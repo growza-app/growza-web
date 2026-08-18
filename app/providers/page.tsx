@@ -15,22 +15,24 @@ export default async function ProvidersPage() {
       />
       <div className="page-body">
         <div className="card">
-          <table>
-            <thead>
-              <tr>
-                <th>{copy.staff.name}</th>
-                <th>{copy.staff.role}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {providers.map((p) => (
-                <tr key={p.id}>
-                  <td style={{ fontWeight: 620 }}>{p.displayName}</td>
-                  <td className="muted">{p.title ?? '—'}</td>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>{copy.staff.name}</th>
+                  <th>{copy.staff.role}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {providers.map((p) => (
+                  <tr key={p.id}>
+                    <td style={{ fontWeight: 620 }}>{p.displayName}</td>
+                    <td className="muted">{p.title ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </>

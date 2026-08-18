@@ -19,13 +19,54 @@
 export const copy = {
   nav: {
     dashboard: 'Home',
+    today: 'Today',
     calendar: 'Calendar',
     appointments: 'Bookings',
     staff: 'Staff',
     services: 'Services',
+    offers: 'Offers',
     availability: 'Free times',
     tryWhatsApp: 'Try WhatsApp',
     settings: 'Settings',
+    more: 'More',
+  },
+
+  home: {
+    greeting: (part: string) => `Good ${part}`,
+    scheduleTitle: 'Today',
+    seeAll: 'See all',
+    nowLabel: (time: string) => `now ${time}`,
+    laterLabel: 'later today',
+    nothingToday: 'Nothing booked today yet.',
+    summaryStyle: 'Summary style',
+    summaryStyleHint: 'Pick what you want to see at a glance',
+    viewReport: 'View report',
+    rangeToday: 'Today',
+    rangeWeek: 'Week',
+    rangeMonth: 'Month',
+  },
+
+  booking: {
+    call: (name: string) => `Call ${name}`,
+    message: 'Send a message',
+    markFinished: 'Mark as finished',
+    markMissed: "They didn't come",
+    reschedule: 'Move to another time',
+    cancel: 'Cancel this booking',
+    reference: 'Booking ID',
+    came: 'Came',
+    didnt: "Didn't",
+    didThisHappen: 'Did this happen?',
+  },
+
+  search: {
+    title: 'Search',
+    placeholder: 'Name, phone, or booking ID',
+    customers: 'CUSTOMERS',
+    bookings: 'BOOKINGS',
+    nothing: 'Nothing found.',
+    hint: 'Search by a customer name, any part of their phone number, or a booking ID.',
+    visits: (n: number) => `${n} ${n === 1 ? 'visit' : 'visits'}`,
   },
 
   kpi: {
@@ -66,6 +107,11 @@ export const copy = {
   freeTimes: {
     title: 'Free times',
     subtitle: 'Times customers can book right now. Already-booked times and breaks are removed automatically.',
+    // Same screen, reframed: reached via the mobile "+" button, this is
+    // someone's entry point to actually creating a booking, not a glance
+    // at the schedule — the heading should say so.
+    newBookingTitle: 'New booking',
+    newBookingSubtitle: 'Pick a service and a time to book someone in.',
     pickService: 'Which service?',
     pickDay: 'Which day?',
     show: 'Show free times',
@@ -91,6 +137,21 @@ export const copy = {
     subtitle: (used: number, allowed: number) => `${used} of ${allowed} people on your plan.`,
     name: 'Name',
     role: 'Role',
+  },
+
+  bookings: {
+    subtitle: 'Every booking, on any day — confirmed, finished, or missed.',
+    filterDay: 'Which day?',
+    show: 'Show',
+    allStaff: 'Everyone',
+    time: 'Time',
+    customer: 'Customer',
+    service: 'Service',
+    staffColumn: 'With',
+    price: 'Price',
+    status: 'Status',
+    bookedVia: 'Booked via',
+    none: 'No bookings that day.',
   },
 
   errors: {

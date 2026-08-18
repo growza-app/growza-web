@@ -1,0 +1,116 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { api, formatTime, type Appointment, type AppointmentStatus } from '../lib/api';
+import { copy } from '../lib/copy';
+import { IconCheck, IconClose, IconPhone, IconWhatsApp } from './icons';
+
+/** Digits only — `tel:` and `wa.me` both choke on spaces and punctuation. */
+export function dialable(phone: string): string {
+  return phone.replace(/[^0-9]/g, '');
+}
+
+/** Short human reference, derived from the appointment id exactly as the WhatsApp confirmation does. */
+export function bookingRef(id: string): string {
+  return `#${id.slice(0, 8).toUpperCase()}`;
+}
+
+/**
+ * Everything you can do to one booking, one tap deep. Kept in a sheet rather
+ * than spread across each row: the schedule stays scannable, and the
+ * destructive action is far from the thumb's resting position.
+ */
+export function BookingSheet({
+  appointment,
+  timezone,
+  onClose,
+}: {
+  appointment: Appointment;
+  timezone: string;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const digits = dialable(appointment.customerPhone);
+  const name = appointment.customerName ?? 'this customer';
+  const settled = appointment.status !== 'confirmed';
+
+  const setStatus = async (status: AppointmentStatus) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.updateAppointmentStatus(appointment.id, status);
+      router.refresh();
+      onClose();
+    } catch {
+      setError('That did not save. Check the connection and try again.');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet" role="dialog" aria-label={name}>
+        <div className="sheet-grab" />
+
+        <div className="sheet-head">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="sheet-title">{appointment.customerName ?? 'Unknown'}</div>
+            <div className="sheet-sub">
+              {appointment.serviceName}
+              {appointment.providerName ? ` · ${appointment.providerName}` : ''} ·{' '}
+              {formatTime(appointment.startAt, timezone)}
+            </div>
+          </div>
+          <span className="ref">{bookingRef(appointment.id)}</span>
+        </div>
+
+        {error && (
+          <div style={{ padding: '10px 18px 0', fontSize: 13, color: '#b91c1c' }}>{error}</div>
+        )}
+
+        <a className="sheet-item" href={`tel:${digits}`}>
+          <IconPhone />
+          {copy.booking.call(appointment.customerName?.split(' ')[0] ?? 'customer')}
+          <span className="trail">{appointment.customerPhone}</span>
+        </a>
+
+        <a className="sheet-item" href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
+          <IconWhatsApp />
+          {copy.booking.message}
+        </a>
+
+        {!settled && (
+          <>
+            <button type="button" className="sheet-item" disabled={busy} onClick={() => setStatus('completed')}>
+              <IconCheck />
+              {copy.booking.markFinished}
+            </button>
+            <button
+              type="button"
+              className="sheet-item sheet-neutral"
+              disabled={busy}
+              onClick={() => setStatus('no_show')}
+            >
+              <IconClose />
+              {copy.booking.markMissed}
+            </button>
+            <button
+              type="button"
+              className="sheet-item sheet-danger"
+              disabled={busy}
+              onClick={() => setStatus('cancelled')}
+            >
+              <IconClose />
+              {copy.booking.cancel}
+            </button>
+          </>
+        )}
+      </div>
+    </>
+  );
+}

@@ -9,9 +9,10 @@ export const dynamic = 'force-dynamic';
 export default async function AvailabilityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ serviceId?: string; date?: string }>;
+  searchParams: Promise<{ serviceId?: string; date?: string; intent?: string }>;
 }) {
   const params = await searchParams;
+  const isBookingIntent = params.intent === 'book';
 
   let me, services, providers;
   try {
@@ -19,7 +20,7 @@ export default async function AvailabilityPage({
   } catch {
     return (
       <>
-        <PageHeader title={copy.freeTimes.title} />
+        <PageHeader title={isBookingIntent ? copy.freeTimes.newBookingTitle : copy.freeTimes.title} />
         <div className="page-body">
           <div className="banner">
             <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
@@ -44,11 +45,15 @@ export default async function AvailabilityPage({
 
   return (
     <>
-      <PageHeader title={copy.freeTimes.title} subtitle={copy.freeTimes.subtitle} />
+      <PageHeader
+        title={isBookingIntent ? copy.freeTimes.newBookingTitle : copy.freeTimes.title}
+        subtitle={isBookingIntent ? copy.freeTimes.newBookingSubtitle : copy.freeTimes.subtitle}
+      />
 
       <div className="page-body">
         <div className="card">
           <form method="get" className="filters">
+            {isBookingIntent && <input type="hidden" name="intent" value="book" />}
             <div className="field">
               <label htmlFor="serviceId">{copy.freeTimes.pickService}</label>
               <select id="serviceId" name="serviceId" defaultValue={serviceId}>

@@ -1,87 +1,10 @@
-import { api, formatMoney, formatTime, type Appointment, type ProviderDay, type TodayStats } from './lib/api';
+import { api, type Appointment, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
-import { PageHeader } from './components/PageHeader';
+import { SummaryCard } from './components/SummaryCard';
+import { DaySchedule } from './components/DaySchedule';
+import { IconSearch } from './components/icons';
 
 export const dynamic = 'force-dynamic';
-
-const initials = (name: string | null) =>
-  (name ?? '?')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('');
-
-function statusChip(appt: Appointment) {
-  if (appt.status === 'completed') return { cls: 'chip-completed', text: copy.status.done };
-  if (appt.status === 'no_show') return { cls: 'chip-no_show', text: copy.status.didNotCome };
-  if (appt.status === 'cancelled') return { cls: 'chip-cancelled', text: copy.status.cancelled };
-  // A confirmed booking whose reminder already went out shows that instead —
-  // a derived display state, never a DB status (07-product-surfaces.md §1.2).
-  if (appt.reminderSent) return { cls: 'chip-reminder', text: copy.status.reminded };
-  if (appt.createdVia === 'dashboard') return { cls: 'chip-new', text: copy.status.walkIn };
-  return { cls: 'chip-confirmed', text: copy.status.confirmed };
-}
-
-function KpiTiles({ stats, labels }: { stats: TodayStats; labels: Record<string, string> }) {
-  const utilisation =
-    stats.capacityMinutesToday > 0 ? Math.round((stats.bookedMinutesToday / stats.capacityMinutesToday) * 100) : 0;
-  const hoursFree = Math.round(Math.max(stats.capacityMinutesToday - stats.bookedMinutesToday, 0) / 60);
-
-  const bookingDiff = stats.bookingsToday - stats.bookingsYesterday;
-  const missedDiff = stats.noShowsThisWeek - stats.noShowsPrevWeek;
-
-  const revenueToday = Number(stats.revenueTodayMinor);
-  const revenuePrev = Number(stats.revenuePrevWeekSameDayMinor);
-  const revenuePct = revenuePrev > 0 ? Math.round(((revenueToday - revenuePrev) / revenuePrev) * 100) : null;
-
-  return (
-    <div className="tiles">
-      <div className="tile">
-        <div className="label">{copy.kpi.bookingsToday}</div>
-        <div className="value">{stats.bookingsToday}</div>
-        <div className={`delta ${bookingDiff > 0 ? 'delta-up' : bookingDiff < 0 ? 'delta-bad' : ''}`}>
-          {bookingDiff === 0
-            ? copy.kpi.sameAsYesterday
-            : bookingDiff > 0
-              ? copy.kpi.moreThanYesterday(bookingDiff)
-              : copy.kpi.fewerThanYesterday(Math.abs(bookingDiff))}
-        </div>
-      </div>
-
-      <div className="tile">
-        <div className="label">{copy.kpi.missedThisWeek}</div>
-        <div className="value">{stats.noShowsThisWeek}</div>
-        {/* Fewer people missing appointments is good news — colour it that way. */}
-        <div className={`delta ${missedDiff < 0 ? 'delta-up' : missedDiff > 0 ? 'delta-bad' : ''}`}>
-          {missedDiff === 0
-            ? copy.kpi.sameAsLastWeek
-            : missedDiff < 0
-              ? copy.kpi.fewerThanLastWeek(Math.abs(missedDiff))
-              : copy.kpi.moreThanLastWeek(missedDiff)}
-        </div>
-      </div>
-
-      <div className="tile">
-        <div className="label">{copy.kpi.earnedToday}</div>
-        <div className="value">{formatMoney(stats.revenueTodayMinor)}</div>
-        <div className={`delta ${revenuePct !== null && revenuePct >= 0 ? 'delta-up' : revenuePct !== null ? 'delta-bad' : ''}`}>
-          {revenuePct === null
-            ? copy.kpi.noComparison
-            : revenuePct >= 0
-              ? copy.kpi.upFromLastWeek(revenuePct)
-              : copy.kpi.downFromLastWeek(Math.abs(revenuePct))}
-        </div>
-      </div>
-
-      <div className="tile">
-        <div className="label">{labels.utilisation_kpi ?? 'How busy today'}</div>
-        <div className="value">{utilisation}%</div>
-        <div className="delta">{copy.kpi.hoursFree(hoursFree)}</div>
-      </div>
-    </div>
-  );
-}
 
 function ChairTimeline({ day }: { day: ProviderDay }) {
   const hours = Array.from({ length: 11 }, (_, i) => 9 + i); // 09:00 – 19:00
@@ -134,80 +57,63 @@ export default async function DashboardPage() {
     providerDay = await api.providerDay().catch(() => null);
   } catch {
     return (
-      <>
-        <PageHeader title={copy.nav.dashboard} />
-        <div className="page-body">
-          <div className="banner">
-            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-          </div>
+      <div className="page-body">
+        <div className="banner">
+          <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
         </div>
-      </>
+      </div>
     );
   }
 
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
-  const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: timezone }).format(new Date()));
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const now = new Date();
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: timezone }).format(now));
+  const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
   const dateLine = new Intl.DateTimeFormat('en-IN', {
-    weekday: 'long',
+    weekday: 'short',
     day: 'numeric',
-    month: 'long',
+    month: 'short',
     timeZone: timezone,
-  }).format(new Date());
-
-  const bookingsWord = me.labels.appointments ?? 'Bookings';
+  }).format(now);
 
   return (
     <>
-      <PageHeader
-        title={`${greeting} 👋`}
-        subtitle={`${dateLine} · ${me.tenant?.locationName ?? ''}`}
-        initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
-      />
+      <header className="home-head">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="home-greeting">{copy.home.greeting(part)}</div>
+          <div className="home-sub">
+            {me.tenant?.name ?? 'Your salon'} · {dateLine}
+            {me.tenant?.locationName ? ` · ${me.tenant.locationName}` : ''}
+          </div>
+        </div>
+        <a className="icon-btn" href="/search" aria-label={copy.search.title}>
+          <IconSearch />
+        </a>
+        <div className="avatar-lg" style={{ width: 36, height: 36, fontSize: 14 }}>
+          {(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
+        </div>
+      </header>
 
       <div className="page-body">
-        <KpiTiles stats={stats} labels={me.labels} />
+        <SummaryCard stats={stats} />
 
-        <div className="grid-2">
-          <div className="card">
-            <div className="card-head">
-              <span>{copy.today.heading(bookingsWord)}</span>
-              <a className="link" href="/appointments">
-                {copy.today.viewAll}
-              </a>
-            </div>
-            {appointments.length === 0 ? (
-              <div className="empty">{copy.today.nothing}</div>
-            ) : (
-              appointments.map((appt) => {
-                const chip = statusChip(appt);
-                return (
-                  <div className="appt" key={appt.id}>
-                    <div className="appt-time">{formatTime(appt.startAt, timezone)}</div>
-                    <div className="avatar">{initials(appt.customerName)}</div>
-                    <div className="appt-main">
-                      <div className="appt-name">{appt.customerName ?? 'Unknown'}</div>
-                      <div className="appt-sub">
-                        {appt.serviceName}
-                        {appt.providerName ? ` · ${appt.providerName}` : ''}
-                      </div>
-                    </div>
-                    <span className={`chip ${chip.cls}`}>{chip.text}</span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {providerDay && (
-            <div className="card">
-              <div className="card-head">
-                <span>{copy.today.chairToday(providerDay.provider.displayName, me.labels.resource ?? 'chair')}</span>
-              </div>
-              <ChairTimeline day={providerDay} />
-            </div>
-          )}
+        <div className="card-head" style={{ padding: '0 2px 9px', border: 'none' }}>
+          <span style={{ fontWeight: 620 }}>{copy.home.scheduleTitle}</span>
+          <a className="link" href="/appointments">
+            {copy.home.seeAll} →
+          </a>
         </div>
+
+        <DaySchedule appointments={appointments} timezone={timezone} nowISO={now.toISOString()} />
+
+        {providerDay && (
+          <div className="card desktop-only" style={{ marginTop: 18 }}>
+            <div className="card-head">
+              <span>{copy.today.chairToday(providerDay.provider.displayName, me.labels.resource ?? 'chair')}</span>
+            </div>
+            <ChairTimeline day={providerDay} />
+          </div>
+        )}
       </div>
     </>
   );

@@ -57,6 +57,22 @@ export interface TodayStats {
   capacityMinutesToday: number;
 }
 
+export interface RangeBucket {
+  label: string;
+  bookings: number;
+  isCurrent: boolean;
+}
+
+export interface RangeSummary {
+  range: 'week' | 'month';
+  label: string;
+  bookings: number;
+  revenueMinor: string;
+  noShows: number;
+  comparisonPct: number | null;
+  buckets: RangeBucket[];
+}
+
 export interface ProviderDay {
   provider: { id: string; displayName: string };
   date: string;
@@ -98,6 +114,30 @@ export interface ChatState {
   nonce: string | null;
 }
 
+export interface Offer {
+  id: string;
+  title: string;
+  description: string | null;
+  active: boolean;
+  sortOrder: number | null;
+  updatedAt: string;
+}
+
+export type AppointmentStatus = 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+
+export interface SearchResult {
+  customers: Array<{ id: string; name: string | null; phone: string; visitCount: number }>;
+  bookings: Array<{
+    id: string;
+    startAt: string;
+    status: string;
+    customerName: string | null;
+    customerPhone: string;
+    serviceName: string;
+    providerName: string | null;
+  }>;
+}
+
 export interface HoldResponse {
   holdKey: string;
   expiresAt: string;
@@ -118,26 +158,41 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method,
+    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 409) {
     const { error } = (await res.json()) as { error: string };
     throw new BookingConflictError(error);
   }
   if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
+
+const post = <T>(path: string, body: unknown) => send<T>('POST', path, body);
+const patch = <T>(path: string, body: unknown) => send<T>('PATCH', path, body);
+const del = <T>(path: string) => send<T>('DELETE', path);
 
 export const api = {
   me: () => get<Me>('/api/v1/me'),
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
-  appointments: (date?: string) => get<Appointment[]>(`/api/v1/appointments${date ? `?date=${date}` : ''}`),
+  appointments: (date?: string, providerId?: string) => {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (providerId) params.set('providerId', providerId);
+    const qs = params.toString();
+    return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
+  },
   todayStats: () => get<TodayStats>('/api/v1/analytics/today'),
+  // Not /analytics/range — that path segment gets silently blocked by
+  // browser ad/tracker blockers (this is fetched client-side, unlike
+  // todayStats which runs server-side during SSR and never hits that filter).
+  rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
   providerDay: (providerId?: string) =>
     get<ProviderDay>(`/api/v1/provider-day${providerId ? `?providerId=${providerId}` : ''}`),
   availability: (serviceId: string, date: string, providerId = 'any') =>
@@ -154,6 +209,15 @@ export const api = {
   chatStart: (phone: string, name?: string) => post<ChatState>('/api/v1/chat/start', { phone, name }),
   chatTap: (phone: string, optionId: string, nonce: string) =>
     post<ChatState>('/api/v1/chat/tap', { phone, optionId, nonce }),
+  updateAppointmentStatus: (id: string, status: AppointmentStatus) =>
+    patch<{ id: string; status: AppointmentStatus }>(`/api/v1/appointments/${id}/status`, { status }),
+  search: (q: string) => get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}`),
+  offers: () => get<Offer[]>('/api/v1/offers/all'),
+  createOffer: (input: { title: string; description?: string; active?: boolean }) =>
+    post<Offer>('/api/v1/offers', input),
+  updateOffer: (id: string, input: { title?: string; description?: string | null; active?: boolean }) =>
+    patch<Offer>(`/api/v1/offers/${id}`, input),
+  deleteOffer: (id: string) => del<void>(`/api/v1/offers/${id}`),
 };
 
 export function formatMoney(minor: string | null, currency = 'INR'): string {
