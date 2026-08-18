@@ -1,0 +1,100 @@
+/**
+ * Every word the salon owner reads, in one place.
+ *
+ * RULE: plain language only. Our users run salons, not software — they should
+ * never have to decode industry jargon. Before adding a string here, say it out
+ * loud to someone who has never used a booking system.
+ *
+ *   no-show      -> didn't come
+ *   utilisation  -> how busy
+ *   buffer       -> cleanup time
+ *   availability -> free times
+ *   revenue      -> money earned
+ *   provider     -> comes from ctx.labels (Stylist / Doctor / Trainer ...)
+ *
+ * Domain nouns (stylist/service/client) come from the vertical config
+ * (ctx.labels) and are NOT duplicated here — see 01-domain-model.md §4.
+ * This file is UI chrome only. Translations later swap this one file.
+ */
+export const copy = {
+  nav: {
+    dashboard: 'Home',
+    calendar: 'Calendar',
+    appointments: 'Bookings',
+    staff: 'Staff',
+    services: 'Services',
+    availability: 'Free times',
+    tryWhatsApp: 'Try WhatsApp',
+    settings: 'Settings',
+  },
+
+  kpi: {
+    bookingsToday: 'Bookings today',
+    missedThisWeek: "Didn't come this week",
+    earnedToday: 'Money earned today',
+    // "How busy today" comes from ctx.labels.utilisation_kpi (vertical-specific)
+    hoursFree: (hours: number) => `${hours} ${hours === 1 ? 'hour' : 'hours'} still free`,
+    moreThanYesterday: (n: number) => `${n} more than yesterday`,
+    fewerThanYesterday: (n: number) => `${n} fewer than yesterday`,
+    sameAsYesterday: 'Same as yesterday',
+    fewerThanLastWeek: (n: number) => `${n} fewer than last week`,
+    moreThanLastWeek: (n: number) => `${n} more than last week`,
+    sameAsLastWeek: 'Same as last week',
+    noComparison: 'Nothing to compare yet',
+    upFromLastWeek: (pct: number) => `${pct}% more than last week`,
+    downFromLastWeek: (pct: number) => `${pct}% less than last week`,
+  },
+
+  status: {
+    done: 'Finished',
+    confirmed: 'Coming',
+    reminded: 'Reminded',
+    walkIn: 'Walk-in',
+    didNotCome: "Didn't come",
+    cancelled: 'Cancelled',
+  },
+
+  today: {
+    heading: (bookingsWord: string) => `Today's ${bookingsWord.toLowerCase()}`,
+    viewAll: 'See all →',
+    nothing: 'No bookings today yet.',
+    chairToday: (providerName: string, resourceWord: string) =>
+      `${providerName}'s ${resourceWord.toLowerCase()} today`,
+    free: '— free —',
+  },
+
+  freeTimes: {
+    title: 'Free times',
+    subtitle: 'Times customers can book right now. Already-booked times and breaks are removed automatically.',
+    pickService: 'Which service?',
+    pickDay: 'Which day?',
+    show: 'Show free times',
+    countLabel: (n: number) => `${n} ${n === 1 ? 'time' : 'times'} free`,
+    none: 'No free times left — the day is full, closed, or too soon to book.',
+    morning: 'Morning',
+    afternoon: 'Afternoon',
+    evening: 'Evening',
+  },
+
+  services: {
+    subtitle: 'What you offer, how long each takes, and what you charge.',
+    name: 'Service',
+    type: 'Type',
+    takes: 'Takes',
+    cleanupTime: 'Cleanup time after',
+    price: 'Price',
+    noCleanup: 'None',
+    minutes: (n: number) => `${n} min`,
+  },
+
+  staff: {
+    subtitle: (used: number, allowed: number) => `${used} of ${allowed} people on your plan.`,
+    name: 'Name',
+    role: 'Role',
+  },
+
+  errors: {
+    apiDown: 'Cannot reach the server.',
+    apiDownHelp: 'Ask your developer to start it, or run',
+  },
+} as const;

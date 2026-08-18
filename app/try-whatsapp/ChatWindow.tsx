@@ -1,0 +1,135 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { api, BookingConflictError, type ChatOption, type ChatState } from '../lib/api';
+
+/**
+ * A simulated WhatsApp thread driving the real conversation engine
+ * (CNV-01/02) over `/api/v1/chat/*`. This is a stand-in CHANNEL only —
+ * everything downstream (the flow interpreter, holds, confirm) is the real
+ * booking engine. Swapping in the real Meta Cloud API adapter later touches
+ * nothing here; this page just stops being useful once real WhatsApp works.
+ */
+
+interface Bubble {
+  from: 'bot' | 'customer';
+  text: string;
+}
+
+const DEFAULT_PHONE = '+91 98765 43210';
+
+export function ChatWindow({ tenantName }: { tenantName: string }) {
+  const [phone, setPhone] = useState(DEFAULT_PHONE);
+  const [name, setName] = useState('Anjali Verma');
+  const [state, setState] = useState<ChatState | null>(null);
+  const [bubbles, setBubbles] = useState<Bubble[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Options render right after the latest bubble, so scrolling on every
+  // change (not just new bubbles) keeps the tappable choices in view —
+  // exactly what a real WhatsApp thread does automatically.
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [bubbles, state]);
+
+  const start = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await api.chatStart(phone.trim(), name.trim() || undefined);
+      setState(next);
+      setBubbles([{ from: 'bot', text: next.body }]);
+    } catch {
+      setError('Could not reach the server.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const tap = async (option: ChatOption) => {
+    if (!state?.nonce || busy) return;
+    setBusy(true);
+    setError(null);
+    setBubbles((prev) => [...prev, { from: 'customer', text: option.label }]);
+    try {
+      const next = await api.chatTap(phone.trim(), option.id, state.nonce);
+      setState(next);
+      setBubbles((prev) => [...prev, { from: 'bot', text: next.body }]);
+    } catch (err) {
+      if (err instanceof BookingConflictError) {
+        setBubbles((prev) => [...prev, { from: 'bot', text: err.message }]);
+      } else {
+        setError('Something went wrong.');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reset = () => {
+    setState(null);
+    setBubbles([]);
+    setError(null);
+  };
+
+  return (
+    <div className="wa-shell">
+      <div className="wa-phone">
+        <div className="wa-header">
+          <div className="wa-avatar">{tenantName.charAt(0).toUpperCase()}</div>
+          <div>
+            <div className="wa-title">{tenantName}</div>
+            <div className="wa-subtitle">{state ? 'online' : 'WhatsApp Business'}</div>
+          </div>
+        </div>
+
+        <div className="wa-body">
+          {!state && (
+            <div className="wa-system">Type a phone number below and tap Start to simulate an incoming chat.</div>
+          )}
+          {bubbles.map((b, i) => (
+            <div key={i} className={`wa-bubble wa-bubble-${b.from}`}>
+              {b.text.split('\n').map((line, j) => (
+                <div key={j}>{line || ' '}</div>
+              ))}
+            </div>
+          ))}
+          {state?.status === 'awaiting_input' && state.options.length > 0 && (
+            <div className={`wa-options wa-options-${state.type}`}>
+              {state.options.map((o) => (
+                <button key={o.id} className="wa-option" disabled={busy} onClick={() => tap(o)}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {state && (state.status === 'completed' || state.status === 'handoff') && (
+            <button className="wa-option wa-option-restart" onClick={reset}>
+              Start a new conversation
+            </button>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {!state && (
+          <div className="wa-composer">
+            <input
+              className="wa-input"
+              placeholder="Phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <input className="wa-input" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+            <button className="btn" disabled={busy || !phone.trim()} onClick={start}>
+              {busy ? 'Starting…' : 'Start chat'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {error && <div className="banner" style={{ marginTop: 16 }}>{error}</div>}
+    </div>
+  );
+}
