@@ -1,6 +1,7 @@
 import { api } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { OffersList } from './OffersList';
+import { CreateOfferMenu } from './CreateOfferMenu';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,8 @@ export default async function OffersPage() {
     <>
       <PageHeader
         title="Offers & Combos"
-        subtitle="What customers see today — on the dashboard and in the WhatsApp chat's Offers menu. Plain offers are just wording; combos also carry a price and can be booked directly from WhatsApp."
+        subtitle="Create offers and combos that customers see on your dashboard and in WhatsApp's Offers menu. Customers can book combos directly from WhatsApp."
+        actions={<CreateOfferMenu />}
       />
       <div className="page-body">
         <OffersList offers={offers} services={services} />

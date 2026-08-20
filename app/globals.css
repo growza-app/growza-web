@@ -17,6 +17,9 @@
   --amber-soft: #fdf0d5;
   --peach: #fde8dd;
   --slate-soft: #eceeee;
+  --purple: #7c3aed;
+  --purple-soft: #ede9fe;
+  --purple-deep: #6d28d9;
   --radius: 14px;
   --radius-sm: 10px;
 }
@@ -2516,6 +2519,372 @@ input[type='date'] {
   color: var(--muted);
 }
 
+/* ---------- offers & combos list ---------- */
+
+.offers-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--page-bg);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 14px;
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+.search-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  background: var(--surface);
+}
+
+.dropdown-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  z-index: 40;
+  min-width: 260px;
+  padding: 6px;
+}
+
+.dropdown-panel-sm {
+  min-width: 160px;
+}
+
+.dropdown-panel-right {
+  right: 0;
+  left: auto;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background: var(--page-bg);
+}
+
+.dropdown-item-plain {
+  font-size: 13.5px;
+  font-weight: 560;
+  padding: 8px 10px;
+}
+
+.dropdown-item-danger {
+  color: #b91c1c;
+}
+
+.dropdown-item-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-item-icon-offer {
+  background: var(--accent-soft);
+}
+
+.dropdown-item-icon-combo {
+  background: var(--purple-soft);
+}
+
+.dropdown-item-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 640;
+}
+
+.dropdown-item-desc {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.offers-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.offer-card-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.offer-card-row:last-child {
+  border-bottom: none;
+}
+
+.offer-row-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1.6;
+  min-width: 0;
+}
+
+.offer-row-foot {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.offer-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.offer-icon-combo {
+  background: var(--purple-soft);
+}
+
+.offer-icon-offer {
+  background: var(--accent-soft);
+}
+
+.offer-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.offer-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.offer-title {
+  font-weight: 640;
+  font-size: 15px;
+}
+
+.offer-subtitle {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.offer-price-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+
+.offer-price {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--purple-deep);
+}
+
+.offer-strike {
+  color: var(--muted);
+  text-decoration: line-through;
+  font-size: 13.5px;
+}
+
+.offer-savings {
+  font-size: 12.5px;
+}
+
+.offer-info-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+}
+
+.offer-info-item {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.offer-info-positive {
+  color: var(--accent-deep);
+  font-weight: 560;
+}
+
+.offer-stats-col {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.offer-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 58px;
+}
+
+.offer-stat-value {
+  font-weight: 660;
+  font-size: 14.5px;
+}
+
+.offer-stat-label {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.kebab-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.kebab-btn:hover {
+  background: var(--page-bg);
+  border-color: var(--border);
+}
+
+.chip-combo {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.chip-offer {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.chip-discount {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  font-size: 13px;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.pagination-btn {
+  min-width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.create-offer-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.create-offer-menu > .btn {
+  white-space: nowrap;
+}
+
 /* Kept at the END of the file on purpose: every rule above defines a class
    exactly once at the base (desktop) specificity, so with equal specificity
    CSS falls back to source order — a media-query override placed EARLIER
@@ -2798,5 +3167,63 @@ input[type='date'] {
 
   .price-panel {
     grid-template-columns: 1fr;
+  }
+
+  .offers-toolbar {
+    padding: 12px 14px;
+  }
+
+  .tabs {
+    order: -1;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: center;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .offer-card-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .offer-row-head,
+  .offer-row-foot {
+    flex: none;
+  }
+
+  .offer-row-foot {
+    flex-wrap: wrap;
+    padding-left: 58px;
+    gap: 14px;
+  }
+
+  .offer-info-col {
+    flex-direction: row;
+    flex-basis: 100%;
+    gap: 14px;
+  }
+
+  .offer-stats-col {
+    justify-content: flex-start;
+    gap: 24px;
+  }
+
+  .offer-stat {
+    align-items: flex-start;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
   }
 }

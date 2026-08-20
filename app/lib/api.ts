@@ -140,6 +140,8 @@ export interface Offer {
   visibleWeekdays: number[] | null;
   visibleFrom: string | null;
   visibleUntil: string | null;
+  bookingsCount: number;
+  revenueMinor: string;
 }
 
 export interface OfferInput {
@@ -243,6 +245,15 @@ const post = <T>(path: string, body: unknown) => send<T>('POST', path, body);
 const patch = <T>(path: string, body: unknown) => send<T>('PATCH', path, body);
 const del = <T>(path: string) => send<T>('DELETE', path);
 
+/** Multipart upload — deliberately not routed through send(), the browser needs to set its own boundary'd Content-Type, not JSON. */
+async function uploadFile<T>(path: string, field: string, file: File): Promise<T> {
+  const form = new FormData();
+  form.append(field, file);
+  const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form });
+  if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
+  return res.json() as Promise<T>;
+}
+
 export const api = {
   me: () => get<Me>('/api/v1/me'),
   services: () => get<Service[]>('/api/v1/services'),
@@ -293,6 +304,8 @@ export const api = {
   createOffer: (input: OfferInput) => post<Offer>('/api/v1/offers', input),
   updateOffer: (id: string, input: Partial<OfferInput>) => patch<Offer>(`/api/v1/offers/${id}`, input),
   deleteOffer: (id: string) => del<void>(`/api/v1/offers/${id}`),
+  uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
+  removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),
 };
 
 export function formatMoney(minor: string | null, currency = 'INR'): string {
