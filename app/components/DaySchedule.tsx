@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { api, formatTime, type Appointment } from '../lib/api';
+import { formatTime, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
 import { initials, statusChip } from '../lib/appointment-display';
 import { BookingSheet, dialable } from './BookingSheet';
@@ -13,10 +12,13 @@ import { IconChevronRight, IconPhone } from './icons';
  * A separate "happening next" section duplicates rows that also appear in
  * the day list; instead each row's weight varies by how urgent it is:
  *
- *   past + settled  -> dimmed one-liner, no actions left to take
- *   past + unmarked -> amber, with Came / Didn't right there
- *   imminent        -> full card with call and details
- *   later today     -> compact reference row
+ *   past + settled   -> dimmed one-liner, no actions left to take
+ *   past + unmarked  -> full card, same as imminent — completing it now
+ *                       goes through the checkout sheet (Booking options),
+ *                       not a one-tap inline button; admin decides whenever
+ *                       they get to it, there is no "you must mark this now"
+ *   imminent         -> full card with call and details
+ *   later today      -> compact reference row
  *
  * The "now" divider sits between past and future, so it IS the what's-next
  * signal and nothing has to be listed twice to provide one.
@@ -74,12 +76,10 @@ export function DaySchedule({
   /** Server's clock, passed in so the first client render matches the server HTML exactly. */
   nowISO: string;
 }) {
-  const router = useRouter();
   // Seeded from the server value, then switched to the real device clock
   // after mount and ticked every minute so the "now" line stays honest.
   const [now, setNow] = useState(() => new Date(nowISO));
   const [open, setOpen] = useState<Appointment | null>(null);
-  const [marking, setMarking] = useState<string | null>(null);
 
   useEffect(() => {
     setNow(new Date());
@@ -96,16 +96,6 @@ export function DaySchedule({
   const firstFuture = groups.findIndex((g) => g.startAt.getTime() > now.getTime());
   const futureStart = firstFuture === -1 ? groups.length : firstFuture;
 
-  const mark = async (id: string, status: 'completed' | 'no_show') => {
-    setMarking(id);
-    try {
-      await api.updateAppointmentStatus(id, status);
-      router.refresh();
-    } finally {
-      setMarking(null);
-    }
-  };
-
   const callButton = (appt: Appointment, strong: boolean) => (
     <a
       className={`call ${strong ? 'call-strong' : ''}`}
@@ -121,49 +111,15 @@ export function DaySchedule({
    * Status is checked BEFORE clock position, deliberately: a booking marked
    * finished or cancelled is settled no matter where it sits on the
    * timeline, and rendering it as an actionable upcoming card would invite
-   * someone to act on it twice.
+   * someone to act on it twice. A past-due but still-confirmed appointment
+   * gets the SAME card as an upcoming one — completing/no-showing it goes
+   * through Booking options (the checkout sheet), on the admin's own time,
+   * not a one-tap inline prompt.
    */
   const renderItem = (appt: Appointment, strong = false) => {
     if (appt.status !== 'confirmed') return renderSettled(appt);
-    const ended = new Date(appt.endAt).getTime() < now.getTime();
-    return ended ? renderNeedsMark(appt) : renderRich(appt, strong);
+    return renderRich(appt, strong);
   };
-
-  /** Its time has passed but nobody has said whether they turned up — the most-skipped action in the product, so it is asked inline. */
-  const renderNeedsMark = (appt: Appointment) => (
-    <div className="sched-card sched-card-warn sched-card-stack" key={appt.id}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
-        <Avatar name={appt.customerName} />
-        <div className="sched-main">
-          <div className="sched-name">{appt.customerName ?? 'Unknown'}</div>
-          <div className="sched-meta">
-            {appt.serviceName}
-            {appt.providerName ? ` · ${appt.providerName}` : ''}
-          </div>
-        </div>
-      </div>
-      <div className="mark-row" style={{ width: '100%' }}>
-        <button
-          type="button"
-          className="mark-btn mark-yes"
-          style={{ flex: 1 }}
-          disabled={marking === appt.id}
-          onClick={() => mark(appt.id, 'completed')}
-        >
-          {copy.booking.came}
-        </button>
-        <button
-          type="button"
-          className="mark-btn mark-no"
-          style={{ flex: 1 }}
-          disabled={marking === appt.id}
-          onClick={() => mark(appt.id, 'no_show')}
-        >
-          {copy.booking.didnt}
-        </button>
-      </div>
-    </div>
-  );
 
   /** Finished, missed or cancelled — nothing left to do, so it recedes. */
   const renderSettled = (appt: Appointment) => (

@@ -11,7 +11,10 @@ import { IconCalendarPlus, IconClose, IconPlus, IconUserPlus } from './icons';
  * Hidden inside the booking flow itself (you're already there) and on
  * search, where it would sit on top of results.
  */
-const NO_FAB = ['/availability', '/search', '/try-whatsapp'];
+// /offers has its own primary "+ Create a new combo" action — a second,
+// functionally-unrelated "New booking" FAB floating on top of it is
+// confusing, not helpful, the same reasoning that excludes /search.
+const NO_FAB = ['/availability', '/search', '/try-whatsapp', '/offers'];
 
 /** Tomorrow's date in the tenant's own timezone, not the device's — matches how every other date in this dashboard is computed. */
 function tomorrowInTimezone(timezone: string): string {

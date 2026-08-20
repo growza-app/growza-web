@@ -1,4 +1,12 @@
-const API_URL = process.env.API_URL ?? 'http://localhost:3001';
+// Server-side (SSR) always talks to the API on the dev machine itself, so the
+// env var / localhost fallback is correct there. Client-side, the page may
+// have been loaded from a LAN address (phone, or a desktop on the network
+// URL) — 'localhost' on THAT device points to itself, not this machine, so
+// the API call has to follow whatever host the page was actually loaded from.
+const API_URL =
+  typeof window !== 'undefined'
+    ? `${window.location.protocol}//${window.location.hostname}:3001`
+    : (process.env.API_URL ?? 'http://localhost:3001');
 
 export interface Me {
   tenant: { id: string; name: string; timezone: string; locationName: string | null } | null;
@@ -21,6 +29,8 @@ export interface Service {
   bufferAfterMin: number;
   priceMinor: string | null;
   currency: string;
+  /** Null until a real photo is uploaded — see servicePhotoUrl() for the local-placeholder fallback. */
+  imageUrl: string | null;
 }
 
 export interface Provider {
@@ -70,6 +80,7 @@ export interface RangeSummary {
   revenueMinor: string;
   noShows: number;
   comparisonPct: number | null;
+  busyPct: number;
   buckets: RangeBucket[];
 }
 
@@ -121,6 +132,25 @@ export interface Offer {
   active: boolean;
   sortOrder: number | null;
   updatedAt: string;
+  /** In display order — the combo builder's chosen order, not insertion order. */
+  serviceIds: string[];
+  /** Set when this offer is a priced combo (not just a discount announcement). */
+  comboPriceMinor: string | null;
+  /** Rules step — all null means always visible. 0=Sun..6=Sat. */
+  visibleWeekdays: number[] | null;
+  visibleFrom: string | null;
+  visibleUntil: string | null;
+}
+
+export interface OfferInput {
+  title: string;
+  description?: string | null;
+  active?: boolean;
+  serviceIds?: string[];
+  comboPriceMinor?: number | null;
+  visibleWeekdays?: number[] | null;
+  visibleFrom?: string | null;
+  visibleUntil?: string | null;
 }
 
 export type AppointmentStatus = 'confirmed' | 'completed' | 'cancelled' | 'no_show';
@@ -149,13 +179,50 @@ export interface ConfirmResponse {
   remindersScheduled: number;
 }
 
-/** Thrown for the 409s the booking API sends back — the slot-just-taken / hold-expired cases. */
+export type PaymentMode = 'cash' | 'card' | 'upi' | 'other';
+
+export interface CheckoutExtraServiceInput {
+  serviceId: string;
+  paidAmountMinor: number;
+  /** Who actually performed it — defaults to the original appointment's provider if omitted. */
+  schedulableId?: string;
+}
+
+export interface CheckoutResponse {
+  appointmentId: string;
+  originalCancelled: boolean;
+  bookingGroupId: string;
+  extraAppointmentIds: string[];
+}
+
+/** Thrown for the 409s the booking API sends back — the slot-just-taken / hold-expired / already-checked-out cases. */
 export class BookingConflictError extends Error {}
+
+/**
+ * Any other non-ok response, with the real status and server message
+ * preserved — callers that need to react to a specific status (e.g. 404
+ * "no active conversation" meaning restart, vs. a generic failure meaning
+ * just show an error) can check `.status` instead of string-matching text.
+ */
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
   return res.json() as Promise<T>;
+}
+
+async function extractErrorMessage(res: Response, path: string): Promise<string> {
+  const body = (await res.json().catch(() => null)) as { error?: string } | null;
+  return body?.error ?? `${path} failed: ${res.status}`;
 }
 
 async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
@@ -165,10 +232,9 @@ async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?:
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 409) {
-    const { error } = (await res.json()) as { error: string };
-    throw new BookingConflictError(error);
+    throw new BookingConflictError(await extractErrorMessage(res, path));
   }
-  if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
@@ -211,12 +277,21 @@ export const api = {
     post<ChatState>('/api/v1/chat/tap', { phone, optionId, nonce }),
   updateAppointmentStatus: (id: string, status: AppointmentStatus) =>
     patch<{ id: string; status: AppointmentStatus }>(`/api/v1/appointments/${id}/status`, { status }),
+  checkout: (
+    appointmentId: string,
+    args: {
+      /** Omit when the customer never got the originally booked service — it's cancelled instead of completed. */
+      paidAmountMinor?: number;
+      schedulableId?: string;
+      paymentMode?: PaymentMode;
+      extraServices?: CheckoutExtraServiceInput[];
+    },
+  ) => post<CheckoutResponse>(`/api/v1/appointments/${appointmentId}/checkout`, args),
   search: (q: string) => get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}`),
   offers: () => get<Offer[]>('/api/v1/offers/all'),
-  createOffer: (input: { title: string; description?: string; active?: boolean }) =>
-    post<Offer>('/api/v1/offers', input),
-  updateOffer: (id: string, input: { title?: string; description?: string | null; active?: boolean }) =>
-    patch<Offer>(`/api/v1/offers/${id}`, input),
+  offer: (id: string) => get<Offer>(`/api/v1/offers/${id}`),
+  createOffer: (input: OfferInput) => post<Offer>('/api/v1/offers', input),
+  updateOffer: (id: string, input: Partial<OfferInput>) => patch<Offer>(`/api/v1/offers/${id}`, input),
   deleteOffer: (id: string) => del<void>(`/api/v1/offers/${id}`),
 };
 

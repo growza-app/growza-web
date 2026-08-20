@@ -1,0 +1,29 @@
+import { api } from '../../lib/api';
+import { PageHeader } from '../../components/PageHeader';
+import { ComboBuilder } from '../ComboBuilder';
+
+export const dynamic = 'force-dynamic';
+
+export default async function NewComboPage() {
+  let services;
+  try {
+    services = await api.services();
+  } catch {
+    return (
+      <>
+        <PageHeader title="Create a new combo" />
+        <div className="page-body">
+          <div className="banner">
+            <strong>Cannot reach the server.</strong> Ask your developer to start it, or run <code>npm run dev</code>.
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div className="page-body">
+      <ComboBuilder services={services} />
+    </div>
+  );
+}

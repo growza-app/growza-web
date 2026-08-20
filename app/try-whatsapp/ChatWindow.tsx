@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { api, BookingConflictError, type ChatOption, type ChatState } from '../lib/api';
+import { api, ApiError, BookingConflictError, type ChatOption, type ChatState } from '../lib/api';
 
 /**
  * A simulated WhatsApp thread driving the real conversation engine
@@ -60,6 +60,18 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
     } catch (err) {
       if (err instanceof BookingConflictError) {
         setBubbles((prev) => [...prev, { from: 'bot', text: err.message }]);
+      } else if (err instanceof ApiError && err.status === 404) {
+        // The conversation is gone (expired from inactivity, or never
+        // started) — those old options are dead, so land back on a fresh
+        // menu instead of leaving them tappable-but-broken.
+        setBubbles((prev) => [...prev, { from: 'bot', text: "Let's start over — that chat timed out." }]);
+        try {
+          const fresh = await api.chatStart(phone.trim(), name.trim() || undefined);
+          setState(fresh);
+          setBubbles((prev) => [...prev, { from: 'bot', text: fresh.body }]);
+        } catch {
+          setError('Could not reach the server.');
+        }
       } else {
         setError('Something went wrong.');
       }
@@ -100,7 +112,8 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
             <div className={`wa-options wa-options-${state.type}`}>
               {state.options.map((o) => (
                 <button key={o.id} className="wa-option" disabled={busy} onClick={() => tap(o)}>
-                  {o.label}
+                  <span className="wa-option-label">{o.label}</span>
+                  {o.sublabel && <span className="wa-option-sublabel">{o.sublabel}</span>}
                 </button>
               ))}
             </div>

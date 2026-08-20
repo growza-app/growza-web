@@ -134,14 +134,34 @@ function Progress({ f }: { f: Figures }) {
   );
 }
 
+/** Shared by all three range layouts: the comparison line + no-show count. */
+function RangeFoot({ summary }: { summary: RangeSummary }) {
+  const periodWord = summary.range === 'week' ? 'week' : 'month';
+  return (
+    <>
+      <div className="summary-rule" />
+      <div className="summary-foot">
+        <span className="summary-cap" style={summary.comparisonPct !== null && summary.comparisonPct >= 0 ? { color: '#5be08a' } : undefined}>
+          {summary.comparisonPct === null
+            ? 'Nothing to compare yet'
+            : `${summary.comparisonPct >= 0 ? '↑' : '↓'} ${Math.abs(summary.comparisonPct)}% vs last ${periodWord}`}
+        </span>
+        <span className="summary-cap">
+          {summary.noShows} no-show{summary.noShows === 1 ? '' : 's'}
+        </span>
+      </div>
+    </>
+  );
+}
+
 /**
  * Week/month view — same card, a different question ("how's the period
- * going" instead of "what's left today"). Only one layout exists for this,
- * unlike Today's three — the style picker is hidden outside the Today tab.
+ * going" instead of "what's left today"). Mirrors Today's three styles:
+ * this is the "progress" one, trading the day's done/to-go bar for a
+ * per-bucket trend chart.
  */
 function RangeBars({ summary }: { summary: RangeSummary }) {
   const max = Math.max(...summary.buckets.map((b) => b.bookings), 1);
-  const periodWord = summary.range === 'week' ? 'week' : 'month';
 
   return (
     <>
@@ -167,17 +187,85 @@ function RangeBars({ summary }: { summary: RangeSummary }) {
         ))}
       </div>
 
-      <div className="summary-rule" />
-      <div className="summary-foot">
-        <span className="summary-cap" style={summary.comparisonPct !== null && summary.comparisonPct >= 0 ? { color: '#5be08a' } : undefined}>
-          {summary.comparisonPct === null
-            ? 'Nothing to compare yet'
-            : `${summary.comparisonPct >= 0 ? '↑' : '↓'} ${Math.abs(summary.comparisonPct)}% vs last ${periodWord}`}
-        </span>
-        <span className="summary-cap">
-          {summary.noShows} no-show{summary.noShows === 1 ? '' : 's'}
-        </span>
+      <RangeFoot summary={summary} />
+    </>
+  );
+}
+
+/**
+ * Ring style for a period: same "booked ÷ open" busyness as Today's ring,
+ * just summed over every elapsed day instead of one — so unlike a vs-last-
+ * period comparison, it's always a real number even for a brand-new tenant
+ * with no prior period to compare against.
+ */
+function RingRange({ summary }: { summary: RangeSummary }) {
+  const filled = (Math.min(summary.busyPct, 100) / 100) * RING_LENGTH;
+
+  return (
+    <>
+      <div className="summary-ring-row">
+        <div className="summary-ring-fig">
+          <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
+            <circle cx="42" cy="42" r={RING_RADIUS} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="7" />
+            <circle
+              cx="42"
+              cy="42"
+              r={RING_RADIUS}
+              fill="none"
+              stroke="#5be08a"
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={`${filled} ${RING_LENGTH}`}
+              transform="rotate(-90 42 42)"
+            />
+          </svg>
+          <div className="summary-ring-mid">
+            <span className="summary-big">{summary.busyPct}%</span>
+            <span className="summary-cap">busy</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+            <span style={{ fontSize: 23, fontWeight: 660 }}>{summary.bookings}</span>
+            <span className="summary-cap">booked</span>
+          </div>
+          <div className="summary-rule" />
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+            <span style={{ fontSize: 23, fontWeight: 660 }}>{formatMoney(summary.revenueMinor)}</span>
+            <span className="summary-cap">earned</span>
+          </div>
+        </div>
       </div>
+      <div className="summary-cap" style={{ marginTop: 11 }}>
+        {summary.label}
+      </div>
+      <RangeFoot summary={summary} />
+    </>
+  );
+}
+
+/** Tiles style for a period: same three-tile scan as Today, swapping busy% for no-shows. */
+function TilesRange({ summary }: { summary: RangeSummary }) {
+  return (
+    <>
+      <div className="summary-tiles">
+        <div className="summary-tile tile-blue">
+          <div className="v">{summary.bookings}</div>
+          <div className="k">bookings</div>
+        </div>
+        <div className="summary-tile tile-green">
+          <div className="v">{formatMoney(summary.revenueMinor)}</div>
+          <div className="k">earned</div>
+        </div>
+        <div className="summary-tile tile-amber">
+          <div className="v">{summary.busyPct}%</div>
+          <div className="k">busy</div>
+        </div>
+      </div>
+      <div className="summary-cap" style={{ marginTop: 11 }}>
+        {summary.label}
+      </div>
+      <RangeFoot summary={summary} />
     </>
   );
 }
@@ -256,7 +344,7 @@ export function SummaryCard({ stats }: { stats: TodayStats }) {
 
   return (
     <>
-      <div className={`summary ${style === 'tiles' && range === 'today' ? 'summary-light' : ''}`}>
+      <div className={`summary ${style === 'tiles' ? 'summary-light' : ''}`}>
         <div className="summary-head">
           <div className="range-toggle">
             <button type="button" className={range === 'today' ? 'active' : ''} onClick={() => selectRange('today')}>
@@ -269,23 +357,23 @@ export function SummaryCard({ stats }: { stats: TodayStats }) {
               {copy.home.rangeMonth}
             </button>
           </div>
-          {range === 'today' && (
-            <button
-              type="button"
-              className="summary-more"
-              aria-label={copy.home.summaryStyle}
-              onClick={() => setPicking(true)}
-            >
-              <IconDots />
-            </button>
-          )}
+          <button
+            type="button"
+            className="summary-more"
+            aria-label={copy.home.summaryStyle}
+            onClick={() => setPicking(true)}
+          >
+            <IconDots />
+          </button>
         </div>
 
         {range === 'today' && style === 'ring' && <Ring f={f} />}
         {range === 'today' && style === 'tiles' && <Tiles f={f} />}
         {range === 'today' && style === 'progress' && <Progress f={f} />}
 
-        {range !== 'today' && activeRangeData && <RangeBars summary={activeRangeData} />}
+        {range !== 'today' && activeRangeData && style === 'ring' && <RingRange summary={activeRangeData} />}
+        {range !== 'today' && activeRangeData && style === 'tiles' && <TilesRange summary={activeRangeData} />}
+        {range !== 'today' && activeRangeData && style === 'progress' && <RangeBars summary={activeRangeData} />}
         {range !== 'today' && !activeRangeData && rangeLoading && (
           <div className="summary-cap" style={{ padding: '8px 0' }}>
             Loading…

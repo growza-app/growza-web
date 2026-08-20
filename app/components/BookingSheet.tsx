@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatTime, type Appointment, type AppointmentStatus } from '../lib/api';
+import { api, formatTime, type Appointment, type AppointmentStatus, type Provider, type Service } from '../lib/api';
 import { copy } from '../lib/copy';
+import { CheckoutSheet } from './CheckoutSheet';
 import { IconCheck, IconClose, IconPhone, IconWhatsApp } from './icons';
 
 /** Digits only — `tel:` and `wa.me` both choke on spaces and punctuation. */
@@ -33,6 +34,9 @@ export function BookingSheet({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [services, setServices] = useState<Service[] | null>(null);
+  const [providers, setProviders] = useState<Provider[] | null>(null);
 
   const digits = dialable(appointment.customerPhone);
   const name = appointment.customerName ?? 'this customer';
@@ -50,6 +54,36 @@ export function BookingSheet({
       setBusy(false);
     }
   };
+
+  const openCheckout = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const [svcs, provs] = await Promise.all([services ?? api.services(), providers ?? api.providers()]);
+      setServices(svcs);
+      setProviders(provs);
+      setCheckingOut(true);
+    } catch {
+      setError('Could not load services. Check the connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (checkingOut && services && providers) {
+    return (
+      <CheckoutSheet
+        appointment={appointment}
+        services={services}
+        providers={providers}
+        timezone={timezone}
+        onClose={() => {
+          setCheckingOut(false);
+          onClose();
+        }}
+      />
+    );
+  }
 
   return (
     <>
@@ -86,7 +120,7 @@ export function BookingSheet({
 
         {!settled && (
           <>
-            <button type="button" className="sheet-item" disabled={busy} onClick={() => setStatus('completed')}>
+            <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
               <IconCheck />
               {copy.booking.markFinished}
             </button>

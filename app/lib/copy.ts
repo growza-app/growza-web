@@ -49,14 +49,11 @@ export const copy = {
   booking: {
     call: (name: string) => `Call ${name}`,
     message: 'Send a message',
-    markFinished: 'Mark as finished',
-    markMissed: "They didn't come",
+    markFinished: 'Mark as done',
+    markMissed: "Customer didn't come",
     reschedule: 'Move to another time',
     cancel: 'Cancel this booking',
     reference: 'Booking ID',
-    came: 'Came',
-    didnt: "Didn't",
-    didThisHappen: 'Did this happen?',
   },
 
   search: {
