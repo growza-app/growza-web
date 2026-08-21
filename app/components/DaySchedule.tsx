@@ -6,6 +6,7 @@ import { copy } from '../lib/copy';
 import { initials, statusChip } from '../lib/appointment-display';
 import { BookingSheet, dialable } from './BookingSheet';
 import { IconChevronRight, IconPhone } from './icons';
+import { useFitRows } from '../lib/use-fit-rows';
 
 /**
  * One time-ordered list for the whole day — deliberately NOT two lists.
@@ -80,6 +81,10 @@ export function DaySchedule({
   // after mount and ticked every minute so the "now" line stays honest.
   const [now, setNow] = useState(() => new Date(nowISO));
   const [open, setOpen] = useState<Appointment | null>(null);
+  const [page, setPage] = useState(1);
+  // The day pages instead of scrolling — how many time slots fit is a
+  // property of the screen, not a fixed number.
+  const { pageSize, listRef } = useFitRows({ fallback: 4, min: 1 });
 
   useEffect(() => {
     setNow(new Date());
@@ -93,8 +98,14 @@ export function DaySchedule({
     return <div className="sched"><div className="empty">{copy.home.nothingToday}</div></div>;
   }
 
-  const firstFuture = groups.findIndex((g) => g.startAt.getTime() > now.getTime());
-  const futureStart = firstFuture === -1 ? groups.length : firstFuture;
+  const pageCount = Math.max(1, Math.ceil(groups.length / pageSize));
+  const clampedPage = Math.min(page, pageCount);
+  const pageGroups = groups.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
+
+  // Derived from the visible page, not the whole day: the "now" divider has
+  // to sit between the past and future groups actually on screen.
+  const firstFuture = pageGroups.findIndex((g) => g.startAt.getTime() > now.getTime());
+  const futureStart = firstFuture === -1 ? pageGroups.length : firstFuture;
 
   const callButton = (appt: Appointment, strong: boolean) => (
     <a
@@ -153,15 +164,15 @@ export function DaySchedule({
     </div>
   );
 
-  const pastGroups = groups.slice(0, futureStart);
-  const richGroups = groups.slice(futureStart, futureStart + RICH_GROUPS);
-  const laterGroups = groups.slice(futureStart + RICH_GROUPS);
+  const pastGroups = pageGroups.slice(0, futureStart);
+  const richGroups = pageGroups.slice(futureStart, futureStart + RICH_GROUPS);
+  const laterGroups = pageGroups.slice(futureStart + RICH_GROUPS);
 
   return (
     <>
-      <div className="sched">
+      <div className="sched" ref={listRef}>
         {pastGroups.map((g) => (
-          <div className="sched-group" key={g.key}>
+          <div className="sched-group" key={g.key} data-row>
             <TimeCell group={g} timezone={timezone} />
             <div className="sched-rail">
               <span className="sched-dot sched-dot-quiet" />
@@ -171,7 +182,7 @@ export function DaySchedule({
           </div>
         ))}
 
-        {futureStart < groups.length && (
+        {futureStart < pageGroups.length && (
           <div className="sched-divider now-divider">
             <span className="label">{copy.home.nowLabel(formatTime(now.toISOString(), timezone))}</span>
             <span className="line" />
@@ -179,7 +190,7 @@ export function DaySchedule({
         )}
 
         {richGroups.map((g, i) => (
-          <div className="sched-group" key={g.key}>
+          <div className="sched-group" key={g.key} data-row>
             <TimeCell group={g} timezone={timezone} />
             <div className="sched-rail">
               <span className="sched-dot" />
@@ -195,8 +206,14 @@ export function DaySchedule({
               <span className="label">{copy.home.laterLabel}</span>
               <span className="line" />
             </div>
-            {laterGroups.flatMap((g) =>
-              g.items.map((appt) => {
+            {/* One wrapper per group, not a flat list of rows: the page size is
+                counted in time slots, so each measurable unit has to be a slot
+                too — otherwise the fit measurement compares slots against
+                individual bookings and refuses to grow. A plain div stacks
+                exactly as the rows did on their own. */}
+            {laterGroups.map((g) => (
+              <div key={g.key} data-row>
+                {g.items.map((appt) => {
                 const settled = appt.status !== 'confirmed';
                 return (
                   <div
@@ -218,11 +235,37 @@ export function DaySchedule({
                     )}
                   </div>
                 );
-              }),
-            )}
+                })}
+              </div>
+            ))}
           </>
         )}
       </div>
+
+      {pageCount > 1 && (
+        <div className="pagination">
+          <span className="muted">
+            Showing {(clampedPage - 1) * pageSize + 1} to {Math.min(clampedPage * pageSize, groups.length)} of{' '}
+            {groups.length} time slots
+          </span>
+          <div className="pagination-controls">
+            <button type="button" className="pagination-btn" disabled={clampedPage <= 1} onClick={() => setPage(clampedPage - 1)}>
+              ‹
+            </button>
+            <button type="button" className="pagination-btn pagination-btn-active">
+              {clampedPage}
+            </button>
+            <button
+              type="button"
+              className="pagination-btn"
+              disabled={clampedPage >= pageCount}
+              onClick={() => setPage(clampedPage + 1)}
+            >
+              ›
+            </button>
+          </div>
+        </div>
+      )}
 
       {open && <BookingSheet appointment={open} timezone={timezone} onClose={() => setOpen(null)} />}
     </>

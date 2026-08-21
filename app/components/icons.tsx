@@ -163,6 +163,12 @@ export const IconGrid = () => (
   </svg>
 );
 
+export const IconFilter = () => (
+  <svg {...base}>
+    <path d="M3 5h18l-7 8v5.5l-4 2V13z" />
+  </svg>
+);
+
 export const IconMenu = () => (
   <svg {...base}>
     <path d="M3 6h18M3 12h18M3 18h18" />

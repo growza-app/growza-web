@@ -22,13 +22,21 @@ export function PwaRegister() {
       }
       return;
     }
-    window.addEventListener('load', () => {
+    const register = () => {
       navigator.serviceWorker.register('/sw.js').catch(() => {
         // Offline/PWA support is a progressive enhancement — a failed
-        // registration (e.g. unsupported browser, dev-mode quirk) should
-        // never surface as a user-facing error.
+        // registration (e.g. unsupported browser) should never surface as a
+        // user-facing error.
       });
-    });
+    };
+    // This effect runs AFTER hydration, which is usually after the window
+    // 'load' event has already fired — so a bare addEventListener('load')
+    // would attach a listener that never triggers, and the service worker
+    // would never register (no SW = Chrome offers only a shortcut, not a
+    // real "Install app"). Register now if the page is already loaded;
+    // otherwise wait for load.
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
   }, []);
 
   return null;

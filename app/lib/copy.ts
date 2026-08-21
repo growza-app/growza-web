@@ -25,6 +25,7 @@ export const copy = {
     staff: 'Staff',
     services: 'Services',
     offers: 'Offers',
+    customers: 'Customers',
     availability: 'Free times',
     tryWhatsApp: 'Try WhatsApp',
     settings: 'Settings',

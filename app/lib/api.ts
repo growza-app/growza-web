@@ -1,12 +1,10 @@
-// Server-side (SSR) always talks to the API on the dev machine itself, so the
-// env var / localhost fallback is correct there. Client-side, the page may
-// have been loaded from a LAN address (phone, or a desktop on the network
-// URL) — 'localhost' on THAT device points to itself, not this machine, so
-// the API call has to follow whatever host the page was actually loaded from.
-const API_URL =
-  typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.hostname}:3001`
-    : (process.env.API_URL ?? 'http://localhost:3001');
+// Server-side (SSR) talks to the API directly on the host machine. Client-side
+// uses a SAME-ORIGIN relative base ('') — the browser calls '/api/...' on
+// whatever host served the page, and Next's rewrite (next.config.ts) proxies
+// it to the API. One origin means the app works identically over localhost, a
+// LAN IP, or an HTTPS tunnel, with no port juggling or mixed-content blocking
+// (the latter is what a PWA install over HTTPS requires).
+const API_URL = typeof window !== 'undefined' ? '' : (process.env.API_URL ?? 'http://localhost:3001');
 
 export interface Me {
   tenant: { id: string; name: string; timezone: string; locationName: string | null } | null;
@@ -154,6 +152,32 @@ export interface OfferInput {
   visibleFrom?: string | null;
   visibleUntil?: string | null;
 }
+
+export interface Customer {
+  id: string;
+  name: string | null;
+  waPhone: string;
+  optIn: boolean;
+  firstSeenAt: string | null;
+  totalBookings: number;
+  totalSpentMinor: string;
+  lastBookingAt: string | null;
+  lastServiceName: string | null;
+}
+
+export interface CustomerPage {
+  rows: Customer[];
+  total: number;
+}
+
+export interface CustomerStats {
+  total: number;
+  newThisMonth: number;
+  returning: number;
+  repeatRatePct: number;
+}
+
+export type CustomerStatusFilter = 'all' | 'active' | 'inactive';
 
 export type AppointmentStatus = 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
@@ -304,6 +328,18 @@ export const api = {
   createOffer: (input: OfferInput) => post<Offer>('/api/v1/offers', input),
   updateOffer: (id: string, input: Partial<OfferInput>) => patch<Offer>(`/api/v1/offers/${id}`, input),
   deleteOffer: (id: string) => del<void>(`/api/v1/offers/${id}`),
+  customers: (args: { search?: string; status?: CustomerStatusFilter; limit?: number; offset?: number } = {}) => {
+    const params = new URLSearchParams();
+    if (args.search) params.set('search', args.search);
+    if (args.status && args.status !== 'all') params.set('status', args.status);
+    if (args.limit != null) params.set('limit', String(args.limit));
+    if (args.offset != null) params.set('offset', String(args.offset));
+    const qs = params.toString();
+    return get<CustomerPage>(`/api/v1/customers${qs ? `?${qs}` : ''}`);
+  },
+  customerStats: () => get<CustomerStats>('/api/v1/customers/stats'),
+  createCustomer: (input: { phone: string; name?: string }) =>
+    post<{ id: string; waPhone: string; name: string | null }>('/api/v1/customers', input),
   uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
   removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),
 };

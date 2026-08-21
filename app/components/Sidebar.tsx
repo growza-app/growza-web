@@ -10,6 +10,7 @@ import {
   IconOffers,
   IconServices,
   IconStaff,
+  IconUserPlus,
 } from './icons';
 
 /**
@@ -31,6 +32,7 @@ export function Sidebar({ tenantName, labels }: { tenantName: string; labels: Re
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
     { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
+    { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
     { href: '/try-whatsapp', label: copy.nav.tryWhatsApp, icon: <IconChat /> },
   ];

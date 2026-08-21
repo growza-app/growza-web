@@ -107,7 +107,7 @@ export default async function DashboardPage() {
         <DaySchedule appointments={appointments} timezone={timezone} nowISO={now.toISOString()} />
 
         {providerDay && (
-          <div className="card desktop-only" style={{ marginTop: 18 }}>
+          <div className="card desktop-only home-chair" style={{ marginTop: 18 }}>
             <div className="card-head">
               <span>{copy.today.chairToday(providerDay.provider.displayName, me.labels.resource ?? 'chair')}</span>
             </div>

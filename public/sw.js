@@ -10,7 +10,7 @@
 // it to show — so that case falls back to a small honest offline notice
 // instead of the browser's default dinosaur/error page.
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `booking-dashboard-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 

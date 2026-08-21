@@ -1,6 +1,7 @@
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
+import { PaginatedTable } from '../components/PaginatedTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,24 +16,22 @@ export default async function ProvidersPage() {
       />
       <div className="page-body">
         <div className="card">
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{copy.staff.name}</th>
-                  <th>{copy.staff.role}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {providers.map((p) => (
-                  <tr key={p.id}>
-                    <td style={{ fontWeight: 620 }}>{p.displayName}</td>
-                    <td className="muted">{p.title ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <PaginatedTable
+            noun={(me.labels.providers ?? copy.nav.staff).toLowerCase()}
+            head={
+              <tr>
+                <th>{copy.staff.name}</th>
+                <th>{copy.staff.role}</th>
+              </tr>
+            }
+          >
+            {providers.map((p) => (
+              <tr key={p.id} data-row>
+                <td style={{ fontWeight: 620 }}>{p.displayName}</td>
+                <td className="muted">{p.title ?? '—'}</td>
+              </tr>
+            ))}
+          </PaginatedTable>
         </div>
       </div>
     </>
