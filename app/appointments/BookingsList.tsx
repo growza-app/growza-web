@@ -22,9 +22,11 @@ function Kpi({ tone, icon, value, label, sub }: { tone: string; icon: ReactNode;
   return (
     <div className="bk-kpi">
       <span className={`bk-kpi-icon bk-kpi-${tone}`}>{icon}</span>
-      <div className="bk-kpi-value">{value}</div>
-      <div className="bk-kpi-label">{label}</div>
-      <div className={`bk-kpi-sub bk-kpi-sub-${tone}`}>{sub}</div>
+      <div className="bk-kpi-text">
+        <div className="bk-kpi-value">{value}</div>
+        <div className="bk-kpi-label">{label}</div>
+        <div className={`bk-kpi-sub bk-kpi-sub-${tone}`}>{sub}</div>
+      </div>
     </div>
   );
 }
@@ -157,6 +159,7 @@ export function BookingsList({
         </div>
       </div>
 
+      <div className="bk-scroll">
       {view === 'timeline' ? (
         <div className="bk-timeline">
           {rows.map((b, i) => {
@@ -182,6 +185,7 @@ export function BookingsList({
       ) : (
         <div className="bk-list">{rows.map((b) => cardInner(b))}</div>
       )}
+      </div>
 
       <Pagination page={clamped} total={bookings.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />
 

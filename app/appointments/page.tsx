@@ -59,7 +59,7 @@ export default async function AppointmentsPage({
         initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
       />
 
-      <div className="page-body">
+      <div className="page-body bk-fit">
         <div className="card">
           <form method="get" className="filters filters-inline">
             <div className="field">
