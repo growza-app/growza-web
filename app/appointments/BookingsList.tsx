@@ -6,7 +6,7 @@ import { formatDuration, groupBookings, statusChip, summarizeServices, type Book
 import { BookingSheet, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { IconCalendar, IconCheck, IconChevronRight, IconClock, IconMenu, IconPhone, IconStaff, IconUserPlus, IconWallet } from '../components/icons';
+import { IconCalendar, IconCheck, IconClock, IconMenu, IconPhone, IconStaff, IconUserPlus, IconWallet } from '../components/icons';
 
 /** What the salon actually took for a booking: services paid, minus any combo discount. */
 function bookingTotalMinor(b: BookingGroup): number {
@@ -67,9 +67,6 @@ export function BookingsList({
   const comingUp = bookings.filter((b) => b.status === 'confirmed' && within2h(b.startAt)).length;
   const noShow = bookings.filter((b) => b.status === 'no_show').length;
   const revenue = completed.reduce((sum, b) => sum + bookingTotalMinor(b), 0);
-  // First-time customers today — the booking's legs all share the customer, so
-  // the first leg's flag speaks for the whole booking.
-  const newCustomers = new Set(bookings.filter((b) => b.appointments[0]?.customerIsNew).map((b) => b.customerPhone)).size;
 
   const pageCount = Math.max(1, Math.ceil(bookings.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
@@ -198,20 +195,6 @@ export function BookingsList({
             <div className="bk-summary-label">Revenue today</div>
           </div>
         </div>
-        <span className="bk-summary-sep" />
-        <div className="bk-summary-item">
-          <span className="bk-summary-icon">
-            <IconUserPlus />
-          </span>
-          <div>
-            <div className="bk-summary-value">{newCustomers}</div>
-            <div className="bk-summary-label">New {newCustomers === 1 ? 'customer' : 'customers'}</div>
-          </div>
-        </div>
-        <a className="bk-summary-link" href="/">
-          View summary
-          <IconChevronRight />
-        </a>
       </div>
 
       {open &&
