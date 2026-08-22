@@ -261,8 +261,11 @@ export function CheckoutSheet({
               </a>
             </div>
             <div className="checkout-header-sub">
-              {appointment.serviceName}
-              {providerName(providerId) ? ` · ${providerName(providerId)}` : ''} · {formatTime(appointment.startAt, timezone)}
+              {groupMembers.length > 0
+                ? // A combo: name every service being completed, not just the first
+                  // leg. Per-service stylists are shown on each row below.
+                  `${[appointment.serviceName, ...groupMembers.map((m) => m.serviceName)].join(' + ')} · ${formatTime(appointment.startAt, timezone)}`
+                : `${appointment.serviceName}${providerName(providerId) ? ` · ${providerName(providerId)}` : ''} · ${formatTime(appointment.startAt, timezone)}`}
             </div>
           </div>
         </div>
