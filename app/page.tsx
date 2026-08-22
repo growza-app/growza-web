@@ -2,6 +2,7 @@ import { api, formatMoney, type Appointment, type Provider, type ProviderDay, ty
 import { copy } from './lib/copy';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
+import { StaffCapacity } from './components/StaffCapacity';
 import {
   IconAnalytics,
   IconAppointments,
@@ -95,49 +96,6 @@ function QuickActions() {
   );
 }
 
-/**
- * Named generically after the vertical's own provider label ("Staff",
- * "Doctors", ...) rather than hardcoded as "Chair capacity" — a chair is a
- * salon-specific idea, but every vertical has providers who get busy.
- */
-function StaffCapacity({
-  label,
-  staff,
-  maxBookedMin,
-  hiddenCount,
-}: {
-  label: string;
-  staff: Array<{ id: string; name: string; bookedMin: number; queueCount: number }>;
-  maxBookedMin: number;
-  hiddenCount: number;
-}) {
-  if (staff.length === 0) return null;
-  return (
-    <section className="rail-card">
-      <div className="rail-head-row">
-        <h3>{label} capacity</h3>
-        <span className="rail-head-now">now</span>
-      </div>
-      {staff.map((p) => (
-        <div className="capacity-row" key={p.id}>
-          <div className="capacity-row-head">
-            <span className="capacity-name">{p.name}</span>
-            <span className="capacity-status">{p.queueCount > 0 ? `${p.queueCount} in queue` : 'free'}</span>
-          </div>
-          <div className="capacity-bar">
-            <span style={{ width: `${Math.round((p.bookedMin / maxBookedMin) * 100)}%` }} />
-          </div>
-        </div>
-      ))}
-      {hiddenCount > 0 && (
-        <a className="rail-see-more" href="/providers">
-          +{hiddenCount} more
-        </a>
-      )}
-    </section>
-  );
-}
-
 /** "Today at a glance" rows + the insight card — shown on the desktop rail AND, separately, in its own mobile section, so both stay in sync from one definition. */
 function GlanceAndInsight({ stats, newCustomers, comingUp }: { stats: TodayStats; newCustomers: number; comingUp: number }) {
   return (
@@ -223,21 +181,27 @@ export default async function DashboardPage() {
     { label: "Customers haven't visited", value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
   ];
   // Real, derived-from-today's-appointments numbers — not a fabricated fill.
-  // Both figures are for the WHOLE day, not just what's left from now on: a
-  // stylist with 3 bookings this morning already done should still read as
-  // busy today, not "free" the moment their last one wraps up. "Booked
-  // minutes" comes straight from each confirmed appointment's own
-  // start/end; the bar is scaled relative to the busiest staff member shown
-  // today (there's no per-provider working-hours/capacity figure available
-  // here to compute a true "% of capacity" against).
+  // Both a "Total" (the whole day) and an "Upcoming" (only what's still
+  // ahead of now) figure are computed here so the widget can toggle between
+  // them client-side — "booked minutes" comes straight from each confirmed
+  // appointment's own start/end, summed either over the whole day or only
+  // the ones still ahead. Sorted by the TOTAL figure regardless of which
+  // one ends up displayed, so the list doesn't reshuffle when switching.
+  const durationMin = (a: Appointment) => (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60_000;
   const staffCapacity = providers
     .map((provider) => {
       const mine = appointments.filter((a) => a.providerId === provider.id && a.status === 'confirmed');
-      const bookedMin = mine.reduce((sum, a) => sum + (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60_000, 0);
-      return { id: provider.id, name: provider.displayName, bookedMin, queueCount: mine.length };
+      const upcoming = mine.filter((a) => new Date(a.startAt).getTime() >= now.getTime());
+      return {
+        id: provider.id,
+        name: provider.displayName,
+        totalCount: mine.length,
+        totalBookedMin: mine.reduce((sum, a) => sum + durationMin(a), 0),
+        upcomingCount: upcoming.length,
+        upcomingBookedMin: upcoming.reduce((sum, a) => sum + durationMin(a), 0),
+      };
     })
-    .sort((a, b) => b.bookedMin - a.bookedMin);
-  const maxBookedMin = Math.max(...staffCapacity.map((p) => p.bookedMin), 1);
+    .sort((a, b) => b.totalBookedMin - a.totalBookedMin);
   const staffShown = staffCapacity.slice(0, 3);
   const staffHiddenCount = staffCapacity.length - staffShown.length;
 
@@ -297,12 +261,7 @@ export default async function DashboardPage() {
 
           <aside className="home-rail desktop-only">
             <QuickActions />
-            <StaffCapacity
-              label={me.labels.providers ?? copy.nav.staff}
-              staff={staffShown}
-              maxBookedMin={maxBookedMin}
-              hiddenCount={staffHiddenCount}
-            />
+            <StaffCapacity label={me.labels.providers ?? copy.nav.staff} staff={staffShown} hiddenCount={staffHiddenCount} />
             <GlanceAndInsight stats={stats} newCustomers={newCustomers} comingUp={comingUp} />
           </aside>
         </div>
