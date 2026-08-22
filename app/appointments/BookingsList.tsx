@@ -41,12 +41,18 @@ export function BookingsList({
   timezone,
   noun,
   nowISO,
+  isToday,
+  dayLabel,
 }: {
   appointments: Appointment[];
   timezone: string;
   noun: string;
   /** Server clock, so the first client render matches SSR before the tick starts. */
   nowISO: string;
+  /** Whether the selected day (the filter's date field) is today. */
+  isToday: boolean;
+  /** Short label for the selected day, e.g. "21 Aug" — used everywhere the page said "Today" when it's actually showing a different day. */
+  dayLabel: string;
 }) {
   const [now, setNow] = useState(() => new Date(nowISO));
   const [page, setPage] = useState(1);
@@ -66,7 +72,11 @@ export function BookingsList({
     return t >= now.getTime() && t <= now.getTime() + 2 * 60 * 60 * 1000;
   };
   const completed = bookings.filter((b) => b.status === 'completed');
-  const comingUp = bookings.filter((b) => b.status === 'confirmed' && within2h(b.startAt)).length;
+  const confirmed = bookings.filter((b) => b.status === 'confirmed');
+  // "Next 2 hrs" only means something against the real clock, i.e. on today's
+  // schedule. Looking at a past/future day, show the day's total confirmed
+  // count instead — "next 2 hours" would silently read 0 for every other day.
+  const comingUp = isToday ? confirmed.filter((b) => within2h(b.startAt)).length : confirmed.length;
   const noShow = bookings.filter((b) => b.status === 'no_show').length;
   const revenue = completed.reduce((sum, b) => sum + bookingTotalMinor(b), 0);
 
@@ -130,14 +140,20 @@ export function BookingsList({
   return (
     <>
       <div className="bk-kpis">
-        <Kpi tone="green" icon={<IconCalendar />} value={bookings.length} label="Bookings" sub="Today" />
-        <Kpi tone="amber" icon={<IconClock />} value={comingUp} label="Coming up" sub="Next 2 hrs" />
-        <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label="Completed" sub="Today" />
-        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label="No-shows" sub="Today" />
+        <Kpi tone="green" icon={<IconCalendar />} value={bookings.length} label="Bookings" sub={isToday ? 'Today' : dayLabel} />
+        <Kpi
+          tone="amber"
+          icon={<IconClock />}
+          value={comingUp}
+          label={isToday ? 'Coming up' : 'Confirmed'}
+          sub={isToday ? 'Next 2 hrs' : dayLabel}
+        />
+        <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label="Completed" sub={isToday ? 'Today' : dayLabel} />
+        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label="No-shows" sub={isToday ? 'Today' : dayLabel} />
       </div>
 
       <div className="bk-sched-head">
-        <h3>Today&apos;s schedule</h3>
+        <h3>{isToday ? "Today's schedule" : `${dayLabel} schedule`}</h3>
         <div className="bk-view">
           <button
             type="button"
@@ -196,7 +212,7 @@ export function BookingsList({
           </span>
           <div>
             <div className="bk-summary-value">{formatMoney(String(revenue))}</div>
-            <div className="bk-summary-label">Revenue today</div>
+            <div className="bk-summary-label">{isToday ? 'Revenue today' : `Revenue · ${dayLabel}`}</div>
           </div>
         </div>
       </div>

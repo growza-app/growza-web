@@ -37,6 +37,7 @@ export default async function AppointmentsPage({
 
   const appointments = await api.appointments(date, providerId || undefined).catch(() => [] as Appointment[]);
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
+  const isToday = date === todayISO;
   const dayHint = new Intl.DateTimeFormat('en-IN', {
     weekday: 'short',
     day: 'numeric',
@@ -44,6 +45,10 @@ export default async function AppointmentsPage({
     year: 'numeric',
     timeZone: timezone,
   }).format(new Date(`${date}T12:00:00`));
+  // Short form for the KPI/schedule/revenue labels when a non-today date is picked, e.g. "21 Aug".
+  const dayShort = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(
+    new Date(`${date}T12:00:00`),
+  );
 
   return (
     <>
@@ -94,6 +99,8 @@ export default async function AppointmentsPage({
             timezone={timezone}
             noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
             nowISO={new Date().toISOString()}
+            isToday={isToday}
+            dayLabel={dayShort}
           />
         )}
       </div>
