@@ -50,7 +50,9 @@ export function StaffCapacity({ label, staff, hiddenCount }: { label: string; st
         <div className="capacity-row" key={p.id}>
           <div className="capacity-row-head">
             <span className="capacity-name">{p.name}</span>
-            <span className="capacity-status">{count(p) > 0 ? `${count(p)} in queue` : 'free'}</span>
+            <span className="capacity-status">
+              {count(p) === 0 ? 'free' : mode === 'total' ? `${count(p)} booking${count(p) === 1 ? '' : 's'}` : `${count(p)} in queue`}
+            </span>
           </div>
           <div className="capacity-bar">
             <span style={{ width: `${Math.round((bookedMin(p) / maxBookedMin) * 100)}%` }} />
