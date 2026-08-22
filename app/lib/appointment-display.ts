@@ -22,6 +22,16 @@ export function initials(name: string | null): string {
     .join('');
 }
 
+/**
+ * A compact service line for a booking: up to three services listed in full,
+ * then "+ N more" — so a 6-service combo reads "Haircut + Facial + De-Tan + 3
+ * more" instead of a runaway line. The checkout lists every service in full.
+ */
+export function summarizeServices(names: string[]): string {
+  if (names.length <= 3) return names.join(' + ');
+  return `${names.slice(0, 3).join(' + ')} + ${names.length - 3} more`;
+}
+
 /** "30 min", "1h", "1h 30m" — a booking's total time in plain words. */
 export function formatDuration(totalMin: number): string {
   const h = Math.floor(totalMin / 60);

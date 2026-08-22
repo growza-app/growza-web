@@ -12,6 +12,7 @@ import {
   type Provider,
   type Service,
 } from '../lib/api';
+import { summarizeServices } from '../lib/appointment-display';
 import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
 
 /** Digits only — `tel:` chokes on spaces and punctuation. Duplicated from BookingSheet.tsx rather than imported, to avoid a circular import (BookingSheet renders CheckoutSheet). */
@@ -262,9 +263,9 @@ export function CheckoutSheet({
             </div>
             <div className="checkout-header-sub">
               {groupMembers.length > 0
-                ? // A combo: name every service being completed, not just the first
-                  // leg. Per-service stylists are shown on each row below.
-                  `${[appointment.serviceName, ...groupMembers.map((m) => m.serviceName)].join(' + ')} · ${formatTime(appointment.startAt, timezone)}`
+                ? // A combo: summarize the services being completed (each is listed
+                  // in full, with its own stylist and amount, in the rows below).
+                  `${summarizeServices([appointment.serviceName, ...groupMembers.map((m) => m.serviceName)])} · ${formatTime(appointment.startAt, timezone)}`
                 : `${appointment.serviceName}${providerName(providerId) ? ` · ${providerName(providerId)}` : ''} · ${formatTime(appointment.startAt, timezone)}`}
             </div>
           </div>

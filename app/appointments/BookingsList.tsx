@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
-import { formatDuration, groupBookings, initials, statusChip, type BookingGroup } from '../lib/appointment-display';
+import { formatDuration, groupBookings, initials, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { BookingSheet, dialable } from '../components/BookingSheet';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { IconPhone } from '../components/icons';
@@ -75,7 +75,7 @@ export function BookingsList({
                       <span style={{ fontWeight: 620 }}>{b.customerName ?? 'Unknown'}</span>
                     </div>
                   </td>
-                  <td>{b.serviceNames.join(' + ')}</td>
+                  <td>{summarizeServices(b.serviceNames)}</td>
                   <td className="muted">{b.providerNames.join(', ') || '—'}</td>
                   <td>{formatMoney(String(b.priceMinor))}</td>
                   <td>
@@ -104,7 +104,7 @@ export function BookingsList({
                   <span className="booking-name-text">{b.customerName ?? 'Unknown'}</span>
                   <span className={`chip ${chip.cls}`}>{chip.text}</span>
                 </div>
-                <div className="booking-sub">{b.serviceNames.join(' + ')}</div>
+                <div className="booking-sub">{summarizeServices(b.serviceNames)}</div>
                 {b.providerNames.length > 0 && <div className="booking-sub booking-staff">{b.providerNames.join(', ')}</div>}
               </div>
               {b.status === 'confirmed' && callButton(b)}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { formatTime, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
-import { formatDuration, groupBookings, initials, statusChip, type BookingGroup } from '../lib/appointment-display';
+import { formatDuration, groupBookings, initials, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { BookingSheet, dialable } from './BookingSheet';
 import { IconChevronRight, IconPhone } from './icons';
 
@@ -52,7 +52,7 @@ function TimeCell({ booking, timezone }: { booking: BookingGroup; timezone: stri
 
 /** What each booking shows as its "service" line — every service, plus the staff. */
 function metaLine(booking: BookingGroup): string {
-  const services = booking.serviceNames.join(' + ');
+  const services = summarizeServices(booking.serviceNames);
   const staff = booking.providerNames.join(', ');
   return staff ? `${services} · ${staff}` : services;
 }
@@ -181,7 +181,7 @@ export function DaySchedule({
                     <span className="ld" />
                   </span>
                   <span className="ln">
-                    {b.customerName ?? 'Unknown'} <span className="muted">· {b.serviceNames.join(' + ')}</span>
+                    {b.customerName ?? 'Unknown'} <span className="muted">· {summarizeServices(b.serviceNames)}</span>
                   </span>
                   {settled ? <span className="status-note">{statusChip(b).text}</span> : callButton(b, false)}
                 </div>

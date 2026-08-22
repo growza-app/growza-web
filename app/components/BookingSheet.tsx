@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatTime, type Appointment, type AppointmentStatus, type Provider, type Service } from '../lib/api';
 import { copy } from '../lib/copy';
-import { formatDuration } from '../lib/appointment-display';
+import { formatDuration, summarizeServices } from '../lib/appointment-display';
 import { CheckoutSheet } from './CheckoutSheet';
 import { IconCheck, IconClose, IconPhone, IconWhatsApp } from './icons';
 
@@ -110,7 +110,7 @@ export function BookingSheet({
             <div className="sheet-title">{appointment.customerName ?? 'Unknown'}</div>
             <div className="sheet-sub">
               {comboServiceNames && comboServiceNames.length > 1
-                ? `${comboServiceNames.join(' + ')}${comboTotalMin ? ` · ${formatDuration(comboTotalMin)}` : ''}`
+                ? `${summarizeServices(comboServiceNames)}${comboTotalMin ? ` · ${formatDuration(comboTotalMin)}` : ''}`
                 : `${appointment.serviceName}${appointment.providerName ? ` · ${appointment.providerName}` : ''}`}{' '}
               · {formatTime(appointment.startAt, timezone)}
             </div>
