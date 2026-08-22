@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { BottomNav } from './BottomNav';
+import { tomorrowInTimezone } from '../lib/appointment-display';
 import { IconCalendarPlus, IconClose, IconPlus, IconUserPlus } from './icons';
 
 /**
@@ -15,12 +16,6 @@ import { IconCalendarPlus, IconClose, IconPlus, IconUserPlus } from './icons';
 // functionally-unrelated "New booking" FAB floating on top of it is
 // confusing, not helpful, the same reasoning that excludes /search.
 const NO_FAB = ['/availability', '/search', '/try-whatsapp', '/offers'];
-
-/** Tomorrow's date in the tenant's own timezone, not the device's — matches how every other date in this dashboard is computed. */
-function tomorrowInTimezone(timezone: string): string {
-  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  return new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(tomorrow);
-}
 
 export function MobileChrome({ labels, timezone }: { labels: Record<string, string>; timezone: string }) {
   const pathname = usePathname();

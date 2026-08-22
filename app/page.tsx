@@ -1,8 +1,20 @@
 import { api, formatMoney, type Appointment, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
+import { tomorrowInTimezone } from './lib/appointment-display';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
-import { IconAppointments, IconBell, IconCalendar, IconCheck, IconChevronRight, IconSearch, IconStaff, IconUserPlus, IconWallet } from './components/icons';
+import {
+  IconAppointments,
+  IconBell,
+  IconCalendar,
+  IconCalendarPlus,
+  IconCheck,
+  IconChevronRight,
+  IconSearch,
+  IconStaff,
+  IconUserPlus,
+  IconWallet,
+} from './components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +61,34 @@ function ChairTimeline({ day }: { day: ProviderDay }) {
   );
 }
 
-/** "Today at a glance" rows + the insight card — shown on the desktop rail AND, separately, in its own mobile section (see GLANCE_CLASS below), so both stay in sync from one definition. */
+/**
+ * Desktop-only: the floating "+" button covers this same ground on mobile
+ * (walk-in / book for later), but has no desktop equivalent — without this,
+ * starting a booking from Home meant a detour through the sidebar. Every
+ * action here is vertical-agnostic (a salon walk-in and a garage walk-in are
+ * the same underlying flow) and links to a route that actually exists.
+ */
+function QuickActions({ timezone }: { timezone: string }) {
+  return (
+    <section className="rail-card rail-actions">
+      <h3>Quick actions</h3>
+      <a className="quick-action" href="/availability?intent=book">
+        <IconUserPlus />
+        Add walk-in
+      </a>
+      <a className="quick-action" href={`/availability?intent=book&date=${tomorrowInTimezone(timezone)}`}>
+        <IconCalendarPlus />
+        Book for later
+      </a>
+      <a className="quick-action" href="/search">
+        <IconSearch />
+        Search
+      </a>
+    </section>
+  );
+}
+
+/** "Today at a glance" rows + the insight card — shown on the desktop rail AND, separately, in its own mobile section, so both stay in sync from one definition. */
 function GlanceAndInsight({ stats, newCustomers, comingUp }: { stats: TodayStats; newCustomers: number; comingUp: number }) {
   return (
     <>
@@ -183,6 +222,7 @@ export default async function DashboardPage() {
           </main>
 
           <aside className="home-rail desktop-only">
+            <QuickActions timezone={timezone} />
             <GlanceAndInsight stats={stats} newCustomers={newCustomers} comingUp={comingUp} />
           </aside>
         </div>

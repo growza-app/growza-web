@@ -41,6 +41,12 @@ export function formatDuration(totalMin: number): string {
   return `${h}h ${m}m`;
 }
 
+/** Tomorrow's date in the tenant's own timezone, not the device's — matches how every other date in this dashboard is computed. Shared by the mobile FAB menu and the desktop quick-actions panel, which offer the same "book for later" shortcut. */
+export function tomorrowInTimezone(timezone: string): string {
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(tomorrow);
+}
+
 /** "in 25m", "in 2h 15m", "5m ago" — how far a booking's start time is from now. */
 export function relativeCountdown(startISO: string, now: Date): string {
   const diffMin = Math.round((new Date(startISO).getTime() - now.getTime()) / 60000);
