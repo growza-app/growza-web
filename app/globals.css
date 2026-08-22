@@ -1953,15 +1953,31 @@ input[type='date'] {
   font-weight: 620;
 }
 
-.summary-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+.summary-totals {
   margin: 10px 18px 0;
   padding-top: 12px;
   border-top: 1px solid var(--border);
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.summary-line:first-child {
+  margin-top: 0;
+}
+
+.summary-line-total {
+  align-items: baseline;
+  margin-top: 10px;
   font-size: 14px;
   font-weight: 600;
+  color: var(--text);
 }
 
 .summary-total-value {
@@ -1970,16 +1986,13 @@ input[type='date'] {
   letter-spacing: -0.02em;
 }
 
-.summary-payline {
-  display: flex;
-  justify-content: space-between;
-  margin: 6px 18px 0;
-  font-size: 13px;
-  color: var(--muted);
+/* The combo saving reads as money off — accent green, like a credit. */
+.summary-discount {
+  color: var(--accent-deep);
+  font-weight: 600;
 }
 
-.summary-payline + .modal-actions,
-.summary-total + .modal-actions {
+.summary-totals + .modal-actions {
   padding: 0 18px;
 }
 

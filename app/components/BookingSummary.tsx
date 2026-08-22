@@ -24,8 +24,17 @@ export function BookingSummary({
   // What the customer actually paid; falls back to the list price for anything
   // completed before checkout recorded an amount.
   const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
-  const totalPaid = booking.appointments.reduce((sum, a) => sum + Number(paidOf(a)), 0);
+  const subtotal = booking.appointments.reduce((sum, a) => sum + Number(paidOf(a)), 0);
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
+
+  // Combo discount: the offer's set price for its services vs those services'
+  // list prices. Only the combo legs (offerTitle set) count; add-on services
+  // stay at their own price.
+  const comboLegs = booking.appointments.filter((a) => a.offerTitle);
+  const comboListTotal = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
+  const comboPriceMinor = comboLegs.find((a) => a.comboPriceMinor)?.comboPriceMinor;
+  const savings = comboPriceMinor ? Math.max(0, comboListTotal - Number(comboPriceMinor)) : 0;
+  const totalPaid = subtotal - savings;
   const dateLine = new Intl.DateTimeFormat('en-IN', {
     weekday: 'short',
     day: 'numeric',
@@ -78,16 +87,30 @@ export function BookingSummary({
           </div>
         ))}
 
-        <div className="summary-total">
-          <span>Total paid</span>
-          <span className="summary-total-value">{formatMoney(String(totalPaid))}</span>
-        </div>
-        {paymentMode && (
-          <div className="summary-payline">
-            <span>Paid by</span>
-            <span>{PAYMENT_LABELS[paymentMode] ?? paymentMode}</span>
+        <div className="summary-totals">
+          {savings > 0 && (
+            <>
+              <div className="summary-line">
+                <span>Subtotal</span>
+                <span>{formatMoney(String(subtotal))}</span>
+              </div>
+              <div className="summary-line">
+                <span>🎁 {booking.offerTitle} combo</span>
+                <span className="summary-discount">− {formatMoney(String(savings))}</span>
+              </div>
+            </>
+          )}
+          <div className="summary-line summary-line-total">
+            <span>Total paid</span>
+            <span className="summary-total-value">{formatMoney(String(totalPaid))}</span>
           </div>
-        )}
+          {paymentMode && (
+            <div className="summary-line">
+              <span>Paid by</span>
+              <span>{PAYMENT_LABELS[paymentMode] ?? paymentMode}</span>
+            </div>
+          )}
+        </div>
 
         <div className="modal-actions" style={{ marginTop: 18 }}>
           <button type="button" className="btn btn-ghost" onClick={onClose}>

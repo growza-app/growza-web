@@ -59,6 +59,8 @@ export interface Appointment {
   bookingGroupId: string | null;
   /** The offer/combo package this booking came from, if any — present means it's a real combo, not just several services. */
   offerTitle: string | null;
+  /** The combo package's special price — shown against the combo services' list prices to reveal the discount. */
+  comboPriceMinor: string | null;
 }
 
 export interface TodayStats {
