@@ -118,7 +118,7 @@ function TopInsight() {
 function BookingsChart({ buckets, trendPct }: { buckets: Array<{ label: string; count: number }>; trendPct: number | null }) {
   const max = Math.max(...buckets.map((b) => b.count), 1);
   const w = 280;
-  const plotH = 60; // the line/fill area only — value labels live above it, time labels below
+  const plotH = 90; // the line/fill area only — value labels live above it, time labels below; sized to match the summary card's height
   const topPad = 16; // headroom so the peak point's value label never clips the card edge
   const stepX = w / (buckets.length - 1);
   const points = buckets.map((b, i) => ({
