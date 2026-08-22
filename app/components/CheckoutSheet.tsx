@@ -138,16 +138,27 @@ function ServiceRow({
  * receipt/payment collection here (parked until a payment provider is
  * integrated) — this is purely recording what happened, for accurate revenue.
  */
+interface MemberRow {
+  appointmentId: string;
+  serviceName: string;
+  /** Raw rupee-string input value — parsed to minor units only on submit. */
+  paidAmountMinor: string;
+  schedulableId: string;
+}
+
 export function CheckoutSheet({
   appointment,
   services,
   providers,
+  groupMembers = [],
   timezone,
   onClose,
 }: {
   appointment: Appointment;
   services: Service[];
   providers: Provider[];
+  /** The combo's other still-booked legs — completed together, each its own service row. */
+  groupMembers?: Appointment[];
   timezone: string;
   onClose: () => void;
 }) {
@@ -161,9 +172,19 @@ export function CheckoutSheet({
   // booked service at all — it gets cancelled (not completed) on save,
   // rather than assumed to have happened.
   const [originalRemoved, setOriginalRemoved] = useState(false);
+  // The combo's other booked services — pre-filled from their own list price and
+  // provider, so completing the whole booking is zero-typing in the common case.
+  const [members, setMembers] = useState<MemberRow[]>(() =>
+    groupMembers.map((m) => ({
+      appointmentId: m.id,
+      serviceName: m.serviceName,
+      paidAmountMinor: minorToRupees(m.priceMinor),
+      schedulableId: m.providerId ?? '',
+    })),
+  );
   const [extras, setExtras] = useState<ExtraRow[]>([]);
   const [newServiceId, setNewServiceId] = useState('');
-  const [editingRow, setEditingRow] = useState<'original' | number | null>(null);
+  const [editingRow, setEditingRow] = useState<'original' | `member-${number}` | number | null>(null);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -182,14 +203,18 @@ export function CheckoutSheet({
   const removeExtra = (i: number) => setExtras((xs) => xs.filter((_, idx) => idx !== i));
   const updateExtra = (i: number, patch: Partial<ExtraRow>) =>
     setExtras((xs) => xs.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
+  const updateMember = (i: number, patch: Partial<MemberRow>) =>
+    setMembers((ms) => ms.map((m, idx) => (idx === i ? { ...m, ...patch } : m)));
 
-  const hasAnyService = !originalRemoved || extras.length > 0;
+  const hasAnyService = !originalRemoved || members.length > 0 || extras.length > 0;
   const valid =
     hasAnyService &&
     (originalRemoved || isValidAmount(amount)) &&
+    members.every((m) => isValidAmount(m.paidAmountMinor)) &&
     extras.every((x) => x.serviceId && isValidAmount(x.paidAmountMinor));
   const totalMinor =
     (!originalRemoved && isValidAmount(amount) ? toMinor(amount) : 0) +
+    members.reduce((sum, m) => sum + (isValidAmount(m.paidAmountMinor) ? toMinor(m.paidAmountMinor) : 0), 0) +
     extras.reduce((sum, x) => sum + (isValidAmount(x.paidAmountMinor) ? toMinor(x.paidAmountMinor) : 0), 0);
 
   const submit = async () => {
@@ -201,6 +226,11 @@ export function CheckoutSheet({
         paidAmountMinor: originalRemoved ? undefined : toMinor(amount),
         schedulableId: originalRemoved ? undefined : providerId || undefined,
         paymentMode,
+        groupMembers: members.map((m) => ({
+          appointmentId: m.appointmentId,
+          paidAmountMinor: toMinor(m.paidAmountMinor),
+          schedulableId: m.schedulableId || undefined,
+        })),
         extraServices: extras.map((x) => ({
           serviceId: x.serviceId,
           paidAmountMinor: toMinor(x.paidAmountMinor),
@@ -267,6 +297,22 @@ export function CheckoutSheet({
             disabled={busy}
           />
         )}
+
+        {members.map((m, i) => (
+          <ServiceRow
+            key={m.appointmentId}
+            name={m.serviceName}
+            amount={m.paidAmountMinor}
+            onAmountChange={(value) => updateMember(i, { paidAmountMinor: value })}
+            providerId={m.schedulableId}
+            providerName={providerName(m.schedulableId)}
+            providers={providers}
+            onProviderChange={(id) => updateMember(i, { schedulableId: id })}
+            editing={editingRow === `member-${i}`}
+            onToggleEdit={() => setEditingRow(editingRow === `member-${i}` ? null : `member-${i}`)}
+            disabled={busy}
+          />
+        ))}
 
         {extras.map((x, i) => (
           <ServiceRow

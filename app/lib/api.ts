@@ -216,6 +216,13 @@ export interface CheckoutExtraServiceInput {
   schedulableId?: string;
 }
 
+/** An existing sibling leg of a combo booking, completed alongside the primary one. */
+export interface CheckoutGroupMemberInput {
+  appointmentId: string;
+  paidAmountMinor: number;
+  schedulableId?: string;
+}
+
 export interface CheckoutResponse {
   appointmentId: string;
   originalCancelled: boolean;
@@ -322,6 +329,8 @@ export const api = {
       schedulableId?: string;
       paymentMode?: PaymentMode;
       extraServices?: CheckoutExtraServiceInput[];
+      /** The OTHER already-booked legs of this combo to complete in the same visit — existing appointments, not new ones. */
+      groupMembers?: CheckoutGroupMemberInput[];
     },
   ) => post<CheckoutResponse>(`/api/v1/appointments/${appointmentId}/checkout`, args),
   search: (q: string) => get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}`),

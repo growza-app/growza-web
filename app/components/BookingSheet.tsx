@@ -29,6 +29,7 @@ export function BookingSheet({
   onClose,
   comboServiceNames,
   comboTotalMin,
+  comboLegs,
 }: {
   appointment: Appointment;
   timezone: string;
@@ -37,6 +38,8 @@ export function BookingSheet({
   comboServiceNames?: string[];
   /** Total booked time across the combo's legs. */
   comboTotalMin?: number;
+  /** All legs of the combo, so "Mark as done" can complete every still-booked service in one go. */
+  comboLegs?: Appointment[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -78,11 +81,15 @@ export function BookingSheet({
   };
 
   if (checkingOut && services && providers) {
+    // The combo's OTHER still-booked services — completed in the same checkout
+    // so one "Mark as done" finishes the whole booking, not just this leg.
+    const groupMembers = (comboLegs ?? []).filter((a) => a.id !== appointment.id && a.status === 'confirmed');
     return (
       <CheckoutSheet
         appointment={appointment}
         services={services}
         providers={providers}
+        groupMembers={groupMembers}
         timezone={timezone}
         onClose={() => {
           setCheckingOut(false);

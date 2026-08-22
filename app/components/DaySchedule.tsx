@@ -205,6 +205,7 @@ export function DaySchedule({
           onClose={() => setOpen(null)}
           comboServiceNames={open.isCombo ? open.serviceNames : undefined}
           comboTotalMin={open.totalMin}
+          comboLegs={open.isCombo ? open.appointments : undefined}
         />
       )}
     </>
