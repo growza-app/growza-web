@@ -3972,23 +3972,43 @@ input[type='date'] {
     display: flex;
     align-items: center;
     gap: var(--sp-2);
-    padding: var(--sp-2) var(--sp-3);
+    padding: 9px var(--sp-3);
   }
   .bk-kpi-icon {
     margin-bottom: 0;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
+  }
+  /* One compact line per stat — "4  Bookings  Today" — so the whole KPI row is
+     ~48px tall instead of three stacked lines, leaving the schedule more room. */
+  .bk-kpi-text {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    min-width: 0;
   }
   .bk-kpi-value {
-    font-size: 21px;
+    font-size: 20px;
+    line-height: 1;
   }
   .bk-kpi-label {
-    font-size: 12.5px;
-    margin-top: 1px;
+    font-size: 13px;
+    margin-top: 0;
   }
   .bk-kpi-sub {
     font-size: 11px;
     margin-top: 0;
+  }
+
+  /* Denser schedule so more bookings are visible at once. */
+  .bk-fit .bk-tl-row {
+    padding-bottom: var(--sp-2);
+  }
+  .bk-fit .bk-tl-time {
+    padding-top: var(--sp-2);
+  }
+  .bk-fit .bk-card {
+    padding: var(--sp-3) var(--sp-4);
   }
 
   /* Filter sits on one row: day + staff share the width and Show is a normal
