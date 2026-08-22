@@ -1,4 +1,4 @@
-import { api, type Appointment, type ProviderDay, type TodayStats } from './lib/api';
+import { api, formatMoney, type Appointment, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
@@ -63,7 +63,7 @@ function GlanceAndInsight({ stats, newCustomers, comingUp }: { stats: TodayStats
         </a>
         <a className="glance-row" href="/appointments">
           <IconWallet />
-          <strong>₹{Number(stats.revenueTodayMinor).toLocaleString('en-IN')}</strong>
+          <strong>{formatMoney(stats.revenueTodayMinor)}</strong>
           <span>Revenue</span>
           <em>View report</em>
         </a>
@@ -128,10 +128,6 @@ export default async function DashboardPage() {
     { label: 'Cancellation today', value: appointments.filter((appointment) => appointment.status === 'cancelled').length, tone: 'rose', href: '/appointments', icon: <IconCalendar /> },
     { label: "Customers haven't visited", value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
   ];
-  const month = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric', timeZone: timezone }).format(now);
-  const weekDay = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: timezone }).format(now);
-  const dayNumber = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: timezone }).format(now);
-
   return (
     <>
       <header className="home-head">
@@ -187,7 +183,6 @@ export default async function DashboardPage() {
           </main>
 
           <aside className="home-rail desktop-only">
-            <section className="rail-card rail-calendar"><div className="rail-head"><strong>Today&apos;s calendar</strong><a href="/appointments">View full calendar</a></div><div className="rail-month">‹ <span>{month}</span> ›</div><div className="rail-week"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div><div className="rail-days"><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><b>{dayNumber}<small>{weekDay}</small></b></div><div className="calendar-key"><span>● Busy</span><span>● Moderate</span><span>● Free</span></div></section>
             <GlanceAndInsight stats={stats} newCustomers={newCustomers} comingUp={comingUp} />
           </aside>
         </div>

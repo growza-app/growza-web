@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, formatMoney, type RangeSummary, type TodayStats } from '../lib/api';
 import { copy } from '../lib/copy';
-import { IconAppointments, IconCheck, IconChevronRight, IconSettings, IconUserPlus, IconWallet } from './icons';
+import { IconAppointments, IconCheck, IconChevronRight, IconDots, IconUserPlus, IconWallet } from './icons';
 
 /**
  * The at-a-glance card. Three interchangeable layouts because the useful
@@ -358,7 +358,7 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
             aria-label={copy.home.summaryStyle}
             onClick={() => setPicking(true)}
           >
-            <IconSettings />
+            <IconDots />
           </button>
         </div>
 
