@@ -1559,6 +1559,26 @@ input[type='date'] {
   padding: 14px 0;
 }
 
+/* "See all N bookings →" below the schedule card — Home shows only a window of
+   the day, this carries the rest to the full Bookings list. */
+.sched-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  padding: var(--sp-2);
+  color: var(--accent-deep);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sched-more svg {
+  width: 16px;
+  height: 16px;
+}
+
 .sched-group {
   display: flex;
   padding: 0 14px;
