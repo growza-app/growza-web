@@ -234,7 +234,16 @@ export default async function DashboardPage() {
             <section className="home-section">
               <div className="home-section-head"><h2>Needs attention</h2><a href="/appointments">View all (3)</a></div>
               <div className="attention-grid">
-                {attention.map((item) => <a className={`attention-card ${item.tone}`} href={item.href} key={item.label}><span className="attention-icon">{item.icon}</span><span className="attention-value">{item.value}</span><span>{item.label}</span><IconChevronRight /></a>)}
+                {attention.map((item) => (
+                  <a className={`attention-card ${item.tone}`} href={item.href} key={item.label}>
+                    <span className="attention-top">
+                      <span className="attention-icon">{item.icon}</span>
+                      <span className="attention-value">{item.value}</span>
+                    </span>
+                    <span>{item.label}</span>
+                    <IconChevronRight />
+                  </a>
+                ))}
               </div>
             </section>
 
