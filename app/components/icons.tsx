@@ -146,6 +146,13 @@ export const IconUserPlus = () => (
   </svg>
 );
 
+export const IconUser = () => (
+  <svg {...base}>
+    <circle cx="12" cy="8" r="3.6" />
+    <path d="M4 20a8 8 0 0 1 16 0" />
+  </svg>
+);
+
 export const IconCalendarPlus = () => (
   <svg {...base}>
     <rect x="3" y="5" width="18" height="16" rx="2" />

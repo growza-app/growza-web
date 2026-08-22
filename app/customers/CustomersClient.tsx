@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   api,
   formatMoney,
@@ -48,7 +49,10 @@ export function CustomersClient({
   const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
+  const searchParams = useSearchParams();
+  // ?add=1 (from the Home quick-actions panel) opens the sheet straight away
+  // instead of landing here and requiring a second click.
+  const [adding, setAdding] = useState(() => searchParams.get('add') === '1');
   // Fixed page size: the list scrolls within the page and a numbered footer
   // pages through it — the standard pattern for a potentially large list.
   const pageSize = PAGE_SIZE;

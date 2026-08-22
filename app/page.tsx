@@ -1,17 +1,18 @@
-import { api, formatMoney, type Appointment, type ProviderDay, type TodayStats } from './lib/api';
+import { api, formatMoney, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
-import { tomorrowInTimezone } from './lib/appointment-display';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
 import {
+  IconAnalytics,
   IconAppointments,
   IconBell,
   IconCalendar,
-  IconCalendarPlus,
   IconCheck,
   IconChevronRight,
+  IconPlus,
   IconSearch,
   IconStaff,
+  IconUser,
   IconUserPlus,
   IconWallet,
 } from './components/icons';
@@ -66,24 +67,73 @@ function ChairTimeline({ day }: { day: ProviderDay }) {
  * (walk-in / book for later), but has no desktop equivalent — without this,
  * starting a booking from Home meant a detour through the sidebar. Every
  * action here is vertical-agnostic (a salon walk-in and a garage walk-in are
- * the same underlying flow) and links to a route that actually exists.
+ * the same underlying flow) and links to a route that actually exists —
+ * "View reports" points at Bookings, the same placeholder the "View report"
+ * glance row already uses, since there's no dedicated reports page yet.
  */
-function QuickActions({ timezone }: { timezone: string }) {
+function QuickActions() {
   return (
     <section className="rail-card rail-actions">
       <h3>Quick actions</h3>
+      <a className="quick-action quick-action-primary" href="/availability?intent=book">
+        <IconPlus />
+        New booking
+      </a>
       <a className="quick-action" href="/availability?intent=book">
         <IconUserPlus />
         Add walk-in
       </a>
-      <a className="quick-action" href={`/availability?intent=book&date=${tomorrowInTimezone(timezone)}`}>
-        <IconCalendarPlus />
-        Book for later
+      <a className="quick-action" href="/customers?add=1">
+        <IconUser />
+        New client
       </a>
-      <a className="quick-action" href="/search">
-        <IconSearch />
-        Search
+      <a className="quick-action" href="/appointments">
+        <IconAnalytics />
+        View reports
       </a>
+    </section>
+  );
+}
+
+/**
+ * Named generically after the vertical's own provider label ("Staff",
+ * "Doctors", ...) rather than hardcoded as "Chair capacity" — a chair is a
+ * salon-specific idea, but every vertical has providers who get busy.
+ */
+function StaffCapacity({
+  label,
+  staff,
+  maxBookedMin,
+  hiddenCount,
+}: {
+  label: string;
+  staff: Array<{ id: string; name: string; bookedMin: number; queueCount: number }>;
+  maxBookedMin: number;
+  hiddenCount: number;
+}) {
+  if (staff.length === 0) return null;
+  return (
+    <section className="rail-card">
+      <div className="rail-head-row">
+        <h3>{label} capacity</h3>
+        <span className="rail-head-now">now</span>
+      </div>
+      {staff.map((p) => (
+        <div className="capacity-row" key={p.id}>
+          <div className="capacity-row-head">
+            <span className="capacity-name">{p.name}</span>
+            <span className="capacity-status">{p.queueCount > 0 ? `${p.queueCount} in queue` : 'free'}</span>
+          </div>
+          <div className="capacity-bar">
+            <span style={{ width: `${Math.round((p.bookedMin / maxBookedMin) * 100)}%` }} />
+          </div>
+        </div>
+      ))}
+      {hiddenCount > 0 && (
+        <a className="rail-see-more" href="/providers">
+          +{hiddenCount} more
+        </a>
+      )}
     </section>
   );
 }
@@ -132,10 +182,15 @@ function GlanceAndInsight({ stats, newCustomers, comingUp }: { stats: TodayStats
 }
 
 export default async function DashboardPage() {
-  let stats: TodayStats, appointments: Appointment[], me, providerDay: ProviderDay | null = null;
+  let stats: TodayStats, appointments: Appointment[], me, providers: Provider[], providerDay: ProviderDay | null = null;
 
   try {
-    [stats, appointments, me] = await Promise.all([api.todayStats(), api.appointments(), api.me()]);
+    [stats, appointments, me, providers] = await Promise.all([
+      api.todayStats(),
+      api.appointments(),
+      api.me(),
+      api.providers(),
+    ]);
     providerDay = await api.providerDay().catch(() => null);
   } catch {
     return (
@@ -167,6 +222,23 @@ export default async function DashboardPage() {
     { label: 'Cancellation today', value: appointments.filter((appointment) => appointment.status === 'cancelled').length, tone: 'rose', href: '/appointments', icon: <IconCalendar /> },
     { label: "Customers haven't visited", value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
   ];
+  // Real, derived-from-today's-appointments numbers — not a fabricated fill.
+  // "Booked minutes" comes straight from each confirmed appointment's own
+  // start/end; the bar is scaled relative to the busiest staff member shown
+  // today (there's no per-provider working-hours/capacity figure available
+  // here to compute a true "% of capacity" against).
+  const staffCapacity = providers
+    .map((provider) => {
+      const mine = appointments.filter((a) => a.providerId === provider.id && a.status === 'confirmed');
+      const bookedMin = mine.reduce((sum, a) => sum + (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60_000, 0);
+      const queueCount = mine.filter((a) => new Date(a.startAt).getTime() >= now.getTime()).length;
+      return { id: provider.id, name: provider.displayName, bookedMin, queueCount };
+    })
+    .sort((a, b) => b.bookedMin - a.bookedMin);
+  const maxBookedMin = Math.max(...staffCapacity.map((p) => p.bookedMin), 1);
+  const staffShown = staffCapacity.slice(0, 3);
+  const staffHiddenCount = staffCapacity.length - staffShown.length;
+
   return (
     <>
       <header className="home-head">
@@ -222,7 +294,13 @@ export default async function DashboardPage() {
           </main>
 
           <aside className="home-rail desktop-only">
-            <QuickActions timezone={timezone} />
+            <QuickActions />
+            <StaffCapacity
+              label={me.labels.providers ?? copy.nav.staff}
+              staff={staffShown}
+              maxBookedMin={maxBookedMin}
+              hiddenCount={staffHiddenCount}
+            />
             <GlanceAndInsight stats={stats} newCustomers={newCustomers} comingUp={comingUp} />
           </aside>
         </div>
