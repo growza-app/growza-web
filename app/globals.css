@@ -548,6 +548,34 @@ tr:last-child td {
   padding: 18px 20px;
 }
 
+/* Which day? + Staff sit side-by-side (each shrinks to share the row); the
+   Show button drops to its own full-width line beneath them. */
+.filters-inline {
+  align-items: flex-start;
+}
+
+.filters-inline .field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.filters-inline .field input,
+.filters-inline .field select {
+  width: 100%;
+  min-width: 0;
+}
+
+.filters-inline .filters-show {
+  flex: 0 0 100%;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .field label {
   display: flex;
   justify-content: space-between;
@@ -3575,35 +3603,53 @@ input[type='date'] {
   letter-spacing: -0.01em;
 }
 
-.bk-view-toggle {
+.bk-view {
   display: flex;
-  gap: 2px;
-  background: var(--page-bg);
-  border-radius: var(--radius-sm);
-  padding: 3px;
+  align-items: center;
+  gap: var(--sp-2);
 }
 
-.bk-view-btn {
-  width: 34px;
-  height: 30px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
+.bk-view-icon {
+  width: 36px;
+  height: 34px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
   color: var(--muted);
   display: grid;
   place-items: center;
   cursor: pointer;
 }
 
-.bk-view-btn svg {
+.bk-view-icon svg {
   width: 17px;
   height: 17px;
 }
 
-.bk-view-btn.is-active {
+.bk-view-icon.is-active {
+  color: var(--accent-deep);
+  border-color: var(--accent);
+}
+
+.bk-view-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
   background: var(--surface);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.bk-view-caret {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* ---- timeline ---- */
@@ -4027,6 +4073,14 @@ input[type='date'] {
 
   .topbar p {
     display: none;
+  }
+
+  /* Opt-in: a page with a SHORT subtitle can still show it on mobile. Long
+     ones stay hidden (they ran 3–4 lines and ate the top of the screen). */
+  .topbar-with-sub p {
+    display: block;
+    font-size: 12.5px;
+    margin-top: 1px;
   }
 
   .home-head {

@@ -6,7 +6,7 @@ import { formatDuration, groupBookings, statusChip, summarizeServices, type Book
 import { BookingSheet, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { IconCalendar, IconCheck, IconChevronRight, IconClock, IconGrid, IconMenu, IconPhone, IconStaff, IconUserPlus, IconWallet } from '../components/icons';
+import { IconCalendar, IconCheck, IconChevronRight, IconClock, IconMenu, IconPhone, IconStaff, IconUserPlus, IconWallet } from '../components/icons';
 
 /** What the salon actually took for a booking: services paid, minus any combo discount. */
 function bookingTotalMinor(b: BookingGroup): number {
@@ -137,10 +137,10 @@ export function BookingsList({
 
       <div className="bk-sched-head">
         <h3>Today&apos;s schedule</h3>
-        <div className="bk-view-toggle">
+        <div className="bk-view">
           <button
             type="button"
-            className={`bk-view-btn ${view === 'list' ? 'is-active' : ''}`}
+            className={`bk-view-icon ${view === 'list' ? 'is-active' : ''}`}
             onClick={() => setView('list')}
             aria-label="List view"
           >
@@ -148,11 +148,12 @@ export function BookingsList({
           </button>
           <button
             type="button"
-            className={`bk-view-btn ${view === 'timeline' ? 'is-active' : ''}`}
-            onClick={() => setView('timeline')}
-            aria-label="Timeline view"
+            className="bk-view-pill"
+            onClick={() => setView((v) => (v === 'timeline' ? 'list' : 'timeline'))}
+            aria-label="Switch view"
           >
-            <IconGrid />
+            {view === 'timeline' ? 'Timeline' : 'List'}
+            <span className="bk-view-caret" aria-hidden="true">⌄</span>
           </button>
         </div>
       </div>

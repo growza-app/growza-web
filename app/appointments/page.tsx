@@ -1,6 +1,7 @@
 import { api, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
+import { IconSearch } from '../components/icons';
 import { BookingsList } from './BookingsList';
 
 export const dynamic = 'force-dynamic';
@@ -36,17 +37,35 @@ export default async function AppointmentsPage({
 
   const appointments = await api.appointments(date, providerId || undefined).catch(() => [] as Appointment[]);
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
+  const dayHint = new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: timezone,
+  }).format(new Date(`${date}T12:00:00`));
 
   return (
     <>
-      <PageHeader title={bookingsWord} subtitle={copy.bookings.subtitle} />
+      <PageHeader
+        title={bookingsWord}
+        subtitle="Manage all your appointments in one place."
+        mobileSubtitle
+        actions={
+          <a className="icon-btn" href="/search" aria-label={copy.search.title}>
+            <IconSearch />
+          </a>
+        }
+        initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
+      />
 
       <div className="page-body">
         <div className="card">
-          <form method="get" className="filters">
+          <form method="get" className="filters filters-inline">
             <div className="field">
               <label htmlFor="date">{copy.bookings.filterDay}</label>
               <input id="date" name="date" type="date" defaultValue={date} />
+              <span className="field-hint">{dayHint}</span>
             </div>
             <div className="field">
               <label htmlFor="providerId">{me.labels.providers ?? copy.nav.staff}</label>
@@ -59,7 +78,7 @@ export default async function AppointmentsPage({
                 ))}
               </select>
             </div>
-            <button className="btn" type="submit">
+            <button className="btn filters-show" type="submit">
               {copy.bookings.show}
             </button>
           </form>
