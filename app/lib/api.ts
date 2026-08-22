@@ -48,6 +48,10 @@ export interface Appointment {
   customerPhone: string;
   serviceName: string;
   priceMinor: string | null;
+  /** What was actually charged at checkout — null until completed; fall back to priceMinor for display. */
+  paidAmountMinor: string | null;
+  /** How the visit was paid — 'cash' | 'card' | 'upi' | 'other'; null until checkout. */
+  paymentMode: string | null;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;

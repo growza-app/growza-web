@@ -5,6 +5,7 @@ import { formatTime, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
 import { formatDuration, groupBookings, initials, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { BookingSheet, dialable } from './BookingSheet';
+import { BookingSummary } from './BookingSummary';
 import { IconChevronRight, IconPhone } from './icons';
 
 /**
@@ -198,16 +199,19 @@ export function DaySchedule({
         </a>
       )}
 
-      {open && (
-        <BookingSheet
-          appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
-          timezone={timezone}
-          onClose={() => setOpen(null)}
-          comboServiceNames={open.isCombo ? open.serviceNames : undefined}
-          comboTotalMin={open.totalMin}
-          comboLegs={open.isCombo ? open.appointments : undefined}
-        />
-      )}
+      {open &&
+        (open.status === 'completed' ? (
+          <BookingSummary booking={open} timezone={timezone} onClose={() => setOpen(null)} />
+        ) : (
+          <BookingSheet
+            appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
+            timezone={timezone}
+            onClose={() => setOpen(null)}
+            comboServiceNames={open.isCombo ? open.serviceNames : undefined}
+            comboTotalMin={open.totalMin}
+            comboLegs={open.isCombo ? open.appointments : undefined}
+          />
+        ))}
     </>
   );
 }

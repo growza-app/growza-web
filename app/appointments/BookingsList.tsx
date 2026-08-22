@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDuration, groupBookings, initials, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { BookingSheet, dialable } from '../components/BookingSheet';
+import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { IconPhone } from '../components/icons';
 
@@ -115,21 +116,26 @@ export function BookingsList({
 
       <Pagination page={clamped} total={bookings.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />
 
-      {open && (
-        <BookingSheet
-          // Open on the leg whose status matches the booking as a whole, so the
-          // sheet's actions line up with the badge: a combo whose first service
-          // is already done but the rest still upcoming reads "Coming", and the
-          // sheet must still offer Mark-done / cancel — not the settled view of
-          // that first finished leg.
-          appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
-          timezone={timezone}
-          onClose={() => setOpen(null)}
-          comboServiceNames={open.isCombo ? open.serviceNames : undefined}
-          comboTotalMin={open.totalMin}
-          comboLegs={open.isCombo ? open.appointments : undefined}
-        />
-      )}
+      {open &&
+        (open.status === 'completed' ? (
+          // A finished booking is a receipt: show the services availed, their
+          // stylists and prices — not the confirmed booking's action sheet.
+          <BookingSummary booking={open} timezone={timezone} onClose={() => setOpen(null)} />
+        ) : (
+          <BookingSheet
+            // Open on the leg whose status matches the booking as a whole, so the
+            // sheet's actions line up with the badge: a combo whose first service
+            // is already done but the rest still upcoming reads "Coming", and the
+            // sheet must still offer Mark-done / cancel — not the settled view of
+            // that first finished leg.
+            appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
+            timezone={timezone}
+            onClose={() => setOpen(null)}
+            comboServiceNames={open.isCombo ? open.serviceNames : undefined}
+            comboTotalMin={open.totalMin}
+            comboLegs={open.isCombo ? open.appointments : undefined}
+          />
+        ))}
     </>
   );
 }
