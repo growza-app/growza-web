@@ -4842,31 +4842,11 @@ input[type='date'] {
   border-radius: 14px;
   box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03);
 }
-.home-main .summary-head { margin-bottom: 4px; }
-/* The picker trigger ("...") now sits at the end of the Today/Week/Month
-   row instead of beside "Summary style" — one row, one job, per feedback
-   on the header looking like two stacked, disconnected controls. */
-.range-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 14px; }
-
-/* "Summary style  Day progress ⌄" — leads the card and opens the same style
-   picker the settings icon does; two entry points to one control, matching
-   the redesign, but neither drops the picker itself. */
-.summary-style-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-}
-.summary-style-label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
-.summary-style-value { display: flex; align-items: center; gap: 3px; font-size: 15.5px; font-weight: 660; letter-spacing: -0.01em; }
-.summary-style-value svg { width: 15px; height: 15px; transform: rotate(90deg); color: var(--muted); }
+/* The Today/Week/Month + "..." row is the card's first element now — no more
+   separate "Summary style" header above it (removed per feedback: the "..."
+   button already opens the same picker, so the header was a redundant
+   second entry point to the same control). */
+.range-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 14px; }
 .home-main .summary-more { color: var(--muted); background: var(--surface); border: 1px solid var(--border); width: 30px; height: 30px; margin: 0; flex-shrink: 0; }
 .home-main .summary-more svg { width: 15px; height: 15px; }
 

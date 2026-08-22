@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, formatMoney, type RangeSummary, type TodayStats } from '../lib/api';
 import { copy } from '../lib/copy';
-import { IconAppointments, IconCheck, IconChevronRight, IconDots, IconUserPlus, IconWallet } from './icons';
+import { IconAppointments, IconCheck, IconDots, IconUserPlus, IconWallet } from './icons';
 
 /**
  * The at-a-glance card. Three interchangeable layouts because the useful
@@ -377,7 +377,6 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
   const [rangeLoading, setRangeLoading] = useState(false);
   const [rangeFailed, setRangeFailed] = useState(false);
   const f = derive(stats, newCustomers);
-  const styleName = STYLE_OPTIONS.find((opt) => opt.id === style)?.name ?? '';
 
   useEffect(() => {
     setStyle(readStoredStyle());
@@ -406,22 +405,9 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
   return (
     <>
       <div className={`summary ${style === 'tiles' ? 'summary-light' : ''}`}>
-        <div className="summary-head">
-          <button type="button" className="summary-style-btn" onClick={() => setPicking(true)}>
-            <span className="summary-style-label">{copy.home.summaryStyle}</span>
-            <span className="summary-style-value">
-              {styleName}
-              <IconChevronRight />
-            </span>
-          </button>
-        </div>
-
-        {/* The range toggle moved out of the primary header row (which now
-            leads with the style picker, to match the redesigned Home), but
-            Today/Week/Month is a real, separately-useful feature — kept as a
-            lighter secondary row rather than dropped. The style picker's own
-            trigger sits at the end of this same row instead of up in the
-            header, so the header stays to one line and one job. */}
+        {/* No separate "Summary style" header — the "..." trigger at the end
+            of this row already opens the same picker, so a second entry
+            point just above it was redundant. */}
         <div className="range-toggle-row">
         <div className="range-toggle range-toggle-secondary">
           <button type="button" className={range === 'today' ? 'active' : ''} onClick={() => selectRange('today')}>
