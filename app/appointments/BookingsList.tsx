@@ -1,148 +1,221 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
-import { formatDuration, groupBookings, initials, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
+import { formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { BookingSheet, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { IconPhone } from '../components/icons';
+import { IconCalendar, IconCheck, IconChevronRight, IconClock, IconGrid, IconMenu, IconPhone, IconStaff, IconUserPlus, IconWallet } from '../components/icons';
+
+/** What the salon actually took for a booking: services paid, minus any combo discount. */
+function bookingTotalMinor(b: BookingGroup): number {
+  const subtotal = b.appointments.reduce((sum, a) => sum + Number(a.paidAmountMinor ?? a.priceMinor ?? 0), 0);
+  const comboLegs = b.appointments.filter((a) => a.offerTitle);
+  const comboList = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
+  const comboPrice = comboLegs.find((a) => a.comboPriceMinor)?.comboPriceMinor;
+  const savings = comboPrice ? Math.max(0, comboList - Number(comboPrice)) : 0;
+  return subtotal - savings;
+}
+
+function Kpi({ tone, icon, value, label, sub }: { tone: string; icon: ReactNode; value: number; label: string; sub: string }) {
+  return (
+    <div className="bk-kpi">
+      <span className={`bk-kpi-icon bk-kpi-${tone}`}>{icon}</span>
+      <div className="bk-kpi-value">{value}</div>
+      <div className="bk-kpi-label">{label}</div>
+      <div className={`bk-kpi-sub bk-kpi-sub-${tone}`}>{sub}</div>
+    </div>
+  );
+}
 
 /**
- * The day's bookings. A combo / multi-service booking is ONE booking, not one
- * row per service: its legs (same `bookingGroupId`) collapse into a single item
- * that shows every service and the total time booked (e.g. Haircut + Facial +
- * De-Tan · 1h 30m). Desktop shows a table, mobile shows cards — same data.
- *
- * Tapping opens the BookingSheet (call, message, reschedule, mark done, cancel)
- * on the booking's first leg; the Call action is also inline on each upcoming
- * card, because chasing a likely no-show is the owner's most time-critical move.
+ * The bookings page: a "today" dashboard — headline counts, then the day's
+ * schedule as a timeline (or a compact list), then a revenue summary. A combo /
+ * multi-service booking is ONE row showing every service and the total time.
  */
 export function BookingsList({
   appointments,
   timezone,
   noun,
+  nowISO,
 }: {
   appointments: Appointment[];
   timezone: string;
-  /** Lowercase plural, e.g. "bookings" — for the "Showing 1–10 of 24" line. */
   noun: string;
+  /** Server clock, so the first client render matches SSR before the tick starts. */
+  nowISO: string;
 }) {
+  const [now, setNow] = useState(() => new Date(nowISO));
   const [page, setPage] = useState(1);
+  const [view, setView] = useState<'timeline' | 'list'>('timeline');
   const [open, setOpen] = useState<BookingGroup | null>(null);
 
+  useEffect(() => {
+    setNow(new Date());
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
   const bookings = groupBookings(appointments);
+
+  const within2h = (iso: string) => {
+    const t = new Date(iso).getTime();
+    return t >= now.getTime() && t <= now.getTime() + 2 * 60 * 60 * 1000;
+  };
+  const completed = bookings.filter((b) => b.status === 'completed');
+  const comingUp = bookings.filter((b) => b.status === 'confirmed' && within2h(b.startAt)).length;
+  const noShow = bookings.filter((b) => b.status === 'no_show').length;
+  const revenue = completed.reduce((sum, b) => sum + bookingTotalMinor(b), 0);
+  const customers = new Set(bookings.map((b) => b.customerPhone)).size;
+
   const pageCount = Math.max(1, Math.ceil(bookings.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
   const rows = bookings.slice((clamped - 1) * PAGE_SIZE, clamped * PAGE_SIZE);
 
-  const callButton = (b: (typeof rows)[number]) => (
-    <a
-      className="call"
-      href={`tel:${dialable(b.customerPhone)}`}
-      aria-label={`Call ${b.customerName ?? 'customer'}`}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <IconPhone />
-    </a>
-  );
+  const openBooking = (b: BookingGroup) => setOpen(b);
+
+  const actionFor = (b: BookingGroup) =>
+    b.status === 'confirmed' ? (
+      <a
+        className="call"
+        href={`tel:${dialable(b.customerPhone)}`}
+        aria-label={`Call ${b.customerName ?? 'customer'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <IconPhone />
+      </a>
+    ) : (
+      <button
+        type="button"
+        className="btn btn-ghost bk-details"
+        onClick={(e) => {
+          e.stopPropagation();
+          openBooking(b);
+        }}
+      >
+        <IconCalendar />
+        Details
+      </button>
+    );
+
+  const cardInner = (b: BookingGroup) => {
+    const chip = statusChip(b);
+    return (
+      <div className="bk-card" onClick={() => openBooking(b)}>
+        <div className="bk-card-left">
+          <div className="bk-card-name">{b.customerName ?? 'Unknown'}</div>
+          {b.offerTitle && (
+            <div className="bk-card-combo">
+              <span className="chip chip-combo">🎁 {b.offerTitle}</span>
+            </div>
+          )}
+          <div className="bk-card-services">{summarizeServices(b.serviceNames)}</div>
+          {b.providerNames.length > 0 && (
+            <div className="bk-card-staff">
+              <IconStaff />
+              {b.providerNames.join(', ')}
+            </div>
+          )}
+        </div>
+        <div className="bk-card-right">
+          <span className={`chip ${chip.cls}`}>{chip.text}</span>
+          {actionFor(b)}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
-      <div className="table-scroll booking-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Customer</th>
-              <th>Service</th>
-              <th>Staff</th>
-              <th>Price</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((b) => {
-              const chip = statusChip(b);
-              return (
-                <tr key={b.key} onClick={() => setOpen(b)} style={{ cursor: 'pointer' }}>
-                  <td>
-                    <div>{formatTime(b.startAt, timezone)}</div>
-                    <div className="muted" style={{ fontSize: 13 }}>{formatDuration(b.totalMin)}</div>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="avatar">{initials(b.customerName)}</span>
-                      <span style={{ fontWeight: 620 }}>{b.customerName ?? 'Unknown'}</span>
-                    </div>
-                  </td>
-                  <td>
-                    {b.offerTitle && (
-                      <div className="booking-combo">
-                        <span className="chip chip-combo">🎁 {b.offerTitle}</span>
-                      </div>
-                    )}
-                    {summarizeServices(b.serviceNames)}
-                  </td>
-                  <td className="muted">{b.providerNames.join(', ') || '—'}</td>
-                  <td>{formatMoney(String(b.priceMinor))}</td>
-                  <td>
-                    <span className={`chip ${chip.cls}`}>{chip.text}</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="bk-kpis">
+        <Kpi tone="green" icon={<IconCalendar />} value={bookings.length} label="Total bookings" sub="Today" />
+        <Kpi tone="amber" icon={<IconClock />} value={comingUp} label="Coming up" sub="Next 2 hours" />
+        <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label="Completed" sub="Today" />
+        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label="No-show" sub="Today" />
       </div>
 
-      <div className="booking-cards">
-        {rows.map((b) => {
-          const chip = statusChip(b);
-          const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
-          return (
-            <div className="booking-card" key={b.key} onClick={() => setOpen(b)}>
-              <div className="booking-time">
-                {clock}
-                <span>{meridiem}</span>
-                <span className="booking-dur">{formatDuration(b.totalMin)}</span>
-              </div>
-              <div className="booking-main">
-                <div className="booking-name">
-                  <span className="booking-name-text">{b.customerName ?? 'Unknown'}</span>
-                  <span className={`chip ${chip.cls}`}>{chip.text}</span>
-                </div>
-                {b.offerTitle && (
-                  <div className="booking-combo">
-                    <span className="chip chip-combo">🎁 {b.offerTitle}</span>
-                  </div>
-                )}
-                <div className="booking-sub">{summarizeServices(b.serviceNames)}</div>
-                {b.providerNames.length > 0 && <div className="booking-sub booking-staff">{b.providerNames.join(', ')}</div>}
-              </div>
-              {/* Always-present slot (empty for finished bookings) so the status
-                  chips above line up in one column whether or not there's a call
-                  button below them. */}
-              <div className="booking-call">{b.status === 'confirmed' ? callButton(b) : null}</div>
-            </div>
-          );
-        })}
+      <div className="bk-sched-head">
+        <h3>Today&apos;s schedule</h3>
+        <div className="bk-view-toggle">
+          <button
+            type="button"
+            className={`bk-view-btn ${view === 'list' ? 'is-active' : ''}`}
+            onClick={() => setView('list')}
+            aria-label="List view"
+          >
+            <IconMenu />
+          </button>
+          <button
+            type="button"
+            className={`bk-view-btn ${view === 'timeline' ? 'is-active' : ''}`}
+            onClick={() => setView('timeline')}
+            aria-label="Timeline view"
+          >
+            <IconGrid />
+          </button>
+        </div>
       </div>
+
+      {view === 'timeline' ? (
+        <div className="bk-timeline">
+          {rows.map((b, i) => {
+            const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
+            return (
+              <div className="bk-tl-row" key={b.key}>
+                <div className="bk-tl-time">
+                  <div className="bk-tl-clock">
+                    {clock}
+                    <span>{meridiem}</span>
+                  </div>
+                  <div className="bk-tl-dur">{formatDuration(b.totalMin)}</div>
+                </div>
+                <div className="bk-tl-rail">
+                  <span className={`bk-tl-dot ${b.status === 'confirmed' ? 'is-up' : ''}`} />
+                  {i < rows.length - 1 && <span className="bk-tl-line" />}
+                </div>
+                {cardInner(b)}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="bk-list">{rows.map((b) => cardInner(b))}</div>
+      )}
 
       <Pagination page={clamped} total={bookings.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />
 
+      <div className="bk-summary-bar">
+        <div className="bk-summary-item">
+          <span className="bk-summary-icon">
+            <IconWallet />
+          </span>
+          <div>
+            <div className="bk-summary-value">{formatMoney(String(revenue))}</div>
+            <div className="bk-summary-label">Revenue today</div>
+          </div>
+        </div>
+        <span className="bk-summary-sep" />
+        <div className="bk-summary-item">
+          <span className="bk-summary-icon">
+            <IconUserPlus />
+          </span>
+          <div>
+            <div className="bk-summary-value">{customers}</div>
+            <div className="bk-summary-label">{customers === 1 ? 'Customer' : 'Customers'}</div>
+          </div>
+        </div>
+        <a className="bk-summary-link" href="/">
+          View summary
+          <IconChevronRight />
+        </a>
+      </div>
+
       {open &&
         (open.status === 'completed' ? (
-          // A finished booking is a receipt: show the services availed, their
-          // stylists and prices — not the confirmed booking's action sheet.
           <BookingSummary booking={open} timezone={timezone} onClose={() => setOpen(null)} />
         ) : (
           <BookingSheet
-            // Open on the leg whose status matches the booking as a whole, so the
-            // sheet's actions line up with the badge: a combo whose first service
-            // is already done but the rest still upcoming reads "Coming", and the
-            // sheet must still offer Mark-done / cancel — not the settled view of
-            // that first finished leg.
             appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
             timezone={timezone}
             onClose={() => setOpen(null)}

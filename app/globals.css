@@ -3481,6 +3481,363 @@ input[type='date'] {
   justify-content: center;
 }
 
+/* ================= bookings page (redesigned) ================= */
+
+/* ---- headline counts ---- */
+.bk-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
+}
+
+.bk-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.bk-kpi-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--sp-2);
+}
+
+.bk-kpi-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.bk-kpi-green {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.bk-kpi-amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.bk-kpi-purple {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+.bk-kpi-red {
+  background: #fde3e3;
+  color: #c0362c;
+}
+
+.bk-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.bk-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.bk-kpi-sub {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 1px;
+}
+.bk-kpi-sub-green {
+  color: var(--accent-deep);
+}
+.bk-kpi-sub-amber {
+  color: var(--amber);
+}
+.bk-kpi-sub-purple {
+  color: var(--purple-deep);
+}
+.bk-kpi-sub-red {
+  color: #c0362c;
+}
+
+/* ---- section header + view toggle ---- */
+.bk-sched-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+
+.bk-sched-head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+}
+
+.bk-view-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--page-bg);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.bk-view-btn {
+  width: 34px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.bk-view-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.bk-view-btn.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ---- timeline ---- */
+.bk-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.bk-tl-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: stretch;
+  padding-bottom: var(--sp-3);
+}
+
+.bk-tl-time {
+  flex-shrink: 0;
+  width: 58px;
+  padding-top: var(--sp-3);
+}
+
+.bk-tl-clock {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.bk-tl-clock span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.bk-tl-dur {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-deep);
+  margin-top: 3px;
+}
+
+.bk-tl-rail {
+  flex-shrink: 0;
+  width: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(var(--sp-3) + 5px);
+}
+
+.bk-tl-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #cfd6d2;
+  flex-shrink: 0;
+}
+
+.bk-tl-dot.is-up {
+  background: var(--accent);
+}
+
+.bk-tl-line {
+  flex: 1;
+  width: 2px;
+  background: var(--border);
+  margin-top: 4px;
+}
+
+/* ---- booking card (shared by timeline + list) ---- */
+.bk-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  cursor: pointer;
+}
+
+.bk-card:hover {
+  border-color: #d4dbd7;
+}
+
+.bk-card-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.bk-card-name {
+  font-size: 15px;
+  font-weight: 660;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-card-combo {
+  margin: 5px 0 2px;
+}
+
+.bk-card-services {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-card-staff {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.bk-card-staff svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.bk-card-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.bk-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+
+.bk-details svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bk-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* ---- revenue summary bar ---- */
+.bk-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  margin-top: var(--sp-4);
+}
+
+.bk-summary-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.bk-summary-icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+}
+
+.bk-summary-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bk-summary-value {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.bk-summary-label {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.bk-summary-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+}
+
+.bk-summary-link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-deep);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bk-summary-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 380px) {
+  .bk-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .booking-sub {
   font-size: 13px;
   color: var(--muted);

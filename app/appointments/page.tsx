@@ -65,17 +65,18 @@ export default async function AppointmentsPage({
           </form>
         </div>
 
-        <div className="card">
-          {appointments.length === 0 ? (
+        {appointments.length === 0 ? (
+          <div className="card">
             <div className="empty">{copy.bookings.none}</div>
-          ) : (
-            <BookingsList
-              appointments={appointments}
-              timezone={timezone}
-              noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          <BookingsList
+            appointments={appointments}
+            timezone={timezone}
+            noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
+            nowISO={new Date().toISOString()}
+          />
+        )}
       </div>
     </>
   );
