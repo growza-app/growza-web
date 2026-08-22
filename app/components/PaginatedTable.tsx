@@ -1,32 +1,32 @@
 'use client';
 
 import { Children, useState, type ReactNode } from 'react';
-import { useFitRows } from '../lib/use-fit-rows';
+import { Pagination, PAGE_SIZE } from './Pagination';
 
 /**
- * Wraps a table so it pages instead of scrolling: `useFitRows` measures how
- * many rows the viewport actually fits, and only those render.
+ * Wraps a table so it pages in fixed-size chunks with the shared
+ * {@link Pagination} footer. The list scrolls within the page body; a numbered
+ * footer sits below it. Standard "scroll + paginate" for the larger list
+ * screens (Bookings, Services, Staff).
  *
  * Rows are passed as CHILDREN rather than through a render prop, so a server
  * component can use this directly — a function prop cannot cross the
- * server/client boundary, but already-built <tr> elements can. Each row must
- * carry `data-row` so the measurement can find it.
+ * server/client boundary, but already-built <tr> elements can.
  */
 export function PaginatedTable({
   head,
   noun,
-  fallback = 6,
+  pageSize = PAGE_SIZE,
   children,
 }: {
   head: ReactNode;
-  /** Plural, for the "Showing 1 to 5 of 20 services" line. */
+  /** Plural, for the "Showing 1–10 of 20 services" line. */
   noun: string;
-  fallback?: number;
+  pageSize?: number;
   children: ReactNode;
 }) {
   const rows = Children.toArray(children);
   const [page, setPage] = useState(1);
-  const { pageSize, listRef } = useFitRows({ fallback });
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const clamped = Math.min(page, pageCount);
@@ -34,36 +34,13 @@ export function PaginatedTable({
 
   return (
     <>
-      <div className="table-scroll" ref={listRef}>
+      <div className="table-scroll">
         <table>
           <thead>{head}</thead>
           <tbody>{visible}</tbody>
         </table>
       </div>
-      {rows.length > 0 && (
-        <div className="pagination">
-          <span className="muted">
-            Showing {(clamped - 1) * pageSize + 1} to {Math.min(clamped * pageSize, rows.length)} of {rows.length}{' '}
-            {noun}
-          </span>
-          <div className="pagination-controls">
-            <button type="button" className="pagination-btn" disabled={clamped <= 1} onClick={() => setPage(clamped - 1)}>
-              ‹
-            </button>
-            <button type="button" className="pagination-btn pagination-btn-active">
-              {clamped}
-            </button>
-            <button
-              type="button"
-              className="pagination-btn"
-              disabled={clamped >= pageCount}
-              onClick={() => setPage(clamped + 1)}
-            >
-              ›
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination page={clamped} total={rows.length} pageSize={pageSize} noun={noun} onChange={setPage} />
     </>
   );
 }

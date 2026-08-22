@@ -12,11 +12,9 @@ import {
 import { initials } from '../lib/appointment-display';
 import { dialable } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
+import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { IconSearch, IconUserPlus, IconWhatsApp } from '../components/icons';
-import { useFitRows } from '../lib/use-fit-rows';
 
-/** Server-rendered first page; the client immediately re-measures and refetches the count that actually fits. */
-const INITIAL_PAGE_SIZE = 6;
 /** Matches the backend's own derived-status window (customer/repository.ts). */
 const ACTIVE_WINDOW_DAYS = 90;
 
@@ -51,8 +49,9 @@ export function CustomersClient({
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [adding, setAdding] = useState(false);
-  // Page size is whatever fits the screen, so the list never scrolls.
-  const { pageSize, listRef } = useFitRows({ fallback: INITIAL_PAGE_SIZE });
+  // Fixed page size: the list scrolls within the page and a numbered footer
+  // pages through it — the standard pattern for a potentially large list.
+  const pageSize = PAGE_SIZE;
   // Skip the fetch on first render — the server already sent page 0.
   const primed = useRef(false);
 
@@ -87,12 +86,7 @@ export function CustomersClient({
     window.location.reload();
   };
 
-  // Sliced, not just fetched: on shrink the row count must drop on the same
-  // frame as the measurement, or the list scrolls until the refetch returns.
   const visibleRows = page.rows.slice(0, pageSize);
-  const pageCount = Math.max(1, Math.ceil(page.total / pageSize));
-  const from = page.total === 0 ? 0 : pageIndex * pageSize + 1;
-  const to = Math.min(pageIndex * pageSize + visibleRows.length, page.total);
 
   const exportCsv = () => {
     const header = ['Name', 'Phone', 'Last booking', 'Last service', 'Total bookings', 'Total spent', 'Status'];
@@ -188,7 +182,6 @@ export function CustomersClient({
             <>
               {/* Desktop: a scannable table. Mobile: the same rows as cards — a
                   6-column table can't be read on a phone without pinch-zoom. */}
-              <div ref={listRef}>
               <div className="table-scroll cust-table">
                 <table>
                   <thead>
@@ -269,29 +262,14 @@ export function CustomersClient({
                   </div>
                 ))}
               </div>
-              </div>
 
-              <div className="pagination">
-                <span className="muted">
-                  Showing {from} to {to} of {page.total} {lower}
-                </span>
-                <div className="pagination-controls">
-                  <button type="button" className="pagination-btn" disabled={pageIndex === 0} onClick={() => setPageIndex(pageIndex - 1)}>
-                    ‹
-                  </button>
-                  <button type="button" className="pagination-btn pagination-btn-active">
-                    {pageIndex + 1}
-                  </button>
-                  <button
-                    type="button"
-                    className="pagination-btn"
-                    disabled={pageIndex + 1 >= pageCount}
-                    onClick={() => setPageIndex(pageIndex + 1)}
-                  >
-                    ›
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                page={pageIndex + 1}
+                total={page.total}
+                pageSize={pageSize}
+                noun={lower}
+                onChange={(p) => setPageIndex(p - 1)}
+              />
             </>
           )}
         </div>

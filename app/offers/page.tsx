@@ -29,7 +29,7 @@ export default async function OffersPage() {
         subtitle="Create offers and combos that customers see on your dashboard and in WhatsApp's Offers menu. Customers can book combos directly from WhatsApp."
         actions={<CreateOfferMenu />}
       />
-      <div className="page-body">
+      <div className="page-body page-fit">
         <OffersList offers={offers} services={services} />
       </div>
     </>

@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, formatMoney, type Offer, type Service } from '../lib/api';
 import { useFitRows } from '../lib/use-fit-rows';
+import { Pagination } from '../components/Pagination';
 import { IconFilter, IconSearch } from '../components/icons';
 
-/** Only the first paint — the client immediately measures how many rows the screen actually fits. */
-const INITIAL_PAGE_SIZE = 5;
+/** First paint only — the client immediately measures how many rows the screen actually fits. */
+const INITIAL_PAGE_SIZE = 4;
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 type Tab = 'all' | 'offers' | 'combos';
@@ -47,9 +48,15 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   const [tab, setTab] = useState<Tab>('all');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  // Page size follows the viewport, so the list never needs a scrollbar.
-  const { pageSize, listRef } = useFitRows({ fallback: INITIAL_PAGE_SIZE });
+  // Greedy fit-paging: each page starts at an offset and shows however many
+  // cards physically fit from there. Because a page of tall combos holds fewer
+  // than a page of short offers, the page size can't be fixed — so we track the
+  // start offset of each visited page and let `fitCount` (measured per page)
+  // decide where the next page begins. This is what fills every page to the
+  // bottom with no scrollbar and no wasted gap, regardless of card height.
+  const [pageStarts, setPageStarts] = useState<number[]>([0]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const filterSig = `${tab}|${status}|${search}`;
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
 
@@ -86,13 +93,34 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
     };
   }, [offers, status, search]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const clampedPage = Math.min(page, pageCount);
-  const pageItems = filtered.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
+  // Clamp the start into range (the filter may have shrunk the list under us),
+  // then let the fit hook measure how many cards fit from that offset. resetKey
+  // forces a fresh measurement whenever the page or the filter changes.
+  const start = Math.min(pageStarts[pageIndex] ?? 0, Math.max(0, filtered.length - 1));
+  const { pageSize: fitCount, listRef } = useFitRows({
+    fallback: INITIAL_PAGE_SIZE,
+    resetKey: `${start}|${filterSig}`,
+  });
+  const pageItems = filtered.slice(start, start + fitCount);
+  const shownTo = start + pageItems.length;
+  const hasPrev = pageIndex > 0;
+  const hasNext = shownTo < filtered.length;
+
+  const goNext = () => {
+    setPageStarts((s) => {
+      const next = s.slice(0, pageIndex + 1);
+      next[pageIndex + 1] = shownTo;
+      return next;
+    });
+    setPageIndex((i) => i + 1);
+  };
+  const goPrev = () => setPageIndex((i) => Math.max(0, i - 1));
 
   const updateFilter = (fn: () => void) => {
     fn();
-    setPage(1);
+    // A new filter is a new list — jump back to the first screenful.
+    setPageStarts([0]);
+    setPageIndex(0);
   };
 
   const toggleActive = async (offer: Offer) => {
@@ -188,7 +216,6 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
               const comboMinor = Number(offer.comboPriceMinor ?? 0);
               const savingsMinor = originalMinor - comboMinor;
               const savingsPct = originalMinor > 0 ? Math.round((savingsMinor / originalMinor) * 100) : 0;
-              const bookable = offer.serviceIds.length > 0;
 
               return (
                 <div
@@ -207,7 +234,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                         <span className={`chip ${isCombo ? 'chip-combo' : 'chip-offer'}`}>{isCombo ? 'Combo' : 'Offer'}</span>
                       </div>
                       {offer.serviceIds.length > 0 && <div className="muted offer-subtitle">{serviceNames(offer.serviceIds)}</div>}
-                      {offer.description && <div className="muted offer-subtitle">{offer.description}</div>}
+                      {offer.description && <div className="muted offer-subtitle offer-desc">{offer.description}</div>}
                       {isCombo && (
                         <div className="offer-price-row">
                           <span className="offer-price">{formatMoney(offer.comboPriceMinor)}</span>
@@ -226,7 +253,6 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                   <div className="offer-row-foot">
                     <div className="offer-info-col">
                       <div className="offer-info-item">📅 {visibilitySummary(offer)}</div>
-                      {!bookable && <div className="muted offer-info-item">Not bookable in WhatsApp</div>}
                     </div>
 
                     {/* A sibling of the stats rather than inside them: on desktop
@@ -291,29 +317,17 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
             })}
           </div>
 
-          <div className="pagination">
-            <span className="muted">
-              Showing {(clampedPage - 1) * pageSize + 1} to {Math.min(clampedPage * pageSize, filtered.length)} of {filtered.length} offers
-            </span>
-            <div className="pagination-controls">
-              <button type="button" className="pagination-btn" disabled={clampedPage <= 1} onClick={() => setPage(clampedPage - 1)}>
-                ‹
-              </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  className={`pagination-btn ${p === clampedPage ? 'pagination-btn-active' : ''}`}
-                  onClick={() => setPage(p)}
-                >
-                  {p}
-                </button>
-              ))}
-              <button type="button" className="pagination-btn" disabled={clampedPage >= pageCount} onClick={() => setPage(clampedPage + 1)}>
-                ›
-              </button>
-            </div>
-          </div>
+          <Pagination
+            mode="cursor"
+            from={filtered.length === 0 ? 0 : start + 1}
+            to={shownTo}
+            total={filtered.length}
+            hasPrev={hasPrev}
+            hasNext={hasNext}
+            onPrev={goPrev}
+            onNext={goNext}
+            noun="offers"
+          />
         </>
       )}
     </div>

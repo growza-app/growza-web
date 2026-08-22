@@ -1,8 +1,7 @@
-import { api, formatMoney, formatTime, type Appointment } from '../lib/api';
+import { api, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
-import { initials, statusChip } from '../lib/appointment-display';
 import { PageHeader } from '../components/PageHeader';
-import { PaginatedTable } from '../components/PaginatedTable';
+import { BookingsList } from './BookingsList';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,40 +69,11 @@ export default async function AppointmentsPage({
           {appointments.length === 0 ? (
             <div className="empty">{copy.bookings.none}</div>
           ) : (
-            <PaginatedTable
+            <BookingsList
+              appointments={appointments}
+              timezone={timezone}
               noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
-              head={
-                <tr>
-                  <th>{copy.bookings.time}</th>
-                  <th>{copy.bookings.customer}</th>
-                  <th>{copy.bookings.service}</th>
-                  <th>{copy.bookings.staffColumn}</th>
-                  <th>{copy.bookings.price}</th>
-                  <th>{copy.bookings.status}</th>
-                </tr>
-              }
-            >
-              {appointments.map((appt) => {
-                    const chip = statusChip(appt);
-                    return (
-                      <tr key={appt.id} data-row>
-                        <td>{formatTime(appt.startAt, timezone)}</td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div className="avatar">{initials(appt.customerName)}</div>
-                            <span style={{ fontWeight: 620 }}>{appt.customerName ?? 'Unknown'}</span>
-                          </div>
-                        </td>
-                        <td>{appt.serviceName}</td>
-                        <td className="muted">{appt.providerName ?? '—'}</td>
-                        <td>{formatMoney(appt.priceMinor)}</td>
-                        <td>
-                          <span className={`chip ${chip.cls}`}>{chip.text}</span>
-                        </td>
-                      </tr>
-                    );
-              })}
-            </PaginatedTable>
+            />
           )}
         </div>
       </div>
