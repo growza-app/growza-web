@@ -12,7 +12,7 @@ import { IconAppointments, IconCheck, IconChevronRight, IconDots, IconUserPlus, 
  * config, so it lives in localStorage rather than the database.
  */
 
-export type SummaryStyle = 'ring' | 'tiles' | 'progress';
+export type SummaryStyle = 'ring' | 'tiles' | 'progress' | 'strip';
 type Range = 'today' | 'week' | 'month';
 
 const STORAGE_KEY = 'wa-booking:summaryStyle';
@@ -22,12 +22,13 @@ const STYLE_OPTIONS: Array<{ id: SummaryStyle; name: string; desc: string }> = [
   { id: 'ring', name: 'Busy ring', desc: 'See how full the day is' },
   { id: 'tiles', name: 'Colour tiles', desc: 'Light and easy to scan' },
   { id: 'progress', name: 'Day progress', desc: "What's left to do today" },
+  { id: 'strip', name: 'Number strip', desc: 'Just the figures, no chart' },
 ];
 
 function readStoredStyle(): SummaryStyle {
   if (typeof window === 'undefined') return DEFAULT_STYLE;
   const raw = window.localStorage.getItem(STORAGE_KEY);
-  return raw === 'ring' || raw === 'tiles' || raw === 'progress' ? raw : DEFAULT_STYLE;
+  return raw === 'ring' || raw === 'tiles' || raw === 'progress' || raw === 'strip' ? raw : DEFAULT_STYLE;
 }
 
 interface Figures {
@@ -127,6 +128,30 @@ function Progress({ f }: { f: Figures }) {
         <div className="summary-metric metric-bookings"><span className="summary-metric-icon"><IconAppointments /></span><strong>{f.bookings}</strong><span>Total bookings</span></div>
         <div className="summary-metric metric-customers"><span className="summary-metric-icon"><IconUserPlus /></span><strong>{f.newCustomers}</strong><span>New customers</span></div>
         <div className="summary-metric metric-revenue"><span className="summary-metric-icon"><IconWallet /></span><strong>{f.earned}</strong><span>Revenue</span></div>
+      </div>
+    </div>
+  );
+}
+
+/** A single dense row of figures — no card, no chart, just the numbers. */
+function Strip({ f }: { f: Figures }) {
+  return (
+    <div className="summary-strip">
+      <div className="summary-strip-item">
+        <strong>{f.bookings}</strong>
+        <span>bookings</span>
+      </div>
+      <div className="summary-strip-item">
+        <strong>{f.earned}</strong>
+        <span>revenue</span>
+      </div>
+      <div className="summary-strip-item">
+        <strong>{f.busyPct}%</strong>
+        <span>busy</span>
+      </div>
+      <div className="summary-strip-item">
+        <strong>{f.newCustomers}</strong>
+        <span>new customers</span>
       </div>
     </div>
   );
@@ -268,6 +293,32 @@ function TilesRange({ summary }: { summary: RangeSummary }) {
   );
 }
 
+/** Strip style for a period: same dense row of figures, minus new-customers (not tracked per range bucket). */
+function StripRange({ summary }: { summary: RangeSummary }) {
+  return (
+    <>
+      <div className="summary-strip">
+        <div className="summary-strip-item">
+          <strong>{summary.bookings}</strong>
+          <span>bookings</span>
+        </div>
+        <div className="summary-strip-item">
+          <strong>{formatMoney(summary.revenueMinor)}</strong>
+          <span>revenue</span>
+        </div>
+        <div className="summary-strip-item">
+          <strong>{summary.busyPct}%</strong>
+          <span>busy</span>
+        </div>
+      </div>
+      <div className="summary-cap" style={{ marginTop: 11 }}>
+        {summary.label}
+      </div>
+      <RangeFoot summary={summary} />
+    </>
+  );
+}
+
 /** Miniature previews so the picker is chosen by sight rather than by name. */
 function Thumb({ id }: { id: SummaryStyle }) {
   if (id === 'tiles') {
@@ -290,6 +341,17 @@ function Thumb({ id }: { id: SummaryStyle }) {
           <div style={{ fontSize: 11, color: '#fff' }}>8</div>
           <div style={{ fontSize: 11, color: '#8fd4b0' }}>₹300</div>
         </div>
+      </div>
+    );
+  }
+  if (id === 'strip') {
+    return (
+      <div style={{ display: 'flex', gap: 8, padding: '10px 2px', fontSize: 11.5, fontWeight: 620, color: 'var(--text)' }}>
+        <span>8</span>
+        <span style={{ color: 'var(--muted)' }}>·</span>
+        <span>₹300</span>
+        <span style={{ color: 'var(--muted)' }}>·</span>
+        <span>25%</span>
       </div>
     );
   }
@@ -381,10 +443,12 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
         {range === 'today' && style === 'ring' && <Ring f={f} />}
         {range === 'today' && style === 'tiles' && <Tiles f={f} />}
         {range === 'today' && style === 'progress' && <Progress f={f} />}
+        {range === 'today' && style === 'strip' && <Strip f={f} />}
 
         {range !== 'today' && activeRangeData && style === 'ring' && <RingRange summary={activeRangeData} />}
         {range !== 'today' && activeRangeData && style === 'tiles' && <TilesRange summary={activeRangeData} />}
         {range !== 'today' && activeRangeData && style === 'progress' && <RangeBars summary={activeRangeData} />}
+        {range !== 'today' && activeRangeData && style === 'strip' && <StripRange summary={activeRangeData} />}
         {range !== 'today' && !activeRangeData && rangeLoading && (
           <div className="summary-cap" style={{ padding: '8px 0' }}>
             Loading…
