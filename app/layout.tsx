@@ -47,9 +47,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <PwaRegister />
         <div className="shell">
           <Sidebar tenantName={tenantName} labels={labels} />
-          <div className="content">{children}</div>
+          <div className="content">
+            {children}
+            <MobileChrome labels={labels} timezone={timezone} />
+          </div>
         </div>
-        <MobileChrome labels={labels} timezone={timezone} />
       </body>
     </html>
   );
