@@ -4916,7 +4916,7 @@ input[type='date'] {
 .quick-action svg { width: 18px; height: 18px; color: var(--text); flex-shrink: 0; }
 .quick-action:hover { filter: brightness(0.97); }
 /* The one prominent, filled CTA — every other action is a plain light row. */
-.quick-action-primary { justify-content: center; background: var(--accent); color: #fff; }
+.quick-action-primary { background: var(--accent); color: #fff; }
 .quick-action-primary svg { color: #fff; }
 .quick-action-primary:hover { background: var(--accent-deep); filter: none; }
 
