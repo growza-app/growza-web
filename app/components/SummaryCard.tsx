@@ -414,20 +414,15 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
               <IconChevronRight />
             </span>
           </button>
-          <button
-            type="button"
-            className="summary-more"
-            aria-label={copy.home.summaryStyle}
-            onClick={() => setPicking(true)}
-          >
-            <IconDots />
-          </button>
         </div>
 
         {/* The range toggle moved out of the primary header row (which now
             leads with the style picker, to match the redesigned Home), but
             Today/Week/Month is a real, separately-useful feature — kept as a
-            lighter secondary row rather than dropped. */}
+            lighter secondary row rather than dropped. The style picker's own
+            trigger sits at the end of this same row instead of up in the
+            header, so the header stays to one line and one job. */}
+        <div className="range-toggle-row">
         <div className="range-toggle range-toggle-secondary">
           <button type="button" className={range === 'today' ? 'active' : ''} onClick={() => selectRange('today')}>
             {copy.home.rangeToday}
@@ -437,6 +432,15 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
           </button>
           <button type="button" className={range === 'month' ? 'active' : ''} onClick={() => selectRange('month')}>
             {copy.home.rangeMonth}
+          </button>
+        </div>
+          <button
+            type="button"
+            className="summary-more"
+            aria-label={copy.home.summaryStyle}
+            onClick={() => setPicking(true)}
+          >
+            <IconDots />
           </button>
         </div>
 

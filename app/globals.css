@@ -4843,6 +4843,10 @@ input[type='date'] {
   box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03);
 }
 .home-main .summary-head { margin-bottom: 4px; }
+/* The picker trigger ("...") now sits at the end of the Today/Week/Month
+   row instead of beside "Summary style" — one row, one job, per feedback
+   on the header looking like two stacked, disconnected controls. */
+.range-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 14px; }
 
 /* "Summary style  Day progress ⌄" — leads the card and opens the same style
    picker the settings icon does; two entry points to one control, matching
@@ -4863,11 +4867,12 @@ input[type='date'] {
 .summary-style-label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
 .summary-style-value { display: flex; align-items: center; gap: 3px; font-size: 15.5px; font-weight: 660; letter-spacing: -0.01em; }
 .summary-style-value svg { width: 15px; height: 15px; transform: rotate(90deg); color: var(--muted); }
-.home-main .summary-more { color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
+.home-main .summary-more { color: var(--muted); background: var(--surface); border: 1px solid var(--border); width: 30px; height: 30px; margin: 0; flex-shrink: 0; }
+.home-main .summary-more svg { width: 15px; height: 15px; }
 
 /* Kept, but demoted: a smaller, quieter row below the style header rather
    than the primary control it used to be — see the comment at its JSX. */
-.range-toggle-secondary { background: transparent; padding: 0; margin: 10px 0 14px; gap: 4px; }
+.range-toggle-secondary { background: transparent; padding: 0; margin: 0; gap: 4px; }
 .range-toggle-secondary button { color: var(--muted); font-size: 12.5px; font-weight: 600; padding: 4px 10px; }
 .range-toggle-secondary button.active { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
 
