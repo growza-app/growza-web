@@ -223,7 +223,10 @@ export default async function DashboardPage() {
     { label: "Customers haven't visited", value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
   ];
   // Real, derived-from-today's-appointments numbers — not a fabricated fill.
-  // "Booked minutes" comes straight from each confirmed appointment's own
+  // Both figures are for the WHOLE day, not just what's left from now on: a
+  // stylist with 3 bookings this morning already done should still read as
+  // busy today, not "free" the moment their last one wraps up. "Booked
+  // minutes" comes straight from each confirmed appointment's own
   // start/end; the bar is scaled relative to the busiest staff member shown
   // today (there's no per-provider working-hours/capacity figure available
   // here to compute a true "% of capacity" against).
@@ -231,8 +234,7 @@ export default async function DashboardPage() {
     .map((provider) => {
       const mine = appointments.filter((a) => a.providerId === provider.id && a.status === 'confirmed');
       const bookedMin = mine.reduce((sum, a) => sum + (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60_000, 0);
-      const queueCount = mine.filter((a) => new Date(a.startAt).getTime() >= now.getTime()).length;
-      return { id: provider.id, name: provider.displayName, bookedMin, queueCount };
+      return { id: provider.id, name: provider.displayName, bookedMin, queueCount: mine.length };
     })
     .sort((a, b) => b.bookedMin - a.bookedMin);
   const maxBookedMin = Math.max(...staffCapacity.map((p) => p.bookedMin), 1);
