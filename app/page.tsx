@@ -197,14 +197,23 @@ export default async function DashboardPage() {
     month: 'short',
     timeZone: timezone,
   }).format(now);
-  const newCustomers = appointments.filter((appointment) => appointment.customerIsNew).length;
-  const comingUp = appointments.filter((appointment) => {
-    const start = new Date(appointment.startAt).getTime();
-    return appointment.status === 'confirmed' && start >= now.getTime() && start <= now.getTime() + 2 * 60 * 60 * 1000;
-  }).length;
+  // A combo booking is several appointment ROWS (one per service) sharing one
+  // bookingGroupId — counting rows would count that one customer visit 2-3x.
+  // Every "how many bookings" figure below counts DISTINCT bookings instead,
+  // matching how the Bookings page itself groups combo legs into one row.
+  const bookingKey = (a: Appointment) => a.bookingGroupId ?? a.id;
+  const countBookings = (list: Appointment[]) => new Set(list.map(bookingKey)).size;
+
+  const newCustomers = countBookings(appointments.filter((appointment) => appointment.customerIsNew));
+  const comingUp = countBookings(
+    appointments.filter((appointment) => {
+      const start = new Date(appointment.startAt).getTime();
+      return appointment.status === 'confirmed' && start >= now.getTime() && start <= now.getTime() + 2 * 60 * 60 * 1000;
+    }),
+  );
   const attention = [
     { label: 'Unconfirmed booking', value: Math.max(stats.bookingsToday - stats.completedToday - comingUp, 0), tone: 'amber', href: '/appointments', icon: <IconBell /> },
-    { label: 'Cancellation today', value: appointments.filter((appointment) => appointment.status === 'cancelled').length, tone: 'rose', href: '/appointments', icon: <IconCalendar /> },
+    { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments', icon: <IconCalendar /> },
     { label: "Customers haven't visited", value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
   ];
   // Real, derived-from-today's-appointments numbers — not a fabricated fill.
@@ -212,19 +221,26 @@ export default async function DashboardPage() {
   // ahead of now) figure are computed here so the widget can toggle between
   // them client-side — "booked minutes" comes straight from each confirmed
   // appointment's own start/end, summed either over the whole day or only
-  // the ones still ahead. Sorted by the TOTAL figure regardless of which
-  // one ends up displayed, so the list doesn't reshuffle when switching.
+  // the ones still ahead (minutes are correctly leg-based: a 3-service combo
+  // really does take the sum of its legs' time). Counts are booking-based.
+  // Sorted by the TOTAL figure regardless of which one ends up displayed, so
+  // the list doesn't reshuffle when switching.
   const durationMin = (a: Appointment) => (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60_000;
   const staffCapacity = providers
     .map((provider) => {
-      const mine = appointments.filter((a) => a.providerId === provider.id && a.status === 'confirmed');
-      const upcoming = mine.filter((a) => new Date(a.startAt).getTime() >= now.getTime());
+      // "Total" means the whole day's real workload — completed and no-show
+      // bookings genuinely happened/were scheduled, so they count too (only
+      // cancelled doesn't, matching the backend's own bookingsToday
+      // definition). "Upcoming" narrows to still-pending: confirmed AND not
+      // yet started — a completed appointment isn't "in queue" anymore.
+      const mine = appointments.filter((a) => a.providerId === provider.id && a.status !== 'cancelled');
+      const upcoming = mine.filter((a) => a.status === 'confirmed' && new Date(a.startAt).getTime() >= now.getTime());
       return {
         id: provider.id,
         name: provider.displayName,
-        totalCount: mine.length,
+        totalCount: countBookings(mine),
         totalBookedMin: mine.reduce((sum, a) => sum + durationMin(a), 0),
-        upcomingCount: upcoming.length,
+        upcomingCount: countBookings(upcoming),
         upcomingBookedMin: upcoming.reduce((sum, a) => sum + durationMin(a), 0),
       };
     })
@@ -240,9 +256,22 @@ export default async function DashboardPage() {
     { label: '3 PM', from: 15, to: 18 },
     { label: '6 PM', from: 18, to: 21 },
   ];
+  // Bucket by each DISTINCT booking's earliest leg, not every leg
+  // independently — otherwise a combo whose legs straddle a window boundary
+  // (e.g. starts at 11:45, second service starts at 12:15) would count once
+  // in both the 9 AM and 12 PM windows instead of once, in the window it
+  // actually started in.
+  const firstStartByBooking = new Map<string, string>();
+  for (const a of appointments) {
+    if (a.status === 'cancelled') continue;
+    const key = bookingKey(a);
+    const existing = firstStartByBooking.get(key);
+    if (!existing || new Date(a.startAt) < new Date(existing)) firstStartByBooking.set(key, a.startAt);
+  }
+  const bookingStarts = [...firstStartByBooking.values()];
   const bookingBuckets = BOOKING_WINDOWS.map(({ label, from, to }) => ({
     label,
-    count: appointments.filter((a) => a.status !== 'cancelled' && localHour(a.startAt) >= from && localHour(a.startAt) < to).length,
+    count: bookingStarts.filter((startAt) => localHour(startAt) >= from && localHour(startAt) < to).length,
   }));
   const bookingTrendPct = stats.bookingsYesterday > 0 ? Math.round(((stats.bookingsToday - stats.bookingsYesterday) / stats.bookingsYesterday) * 100) : null;
 
@@ -289,7 +318,7 @@ export default async function DashboardPage() {
             </section>
 
             <section className="home-section home-upcoming">
-              <div className="home-section-head"><h2>Up next</h2><a href="/appointments">See all ({appointments.length})</a></div>
+              <div className="home-section-head"><h2>Up next</h2><a href="/appointments">See all ({countBookings(appointments)})</a></div>
               <DaySchedule appointments={appointments} timezone={timezone} nowISO={now.toISOString()} />
             </section>
 
