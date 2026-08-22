@@ -15,7 +15,10 @@ const nextConfig: NextConfig = {
   // a phone via the Mac's LAN IP silently 403s one of the chunks, so parts
   // of the page render but their interactivity never loads. Dev-only; the
   // production build has no dev server to protect.
-  allowedDevOrigins: ['192.168.1.5'],
+  // The LAN IP for phones on the same Wi-Fi, plus every *.trycloudflare.com
+  // subdomain so a quick Cloudflare tunnel (random hostname each run) can load
+  // the dev chunks without a 403. Dev-only.
+  allowedDevOrigins: ['192.168.1.5', '*.trycloudflare.com'],
   // Serve the API and its uploaded files under the SAME origin as the web
   // app. The browser then only ever talks to one host, which is what makes
   // the app work unchanged over localhost, a LAN IP, AND an HTTPS tunnel
