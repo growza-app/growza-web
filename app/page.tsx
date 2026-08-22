@@ -232,7 +232,7 @@ export default async function DashboardPage() {
             <SummaryCard stats={stats} newCustomers={newCustomers} />
 
             <section className="home-section">
-              <div className="home-section-head"><h2>Needs attention</h2><a href="/appointments">View all (3)</a></div>
+              <div className="home-section-head"><h2>Needs attention</h2></div>
               <div className="attention-grid">
                 {attention.map((item) => (
                   <a className={`attention-card ${item.tone}`} href={item.href} key={item.label}>
