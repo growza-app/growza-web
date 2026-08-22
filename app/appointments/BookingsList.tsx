@@ -67,7 +67,9 @@ export function BookingsList({
   const comingUp = bookings.filter((b) => b.status === 'confirmed' && within2h(b.startAt)).length;
   const noShow = bookings.filter((b) => b.status === 'no_show').length;
   const revenue = completed.reduce((sum, b) => sum + bookingTotalMinor(b), 0);
-  const customers = new Set(bookings.map((b) => b.customerPhone)).size;
+  // First-time customers today — the booking's legs all share the customer, so
+  // the first leg's flag speaks for the whole booking.
+  const newCustomers = new Set(bookings.filter((b) => b.appointments[0]?.customerIsNew).map((b) => b.customerPhone)).size;
 
   const pageCount = Math.max(1, Math.ceil(bookings.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
@@ -202,8 +204,8 @@ export function BookingsList({
             <IconUserPlus />
           </span>
           <div>
-            <div className="bk-summary-value">{customers}</div>
-            <div className="bk-summary-label">{customers === 1 ? 'Customer' : 'Customers'}</div>
+            <div className="bk-summary-value">{newCustomers}</div>
+            <div className="bk-summary-label">New {newCustomers === 1 ? 'customer' : 'customers'}</div>
           </div>
         </div>
         <a className="bk-summary-link" href="/">
