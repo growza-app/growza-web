@@ -1,21 +1,18 @@
-import { api, formatMoney, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
+import { api, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
 import { StaffCapacity } from './components/StaffCapacity';
 import {
   IconAnalytics,
-  IconAppointments,
   IconBell,
   IconCalendar,
-  IconCheck,
   IconChevronRight,
   IconPlus,
   IconSearch,
   IconStaff,
   IconUser,
   IconUserPlus,
-  IconWallet,
 } from './components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -96,46 +93,76 @@ function QuickActions() {
   );
 }
 
-/** "Today at a glance" rows + the insight card — shown on the desktop rail AND, separately, in its own mobile section, so both stay in sync from one definition. */
-function GlanceAndInsight({ stats, newCustomers, comingUp }: { stats: TodayStats; newCustomers: number; comingUp: number }) {
+function TopInsight() {
   return (
-    <>
-      <section className="rail-card">
-        <h3>Today at a glance</h3>
-        <a className="glance-row" href="/appointments">
-          <IconAppointments />
-          <strong>{stats.bookingsToday}</strong>
-          <span>Bookings</span>
-          <em>View all</em>
-        </a>
-        <a className="glance-row" href="/appointments">
-          <IconWallet />
-          <strong>{formatMoney(stats.revenueTodayMinor)}</strong>
-          <span>Revenue</span>
-          <em>View report</em>
-        </a>
-        <a className="glance-row" href="/customers">
-          <IconUserPlus />
-          <strong>{newCustomers}</strong>
-          <span>New customers</span>
-          <em>View all</em>
-        </a>
-        <a className="glance-row" href="/appointments">
-          <IconCheck />
-          <strong>{comingUp}</strong>
-          <span>Coming up</span>
-          <em>Next 2 hours</em>
-        </a>
-      </section>
-      <a href="/services" className="rail-insight">
-        <span>✦</span>
-        <div>
-          <strong>Top insight</strong>
-          <p>Keep an eye on your most booked service today.</p>
-        </div>
-        <IconChevronRight />
-      </a>
-    </>
+    <a href="/services" className="rail-insight">
+      <span>✦</span>
+      <div>
+        <strong>Top insight</strong>
+        <p>Keep an eye on your most booked service today.</p>
+      </div>
+      <IconChevronRight />
+    </a>
+  );
+}
+
+/**
+ * A real hourly booking count for today (bucketed into four 3-hour windows,
+ * matching the reference design), not a fabricated curve — every point comes
+ * straight from today's appointments' own start times. Cancelled bookings
+ * are excluded (they didn't actually happen in that slot); no-shows count,
+ * since the slot was genuinely booked. The trend badge compares against
+ * stats.bookingsYesterday, the same figure the summary card's own "vs
+ * yesterday" comparisons use elsewhere — no separate fetch needed.
+ */
+function BookingsChart({ buckets, trendPct }: { buckets: Array<{ label: string; count: number }>; trendPct: number | null }) {
+  const max = Math.max(...buckets.map((b) => b.count), 1);
+  const w = 280;
+  const plotH = 60; // the line/fill area only — value labels live above it, time labels below
+  const topPad = 16; // headroom so the peak point's value label never clips the card edge
+  const stepX = w / (buckets.length - 1);
+  const points = buckets.map((b, i) => ({
+    x: i * stepX,
+    y: topPad + (1 - b.count / max) * (plotH - topPad),
+    count: b.count,
+  }));
+  const line = points.map((p) => `${p.x},${p.y}`).join(' ');
+  const area = `${line} ${w},${plotH} 0,${plotH}`;
+
+  return (
+    <section className="rail-card rail-chart">
+      <div className="rail-head-row">
+        <h3>Bookings today</h3>
+        {trendPct !== null && (
+          <span className={`rail-trend ${trendPct >= 0 ? 'up' : 'down'}`}>
+            {trendPct >= 0 ? '↑' : '↓'} {Math.abs(trendPct)}%
+          </span>
+        )}
+      </div>
+      <svg viewBox={`0 0 ${w} ${plotH + 20}`} width="100%" height={plotH + 20} role="img" aria-label={`Bookings by time of day: ${buckets.map((b) => `${b.count} at ${b.label}`).join(', ')}`}>
+        <polygon points={area} className="rail-chart-fill" />
+        <polyline points={line} className="rail-chart-line" />
+        {points.map((p, i) => (
+          <text
+            key={`v-${buckets[i]!.label}`}
+            x={p.x}
+            y={Math.max(p.y - 9, 10)}
+            textAnchor={i === 0 ? 'start' : i === buckets.length - 1 ? 'end' : 'middle'}
+            className="rail-chart-value"
+          >
+            {p.count}
+          </text>
+        ))}
+        {points.map((p, i) => (
+          <circle key={buckets[i]!.label} cx={p.x} cy={p.y} r="3" className="rail-chart-dot" />
+        ))}
+        {buckets.map((b, i) => (
+          <text key={b.label} x={points[i]!.x} y={plotH + 17} textAnchor={i === 0 ? 'start' : i === buckets.length - 1 ? 'end' : 'middle'} className="rail-chart-label">
+            {b.label}
+          </text>
+        ))}
+      </svg>
+    </section>
   );
 }
 
@@ -205,6 +232,20 @@ export default async function DashboardPage() {
   const staffShown = staffCapacity.slice(0, 3);
   const staffHiddenCount = staffCapacity.length - staffShown.length;
 
+  const localHour = (iso: string) =>
+    Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: timezone }).format(new Date(iso)));
+  const BOOKING_WINDOWS: Array<{ label: string; from: number; to: number }> = [
+    { label: '9 AM', from: 9, to: 12 },
+    { label: '12 PM', from: 12, to: 15 },
+    { label: '3 PM', from: 15, to: 18 },
+    { label: '6 PM', from: 18, to: 21 },
+  ];
+  const bookingBuckets = BOOKING_WINDOWS.map(({ label, from, to }) => ({
+    label,
+    count: appointments.filter((a) => a.status !== 'cancelled' && localHour(a.startAt) >= from && localHour(a.startAt) < to).length,
+  }));
+  const bookingTrendPct = stats.bookingsYesterday > 0 ? Math.round(((stats.bookingsToday - stats.bookingsYesterday) / stats.bookingsYesterday) * 100) : null;
+
   return (
     <>
       <header className="home-head">
@@ -261,17 +302,21 @@ export default async function DashboardPage() {
               </div>
             )}
 
-            {/* Same glance rows + insight as the desktop rail — shown here only below
-                860px, where there's no rail to hold them (see .mobile-only-section). */}
+            {/* Same insight card as the desktop rail — shown here only below
+                860px, where there's no rail to hold it (see .mobile-only-section).
+                "Today at a glance" isn't repeated here: it was a straight
+                repeat of the summary card above, so it was dropped everywhere,
+                not just on desktop. */}
             <section className="home-section mobile-only-section">
-              <GlanceAndInsight stats={stats} newCustomers={newCustomers} comingUp={comingUp} />
+              <TopInsight />
             </section>
           </main>
 
           <aside className="home-rail desktop-only">
+            <BookingsChart buckets={bookingBuckets} trendPct={bookingTrendPct} />
             <QuickActions />
             <StaffCapacity label={me.labels.providers ?? copy.nav.staff} staff={staffShown} hiddenCount={staffHiddenCount} />
-            <GlanceAndInsight stats={stats} newCustomers={newCustomers} comingUp={comingUp} />
+            <TopInsight />
           </aside>
         </div>
       </div>

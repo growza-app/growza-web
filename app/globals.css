@@ -4877,9 +4877,6 @@ input[type='date'] {
    there's no rail column, so the glance rows + insight get their own section
    in the main column instead. Hidden here; shown in the mobile media query. */
 .mobile-only-section { display: none; }
-.mobile-only-section .rail-card { padding: 0; border: 0; }
-.mobile-only-section .rail-card h3 { font-size: 17px; letter-spacing: -0.02em; margin-bottom: 13px; }
-.mobile-only-section .rail-insight { margin-top: 12px; }
 .home-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
 .home-section-head h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
 .home-section-head a { color: var(--accent-deep); font-size: 13px; font-weight: 650; text-decoration: none; }
@@ -4909,11 +4906,14 @@ input[type='date'] {
 .home-upcoming .call { width: 42px; height: 42px; background: var(--surface); border: 1px solid var(--border); }
 
 .home-rail { display: flex; flex-direction: column; gap: 14px; }
-.rail-card { padding: 16px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface); }
+/* Same soft mint tint as the summary card above (.home-main .summary) — every
+   rail card now shares that theme instead of plain white, so the rail reads
+   as one family rather than the summary card standing alone. */
+.rail-card { padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); }
 .rail-card h3 { margin: 0 0 12px; font-size: 15px; }
 .rail-actions { display: flex; flex-direction: column; gap: 10px; }
 .rail-actions h3 { margin-bottom: 10px; }
-.quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 11px; background: var(--page-bg); color: var(--text); text-decoration: none; font-size: 14px; font-weight: 650; }
+.quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 11px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 14px; font-weight: 650; }
 .quick-action svg { width: 18px; height: 18px; color: var(--text); flex-shrink: 0; }
 .quick-action:hover { filter: brightness(0.97); }
 /* The one prominent, filled CTA — every other action is a plain light row. */
@@ -4931,12 +4931,20 @@ input[type='date'] {
 .capacity-row-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; font-size: 13.5px; }
 .capacity-name { font-weight: 650; }
 .capacity-status { color: var(--muted); font-size: 12px; }
-.capacity-bar { height: 7px; border-radius: 4px; background: var(--page-bg); overflow: hidden; }
+.capacity-bar { height: 7px; border-radius: 4px; background: var(--surface); overflow: hidden; }
 .capacity-bar span { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
 .rail-see-more { display: block; margin-top: 14px; color: var(--accent-deep); font-size: 13px; font-weight: 650; text-decoration: none; }
-.glance-row { display: grid; grid-template-columns: 31px 1fr auto; align-items: center; column-gap: 8px; min-height: 62px; padding: 9px 10px; margin-top: 8px; border: 1px solid #edf0ee; border-radius: 10px; text-decoration: none; color: var(--text); }
-.glance-row svg { grid-row: span 2; width: 20px; color: var(--accent); }.glance-row strong { font-size: 15px; }.glance-row span { font-size: 11px; color: var(--muted); }.glance-row em { grid-row: span 2; color: var(--accent-deep); font-style: normal; font-size: 11px; font-weight: 600; }
-.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border-radius: 13px; background: linear-gradient(120deg,#effaf3,#f8fcfa); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 21px; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 11px; }.rail-insight p { margin: 2px 0 0; font-size: 11.5px; }.rail-insight svg { width: 17px; color: var(--accent); }
+
+/* ---- bookings-today chart ---- */
+.rail-trend { font-size: 12px; font-weight: 650; padding: 3px 8px; border-radius: 999px; }
+.rail-trend.up { background: var(--accent-soft); color: var(--accent-deep); }
+.rail-trend.down { background: #fde3e3; color: #c0362c; }
+.rail-chart-fill { fill: #7bd39c; fill-opacity: 0.18; stroke: none; }
+.rail-chart-line { fill: none; stroke: #6ec886; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rail-chart-dot { fill: var(--surface); stroke: #6ec886; stroke-width: 2; }
+.rail-chart-value { font-size: 10.5px; font-weight: 700; fill: var(--text); }
+.rail-chart-label { font-size: 9.5px; fill: var(--muted); }
+.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 21px; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 11px; }.rail-insight p { margin: 2px 0 0; font-size: 11.5px; }.rail-insight svg { width: 17px; color: var(--accent); }
 
 @media (max-width: 1180px) { .home-layout { grid-template-columns: minmax(0, 1fr) 305px; }.summary-metric { padding: 0 12px; }.summary-metric strong { font-size: 20px; }.summary-metric > span:not(.summary-metric-icon) { white-space: normal; } }
 @media (min-width: 861px) and (max-width: 1060px) { .home-main .summary-progress-layout { flex-direction: column; }.summary-progress-hero { flex-basis: auto; }.summary-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
