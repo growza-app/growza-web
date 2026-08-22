@@ -51,6 +51,8 @@ export interface Appointment {
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;
+  /** Ties the legs of one combo/multi-service booking together — null for a plain single-service booking. */
+  bookingGroupId: string | null;
 }
 
 export interface TodayStats {

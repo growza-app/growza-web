@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   env: {
     API_URL: API_ORIGIN,
   },
+  // Hide the Next.js dev-tools indicator (the floating "N" button) — it sits in
+  // the bottom-left corner and overlaps the mobile tab bar's first tab. Dev-only
+  // anyway; a production build never renders it.
+  devIndicators: false,
   // Next's dev server blocks cross-origin requests to its JS chunks by
   // default (DNS-rebinding protection) — without this, loading the app from
   // a phone via the Mac's LAN IP silently 403s one of the chunks, so parts

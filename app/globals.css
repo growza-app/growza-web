@@ -1665,21 +1665,22 @@ input[type='date'] {
   min-width: 0;
 }
 
-/* Truncate rather than wrap: a wrapped service line pushes the row taller and
-   makes the list ragged, and the full detail is one tap away in the sheet. */
-.sched-name,
-.sched-meta {
+.sched-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sched-name {
   font-size: 13.5px;
   font-weight: 620;
 }
 
+/* The service line may list several services for a combo ("Haircut + Facial +
+   De-Tan · Priya"), so it wraps to at most two lines rather than truncating to
+   one near-useless word; full detail is still one tap away in the sheet. */
 .sched-meta {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-size: 12.5px;
   color: var(--muted);
 }
@@ -3288,6 +3289,19 @@ input[type='date'] {
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
+}
+
+/* Total booked time under the start time — the whole combo as one duration,
+   never split per service. */
+.booking-time .booking-dur {
+  margin-top: 3px;
+  color: var(--accent-deep);
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.booking-staff {
+  font-size: 12px;
 }
 
 .booking-main {

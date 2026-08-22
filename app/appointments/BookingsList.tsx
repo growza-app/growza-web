@@ -2,20 +2,20 @@
 
 import { useState } from 'react';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
-import { initials, statusChip } from '../lib/appointment-display';
+import { formatDuration, groupBookings, initials, statusChip, type BookingGroup } from '../lib/appointment-display';
 import { BookingSheet, dialable } from '../components/BookingSheet';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { IconPhone } from '../components/icons';
 
 /**
- * The day's bookings. Desktop shows a scannable table; mobile shows the same
- * rows as cards — a six-column table can't be read on a phone without pinch-
- * zooming, and the design language is cards everywhere on mobile (matches
- * Clients). Both share ONE page slice and the shared numbered Pagination.
+ * The day's bookings. A combo / multi-service booking is ONE booking, not one
+ * row per service: its legs (same `bookingGroupId`) collapse into a single item
+ * that shows every service and the total time booked (e.g. Haircut + Facial +
+ * De-Tan · 1h 30m). Desktop shows a table, mobile shows cards — same data.
  *
- * Tapping a row/card opens the BookingSheet (call, message, reschedule, mark
- * done, cancel); the Call action is also surfaced inline on each upcoming card,
- * because chasing a likely no-show is the owner's most time-critical move.
+ * Tapping opens the BookingSheet (call, message, reschedule, mark done, cancel)
+ * on the booking's first leg; the Call action is also inline on each upcoming
+ * card, because chasing a likely no-show is the owner's most time-critical move.
  */
 export function BookingsList({
   appointments,
@@ -28,17 +28,18 @@ export function BookingsList({
   noun: string;
 }) {
   const [page, setPage] = useState(1);
-  const [open, setOpen] = useState<Appointment | null>(null);
+  const [open, setOpen] = useState<BookingGroup | null>(null);
 
-  const pageCount = Math.max(1, Math.ceil(appointments.length / PAGE_SIZE));
+  const bookings = groupBookings(appointments);
+  const pageCount = Math.max(1, Math.ceil(bookings.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
-  const rows = appointments.slice((clamped - 1) * PAGE_SIZE, clamped * PAGE_SIZE);
+  const rows = bookings.slice((clamped - 1) * PAGE_SIZE, clamped * PAGE_SIZE);
 
-  const callButton = (appt: Appointment) => (
+  const callButton = (b: (typeof rows)[number]) => (
     <a
       className="call"
-      href={`tel:${dialable(appt.customerPhone)}`}
-      aria-label={`Call ${appt.customerName ?? 'customer'}`}
+      href={`tel:${dialable(b.customerPhone)}`}
+      aria-label={`Call ${b.customerName ?? 'customer'}`}
       onClick={(e) => e.stopPropagation()}
     >
       <IconPhone />
@@ -60,20 +61,23 @@ export function BookingsList({
             </tr>
           </thead>
           <tbody>
-            {rows.map((appt) => {
-              const chip = statusChip(appt);
+            {rows.map((b) => {
+              const chip = statusChip(b);
               return (
-                <tr key={appt.id} data-row onClick={() => setOpen(appt)} style={{ cursor: 'pointer' }}>
-                  <td>{formatTime(appt.startAt, timezone)}</td>
+                <tr key={b.key} onClick={() => setOpen(b)} style={{ cursor: 'pointer' }}>
+                  <td>
+                    <div>{formatTime(b.startAt, timezone)}</div>
+                    <div className="muted" style={{ fontSize: 13 }}>{formatDuration(b.totalMin)}</div>
+                  </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="avatar">{initials(appt.customerName)}</span>
-                      <span style={{ fontWeight: 620 }}>{appt.customerName ?? 'Unknown'}</span>
+                      <span className="avatar">{initials(b.customerName)}</span>
+                      <span style={{ fontWeight: 620 }}>{b.customerName ?? 'Unknown'}</span>
                     </div>
                   </td>
-                  <td>{appt.serviceName}</td>
-                  <td className="muted">{appt.providerName ?? '—'}</td>
-                  <td>{formatMoney(appt.priceMinor)}</td>
+                  <td>{b.serviceNames.join(' + ')}</td>
+                  <td className="muted">{b.providerNames.join(', ') || '—'}</td>
+                  <td>{formatMoney(String(b.priceMinor))}</td>
                   <td>
                     <span className={`chip ${chip.cls}`}>{chip.text}</span>
                   </td>
@@ -85,34 +89,46 @@ export function BookingsList({
       </div>
 
       <div className="booking-cards">
-        {rows.map((appt) => {
-          const chip = statusChip(appt);
-          const [clock, meridiem] = formatTime(appt.startAt, timezone).split(' ');
+        {rows.map((b) => {
+          const chip = statusChip(b);
+          const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
           return (
-            <div className="booking-card" key={appt.id} data-row onClick={() => setOpen(appt)}>
+            <div className="booking-card" key={b.key} onClick={() => setOpen(b)}>
               <div className="booking-time">
                 {clock}
                 <span>{meridiem}</span>
+                <span className="booking-dur">{formatDuration(b.totalMin)}</span>
               </div>
               <div className="booking-main">
                 <div className="booking-name">
-                  <span className="booking-name-text">{appt.customerName ?? 'Unknown'}</span>
+                  <span className="booking-name-text">{b.customerName ?? 'Unknown'}</span>
                   <span className={`chip ${chip.cls}`}>{chip.text}</span>
                 </div>
-                <div className="booking-sub">
-                  {appt.serviceName}
-                  {appt.providerName ? ` · ${appt.providerName}` : ''}
-                </div>
+                <div className="booking-sub">{b.serviceNames.join(' + ')}</div>
+                {b.providerNames.length > 0 && <div className="booking-sub booking-staff">{b.providerNames.join(', ')}</div>}
               </div>
-              {appt.status === 'confirmed' && callButton(appt)}
+              {b.status === 'confirmed' && callButton(b)}
             </div>
           );
         })}
       </div>
 
-      <Pagination page={clamped} total={appointments.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />
+      <Pagination page={clamped} total={bookings.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />
 
-      {open && <BookingSheet appointment={open} timezone={timezone} onClose={() => setOpen(null)} />}
+      {open && (
+        <BookingSheet
+          // Open on the leg whose status matches the booking as a whole, so the
+          // sheet's actions line up with the badge: a combo whose first service
+          // is already done but the rest still upcoming reads "Coming", and the
+          // sheet must still offer Mark-done / cancel — not the settled view of
+          // that first finished leg.
+          appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
+          timezone={timezone}
+          onClose={() => setOpen(null)}
+          comboServiceNames={open.isCombo ? open.serviceNames : undefined}
+          comboTotalMin={open.totalMin}
+        />
+      )}
     </>
   );
 }

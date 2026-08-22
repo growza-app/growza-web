@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatTime, type Appointment, type AppointmentStatus, type Provider, type Service } from '../lib/api';
 import { copy } from '../lib/copy';
+import { formatDuration } from '../lib/appointment-display';
 import { CheckoutSheet } from './CheckoutSheet';
 import { IconCheck, IconClose, IconPhone, IconWhatsApp } from './icons';
 
@@ -26,10 +27,16 @@ export function BookingSheet({
   appointment,
   timezone,
   onClose,
+  comboServiceNames,
+  comboTotalMin,
 }: {
   appointment: Appointment;
   timezone: string;
   onClose: () => void;
+  /** When this booking is a combo, every service in it — so the sheet shows the whole booking, not just one leg. */
+  comboServiceNames?: string[];
+  /** Total booked time across the combo's legs. */
+  comboTotalMin?: number;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -95,9 +102,10 @@ export function BookingSheet({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="sheet-title">{appointment.customerName ?? 'Unknown'}</div>
             <div className="sheet-sub">
-              {appointment.serviceName}
-              {appointment.providerName ? ` · ${appointment.providerName}` : ''} ·{' '}
-              {formatTime(appointment.startAt, timezone)}
+              {comboServiceNames && comboServiceNames.length > 1
+                ? `${comboServiceNames.join(' + ')}${comboTotalMin ? ` · ${formatDuration(comboTotalMin)}` : ''}`
+                : `${appointment.serviceName}${appointment.providerName ? ` · ${appointment.providerName}` : ''}`}{' '}
+              · {formatTime(appointment.startAt, timezone)}
             </div>
           </div>
           <span className="ref">{bookingRef(appointment.id)}</span>
