@@ -128,10 +128,10 @@ export function BookingsList({
   return (
     <>
       <div className="bk-kpis">
-        <Kpi tone="green" icon={<IconCalendar />} value={bookings.length} label="Total bookings" sub="Today" />
-        <Kpi tone="amber" icon={<IconClock />} value={comingUp} label="Coming up" sub="Next 2 hours" />
+        <Kpi tone="green" icon={<IconCalendar />} value={bookings.length} label="Bookings" sub="Today" />
+        <Kpi tone="amber" icon={<IconClock />} value={comingUp} label="Coming up" sub="Next 2 hrs" />
         <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label="Completed" sub="Today" />
-        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label="No-show" sub="Today" />
+        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label="No-shows" sub="Today" />
       </div>
 
       <div className="bk-sched-head">
