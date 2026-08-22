@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { formatTime, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
-import { formatDuration, groupBookings, initials, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
+import {
+  formatDuration,
+  groupBookings,
+  initials,
+  relativeCountdown,
+  statusChip,
+  summarizeServices,
+  type BookingGroup,
+} from '../lib/appointment-display';
 import { BookingSheet, dialable } from './BookingSheet';
 import { BookingSummary } from './BookingSummary';
 import { IconChevronRight, IconPhone } from './icons';
@@ -39,14 +47,16 @@ function Avatar({ name, muted }: { name: string | null; muted?: boolean }) {
   );
 }
 
-function TimeCell({ booking, timezone }: { booking: BookingGroup; timezone: string }) {
+function TimeCell({ booking, timezone, now }: { booking: BookingGroup; timezone: string; now: Date }) {
   const [clock, meridiem] = formatTime(booking.startAt, timezone).split(' '); // e.g. "11:30 am"
   return (
     <div className="sched-time">
       <div className="t">
         {clock} <span className="m">{meridiem}</span>
       </div>
-      <div className="n">{formatDuration(booking.totalMin)}</div>
+      {/* A settled booking (done/no-show/cancelled) has nothing left to count down to — show its
+          duration instead, same as before. Only a still-confirmed booking gets "in 25m". */}
+      <div className="n">{booking.status === 'confirmed' ? relativeCountdown(booking.startAt, now) : formatDuration(booking.totalMin)}</div>
     </div>
   );
 }
@@ -127,16 +137,22 @@ export function DaySchedule({
     </div>
   );
 
-  const renderRich = (booking: BookingGroup, strong: boolean) => (
-    <div className="sched-card" key={booking.key} onClick={() => setOpen(booking)}>
-      <Avatar name={booking.customerName} />
-      <div className="sched-main">
-        <div className="sched-name">{booking.customerName ?? 'Unknown'}</div>
-        <div className="sched-meta">{metaLine(booking)}</div>
+  const renderRich = (booking: BookingGroup, strong: boolean) => {
+    const chip = statusChip(booking);
+    return (
+      <div className="sched-card" key={booking.key} onClick={() => setOpen(booking)}>
+        <Avatar name={booking.customerName} />
+        <div className="sched-main">
+          <div className="sched-name">{booking.customerName ?? 'Unknown'}</div>
+          <div className="sched-meta">{metaLine(booking)}</div>
+        </div>
+        <div className="sched-actions">
+          {callButton(booking, strong)}
+          <span className={`chip ${chip.cls}`}>{chip.text}</span>
+        </div>
       </div>
-      {callButton(booking, strong)}
-    </div>
-  );
+    );
+  };
 
   const past = shown.slice(0, futureStart);
   const rich = shown.slice(futureStart, futureStart + RICH_GROUPS);
@@ -144,7 +160,7 @@ export function DaySchedule({
 
   const timelineRow = (booking: BookingGroup, quiet: boolean, strong = false) => (
     <div className="sched-group" key={booking.key}>
-      <TimeCell booking={booking} timezone={timezone} />
+      <TimeCell booking={booking} timezone={timezone} now={now} />
       <div className="sched-rail">
         <span className={`sched-dot ${quiet ? 'sched-dot-quiet' : ''}`} />
         <span className="sched-thread" />

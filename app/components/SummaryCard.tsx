@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, formatMoney, type RangeSummary, type TodayStats } from '../lib/api';
 import { copy } from '../lib/copy';
-import { IconCheck, IconDots } from './icons';
+import { IconAppointments, IconCheck, IconChevronRight, IconSettings, IconUserPlus, IconWallet } from './icons';
 
 /**
  * The at-a-glance card. Three interchangeable layouts because the useful
@@ -37,9 +37,10 @@ interface Figures {
   freeHours: number;
   done: number;
   toGo: number;
+  newCustomers: number;
 }
 
-function derive(stats: TodayStats): Figures {
+function derive(stats: TodayStats, newCustomers: number): Figures {
   const busyPct =
     stats.capacityMinutesToday > 0 ? Math.round((stats.bookedMinutesToday / stats.capacityMinutesToday) * 100) : 0;
   return {
@@ -49,6 +50,7 @@ function derive(stats: TodayStats): Figures {
     freeHours: Math.round(Math.max(stats.capacityMinutesToday - stats.bookedMinutesToday, 0) / 60),
     done: stats.completedToday,
     toGo: Math.max(stats.bookingsToday - stats.completedToday, 0),
+    newCustomers,
   };
 }
 
@@ -116,21 +118,17 @@ function Tiles({ f }: { f: Figures }) {
 function Progress({ f }: { f: Figures }) {
   const pct = f.bookings > 0 ? (f.done / f.bookings) * 100 : 0;
   return (
-    <>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, marginBottom: 11, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 25, fontWeight: 660 }}>{f.done}</span>
-        <span className="summary-cap">done ·</span>
-        <span style={{ fontSize: 25, fontWeight: 660 }}>{f.toGo}</span>
-        <span className="summary-cap">to go · of {f.bookings}</span>
+    <div className="summary-progress-layout">
+      <div className="summary-progress-hero">
+        <div className="summary-progress-line">{f.done} done · {f.toGo} to go</div>
+        <div className="summary-bar"><span style={{ width: `${pct}%` }} /></div>
       </div>
-      <div className="summary-bar">
-        <span style={{ width: `${pct}%` }} />
+      <div className="summary-metrics">
+        <div className="summary-metric metric-bookings"><span className="summary-metric-icon"><IconAppointments /></span><strong>{f.bookings}</strong><span>Total bookings</span></div>
+        <div className="summary-metric metric-customers"><span className="summary-metric-icon"><IconUserPlus /></span><strong>{f.newCustomers}</strong><span>New customers</span></div>
+        <div className="summary-metric metric-revenue"><span className="summary-metric-icon"><IconWallet /></span><strong>{f.earned}</strong><span>Revenue</span></div>
       </div>
-      <div className="summary-foot">
-        <span className="summary-cap">{f.earned} earned so far</span>
-        <span className="summary-cap">{f.freeHours}h still free</span>
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -305,7 +303,7 @@ function Thumb({ id }: { id: SummaryStyle }) {
   );
 }
 
-export function SummaryCard({ stats }: { stats: TodayStats }) {
+export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; newCustomers?: number }) {
   // Starts at the default and corrects after mount — reading localStorage
   // during render would produce different server and client markup.
   const [style, setStyle] = useState<SummaryStyle>(DEFAULT_STYLE);
@@ -316,7 +314,8 @@ export function SummaryCard({ stats }: { stats: TodayStats }) {
   const [rangeData, setRangeData] = useState<Partial<Record<'week' | 'month', RangeSummary>>>({});
   const [rangeLoading, setRangeLoading] = useState(false);
   const [rangeFailed, setRangeFailed] = useState(false);
-  const f = derive(stats);
+  const f = derive(stats, newCustomers);
+  const styleName = STYLE_OPTIONS.find((opt) => opt.id === style)?.name ?? '';
 
   useEffect(() => {
     setStyle(readStoredStyle());
@@ -346,24 +345,36 @@ export function SummaryCard({ stats }: { stats: TodayStats }) {
     <>
       <div className={`summary ${style === 'tiles' ? 'summary-light' : ''}`}>
         <div className="summary-head">
-          <div className="range-toggle">
-            <button type="button" className={range === 'today' ? 'active' : ''} onClick={() => selectRange('today')}>
-              {copy.home.rangeToday}
-            </button>
-            <button type="button" className={range === 'week' ? 'active' : ''} onClick={() => selectRange('week')}>
-              {copy.home.rangeWeek}
-            </button>
-            <button type="button" className={range === 'month' ? 'active' : ''} onClick={() => selectRange('month')}>
-              {copy.home.rangeMonth}
-            </button>
-          </div>
+          <button type="button" className="summary-style-btn" onClick={() => setPicking(true)}>
+            <span className="summary-style-label">{copy.home.summaryStyle}</span>
+            <span className="summary-style-value">
+              {styleName}
+              <IconChevronRight />
+            </span>
+          </button>
           <button
             type="button"
             className="summary-more"
             aria-label={copy.home.summaryStyle}
             onClick={() => setPicking(true)}
           >
-            <IconDots />
+            <IconSettings />
+          </button>
+        </div>
+
+        {/* The range toggle moved out of the primary header row (which now
+            leads with the style picker, to match the redesigned Home), but
+            Today/Week/Month is a real, separately-useful feature — kept as a
+            lighter secondary row rather than dropped. */}
+        <div className="range-toggle range-toggle-secondary">
+          <button type="button" className={range === 'today' ? 'active' : ''} onClick={() => selectRange('today')}>
+            {copy.home.rangeToday}
+          </button>
+          <button type="button" className={range === 'week' ? 'active' : ''} onClick={() => selectRange('week')}>
+            {copy.home.rangeWeek}
+          </button>
+          <button type="button" className={range === 'month' ? 'active' : ''} onClick={() => selectRange('month')}>
+            {copy.home.rangeMonth}
           </button>
         </div>
 

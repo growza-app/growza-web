@@ -41,6 +41,13 @@ export function formatDuration(totalMin: number): string {
   return `${h}h ${m}m`;
 }
 
+/** "in 25m", "in 2h 15m", "5m ago" — how far a booking's start time is from now. */
+export function relativeCountdown(startISO: string, now: Date): string {
+  const diffMin = Math.round((new Date(startISO).getTime() - now.getTime()) / 60000);
+  if (diffMin <= 0) return diffMin === 0 ? 'now' : `${formatDuration(Math.min(-diffMin, 24 * 60))} ago`;
+  return `in ${formatDuration(Math.min(diffMin, 24 * 60))}`;
+}
+
 /**
  * One booking the owner actually made — collapsing the per-service legs of a
  * combo/multi-service booking (same `bookingGroupId`) into a single item.
