@@ -57,6 +57,8 @@ export interface Appointment {
   reminderSent: boolean;
   /** Ties the legs of one combo/multi-service booking together — null for a plain single-service booking. */
   bookingGroupId: string | null;
+  /** The offer/combo package this booking came from, if any — present means it's a real combo, not just several services. */
+  offerTitle: string | null;
 }
 
 export interface TodayStats {

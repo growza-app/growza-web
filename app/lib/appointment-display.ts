@@ -65,7 +65,10 @@ export interface BookingGroup {
   createdVia: Appointment['createdVia'];
   reminderSent: boolean;
   priceMinor: number;
+  /** True when the booking has more than one service (grouped display). */
   isCombo: boolean;
+  /** The offer/combo package's name, if the customer booked one — null for plain (multi-)service bookings. This is what marks a booking as a real "combo". */
+  offerTitle: string | null;
 }
 
 function groupStatus(legs: Appointment[]): Appointment['status'] {
@@ -107,6 +110,7 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
       reminderSent: sorted.some((a) => a.reminderSent),
       priceMinor: sorted.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0),
       isCombo: sorted.length > 1,
+      offerTitle: sorted.find((a) => a.offerTitle)?.offerTitle ?? null,
     };
   });
 

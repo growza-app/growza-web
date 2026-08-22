@@ -1899,6 +1899,10 @@ input[type='date'] {
   margin-top: 2px;
 }
 
+.summary-combo {
+  margin-top: 7px;
+}
+
 .summary-section-label {
   padding: 14px 18px 4px;
   font-size: 12px;
@@ -3457,6 +3461,12 @@ input[type='date'] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Purple "🎁 <name>" pill that marks a booking as a real combo package (the
+   customer picked an offer), not just several services added together. */
+.booking-combo {
+  margin: 3px 0 1px;
 }
 
 /* Home stacks three sections (summary, today's schedule, chair timeline) and

@@ -76,7 +76,14 @@ export function BookingsList({
                       <span style={{ fontWeight: 620 }}>{b.customerName ?? 'Unknown'}</span>
                     </div>
                   </td>
-                  <td>{summarizeServices(b.serviceNames)}</td>
+                  <td>
+                    {b.offerTitle && (
+                      <div className="booking-combo">
+                        <span className="chip chip-combo">🎁 {b.offerTitle}</span>
+                      </div>
+                    )}
+                    {summarizeServices(b.serviceNames)}
+                  </td>
                   <td className="muted">{b.providerNames.join(', ') || '—'}</td>
                   <td>{formatMoney(String(b.priceMinor))}</td>
                   <td>
@@ -105,6 +112,11 @@ export function BookingsList({
                   <span className="booking-name-text">{b.customerName ?? 'Unknown'}</span>
                   <span className={`chip ${chip.cls}`}>{chip.text}</span>
                 </div>
+                {b.offerTitle && (
+                  <div className="booking-combo">
+                    <span className="chip chip-combo">🎁 {b.offerTitle}</span>
+                  </div>
+                )}
                 <div className="booking-sub">{summarizeServices(b.serviceNames)}</div>
                 {b.providerNames.length > 0 && <div className="booking-sub booking-staff">{b.providerNames.join(', ')}</div>}
               </div>

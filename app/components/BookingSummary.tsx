@@ -58,6 +58,11 @@ export function BookingSummary({
             <div className="summary-sub">
               Finished · {dateLine} · {formatTime(booking.startAt, timezone)} · {formatDuration(booking.totalMin)}
             </div>
+            {booking.offerTitle && (
+              <div className="summary-combo">
+                <span className="chip chip-combo">🎁 {booking.offerTitle}</span>
+              </div>
+            )}
           </div>
         </div>
 
