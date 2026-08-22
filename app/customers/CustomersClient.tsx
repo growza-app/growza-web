@@ -7,6 +7,7 @@ import {
   formatMoney,
   type Customer,
   type CustomerPage,
+  type CustomerSort,
   type CustomerStats,
   type CustomerStatusFilter,
 } from '../lib/api';
@@ -30,13 +31,25 @@ function isActive(c: Customer): boolean {
   return days <= ACTIVE_WINDOW_DAYS;
 }
 
+function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
+  if (s === 'active') return 'Active only';
+  if (s === 'inactive') return 'Inactive only';
+  return `Haven't visited in 30+ days`;
+}
+
 export function CustomersClient({
   initialStats,
   initialPage,
+  initialStatus,
+  initialSort,
   label,
 }: {
   initialStats: CustomerStats;
   initialPage: CustomerPage;
+  /** From the URL (?status=lapsed, e.g. the Home "Needs attention" deep link) — defaults to 'all'. */
+  initialStatus?: CustomerStatusFilter;
+  /** From the URL (?sort=spent) — defaults to 'recent'. */
+  initialSort?: CustomerSort;
   /** "Clients" for a salon, "Patients" for a clinic — from the vertical config. */
   label: string;
 }) {
@@ -45,7 +58,8 @@ export function CustomersClient({
   const [stats] = useState(initialStats);
   const [page, setPage] = useState(initialPage);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<CustomerStatusFilter>('all');
+  const [status, setStatus] = useState<CustomerStatusFilter>(initialStatus ?? 'all');
+  const [sort, setSort] = useState<CustomerSort>(initialSort ?? 'recent');
   const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -69,7 +83,7 @@ export function CustomersClient({
     // Debounced so typing a phone number doesn't fire a request per digit.
     const timer = setTimeout(() => {
       api
-        .customers({ search, status, limit: pageSize, offset: pageIndex * pageSize })
+        .customers({ search, status, sort, limit: pageSize, offset: pageIndex * pageSize })
         .then((r) => {
           if (!cancelled) setPage(r);
         })
@@ -81,10 +95,10 @@ export function CustomersClient({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [search, status, pageIndex, pageSize]);
+  }, [search, status, sort, pageIndex, pageSize]);
 
   const refresh = () => {
-    api.customers({ search, status, limit: pageSize, offset: pageIndex * pageSize }).then(setPage);
+    api.customers({ search, status, sort, limit: pageSize, offset: pageIndex * pageSize }).then(setPage);
     // Stats are server-rendered once; a full refresh is the honest way to
     // re-derive them rather than incrementing a local copy that could drift.
     window.location.reload();
@@ -154,22 +168,26 @@ export function CustomersClient({
             </label>
             <div className="dropdown-anchor">
               <button type="button" className="btn btn-ghost" onClick={() => setFilterOpen((v) => !v)}>
-                {status === 'all' ? 'Filter' : status === 'active' ? 'Active only' : 'Inactive only'} ⌄
+                {status === 'all' ? 'Filter' : statusLabel(status)} ⌄
               </button>
               {filterOpen && (
                 <div className="dropdown-panel dropdown-panel-sm" onMouseLeave={() => setFilterOpen(false)}>
-                  {(['all', 'active', 'inactive'] as CustomerStatusFilter[]).map((s) => (
+                  {(['all', 'active', 'inactive', 'lapsed'] as CustomerStatusFilter[]).map((s) => (
                     <button
                       key={s}
                       type="button"
                       className="dropdown-item dropdown-item-plain"
                       onClick={() => {
                         setStatus(s);
+                        // Lapsed is a win-back list — sort by lifetime spend so
+                        // the highest-value customers to call first sort to the
+                        // top. Any other filter goes back to most-recent-first.
+                        setSort(s === 'lapsed' ? 'spent' : 'recent');
                         setPageIndex(0);
                         setFilterOpen(false);
                       }}
                     >
-                      {s === 'all' ? `All ${lower}` : s === 'active' ? 'Active only' : 'Inactive only'}
+                      {s === 'all' ? `All ${lower}` : statusLabel(s)}
                     </button>
                   ))}
                 </div>

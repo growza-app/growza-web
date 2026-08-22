@@ -167,15 +167,25 @@ function BookingsChart({ buckets, trendPct }: { buckets: Array<{ label: string; 
 }
 
 export default async function DashboardPage() {
-  let stats: TodayStats, appointments: Appointment[], me, providers: Provider[], providerDay: ProviderDay | null = null;
+  let stats: TodayStats,
+    appointments: Appointment[],
+    me,
+    providers: Provider[],
+    lapsedCount: number,
+    providerDay: ProviderDay | null = null;
 
   try {
-    [stats, appointments, me, providers] = await Promise.all([
+    let lapsed;
+    [stats, appointments, me, providers, lapsed] = await Promise.all([
       api.todayStats(),
       api.appointments(),
       api.me(),
       api.providers(),
+      // Just the count for the attention card — the list itself lives on
+      // the Clients page (?status=lapsed&sort=spent), one click away.
+      api.customers({ status: 'lapsed', limit: 1 }),
     ]);
+    lapsedCount = lapsed.total;
     providerDay = await api.providerDay().catch(() => null);
   } catch {
     return (
@@ -214,7 +224,13 @@ export default async function DashboardPage() {
   const attention = [
     { label: 'Unconfirmed booking', value: Math.max(stats.bookingsToday - stats.completedToday - comingUp, 0), tone: 'amber', href: '/appointments', icon: <IconBell /> },
     { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments', icon: <IconCalendar /> },
-    { label: 'No-shows this week', value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
+    {
+      label: "Haven't visited in 30 days",
+      value: lapsedCount,
+      tone: 'violet',
+      href: '/customers?status=lapsed&sort=spent',
+      icon: <IconStaff />,
+    },
   ];
   // Real, derived-from-today's-appointments numbers — not a fabricated fill.
   // Both a "Total" (the whole day) and an "Upcoming" (only what's still
