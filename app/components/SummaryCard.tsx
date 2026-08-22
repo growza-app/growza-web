@@ -430,25 +430,27 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
           </button>
         </div>
 
-        {range === 'today' && style === 'ring' && <Ring f={f} />}
-        {range === 'today' && style === 'tiles' && <Tiles f={f} />}
-        {range === 'today' && style === 'progress' && <Progress f={f} />}
-        {range === 'today' && style === 'strip' && <Strip f={f} />}
+        <div className="summary-body">
+          {range === 'today' && style === 'ring' && <Ring f={f} />}
+          {range === 'today' && style === 'tiles' && <Tiles f={f} />}
+          {range === 'today' && style === 'progress' && <Progress f={f} />}
+          {range === 'today' && style === 'strip' && <Strip f={f} />}
 
-        {range !== 'today' && activeRangeData && style === 'ring' && <RingRange summary={activeRangeData} />}
-        {range !== 'today' && activeRangeData && style === 'tiles' && <TilesRange summary={activeRangeData} />}
-        {range !== 'today' && activeRangeData && style === 'progress' && <RangeBars summary={activeRangeData} />}
-        {range !== 'today' && activeRangeData && style === 'strip' && <StripRange summary={activeRangeData} />}
-        {range !== 'today' && !activeRangeData && rangeLoading && (
-          <div className="summary-cap" style={{ padding: '8px 0' }}>
-            Loading…
-          </div>
-        )}
-        {range !== 'today' && !activeRangeData && !rangeLoading && rangeFailed && (
-          <div className="summary-cap" style={{ padding: '8px 0' }}>
-            Couldn&apos;t load — tap {range === 'week' ? 'Week' : 'Month'} to try again.
-          </div>
-        )}
+          {range !== 'today' && activeRangeData && style === 'ring' && <RingRange summary={activeRangeData} />}
+          {range !== 'today' && activeRangeData && style === 'tiles' && <TilesRange summary={activeRangeData} />}
+          {range !== 'today' && activeRangeData && style === 'progress' && <RangeBars summary={activeRangeData} />}
+          {range !== 'today' && activeRangeData && style === 'strip' && <StripRange summary={activeRangeData} />}
+          {range !== 'today' && !activeRangeData && rangeLoading && (
+            <div className="summary-cap" style={{ padding: '8px 0' }}>
+              Loading…
+            </div>
+          )}
+          {range !== 'today' && !activeRangeData && !rangeLoading && rangeFailed && (
+            <div className="summary-cap" style={{ padding: '8px 0' }}>
+              Couldn&apos;t load — tap {range === 'week' ? 'Week' : 'Month'} to try again.
+            </div>
+          )}
+        </div>
       </div>
 
       {picking && (

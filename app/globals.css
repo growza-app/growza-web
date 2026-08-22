@@ -4842,6 +4842,23 @@ input[type='date'] {
   border-radius: 14px;
   box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03);
 }
+
+/* The 4 summary styles have genuinely different natural heights (Strip is a
+   dense single row; Progress/Ring carry a hero card) — without this the card
+   would resize every time the style is switched, and on desktop it would
+   drift out of alignment with the bookings-today chart card beside it,
+   which is a fixed height. Fixed to the tallest style's natural height
+   (187px, Progress/Ring) so nothing clips; shorter styles center inside it. */
+.summary-body { display: flex; flex-direction: column; justify-content: center; }
+/* Only from 1061px up — below that, .summary-progress-layout switches to a
+   stacked hero-above-metrics layout (see the 861-1060px rule further down)
+   that genuinely needs more than 187px; locking the height there would clip
+   real content instead of just leaving the chart card very slightly taller
+   in that one narrow range, which is the better trade-off. */
+@media (min-width: 1061px) {
+  .home-main .summary { height: 187px; display: flex; flex-direction: column; }
+  .summary-body { flex: 1; min-height: 0; overflow: hidden; }
+}
 /* The Today/Week/Month + "..." row is the card's first element now — no more
    separate "Summary style" header above it (removed per feedback: the "..."
    button already opens the same picker, so the header was a redundant

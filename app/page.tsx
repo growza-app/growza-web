@@ -214,7 +214,7 @@ export default async function DashboardPage() {
   const attention = [
     { label: 'Unconfirmed booking', value: Math.max(stats.bookingsToday - stats.completedToday - comingUp, 0), tone: 'amber', href: '/appointments', icon: <IconBell /> },
     { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments', icon: <IconCalendar /> },
-    { label: "Customers haven't visited", value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
+    { label: 'No-shows this week', value: stats.noShowsThisWeek, tone: 'violet', href: '/customers', icon: <IconStaff /> },
   ];
   // Real, derived-from-today's-appointments numbers — not a fabricated fill.
   // Both a "Total" (the whole day) and an "Upcoming" (only what's still
