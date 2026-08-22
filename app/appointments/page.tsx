@@ -54,7 +54,7 @@ export default async function AppointmentsPage({
     <>
       <PageHeader
         title={bookingsWord}
-        subtitle="Manage all your appointments in one place."
+        subtitle="All your appointments in one place."
         mobileSubtitle
         actions={
           <a className="icon-btn" href="/search" aria-label={copy.search.title}>
