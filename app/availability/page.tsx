@@ -52,7 +52,7 @@ export default async function AvailabilityPage({
 
       <div className="page-body">
         <div className="card">
-          <form method="get" className="filters">
+          <form method="get" className="filters filters-inline">
             {isBookingIntent && <input type="hidden" name="intent" value="book" />}
             <div className="field">
               <label htmlFor="serviceId">{copy.freeTimes.pickService}</label>

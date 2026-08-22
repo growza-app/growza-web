@@ -3920,6 +3920,45 @@ input[type='date'] {
   }
 }
 
+/* ---------- filter toolbar: slim single row, every page (desktop) ----------
+   Any form using .filters-inline (Bookings' day/staff filter, Free Times'
+   service/day filter, ...) collapses to ONE compact row: each label sits to
+   the LEFT of its control instead of stacked above it, and the (desktop-
+   redundant) weekday hint is dropped — the date field already shows the
+   date. ~56px instead of ~130px. Desktop only — mobile keeps the stacked,
+   full-width layout since fields need the width there. */
+@media (min-width: 861px) {
+  .filters-inline {
+    padding: 10px var(--sp-4);
+    align-items: center;
+    column-gap: var(--sp-4);
+    row-gap: 0;
+  }
+  .filters-inline .field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+  .filters-inline .field > label {
+    margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .filters-inline .field input,
+  .filters-inline .field select {
+    flex: 1;
+  }
+  .filters-inline .field-hint {
+    display: none;
+  }
+  .filters-inline .filters-show {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+}
+
 /* ---------- bookings page: fit-to-screen on desktop ----------
    The whole dashboard fits one screen with no page scroll. The filter, the KPI
    row, the section header, the pagination and the revenue bar all stay pinned;
@@ -3944,12 +3983,6 @@ input[type='date'] {
   .bk-fit .bk-sched-head {
     flex-shrink: 0;
     margin-bottom: var(--sp-2);
-  }
-
-  /* Compact filter: the schedule is the point of the page, so the day/staff
-     controls take as little height as possible. */
-  .page-body.bk-fit .filters {
-    padding: var(--sp-3) var(--sp-4) 22px;
   }
   .bk-fit .bk-scroll {
     flex: 1;
@@ -4009,29 +4042,6 @@ input[type='date'] {
   }
   .bk-fit .bk-card {
     padding: var(--sp-3) var(--sp-4);
-  }
-
-  /* Filter sits on one row: day + staff share the width and Show is a normal
-     button beside them, not a full-width bar eating the vertical space the
-     schedule needs. The day hint is taken out of flow so all three bottom-align. */
-  .filters-inline {
-    align-items: flex-end;
-    column-gap: var(--sp-3);
-    padding-bottom: 26px;
-  }
-  .filters-inline .field {
-    position: relative;
-    flex: 1 1 240px;
-  }
-  .filters-inline .field-hint {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 2px;
-    margin: 0;
-  }
-  .filters-inline .filters-show {
-    flex: 0 0 auto;
-    min-width: 132px;
   }
 }
 
