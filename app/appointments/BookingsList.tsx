@@ -120,7 +120,10 @@ export function BookingsList({
                 <div className="booking-sub">{summarizeServices(b.serviceNames)}</div>
                 {b.providerNames.length > 0 && <div className="booking-sub booking-staff">{b.providerNames.join(', ')}</div>}
               </div>
-              {b.status === 'confirmed' && callButton(b)}
+              {/* Always-present slot (empty for finished bookings) so the status
+                  chips above line up in one column whether or not there's a call
+                  button below them. */}
+              <div className="booking-call">{b.status === 'confirmed' ? callButton(b) : null}</div>
             </div>
           );
         })}
