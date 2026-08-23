@@ -82,16 +82,11 @@ function Ring({ f }: { f: Figures }) {
           <span className="summary-cap">busy</span>
         </div>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-          <span style={{ fontSize: 23, fontWeight: 660 }}>{f.bookings}</span>
-          <span className="summary-cap">booked</span>
-        </div>
-        <div className="summary-rule" />
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-          <span style={{ fontSize: 23, fontWeight: 660 }}>{f.earned}</span>
-          <span className="summary-cap">earned</span>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap', minWidth: 0 }}>
+        <span style={{ fontSize: 23, fontWeight: 660 }}>{f.bookings}</span>
+        <span className="summary-cap">booked ·</span>
+        <span style={{ fontSize: 23, fontWeight: 660 }}>{f.earned}</span>
+        <span className="summary-cap">earned</span>
       </div>
     </div>
   );
@@ -247,16 +242,11 @@ function RingRange({ summary }: { summary: RangeSummary }) {
             <span className="summary-cap">busy</span>
           </div>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-            <span style={{ fontSize: 23, fontWeight: 660 }}>{summary.bookings}</span>
-            <span className="summary-cap">booked</span>
-          </div>
-          <div className="summary-rule" />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-            <span style={{ fontSize: 23, fontWeight: 660 }}>{formatMoney(summary.revenueMinor)}</span>
-            <span className="summary-cap">earned</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap', minWidth: 0 }}>
+          <span style={{ fontSize: 23, fontWeight: 660 }}>{summary.bookings}</span>
+          <span className="summary-cap">booked ·</span>
+          <span style={{ fontSize: 23, fontWeight: 660 }}>{formatMoney(summary.revenueMinor)}</span>
+          <span className="summary-cap">earned</span>
         </div>
       </div>
       <div className="summary-cap" style={{ marginTop: 11 }}>
@@ -404,7 +394,7 @@ export function SummaryCard({ stats, newCustomers = 0 }: { stats: TodayStats; ne
 
   return (
     <>
-      <div className={`summary ${style === 'tiles' ? 'summary-light' : ''}`}>
+      <div className={`summary ${style === 'tiles' ? 'summary-light' : ''} ${range !== 'today' ? 'summary-range' : ''}`}>
         {/* No separate "Summary style" header — the "..." trigger at the end
             of this row already opens the same picker, so a second entry
             point just above it was redundant. */}

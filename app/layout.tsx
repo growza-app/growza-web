@@ -5,6 +5,7 @@ import { api } from './lib/api';
 import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
+import { LiveRefresh } from './components/LiveRefresh';
 
 export const metadata: Metadata = {
   title: 'Booking Dashboard',
@@ -45,6 +46,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="en">
       <body>
         <PwaRegister />
+        <LiveRefresh />
         <div className="shell">
           <Sidebar tenantName={tenantName} labels={labels} />
           <div className="content">

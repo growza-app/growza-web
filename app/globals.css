@@ -4900,6 +4900,15 @@ input[type='date'] {
 @media (min-width: 1061px) {
   .home-main .summary { height: 187px; display: flex; flex-direction: column; }
   .summary-body { flex: 1; min-height: 0; overflow: hidden; }
+  /* Week/Month carry extra content the Today view doesn't (a date-range
+     label, a vs-last-period line, a no-shows count) — every style's range
+     variant genuinely needs more than 187px, not just Ring's. Locking to
+     187px there clips real content (measured: 32-44px cut off, depending on
+     style) instead of just leaving the chart card slightly shorter in
+     comparison, which is the better trade-off — same reasoning already
+     applied to the 861-1060px case below. */
+  .home-main .summary.summary-range { height: auto; min-height: 187px; }
+  .home-main .summary.summary-range .summary-body { flex: none; overflow: visible; }
 }
 /* The Today/Week/Month + "..." row is the card's first element now — no more
    separate "Summary style" header above it (removed per feedback: the "..."
@@ -4921,7 +4930,12 @@ input[type='date'] {
 .summary-progress-hero .summary-bar { margin-top: 14px; background: rgba(255,255,255,.20); }
 .summary-progress-hero .summary-bar span { background: #20c568; }
 .summary-metrics { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; min-width: 0; }
-.summary-metric { min-width: 0; padding: 0 16px; display: flex; flex-direction: column; border-left: 1px solid #e6ece8; }
+/* align-items explicit, not the default 'normal' — a fixed-size child (the
+   icon circle, 42px/26px) and auto-width children (the number, the label)
+   can resolve 'normal' alignment inconsistently across engines. Centered so
+   the icon sits directly above the number/label regardless of how wide
+   either one is (₹23,131 vs 0). */
+.summary-metric { min-width: 0; padding: 0 16px; display: flex; flex-direction: column; align-items: center; text-align: center; border-left: 1px solid #e6ece8; }
 .summary-metric:first-child { border-left: 0; }
 .summary-metric-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; margin-bottom: 10px; }
 .summary-metric-icon svg { width: 22px; height: 22px; }
@@ -5020,7 +5034,7 @@ input[type='date'] {
   .home-greeting { font-size: 24px; line-height: 1.25; }
   .home-sub { font-size: 14px; margin-top: 5px; }
   .desktop-home-search { display: none; }.mobile-home-search { display: grid; margin-top: 5px; width: 48px; height: 48px; }.home-head .avatar-lg { width: 48px !important; height: 48px !important; margin-top: 5px; }
-  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { gap: 10px; }.summary-progress-hero { flex-basis: 132px; padding: 14px; }.summary-progress-line { font-size: 12.5px; }.summary-metrics { gap: 4px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 15px; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 10px; white-space: normal; line-height: 1.2; }
+  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 12.5px; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 15px; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 10px; white-space: normal; line-height: 1.2; }
   .attention-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; }
   .mobile-only-section { display: block; }
   /* .home-rail's own (unconditional, later-in-file) display:flex would
