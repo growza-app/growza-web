@@ -84,12 +84,22 @@ export interface BookingGroup {
   offerTitle: string | null;
 }
 
+/**
+ * A combo's legs can end up with genuinely different outcomes — e.g. the
+ * owner cancels just one service in a 4-service combo while the rest go
+ * on to no-show. Priority order, most-needs-attention first:
+ *   confirmed > no_show > cancelled > completed
+ * "completed" is only returned when every leg actually completed — it must
+ * be checked LAST, not used as a catch-all default, or a combo where
+ * nothing actually finished (e.g. 3 no-shows + 1 cancellation, no completed
+ * legs at all) reads as "Finished" when nothing was.
+ */
 function groupStatus(legs: Appointment[]): Appointment['status'] {
-  // If the legs disagree, the still-live one wins so the owner never loses the
-  // action (a half-completed combo still needs finishing); otherwise they match.
-  if (legs.some((a) => a.status === 'confirmed')) return 'confirmed';
-  const first = legs[0]!.status;
-  return legs.every((a) => a.status === first) ? first : 'completed';
+  const statuses = new Set(legs.map((a) => a.status));
+  if (statuses.has('confirmed')) return 'confirmed';
+  if (statuses.has('no_show')) return 'no_show';
+  if (statuses.has('cancelled')) return 'cancelled';
+  return 'completed';
 }
 
 export function groupBookings(appointments: Appointment[]): BookingGroup[] {
