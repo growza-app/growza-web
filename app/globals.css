@@ -4963,6 +4963,12 @@ input[type='date'] {
 .home-upcoming .sched-name { font-size: 15px; }
 .home-upcoming .sched-meta { font-size: 13px; }
 .home-upcoming .call { width: 42px; height: 42px; background: var(--surface); border: 1px solid var(--border); }
+/* .call-strong (the very next booking's highlighted call button) wants a
+   solid green circle + white icon, but the equal-specificity rule above
+   was winning on background (later in the file) while leaving color
+   untouched -- white icon, white circle, invisible. This has to come after
+   it to actually override the background for the strong variant. */
+.home-upcoming .call-strong { background: var(--accent); border-color: var(--accent); }
 
 .home-rail { display: flex; flex-direction: column; gap: 14px; }
 /* Same soft mint tint as the summary card above (.home-main .summary) — every
