@@ -223,7 +223,7 @@ export default async function DashboardPage() {
   );
   const attention = [
     { label: 'Unconfirmed booking', value: Math.max(stats.bookingsToday - stats.completedToday - comingUp, 0), tone: 'amber', href: '/appointments', icon: <IconBell /> },
-    { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments', icon: <IconCalendar /> },
+    { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments?status=cancelled', icon: <IconCalendar /> },
     {
       label: "Haven't visited in 30 days",
       value: lapsedCount,

@@ -7,12 +7,23 @@ import { BookingsList } from './BookingsList';
 export const dynamic = 'force-dynamic';
 
 /** The full "Bookings" list — one day at a time (the API is a day-range query, same as the dashboard's "today" list), optionally narrowed to one stylist. */
+const STATUS_LABEL: Record<string, string> = {
+  cancelled: 'Cancelled',
+  completed: 'Finished',
+  confirmed: 'Confirmed',
+  no_show: "Didn't come",
+};
+
 export default async function AppointmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; providerId?: string }>;
+  searchParams: Promise<{ date?: string; providerId?: string; status?: string }>;
 }) {
   const params = await searchParams;
+  // Deep-linked from Home's "Cancellation today" card (?status=cancelled) —
+  // validated against the real statuses so a stray query param is ignored
+  // rather than silently filtering everything out.
+  const status = params.status && params.status in STATUS_LABEL ? params.status : '';
 
   let me, providers;
   try {
@@ -35,7 +46,12 @@ export default async function AppointmentsPage({
   const date = params.date ?? todayISO;
   const providerId = params.providerId ?? '';
 
-  const appointments = await api.appointments(date, providerId || undefined).catch(() => [] as Appointment[]);
+  const dayAppointments = await api.appointments(date, providerId || undefined).catch(() => [] as Appointment[]);
+  // Filtered BEFORE reaching BookingsList, not after — so the KPI row,
+  // revenue bar, and "Today's schedule" all consistently reflect just the
+  // filtered slice, the same way the Staff filter already narrows the whole
+  // dataset server-side rather than just hiding rows client-side.
+  const appointments = status ? dayAppointments.filter((a) => a.status === status) : dayAppointments;
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
   const isToday = date === todayISO;
   const dayHint = new Intl.DateTimeFormat('en-IN', {
@@ -49,6 +65,10 @@ export default async function AppointmentsPage({
   const dayShort = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(
     new Date(`${date}T12:00:00`),
   );
+  const clearFilterParams = new URLSearchParams();
+  if (params.date) clearFilterParams.set('date', params.date);
+  if (providerId) clearFilterParams.set('providerId', providerId);
+  const clearFilterHref = `/appointments${clearFilterParams.toString() ? `?${clearFilterParams.toString()}` : ''}`;
 
   return (
     <>
@@ -89,9 +109,18 @@ export default async function AppointmentsPage({
           </form>
         </div>
 
+        {status && (
+          <div className="status-filter-banner">
+            <span>
+              Showing <strong>{STATUS_LABEL[status]}</strong> only
+            </span>
+            <a href={clearFilterHref}>Clear ✕</a>
+          </div>
+        )}
+
         {appointments.length === 0 ? (
           <div className="card">
-            <div className="empty">{copy.bookings.none}</div>
+            <div className="empty">{status ? `No ${STATUS_LABEL[status].toLowerCase()} bookings that day.` : copy.bookings.none}</div>
           </div>
         ) : (
           <BookingsList
