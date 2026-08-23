@@ -422,7 +422,16 @@ body {
   color: var(--amber);
 }
 
-.chip-cancelled,
+/* Deliberately different treatments, not a shared rule: a cancellation is
+   advance notice (the slot can be refilled, routine business), a no-show is
+   a wasted slot with zero warning — the one metric this whole reminders
+   engine exists to cut (see the north star in CLAUDE.md). No-show keeps the
+   alarming red; cancelled gets a neutral, unremarkable gray. */
+.chip-cancelled {
+  background: var(--slate-soft);
+  color: #6b6f6d;
+}
+
 .chip-no_show {
   background: #fde4e4;
   color: #b91c1c;
