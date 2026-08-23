@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { NotificationBell } from './NotificationBell';
 
 export function PageHeader({
   title,
@@ -21,6 +22,7 @@ export function PageHeader({
         {subtitle && <p>{subtitle}</p>}
       </div>
       {actions}
+      <NotificationBell />
       {initial && <div className="avatar-lg">{initial}</div>}
     </header>
   );

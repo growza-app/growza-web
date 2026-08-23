@@ -65,6 +65,15 @@ export interface Appointment {
   comboPriceMinor: string | null;
 }
 
+export interface ActivityEvent {
+  id: string;
+  topic: 'appointment.confirmed' | 'appointment.cancelled' | 'appointment.rescheduled';
+  createdAt: string;
+  customerName: string | null;
+  startAt: string;
+  serviceNames: string[];
+}
+
 export interface TodayStats {
   bookingsToday: number;
   bookingsYesterday: number;
@@ -314,6 +323,7 @@ export const api = {
   // browser ad/tracker blockers (this is fetched client-side, unlike
   // todayStats which runs server-side during SSR and never hits that filter).
   rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
+  notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
   providerDay: (providerId?: string) =>
     get<ProviderDay>(`/api/v1/provider-day${providerId ? `?providerId=${providerId}` : ''}`),
   availability: (serviceId: string, date: string, providerId = 'any') =>

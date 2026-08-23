@@ -1298,6 +1298,95 @@ input[type='date'] {
   height: 18px;
 }
 
+/* ---------- notification bell ---------- */
+
+.notif-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: #d84a3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notif-scrim { position: fixed; inset: 0; z-index: 40; background: transparent; }
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 41;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(18, 38, 29, 0.14);
+  overflow: hidden;
+}
+.notif-dropdown-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+}
+.notif-dropdown-actions { display: flex; align-items: center; gap: 10px; }
+.notif-mark-read { background: none; border: none; color: var(--accent-deep); font-size: 12.5px; font-weight: 620; cursor: pointer; padding: 0; }
+.notif-clear-all { background: none; border: none; color: var(--muted); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0; }
+.notif-empty { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.notif-list { max-height: 360px; overflow-y: auto; }
+.notif-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.notif-item:last-child { border-bottom: none; }
+.notif-item-unread { background: #f8fbf9; }
+.notif-icon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.notif-icon svg { width: 15px; height: 15px; }
+.notif-new { background: #dcf8e7; color: #16a34a; }
+.notif-cancel { background: #fde3e3; color: #c0362c; }
+.notif-reschedule { background: #fdf3e3; color: #8a5a10; }
+.notif-item-body { flex: 1; min-width: 0; }
+.notif-item-title { font-size: 13px; color: var(--text); }
+.notif-item-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+
+.notif-toast {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--sidebar);
+  border-radius: 12px;
+  padding: 12px 16px;
+  max-width: 340px;
+  box-shadow: 0 12px 32px rgba(18, 38, 29, 0.24);
+}
+.notif-toast-text { font-size: 13px; color: #fff; }
+
+@media (max-width: 860px) {
+  /* The bell sits close to the right edge of a mobile header (search + bell
+     + avatar all clustered there), so anchoring the dropdown's edge to the
+     bell's edge — fine on desktop — leaves it looking pinned to the left
+     with the bell buried in its corner. Centering on the screen instead
+     reads as deliberate rather than lopsided, and sidesteps having to know
+     exactly where the bell sits on every page's header. */
+  .notif-dropdown { position: fixed; top: var(--notif-mobile-top, 84px); left: 50%; right: auto; transform: translateX(-50%); width: min(320px, calc(100vw - 32px)); }
+  .notif-toast { top: auto; bottom: 78px; left: 16px; right: 16px; max-width: none; }
+}
+
 /* ---------- summary card ---------- */
 
 .summary {
@@ -4870,7 +4959,6 @@ input[type='date'] {
 }
 .home-search svg { width: 18px; color: var(--text); }
 .mobile-home-search { display: none; }
-.home-bell { width: 42px; height: 42px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: #ef4444; font-size: 14px; cursor: pointer; }
 
 /* The style picker is deliberately retained. This only changes how the
    selected Day progress summary is presented on the redesigned Home. A soft
@@ -5033,7 +5121,7 @@ input[type='date'] {
   .home-head { padding: 28px 24px 18px; align-items: flex-start; }
   .home-greeting { font-size: 24px; line-height: 1.25; }
   .home-sub { font-size: 14px; margin-top: 5px; }
-  .desktop-home-search { display: none; }.mobile-home-search { display: grid; margin-top: 5px; width: 48px; height: 48px; }.home-head .avatar-lg { width: 48px !important; height: 48px !important; margin-top: 5px; }
+  .desktop-home-search { display: none; }.mobile-home-search { display: grid; margin-top: 5px; width: 48px; height: 48px; }.home-head .avatar-lg { width: 48px !important; height: 48px !important; margin-top: 5px; }.home-head .notif-wrap { margin-top: 5px; }.home-head .notif-bell { width: 48px; height: 48px; }
   .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 12.5px; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 15px; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 10px; white-space: normal; line-height: 1.2; }
   .attention-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; }
   .mobile-only-section { display: block; }

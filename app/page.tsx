@@ -3,6 +3,7 @@ import { copy } from './lib/copy';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
 import { StaffCapacity } from './components/StaffCapacity';
+import { NotificationBell } from './components/NotificationBell';
 import {
   IconAnalytics,
   IconBell,
@@ -306,7 +307,7 @@ export default async function DashboardPage() {
           <span>Search anything...</span>
         </a>
         <a className="icon-btn mobile-home-search" href="/search" aria-label={copy.search.title}><IconSearch /></a>
-        <button className="home-bell desktop-only" type="button" aria-label="Notifications">●</button>
+        <NotificationBell />
         <div className="avatar-lg" style={{ width: 36, height: 36, fontSize: 14 }}>
           {(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
         </div>
