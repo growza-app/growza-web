@@ -1,38 +1,38 @@
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
-import { PaginatedTable } from '../components/PaginatedTable';
+import { StaffClient } from './StaffClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProvidersPage() {
-  const [me, providers] = await Promise.all([api.me(), api.providers()]);
+  let me, overview, services;
+  try {
+    [me, overview, services] = await Promise.all([api.me(), api.providersOverview(), api.services()]);
+  } catch {
+    return (
+      <>
+        <PageHeader title={copy.nav.staff} />
+        <div className="page-body">
+          <div className="banner">
+            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const staffWord = me.labels.providers ?? copy.nav.staff;
 
   return (
     <>
       <PageHeader
-        title={me.labels.providers ?? copy.nav.staff}
-        subtitle={copy.staff.subtitle(providers.length, me.capabilities.maxProviders)}
+        title={staffWord}
+        subtitle={`Manage your team and their availability. ${copy.staff.subtitle(overview.providers.length, me.capabilities.maxProviders)}`}
+        mobileSubtitle
       />
       <div className="page-body">
-        <div className="card">
-          <PaginatedTable
-            noun={(me.labels.providers ?? copy.nav.staff).toLowerCase()}
-            head={
-              <tr>
-                <th>{copy.staff.name}</th>
-                <th>{copy.staff.role}</th>
-              </tr>
-            }
-          >
-            {providers.map((p) => (
-              <tr key={p.id} data-row>
-                <td style={{ fontWeight: 620 }}>{p.displayName}</td>
-                <td className="muted">{p.title ?? '—'}</td>
-              </tr>
-            ))}
-          </PaginatedTable>
-        </div>
+        <StaffClient initialOverview={overview} services={services} staffWord={staffWord} />
       </div>
     </>
   );

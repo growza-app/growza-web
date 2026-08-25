@@ -619,7 +619,8 @@ input[type='text'],
 input[type='date'],
 input[type='search'],
 input[type='tel'],
-input[type='number'] {
+input[type='number'],
+textarea {
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -630,6 +631,10 @@ input[type='number'] {
   min-width: 180px;
   /* Tap targets stay comfortable on a phone-sized PWA window without over-zooming Safari (16px+ avoids its auto-zoom-on-focus). */
   min-height: 40px;
+}
+
+textarea {
+  min-height: 80px;
 }
 
 input[type='date'] {
@@ -646,10 +651,23 @@ input[type='date'] {
   font: inherit;
   font-weight: 620;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn:hover {
   background: var(--accent-deep);
+}
+
+/* An <svg> icon with no explicit width/height falls back to the browser's
+   default intrinsic size (defaults to ~300x150, which flex sizing here let
+   render at ~50px) — every icon+text button needs an explicit cap. */
+.btn svg,
+.btn-ghost svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .slot-grid {
@@ -2387,6 +2405,239 @@ input[type='date'] {
 .menu-row .chev {
   margin-left: auto;
   color: #c4ccc7;
+}
+
+/* ---------- settings ---------- */
+
+/* Dense throughout on purpose — with 4 groups and 13 rows, the hub is long
+   enough that "Log out" at the very bottom needs to stay reachable without
+   scrolling on an ordinary phone screen, not just on a tall one. Disabled
+   ("coming soon") rows drop their subtitle and shrink further still, since
+   they're not the primary thing anyone's here to tap. */
+.settings-header-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.settings-header-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.settings-header-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-header-name {
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.settings-header-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.settings-group + .settings-group {
+  margin-top: 9px;
+}
+
+.settings-group-title {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 4px 2px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 7px 14px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.settings-row + .settings-row {
+  border-top: 1px solid var(--border);
+}
+
+.settings-row:hover {
+  background: var(--page-bg);
+}
+
+.settings-row-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.settings-row-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.settings-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row-title {
+  font-size: 13.5px;
+  font-weight: 620;
+  line-height: 1.3;
+}
+
+/* Subtitles are dropped everywhere, not just on disabled rows — with 13
+   rows across 4 groups, a second line per row is what pushed "Log out" off
+   the bottom of an ordinary phone screen. The icon + title already say
+   enough; a chevron (or the "Coming soon" pill) carries the rest. */
+.settings-row-sub {
+  display: none;
+}
+
+.settings-row-chev {
+  margin-left: auto;
+  color: #c4ccc7;
+  flex-shrink: 0;
+}
+
+.settings-row-chev svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Rows the design names but nothing is built for yet (payments, WhatsApp
+   auto-replies, theming, real login) — shown, not hidden, but visibly inert
+   so tapping one can't look like a silent failure. No subtitle and tighter
+   padding: these aren't what anyone opens Settings to do, so they shouldn't
+   cost as much vertical space as the rows that actually work. */
+.settings-row-disabled {
+  cursor: default;
+  opacity: 0.55;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.settings-row-disabled:hover {
+  background: none;
+}
+
+.settings-row-disabled .settings-row-icon {
+  width: 22px;
+  height: 22px;
+  background: var(--page-bg);
+  color: var(--muted);
+}
+
+.settings-row-disabled .settings-row-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.settings-row-soon {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--muted);
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+/* Desktop: a persistent sub-nav pane beside the section content, so picking
+   a different section never re-loads the whole page. Mobile shows exactly
+   one of the two panes at a time via the hidden-on-mobile classes below —
+   the hub route shows the nav pane as the whole screen, any other settings
+   route shows only the content pane. */
+.settings-shell {
+  display: block;
+}
+
+.settings-nav-pane .card-head {
+  display: none;
+}
+
+.settings-back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-deep);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 620;
+  margin-bottom: 14px;
+}
+
+.settings-back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (min-width: 861px) {
+  .settings-shell {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 640px);
+    gap: 20px;
+    align-items: start;
+  }
+  .settings-nav-pane,
+  .settings-content-pane {
+    display: block !important;
+  }
+  .settings-back-link {
+    display: none;
+  }
+  /* Only the mobile hub screen opens with a business-summary card above the
+     grouped list — the desktop nav pane is narrow and persistent, and goes
+     straight into the section groups. */
+  .settings-header-card {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .settings-nav-pane-hidden-mobile,
+  .settings-content-pane-hidden-mobile {
+    display: none;
+  }
+}
+
+.settings-empty-state {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 /* ---------- mobile overrides ---------- */
@@ -5130,4 +5381,447 @@ input[type='date'] {
      specificity — same gotcha as elsewhere in this file: an override has to
      come after the rule it overrides. This one does. */
   .home-rail { display: none; }
+}
+
+/* ---------- staff ---------- */
+
+.staff-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.staff-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.staff-search-wrap svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.staff-search-wrap input[type='search'] {
+  width: 100%;
+  padding-left: 36px;
+}
+
+/* Fixed 3 columns, not auto-fit-by-minwidth — with only 3 tiles, "same line
+   on every screen size including mobile" needs a guaranteed 3-up grid, not
+   one that happens to fit 3 only above some breakpoint. */
+.staff-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Scoped to this grid, not the shared .tile rule (also used on Home) —
+   these read visibly smaller/denser than a KPI tile elsewhere in the app. */
+.staff-tiles .tile {
+  padding: 9px 8px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.staff-tiles .tile .value {
+  font-size: 17px;
+  margin: 3px 0 1px;
+}
+
+.staff-tiles .tile .label {
+  font-size: 10.5px;
+  line-height: 1.25;
+}
+
+.staff-tiles .tile .delta {
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-tile-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+
+.staff-tile-icon svg {
+  width: 10px;
+  height: 10px;
+}
+
+.staff-tile-icon.working { background: var(--accent-soft); color: var(--accent-deep); }
+.staff-tile-icon.total { background: var(--blue-soft); color: var(--blue); }
+.staff-tile-icon.top { background: #fdf0d5; color: #a5720a; }
+
+.staff-tile-top {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin: 0 0 -1px;
+  padding: 0 4px;
+  overflow-x: auto;
+}
+
+.staff-tab {
+  background: none;
+  border: none;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.staff-tab.active {
+  color: var(--accent-deep);
+  border-bottom-color: var(--accent-deep);
+}
+
+.staff-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.staff-row-name {
+  font-weight: 620;
+}
+
+.staff-row-phone {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 1px;
+}
+
+.staff-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 620;
+}
+
+.staff-status-dot::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.staff-status-working { color: var(--accent-deep); }
+.staff-status-off { color: var(--muted); }
+
+.staff-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.staff-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.staff-icon-btn:hover {
+  background: var(--page-bg);
+}
+
+.staff-icon-btn-positive {
+  color: var(--accent-deep);
+  border-color: var(--accent-soft);
+}
+
+.staff-icon-btn-positive:hover {
+  background: var(--accent-soft);
+}
+
+/* ---------- staff detail drawer ---------- */
+
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 30, 24, 0.28);
+  z-index: 70;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--surface);
+  z-index: 71;
+  overflow-y: auto;
+  box-shadow: -12px 0 32px rgba(18, 38, 29, 0.14);
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.drawer-head h2 {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0;
+}
+
+.drawer-body {
+  padding: 18px;
+}
+
+.staff-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.staff-profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.staff-profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.staff-profile-name {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.staff-profile-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13.5px;
+  margin-top: 3px;
+}
+
+.staff-profile-phone svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+.drawer-section-title {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 10px;
+}
+
+.drawer-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.drawer-section-title-row .drawer-section-title {
+  margin: 0;
+}
+
+.drawer-section + .drawer-section {
+  margin-top: 24px;
+}
+
+.skill-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--page-bg);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.skill-pill.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.skill-pill svg {
+  width: 13px;
+  height: 13px;
+}
+
+.weekday-hours-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.weekday-hours-row:first-of-type {
+  border-top: none;
+}
+
+.weekday-hours-row-disabled {
+  opacity: 0.55;
+}
+
+.weekday-hours-row-disabled .weekday-hours-inputs input[type='time'] {
+  cursor: not-allowed;
+}
+
+.weekday-hours-label {
+  width: 40px;
+  flex-shrink: 0;
+  font-size: 13.5px;
+  font-weight: 620;
+}
+
+.weekday-hours-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.weekday-hours-inputs input[type='time'] {
+  min-width: 0;
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.weekday-hours-off {
+  color: var(--muted);
+  font-size: 13px;
+  flex: 1;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.schedule-row:first-of-type {
+  border-top: none;
+}
+
+.schedule-time {
+  width: 62px;
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 620;
+  color: var(--muted);
+}
+
+.schedule-label {
+  flex: 1;
+  font-size: 13.5px;
+}
+
+.drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+}
+
+/* Forces the error/saved banner onto its own row above the button row, in
+   the same sticky flex container — see StaffDetailPanel's single save bar. */
+.drawer-actions-banner {
+  flex-basis: 100%;
+}
+
+.drawer-actions .btn,
+.drawer-actions .btn-ghost {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .drawer { width: 100vw; }
 }

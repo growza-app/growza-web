@@ -9,6 +9,7 @@ import {
   IconDashboard,
   IconOffers,
   IconServices,
+  IconSettings,
   IconStaff,
   IconUserPlus,
 } from './icons';
@@ -24,8 +25,8 @@ import {
 export function Sidebar({ tenantName, labels }: { tenantName: string; labels: Record<string, string> }) {
   const pathname = usePathname();
 
-  // Only routes that exist. Calendar and Settings are in the design but have
-  // no page yet — listing them here would be a link to a 404.
+  // Only routes that exist. Calendar is still in the design but has no page
+  // yet — listing it here would be a link to a 404.
   const items = [
     { href: '/', label: copy.nav.dashboard, icon: <IconDashboard /> },
     { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconAppointments /> },
@@ -35,6 +36,7 @@ export function Sidebar({ tenantName, labels }: { tenantName: string; labels: Re
     { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
     { href: '/try-whatsapp', label: copy.nav.tryWhatsApp, icon: <IconChat /> },
+    { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },
   ];
 
   return (

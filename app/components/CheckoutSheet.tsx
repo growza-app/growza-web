@@ -42,6 +42,41 @@ function minorToRupees(minor: string | null): string {
   return String(Number(minor) / 100);
 }
 
+/**
+ * A combo booking's legs (offerTitle set) share one discounted
+ * comboPriceMinor rather than each having its own price — this splits it
+ * proportionally by each leg's own list price, so the per-row defaults sum
+ * exactly to the combo price (any rounding remainder lands on the last
+ * leg). A non-combo leg booked alongside a combo (e.g. a walk-in add-on)
+ * keeps its own list price, untouched. Mirrors the subtotal-minus-savings
+ * total already shown in BookingsList.tsx / BookingSummary.tsx — this just
+ * distributes that same discount across editable per-row amounts instead
+ * of collapsing it into one total.
+ */
+function splitComboDefaults(legs: Appointment[]): Map<string, number> {
+  const defaults = new Map<string, number>();
+  const comboLegs = legs.filter((a) => a.offerTitle && a.comboPriceMinor);
+  if (comboLegs.length > 0) {
+    const comboPriceMinor = Number(comboLegs[0]!.comboPriceMinor);
+    const comboListTotal = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
+    let allocated = 0;
+    comboLegs.forEach((leg, i) => {
+      const share =
+        i === comboLegs.length - 1
+          ? comboPriceMinor - allocated
+          : comboListTotal > 0
+            ? Math.round((Number(leg.priceMinor ?? 0) / comboListTotal) * comboPriceMinor)
+            : 0;
+      if (i < comboLegs.length - 1) allocated += share;
+      defaults.set(leg.id, share);
+    });
+  }
+  for (const leg of legs) {
+    if (!defaults.has(leg.id)) defaults.set(leg.id, Number(leg.priceMinor ?? 0));
+  }
+  return defaults;
+}
+
 const PAYMENT_MODES: Array<{ value: PaymentMode; label: string }> = [
   { value: 'cash', label: 'Cash' },
   { value: 'card', label: 'Card' },
@@ -164,22 +199,24 @@ export function CheckoutSheet({
   onClose: () => void;
 }) {
   const router = useRouter();
-  // Pre-filled from the booked service's list price and its own provider —
-  // the common case (paid exactly what's listed, same stylist) needs zero
-  // typing. Staff only change what's actually different.
-  const [amount, setAmount] = useState(() => minorToRupees(appointment.priceMinor));
+  // Pre-filled from the booked service's list price (or its share of the
+  // combo price, if this booking is a combo — see splitComboDefaults) and
+  // its own provider — the common case (paid exactly what was quoted, same
+  // stylist) needs zero typing. Staff only change what's actually different.
+  const comboDefaultsMinor = splitComboDefaults([appointment, ...groupMembers]);
+  const [amount, setAmount] = useState(() => minorToRupees(String(comboDefaultsMinor.get(appointment.id))));
   const [providerId, setProviderId] = useState(appointment.providerId ?? '');
   // The customer changed their mind at the desk and never got the originally
   // booked service at all — it gets cancelled (not completed) on save,
   // rather than assumed to have happened.
   const [originalRemoved, setOriginalRemoved] = useState(false);
-  // The combo's other booked services — pre-filled from their own list price and
-  // provider, so completing the whole booking is zero-typing in the common case.
+  // The combo's other booked services — pre-filled the same combo-aware way,
+  // so completing the whole booking is zero-typing in the common case.
   const [members, setMembers] = useState<MemberRow[]>(() =>
     groupMembers.map((m) => ({
       appointmentId: m.id,
       serviceName: m.serviceName,
-      paidAmountMinor: minorToRupees(m.priceMinor),
+      paidAmountMinor: minorToRupees(String(comboDefaultsMinor.get(m.id))),
       schedulableId: m.providerId ?? '',
     })),
   );

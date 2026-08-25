@@ -211,10 +211,65 @@ export const IconEdit = () => (
   </svg>
 );
 
+/** "No entry" glyph — used to mark someone unavailable for today. */
+export const IconBan = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m5.5 5.5 13 13" />
+  </svg>
+);
+
 export const IconTrash = () => (
   <svg {...base}>
     <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
     <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" />
     <path d="M10 11v6M14 11v6" />
+  </svg>
+);
+
+export const IconShop = () => (
+  <svg {...base}>
+    <path d="M3 9l1.5-5h15L21 9" />
+    <path d="M3 9a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0" />
+    <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" />
+    <path d="M10 20v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" />
+  </svg>
+);
+
+export const IconShield = () => (
+  <svg {...base}>
+    <path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3Z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
+export const IconPalette = () => (
+  <svg {...base}>
+    <path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2a2 2 0 0 1 2-2h1.5A3.5 3.5 0 0 0 21 13.5c0-5.8-4.2-10.5-9-10.5Z" />
+    <circle cx="7.5" cy="12" r="1.3" />
+    <circle cx="9" cy="8" r="1.3" />
+    <circle cx="14" cy="7.5" r="1.3" />
+    <circle cx="17" cy="11" r="1.3" />
+  </svg>
+);
+
+export const IconLock = () => (
+  <svg {...base}>
+    <rect x="4" y="11" width="16" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </svg>
+);
+
+export const IconStar = () => (
+  <svg {...base}>
+    <path d="m12 3 2.6 5.7 6.2.6-4.7 4.2 1.4 6.1L12 16.6l-5.5 3 1.4-6.1-4.7-4.2 6.2-.6Z" />
+  </svg>
+);
+
+export const IconLogout = () => (
+  <svg {...base}>
+    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+    <path d="M10 17l5-5-5-5" />
+    <path d="M15 12H3" />
   </svg>
 );

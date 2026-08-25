@@ -1,7 +1,7 @@
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconChevronRight, IconServices, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconChevronRight, IconServices, IconSettings, IconStaff } from '../components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +20,13 @@ export default async function MorePage() {
   }
 
   // Offers is a tab of its own, so it is deliberately not repeated here.
-  // Settings and Calendar have no page yet — listing them would be a dead link.
+  // Calendar has no page yet — listing it would be a dead link.
   const items = [
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
     { href: '/try-whatsapp', label: copy.nav.tryWhatsApp, icon: <IconChat /> },
+    { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },
   ];
 
   return (

@@ -38,6 +38,48 @@ export interface Provider {
   sortOrder: number | null;
 }
 
+export interface ProviderOverviewRow {
+  id: string;
+  displayName: string;
+  title: string | null;
+  phone: string | null;
+  email: string | null;
+  active: boolean;
+  sortOrder: number | null;
+  todayBookings: number;
+  workingHoursTodayStart: string | null;
+  workingHoursTodayEnd: string | null;
+  /** Manual "called in sick" override for today only — takes precedence over the working-hours schedule above. */
+  unavailableToday: boolean;
+}
+
+export interface ProvidersOverview {
+  providers: ProviderOverviewRow[];
+  topPerformer: { id: string; displayName: string; bookingsCount: number } | null;
+}
+
+export interface ProviderWorkingHourRow {
+  weekday: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ProviderDetail {
+  id: string;
+  displayName: string;
+  title: string | null;
+  phone: string | null;
+  email: string | null;
+  bio: string | null;
+  languages: string | null;
+  hiredAt: string | null;
+  active: boolean;
+  /** True when workingHours below is a synced copy of the organization's default hours rather than this provider's own — the drawer shows it read-only. */
+  usesOrgHours: boolean;
+  workingHours: ProviderWorkingHourRow[];
+  serviceIds: string[];
+}
+
 export interface Appointment {
   id: string;
   startAt: string;
@@ -63,6 +105,28 @@ export interface Appointment {
   offerTitle: string | null;
   /** The combo package's special price — shown against the combo services' list prices to reveal the discount. */
   comboPriceMinor: string | null;
+}
+
+export interface SettingsSummary {
+  tenant: {
+    id: string;
+    name: string;
+    timezone: string;
+    phone: string;
+    email: string;
+    description: string;
+    logoUrl: string | null;
+  };
+  location: { id: string; name: string; timezone: string | null; addressLine1: string; addressCity: string } | null;
+  booking: {
+    slotGranularityMin: number;
+    slotPolicy: 'fixed_grid' | 'gap_packed';
+    minNoticeMin: number;
+    bookingHorizonDays: number;
+    cancellationCutoffMin: number;
+  };
+  reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>;
+  workingHours: Array<{ weekday: number; startTime: string; endTime: string }>;
 }
 
 export interface ActivityEvent {
@@ -324,8 +388,64 @@ export const api = {
   // todayStats which runs server-side during SSR and never hits that filter).
   rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
   notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
-  providerDay: (providerId?: string) =>
-    get<ProviderDay>(`/api/v1/provider-day${providerId ? `?providerId=${providerId}` : ''}`),
+  settings: () => get<SettingsSummary>('/api/v1/settings'),
+  updateProfile: (body: {
+    name?: string;
+    timezone?: string;
+    phone?: string;
+    email?: string;
+    description?: string;
+    locationName?: string;
+    addressLine1?: string;
+    addressCity?: string;
+  }) => patch<SettingsSummary>('/api/v1/settings/profile', body),
+  uploadBusinessLogo: (file: File) => uploadFile<SettingsSummary>('/api/v1/settings/logo', 'logo', file),
+  updateBookingRules: (body: {
+    slotGranularityMin?: number;
+    slotPolicy?: 'fixed_grid' | 'gap_packed';
+    minNoticeMin?: number;
+    bookingHorizonDays?: number;
+    cancellationCutoffMin?: number;
+  }) => patch<SettingsSummary>('/api/v1/settings/booking', body),
+  updateReminders: (reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>) =>
+    patch<SettingsSummary>('/api/v1/settings/reminders', { reminderRules }),
+  updateOrgWorkingHours: (workingHours: Array<{ weekday: number; startTime: string; endTime: string }>) =>
+    patch<SettingsSummary>('/api/v1/settings/working-hours', { workingHours }),
+  providerDay: (providerId?: string, date?: string) =>
+    get<ProviderDay>(
+      `/api/v1/provider-day${providerId || date ? `?${new URLSearchParams({ ...(providerId ? { providerId } : {}), ...(date ? { date } : {}) })}` : ''}`,
+    ),
+  providersOverview: () => get<ProvidersOverview>('/api/v1/providers/overview'),
+  providerDetail: (id: string) => get<ProviderDetail>(`/api/v1/providers/${id}`),
+  createProvider: (body: {
+    displayName: string;
+    phone: string;
+    title?: string | null;
+    email?: string | null;
+    bio?: string | null;
+    languages?: string | null;
+    hiredAt?: string | null;
+  }) => post<ProviderDetail>('/api/v1/providers', body),
+  updateProviderProfile: (
+    id: string,
+    body: {
+      displayName?: string;
+      title?: string | null;
+      phone?: string | null;
+      email?: string | null;
+      bio?: string | null;
+      languages?: string | null;
+      hiredAt?: string | null;
+      active?: boolean;
+      usesOrgHours?: boolean;
+    },
+  ) => patch<ProviderDetail>(`/api/v1/providers/${id}`, body),
+  updateProviderWorkingHours: (id: string, workingHours: ProviderWorkingHourRow[]) =>
+    patch<{ workingHours: ProviderWorkingHourRow[] }>(`/api/v1/providers/${id}/working-hours`, { workingHours }),
+  setProviderAvailabilityToday: (id: string, unavailableToday: boolean) =>
+    patch<{ unavailableToday: boolean }>(`/api/v1/providers/${id}/availability-today`, { unavailableToday }),
+  updateProviderServices: (id: string, serviceIds: string[]) =>
+    patch<{ serviceIds: string[] }>(`/api/v1/providers/${id}/services`, { serviceIds }),
   availability: (serviceId: string, date: string, providerId = 'any') =>
     get<AvailabilityResponse>(`/api/v1/availability?serviceId=${serviceId}&date=${date}&providerId=${providerId}`),
   createHold: (serviceId: string, startAt: string, providerId?: string) =>
