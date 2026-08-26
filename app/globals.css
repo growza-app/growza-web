@@ -6714,3 +6714,27 @@ select:focus-visible {
 .btn-danger-solid:hover:not(:disabled) {
   background: #991b1b;
 }
+
+/* ---------- services catalogue ---------- */
+
+/* Says a photo is missing, rather than showing an identical grey block whether
+   one exists or not. */
+.svc-photo-empty {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed #c9cfc6;
+  border-radius: 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* A retired service still shows in the catalogue so it can be restored — muted
+   so it never reads as bookable. */
+tr.is-retired td {
+  opacity: 0.6;
+}

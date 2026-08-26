@@ -31,6 +31,28 @@ export interface Service {
   imageUrl: string | null;
 }
 
+/** A catalogue row as the Services screen edits it — Service plus the fields booking flows never need. */
+export interface ServiceAdmin extends Service {
+  categoryId: string | null;
+  active: boolean;
+}
+
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  serviceCount: number;
+}
+
+export interface ServiceInput {
+  name: string;
+  categoryId?: string | null;
+  durationMin: number;
+  bufferBeforeMin?: number;
+  bufferAfterMin?: number;
+  priceMinor?: number | null;
+  active?: boolean;
+}
+
 export interface Provider {
   id: string;
   displayName: string;
@@ -431,6 +453,11 @@ export const api = {
     get<ProviderDay>(
       `/api/v1/provider-day${providerId || date ? `?${new URLSearchParams({ ...(providerId ? { providerId } : {}), ...(date ? { date } : {}) })}` : ''}`,
     ),
+  allServices: () => get<ServiceAdmin[]>('/api/v1/services/all'),
+  serviceCategories: () => get<ServiceCategory[]>('/api/v1/service-categories'),
+  createService: (body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', body),
+  updateService: (id: string, body: Partial<ServiceInput>) => patch<ServiceAdmin>(`/api/v1/services/${id}`, body),
+  serviceUsage: (id: string) => get<{ bookings: number; providers: number; offers: number }>(`/api/v1/services/${id}/usage`),
   providersOverview: () => get<ProvidersOverview>('/api/v1/providers/overview'),
   providerDetail: (id: string) => get<ProviderDetail>(`/api/v1/providers/${id}`),
   providerStats: (id: string) => get<ProviderStats>(`/api/v1/providers/${id}/stats`),
