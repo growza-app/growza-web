@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { formatPhone, formatRecency, isLapsed } from '../lib/validate';
+import { clientRecency, formatPhone, formatRecency, type ClientRecency } from '../lib/validate';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -28,6 +28,17 @@ function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
   if (s === 'active') return 'Active only';
   if (s === 'inactive') return 'Inactive only';
   return `Haven't visited in 30+ days`;
+}
+
+/**
+ * Chips only where they say something. "Active" on every row was the original
+ * sin here; a client seen last week needs no chip at all, and a client who has
+ * never booked is neither lapsed nor inactive — there is nothing to win back.
+ */
+function recencyChip(state: ClientRecency) {
+  if (state === 'lapsed') return <span className="chip chip-lapsed">Lapsed</span>;
+  if (state === 'inactive') return <span className="chip chip-completed">Inactive</span>;
+  return null;
 }
 
 export function CustomersClient({
@@ -108,7 +119,7 @@ export function CustomersClient({
       c.lastServiceName ?? '',
       String(c.totalBookings),
       formatMoney(c.totalSpentMinor),
-      formatRecency(c.lastBookingAt) + (isLapsed(c.lastBookingAt) ? ' (lapsed)' : ''),
+      `${formatRecency(c.lastBookingAt)} (${clientRecency(c.lastBookingAt)})`,
     ]);
     const csv = [header, ...rows]
       .map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
@@ -242,7 +253,7 @@ export function CustomersClient({
                         <td>
                           <div className="cust-recency">
                             <span>{formatRecency(c.lastBookingAt)}</span>
-                            {isLapsed(c.lastBookingAt) && <span className="chip chip-lapsed">Lapsed</span>}
+                            {recencyChip(clientRecency(c.lastBookingAt))}
                           </div>
                         </td>
                       </tr>
@@ -259,7 +270,7 @@ export function CustomersClient({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="cust-card-name">
                           {c.name ?? 'Unnamed'}
-                          {isLapsed(c.lastBookingAt) && <span className="chip chip-lapsed">Lapsed</span>}
+                          {recencyChip(clientRecency(c.lastBookingAt))}
                         </div>
                         <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
                           <IconWhatsApp />

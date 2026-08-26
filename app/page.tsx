@@ -226,7 +226,11 @@ export default async function DashboardPage() {
     { label: 'Unconfirmed booking', value: Math.max(stats.bookingsToday - stats.completedToday - comingUp, 0), tone: 'amber', href: '/appointments', icon: <IconBell /> },
     { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments?status=cancelled', icon: <IconCalendar /> },
     {
-      label: "Haven't visited in 30 days",
+      // The backing filter is the win-back segment: last visit 30-89 days ago,
+      // deliberately bounded so it stays distinct from Inactive. The old label
+      // ("Haven't visited in 30 days") promised 30-or-more, so a client gone
+      // six months was missing from a card that appeared to count them.
+      label: 'Slipping away · 30-90 days',
       value: lapsedCount,
       tone: 'violet',
       href: '/customers?status=lapsed&sort=spent',
@@ -335,7 +339,13 @@ export default async function DashboardPage() {
             </section>
 
             <section className="home-section home-upcoming">
-              <div className="home-section-head"><h2>Up next</h2><a href="/appointments">See all ({countBookings(appointments)})</a></div>
+              {/* DaySchedule renders the WHOLE day, past entries included, so
+                  "Up next" was labelling a booking that started three hours
+                  ago. Filtering to future-only would hide work that has
+                  happened but not been marked done — which is exactly what the
+                  owner still needs to action — so the heading is what changes,
+                  matching the Bookings page's own wording. */}
+              <div className="home-section-head"><h2>{copy.today.heading(me.labels.appointment_plural ?? 'bookings')}</h2><a href="/appointments">See all ({countBookings(appointments)})</a></div>
               <DaySchedule appointments={appointments} timezone={timezone} nowISO={now.toISOString()} />
             </section>
 

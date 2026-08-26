@@ -91,10 +91,25 @@ export function formatRecency(iso: string | null | undefined, now: Date = new Da
   return `${years} ${years === 1 ? 'year' : 'years'} ago`;
 }
 
-/** A client nobody has seen in this many days reads as lapsed, not merely inactive. */
-export const LAPSED_AFTER_DAYS = 60;
+/**
+ * Client recency segments — deliberately the SAME boundaries the backend
+ * filter uses (`CustomerStatusFilter`, src/modules/customer/repository.ts), so
+ * a row chipped "Lapsed" here is exactly a row `?status=lapsed` would return.
+ *
+ * The backend bounds Lapsed at 30-89 days on purpose: "recently slipped,
+ * worth a nudge", as distinct from Inactive ("gone, unclear if they're coming
+ * back"). Someone who has never booked qualifies as neither — there is
+ * nothing to win back.
+ */
+export const LAPSED_MIN_DAYS = 30;
+export const ACTIVE_WINDOW_DAYS = 90;
 
-export function isLapsed(iso: string | null | undefined, now: Date = new Date()): boolean {
-  if (!iso) return true;
-  return (now.getTime() - new Date(iso).getTime()) / 86_400_000 > LAPSED_AFTER_DAYS;
+export type ClientRecency = 'never' | 'active' | 'lapsed' | 'inactive';
+
+export function clientRecency(iso: string | null | undefined, now: Date = new Date()): ClientRecency {
+  if (!iso) return 'never';
+  const days = (now.getTime() - new Date(iso).getTime()) / 86_400_000;
+  if (days < LAPSED_MIN_DAYS) return 'active';
+  if (days < ACTIVE_WINDOW_DAYS) return 'lapsed';
+  return 'inactive';
 }
