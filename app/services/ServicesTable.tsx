@@ -9,6 +9,7 @@ import { PaginatedTable } from '../components/PaginatedTable';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconEdit, IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
+import { ImportServices } from './ImportServices';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -36,6 +37,7 @@ export function ServicesTable({
   const [categoryId, setCategoryId] = useState<string | 'all'>('all');
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -146,6 +148,9 @@ export function ServicesTable({
       <div className="staff-toolbar">
         <button type="button" className="btn" onClick={() => setCreating(true)}>
           <IconPlus /> Add service
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={() => setImporting(true)}>
+          Import price list
         </button>
         <div className="staff-search-wrap">
           <IconSearch />
@@ -283,6 +288,18 @@ export function ServicesTable({
             replace(saved);
             setCreating(false);
             setEditing(null);
+          }}
+        />
+      )}
+
+      {importing && (
+        <ImportServices
+          existing={services}
+          onClose={() => setImporting(false)}
+          onImported={async () => {
+            setImporting(false);
+            setServices(await api.allServices());
+            router.refresh();
           }}
         />
       )}

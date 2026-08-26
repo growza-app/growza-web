@@ -43,6 +43,16 @@ export interface ServiceCategory {
   serviceCount: number;
 }
 
+export interface ServiceImportItem {
+  mode: 'create' | 'updatePrice';
+  existingId?: string;
+  name: string;
+  categoryName?: string | null;
+  durationMin: number;
+  bufferAfterMin?: number;
+  priceMinor?: number | null;
+}
+
 export interface ServiceInput {
   name: string;
   categoryId?: string | null;
@@ -457,6 +467,8 @@ export const api = {
   serviceCategories: () => get<ServiceCategory[]>('/api/v1/service-categories'),
   createService: (body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', body),
   updateService: (id: string, body: Partial<ServiceInput>) => patch<ServiceAdmin>(`/api/v1/services/${id}`, body),
+  parseServiceSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/services/import/parse', 'file', file),
+  importServices: (items: ServiceImportItem[]) => post<{ created: number; repriced: number }>('/api/v1/services/import', { items }),
   serviceUsage: (id: string) => get<{ bookings: number; providers: number; offers: number }>(`/api/v1/services/${id}/usage`),
   providersOverview: () => get<ProvidersOverview>('/api/v1/providers/overview'),
   providerDetail: (id: string) => get<ProviderDetail>(`/api/v1/providers/${id}`),

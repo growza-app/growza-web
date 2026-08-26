@@ -6738,3 +6738,109 @@ select:focus-visible {
 tr.is-retired td {
   opacity: 0.6;
 }
+
+/* Photo picker inside the add/edit service form. */
+.svc-photo-field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.svc-photo-preview,
+.svc-photo-empty-lg {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.svc-photo-empty-lg {
+  font-size: 11px;
+}
+
+/* ---------- price-list import ---------- */
+
+.import-modal {
+  max-width: 720px;
+}
+
+.import-map {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.import-map select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Scrolls inside the modal so the actions stay reachable on a long list. */
+.import-review {
+  max-height: 46vh;
+  overflow-y: auto;
+  margin-top: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.import-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 74px 88px minmax(0, 1.6fr) auto;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.import-row:last-child {
+  border-bottom: none;
+}
+
+.import-row input {
+  min-width: 0;
+  width: 100%;
+  font-size: 13.5px;
+  min-height: 34px;
+  padding: 5px 9px;
+}
+
+/* Amber, not red — a row that needs a value is unfinished, not broken. */
+.import-row.is-bad {
+  background: var(--amber-soft);
+}
+
+.import-row.is-skipped {
+  opacity: 0.45;
+}
+
+.import-issue {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.import-note {
+  font-size: 12.5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 860px) {
+  .import-map {
+    grid-template-columns: 1fr;
+  }
+
+  .import-row {
+    grid-template-columns: minmax(0, 1fr) 64px 74px;
+    row-gap: 6px;
+  }
+
+  .import-note,
+  .import-row > button {
+    grid-column: 1 / -1;
+  }
+}

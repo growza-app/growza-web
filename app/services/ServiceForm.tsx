@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategory } from '../lib/api';
+import { servicePhotoUrl } from '../lib/service-photos';
 
 /** Rupees in the form, paise in the database — converted at this boundary only. */
 function toMinor(rupees: string): number | null {
@@ -42,6 +43,13 @@ export function ServiceForm({
   const [bufferAfterMin, setBufferAfterMin] = useState(String(service?.bufferAfterMin ?? 0));
   const [price, setPrice] = useState(fromMinor(service?.priceMinor ?? null));
 
+  // Held until save. On create there is no service id to attach a photo to
+  // yet, so the file is uploaded straight after the record exists — the owner
+  // still only presses one button.
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState(service?.imageUrl ?? null);
+  const photoRef = useRef<HTMLInputElement>(null);
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; duration?: string; price?: string }>({});
@@ -75,7 +83,11 @@ export function ServiceForm({
       priceMinor: toMinor(price),
     };
     try {
-      const saved = service ? await api.updateService(service.id, payload) : await api.createService(payload);
+      let saved = service ? await api.updateService(service.id, payload) : await api.createService(payload);
+      if (photo) {
+        const withPhoto = await api.uploadServicePhoto(saved.id, photo);
+        saved = { ...saved, imageUrl: withPhoto.imageUrl };
+      }
       onSaved(saved);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save.');
@@ -88,6 +100,54 @@ export function ServiceForm({
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>{service ? `Edit ${service.name}` : 'Add a service'}</h3>
+
+        <div className="svc-photo-field">
+          {photo ? (
+            <img className="svc-photo-preview" src={URL.createObjectURL(photo)} alt="" />
+          ) : imageUrl ? (
+            <img className="svc-photo-preview" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
+          ) : (
+            <span className="svc-photo-empty svc-photo-empty-lg">ADD</span>
+          )}
+          <input
+            ref={photoRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              if (f.size > 5 * 1024 * 1024) {
+                setError('Photo must be under 5MB.');
+                return;
+              }
+              setError(null);
+              setPhoto(f);
+            }}
+          />
+          <div>
+            <button type="button" className="btn btn-ghost" onClick={() => photoRef.current?.click()}>
+              {photo || imageUrl ? 'Change photo' : 'Add a photo'}
+            </button>
+            <div className="field-hint">Optional. Customers see it when booking on WhatsApp.</div>
+          </div>
+          {(photo || imageUrl) && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-danger"
+              onClick={async () => {
+                setPhoto(null);
+                if (service && imageUrl) {
+                  await api.removeServicePhoto(service.id).catch(() => {});
+                  setImageUrl(null);
+                }
+                if (photoRef.current) photoRef.current.value = '';
+              }}
+            >
+              Remove
+            </button>
+          )}
+        </div>
 
         <div className="field">
           <label>
