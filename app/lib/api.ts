@@ -51,6 +51,10 @@ export interface ProviderOverviewRow {
   workingHoursTodayEnd: string | null;
   /** Manual "called in sick" override for today only — takes precedence over the working-hours schedule above. */
   unavailableToday: boolean;
+  /** Today's booked spans as minutes since local midnight — drives the roster shift bar. */
+  todayBookedSegments: { startMin: number; endMin: number }[];
+  /** Next scheduled day after today, for the "Back Wednesday, 9:00 AM" line on off-today rows. */
+  nextWorkingDay: { dayOffset: number; weekday: number; startTime: string } | null;
 }
 
 export interface ProvidersOverview {
@@ -76,8 +80,20 @@ export interface ProviderDetail {
   active: boolean;
   /** True when workingHours below is a synced copy of the organization's default hours rather than this provider's own — the drawer shows it read-only. */
   usesOrgHours: boolean;
+  /** Manual "off today" override — the same switch the roster row carries. */
+  unavailableToday: boolean;
   workingHours: ProviderWorkingHourRow[];
   serviceIds: string[];
+}
+
+/** Last-30-days scorecard shown in the edit screen's context column. */
+export interface ProviderStats {
+  bookings: number;
+  /** 0–100; null when this provider had no clients in the window. */
+  repeatPct: number | null;
+  noShows: number;
+  bookedMinutes: number;
+  scheduledMinutes: number;
 }
 
 export interface Appointment {
@@ -417,6 +433,7 @@ export const api = {
     ),
   providersOverview: () => get<ProvidersOverview>('/api/v1/providers/overview'),
   providerDetail: (id: string) => get<ProviderDetail>(`/api/v1/providers/${id}`),
+  providerStats: (id: string) => get<ProviderStats>(`/api/v1/providers/${id}/stats`),
   createProvider: (body: {
     displayName: string;
     phone: string;

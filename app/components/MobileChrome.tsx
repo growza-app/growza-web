@@ -17,10 +17,18 @@ import { IconCalendarPlus, IconClose, IconPlus, IconUserPlus } from './icons';
 // confusing, not helpful, the same reasoning that excludes /search.
 const NO_FAB = ['/availability', '/search', '/try-whatsapp', '/offers'];
 
+/**
+ * Full-screen edit forms with their own pinned primary button — the FAB would
+ * float directly on top of "Save changes". Matched as a pattern rather than a
+ * NO_FAB prefix because `/providers` (the roster) SHOULD keep the FAB; only
+ * `/providers/<id>` should not.
+ */
+const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
+
 export function MobileChrome({ labels, timezone }: { labels: Record<string, string>; timezone: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const showFab = !NO_FAB.some((p) => pathname.startsWith(p));
+  const showFab = !NO_FAB.some((p) => pathname.startsWith(p)) && !EDIT_ROUTE_RE.test(pathname);
 
   const close = () => setOpen(false);
 

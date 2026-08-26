@@ -619,6 +619,7 @@ input[type='text'],
 input[type='date'],
 input[type='search'],
 input[type='tel'],
+input[type='email'],
 input[type='number'],
 textarea {
   padding: 9px 12px;
@@ -5415,138 +5416,378 @@ input[type='date'] {
   padding-left: 36px;
 }
 
-/* Fixed 3 columns, not auto-fit-by-minwidth — with only 3 tiles, "same line
-   on every screen size including mobile" needs a guaranteed 3-up grid, not
-   one that happens to fit 3 only above some breakpoint. */
-.staff-tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-/* Scoped to this grid, not the shared .tile rule (also used on Home) —
-   these read visibly smaller/denser than a KPI tile elsewhere in the app. */
-.staff-tiles .tile {
-  padding: 9px 8px;
-  min-width: 0;
+/* Summary line — replaces the three KPI tiles. The tiles cost ~120px of
+   vertical space above the fold to show three numbers that fit on one line,
+   and pushed the actual roster below the fold on a laptop. */
+.staff-summary {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-}
-
-.staff-tiles .tile .value {
-  font-size: 17px;
-  margin: 3px 0 1px;
-}
-
-.staff-tiles .tile .label {
-  font-size: 10.5px;
-  line-height: 1.25;
-}
-
-.staff-tiles .tile .delta {
-  font-size: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.staff-tile-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  margin-bottom: 4px;
-}
-
-.staff-tile-icon svg {
-  width: 10px;
-  height: 10px;
-}
-
-.staff-tile-icon.working { background: var(--accent-soft); color: var(--accent-deep); }
-.staff-tile-icon.total { background: var(--blue-soft); color: var(--blue); }
-.staff-tile-icon.top { background: #fdf0d5; color: #a5720a; }
-
-.staff-tile-top {
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.3;
-  margin-top: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.staff-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--border);
-  margin: 0 0 -1px;
-  padding: 0 4px;
-  overflow-x: auto;
-}
-
-.staff-tab {
-  background: none;
-  border: none;
-  padding: 12px 14px;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
   font-size: 14px;
-  font-weight: 620;
   color: var(--muted);
+}
+
+.staff-summary strong {
+  color: var(--text);
+  font-weight: 640;
+}
+
+.staff-summary-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c7cfc9;
+}
+
+.staff-summary-warn {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* ---------- segmented filter ---------- */
+
+.staff-segmented {
+  display: inline-flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--slate-soft);
+  border-radius: 12px;
+  margin-bottom: var(--sp-4);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.staff-segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.staff-seg {
+  flex: none;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  color: #5c6b63;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   white-space: nowrap;
 }
 
-.staff-tab.active {
-  color: var(--accent-deep);
-  border-bottom-color: var(--accent-deep);
+.staff-seg.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 640;
+  box-shadow: 0 1px 2px rgba(14, 51, 37, 0.12);
 }
 
-.staff-row-main {
+.staff-seg-count {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.staff-seg.active .staff-seg-count {
+  color: var(--accent-deep);
+}
+
+/* ---------- group headers ---------- */
+
+.staff-group-head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  cursor: pointer;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-1) var(--sp-2);
 }
 
-.staff-row-name {
-  font-weight: 620;
+.staff-rows + .staff-group-head,
+.staff-cards + .staff-group-head {
+  padding-top: var(--sp-4);
 }
 
-.staff-row-phone {
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 1px;
-}
-
-.staff-status-dot {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
-  font-weight: 620;
-}
-
-.staff-status-dot::before {
-  content: '';
+.staff-group-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: currentColor;
+  background: #c0c9c3;
 }
 
-.staff-status-working { color: var(--accent-deep); }
-.staff-status-off { color: var(--muted); }
+.staff-group-dot.is-on {
+  background: var(--accent);
+}
+
+.staff-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5c6b63;
+}
+
+/* ---------- roster rows (web) ---------- */
+
+.staff-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.staff-cards {
+  display: none;
+}
+
+.staff-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-height: 72px;
+}
+
+.staff-row:hover {
+  border-color: #cbd5ce;
+}
+
+.staff-row.is-off {
+  background: #fcfdfc;
+  border-color: #edf0ec;
+}
+
+.staff-avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.staff-avatar.is-muted {
+  background: #f0f2ef !important;
+  color: var(--muted) !important;
+}
+
+.staff-avatar.tone-green { background: var(--accent-soft); color: #12643e; }
+.staff-avatar.tone-purple { background: var(--purple-soft); color: #4c3a78; }
+.staff-avatar.tone-peach { background: var(--peach); color: #7a4a1e; }
+.staff-avatar.tone-blue { background: var(--blue-soft); color: #1e4e73; }
+
+.staff-identity {
+  width: 190px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.staff-identity-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The name is the primary way into the edit screen — a real button, not a
+   div with an onClick, so it is keyboard-reachable and screen-reader-obvious. */
+.staff-name-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 620;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-name-btn:hover {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
+
+.staff-identity-role {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-badge {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.staff-badge-top {
+  color: #8a6a12;
+  background: #fbf3dc;
+}
+
+.staff-badge-free {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+/* ---------- shift bar ---------- */
+
+.staff-shift {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.staff-shift-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.staff-shift-time {
+  font-size: 13px;
+  font-weight: 550;
+  color: #3d4a43;
+  white-space: nowrap;
+}
+
+.staff-shift-off {
+  font-size: 13px;
+  color: #a0aaa3;
+}
+
+/* Where the day is already sold. Zero-booking shifts render an empty track,
+   which is the "you can still sell this time" signal at a glance. */
+.staff-shift-bar {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: #edf0ec;
+  overflow: hidden;
+}
+
+.staff-shift-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* ---------- counts ---------- */
+
+.staff-count {
+  width: 104px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.staff-count-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.staff-count-num.is-zero {
+  color: #a9b3ac;
+}
+
+.staff-count-label {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---------- row actions ---------- */
+
+.staff-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.staff-toggle-label {
+  width: 68px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3d4a43;
+}
+
+.staff-row.is-off .staff-toggle-label {
+  color: var(--muted);
+}
+
+/* Bigger than the shared .switch (36x21) because this one is the primary
+   action on the row and has to survive a thumb, not just a mouse. */
+.switch-lg .switch-track {
+  width: 46px;
+  height: 28px;
+}
+
+.switch-lg .switch-thumb {
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+}
+
+.switch-lg input:checked + .switch-track .switch-thumb {
+  transform: translateX(18px);
+}
+
+/* Edit is a labelled 38px button, not a bare icon — an icon-only pencil next
+   to an icon-only bin is the mis-tap this redesign exists to remove. */
+.staff-edit-btn {
+  height: 38px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4a43;
+  cursor: pointer;
+}
+
+.staff-edit-btn:hover {
+  border-color: #b9c2bb;
+}
+
+.staff-edit-btn svg {
+  width: 14px;
+  height: 14px;
+}
 
 .staff-icon-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
@@ -5555,22 +5796,189 @@ input[type='date'] {
   cursor: pointer;
 }
 
-.staff-icon-btn svg {
-  width: 15px;
-  height: 15px;
-}
-
 .staff-icon-btn:hover {
-  background: var(--page-bg);
+  border-color: #b9c2bb;
 }
 
-.staff-icon-btn-positive {
-  color: var(--accent-deep);
-  border-color: var(--accent-soft);
-}
-
-.staff-icon-btn-positive:hover {
+.staff-icon-btn.is-open {
+  border-color: var(--accent-deep);
   background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.staff-dots {
+  font-size: 17px;
+  line-height: 1;
+  margin-top: -6px;
+}
+
+/* ---------- row overflow menu ---------- */
+
+.staff-menu-wrap {
+  position: relative;
+}
+
+.staff-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  width: 232px;
+  padding: var(--sp-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 44px -18px rgba(14, 51, 37, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.staff-menu .sheet-item {
+  padding: 10px 11px;
+  border-radius: 9px;
+  font-size: 14px;
+}
+
+.staff-menu-divider {
+  height: 1px;
+  background: #edf0ec;
+  margin: var(--sp-1) var(--sp-2);
+}
+
+.staff-sheet-toggle {
+  cursor: default;
+}
+
+.staff-sheet-toggle:hover {
+  background: transparent;
+}
+
+
+/* ---------- roster: mobile ---------- */
+/* Same responsive table/cards swap Bookings and Clients already use — the row
+   layout above needs ~900px for its five columns, so below 860px the same
+   data renders as cards and the whole card becomes the tap target. */
+@media (max-width: 860px) {
+  .staff-rows {
+    display: none;
+  }
+
+  .staff-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  .staff-summary {
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+    font-size: 13px;
+  }
+
+  .staff-segmented {
+    display: flex;
+    width: 100%;
+    margin-bottom: var(--sp-3);
+  }
+
+  .staff-seg {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .staff-group-head {
+    padding: var(--sp-4) var(--sp-1) var(--sp-2);
+  }
+
+  .staff-card {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    padding: var(--sp-3) 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    /* The whole card is the tap target, so a tap must not start a text
+       selection — without this, tapping a name highlights the word instead
+       of opening the sheet. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .staff-card.is-off {
+    background: #fcfdfc;
+    border-color: #edf0ec;
+  }
+
+  .staff-card-top {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  .staff-card .staff-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 15px;
+  }
+
+  .staff-card-identity {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .staff-card-name {
+    font-size: 16px;
+    font-weight: 620;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .staff-card.is-off .staff-card-name {
+    color: #3d4a43;
+  }
+
+  .staff-card-identity .staff-identity-role {
+    font-size: 12px;
+  }
+
+  .staff-card-shift {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  .staff-card-shift .staff-shift-bar {
+    flex: 1;
+  }
+
+  .staff-card-count {
+    flex: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3d4a43;
+  }
+
+  .staff-card-count.is-zero {
+    color: #a9b3ac;
+  }
+
+  /* The sheet covers every row action on phone, so the desktop-only inline
+     Edit button and ⋯ menu never render here. */
+  .staff-edit-btn,
+  .staff-menu-wrap {
+    display: none;
+  }
 }
 
 /* ---------- staff detail drawer ---------- */
@@ -5824,4 +6232,382 @@ input[type='date'] {
 
 @media (max-width: 640px) {
   .drawer { width: 100vw; }
+}
+
+/* ---------- staff edit screen (design Turn 4) ---------- */
+
+.edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--page-pad-x);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.edit-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.edit-header-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 17px;
+}
+
+.edit-crumb {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.edit-crumb a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.edit-crumb a:hover {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
+
+.edit-title {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.edit-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+}
+
+.edit-header-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-right: var(--sp-3);
+  border-right: 1px solid var(--border);
+}
+
+.edit-banner {
+  margin-bottom: var(--sp-4);
+}
+
+/* Form left, read-only context right — the manager can see what a change
+   costs (today's remaining bookings, the 30-day record) without leaving. */
+.edit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 336px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.edit-main,
+.edit-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.edit-card {
+  padding: var(--sp-5);
+}
+
+.edit-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.edit-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: var(--sp-4);
+}
+
+.edit-card-head .edit-card-title {
+  margin-bottom: 0;
+}
+
+.edit-count {
+  font-size: 13px;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.edit-grid .field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4a43;
+  margin-bottom: 7px;
+}
+
+.field-optional {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.edit-grid input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The shared WeekdayHoursEditor puts its switch before the day name; the
+   design leads with the day. Reordering here keeps one shared component
+   instead of forking it for this screen. */
+.edit-hours .weekday-hours-row .switch {
+  order: 2;
+}
+
+.edit-hours .weekday-hours-label {
+  order: 1;
+  width: 84px;
+}
+
+.edit-hours .weekday-hours-inputs,
+.edit-hours .weekday-hours-off {
+  order: 3;
+}
+
+.edit-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.edit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--slate-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  color: #3d4a43;
+  cursor: pointer;
+}
+
+.edit-chip:hover {
+  border-color: #b9c2bb;
+}
+
+.edit-chip.is-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+  font-weight: 600;
+}
+
+.edit-chip svg {
+  width: 13px;
+  height: 13px;
+}
+
+.edit-side-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5c6b63;
+  margin-bottom: var(--sp-3);
+}
+
+.edit-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.edit-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.edit-stat span {
+  font-size: 14px;
+  color: #5c6b63;
+}
+
+.edit-stat strong {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.edit-upcoming {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: var(--sp-3);
+}
+
+.edit-upcoming-row {
+  display: flex;
+  gap: 11px;
+  align-items: baseline;
+}
+
+.edit-upcoming-time {
+  width: 62px;
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+.edit-upcoming-label {
+  font-size: 13px;
+  color: #3d4a43;
+}
+
+.edit-danger {
+  border-color: #f0dedc;
+}
+
+.edit-danger-btn {
+  width: 100%;
+  margin-bottom: var(--sp-3);
+}
+
+/* Desktop keeps Save in the header; the sticky bar is a phone affordance. */
+.edit-savebar {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .edit-header {
+    padding: var(--sp-3) var(--sp-4);
+    gap: var(--sp-3);
+  }
+
+  .edit-header-avatar {
+    display: none;
+  }
+
+  .edit-title {
+    font-size: 18px;
+  }
+
+  /* Save moves to the pinned bar below, so the header keeps only the
+     active/inactive switch — Cancel is the back arrow on a phone. */
+  .edit-header-actions .btn {
+    display: none;
+  }
+
+  .edit-header-toggle {
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .edit-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+
+  .edit-card {
+    padding: var(--sp-4);
+  }
+
+  /* One field per row: two 46px inputs side by side at 390px leaves neither
+     wide enough for a phone number. */
+  .edit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* A native time input needs ~120px for "09:00 AM" plus its picker glyph.
+     Two of them beside an 84px day label and a 46px switch overflow 390px,
+     so the times drop to their own full-width line under the day. */
+  .edit-hours .weekday-hours-row {
+    flex-wrap: wrap;
+    row-gap: var(--sp-2);
+  }
+
+  .edit-hours .weekday-hours-label {
+    width: 44px;
+  }
+
+  .edit-hours .weekday-hours-inputs,
+  .edit-hours .weekday-hours-off {
+    flex-basis: 100%;
+  }
+
+  .edit-savebar {
+    display: block;
+    padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex: none;
+  }
+
+  .edit-savebar-btn {
+    width: 100%;
+    height: 50px;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  /* The pinned save bar replaces the tab bar's job here, and the page body
+     already stops above it — only the normal gutter is needed. */
+  .edit-layout {
+    padding-bottom: 0;
+  }
+}
+
+/* ---------- confirmation dialog ---------- */
+
+.confirm-modal {
+  max-width: 400px;
+}
+
+.confirm-body {
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+/* The consequence line — an amber card because it is the thing the owner is
+   actually deciding on, not decoration. */
+.confirm-detail {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: #7c4a09;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.btn-danger-solid {
+  background: #b91c1c;
+  color: #fff;
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+  background: #991b1b;
 }

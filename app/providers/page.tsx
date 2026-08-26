@@ -26,13 +26,17 @@ export default async function ProvidersPage() {
 
   return (
     <>
-      <PageHeader
-        title={staffWord}
-        subtitle={`Manage your team and their availability. ${copy.staff.subtitle(overview.providers.length, me.capabilities.maxProviders)}`}
-        mobileSubtitle
-      />
+      {/* The seats/working counts moved into the roster's own summary line
+          (StaffClient) so they sit with the filters they describe, rather than
+          repeating in the page subtitle. */}
+      <PageHeader title={staffWord} />
       <div className="page-body">
-        <StaffClient initialOverview={overview} services={services} staffWord={staffWord} />
+        <StaffClient
+          initialOverview={overview}
+          services={services}
+          staffWord={staffWord}
+          maxProviders={me.capabilities.maxProviders}
+        />
       </div>
     </>
   );
