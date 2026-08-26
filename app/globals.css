@@ -437,6 +437,21 @@ body {
   color: #b91c1c;
 }
 
+/* A client nobody has seen in 60+ days. Amber, not red — lapsed is a prompt to
+   win them back, not an error state. */
+.chip-lapsed {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+/* Recency + its optional Lapsed chip, in the Clients "Last seen" column. */
+.cust-recency {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+
 /* ---------- offers ---------- */
 
 .offer-row {

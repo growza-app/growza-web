@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { formatPhone, formatRecency, isLapsed } from '../lib/validate';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -18,17 +19,9 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { IconSearch, IconUserPlus, IconWhatsApp } from '../components/icons';
 
 /** Matches the backend's own derived-status window (customer/repository.ts). */
-const ACTIVE_WINDOW_DAYS = 90;
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(iso));
-}
-
-/** Derived the same way the backend filter does — a customer is active if they've booked recently. */
-function isActive(c: Customer): boolean {
-  if (!c.lastBookingAt) return false;
-  const days = (Date.now() - new Date(c.lastBookingAt).getTime()) / 86_400_000;
-  return days <= ACTIVE_WINDOW_DAYS;
 }
 
 function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
@@ -107,15 +100,15 @@ export function CustomersClient({
   const visibleRows = page.rows.slice(0, pageSize);
 
   const exportCsv = () => {
-    const header = ['Name', 'Phone', 'Last booking', 'Last service', 'Total bookings', 'Total spent', 'Status'];
+    const header = ['Name', 'Phone', 'Last booking', 'Last service', 'Total bookings', 'Total spent', 'Last seen'];
     const rows = page.rows.map((c) => [
       c.name ?? '',
-      c.waPhone,
+      formatPhone(c.waPhone),
       c.lastBookingAt ? formatDate(c.lastBookingAt) : '',
       c.lastServiceName ?? '',
       String(c.totalBookings),
       formatMoney(c.totalSpentMinor),
-      isActive(c) ? 'Active' : 'Inactive',
+      formatRecency(c.lastBookingAt) + (isLapsed(c.lastBookingAt) ? ' (lapsed)' : ''),
     ]);
     const csv = [header, ...rows]
       .map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
@@ -141,14 +134,14 @@ export function CustomersClient({
       />
       <div className="page-body">
         <div className="cust-kpis">
-          <Kpi label={`Total ${lower}`} value={String(stats.total)} sub={`${stats.newThisMonth} new this month`} />
+          {/* Four distinct facts. Previously tile 1's subtitle repeated tile 2's
+              value, and tile 3's subtitle repeated tile 4's — so half the row
+              restated the other half and the numbers read as contradicting
+              each other. */}
+          <Kpi label={`Total ${lower}`} value={String(stats.total)} sub="All time" />
           <Kpi label="New this month" value={String(stats.newThisMonth)} sub="First seen this month" />
-          <Kpi
-            label={`Returning ${lower}`}
-            value={String(stats.returning)}
-            sub={stats.total > 0 ? `${Math.round((stats.returning / stats.total) * 100)}% of total` : '—'}
-          />
-          <Kpi label="Repeat rate" value={`${stats.repeatRatePct}%`} sub="Booked more than once" />
+          <Kpi label={`Returning ${lower}`} value={String(stats.returning)} sub="Booked more than once" />
+          <Kpi label="Repeat rate" value={`${stats.repeatRatePct}%`} sub={`Returning ÷ total ${lower}`} />
         </div>
 
         <div className="card">
@@ -213,7 +206,7 @@ export function CustomersClient({
                       <th>Last booking</th>
                       <th>Bookings</th>
                       <th>Total spent</th>
-                      <th>Status</th>
+                      <th>Last seen</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -228,7 +221,7 @@ export function CustomersClient({
                         <td>
                           <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
                             <IconWhatsApp />
-                            {c.waPhone}
+                            {formatPhone(c.waPhone)}
                           </a>
                         </td>
                         <td>
@@ -243,10 +236,14 @@ export function CustomersClient({
                         </td>
                         <td>{c.totalBookings}</td>
                         <td>{formatMoney(c.totalSpentMinor)}</td>
+                        {/* Recency, not a constant. "Active" was true for every
+                            row in the table, so the column carried no signal at
+                            all; how long ago someone last came in does. */}
                         <td>
-                          <span className={`chip ${isActive(c) ? 'chip-confirmed' : 'chip-completed'}`}>
-                            {isActive(c) ? 'Active' : 'Inactive'}
-                          </span>
+                          <div className="cust-recency">
+                            <span>{formatRecency(c.lastBookingAt)}</span>
+                            {isLapsed(c.lastBookingAt) && <span className="chip chip-lapsed">Lapsed</span>}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -262,13 +259,11 @@ export function CustomersClient({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="cust-card-name">
                           {c.name ?? 'Unnamed'}
-                          <span className={`chip ${isActive(c) ? 'chip-confirmed' : 'chip-completed'}`}>
-                            {isActive(c) ? 'Active' : 'Inactive'}
-                          </span>
+                          {isLapsed(c.lastBookingAt) && <span className="chip chip-lapsed">Lapsed</span>}
                         </div>
                         <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
                           <IconWhatsApp />
-                          {c.waPhone}
+                          {formatPhone(c.waPhone)}
                         </a>
                         {c.lastBookingAt && (
                           <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>

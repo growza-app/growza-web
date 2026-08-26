@@ -69,7 +69,7 @@ export const copy = {
 
   kpi: {
     bookingsToday: 'Bookings today',
-    missedThisWeek: "Didn't come this week",
+    missedThisWeek: 'No-shows this week',
     earnedToday: 'Money earned today',
     // "How busy today" comes from ctx.labels.utilisation_kpi (vertical-specific)
     hoursFree: (hours: number) => `${hours} ${hours === 1 ? 'hour' : 'hours'} still free`,
@@ -84,12 +84,22 @@ export const copy = {
     downFromLastWeek: (pct: number) => `${pct}% less than last week`,
   },
 
+  /**
+   * The four booking statuses, one word each, used EVERYWHERE — KPI tiles, row
+   * chips and filter chips all read from here.
+   *
+   * Previously a tile said "Coming up" while the chip beneath it said "Coming"
+   * and the sidebar counted "No-shows" against a chip reading "Didn't come".
+   * Three vocabularies for four states meant a tile labelled one thing filtered
+   * to rows labelled another, which reads as a different concept rather than
+   * the same one. These strings mirror `appointment.status` exactly.
+   */
   status: {
-    done: 'Finished',
-    confirmed: 'Coming',
+    done: 'Completed',
+    confirmed: 'Confirmed',
     reminded: 'Reminded',
     walkIn: 'Walk-in',
-    didNotCome: "Didn't come",
+    didNotCome: 'No-show',
     cancelled: 'Cancelled',
   },
 

@@ -55,3 +55,46 @@ export function validateEmail(raw: string): string | null {
 export function validateRequired(raw: string, label: string): string | null {
   return raw.trim() ? null : `${label} is required`;
 }
+
+/**
+ * One phone format across the app: `+91 98765 43210`.
+ *
+ * The Clients table previously rendered whatever happened to be stored — one
+ * row spaced, the next run together — because numbers arrive from three places
+ * (WhatsApp webhook, dashboard forms, seed data) and only some were spaced.
+ * Formatting at display time rather than at write time means existing rows are
+ * fixed too, without a migration.
+ *
+ * Non-Indian or unrecognised numbers are returned untouched rather than forced
+ * into a grouping that would be wrong for their country.
+ */
+export function formatPhone(raw: string | null | undefined): string {
+  if (!raw) return '—';
+  const v = normalizePhone(raw.trim());
+  const in10 = /^\+91(\d{5})(\d{5})$/.exec(v);
+  if (in10) return `+91 ${in10[1]} ${in10[2]}`;
+  const bare10 = /^(\d{5})(\d{5})$/.exec(v);
+  if (bare10) return `+91 ${bare10[1]} ${bare10[2]}`;
+  return raw.trim();
+}
+
+/** "Today" · "3 days ago" · "2 months ago" — recency that carries signal where a constant "Active" did not. */
+export function formatRecency(iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return 'Never';
+  const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+}
+
+/** A client nobody has seen in this many days reads as lapsed, not merely inactive. */
+export const LAPSED_AFTER_DAYS = 60;
+
+export function isLapsed(iso: string | null | undefined, now: Date = new Date()): boolean {
+  if (!iso) return true;
+  return (now.getTime() - new Date(iso).getTime()) / 86_400_000 > LAPSED_AFTER_DAYS;
+}

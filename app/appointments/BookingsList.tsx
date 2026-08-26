@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
+import { copy } from '../lib/copy';
 import { formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { BookingSheet, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
@@ -145,11 +146,11 @@ export function BookingsList({
           tone="amber"
           icon={<IconClock />}
           value={comingUp}
-          label={isToday ? 'Coming up' : 'Confirmed'}
+          label={copy.status.confirmed}
           sub={isToday ? 'Next 2 hrs' : dayLabel}
         />
-        <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label="Completed" sub={isToday ? 'Today' : dayLabel} />
-        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label="No-shows" sub={isToday ? 'Today' : dayLabel} />
+        <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label={copy.status.done} sub={isToday ? 'Today' : dayLabel} />
+        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label={copy.status.didNotCome} sub={isToday ? 'Today' : dayLabel} />
       </div>
 
       <div className="bk-sched-head">
