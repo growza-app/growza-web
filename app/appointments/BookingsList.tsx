@@ -19,7 +19,8 @@ function bookingTotalMinor(b: BookingGroup): number {
   return subtotal - savings;
 }
 
-function Kpi({ tone, icon, value, label, sub }: { tone: string; icon: ReactNode; value: number; label: string; sub: string }) {
+// `value` widened to string so the revenue tile can carry a formatted amount alongside the plain counts.
+function Kpi({ tone, icon, value, label, sub }: { tone: string; icon: ReactNode; value: number | string; label: string; sub: string }) {
   return (
     <div className="bk-kpi">
       <span className={`bk-kpi-icon bk-kpi-${tone}`}>{icon}</span>
@@ -151,6 +152,15 @@ export function BookingsList({
         />
         <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label={copy.status.done} sub={isToday ? 'Today' : dayLabel} />
         <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label={copy.status.didNotCome} sub={isToday ? 'Today' : dayLabel} />
+        {/* Revenue belongs with the other numbers for the day, not stranded
+            below the list where it read as a footnote to the last booking. */}
+        <Kpi
+          tone="green"
+          icon={<IconWallet />}
+          value={formatMoney(String(revenue))}
+          label="Revenue"
+          sub={isToday ? 'Today' : dayLabel}
+        />
       </div>
 
       <div className="bk-sched-head">
@@ -205,18 +215,6 @@ export function BookingsList({
       </div>
 
       <Pagination page={clamped} total={bookings.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />
-
-      <div className="bk-summary-bar">
-        <div className="bk-summary-item">
-          <span className="bk-summary-icon">
-            <IconWallet />
-          </span>
-          <div>
-            <div className="bk-summary-value">{formatMoney(String(revenue))}</div>
-            <div className="bk-summary-label">{isToday ? 'Revenue today' : `Revenue · ${dayLabel}`}</div>
-          </div>
-        </div>
-      </div>
 
       {open &&
         (open.status === 'completed' ? (

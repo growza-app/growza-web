@@ -58,6 +58,35 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
   // service/date causes) so "book another service for this customer"
   // doesn't make the admin retype the phone number.
   const [rememberedCustomer, setRememberedCustomer] = useState<RememberedCustomer | null>(loadRememberedCustomer);
+  /**
+   * Slots the owner has picked to quote. The page used to end at a wall of
+   * times with nothing to do but book one — but the common move is answering
+   * "when are you free?" with two or three options, which meant retyping them
+   * into WhatsApp by hand. Selection turns the grid into that reply.
+   */
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const toggleSlot = (utc: string) =>
+    setSelected((prev) => (prev.includes(utc) ? prev.filter((u) => u !== utc) : [...prev, utc]));
+
+  const allSlots = sections.flatMap((sec) => sec.slots);
+  // Keep the owner's tap order, not grid order — the first one picked is the
+  // one the Book button offers, which is what they reached for first.
+  const selectedSlots = selected.map((utc) => allSlots.find((s) => s.utc === utc)).filter(Boolean) as Slot[];
+
+  /**
+   * Opens WhatsApp with the times pre-written and no recipient, so the owner
+   * picks the chat. We deliberately do not guess a customer here — Free times
+   * is answered for whoever happens to be asking.
+   */
+  const sendOnWhatsApp = () => {
+    const times = selectedSlots.map((s) => s.local).join(', ');
+    const text =
+      selectedSlots.length === 1
+        ? `Hi! I can fit you in for ${serviceName} at ${times}. Shall I book it?`
+        : `Hi! I have these times free for ${serviceName}: ${times}. Which suits you?`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+  };
 
   const providerName = (id: string | null) => (id ? (providerNames[id] ?? '—') : '—');
 
@@ -111,7 +140,13 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
           {sections.length > 1 && <div className="section-label">{sectionLabel(section.section)}</div>}
           <div className="slot-grid">
             {section.slots.map((slot) => (
-              <button key={slot.utc} className="slot slot-clickable" onClick={() => openBooking(slot)}>
+              <button
+                key={slot.utc}
+                type="button"
+                aria-pressed={selected.includes(slot.utc)}
+                className={`slot slot-clickable ${selected.includes(slot.utc) ? 'slot-selected' : ''}`}
+                onClick={() => toggleSlot(slot.utc)}
+              >
                 {slot.local}
                 <small>{providerName(slot.assignedProviderId)}</small>
               </button>
@@ -119,6 +154,27 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
           </div>
         </div>
       ))}
+
+      {/* The page now ends in an action instead of a wall of times. Appears
+          only once something is selected, so the default view is unchanged. */}
+      {selectedSlots.length > 0 && (
+        <div className="slot-actions">
+          <div className="slot-actions-count">
+            {selectedSlots.length} {selectedSlots.length === 1 ? 'time' : 'times'} selected
+            <button type="button" className="link-btn" onClick={() => setSelected([])}>
+              Clear
+            </button>
+          </div>
+          <div className="slot-actions-buttons">
+            <button type="button" className="btn" onClick={sendOnWhatsApp}>
+              Send {selectedSlots.length} {selectedSlots.length === 1 ? 'time' : 'times'} on WhatsApp
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => openBooking(selectedSlots[0]!)}>
+              Book {selectedSlots[0]!.local}
+            </button>
+          </div>
+        </div>
+      )}
 
       {modal.step !== 'closed' && (
         <div className="modal-backdrop" onClick={modal.step === 'form' ? close : undefined}>

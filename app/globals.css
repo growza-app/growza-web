@@ -712,6 +712,56 @@ input[type='date'] {
   margin-top: 2px;
 }
 
+/* A picked time. Selection is what turns the grid into a reply the owner can
+   send, so it has to read as chosen, not merely hovered. */
+.slot-selected {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.slot-selected small {
+  color: var(--accent-deep);
+}
+
+.slot-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+
+.slot-actions-count {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.slot-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 860px) {
+  .slot-actions,
+  .slot-actions-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .slot-actions-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .section-label {
   font-size: 14.5px;
   font-weight: 650;
@@ -3919,11 +3969,22 @@ input[type='date'] {
 /* ================= bookings page (redesigned) ================= */
 
 /* ---- headline counts ---- */
+/* Five tiles since revenue joined the row (it used to float below the list). */
 .bk-kpis {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--sp-2);
   margin-bottom: var(--sp-5);
+}
+
+/* Desktop tiles read as one horizontal line ("4  Bookings  22 Aug"), and the
+   revenue tile carries the longest value, so five across only fits on a wide
+   screen. Below that, wrap to 3-up rather than ellipsing "Revenue" away —
+   a truncated label on the money tile is the one that matters most. */
+@media (max-width: 1560px) {
+  .bk-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .bk-kpi {
