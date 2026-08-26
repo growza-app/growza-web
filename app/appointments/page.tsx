@@ -1,4 +1,5 @@
 import { api, type Appointment } from '../lib/api';
+import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
 import { IconSearch } from '../components/icons';
@@ -54,17 +55,9 @@ export default async function AppointmentsPage({
   const appointments = status ? dayAppointments.filter((a) => a.status === status) : dayAppointments;
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
   const isToday = date === todayISO;
-  const dayHint = new Intl.DateTimeFormat('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: timezone,
-  }).format(new Date(`${date}T12:00:00`));
+  const dayHint = formatDateWithWeekday(new Date(`${date}T12:00:00`), timezone);
   // Short form for the KPI/schedule/revenue labels when a non-today date is picked, e.g. "21 Aug".
-  const dayShort = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(
-    new Date(`${date}T12:00:00`),
-  );
+  const dayShort = formatDateShort(new Date(`${date}T12:00:00`));
   const clearFilterParams = new URLSearchParams();
   if (params.date) clearFilterParams.set('date', params.date);
   if (providerId) clearFilterParams.set('providerId', providerId);

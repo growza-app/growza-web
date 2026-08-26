@@ -1,4 +1,5 @@
 import { api } from '../lib/api';
+import { formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
 import { SlotGrid } from './SlotGrid';
@@ -69,12 +70,7 @@ export default async function AvailabilityPage({
               <select id="date" name="date" defaultValue={date}>
                 {dates.map((d) => (
                   <option key={d} value={d}>
-                    {new Intl.DateTimeFormat('en-IN', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'short',
-                      timeZone: timezone,
-                    }).format(new Date(`${d}T12:00:00Z`))}
+                    {formatDateWithWeekday(new Date(`${d}T12:00:00Z`), timezone, { withYear: false })}
                   </option>
                 ))}
               </select>

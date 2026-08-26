@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { formatDate } from '../lib/format';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, formatMoney, type Offer, type Service } from '../lib/api';
@@ -15,9 +16,6 @@ const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 type Tab = 'all' | 'offers' | 'combos';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso));
-}
 
 /** Same rules the builder's own Step 2 summarizes — reused here so the list row and the wizard never describe an offer's visibility differently. */
 function visibilitySummary(offer: Offer): string {

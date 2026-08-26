@@ -658,6 +658,33 @@ input[type='date'] {
   min-width: 160px;
 }
 
+/* Selects wear the app's chrome, not the OS's.
+   The three remaining ones (Bookings staff, Free times service and day) sit
+   inside plain `<form method="get">` blocks that submit on change — that
+   full-page-navigation behaviour is load-bearing (SlotGrid restores its
+   customer from sessionStorage across it), so this restyles the native
+   control rather than replacing it with a JS listbox. Same visual language,
+   none of the risk, and the keyboard/screen-reader behaviour stays native. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2377857f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 15px 15px;
+  cursor: pointer;
+}
+
+select:hover {
+  border-color: #b9c2bb;
+}
+
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .btn {
   padding: 9px 20px;
   border: none;

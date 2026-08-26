@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { clientRecency, formatPhone, formatRecency, type ClientRecency } from '../lib/validate';
+import { clientRecency, formatDate, formatPhone, formatRecency, type ClientRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -19,10 +19,6 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { IconSearch, IconUserPlus, IconWhatsApp } from '../components/icons';
 
 /** Matches the backend's own derived-status window (customer/repository.ts). */
-
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(iso));
-}
 
 function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
   if (s === 'active') return 'Active only';

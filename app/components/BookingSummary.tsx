@@ -1,6 +1,7 @@
 'use client';
 
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
+import { formatDateWithWeekday } from '../lib/format';
 import { formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { IconCheck, IconPhone } from './icons';
@@ -35,12 +36,7 @@ export function BookingSummary({
   const comboPriceMinor = comboLegs.find((a) => a.comboPriceMinor)?.comboPriceMinor;
   const savings = comboPriceMinor ? Math.max(0, comboListTotal - Number(comboPriceMinor)) : 0;
   const totalPaid = subtotal - savings;
-  const dateLine = new Intl.DateTimeFormat('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    timeZone: timezone,
-  }).format(new Date(booking.startAt));
+  const dateLine = formatDateWithWeekday(booking.startAt, timezone);
 
   return (
     <>

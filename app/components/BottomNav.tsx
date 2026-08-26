@@ -17,7 +17,9 @@ export function BottomNav({ labels }: { labels: Record<string, string> }) {
   const pathname = usePathname();
 
   const items = [
-    { href: '/', label: copy.nav.today, icon: <IconGrid /> },
+    // Same label as the sidebar's first item — this is the same route, and
+    // calling it "Today" on a phone and "Home" on a laptop read as two places.
+    { href: '/', label: copy.nav.dashboard, icon: <IconGrid /> },
     { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconAppointments /> },
     { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
     { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },

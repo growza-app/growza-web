@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { formatDate } from '../lib/format';
 import { api, formatTime, type SearchResult } from '../lib/api';
 import { copy } from '../lib/copy';
 import { initials } from '../lib/appointment-display';
@@ -116,9 +117,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
               <div className="res-row" key={b.id}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 620, fontSize: 14 }}>
-                    {new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: timezone }).format(
-                      new Date(b.startAt),
-                    )}{' '}
+                    {formatDate(b.startAt, timezone)}{' '}
                     · {formatTime(b.startAt, timezone)}
                   </div>
                   <div className="muted" style={{ fontSize: 13 }}>

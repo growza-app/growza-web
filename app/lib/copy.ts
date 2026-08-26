@@ -19,7 +19,6 @@
 export const copy = {
   nav: {
     dashboard: 'Home',
-    today: 'Today',
     calendar: 'Calendar',
     appointments: 'Bookings',
     staff: 'Staff',

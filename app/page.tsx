@@ -1,5 +1,6 @@
 import { api, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
+import { formatDateWithWeekday } from './lib/format';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
 import { StaffCapacity } from './components/StaffCapacity';
@@ -202,12 +203,7 @@ export default async function DashboardPage() {
   const now = new Date();
   const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: timezone }).format(now));
   const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-  const dateLine = new Intl.DateTimeFormat('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    timeZone: timezone,
-  }).format(now);
+  const dateLine = formatDateWithWeekday(now, timezone);
   // A combo booking is several appointment ROWS (one per service) sharing one
   // bookingGroupId — counting rows would count that one customer visit 2-3x.
   // Every "how many bookings" figure below counts DISTINCT bookings instead,
