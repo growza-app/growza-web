@@ -46,15 +46,17 @@ export function ConfirmDialog({
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onCancel}>
       <div
-        className="modal confirm-modal"
+        className="modal modal-fit confirm-modal"
         role="alertdialog"
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
       >
         <h3>{title}</h3>
-        <p className="confirm-body">{body}</p>
-        {detail && <p className="confirm-detail">{detail}</p>}
+        <div className="modal-body">
+          <p className="confirm-body">{body}</p>
+          {detail && <p className="confirm-detail">{detail}</p>}
+        </div>
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
             {cancelLabel}

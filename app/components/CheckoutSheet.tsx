@@ -287,7 +287,7 @@ export function CheckoutSheet({
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
-      <div className="modal checkout-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal modal-fit checkout-modal" onClick={(e) => e.stopPropagation()}>
         <div className="checkout-header">
           <div className="checkout-header-icon">
             <IconCheck />
@@ -310,106 +310,108 @@ export function CheckoutSheet({
           </div>
         </div>
 
-        <div className="checkout-total-card">
-          <div className="checkout-total-icon">
-            <IconWallet />
+        <div className="modal-body">
+          <div className="checkout-total-card">
+            <div className="checkout-total-icon">
+              <IconWallet />
+            </div>
+            <div>
+              <div className="checkout-total-label">Total amount</div>
+              <div className="checkout-total-value">{formatMoney(String(totalMinor))}</div>
+            </div>
           </div>
-          <div>
-            <div className="checkout-total-label">Total amount</div>
-            <div className="checkout-total-value">{formatMoney(String(totalMinor))}</div>
-          </div>
-        </div>
 
-        <div className="checkout-section-label">Services</div>
+          <div className="checkout-section-label">Services</div>
 
-        {!originalRemoved && (
-          <ServiceRow
-            name={appointment.serviceName}
-            amount={amount}
-            onAmountChange={setAmount}
-            providerId={providerId}
-            providerName={providerName(providerId)}
-            providers={providers}
-            onProviderChange={setProviderId}
-            editing={editingRow === 'original'}
-            onToggleEdit={() => setEditingRow(editingRow === 'original' ? null : 'original')}
-            onRemove={() => {
-              setOriginalRemoved(true);
-              if (editingRow === 'original') setEditingRow(null);
-            }}
-            disabled={busy}
-          />
-        )}
-
-        {members.map((m, i) => (
-          <ServiceRow
-            key={m.appointmentId}
-            name={m.serviceName}
-            amount={m.paidAmountMinor}
-            onAmountChange={(value) => updateMember(i, { paidAmountMinor: value })}
-            providerId={m.schedulableId}
-            providerName={providerName(m.schedulableId)}
-            providers={providers}
-            onProviderChange={(id) => updateMember(i, { schedulableId: id })}
-            editing={editingRow === `member-${i}`}
-            onToggleEdit={() => setEditingRow(editingRow === `member-${i}` ? null : `member-${i}`)}
-            disabled={busy}
-          />
-        ))}
-
-        {extras.map((x, i) => (
-          <ServiceRow
-            key={i}
-            name={services.find((s) => s.id === x.serviceId)?.name ?? 'Service'}
-            amount={x.paidAmountMinor}
-            onAmountChange={(value) => updateExtra(i, { paidAmountMinor: value })}
-            providerId={x.schedulableId}
-            providerName={providerName(x.schedulableId)}
-            providers={providers}
-            onProviderChange={(id) => updateExtra(i, { schedulableId: id })}
-            editing={editingRow === i}
-            onToggleEdit={() => setEditingRow(editingRow === i ? null : i)}
-            onRemove={() => removeExtra(i)}
-            disabled={busy}
-          />
-        ))}
-
-        {!hasAnyService && (
-          <div className="muted" style={{ padding: '10px 0', fontSize: 13 }}>
-            Add at least one service before saving.
-          </div>
-        )}
-
-        <div className="checkout-add-row">
-          <select value={newServiceId} onChange={(e) => setNewServiceId(e.target.value)} disabled={busy}>
-            <option value="">Select a service</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <button type="button" className="btn" onClick={addExtra} disabled={busy || !newServiceId}>
-            Add
-          </button>
-        </div>
-
-        <div className="checkout-section-label">Payment method</div>
-        <div className="payment-mode-row">
-          {PAYMENT_MODES.map((m) => (
-            <button
-              key={m.value}
-              type="button"
-              className={`payment-mode-btn ${paymentMode === m.value ? 'active' : ''}`}
-              onClick={() => setPaymentMode(m.value)}
+          {!originalRemoved && (
+            <ServiceRow
+              name={appointment.serviceName}
+              amount={amount}
+              onAmountChange={setAmount}
+              providerId={providerId}
+              providerName={providerName(providerId)}
+              providers={providers}
+              onProviderChange={setProviderId}
+              editing={editingRow === 'original'}
+              onToggleEdit={() => setEditingRow(editingRow === 'original' ? null : 'original')}
+              onRemove={() => {
+                setOriginalRemoved(true);
+                if (editingRow === 'original') setEditingRow(null);
+              }}
               disabled={busy}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
+            />
+          )}
 
-        {error && <div style={{ padding: '10px 0 0', fontSize: 13, color: '#b91c1c' }}>{error}</div>}
+          {members.map((m, i) => (
+            <ServiceRow
+              key={m.appointmentId}
+              name={m.serviceName}
+              amount={m.paidAmountMinor}
+              onAmountChange={(value) => updateMember(i, { paidAmountMinor: value })}
+              providerId={m.schedulableId}
+              providerName={providerName(m.schedulableId)}
+              providers={providers}
+              onProviderChange={(id) => updateMember(i, { schedulableId: id })}
+              editing={editingRow === `member-${i}`}
+              onToggleEdit={() => setEditingRow(editingRow === `member-${i}` ? null : `member-${i}`)}
+              disabled={busy}
+            />
+          ))}
+
+          {extras.map((x, i) => (
+            <ServiceRow
+              key={i}
+              name={services.find((s) => s.id === x.serviceId)?.name ?? 'Service'}
+              amount={x.paidAmountMinor}
+              onAmountChange={(value) => updateExtra(i, { paidAmountMinor: value })}
+              providerId={x.schedulableId}
+              providerName={providerName(x.schedulableId)}
+              providers={providers}
+              onProviderChange={(id) => updateExtra(i, { schedulableId: id })}
+              editing={editingRow === i}
+              onToggleEdit={() => setEditingRow(editingRow === i ? null : i)}
+              onRemove={() => removeExtra(i)}
+              disabled={busy}
+            />
+          ))}
+
+          {!hasAnyService && (
+            <div className="muted" style={{ padding: '10px 0', fontSize: 13 }}>
+              Add at least one service before saving.
+            </div>
+          )}
+
+          <div className="checkout-add-row">
+            <select value={newServiceId} onChange={(e) => setNewServiceId(e.target.value)} disabled={busy}>
+              <option value="">Select a service</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="btn" onClick={addExtra} disabled={busy || !newServiceId}>
+              Add
+            </button>
+          </div>
+
+          <div className="checkout-section-label">Payment method</div>
+          <div className="payment-mode-row">
+            {PAYMENT_MODES.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                className={`payment-mode-btn ${paymentMode === m.value ? 'active' : ''}`}
+                onClick={() => setPaymentMode(m.value)}
+                disabled={busy}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
+          {error && <div style={{ padding: '10px 0 0', fontSize: 13, color: '#b91c1c' }}>{error}</div>}
+        </div>
 
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onClose} disabled={busy}>

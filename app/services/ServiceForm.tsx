@@ -101,146 +101,148 @@ export function ServiceForm({
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal modal-fit" onClick={(e) => e.stopPropagation()}>
         <h3>{service ? `Edit ${service.name}` : 'Add a service'}</h3>
 
-        <div className="svc-photo-field">
-          {photo ? (
-            <img className="svc-photo-preview" src={URL.createObjectURL(photo)} alt="" />
-          ) : imageUrl ? (
-            <img className="svc-photo-preview" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
-          ) : (
-            <span className="svc-photo-empty svc-photo-empty-lg">ADD</span>
-          )}
-          <input
-            ref={photoRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              if (f.size > 5 * 1024 * 1024) {
-                setError('Photo must be under 5MB.');
-                return;
-              }
-              setError(null);
-              setPhoto(f);
-            }}
-          />
-          <div>
-            <button type="button" className="btn btn-ghost" onClick={() => photoRef.current?.click()}>
-              {photo || imageUrl ? 'Change photo' : 'Add a photo'}
-            </button>
-            <div className="field-hint">Optional. Customers see it when booking on WhatsApp.</div>
-          </div>
-          {(photo || imageUrl) && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-danger"
-              onClick={async () => {
-                setPhoto(null);
-                if (service && imageUrl) {
-                  await api.removeServicePhoto(service.id).catch(() => {});
-                  setImageUrl(null);
+        <div className="modal-body">
+          <div className="svc-photo-field">
+            {photo ? (
+              <img className="svc-photo-preview" src={URL.createObjectURL(photo)} alt="" />
+            ) : imageUrl ? (
+              <img className="svc-photo-preview" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
+            ) : (
+              <span className="svc-photo-empty svc-photo-empty-lg">ADD</span>
+            )}
+            <input
+              ref={photoRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                if (f.size > 5 * 1024 * 1024) {
+                  setError('Photo must be under 5MB.');
+                  return;
                 }
-                if (photoRef.current) photoRef.current.value = '';
+                setError(null);
+                setPhoto(f);
               }}
-            >
-              Remove
-            </button>
-          )}
-        </div>
+            />
+            <div>
+              <button type="button" className="btn btn-ghost" onClick={() => photoRef.current?.click()}>
+                {photo || imageUrl ? 'Change photo' : 'Add a photo'}
+              </button>
+              <div className="field-hint">Optional. Customers see it when booking on WhatsApp.</div>
+            </div>
+            {(photo || imageUrl) && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-danger"
+                onClick={async () => {
+                  setPhoto(null);
+                  if (service && imageUrl) {
+                    await api.removeServicePhoto(service.id).catch(() => {});
+                    setImageUrl(null);
+                  }
+                  if (photoRef.current) photoRef.current.value = '';
+                }}
+              >
+                Remove
+              </button>
+            )}
+          </div>
 
-        <div className="field">
-          <label>
-            <span>Name *</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            autoFocus
-            placeholder="e.g. Haircut"
-            className={fieldErrors.name ? 'field-invalid' : undefined}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (fieldErrors.name) setFieldErrors((f) => ({ ...f, name: undefined }));
-            }}
-          />
-          {fieldErrors.name && <div className="field-error">{fieldErrors.name}</div>}
-        </div>
+          <div className="field">
+            <label>
+              <span>Name *</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              autoFocus
+              placeholder="e.g. Haircut"
+              className={fieldErrors.name ? 'field-invalid' : undefined}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (fieldErrors.name) setFieldErrors((f) => ({ ...f, name: undefined }));
+              }}
+            />
+            {fieldErrors.name && <div className="field-error">{fieldErrors.name}</div>}
+          </div>
 
-        <div className="field">
-          <label>
-            <span>Type</span>
-          </label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-            <option value="">No type</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="field">
+            <label>
+              <span>Type</span>
+            </label>
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              <option value="">No type</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="field">
-          <label>
-            <span>How long it takes (minutes) *</span>
-          </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={durationMin}
-            className={fieldErrors.duration ? 'field-invalid' : undefined}
-            onChange={(e) => {
-              setDurationMin(e.target.value);
-              if (fieldErrors.duration) setFieldErrors((f) => ({ ...f, duration: undefined }));
-            }}
-          />
-          {fieldErrors.duration && <div className="field-error">{fieldErrors.duration}</div>}
-        </div>
+          <div className="field">
+            <label>
+              <span>How long it takes (minutes) *</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={durationMin}
+              className={fieldErrors.duration ? 'field-invalid' : undefined}
+              onChange={(e) => {
+                setDurationMin(e.target.value);
+                if (fieldErrors.duration) setFieldErrors((f) => ({ ...f, duration: undefined }));
+              }}
+            />
+            {fieldErrors.duration && <div className="field-error">{fieldErrors.duration}</div>}
+          </div>
 
-        <div className="field">
-          <label>
-            <span>Cleanup time after (minutes)</span>
-          </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={bufferAfterMin}
-            className={fieldErrors.buffer ? 'field-invalid' : undefined}
-            onChange={(e) => {
-              setBufferAfterMin(e.target.value);
-              if (fieldErrors.buffer) setFieldErrors((f) => ({ ...f, buffer: undefined }));
-            }}
-          />
-          {fieldErrors.buffer && <div className="field-error">{fieldErrors.buffer}</div>}
-          <div className="field-hint">Held after the booking so the next customer isn&apos;t booked into it.</div>
-        </div>
+          <div className="field">
+            <label>
+              <span>Cleanup time after (minutes)</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={bufferAfterMin}
+              className={fieldErrors.buffer ? 'field-invalid' : undefined}
+              onChange={(e) => {
+                setBufferAfterMin(e.target.value);
+                if (fieldErrors.buffer) setFieldErrors((f) => ({ ...f, buffer: undefined }));
+              }}
+            />
+            {fieldErrors.buffer && <div className="field-error">{fieldErrors.buffer}</div>}
+            <div className="field-hint">Held after the booking so the next customer isn&apos;t booked into it.</div>
+          </div>
 
-        <div className="field">
-          <label>
-            <span>Price (₹)</span>
-          </label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={price}
-            placeholder="Leave blank if it varies"
-            className={fieldErrors.price ? 'field-invalid' : undefined}
-            onChange={(e) => {
-              setPrice(e.target.value);
-              if (fieldErrors.price) setFieldErrors((f) => ({ ...f, price: undefined }));
-            }}
-          />
-          {fieldErrors.price && <div className="field-error">{fieldErrors.price}</div>}
-          {service && (
-            <div className="field-hint">Applies to new bookings — already-booked customers keep the price they were quoted.</div>
-          )}
-        </div>
+          <div className="field">
+            <label>
+              <span>Price (₹)</span>
+            </label>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={price}
+              placeholder="Leave blank if it varies"
+              className={fieldErrors.price ? 'field-invalid' : undefined}
+              onChange={(e) => {
+                setPrice(e.target.value);
+                if (fieldErrors.price) setFieldErrors((f) => ({ ...f, price: undefined }));
+              }}
+            />
+            {fieldErrors.price && <div className="field-error">{fieldErrors.price}</div>}
+            {service && (
+              <div className="field-hint">Applies to new bookings — already-booked customers keep the price they were quoted.</div>
+            )}
+          </div>
 
-        {error && <div className="field-error" style={{ marginTop: 12 }}>{error}</div>}
+          {error && <div className="field-error" style={{ marginTop: 12 }}>{error}</div>}
+        </div>
 
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>

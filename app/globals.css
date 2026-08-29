@@ -928,7 +928,12 @@ select:focus-visible {
      itself, and .modal-actions sticks to the bottom of that scroll box so the
      Save/Cancel actions stay on screen at any window height. The horizontal
      padding here is what .modal-actions' negative side margins cancel; change
-     one and change the other. */
+     one and change the other. This is the DEFAULT, whole-box-scrolls mode —
+     several modals (AddCustomerModal, CreateOfferMenu, AddServicesChooser,
+     ImportServices, the price-import dialogs) still use it as-is. `.modal-fit`
+     below is the GRW-8 shared shell, opt-in per component rather than a
+     change to this base rule, precisely so those other modals keep scrolling
+     instead of silently clipping their content. */
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
 }
@@ -938,6 +943,35 @@ select:focus-visible {
   font-size: 19px;
   font-weight: 660;
   letter-spacing: -0.01em;
+}
+
+/*
+ * GRW-8's shared modal shell: header / .modal-body / .modal-actions as a flex
+ * column, so the header and actions are pinned by construction and only the
+ * body scrolls — instead of the whole box scrolling with a sticky footer
+ * glued to the bottom of it (the default `.modal` behaviour above). Add
+ * `.modal-fit` alongside `.modal` and wrap everything between the header and
+ * `.modal-actions` in a `.modal-body` div to opt in.
+ */
+.modal.modal-fit {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/*
+ * The one scroll region. Negative side margins plus matching padding move its
+ * true edge out to the modal's own edge — the same trick .modal-actions uses
+ * below — so the scrollbar sits flush in the corner instead of 26px short of
+ * it, and a scrolled-past field doesn't show a sliver of white margin outside
+ * the scroll track.
+ */
+.modal-fit .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -26px;
+  padding: 0 26px;
 }
 
 .modal .field {
@@ -977,6 +1011,14 @@ select:focus-visible {
 @media (max-height: 860px) {
   .modal {
     padding: 20px 22px 16px;
+  }
+
+  /* Matches .modal's tightened 22px side padding above — otherwise the body's
+     edge-alignment margin would still cancel the old 26px and the scroll
+     track would sit 4px short of the modal's edge. */
+  .modal-body {
+    margin: 0 -22px;
+    padding: 0 22px;
   }
 
   .modal .field {
@@ -1260,14 +1302,13 @@ select:focus-visible {
 }
 
 /*
- * Pinned to the foot of the modal's own scroll box.
- *
- * The modal already capped itself at the viewport and scrolled, but the actions
- * scrolled away with everything else — on a short window the Edit-service form
- * opened with Save changes below the fold, and nothing on screen said it was
- * there. Sticky keeps it in the pane at every height. The negative side margins
- * pull it through the modal's 26px padding so its background reaches the edges
- * instead of leaving a strip of content showing beside it.
+ * Pinned to the foot of the modal. In the default `.modal` (whole box
+ * scrolls), that's `position: sticky` to the bottom of the scroll box. In the
+ * GRW-8 `.modal-fit` shell, `.modal-actions` is already a flex sibling of
+ * `.modal-body` rather than a descendant of it — sticky has nothing to stick
+ * to there (the shell itself doesn't scroll) and renders as a no-op, so
+ * `flex: none` is what actually keeps it pinned in that mode, alongside
+ * sticky staying harmlessly inert. One rule serves both.
  *
  * `bottom: 0` with no negative bottom margin. An earlier version used -22px for
  * both; measured side by side, that clipped 22px of the footer's own padding
@@ -1285,6 +1326,7 @@ select:focus-visible {
   position: sticky;
   bottom: 0;
   z-index: 1;
+  flex: none;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
