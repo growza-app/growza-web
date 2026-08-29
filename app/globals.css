@@ -5569,6 +5569,14 @@ select:focus-visible {
 .home-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 376px;
+  /* Grid's default align-items (stretch) was making .home-main exactly as
+     tall as .home-rail regardless of how much it actually had to show — on a
+     quiet day the bookings list would end after one entry, but the column
+     itself kept stretching to match the rail's chart+actions+staff content,
+     leaving a large empty gap below the list that read as "something failed
+     to load" rather than "that's everything today". `start` lets each column
+     size to its own content instead. */
+  align-items: start;
   gap: 14px;
   max-width: 1280px;
   margin: 0 auto;
@@ -5765,7 +5773,12 @@ select:focus-visible {
   .home-sub { font-size: 13px; margin-top: 2px; }
   .desktop-home-search { display: none; }.mobile-home-search { display: grid; margin-top: 5px; width: 48px; height: 48px; }.home-head .avatar-lg { width: 48px !important; height: 48px !important; margin-top: 5px; }.home-head .notif-wrap { margin-top: 5px; }.home-head .notif-bell { width: 48px; height: 48px; }
   .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 12.5px; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 15px; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 10px; white-space: normal; line-height: 1.2; }
-  .attention-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; }
+  /* repeat(2, 1fr), not 3: three columns in .home-main's full mobile width
+     (no rail to share it with here) measured at 81-108px per card at 320px —
+     the narrowest one clipped under the floating "+" button and its label
+     wrapped to a single truncated word. Two stays comfortable (138px+ per
+     card) all the way down to 320px, so a third tier was not needed. */
+  .attention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; }
   .mobile-only-section { display: block; }
   /* .home-rail's own (unconditional, later-in-file) display:flex would
      otherwise beat the earlier .desktop-only{display:none} rule at equal
