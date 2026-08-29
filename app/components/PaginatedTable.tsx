@@ -12,6 +12,13 @@ import { Pagination, PAGE_SIZE } from './Pagination';
  * Rows are passed as CHILDREN rather than through a render prop, so a server
  * component can use this directly — a function prop cannot cross the
  * server/client boundary, but already-built <tr> elements can.
+ *
+ * Fit-to-viewport is CSS the caller opts into (a `*-fit` class on the
+ * ancestor `.page-body`, see globals.css) — this component can't reach
+ * outside itself to flex its own ancestors, but its own markup (`.table-scroll`
+ * / `.paged-cards` / the pagination footer) is exactly what that CSS targets,
+ * so a new consumer gets the scroll-and-pin behaviour for free from the
+ * shared rules once it's wrapped in a fit ancestor.
  */
 export function PaginatedTable({
   head,
@@ -19,6 +26,9 @@ export function PaginatedTable({
   cards,
   pageSize = PAGE_SIZE,
   children,
+  page: controlledPage,
+  total: controlledTotal,
+  onPageChange,
 }: {
   head: ReactNode;
   /** Plural, for the "Showing 1–10 of 20 services" line. */
@@ -33,13 +43,40 @@ export function PaginatedTable({
   cards?: ReactNode;
   pageSize?: number;
   children: ReactNode;
+  /**
+   * Controlled mode, for a list that's already paginated server-side
+   * (Customers): `children`/`cards` are just this one page's rows, rendered
+   * as-is with no further client-side slicing. Pass all three of `page`,
+   * `total` and `onPageChange` together; omitting them keeps the default
+   * uncontrolled mode, which slices its own `children` into pages.
+   */
+  page?: number;
+  total?: number;
+  onPageChange?: (page: number) => void;
 }) {
+  const controlled = controlledPage !== undefined;
+  const [internalPage, setInternalPage] = useState(1);
+
   const rows = Children.toArray(children);
   const cardList = cards === undefined ? null : Children.toArray(cards);
-  const [page, setPage] = useState(1);
+
+  if (controlled) {
+    return (
+      <>
+        <div className={`table-scroll ${cardList ? 'paged-table' : ''}`}>
+          <table>
+            <thead>{head}</thead>
+            <tbody>{rows}</tbody>
+          </table>
+        </div>
+        {cardList && <div className="paged-cards">{cardList}</div>}
+        <Pagination page={controlledPage} total={controlledTotal ?? rows.length} pageSize={pageSize} noun={noun} onChange={onPageChange!} />
+      </>
+    );
+  }
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const clamped = Math.min(page, pageCount);
+  const clamped = Math.min(internalPage, pageCount);
   const from = (clamped - 1) * pageSize;
   const visible = rows.slice(from, from + pageSize);
 
@@ -52,7 +89,7 @@ export function PaginatedTable({
         </table>
       </div>
       {cardList && <div className="paged-cards">{cardList.slice(from, from + pageSize)}</div>}
-      <Pagination page={clamped} total={rows.length} pageSize={pageSize} noun={noun} onChange={setPage} />
+      <Pagination page={clamped} total={rows.length} pageSize={pageSize} noun={noun} onChange={setInternalPage} />
     </>
   );
 }

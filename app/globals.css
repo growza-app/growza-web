@@ -4023,12 +4023,6 @@ select:focus-visible {
   text-decoration: underline;
 }
 
-/* The card list is the mobile half of the same data — hidden here, swapped
-   in (and the table swapped out) inside the mobile block below. */
-.cust-cards {
-  display: none;
-}
-
 .cust-card {
   border-bottom: 1px solid var(--border);
   padding: 12px 14px;
@@ -4675,37 +4669,47 @@ select:focus-visible {
 
 @media (min-width: 861px) {
   /*
-   * Services, fit to the window.
+   * Services and Customers, fit to the window.
    *
    * The page ran 152px past the bottom at 1440x900, which put the pager at y=987
    * in a 900px window — you had to scroll to reach page 2, on a screen with room
    * to spare. Same treatment as .bk-fit: chrome fixed, rows scroll, pager pinned.
+   *
+   * Customers shares this exact shape with Services — one KPI/toolbar row,
+   * then a single `.card` holding the shared `PaginatedTable` — so it reuses
+   * the same rules under its own `.cust-fit` class rather than a second
+   * hand-written copy (GRW-7).
    */
-  .page-body.svc-fit {
+  .page-body.svc-fit,
+  .page-body.cust-fit {
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
   .svc-fit > .staff-toolbar,
-  .svc-fit > .staff-segmented {
+  .svc-fit > .staff-segmented,
+  .cust-fit > .cust-kpis {
     flex: none;
   }
 
-  .svc-fit > .card {
+  .svc-fit > .card,
+  .cust-fit > .card {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
   }
 
-  .svc-fit .paged-table {
+  .svc-fit .paged-table,
+  .cust-fit .paged-table {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
   }
 
-  .svc-fit .pagination {
+  .svc-fit .pagination,
+  .cust-fit .pagination {
     flex: none;
   }
 
@@ -5435,16 +5439,15 @@ select:focus-visible {
     display: inline-flex;
   }
 
-  /* Customers, bookings AND services: the multi-column table is unreadable on a
-     phone, so the same rows render as cards instead — same data, no horizontal
-     scrolling. `.paged-table` is only set when a card view was supplied, so a
-     table without one still shows at every width. */
-  .cust-table,
+  /* Bookings' per-provider chair view: the multi-column table is unreadable on
+     a phone, so the same rows render as cards instead — same data, no
+     horizontal scrolling. Customers and Services use the shared
+     `PaginatedTable` for the same swap now (see `.paged-table`/`.paged-cards`
+     above) instead of a bespoke pair of classes each. */
   .booking-table {
     display: none;
   }
 
-  .cust-cards,
   .booking-cards {
     display: block;
   }
@@ -5489,6 +5492,13 @@ select:focus-visible {
 
   .cust-kpi-value {
     font-size: 18px;
+  }
+
+  /* The WhatsApp link's own box was only 24px tall — text-height, not a tap
+     target. min-height (not padding, which would nudge the icon/text off
+     center) gets it to the 44px minimum without changing how the row looks. */
+  .cust-card .cust-phone {
+    min-height: 44px;
   }
 
   /* Customers toolbar only (no tabs): search takes the full first row; Filter

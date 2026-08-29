@@ -15,7 +15,8 @@ import {
 import { initials } from '../lib/appointment-display';
 import { dialable } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
-import { Pagination, PAGE_SIZE } from '../components/Pagination';
+import { PaginatedTable } from '../components/PaginatedTable';
+import { PAGE_SIZE } from '../components/Pagination';
 import { IconSearch, IconUserPlus, IconWhatsApp } from '../components/icons';
 
 /** Matches the backend's own derived-status window (customer/repository.ts). */
@@ -139,7 +140,7 @@ export function CustomersClient({
           </button>
         }
       />
-      <div className="page-body">
+      <div className="page-body cust-fit">
         <div className="cust-kpis">
           {/* Four distinct facts. Previously tile 1's subtitle repeated tile 2's
               value, and tile 3's subtitle repeated tile 4's — so half the row
@@ -201,100 +202,89 @@ export function CustomersClient({
           {page.rows.length === 0 ? (
             <div className="empty">{loading ? 'Loading…' : `No ${lower} match your search.`}</div>
           ) : (
-            <>
-              {/* Desktop: a scannable table. Mobile: the same rows as cards — a
-                  6-column table can't be read on a phone without pinch-zoom. */}
-              <div className="table-scroll cust-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Customer</th>
-                      <th>Phone / WhatsApp</th>
-                      <th>Last booking</th>
-                      <th>Bookings</th>
-                      <th>Total spent</th>
-                      <th>Last seen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleRows.map((c) => (
-                      <tr key={c.id} data-row>
-                        <td>
-                          <div className="cust-name-cell">
-                            <span className="avatar">{initials(c.name)}</span>
-                            <span style={{ fontWeight: 620 }}>{c.name ?? 'Unnamed'}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
-                            <IconWhatsApp />
-                            {formatPhone(c.waPhone)}
-                          </a>
-                        </td>
-                        <td>
-                          {c.lastBookingAt ? (
-                            <>
-                              <div>{formatDate(c.lastBookingAt)}</div>
-                              <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
-                            </>
-                          ) : (
-                            <span className="muted">Never</span>
-                          )}
-                        </td>
-                        <td>{c.totalBookings}</td>
-                        <td>{formatMoney(c.totalSpentMinor)}</td>
-                        {/* Recency, not a constant. "Active" was true for every
-                            row in the table, so the column carried no signal at
-                            all; how long ago someone last came in does. */}
-                        <td>
-                          <div className="cust-recency">
-                            <span>{formatRecency(c.lastBookingAt)}</span>
-                            {recencyChip(clientRecency(c.lastBookingAt))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="cust-cards">
-                {visibleRows.map((c) => (
-                  <div className="cust-card" key={c.id} data-row>
-                    <div className="cust-card-head">
-                      <span className="avatar">{initials(c.name)}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="cust-card-name">
-                          {c.name ?? 'Unnamed'}
-                          {recencyChip(clientRecency(c.lastBookingAt))}
-                        </div>
-                        <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
-                          <IconWhatsApp />
-                          {formatPhone(c.waPhone)}
-                        </a>
-                        {c.lastBookingAt && (
-                          <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                            📅 {formatDate(c.lastBookingAt)} · {c.lastServiceName}
-                          </div>
-                        )}
+            <PaginatedTable
+              noun={lower}
+              pageSize={pageSize}
+              page={pageIndex + 1}
+              total={page.total}
+              onPageChange={(p) => setPageIndex(p - 1)}
+              head={
+                <tr>
+                  <th>Customer</th>
+                  <th>Phone / WhatsApp</th>
+                  <th>Last booking</th>
+                  <th>Bookings</th>
+                  <th>Total spent</th>
+                  <th>Last seen</th>
+                </tr>
+              }
+              cards={visibleRows.map((c) => (
+                <div className="cust-card" key={c.id} data-row>
+                  <div className="cust-card-head">
+                    <span className="avatar">{initials(c.name)}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="cust-card-name">
+                        {c.name ?? 'Unnamed'}
+                        {recencyChip(clientRecency(c.lastBookingAt))}
                       </div>
-                    </div>
-                    <div className="cust-card-foot">
-                      <span>{c.totalBookings} bookings</span>
-                      <span>{formatMoney(c.totalSpentMinor)} spent</span>
+                      <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
+                        <IconWhatsApp />
+                        {formatPhone(c.waPhone)}
+                      </a>
+                      {c.lastBookingAt && (
+                        <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
+                          📅 {formatDate(c.lastBookingAt)} · {c.lastServiceName}
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-
-              <Pagination
-                page={pageIndex + 1}
-                total={page.total}
-                pageSize={pageSize}
-                noun={lower}
-                onChange={(p) => setPageIndex(p - 1)}
-              />
-            </>
+                  <div className="cust-card-foot">
+                    <span>{c.totalBookings} bookings</span>
+                    <span>{formatMoney(c.totalSpentMinor)} spent</span>
+                  </div>
+                </div>
+              ))}
+            >
+              {/* Desktop: a scannable table. Mobile: the same rows as cards — a
+                  6-column table can't be read on a phone without pinch-zoom. */}
+              {visibleRows.map((c) => (
+                <tr key={c.id} data-row>
+                  <td>
+                    <div className="cust-name-cell">
+                      <span className="avatar">{initials(c.name)}</span>
+                      <span style={{ fontWeight: 620 }}>{c.name ?? 'Unnamed'}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
+                      <IconWhatsApp />
+                      {formatPhone(c.waPhone)}
+                    </a>
+                  </td>
+                  <td>
+                    {c.lastBookingAt ? (
+                      <>
+                        <div>{formatDate(c.lastBookingAt)}</div>
+                        <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
+                      </>
+                    ) : (
+                      <span className="muted">Never</span>
+                    )}
+                  </td>
+                  <td>{c.totalBookings}</td>
+                  <td>{formatMoney(c.totalSpentMinor)}</td>
+                  {/* Recency, not a constant. "Active" was true for every row in
+                      the table, so the column carried no signal at all; how long
+                      ago someone last came in does. */}
+                  <td>
+                    <div className="cust-recency">
+                      <span>{formatRecency(c.lastBookingAt)}</span>
+                      {recencyChip(clientRecency(c.lastBookingAt))}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </PaginatedTable>
           )}
         </div>
       </div>
