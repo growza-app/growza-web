@@ -5511,7 +5511,7 @@ select:focus-visible {
 
 /* ---------- reference-led home dashboard ---------- */
 .home-page {
-  padding-top: 20px;
+  padding-top: 14px;
 }
 
 .home-layout {
@@ -5525,7 +5525,7 @@ select:focus-visible {
 .home-main { min-width: 0; }
 
 .home-head {
-  padding: 27px 34px 20px;
+  padding: 18px 34px 12px;
   border: 0;
   background: transparent;
 }
@@ -5707,10 +5707,10 @@ select:focus-visible {
 @media (min-width: 861px) and (max-width: 1060px) { .home-main .summary-progress-layout { flex-direction: column; }.summary-progress-hero { flex-basis: auto; }.summary-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 @media (max-width: 860px) {
-  .home-page { padding-top: 8px; }
-  .home-head { padding: 28px 24px 18px; align-items: flex-start; }
-  .home-greeting { font-size: 24px; line-height: 1.25; }
-  .home-sub { font-size: 14px; margin-top: 5px; }
+  .home-page { padding-top: 4px; }
+  .home-head { padding: 14px 20px 10px; align-items: flex-start; }
+  .home-greeting { font-size: 22px; line-height: 1.15; }
+  .home-sub { font-size: 13px; margin-top: 2px; }
   .desktop-home-search { display: none; }.mobile-home-search { display: grid; margin-top: 5px; width: 48px; height: 48px; }.home-head .avatar-lg { width: 48px !important; height: 48px !important; margin-top: 5px; }.home-head .notif-wrap { margin-top: 5px; }.home-head .notif-bell { width: 48px; height: 48px; }
   .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 12.5px; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 15px; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 10px; white-space: normal; line-height: 1.2; }
   .attention-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; }
