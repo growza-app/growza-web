@@ -361,21 +361,31 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
 
       {error && <div className="banner" style={{ marginBottom: 16 }}>{error}</div>}
 
-      <div className="wizard-steps">
-        {STEPS.map((s) => (
-          <button
-            key={s.key}
-            className={`wizard-step ${step === s.key ? 'wizard-step-active' : ''} ${s.key > maxStepReached ? 'wizard-step-locked' : ''}`}
-            disabled={s.key > maxStepReached}
-            onClick={() => goToStep(s.key)}
-          >
-            <span className="wizard-step-num">{s.key}</span>
-            <span>
-              <div className="wizard-step-title">{s.title}</div>
-              <div className="wizard-step-sub">{s.sub}</div>
-            </span>
-          </button>
-        ))}
+      <div className="wizard-rail">
+        <div className="wizard-steps">
+          {STEPS.map((s) => (
+            <button
+              key={s.key}
+              className={`wizard-step ${step === s.key ? 'wizard-step-active' : ''} ${s.key > maxStepReached ? 'wizard-step-locked' : ''}`}
+              disabled={s.key > maxStepReached}
+              onClick={() => goToStep(s.key)}
+            >
+              <span className="wizard-step-num">{s.key}</span>
+              <span>
+                <div className="wizard-step-title">{s.title}</div>
+                <div className="wizard-step-sub">{s.sub}</div>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="wizard-tip wizard-tip-rail">
+          <span>💡</span>
+          <div>
+            <strong>Tip</strong>
+            <div>Customers can book this combo directly from your WhatsApp offers menu.</div>
+          </div>
+        </div>
       </div>
 
       <div className="wizard-layout">
@@ -705,14 +715,6 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                 <div className="preview-caption">📲 Bookable directly from WhatsApp</div>
               </div>
             )}
-          </div>
-        </div>
-
-        <div className="wizard-tip">
-          <span>💡</span>
-          <div>
-            <strong>Tip</strong>
-            <div>Customers can book this combo directly from your WhatsApp offers menu.</div>
           </div>
         </div>
         </div>

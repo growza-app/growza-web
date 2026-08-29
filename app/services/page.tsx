@@ -13,8 +13,15 @@ export default async function ServicesPage() {
   return (
     <>
       <PageHeader title={me.labels.services ?? copy.nav.services} subtitle={copy.services.subtitle} />
-      <div className="page-body">
-        <ServicesTable services={services} categories={categories} />
+      {/* svc-fit: desktop pins the toolbar, tabs and pagination and lets only
+          the rows scroll, so the pager is never below the fold. */}
+      <div className="page-body svc-fit">
+        <ServicesTable
+          services={services}
+          categories={categories}
+          tenantName={me.tenant?.name ?? null}
+          serviceLabel={me.labels.services ?? copy.nav.services}
+        />
       </div>
     </>
   );

@@ -133,9 +133,12 @@ export const copy = {
     subtitle: 'What you offer, how long each takes, and what you charge.',
     name: 'Service',
     type: 'Type',
-    takes: 'Takes',
+    /* "Takes" is the design's word. Our owners are not all confident readers, and
+       "Minutes" names both the column and its unit without being decoded. */
+    duration: 'Minutes',
     cleanupTime: 'Cleanup time after',
     price: 'Price',
+    status: 'Status',
     noCleanup: 'None',
     minutes: (n: number) => `${n} min`,
   },

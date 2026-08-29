@@ -43,6 +43,31 @@ export interface ServiceCategory {
   serviceCount: number;
 }
 
+/** The ready-made catalogue for the tenant's pinned vertical (boards 3a/3b). */
+export interface SeedCatalogService {
+  name: string;
+  category: string | null;
+  durationMin: number;
+  bufferAfterMin: number;
+  priceMinor: number | null;
+  alreadyHave: boolean;
+}
+
+export interface SeedCatalogCategory {
+  name: string;
+  count: number;
+  sample: string[];
+  minPriceMinor: number | null;
+  maxPriceMinor: number | null;
+}
+
+export interface SeedCatalog {
+  label: string;
+  total: number;
+  categories: SeedCatalogCategory[];
+  services: SeedCatalogService[];
+}
+
 export interface ServiceImportItem {
   mode: 'create' | 'updatePrice';
   existingId?: string;
@@ -467,6 +492,7 @@ export const api = {
   serviceCategories: () => get<ServiceCategory[]>('/api/v1/service-categories'),
   createService: (body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', body),
   updateService: (id: string, body: Partial<ServiceInput>) => patch<ServiceAdmin>(`/api/v1/services/${id}`, body),
+  seedCatalog: () => get<SeedCatalog>('/api/v1/services/seed-catalog'),
   parseServiceSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/services/import/parse', 'file', file),
   importServices: (items: ServiceImportItem[]) => post<{ created: number; repriced: number }>('/api/v1/services/import', { items }),
   serviceUsage: (id: string) => get<{ bookings: number; providers: number; offers: number }>(`/api/v1/services/${id}/usage`),

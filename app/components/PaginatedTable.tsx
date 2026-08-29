@@ -16,30 +16,42 @@ import { Pagination, PAGE_SIZE } from './Pagination';
 export function PaginatedTable({
   head,
   noun,
+  cards,
   pageSize = PAGE_SIZE,
   children,
 }: {
   head: ReactNode;
   /** Plural, for the "Showing 1–10 of 20 services" line. */
   noun: string;
+  /**
+   * The same rows as cards, for phones — a multi-column table is unreadable
+   * there, and the columns that fall off the right are the ones with the
+   * actions on them. Built from the same array in the same order as `children`,
+   * so the two are sliced by one page index and can never disagree. Omit it and
+   * the table stays on at every width, as before.
+   */
+  cards?: ReactNode;
   pageSize?: number;
   children: ReactNode;
 }) {
   const rows = Children.toArray(children);
+  const cardList = cards === undefined ? null : Children.toArray(cards);
   const [page, setPage] = useState(1);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const clamped = Math.min(page, pageCount);
-  const visible = rows.slice((clamped - 1) * pageSize, clamped * pageSize);
+  const from = (clamped - 1) * pageSize;
+  const visible = rows.slice(from, from + pageSize);
 
   return (
     <>
-      <div className="table-scroll">
+      <div className={`table-scroll ${cardList ? 'paged-table' : ''}`}>
         <table>
           <thead>{head}</thead>
           <tbody>{visible}</tbody>
         </table>
       </div>
+      {cardList && <div className="paged-cards">{cardList.slice(from, from + pageSize)}</div>}
       <Pagination page={clamped} total={rows.length} pageSize={pageSize} noun={noun} onChange={setPage} />
     </>
   );

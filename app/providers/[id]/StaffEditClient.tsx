@@ -17,6 +17,7 @@ import { IconArrowLeft, IconCheck } from '../../components/icons';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { normalizePhone, validateEmail, validatePhone, validateRequired } from '../../lib/validate';
 import { avatarTone, initials } from '../StaffRoster';
+import { useLabel } from '../../components/LabelsProvider';
 
 const SAVE_ERROR = 'Could not save — check the server is running.';
 
@@ -48,9 +49,10 @@ export function StaffEditClient({
   day: ProviderDay | null;
   stats: ProviderStats | null;
   staffWord: string;
-  /** The business's default week — previewed in the editor when "Same as salon" is on, so that switch can defer to Save like every other field. */
+  /** The business's default week — previewed in the editor when "Same as the business" is on, so that switch can defer to Save like every other field. */
   orgWorkingHours: ProviderWorkingHourRow[];
 }) {
+  const providerWord = useLabel('provider', 'Staff member');
   const router = useRouter();
   const [detail, setDetail] = useState(initialDetail);
 
@@ -94,7 +96,7 @@ export function StaffEditClient({
   const skillsDirty = !setsEqual(selectedServiceIds, new Set(detail.serviceIds));
   const orgHoursDirty = usesOrgHours !== detail.usesOrgHours;
   const availabilityDirty = unavailableToday !== detail.unavailableToday;
-  // While "Same as salon" is on the rows are a read-only preview of the org
+  // While "Same as the business" is on the rows are a read-only preview of the org
   // week, so there is nothing of the user's own in them to be dirty about.
   const hoursDirty = !usesOrgHours && !rowsEqual(hourRows, toWeekdayRows(detail.workingHours));
   const dirty = aboutDirty || skillsDirty || hoursDirty || orgHoursDirty || availabilityDirty;
@@ -115,7 +117,7 @@ export function StaffEditClient({
   };
 
   /**
-   * "Same as salon" is a form field, not an instant action: flipping it only
+   * "Same as the business" is a form field, not an instant action: flipping it only
    * previews the business's week in the (disabled) editor and marks the form
    * dirty — Save is what persists it. Previously this wrote to the server on
    * flip, which left Save greyed out and made the switch look broken.
@@ -300,7 +302,7 @@ export function StaffEditClient({
                 </label>
                 <label className="field">
                   <span className="field-label">Role</span>
-                  <input type="text" value={title} placeholder="Stylist" onChange={(e) => (setTitle(e.target.value), setSaved(false))} />
+                  <input type="text" value={title} placeholder={providerWord} onChange={(e) => (setTitle(e.target.value), setSaved(false))} />
                 </label>
                 <label className="field">
                   <span className="field-label">Mobile</span>
@@ -330,7 +332,7 @@ export function StaffEditClient({
                     inputMode="email"
                     autoComplete="email"
                     value={email}
-                    placeholder="name@salon.in"
+                    placeholder="name@example.com"
                     className={fieldErrors.email ? 'field-invalid' : undefined}
                     aria-invalid={!!fieldErrors.email}
                     onChange={(e) => {
@@ -353,7 +355,7 @@ export function StaffEditClient({
                   <span className="switch-track">
                     <span className="switch-thumb" />
                   </span>
-                  <span className={usesOrgHours ? 'switch-label-on' : 'switch-label-off'}>Same as salon</span>
+                  <span className={usesOrgHours ? 'switch-label-on' : 'switch-label-off'}>Same as the business</span>
                 </label>
               </div>
               {usesOrgHours && (

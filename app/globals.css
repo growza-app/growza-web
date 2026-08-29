@@ -151,8 +151,14 @@ body {
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
+  /* Grid, not flex column: a fixed row plan (header / scroller / footer) is
+     what every page-level .page-fit / .bk-fit / .svc-fit variant has been
+     hand-rolling on top of flex — giving the shell the plan directly means
+     .page-body only has to be the middle row, not re-derive "fill what's
+     left" itself. Rows beyond these three (fixed-position overlays like
+     .fab-menu) don't consume a track, so they don't disturb the layout. */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
@@ -234,8 +240,12 @@ body {
 }
 
 .page-body {
-  flex: 1;
+  /* The middle grid row (.content) already stretches this to fill the
+     leftover height and width; min-height/min-width: 0 is what lets it
+     actually shrink to that track instead of growing to fit its content,
+     which is what makes overflow-y: auto below able to scroll at all. */
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
   padding: 12px 34px 12px;
 }
@@ -555,6 +565,30 @@ tr:last-child td {
   border-bottom: none;
 }
 
+/*
+ * Between the card breakpoint and a roomy desktop the sidebar takes 232px and a
+ * seven-column table does not fit what is left: measured at 1024px, 129px of the
+ * Services table was still off to the right, and the column that fell off was
+ * Actions. Tighter gutters buy ~140px, which covers it.
+ */
+@media (min-width: 1001px) and (max-width: 1100px) {
+  th,
+  td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 14px;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 14px;
+  }
+}
+
 /* ---------- availability ---------- */
 
 .filters {
@@ -863,7 +897,10 @@ select:focus-visible {
   max-width: 380px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   /* A big combo's checkout can list many services — the modal scrolls inside
-     itself so the Save/Cancel actions are always reachable. */
+     itself, and .modal-actions sticks to the bottom of that scroll box so the
+     Save/Cancel actions stay on screen at any window height. The horizontal
+     padding here is what .modal-actions' negative side margins cancel; change
+     one and change the other. */
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
 }
@@ -894,6 +931,52 @@ select:focus-visible {
 .modal input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+/*
+ * Short windows: tighten the modal's vertical rhythm so a full form still fits
+ * without scrolling.
+ *
+ * The Edit-service form runs ~780px at the roomy spacing. `100dvh - 32px` means
+ * any window under about 830px pushed its last field — Price — below the fold,
+ * and the sticky footer's border made the dialog look like it ended there rather
+ * than like there was more to scroll to. Trimming the gaps buys back ~120px,
+ * which covers the common laptop heights.
+ *
+ * Nothing is removed, only tightened. Below ~640px the form genuinely cannot fit
+ * and it scrolls, which is what the sticky footer is for.
+ */
+@media (max-height: 860px) {
+  .modal {
+    padding: 20px 22px 16px;
+  }
+
+  .modal .field {
+    margin-top: 11px;
+  }
+
+  .modal .field label {
+    margin-bottom: 4px;
+  }
+
+  .modal input,
+  .modal select {
+    padding: 8px 12px;
+  }
+
+  .modal-actions {
+    margin: 14px -22px 0;
+    padding: 11px 22px 12px;
+  }
+
+  .field-hint {
+    margin-top: 3px;
+    line-height: 1.35;
+  }
+
+  .svc-photo-field {
+    margin-top: var(--sp-3);
+  }
 }
 
 /* ---------- checkout sheet ---------- */
@@ -1148,11 +1231,39 @@ select:focus-visible {
   cursor: default;
 }
 
+/*
+ * Pinned to the foot of the modal's own scroll box.
+ *
+ * The modal already capped itself at the viewport and scrolled, but the actions
+ * scrolled away with everything else — on a short window the Edit-service form
+ * opened with Save changes below the fold, and nothing on screen said it was
+ * there. Sticky keeps it in the pane at every height. The negative side margins
+ * pull it through the modal's 26px padding so its background reaches the edges
+ * instead of leaving a strip of content showing beside it.
+ *
+ * `bottom: 0` with no negative bottom margin. An earlier version used -22px for
+ * both; measured side by side, that clipped 22px of the footer's own padding
+ * below the scrollport for no benefit. It did NOT overlap the last field — that
+ * was a wrong guess at why the Price input was hard to find. The real cause was
+ * simply that the form is taller than a short window, handled by the
+ * height media query further down.
+ *
+ * Only the side margins are negative, so the background reaches the modal's edges
+ * through its 26px padding. At rest the modal's 22px bottom padding shows beneath
+ * the footer, which is what that padding is for. On a modal short enough not to
+ * scroll none of this engages — sticky does nothing without overflow.
+ */
 .modal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 22px;
+  margin: 22px -26px 0;
+  padding: 14px 26px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
 }
 
 .btn-ghost {
@@ -2829,6 +2940,25 @@ select:focus-visible {
   font-size: 13.5px;
 }
 
+/* The step rail carries the Tip on its right, so the wizard's right column ends
+   with the Preview rather than trailing off below it (Growza Fixes, board 2f). */
+.wizard-rail {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.wizard-rail .wizard-steps {
+  flex: 1;
+  min-width: 0;
+}
+
+.wizard-tip-rail {
+  flex: none;
+  max-width: 360px;
+  margin-bottom: 18px;
+}
+
 .wizard-steps {
   display: flex;
   gap: 28px;
@@ -3913,6 +4043,31 @@ select:focus-visible {
   display: none;
 }
 
+/* Must be declared HERE, above the mobile media query — a base rule placed after
+   it would win on equal specificity and the cards would never show. */
+.paged-cards {
+  display: none;
+}
+
+/*
+ * The card swap for `PaginatedTable` is at 1000px, not the app's usual 860: the
+ * Services table has seven columns and, measured even with tightened gutters,
+ * 900px still left 121px of it — including Actions — off to the right.
+ *
+ * It has to sit AFTER the base rule above and after any later `.paged-*`
+ * declaration; on equal specificity the last one in the file wins, which is what
+ * made the first attempt at this silently do nothing.
+ */
+@media (max-width: 1000px) {
+  .paged-table {
+    display: none;
+  }
+
+  .paged-cards {
+    display: block;
+  }
+}
+
 .booking-card {
   display: flex;
   align-items: center;
@@ -4491,6 +4646,41 @@ select:focus-visible {
 }
 
 @media (min-width: 861px) {
+  /*
+   * Services, fit to the window.
+   *
+   * The page ran 152px past the bottom at 1440x900, which put the pager at y=987
+   * in a 900px window — you had to scroll to reach page 2, on a screen with room
+   * to spare. Same treatment as .bk-fit: chrome fixed, rows scroll, pager pinned.
+   */
+  .page-body.svc-fit {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .svc-fit > .staff-toolbar,
+  .svc-fit > .staff-segmented {
+    flex: none;
+  }
+
+  .svc-fit > .card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .svc-fit .paged-table {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .svc-fit .pagination {
+    flex: none;
+  }
+
   .page-body.bk-fit {
     display: flex;
     flex-direction: column;
@@ -4512,8 +4702,13 @@ select:focus-visible {
     flex-shrink: 0;
     margin-bottom: var(--sp-2);
   }
+  /* `flex: 0 1 auto`, not `flex: 1`. On a busy day the list still shrinks to the
+     space left and scrolls inside it; on a quiet day it takes only the height it
+     needs, so the page ends after the last booking instead of stretching a few
+     rows over the whole viewport and reading as "something failed to load"
+     (Growza Fixes, board 2f). */
   .bk-fit .bk-scroll {
-    flex: 1;
+    flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
@@ -4886,6 +5081,16 @@ select:focus-visible {
     overflow-x: auto;
   }
 
+  .wizard-rail {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .wizard-tip-rail {
+    max-width: none;
+  }
+
   .price-panel {
     grid-template-columns: 1fr;
   }
@@ -5202,8 +5407,10 @@ select:focus-visible {
     display: inline-flex;
   }
 
-  /* Customers AND bookings: the multi-column table is unreadable on a phone, so
-     the same rows render as cards instead — same data, no horizontal scrolling. */
+  /* Customers, bookings AND services: the multi-column table is unreadable on a
+     phone, so the same rows render as cards instead — same data, no horizontal
+     scrolling. `.paged-table` is only set when a card view was supplied, so a
+     table without one still shows at every width. */
   .cust-table,
   .booking-table {
     display: none;
@@ -6719,6 +6926,75 @@ select:focus-visible {
 
 /* Says a photo is missing, rather than showing an identical grey block whether
    one exists or not. */
+/* ---------- services (mobile cards) ----------
+   The seven-column table is unusable on a phone: measured at 375px it is 772px
+   wide with 431px off-screen, and the columns that fall off the right are Price
+   and Actions — so Edit and Retire were unreachable without scrolling the table
+   sideways. Same rows as cards below 860px, matching Clients and Bookings. */
+.svc-card {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+}
+
+.svc-card:last-child {
+  border-bottom: none;
+}
+
+.svc-card.is-retired {
+  opacity: 0.6;
+}
+
+.svc-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.svc-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.svc-card-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 640;
+  margin-bottom: 3px;
+}
+
+.svc-card-meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.svc-card-price {
+  flex: none;
+  font-weight: 640;
+}
+
+.svc-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+}
+
+/* Edit is the reason most owners open this row — it leads. */
+.svc-card-edit {
+  color: var(--accent-deep);
+  font-weight: 640;
+}
+
+.svc-card-edit svg {
+  width: 15px;
+  height: 15px;
+}
+
 .svc-photo-empty {
   width: 36px;
   height: 36px;
@@ -6787,13 +7063,21 @@ tr.is-retired td {
   border-radius: var(--radius-sm);
 }
 
+/* The last column is a fixed width, not `auto`. It used to size to its content,
+   which meant the header row (an empty cell) and the data rows (a Skip button)
+   resolved different track widths — and every `fr` column drifted with them, so
+   no header sat over its own column. Fixed width, one grid, everything lines up. */
 .import-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) 74px 88px minmax(0, 1.6fr) auto;
+  grid-template-columns: minmax(0, 2fr) 74px 104px minmax(0, 1.6fr) 78px;
   gap: var(--sp-2);
   align-items: center;
   padding: 7px 10px;
   border-bottom: 1px solid var(--border);
+}
+
+.import-row > button {
+  justify-self: end;
 }
 
 .import-row:last-child {
@@ -6806,6 +7090,50 @@ tr.is-retired td {
   font-size: 13.5px;
   min-height: 34px;
   padding: 5px 9px;
+}
+
+/* Reads as a fact, not a field — a re-price row cannot change its duration. */
+.import-row input[readonly] {
+  background: var(--slate-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* Column names for the review table. Sticky, because the list scrolls inside its
+   own box and a header that scrolls away is no header at all. Hidden from screen
+   readers — every input already carries its own aria-label, so announcing the row
+   again would only add noise. */
+.import-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Only the columns whose cell is an input need the inset — an <input> pads its own
+   text by 9px, so the label above it has to match. Price and Status start at the
+   cell edge (the rupee symbol and the status text both do), so they take none. */
+.import-head .ih-pad {
+  padding: 0 9px;
+}
+
+/* Rupee outside the box: the owner types a number, not a currency string. */
+.import-money {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.import-money-sym {
+  flex: none;
+  font-size: 13.5px;
+  color: var(--muted);
 }
 
 /* Amber, not red — a row that needs a value is unfinished, not broken. */
@@ -6842,5 +7170,554 @@ tr.is-retired td {
   .import-note,
   .import-row > button {
     grid-column: 1 / -1;
+  }
+}
+
+/* ---------- add-services chooser + ready-made catalogue (boards 3a, 3b) ---------- */
+
+.chooser-modal {
+  max-width: 620px;
+  width: 100%;
+}
+
+.chooser-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.chooser-head h3 {
+  margin: 0 0 4px;
+}
+
+.chooser-routes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.chooser-route {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chooser-route:hover:not(.is-disabled) {
+  border-color: var(--accent);
+}
+
+/* The catalogue route is the one that is already specific to this tenant, so it
+   leads rather than sitting level with the others. */
+.chooser-route.is-primary {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.chooser-route.is-disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.chooser-route.is-plain {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chooser-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--slate-soft);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.chooser-icon.is-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.chooser-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.chooser-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.chooser-chevron {
+  flex: none;
+  color: var(--muted);
+}
+
+.chooser-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.chooser-or > span:first-child,
+.chooser-or > span:last-child {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.chip-fastest {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.chip-beta {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--amber);
+  background: var(--amber-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/*
+ * The picker's own scroll region is its list, not the whole dialog.
+ *
+ * As a plain scrolling modal it ran past the bottom of the window: the last
+ * category was cut mid-row and "Adjust all prices" — a control, not a footnote —
+ * sat below the fold with nothing on screen saying it was there. Measured at
+ * 1440x900: 895px of content in an 868px box.
+ *
+ * Now the dialog is a flex column that fits the viewport, and only the list
+ * scrolls. Header, toolbar, price scaling and the count line are always on screen.
+ */
+.cat-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cat-modal > * {
+  flex: none;
+}
+
+.cat-modal .cat-list,
+.cat-modal .cat-edit-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.cat-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cat-head h3 {
+  margin: 0 0 2px;
+}
+
+/* The 15px right inset matches .cat-row's padding, so "Clear all" and the
+   View / edit buttons below it share one right edge instead of sitting in two
+   different columns. */
+.cat-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 15px 10px;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.linkish {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.cat-list {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cat-row:last-child {
+  border-bottom: none;
+}
+
+.cat-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cat-samples {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cat-stats {
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* The category editor reuses the review table's grid so the two screens read as
+   one thing, with Remove where Skip sits. Its own column widths only differ in
+   the last track, which holds a wider word. */
+.cat-edit-list {
+  max-height: 44vh;
+}
+
+.import-row.cat-edit-row {
+  grid-template-columns: minmax(0, 2fr) 74px 104px minmax(0, 1.2fr) 92px;
+}
+
+.cat-add-row {
+  margin-top: var(--sp-2);
+}
+
+/* Catalogue-wide actions, above the list. Left-aligned with the header rather
+   than the rows, because they act on the whole catalogue, not on one group. */
+.cat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+}
+
+/* The one action that leaves this screen, pushed away from the two that stay on
+   it so it never gets hit by mistake. */
+.cat-toolbar-next {
+  margin-left: auto;
+  padding: 8px 16px;
+  white-space: nowrap;
+}
+
+.cat-footnote {
+  padding: var(--sp-3) 15px 0;
+  font-size: 13px;
+}
+
+.cat-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.cat-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 10px;
+}
+
+/* Off by default and quiet: plain text is what most owners want, and the toggle
+   should not look like the main event. It lights up when it is doing something. */
+.cat-regex-toggle {
+  flex: none;
+  min-width: 38px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.cat-regex-toggle.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.cat-search-count {
+  flex: none;
+  min-width: 74px;
+  text-align: right;
+  font-size: 12.5px;
+}
+
+/* The flat editor carries a Group column the category editor does not need. */
+.import-row.cat-edit-row-all {
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) 74px 104px minmax(0, 1fr) 92px;
+}
+
+.import-row.cat-edit-row-all select {
+  min-width: 0;
+  width: 100%;
+  font-size: 13px;
+  min-height: 34px;
+  padding: 5px 8px;
+}
+
+/* The group name is a field, not a heading: the same screen creates a category
+   and renames one, so the title has to be typed into. It still reads as a title
+   until focused. */
+.cat-head-name {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cat-name-input {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  padding: 2px 6px;
+  margin-left: -6px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.cat-name-input::placeholder {
+  font-weight: 550;
+  color: var(--muted);
+}
+
+.cat-name-input:hover {
+  border-color: var(--border);
+}
+
+.cat-name-input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  outline: none;
+}
+
+/* Real button chrome, not `.btn`'s 20px inset — that pushed the label 35px clear
+   of the list edge while "Clear all" sat flush against it. It also has to look
+   like it opens something: the previous text link read as decoration. */
+.cat-edit-btn {
+  flex: none;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 620;
+}
+
+.cat-edit-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Both row actions in one group, so the rightmost still lands on the 15px inset
+   that "Clear all" sits on. */
+.cat-row-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* Quieter than View / edit: same row, but this one should never be the thing the
+   eye lands on first. It picks up its colour on hover. */
+.cat-delete-btn {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cat-delete-btn:hover {
+  color: #b91c1c;
+  background: #fde4e4;
+}
+
+.cat-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 14px 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.cat-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.cat-stepper span {
+  min-width: 54px;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.cat-stepper button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--slate-soft);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.cat-stepper button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cat-actions {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cat-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 860px) {
+  .import-row.cat-edit-row {
+    grid-template-columns: minmax(0, 1.6fr) 58px 88px 78px;
+  }
+
+  /* Group drops to its own line's worth of width rather than crushing the name. */
+  .import-row.cat-edit-row-all {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 52px 84px 74px;
+  }
+
+  .cat-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .cat-search-count {
+    min-width: 0;
+  }
+
+  /* On a phone the primary drops to its own full-width line rather than being
+     squeezed to a stub beside the other two. */
+  .cat-toolbar-next {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Stack the two row actions on a phone rather than squeezing the name column. */
+  .cat-row-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  /* Back sits on its own line: side by side, it squeezed the title into a
+     two-line wrap with the arrow stranded beside it. */
+  .cat-head {
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+
+  .cat-head > div {
+    flex: 1 1 100%;
+  }
+
+  .cat-head h3 {
+    font-size: 17px;
+  }
+
+  /* The example names ran to five lines and pushed every row past the fold. One
+     line is enough to recognise a category; the count and price range below it
+     are never clamped, because that is the half an owner reads. */
+  .cat-samples {
+    -webkit-line-clamp: 1;
+  }
+
+  /* Status is the first thing to go on a narrow screen — a bad row is already
+     tinted amber, so the words are a second telling of the same fact. */
+  .import-row.cat-edit-row > .import-note {
+    display: none;
+  }
+
+  .cat-scale {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cat-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* Delete sits left of Save so the destructive one is never under the thumb
+     that was reaching for the safe one. */
+  .cat-actions-buttons {
+    justify-content: space-between;
   }
 }

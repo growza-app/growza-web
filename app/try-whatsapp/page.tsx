@@ -29,7 +29,7 @@ export default async function TryWhatsAppPage() {
         subtitle="A stand-in for real WhatsApp — same booking engine, until Meta approval is live."
       />
       <div className="page-body">
-        <ChatWindow tenantName={me.tenant?.name ?? 'Your salon'} />
+        <ChatWindow tenantName={me.tenant?.name ?? 'Your business'} />
       </div>
     </>
   );

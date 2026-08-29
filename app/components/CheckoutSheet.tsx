@@ -14,6 +14,7 @@ import {
 } from '../lib/api';
 import { summarizeServices } from '../lib/appointment-display';
 import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
+import { useLabel } from './LabelsProvider';
 
 /** Digits only — `tel:` chokes on spaces and punctuation. Duplicated from BookingSheet.tsx rather than imported, to avoid a circular import (BookingSheet renders CheckoutSheet). */
 function dialable(phone: string): string {
@@ -110,6 +111,7 @@ function ServiceRow({
   onRemove?: () => void;
   disabled: boolean;
 }) {
+  const providerWord = useLabel('provider', 'Staff member');
   return (
     <div className="checkout-service-row">
       <div className="checkout-service-avatar">{name.slice(0, 1).toUpperCase()}</div>
@@ -131,7 +133,7 @@ function ServiceRow({
             ))}
           </select>
         ) : (
-          <div className="checkout-service-sub">{providerName || 'No stylist set'}</div>
+          <div className="checkout-service-sub">{providerName || `No ${providerWord.toLowerCase()} set`}</div>
         )}
       </div>
       <div className="checkout-amount-field">
@@ -145,7 +147,7 @@ function ServiceRow({
           disabled={disabled}
         />
       </div>
-      <button type="button" className="checkout-icon-btn" aria-label="Change stylist" onClick={onToggleEdit} disabled={disabled}>
+      <button type="button" className="checkout-icon-btn" aria-label={`Change ${providerWord.toLowerCase()}`} onClick={onToggleEdit} disabled={disabled}>
         <IconEdit />
       </button>
       {onRemove ? (

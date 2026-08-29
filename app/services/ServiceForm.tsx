@@ -52,7 +52,7 @@ export function ServiceForm({
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; duration?: string; price?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; duration?: string; buffer?: string; price?: string }>({});
 
   const validate = () => {
     const next: typeof fieldErrors = {};
@@ -62,6 +62,9 @@ export function ServiceForm({
     const d = Number(durationMin);
     if (!durationMin.trim() || !Number.isFinite(d) || d <= 0) next.duration = 'Must be more than 0 minutes';
     else if (d > 12 * 60) next.duration = 'Must be 12 hours or less';
+
+    const b = Number(bufferAfterMin);
+    if (bufferAfterMin.trim() && (!Number.isFinite(b) || b < 0)) next.buffer = 'Cannot be less than 0 minutes';
 
     if (price.trim()) {
       const p = Number(price);
@@ -186,8 +189,8 @@ export function ServiceForm({
             <span>How long it takes (minutes) *</span>
           </label>
           <input
-            type="number"
-            min={1}
+            type="text"
+            inputMode="numeric"
             value={durationMin}
             className={fieldErrors.duration ? 'field-invalid' : undefined}
             onChange={(e) => {
@@ -202,7 +205,17 @@ export function ServiceForm({
           <label>
             <span>Cleanup time after (minutes)</span>
           </label>
-          <input type="number" min={0} value={bufferAfterMin} onChange={(e) => setBufferAfterMin(e.target.value)} />
+          <input
+            type="text"
+            inputMode="numeric"
+            value={bufferAfterMin}
+            className={fieldErrors.buffer ? 'field-invalid' : undefined}
+            onChange={(e) => {
+              setBufferAfterMin(e.target.value);
+              if (fieldErrors.buffer) setFieldErrors((f) => ({ ...f, buffer: undefined }));
+            }}
+          />
+          {fieldErrors.buffer && <div className="field-error">{fieldErrors.buffer}</div>}
           <div className="field-hint">Held after the booking so the next customer isn&apos;t booked into it.</div>
         </div>
 
@@ -211,8 +224,8 @@ export function ServiceForm({
             <span>Price (₹)</span>
           </label>
           <input
-            type="number"
-            min={0}
+            type="text"
+            inputMode="decimal"
             value={price}
             placeholder="Leave blank if it varies"
             className={fieldErrors.price ? 'field-invalid' : undefined}

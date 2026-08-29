@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
 import { LiveRefresh } from './components/LiveRefresh';
+import { LabelsProvider } from './components/LabelsProvider';
 
 export const metadata: Metadata = {
   title: 'Booking Dashboard',
@@ -47,13 +48,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <PwaRegister />
         <LiveRefresh />
-        <div className="shell">
-          <Sidebar tenantName={tenantName} labels={labels} />
-          <div className="content">
-            {children}
-            <MobileChrome labels={labels} timezone={timezone} />
+        <LabelsProvider labels={labels}>
+          <div className="shell">
+            <Sidebar tenantName={tenantName} labels={labels} />
+            <div className="content">
+              {children}
+              <MobileChrome labels={labels} timezone={timezone} />
+            </div>
           </div>
-        </div>
+        </LabelsProvider>
       </body>
     </html>
   );

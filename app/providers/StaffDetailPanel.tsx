@@ -5,6 +5,7 @@ import { DateTime } from 'luxon';
 import { api, type ProviderDay, type ProviderDetail, type Service } from '../lib/api';
 import { IconCheck, IconClose, IconWhatsApp } from '../components/icons';
 import { toWeekdayRows, WeekdayHoursEditor, type WeekdayRow } from '../components/WeekdayHoursEditor';
+import { useLabel } from '../components/LabelsProvider';
 
 const SAVE_ERROR = 'Could not save — check the server is running.';
 
@@ -69,6 +70,7 @@ function AboutFields({
   nameInvalid: boolean;
   phoneInvalid: boolean;
 }) {
+  const providerWord = useLabel('provider', 'Staff member');
   return (
     <div className="drawer-section">
       <div className="drawer-section-title">About</div>
@@ -89,7 +91,7 @@ function AboutFields({
         <label>
           <span>Role</span>
         </label>
-        <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)} placeholder="e.g. Senior Stylist" />
+        <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)} placeholder={`e.g. Senior ${providerWord}`} />
       </div>
       <div className="field" style={{ marginTop: 12 }}>
         <label>

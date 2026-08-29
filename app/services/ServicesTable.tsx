@@ -10,6 +10,8 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconEdit, IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
 import { ImportServices } from './ImportServices';
+import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser';
+import { CataloguePicker } from './CataloguePicker';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -25,9 +27,14 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 export function ServicesTable({
   services: initial,
   categories,
+  tenantName,
+  serviceLabel,
 }: {
   services: ServiceAdmin[];
   categories: ServiceCategory[];
+  tenantName: string | null;
+  /** ctx.labels — every customer-visible noun comes from the vertical, not a literal. */
+  serviceLabel: string;
 }) {
   const router = useRouter();
   const [services, setServices] = useState(initial);
@@ -38,6 +45,8 @@ export function ServicesTable({
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [choosing, setChoosing] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -125,7 +134,7 @@ export function ServicesTable({
   }, [services, search, categoryId]);
 
   const exportCsv = () => {
-    const header = ['Name', 'Type', 'Takes (min)', 'Cleanup after (min)', 'Price', 'Status'];
+    const header = ['Name', 'Type', 'Minutes', 'Cleanup after (min)', 'Price', 'Status'];
     const rows = filtered.map((s) => [
       s.name,
       s.categoryName ?? '',
@@ -146,11 +155,8 @@ export function ServicesTable({
   return (
     <>
       <div className="staff-toolbar">
-        <button type="button" className="btn" onClick={() => setCreating(true)}>
-          <IconPlus /> Add service
-        </button>
-        <button type="button" className="btn btn-ghost" onClick={() => setImporting(true)}>
-          Import price list
+        <button type="button" className="btn" onClick={() => setChoosing(true)}>
+          <IconPlus /> Add {serviceLabel.toLowerCase()}
         </button>
         <div className="staff-search-wrap">
           <IconSearch />
@@ -198,12 +204,68 @@ export function ServicesTable({
         ) : (
           <PaginatedTable
             noun="services"
+            cards={filtered.map((s) => (
+              <div className={`svc-card ${s.active ? '' : 'is-retired'}`} key={s.id} data-row>
+                <div className="svc-card-head">
+                  {s.imageUrl ? (
+                    <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={40} height={40} />
+                  ) : (
+                    <span className="svc-photo-empty">ADD</span>
+                  )}
+                  <div className="svc-card-text">
+                    <div className="svc-card-name">
+                      {s.name}
+                      {!s.active && <span className="chip chip-completed">Retired</span>}
+                    </div>
+                    <div className="svc-card-meta">
+                      {s.categoryName ?? '—'} · {copy.services.minutes(s.durationMin)}
+                      {s.bufferAfterMin > 0 && ` · +${copy.services.minutes(s.bufferAfterMin)} cleanup`}
+                    </div>
+                  </div>
+                  <div className="svc-card-price">{formatMoney(s.priceMinor, s.currency)}</div>
+                </div>
+                <div className="svc-card-foot">
+                  {/* Not `.staff-edit-btn`: the Staff screen hides that class on
+                      mobile because its bottom sheet covers row actions there. */}
+                  <button type="button" className="btn btn-ghost svc-card-edit" onClick={() => setEditing(s)}>
+                    <IconEdit /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    disabled={busyId === s.id}
+                    onClick={() => inputRefs.current[s.id]?.click()}
+                  >
+                    {busyId === s.id ? '…' : s.imageUrl ? 'Change photo' : 'Add photo'}
+                  </button>
+                  {s.active ? (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-danger"
+                      disabled={busyId === s.id}
+                      onClick={() => askRetire(s)}
+                    >
+                      Retire
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      disabled={busyId === s.id}
+                      onClick={() => setActive(s, true)}
+                    >
+                      Restore
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
             head={
               <tr>
                 <th>Photo</th>
                 <th>{copy.services.name}</th>
                 <th>{copy.services.type}</th>
-                <th>{copy.services.takes}</th>
+                <th>{copy.services.duration}</th>
                 <th>{copy.services.cleanupTime}</th>
                 <th>{copy.services.price}</th>
                 <th>Actions</th>
@@ -288,6 +350,37 @@ export function ServicesTable({
             replace(saved);
             setCreating(false);
             setEditing(null);
+          }}
+        />
+      )}
+
+      {choosing && (
+        <AddServicesChooser
+          tenantName={tenantName}
+          serviceCount={services.length}
+          serviceLabel={serviceLabel}
+          onClose={() => setChoosing(false)}
+          onPick={(route: AddServicesRoute) => {
+            setChoosing(false);
+            if (route === 'catalogue') setPicking(true);
+            else if (route === 'sheet') setImporting(true);
+            else setCreating(true);
+          }}
+        />
+      )}
+
+      {picking && (
+        <CataloguePicker
+          existing={services}
+          onBack={() => {
+            setPicking(false);
+            setChoosing(true);
+          }}
+          onClose={() => setPicking(false)}
+          onImported={async () => {
+            setPicking(false);
+            setServices(await api.allServices());
+            router.refresh();
           }}
         />
       )}

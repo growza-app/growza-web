@@ -5,6 +5,7 @@ import { formatDateWithWeekday } from '../lib/format';
 import { formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { IconCheck, IconPhone } from './icons';
+import { useLabel } from './LabelsProvider';
 
 const PAYMENT_LABELS: Record<string, string> = { cash: 'Cash', card: 'Card', upi: 'UPI', other: 'Other' };
 
@@ -22,6 +23,7 @@ export function BookingSummary({
   timezone: string;
   onClose: () => void;
 }) {
+  const providerWord = useLabel('provider', 'Staff member');
   // What the customer actually paid; falls back to the list price for anything
   // completed before checkout recorded an amount.
   const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
@@ -77,7 +79,7 @@ export function BookingSummary({
             <span className="summary-avatar">{a.serviceName.slice(0, 1).toUpperCase()}</span>
             <div className="summary-info">
               <div className="summary-service">{a.serviceName}</div>
-              <div className="summary-stylist">{a.providerName ?? 'No stylist'}</div>
+              <div className="summary-stylist">{a.providerName ?? `No ${providerWord.toLowerCase()}`}</div>
             </div>
             <span className="summary-price">{formatMoney(paidOf(a))}</span>
           </div>

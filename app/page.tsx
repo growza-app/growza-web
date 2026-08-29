@@ -298,7 +298,7 @@ export default async function DashboardPage() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="home-greeting">{copy.home.greeting(part)}</div>
           <div className="home-sub">
-            {me.tenant?.name ?? 'Your salon'} · {dateLine}
+            {me.tenant?.name ?? 'Your business'} · {dateLine}
             {me.tenant?.locationName ? ` · ${me.tenant.locationName}` : ''}
           </div>
         </div>
