@@ -1,6 +1,22 @@
 import type { NextConfig } from 'next';
+import { networkInterfaces } from 'node:os';
 
 const API_ORIGIN = process.env.API_URL ?? 'http://localhost:3001';
+
+/**
+ * Every non-internal IPv4 address this machine currently has. Hardcoding a
+ * single LAN IP here went stale the moment the Mac joined a different
+ * Wi-Fi — the phone could still load the page (SSR HTML doesn't care) but
+ * every JS chunk 403'd, so nothing was interactive. Detecting it at startup
+ * means the same behaviour holds on whatever network `next dev` is actually
+ * running on, without a config edit every time it changes.
+ */
+function currentLanIps(): string[] {
+  return Object.values(networkInterfaces())
+    .flat()
+    .filter((i): i is NonNullable<typeof i> => !!i && i.family === 'IPv4' && !i.internal)
+    .map((i) => i.address);
+}
 
 const nextConfig: NextConfig = {
   env: {
@@ -15,10 +31,12 @@ const nextConfig: NextConfig = {
   // a phone via the Mac's LAN IP silently 403s one of the chunks, so parts
   // of the page render but their interactivity never loads. Dev-only; the
   // production build has no dev server to protect.
-  // The LAN IP for phones on the same Wi-Fi, plus every *.trycloudflare.com
-  // subdomain so a quick Cloudflare tunnel (random hostname each run) can load
-  // the dev chunks without a 403. Dev-only.
-  allowedDevOrigins: ['192.168.1.5', '*.trycloudflare.com'],
+  // Every LAN IP this machine currently has (detected at startup — see
+  // currentLanIps above), plus every *.trycloudflare.com subdomain so a
+  // quick Cloudflare tunnel (random hostname each run) can load the dev
+  // chunks without a 403. Dev-only. Restart `next dev` after switching
+  // networks so this list picks up the new address.
+  allowedDevOrigins: [...currentLanIps(), '*.trycloudflare.com'],
   // Serve the API and its uploaded files under the SAME origin as the web
   // app. The browser then only ever talks to one host, which is what makes
   // the app work unchanged over localhost, a LAN IP, AND an HTTPS tunnel
