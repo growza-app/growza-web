@@ -57,13 +57,13 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
           three that stay are the ones an owner acts on — and two of them are
           better when they fall, so their arrows read the other way round. */}
       <div className="rp-kpi-grid rp-kpi-grid-4">
-        <Kpi icon={<IconAppointments />} iconTone="var(--rp-blue)" label={c.total}
+        <Kpi icon={<IconAppointments />} iconTone="var(--rp-blue)" label={c.total} explain={copy.reports.explain.bookingsTotal}
              value={String(kpis.total.value)} metric={kpis.total} compare={data.compare} />
-        <Kpi icon={<IconUserCheck />} iconTone="var(--rp-purple)" label={copy.status.didNotCome}
+        <Kpi icon={<IconUserCheck />} iconTone="var(--rp-purple)" label={copy.status.didNotCome} explain={copy.reports.explain.bookingsNoShow}
              value={String(kpis.noShow.value)} metric={kpis.noShow} compare={data.compare} lowerIsBetter />
-        <Kpi icon={<IconBan />} iconTone="var(--rp-red)" label={copy.status.cancelled}
+        <Kpi icon={<IconBan />} iconTone="var(--rp-red)" label={copy.status.cancelled} explain={copy.reports.explain.bookingsCancelled}
              value={String(kpis.cancelled.value)} metric={kpis.cancelled} compare={data.compare} lowerIsBetter />
-        <Kpi icon={<IconClock />} iconTone="var(--rp-teal)" label={c.upcoming}
+        <Kpi icon={<IconClock />} iconTone="var(--rp-teal)" label={c.upcoming} explain={copy.reports.explain.bookingsUpcoming}
              value={String(kpis.upcoming.value)} metric={kpis.upcoming} compare={false} />
       </div>
 

@@ -249,6 +249,43 @@ export const copy = {
       custom: 'Pick dates',
     },
     compare: 'Compare with before',
+    /**
+     * What each figure actually counts (GRW-66).
+     *
+     * Written from the queries, not from the tile labels — the point of the
+     * ⓘ is that the rule behind a number is not guessable from its name, so a
+     * plausible-sounding sentence here would be worse than no button at all.
+     * If a metric's definition changes, this text changes in the same commit.
+     */
+    explain: {
+      // ---- Overview
+      overviewRevenue:
+        'Money from visits that were done in the dates you picked. If you wrote down what was paid, we use that. If not, we use the price on the booking.',
+      overviewBookings:
+        'Bookings in the dates you picked. We leave out ones you called off and ones nobody came to. If someone books three things in one visit, that counts as one booking.',
+      overviewNewClients:
+        'People who booked with you for the very first time in these dates. Someone who came years ago and came back is not new.',
+      overviewRepeat: 'Out of the people who came in these dates, how many came more than once.',
+      // ---- Money
+      revenueCompleted:
+        'Money from visits that were done in these dates. Bookings that have not happened yet are not counted.',
+      revenueAvgBooking: 'Money from done visits, divided by how many visits were done.',
+      revenuePerClient:
+        'Money from done visits, divided by how many different people came. Someone who came three times counts as one person.',
+      // ---- Bookings
+      bookingsTotal:
+        'Bookings in these dates. We leave out ones you called off and ones nobody came to. Three things booked in one visit count as one.',
+      bookingsNoShow: 'Bookings where nobody turned up, and nothing on that booking was done.',
+      bookingsCancelled:
+        'Bookings that were called off. If part of the visit still went ahead, it is not counted here.',
+      bookingsUpcoming: 'Bookings in these dates that are confirmed and have not started yet.',
+      // ---- Clients
+      clientsTotal:
+        'Everyone on your list today, no matter how long ago they came. This one does not change with the dates you pick.',
+      clientsNew: 'People who booked with you for the very first time in these dates.',
+      clientsOverdue:
+        'People who have left it longer than they usually do between visits. We need three past visits to know someone\u2019s usual gap, so newer clients are not counted. This is about today, not the dates you pick.',
+    },
     filters: 'Filters',
     export: 'Download',
     notBuiltYet: 'Coming soon',

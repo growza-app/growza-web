@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { copy } from '../lib/copy';
 import type { ReportMetric, ReportPoint } from '../lib/api';
 import { IconTrendDown, IconTrendUp } from '../components/icons';
+import { InfoTip } from '../components/InfoTip';
 import { LineChart } from './charts';
 
 /**
@@ -18,6 +19,8 @@ export function Kpi({
   icon,
   iconTone,
   label,
+  /** What this figure counts, in the owner's terms. Rendered behind an ⓘ. */
+  explain,
   value,
   metric,
   compare,
@@ -32,6 +35,7 @@ export function Kpi({
   icon: ReactNode;
   iconTone?: string;
   label: string;
+  explain?: string;
   value: string;
   metric: ReportMetric;
   compare: boolean;
@@ -52,6 +56,7 @@ export function Kpi({
           {icon}
         </span>
         {label}
+        {explain && <InfoTip label={label}>{explain}</InfoTip>}
       </div>
       <div className="rp-kpi-value">{value}</div>
       <div className="rp-kpi-foot">

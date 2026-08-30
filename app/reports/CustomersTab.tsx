@@ -13,7 +13,7 @@ import {
   IconUserPlus,
 } from '../components/icons';
 import { BarList, ReportTable, type Cell } from './charts';
-import { Kpi } from './Kpi';
+import { InfoTip } from '../components/InfoTip';
 import { Card, countBars, money } from './shared';
 
 const SEGMENT_TONE: Record<string, string> = {
@@ -103,13 +103,20 @@ export function CustomersTab({
       <section className="rp-card rp-client-summary">
         <div className="rp-cs-figures">
           {[
-            { label: c.total, value: String(kpis.total.value), metric: kpis.total, compare: false },
-            { label: c.newClients, value: String(kpis.newCustomers.value), metric: kpis.newCustomers, compare: data.compare },
-            { label: c.repeatRate, value: `${data.repeatRatePct.value}%`, metric: data.repeatRatePct, compare: data.compare },
-            { label: c.overdue, value: String(kpis.overdue.value), metric: kpis.overdue, compare: false },
+            { label: c.total, value: String(kpis.total.value), metric: kpis.total, compare: false,
+              explain: copy.reports.explain.clientsTotal },
+            { label: c.newClients, value: String(kpis.newCustomers.value), metric: kpis.newCustomers, compare: data.compare,
+              explain: copy.reports.explain.clientsNew },
+            { label: c.repeatRate, value: `${data.repeatRatePct.value}%`, metric: data.repeatRatePct, compare: data.compare,
+              explain: copy.reports.explain.overviewRepeat },
+            { label: c.overdue, value: String(kpis.overdue.value), metric: kpis.overdue, compare: false,
+              explain: copy.reports.explain.clientsOverdue },
           ].map((f) => (
             <div className="rp-cs-figure" key={f.label}>
-              <span>{f.label}</span>
+              <span>
+                {f.label}
+                <InfoTip label={f.label}>{f.explain}</InfoTip>
+              </span>
               <strong>{f.value}</strong>
               {f.compare && f.metric.deltaPct !== null && (
                 <em style={{ color: f.metric.deltaPct >= 0 ? 'var(--rp-green-ink)' : 'var(--rp-red)' }}>

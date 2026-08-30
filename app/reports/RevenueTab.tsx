@@ -42,6 +42,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           icon={<IconRupee />}
           iconTone="var(--rp-green-ink)"
           label={c.earned}
+          explain={copy.reports.explain.revenueCompleted}
           value={money(kpis.completedRevenueMinor.value)}
           metric={kpis.completedRevenueMinor}
           compare={data.compare}
@@ -50,6 +51,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           icon={<IconCoins />}
           iconTone="var(--rp-amber)"
           label={c.perVisit}
+          explain={copy.reports.explain.revenueAvgBooking}
           value={money(kpis.avgBookingValueMinor.value)}
           metric={kpis.avgBookingValueMinor}
           compare={data.compare}
@@ -58,6 +60,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           icon={<IconUserPlus />}
           iconTone="var(--rp-purple)"
           label={c.perClient}
+          explain={copy.reports.explain.revenuePerClient}
           value={money(kpis.revenuePerCustomerMinor.value)}
           metric={kpis.revenuePerCustomerMinor}
           compare={data.compare}

@@ -56,6 +56,7 @@ export function OverviewTab({
           icon={<IconRupee />}
           iconTone="var(--rp-green-ink)"
           label={copy.reports.kpi.revenue}
+          explain={copy.reports.explain.overviewRevenue}
           value={money(kpis.revenueMinor.value)}
           metric={kpis.revenueMinor}
           compare={data.compare}
@@ -67,6 +68,7 @@ export function OverviewTab({
           icon={<IconReports />}
           iconTone="var(--rp-blue)"
           label={copy.reports.kpi.bookings}
+          explain={copy.reports.explain.overviewBookings}
           value={String(kpis.bookings.value)}
           metric={kpis.bookings}
           compare={data.compare}
@@ -77,6 +79,7 @@ export function OverviewTab({
           icon={<IconUserPlus />}
           iconTone="var(--rp-purple)"
           label={copy.reports.kpi.newCustomers}
+          explain={copy.reports.explain.overviewNewClients}
           value={String(kpis.newCustomers.value)}
           metric={kpis.newCustomers}
           compare={data.compare}
@@ -87,6 +90,7 @@ export function OverviewTab({
           icon={<IconRepeat />}
           iconTone="var(--rp-brand)"
           label={copy.reports.kpi.repeatRate}
+          explain={copy.reports.explain.overviewRepeat}
           value={`${kpis.repeatRatePct.value}%`}
           metric={kpis.repeatRatePct}
           compare={data.compare}
