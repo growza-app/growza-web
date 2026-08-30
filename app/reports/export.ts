@@ -5,9 +5,24 @@ import type { TabPayload } from './ReportsClient';
  * A tab's figures as CSV (GRW-60).
  *
  * Built from the same payload object the tab renders, never from a second
- * query. That is what makes "the export equals the screen" structural rather
- * than a thing to re-verify by hand every time a tab changes: there is only
- * one set of numbers, and both the chart and the file read it.
+ * query — that is what makes "the file equals the screen" structural rather
+ * than something to re-verify every time a tab changes.
+ *
+ * **Every heading comes from `copy`, the same strings the tabs render, and the
+ * rows are the same figures in the same order.** The first version wrote its
+ * own words and chose its own figures, and every tab drifted:
+ *
+ *   - Revenue had a row headed "Money earned" carrying the *uncompleted*
+ *     total, 25,93,443, while the tile headed "Money earned" showed
+ *     24,92,693. One label, two numbers — the exact defect this epic spent
+ *     itself fixing, reintroduced in the export of the screen that fixed it.
+ *   - Bookings had a "Finished" row the tab deliberately dropped, and said
+ *     "Called off" where the app says "Cancelled".
+ *   - Services and Staff each renamed three columns and reordered them.
+ *
+ * So there is no literal column heading in this file. If a column needs a
+ * name it is because a tab has one, and the tab's name is the name
+ * (conventions §3).
  *
  * Money is written in major units with no symbol and no grouping, because a
  * spreadsheet has to be able to add the column up — `₹24,92,693` is a string
@@ -32,89 +47,128 @@ function section(title: string, header: string[], body: (string | number | null 
   return body.length === 0 ? '' : `\n${esc(title)}\n${rows([header, ...body])}\n`;
 }
 
+const c = copy.reports;
+
+/**
+ * The two columns a row of tiles becomes.
+ *
+ * The only headings in this file that no tab owns, because no tab renders its
+ * KPI row as a table. Everything under them is the tiles' own words.
+ */
+const TILE_COLUMNS = ['Figure', 'Value'];
+const DATE = 'Date';
+
+/**
+ * The bands are cards on screen, not a table, so like the tile rows they need
+ * column names no tab owns. The values under them are still the bands' own
+ * words, straight from `copy.clients.segments`.
+ */
+const BAND_COLUMNS = ['Group', 'When they last came', 'Clients'];
+
+/** The same four words the chart slices and the Bookings chips use (conventions §3). */
+function statusWord(key: string): string {
+  return key === 'completed'
+    ? copy.status.done
+    : key === 'cancelled'
+      ? copy.status.cancelled
+      : key === 'no_show'
+        ? copy.status.didNotCome
+        : copy.status.confirmed;
+}
+
 export function reportToCsv(payload: TabPayload, providerLabel: string): string {
   if (!payload) return '';
 
   if (payload.tab === 'revenue') {
     const d = payload.data;
+    const t = c.money;
     return [
-      section('Totals', ['Figure', 'Amount'], [
-        ['Money earned', money(d.kpis.totalRevenueMinor.value)],
-        ['From finished visits', money(d.kpis.completedRevenueMinor.value)],
-        ['Average booking', money(d.kpis.avgBookingValueMinor.value)],
-        ['Per client', money(d.kpis.revenuePerCustomerMinor.value)],
+      // The same three tiles the tab shows, in the same order, carrying the
+      // same figures. `totalRevenueMinor` is deliberately absent: no tile
+      // shows it, so a row for it would be a number in the file that cannot
+      // be checked against the screen.
+      section(t.earned, TILE_COLUMNS, [
+        [t.earned, money(d.kpis.completedRevenueMinor.value)],
+        [t.perVisit, money(d.kpis.avgBookingValueMinor.value)],
+        [t.perClient, money(d.kpis.revenuePerCustomerMinor.value)],
       ]),
-      section('Over time', ['Date', 'Amount'], d.trend.map((p) => [p.label, money(p.value)])),
-      section('By service', ['Service', 'Amount'], d.byService.map((r) => [r.label, money(r.value)])),
+      section(t.trend, [DATE, t.earned], d.trend.map((p) => [p.label, money(p.value)])),
+      section(t.byService, [c.servicesTab.colService, t.earned], d.byService.map((r) => [r.label, money(r.value)])),
       d.showProviders
-        ? section(`By ${providerLabel.toLowerCase()}`, [providerLabel, 'Amount'], d.byProvider.map((r) => [r.label, money(r.value)]))
+        ? section(t.byStaff, [providerLabel, t.earned], d.byProvider.map((r) => [r.label, money(r.value)]))
         : '',
-      section('By client type', ['Type', 'Amount'], d.bySegment.map((r) => [r.label, money(r.value)])),
-      section('By payment', ['Method', 'Amount'], d.byPaymentMethod.map((r) => [r.label, money(r.value)])),
+      section(t.bySegment, [t.bySegment, t.earned], d.bySegment.map((r) => [r.label, money(r.value)])),
+      section(t.byPayment, [t.byPayment, t.earned], d.byPaymentMethod.map((r) => [r.label, money(r.value)])),
     ].join('');
   }
 
   if (payload.tab === 'bookings') {
     const d = payload.data;
+    const t = c.bookingsTab;
     return [
-      section('Totals', ['Figure', 'Count'], [
-        ['Bookings', d.kpis.total.value],
-        ['Finished', d.kpis.completed.value],
-        ['Called off', d.kpis.cancelled.value],
+      // Four tiles, matching the tab. "Finished" is not among them: it is the
+      // biggest slice of the chart below, and a tile for it repeated that
+      // chart's headline, which is why the tab dropped it.
+      section(t.total, TILE_COLUMNS, [
+        [t.total, d.kpis.total.value],
         [copy.status.didNotCome, d.kpis.noShow.value],
-        ['Still to come', d.kpis.upcoming.value],
+        [copy.status.cancelled, d.kpis.cancelled.value],
+        [t.upcoming, d.kpis.upcoming.value],
       ]),
-      section('Over time', ['Date', 'Bookings'], d.trend.map((p) => [p.label, p.value])),
-      section('What happened', ['Outcome', 'Bookings'], d.byStatus.map((r) => [r.label, r.value])),
-      section('Where they came from', ['Source', 'Bookings'], d.bySource.map((r) => [r.label, r.value])),
+      section(t.trend, [DATE, t.total], d.trend.map((p) => [p.label, p.value])),
+      section(t.status, [t.status, t.total], d.byStatus.map((r) => [statusWord(r.label), r.value])),
+      section(t.source, [t.source, t.total], d.bySource.map((r) => [r.label, r.value])),
     ].join('');
   }
 
   if (payload.tab === 'services') {
     const d = payload.data;
+    const t = c.servicesTab;
     return section(
-      'Services',
-      ['Service', 'Bookings', 'Money', 'Average price', 'Minutes', 'Booked again %', 'Called off %', 'Still offered'],
+      t.table,
+      [t.colService, t.colBookings, t.colRevenue, t.colAvg, t.colMinutes, t.colRepeat, t.colCancel],
       d.rows.map((r) => [
-        r.name,
+        // The retired marker rides with the name, as it does on screen, rather
+        // than becoming a column the table does not have.
+        r.retired ? `${r.name} (${t.retired})` : r.name,
         r.bookings,
         money(r.revenueMinor),
         r.avgPriceMinor === null ? '' : money(r.avgPriceMinor),
         r.durationMin,
         pct(r.repeatPct),
         pct(r.cancelPct),
-        r.retired ? 'no' : 'yes',
       ]),
     );
   }
 
   if (payload.tab === 'staff') {
     const d = payload.data;
+    const t = c.staffTab;
     return section(
-      providerLabel,
-      [providerLabel, 'Bookings', 'Finished', copy.status.didNotCome, 'Money', 'Average', 'Busy %', 'Still working'],
+      t.table,
+      [t.colName, t.colBookings, t.colCompleted, t.colRevenue, t.colAvg, t.colUtilisation, t.colNoShow],
       d.rows.map((r) => [
         r.name,
         r.bookings,
         r.completed,
-        pct(r.noShowPct),
         money(r.revenueMinor),
         r.avgValueMinor === null ? '' : money(r.avgValueMinor),
         // Blank, not zero, when a service or outcome filter is on: the hours
         // someone was available cannot be narrowed the same way, so there is
         // no honest figure to write (see StaffReport.utilisationSuppressed).
         pct(r.utilisationPct),
-        r.retired ? 'no' : 'yes',
+        pct(r.noShowPct),
       ]),
     );
   }
 
   if (payload.tab === 'customers') {
     const d = payload.data;
+    const t = c.customersTab;
     return [
       section(
-        'How your clients are doing',
-        ['Group', 'When they last came', 'Clients'],
+        c.segmentsTitle,
+        BAND_COLUMNS,
         d.segments.map((s) => [
           copy.clients.segments[s.key].label,
           copy.clients.segments[s.key].range,
@@ -122,29 +176,32 @@ export function reportToCsv(payload: TabPayload, providerLabel: string): string 
         ]),
       ),
       section(
-        'Top clients',
-        ['Client', 'Visits', 'Total spent', 'Average', 'Last visit (days ago)'],
+        t.top,
+        [t.colClient, t.colVisits, t.colSpend, t.colAvg, t.colLast, t.colFavourite, t.colInterval],
         d.topCustomers.map((r) => [
           r.name,
           r.visits,
           money(r.lifetimeSpendMinor),
           money(r.avgSpendMinor),
           r.lastVisitDays,
+          r.favouriteService ?? '',
+          r.intervalDays ?? '',
         ]),
       ),
     ].join('');
   }
 
   const d = payload.data;
+  const k = c.kpi;
   return [
-    section('Totals', ['Figure', 'Value'], [
-      ['Money earned', money(d.kpis.revenueMinor.value)],
-      ['Bookings', d.kpis.bookings.value],
-      ['New clients', d.kpis.newCustomers.value],
-      ['Came back %', d.kpis.repeatRatePct.value],
+    section(k.revenue, TILE_COLUMNS, [
+      [k.revenue, money(d.kpis.revenueMinor.value)],
+      [k.bookings, d.kpis.bookings.value],
+      [k.newCustomers, d.kpis.newCustomers.value],
+      [k.repeatRate, d.kpis.repeatRatePct.value],
     ]),
-    section('Money over time', ['Date', 'Amount'], d.revenueTrend.map((p) => [p.label, money(p.value)])),
-    section('Bookings over time', ['Date', 'Bookings'], d.bookingTrend.map((p) => [p.label, p.value])),
+    section(c.revenueTrend, [DATE, k.revenue], d.revenueTrend.map((p) => [p.label, money(p.value)])),
+    section(c.bookingTrend, [DATE, k.bookings], d.bookingTrend.map((p) => [p.label, p.value])),
   ].join('');
 }
 
