@@ -4611,7 +4611,9 @@ select:focus-visible {
 .bk-card-ref,
 .bk-card-phone,
 .bk-card-price,
-.bk-card-staff-avatar {
+.bk-card-staff-avatar,
+.bk-sched-count,
+.bk-multi-badge {
   display: none;
 }
 
@@ -4639,17 +4641,39 @@ select:focus-visible {
      back to transparent/muted for a booking with no assigned staff. */
   .bk-card {
     border-left: 4px solid var(--bk-rail, transparent);
+    gap: 10px;
+    padding: 12px 14px;
   }
 
+  /* The status chip is the one thing still sharing the name row's width
+     budget — trimmed down so a normal-length name doesn't get chewed to a
+     couple of characters by the ellipsis rule above. */
+  .bk-card-right {
+    gap: 6px;
+  }
+
+  .bk-card-right .chip {
+    padding: 4px 9px;
+    font-size: 11.5px;
+  }
+
+  /* nowrap, not wrap: the ref chip stays glued to the name, same row as the
+     mock — the name's own ellipsis rule (below) truncates first instead. */
   .bk-card-name-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+  }
+
+  .bk-card-name-row .bk-card-name {
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .bk-card-ref {
     display: inline-block;
+    flex-shrink: 0;
     font-size: 11px;
     font-weight: 700;
     color: var(--muted);
@@ -4675,6 +4699,22 @@ select:focus-visible {
     flex-shrink: 0;
   }
 
+  /* Price moves down here, beside staff, instead of stacking in the card's
+     right-hand status column (GRW-46 follow-up) — that column got crowded
+     enough to force the name/ref-chip row above to wrap onto two lines, and
+     the mock keeps price at the bottom next to the staff line, not the top. */
+  .bk-card-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .bk-card-bottom-row .bk-card-staff {
+    margin-top: 0;
+  }
+
   .bk-card-staff-avatar {
     width: 20px;
     height: 20px;
@@ -4697,42 +4737,33 @@ select:focus-visible {
   }
 
   /* Same dark gradient Home's summary hero already uses (.summary-progress-hero)
-     — one shared "headline metric" card look instead of a second one-off. */
+     — one shared "headline metric" card look instead of a second one-off.
+     Single row — value/label on the left, the metric picker on the right —
+     matching the design mock rather than the earlier icon-strip-then-value
+     stack, which read as two rows fighting for the same small card. */
   .bk-metric-card {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     background: linear-gradient(135deg, #0b3d2d, #104a37);
     border-radius: var(--radius);
-    padding: 14px 16px;
+    padding: 16px;
     margin-top: 10px;
     color: #fff;
   }
 
-  .bk-metric-top {
+  .bk-metric-main {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .bk-metric-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
-    background: rgba(255, 255, 255, 0.14);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-
-  .bk-metric-icon svg {
-    width: 15px;
-    height: 15px;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
   }
 
   .bk-metric-select {
-    height: 30px;
+    flex-shrink: 0;
+    height: 32px;
     padding: 0 10px;
     border-radius: 9px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -4748,7 +4779,7 @@ select:focus-visible {
   }
 
   .bk-metric-value {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
     line-height: 1.1;
     white-space: nowrap;
@@ -4757,9 +4788,10 @@ select:focus-visible {
   }
 
   .bk-metric-label {
-    font-size: 11.5px;
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.75);
     font-weight: 500;
+    white-space: nowrap;
   }
 
   /* Search + staff chips: both filter the day's already-loaded bookings
@@ -4841,6 +4873,60 @@ select:focus-visible {
     font-size: 13px;
     color: var(--muted);
     margin-top: 5px;
+  }
+
+  /* "N appts" beside the section heading — a real count of what's actually
+     listed below (post search/staff filter), not a static day total that
+     could disagree with an empty/narrowed list right under it. */
+  .bk-sched-count {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  /* Flags a cluster of bookings that start at the exact same time — the one
+     case a straight top-to-bottom timeline can't show on its own. Shown once,
+     above the first card of the cluster. */
+  .bk-multi-badge {
+    display: block;
+    width: fit-content;
+    margin: 12px 0 -2px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: #fff4e5;
+    color: #9a5b00;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  /* The day-filter card: full stacked layout (label above input, weekday
+     hint, full-width button) reads fine on desktop but towers over the rest
+     of the redesigned mobile screen — collapse it to one slim row, same
+     spirit as the desktop-only .filters-inline compaction above. */
+  .bk-fit > .card:first-child {
+    padding: 10px 14px;
+  }
+  .bk-fit .filters-inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .bk-fit .filters-inline .field {
+    flex: 1 1 auto;
+  }
+  .bk-fit .filters-inline .field > label {
+    display: none;
+  }
+  .bk-fit .field-hint {
+    display: none;
+  }
+  .bk-fit .filters-inline .filters-show {
+    flex: 0 0 auto;
+    width: auto;
+    height: 40px;
+    padding: 0 18px;
   }
 }
 

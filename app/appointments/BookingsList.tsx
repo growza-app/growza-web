@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type Provider } from '../lib/api';
 import { copy } from '../lib/copy';
 import { formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
@@ -180,6 +180,21 @@ export function BookingsList({
   const clamped = Math.min(page, pageCount);
   const rows = filtered.slice((clamped - 1) * PAGE_SIZE, clamped * PAGE_SIZE);
 
+  // Mobile only (GRW-46 follow-up): flags a cluster of bookings starting at
+  // the exact same instant — a straight top-to-bottom timeline can't show
+  // that on its own. Scoped to the current page's rows, same as the
+  // timeline itself.
+  const sameStartCount = new Map<string, number>();
+  for (const b of rows) sameStartCount.set(b.startAt, (sameStartCount.get(b.startAt) ?? 0) + 1);
+  const multiBadgeAt = new Set<number>();
+  const badgeShownFor = new Set<string>();
+  rows.forEach((b, i) => {
+    if ((sameStartCount.get(b.startAt) ?? 1) > 1 && !badgeShownFor.has(b.startAt)) {
+      multiBadgeAt.add(i);
+      badgeShownFor.add(b.startAt);
+    }
+  });
+
   const openBooking = (b: BookingGroup) => setOpen(b);
 
   const actionFor = (b: BookingGroup) =>
@@ -232,17 +247,21 @@ export function BookingsList({
             <IconPhone />
             {b.customerPhone}
           </div>
-          {b.providerNames.length > 0 && (
-            <div className="bk-card-staff">
-              {staffName && <span className="bk-card-staff-avatar">{staffName.charAt(0).toUpperCase()}</span>}
-              <IconStaff />
-              {b.providerNames.join(', ')}
-            </div>
-          )}
+          <div className="bk-card-bottom-row">
+            {b.providerNames.length > 0 ? (
+              <div className="bk-card-staff">
+                {staffName && <span className="bk-card-staff-avatar">{staffName.charAt(0).toUpperCase()}</span>}
+                <IconStaff />
+                {b.providerNames.join(', ')}
+              </div>
+            ) : (
+              <span />
+            )}
+            <span className="bk-card-price">{formatMoney(String(bookingTotalMinor(b)))}</span>
+          </div>
         </div>
         <div className="bk-card-right">
           <span className={`chip ${chip.cls}`}>{chip.text}</span>
-          <span className="bk-card-price">{formatMoney(String(bookingTotalMinor(b)))}</span>
           {actionFor(b)}
         </div>
       </div>
@@ -281,22 +300,19 @@ export function BookingsList({
           for on a phone, switchable rather than picking one and hiding the
           other two. */}
       <div className="bk-metric-card">
-        <div className="bk-metric-top">
-          <span className="bk-metric-icon">
-            <IconWallet />
-          </span>
-          <select
-            className="bk-metric-select"
-            value={metric}
-            onChange={(e) => setMetric(e.target.value as typeof metric)}
-          >
-            <option value="busy">Staff busy</option>
-            <option value="staff">Busiest staff</option>
-            <option value="service">Top service</option>
-          </select>
+        <div className="bk-metric-main">
+          <div className="bk-metric-value">{metricValue}</div>
+          <div className="bk-metric-label">{metricLabel}</div>
         </div>
-        <div className="bk-metric-value">{metricValue}</div>
-        <div className="bk-metric-label">{metricLabel}</div>
+        <select
+          className="bk-metric-select"
+          value={metric}
+          onChange={(e) => setMetric(e.target.value as typeof metric)}
+        >
+          <option value="busy">Staff busy</option>
+          <option value="staff">Busiest staff</option>
+          <option value="service">Top service</option>
+        </select>
       </div>
 
       {/* Mobile only (GRW-46): both filter the already-loaded day client-side
@@ -333,7 +349,10 @@ export function BookingsList({
       </div>
 
       <div className="bk-sched-head">
-        <h3>{isToday ? "Today's schedule" : `${dayLabel} schedule`}</h3>
+        <h3>
+          {isToday ? "Today's schedule" : `${dayLabel} schedule`}
+          <span className="bk-sched-count">{filtered.length} appts</span>
+        </h3>
         <div className="bk-view">
           <button
             type="button"
@@ -366,20 +385,25 @@ export function BookingsList({
           {rows.map((b, i) => {
             const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
             return (
-              <div className="bk-tl-row" key={b.key}>
-                <div className="bk-tl-time">
-                  <div className="bk-tl-clock">
-                    {clock}
-                    <span>{meridiem}</span>
+              <Fragment key={b.key}>
+                {multiBadgeAt.has(i) && (
+                  <div className="bk-multi-badge">{sameStartCount.get(b.startAt)} at the same time</div>
+                )}
+                <div className="bk-tl-row">
+                  <div className="bk-tl-time">
+                    <div className="bk-tl-clock">
+                      {clock}
+                      <span>{meridiem}</span>
+                    </div>
+                    <div className="bk-tl-dur">{formatDuration(b.totalMin)}</div>
                   </div>
-                  <div className="bk-tl-dur">{formatDuration(b.totalMin)}</div>
+                  <div className="bk-tl-rail">
+                    <span className={`bk-tl-dot ${b.status === 'confirmed' ? 'is-up' : ''}`} />
+                    {i < rows.length - 1 && <span className="bk-tl-line" />}
+                  </div>
+                  {cardInner(b)}
                 </div>
-                <div className="bk-tl-rail">
-                  <span className={`bk-tl-dot ${b.status === 'confirmed' ? 'is-up' : ''}`} />
-                  {i < rows.length - 1 && <span className="bk-tl-line" />}
-                </div>
-                {cardInner(b)}
-              </div>
+              </Fragment>
             );
           })}
         </div>
