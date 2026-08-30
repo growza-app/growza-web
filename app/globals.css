@@ -5594,6 +5594,20 @@ select:focus-visible {
     flex-direction: column;
   }
 
+  /*
+   * ...except the bands panel, which is a card too.
+   *
+   * This rule assumed exactly one `.card` child and gave it the leftover
+   * height. Adding a second one split that height in half: the bands card
+   * stretched into a large empty gap, and the list beneath it was squeezed
+   * down to a single row while its own footer still read "Showing 1–10".
+   * The panel is sized by its contents; only the list takes what is left.
+   */
+  .cust-fit > .cust-segments {
+    flex: none;
+    display: block;
+  }
+
   .svc-fit .paged-table,
   .cust-fit .paged-table {
     flex: 1;

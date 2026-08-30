@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatDate, formatPhone, formatRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -18,7 +18,15 @@ import { dialable } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
-import { IconSearch, IconSort, IconUserPlus, IconWhatsApp } from '../components/icons';
+import {
+  IconPercent,
+  IconRepeat,
+  IconSearch,
+  IconSort,
+  IconStaff,
+  IconUserPlus,
+  IconWhatsApp,
+} from '../components/icons';
 import { copy } from '../lib/copy';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 
@@ -216,10 +224,10 @@ export function CustomersClient({
               value, and tile 3's subtitle repeated tile 4's — so half the row
               restated the other half and the numbers read as contradicting
               each other. */}
-          <Kpi label={`Total ${lower}`} value={String(stats.total)} sub="All time" />
-          <Kpi label="New this month" value={String(stats.newThisMonth)} sub="First seen this month" />
-          <Kpi label={`Returning ${lower}`} value={String(stats.returning)} sub="Booked more than once" />
-          <Kpi label="Repeat rate" value={`${stats.repeatRatePct}%`} sub={`Returning ÷ total ${lower}`} />
+          <Kpi icon={<IconStaff />} label={`Total ${lower}`} value={String(stats.total)} sub="All time" />
+          <Kpi icon={<IconUserPlus />} label="New this month" value={String(stats.newThisMonth)} sub="First seen this month" />
+          <Kpi icon={<IconRepeat />} label={`Returning ${lower}`} value={String(stats.returning)} sub="Booked more than once" />
+          <Kpi icon={<IconPercent />} label="Repeat rate" value={`${stats.repeatRatePct}%`} sub={`Returning ÷ total ${lower}`} />
         </div>
 
         {/* The cards are also the filter. Their counts come back with the
@@ -457,12 +465,18 @@ export function CustomersClient({
   );
 }
 
-function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {
+/**
+ * One headline figure.
+ *
+ * The icon differs per tile. All four used to be the same person-plus glyph,
+ * which is decoration occupying the space a distinguishing mark could use —
+ * the same reason a column whose value never varies got retired from this
+ * very table (12-conventions.md §6).
+ */
+function Kpi({ label, value, sub, icon }: { label: string; value: string; sub: string; icon: ReactNode }) {
   return (
     <div className="cust-kpi">
-      <span className="cust-kpi-icon">
-        <IconUserPlus />
-      </span>
+      <span className="cust-kpi-icon">{icon}</span>
       <div>
         <div className="cust-kpi-label">{label}</div>
         <div className="cust-kpi-value">{value}</div>
