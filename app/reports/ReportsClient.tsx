@@ -3,29 +3,65 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { copy } from '../lib/copy';
-import type { ReportOverview, ReportRangeKey, ReportTabKey } from '../lib/api';
+import type {
+  ReportBookings,
+  ReportCustomers,
+  ReportInsights,
+  ReportOverview,
+  ReportRangeKey,
+  ReportRetention,
+  ReportRevenue,
+  ReportServices,
+  ReportStaff,
+  ReportTabKey,
+} from '../lib/api';
+import { BookingsTab } from './BookingsTab';
+import { CustomersTab } from './CustomersTab';
+import { InsightsTab } from './InsightsTab';
 import { OverviewTab } from './OverviewTab';
 import { ReportsShell } from './ReportsShell';
+import { RetentionTab } from './RetentionTab';
+import { RevenueTab } from './RevenueTab';
+import { ServicesTab } from './ServicesTab';
+import { StaffTab } from './StaffTab';
+
+/**
+ * A tab and its data as one value, so the two cannot get out of step — a
+ * `tab` prop saying "revenue" beside a payload that is actually the Bookings
+ * envelope is a class of bug the type system should refuse outright.
+ */
+export type TabPayload =
+  | { tab: 'overview'; data: ReportOverview }
+  | { tab: 'revenue'; data: ReportRevenue }
+  | { tab: 'bookings'; data: ReportBookings }
+  | { tab: 'services'; data: ReportServices }
+  | { tab: 'staff'; data: ReportStaff }
+  | { tab: 'customers'; data: ReportCustomers }
+  | { tab: 'retention'; data: ReportRetention }
+  | { tab: 'insights'; data: ReportInsights }
+  | null;
 
 /**
  * Ties the chrome to the active tab.
  *
- * Data arrives already fetched from the server component — this layer only
- * decides what to render and how navigation between tabs works, so no metric
- * is ever computed in the browser (07-product-surfaces.md §3.3).
+ * Data arrives already resolved from the server component; this layer only
+ * decides what to render and how navigation works, so no metric is ever
+ * computed in the browser (07-product-surfaces.md §3.3).
  */
 export function ReportsClient({
   tab,
   range,
   compare,
   staffTabAvailable,
-  overview,
+  providerLabel,
+  payload,
 }: {
   tab: ReportTabKey;
   range: ReportRangeKey;
   compare: boolean;
   staffTabAvailable: boolean;
-  overview: ReportOverview | null;
+  providerLabel: string;
+  payload: TabPayload;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -36,22 +72,35 @@ export function ReportsClient({
     router.push(`/reports?${query.toString()}`);
   };
 
+  // Segment cards lead to the Clients page filtered to that segment — the
+  // same four words, the same boundaries, the same rows (conventions §5).
+  const goToSegment = (segment: string) => router.push(`/customers?status=${segment}`);
+
   return (
     <ReportsShell tab={tab} range={range} compare={compare} staffTabAvailable={staffTabAvailable}>
-      {tab === 'overview' && overview ? (
-        <OverviewTab data={overview} onTab={goToTab} />
-      ) : tab === 'overview' ? (
-        <p className="rp-empty">{copy.reports.loadFailed}</p>
-      ) : (
-        // Every other tab has its own story. Until it lands the tab says so,
-        // rather than showing a blank panel or a spinner that never resolves
-        // (GRW-50 AC-04).
+      {payload === null ? (
         <section className="rp-card rp-card-quiet">
           <div>
-            <h2>{copy.reports.tabs[tab]}</h2>
-            <p className="rp-card-sub">{copy.reports.comingSoonTab}</p>
+            <h2>{copy.reports.loadFailed}</h2>
+            <p className="rp-card-sub">{copy.errors.apiDownHelp} <code>npm run dev</code>.</p>
           </div>
         </section>
+      ) : payload.tab === 'overview' ? (
+        <OverviewTab data={payload.data} onTab={goToTab} />
+      ) : payload.tab === 'revenue' ? (
+        <RevenueTab data={payload.data} />
+      ) : payload.tab === 'bookings' ? (
+        <BookingsTab data={payload.data} />
+      ) : payload.tab === 'services' ? (
+        <ServicesTab data={payload.data} />
+      ) : payload.tab === 'staff' ? (
+        <StaffTab data={payload.data} providerLabel={providerLabel} />
+      ) : payload.tab === 'customers' ? (
+        <CustomersTab data={payload.data} onSegment={goToSegment} />
+      ) : payload.tab === 'retention' ? (
+        <RetentionTab data={payload.data} />
+      ) : (
+        <InsightsTab data={payload.data} onTab={goToTab} />
       )}
     </ReportsShell>
   );

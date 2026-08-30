@@ -283,6 +283,156 @@ export const copy = {
     noDataHint: (range: string) => `No bookings in ${range.toLowerCase()}. Try a longer stretch.`,
     notEnoughVisits: 'Not enough visits yet to spot a pattern.',
     loadFailed: 'Could not load this.',
+
+    // ---- Money tab ----
+    money: {
+      total: 'Money booked',
+      completed: 'Money earned',
+      perBooking: 'Per booking',
+      perClient: 'Per client',
+      totalHint: 'Everything booked, including visits still to happen',
+      completedHint: 'Only visits that actually happened',
+      trend: 'Money over time',
+      byService: 'Which services earn',
+      byStaff: 'Who earns it',
+      bySegment: 'New faces or regulars',
+      byPayment: 'How people paid',
+      notRecordedHint: 'Marking a visit done in one tap records no amount, so those land in "Not recorded".',
+    },
+
+    // ---- Bookings tab ----
+    bookingsTab: {
+      // The four status words are NOT repeated here. They live in
+      // copy.status and are read from there, so a KPI tile and a chip on the
+      // Bookings screen cannot end up saying different things about the same
+      // state — which is exactly what GRW-020 shipped (conventions §3).
+      total: 'Bookings',
+      upcoming: 'Still to come',
+      trend: 'Bookings over time',
+      status: 'How they ended',
+      statusHint: 'Every booking in this stretch, including the ones called off',
+      totalHint: 'Called-off and no-show visits are left out of this count',
+      source: 'Where they came from',
+      sourceHint: 'WhatsApp bookings and ones you added at the desk',
+      peak: 'When the work lands',
+      peakHint: 'Booked time across a normal week',
+    },
+
+    // ---- Services tab ----
+    servicesTab: {
+      mostBooked: 'Booked most often',
+      topRevenue: 'Earns the most',
+      pairHint: 'These are rarely the same list — that gap is the point',
+      table: 'Every service',
+      tableHint: 'Bookings, money, and how reliably each one brings people back',
+      colService: 'Service',
+      colBookings: 'Bookings',
+      colRevenue: 'Money',
+      colAvg: 'Average',
+      colMinutes: 'Minutes',
+      colRepeat: 'Came back',
+      colCancel: 'Called off',
+      thinSample: 'too few clients to say',
+      retired: 'no longer offered',
+    },
+
+    // ---- Staff tab ----
+    staffTab: {
+      byRevenue: 'Who brings in the most',
+      utilisation: 'How full their day is',
+      utilisationHint: 'Booked time against the hours they were actually available',
+      table: 'Side by side',
+      tableHint: 'Works the same for stylists, mechanics, trainers or technicians',
+      colName: 'Name',
+      colBookings: 'Bookings',
+      colCompleted: 'Finished',
+      colRevenue: 'Money',
+      colAvg: 'Average',
+      colUtilisation: 'How full',
+      colNoShow: "Didn't come",
+      noHours: 'no hours set',
+      inactive: 'no longer here',
+    },
+
+    // ---- Customers tab ----
+    customersTab: {
+      total: 'Clients',
+      newClients: 'New this stretch',
+      returning: 'Came back',
+      avgSpend: 'Average spend',
+      overdue: 'Overdue a visit',
+      overdueHint: 'Past their own usual gap between visits',
+      opportunities: 'Where the next bit of business is',
+      opportunitiesHint: 'Grouped by what to do about it',
+      cards: {
+        quiet30: { title: 'Gone quiet', body: (n: number) => `${n} clients have not been in for 30 days or more` },
+        overdue: { title: 'Due a visit', body: (n: number) => `${n} are past their own usual gap` },
+        loyal: { title: 'Regulars', body: (n: number) => `${n} have been in 5 times or more` },
+        highValue: { title: 'Big spenders', body: (n: number) => `${n} have spent over ₹10,000 with you` },
+        atRisk: { title: 'Regulars slipping', body: (n: number) => `${n} used to come often and have not been in for 60 days` },
+      },
+      spend: 'What people spend',
+      spendHint: 'Clients grouped by what they have spent in total',
+      frequency: 'How often they come',
+      avgInterval: 'Usual gap',
+      avgVisits: 'Visits per client',
+      top: 'Your best clients',
+      topHint: 'Highest total spend first',
+      colClient: 'Client',
+      colVisits: 'Visits',
+      colSpend: 'Total spent',
+      colAvg: 'Average',
+      colLast: 'Last in',
+      colFavourite: 'Usual',
+      colInterval: 'Comes every',
+      daysAgo: (n: number) => `${n} days ago`,
+      neverIn: 'never been in',
+    },
+
+    // ---- Coming back tab ----
+    retentionTab: {
+      newClients: 'New clients',
+      returning: 'Came back',
+      repeatRate: 'Repeat rate',
+      avgInterval: 'Usual gap',
+      mix: 'New faces against regulars',
+      mixHint: 'Clients seen in each stretch, split by whether they had been before',
+      repeatShare: 'Regulars brought in',
+      repeatShareHint: 'of the money you earned this stretch',
+      firstToSecond: 'Came back after a first visit',
+      lifetime: 'How long they stay',
+      months: (n: number) => `${n} months`,
+      trend: 'Repeat rate over time',
+      trendHint: 'Share of clients in each stretch who had been before',
+      thinSample: (n: number, floor: number) =>
+        `Only ${n} clients have been in more than once — too few to average until there are ${floor}.`,
+    },
+
+    // ---- What to do tab ----
+    insightsTab: {
+      bannerKicker: 'What to do',
+      bannerBody: 'Worked out from your own bookings, not guessed.',
+      showing: (n: number, total: number) => `Showing ${n} of ${total}. The rest need more bookings before they can say anything useful.`,
+      none: 'Nothing to flag for this stretch.',
+      noneHint: 'Come back after a few more weeks of bookings.',
+      categories: {
+        growth: 'Money',
+        quietCustomers: 'Clients',
+        repeatRevenue: 'Coming back',
+        peakWindow: 'How busy you are',
+        overdueRegulars: 'Worth a call',
+        bestPerBooking: 'Services',
+      },
+      ctas: {
+        growth: 'See the money',
+        quietCustomers: 'See these clients',
+        repeatRevenue: 'See who comes back',
+        peakWindow: 'See bookings',
+        overdueRegulars: 'See these clients',
+        bestPerBooking: 'See services',
+      },
+    },
+
     retry: 'Try again',
     comingSoonTab: 'This part is not built yet.',
   },

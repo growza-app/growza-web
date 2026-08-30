@@ -520,6 +520,151 @@ export interface ReportOverview {
   opportunities: ReportOpportunity[];
 }
 
+
+export interface ReportServiceRow {
+  id: string;
+  name: string;
+  bookings: number;
+  revenueMinor: number;
+  avgPriceMinor: number | null;
+  durationMin: number;
+  repeatPct: number | null;
+  distinctCustomers: number;
+  cancelPct: number;
+  retired: boolean;
+}
+
+export interface ReportProviderRow {
+  id: string;
+  name: string;
+  bookings: number;
+  completed: number;
+  revenueMinor: number;
+  avgValueMinor: number | null;
+  utilisationPct: number | null;
+  noShowPct: number | null;
+  retired: boolean;
+}
+
+export interface ReportTopCustomer {
+  id: string;
+  name: string;
+  initial: string;
+  visits: number;
+  lifetimeSpendMinor: number;
+  avgSpendMinor: number;
+  lastVisitDays: number | null;
+  favouriteService: string | null;
+  intervalDays: number | null;
+}
+
+export interface ReportRevenue {
+  range: ReportRangeMeta;
+  compare: boolean;
+  kpis: {
+    totalRevenueMinor: ReportMetric;
+    completedRevenueMinor: ReportMetric;
+    avgBookingValueMinor: ReportMetric;
+    revenuePerCustomerMinor: ReportMetric;
+  };
+  trend: ReportPoint[];
+  byService: ReportNamedValue[];
+  byProvider: ReportNamedValue[];
+  showProviders: boolean;
+  bySegment: ReportNamedValue[];
+  byPaymentMethod: ReportNamedValue[];
+}
+
+export interface ReportBookings {
+  range: ReportRangeMeta;
+  compare: boolean;
+  kpis: {
+    total: ReportMetric;
+    completed: ReportMetric;
+    cancelled: ReportMetric;
+    noShow: ReportMetric;
+    upcoming: ReportMetric;
+  };
+  trend: ReportPoint[];
+  byStatus: ReportNamedValue[];
+  bySource: ReportNamedValue[];
+  peakPeriods: ReportHeatmap;
+}
+
+export interface ReportServices {
+  range: ReportRangeMeta;
+  mostBooked: ReportNamedValue[];
+  topRevenue: ReportNamedValue[];
+  rows: ReportServiceRow[];
+}
+
+export interface ReportStaff {
+  range: ReportRangeMeta;
+  byRevenue: ReportNamedValue[];
+  byUtilisation: ReportNamedValue[];
+  rows: ReportProviderRow[];
+}
+
+export interface ReportCustomers {
+  range: ReportRangeMeta;
+  compare: boolean;
+  kpis: {
+    total: ReportMetric;
+    newCustomers: ReportMetric;
+    returning: ReportMetric;
+    avgSpendMinor: ReportMetric;
+    overdue: ReportMetric;
+  };
+  segments: ReportSegment[];
+  neverVisited: number;
+  opportunities: { key: string; count: number }[];
+  spend: ReportNamedValue[];
+  frequency: ReportNamedValue[];
+  avgIntervalDays: number | null;
+  avgVisits: number;
+  topCustomers: ReportTopCustomer[];
+}
+
+export interface ReportRetention {
+  range: ReportRangeMeta;
+  compare: boolean;
+  kpis: {
+    newCustomers: ReportMetric;
+    returning: ReportMetric;
+    repeatRatePct: ReportMetric;
+    avgIntervalDays: ReportMetric;
+  };
+  newSeries: ReportPoint[];
+  returningSeries: ReportPoint[];
+  repeatRateTrend: ReportPoint[];
+  repeatRevenueSharePct: number | null;
+  firstToSecondPct: number | null;
+  avgLifetimeMonths: number | null;
+  lifetimeSample: number;
+  lifetimeSampleFloor: number;
+}
+
+export type ReportInsightKey =
+  | 'growth'
+  | 'quietCustomers'
+  | 'repeatRevenue'
+  | 'peakWindow'
+  | 'overdueRegulars'
+  | 'bestPerBooking';
+
+/** Facts, not prose — the wording lives in copy.reports.insights. */
+export interface ReportInsight {
+  key: ReportInsightKey;
+  tab: string;
+  values: Record<string, number | string>;
+}
+
+export interface ReportInsights {
+  range: ReportRangeMeta;
+  insights: ReportInsight[];
+  possible: number;
+}
+
 async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -532,6 +677,21 @@ async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?:
   if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+/**
+ * Every Reports tab, through one path builder.
+ *
+ * Under /reports/, never /analytics/ — these are fetched from the browser on
+ * every tab and range change, and that path segment is a common ad-blocker
+ * pattern. A blocked first-party request looks exactly like a network
+ * failure client-side. Same reasoning as rangeSummary.
+ */
+function reportGet<T>(tab: string, range: ReportRangeKey, compare: boolean, from?: string, to?: string) {
+  const params = new URLSearchParams({ range, compare: String(compare) });
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  return get<T>(`/api/v1/reports/${tab}?${params.toString()}`);
 }
 
 const post = <T>(path: string, body: unknown) => send<T>('POST', path, body);
@@ -566,12 +726,15 @@ export const api = {
    * browser on every tab and range change, and that path segment is a common
    * ad-blocker pattern, same reasoning as rangeSummary below.
    */
-  reportsOverview: (range: ReportRangeKey, compare: boolean, from?: string, to?: string) => {
-    const params = new URLSearchParams({ range, compare: String(compare) });
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
-    return get<ReportOverview>(`/api/v1/reports/overview?${params.toString()}`);
-  },
+  reportsOverview: (range: ReportRangeKey, compare: boolean, from?: string, to?: string) =>
+    reportGet<ReportOverview>('overview', range, compare, from, to),
+  reportsRevenue: (range: ReportRangeKey, compare: boolean) => reportGet<ReportRevenue>('revenue', range, compare),
+  reportsBookings: (range: ReportRangeKey, compare: boolean) => reportGet<ReportBookings>('bookings', range, compare),
+  reportsServices: (range: ReportRangeKey, compare: boolean) => reportGet<ReportServices>('services', range, compare),
+  reportsStaff: (range: ReportRangeKey, compare: boolean) => reportGet<ReportStaff>('staff', range, compare),
+  reportsCustomers: (range: ReportRangeKey, compare: boolean) => reportGet<ReportCustomers>('customers', range, compare),
+  reportsRetention: (range: ReportRangeKey, compare: boolean) => reportGet<ReportRetention>('retention', range, compare),
+  reportsInsights: (range: ReportRangeKey, compare: boolean) => reportGet<ReportInsights>('insights', range, compare),
   // Not /analytics/range — that path segment gets silently blocked by
   // browser ad/tracker blockers (this is fetched client-side, unlike
   // todayStats which runs server-side during SSR and never hits that filter).

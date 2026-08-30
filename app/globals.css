@@ -9369,12 +9369,231 @@ tr.is-retired td {
 .rp-cell-bar-fill { display: block; height: 100%; }
 .rp-cell-bar-value { font-size: 12.5px; font-weight: 700; }
 
+/* ---------- tab-specific blocks (GRW-52 … GRW-58) ---------- */
+
+/* Four and five tiles divide differently from six, so each row gets the
+   counts that leave no orphan at any width. */
+.rp-kpi-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rp-kpi-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* A pair of figures under a chart — "usual gap" beside "visits per client". */
+.rp-figure-pair {
+  display: flex;
+  gap: var(--sp-6);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+
+.rp-figure-pair span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rp-figure-pair strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+/* Opportunity cards: a count, what it means, and where to go about it. */
+.rp-opp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.rp-opp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--rp-seg);
+  border-radius: 14px;
+  padding: 15px;
+  min-width: 0;
+}
+
+.rp-opp-card-head { display: flex; align-items: center; gap: 11px; }
+
+.rp-opp-card-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--page-bg);
+  color: var(--rp-seg);
+}
+
+.rp-opp-card-icon svg { width: 18px; height: 18px; }
+.rp-opp-card-count { font-size: 25px; font-weight: 800; letter-spacing: -0.5px; }
+.rp-opp-card-title { font-weight: 700; font-size: 13.5px; }
+
+.rp-opp-card-body {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.rp-opp-card-cta,
+.rp-insight-cta {
+  align-self: flex-start;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-soft);
+  border: 1px solid #dbe7df;
+  color: var(--accent-deep);
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* ---------- retention panel ---------- */
+
+.rp-retention-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+
+.rp-headline-box {
+  background: var(--accent-soft);
+  border: 1px solid #dbe7df;
+  border-radius: 14px;
+  padding: var(--sp-4);
+}
+
+.rp-headline-label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--accent-deep);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.rp-headline-value {
+  font-size: 34px;
+  font-weight: 800;
+  margin-top: var(--sp-2);
+  color: var(--accent-deep);
+  line-height: 1.1;
+}
+
+.rp-headline-hint { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+
+.rp-retention-panel .rp-figure-pair { border-top: none; padding-top: 0; margin-top: 0; }
+
+/* ---------- insights ---------- */
+
+.rp-banner {
+  background: var(--sidebar);
+  border-radius: 18px;
+  padding: 22px;
+  color: #e7f0ea;
+}
+
+.rp-banner-kicker {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.8;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.rp-banner-body {
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: var(--sp-2);
+  letter-spacing: -0.3px;
+  max-width: 560px;
+  line-height: 1.35;
+}
+
+.rp-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--sp-3);
+}
+
+.rp-insight { display: flex; flex-direction: column; gap: var(--sp-3); }
+.rp-insight-head { display: flex; align-items: center; gap: 9px; }
+
+.rp-insight-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rp-insight-icon svg { width: 18px; height: 18px; }
+
+.rp-insight-cat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.rp-insight-headline {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* No line clamp anywhere here on purpose: a half-sentence insight is worse
+   than none, so the card grows to fit its text. */
+.rp-insight-body {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.rp-standalone-foot {
+  margin: 0;
+  padding-top: 0;
+  border-top: none;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
 /* ---------- narrower viewports ---------- */
 
 /* Below ~1380 the six-across row squeezes "₹1,15,381" narrower than it reads,
    so it becomes two rows of three rather than shrinking the figure. */
 @media (max-width: 1380px) {
   .rp-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Five tiles have no tidy sub-row, so below the width that fits all five they
+   go straight to the phone layout's pairs rather than stranding a fifth. */
+@media (max-width: 1240px) {
+  .rp-kpi-grid-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1040px) {
+  .rp-kpi-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-kpi-grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 1100px) {
@@ -9387,7 +9606,12 @@ tr.is-retired td {
   .rp-grid-2 { grid-template-columns: 1fr; }
   /* Four across on a phone, matching the Bookings KPI row: three tiles and a
      stranded fourth is the layout that reads as broken. */
-  .rp-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-kpi-grid,
+  .rp-kpi-grid-4,
+  .rp-kpi-grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-figure-pair { gap: var(--sp-4); }
+  .rp-banner { padding: var(--sp-4); }
+  .rp-banner-body { font-size: 17px; }
   .rp-kpi-value { font-size: 21px; }
   .rp-kpi-spark { display: none; }
   .rp-controls-spacer { display: none; }

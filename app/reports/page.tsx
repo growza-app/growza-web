@@ -1,40 +1,28 @@
 import { Suspense } from 'react';
 
-import { api, type ReportOverview, type ReportRangeKey, type ReportTabKey } from '../lib/api';
+import { api, type ReportRangeKey, type ReportTabKey } from '../lib/api';
 import { copy } from '../lib/copy';
-import { ReportsClient } from './ReportsClient';
+import { ReportsClient, type TabPayload } from './ReportsClient';
 
 export const dynamic = 'force-dynamic';
 
 const TABS = new Set<string>([
-  'overview',
-  'customers',
-  'revenue',
-  'bookings',
-  'services',
-  'staff',
-  'retention',
-  'insights',
+  'overview', 'customers', 'revenue', 'bookings', 'services', 'staff', 'retention', 'insights',
 ]);
 
 const RANGES = new Set<string>([
-  'today',
-  'last_7_days',
-  'this_month',
-  'last_month',
-  'last_3_months',
-  'this_year',
+  'today', 'last_7_days', 'this_month', 'last_month', 'last_3_months', 'this_year',
 ]);
 
 /**
  * Reports (GRW-48).
  *
- * Rendered on the server, one tab per request. Tab and range come from the
- * URL, so a report is a link somebody can send and a back button behaves; and
+ * Server-rendered, one tab per request. Tab and range come from the URL, so a
+ * report is a link somebody can send and the back button behaves — and
  * because the range is resolved once, server-side, every block on the page is
  * guaranteed to be describing the same days.
  *
- * A junk `?tab=` or `?range=` falls back rather than erroring — a stale
+ * A junk `?tab=` or `?range=` falls back rather than erroring: a stale
  * bookmark should still show a report.
  */
 export default async function ReportsPage({
@@ -60,21 +48,28 @@ export default async function ReportsPage({
     );
   }
 
-  // Ranking providers against each other is off for verticals where it is a
-  // product smell — a clinic does not have a doctor leaderboard (07 §3.2).
+  // Ranking providers against each other is a product smell in some verticals
+  // — a clinic has no doctor leaderboard (07 §3.2). The tab is absent, and a
+  // deep link to it lands somewhere real instead of on a 403.
   const staffTabAvailable = me.capabilities.staffLeaderboard;
   const resolvedTab = tab === 'staff' && !staffTabAvailable ? 'overview' : tab;
 
-  // One block failing must not blank the page: the tab renders its own error
-  // state and the chrome above it stays usable, so the owner can change the
+  // One tab's failure must not blank the page: the body renders its own error
+  // state while the chrome above stays usable, so the owner can change the
   // range and try again.
-  let overview: ReportOverview | null = null;
-  if (resolvedTab === 'overview') {
-    try {
-      overview = await api.reportsOverview(range, compare);
-    } catch {
-      overview = null;
-    }
+  let payload: TabPayload = null;
+  try {
+    payload =
+      resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare) }
+      : resolvedTab === 'revenue' ? { tab: 'revenue', data: await api.reportsRevenue(range, compare) }
+      : resolvedTab === 'bookings' ? { tab: 'bookings', data: await api.reportsBookings(range, compare) }
+      : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare) }
+      : resolvedTab === 'staff' ? { tab: 'staff', data: await api.reportsStaff(range, compare) }
+      : resolvedTab === 'customers' ? { tab: 'customers', data: await api.reportsCustomers(range, compare) }
+      : resolvedTab === 'retention' ? { tab: 'retention', data: await api.reportsRetention(range, compare) }
+      : { tab: 'insights', data: await api.reportsInsights(range, compare) };
+  } catch {
+    payload = null;
   }
 
   return (
@@ -84,7 +79,8 @@ export default async function ReportsPage({
         range={range}
         compare={compare}
         staffTabAvailable={staffTabAvailable}
-        overview={overview}
+        providerLabel={me.labels.providers ?? copy.nav.staff}
+        payload={payload}
       />
     </Suspense>
   );
