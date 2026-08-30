@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { DateTime } from 'luxon';
-import { api, type ProviderDay, type ProviderDetail, type Service } from '../lib/api';
+import { api, ApiError, type ProviderDay, type ProviderDetail, type Service } from '../lib/api';
 import { IconCheck, IconClose, IconWhatsApp } from '../components/icons';
 import { toWeekdayRows, WeekdayHoursEditor, type WeekdayRow } from '../components/WeekdayHoursEditor';
 import { useLabel } from '../components/LabelsProvider';
@@ -380,8 +380,12 @@ export function StaffDetailPanel({
       }
       setSaved(true);
       onSaved();
-    } catch {
-      setError(SAVE_ERROR);
+    } catch (err) {
+      // A plan limit is not a failure the owner can fix by retrying, and
+      // "check the server is running" sends them looking in the wrong place.
+      // The API says which plan and how many people; pass that through
+      // (GRW-005 §3).
+      setError(err instanceof ApiError && err.status === 403 ? err.message : SAVE_ERROR);
     } finally {
       setBusy(false);
     }

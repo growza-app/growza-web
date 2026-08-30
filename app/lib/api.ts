@@ -425,8 +425,13 @@ async function get<T>(path: string): Promise<T> {
 }
 
 async function extractErrorMessage(res: Response, path: string): Promise<string> {
-  const body = (await res.json().catch(() => null)) as { error?: string } | null;
-  return body?.error ?? `${path} failed: ${res.status}`;
+  const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
+  // `detail` first: the API's capability denials follow 00 §4 and put a
+  // machine-readable code in `error` with the sentence in `detail`, so
+  // reading `error` alone showed an owner the words "capability_denied".
+  // Every other endpoint sends a human message in `error` and no `detail`,
+  // so this changes nothing for them.
+  return body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
 }
 
 
