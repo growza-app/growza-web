@@ -9024,6 +9024,7 @@ tr.is-retired td {
 .rp-kpi-label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp-2);
   color: var(--muted);
   font-size: 12.5px;
@@ -9038,19 +9039,33 @@ tr.is-retired td {
 
 .rp-kpi-icon svg { width: 100%; height: 100%; }
 
-.rp-kpi-value {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
-  margin: 8px 0 4px;
+/* The tile is deliberately shorter than a normal .rp-card.
+   Four of these sit above the charts on Overview, Money, Bookings and
+   Clients, so every pixel of tile height is a pixel the actual reports lose.
+   The figure stays the biggest thing in the tile; what shrinks is the empty
+   room around it. */
+.rp-kpi {
+  padding: var(--sp-3) var(--sp-4);
 }
 
+.rp-kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 3px 0 1px;
+  text-align: center;
+}
+
+/* Centred, not spread. The icon, the figure and the movement sit on one
+   axis down the middle of the tile; `space-between` used to pin the movement
+   left and the sparkline right, which left the figure looking off-centre
+   above them. */
 .rp-kpi-foot {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  min-height: 28px;
+  justify-content: center;
+  gap: var(--sp-3);
+  min-height: 20px;
 }
 
 .rp-kpi-delta {
@@ -9639,6 +9654,15 @@ tr.is-retired td {
   .rp-banner-body { font-size: 17px; }
   .rp-kpi-value { font-size: 21px; }
   .rp-kpi-spark { display: none; }
+}
+
+/* Two tiles across a small phone leaves each figure about 104px of room, and
+   a crore-scale money value does not fit that at 21px — it was overflowing
+   its tile by 40px before the tiles were shortened and by 12px after, so the
+   figure was being cut off rather than being small. The narrowest widths get
+   a smaller figure; it is still the largest thing in the tile. */
+@media (max-width: 400px) {
+  .rp-kpi-value { font-size: 18px; letter-spacing: -0.3px; }
   .rp-controls-spacer { display: none; }
   .rp-control { padding: 7px 10px; font-size: 12.5px; }
   /* Clear the floating action button, which sits 74px above the tab bar. The

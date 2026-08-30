@@ -64,15 +64,13 @@ export function Kpi({
               {Math.abs(delta)}%
             </span>
           )
-        ) : (
-          <span />
-        )}
+        ) : null}
         {spark && spark.length > 0 && sparkLabels && (
           <span className="rp-kpi-spark">
             <LineChart
               labels={sparkLabels}
               series={[{ name: sparkName, color: good ? 'var(--rp-brand)' : 'var(--rp-red)', values: spark.map((p) => p.value), format: sparkFormat }]}
-              height={44}
+              height={26}
               showAxis={false}
               fill
             />
