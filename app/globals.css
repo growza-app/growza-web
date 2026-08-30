@@ -10481,3 +10481,24 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   background: var(--surface);
   padding: 7px 11px;
 }
+
+/* The Bookings trend card's answer, in words. Sits above the chart because
+   the heading is a question and this is the reply — the chart is the working. */
+.rp-verdict {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rp-verdict strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rp-verdict.is-up strong { color: var(--rp-green-ink); }
+.rp-verdict.is-down strong { color: var(--rp-red); }

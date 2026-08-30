@@ -357,6 +357,22 @@ export const copy = {
       totalHint: 'Called-off visits and no-shows are left out of this count',
       trend: 'Is work going up or down?',
       trendHint: 'Bookings in each stretch of the period you picked',
+      /**
+       * The heading asks a direction question, so the card answers it in a
+       * sentence instead of leaving an owner to read a direction out of a
+       * zigzag. The dashed line on the chart is the same answer, drawn.
+       */
+      trendVerdict: {
+        up: 'Work is picking up',
+        down: 'Work is easing off',
+        flat: 'Work is holding steady',
+      },
+      trendDetail: (from: number, to: number, unit: string) =>
+        `Around ${from} a ${unit} at the start of this stretch, around ${to} by the end`,
+      trendSteady: (about: number, unit: string) => `Around ${about} a ${unit} throughout`,
+      /** Too few points to average anything out — say so rather than guess. */
+      trendTooShort: 'Pick a longer period to see which way work is going',
+      trendLineKey: 'The dashed line is the overall direction',
       status: 'How they ended',
       statusHint: 'Every booking, including the ones called off',
       source: 'Where they came from',

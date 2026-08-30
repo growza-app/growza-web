@@ -8,6 +8,12 @@ export interface LineSeries {
   values: number[];
   /** How a value reads in the hover tooltip, e.g. money or "12 bookings". */
   format?: (value: number) => string;
+  /**
+   * A reference line rather than the data: drawn dashed and thin, with no
+   * fill and no hover dot, so it reads as an overlay on the series rather
+   * than as a second thing that happened.
+   */
+  dashed?: boolean;
 }
 
 /**
@@ -87,14 +93,23 @@ export function LineChart({
 
         {series.map((s, i) => (
           <g key={i}>
-            {fill && points > 1 && (
+            {fill && !s.dashed && points > 1 && (
               <path
                 d={`${linePath(s.values)} L${x(points - 1)},${height - padBottom} L${x(0)},${height - padBottom} Z`}
                 fill={`url(#${gradientId}-${i})`}
               />
             )}
             {points > 1 ? (
-              <path d={linePath(s.values)} fill="none" stroke={s.color} strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" />
+              <path
+                d={linePath(s.values)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={s.dashed ? 1.8 : 2.4}
+                strokeDasharray={s.dashed ? '6 5' : undefined}
+                strokeOpacity={s.dashed ? 0.75 : 1}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
             ) : (
               <circle cx={x(0)} cy={y(s.values[0]!)} r={5} fill={s.color} />
             )}
@@ -104,9 +119,11 @@ export function LineChart({
         {hover !== null && points > 1 && (
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={padTop} y2={height - padBottom} className="rp-crosshair" />
-            {series.map((s, i) => (
-              <circle key={i} cx={x(hover)} cy={y(s.values[hover]!)} r={4.5} fill="#fff" stroke={s.color} strokeWidth={2.5} />
-            ))}
+            {series.map((s, i) =>
+              s.dashed ? null : (
+                <circle key={i} cx={x(hover)} cy={y(s.values[hover]!)} r={4.5} fill="#fff" stroke={s.color} strokeWidth={2.5} />
+              ),
+            )}
           </g>
         )}
 
@@ -126,7 +143,7 @@ export function LineChart({
       {hover !== null && (
         <div className="rp-chart-tip">
           <span className="rp-chart-tip-label">{labels[hover]}</span>
-          {series.map((s, i) => (
+          {series.filter((s) => !s.dashed).map((s, i) => (
             <span key={i} className="rp-chart-tip-value" style={{ color: s.color }}>
               {s.name ? `${s.name}: ` : ''}
               {s.format ? s.format(s.values[hover]!) : s.values[hover]}

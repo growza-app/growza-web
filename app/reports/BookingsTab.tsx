@@ -6,6 +6,7 @@ import { IconAppointments, IconBan, IconClock, IconUserCheck } from '../componen
 import { BarList, Donut, Heatmap, LineChart } from './charts';
 import { Kpi } from './Kpi';
 import { Card, countBars, hoursAndMinutes } from './shared';
+import { linearTrend } from './trend';
 
 const STATUS_COLOUR: Record<string, string> = {
   completed: 'var(--rp-brand)',
@@ -34,6 +35,21 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
     : key === 'no_show' ? copy.status.didNotCome
     : copy.status.confirmed;
 
+  // The card is headed with a question, so it answers it. A fitted straight
+  // line is the direction the zigzag is actually going, and the sentence
+  // below says the same thing for anyone who does not read charts.
+  const trend = linearTrend(data.trend.map((p) => p.value));
+  const unit = data.range.bucketUnit === 'day' ? 'day' : data.range.bucketUnit;
+  const verdict = trend
+    ? {
+        headline: c.trendVerdict[trend.direction],
+        detail:
+          trend.direction === 'flat'
+            ? c.trendSteady(Math.round((trend.from + trend.to) / 2), unit)
+            : c.trendDetail(Math.round(trend.from), Math.round(trend.to), unit),
+      }
+    : null;
+
   return (
     <div className="rp-stack">
       {/* Four, not five. "Finished" is the biggest slice of the chart
@@ -51,16 +67,38 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
              value={String(kpis.upcoming.value)} metric={kpis.upcoming} compare={false} />
       </div>
 
-      <Card title={c.trend} hint={`${c.trendHint} · ${data.range.label}`} figure={kpis.total.value}>
+      <Card
+        title={c.trend}
+        hint={`${c.trendHint} · ${data.range.label}`}
+        figure={kpis.total.value}
+        foot={trend ? c.trendLineKey : undefined}
+      >
         {kpis.total.value === 0 ? (
           <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
         ) : (
-          <LineChart
-            labels={labels}
-            series={[{ color: 'var(--rp-blue)', values: data.trend.map((p) => p.value), format: (v) => `${v} bookings` }]}
-            height={250}
-            fill
-          />
+          <>
+            {verdict ? (
+              <p className={`rp-verdict is-${trend!.direction}`}>
+                <strong>{verdict.headline}</strong>
+                <span>{verdict.detail}</span>
+              </p>
+            ) : (
+              <p className="rp-verdict is-flat">
+                <span>{c.trendTooShort}</span>
+              </p>
+            )}
+            <LineChart
+              labels={labels}
+              series={[
+                { color: 'var(--rp-blue)', values: data.trend.map((p) => p.value), format: (v) => `${v} bookings` },
+                ...(trend
+                  ? [{ color: 'var(--rp-slate, #7d8a84)', values: trend.line, dashed: true }]
+                  : []),
+              ]}
+              height={250}
+              fill
+            />
+          </>
         )}
       </Card>
 
