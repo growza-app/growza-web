@@ -4,7 +4,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 
 import { copy } from '../lib/copy';
-import type { ReportRangeKey, ReportTabKey } from '../lib/api';
+import {
+  countFilters,
+  isFilterableReportTab,
+  type ReportFilterOptions,
+  type ReportFilters,
+  type ReportRangeKey,
+  type ReportTabKey,
+} from '../lib/api';
+import { FiltersDrawer } from './FiltersDrawer';
 import { IconCalendar, IconChevronDown, IconDownload, IconFilter, IconRepeat } from '../components/icons';
 
 const TAB_ORDER: ReportTabKey[] = [
@@ -14,7 +22,6 @@ const TAB_ORDER: ReportTabKey[] = [
   'bookings',
   'services',
   'staff',
-  'insights',
 ];
 
 const RANGE_ORDER: ReportRangeKey[] = [
@@ -41,6 +48,12 @@ export function ReportsShell({
   range,
   compare,
   staffTabAvailable,
+  filters,
+  filterOptions,
+  droppedFilters,
+  providerLabel,
+  onExport,
+  canExport,
   labels,
   rangeLabel,
   children,
@@ -57,6 +70,14 @@ export function ReportsShell({
   rangeLabel?: string;
   /** Off for verticals where ranking providers is a product smell (07 §3.2). */
   staffTabAvailable: boolean;
+  filters: ReportFilters;
+  filterOptions: ReportFilterOptions;
+  droppedFilters: number;
+  providerLabel: string;
+  /** Builds and downloads the active tab's CSV. Owned by the client, which holds the payload. */
+  onExport: () => void;
+  /** False when the tab has nothing to write — a button that downloads an empty file is worse than a disabled one. */
+  canExport: boolean;
   /** The vertical's own nouns — "Stylists" for a salon, "Doctors" for a clinic. */
   labels: Record<string, string>;
   children: ReactNode;
@@ -64,6 +85,7 @@ export function ReportsShell({
   const router = useRouter();
   const params = useSearchParams();
   const [rangeOpen, setRangeOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const go = (next: Record<string, string>) => {
     const query = new URLSearchParams(params.toString());
@@ -72,6 +94,35 @@ export function ReportsShell({
   };
 
   const tabs = TAB_ORDER.filter((key) => key !== 'staff' || staffTabAvailable);
+
+  const filterable = isFilterableReportTab(tab);
+  const activeFilters = countFilters(filters);
+
+  /**
+   * Filters live in the URL like the tab and range do, so a narrowed report is
+   * a link somebody can send and the back button undoes a filter (FR-03).
+   */
+  const applyFilters = (next: ReportFilters) => {
+    const query = new URLSearchParams(params.toString());
+    query.delete('providerId');
+    query.delete('serviceId');
+    query.delete('status');
+    for (const id of next.providerIds) query.append('providerId', id);
+    for (const id of next.serviceIds) query.append('serviceId', id);
+    for (const s of next.statuses) query.append('status', s);
+    setFiltersOpen(false);
+    router.push(`/reports?${query.toString()}`);
+  };
+
+  const removeFilter = (group: keyof ReportFilters, value: string) =>
+    applyFilters({ ...filters, [group]: filters[group].filter((v) => v !== value) });
+
+  /** Names for the applied-filter chips, resolved from what the drawer offered. */
+  const nameOf = (group: keyof ReportFilters, id: string) => {
+    if (group === 'providerIds') return filterOptions.providers.find((p) => p.id === id)?.name ?? id;
+    if (group === 'serviceIds') return filterOptions.services.find((s) => s.id === id)?.name ?? id;
+    return copy.status[id === 'no_show' ? 'didNotCome' : id === 'completed' ? 'done' : (id as 'confirmed' | 'cancelled')];
+  };
 
   // Two of these are domain nouns, not UI chrome, so they come from the
   // vertical's label pack exactly as the sidebar's do. Hardcoding "Clients"
@@ -147,17 +198,29 @@ export function ReportsShell({
 
           <div className="rp-controls-spacer" />
 
-          {/* Both controls are drawn by the design and defined by no part of
-              it — the mock's own logic class wires neither. They ship visible
-              but disabled with a stated reason rather than as buttons that
-              look alive and silently do nothing (GRW-60). */}
-          <button type="button" className="rp-control" disabled title={copy.reports.notBuiltYet}>
-            <span className="rp-control-icon rp-muted">
+          {/* Live on the tabs a filter can honestly narrow, and disabled with
+              the reason on the rest — a control that looks alive and silently
+              does nothing is the thing GRW-50's rule forbids. */}
+          <button
+            type="button"
+            className={`rp-control${activeFilters > 0 ? ' is-on' : ''}`}
+            disabled={!filterable}
+            title={filterable ? undefined : copy.reports.filtersNotHere}
+            onClick={() => setFiltersOpen(true)}
+          >
+            <span className={`rp-control-icon${filterable ? '' : ' rp-muted'}`}>
               <IconFilter />
             </span>
             <span>{copy.reports.filters}</span>
+            {filterable && activeFilters > 0 && <span className="rp-control-count">{activeFilters}</span>}
           </button>
-          <button type="button" className="rp-control rp-control-primary" disabled title={copy.reports.notBuiltYet}>
+          <button
+            type="button"
+            className="rp-control rp-control-primary"
+            onClick={onExport}
+            disabled={!canExport}
+            title={canExport ? undefined : copy.reports.exportNothing}
+          >
             <span className="rp-control-icon">
               <IconDownload />
             </span>
@@ -179,7 +242,63 @@ export function ReportsShell({
         </nav>
       </header>
 
-      <div className="rp-body page-body">{children}</div>
+      <div className="rp-body page-body">
+        {/* What is narrowing this tab, and how to stop it — one click per
+            filter, so removing one does not mean reopening the drawer
+            (FR-04). */}
+        {filterable && activeFilters > 0 && (
+          <div className="rp-applied">
+            <span className="rp-applied-label">{copy.reports.applied}</span>
+            {(['providerIds', 'serviceIds', 'statuses'] as const).flatMap((group) =>
+              filters[group].map((value) => (
+                <button
+                  key={`${group}:${value}`}
+                  type="button"
+                  className="rp-applied-chip"
+                  onClick={() => removeFilter(group, value)}
+                  aria-label={copy.reports.remove(nameOf(group, value))}
+                >
+                  {nameOf(group, value)}
+                  <span aria-hidden="true">✕</span>
+                </button>
+              )),
+            )}
+            <button
+              type="button"
+              className="rp-applied-clear"
+              onClick={() => applyFilters({ providerIds: [], serviceIds: [], statuses: [] })}
+            >
+              {copy.reports.clearFilters}
+            </button>
+          </div>
+        )}
+
+        {/* A filter set on another tab is still in the URL here. Saying so
+            beats letting the owner read unnarrowed figures believing they are
+            narrowed. */}
+        {!filterable && activeFilters > 0 && (
+          <div className="rp-applied rp-applied-inert">
+            <span>{copy.reports.filtersOnOtherTabs(activeFilters)}</span>
+          </div>
+        )}
+
+        {droppedFilters > 0 && (
+          <div className="rp-applied rp-applied-inert">
+            <span>{copy.reports.droppedFilters(droppedFilters)}</span>
+          </div>
+        )}
+
+        {children}
+      </div>
+
+      <FiltersDrawer
+        open={filtersOpen}
+        filters={filters}
+        options={filterOptions}
+        providerLabel={providerLabel}
+        onClose={() => setFiltersOpen(false)}
+        onApply={applyFilters}
+      />
     </>
   );
 }

@@ -70,7 +70,7 @@ export function Kpi({
             <LineChart
               labels={sparkLabels}
               series={[{ name: sparkName, color: good ? 'var(--rp-brand)' : 'var(--rp-red)', values: spark.map((p) => p.value), format: sparkFormat }]}
-              height={26}
+              height={20}
               showAxis={false}
               fill
             />

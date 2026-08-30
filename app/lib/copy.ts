@@ -229,7 +229,6 @@ export const copy = {
       bookings: 'Bookings',
       services: 'Services',
       staff: 'Staff',
-      insights: 'What to do',
     },
     subtitles: {
       overview: 'How is your business doing?',
@@ -238,7 +237,6 @@ export const copy = {
       bookings: 'How much work do you have?',
       services: 'Which services actually earn?',
       staff: 'Who is bringing in the most?',
-      insights: 'What should you do this week?',
     },
 
     ranges: {
@@ -254,6 +252,41 @@ export const copy = {
     filters: 'Filters',
     export: 'Download',
     notBuiltYet: 'Coming soon',
+    /**
+     * Why the control is off on Overview, Clients and What to do.
+     *
+     * Plainly, and in the owner's terms: these tabs count people by how long
+     * it has been since they came, not bookings in the period, so narrowing
+     * them by service would change what the number means (GRW-60, BR-01).
+     */
+    filtersNotHere: 'Filters work on Money, Bookings, Services and Staff',
+    filtersOnOtherTabs: (n: number) =>
+      n === 1
+        ? '1 filter is set, but it does not change this tab'
+        : `${n} filters are set, but they do not change this tab`,
+    exportNothing: 'Nothing to download for this range',
+    filterDrawer: {
+      title: 'Narrow this report',
+      close: 'Close',
+      services: 'Service',
+      status: 'What happened',
+      retired: 'no longer offered',
+      noProviders: 'No staff to filter by yet',
+      noServices: 'No services to filter by yet',
+      reset: 'Clear all',
+      apply: 'Show all',
+      applyCount: (n: number) => `Show ${n === 1 ? '1 filter' : `${n} filters`}`,
+    },
+    /** The removable summary above a narrowed tab (FR-04). */
+    applied: 'Showing only:',
+    clearFilters: 'Clear filters',
+    remove: (name: string) => `Remove ${name}`,
+    droppedFilters: (n: number) =>
+      n === 1
+        ? 'One filter was dropped — it pointed at something that no longer exists'
+        : `${n} filters were dropped — they pointed at things that no longer exist`,
+    utilisationSuppressed:
+      'Busy % is hidden while a service or outcome filter is on: the hours someone was available cannot be narrowed the same way, so the figure would read low',
 
     // ---- Overview: the four headline figures, and nowhere else ----
     kpi: {
@@ -431,30 +464,6 @@ export const copy = {
     },
 
     // ---- What to do ----
-    insightsTab: {
-      bannerKicker: 'What to do',
-      bannerBody: 'Worked out from your own bookings, not guessed.',
-      showing: (n: number, total: number) =>
-        `Showing ${n} of ${total}. The rest need more bookings before they can tell you anything useful.`,
-      none: 'Nothing to flag right now.',
-      noneHint: 'Come back after a few more weeks of bookings.',
-      categories: {
-        growth: 'Money',
-        quietCustomers: 'Clients',
-        repeatRevenue: 'Coming back',
-        peakWindow: 'How busy you are',
-        overdueRegulars: 'Worth a call',
-        bestPerBooking: 'Services',
-      },
-      ctas: {
-        growth: 'See the money',
-        quietCustomers: 'See these clients',
-        repeatRevenue: 'See these clients',
-        peakWindow: 'See bookings',
-        overdueRegulars: 'See these clients',
-        bestPerBooking: 'See services',
-      },
-    },
   },
 
   /**

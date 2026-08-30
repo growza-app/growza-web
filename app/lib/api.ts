@@ -447,8 +447,7 @@ export type ReportTabKey =
   | 'revenue'
   | 'bookings'
   | 'services'
-  | 'staff'
-  | 'insights';
+  | 'staff';
 
 export interface ReportRangeMeta {
   key: ReportRangeKey;
@@ -636,26 +635,9 @@ export interface ReportCustomers {
   repeatRatePct: ReportMetric;
 }
 
-export type ReportInsightKey =
-  | 'growth'
-  | 'quietCustomers'
-  | 'repeatRevenue'
-  | 'peakWindow'
-  | 'overdueRegulars'
-  | 'bestPerBooking';
 
 /** Facts, not prose — the wording lives in copy.reports.insights. */
-export interface ReportInsight {
-  key: ReportInsightKey;
-  tab: string;
-  values: Record<string, number | string>;
-}
 
-export interface ReportInsights {
-  range: ReportRangeMeta;
-  insights: ReportInsight[];
-  possible: number;
-}
 
 
 export interface ClientProfileRow {
@@ -699,11 +681,66 @@ async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?:
  * pattern. A blocked first-party request looks exactly like a network
  * failure client-side. Same reasoning as rangeSummary.
  */
-function reportGet<T>(tab: string, range: ReportRangeKey, compare: boolean, from?: string, to?: string) {
+function reportGet<T>(
+  tab: string,
+  range: ReportRangeKey,
+  compare: boolean,
+  from?: string,
+  to?: string,
+  filters?: ReportFilters,
+) {
   const params = new URLSearchParams({ range, compare: String(compare) });
   if (from) params.set('from', from);
   if (to) params.set('to', to);
+  // Repeated rather than comma-joined: a service called "Cut & Blow-dry, Long"
+  // would split a joined list in the wrong place, and `append` is the shape
+  // Fastify already parses into an array.
+  for (const id of filters?.providerIds ?? []) params.append('providerId', id);
+  for (const id of filters?.serviceIds ?? []) params.append('serviceId', id);
+  for (const s of filters?.statuses ?? []) params.append('status', s);
   return get<T>(`/api/v1/reports/${tab}?${params.toString()}`);
+}
+
+/** What the Filters drawer is narrowing a report to (GRW-60). */
+export interface ReportFilters {
+  providerIds: string[];
+  serviceIds: string[];
+  statuses: string[];
+}
+
+export interface ReportFilterOption {
+  id: string;
+  name: string;
+  retired: boolean;
+}
+
+export interface ReportFilterOptions {
+  providers: ReportFilterOption[];
+  services: ReportFilterOption[];
+}
+
+/**
+ * The tabs a filter can honestly narrow.
+ *
+ * Every figure on these is bookings in a period, which is the row set a
+ * filter narrows. Overview, Clients and Insights are not here: their figures
+ * are all-time customer recency, or a statement about the whole business, so
+ * a per-booking filter would change what the number means rather than which
+ * rows it covers.
+ */
+export const FILTERABLE_REPORT_TABS: ReportTabKey[] = ['revenue', 'bookings', 'services', 'staff'];
+
+export function isFilterableReportTab(tab: ReportTabKey): boolean {
+  return FILTERABLE_REPORT_TABS.includes(tab);
+}
+
+/** True when no group has a selection, so the report is unnarrowed. */
+export function hasNoFilters(filters: ReportFilters): boolean {
+  return countFilters(filters) === 0;
+}
+
+export function countFilters(filters: ReportFilters): number {
+  return filters.providerIds.length + filters.serviceIds.length + filters.statuses.length;
 }
 
 const post = <T>(path: string, body: unknown) => send<T>('POST', path, body);
@@ -740,12 +777,12 @@ export const api = {
    * ad-blocker pattern, same reasoning as rangeSummary below.
    */
   reportsOverview: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportOverview>('overview', r, c, f, t),
-  reportsRevenue: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportRevenue>('revenue', r, c, f, t),
-  reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportBookings>('bookings', r, c, f, t),
-  reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportServices>('services', r, c, f, t),
-  reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportStaff>('staff', r, c, f, t),
+  reportFilterOptions: () => get<ReportFilterOptions>('/api/v1/reports/filters'),
+  reportsRevenue: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportRevenue>('revenue', r, c, f, t, x),
+  reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportBookings>('bookings', r, c, f, t, x),
+  reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportServices>('services', r, c, f, t, x),
+  reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportStaff>('staff', r, c, f, t, x),
   reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportCustomers>('customers', r, c, f, t),
-  reportsInsights: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportInsights>('insights', r, c, f, t),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),
   // Not /analytics/range — that path segment gets silently blocked by

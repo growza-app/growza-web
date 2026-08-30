@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { copy } from '../lib/copy';
 import type {
+  ReportFilterOptions,
+  ReportFilters,
   ReportBookings,
   ReportCustomers,
-  ReportInsights,
   ReportOverview,
   ReportRangeKey,
   ReportRevenue,
@@ -16,9 +17,9 @@ import type {
   ReportTabKey,
 } from '../lib/api';
 import { ClientProfileCard } from '../components/ClientProfileCard';
+import { csvFilename, downloadCsv, reportToCsv } from './export';
 import { BookingsTab } from './BookingsTab';
 import { CustomersTab } from './CustomersTab';
-import { InsightsTab } from './InsightsTab';
 import { OverviewTab } from './OverviewTab';
 import { ReportsShell } from './ReportsShell';
 import { RevenueTab } from './RevenueTab';
@@ -37,7 +38,6 @@ export type TabPayload =
   | { tab: 'services'; data: ReportServices }
   | { tab: 'staff'; data: ReportStaff }
   | { tab: 'customers'; data: ReportCustomers }
-  | { tab: 'insights'; data: ReportInsights }
   | null;
 
 /**
@@ -52,7 +52,12 @@ export function ReportsClient({
   range,
   compare,
   staffTabAvailable,
+  filters,
+  filterOptions,
+  droppedFilters,
   providerLabel,
+  tenantName,
+  rangeLabel,
   labels,
   payload,
 }: {
@@ -60,7 +65,15 @@ export function ReportsClient({
   range: ReportRangeKey;
   compare: boolean;
   staffTabAvailable: boolean;
+  /** Already narrowed to ids this tenant owns — see page.tsx. */
+  filters: ReportFilters;
+  filterOptions: ReportFilterOptions;
+  /** How many URL filters pointed at something that no longer exists. */
+  droppedFilters: number;
   providerLabel: string;
+  /** For the download's filename, which names the tenant, tab and range (FR-05). */
+  tenantName: string;
+  rangeLabel: string;
   labels: Record<string, string>;
   payload: TabPayload;
 }) {
@@ -82,12 +95,27 @@ export function ReportsClient({
   const goToSegment = (segment: string) =>
     router.push(segment === 'all' ? '/customers' : `/customers?status=${segment}`);
 
+  /**
+   * The download, built from `payload` — the very object the tab below is
+   * rendering. Not a second fetch, so the file cannot disagree with the
+   * screen however the tab changes later (AC-04).
+   */
+  const csv = reportToCsv(payload, providerLabel);
+  const onExport = () =>
+    downloadCsv(csvFilename(tenantName, tab, rangeLabel), csv);
+
   return (
     <ReportsShell
       tab={tab}
       range={range}
       compare={compare}
       staffTabAvailable={staffTabAvailable}
+      filters={filters}
+      filterOptions={filterOptions}
+      droppedFilters={droppedFilters}
+      providerLabel={providerLabel}
+      onExport={onExport}
+      canExport={csv.trim().length > 0}
       labels={labels}
       rangeLabel={range === 'custom' ? payload?.data.range.label : undefined}
     >
@@ -115,9 +143,7 @@ export function ReportsClient({
           onSegment={goToSegment}
           onClient={setOpenClientId}
         />
-      ) : (
-        <InsightsTab data={payload.data} onTab={goToTab} />
-      )}
+      ) : null}
       {openClientId && <ClientProfileCard clientId={openClientId} onClose={() => setOpenClientId(null)} />}
     </ReportsShell>
   );
