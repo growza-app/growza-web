@@ -157,7 +157,13 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
             <span className="cpc-btn-icon"><IconPhone /></span>
             {c.call}
           </a>
-          <a className="cpc-btn cpc-btn-primary" href={`/appointments?q=${encodeURIComponent(profile?.name ?? '')}`}>
+          {/* By id, not by name in the search box. The search-by-name link
+              landed on the Bookings screen's default day — today — so a client
+              whose last visit was in July showed nothing at all. */}
+          <a
+            className={`cpc-btn cpc-btn-primary ${profile ? '' : 'cpc-btn-off'}`}
+            href={profile ? `/appointments?customerId=${profile.id}` : undefined}
+          >
             {c.viewBookings}
           </a>
         </footer>

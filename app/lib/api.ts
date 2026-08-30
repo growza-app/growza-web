@@ -724,11 +724,12 @@ export const api = {
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
   /** `date` alone = one day; `date` + `to` = an inclusive day range (the Bookings From/To filter). */
-  appointments: (date?: string, to?: string, providerId?: string) => {
+  appointments: (date?: string, to?: string, providerId?: string, customerId?: string) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (to) params.set('to', to);
     if (providerId) params.set('providerId', providerId);
+    if (customerId) params.set('customerId', customerId);
     const qs = params.toString();
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },

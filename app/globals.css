@@ -10238,3 +10238,39 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   .rp-cs-group { padding: 5px 9px; }
   .rp-cs-group-text em { display: none; }
 }
+
+/* The Bookings screen, when it is showing one client rather than a day. */
+.bk-client-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-3);
+  padding: 9px 14px;
+  border: 1px solid #bfe0cc;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 13px;
+}
+
+.bk-client-banner strong { font-weight: 700; }
+
+/* On a phone this sits above a fit-to-screen list, so it earns one line and
+   no more — two wrapped lines cost a booking card's worth of height. */
+@media (max-width: 859px) {
+  .bk-client-banner {
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-2);
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .bk-client-banner > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bk-client-banner > a { flex: none; }
+}

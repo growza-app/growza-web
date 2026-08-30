@@ -116,6 +116,7 @@ export function BookingsList({
   dayLabel,
   date,
   toDate,
+  customerId,
   dayHint,
   emptyMessage,
   initialStatus,
@@ -138,6 +139,8 @@ export function BookingsList({
   date: string;
   /** The From/To range's end (equal to `date` for a single day). */
   toDate: string;
+  /** Set when the page is showing one client's bookings, so the date form's GET submit keeps them rather than dropping back to everyone. */
+  customerId?: string;
   dayHint: string;
   /** Shown in place of the schedule when the day itself has zero bookings, before any client-side search/staff filtering. */
   emptyMessage: string;
@@ -430,6 +433,7 @@ export function BookingsList({
               is still submitted, so naming both would send q twice. Only
               non-default values are emitted, so a URL stays clean until a
               filter is actually set. */}
+          {customerId && <input type="hidden" name="customerId" value={customerId} />}
           {query && <input type="hidden" name="q" value={query} />}
           {staffFilter !== 'Everyone' && <input type="hidden" name="staff" value={staffFilter} />}
           {statusFilter && <input type="hidden" name="status" value={statusFilter} />}

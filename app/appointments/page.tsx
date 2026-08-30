@@ -23,6 +23,7 @@ export default async function AppointmentsPage({
     q?: string;
     staff?: string;
     sort?: string;
+    customerId?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -61,13 +62,38 @@ export default async function AppointmentsPage({
 
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date());
-  const date = params.date ?? todayISO;
+
+  /**
+   * Arriving from a client's card, to see that client's bookings.
+   *
+   * The date filter has to stand down for it. This screen defaults to today,
+   * so "See bookings" for someone whose last visit was in July used to land on
+   * an empty day — the button worked, the page just had nothing to show. When
+   * a client is named, the window opens wide and the query narrows to them
+   * instead (indexed since migration 0001), so the range costs nothing.
+   */
+  // Shape-checked before it goes near the query: the column is a uuid, so
+  // "?customerId=abc" would be a cast error rather than an empty result.
+  const customerIdParam = params.customerId?.trim();
+  const customerId =
+    customerIdParam && /^[0-9a-f-]{36}$/i.test(customerIdParam) ? customerIdParam : undefined;
+  // Sentinels, not dates. They are the query window only — never shown, and
+  // never fed back into the From/To fields, which stay empty so the owner can
+  // still narrow a client's history by date if they want to.
+  const ALL_TIME_FROM = '2000-01-01';
+  const ALL_TIME_TO = '2099-12-31';
+  const fieldFrom = params.date ?? (customerId ? '' : todayISO);
   // GRW-47: the filter is a From/To range now. `to` defaults to `date`, so
   // the common case is still exactly one day and every "today" label below
   // keeps meaning what it did; a `to` earlier than `date` is ignored by the
   // API rather than returning nothing.
-  const toDate = params.to && params.to >= date ? params.to : date;
+  const fieldTo = params.to && fieldFrom && params.to >= fieldFrom ? params.to : fieldFrom;
+  const date = fieldFrom || ALL_TIME_FROM;
+  const toDate = fieldTo || ALL_TIME_TO;
   const isRange = toDate !== date;
+  // True only while the whole history is on screen. Once a date is picked the
+  // page is a normal filtered range again that happens to be one client's.
+  const wholeHistory = Boolean(customerId) && !fieldFrom;
 
   // GRW-47: no `providerId` — staff filtering now lives entirely client-side
   // in BookingsList (search + staff select on desktop, chips on mobile),
@@ -78,16 +104,28 @@ export default async function AppointmentsPage({
   // server-side pass and a client-side control that can disagree. The KPI row
   // therefore keeps showing the day's real totals while the list narrows —
   // the same split search and the staff filter already use.
-  const appointments = await api.appointments(date, toDate).catch(() => [] as Appointment[]);
+  const appointments = await api
+    .appointments(date, toDate, undefined, customerId)
+    .catch(() => [] as Appointment[]);
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
   // A multi-day range is never "today", even when it starts today — the
   // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
-  const isToday = !isRange && date === todayISO;
-  const dayHint = formatDateWithWeekday(new Date(`${date}T12:00:00`), timezone);
+  const isToday = !isRange && date === todayISO && !customerId;
+  // Whose bookings these are, for the banner. Taken from the rows rather than
+  // the URL so it is the name actually on the bookings, not one a link claimed.
+  const customerName = customerId ? (appointments[0]?.customerName ?? null) : null;
+  // A window spanning the year 2000 to 2099 is a mechanism, not a date range,
+  // and labelling it as one would be a screen describing itself falsely. When
+  // a client is named, the labels say so instead.
+  const dayHint = wholeHistory
+    ? `Every booking for ${customerName ?? 'this client'}`
+    : formatDateWithWeekday(new Date(`${date}T12:00:00`), timezone);
   // Short form for the KPI/schedule labels when a non-today date is picked, e.g. "21 Aug" — or "21 Aug – 24 Aug" for a range.
-  const dayShort = isRange
-    ? `${formatDateShort(new Date(`${date}T12:00:00`))} – ${formatDateShort(new Date(`${toDate}T12:00:00`))}`
-    : formatDateShort(new Date(`${date}T12:00:00`));
+  const dayShort = wholeHistory
+    ? (customerName ?? 'This client')
+    : isRange
+      ? `${formatDateShort(new Date(`${date}T12:00:00`))} – ${formatDateShort(new Date(`${toDate}T12:00:00`))}`
+      : formatDateShort(new Date(`${date}T12:00:00`));
   return (
     <>
       {/* No search action in the header: this page has its own search field
@@ -101,6 +139,23 @@ export default async function AppointmentsPage({
       />
 
       <div className="page-body bk-fit">
+        {/* Says whose bookings these are and how to get back out. Without it a
+            page showing one client's history is indistinguishable from a very
+            quiet day, and the date picker below would look broken rather than
+            deliberately stood down. */}
+        {customerId && (
+          <div className="bk-client-banner">
+            <span>
+              {wholeHistory ? 'Showing every booking for ' : 'Showing bookings for '}
+              <strong>{customerName ?? 'this client'}</strong>
+              {appointments.length === 0 &&
+                (wholeHistory ? ' — they have none yet' : ' — none in these dates')}
+            </span>
+            <a className="btn btn-ghost btn-sm" href="/appointments">
+              Show all bookings
+            </a>
+          </div>
+        )}
         {/* The "Showing Cancelled only" banner is gone: the Status control in
             the filter card shows the same thing, in the place you'd change
             it. A banner plus a control is two ways to read one filter. */}
@@ -117,8 +172,9 @@ export default async function AppointmentsPage({
           nowISO={new Date().toISOString()}
           isToday={isToday}
           dayLabel={dayShort}
-          date={date}
-          toDate={toDate}
+          date={fieldFrom}
+          toDate={fieldTo}
+          customerId={customerId}
           dayHint={dayHint}
           emptyMessage={copy.bookings.none}
           initialStatus={status}
