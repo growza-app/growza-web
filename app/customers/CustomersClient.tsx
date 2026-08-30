@@ -181,6 +181,10 @@ export function CustomersClient({
     setPageIndex(0);
   };
 
+  /** Null when everyone has been in at least once — then there is nothing to explain. */
+  const neverPct =
+    stats.neverVisited > 0 && stats.total > 0 ? Math.round((stats.neverVisited / stats.total) * 100) : null;
+
   const visibleRows = page.rows.slice(0, pageSize);
 
   const exportCsv = () => {
@@ -237,20 +241,26 @@ export function CustomersClient({
         <div className="card cust-segments">
           <div className="cust-segments-head">
             <h2>{copy.clients.segmentsTitle}</h2>
-            {/* Both asides on the heading's line. The hint has to stay — it is
-                what tells a hesitant reader the cards are tappable at all — and
-                the never-been-in count has to stay too, or the four bands look
-                like they should add up to the total above and never will. */}
+            {/*
+              Two versions of the same aside, one per screen size — not one
+              string left to wrap. On a phone the full sentence ran to eleven
+              lines at 320px, which is most of the screen spent on a footnote.
+
+              What the short one keeps is the number: without it the four bands
+              look like they should add up to the total above and never will.
+              What it drops is the tap hint, because tapping a card is the
+              obvious gesture on a touch screen and the card highlights when
+              you do.
+            */}
             <p>
-              {copy.clients.segmentsHint}
-              {stats.neverVisited > 0 && (
-                <>
-                  {' · '}
-                  {copy.clients.neverVisited(
-                    stats.neverVisited,
-                    stats.total > 0 ? Math.round((stats.neverVisited / stats.total) * 100) : 0,
-                  )}
-                </>
+              <span className="cust-aside-full">
+                {copy.clients.segmentsHint}
+                {neverPct !== null && ` · ${copy.clients.neverVisited(stats.neverVisited, neverPct)}`}
+              </span>
+              {neverPct !== null && (
+                <span className="cust-aside-brief">
+                  {copy.clients.neverVisitedShort(stats.neverVisited, neverPct)}
+                </span>
               )}
             </p>
             {status !== 'all' && (
@@ -270,6 +280,10 @@ export function CustomersClient({
                   className={`cust-segment ${on ? 'is-on' : ''}`}
                   style={{ ['--seg' as string]: SEGMENT_TONE[seg.key] }}
                   aria-pressed={on}
+                  // The day window is hidden on a phone to save the line, so it
+                  // rides along here rather than being lost — long-press shows
+                  // it, and a screen reader reads it either way.
+                  title={`${words.label} · ${words.range}`}
                   onClick={() => {
                     // Clicking the band you are already in clears it, so the
                     // card is a toggle rather than a one-way trip.

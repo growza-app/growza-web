@@ -463,6 +463,13 @@ export const copy = {
     segmentsTitle: 'How your clients are doing',
     segmentsHint: 'Tap one to see just those',
     neverVisited: (n: number, pct: number) => `${n} (${pct}%) have not been in yet, so they are in none of these`,
+    /**
+     * The same fact for a phone. The full sentence wrapped to eleven lines at
+     * 320px and pushed the bands card to 405px — most of a small screen spent
+     * explaining a footnote. What has to survive is the number, because
+     * without it the four bands look like they should add up to the total.
+     */
+    neverVisitedShort: (n: number, pct: number) => `${n} (${pct}%) never been in`,
     showingAll: 'Showing everyone',
     clearFilter: 'Show everyone',
     segments: {

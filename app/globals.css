@@ -9982,3 +9982,37 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   gap: 6px;
   line-height: 1.35;
 }
+
+/*
+ * The bands aside, in two lengths.
+ *
+ * The full sentence is one line on a desktop and eleven at 320px, where it
+ * pushed the bands card to 405px — most of a phone screen spent on a
+ * footnote. The brief version keeps the only part that has to survive: the
+ * count, without which the four bands look like they should add up to the
+ * total above them.
+ */
+.cust-aside-brief { display: none; }
+
+@media (max-width: 860px) {
+  .cust-aside-full { display: none; }
+  .cust-aside-brief { display: inline; }
+
+  /* Stacked, not squeezed. On one flex row the heading and the aside split a
+     390px screen between them, so a twenty-character aside still wrapped to
+     two lines in the sliver it was left. */
+  .cust-segments-head {
+    display: block;
+  }
+
+  .cust-segments-head h2 { font-size: 13.5px; }
+  .cust-segments-head p { margin-top: 1px; }
+
+  .cust-segments { padding: var(--sp-3); }
+
+  /* The band's window is what the label already implies on a small screen,
+     and it is the line that makes each card three rows tall. */
+  .cust-segment { padding: 7px 9px; }
+  .cust-segment-range { display: none; }
+  .cust-segment-count { font-size: 17px; }
+}
