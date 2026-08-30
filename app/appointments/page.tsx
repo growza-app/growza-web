@@ -2,29 +2,41 @@ import { api, type Appointment } from '../lib/api';
 import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
-import { IconSearch } from '../components/icons';
 import { BookingsList } from './BookingsList';
 
 export const dynamic = 'force-dynamic';
 
-/** The full "Bookings" list — one day at a time (the API is a day-range query, same as the dashboard's "today" list), optionally narrowed to one stylist. */
-const STATUS_LABEL: Record<string, string> = {
-  cancelled: 'Cancelled',
-  completed: 'Finished',
-  confirmed: 'Confirmed',
-  no_show: "Didn't come",
-};
+/** The full "Bookings" list — a date range (the API is a day-range query, same as the dashboard's "today" list), narrowed client-side by search/staff/status. */
+// Just the valid values: this only guards ?status= against a junk param. It
+// used to carry display labels too, which was a second place for this
+// wording to drift out of step with copy.status — the Status control renders
+// its own labels from there.
+const STATUSES = new Set(['cancelled', 'completed', 'confirmed', 'no_show']);
 
 export default async function AppointmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; providerId?: string; status?: string }>;
+  searchParams: Promise<{
+    date?: string;
+    to?: string;
+    status?: string;
+    q?: string;
+    staff?: string;
+    sort?: string;
+  }>;
 }) {
   const params = await searchParams;
   // Deep-linked from Home's "Cancellation today" card (?status=cancelled) —
   // validated against the real statuses so a stray query param is ignored
   // rather than silently filtering everything out.
-  const status = params.status && params.status in STATUS_LABEL ? params.status : '';
+  const status = params.status && STATUSES.has(params.status) ? params.status : '';
+  // The search/staff/status/sort controls are client-side, but the date form
+  // is a real GET submit — so pressing Show reloads the page and would drop
+  // them back to their defaults. BookingsList round-trips them through the
+  // URL (hidden inputs) and they are re-seeded here, so a submit preserves
+  // what the owner had set instead of silently resetting it.
+  const sort = params.sort === 'desc' ? 'desc' : 'asc';
+  const query = params.q ?? '';
 
   let me, providers;
   try {
@@ -42,97 +54,78 @@ export default async function AppointmentsPage({
     );
   }
 
+  // Validated against the real roster: a stale ?staff= from an edited URL or
+  // a since-removed stylist would otherwise match nothing and read as "this
+  // day is empty" rather than "that filter no longer applies".
+  const staff = params.staff && providers.some((p) => p.displayName === params.staff) ? params.staff : 'Everyone';
+
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date());
   const date = params.date ?? todayISO;
-  const providerId = params.providerId ?? '';
+  // GRW-47: the filter is a From/To range now. `to` defaults to `date`, so
+  // the common case is still exactly one day and every "today" label below
+  // keeps meaning what it did; a `to` earlier than `date` is ignored by the
+  // API rather than returning nothing.
+  const toDate = params.to && params.to >= date ? params.to : date;
+  const isRange = toDate !== date;
 
-  const dayAppointments = await api.appointments(date, providerId || undefined).catch(() => [] as Appointment[]);
-  // Filtered BEFORE reaching BookingsList, not after — so the KPI row,
-  // revenue bar, and "Today's schedule" all consistently reflect just the
-  // filtered slice, the same way the Staff filter already narrows the whole
-  // dataset server-side rather than just hiding rows client-side.
-  const appointments = status ? dayAppointments.filter((a) => a.status === status) : dayAppointments;
+  // GRW-47: no `providerId` — staff filtering now lives entirely client-side
+  // in BookingsList (search + staff select on desktop, chips on mobile),
+  // so the server always loads the full range rather than a server-narrowed
+  // slice that a client-side filter could contradict.
+  // Status is NOT filtered here any more: it seeds BookingsList's own Status
+  // control instead, so there is one filtering mechanism rather than a
+  // server-side pass and a client-side control that can disagree. The KPI row
+  // therefore keeps showing the day's real totals while the list narrows —
+  // the same split search and the staff filter already use.
+  const appointments = await api.appointments(date, toDate).catch(() => [] as Appointment[]);
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
-  const isToday = date === todayISO;
+  // A multi-day range is never "today", even when it starts today — the
+  // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
+  const isToday = !isRange && date === todayISO;
   const dayHint = formatDateWithWeekday(new Date(`${date}T12:00:00`), timezone);
-  // Short form for the KPI/schedule/revenue labels when a non-today date is picked, e.g. "21 Aug".
-  const dayShort = formatDateShort(new Date(`${date}T12:00:00`));
-  const clearFilterParams = new URLSearchParams();
-  if (params.date) clearFilterParams.set('date', params.date);
-  if (providerId) clearFilterParams.set('providerId', providerId);
-  const clearFilterHref = `/appointments${clearFilterParams.toString() ? `?${clearFilterParams.toString()}` : ''}`;
-
+  // Short form for the KPI/schedule labels when a non-today date is picked, e.g. "21 Aug" — or "21 Aug – 24 Aug" for a range.
+  const dayShort = isRange
+    ? `${formatDateShort(new Date(`${date}T12:00:00`))} – ${formatDateShort(new Date(`${toDate}T12:00:00`))}`
+    : formatDateShort(new Date(`${date}T12:00:00`));
   return (
     <>
+      {/* No search action in the header: this page has its own search field
+          in the filter card now (GRW-47), and a second magnifier pointing at
+          the global /search page right above it read as the same control. */}
       <PageHeader
         title={bookingsWord}
         subtitle="All your appointments in one place."
         mobileSubtitle
-        actions={
-          <a className="icon-btn" href="/search" aria-label={copy.search.title}>
-            <IconSearch />
-          </a>
-        }
         initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
       />
 
       <div className="page-body bk-fit">
-        <div className="card">
-          <form method="get" className="filters filters-inline">
-            <div className="field">
-              <label htmlFor="date">{copy.bookings.filterDay}</label>
-              <input id="date" name="date" type="date" defaultValue={date} />
-              <span className="field-hint">{dayHint}</span>
-            </div>
-            {/* Mobile hides this in favour of BookingsList's own tap chips
-                (GRW-46), which filter client-side instead of a page reload —
-                having both visible at once let a stale server-side provider
-                filter make the chips look broken (a chip for someone the
-                already-loaded page never fetched always reads "no results").
-                The field/form itself is untouched, so desktop is unaffected
-                and a submitted providerId still narrows what loads. */}
-            <div className="field desktop-only">
-              <label htmlFor="providerId">{me.labels.providers ?? copy.nav.staff}</label>
-              <select id="providerId" name="providerId" defaultValue={providerId}>
-                <option value="">{copy.bookings.allStaff}</option>
-                {providers.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.displayName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button className="btn filters-show" type="submit">
-              {copy.bookings.show}
-            </button>
-          </form>
-        </div>
+        {/* The "Showing Cancelled only" banner is gone: the Status control in
+            the filter card shows the same thing, in the place you'd change
+            it. A banner plus a control is two ways to read one filter. */}
 
-        {status && (
-          <div className="status-filter-banner">
-            <span>
-              Showing <strong>{STATUS_LABEL[status]}</strong> only
-            </span>
-            <a href={clearFilterHref}>Clear ✕</a>
-          </div>
-        )}
-
-        {appointments.length === 0 ? (
-          <div className="card">
-            <div className="empty">{status ? `No ${STATUS_LABEL[status].toLowerCase()} bookings that day.` : copy.bookings.none}</div>
-          </div>
-        ) : (
-          <BookingsList
-            appointments={appointments}
-            providers={providers}
-            timezone={timezone}
-            noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
-            nowISO={new Date().toISOString()}
-            isToday={isToday}
-            dayLabel={dayShort}
-          />
-        )}
+        {/* GRW-47: the day-filter form itself now renders inside BookingsList,
+            in one combined card with search/staff/Filters (desktop) — folded
+            in so the desktop mock's single filter card is achievable at all;
+            page.tsx used to own a standalone version of just the day field. */}
+        <BookingsList
+          appointments={appointments}
+          providers={providers}
+          timezone={timezone}
+          noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
+          nowISO={new Date().toISOString()}
+          isToday={isToday}
+          dayLabel={dayShort}
+          date={date}
+          toDate={toDate}
+          dayHint={dayHint}
+          emptyMessage={copy.bookings.none}
+          initialStatus={status}
+          initialQuery={query}
+          initialSort={sort}
+          initialStaff={staff}
+        />
       </div>
     </>
   );

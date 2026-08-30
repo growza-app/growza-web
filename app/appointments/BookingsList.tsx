@@ -4,10 +4,23 @@ import { Fragment, useEffect, useMemo, useState, type CSSProperties, type ReactN
 import { formatMoney, formatTime, type Appointment, type Provider } from '../lib/api';
 import { copy } from '../lib/copy';
 import { formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
+import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { IconCalendar, IconCheck, IconClock, IconMenu, IconPhone, IconSearch, IconStaff, IconUserPlus, IconWallet } from '../components/icons';
+import {
+  IconCalendar,
+  IconCheck,
+  IconClock,
+  IconFilter,
+  IconMenu,
+  IconPhone,
+  IconSearch,
+  IconSort,
+  IconStaff,
+  IconUserPlus,
+  IconWallet,
+} from '../components/icons';
 
 /** What the salon actually took for a booking: services paid, minus any combo discount. */
 function bookingTotalMinor(b: BookingGroup): number {
@@ -72,7 +85,12 @@ function Kpi({
   className?: string;
 }) {
   return (
-    <div className={`bk-kpi ${className ?? ''}`}>
+    // The "Today" / "Next 2 hrs" sub-line is dropped at narrower widths
+    // (there is no room for it in a quarter-width tile), which leaves the
+    // counts with nothing saying WHICH day they cover. The tooltip carries
+    // that on hover, and aria-label gives a screen reader the same sentence
+    // rather than three unlabelled numbers in a row.
+    <div className={`bk-kpi ${className ?? ''}`} title={`${label} — ${sub}`} aria-label={`${value} ${label}, ${sub}`}>
       <span className={`bk-kpi-icon bk-kpi-${tone}`}>{icon}</span>
       <div className="bk-kpi-text">
         <div className="bk-kpi-value">{value}</div>
@@ -96,9 +114,17 @@ export function BookingsList({
   nowISO,
   isToday,
   dayLabel,
+  date,
+  toDate,
+  dayHint,
+  emptyMessage,
+  initialStatus,
+  initialQuery,
+  initialStaff,
+  initialSort,
 }: {
   appointments: Appointment[];
-  /** The full roster, for the mobile staff-filter chips (GRW-46) — not just staff with a booking today, so tapping a chip can honestly show "0 bookings" for someone rather than making them disappear. */
+  /** The full roster, for the mobile staff-filter chips (GRW-46) and the desktop staff select (GRW-47) — not just staff with a booking today, so picking one can honestly show "0 bookings" for someone rather than making them disappear. */
   providers: Provider[];
   timezone: string;
   noun: string;
@@ -108,6 +134,19 @@ export function BookingsList({
   isToday: boolean;
   /** Short label for the selected day, e.g. "21 Aug" — used everywhere the page said "Today" when it's actually showing a different day. */
   dayLabel: string;
+  /** GRW-47: the day field renders inside this component's own filter card now (alongside search/staff, matching the desktop mock), so this component always renders — even on a day with zero bookings — instead of page.tsx swapping it for a bare empty card. */
+  date: string;
+  /** The From/To range's end (equal to `date` for a single day). */
+  toDate: string;
+  dayHint: string;
+  /** Shown in place of the schedule when the day itself has zero bookings, before any client-side search/staff filtering. */
+  emptyMessage: string;
+  /** From ?status= — seeds the Status filter so Home's deep links land pre-filtered. '' = every status. */
+  initialStatus: string;
+  /** The remaining client-side filters, round-tripped through the URL so the date form's GET submit doesn't reset them. */
+  initialQuery: string;
+  initialStaff: string;
+  initialSort: 'asc' | 'desc';
 }) {
   const [now, setNow] = useState(() => new Date(nowISO));
   const [page, setPage] = useState(1);
@@ -116,9 +155,19 @@ export function BookingsList({
   // Mobile-only (GRW-46): both filter the day's already-loaded bookings
   // client-side, independent of the date form's own GET navigation — see
   // GRW-10's BR-01 on why that form stays a full-page submit.
-  const [query, setQuery] = useState('');
-  const [staffFilter, setStaffFilter] = useState('Everyone');
-  // Mobile-only (GRW-46): which figure the "at a glance" card shows.
+  const [query, setQuery] = useState(initialQuery);
+  const [staffFilter, setStaffFilter] = useState(initialStaff);
+  // Seeded from ?status= so Home's "Cancellation today" card still deep-links
+  // straight to that slice — but it's client-side state from then on, not a
+  // second server-side filter racing this one (the contradiction GRW-47 had
+  // to untangle for the staff filter).
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  // Earliest-first by default: on today's schedule that's the running order of
+  // the day, which is what the page is for. Latest-first earns its keep on a
+  // From/To range, where the most recent day is usually the interesting end.
+  const [sort, setSort] = useState<'asc' | 'desc'>(initialSort);
+  // Which figure the "at a glance" card shows — the KPI row's 5th column on
+  // desktop (GRW-47), a full-width row below the 2x2 grid on mobile (GRW-46).
   const [metric, setMetric] = useState<'busy' | 'staff' | 'service'>('busy');
 
   useEffect(() => {
@@ -140,8 +189,13 @@ export function BookingsList({
       f.toLowerCase().includes(q),
     );
   const matchesStaff = (b: BookingGroup) => staffFilter === 'Everyone' || b.providerNames.includes(staffFilter);
-  const filtered = bookings.filter((b) => matchesStaff(b) && matchesQuery(b));
-  const filtering = q !== '' || staffFilter !== 'Everyone';
+  const matchesStatus = (b: BookingGroup) => !statusFilter || b.status === statusFilter;
+  const matching = bookings.filter((b) => matchesStaff(b) && matchesQuery(b) && matchesStatus(b));
+  // groupBookings already returns ascending by start time, so descending is a
+  // reverse rather than a second sort — and reversing keeps bookings that
+  // share a start instant adjacent, which the slot grouping below depends on.
+  const filtered = sort === 'desc' ? [...matching].reverse() : matching;
+  const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '';
   const noMatches = filtering && filtered.length === 0;
 
   const staffChipNames = useMemo(() => ['Everyone', ...providers.map((p) => p.displayName)], [providers]);
@@ -150,14 +204,21 @@ export function BookingsList({
     const t = new Date(iso).getTime();
     return t >= now.getTime() && t <= now.getTime() + 2 * 60 * 60 * 1000;
   };
-  const completed = bookings.filter((b) => b.status === 'completed');
-  const confirmed = bookings.filter((b) => b.status === 'confirmed');
+  // Counted over `filtered`, i.e. exactly what the list below is showing —
+  // NOT the whole day. These tiles are labelled with the same statuses the
+  // Status filter offers, so leaving them on day totals meant picking
+  // "Didn't come" and still being shown "27 Completed" directly above four
+  // no-shows: the headline contradicted the list it was heading. It also
+  // makes the staff filter read properly ("Priya: 7 bookings, 5 completed").
+  // The metric card below deliberately stays whole-day — its labels all say
+  // "today", so it reads as a day fact rather than a description of the list.
+  const completed = filtered.filter((b) => b.status === 'completed');
+  const confirmed = filtered.filter((b) => b.status === 'confirmed');
   // "Next 2 hrs" only means something against the real clock, i.e. on today's
   // schedule. Looking at a past/future day, show the day's total confirmed
   // count instead — "next 2 hours" would silently read 0 for every other day.
   const comingUp = isToday ? confirmed.filter((b) => within2h(b.startAt)).length : confirmed.length;
-  const noShow = bookings.filter((b) => b.status === 'no_show').length;
-  const revenue = completed.reduce((sum, b) => sum + bookingTotalMinor(b), 0);
+  const noShow = filtered.filter((b) => b.status === 'no_show').length;
 
   // Mobile-only (GRW-46) "at a glance" card. Busy % assumes a 9-hour working
   // day per staff member — the real per-tenant working-hours configuration
@@ -180,20 +241,42 @@ export function BookingsList({
   const clamped = Math.min(page, pageCount);
   const rows = filtered.slice((clamped - 1) * PAGE_SIZE, clamped * PAGE_SIZE);
 
-  // Mobile only (GRW-46 follow-up): flags a cluster of bookings starting at
-  // the exact same instant — a straight top-to-bottom timeline can't show
-  // that on its own. Scoped to the current page's rows, same as the
-  // timeline itself.
-  const sameStartCount = new Map<string, number>();
-  for (const b of rows) sameStartCount.set(b.startAt, (sameStartCount.get(b.startAt) ?? 0) + 1);
-  const multiBadgeAt = new Set<number>();
-  const badgeShownFor = new Set<string>();
-  rows.forEach((b, i) => {
-    if ((sameStartCount.get(b.startAt) ?? 1) > 1 && !badgeShownFor.has(b.startAt)) {
-      multiBadgeAt.add(i);
-      badgeShownFor.add(b.startAt);
+  // The timeline is grouped BY START TIME, not one row per booking: two
+  // bookings at 9:00 share a single time marker and sit side by side under it,
+  // with a "N bookings at the same time" badge above them. A flat one-row-per-
+  // booking list repeated the same "9:00 AM" twice and gave no hint the two
+  // overlapped, which is exactly the thing an owner needs to spot.
+  //
+  // Rows carry only a clock time, which is unambiguous for a single day and
+  // actively misleading across a From/To range: 9:00 on the 28th and 9:00 on
+  // the 29th render as two identical "9:00 AM" markers, reading as duplicates
+  // within one day. So slots also carry the day they belong to, and the render
+  // puts a heading in whenever that day changes.
+  const dayKeyOf = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone });
+    return (iso: string) => fmt.format(new Date(iso));
+  }, [timezone]);
+
+  const slots = useMemo(() => {
+    const byStart = new Map<string, BookingGroup[]>();
+    for (const b of rows) {
+      const at = byStart.get(b.startAt);
+      if (at) at.push(b);
+      else byStart.set(b.startAt, [b]);
     }
-  });
+    return [...byStart.entries()].map(([startAt, items]) => ({
+      startAt,
+      items,
+      dayKey: dayKeyOf(startAt),
+    }));
+  }, [rows, dayKeyOf]);
+
+  // Keyed off the whole filtered range, NOT just this page: page 1 of a
+  // 27–30 Aug range can happen to be all one day, and suppressing the heading
+  // there leaves the reader with bare clock times under a "27 Aug – 30 Aug"
+  // title, still unable to tell which day they're looking at. A single-day
+  // filter gains nothing from a heading, so it stays off there.
+  const multiDay = useMemo(() => new Set(filtered.map((b) => dayKeyOf(b.startAt))).size > 1, [filtered, dayKeyOf]);
 
   const openBooking = (b: BookingGroup) => setOpen(b);
 
@@ -230,9 +313,20 @@ export function BookingsList({
     const railStyle = staffName
       ? ({ '--bk-rail': railColorFor(staffName), '--bk-staff-bg': staffBgFor(staffName) } as CSSProperties)
       : undefined;
+    const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
     return (
-      <div className="bk-card" style={railStyle} onClick={() => openBooking(b)}>
+      <div className="bk-card" style={railStyle} onClick={() => openBooking(b)} key={b.key}>
         <div className="bk-card-left">
+          {/* Mobile only: mobile drops the timeline's left gutter entirely
+              (no room for it on a phone), so the card has to carry its own
+              time + duration and its own status chip — matching the mobile
+              mock. Desktop keeps both in the gutter / right column instead. */}
+          <div className="bk-card-timerow">
+            <span className="bk-card-time">
+              {clock} <span>{meridiem}</span> · {formatDuration(b.totalMin)}
+            </span>
+            <span className={`chip ${chip.cls}`}>{chip.text}</span>
+          </div>
           <div className="bk-card-name-row">
             <div className="bk-card-name">{b.customerName ?? 'Unknown'}</div>
             <span className="bk-card-ref">{bookingRef(b.appointments[0]!.id)}</span>
@@ -248,14 +342,17 @@ export function BookingsList({
             {b.customerPhone}
           </div>
           <div className="bk-card-bottom-row">
-            {b.providerNames.length > 0 ? (
+            {/* Desktop only: mobile already shows duration in .bk-card-timerow
+                above, so repeating it here would print it twice on a phone. */}
+            <span className="bk-card-dur">
+              <IconClock />
+              {formatDuration(b.totalMin)}
+            </span>
+            {b.providerNames.length > 0 && (
               <div className="bk-card-staff">
                 {staffName && <span className="bk-card-staff-avatar">{staffName.charAt(0).toUpperCase()}</span>}
-                <IconStaff />
                 {b.providerNames.join(', ')}
               </div>
-            ) : (
-              <span />
             )}
             <span className="bk-card-price">{formatMoney(String(bookingTotalMinor(b)))}</span>
           </div>
@@ -271,7 +368,7 @@ export function BookingsList({
   return (
     <>
       <div className="bk-kpis">
-        <Kpi tone="green" icon={<IconCalendar />} value={bookings.length} label="Bookings" sub={isToday ? 'Today' : dayLabel} />
+        <Kpi tone="green" icon={<IconCalendar />} value={filtered.length} label="Bookings" sub={isToday ? 'Today' : dayLabel} />
         <Kpi
           tone="amber"
           icon={<IconClock />}
@@ -281,57 +378,198 @@ export function BookingsList({
         />
         <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label={copy.status.done} sub={isToday ? 'Today' : dayLabel} />
         <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label={copy.status.didNotCome} sub={isToday ? 'Today' : dayLabel} />
-        {/* Revenue belongs with the other numbers for the day, not stranded
-            below the list where it read as a footnote to the last booking.
-            Desktop only (GRW-46): mobile trades this tile for the "at a
-            glance" metric card below, which can show the same busy/staff/
-            service angle the KPI row doesn't have room for on a phone. */}
-        <Kpi
-          tone="green"
-          icon={<IconWallet />}
-          value={formatMoney(String(revenue))}
-          label="Revenue"
-          sub={isToday ? 'Today' : dayLabel}
-          className="desktop-only"
-        />
-      </div>
 
-      {/* Mobile only (GRW-46): a real number that a 5th KPI tile has no room
-          for on a phone, switchable rather than picking one and hiding the
-          other two. */}
-      <div className="bk-metric-card">
-        <div className="bk-metric-main">
-          <div className="bk-metric-value">{metricValue}</div>
-          <div className="bk-metric-label">{metricLabel}</div>
+        {/* "At a glance" — the KPI row's 5th column on desktop (Bookings.dc.html,
+            GRW-47), and its own full-width row below the 2x2 grid on mobile
+            (Bookings Mobile.dc.html, GRW-46) — one card, reflowed per viewport
+            in CSS only. Replaces the old static Revenue tile, exactly as the
+            mock does (Revenue itself isn't shown here any more). */}
+        <div className="bk-metric-card">
+          <div className="bk-metric-top">
+            <span className="bk-metric-icon">
+              <IconWallet />
+            </span>
+            <select
+              className="bk-metric-select"
+              value={metric}
+              onChange={(e) => setMetric(e.target.value as typeof metric)}
+            >
+              <option value="busy">Staff busy</option>
+              <option value="staff">Busiest staff</option>
+              <option value="service">Top service</option>
+            </select>
+          </div>
+          <div className="bk-metric-main">
+            <div className="bk-metric-value">{metricValue}</div>
+            <div className="bk-metric-label">{metricLabel}</div>
+          </div>
+          {metric === 'busy' && (
+            <div className="bk-metric-bar">
+              <div className="bk-metric-bar-fill" style={{ width: `${Math.min(100, Math.max(0, staffBusyPct))}%` }} />
+            </div>
+          )}
         </div>
-        <select
-          className="bk-metric-select"
-          value={metric}
-          onChange={(e) => setMetric(e.target.value as typeof metric)}
-        >
-          <option value="busy">Staff busy</option>
-          <option value="staff">Busiest staff</option>
-          <option value="service">Top service</option>
-        </select>
       </div>
 
-      {/* Mobile only (GRW-46): both filter the already-loaded day client-side
-          (see BR-01/BR-02 on the Jira story) — no relation to the date
-          form's own full-page GET navigation above this component. */}
-      <div className="bk-search-row">
-        <IconSearch />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setPage(1);
-          }}
-          placeholder="Search bookings…"
-          aria-label="Search bookings"
-        />
+      {/* Filters sit BELOW the headline row in both mocks, not above it — the
+          numbers are what the owner looks at first. Search and the staff
+          select are desktop-only (mobile has its own search pill + tap chips
+          inside this same card / just below it); the date range is on every
+          viewport, since it's the one filter that actually re-queries. */}
+      <div className="card bk-filter-card">
+        <form method="get" className="bk-filters">
+          {/* Search / staff / status / sort are client-side state, but this
+              form is a real GET submit — so Show (or changing a date on
+              mobile, which auto-submits) reloads the page and would drop them
+              back to defaults. Carrying them as hidden inputs means the
+              reload comes back with the same filters applied.
+
+              Hidden inputs rather than `name` on the visible controls: the
+              search field is rendered twice (a desktop row and a mobile
+              pill, one hidden by CSS at any width) and a hidden-by-CSS input
+              is still submitted, so naming both would send q twice. Only
+              non-default values are emitted, so a URL stays clean until a
+              filter is actually set. */}
+          {query && <input type="hidden" name="q" value={query} />}
+          {staffFilter !== 'Everyone' && <input type="hidden" name="staff" value={staffFilter} />}
+          {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+          {sort !== 'asc' && <input type="hidden" name="sort" value={sort} />}
+
+          <div className="bk-field bk-field-search desktop-only">
+            <label htmlFor="booking-search">{copy.bookings.search}</label>
+            <div className="bk-search-inline">
+              <IconSearch />
+              <input
+                id="booking-search"
+                type="text"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder={copy.bookings.searchHint}
+              />
+            </div>
+          </div>
+
+          {/* Mobile's own search pill — same client-side query state as the
+              desktop field above (BR-01/BR-02), just the compact shape the
+              mobile mock uses, and inside the card so it lands above the
+              date range the way that mock orders them. */}
+          <div className="bk-field bk-field-search mobile-only">
+            <div className="bk-search-row">
+              <IconSearch />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder={copy.bookings.searchHint}
+                aria-label={copy.bookings.search}
+              />
+            </div>
+          </div>
+
+          <div className="bk-field">
+            <label htmlFor="date">{copy.bookings.from}</label>
+            <input
+              id="date"
+              name="date"
+              type="date"
+              defaultValue={date}
+              onChange={(e) => e.currentTarget.form?.requestSubmit()}
+            />
+            <span className="field-hint">{dayHint}</span>
+          </div>
+          <div className="bk-field">
+            <label htmlFor="to">{copy.bookings.to}</label>
+            <input
+              id="to"
+              name="to"
+              type="date"
+              defaultValue={toDate}
+              onChange={(e) => e.currentTarget.form?.requestSubmit()}
+            />
+          </div>
+          <div className="bk-field bk-field-staff desktop-only">
+            <label htmlFor="bk-staff-select">{copy.bookings.staff}</label>
+            <select
+              id="bk-staff-select"
+              value={staffFilter}
+              onChange={(e) => {
+                setStaffFilter(e.target.value);
+                setPage(1);
+              }}
+            >
+              {staffChipNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Status, order — both client-side like search and staff: they
+              narrow/reorder the range already loaded, never re-query. Each
+              carries its own mark (funnel = narrowing, up/down arrows =
+              reordering) so the two are told apart at a glance rather than by
+              reading two similar-looking dropdowns. */}
+          <div className="bk-field bk-field-status">
+            <label htmlFor="bk-status">
+              <IconFilter />
+              {copy.bookings.statusLabel}
+            </label>
+            <select
+              id="bk-status"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">{copy.bookings.allStatuses}</option>
+              <option value="confirmed">{copy.status.confirmed}</option>
+              <option value="completed">{copy.status.done}</option>
+              <option value="no_show">{copy.status.didNotCome}</option>
+              <option value="cancelled">{copy.status.cancelled}</option>
+            </select>
+          </div>
+
+          <div className="bk-field bk-field-sort">
+            <label htmlFor="bk-sort">
+              <IconSort />
+              {copy.bookings.sort}
+            </label>
+            <select
+              id="bk-sort"
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value as typeof sort);
+                setPage(1);
+              }}
+            >
+              <option value="asc">{copy.bookings.oldestFirst}</option>
+              <option value="desc">{copy.bookings.newestFirst}</option>
+            </select>
+          </div>
+
+          {/* No submit button: every control here applies on selection. The
+              four client-side ones (search, staff, status, order) never
+              needed one, and both date fields submit the form themselves on
+              change — so a "Show" button could only ever repeat what had
+              already happened, which reads as "my change didn't take until I
+              press this". The form element stays: it is what carries the
+              dates, and the hidden inputs above, through that submit. */}
+        </form>
       </div>
 
+      {bookings.length === 0 ? (
+        <div className="card">
+          <div className="empty">{emptyMessage}</div>
+        </div>
+      ) : (
+        <>
       <div className="bk-staff-chips">
         {staffChipNames.map((name) => (
           <button
@@ -350,26 +588,28 @@ export function BookingsList({
 
       <div className="bk-sched-head">
         <h3>
-          {isToday ? "Today's schedule" : `${dayLabel} schedule`}
-          <span className="bk-sched-count">{filtered.length} appts</span>
+          {isToday ? copy.bookings.scheduleToday : `${dayLabel} schedule`}
+          <span className="bk-sched-count">{copy.bookings.bookingCount(filtered.length)}</span>
         </h3>
+        {/* Segmented Timeline | List, both always visible with the active one
+            highlighted (per the mock) — the old single pill toggled blind, so
+            you couldn't see which view you'd land in until after tapping. */}
         <div className="bk-view">
           <button
             type="button"
-            className={`bk-view-icon ${view === 'list' ? 'is-active' : ''}`}
-            onClick={() => setView('list')}
-            aria-label="List view"
+            className={`bk-view-tab ${view === 'timeline' ? 'is-active' : ''}`}
+            onClick={() => setView('timeline')}
           >
-            <IconMenu />
+            <IconClock />
+            {copy.bookings.viewTimeline}
           </button>
           <button
             type="button"
-            className="bk-view-pill"
-            onClick={() => setView((v) => (v === 'timeline' ? 'list' : 'timeline'))}
-            aria-label="Switch view"
+            className={`bk-view-tab ${view === 'list' ? 'is-active' : ''}`}
+            onClick={() => setView('list')}
           >
-            {view === 'timeline' ? 'Timeline' : 'List'}
-            <span className="bk-view-caret" aria-hidden="true">⌄</span>
+            <IconMenu />
+            {copy.bookings.viewList}
           </button>
         </div>
       </div>
@@ -377,42 +617,63 @@ export function BookingsList({
       <div className="bk-scroll">
       {noMatches ? (
         <div className="bk-no-matches">
-          <div className="bk-no-matches-title">No matching bookings</div>
-          <div className="bk-no-matches-sub">Try a different name, staff member, phone number, or booking ID.</div>
+          <div className="bk-no-matches-title">{copy.bookings.noneFound}</div>
+          <div className="bk-no-matches-sub">{copy.bookings.noneFoundHint}</div>
         </div>
       ) : view === 'timeline' ? (
         <div className="bk-timeline">
-          {rows.map((b, i) => {
-            const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
+          {slots.map((slot, si) => {
+            const [clock, meridiem] = formatTime(slot.startAt, timezone).split(' ');
+            const multi = slot.items.length > 1;
+            const startsNewDay = multiDay && slot.dayKey !== slots[si - 1]?.dayKey;
             return (
-              <Fragment key={b.key}>
-                {multiBadgeAt.has(i) && (
-                  <div className="bk-multi-badge">{sameStartCount.get(b.startAt)} at the same time</div>
+              <Fragment key={slot.startAt}>
+                {startsNewDay && (
+                  <div className="bk-day-head">{formatDateWithWeekday(slot.startAt, timezone)}</div>
                 )}
-                <div className="bk-tl-row">
-                  <div className="bk-tl-time">
-                    <div className="bk-tl-clock">
-                      {clock}
-                      <span>{meridiem}</span>
-                    </div>
-                    <div className="bk-tl-dur">{formatDuration(b.totalMin)}</div>
+              <div className="bk-tl-row">
+                <div className="bk-tl-time">
+                  <div className="bk-tl-clock">
+                    {clock}
+                    <span>{meridiem}</span>
                   </div>
-                  <div className="bk-tl-rail">
-                    <span className={`bk-tl-dot ${b.status === 'confirmed' ? 'is-up' : ''}`} />
-                    {i < rows.length - 1 && <span className="bk-tl-line" />}
-                  </div>
-                  {cardInner(b)}
+                  {!multi && <div className="bk-tl-dur">{formatDuration(slot.items[0]!.totalMin)}</div>}
                 </div>
+                <div className="bk-tl-rail">
+                  <span className={`bk-tl-dot ${multi ? 'is-multi' : slot.items[0]!.status === 'confirmed' ? 'is-up' : ''}`} />
+                  {si < slots.length - 1 && <span className="bk-tl-line" />}
+                </div>
+                <div className="bk-tl-slot">
+                  {multi && (
+                    <div className="bk-multi-badge">
+                      <IconStaff />
+                      {copy.bookings.sameTime(slot.items.length)}
+                    </div>
+                  )}
+                  <div className="bk-tl-cards">{slot.items.map((b) => cardInner(b))}</div>
+                </div>
+              </div>
               </Fragment>
             );
           })}
         </div>
       ) : (
-        <div className="bk-list">{rows.map((b) => cardInner(b))}</div>
+        <div className="bk-list">
+          {rows.map((b, i) => (
+            <Fragment key={b.key}>
+              {multiDay && dayKeyOf(b.startAt) !== (rows[i - 1] && dayKeyOf(rows[i - 1]!.startAt)) && (
+                <div className="bk-day-head">{formatDateWithWeekday(b.startAt, timezone)}</div>
+              )}
+              {cardInner(b)}
+            </Fragment>
+          ))}
+        </div>
       )}
       </div>
 
       {!noMatches && <Pagination page={clamped} total={filtered.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />}
+        </>
+      )}
 
       {open &&
         (open.status === 'completed' ? (

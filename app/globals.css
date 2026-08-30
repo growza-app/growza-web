@@ -241,6 +241,17 @@ body {
   flex-shrink: 0;
 }
 
+/* The header's trailing controls (page actions, bell, avatar) as ONE group,
+   so .topbar's space-between only ever splits title-vs-controls. As loose
+   siblings they were spread evenly instead, which parked the bell in the
+   middle of the header on any page without an `actions` prop. */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .topbar h1 {
   margin: 0 0 5px;
   font-size: 25px;
@@ -4215,23 +4226,19 @@ select:focus-visible {
 /* ================= bookings page (redesigned) ================= */
 
 /* ---- headline counts ---- */
-/* Five tiles since revenue joined the row (it used to float below the list). */
+/* 4 count tiles + the "at a glance" metric card as a wider 5th column
+   (GRW-47, Bookings.dc.html) — the metric card replaced the old static
+   Revenue tile that used to fill this slot. */
 .bk-kpis {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 1.6fr;
   gap: var(--sp-2);
   margin-bottom: var(--sp-5);
 }
 
-/* Desktop tiles read as one horizontal line ("4  Bookings  22 Aug"), and the
-   revenue tile carries the longest value, so five across only fits on a wide
-   screen. Below that, wrap to 3-up rather than ellipsing "Revenue" away —
-   a truncated label on the money tile is the one that matters most. */
-@media (max-width: 1560px) {
-  .bk-kpis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
+/* Stays 5-across at every desktop width (matching the mock) — the tiles are
+   compact enough now that the count value and its label sit on one line, so
+   they don't need the extra room an earlier 3-up wrap was buying them. */
 
 .bk-kpi {
   background: var(--surface);
@@ -4288,13 +4295,11 @@ select:focus-visible {
   text-overflow: ellipsis;
 }
 
+/* The mock's tiles are value + label only. The day/"Next 2 hrs" qualifier
+   this used to carry is redundant next to the From/To filter right above the
+   row, and squeezing a third line in made the labels ellipsis away. */
 .bk-kpi-sub {
-  font-size: 10.5px;
-  font-weight: 600;
-  margin-top: 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none;
 }
 .bk-kpi-sub-green {
   color: var(--accent-deep);
@@ -4308,6 +4313,223 @@ select:focus-visible {
 .bk-kpi-sub-red {
   color: #c0362c;
 }
+
+/* ---- "at a glance" metric card ----
+   Same dark gradient Home's summary hero already uses (.summary-progress-hero)
+   — one card, reflowed per viewport: the KPI row's 5th column on desktop
+   (icon+select on top, value/label below, an optional busy-% bar — matching
+   Bookings.dc.html), a single full-width row below the 2x2 grid on mobile
+   (value/label left, select right, no icon/bar — matching Bookings Mobile.dc.html,
+   GRW-46). The mobile media query below only touches layout, not these colours. */
+.bk-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: linear-gradient(135deg, #0b3d2d, #104a37);
+  border: 1px solid #163f2f;
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-3) 12px;
+  color: #fff;
+  min-width: 0;
+}
+
+.bk-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bk-metric-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.bk-metric-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bk-metric-select {
+  flex-shrink: 0;
+  max-width: 132px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+}
+
+.bk-metric-select option {
+  color: var(--text);
+}
+
+.bk-metric-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bk-metric-value {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-metric-label {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-metric-bar {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.bk-metric-bar-fill {
+  height: 100%;
+  background: #fff;
+  border-radius: 99px;
+}
+
+/* ---- combined filter card (search / From / To / staff / Show) ----
+   GRW-47: search full-width on its own row, then From, To, Staff and Show
+   sharing the row beneath it — matching Bookings.dc.html. Search and the
+   staff select are desktop-only; mobile keeps its own dedicated search pill
+   and tap chips further down the page (unchanged from GRW-46) and shows just
+   From/To + Show here. */
+.bk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.bk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* inline-flex so the Show/Order labels can carry a funnel / up-down-arrows
+   mark beside the word — the two dropdowns sit next to each other and read
+   almost identically otherwise. */
+.bk-field > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding-left: 2px;
+}
+
+.bk-field > label svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.bk-field input,
+.bk-field select {
+  height: 44px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+}
+
+/* The weekday hint is redundant next to a date input that already renders the
+   date, and keeping it would make the From field taller than every sibling,
+   dropping the row out of alignment with To / Staff / Show. (The old
+   .filters-inline card dropped it on desktop for the same reason.) */
+.bk-filters .field-hint {
+  display: none;
+}
+
+/* Search takes the whole first row; the fields below it then wrap onto the
+   second one on their own. */
+.bk-field-search {
+  flex: 1 1 100%;
+}
+
+/* Staff can hold a long display name, so it keeps the most room. Status and
+   Sort have short, fixed vocabularies ("No-show", "Latest first") and don't
+   grow — Sort in particular was taking a full field's width to show two
+   words. `flex-grow: 0` keeps the spare width with Staff instead of padding
+   all three out. */
+.bk-field-staff {
+  flex: 1 1 170px;
+}
+
+.bk-field-status {
+  flex: 0 1 150px;
+}
+
+.bk-field-sort {
+  flex: 0 1 150px;
+}
+
+.bk-search-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.bk-search-inline svg {
+  width: 17px;
+  height: 17px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.bk-search-inline input {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
 
 /* ---- section header + view toggle ---- */
 .bk-sched-head {
@@ -4324,59 +4546,151 @@ select:focus-visible {
   letter-spacing: -0.01em;
 }
 
-.bk-view {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-.bk-view-icon {
-  width: 36px;
-  height: 34px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.bk-view-icon svg {
-  width: 17px;
-  height: 17px;
-}
-
-.bk-view-icon.is-active {
-  color: var(--accent-deep);
-  border-color: var(--accent);
-}
-
-.bk-view-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
+/* "N appts" beside the heading — a real count of what's actually listed
+   below (post search/staff filter), not a static day total that could
+   disagree with an empty/narrowed list right under it. */
+.bk-sched-count {
+  display: inline-block;
+  margin-left: 8px;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
+  color: var(--muted);
 }
 
-.bk-view-caret {
+/* Segmented Timeline | List — both tabs always visible, the active one
+   raised on a white pill (GRW-47, per the mock). Replaces a single pill that
+   toggled blind, so the owner can see which view they're switching to. */
+.bk-view {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--slate-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.bk-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 15px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
   color: var(--muted);
-  font-size: 14px;
-  line-height: 1;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bk-view-tab svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bk-view-tab.is-active {
+  background: var(--surface);
+  color: var(--accent-deep);
+  box-shadow: 0 1px 3px rgba(20, 40, 30, 0.15);
 }
 
 /* ---- timeline ---- */
 .bk-timeline {
   display: flex;
   flex-direction: column;
+}
+
+/* Date separator, shown only when a From/To range actually spans more than
+   one day. Without it the timeline's markers are bare clock times, so 9:00 on
+   the 28th and 9:00 on the 29th look like two entries in the same day —
+   "6 bookings at the same time" then reads as a claim about a day the owner
+   can't identify. Sticky so the day stays named while scrolling through it. */
+.bk-day-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: var(--sp-4) 0 var(--sp-3);
+  padding: 6px 0;
+  background: var(--page-bg);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.bk-day-head:first-child {
+  margin-top: 0;
+}
+
+/* One timeline row per START TIME, not per booking: bookings that start
+   together share the marker and sit side by side beneath it (GRW-47, per the
+   mock), with a badge saying how many. Cards flex-wrap so 3+ at once still
+   fit rather than overflowing the row. */
+.bk-tl-slot {
+  flex: 1;
+  min-width: 0;
+  padding-top: var(--sp-3);
+}
+
+.bk-tl-cards {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.bk-tl-cards > .bk-card {
+  flex: 1 1 320px;
+}
+
+.bk-multi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-bottom: 9px;
+  padding: 4px 11px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+}
+
+.bk-multi-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Duration moved onto the card's bottom row with a clock icon (per the mock).
+   Mobile shows it in .bk-card-timerow instead — see the mobile query. */
+.bk-card-dur {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.bk-card-dur svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Time + status inside the card is a MOBILE affordance: mobile drops the
+   timeline's left gutter entirely, so without this the card would show no
+   time at all. Desktop keeps time in the gutter and status in the card's
+   right-hand column, so this row stays hidden there. */
+.bk-card-timerow {
+  display: none;
 }
 
 .bk-tl-row {
@@ -4407,11 +4721,10 @@ select:focus-visible {
   text-transform: uppercase;
 }
 
+/* The gutter shows the time only — duration lives on the card's bottom row
+   (per the mock), and printing it in both places read as a stutter. */
 .bk-tl-dur {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-deep);
-  margin-top: 3px;
+  display: none;
 }
 
 .bk-tl-rail {
@@ -4433,6 +4746,12 @@ select:focus-visible {
 
 .bk-tl-dot.is-up {
   background: var(--accent);
+}
+
+/* A slot holding more than one booking gets its own marker colour, so the
+   overlap is visible before you read the badge. */
+.bk-tl-dot.is-multi {
+  background: var(--accent-deep);
 }
 
 .bk-tl-line {
@@ -4498,6 +4817,75 @@ select:focus-visible {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+}
+
+/* Booking reference, phone, staff avatar, price (GRW-46 built these for
+   mobile; GRW-47 shows them on desktop too, at desktop-appropriate sizing —
+   the mobile media query further down overrides these for its tighter card). */
+.bk-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bk-card-ref {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  background: var(--slate-soft);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.bk-card-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.bk-card-phone svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.bk-card-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.bk-card-bottom-row .bk-card-staff {
+  margin-top: 0;
+}
+
+.bk-card-staff-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bk-staff-bg, var(--slate-soft));
+  color: var(--bk-rail, var(--muted));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.bk-card-price {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
 }
 
 .bk-card-right {
@@ -4600,27 +4988,16 @@ select:focus-visible {
 }
 
 /* GRW-46: mobile-only. Hidden by default here so desktop never sees them —
-   the mobile media query below is what turns them on. These four render
+   the mobile media query below is what turns them on. Both render
    unconditionally in BookingsList.tsx's JSX (there's no server-side way to
    know the viewport), so without this desktop would show an unstyled
-   booking-ref span, phone row, price, and staff-initial letter on every
-   card instead of nothing. */
-.bk-metric-card,
+   search pill and a row of chips above the schedule. Everything else that
+   used to live in this list (the metric card, booking-ref/phone/price/
+   staff-avatar, the schedule count, the same-time badge) is desktop-visible
+   too as of GRW-47 — see their own default rules below instead. */
 .bk-search-row,
-.bk-staff-chips,
-.bk-card-ref,
-.bk-card-phone,
-.bk-card-price,
-.bk-card-staff-avatar,
-.bk-sched-count,
-.bk-multi-badge {
+.bk-staff-chips {
   display: none;
-}
-
-@media (max-width: 400px) {
-  .bk-kpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /*
@@ -4632,8 +5009,131 @@ select:focus-visible {
  * elsewhere in this file: a later declaration wins at equal specificity).
  */
 @media (max-width: 860px) {
-  /* Revenue's tile is desktop-only (.desktop-only, applied in JSX); the
-     metric card below replaces it here instead of just disappearing. */
+  /* 4 compact count tiles across one row, exactly as the mobile mock has
+     them; the metric card becomes its own full-width row below (see
+     .bk-metric-card further down) rather than a 5th grid cell. */
+  .bk-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  /* Centred column: icon, then count, then label. Four equal tiles sitting
+     in a row read as a set, and centring each one keeps that symmetry —
+     left-aligned contents put the icon and the number on different optical
+     axes in every tile. */
+  .bk-kpi {
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .bk-kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .bk-kpi-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .bk-kpi-value {
+    font-size: 19px;
+  }
+
+  /* Quarter of a phone's width is not enough for "Completed" on one line —
+     let it wrap instead of ellipsing to "Comple…", which reads as broken. */
+  .bk-kpi-label {
+    font-size: 10.5px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  /* The "Today"/"Next 2 hrs" sub-line has no room in a quarter-width tile
+     and repeats what the day filter above already says. */
+  .bk-kpi-sub {
+    display: none;
+  }
+
+  /* Mobile has no timeline gutter (no room for it) — the card carries its
+     own time in .bk-card-timerow instead, per the mobile mock. */
+  .bk-tl-time,
+  .bk-tl-rail {
+    display: none;
+  }
+
+  .bk-tl-row {
+    padding-bottom: 0;
+  }
+
+  .bk-tl-slot {
+    padding-top: 0;
+  }
+
+  /* One card per row on a phone — the desktop side-by-side flex basis would
+     force a horizontal squeeze instead. */
+  .bk-tl-cards {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bk-tl-cards > .bk-card {
+    flex: 1 1 auto;
+  }
+
+  .bk-timeline {
+    gap: 10px;
+  }
+
+  .bk-multi-badge {
+    margin-bottom: 10px;
+  }
+
+  /* Time + duration on the left, status chip on the right, at the top of the
+     card — the row desktop doesn't need because its gutter and right-hand
+     column cover both. */
+  .bk-card-timerow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .bk-card-time {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .bk-card-time span {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Duration and the status chip both moved into .bk-card-timerow above; the
+     desktop copies would double them up here.
+
+     "Details" goes too. Tapping the card already opens the same sheet, so it
+     was a second control for one action — and being pinned to the card's
+     bottom-right put it directly under the floating + button, which is fixed
+     there. Taps landed on the FAB and the button read as dead. The call
+     action stays: it does something the card tap doesn't, and the mobile
+     mock's card carries only that. */
+  .bk-card-dur,
+  .bk-card-right .chip,
+  .bk-card-right .bk-details {
+    display: none;
+  }
 
   /* Colour rail per staff member, set inline per-card via --bk-rail /
      --bk-staff-bg (BookingsList.tsx) — hashed from the staff member's name,
@@ -4645,16 +5145,12 @@ select:focus-visible {
     padding: 12px 14px;
   }
 
-  /* The status chip is the one thing still sharing the name row's width
-     budget — trimmed down so a normal-length name doesn't get chewed to a
-     couple of characters by the ellipsis rule above. */
+  /* Only the call/Details action is left in this column on mobile — the
+     status chip moved up into .bk-card-timerow, so it no longer competes
+     with the name row for width. */
   .bk-card-right {
     gap: 6px;
-  }
-
-  .bk-card-right .chip {
-    padding: 4px 9px;
-    font-size: 11.5px;
+    justify-content: flex-end;
   }
 
   /* nowrap, not wrap: the ref chip stays glued to the name, same row as the
@@ -4736,62 +5232,53 @@ select:focus-visible {
     color: var(--text);
   }
 
-  /* Same dark gradient Home's summary hero already uses (.summary-progress-hero)
-     — one shared "headline metric" card look instead of a second one-off.
-     Single row — value/label on the left, the metric picker on the right —
-     matching the design mock rather than the earlier icon-strip-then-value
-     stack, which read as two rows fighting for the same small card. */
+  /* Single row on mobile — value/label on the left, the metric picker on the
+     right, no icon, no busy-% bar (matching Bookings Mobile.dc.html) — versus
+     desktop's icon+select-on-top / value-below / bar layout (Bookings.dc.html,
+     GRW-47). .bk-metric-top's own box is removed (display:contents) so its
+     icon + select become direct flex items of the row here; the icon is then
+     hidden outright, and `order` puts .bk-metric-main first regardless of
+     source order. */
   .bk-metric-card {
-    display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    background: linear-gradient(135deg, #0b3d2d, #104a37);
-    border-radius: var(--radius);
     padding: 16px;
     margin-top: 10px;
-    color: #fff;
+    grid-column: 1 / -1;
+  }
+
+  .bk-metric-top {
+    display: contents;
+  }
+
+  .bk-metric-icon {
+    display: none;
   }
 
   .bk-metric-main {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
+    order: 1;
   }
 
   .bk-metric-select {
-    flex-shrink: 0;
+    order: 2;
+    max-width: none;
     height: 32px;
     padding: 0 10px;
-    border-radius: 9px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
     font-size: 12px;
-    font-weight: 700;
-    outline: none;
-  }
-
-  .bk-metric-select option {
-    color: var(--text);
   }
 
   .bk-metric-value {
     font-size: 22px;
-    font-weight: 800;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .bk-metric-label {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.75);
-    font-weight: 500;
-    white-space: nowrap;
+  }
+
+  .bk-metric-bar {
+    display: none;
   }
 
   /* Search + staff chips: both filter the day's already-loaded bookings
@@ -4803,7 +5290,6 @@ select:focus-visible {
     gap: 8px;
     height: 46px;
     padding: 0 14px;
-    margin-top: 10px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface);
@@ -4875,58 +5361,87 @@ select:focus-visible {
     margin-top: 5px;
   }
 
-  /* "N appts" beside the section heading — a real count of what's actually
-     listed below (post search/staff filter), not a static day total that
-     could disagree with an empty/narrowed list right under it. */
-  .bk-sched-count {
-    display: inline-block;
-    margin-left: 6px;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--muted);
-  }
-
-  /* Flags a cluster of bookings that start at the exact same time — the one
-     case a straight top-to-bottom timeline can't show on its own. Shown once,
-     above the first card of the cluster. */
-  .bk-multi-badge {
-    display: block;
-    width: fit-content;
-    margin: 12px 0 -2px;
-    padding: 3px 10px;
-    border-radius: 99px;
-    background: #fff4e5;
-    color: #9a5b00;
-    font-size: 11px;
+  /* The count sits hard right of the heading on mobile (per the mock), not
+     tucked beside it — .bk-sched-head is already space-between, so pushing
+     the count out of the <h3> flow with margin-left:auto isn't possible;
+     making the h3 itself the flex row does it. */
+  .bk-sched-head h3 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex: 1;
+    gap: 10px;
+    font-size: 19px;
     font-weight: 800;
   }
 
-  /* The day-filter card: full stacked layout (label above input, weekday
-     hint, full-width button) reads fine on desktop but towers over the rest
-     of the redesigned mobile screen — collapse it to one slim row, same
-     spirit as the desktop-only .filters-inline compaction above. */
-  .bk-fit > .card:first-child {
-    padding: 10px 14px;
+  .bk-sched-count {
+    font-size: 13.5px;
+    font-weight: 600;
   }
-  .bk-fit .filters-inline {
-    flex-direction: row;
-    align-items: center;
+
+  /* The view toggle has no room beside a full-width heading on a phone, and
+     the timeline (which mobile renders as plain stacked cards anyway) is the
+     only view that reads well at this width. */
+  .bk-view {
+    display: none;
+  }
+
+  /* The filter card is just From/To + Show on mobile (search and staff live
+     in their own dedicated pill/chips below) — two date fields sharing a row
+     with the button wrapping under them, per the mobile mock. Targeted by
+     class, not :first-child: the status-filter banner can render before this
+     card, in which case it isn't the first child. */
+  .bk-filter-card {
+    padding: 12px;
+  }
+
+  .bk-filters {
+    padding: 0;
     gap: 8px;
   }
-  .bk-fit .filters-inline .field {
-    flex: 1 1 auto;
+
+  /* Two per row, not "as many as fit": with four controls all set to shrink
+     freely they crammed onto one line and every value clipped ("30/0…",
+     "All statu…"). The basis is half the row minus the 8px gap. */
+  .bk-field {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
   }
-  .bk-fit .filters-inline .field > label {
+
+  /* Search keeps its own full-width row above the two date fields, the way
+     the mobile mock stacks them. */
+  .bk-field-search.mobile-only {
+    flex: 1 1 100%;
+  }
+
+  /* Status and Sort share the row under From/To — two per row, so neither is
+     squeezed the way three across a phone would be. Labels stay hidden like
+     every other field here; both option sets read as their own labels
+     ("All statuses", "Earliest first"). */
+  .bk-field-status,
+  .bk-field-sort {
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .bk-field-status select,
+  .bk-field-sort select {
+    height: 42px;
+    padding: 0 10px;
+    font-size: 13.5px;
+  }
+
+  /* The labels ("From"/"To") and the weekday hint are what make this card
+     tall; the two date values read as a range on their own at this size. */
+  .bk-field > label,
+  .bk-filters .field-hint {
     display: none;
   }
-  .bk-fit .field-hint {
-    display: none;
-  }
-  .bk-fit .filters-inline .filters-show {
-    flex: 0 0 auto;
-    width: auto;
-    height: 40px;
-    padding: 0 18px;
+
+  .bk-field input {
+    height: 42px;
+    padding: 0 10px;
+    font-size: 13.5px;
   }
 }
 
@@ -4966,6 +5481,17 @@ select:focus-visible {
    redundant) weekday hint is dropped — the date field already shows the
    date. ~56px instead of ~130px. Desktop only — mobile keeps the stacked,
    full-width layout since fields need the width there. */
+/* Counterpart to .desktop-only. Hidden inside a DESKTOP query rather than as
+   an undecorated base rule on purpose: a base `display:none` declared later
+   in this file than the ≤860px block would beat the mobile override at equal
+   specificity (the source-order gotcha documented throughout this file).
+   Scoping it to ≥861px means the two can never collide. */
+@media (min-width: 861px) {
+  .mobile-only {
+    display: none;
+  }
+}
+
 @media (min-width: 861px) {
   .filters-inline {
     padding: 10px var(--sp-4);
@@ -5080,44 +5606,31 @@ select:focus-visible {
     flex: none;
   }
 
-  .page-body.bk-fit {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .page-body.bk-fit > .card:first-child {
-    flex-shrink: 0;
+  /*
+   * Bookings scrolls the whole page — it is NOT fit-to-screen.
+   *
+   * It used to pin every band (filter, KPIs, section head, pager) and scroll
+   * only .bk-scroll inside whatever height was left. That existed to keep the
+   * "Revenue today" bar on screen, and that bar is gone — revenue is a mode of
+   * the metric card in the KPI row now. What the pinning left behind was a
+   * schedule region squeezed to ~338px on a 900px screen, while a single time
+   * slot holding six simultaneous bookings is ~331px on its own: one slot
+   * filled the entire viewport and every card was sliced through the middle.
+   *
+   * Page-scroll + numbered pagination is also the documented shape for this
+   * page (Offers is the fit-to-screen one), and it matches the design mock,
+   * whose <main> is an ordinary scrolling column.
+   */
+  .bk-fit .bk-filter-card {
     margin-bottom: var(--sp-3);
   }
-  .bk-fit .status-filter-banner {
-    flex-shrink: 0;
-  }
   .bk-fit .bk-kpis {
-    flex-shrink: 0;
     margin-bottom: var(--sp-3);
   }
   .bk-fit .bk-sched-head {
-    flex-shrink: 0;
     margin-bottom: var(--sp-2);
   }
-  /* `flex: 0 1 auto`, not `flex: 1`. On a busy day the list still shrinks to the
-     space left and scrolls inside it; on a quiet day it takes only the height it
-     needs, so the page ends after the last booking instead of stretching a few
-     rows over the whole viewport and reading as "something failed to load"
-     (Growza Fixes, board 2f). */
-  .bk-fit .bk-scroll {
-    flex: 0 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 2px;
-  }
-  .bk-fit .pagination {
-    flex-shrink: 0;
-  }
   .bk-fit .bk-summary-bar {
-    flex-shrink: 0;
     margin-top: var(--sp-3);
   }
 
@@ -5159,7 +5672,8 @@ select:focus-visible {
   .bk-fit .bk-tl-row {
     padding-bottom: var(--sp-2);
   }
-  .bk-fit .bk-tl-time {
+  .bk-fit .bk-tl-time,
+  .bk-fit .bk-tl-slot {
     padding-top: var(--sp-2);
   }
   .bk-fit .bk-card {
@@ -8137,5 +8651,29 @@ tr.is-retired td {
      that was reaching for the safe one. */
   .cat-actions-buttons {
     justify-content: space-between;
+  }
+}
+
+/* ---------- narrow phones: keep the mock's four tiles across ----------
+   Four across is the mobile mock's layout and should hold on every phone.
+   The squeeze is "Confirmed"/"Completed" — single words with nowhere to
+   break — against a tile whose 10px side padding was eating the room: at
+   361px they already overflowed by 1-3px, and a 1264px-wide Android at
+   DPR 3.5 reports ~361 CSS px, so real devices hit it.
+
+   Trimming the side padding and the label a little buys enough width to fit
+   them down to 320 (iPhone SE), which beats dropping to a 2x2 the design
+   never asked for. Placed last so it wins over the 860px block above at
+   equal specificity. */
+@media (max-width: 420px) {
+  /* Vertical padding matches the centred tile above; only the sides shrink. */
+  .bk-kpi {
+    padding: 12px 6px;
+  }
+
+  .bk-kpi-label,
+  .bk-kpi-sub {
+    font-size: 9.5px;
+    letter-spacing: -0.01em;
   }
 }

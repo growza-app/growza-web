@@ -98,7 +98,14 @@ export const copy = {
     confirmed: 'Confirmed',
     reminded: 'Reminded',
     walkIn: 'Walk-in',
-    didNotCome: 'No-show',
+    // "No-show" is trade jargon. The owner marks these with a button that
+    // already reads "Customer didn't come", so the status it produces should
+    // say the same thing back — tapping one wording and being shown another
+    // reads as two different states. Also what the key here has always been
+    // called, and what the ?status= label map already used.
+    didNotCome: "Didn't come",
+    /** Plural, for counts: "3 didn't come". */
+    didNotComeCount: "didn't come",
     cancelled: 'Cancelled',
   },
 
@@ -150,18 +157,42 @@ export const copy = {
   },
 
   bookings: {
-    subtitle: 'Every booking, on any day — confirmed, finished, or missed.',
-    filterDay: 'Which day?',
-    show: 'Show',
-    allStaff: 'Everyone',
-    time: 'Time',
-    customer: 'Customer',
-    service: 'Service',
-    staffColumn: 'With',
-    price: 'Price',
-    status: 'Status',
-    bookedVia: 'Booked via',
+    // The old table's column headers and its "Which day?" / "Show" filter
+    // strings lived here. GRW-47 replaced that table with cards and a
+    // combined filter bar whose every control applies on selection, so none
+    // of them had a caller left — removed rather than kept as dead copy the
+    // next reader has to check for.
     none: 'No bookings that day.',
+
+    // Filter bar. Plain words over precise ones: an owner scanning this reads
+    // "Oldest first" without stopping, where "Earliest first" made them think
+    // about what it was earliest *of*. Same reason "Staff" beats "Provider"
+    // and "Search name, phone or booking ID" beats naming every field.
+    search: 'Search',
+    searchHint: 'Search name, phone or booking ID',
+    from: 'From',
+    to: 'To',
+    staff: 'Staff',
+    // Not "Show": the submit button next to it already says that, and two
+    // adjacent controls carrying the same word is worse than one slightly
+    // less casual one. "Status" is a plain word and already the table's own
+    // column header for this same field.
+    statusLabel: 'Status',
+    allStatuses: 'All bookings',
+    sort: 'Order',
+    oldestFirst: 'Oldest first',
+    newestFirst: 'Newest first',
+
+    // Schedule
+    scheduleToday: "Today's schedule",
+    bookingCount: (n: number) => `${n} ${n === 1 ? 'booking' : 'bookings'}`,
+    sameTime: (n: number) => `${n} bookings at the same time`,
+    viewTimeline: 'Timeline',
+    viewList: 'List',
+
+    // Empty state when a filter matches nothing
+    noneFound: 'No bookings found',
+    noneFoundHint: 'Try another name, staff member or date.',
   },
 
   errors: {

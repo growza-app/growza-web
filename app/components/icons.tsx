@@ -176,6 +176,13 @@ export const IconFilter = () => (
   </svg>
 );
 
+/** Two arrows, one up one down — the usual "change the order" mark. */
+export const IconSort = () => (
+  <svg {...base}>
+    <path d="M7 4v16M4 7l3-3 3 3M17 20V4M14 17l3 3 3-3" />
+  </svg>
+);
+
 export const IconMenu = () => (
   <svg {...base}>
     <path d="M3 6h18M3 12h18M3 18h18" />

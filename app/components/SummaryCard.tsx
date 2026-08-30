@@ -165,7 +165,7 @@ function RangeFoot({ summary }: { summary: RangeSummary }) {
             : `${summary.comparisonPct >= 0 ? '↑' : '↓'} ${Math.abs(summary.comparisonPct)}% vs last ${periodWord}`}
         </span>
         <span className="summary-cap">
-          {summary.noShows} no-show{summary.noShows === 1 ? '' : 's'}
+          {summary.noShows} {copy.status.didNotComeCount}
         </span>
       </div>
     </>

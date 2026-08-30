@@ -21,9 +21,15 @@ export function PageHeader({
         <h1>{title}</h1>
         {subtitle && <p>{subtitle}</p>}
       </div>
-      {actions}
-      <NotificationBell />
-      {initial && <div className="avatar-lg">{initial}</div>}
+      {/* One group, not three loose children: .topbar is space-between, so
+          bare siblings get spread across the width — a page with no `actions`
+          stranded the bell in the middle of the header instead of keeping it
+          next to the avatar. */}
+      <div className="topbar-actions">
+        {actions}
+        <NotificationBell />
+        {initial && <div className="avatar-lg">{initial}</div>}
+      </div>
     </header>
   );
 }

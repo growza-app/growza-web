@@ -15,6 +15,7 @@ import {
 import { toWeekdayRows, WeekdayHoursEditor, type WeekdayRow } from '../../components/WeekdayHoursEditor';
 import { IconArrowLeft, IconCheck } from '../../components/icons';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { copy } from '../../lib/copy';
 import { normalizePhone, validateEmail, validatePhone, validateRequired } from '../../lib/validate';
 import { avatarTone, initials } from '../StaffRoster';
 import { useLabel } from '../../components/LabelsProvider';
@@ -413,7 +414,7 @@ export function StaffEditClient({
                     <strong>{stats.repeatPct === null ? '—' : `${stats.repeatPct}%`}</strong>
                   </div>
                   <div className="edit-stat">
-                    <span>No-shows</span>
+                    <span>{copy.status.didNotCome}</span>
                     <strong>{stats.noShows}</strong>
                   </div>
                   <div className="edit-stat">
