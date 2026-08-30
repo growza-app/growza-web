@@ -8677,3 +8677,723 @@ tr.is-retired td {
     letter-spacing: -0.01em;
   }
 }
+
+/* ==========================================================================
+   Reports (GRW-48)
+
+   The densest screen in the product: eight tabs over four chart types, two
+   wide tables and a heatmap. Two rules carry most of the weight here —
+
+   1. The header is row 1 of `.content`'s grid and `.rp-body` is row 2, so
+      only the body scrolls and only vertically. Nothing in this section may
+      widen the page: charts, tables and the heatmap each scroll inside their
+      own box (GRW-5's shell grid, and the horizontal-scrollbar rule).
+   2. Colours come from the existing palette. The `--rp-*` aliases below map
+      the design's names onto tokens that already exist rather than starting
+      a second palette that would drift from the first.
+   ========================================================================== */
+
+:root {
+  --rp-brand: var(--accent);
+  --rp-green-ink: var(--accent-deep);
+  --rp-blue: #3b82f6;
+  --rp-amber: #f59e0b;
+  --rp-amber-ink: var(--amber);
+  --rp-red: #e5533c;
+  --rp-purple: var(--purple);
+  --rp-teal: #0d9488;
+  --rp-heat-empty: #f4f6f4;
+  --rp-card-radius: 16px;
+}
+
+/* ---------- header ---------- */
+
+.rp-header {
+  display: flex;
+  flex-direction: column;
+  /* Row 1 of `.content`'s grid. Without min-width:0 the header's widest
+     child sizes the whole grid column, and the scrolling body below it
+     inherits that width — which is how eight nowrap tabs made a 390px phone
+     render a 755px page with half of every card unreachable. */
+  min-width: 0;
+  gap: var(--sp-3);
+  padding: 14px var(--page-pad-x) 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.rp-title-row h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+
+.rp-title-row p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.rp-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.rp-controls-spacer {
+  flex: 1;
+}
+
+.rp-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.rp-control:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rp-control-on {
+  background: var(--accent-soft);
+  border-color: #bfe0cc;
+  color: var(--accent-deep);
+}
+
+.rp-control-primary {
+  background: var(--sidebar);
+  border-color: var(--sidebar);
+  color: #fff;
+}
+
+.rp-control-icon {
+  display: flex;
+  width: 15px;
+  height: 15px;
+}
+
+.rp-control-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.rp-brand-ink { color: var(--accent-deep); }
+.rp-amber-ink { color: var(--rp-amber-ink); }
+.rp-muted { color: var(--muted); }
+
+/* ---------- range picker ---------- */
+
+.rp-range {
+  position: relative;
+}
+
+/* Full-viewport, behind the menu: a click anywhere outside closes it without
+   the menu needing a document-level listener that outlives the component. */
+.rp-range-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.rp-range-menu {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  z-index: 40;
+  width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px -18px rgba(20, 50, 35, 0.4);
+  padding: 6px;
+}
+
+.rp-range-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rp-range-menu button:hover {
+  background: var(--page-bg);
+}
+
+.rp-range-menu button.active {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+/* ---------- tabs ---------- */
+
+.rp-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  /* A flex item's automatic minimum size is its content's — for a nowrap row
+     of eight tabs that is ~730px, so `overflow-x: auto` alone never gets the
+     chance to scroll. This is the line that makes it scroll. */
+  min-width: 0;
+  /* The bar scrolls; the page never does. Eight tabs do not fit a 320px
+     phone, and the alternative — wrapping onto a second row — costs vertical
+     space on the smallest screen that can least afford it. */
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  margin: 0 -2px;
+}
+
+.rp-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.rp-tabs button {
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  padding: 9px 14px;
+  border-radius: 10px 10px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #5c665f;
+  background: transparent;
+}
+
+.rp-tabs button.active {
+  background: var(--sidebar);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ---------- body & cards ---------- */
+
+.rp-body {
+  min-width: 0;
+  background: var(--page-bg);
+  padding-top: var(--sp-4);
+  padding-bottom: var(--sp-6);
+}
+
+.rp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.rp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rp-card-radius);
+  padding: var(--sp-4);
+  min-width: 0;
+}
+
+.rp-card h2 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.rp-card-sub,
+.rp-card-head p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.rp-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.rp-card-figure {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  white-space: nowrap;
+}
+
+.rp-card-icon {
+  display: flex;
+  width: 18px;
+  height: 18px;
+}
+
+.rp-card-icon svg { width: 100%; height: 100%; }
+
+.rp-card-foot {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rp-card-quiet {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.rp-empty {
+  margin: var(--sp-4) 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- grids ---------- */
+
+.rp-kpi-grid {
+  /* Explicit column counts, not auto-fit. Six tiles auto-fitting produce a
+     5 + 1 orphan at 1440 and a 4 + 2 at 1280 — a row that reads as a layout
+     bug rather than as six equal figures. Six divides cleanly into 6, 3 and
+     2, so those are the only counts used. */
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.rp-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+.rp-grid-health {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: var(--sp-3);
+}
+
+/* ---------- KPI tile ---------- */
+
+.rp-kpi-label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.rp-kpi-icon {
+  display: flex;
+  width: 15px;
+  height: 15px;
+}
+
+.rp-kpi-icon svg { width: 100%; height: 100%; }
+
+.rp-kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  margin: 8px 0 4px;
+}
+
+.rp-kpi-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 28px;
+}
+
+.rp-kpi-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.rp-kpi-delta-icon {
+  display: flex;
+  width: 13px;
+  height: 13px;
+}
+
+.rp-kpi-delta-icon svg { width: 100%; height: 100%; }
+
+.rp-kpi-nodelta {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.rp-kpi-spark {
+  width: 56px;
+  flex: 0 0 56px;
+}
+
+/* ---------- charts ---------- */
+
+.rp-chart {
+  position: relative;
+  width: 100%;
+}
+
+.rp-gridline {
+  stroke: #eef0ee;
+  stroke-width: 1;
+}
+
+.rp-crosshair {
+  stroke: #c8cec9;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.rp-axis-label {
+  fill: #9aa39d;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.rp-chart-tip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.rp-chart-tip-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---------- bar list ---------- */
+
+.rp-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.rp-bar-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.rp-bar-label {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-bar-note {
+  margin-left: 6px;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rp-bar-value {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rp-bar-track {
+  height: 9px;
+  background: #f0f1f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.rp-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: opacity 0.15s;
+}
+
+/* ---------- donut ---------- */
+
+.rp-donut {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.rp-donut svg { flex: 0 0 136px; }
+.rp-donut circle { transition: stroke-width 0.15s; }
+.rp-donut-value { font-size: 17px; font-weight: 800; fill: var(--text); }
+.rp-donut-label { font-size: 10.5px; font-weight: 600; fill: #9aa39d; }
+
+.rp-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rp-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+}
+
+.rp-legend-dot { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 9px; }
+.rp-legend-label { font-weight: 600; flex: 1; min-width: 0; }
+.rp-legend-value { font-weight: 700; }
+.rp-legend-pct { color: #9aa39d; width: 38px; text-align: right; }
+
+/* ---------- heatmap ---------- */
+
+.rp-heat-scroll {
+  overflow-x: auto;
+  min-width: 0;
+  margin-top: var(--sp-4);
+}
+
+.rp-heat {
+  min-width: 420px;
+}
+
+.rp-heat-row {
+  display: grid;
+  grid-template-columns: 46px repeat(var(--rp-heat-cols), minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.rp-heat-hour {
+  font-size: 10px;
+  color: #9aa39d;
+  text-align: center;
+  font-weight: 600;
+}
+
+.rp-heat-day {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.rp-heat-cell {
+  height: 26px;
+  border-radius: 6px;
+}
+
+/* ---------- segments ---------- */
+
+.rp-segments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: var(--sp-4);
+}
+
+.rp-segment {
+  display: block;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--rp-seg);
+  border-radius: 13px;
+  padding: 12px 13px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.rp-segment-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rp-segment-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rp-seg);
+}
+
+.rp-segment-count {
+  display: block;
+  font-size: 23px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.rp-segment-range {
+  display: block;
+  font-size: 11.5px;
+  color: #9aa39d;
+  margin-top: 1px;
+}
+
+/* ---------- opportunity list ---------- */
+
+.rp-opps {
+  display: flex;
+  flex-direction: column;
+}
+
+.rp-opp {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 11px 4px;
+  border-bottom: 1px solid #eef0ee;
+  color: inherit;
+  text-decoration: none;
+}
+
+.rp-opp:last-child { border-bottom: none; }
+.rp-opp:hover { background: #f7f9f7; }
+
+.rp-opp-main { flex: 1; min-width: 0; }
+.rp-opp-name { display: block; font-weight: 700; font-size: 13.5px; }
+.rp-opp-meta { display: block; color: var(--muted); font-size: 12px; }
+.rp-opp-right { text-align: right; }
+.rp-opp-spend { display: block; font-weight: 700; font-size: 13px; }
+.rp-opp-status { display: block; font-size: 11.5px; font-weight: 600; }
+.rp-opp-chev { display: flex; width: 14px; height: 14px; color: var(--muted); }
+.rp-opp-chev svg { width: 100%; height: 100%; }
+
+.rp-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ---------- tables ---------- */
+
+/* Wide tables scroll inside this box, never by widening the page. */
+.rp-table-scroll {
+  overflow-x: auto;
+  min-width: 0;
+  margin-top: var(--sp-3);
+}
+
+.rp-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.rp-table th {
+  text-align: left;
+  padding: 0 14px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #9aa39d;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.rp-table td {
+  padding: 13px 14px;
+  border-top: 1px solid #eef0ee;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.rp-row-clickable { cursor: pointer; }
+.rp-row-clickable:hover { background: #f7f9f7; }
+
+.rp-cell-avatar { display: flex; align-items: center; gap: 10px; }
+.rp-cell-avatar .rp-avatar { width: 30px; height: 30px; flex: 0 0 30px; font-size: 12px; }
+.rp-cell-name { font-weight: 700; font-size: 13.5px; }
+
+.rp-pill {
+  background: var(--accent-soft);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+
+.rp-cell-bar { display: flex; align-items: center; gap: 8px; }
+.rp-cell-bar-track { width: 70px; height: 7px; background: #f0f1f0; border-radius: 5px; overflow: hidden; }
+.rp-cell-bar-fill { display: block; height: 100%; }
+.rp-cell-bar-value { font-size: 12.5px; font-weight: 700; }
+
+/* ---------- narrower viewports ---------- */
+
+/* Below ~1380 the six-across row squeezes "₹1,15,381" narrower than it reads,
+   so it becomes two rows of three rather than shrinking the figure. */
+@media (max-width: 1380px) {
+  .rp-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1100px) {
+  .rp-grid-health { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 860px) {
+  .rp-header { padding-top: 10px; gap: var(--sp-2); }
+  .rp-title-row h1 { font-size: 22px; }
+  .rp-grid-2 { grid-template-columns: 1fr; }
+  /* Four across on a phone, matching the Bookings KPI row: three tiles and a
+     stranded fourth is the layout that reads as broken. */
+  .rp-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-kpi-value { font-size: 21px; }
+  .rp-kpi-spark { display: none; }
+  .rp-controls-spacer { display: none; }
+  .rp-control { padding: 7px 10px; font-size: 12.5px; }
+  /* Clear the floating action button, which sits 74px above the tab bar. The
+     same 84px other mobile scrollers use — without it the last card ends up
+     under the FAB and its bottom row is untappable. */
+  .rp-body { padding-bottom: 84px; }
+}

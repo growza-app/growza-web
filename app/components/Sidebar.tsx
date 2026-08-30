@@ -8,6 +8,7 @@ import {
   IconChat,
   IconDashboard,
   IconOffers,
+  IconReports,
   IconServices,
   IconSettings,
   IconStaff,
@@ -34,6 +35,10 @@ export function Sidebar({ tenantName, labels }: { tenantName: string; labels: Re
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
     { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
     { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
+    // Reports is added; nothing is removed. The design's sidebar puts it in
+    // Free times' slot, but a Reports mock is not a reason to demote a working
+    // page out of the owner's reach (GRW-48 decision 2).
+    { href: '/reports', label: copy.reports.navLabel, icon: <IconReports /> },
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
     { href: '/try-whatsapp', label: copy.nav.tryWhatsApp, icon: <IconChat /> },
     { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },

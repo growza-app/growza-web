@@ -280,3 +280,109 @@ export const IconLogout = () => (
     <path d="M15 12H3" />
   </svg>
 );
+
+/* ---- Reports (GRW-48) ---- */
+
+export const IconReports = () => (
+  <svg {...base}>
+    <path d="M3 3v18h18" />
+    <rect x="7" y="10" width="3" height="8" rx="1" />
+    <rect x="12" y="6" width="3" height="12" rx="1" />
+    <rect x="17" y="13" width="3" height="5" rx="1" />
+  </svg>
+);
+
+export const IconTrendUp = () => (
+  <svg {...base}>
+    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+    <polyline points="16 7 22 7 22 13" />
+  </svg>
+);
+
+export const IconTrendDown = () => (
+  <svg {...base}>
+    <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+    <polyline points="16 17 22 17 22 11" />
+  </svg>
+);
+
+export const IconArrowRight = () => (
+  <svg {...base}>
+    <path d="M5 12h14" />
+    <path d="m12 5 7 7-7 7" />
+  </svg>
+);
+
+export const IconRepeat = () => (
+  <svg {...base}>
+    <path d="m17 2 4 4-4 4" />
+    <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+    <path d="m7 22-4-4 4-4" />
+    <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+  </svg>
+);
+
+export const IconFlame = () => (
+  <svg {...base}>
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z" />
+  </svg>
+);
+
+export const IconAlert = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 8v5M12 16.5v.01" />
+  </svg>
+);
+
+export const IconCoins = () => (
+  <svg {...base}>
+    <circle cx="8" cy="8" r="5" />
+    <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+    <path d="M7 6h1v4M16.71 13.88l.7.71-2.82 2.82" />
+  </svg>
+);
+
+export const IconPercent = () => (
+  <svg {...base}>
+    <line x1="19" x2="5" y1="5" y2="19" />
+    <circle cx="6.5" cy="6.5" r="2.5" />
+    <circle cx="17.5" cy="17.5" r="2.5" />
+  </svg>
+);
+
+export const IconTarget = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="5" />
+    <circle cx="12" cy="12" r="1" />
+  </svg>
+);
+
+export const IconDownload = () => (
+  <svg {...base}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" x2="12" y1="15" y2="3" />
+  </svg>
+);
+
+export const IconRupee = () => (
+  <svg {...base}>
+    <path d="M6 3h12M6 8h12M9.5 21 6 13h3a5 5 0 0 0 0-10" />
+  </svg>
+);
+
+export const IconUserCheck = () => (
+  <svg {...base}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <polyline points="16 11 18 13 22 9" />
+  </svg>
+);
+
+export const IconChevronDown = () => (
+  <svg {...base}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);

@@ -417,6 +417,109 @@ async function extractErrorMessage(res: Response, path: string): Promise<string>
   return body?.error ?? `${path} failed: ${res.status}`;
 }
 
+
+/* ---- Reports (GRW-48) ------------------------------------------------- */
+
+export type ReportRangeKey =
+  | 'today'
+  | 'last_7_days'
+  | 'this_month'
+  | 'last_month'
+  | 'last_3_months'
+  | 'this_year'
+  | 'custom';
+
+export type ReportTabKey =
+  | 'overview'
+  | 'customers'
+  | 'revenue'
+  | 'bookings'
+  | 'services'
+  | 'staff'
+  | 'retention'
+  | 'insights';
+
+export interface ReportRangeMeta {
+  key: ReportRangeKey;
+  label: string;
+  startISO: string;
+  endExclusiveISO: string;
+  bucketUnit: 'day' | 'week' | 'month';
+  buckets: { label: string; startISO: string; endExclusiveISO: string }[];
+}
+
+/**
+ * A figure and its comparison. `deltaPct` is null when there was no previous
+ * period to compare against — the tile then says so rather than showing a 0%
+ * that would describe a month that never happened.
+ */
+export interface ReportMetric {
+  value: number;
+  previous: number | null;
+  deltaPct: number | null;
+}
+
+export interface ReportPoint {
+  label: string;
+  value: number;
+}
+
+export type ReportSegmentKey = 'active' | 'due' | 'at_risk' | 'inactive';
+
+export interface ReportSegment {
+  key: ReportSegmentKey;
+  rangeLabel: string;
+  count: number;
+}
+
+export interface ReportNamedValue {
+  label: string;
+  value: number;
+  retired?: boolean;
+}
+
+export interface ReportHeatmap {
+  days: string[];
+  hours: string[];
+  grid: number[][];
+  basis: 'booked_minutes' | 'booking_count';
+  outsideOpeningHoursMinutes: number;
+}
+
+export interface ReportOpportunity {
+  customerId: string;
+  name: string;
+  initial: string;
+  intervalDays: number | null;
+  lastVisitDays: number;
+  daysOverdue: number | null;
+  lifetimeSpendMinor: number;
+}
+
+export type ReportKpiKey =
+  | 'revenueMinor'
+  | 'bookings'
+  | 'completed'
+  | 'avgBookingValueMinor'
+  | 'newCustomers'
+  | 'repeatRatePct';
+
+export interface ReportOverview {
+  range: ReportRangeMeta;
+  compare: boolean;
+  kpis: Record<ReportKpiKey, ReportMetric>;
+  revenueTrend: ReportPoint[];
+  bookingTrend: ReportPoint[];
+  /** One real series per KPI tile, keyed by the same names as `kpis`. */
+  sparklines: Record<ReportKpiKey, ReportPoint[]>;
+  totalCustomers: number;
+  neverVisited: number;
+  segments: ReportSegment[];
+  topServices: ReportNamedValue[];
+  peakHours: ReportHeatmap;
+  opportunities: ReportOpportunity[];
+}
+
 async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -458,6 +561,17 @@ export const api = {
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
   todayStats: () => get<TodayStats>('/api/v1/analytics/today'),
+  /**
+   * Reports. Under /reports/, never /analytics/ — this is fetched from the
+   * browser on every tab and range change, and that path segment is a common
+   * ad-blocker pattern, same reasoning as rangeSummary below.
+   */
+  reportsOverview: (range: ReportRangeKey, compare: boolean, from?: string, to?: string) => {
+    const params = new URLSearchParams({ range, compare: String(compare) });
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    return get<ReportOverview>(`/api/v1/reports/overview?${params.toString()}`);
+  },
   // Not /analytics/range — that path segment gets silently blocked by
   // browser ad/tracker blockers (this is fetched client-side, unlike
   // todayStats which runs server-side during SSR and never hits that filter).

@@ -1,7 +1,7 @@
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconChevronRight, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconChevronRight, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +24,10 @@ export default async function MorePage() {
   const items = [
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
+    // The design's mobile tab bar puts Reports in Offers' slot. The tab bar's
+    // composition is its own product decision, so Reports arrives here instead
+    // and the four frequent destinations keep their places (GRW-48 decision 2).
+    { href: '/reports', label: copy.reports.navLabel, icon: <IconReports /> },
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
     { href: '/try-whatsapp', label: copy.nav.tryWhatsApp, icon: <IconChat /> },
     { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },

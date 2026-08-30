@@ -195,6 +195,98 @@ export const copy = {
     noneFoundHint: 'Try another name, staff member or date.',
   },
 
+  /**
+   * Reports (GRW-48). Every tab's subtitle is written as the question the tab
+   * answers, which is the plainest statement of what it is for — an owner who
+   * reads "Who is coming back?" knows whether this is the tab they want
+   * without learning what "retention" means (see the plain-language rule at
+   * the top of this file, and 12-conventions.md §12).
+   */
+  reports: {
+    title: 'Reports',
+    navLabel: 'Reports',
+
+    tabs: {
+      overview: 'Overview',
+      customers: 'Customers',
+      revenue: 'Money',
+      bookings: 'Bookings',
+      services: 'Services',
+      staff: 'Staff',
+      retention: 'Coming back',
+      insights: 'What to do',
+    },
+    subtitles: {
+      overview: 'How is your business doing?',
+      customers: 'Who are your best clients?',
+      revenue: 'Where is your money coming from?',
+      bookings: 'How much work do you have?',
+      services: 'Which services actually earn?',
+      staff: 'Who is bringing in the most?',
+      retention: 'Who is coming back?',
+      insights: 'What should you do this week?',
+    },
+
+    ranges: {
+      today: 'Today',
+      last_7_days: 'Last 7 days',
+      this_month: 'This month',
+      last_month: 'Last month',
+      last_3_months: 'Last 3 months',
+      this_year: 'This year',
+      custom: 'Pick dates',
+    },
+    compare: 'Compare with before',
+    filters: 'Filters',
+    export: 'Download',
+    // Shown on the two controls the design draws but does not define. They are
+    // disabled rather than silently doing nothing, so the screen never has a
+    // button that looks alive and is not (GRW-60).
+    notBuiltYet: 'Coming soon',
+
+    kpi: {
+      revenue: 'Money earned',
+      bookings: 'Bookings',
+      completed: 'Finished',
+      avgBookingValue: 'Average booking',
+      newCustomers: 'New clients',
+      repeatRate: 'Came back',
+    },
+
+    segments: {
+      active: 'Active',
+      due: 'Due',
+      at_risk: 'Slipping',
+      inactive: 'Gone quiet',
+    },
+    segmentsTitle: 'How your clients are doing',
+    segmentsHint: (total: number) => `${total} clients, by how long since their last visit`,
+    neverVisited: (n: number) => `${n} have not been in yet, so they are in none of these.`,
+
+    revenueTrend: 'Money over time',
+    bookingTrend: 'Bookings over time',
+    topServices: 'Top services by money',
+    peakHours: 'When you are busiest',
+    peakHoursHint: 'Where your booked time lands across the week',
+    peakOutside: (hours: string) => `${hours} booked outside your opening hours.`,
+
+    opportunities: 'Worth a call this week',
+    opportunitiesHint: 'Regulars who are due back, or already late',
+    overdueBy: (days: number) => `${days} days late`,
+    dueNow: 'Due now',
+    dueIn: (days: number) => `Due in ${days} days`,
+    usuallyEvery: (days: number) => `Usually every ${days} days`,
+
+    // States
+    noPrior: 'no earlier data',
+    noData: 'Nothing here yet',
+    noDataHint: (range: string) => `No bookings in ${range.toLowerCase()}. Try a longer stretch.`,
+    notEnoughVisits: 'Not enough visits yet to spot a pattern.',
+    loadFailed: 'Could not load this.',
+    retry: 'Try again',
+    comingSoonTab: 'This part is not built yet.',
+  },
+
   errors: {
     apiDown: 'Cannot reach the server.',
     apiDownHelp: 'Ask your developer to start it, or run',
