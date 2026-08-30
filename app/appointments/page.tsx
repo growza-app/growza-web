@@ -85,7 +85,14 @@ export default async function AppointmentsPage({
               <input id="date" name="date" type="date" defaultValue={date} />
               <span className="field-hint">{dayHint}</span>
             </div>
-            <div className="field">
+            {/* Mobile hides this in favour of BookingsList's own tap chips
+                (GRW-46), which filter client-side instead of a page reload —
+                having both visible at once let a stale server-side provider
+                filter make the chips look broken (a chip for someone the
+                already-loaded page never fetched always reads "no results").
+                The field/form itself is untouched, so desktop is unaffected
+                and a submitted providerId still narrows what loads. */}
+            <div className="field desktop-only">
               <label htmlFor="providerId">{me.labels.providers ?? copy.nav.staff}</label>
               <select id="providerId" name="providerId" defaultValue={providerId}>
                 <option value="">{copy.bookings.allStaff}</option>
@@ -118,6 +125,7 @@ export default async function AppointmentsPage({
         ) : (
           <BookingsList
             appointments={appointments}
+            providers={providers}
             timezone={timezone}
             noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
             nowISO={new Date().toISOString()}
