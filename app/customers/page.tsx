@@ -1,4 +1,4 @@
-import { api, type CustomerSort, type CustomerStatusFilter } from '../lib/api';
+import { api, type CustomerSort, type CustomerStatusFilter, type SortDirection } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { CustomersClient } from './CustomersClient';
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; sort?: string }>;
+  searchParams: Promise<{ status?: string; sort?: string; dir?: string }>;
 }) {
   const params = await searchParams;
   // Deep-linked from Home's "Needs attention" card (?status=at_risk&sort=spent)
@@ -23,12 +23,16 @@ export default async function CustomersPage({
   const status: CustomerStatusFilter =
     params.status && STATUSES.has(params.status) ? (params.status as CustomerStatusFilter) : 'all';
   const sort: CustomerSort = params.sort && SORTS.has(params.sort) ? (params.sort as CustomerSort) : 'recent';
+  // `dir` travels with `sort` or not at all. A link carrying the column but
+  // not the order would restore a different list than the one the sender was
+  // looking at — sorting by name would come back descending.
+  const direction: SortDirection = params.dir === 'asc' ? 'asc' : 'desc';
 
   let stats, first, me;
   try {
     [stats, first, me] = await Promise.all([
       api.customerStats(),
-      api.customers({ status, sort, limit: 20, offset: 0 }),
+      api.customers({ status, sort, direction, limit: 20, offset: 0 }),
       api.me(),
     ]);
   } catch {
@@ -53,6 +57,7 @@ export default async function CustomersPage({
       initialPage={first}
       initialStatus={status}
       initialSort={sort}
+      initialDirection={direction}
       label={me.labels.customers ?? 'Customers'}
     />
   );

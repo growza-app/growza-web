@@ -97,6 +97,7 @@ export function CustomersClient({
   initialPage,
   initialStatus,
   initialSort,
+  initialDirection,
   label,
 }: {
   initialStats: CustomerStats;
@@ -105,6 +106,8 @@ export function CustomersClient({
   initialStatus?: CustomerStatusFilter;
   /** From the URL (?sort=spent) — defaults to 'recent'. */
   initialSort?: CustomerSort;
+  /** From the URL (?dir=asc) — defaults to 'desc'. Travels with `initialSort`. */
+  initialDirection?: SortDirection;
   /** "Clients" for a salon, "Patients" for a clinic — from the vertical config. */
   label: string;
 }) {
@@ -124,7 +127,7 @@ export function CustomersClient({
   const [openClientId, setOpenClientId] = useState<string | null>(null);
   // Which way the sorted column runs. Clicking the same header again flips it,
   // which is what makes "who spends least" reachable without a second control.
-  const [direction, setDirection] = useState<SortDirection>('desc');
+  const [direction, setDirection] = useState<SortDirection>(initialDirection ?? 'desc');
   // ?add=1 (from the Home quick-actions panel) opens the sheet straight away
   // instead of landing here and requiring a second click.
   const [adding, setAdding] = useState(() => searchParams.get('add') === '1');
@@ -133,6 +136,67 @@ export function CustomersClient({
   const pageSize = PAGE_SIZE;
   // Skip the fetch on first render — the server already sent page 0.
   const primed = useRef(false);
+
+  /**
+   * The band and sort live in the address bar, not only in React state.
+   *
+   * The URL already decided what this screen looks like on arrival — Home
+   * links `?status=at_risk&sort=spent`, and so does every Reports segment
+   * card — but the screen could not produce the link it consumes. Filtering
+   * to Slipping away and reloading put you back on everyone, and sending
+   * someone the link sent them the unfiltered list.
+   *
+   * `history`, not `router`. This page is force-dynamic, so router.replace
+   * would re-run the server component and re-query Postgres for a change the
+   * client has already rendered. The native call moves the address bar and
+   * nothing else; Next keeps useSearchParams in step with it.
+   *
+   * Changing the band is a change of what you are looking at, so it pushes
+   * and Back undoes it. Sorting refines the same list, so it replaces —
+   * otherwise Back would walk you through every column you had tried.
+   *
+   * `search` and the page number stay out. Nothing reads them on the way in,
+   * and writing a param the server ignores would produce a link that half
+   * restores — the band back, the search silently dropped.
+   */
+  const lastUrlStatus = useRef(initialStatus ?? 'all');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (status === 'all') params.delete('status');
+    else params.set('status', status);
+    if (sort === 'recent') params.delete('sort');
+    else params.set('sort', sort);
+    if (direction === 'desc') params.delete('dir');
+    else params.set('dir', direction);
+    // ?add=1 opened the sheet on arrival; leaving it in the URL would reopen
+    // the sheet on every reload of a link that was only meant to be a filter.
+    params.delete('add');
+
+    const query = params.toString();
+    const next = `${window.location.pathname}${query ? `?${query}` : ''}`;
+    if (next === `${window.location.pathname}${window.location.search}`) return;
+
+    const bandChanged = status !== lastUrlStatus.current;
+    lastUrlStatus.current = status;
+    window.history[bandChanged ? 'pushState' : 'replaceState'](null, '', next);
+  }, [status, sort, direction, initialStatus]);
+
+  // Back/Forward move through the bands pushed above. Without this the URL
+  // would change under a screen that kept showing the previous band.
+  useEffect(() => {
+    const onPop = () => {
+      const params = new URLSearchParams(window.location.search);
+      const nextStatus = (params.get('status') ?? 'all') as CustomerStatusFilter;
+      const nextSort = (params.get('sort') ?? 'recent') as CustomerSort;
+      lastUrlStatus.current = nextStatus;
+      setStatus(nextStatus);
+      setSort(nextSort);
+      setDirection(params.get('dir') === 'asc' ? 'asc' : 'desc');
+      setPageIndex(0);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   useEffect(() => {
     if (!primed.current) {
