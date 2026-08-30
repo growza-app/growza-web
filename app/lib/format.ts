@@ -83,24 +83,31 @@ export function formatRecency(iso: string | null | undefined, now: Date = new Da
 }
 
 /**
- * Client recency segments — deliberately the SAME boundaries the backend
- * filter uses (`CustomerStatusFilter`, src/modules/customer/repository.ts), so
- * a row chipped "Lapsed" here is exactly a row `?status=lapsed` would return.
+ * How long since a client last came in, as one of four named bands.
  *
- * The backend bounds Lapsed at 30-89 days on purpose: "recently slipped,
- * worth a nudge", as distinct from Inactive ("gone, unclear if they're coming
- * back"). Someone who has never booked qualifies as neither — there is
- * nothing to win back.
+ * The boundaries are the same ones the backend filters by
+ * (`src/platform/segments.ts`), so a row chipped "Slipping away" here is
+ * exactly a row `?status=at_risk` returns, and the card counting them shows
+ * the same number. Re-deriving them in a third place is what let the Clients
+ * list and Reports disagree about the same client (12-conventions.md §5).
+ *
+ *   Coming in    0–30 days     they are current
+ *   Due a visit  31–45 days    slipped a little, easily recovered
+ *   Slipping     46–90 days    worth a call before it is too late
+ *   Gone quiet   91+ days      unclear if they are coming back
+ *
+ * Someone who has never completed a visit is in none of them: there is no
+ * recency to measure and nothing to win back.
  */
-export const LAPSED_MIN_DAYS = 30;
-export const ACTIVE_WINDOW_DAYS = 90;
+export const SEGMENT_MAX_DAYS = { active: 30, due: 45, at_risk: 90 } as const;
 
-export type ClientRecency = 'never' | 'active' | 'lapsed' | 'inactive';
+export type ClientRecency = 'never' | 'active' | 'due' | 'at_risk' | 'inactive';
 
 export function clientRecency(iso: string | null | undefined, now: Date = new Date()): ClientRecency {
   if (!iso) return 'never';
-  const days = (now.getTime() - new Date(iso).getTime()) / 86_400_000;
-  if (days < LAPSED_MIN_DAYS) return 'active';
-  if (days < ACTIVE_WINDOW_DAYS) return 'lapsed';
+  const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= SEGMENT_MAX_DAYS.active) return 'active';
+  if (days <= SEGMENT_MAX_DAYS.due) return 'due';
+  if (days <= SEGMENT_MAX_DAYS.at_risk) return 'at_risk';
   return 'inactive';
 }

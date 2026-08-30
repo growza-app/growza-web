@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { clientRecency, formatDate, formatPhone, formatRecency, type ClientRecency } from '../lib/format';
+import { formatDate, formatPhone, formatRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -11,32 +11,77 @@ import {
   type CustomerSort,
   type CustomerStats,
   type CustomerStatusFilter,
+  type SortDirection,
 } from '../lib/api';
 import { initials } from '../lib/appointment-display';
 import { dialable } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
-import { IconSearch, IconUserPlus, IconWhatsApp } from '../components/icons';
+import { IconSearch, IconSort, IconUserPlus, IconWhatsApp } from '../components/icons';
+import { copy } from '../lib/copy';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 
-/** Matches the backend's own derived-status window (customer/repository.ts). */
-
+/** The same four words the cards, the chips and `?status=` all use. */
 function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
-  if (s === 'active') return 'Active only';
-  if (s === 'inactive') return 'Inactive only';
-  return `Haven't visited in 30+ days`;
+  if (s === 'never') return 'Never been in';
+  if (s === 'lapsed') return 'Due or slipping';
+  return copy.clients.segments[s].label;
 }
 
 /**
  * Chips only where they say something. "Active" on every row was the original
- * sin here; a client seen last week needs no chip at all, and a client who has
- * never booked is neither lapsed nor inactive — there is nothing to win back.
+ * sin here: a client seen last week needs no chip at all. A client who has
+ * never been in is in no band — there is nothing to win back — so they get no
+ * chip either.
+ *
+ * The band comes from the row, which the backend computed with the same rule
+ * the filter and the cards use. It was briefly worked out here instead, from
+ * the row's last *booking* — which counts no-shows and visits still to happen
+ * — so filtering to "Gone quiet" returned rows chipped "Due a visit".
  */
-function recencyChip(state: ClientRecency) {
-  if (state === 'lapsed') return <span className="chip chip-lapsed">Lapsed</span>;
-  if (state === 'inactive') return <span className="chip chip-completed">Inactive</span>;
+function recencyChip(segment: Customer['segment']) {
+  if (segment === 'due') return <span className="chip chip-lapsed">{copy.clients.segments.due.label}</span>;
+  if (segment === 'at_risk') return <span className="chip chip-cancelled">{copy.clients.segments.at_risk.label}</span>;
+  if (segment === 'inactive') return <span className="chip chip-completed">{copy.clients.segments.inactive.label}</span>;
   return null;
+}
+
+/** Left rule colour per band — the same four the Reports segment cards use. */
+const SEGMENT_TONE: Record<string, string> = {
+  active: 'var(--accent)',
+  due: '#f59e0b',
+  at_risk: '#e5533c',
+  inactive: 'var(--purple)',
+};
+
+/** A column header that sorts. The arrow only appears on the active column. */
+function SortableTh({
+  col,
+  label,
+  sort,
+  direction,
+  onSort,
+  numeric,
+}: {
+  col: CustomerSort;
+  label: string;
+  sort: CustomerSort;
+  direction: SortDirection;
+  onSort: (col: CustomerSort) => void;
+  numeric?: boolean;
+}) {
+  const active = sort === col;
+  return (
+    <th className={numeric ? 'th-sortable th-numeric' : 'th-sortable'}>
+      <button type="button" onClick={() => onSort(col)} title={copy.clients.sortBy(label.toLowerCase())}>
+        {label}
+        <span className={`th-arrow ${active ? 'is-on' : ''}`} aria-hidden>
+          {active ? (direction === 'desc' ? '↓' : '↑') : <IconSort />}
+        </span>
+      </button>
+    </th>
+  );
 }
 
 export function CustomersClient({
@@ -69,6 +114,9 @@ export function CustomersClient({
   // Which client's card is open. Null closes it; the list keeps its scroll
   // position because nothing navigates away.
   const [openClientId, setOpenClientId] = useState<string | null>(null);
+  // Which way the sorted column runs. Clicking the same header again flips it,
+  // which is what makes "who spends least" reachable without a second control.
+  const [direction, setDirection] = useState<SortDirection>('desc');
   // ?add=1 (from the Home quick-actions panel) opens the sheet straight away
   // instead of landing here and requiring a second click.
   const [adding, setAdding] = useState(() => searchParams.get('add') === '1');
@@ -88,7 +136,7 @@ export function CustomersClient({
     // Debounced so typing a phone number doesn't fire a request per digit.
     const timer = setTimeout(() => {
       api
-        .customers({ search, status, sort, limit: pageSize, offset: pageIndex * pageSize })
+        .customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize })
         .then((r) => {
           if (!cancelled) setPage(r);
         })
@@ -100,13 +148,29 @@ export function CustomersClient({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [search, status, sort, pageIndex, pageSize]);
+  }, [search, status, sort, direction, pageIndex, pageSize]);
 
   const refresh = () => {
-    api.customers({ search, status, sort, limit: pageSize, offset: pageIndex * pageSize }).then(setPage);
+    api.customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize }).then(setPage);
     // Stats are server-rendered once; a full refresh is the honest way to
     // re-derive them rather than incrementing a local copy that could drift.
     window.location.reload();
+  };
+
+  /**
+   * Clicking a column sorts by it; clicking the one already sorted flips the
+   * direction. Two clicks reach "who spends least" without a second control,
+   * and the arrow says which way it currently runs.
+   */
+  const setSortColumn = (col: CustomerSort) => {
+    if (col === sort) setDirection((d) => (d === 'desc' ? 'asc' : 'desc'));
+    else {
+      setSort(col);
+      // Names read A–Z; every number reads biggest-first, because that is the
+      // question an owner asks of a number column.
+      setDirection(col === 'name' ? 'asc' : 'desc');
+    }
+    setPageIndex(0);
   };
 
   const visibleRows = page.rows.slice(0, pageSize);
@@ -120,7 +184,9 @@ export function CustomersClient({
       c.lastServiceName ?? '',
       String(c.totalBookings),
       formatMoney(c.totalSpentMinor),
-      `${formatRecency(c.lastBookingAt)} (${clientRecency(c.lastBookingAt)})`,
+      // The exported band is the row's own, so a spreadsheet and the screen
+      // cannot disagree about which clients are slipping.
+      `${formatRecency(c.lastBookingAt)} (${c.segment})`,
     ]);
     const csv = [header, ...rows]
       .map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
@@ -156,6 +222,68 @@ export function CustomersClient({
           <Kpi label="Repeat rate" value={`${stats.repeatRatePct}%`} sub={`Returning ÷ total ${lower}`} />
         </div>
 
+        {/* The cards are also the filter. Their counts come back with the
+            page's own stats, from the same predicate the filter runs, so a
+            card reading "462 Slipping away" cannot show a different number of
+            rows than it counted (platform/segments.ts). */}
+        <div className="card cust-segments">
+          <div className="cust-segments-head">
+            <div>
+              <h2>{copy.clients.segmentsTitle}</h2>
+              <p>{copy.clients.segmentsHint}</p>
+            </div>
+            {status !== 'all' && (
+              <button type="button" className="btn btn-ghost" onClick={() => { setStatus('all'); setPageIndex(0); }}>
+                {copy.clients.clearFilter}
+              </button>
+            )}
+          </div>
+          <div className="cust-segment-grid">
+            {stats.segments.map((seg) => {
+              const words = copy.clients.segments[seg.key];
+              const on = status === seg.key;
+              return (
+                <button
+                  key={seg.key}
+                  type="button"
+                  className={`cust-segment ${on ? 'is-on' : ''}`}
+                  style={{ ['--seg' as string]: SEGMENT_TONE[seg.key] }}
+                  aria-pressed={on}
+                  onClick={() => {
+                    // Clicking the band you are already in clears it, so the
+                    // card is a toggle rather than a one-way trip.
+                    setStatus(on ? 'all' : seg.key);
+                    // A band of people who have drifted is a call list, so it
+                    // opens highest-spend-first — the ones worth ringing.
+                    if (!on && seg.key !== 'active') { setSort('spent'); setDirection('desc'); }
+                    setPageIndex(0);
+                  }}
+                >
+                  <span className="cust-segment-label">
+                    <span className="cust-segment-dot" />
+                    {words.label}
+                  </span>
+                  <span className="cust-segment-count">
+                    {seg.count}
+                    <em>{seg.pct}%</em>
+                  </span>
+                  <span className="cust-segment-range">{words.range}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Said out loud: without it the four bands look like they should
+              add up to the total above, and they never will. */}
+          {stats.neverVisited > 0 && (
+            <p className="cust-segments-foot">
+              {copy.clients.neverVisited(
+                stats.neverVisited,
+                stats.total > 0 ? Math.round((stats.neverVisited / stats.total) * 100) : 0,
+              )}
+            </p>
+          )}
+        </div>
+
         <div className="card">
           <div className="offers-toolbar cust-toolbar">
             <label className="search-wrap">
@@ -177,17 +305,18 @@ export function CustomersClient({
               </button>
               {filterOpen && (
                 <div className="dropdown-panel dropdown-panel-sm" onMouseLeave={() => setFilterOpen(false)}>
-                  {(['all', 'active', 'inactive', 'lapsed'] as CustomerStatusFilter[]).map((s) => (
+                  {(['all', 'active', 'due', 'at_risk', 'inactive', 'never'] as CustomerStatusFilter[]).map((s) => (
                     <button
                       key={s}
                       type="button"
                       className="dropdown-item dropdown-item-plain"
                       onClick={() => {
                         setStatus(s);
-                        // Lapsed is a win-back list — sort by lifetime spend so
-                        // the highest-value customers to call first sort to the
-                        // top. Any other filter goes back to most-recent-first.
-                        setSort(s === 'lapsed' ? 'spent' : 'recent');
+                        // A band of people who have drifted is a call list, so
+                        // it opens highest-spend-first. Anything else goes back
+                        // to most-recent.
+                        setSort(s === 'all' || s === 'active' ? 'recent' : 'spent');
+                        setDirection('desc');
                         setPageIndex(0);
                         setFilterOpen(false);
                       }}
@@ -214,12 +343,12 @@ export function CustomersClient({
               onPageChange={(p) => setPageIndex(p - 1)}
               head={
                 <tr>
-                  <th>Customer</th>
+                  <SortableTh col="name" label="Customer" sort={sort} direction={direction} onSort={setSortColumn} />
                   <th>Phone / WhatsApp</th>
                   <th>Last booking</th>
-                  <th>Bookings</th>
-                  <th>Total spent</th>
-                  <th>Last seen</th>
+                  <SortableTh col="visits" label="Bookings" sort={sort} direction={direction} onSort={setSortColumn} numeric />
+                  <SortableTh col="spent" label="Total spent" sort={sort} direction={direction} onSort={setSortColumn} numeric />
+                  <SortableTh col="recent" label="Last seen" sort={sort} direction={direction} onSort={setSortColumn} />
                 </tr>
               }
               cards={visibleRows.map((c) => (
@@ -242,7 +371,7 @@ export function CustomersClient({
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="cust-card-name">
                         {c.name ?? 'Unnamed'}
-                        {recencyChip(clientRecency(c.lastBookingAt))}
+                        {recencyChip(c.segment)}
                       </div>
                       {/* Stops the row's own click: tapping the number should
                           open WhatsApp, not the card behind it. */}
@@ -310,7 +439,7 @@ export function CustomersClient({
                   <td>
                     <div className="cust-recency">
                       <span>{formatRecency(c.lastBookingAt)}</span>
-                      {recencyChip(clientRecency(c.lastBookingAt))}
+                      {recencyChip(c.segment)}
                     </div>
                   </td>
                 </tr>

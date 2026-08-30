@@ -14,9 +14,14 @@ export default async function CustomersPage({
   // — validated against the real union rather than cast, so a stray/typo'd
   // query param falls back to the normal defaults instead of ever reaching
   // the API with a bad value.
+  // Deep links arrive from Home's "needs attention" card and from every
+  // Reports segment card. `lapsed` is still honoured — it was the one band
+  // that Due and At risk replaced, so an older bookmark keeps working.
+  const STATUSES = new Set(['active', 'due', 'at_risk', 'inactive', 'lapsed', 'never']);
+  const SORTS = new Set(['recent', 'spent', 'visits', 'name']);
   const status: CustomerStatusFilter =
-    params.status === 'active' || params.status === 'inactive' || params.status === 'lapsed' ? params.status : 'all';
-  const sort: CustomerSort = params.sort === 'spent' ? 'spent' : 'recent';
+    params.status && STATUSES.has(params.status) ? (params.status as CustomerStatusFilter) : 'all';
+  const sort: CustomerSort = params.sort && SORTS.has(params.sort) ? (params.sort as CustomerSort) : 'recent';
 
   let stats, first, me;
   try {

@@ -321,6 +321,8 @@ export interface Customer {
   totalSpentMinor: string;
   lastBookingAt: string | null;
   lastServiceName: string | null;
+  /** The band this client is in, from the backend's own rule. Never re-derived here. */
+  segment: 'active' | 'due' | 'at_risk' | 'inactive' | 'never';
 }
 
 export interface CustomerPage {
@@ -328,15 +330,25 @@ export interface CustomerPage {
   total: number;
 }
 
+export interface CustomerSegmentCount {
+  key: 'active' | 'due' | 'at_risk' | 'inactive';
+  count: number;
+  pct: number;
+}
+
 export interface CustomerStats {
   total: number;
   newThisMonth: number;
   returning: number;
   repeatRatePct: number;
+  /** Clients with no completed visit — in the total, in none of the bands. */
+  neverVisited: number;
+  segments: CustomerSegmentCount[];
 }
 
-export type CustomerStatusFilter = 'all' | 'active' | 'inactive' | 'lapsed';
-export type CustomerSort = 'recent' | 'spent';
+export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never';
+export type CustomerSort = 'recent' | 'spent' | 'visits' | 'name';
+export type SortDirection = 'asc' | 'desc';
 
 export type AppointmentStatus = 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
@@ -852,11 +864,21 @@ export const api = {
   createOffer: (input: OfferInput) => post<Offer>('/api/v1/offers', input),
   updateOffer: (id: string, input: Partial<OfferInput>) => patch<Offer>(`/api/v1/offers/${id}`, input),
   deleteOffer: (id: string) => del<void>(`/api/v1/offers/${id}`),
-  customers: (args: { search?: string; status?: CustomerStatusFilter; sort?: CustomerSort; limit?: number; offset?: number } = {}) => {
+  customers: (
+    args: {
+      search?: string;
+      status?: CustomerStatusFilter;
+      sort?: CustomerSort;
+      direction?: SortDirection;
+      limit?: number;
+      offset?: number;
+    } = {},
+  ) => {
     const params = new URLSearchParams();
     if (args.search) params.set('search', args.search);
     if (args.status && args.status !== 'all') params.set('status', args.status);
     if (args.sort && args.sort !== 'recent') params.set('sort', args.sort);
+    if (args.direction && args.direction !== 'desc') params.set('direction', args.direction);
     if (args.limit != null) params.set('limit', String(args.limit));
     if (args.offset != null) params.set('offset', String(args.offset));
     const qs = params.toString();

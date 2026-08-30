@@ -9807,3 +9807,116 @@ tr.cust-row-click:hover { background: #f7f9f7; }
      of list behind it that is neither usable nor readable. */
   .cpc { width: 100%; max-width: 100%; }
 }
+
+/* ---------- Clients: the segment bands, which are also the filter ---------- */
+
+.cust-segments { padding-bottom: var(--sp-4); }
+
+.cust-segments-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.cust-segments-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
+.cust-segments-head p { margin: 3px 0 0; color: var(--muted); font-size: 12.5px; }
+
+.cust-segment-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.cust-segment {
+  display: block;
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--seg);
+  border-radius: 13px;
+  padding: 12px 13px;
+  min-width: 0;
+}
+
+.cust-segment:hover { background: #f7f9f7; }
+
+/* The chosen band is filled rather than merely outlined, so which filter is
+   on is legible at a glance instead of needing the list read to find out. */
+.cust-segment.is-on {
+  background: var(--accent-soft);
+  border-color: #bfe0cc;
+  border-left-color: var(--seg);
+  box-shadow: inset 0 0 0 1px #bfe0cc;
+}
+
+.cust-segment-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cust-segment-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--seg); flex: 0 0 8px; }
+
+.cust-segment-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 23px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.cust-segment-count em {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cust-segment-range { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+
+.cust-segments-foot {
+  margin: var(--sp-4) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ---------- sortable column headers ---------- */
+
+.th-sortable { padding: 0; }
+
+.th-sortable button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: inherit;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+.th-numeric button { justify-content: flex-start; }
+
+/* The arrow is faint until the column is the one being sorted, so the header
+   row reads as headings with an affordance rather than as six live controls. */
+.th-arrow { display: inline-flex; align-items: center; opacity: 0.25; }
+.th-arrow svg { width: 13px; height: 13px; }
+.th-arrow.is-on { opacity: 1; color: var(--accent-deep); font-weight: 800; }
+.th-sortable button:hover .th-arrow { opacity: 0.7; }
+
+@media (max-width: 1100px) {
+  .cust-segment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
