@@ -106,14 +106,13 @@ export function reportToCsv(payload: TabPayload, providerLabel: string): string 
     const d = payload.data;
     const t = c.bookingsTab;
     return [
-      // Four tiles, matching the tab. "Finished" is not among them: it is the
-      // biggest slice of the chart below, and a tile for it repeated that
-      // chart's headline, which is why the tab dropped it.
+      // Three tiles, matching the tab. "Finished" is not among them: it is
+      // the biggest slice of the chart below, and a tile for it repeated that
+      // chart's headline. Nor is "Still to come" — see the tab.
       section(t.total, TILE_COLUMNS, [
         [t.total, d.kpis.total.value],
         [copy.status.didNotCome, d.kpis.noShow.value],
         [copy.status.cancelled, d.kpis.cancelled.value],
-        [t.upcoming, d.kpis.upcoming.value],
       ]),
       section(t.trend, [DATE, t.total], d.trend.map((p) => [p.label, p.value])),
       section(t.status, [t.status, t.total], d.byStatus.map((r) => [statusWord(r.label), r.value])),

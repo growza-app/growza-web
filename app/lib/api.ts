@@ -503,7 +503,12 @@ export interface ReportOpportunity {
   intervalDays: number | null;
   lastVisitDays: number;
   daysOverdue: number | null;
+  /** All-time, kept as context. Not what the list is ordered by. */
   lifetimeSpendMinor: number;
+  /** What one recovered visit is usually worth — the figure the card shows. */
+  avgTicketMinor: number;
+  /** Completed bookings as a share of completed + missed; discounts the ticket. */
+  showRatePct: number;
 }
 
 export type ReportKpiKey =
@@ -592,7 +597,6 @@ export interface ReportBookings {
     completed: ReportMetric;
     cancelled: ReportMetric;
     noShow: ReportMetric;
-    upcoming: ReportMetric;
   };
   trend: ReportPoint[];
   byStatus: ReportNamedValue[];

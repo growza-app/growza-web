@@ -63,7 +63,6 @@ const bookings = {
       completed: metric(1254),
       cancelled: metric(119),
       noShow: metric(97),
-      upcoming: metric(1),
     },
     trend: [],
     byStatus: [],
@@ -134,16 +133,18 @@ describe('the download says what the screen says', () => {
     expect(csv).not.toMatch(/From finished visits/);
   });
 
-  it('lists the four Bookings tiles, and not the Finished one the tab dropped', () => {
+  it('lists the three Bookings tiles, and not the ones the tab dropped', () => {
     const csv = reportToCsv(bookings, 'Staff');
 
     expect(rowFor(csv, copy.reports.bookingsTab.total)?.[1]).toBe('1287');
     expect(rowFor(csv, copy.status.didNotCome)?.[1]).toBe('97');
     expect(rowFor(csv, copy.status.cancelled)?.[1]).toBe('119');
-    expect(rowFor(csv, copy.reports.bookingsTab.upcoming)?.[1]).toBe('1');
-    // "Finished" is the biggest slice of the chart below the tiles; a tile for
-    // it repeated that chart's headline, which is why the tab has none.
+    // "Finished" is the biggest slice of the chart below the tiles; a tile
+    // for it repeated that chart's headline, which is why the tab has none.
     expect(csv).not.toMatch(/^Finished,/m);
+    // "Still to come" said the same number for every period, because it was a
+    // fact about today wearing a period's clothing.
+    expect(csv).not.toMatch(/Still to come/);
   });
 
   it('uses the app’s word for a called-off booking, not its own', () => {

@@ -278,11 +278,12 @@ export const copy = {
       bookingsNoShow: 'Bookings where nobody turned up, and nothing on that booking was done.',
       bookingsCancelled:
         'Bookings that were called off. If part of the visit still went ahead, it is not counted here.',
-      bookingsUpcoming: 'Bookings in these dates that are confirmed and have not started yet.',
       // ---- Clients
       clientsTotal:
         'Everyone on your list today, no matter how long ago they came. This one does not change with the dates you pick.',
       clientsNew: 'People who booked with you for the very first time in these dates.',
+      opportunities:
+        'Regulars who are due back or already late, sorted by what one visit from them is usually worth. Someone who often does not turn up counts for less. We leave out anyone already booked in, and anyone who asked us not to contact them. It takes three past visits to know someone\u2019s usual gap.',
       clientsOverdue:
         'People who have left it longer than they usually do between visits. We need three past visits to know someone\u2019s usual gap, so newer clients are not counted. This is about today, not the dates you pick.',
     },
@@ -352,7 +353,9 @@ export const copy = {
     peakOutside: (hours: string) => `${hours} booked outside your opening hours.`,
 
     opportunities: 'Worth a call this week',
-    opportunitiesHint: 'Regulars who are due back, or already late',
+    opportunitiesHint: 'Due back, and worth the most first',
+    /** The figure beside each name: what one visit from them is usually worth. */
+    perVisit: (amount: string) => `${amount} a visit`,
     overdueBy: (days: number) => `${days} days late`,
     dueNow: 'Due now',
     dueIn: (days: number) => `Due in ${days} days`,
@@ -390,7 +393,6 @@ export const copy = {
       // Bookings screen cannot say different things about the same state —
       // which is what GRW-020 shipped (conventions §3).
       total: 'Bookings',
-      upcoming: 'Still to come',
       totalHint: 'Called-off visits and no-shows are left out of this count',
       trend: 'Is work going up or down?',
       trendHint: 'Bookings in each stretch of the period you picked',

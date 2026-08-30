@@ -1,6 +1,7 @@
 'use client';
 
 import { copy } from '../lib/copy';
+import { InfoTip } from '../components/InfoTip';
 import { formatMoney, type ReportOverview } from '../lib/api';
 import {
   IconAlert,
@@ -190,7 +191,10 @@ export function OverviewTab({
       <section className="rp-card">
         <div className="rp-card-head">
           <div>
-            <h2>{copy.reports.opportunities}</h2>
+            <h2>
+              {copy.reports.opportunities}
+              <InfoTip label={copy.reports.opportunities}>{copy.reports.explain.opportunities}</InfoTip>
+            </h2>
             <p>{copy.reports.opportunitiesHint}</p>
           </div>
           <span className="rp-card-icon rp-amber-ink">
@@ -218,7 +222,11 @@ export function OverviewTab({
                     </span>
                   </span>
                   <span className="rp-opp-right">
-                    <span className="rp-opp-spend">{money(o.lifetimeSpendMinor)}</span>
+                    {/* What one recovered visit is worth, which is what the
+                        list is ordered by. It showed lifetime spend before —
+                        the number that made a ₹462 client look like a reason
+                        to pick up the phone. */}
+                    <span className="rp-opp-spend">{copy.reports.perVisit(money(o.avgTicketMinor))}</span>
                     <span className="rp-opp-status" style={{ color: late ? 'var(--rp-red)' : 'var(--rp-amber)' }}>
                       {o.daysOverdue === null
                         ? ''
