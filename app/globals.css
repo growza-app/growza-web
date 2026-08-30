@@ -10543,30 +10543,10 @@ tr.cust-row-click:hover { background: #f7f9f7; }
 
 /* ---------- "what does this count?" ---------- */
 
-/* Deliberately NOT positioned: the bubble resolves against the tile instead,
-   so it can be pinned to the tile's edges. Making this the containing block
-   is what centred the bubble on a 15px icon and sent the rightmost tile's
-   bubble 77px past the screen at 320px. */
 .rp-tip {
   display: inline-flex;
   align-items: center;
   margin-left: 5px;
-}
-
-/* The bubble's containing block — always something wide enough to read in.
-   A desktop KPI tile is, so the bubble sits under its own tile and the
-   association is obvious. One of the four figures in the Clients summary row
-   is not (42px at 320px), so those anchor to the row instead. */
-.rp-kpi,
-.rp-cs-figures { position: relative; }
-
-/* On a phone the tiles are two across and about 148px wide, which turns a
-   one-sentence explanation into seven lines. Below the crossover the bubble
-   anchors to the row instead and spans the card. Only one is ever open, so
-   nothing is ambiguous about which figure it belongs to. */
-@media (max-width: 860px) {
-  .rp-kpi { position: static; }
-  .rp-kpi-grid { position: relative; }
 }
 
 .rp-tip-btn {
@@ -10593,21 +10573,12 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   color: var(--accent-deep);
 }
 
-/* Pinned to the tile's own edges rather than centred on the icon, so it can
-   never reach past the card it sits in — a bubble that overflows at 320px
-   would be a new matrix failure introduced by the thing explaining the
-   others. It overlays what is below it; that is what the z-index is for. */
+/* Placed by InfoTip in viewport coordinates — see the reasoning there. The
+   stylesheet owns how it looks; where it goes depends on measurements CSS
+   cannot take. */
 .rp-tip-bubble {
-  position: absolute;
-  top: calc(100% - 4px);
-  left: 8px;
-  right: 8px;
-  /* Over-constrained on purpose: with left, right and a max-width all set,
-     the right edge gives, so the bubble is left-anchored and never wider
-     than a sentence wants to be. A tile at 4K is 858px, and one line of
-     explanation stretched across that is harder to read, not easier. */
-  max-width: 460px;
-  z-index: 20;
+  position: fixed;
+  z-index: 60;
   padding: 9px 11px;
   border: 1px solid var(--border);
   border-radius: 10px;
