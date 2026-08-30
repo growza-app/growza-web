@@ -3968,20 +3968,27 @@ select:focus-visible {
   margin-bottom: 12px;
 }
 
+/*
+ * Deliberately short. This band and the one under it were costing 306px above
+ * a list the owner opened the page to read — three rows of ten were visible
+ * at 1440x900. The figure is the point; the label sits beside it rather than
+ * above it, and the explanatory line is gone (two of the four restated their
+ * own label, and the two that defined something now do it on hover).
+ */
 .cust-kpi {
   display: flex;
-  align-items: flex-start;
-  gap: 11px;
+  align-items: center;
+  gap: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px 14px;
+  padding: 9px 12px;
 }
 
 .cust-kpi-icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 9px;
   background: var(--purple-soft);
   color: var(--purple-deep);
@@ -3990,25 +3997,21 @@ select:focus-visible {
 }
 
 .cust-kpi-icon svg {
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
 }
 
 .cust-kpi-label {
   font-size: 12.5px;
   color: var(--muted);
+  line-height: 1.25;
 }
 
 .cust-kpi-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 680;
   letter-spacing: -0.02em;
   line-height: 1.2;
-}
-
-.cust-kpi-sub {
-  font-size: 12px;
-  color: var(--muted);
 }
 
 /* Wraps the magnifier and the input as one control so the icon sits inside
@@ -9824,24 +9827,39 @@ tr.cust-row-click:hover { background: #f7f9f7; }
 
 /* ---------- Clients: the segment bands, which are also the filter ---------- */
 
-.cust-segments { padding-bottom: var(--sp-4); }
+/*
+ * The bands are a filter, not a report. They used to be laid out like one —
+ * a heading, a hint under it, four tall cards, a footnote — and cost 216px
+ * above the list. Everything explanatory now sits on one line with the
+ * heading, and each band is two tight lines.
+ */
+.cust-segments { padding: var(--sp-3) var(--sp-4); }
 
 .cust-segments-head {
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-3);
   flex-wrap: wrap;
 }
 
-.cust-segments-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
-.cust-segments-head p { margin: 3px 0 0; color: var(--muted); font-size: 12.5px; }
+.cust-segments-head h2 { margin: 0; font-size: 14px; font-weight: 700; }
+
+/* The hint and the never-been-in note share the heading's line: both are
+   asides, and neither earns a row of its own above a list this cramped. */
+.cust-segments-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+}
 
 .cust-segment-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--sp-3);
-  margin-top: var(--sp-4);
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
 }
 
 .cust-segment {
@@ -9851,8 +9869,8 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 4px solid var(--seg);
-  border-radius: 13px;
-  padding: 12px 13px;
+  border-radius: 11px;
+  padding: 8px 11px;
   min-width: 0;
 }
 
@@ -9869,11 +9887,17 @@ tr.cust-row-click:hover { background: #f7f9f7; }
 
 .cust-segment-label {
   display: flex;
-  align-items: center;
-  gap: 7px;
+  align-items: baseline;
+  gap: 6px;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--muted);
+  min-width: 0;
+}
+
+.cust-segment-label > span:last-child {
+  margin-left: auto;
+  flex: none;
 }
 
 .cust-segment-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--seg); flex: 0 0 8px; }
@@ -9882,9 +9906,10 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-size: 23px;
+  font-size: 19px;
   font-weight: 800;
-  margin-top: 6px;
+  margin-top: 2px;
+  line-height: 1.15;
 }
 
 .cust-segment-count em {
@@ -9894,15 +9919,8 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   color: var(--muted);
 }
 
-.cust-segment-range { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; }
-
-.cust-segments-foot {
-  margin: var(--sp-4) 0 0;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 12.5px;
-}
+/* The band's own window, kept beside its name rather than under its figure. */
+.cust-segment-range { font-size: 11px; color: var(--muted); font-weight: 500; }
 
 /* ---------- sortable column headers ---------- */
 
@@ -9933,4 +9951,34 @@ tr.cust-row-click:hover { background: #f7f9f7; }
 
 @media (max-width: 1100px) {
   .cust-segment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/*
+ * Clients rows, tightened.
+ *
+ * Scoped to this table on purpose: the shared cell padding is what every
+ * other list uses, and none of them has two bands of chrome above it. Here
+ * the rows were 73px each against 465px of room — five of ten visible — so
+ * the padding comes down and the secondary line under a cell stops carrying
+ * a full line-height of its own.
+ */
+.cust-fit .paged-table td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.cust-fit .paged-table td .muted,
+.cust-fit .paged-table .cust-phone {
+  line-height: 1.35;
+}
+
+.cust-fit .paged-table .avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.cust-fit .paged-table .cust-recency {
+  gap: 6px;
+  line-height: 1.35;
 }

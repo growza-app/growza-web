@@ -236,12 +236,25 @@ export function CustomersClient({
             rows than it counted (platform/segments.ts). */}
         <div className="card cust-segments">
           <div className="cust-segments-head">
-            <div>
-              <h2>{copy.clients.segmentsTitle}</h2>
-              <p>{copy.clients.segmentsHint}</p>
-            </div>
+            <h2>{copy.clients.segmentsTitle}</h2>
+            {/* Both asides on the heading's line. The hint has to stay — it is
+                what tells a hesitant reader the cards are tappable at all — and
+                the never-been-in count has to stay too, or the four bands look
+                like they should add up to the total above and never will. */}
+            <p>
+              {copy.clients.segmentsHint}
+              {stats.neverVisited > 0 && (
+                <>
+                  {' · '}
+                  {copy.clients.neverVisited(
+                    stats.neverVisited,
+                    stats.total > 0 ? Math.round((stats.neverVisited / stats.total) * 100) : 0,
+                  )}
+                </>
+              )}
+            </p>
             {status !== 'all' && (
-              <button type="button" className="btn btn-ghost" onClick={() => { setStatus('all'); setPageIndex(0); }}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setStatus('all'); setPageIndex(0); }}>
                 {copy.clients.clearFilter}
               </button>
             )}
@@ -270,26 +283,16 @@ export function CustomersClient({
                   <span className="cust-segment-label">
                     <span className="cust-segment-dot" />
                     {words.label}
+                    <span className="cust-segment-range">{words.range}</span>
                   </span>
                   <span className="cust-segment-count">
                     {seg.count}
                     <em>{seg.pct}%</em>
                   </span>
-                  <span className="cust-segment-range">{words.range}</span>
                 </button>
               );
             })}
           </div>
-          {/* Said out loud: without it the four bands look like they should
-              add up to the total above, and they never will. */}
-          {stats.neverVisited > 0 && (
-            <p className="cust-segments-foot">
-              {copy.clients.neverVisited(
-                stats.neverVisited,
-                stats.total > 0 ? Math.round((stats.neverVisited / stats.total) * 100) : 0,
-              )}
-            </p>
-          )}
         </div>
 
         <div className="card">
@@ -475,12 +478,15 @@ export function CustomersClient({
  */
 function Kpi({ label, value, sub, icon }: { label: string; value: string; sub: string; icon: ReactNode }) {
   return (
-    <div className="cust-kpi">
+    // `sub` becomes the tooltip rather than a third line. Two of the four
+    // restated their own label ("New this month" / "First seen this month");
+    // the two that genuinely defined something still do, on hover, without
+    // costing every screen a row of the list.
+    <div className="cust-kpi" title={sub}>
       <span className="cust-kpi-icon">{icon}</span>
-      <div>
+      <div style={{ minWidth: 0 }}>
         <div className="cust-kpi-label">{label}</div>
         <div className="cust-kpi-value">{value}</div>
-        <div className="cust-kpi-sub">{sub}</div>
       </div>
     </div>
   );
