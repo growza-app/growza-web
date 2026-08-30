@@ -10,7 +10,6 @@ import type {
   ReportInsights,
   ReportOverview,
   ReportRangeKey,
-  ReportRetention,
   ReportRevenue,
   ReportServices,
   ReportStaff,
@@ -22,7 +21,6 @@ import { CustomersTab } from './CustomersTab';
 import { InsightsTab } from './InsightsTab';
 import { OverviewTab } from './OverviewTab';
 import { ReportsShell } from './ReportsShell';
-import { RetentionTab } from './RetentionTab';
 import { RevenueTab } from './RevenueTab';
 import { ServicesTab } from './ServicesTab';
 import { StaffTab } from './StaffTab';
@@ -39,7 +37,6 @@ export type TabPayload =
   | { tab: 'services'; data: ReportServices }
   | { tab: 'staff'; data: ReportStaff }
   | { tab: 'customers'; data: ReportCustomers }
-  | { tab: 'retention'; data: ReportRetention }
   | { tab: 'insights'; data: ReportInsights }
   | null;
 
@@ -111,8 +108,6 @@ export function ReportsClient({
         <StaffTab data={payload.data} providerLabel={providerLabel} />
       ) : payload.tab === 'customers' ? (
         <CustomersTab data={payload.data} onSegment={goToSegment} onClient={setOpenClientId} />
-      ) : payload.tab === 'retention' ? (
-        <RetentionTab data={payload.data} />
       ) : (
         <InsightsTab data={payload.data} onTab={goToTab} />
       )}

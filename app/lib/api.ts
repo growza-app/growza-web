@@ -436,7 +436,6 @@ export type ReportTabKey =
   | 'bookings'
   | 'services'
   | 'staff'
-  | 'retention'
   | 'insights';
 
 export interface ReportRangeMeta {
@@ -516,7 +515,6 @@ export interface ReportOverview {
   neverVisited: number;
   segments: ReportSegment[];
   topServices: ReportNamedValue[];
-  peakHours: ReportHeatmap;
   opportunities: ReportOpportunity[];
 }
 
@@ -623,17 +621,10 @@ export interface ReportCustomers {
   avgIntervalDays: number | null;
   avgVisits: number;
   topCustomers: ReportTopCustomer[];
-}
 
-export interface ReportRetention {
-  range: ReportRangeMeta;
-  compare: boolean;
-  kpis: {
-    newCustomers: ReportMetric;
-    returning: ReportMetric;
-    repeatRatePct: ReportMetric;
-    avgIntervalDays: ReportMetric;
-  };
+  /* ---- coming-back figures, merged into this tab ---- */
+  repeatRatePct: ReportMetric;
+  returning: ReportMetric;
   newSeries: ReportPoint[];
   returningSeries: ReportPoint[];
   repeatRateTrend: ReportPoint[];
@@ -752,7 +743,6 @@ export const api = {
   reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportServices>('services', r, c, f, t),
   reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportStaff>('staff', r, c, f, t),
   reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportCustomers>('customers', r, c, f, t),
-  reportsRetention: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportRetention>('retention', r, c, f, t),
   reportsInsights: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportInsights>('insights', r, c, f, t),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),

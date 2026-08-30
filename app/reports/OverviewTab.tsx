@@ -11,7 +11,7 @@ import {
   IconRupee,
   IconUserPlus,
 } from '../components/icons';
-import { BarList, Heatmap, LineChart } from './charts';
+import { BarList, LineChart } from './charts';
 import { Kpi } from './Kpi';
 
 const SEGMENT_TONE: Record<string, string> = {
@@ -23,14 +23,6 @@ const SEGMENT_TONE: Record<string, string> = {
 
 function money(minor: number): string {
   return formatMoney(String(minor));
-}
-
-/** "3h 20m" — an owner reads hours, not 200 minutes. */
-function hoursAndMinutes(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  if (h === 0) return `${m}m`;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
 /**
@@ -186,77 +178,62 @@ export function OverviewTab({
         </section>
       </div>
 
-      <div className="rp-grid-2">
-        <section className="rp-card">
-          <h2>{copy.reports.peakHours}</h2>
-          <p className="rp-card-sub">{copy.reports.peakHoursHint}</p>
-          <Heatmap
-            days={data.peakHours.days}
-            hours={data.peakHours.hours}
-            grid={data.peakHours.grid}
-            describe={(day, hour, value) => `${day} ${hour} · ${Math.round(value * 100)}% of your busiest hour`}
-          />
-          {/* The grid is clamped to opening hours so it stays readable. Anything
-              booked outside them is reported here rather than disappearing. */}
-          {data.peakHours.outsideOpeningHoursMinutes > 0 && (
-            <p className="rp-card-foot">
-              {copy.reports.peakOutside(hoursAndMinutes(data.peakHours.outsideOpeningHoursMinutes))}
-            </p>
-          )}
-        </section>
-
-        <section className="rp-card">
-          <div className="rp-card-head">
-            <div>
-              <h2>{copy.reports.opportunities}</h2>
-              <p>{copy.reports.opportunitiesHint}</p>
-            </div>
-            <span className="rp-card-icon rp-amber-ink">
-              <IconFlame />
-            </span>
+      {/* The weekday × hour grid used to sit here too, showing the exact same
+          data as the one on Bookings — same query, same grid, two titles. One
+          of them had to go, and it is the one on the summary: "when do my
+          hours fill up" is a question about demand, which is what the Bookings
+          tab is for. */}
+      <section className="rp-card">
+        <div className="rp-card-head">
+          <div>
+            <h2>{copy.reports.opportunities}</h2>
+            <p>{copy.reports.opportunitiesHint}</p>
           </div>
-          {data.opportunities.length === 0 ? (
-            <p className="rp-empty">{copy.reports.notEnoughVisits}</p>
-          ) : (
-            <div className="rp-opps">
-              {data.opportunities.map((o) => {
-                const late = (o.daysOverdue ?? 0) > 0;
-                return (
-                  <button
-                    key={o.customerId}
-                    type="button"
-                    className="rp-opp"
-                    onClick={() => onClient(o.customerId)}
-                  >
-                    <span className="rp-avatar">{o.initial}</span>
-                    <span className="rp-opp-main">
-                      <span className="rp-opp-name">{o.name}</span>
-                      <span className="rp-opp-meta">
-                        {o.intervalDays ? copy.reports.usuallyEvery(o.intervalDays) : ''}
-                      </span>
+          <span className="rp-card-icon rp-amber-ink">
+            <IconFlame />
+          </span>
+        </div>
+        {data.opportunities.length === 0 ? (
+          <p className="rp-empty">{copy.reports.notEnoughVisits}</p>
+        ) : (
+          <div className="rp-opps">
+            {data.opportunities.map((o) => {
+              const late = (o.daysOverdue ?? 0) > 0;
+              return (
+                <button
+                  key={o.customerId}
+                  type="button"
+                  className="rp-opp"
+                  onClick={() => onClient(o.customerId)}
+                >
+                  <span className="rp-avatar">{o.initial}</span>
+                  <span className="rp-opp-main">
+                    <span className="rp-opp-name">{o.name}</span>
+                    <span className="rp-opp-meta">
+                      {o.intervalDays ? copy.reports.usuallyEvery(o.intervalDays) : ''}
                     </span>
-                    <span className="rp-opp-right">
-                      <span className="rp-opp-spend">{money(o.lifetimeSpendMinor)}</span>
-                      <span className="rp-opp-status" style={{ color: late ? 'var(--rp-red)' : 'var(--rp-amber)' }}>
-                        {o.daysOverdue === null
-                          ? ''
-                          : o.daysOverdue > 0
-                            ? copy.reports.overdueBy(o.daysOverdue)
-                            : o.daysOverdue === 0
-                              ? copy.reports.dueNow
-                              : copy.reports.dueIn(-o.daysOverdue)}
-                      </span>
+                  </span>
+                  <span className="rp-opp-right">
+                    <span className="rp-opp-spend">{money(o.lifetimeSpendMinor)}</span>
+                    <span className="rp-opp-status" style={{ color: late ? 'var(--rp-red)' : 'var(--rp-amber)' }}>
+                      {o.daysOverdue === null
+                        ? ''
+                        : o.daysOverdue > 0
+                          ? copy.reports.overdueBy(o.daysOverdue)
+                          : o.daysOverdue === 0
+                            ? copy.reports.dueNow
+                            : copy.reports.dueIn(-o.daysOverdue)}
                     </span>
-                    <span className="rp-opp-chev">
-                      <IconArrowRight />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </div>
+                  </span>
+                  <span className="rp-opp-chev">
+                    <IconArrowRight />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {empty && (
         <section className="rp-card rp-card-quiet">

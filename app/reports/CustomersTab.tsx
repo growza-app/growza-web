@@ -7,11 +7,12 @@ import {
   IconArrowRight,
   IconClock,
   IconCoins,
+  IconPercent,
   IconRepeat,
   IconStaff,
   IconUserPlus,
 } from '../components/icons';
-import { BarList, ReportTable, type Cell } from './charts';
+import { BarList, LineChart, ReportTable, type Cell } from './charts';
 import { Kpi } from './Kpi';
 import { Card, countBars, money } from './shared';
 
@@ -57,6 +58,8 @@ export function CustomersTab({
 }) {
   const c = copy.reports.customersTab;
   const { kpis } = data;
+  const labels = data.range.buckets.map((b) => b.label);
+  const lifetimeThin = data.lifetimeSample < data.lifetimeSampleFloor || data.avgLifetimeMonths === null;
 
   const rows = data.topCustomers.map((r) => {
     const lastTone =
@@ -85,15 +88,17 @@ export function CustomersTab({
 
   return (
     <div className="rp-stack">
-      {/* Three, not five. "Came back" belongs to the Coming back tab and
-          "Average spend" to Money — repeating them here gave the same figure
-          three homes and no tab a clear job. What is left is what only this
-          tab can say. */}
-      <div className="rp-kpi-grid rp-kpi-grid-3">
+      {/* Four. This tab used to be two — one for who the clients are, one for
+          whether they come back — and they read as near-duplicates because
+          they described the same people. Merged, the repeat rate belongs in
+          the headline row rather than on a page of its own. */}
+      <div className="rp-kpi-grid rp-kpi-grid-4">
         <Kpi icon={<IconStaff />} iconTone="var(--rp-blue)" label={c.total}
              value={String(kpis.total.value)} metric={kpis.total} compare={false} />
         <Kpi icon={<IconUserPlus />} iconTone="var(--rp-purple)" label={c.newClients}
              value={String(kpis.newCustomers.value)} metric={kpis.newCustomers} compare={data.compare} />
+        <Kpi icon={<IconPercent />} iconTone="var(--rp-teal)" label={c.repeatRate}
+             value={`${data.repeatRatePct.value}%`} metric={data.repeatRatePct} compare={data.compare} />
         {/* No comparison: "due back" describes right now, and a delta against
             last month's right-now would not mean anything. */}
         <Kpi icon={<IconAlert />} iconTone="var(--rp-red)" label={c.overdue}
@@ -151,6 +156,56 @@ export function CustomersTab({
             );
           })}
         </div>
+      </Card>
+
+      <h2 className="rp-section-heading">{c.comingBack}</h2>
+
+      <div className="rp-grid-2">
+        <Card title={c.mix} hint={c.mixHint}>
+          <LineChart
+            labels={labels}
+            series={[
+              { name: 'Regulars', color: 'var(--rp-brand)', values: data.returningSeries.map((p) => p.value) },
+              { name: 'New', color: 'var(--rp-blue)', values: data.newSeries.map((p) => p.value) },
+            ]}
+          />
+        </Card>
+
+        <section className="rp-card rp-retention-panel">
+          <div className="rp-headline-box">
+            <div className="rp-headline-label">
+              <span className="rp-card-icon"><IconPercent /></span>
+              {c.repeatShare}
+            </div>
+            <div className="rp-headline-value">
+              {data.repeatRevenueSharePct === null ? '—' : `${data.repeatRevenueSharePct}%`}
+            </div>
+            <p className="rp-headline-hint">{c.repeatShareHint}</p>
+          </div>
+          <div className="rp-figure-pair">
+            <div>
+              <span>{c.firstToSecond}</span>
+              <strong>{data.firstToSecondPct === null ? '—' : `${data.firstToSecondPct}%`}</strong>
+            </div>
+            <div>
+              <span>{c.lifetime}</span>
+              {/* Stated as a sample size, not as a confident average, until
+                  there are enough clients behind it to mean anything. */}
+              <strong>{lifetimeThin ? '—' : c.months(data.avgLifetimeMonths!)}</strong>
+            </div>
+          </div>
+          <p className="rp-card-foot">
+            {lifetimeThin ? c.thinSample(data.lifetimeSample, data.lifetimeSampleFloor) : c.panelBasis}
+          </p>
+        </section>
+      </div>
+
+      <Card title={c.trend} hint={c.trendHint}>
+        <LineChart
+          labels={labels}
+          series={[{ color: 'var(--rp-brand)', values: data.repeatRateTrend.map((p) => p.value), format: (v) => `${v}%` }]}
+          fill
+        />
       </Card>
 
       <div className="rp-grid-2">

@@ -9461,7 +9461,18 @@ tr.is-retired td {
   text-decoration: none;
 }
 
-/* ---------- retention panel ---------- */
+/* A heading inside the scroll, marking where one question ends and the next
+   begins. The Clients tab answers two — who they are, and whether they come
+   back — and without a divider the second half reads as more of the first. */
+.rp-section-heading {
+  margin: var(--sp-3) 0 calc(-1 * var(--sp-1));
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+/* ---------- coming-back panel ---------- */
 
 .rp-retention-panel {
   display: flex;

@@ -7,7 +7,7 @@ import { ReportsClient, type TabPayload } from './ReportsClient';
 export const dynamic = 'force-dynamic';
 
 const TABS = new Set<string>([
-  'overview', 'customers', 'revenue', 'bookings', 'services', 'staff', 'retention', 'insights',
+  'overview', 'customers', 'revenue', 'bookings', 'services', 'staff', 'insights',
 ]);
 
 const RANGES = new Set<string>([
@@ -76,7 +76,6 @@ export default async function ReportsPage({
       : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare, from, to) }
       : resolvedTab === 'staff' ? { tab: 'staff', data: await api.reportsStaff(range, compare, from, to) }
       : resolvedTab === 'customers' ? { tab: 'customers', data: await api.reportsCustomers(range, compare, from, to) }
-      : resolvedTab === 'retention' ? { tab: 'retention', data: await api.reportsRetention(range, compare, from, to) }
       : { tab: 'insights', data: await api.reportsInsights(range, compare, from, to) };
   } catch {
     payload = null;

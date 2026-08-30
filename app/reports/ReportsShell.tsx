@@ -14,7 +14,6 @@ const TAB_ORDER: ReportTabKey[] = [
   'bookings',
   'services',
   'staff',
-  'retention',
   'insights',
 ];
 

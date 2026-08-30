@@ -229,17 +229,15 @@ export const copy = {
       bookings: 'Bookings',
       services: 'Services',
       staff: 'Staff',
-      retention: 'Coming back',
       insights: 'What to do',
     },
     subtitles: {
       overview: 'How is your business doing?',
-      customers: 'Who are your best clients?',
+      customers: 'Who are your clients, and do they come back?',
       revenue: 'Where is your money coming from?',
       bookings: 'How much work do you have?',
       services: 'Which services actually earn?',
       staff: 'Who is bringing in the most?',
-      retention: 'Who is coming back?',
       insights: 'What should you do this week?',
     },
 
@@ -278,8 +276,6 @@ export const copy = {
     revenueTrend: 'Money over time',
     bookingTrend: 'Bookings over time',
     topServices: 'Top services by money',
-    peakHours: 'When you are busiest',
-    peakHoursHint: 'Where your booked time lands across a normal week',
     peakOutside: (hours: string) => `${hours} booked outside your opening hours.`,
 
     opportunities: 'Worth a call this week',
@@ -323,13 +319,18 @@ export const copy = {
       total: 'Bookings',
       upcoming: 'Still to come',
       totalHint: 'Called-off visits and no-shows are left out of this count',
-      trend: 'Bookings over time',
+      trend: 'Is work going up or down?',
+      trendHint: 'Bookings in each stretch of the period you picked',
       status: 'How they ended',
       statusHint: 'Every booking, including the ones called off',
       source: 'Where they came from',
       sourceHint: 'Booked on WhatsApp, or added by you at the desk',
-      peak: 'When the work lands',
-      peakHint: 'Booked time across a normal week',
+      // Sits beside the trend above it, and the two were read as the same
+      // chart twice. They are not: one is whether work is growing over the
+      // period, this one is which hours of a week fill up. The titles now say
+      // which is which instead of both saying "time".
+      peak: 'Your busiest hours',
+      peakHint: 'Which hours of the week fill up, averaged across the period',
     },
 
     // ---- Services ----
@@ -403,26 +404,22 @@ export const copy = {
       colInterval: 'Comes every',
       daysAgo: (n: number) => `${n} days ago`,
       neverIn: 'never been in',
-    },
 
-    // ---- Coming back ----
-    retentionTab: {
+      // Merged in from what used to be a separate "Coming back" tab. It
+      // described the same people from a second angle, which is why the two
+      // read as near-duplicates of each other.
       repeatRate: 'Came back',
-      repeatRateHint: 'Share of clients who had been in before',
-      returning: 'Regulars seen',
-      avgInterval: 'Usual gap, all time',
+      comingBack: 'Are they coming back?',
       mix: 'New clients and regulars',
       mixHint: 'Clients seen over time, split by whether they had been before',
       repeatShare: 'Regulars brought in',
       repeatShareHint: 'of the money you earned in this period',
       firstToSecond: 'Booked a second time',
       lifetime: 'How long clients stay',
-      // The two figures beneath the headline are lifetime facts about the
-      // client base, not facts about the period the picker is set to. Sitting
-      // them under a period figure without saying so invites the wrong read.
-      panelBasis: 'These two cover every client you have ever had, not just this period.',
       months: (n: number) => `${n} months`,
       trend: 'How many come back, over time',
+      trendHint: 'Share of clients in each stretch who had been in before',
+      panelBasis: 'These two cover every client you have ever had, not just this period.',
       thinSample: (n: number, floor: number) =>
         `Only ${n} clients have been in more than once — too few to work out an average until there are ${floor}.`,
     },
@@ -446,7 +443,7 @@ export const copy = {
       ctas: {
         growth: 'See the money',
         quietCustomers: 'See these clients',
-        repeatRevenue: 'See who comes back',
+        repeatRevenue: 'See these clients',
         peakWindow: 'See bookings',
         overdueRegulars: 'See these clients',
         bestPerBooking: 'See services',

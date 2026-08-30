@@ -51,7 +51,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
              value={String(kpis.upcoming.value)} metric={kpis.upcoming} compare={false} />
       </div>
 
-      <Card title={c.trend} hint={`${c.totalHint} · ${data.range.label}`} figure={kpis.total.value}>
+      <Card title={c.trend} hint={`${c.trendHint} · ${data.range.label}`} figure={kpis.total.value}>
         {kpis.total.value === 0 ? (
           <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
         ) : (
