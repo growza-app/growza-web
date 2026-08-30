@@ -76,9 +76,11 @@ export function ReportsClient({
     router.push(`/reports?${query.toString()}`);
   };
 
-  // Segment cards lead to the Clients page filtered to that segment — the
-  // same four words, the same boundaries, the same rows (conventions §5).
-  const goToSegment = (segment: string) => router.push(`/customers?status=${segment}`);
+  // A band leads to the Clients page filtered to it — the same four words,
+  // the same boundaries, the same rows (conventions §5). Reports counts them;
+  // the Clients page is where you work through them.
+  const goToSegment = (segment: string) =>
+    router.push(segment === 'all' ? '/customers' : `/customers?status=${segment}`);
 
   return (
     <ReportsShell
@@ -107,7 +109,12 @@ export function ReportsClient({
       ) : payload.tab === 'staff' ? (
         <StaffTab data={payload.data} providerLabel={providerLabel} />
       ) : payload.tab === 'customers' ? (
-        <CustomersTab data={payload.data} onSegment={goToSegment} onClient={setOpenClientId} />
+        <CustomersTab
+          data={payload.data}
+          status={params.get('status') ?? 'all'}
+          onSegment={goToSegment}
+          onClient={setOpenClientId}
+        />
       ) : (
         <InsightsTab data={payload.data} onTab={goToTab} />
       )}

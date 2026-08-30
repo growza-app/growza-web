@@ -270,7 +270,10 @@ export const copy = {
       inactive: 'Gone quiet',
     },
     segmentsTitle: 'How your clients are doing',
+    /** Overview has no client-count tile, so its version carries the total. */
     segmentsHint: (total: number) => `${total} clients, by how long since they were last in`,
+    /** The Clients tab shows the total in its own figure row, so it only needs the affordance. */
+    segmentsTapHint: 'Tap one to see just those',
     neverVisited: (n: number) => `${n} have not been in yet, so they are in none of these.`,
 
     revenueTrend: 'Money over time',
@@ -377,16 +380,28 @@ export const copy = {
       newClients: 'New clients',
       overdue: 'Due back',
       overdueHint: 'Past the gap they normally leave between visits',
-      opportunities: 'Who to contact',
-      opportunitiesHint: 'Grouped by what to do about them',
+      opportunities: 'Worth knowing',
       viewClients: 'See these clients',
+      /**
+       * Three groups, not five.
+       *
+       * "Gone quiet" here counted everyone 30+ days away — which is the Due a
+       * visit, Slipping away and Gone quiet bands added together, under a name
+       * one of those bands already uses. Two numbers under two identical words
+       * on one screen is the defect conventions §3 exists to stop, and it was
+       * on screen: 1,081 here against 328 in the bands.
+       *
+       * "Due back" was worse: the same figure as the tile directly above it.
+       *
+       * What is left is what the recency bands cannot say — how often someone
+       * comes and how much they spend.
+       */
       cards: {
-        quiet30: { title: 'Gone quiet', body: (n: number) => `${n} clients have not been in for a month or more` },
-        overdue: { title: 'Due back', body: (n: number) => `${n} are past the gap they normally leave` },
-        loyal: { title: 'Regulars', body: (n: number) => `${n} have been in 5 times or more` },
-        highValue: { title: 'Big spenders', body: (n: number) => `${n} have spent over ₹10,000 with you` },
-        atRisk: { title: 'Regulars slipping', body: (n: number) => `${n} used to come often and have not been in for 2 months` },
+        loyal: { title: 'Regulars', hint: 'been in 5+ times' },
+        highValue: { title: 'Big spenders', hint: 'spent over ₹10,000' },
+        atRisk: { title: 'Regulars who stopped', hint: 'came often, gone 2 months' },
       },
+      neverBand: 'Never been in',
       spend: 'What people spend',
       spendHint: 'Every client, by what they have spent with you in total — not just this period',
       frequency: 'How often they come',
@@ -405,23 +420,14 @@ export const copy = {
       daysAgo: (n: number) => `${n} days ago`,
       neverIn: 'never been in',
 
-      // Merged in from what used to be a separate "Coming back" tab. It
-      // described the same people from a second angle, which is why the two
-      // read as near-duplicates of each other.
+      /**
+       * All that survives of the old "Coming back" tab. Its three charts —
+       * new-vs-regulars over time, the repeat-revenue share and the repeat-rate
+       * trend — came out again: three graphs answering, at length, what this
+       * one tile answers in a number, on a tab an owner opens to find people
+       * to call.
+       */
       repeatRate: 'Came back',
-      comingBack: 'Are they coming back?',
-      mix: 'New clients and regulars',
-      mixHint: 'Clients seen over time, split by whether they had been before',
-      repeatShare: 'Regulars brought in',
-      repeatShareHint: 'of the money you earned in this period',
-      firstToSecond: 'Booked a second time',
-      lifetime: 'How long clients stay',
-      months: (n: number) => `${n} months`,
-      trend: 'How many come back, over time',
-      trendHint: 'Share of clients in each stretch who had been in before',
-      panelBasis: 'These two cover every client you have ever had, not just this period.',
-      thinSample: (n: number, floor: number) =>
-        `Only ${n} clients have been in more than once — too few to work out an average until there are ${floor}.`,
     },
 
     // ---- What to do ----

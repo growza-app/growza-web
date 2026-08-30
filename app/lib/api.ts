@@ -621,7 +621,6 @@ export interface ReportCustomers {
   kpis: {
     total: ReportMetric;
     newCustomers: ReportMetric;
-    returning: ReportMetric;
     avgSpendMinor: ReportMetric;
     overdue: ReportMetric;
   };
@@ -633,18 +632,8 @@ export interface ReportCustomers {
   avgIntervalDays: number | null;
   avgVisits: number;
   topCustomers: ReportTopCustomer[];
-
-  /* ---- coming-back figures, merged into this tab ---- */
+  /** Share of the period's clients who had been in before. One tile, no chart. */
   repeatRatePct: ReportMetric;
-  returning: ReportMetric;
-  newSeries: ReportPoint[];
-  returningSeries: ReportPoint[];
-  repeatRateTrend: ReportPoint[];
-  repeatRevenueSharePct: number | null;
-  firstToSecondPct: number | null;
-  avgLifetimeMonths: number | null;
-  lifetimeSample: number;
-  lifetimeSampleFloor: number;
 }
 
 export type ReportInsightKey =
