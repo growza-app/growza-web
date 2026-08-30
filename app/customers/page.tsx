@@ -10,13 +10,14 @@ export default async function CustomersPage({
   searchParams: Promise<{ status?: string; sort?: string }>;
 }) {
   const params = await searchParams;
-  // Deep-linked from Home's "Needs attention" card (?status=lapsed&sort=spent)
-  // — validated against the real union rather than cast, so a stray/typo'd
-  // query param falls back to the normal defaults instead of ever reaching
-  // the API with a bad value.
-  // Deep links arrive from Home's "needs attention" card and from every
-  // Reports segment card. `lapsed` is still honoured — it was the one band
-  // that Due and At risk replaced, so an older bookmark keeps working.
+  // Deep-linked from Home's "Needs attention" card (?status=at_risk&sort=spent)
+  // and from every Reports segment card — validated against the real union
+  // rather than cast, so a stray/typo'd query param falls back to the normal
+  // defaults instead of ever reaching the API with a bad value.
+  // `lapsed` is still honoured: it was the one wide band that Due a visit and
+  // Slipping away replaced, so an older bookmark keeps working. Nothing links
+  // to it any more — Home used to, under the narrower band's name, which is
+  // how it came to show 730 where the Clients page showed 462.
   const STATUSES = new Set(['active', 'due', 'at_risk', 'inactive', 'lapsed', 'never']);
   const SORTS = new Set(['recent', 'spent', 'visits', 'name']);
   const status: CustomerStatusFilter =

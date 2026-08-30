@@ -101,7 +101,7 @@ export function CustomersClient({
 }: {
   initialStats: CustomerStats;
   initialPage: CustomerPage;
-  /** From the URL (?status=lapsed, e.g. the Home "Needs attention" deep link) — defaults to 'all'. */
+  /** From the URL (?status=at_risk, e.g. the Home "Needs attention" deep link) — defaults to 'all'. */
   initialStatus?: CustomerStatusFilter;
   /** From the URL (?sort=spent) — defaults to 'recent'. */
   initialSort?: CustomerSort;

@@ -2281,6 +2281,16 @@ select:focus-visible {
 
 .sched-actions .chip {
   white-space: nowrap;
+  /* One lane, so the call buttons form a straight column.
+     The chip is right-aligned and its width follows its label — "Walk-in" is
+     76px, "Didn't come" is 106px — so the button sitting beside it shifted up
+     to 30px from row to row and the edge read as ragged. The width is the
+     widest label in copy.status; centring keeps the shorter ones balanced in
+     the lane rather than hanging off one side. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 106px;
 }
 
 /* ---------- bottom sheet ---------- */
@@ -6634,7 +6644,7 @@ select:focus-visible {
      the narrowest one clipped under the floating "+" button and its label
      wrapped to a single truncated word. Two stays comfortable (138px+ per
      card) all the way down to 320px, so a third tier was not needed. */
-  .attention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; }
+  .attention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; min-width: 78px; }
   .mobile-only-section { display: block; }
   /* .home-rail's own (unconditional, later-in-file) display:flex would
      otherwise beat the earlier .desktop-only{display:none} rule at equal

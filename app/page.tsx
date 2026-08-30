@@ -173,21 +173,22 @@ export default async function DashboardPage() {
     appointments: Appointment[],
     me,
     providers: Provider[],
-    lapsedCount: number,
+    atRiskCount: number,
     providerDay: ProviderDay | null = null;
 
   try {
-    let lapsed;
-    [stats, appointments, me, providers, lapsed] = await Promise.all([
+    let atRisk;
+    [stats, appointments, me, providers, atRisk] = await Promise.all([
       api.todayStats(),
       api.appointments(),
       api.me(),
       api.providers(),
       // Just the count for the attention card — the list itself lives on
-      // the Clients page (?status=lapsed&sort=spent), one click away.
-      api.customers({ status: 'lapsed', limit: 1 }),
+      // the Clients page (?status=at_risk&sort=spent), one click away, and
+      // the filter there is the same band this counts.
+      api.customers({ status: 'at_risk', limit: 1 }),
     ]);
-    lapsedCount = lapsed.total;
+    atRiskCount = atRisk.total;
     providerDay = await api.providerDay().catch(() => null);
   } catch {
     return (
@@ -212,24 +213,51 @@ export default async function DashboardPage() {
   const countBookings = (list: Appointment[]) => new Set(list.map(bookingKey)).size;
 
   const newCustomers = countBookings(appointments.filter((appointment) => appointment.customerIsNew));
-  const comingUp = countBookings(
-    appointments.filter((appointment) => {
-      const start = new Date(appointment.startAt).getTime();
-      return appointment.status === 'confirmed' && start >= now.getTime() && start <= now.getTime() + 2 * 60 * 60 * 1000;
-    }),
-  );
   const attention = [
-    { label: 'Unconfirmed booking', value: Math.max(stats.bookingsToday - stats.completedToday - comingUp, 0), tone: 'amber', href: '/appointments', icon: <IconBell /> },
+    {
+      /**
+       * Bookings whose time has gone and that nobody has marked done or
+       * didn't-come. That is the only thing here the status vocabulary can
+       * honestly name: there is no "unconfirmed" booking in this system —
+       * `confirmed` IS the live state, and a hold is a separate 5-minute-TTL
+       * row that never appears on this list. The card was counting confirmed
+       * bookings and calling them unconfirmed.
+       *
+       * The old sum was `bookingsToday - completedToday - comingUp`. It landed
+       * on the right figure this evening only because nothing was within two
+       * hours; subtracting `comingUp` means the count FALLS as appointments
+       * draw near, which is backwards for a card asking to be acted on.
+       *
+       * `endAt`, not `startAt` — a booking still running isn't overdue.
+       */
+      label: 'Not marked done yet',
+      value: countBookings(
+        appointments.filter(
+          (a) => a.status === 'confirmed' && new Date(a.endAt).getTime() <= now.getTime(),
+        ),
+      ),
+      tone: 'amber',
+      href: '/appointments?status=confirmed',
+      icon: <IconBell />,
+    },
     { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments?status=cancelled', icon: <IconCalendar /> },
     {
-      // The backing filter is the win-back segment: last visit 30-89 days ago,
-      // deliberately bounded so it stays distinct from Inactive. The old label
-      // ("Haven't visited in 30 days") promised 30-or-more, so a client gone
-      // six months was missing from a card that appeared to count them.
-      label: 'Slipping away · 30-90 days',
-      value: lapsedCount,
+      /**
+       * One band, and the same one the word names everywhere else.
+       *
+       * This counted `lapsed` — the single wide band that Due a visit and
+       * Slipping away replaced — while wearing the narrower band's name. So
+       * Home said 730 Slipping away and the Clients page said 462, because
+       * Home was quietly adding Due a visit's 268 to it. Same defect as the
+       * Reports one conventions §3 was written for, in a second place.
+       *
+       * Labels come from copy.clients.segments so the card cannot drift from
+       * the band card it links to.
+       */
+      label: `${copy.clients.segments.at_risk.label} · ${copy.clients.segments.at_risk.range}`,
+      value: atRiskCount,
       tone: 'violet',
-      href: '/customers?status=lapsed&sort=spent',
+      href: '/customers?status=at_risk&sort=spent',
       icon: <IconStaff />,
     },
   ];
