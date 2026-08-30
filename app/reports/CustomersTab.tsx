@@ -49,9 +49,11 @@ const CARD_ICON: Record<string, React.ReactNode> = {
 export function CustomersTab({
   data,
   onSegment,
+  onClient,
 }: {
   data: ReportCustomers;
   onSegment: (segment: string) => void;
+  onClient: (id: string) => void;
 }) {
   const c = copy.reports.customersTab;
   const { kpis } = data;
@@ -83,16 +85,16 @@ export function CustomersTab({
 
   return (
     <div className="rp-stack">
-      <div className="rp-kpi-grid rp-kpi-grid-5">
+      {/* Three, not five. "Came back" belongs to the Coming back tab and
+          "Average spend" to Money — repeating them here gave the same figure
+          three homes and no tab a clear job. What is left is what only this
+          tab can say. */}
+      <div className="rp-kpi-grid rp-kpi-grid-3">
         <Kpi icon={<IconStaff />} iconTone="var(--rp-blue)" label={c.total}
              value={String(kpis.total.value)} metric={kpis.total} compare={false} />
         <Kpi icon={<IconUserPlus />} iconTone="var(--rp-purple)" label={c.newClients}
              value={String(kpis.newCustomers.value)} metric={kpis.newCustomers} compare={data.compare} />
-        <Kpi icon={<IconRepeat />} iconTone="var(--rp-brand)" label={c.returning}
-             value={String(kpis.returning.value)} metric={kpis.returning} compare={data.compare} />
-        <Kpi icon={<IconCoins />} iconTone="var(--rp-amber)" label={c.avgSpend}
-             value={money(kpis.avgSpendMinor.value)} metric={kpis.avgSpendMinor} compare={data.compare} />
-        {/* No comparison: "overdue" describes right now, and a delta against
+        {/* No comparison: "due back" describes right now, and a delta against
             last month's right-now would not mean anything. */}
         <Kpi icon={<IconAlert />} iconTone="var(--rp-red)" label={c.overdue}
              value={String(kpis.overdue.value)} metric={kpis.overdue} compare={false} />
@@ -142,7 +144,7 @@ export function CustomersTab({
                     every proactive message goes through the compliance funnel
                     with opt-in and an approved template (05, ADR-11). */}
                 <a className="rp-opp-card-cta" href="/customers">
-                  {copy.reports.opportunities}
+                  {c.viewClients}
                   <span className="rp-opp-chev"><IconArrowRight /></span>
                 </a>
               </div>
@@ -174,6 +176,7 @@ export function CustomersTab({
         <ReportTable
           columns={[c.colClient, c.colVisits, c.colSpend, c.colAvg, c.colLast, c.colFavourite, c.colInterval]}
           rows={rows}
+          onRowClick={onClient}
           emptyText={copy.reports.noData}
         />
       </Card>

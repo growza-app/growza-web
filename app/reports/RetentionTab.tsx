@@ -2,7 +2,7 @@
 
 import { copy } from '../lib/copy';
 import type { ReportRetention } from '../lib/api';
-import { IconPercent, IconRepeat, IconClock, IconUserPlus } from '../components/icons';
+import { IconClock, IconPercent, IconRepeat } from '../components/icons';
 import { LineChart } from './charts';
 import { Kpi } from './Kpi';
 import { Card } from './shared';
@@ -24,13 +24,14 @@ export function RetentionTab({ data }: { data: ReportRetention }) {
 
   return (
     <div className="rp-stack">
-      <div className="rp-kpi-grid rp-kpi-grid-4">
-        <Kpi icon={<IconUserPlus />} iconTone="var(--rp-purple)" label={c.newClients}
-             value={String(kpis.newCustomers.value)} metric={kpis.newCustomers} compare={data.compare} />
-        <Kpi icon={<IconRepeat />} iconTone="var(--rp-brand)" label={c.returning}
-             value={String(kpis.returning.value)} metric={kpis.returning} compare={data.compare} />
+      {/* Three, not four. "New clients" is the Clients tab's figure and is
+          plotted right below anyway, so a tile for it here was a third copy
+          of one number. */}
+      <div className="rp-kpi-grid rp-kpi-grid-3">
         <Kpi icon={<IconPercent />} iconTone="var(--rp-teal)" label={c.repeatRate}
              value={`${kpis.repeatRatePct.value}%`} metric={kpis.repeatRatePct} compare={data.compare} />
+        <Kpi icon={<IconRepeat />} iconTone="var(--rp-brand)" label={c.returning}
+             value={String(kpis.returning.value)} metric={kpis.returning} compare={data.compare} />
         <Kpi icon={<IconClock />} iconTone="var(--rp-amber)" label={c.avgInterval}
              value={kpis.avgIntervalDays.value ? `${kpis.avgIntervalDays.value} days` : '—'}
              metric={kpis.avgIntervalDays} compare={false} />
@@ -41,8 +42,8 @@ export function RetentionTab({ data }: { data: ReportRetention }) {
           <LineChart
             labels={labels}
             series={[
-              { name: c.returning, color: 'var(--rp-brand)', values: data.returningSeries.map((p) => p.value) },
-              { name: c.newClients, color: 'var(--rp-blue)', values: data.newSeries.map((p) => p.value) },
+              { name: 'Regulars', color: 'var(--rp-brand)', values: data.returningSeries.map((p) => p.value) },
+              { name: 'New', color: 'var(--rp-blue)', values: data.newSeries.map((p) => p.value) },
             ]}
           />
         </Card>
@@ -76,7 +77,7 @@ export function RetentionTab({ data }: { data: ReportRetention }) {
         </section>
       </div>
 
-      <Card title={c.trend} hint={c.trendHint}>
+      <Card title={c.trend} hint={c.repeatRateHint}>
         <LineChart
           labels={labels}
           series={[{ color: 'var(--rp-brand)', values: data.repeatRateTrend.map((p) => p.value), format: (v) => `${v}%` }]}

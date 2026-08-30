@@ -2,7 +2,7 @@
 
 import { copy } from '../lib/copy';
 import type { ReportBookings } from '../lib/api';
-import { IconAppointments, IconBan, IconCheck, IconClock, IconUserCheck } from '../components/icons';
+import { IconAppointments, IconBan, IconClock, IconUserCheck } from '../components/icons';
 import { BarList, Donut, Heatmap, LineChart } from './charts';
 import { Kpi } from './Kpi';
 import { Card, countBars, hoursAndMinutes } from './shared';
@@ -36,16 +36,17 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
 
   return (
     <div className="rp-stack">
-      <div className="rp-kpi-grid rp-kpi-grid-5">
+      {/* Four, not five. "Finished" is the biggest slice of the chart
+          directly below, so a tile for it repeated the chart's headline. The
+          three that stay are the ones an owner acts on — and two of them are
+          better when they fall, so their arrows read the other way round. */}
+      <div className="rp-kpi-grid rp-kpi-grid-4">
         <Kpi icon={<IconAppointments />} iconTone="var(--rp-blue)" label={c.total}
              value={String(kpis.total.value)} metric={kpis.total} compare={data.compare} />
-        <Kpi icon={<IconCheck />} iconTone="var(--rp-green-ink)" label={copy.status.done}
-             value={String(kpis.completed.value)} metric={kpis.completed} compare={data.compare} />
-        {/* Fewer cancellations and no-shows is better, so the arrow colours invert. */}
-        <Kpi icon={<IconBan />} iconTone="var(--rp-red)" label={copy.status.cancelled}
-             value={String(kpis.cancelled.value)} metric={kpis.cancelled} compare={data.compare} lowerIsBetter />
         <Kpi icon={<IconUserCheck />} iconTone="var(--rp-purple)" label={copy.status.didNotCome}
              value={String(kpis.noShow.value)} metric={kpis.noShow} compare={data.compare} lowerIsBetter />
+        <Kpi icon={<IconBan />} iconTone="var(--rp-red)" label={copy.status.cancelled}
+             value={String(kpis.cancelled.value)} metric={kpis.cancelled} compare={data.compare} lowerIsBetter />
         <Kpi icon={<IconClock />} iconTone="var(--rp-teal)" label={c.upcoming}
              value={String(kpis.upcoming.value)} metric={kpis.upcoming} compare={false} />
       </div>

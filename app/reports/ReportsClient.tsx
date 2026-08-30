@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { copy } from '../lib/copy';
@@ -15,6 +16,7 @@ import type {
   ReportStaff,
   ReportTabKey,
 } from '../lib/api';
+import { ClientProfileCard } from '../components/ClientProfileCard';
 import { BookingsTab } from './BookingsTab';
 import { CustomersTab } from './CustomersTab';
 import { InsightsTab } from './InsightsTab';
@@ -54,6 +56,7 @@ export function ReportsClient({
   compare,
   staffTabAvailable,
   providerLabel,
+  labels,
   payload,
 }: {
   tab: ReportTabKey;
@@ -61,10 +64,14 @@ export function ReportsClient({
   compare: boolean;
   staffTabAvailable: boolean;
   providerLabel: string;
+  labels: Record<string, string>;
   payload: TabPayload;
 }) {
   const router = useRouter();
   const params = useSearchParams();
+  // Which client's card is open. A row opens it over the report rather than
+  // navigating, so the owner keeps their place in the list they were reading.
+  const [openClientId, setOpenClientId] = useState<string | null>(null);
 
   const goToTab = (next: string) => {
     const query = new URLSearchParams(params.toString());
@@ -77,7 +84,13 @@ export function ReportsClient({
   const goToSegment = (segment: string) => router.push(`/customers?status=${segment}`);
 
   return (
-    <ReportsShell tab={tab} range={range} compare={compare} staffTabAvailable={staffTabAvailable}>
+    <ReportsShell
+      tab={tab}
+      range={range}
+      compare={compare}
+      staffTabAvailable={staffTabAvailable}
+      labels={labels}
+    >
       {payload === null ? (
         <section className="rp-card rp-card-quiet">
           <div>
@@ -86,7 +99,7 @@ export function ReportsClient({
           </div>
         </section>
       ) : payload.tab === 'overview' ? (
-        <OverviewTab data={payload.data} onTab={goToTab} />
+        <OverviewTab data={payload.data} onTab={goToTab} onClient={setOpenClientId} />
       ) : payload.tab === 'revenue' ? (
         <RevenueTab data={payload.data} />
       ) : payload.tab === 'bookings' ? (
@@ -96,12 +109,13 @@ export function ReportsClient({
       ) : payload.tab === 'staff' ? (
         <StaffTab data={payload.data} providerLabel={providerLabel} />
       ) : payload.tab === 'customers' ? (
-        <CustomersTab data={payload.data} onSegment={goToSegment} />
+        <CustomersTab data={payload.data} onSegment={goToSegment} onClient={setOpenClientId} />
       ) : payload.tab === 'retention' ? (
         <RetentionTab data={payload.data} />
       ) : (
         <InsightsTab data={payload.data} onTab={goToTab} />
       )}
+      {openClientId && <ClientProfileCard clientId={openClientId} onClose={() => setOpenClientId(null)} />}
     </ReportsShell>
   );
 }

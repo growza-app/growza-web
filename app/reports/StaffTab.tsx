@@ -62,7 +62,7 @@ export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerL
         </Card>
       </div>
 
-      <Card title={`${providerLabel} ${c.table.toLowerCase()}`} hint={c.tableHint}>
+      <Card title={`${providerLabel} ${c.table.toLowerCase()}`}>
         <ReportTable
           columns={[c.colName, c.colBookings, c.colCompleted, c.colRevenue, c.colAvg, c.colUtilisation, c.colNoShow]}
           rows={rows}

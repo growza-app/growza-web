@@ -18,6 +18,7 @@ import { PageHeader } from '../components/PageHeader';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
 import { IconSearch, IconUserPlus, IconWhatsApp } from '../components/icons';
+import { ClientProfileCard } from '../components/ClientProfileCard';
 
 /** Matches the backend's own derived-status window (customer/repository.ts). */
 
@@ -65,6 +66,9 @@ export function CustomersClient({
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const searchParams = useSearchParams();
+  // Which client's card is open. Null closes it; the list keeps its scroll
+  // position because nothing navigates away.
+  const [openClientId, setOpenClientId] = useState<string | null>(null);
   // ?add=1 (from the Home quick-actions panel) opens the sheet straight away
   // instead of landing here and requiring a second click.
   const [adding, setAdding] = useState(() => searchParams.get('add') === '1');
@@ -219,7 +223,20 @@ export function CustomersClient({
                 </tr>
               }
               cards={visibleRows.map((c) => (
-                <div className="cust-card" key={c.id} data-row>
+                <div
+                  className="cust-card cust-row-click"
+                  key={c.id}
+                  data-row
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setOpenClientId(c.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpenClientId(c.id);
+                    }
+                  }}
+                >
                   <div className="cust-card-head">
                     <span className="avatar">{initials(c.name)}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -227,7 +244,15 @@ export function CustomersClient({
                         {c.name ?? 'Unnamed'}
                         {recencyChip(clientRecency(c.lastBookingAt))}
                       </div>
-                      <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
+                      {/* Stops the row's own click: tapping the number should
+                          open WhatsApp, not the card behind it. */}
+                      <a
+                        className="cust-phone"
+                        href={`https://wa.me/${dialable(c.waPhone)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <IconWhatsApp />
                         {formatPhone(c.waPhone)}
                       </a>
@@ -248,7 +273,7 @@ export function CustomersClient({
               {/* Desktop: a scannable table. Mobile: the same rows as cards — a
                   6-column table can't be read on a phone without pinch-zoom. */}
               {visibleRows.map((c) => (
-                <tr key={c.id} data-row>
+                <tr key={c.id} data-row className="cust-row-click" onClick={() => setOpenClientId(c.id)}>
                   <td>
                     <div className="cust-name-cell">
                       <span className="avatar">{initials(c.name)}</span>
@@ -256,7 +281,13 @@ export function CustomersClient({
                     </div>
                   </td>
                   <td>
-                    <a className="cust-phone" href={`https://wa.me/${dialable(c.waPhone)}`} target="_blank" rel="noreferrer">
+                    <a
+                      className="cust-phone"
+                      href={`https://wa.me/${dialable(c.waPhone)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <IconWhatsApp />
                       {formatPhone(c.waPhone)}
                     </a>
@@ -290,6 +321,9 @@ export function CustomersClient({
       </div>
 
       {adding && <AddCustomerModal singular={singular} onClose={() => setAdding(false)} onSaved={refresh} />}
+      {/* The same card the Reports Clients tab opens. One component, so a
+          name tapped in either place tells the same story. */}
+      {openClientId && <ClientProfileCard clientId={openClientId} onClose={() => setOpenClientId(null)} />}
     </>
   );
 }

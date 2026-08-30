@@ -665,6 +665,26 @@ export interface ReportInsights {
   possible: number;
 }
 
+
+export interface ClientProfileRow {
+  label: string;
+  value: string | number | null;
+  kind: 'text' | 'money' | 'days' | 'percent';
+  tone?: 'bad' | 'warn';
+}
+
+export interface ClientProfile {
+  id: string;
+  name: string;
+  initial: string;
+  phone: string;
+  sinceISO: string | null;
+  visits: number;
+  lifetimeSpendMinor: number;
+  rows: ClientProfileRow[];
+  recent: { service: string; whenISO: string; amountMinor: number }[];
+}
+
 async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -735,6 +755,8 @@ export const api = {
   reportsCustomers: (range: ReportRangeKey, compare: boolean) => reportGet<ReportCustomers>('customers', range, compare),
   reportsRetention: (range: ReportRangeKey, compare: boolean) => reportGet<ReportRetention>('retention', range, compare),
   reportsInsights: (range: ReportRangeKey, compare: boolean) => reportGet<ReportInsights>('insights', range, compare),
+  /** One client's derived profile, for the card that opens from a row. */
+  clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),
   // Not /analytics/range — that path segment gets silently blocked by
   // browser ad/tracker blockers (this is fetched client-side, unlike
   // todayStats which runs server-side during SSR and never hits that filter).

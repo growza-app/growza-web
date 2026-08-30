@@ -2,7 +2,7 @@
 
 import { copy } from '../lib/copy';
 import type { ReportRevenue } from '../lib/api';
-import { IconCoins, IconRupee, IconUserCheck, IconUserPlus } from '../components/icons';
+import { IconCoins, IconRupee, IconUserPlus } from '../components/icons';
 import { BarList, Donut, LineChart } from './charts';
 import { Kpi } from './Kpi';
 import { Card, money, moneyBars } from './shared';
@@ -32,27 +32,24 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
 
   return (
     <div className="rp-stack">
-      <div className="rp-kpi-grid rp-kpi-grid-4">
+      {/* Three, not four. "Money booked" sat beside "Money earned" as two
+          large figures a few percent apart, which reads as a discrepancy
+          rather than as a distinction. The difference is worth stating, so it
+          is stated in a sentence under the trend where there is room to say
+          what it means. */}
+      <div className="rp-kpi-grid rp-kpi-grid-3">
         <Kpi
           icon={<IconRupee />}
           iconTone="var(--rp-green-ink)"
-          label={c.completed}
+          label={c.earned}
           value={money(kpis.completedRevenueMinor.value)}
           metric={kpis.completedRevenueMinor}
           compare={data.compare}
         />
         <Kpi
           icon={<IconCoins />}
-          iconTone="var(--rp-blue)"
-          label={c.total}
-          value={money(kpis.totalRevenueMinor.value)}
-          metric={kpis.totalRevenueMinor}
-          compare={data.compare}
-        />
-        <Kpi
-          icon={<IconUserCheck />}
-          iconTone="var(--rp-teal)"
-          label={c.perBooking}
+          iconTone="var(--rp-amber)"
+          label={c.perVisit}
           value={money(kpis.avgBookingValueMinor.value)}
           metric={kpis.avgBookingValueMinor}
           compare={data.compare}
@@ -69,8 +66,9 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
 
       <Card
         title={c.trend}
-        hint={`${c.completedHint} · ${data.range.label}`}
+        hint={`${c.trendHint} · ${data.range.label}`}
         figure={money(kpis.completedRevenueMinor.value)}
+        foot={c.bookedNote(money(kpis.totalRevenueMinor.value))}
       >
         {empty ? (
           <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
@@ -100,7 +98,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
       <div className="rp-grid-2">
         <Card title={c.bySegment}>
           <Donut
-            centreLabel={c.completed}
+            centreLabel={c.earned}
             centreValue={money(kpis.completedRevenueMinor.value)}
             emptyText={copy.reports.noDataHint(data.range.label)}
             segments={data.bySegment.map((s, i) => ({

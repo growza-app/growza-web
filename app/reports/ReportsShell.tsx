@@ -42,6 +42,7 @@ export function ReportsShell({
   range,
   compare,
   staffTabAvailable,
+  labels,
   children,
 }: {
   tab: ReportTabKey;
@@ -49,6 +50,8 @@ export function ReportsShell({
   compare: boolean;
   /** Off for verticals where ranking providers is a product smell (07 §3.2). */
   staffTabAvailable: boolean;
+  /** The vertical's own nouns — "Stylists" for a salon, "Doctors" for a clinic. */
+  labels: Record<string, string>;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -62,6 +65,15 @@ export function ReportsShell({
   };
 
   const tabs = TAB_ORDER.filter((key) => key !== 'staff' || staffTabAvailable);
+
+  // Two of these are domain nouns, not UI chrome, so they come from the
+  // vertical's label pack exactly as the sidebar's do. Hardcoding "Clients"
+  // here while the sidebar renders "Patients" from config is the drift
+  // ctx.labels exists to prevent (01 §4, epic BR-06).
+  const tabLabel = (key: ReportTabKey) =>
+    key === 'customers' ? labels.customers ?? copy.reports.tabs.customers
+    : key === 'staff' ? labels.providers ?? copy.reports.tabs.staff
+    : copy.reports.tabs[key];
 
   // A fragment, not a wrapper: `.content` is a three-row grid (header /
   // scroller / footer), so the header and the scrolling body have to be its
@@ -154,7 +166,7 @@ export function ReportsShell({
               className={key === tab ? 'active' : ''}
               onClick={() => go({ tab: key })}
             >
-              {copy.reports.tabs[key]}
+              {tabLabel(key)}
             </button>
           ))}
         </nav>

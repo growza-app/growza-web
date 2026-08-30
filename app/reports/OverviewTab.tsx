@@ -5,12 +5,10 @@ import { formatMoney, type ReportOverview } from '../lib/api';
 import {
   IconAlert,
   IconArrowRight,
-  IconCoins,
   IconFlame,
   IconRepeat,
   IconReports,
   IconRupee,
-  IconUserCheck,
   IconUserPlus,
 } from '../components/icons';
 import { BarList, Heatmap, LineChart } from './charts';
@@ -39,14 +37,29 @@ function hoursAndMinutes(minutes: number): string {
  * Overview — the tab an owner lands on, and a summary of the other seven
  * rather than a subject of its own. Every block here has somewhere to go next.
  */
-export function OverviewTab({ data, onTab }: { data: ReportOverview; onTab: (tab: string) => void }) {
+export function OverviewTab({
+  data,
+  onTab,
+  onClient,
+}: {
+  data: ReportOverview;
+  onTab: (tab: string) => void;
+  onClient: (id: string) => void;
+}) {
   const labels = data.range.buckets.map((b) => b.label);
   const { kpis, sparklines } = data;
   const empty = data.kpis.bookings.value === 0 && data.kpis.revenueMinor.value === 0;
 
   return (
     <div className="rp-stack">
-      <div className="rp-kpi-grid">
+      {/* Four figures, not six. "Finished" restated Bookings and "Average
+          booking" restated the Money tab — a row where tile 3 is tile 1 with
+          a bit taken off reads as numbers contradicting each other, which is
+          the row conventions §6 retired once already. What is left is the
+          four questions an owner actually opens this screen with: how much
+          came in, how many visits, are new people arriving, are they coming
+          back. */}
+      <div className="rp-kpi-grid rp-kpi-grid-4">
         <Kpi
           icon={<IconRupee />}
           iconTone="var(--rp-green-ink)"
@@ -69,27 +82,6 @@ export function OverviewTab({ data, onTab }: { data: ReportOverview; onTab: (tab
           sparkLabels={labels}
         />
         <Kpi
-          icon={<IconUserCheck />}
-          iconTone="var(--rp-teal)"
-          label={copy.reports.kpi.completed}
-          value={String(kpis.completed.value)}
-          metric={kpis.completed}
-          compare={data.compare}
-          spark={sparklines.completed}
-          sparkLabels={labels}
-        />
-        <Kpi
-          icon={<IconCoins />}
-          iconTone="var(--rp-amber)"
-          label={copy.reports.kpi.avgBookingValue}
-          value={money(kpis.avgBookingValueMinor.value)}
-          metric={kpis.avgBookingValueMinor}
-          compare={data.compare}
-          spark={sparklines.avgBookingValueMinor}
-          sparkLabels={labels}
-          sparkFormat={money}
-        />
-        <Kpi
           icon={<IconUserPlus />}
           iconTone="var(--rp-purple)"
           label={copy.reports.kpi.newCustomers}
@@ -108,9 +100,9 @@ export function OverviewTab({ data, onTab }: { data: ReportOverview; onTab: (tab
           compare={data.compare}
           spark={sparklines.repeatRatePct}
           sparkLabels={labels}
-          // Named, because this line is a count of returning clients while the
-          // figure above it is a rate — the two move together but are not the
-          // same number, and an unlabelled line would be read as the rate.
+          // Named, because this line counts returning clients while the figure
+          // above it is a share — they move together but are not the same
+          // number, and an unlabelled line would be read as the percentage.
           sparkName="Came back"
         />
       </div>
@@ -230,7 +222,12 @@ export function OverviewTab({ data, onTab }: { data: ReportOverview; onTab: (tab
               {data.opportunities.map((o) => {
                 const late = (o.daysOverdue ?? 0) > 0;
                 return (
-                  <a key={o.customerId} className="rp-opp" href={`/customers?q=${encodeURIComponent(o.name)}`}>
+                  <button
+                    key={o.customerId}
+                    type="button"
+                    className="rp-opp"
+                    onClick={() => onClient(o.customerId)}
+                  >
                     <span className="rp-avatar">{o.initial}</span>
                     <span className="rp-opp-main">
                       <span className="rp-opp-name">{o.name}</span>
@@ -253,7 +250,7 @@ export function OverviewTab({ data, onTab }: { data: ReportOverview; onTab: (tab
                     <span className="rp-opp-chev">
                       <IconArrowRight />
                     </span>
-                  </a>
+                  </button>
                 );
               })}
             </div>

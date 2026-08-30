@@ -80,6 +80,7 @@ export default async function ReportsPage({
         compare={compare}
         staffTabAvailable={staffTabAvailable}
         providerLabel={me.labels.providers ?? copy.nav.staff}
+        labels={me.labels}
         payload={payload}
       />
     </Suspense>
