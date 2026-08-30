@@ -11,8 +11,11 @@ const TABS = new Set<string>([
 ]);
 
 const RANGES = new Set<string>([
-  'today', 'last_7_days', 'this_month', 'last_month', 'last_3_months', 'this_year',
+  'today', 'last_7_days', 'this_month', 'last_month', 'last_3_months', 'this_year', 'custom',
 ]);
+
+/** `custom` needs both ends; without them it is not a range, it is a typo. */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Reports (GRW-48).
@@ -28,11 +31,18 @@ const RANGES = new Set<string>([
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; range?: string; compare?: string }>;
+  searchParams: Promise<{ tab?: string; range?: string; compare?: string; from?: string; to?: string }>;
 }) {
   const params = await searchParams;
   const tab = (params.tab && TABS.has(params.tab) ? params.tab : 'overview') as ReportTabKey;
-  const range = (params.range && RANGES.has(params.range) ? params.range : 'this_month') as ReportRangeKey;
+  const from = params.from && ISO_DATE.test(params.from) ? params.from : undefined;
+  const to = params.to && ISO_DATE.test(params.to) ? params.to : undefined;
+  const asked = params.range && RANGES.has(params.range) ? params.range : 'this_month';
+  // A custom range without usable dates falls back rather than 400-ing the
+  // whole page — but it must not silently render a *different* period under
+  // the label of the one that was asked for, which is what dropping `custom`
+  // on the floor used to do.
+  const range = (asked === 'custom' && !(from && to) ? 'this_month' : asked) as ReportRangeKey;
   const compare = params.compare !== 'false';
 
   let me;
@@ -60,14 +70,14 @@ export default async function ReportsPage({
   let payload: TabPayload = null;
   try {
     payload =
-      resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare) }
-      : resolvedTab === 'revenue' ? { tab: 'revenue', data: await api.reportsRevenue(range, compare) }
-      : resolvedTab === 'bookings' ? { tab: 'bookings', data: await api.reportsBookings(range, compare) }
-      : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare) }
-      : resolvedTab === 'staff' ? { tab: 'staff', data: await api.reportsStaff(range, compare) }
-      : resolvedTab === 'customers' ? { tab: 'customers', data: await api.reportsCustomers(range, compare) }
-      : resolvedTab === 'retention' ? { tab: 'retention', data: await api.reportsRetention(range, compare) }
-      : { tab: 'insights', data: await api.reportsInsights(range, compare) };
+      resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare, from, to) }
+      : resolvedTab === 'revenue' ? { tab: 'revenue', data: await api.reportsRevenue(range, compare, from, to) }
+      : resolvedTab === 'bookings' ? { tab: 'bookings', data: await api.reportsBookings(range, compare, from, to) }
+      : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare, from, to) }
+      : resolvedTab === 'staff' ? { tab: 'staff', data: await api.reportsStaff(range, compare, from, to) }
+      : resolvedTab === 'customers' ? { tab: 'customers', data: await api.reportsCustomers(range, compare, from, to) }
+      : resolvedTab === 'retention' ? { tab: 'retention', data: await api.reportsRetention(range, compare, from, to) }
+      : { tab: 'insights', data: await api.reportsInsights(range, compare, from, to) };
   } catch {
     payload = null;
   }

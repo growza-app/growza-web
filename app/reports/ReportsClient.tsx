@@ -90,6 +90,7 @@ export function ReportsClient({
       compare={compare}
       staffTabAvailable={staffTabAvailable}
       labels={labels}
+      rangeLabel={range === 'custom' ? payload?.data.range.label : undefined}
     >
       {payload === null ? (
         <section className="rp-card rp-card-quiet">

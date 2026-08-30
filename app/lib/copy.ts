@@ -338,7 +338,11 @@ export const copy = {
       topRevenue: 'Earns the most',
       pairHint: 'Your most popular service is often not your best earner',
       table: 'Every service',
-      tableHint: 'Bookings, money, and how often people come back for it',
+      // States which columns are period figures and which are not. "Came back"
+      // cannot be a period figure — a seven-day range has nothing to say about
+      // whether anyone returned — and a column silently on a different basis
+      // from its neighbours is a number nobody can check.
+      tableHint: 'Bookings and money for the period you picked. "Came back" is all time — a short period cannot show it.',
       colService: 'Service',
       colBookings: 'Bookings',
       colRevenue: 'Money',
@@ -383,8 +387,9 @@ export const copy = {
         atRisk: { title: 'Regulars slipping', body: (n: number) => `${n} used to come often and have not been in for 2 months` },
       },
       spend: 'What people spend',
-      spendHint: 'Clients grouped by what they have spent in total',
+      spendHint: 'Every client, by what they have spent with you in total — not just this period',
       frequency: 'How often they come',
+      frequencyHint: 'Every client, counting all their visits — not just this period',
       avgInterval: 'Time between visits',
       avgVisits: 'Visits per client',
       top: 'Your best clients',
@@ -405,13 +410,17 @@ export const copy = {
       repeatRate: 'Came back',
       repeatRateHint: 'Share of clients who had been in before',
       returning: 'Regulars seen',
-      avgInterval: 'Time between visits',
+      avgInterval: 'Usual gap, all time',
       mix: 'New clients and regulars',
       mixHint: 'Clients seen over time, split by whether they had been before',
       repeatShare: 'Regulars brought in',
-      repeatShareHint: 'of the money you earned',
+      repeatShareHint: 'of the money you earned in this period',
       firstToSecond: 'Booked a second time',
       lifetime: 'How long clients stay',
+      // The two figures beneath the headline are lifetime facts about the
+      // client base, not facts about the period the picker is set to. Sitting
+      // them under a period figure without saying so invites the wrong read.
+      panelBasis: 'These two cover every client you have ever had, not just this period.',
       months: (n: number) => `${n} months`,
       trend: 'How many come back, over time',
       thinSample: (n: number, floor: number) =>

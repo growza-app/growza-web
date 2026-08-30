@@ -157,7 +157,7 @@ export function CustomersTab({
         <Card title={c.spend} hint={c.spendHint}>
           <BarList items={countBars(data.spend)} emptyText={copy.reports.noData} />
         </Card>
-        <Card title={c.frequency}>
+        <Card title={c.frequency} hint={c.frequencyHint}>
           <BarList items={countBars(data.frequency)} emptyText={copy.reports.noData} />
           <div className="rp-figure-pair">
             <div>

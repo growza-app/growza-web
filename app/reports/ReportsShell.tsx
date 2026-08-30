@@ -43,11 +43,19 @@ export function ReportsShell({
   compare,
   staffTabAvailable,
   labels,
+  rangeLabel,
   children,
 }: {
   tab: ReportTabKey;
   range: ReportRangeKey;
   compare: boolean;
+  /**
+   * What the range actually resolved to, from the payload. Only a custom
+   * range needs it: every other key has a fixed name, but "Pick dates" on the
+   * button while January's figures are on screen is the header describing a
+   * different period from the one below it.
+   */
+  rangeLabel?: string;
   /** Off for verticals where ranking providers is a product smell (07 §3.2). */
   staffTabAvailable: boolean;
   /** The vertical's own nouns — "Stylists" for a salon, "Doctors" for a clinic. */
@@ -95,7 +103,7 @@ export function ReportsShell({
               <span className="rp-control-icon rp-brand-ink">
                 <IconCalendar />
               </span>
-              <span>{copy.reports.ranges[range]}</span>
+              <span>{rangeLabel ?? copy.reports.ranges[range]}</span>
               <span className="rp-control-icon rp-muted">
                 <IconChevronDown />
               </span>

@@ -746,15 +746,14 @@ export const api = {
    * browser on every tab and range change, and that path segment is a common
    * ad-blocker pattern, same reasoning as rangeSummary below.
    */
-  reportsOverview: (range: ReportRangeKey, compare: boolean, from?: string, to?: string) =>
-    reportGet<ReportOverview>('overview', range, compare, from, to),
-  reportsRevenue: (range: ReportRangeKey, compare: boolean) => reportGet<ReportRevenue>('revenue', range, compare),
-  reportsBookings: (range: ReportRangeKey, compare: boolean) => reportGet<ReportBookings>('bookings', range, compare),
-  reportsServices: (range: ReportRangeKey, compare: boolean) => reportGet<ReportServices>('services', range, compare),
-  reportsStaff: (range: ReportRangeKey, compare: boolean) => reportGet<ReportStaff>('staff', range, compare),
-  reportsCustomers: (range: ReportRangeKey, compare: boolean) => reportGet<ReportCustomers>('customers', range, compare),
-  reportsRetention: (range: ReportRangeKey, compare: boolean) => reportGet<ReportRetention>('retention', range, compare),
-  reportsInsights: (range: ReportRangeKey, compare: boolean) => reportGet<ReportInsights>('insights', range, compare),
+  reportsOverview: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportOverview>('overview', r, c, f, t),
+  reportsRevenue: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportRevenue>('revenue', r, c, f, t),
+  reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportBookings>('bookings', r, c, f, t),
+  reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportServices>('services', r, c, f, t),
+  reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportStaff>('staff', r, c, f, t),
+  reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportCustomers>('customers', r, c, f, t),
+  reportsRetention: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportRetention>('retention', r, c, f, t),
+  reportsInsights: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportInsights>('insights', r, c, f, t),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),
   // Not /analytics/range — that path segment gets silently blocked by

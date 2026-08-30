@@ -71,9 +71,9 @@ export function RetentionTab({ data }: { data: ReportRetention }) {
               <strong>{lifetimeThin ? '—' : c.months(data.avgLifetimeMonths!)}</strong>
             </div>
           </div>
-          {lifetimeThin && (
-            <p className="rp-card-foot">{c.thinSample(data.lifetimeSample, data.lifetimeSampleFloor)}</p>
-          )}
+          <p className="rp-card-foot">
+            {lifetimeThin ? c.thinSample(data.lifetimeSample, data.lifetimeSampleFloor) : c.panelBasis}
+          </p>
         </section>
       </div>
 
