@@ -31,7 +31,8 @@ export function Card({
   foot,
 }: {
   title: string;
-  hint?: string;
+  /** A node, not just a string: the Bookings trend card puts its verdict here. */
+  hint?: ReactNode;
   figure?: ReactNode;
   children: ReactNode;
   foot?: ReactNode;

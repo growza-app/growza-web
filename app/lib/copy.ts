@@ -368,11 +368,10 @@ export const copy = {
         flat: 'Work is holding steady',
       },
       trendDetail: (from: number, to: number, unit: string) =>
-        `Around ${from} a ${unit} at the start of this stretch, around ${to} by the end`,
-      trendSteady: (about: number, unit: string) => `Around ${about} a ${unit} throughout`,
+        `from around ${from} a ${unit} to around ${to}`,
+      trendSteady: (about: number, unit: string) => `around ${about} a ${unit} throughout`,
       /** Too few points to average anything out — say so rather than guess. */
       trendTooShort: 'Pick a longer period to see which way work is going',
-      trendLineKey: 'The dashed line is the overall direction',
       status: 'How they ended',
       statusHint: 'Every booking, including the ones called off',
       source: 'Where they came from',
@@ -383,6 +382,9 @@ export const copy = {
       // which is which instead of both saying "time".
       peak: 'Your busiest hours',
       peakHint: 'Which hours of the week fill up, averaged across the period',
+      /** The two ends of the colour key. Plain words, not "low" and "high". */
+      peakQuiet: 'Nobody in',
+      peakBusy: 'Busiest',
     },
 
     // ---- Services ----

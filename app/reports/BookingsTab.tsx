@@ -67,26 +67,28 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
              value={String(kpis.upcoming.value)} metric={kpis.upcoming} compare={false} />
       </div>
 
+      {/* The verdict IS the hint. It used to sit below the head as its own
+          block, under a generic line about buckets — three stacked lines
+          where the card only ever had one thing to say. The answer to the
+          heading now goes where the explanation went. */}
       <Card
         title={c.trend}
-        hint={`${c.trendHint} · ${data.range.label}`}
+        hint={
+          verdict ? (
+            <>
+              <strong className={`rp-verdict-word is-${trend!.direction}`}>{verdict.headline}</strong>{' '}
+              {verdict.detail}
+            </>
+          ) : (
+            c.trendTooShort
+          )
+        }
         figure={kpis.total.value}
-        foot={trend ? c.trendLineKey : undefined}
       >
         {kpis.total.value === 0 ? (
           <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
         ) : (
           <>
-            {verdict ? (
-              <p className={`rp-verdict is-${trend!.direction}`}>
-                <strong>{verdict.headline}</strong>
-                <span>{verdict.detail}</span>
-              </p>
-            ) : (
-              <p className="rp-verdict is-flat">
-                <span>{c.trendTooShort}</span>
-              </p>
-            )}
             <LineChart
               labels={labels}
               series={[
@@ -95,7 +97,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
                   ? [{ color: 'var(--rp-slate, #7d8a84)', values: trend.line, dashed: true }]
                   : []),
               ]}
-              height={250}
+              height={170}
               fill
             />
           </>
@@ -141,6 +143,8 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
           hours={data.peakPeriods.hours}
           grid={data.peakPeriods.grid}
           describe={(day, hour, value) => `${day} ${hour} · ${Math.round(value * 100)}% of your busiest hour`}
+          quietWord={c.peakQuiet}
+          busyWord={c.peakBusy}
         />
       </Card>
     </div>

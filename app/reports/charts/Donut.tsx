@@ -10,6 +10,20 @@ export interface DonutSegment {
 }
 
 /**
+ * A slice's share, which is never allowed to read as nothing when it is not.
+ *
+ * A ₹11,580 slice rounded to "0%", which is a row saying it has money and no
+ * share in the same breath. Anything real but under half a per cent says
+ * "<1%" instead — the same reason a delta says "no prior period" rather than
+ * 0% (epic BR-07).
+ */
+function share(value: number, total: number): string {
+  if (value === 0) return '0%';
+  const pct = (value / total) * 100;
+  return pct < 1 ? '<1%' : `${Math.round(pct)}%`;
+}
+
+/**
  * A share-of-total ring with a legend.
  *
  * Hovering a segment moves its figure into the centre, so the ring can be read
@@ -82,7 +96,7 @@ export function Donut({
             <span className="rp-legend-dot" style={{ background: segment.color }} />
             <span className="rp-legend-label">{segment.label}</span>
             <span className="rp-legend-value">{segment.display}</span>
-            <span className="rp-legend-pct">{Math.round((segment.value / total) * 100)}%</span>
+            <span className="rp-legend-pct">{share(segment.value, total)}</span>
           </div>
         ))}
       </div>
