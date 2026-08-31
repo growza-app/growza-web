@@ -3,7 +3,7 @@ import type { Service } from './api';
 /**
  * Local placeholders (web/public/service-photos/, free-license Pexels
  * photos) shown until an owner uploads a real photo for that service
- * (Services page — local disk today, Supabase Storage-ready). Generic by
+ * (Services page — local disk today, S3-ready). Generic by
  * category, not by vertical: a car-garage or dentist tenant would just add
  * its own category names here, no code branch per business type.
  */
