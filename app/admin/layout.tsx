@@ -2,9 +2,9 @@ import './admin.css';
 import { Hanken_Grotesk } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { AdminShell } from './components/AdminShell';
 import { ImpersonationProvider } from './components/ImpersonationContext';
 import { SearchProvider } from './components/SearchContext';
+import { SessionGate } from './components/SessionGate';
 
 /**
  * The platform plane's own root layout (GRW-93, GRW-95, ADR-14).
@@ -40,7 +40,7 @@ export default function AdminRootLayout({ children }: { children: ReactNode }) {
       <body className={`admin-body ${hanken.className}`}>
         <ImpersonationProvider>
           <SearchProvider>
-            <AdminShell>{children}</AdminShell>
+            <SessionGate>{children}</SessionGate>
           </SearchProvider>
         </ImpersonationProvider>
       </body>
