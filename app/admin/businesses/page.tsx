@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { getBusinesses } from '../data';
 import { Icon, TypeIcon } from '../icons';
 import { EmptyState, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { DEFAULT_PAGE_SIZE, Pagination, usePagedSlice, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
 import { inr, oklch, typeColor } from '../tokens';
 
@@ -24,10 +25,12 @@ export default function AdminBusinessesPage() {
   const router = useRouter();
   const { query } = useAdminSearch();
   const [typeFilter, setTypeFilter] = useState('All');
+  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
 
-  let list = getBusinesses().filter((b) => typeFilter === 'All' || b.type === typeFilter);
+  let filtered = getBusinesses().filter((b) => typeFilter === 'All' || b.type === typeFilter);
   const q = query.trim().toLowerCase();
-  if (q) list = list.filter((b) => (b.name + b.owner + b.type + b.city).toLowerCase().includes(q));
+  if (q) filtered = filtered.filter((b) => (b.name + b.owner + b.type + b.city).toLowerCase().includes(q));
+  const list = usePagedSlice(filtered, paging);
 
   return (
     <div>
@@ -58,9 +61,10 @@ export default function AdminBusinessesPage() {
         ))}
       </div>
 
-      {list.length === 0 ? (
+      {filtered.length === 0 ? (
         <EmptyState title="No businesses match" sub="Try a different filter or search term." />
       ) : (
+        <>
         <Table
           columns={COLUMNS}
           minWidthPx={760}
@@ -138,6 +142,8 @@ export default function AdminBusinessesPage() {
             );
           })}
         />
+        <Pagination total={filtered.length} shown={list.length} state={paging} onChange={setPaging} />
+        </>
       )}
     </div>
   );

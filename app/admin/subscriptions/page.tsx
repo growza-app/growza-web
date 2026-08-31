@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { getBusinesses } from '../data';
 import { StatusPill, Table, TableRow, SecondaryButton, type TableColumn } from '../components/primitives';
 import { DiscountModal } from '../components/DiscountModal';
+import { DEFAULT_PAGE_SIZE, Pagination, usePagedSlice, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
 import { inr, oklch, typeColor } from '../tokens';
 import { TypeIcon } from '../icons';
@@ -31,12 +32,14 @@ export default function AdminSubscriptionsPage() {
   const { query } = useAdminSearch();
   const [statusFilter, setStatusFilter] = useState('All');
   const [discountTarget, setDiscountTarget] = useState<string | null>(null);
+  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
 
-  let list = getBusinesses();
-  if (statusFilter === 'Discounted') list = list.filter((b) => b.discount > 0);
-  else if (statusFilter !== 'All') list = list.filter((b) => b.status === statusFilter);
+  let filtered = getBusinesses();
+  if (statusFilter === 'Discounted') filtered = filtered.filter((b) => b.discount > 0);
+  else if (statusFilter !== 'All') filtered = filtered.filter((b) => b.status === statusFilter);
   const q = query.trim().toLowerCase();
-  if (q) list = list.filter((b) => (b.name + b.owner).toLowerCase().includes(q));
+  if (q) filtered = filtered.filter((b) => (b.name + b.owner).toLowerCase().includes(q));
+  const list = usePagedSlice(filtered, paging);
 
   return (
     <div>
@@ -99,6 +102,7 @@ export default function AdminSubscriptionsPage() {
           );
         })}
       />
+      <Pagination total={filtered.length} shown={list.length} state={paging} onChange={setPaging} />
 
       <DiscountModal businessName={discountTarget} onClose={() => setDiscountTarget(null)} />
     </div>

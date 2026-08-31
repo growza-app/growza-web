@@ -129,3 +129,19 @@ body.admin-body {
 .admin-table-scroll {
   overflow-x: auto;
 }
+
+/* ---------- pagination: desktop controls vs mobile "Load more" ---------- */
+.admin-pagination-desktop {
+  display: flex;
+}
+.admin-pagination-mobile {
+  display: none;
+}
+@media (max-width: 860px) {
+  .admin-pagination-desktop {
+    display: none;
+  }
+  .admin-pagination-mobile {
+    display: flex;
+  }
+}

@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { getBusinesses } from '../data';
 import { StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { DEFAULT_PAGE_SIZE, Pagination, usePagedSlice, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
 import { inr, oklch } from '../tokens';
 
@@ -24,11 +26,14 @@ const COLUMNS: TableColumn[] = [
  */
 export default function AdminPaymentsPage() {
   const { query } = useAdminSearch();
-  let list = getBusinesses();
+  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  let filtered = getBusinesses();
   const q = query.trim().toLowerCase();
-  if (q) list = list.filter((b) => b.name.toLowerCase().includes(q));
+  if (q) filtered = filtered.filter((b) => b.name.toLowerCase().includes(q));
+  const list = usePagedSlice(filtered, paging);
 
   return (
+    <div>
     <Table
       columns={COLUMNS}
       minWidthPx={860}
@@ -54,5 +59,7 @@ export default function AdminPaymentsPage() {
         );
       })}
     />
+    <Pagination total={filtered.length} shown={list.length} state={paging} onChange={setPaging} />
+    </div>
   );
 }

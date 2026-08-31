@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { AUDIT_LOG } from '../data';
 import { Icon } from '../icons';
 import { Card } from '../components/primitives';
+import { DEFAULT_PAGE_SIZE, Pagination, usePagedSlice, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch } from '../tokens';
 
@@ -14,10 +16,13 @@ import { oklch } from '../tokens';
  */
 export default function AdminAuditLogsPage() {
   const { query } = useAdminSearch();
+  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
   const q = query.trim().toLowerCase();
-  const logs = q ? AUDIT_LOG.filter((l) => (l.action + l.biz + l.admin + l.detail).toLowerCase().includes(q)) : AUDIT_LOG;
+  const filtered = q ? AUDIT_LOG.filter((l) => (l.action + l.biz + l.admin + l.detail).toLowerCase().includes(q)) : AUDIT_LOG;
+  const logs = usePagedSlice(filtered, paging);
 
   return (
+    <>
     <Card>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {logs.map((l, i) => (
@@ -53,5 +58,7 @@ export default function AdminAuditLogsPage() {
         ))}
       </div>
     </Card>
+    <Pagination total={filtered.length} shown={logs.length} state={paging} onChange={setPaging} />
+    </>
   );
 }

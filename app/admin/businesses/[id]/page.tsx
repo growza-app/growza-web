@@ -6,6 +6,7 @@ import { getBusiness } from '../../data';
 import { TypeIcon } from '../../icons';
 import { Bar, Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill } from '../../components/primitives';
 import { DiscountModal } from '../../components/DiscountModal';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useImpersonation } from '../../components/ImpersonationContext';
 import { inr, oklch, typeColor } from '../../tokens';
 
@@ -21,6 +22,7 @@ export default function BusinessDetailPage() {
   const router = useRouter();
   const { start: startImpersonation } = useImpersonation();
   const [discountOpen, setDiscountOpen] = useState(false);
+  const [suspendOpen, setSuspendOpen] = useState(false);
 
   const business = getBusiness(params.id);
   if (!business) {
@@ -76,7 +78,9 @@ export default function BusinessDetailPage() {
               Impersonate owner
             </SecondaryButton>
             <SecondaryButton onClick={() => router.push(`/admin/subscriptions/${b.id}`)}>View subscription</SecondaryButton>
-            <SecondaryButton danger>Suspend business</SecondaryButton>
+            <SecondaryButton danger onClick={() => setSuspendOpen(true)}>
+              Suspend business
+            </SecondaryButton>
           </div>
         </div>
       </Card>
@@ -107,6 +111,18 @@ export default function BusinessDetailPage() {
       </div>
 
       <DiscountModal businessName={discountOpen ? b.name : null} onClose={() => setDiscountOpen(false)} />
+
+      <ConfirmDialog
+        open={suspendOpen}
+        title={`Suspend ${b.name}?`}
+        description="Dashboard sign-in stops and no proactive WhatsApp messages go out for this business. Their customers, bookings and services are not touched — suspension never deletes data. This can be reversed at any time."
+        confirmLabel="Suspend business"
+        danger
+        reasonRequired
+        reasonPlaceholder="e.g. Payment failed ×3"
+        onCancel={() => setSuspendOpen(false)}
+        onConfirm={() => setSuspendOpen(false)}
+      />
     </div>
   );
 }

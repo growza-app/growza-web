@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { getBusinesses } from '../data';
 import { Card, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { DEFAULT_PAGE_SIZE, Pagination, usePagedSlice, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
 import { inr, oklch } from '../tokens';
 
@@ -22,11 +24,14 @@ const COLUMNS: TableColumn[] = [
  */
 export default function AdminInvoicesPage() {
   const { query } = useAdminSearch();
-  let businesses = getBusinesses();
-  const q = query.trim().toLowerCase();
-  if (q) businesses = businesses.filter((b) => b.name.toLowerCase().includes(q));
+  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
 
-  const rows = businesses.slice(0, 6).map((x, i) => {
+  let filtered = getBusinesses();
+  const q = query.trim().toLowerCase();
+  if (q) filtered = filtered.filter((b) => b.name.toLowerCase().includes(q));
+  const list = usePagedSlice(filtered, paging);
+
+  const rows = list.map((x, i) => {
     const subtotal = x.final;
     const gst = +(subtotal * GST_RATE).toFixed(2);
     const total = +(subtotal + gst).toFixed(2);
@@ -45,13 +50,16 @@ export default function AdminInvoicesPage() {
     );
   });
 
-  const featured = businesses[0];
+  const featured = filtered[0];
   const featSub = featured?.final ?? 0;
   const featGst = +(featSub * GST_RATE).toFixed(2);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(280px, 320px)', gap: 16, alignItems: 'start' }}>
-      <Table columns={COLUMNS} minWidthPx={720} rows={rows} />
+      <div>
+        <Table columns={COLUMNS} minWidthPx={720} rows={rows} />
+        <Pagination total={filtered.length} shown={list.length} state={paging} onChange={setPaging} />
+      </div>
       {featured ? (
         <Card>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textFaint }}>INV-2042 · {featured.name}</div>
