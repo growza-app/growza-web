@@ -92,7 +92,11 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
     case 'impersonation':
       return { title: 'Impersonation', subtitle: 'Controlled support sessions.', showSearch: false };
     case 'audit-logs':
-      return { title: 'Audit logs', subtitle: 'Every sensitive admin action.', showSearch: true };
+      // GRW-99 replaced the header's free-text search with its own structured
+      // filter bar (admin/action/entity/business/date range) — a global
+      // search box that only searched the currently-loaded page would have
+      // been a dead control against a server-paginated list.
+      return { title: 'Audit logs', subtitle: 'Every sensitive admin action.', showSearch: false };
     case 'settings':
       return { title: 'Settings', subtitle: 'Platform configuration.', showSearch: false };
     default:
