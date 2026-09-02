@@ -113,5 +113,3 @@ export const PERMISSION_MATRIX: Record<string, number[]> = {
   'Service provider': [2, 0, 1, 0, 1],
 };
 export const PERMISSION_COLUMNS = ['Bookings', 'Staff', 'Services', 'Reports', 'Clients'];
-
-export const CURRENT_ADMIN = { name: 'Aarav Khanna', role: 'Super admin', initials: 'AK' };

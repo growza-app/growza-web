@@ -39,6 +39,10 @@ const PATHS: Record<string, string> = {
   spaT: '<path d="M12 21c4-2 7-5.5 7-9.5C19 8 16.5 6 14 8c-.8.6-1.5 1.6-2 2.5-.5-.9-1.2-1.9-2-2.5C7.5 6 5 8 5 11.5 5 15.5 8 19 12 21Z"/>',
   clinicT: '<rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M12 9v6M9 12h6"/>',
   fitnessT: '<path d="M6.5 6.5 17.5 17.5M4 8l2-2M8 4 6 6M16 20l2-2M20 16l-2 2"/>',
+  // Not in the original Admin.dc.html canvas — added for GRW-93's sign-out
+  // control, which the static design never depicted. Same Lucide-style path
+  // convention as the rest of this set (log-out).
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
 };
 
 export type IconName = keyof typeof PATHS;

@@ -3,12 +3,27 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { CURRENT_ADMIN } from '../data';
 import { Icon } from '../icons';
+import { adminFetch } from '../lib/api';
+import { clearAdminSession } from '../lib/session';
 import { NAV_GROUPS, isNavItemActive, resolveRouteMeta } from '../nav';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
 import { useAdminSearch } from './SearchContext';
+
+interface Me {
+  admin: { id: string; email: string; name: string };
+}
+
+function initialsOf(name: string): string {
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
 
 /**
  * The admin shell (GRW-95): sidebar, header, mobile drawer, impersonation
@@ -19,6 +34,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [navOpen, setNavOpen] = useState(false);
+  const [me, setMe] = useState<Me['admin'] | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
   const { query, setQuery } = useAdminSearch();
   const meta = resolveRouteMeta(pathname);
@@ -26,6 +43,41 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // Close the mobile drawer on every navigation so a tap-through doesn't
   // leave it hanging open behind the new screen.
   useEffect(() => setNavOpen(false), [pathname]);
+
+  // GRW-93: the identity shown here is the admin actually signed in, not
+  // the design canvas's fixed mock person — a stale name next to a real
+  // sign-out control would be its own small QA finding.
+  useEffect(() => {
+    let cancelled = false;
+    adminFetch<Me>('/me')
+      .then((result) => {
+        if (!cancelled) setMe(result.admin);
+      })
+      .catch(() => {
+        // SessionGate already guarantees a session exists before this
+        // mounts; a failure here means the token died between then and
+        // now, and adminFetch's own 401 handling is already redirecting.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await adminFetch('/auth/logout', { method: 'POST' });
+    } catch {
+      // Sign out client-side regardless — there is no server-side session
+      // to fail to clear (stateless bearer tokens; see the route's own
+      // comment), so a failed request here is never a reason to leave the
+      // admin stuck signed in.
+    } finally {
+      clearAdminSession();
+      router.push('/admin/login');
+    }
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%', position: 'relative' }}>
@@ -151,14 +203,39 @@ export function AdminShell({ children }: { children: ReactNode }) {
               flex: 'none',
             }}
           >
-            {CURRENT_ADMIN.initials}
+            {me ? initialsOf(me.name) : ''}
           </div>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {CURRENT_ADMIN.name}
+              {me?.name ?? 'Loading…'}
             </div>
-            <div style={{ fontSize: 11, color: oklch.sidebarTextFaint }}>{CURRENT_ADMIN.role}</div>
+            <div style={{ fontSize: 11, color: oklch.sidebarTextFaint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {me?.email ?? ''}
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={signOut}
+            disabled={signingOut}
+            aria-label="Sign out"
+            title="Sign out"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              border: 'none',
+              background: 'oklch(1 0 0 / 0.1)',
+              color: oklch.sidebarText,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: signingOut ? 'not-allowed' : 'pointer',
+              opacity: signingOut ? 0.6 : 1,
+              flex: 'none',
+            }}
+          >
+            <Icon name="logout" size={16} />
+          </button>
         </div>
       </aside>
 
