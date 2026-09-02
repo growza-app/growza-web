@@ -1,45 +1,122 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { getBusinesses } from '../data';
+import { useEffect, useState } from 'react';
+import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
-import { EmptyState, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
-import { DEFAULT_PAGE_SIZE, Pagination, usePagedSlice, type PaginationState } from '../components/Pagination';
+import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
-import { inr, oklch, typeColor } from '../tokens';
+import { oklch, typeColor } from '../tokens';
 
-const FILTERS = ['All', 'Salon', 'Garage', 'Dental', 'Spa', 'Clinic', 'Fitness'];
+/**
+ * GRW-101's Businesses list, wired to GRW-100's real read layer in place of
+ * the mock data module. The two verticals shown are the two the product
+ * actually defines (docs/architecture/verticals/*.json) — the mock's
+ * Garage/Dental/Spa/Fitness pills were dressing for the design canvas, not
+ * real product categories, and this screen shows what is real.
+ */
+const VERTICAL_FILTERS = ['All', 'Salon', 'Clinic'];
+const STATUS_OPTIONS = ['All', 'provisioning', 'active', 'suspended', 'churned'];
+const statusLabel = (s: string) => (s === 'All' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1));
+
 const COLUMNS: TableColumn[] = [
   { label: 'Business', width: '1.8fr' },
-  { label: 'Type', width: '1fr' },
-  { label: 'Owner', width: '1.1fr' },
-  { label: 'Price / mo', width: '1fr' },
-  { label: 'Bookings', width: '1fr' },
-  { label: 'Status', width: '0.9fr' },
-  { label: '', width: '70px', right: true },
+  { label: 'Owner', width: '1.4fr' },
+  { label: 'Branches', width: '0.8fr' },
+  { label: 'Users', width: '0.7fr' },
+  { label: 'Plan', width: '1fr' },
+  { label: 'Status', width: '1fr' },
+  { label: 'Bookings', width: '0.9fr' },
+  { label: 'Usage', width: '0.9fr' },
+  { label: 'Created', width: '1fr' },
+  { label: '', width: '50px', right: true },
 ];
 
-/** GRW-79's Businesses list. Reads through the mock data module until GRW-100's admin read layer exists. */
+interface BusinessRow {
+  tenantId: string;
+  name: string;
+  status: string;
+  vertical: string;
+  planName: string;
+  ownerEmail: string | null;
+  branchCount: number;
+  userCount: number;
+  createdAt: string;
+}
+
+interface BusinessPage {
+  rows: BusinessRow[];
+  total: number;
+}
+
+/** No metering epic has shipped — a real count here would be a claim nothing backs (GRW-101 BR-02: "a zero is a claim"). */
+function NotYetAvailable({ reason }: { reason: string }) {
+  return (
+    <span title={reason} style={{ color: oklch.textFaint, fontWeight: 700, cursor: 'help' }}>
+      —
+    </span>
+  );
+}
+
 export default function AdminBusinessesPage() {
   const router = useRouter();
-  const { query } = useAdminSearch();
-  const [typeFilter, setTypeFilter] = useState('All');
+  const { query: search } = useAdminSearch();
+  const [vertical, setVertical] = useState('All');
+  const [status, setStatus] = useState('All');
   const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [page, setPage] = useState<BusinessPage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  let filtered = getBusinesses().filter((b) => typeFilter === 'All' || b.type === typeFilter);
-  const q = query.trim().toLowerCase();
-  if (q) filtered = filtered.filter((b) => (b.name + b.owner + b.type + b.city).toLowerCase().includes(q));
-  const list = usePagedSlice(filtered, paging);
+  const trimmedSearch = search.trim();
+  // FR: a search under 2 characters issues no request rather than matching everything.
+  const searchTooShort = trimmedSearch.length > 0 && trimmedSearch.length < 2;
+
+  useEffect(() => {
+    setPaging((p) => ({ ...p, page: 1 }));
+  }, [vertical, status, trimmedSearch]);
+
+  useEffect(() => {
+    if (searchTooShort) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+
+    const params = new URLSearchParams();
+    if (trimmedSearch) params.set('search', trimmedSearch);
+    if (vertical !== 'All') params.set('vertical', vertical);
+    if (status !== 'All') params.set('status', status);
+    // Accumulating-prefix pagination, same pattern as AuditLogList — the
+    // API returns everything from page 1 up to the current window, so
+    // mobile's "Load more" appends instead of replacing.
+    params.set('page', '1');
+    params.set('pageSize', String(paging.page * paging.pageSize));
+
+    adminFetch<BusinessPage>(`/businesses?${params}`, { signal: controller.signal })
+      .then((result) => setPage(result))
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof AdminApiError ? err.message : 'Could not load businesses.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trimmedSearch, vertical, status, paging, searchTooShort]);
+
+  const hasActiveFilters = vertical !== 'All' || status !== 'All' || trimmedSearch.length >= 2;
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap' }}>
-        {FILTERS.map((f) => (
+      <div style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {VERTICAL_FILTERS.map((f) => (
           <button
             key={f}
             type="button"
-            onClick={() => setTypeFilter(f)}
+            onClick={() => setVertical(f)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -50,99 +127,122 @@ export default function AdminBusinessesPage() {
               fontSize: 13.5,
               fontWeight: 700,
               cursor: 'pointer',
-              ...(typeFilter === f
-                ? { background: 'oklch(0.31 0.055 158)', color: 'white', border: '1px solid oklch(0.31 0.055 158)' }
+              border: 'none',
+              ...(vertical === f
+                ? { background: 'oklch(0.31 0.055 158)', color: 'white' }
                 : { background: 'white', color: 'oklch(0.45 0.02 155)', border: `1px solid ${oklch.borderStrong}` }),
             }}
           >
             {f !== 'All' ? <TypeIcon type={f} size={16} /> : null}
-            {f === 'All' ? 'All' : f + 's'}
+            {f}
           </button>
         ))}
+        <div style={{ width: 150 }}>
+          <Select options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
+        </div>
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState title="No businesses match" sub="Try a different filter or search term." />
+      {searchTooShort ? (
+        <div style={{ fontSize: 13, color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
+      ) : error ? (
+        <Card>
+          <div style={{ textAlign: 'center', padding: '24px 12px' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <SecondaryButton onClick={() => setPaging((p) => ({ ...p }))}>Retry</SecondaryButton>
+          </div>
+        </Card>
+      ) : loading && !page ? (
+        <Card>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} style={{ height: 56, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
+            ))}
+          </div>
+        </Card>
+      ) : !page || page.total === 0 ? (
+        hasActiveFilters ? (
+          <EmptyState title="No businesses match" sub="Try a different filter or search term." />
+        ) : (
+          <EmptyState title="No businesses on the platform yet" sub="Enroll one to see it here." />
+        )
       ) : (
         <>
-        <Table
-          columns={COLUMNS}
-          minWidthPx={760}
-          rows={list.map((b) => {
-            const tc = typeColor(b.type);
-            return (
-              <TableRow key={b.id} columns={COLUMNS} onClick={() => router.push(`/admin/businesses/${b.id}`)}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                  <span
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 11,
-                      background: tc.bg,
-                      color: tc.fg,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flex: 'none',
-                    }}
-                  >
-                    <TypeIcon type={b.type} />
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {b.name}
+          <Table
+            columns={COLUMNS}
+            minWidthPx={1180}
+            rows={page.rows.map((b) => {
+              const tc = typeColor(b.vertical);
+              return (
+                <TableRow key={b.tenantId} columns={COLUMNS} onClick={() => router.push(`/admin/businesses/${b.tenantId}`)}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                    <span
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 11,
+                        background: tc.bg,
+                        color: tc.fg,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flex: 'none',
+                      }}
+                    >
+                      <TypeIcon type={b.vertical} />
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {b.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: oklch.textFaint }}>{b.vertical}</div>
                     </div>
-                    <div style={{ fontSize: 12, color: oklch.textFaint }}>{b.city}</div>
                   </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: tc.fg, background: tc.bg, padding: '4px 10px', borderRadius: 8 }}>{b.type}</span>
-                </div>
-                <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600 }}>{b.owner}</div>
-                <div>
-                  {b.discount > 0 ? (
-                    <div>
-                      <span style={{ fontSize: 13.5, fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{inr(b.final)}</span>
-                      <span style={{ fontSize: 11.5, color: 'oklch(0.55 0.15 25)', marginLeft: 6, fontWeight: 700 }}>−{inr(b.discount)}</span>
-                    </div>
-                  ) : (
-                    <span style={{ fontSize: 13.5, fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{inr(b.final)}</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>
-                  {b.bookings[0]}/{b.bookings[1]}
-                </div>
-                <div>
-                  <StatusPill status={b.status} />
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/admin/businesses/${b.id}`);
-                    }}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 9,
-                      border: `1px solid ${oklch.border}`,
-                      background: 'white',
-                      color: 'oklch(0.5 0.02 155)',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Icon name="chevronRight" size={15} />
-                  </button>
-                </div>
-              </TableRow>
-            );
-          })}
-        />
-        <Pagination total={filtered.length} shown={list.length} state={paging} onChange={setPaging} />
+                  <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {b.ownerEmail ?? <span style={{ color: oklch.textFaint }}>—</span>}
+                  </div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.branchCount}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.userCount}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
+                  <div>
+                    <StatusPill status={statusLabel(b.status)} />
+                  </div>
+                  <div>
+                    <NotYetAvailable reason="Bookings aren't counted yet — lands with the usage metering epic (GRW-85)." />
+                  </div>
+                  <div>
+                    <NotYetAvailable reason="Usage against a plan limit isn't tracked yet — lands with the usage metering epic (GRW-85)." />
+                  </div>
+                  <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
+                    {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/admin/businesses/${b.tenantId}`);
+                      }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 9,
+                        border: `1px solid ${oklch.border}`,
+                        background: 'white',
+                        color: 'oklch(0.5 0.02 155)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Icon name="chevronRight" size={15} />
+                    </button>
+                  </div>
+                </TableRow>
+              );
+            })}
+          />
+          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} />
         </>
       )}
     </div>

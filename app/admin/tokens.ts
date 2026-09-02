@@ -46,6 +46,9 @@ export const STATUS_COLORS: Record<string, [fg: string, bg: string]> = {
   Paid: ['oklch(0.5 0.13 150)', 'oklch(0.95 0.035 150)'],
   Overdue: ['oklch(0.55 0.17 25)', 'oklch(0.95 0.04 25)'],
   Invited: ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
+  // tenant.status (GRW-101) — 'active'/'suspended' already share Active/Suspended above.
+  Provisioning: ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
+  Churned: ['oklch(0.55 0.17 25)', 'oklch(0.95 0.04 25)'],
 };
 
 /** Business-type color, keyed by hue — matches typeCol()/TYPE_HUE in the design. */
