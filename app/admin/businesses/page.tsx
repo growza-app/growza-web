@@ -74,7 +74,14 @@ export default function AdminBusinessesPage() {
   const searchTooShort = trimmedSearch.length > 0 && trimmedSearch.length < 2;
 
   useEffect(() => {
-    setPaging((p) => ({ ...p, page: 1 }));
+    // Bail out with the SAME object reference when already on page 1 —
+    // `{ ...p, page: 1 }` unconditionally would still be a *new* reference
+    // even when nothing actually changed, which was enough for React to
+    // treat `paging` as changed and re-fire the fetch effect below a
+    // second time for every filter change (confirmed via network trace:
+    // two identical requests per filter click). Returning `p` itself here
+    // makes React skip the re-render entirely in that case.
+    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1 }));
   }, [vertical, status, trimmedSearch]);
 
   useEffect(() => {
