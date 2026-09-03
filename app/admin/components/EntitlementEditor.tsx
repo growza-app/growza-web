@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';
-import { Card, Field, SectionTitle, TextInput, Toggle, PrimaryButton, SecondaryButton } from './primitives';
+import { Card, Field, SectionTitle, TextInput, Toggle, PrimaryButton } from './primitives';
 import { ConfirmDialog } from './ConfirmDialog';
 
 /**
@@ -132,7 +132,19 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
 
   return (
     <Card>
-      <SectionTitle title="Entitlements & limits" />
+      {/* UI/UX Requirements — "the save action is never below the fold": this
+          card can run to 20+ fields across seven groups, so Save lives in
+          the header rather than at the end of a scroll a reviewer might
+          never reach. The confirm dialog still surfaces the ceiling warning
+          at save time regardless of scroll position. */}
+      <SectionTitle
+        title="Entitlements & limits"
+        right={
+          <PrimaryButton onClick={() => setConfirmOpen(true)} style={{ opacity: hasChanges ? 1 : 0.5, cursor: hasChanges ? 'pointer' : 'not-allowed' }}>
+            Save entitlements
+          </PrimaryButton>
+        }
+      />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 6 }}>
         {grouped.map(({ group, keys }) => (
           <div key={group}>
@@ -211,12 +223,6 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
         {saveError ? (
           <div style={{ fontSize: 13, fontWeight: 600, color: oklch.danger }}>{saveError}</div>
         ) : null}
-
-        <div>
-          <PrimaryButton onClick={() => setConfirmOpen(true)} style={{ opacity: hasChanges ? 1 : 0.5, cursor: hasChanges ? 'pointer' : 'not-allowed' }}>
-            Save entitlements
-          </PrimaryButton>
-        </div>
       </div>
 
       <ConfirmDialog
