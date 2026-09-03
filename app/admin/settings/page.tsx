@@ -2,6 +2,7 @@
 
 import { Card, Select, TextInput, Toggle } from '../components/primitives';
 import { oklch } from '../tokens';
+import { PreviewBanner } from '../components/PreviewBanner';
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -32,60 +33,63 @@ function SettingsRow({ label, hint, children }: { label: string; hint?: string; 
  */
 export default function AdminSettingsPage() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, alignItems: 'start' }}>
-      <SettingsSection title="Tax & currency">
-        <SettingsRow label="Currency">
-          <div style={{ width: 150 }}>
-            <Select options={['INR (₹)', 'USD ($)']} defaultValue="INR (₹)" />
-          </div>
-        </SettingsRow>
-        <SettingsRow label="GST rate" hint="Applied on taxable amount">
-          <TextInput defaultValue="18" style={{ width: 90, textAlign: 'center' }} />
-        </SettingsRow>
-        <SettingsRow label="Prices are pre-tax" hint="Tax calculated separately at billing">
-          <Toggle on onClick={() => {}} disabled />
-        </SettingsRow>
-      </SettingsSection>
+    <>
+      <PreviewBanner shows="Platform configuration — tax rates, grace periods and message caps" epic="Jira GRW-92" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, alignItems: 'start' }}>
+        <SettingsSection title="Tax & currency">
+          <SettingsRow label="Currency">
+            <div style={{ width: 150 }}>
+              <Select disabled options={['INR (₹)', 'USD ($)']} defaultValue="INR (₹)" />
+            </div>
+          </SettingsRow>
+          <SettingsRow label="GST rate" hint="Applied on taxable amount">
+            <TextInput readOnly defaultValue="18" style={{ width: 90, textAlign: 'center' }} />
+          </SettingsRow>
+          <SettingsRow label="Prices are pre-tax" hint="Tax calculated separately at billing">
+            <Toggle on onClick={() => {}} disabled />
+          </SettingsRow>
+        </SettingsSection>
 
-      <SettingsSection title="Billing defaults">
-        <SettingsRow label="Default billing cycle">
-          <div style={{ width: 150 }}>
-            <Select options={['Monthly', 'Yearly']} defaultValue="Monthly" />
-          </div>
-        </SettingsRow>
-        <SettingsRow label="Grace period" hint="Days before suspend after failed payment">
-          <TextInput defaultValue="5" style={{ width: 90, textAlign: 'center' }} />
-        </SettingsRow>
-        <SettingsRow label="Auto-suspend on past due">
-          <Toggle on onClick={() => {}} disabled />
-        </SettingsRow>
-      </SettingsSection>
+        <SettingsSection title="Billing defaults">
+          <SettingsRow label="Default billing cycle">
+            <div style={{ width: 150 }}>
+              <Select disabled options={['Monthly', 'Yearly']} defaultValue="Monthly" />
+            </div>
+          </SettingsRow>
+          <SettingsRow label="Grace period" hint="Days before suspend after failed payment">
+            <TextInput readOnly defaultValue="5" style={{ width: 90, textAlign: 'center' }} />
+          </SettingsRow>
+          <SettingsRow label="Auto-suspend on past due">
+            <Toggle on onClick={() => {}} disabled />
+          </SettingsRow>
+        </SettingsSection>
 
-      <SettingsSection title="WhatsApp defaults">
-        <SettingsRow label="Utility limit / mo">
-          <TextInput defaultValue="800" style={{ width: 110, textAlign: 'center' }} />
-        </SettingsRow>
-        <SettingsRow label="Warning threshold" hint="% of limit">
-          <TextInput defaultValue="80" style={{ width: 90, textAlign: 'center' }} />
-        </SettingsRow>
-        <SettingsRow label="Hard cap at 100%" hint="Block non-critical messages over limit">
-          <Toggle on onClick={() => {}} disabled />
-        </SettingsRow>
-      </SettingsSection>
+        <SettingsSection title="WhatsApp defaults">
+          <SettingsRow label="Utility limit / mo">
+            <TextInput readOnly defaultValue="800" style={{ width: 110, textAlign: 'center' }} />
+          </SettingsRow>
+          <SettingsRow label="Warning threshold" hint="% of limit">
+            <TextInput readOnly defaultValue="80" style={{ width: 90, textAlign: 'center' }} />
+          </SettingsRow>
+          <SettingsRow label="Hard cap at 100%" hint="Block non-critical messages over limit">
+            <Toggle on onClick={() => {}} disabled />
+          </SettingsRow>
+        </SettingsSection>
 
-      <SettingsSection title="Platform">
-        <SettingsRow label="Payment provider">
-          <div style={{ width: 150 }}>
-            <Select options={['Razorpay', 'Stripe']} defaultValue="Razorpay" />
-          </div>
-        </SettingsRow>
-        <SettingsRow label="Require reason for impersonation">
-          <Toggle on onClick={() => {}} disabled />
-        </SettingsRow>
-        <SettingsRow label="Audit log retention" hint="Days">
-          <TextInput defaultValue="365" style={{ width: 90, textAlign: 'center' }} />
-        </SettingsRow>
-      </SettingsSection>
-    </div>
+        <SettingsSection title="Platform">
+          <SettingsRow label="Payment provider">
+            <div style={{ width: 150 }}>
+              <Select disabled options={['Razorpay', 'Stripe']} defaultValue="Razorpay" />
+            </div>
+          </SettingsRow>
+          <SettingsRow label="Require reason for impersonation">
+            <Toggle on onClick={() => {}} disabled />
+          </SettingsRow>
+          <SettingsRow label="Audit log retention" hint="Days">
+            <TextInput readOnly defaultValue="365" style={{ width: 90, textAlign: 'center' }} />
+          </SettingsRow>
+        </SettingsSection>
+      </div>
+    </>
   );
 }

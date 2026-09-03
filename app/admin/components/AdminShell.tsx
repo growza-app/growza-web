@@ -13,6 +13,7 @@ import { useAdminSearch } from './SearchContext';
 
 interface Me {
   admin: { id: string; email: string; name: string };
+  permissions: string[];
 }
 
 function initialsOf(name: string): string {
@@ -35,10 +36,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [navOpen, setNavOpen] = useState(false);
   const [me, setMe] = useState<Me['admin'] | null>(null);
+  // Null until /me answers — the nav renders nothing rather than flashing
+  // items the admin may not be allowed to see.
+  const [permissions, setPermissions] = useState<string[] | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
   const { query, setQuery } = useAdminSearch();
   const meta = resolveRouteMeta(pathname);
+
+  // GRW-94's own rule: "Navigation is never the control — /me returns the
+  // resolved permission set so the dashboard can hide what an admin cannot
+  // use." That was built server-side and never wired here, so every admin was
+  // offered all twelve screens and found out which ones they could open by
+  // clicking and reading an error.
+  const visibleNavGroups = NAV_GROUPS.map((grp) => ({
+    ...grp,
+    items: grp.items.filter((item) => permissions?.includes(item.permission) ?? false),
+  })).filter((grp) => grp.items.length > 0);
 
   // Close the mobile drawer on every navigation so a tap-through doesn't
   // leave it hanging open behind the new screen.
@@ -51,7 +65,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
     let cancelled = false;
     adminFetch<Me>('/me')
       .then((result) => {
-        if (!cancelled) setMe(result.admin);
+        if (cancelled) return;
+        setMe(result.admin);
+        setPermissions(result.permissions);
       })
       .catch(() => {
         // SessionGate already guarantees a session exists before this
@@ -127,7 +143,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 16, overflowY: 'auto', flex: 1, paddingRight: 2 }}>
-          {NAV_GROUPS.map((grp) => (
+          {visibleNavGroups.map((grp) => (
             <div key={grp.group}>
               <div
                 style={{

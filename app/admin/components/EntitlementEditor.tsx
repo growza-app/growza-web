@@ -141,7 +141,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
       <SectionTitle
         title="Entitlements & limits"
         right={
-          <PrimaryButton onClick={() => setConfirmOpen(true)} style={{ opacity: hasChanges ? 1 : 0.5, cursor: hasChanges ? 'pointer' : 'not-allowed' }}>
+          <PrimaryButton onClick={() => setConfirmOpen(true)} disabled={!hasChanges} title={hasChanges ? undefined : 'No entitlements have changed'}>
             Save entitlements
           </PrimaryButton>
         }

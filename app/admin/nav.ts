@@ -4,7 +4,33 @@ export interface NavItem {
   label: string;
   href: string;
   icon: IconName;
+  /**
+   * The permission this screen's own endpoints require. The sidebar hides
+   * items an admin cannot use — it used to offer all twelve to everyone, so a
+   * billing admin clicking "Businesses" got a full-page permission error for a
+   * screen the nav had just invited them to open.
+   *
+   * Hiding is a courtesy, never the control: every endpoint refuses
+   * independently, server-side (admin-routes.ts's own deny-by-default hook).
+   */
+  permission: AdminPermission;
 }
+
+/** Mirrors the keys in src/platform/admin-permissions.ts. */
+export type AdminPermission =
+  | 'admin.dashboard.view'
+  | 'admin.business.view'
+  | 'admin.user.view'
+  | 'admin.role.view'
+  | 'admin.plan.view'
+  | 'admin.subscription.view'
+  | 'admin.payment.view'
+  | 'admin.invoice.view'
+  | 'admin.usage.view'
+  | 'admin.feature_flag.view'
+  | 'admin.impersonation.start'
+  | 'admin.audit.view'
+  | 'admin.configuration.view';
 export interface NavGroup {
   group: string;
   items: NavItem[];
@@ -12,32 +38,32 @@ export interface NavGroup {
 
 /** The admin sidebar, grouped exactly as Admin.dc.html groups it. */
 export const NAV_GROUPS: NavGroup[] = [
-  { group: 'Overview', items: [{ label: 'Dashboard', href: '/admin', icon: 'dashboard' }] },
+  { group: 'Overview', items: [{ label: 'Dashboard', href: '/admin', permission: 'admin.dashboard.view', icon: 'dashboard' }] },
   {
     group: 'Platform',
     items: [
-      { label: 'Businesses', href: '/admin/businesses', icon: 'businesses' },
-      { label: 'Platform users', href: '/admin/users', icon: 'users' },
-      { label: 'Roles & permissions', href: '/admin/roles', icon: 'roles' },
+      { label: 'Businesses', href: '/admin/businesses', permission: 'admin.business.view', icon: 'businesses' },
+      { label: 'Platform users', href: '/admin/users', permission: 'admin.user.view', icon: 'users' },
+      { label: 'Roles & permissions', href: '/admin/roles', permission: 'admin.role.view', icon: 'roles' },
     ],
   },
   {
     group: 'Billing',
     items: [
-      { label: 'Plans', href: '/admin/plans', icon: 'plans' },
-      { label: 'Subscriptions', href: '/admin/subscriptions', icon: 'subs' },
-      { label: 'Payments', href: '/admin/payments', icon: 'payments' },
-      { label: 'Invoices', href: '/admin/invoices', icon: 'invoices' },
-      { label: 'Usage', href: '/admin/usage', icon: 'usage' },
+      { label: 'Plans', href: '/admin/plans', permission: 'admin.plan.view', icon: 'plans' },
+      { label: 'Subscriptions', href: '/admin/subscriptions', permission: 'admin.subscription.view', icon: 'subs' },
+      { label: 'Payments', href: '/admin/payments', permission: 'admin.payment.view', icon: 'payments' },
+      { label: 'Invoices', href: '/admin/invoices', permission: 'admin.invoice.view', icon: 'invoices' },
+      { label: 'Usage', href: '/admin/usage', permission: 'admin.usage.view', icon: 'usage' },
     ],
   },
-  { group: 'Control', items: [{ label: 'Feature flags', href: '/admin/feature-flags', icon: 'flags' }] },
+  { group: 'Control', items: [{ label: 'Feature flags', href: '/admin/feature-flags', permission: 'admin.feature_flag.view', icon: 'flags' }] },
   {
     group: 'Operations',
     items: [
-      { label: 'Impersonation', href: '/admin/impersonation', icon: 'impersonate' },
-      { label: 'Audit logs', href: '/admin/audit-logs', icon: 'audit' },
-      { label: 'Settings', href: '/admin/settings', icon: 'settings' },
+      { label: 'Impersonation', href: '/admin/impersonation', permission: 'admin.impersonation.start', icon: 'impersonate' },
+      { label: 'Audit logs', href: '/admin/audit-logs', permission: 'admin.audit.view', icon: 'audit' },
+      { label: 'Settings', href: '/admin/settings', permission: 'admin.configuration.view', icon: 'settings' },
     ],
   },
 ];

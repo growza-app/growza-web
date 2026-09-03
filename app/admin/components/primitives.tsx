@@ -264,21 +264,38 @@ export function Select({ options, ...props }: React.SelectHTMLAttributes<HTMLSel
   );
 }
 
+/**
+ * `disabled` is a real prop, not a style.
+ *
+ * It used not to exist, so every "disabled" primary button in the portal was
+ * disabled in appearance only — `opacity: 0.5, cursor: not-allowed` on a
+ * fully clickable control. Callers that meant "you can't do this yet" were
+ * telling the truth visually and lying functionally: the click still fired,
+ * the request still went, and the admin got a validation error from the
+ * server for something the UI had already greyed out.
+ */
 export function PrimaryButton({
   children,
   onClick,
   style,
   type = 'button',
+  disabled,
+  title,
 }: {
   children: ReactNode;
   onClick?: () => void;
   style?: CSSProperties;
   type?: 'button' | 'submit';
+  disabled?: boolean;
+  /** Native tooltip — the place to say WHY it is disabled. */
+  title?: string;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
+      title={title}
       style={{
         height: 40,
         padding: '0 16px',
@@ -288,7 +305,8 @@ export function PrimaryButton({
         color: 'white',
         fontSize: 13.5,
         fontWeight: 700,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
         display: 'inline-flex',
         alignItems: 'center',
         gap: 8,
@@ -305,16 +323,23 @@ export function SecondaryButton({
   onClick,
   danger,
   style,
+  disabled,
+  title,
 }: {
   children: ReactNode;
   onClick?: () => void;
   danger?: boolean;
   style?: CSSProperties;
+  disabled?: boolean;
+  /** Native tooltip — the place to say WHY it is disabled. */
+  title?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
+      title={title}
       style={{
         height: 40,
         padding: '0 16px',
@@ -324,7 +349,8 @@ export function SecondaryButton({
         color: danger ? oklch.danger : 'oklch(0.36 0.02 155)',
         fontSize: 13.5,
         fontWeight: 700,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
         ...style,
       }}
     >

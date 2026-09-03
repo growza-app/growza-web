@@ -133,7 +133,7 @@ function PlanDetailsCard({ plan, onSaved }: { plan: PlanDetail; onSaved: (p: Pla
       <SectionTitle
         title="Plan details"
         right={
-          <PrimaryButton onClick={() => setConfirmOpen(true)} style={{ opacity: dirty ? 1 : 0.5, cursor: dirty ? 'pointer' : 'not-allowed' }}>
+          <PrimaryButton onClick={() => setConfirmOpen(true)} disabled={!dirty} title={dirty ? undefined : 'Nothing has changed yet'}>
             Save details
           </PrimaryButton>
         }
@@ -276,7 +276,9 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
             </SecondaryButton>
             <PrimaryButton
               onClick={() => setConfirmOpen(true)}
-              style={{ flex: 1.3, height: 44, justifyContent: 'center', opacity: canSubmit ? 1 : 0.5, cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+              disabled={!canSubmit}
+              title={canSubmit ? undefined : 'Set a new price and choose who it applies to first'}
+              style={{ flex: 1.3, height: 44, justifyContent: 'center' }}
             >
               Save as new version
             </PrimaryButton>

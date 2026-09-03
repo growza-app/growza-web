@@ -6,6 +6,7 @@ import { Card, StatusPill, Table, TableRow, type TableColumn } from '../componen
 import { DEFAULT_PAGE_SIZE, Pagination, usePagedSlice, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
 import { inr, oklch } from '../tokens';
+import { PreviewBanner } from '../components/PreviewBanner';
 
 const GST_RATE = 0.18;
 const COLUMNS: TableColumn[] = [
@@ -55,34 +56,37 @@ export default function AdminInvoicesPage() {
   const featGst = +(featSub * GST_RATE).toFixed(2);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(280px, 320px)', gap: 16, alignItems: 'start' }}>
-      <div>
-        <Table columns={COLUMNS} minWidthPx={720} rows={rows} />
-        <Pagination total={filtered.length} shown={list.length} state={paging} onChange={setPaging} />
+    <>
+      <PreviewBanner shows="GST invoices and their line items" epic="Jira GRW-83" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(280px, 320px)', gap: 16, alignItems: 'start' }}>
+        <div>
+          <Table columns={COLUMNS} minWidthPx={720} rows={rows} />
+          <Pagination total={filtered.length} shown={list.length} state={paging} onChange={setPaging} />
+        </div>
+        {featured ? (
+          <Card>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textFaint }}>INV-2042 · {featured.name}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: oklch.textStrong, marginTop: 2 }}>Growza Base · Aug 2026</div>
+            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13.5 }}>
+              {[
+                ['List price', inr(featured.list), undefined],
+                ['Discount', '− ' + inr(featured.discount), 'oklch(0.5 0.15 25)'],
+                ['Taxable amount', inr(featSub), undefined],
+                ['GST (18%)', inr(featGst), undefined],
+              ].map(([label, value, color]) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
+                  <span style={{ fontWeight: 700, color: color ?? 'oklch(0.3 0.02 155)' }}>{value}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: `1px solid ${oklch.border}` }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>Total</span>
+              <span style={{ fontSize: 19, fontWeight: 800, color: oklch.accentText }}>{inr(+(featSub + featGst).toFixed(2))}</span>
+            </div>
+          </Card>
+        ) : null}
       </div>
-      {featured ? (
-        <Card>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textFaint }}>INV-2042 · {featured.name}</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: oklch.textStrong, marginTop: 2 }}>Growza Base · Aug 2026</div>
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13.5 }}>
-            {[
-              ['List price', inr(featured.list), undefined],
-              ['Discount', '− ' + inr(featured.discount), 'oklch(0.5 0.15 25)'],
-              ['Taxable amount', inr(featSub), undefined],
-              ['GST (18%)', inr(featGst), undefined],
-            ].map(([label, value, color]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
-                <span style={{ fontWeight: 700, color: color ?? 'oklch(0.3 0.02 155)' }}>{value}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: `1px solid ${oklch.border}` }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>Total</span>
-            <span style={{ fontSize: 19, fontWeight: 800, color: oklch.accentText }}>{inr(+(featSub + featGst).toFixed(2))}</span>
-          </div>
-        </Card>
-      ) : null}
-    </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { BUSINESS_ROLES, PERMISSION_COLUMNS, PERMISSION_MATRIX, PLATFORM_ROLES }
 import { Icon } from '../icons';
 import { Card, SectionTitle } from '../components/primitives';
 import { oklch } from '../tokens';
+import { PreviewBanner } from '../components/PreviewBanner';
 
 const LEVEL_LABEL = ['No access', 'View', 'Manage'];
 const LEVEL_COLOR = ['oklch(0.6 0.02 155)', 'oklch(0.5 0.1 220)', 'oklch(0.44 0.12 150)'];
@@ -37,37 +38,40 @@ function RoleCard({ title, roles }: { title: string; roles: [string, string][] }
  */
 export default function AdminRolesPage() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-        <RoleCard title="Platform roles" roles={[...PLATFORM_ROLES]} />
-        <RoleCard title="Business roles" roles={[...BUSINESS_ROLES]} />
-      </div>
+    <>
+      <PreviewBanner shows="Configurable platform roles, replacing today's single built-in Super Admin" epic="Jira GRW-89" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          <RoleCard title="Platform roles" roles={[...PLATFORM_ROLES]} />
+          <RoleCard title="Business roles" roles={[...BUSINESS_ROLES]} />
+        </div>
 
-      <Card>
-        <SectionTitle title="Business permission matrix" />
-        <div className="admin-table-scroll">
-          <div style={{ minWidth: 640 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: `1.2fr repeat(${PERMISSION_COLUMNS.length}, 1fr)`, padding: '0 6px 10px', fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              <div>Role</div>
-              {PERMISSION_COLUMNS.map((h) => (
-                <div key={h}>{h}</div>
-              ))}
-            </div>
-            {Object.entries(PERMISSION_MATRIX).map(([role, levels]) => (
-              <div key={role} style={{ display: 'grid', gridTemplateColumns: `1.2fr repeat(${PERMISSION_COLUMNS.length}, 1fr)`, alignItems: 'center', padding: '10px 6px', borderTop: `1px solid ${oklch.divider}` }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.28 0.02 155)' }}>{role}</div>
-                {levels.map((level, i) => (
-                  <div key={i}>
-                    <span style={{ fontSize: 11.5, fontWeight: 700, color: LEVEL_COLOR[level], background: LEVEL_BG[level], padding: '3px 9px', borderRadius: 6 }}>
-                      {LEVEL_LABEL[level]}
-                    </span>
-                  </div>
+        <Card>
+          <SectionTitle title="Business permission matrix" />
+          <div className="admin-table-scroll">
+            <div style={{ minWidth: 640 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `1.2fr repeat(${PERMISSION_COLUMNS.length}, 1fr)`, padding: '0 6px 10px', fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div>Role</div>
+                {PERMISSION_COLUMNS.map((h) => (
+                  <div key={h}>{h}</div>
                 ))}
               </div>
-            ))}
+              {Object.entries(PERMISSION_MATRIX).map(([role, levels]) => (
+                <div key={role} style={{ display: 'grid', gridTemplateColumns: `1.2fr repeat(${PERMISSION_COLUMNS.length}, 1fr)`, alignItems: 'center', padding: '10px 6px', borderTop: `1px solid ${oklch.divider}` }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.28 0.02 155)' }}>{role}</div>
+                  {levels.map((level, i) => (
+                    <div key={i}>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: LEVEL_COLOR[level], background: LEVEL_BG[level], padding: '3px 9px', borderRadius: 6 }}>
+                        {LEVEL_LABEL[level]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </>
   );
 }

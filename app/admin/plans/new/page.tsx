@@ -30,7 +30,11 @@ export default function CreatePlanPage() {
   const canSubmit = codeValid && name.trim().length > 0 && priceValid && reason.trim().length > 0;
 
   function submit() {
-    if (!canSubmit) return;
+    // `saving` as well as `canSubmit`: a double-click used to fire two
+    // concurrent POSTs, the second returning 409 plan_code_exists — so the
+    // admin saw "a plan with that code already exists" immediately after
+    // successfully creating it.
+    if (!canSubmit || saving) return;
     setSaving(true);
     setError(null);
     adminFetch<{ code: string }>('/plans', {
@@ -102,7 +106,8 @@ export default function CreatePlanPage() {
           </SecondaryButton>
           <PrimaryButton
             onClick={submit}
-            style={{ flex: 1.3, height: 44, justifyContent: 'center', opacity: canSubmit && !saving ? 1 : 0.5, cursor: canSubmit && !saving ? 'pointer' : 'not-allowed' }}
+            disabled={!canSubmit || saving}
+            style={{ flex: 1.3, height: 44, justifyContent: 'center' }}
           >
             {saving ? 'Creating…' : 'Create plan'}
           </PrimaryButton>
