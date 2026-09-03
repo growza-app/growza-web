@@ -1,124 +1,409 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, PrimaryButton, SecondaryButton, Select, SectionTitle, Field, TextInput } from './primitives';
+import { useState, type CSSProperties } from 'react';
+import { adminFetch, AdminApiError } from '../lib/api';
+import { formatDateTime } from '../lib/format';
+import { Card, Field, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, TextInput, type TableColumn } from './primitives';
+import { ConfirmDialog } from './ConfirmDialog';
 import { EntitlementEditor } from './EntitlementEditor';
-import { oklch } from '../tokens';
+import { inr, oklch } from '../tokens';
 
 /**
- * The shared plan create/edit form (GRW-80). One component behind both
- * /admin/plans/new and /admin/plans/[id]. GRW-107 replaced the entitlement
- * section's placeholder checkboxes with the real, registry-driven editor —
- * the rest of this form (name/price/status) is still the mock GRW-108 makes
- * real; wiring the whole plan record is that story's own scope, not this one's.
+ * GRW-108 — the real plan editor: details, pricing (via GRW-106's
+ * versioning, never a silent price overwrite), status (retire/reactivate),
+ * entitlements (GRW-107's editor, untouched), and version history. Edit
+ * only — creating a plan is its own smaller form (plans/new/page.tsx),
+ * since a not-yet-created plan has no entitlements or versions to show.
  */
+
+export interface PlanDetail {
+  code: string;
+  name: string;
+  description: string;
+  basePriceMinor: number;
+  currency: string;
+  billingCycle: string;
+  status: string;
+  limits: Record<string, number>;
+  capabilityGrants: Record<string, boolean>;
+}
+
+export interface PlanVersion {
+  id: string;
+  version: number;
+  basePriceMinor: number;
+  cohortChoice: string;
+  scheduledAt: string | null;
+  activatedAt: string | null;
+  createdAt: string;
+}
+
+const COHORT_CHOICES: { value: string; label: string; description: string; disabled?: boolean }[] = [
+  {
+    value: 'existing_customers_keep_price',
+    label: 'Existing customers keep their price',
+    description: 'New businesses get the new price; nobody already on this plan is affected.',
+  },
+  {
+    value: 'new_customers_only',
+    label: 'New customers only',
+    description: "Same effect as above — there's no subscription yet (Jira GRW-81) for these to differ against.",
+  },
+  {
+    value: 'named_customers_migrate',
+    label: 'Named customers migrate',
+    description: 'Not available yet — there is no subscription to migrate (Jira GRW-81).',
+    disabled: true,
+  },
+  {
+    value: 'scheduled',
+    label: 'Scheduled for a date',
+    description: 'Takes effect on a future date you choose, instead of immediately.',
+  },
+];
+const COHORT_LABEL = Object.fromEntries(COHORT_CHOICES.map((c) => [c.value, c.label]));
+
 export function PlanForm({
-  mode,
-  planCode,
-  limits,
-  capabilityGrants,
+  plan,
+  versions,
+  otherActivePlansCount,
+  onPlanUpdated,
+  onVersionCreated,
 }: {
-  mode: 'create' | 'edit';
-  /** Present only in edit mode — a plan must exist before its entitlements can be set. */
-  planCode?: string;
-  limits?: Record<string, number>;
-  capabilityGrants?: Record<string, boolean>;
+  plan: PlanDetail;
+  versions: PlanVersion[];
+  otherActivePlansCount: number;
+  onPlanUpdated: (plan: PlanDetail) => void;
+  onVersionCreated: () => void;
 }) {
-  const router = useRouter();
-  const creating = mode === 'create';
-  const [liveLimits, setLiveLimits] = useState(limits ?? {});
-  const [liveGrants, setLiveGrants] = useState(capabilityGrants ?? {});
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <PlanDetailsCard plan={plan} onSaved={onPlanUpdated} />
+      <PricingCard plan={plan} onVersionCreated={onVersionCreated} />
+      <StatusCard plan={plan} otherActivePlansCount={otherActivePlansCount} onSaved={onPlanUpdated} />
+      <EntitlementEditor
+        planCode={plan.code}
+        limits={plan.limits}
+        capabilityGrants={plan.capabilityGrants}
+        onSaved={(updated) => onPlanUpdated({ ...plan, ...updated })}
+      />
+      <VersionHistoryCard versions={versions} />
+    </div>
+  );
+}
+
+const textareaStyle: CSSProperties = {
+  width: '100%',
+  minHeight: 70,
+  padding: '12px 14px',
+  borderRadius: 11,
+  border: `1px solid ${oklch.borderStrong}`,
+  background: oklch.inputBg,
+  fontSize: 14,
+  fontWeight: 500,
+  outline: 'none',
+  resize: 'vertical',
+  fontFamily: 'inherit',
+};
+
+function PlanDetailsCard({ plan, onSaved }: { plan: PlanDetail; onSaved: (p: PlanDetail) => void }) {
+  const [name, setName] = useState(plan.name);
+  const [description, setDescription] = useState(plan.description);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dirty = name !== plan.name || description !== plan.description;
+
+  function submit(reason: string) {
+    setSaving(true);
+    setError(null);
+    adminFetch<PlanDetail>(`/plans/${plan.code}`, { method: 'PATCH', body: JSON.stringify({ reason, name, description }) })
+      .then((updated) => {
+        setConfirmOpen(false);
+        onSaved(updated);
+      })
+      .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not save.'))
+      .finally(() => setSaving(false));
+  }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1.4fr) minmax(280px, 1fr)', gap: 16, alignItems: 'start' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <Card>
-          <SectionTitle title="Plan details" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Field label="Plan name">
-              <TextInput defaultValue={creating ? '' : 'Growza Base'} />
-            </Field>
-            <Field label="Description">
-              <textarea
-                defaultValue={creating ? '' : 'CRM, bookings and WhatsApp for service businesses.'}
-                style={{
-                  width: '100%',
-                  minHeight: 70,
-                  padding: '12px 14px',
-                  borderRadius: 11,
-                  border: `1px solid ${oklch.borderStrong}`,
-                  background: oklch.inputBg,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  outline: 'none',
-                  resize: 'vertical',
-                  fontFamily: 'inherit',
-                }}
-              />
-            </Field>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
-              <Field label="Base price (₹)" hint="Pre-tax">
-                <TextInput defaultValue={creating ? '' : '799'} type="number" />
-              </Field>
-              <Field label="Billing cycle">
-                <Select options={['Monthly', 'Quarterly', 'Yearly']} defaultValue="Monthly" />
-              </Field>
-              <Field label="Status">
-                <Select options={['Active', 'Draft', 'Archived']} defaultValue={creating ? 'Draft' : 'Active'} />
-              </Field>
+    <Card>
+      <SectionTitle
+        title="Plan details"
+        right={
+          <PrimaryButton onClick={() => setConfirmOpen(true)} style={{ opacity: dirty ? 1 : 0.5, cursor: dirty ? 'pointer' : 'not-allowed' }}>
+            Save details
+          </PrimaryButton>
+        }
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 6 }}>
+        <Field label="Plan name">
+          <TextInput value={name} onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <Field label="Description">
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} style={textareaStyle} />
+        </Field>
+      </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={`Save details for ${plan.name}?`}
+        description="Updates the plan's name and description only — price and entitlements are unaffected. This change is audited."
+        confirmLabel="Save"
+        reasonRequired
+        loading={saving}
+        error={error}
+        onConfirm={submit}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setError(null);
+        }}
+      />
+    </Card>
+  );
+}
+
+function SummaryField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: oklch.textStrong, marginTop: 3 }}>{value}</div>
+    </div>
+  );
+}
+
+function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCreated: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [price, setPrice] = useState(String(plan.basePriceMinor / 100));
+  const [cohortChoice, setCohortChoice] = useState<string | null>(null);
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const priceChanged = !Number.isNaN(Number(price)) && Math.round(Number(price) * 100) !== plan.basePriceMinor;
+  const canSubmit = priceChanged && !!cohortChoice && cohortChoice !== 'named_customers_migrate' && (cohortChoice !== 'scheduled' || !!scheduledAt);
+
+  function resetAndClose() {
+    setEditing(false);
+    setCohortChoice(null);
+    setScheduledAt('');
+    setPrice(String(plan.basePriceMinor / 100));
+  }
+
+  function submit(reason: string) {
+    setSaving(true);
+    setError(null);
+    adminFetch(`/plans/${plan.code}/versions`, {
+      method: 'POST',
+      body: JSON.stringify({
+        reason,
+        cohortChoice,
+        basePriceMinor: Math.round(Number(price) * 100),
+        ...(cohortChoice === 'scheduled' && scheduledAt ? { scheduledAt: new Date(scheduledAt).toISOString() } : {}),
+      }),
+    })
+      .then(() => {
+        setConfirmOpen(false);
+        resetAndClose();
+        onVersionCreated();
+      })
+      .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not create a new version.'))
+      .finally(() => setSaving(false));
+  }
+
+  return (
+    <Card>
+      <SectionTitle title="Pricing" right={!editing ? <SecondaryButton onClick={() => setEditing(true)}>Change price</SecondaryButton> : null} />
+      {!editing ? (
+        <div style={{ marginTop: 6, display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+          <SummaryField label="List price" value={`${inr(plan.basePriceMinor / 100)}/mo`} />
+          <SummaryField label="Currency" value={plan.currency} />
+          <SummaryField label="Billing cycle" value={plan.billingCycle} />
+        </div>
+      ) : (
+        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Field label="New base price (₹)" hint="Pre-tax">
+            <TextInput type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </Field>
+
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted, marginBottom: 8 }}>
+              What happens to existing customers? <span style={{ color: oklch.danger }}>*</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {COHORT_CHOICES.map((c) => (
+                <label
+                  key={c.value}
+                  style={{
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'flex-start',
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    border: `1px solid ${cohortChoice === c.value ? oklch.accent : oklch.borderStrong}`,
+                    cursor: c.disabled ? 'not-allowed' : 'pointer',
+                    opacity: c.disabled ? 0.5 : 1,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="cohortChoice"
+                    disabled={c.disabled}
+                    checked={cohortChoice === c.value}
+                    onChange={() => setCohortChoice(c.value)}
+                    style={{ marginTop: 2, accentColor: oklch.accent }}
+                  />
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.text }}>{c.label}</div>
+                    <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 2 }}>{c.description}</div>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
-        </Card>
 
-        {planCode ? (
-          <EntitlementEditor
-            planCode={planCode}
-            limits={liveLimits}
-            capabilityGrants={liveGrants}
-            onSaved={(updated) => {
-              setLiveLimits(updated.limits);
-              setLiveGrants(updated.capabilityGrants);
-            }}
-          />
-        ) : (
-          <Card>
-            <SectionTitle title="Entitlements & limits" />
-            <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 4 }}>
-              Create the plan first — entitlements are set on a plan that already exists.
-            </div>
-          </Card>
-        )}
-      </div>
+          {cohortChoice === 'scheduled' ? (
+            <Field label="Effective date">
+              <TextInput type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
+            </Field>
+          ) : null}
 
-      <Card>
-        <SectionTitle title="Summary" />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13.5 }}>
-          {[
-            ['Base price', '₹799/mo'],
-            ['GST (18%)', 'calculated at billing'],
-            ['Booking limit', '100 / mo'],
-            ['WhatsApp', '800 / mo'],
-            ['AI', 'Not included'],
-          ].map(([label, value]) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 9, borderBottom: `1px solid ${oklch.divider}` }}>
-              <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
-              <span style={{ fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{value}</span>
-            </div>
-          ))}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <SecondaryButton onClick={resetAndClose} style={{ flex: 1, height: 44 }}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton
+              onClick={() => setConfirmOpen(true)}
+              style={{ flex: 1.3, height: 44, justifyContent: 'center', opacity: canSubmit ? 1 : 0.5, cursor: canSubmit ? 'pointer' : 'not-allowed' }}
+            >
+              Save as new version
+            </PrimaryButton>
+          </div>
         </div>
-        <div style={{ marginTop: 14, padding: '12px 14px', borderRadius: 11, background: 'oklch(0.98 0.012 150)', border: '1px solid oklch(0.92 0.02 150)', fontSize: 12, color: 'oklch(0.4 0.06 152)', fontWeight: 600 }}>
-          Changing price creates a new plan version. Existing subscriptions keep their current pricing until migrated.
-        </div>
-        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-          <SecondaryButton onClick={() => router.push('/admin/plans')} style={{ flex: 1, height: 44 }}>
-            Cancel
+      )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title={`Create a new price version for ${plan.name}?`}
+        description="This creates a new, immutable version — the version customers were already sold stays exactly as it was (12-conventions.md §1). This change is audited."
+        confirmLabel="Create version"
+        reasonRequired
+        loading={saving}
+        error={error}
+        onConfirm={submit}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setError(null);
+        }}
+      />
+    </Card>
+  );
+}
+
+function StatusCard({
+  plan,
+  otherActivePlansCount,
+  onSaved,
+}: {
+  plan: PlanDetail;
+  otherActivePlansCount: number;
+  onSaved: (p: PlanDetail) => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const retiring = plan.status === 'active';
+  const isLastActive = retiring && otherActivePlansCount === 0;
+
+  function submit(reason: string) {
+    setSaving(true);
+    setError(null);
+    adminFetch<PlanDetail>(`/plans/${plan.code}`, { method: 'PATCH', body: JSON.stringify({ reason, status: retiring ? 'retired' : 'active' }) })
+      .then((updated) => {
+        setConfirmOpen(false);
+        onSaved(updated);
+      })
+      .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not change status.'))
+      .finally(() => setSaving(false));
+  }
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Status"
+        right={
+          <SecondaryButton danger={retiring} onClick={() => setConfirmOpen(true)}>
+            {retiring ? 'Retire plan' : 'Reactivate plan'}
           </SecondaryButton>
-          <PrimaryButton onClick={() => router.push('/admin/plans')} style={{ flex: 1.3, height: 44, justifyContent: 'center' }}>
-            {creating ? 'Create plan' : 'Save plan'}
-          </PrimaryButton>
-        </div>
-      </Card>
-    </div>
+        }
+      />
+      <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <StatusPill status={plan.status === 'active' ? 'Active' : 'Retired'} />
+        <span style={{ fontSize: 12.5, color: oklch.textFaint }}>
+          {plan.status === 'active'
+            ? 'New businesses can be assigned this plan.'
+            : 'This plan cannot be chosen for a new business; existing tenants on it are unaffected.'}
+        </span>
+      </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={retiring ? `Retire ${plan.name}?` : `Reactivate ${plan.name}?`}
+        description={
+          retiring
+            ? isLastActive
+              ? `This is the only active plan today — after retiring it, no plan will be available for a new business until another is created or reactivated. Existing tenants on ${plan.name} keep working exactly as they do now.`
+              : `New businesses can no longer be assigned this plan. Existing tenants on it are completely unaffected — retire, never delete.`
+            : 'New businesses can be assigned this plan again.'
+        }
+        confirmLabel={retiring ? 'Retire plan' : 'Reactivate plan'}
+        danger={retiring}
+        reasonRequired
+        loading={saving}
+        error={error}
+        onConfirm={submit}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setError(null);
+        }}
+      />
+    </Card>
+  );
+}
+
+const VERSION_COLUMNS: TableColumn[] = [
+  { label: 'Version', width: '0.6fr' },
+  { label: 'Price', width: '1fr' },
+  { label: 'Cohort choice', width: '1.6fr' },
+  { label: 'Status', width: '1fr' },
+  { label: 'Created', width: '1.2fr' },
+];
+
+function VersionHistoryCard({ versions }: { versions: PlanVersion[] }) {
+  return (
+    <Card>
+      <SectionTitle title="Version history" />
+      {versions.length === 0 ? (
+        <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 6 }}>No versions yet.</div>
+      ) : (
+        <Table
+          columns={VERSION_COLUMNS}
+          minWidthPx={560}
+          rows={versions.map((v) => (
+            <TableRow key={v.id} columns={VERSION_COLUMNS}>
+              <div style={{ fontWeight: 800, color: oklch.textStrong }}>v{v.version}</div>
+              <div style={{ fontWeight: 700, color: oklch.text }}>{inr(v.basePriceMinor / 100)}/mo</div>
+              <div style={{ fontSize: 12.5, color: oklch.textMuted }}>{COHORT_LABEL[v.cohortChoice] ?? v.cohortChoice}</div>
+              <div>
+                <StatusPill status={v.activatedAt ? 'Active' : 'Scheduled'} />
+              </div>
+              <div style={{ fontSize: 12.5, color: oklch.textFaint }}>{formatDateTime(v.createdAt)}</div>
+            </TableRow>
+          ))}
+        />
+      )}
+      <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 14, lineHeight: 1.5 }}>
+        Pinned-subscription counts per version aren't shown here — subscriptions don't exist yet (Jira GRW-81).
+      </div>
+    </Card>
   );
 }

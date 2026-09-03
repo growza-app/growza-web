@@ -1,25 +1,72 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Card, PrimaryButton, SecondaryButton, SectionTitle } from '../components/primitives';
+import { useEffect, useState } from 'react';
+import { adminFetch, AdminApiError } from '../lib/api';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, StatusPill } from '../components/primitives';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
 
-const ENTITLEMENTS: [string, string][] = [
-  ['Monthly bookings', '100'],
-  ['WhatsApp (utility)', '800 / mo'],
-  ['WhatsApp marketing', 'Not included'],
-  ['AI', 'Not included'],
-];
-const FEATURES = ['Customer CRM & history', 'Spending & behaviour insights', 'Bookings, staff & services', 'Service combos & offers', 'Reports & business analytics', 'WhatsApp booking'];
-
 /**
- * GRW-80's Plans screen. One plan today — Growza Base — and deliberately no
- * discount data anywhere on this screen: a discount belongs to a
- * subscription, never to the plan (13-platform-administration.md §2.1).
+ * GRW-108's Plans screen. Every card here is derived from real data —
+ * price, status, inclusions/exclusions and business count all come from
+ * GET /plans and GET /capability-keys, none of it authored per plan
+ * (Technical Notes: a hand-written exclusions list is exactly the kind of
+ * copy that goes stale the moment an entitlement changes — GRW-020's own
+ * lesson). Deliberately no discount data anywhere (BR-01) and no "View
+ * subscriptions" link — GRW-81's subscriptions list doesn't exist yet, so
+ * that action is absent rather than pointing at a broken screen.
  */
+
+interface CapabilityKeyMeta {
+  key: string;
+  type: 'boolean' | 'number';
+  codeDefault: boolean | number;
+  label: string;
+  group: string;
+}
+
+interface PlanSummary {
+  code: string;
+  name: string;
+  description: string;
+  basePriceMinor: number;
+  currency: string;
+  billingCycle: string;
+  status: string;
+  limits: Record<string, number>;
+  capabilityGrants: Record<string, boolean>;
+  businessCount: number;
+}
+
 export default function AdminPlansPage() {
   const router = useRouter();
+  const [plans, setPlans] = useState<PlanSummary[] | null>(null);
+  const [registry, setRegistry] = useState<CapabilityKeyMeta[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([adminFetch<{ rows: PlanSummary[] }>('/plans'), adminFetch<{ rows: CapabilityKeyMeta[] }>('/capability-keys')])
+      .then(([plansResult, registryResult]) => {
+        if (cancelled) return;
+        setPlans(plansResult.rows);
+        setRegistry(registryResult.rows);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof AdminApiError ? err.message : 'Could not load plans.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [retryToken]);
 
   return (
     <div>
@@ -30,74 +77,104 @@ export default function AdminPlansPage() {
         </PrimaryButton>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 380px) minmax(320px, 1fr)', gap: 16, alignItems: 'start' }}>
+      {error ? (
         <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>Growza Base</div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'oklch(0.44 0.12 150)', background: 'oklch(0.95 0.035 150)', padding: '4px 10px', borderRadius: 8, display: 'inline-block', marginTop: 4 }}>
-                Active · v1
-              </span>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 30, fontWeight: 800, color: oklch.textStrong, lineHeight: 1 }}>₹799</div>
-              <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>per month · pre-tax</div>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {ENTITLEMENTS.map(([label, value]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, paddingBottom: 9, borderBottom: `1px solid ${oklch.divider}` }}>
-                <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
-                <span style={{ fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{value}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 16, fontSize: 13, color: oklch.textFaint, fontWeight: 600 }}>1,284 businesses on this plan</div>
-          <div style={{ display: 'flex', gap: 9, marginTop: 16 }}>
-            <PrimaryButton onClick={() => router.push('/admin/plans/base')} style={{ flex: 1, height: 42, justifyContent: 'center' }}>
-              Edit plan
-            </PrimaryButton>
-            <SecondaryButton onClick={() => router.push('/admin/subscriptions')} style={{ flex: 1, height: 42 }}>
-              Subscriptions
-            </SecondaryButton>
+          <div style={{ textAlign: 'center', padding: '24px 12px' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <SecondaryButton onClick={() => setRetryToken((n) => n + 1)}>Retry</SecondaryButton>
           </div>
         </Card>
+      ) : loading || !plans || !registry ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+          {Array.from({ length: 2 }, (_, i) => (
+            <Card key={i}>
+              <div style={{ height: 300, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
+            </Card>
+          ))}
+        </div>
+      ) : plans.length === 0 ? (
+        <EmptyState icon="plans" title="No plans yet" sub="Create the first plan to start selling." />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, alignItems: 'start' }}>
+          {plans.map((plan) => (
+            <PlanCard key={plan.code} plan={plan} registry={registry} onEdit={() => router.push(`/admin/plans/${plan.code}`)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-        <Card>
-          <SectionTitle title="Included in Base" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-            {FEATURES.map((f) => (
-              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'oklch(0.3 0.02 155)', fontWeight: 600 }}>
-                <span style={{ width: 22, height: 22, borderRadius: 7, background: 'oklch(0.95 0.035 150)', color: 'oklch(0.44 0.12 150)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                  <Icon name="check" size={14} />
-                </span>
-                {f}
-              </div>
-            ))}
-          </div>
+function PlanCard({ plan, registry, onEdit }: { plan: PlanSummary; registry: CapabilityKeyMeta[]; onEdit: () => void }) {
+  const booleanKeys = registry.filter((k) => k.type === 'boolean');
+  // BR-02 — what a plan does not include is stated as plainly as what it
+  // does; both lists read the EFFECTIVE value (plan override, or the
+  // registry's own code default when the plan doesn't set one), matching
+  // the entitlement editor's own resolution logic.
+  const included = booleanKeys.filter((k) => (plan.capabilityGrants[k.key] ?? (k.codeDefault as boolean)) === true);
+  const excluded = booleanKeys.filter((k) => (plan.capabilityGrants[k.key] ?? (k.codeDefault as boolean)) === false);
 
-          <div style={{ marginTop: 18, padding: '14px 16px', borderRadius: 12, background: 'oklch(0.98 0.008 80)', border: '1px solid oklch(0.92 0.03 80)' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.45 0.1 65)' }}>Not in Base — future / add-on</div>
-            <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.06 70)', marginTop: 3 }}>AI conversations · WhatsApp marketing broadcasts · Advanced analytics</div>
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>{plan.name}</div>
+          <div style={{ marginTop: 6 }}>
+            <StatusPill status={plan.status === 'active' ? 'Active' : 'Retired'} />
           </div>
-
-          <div style={{ marginTop: 16, padding: '15px 16px', borderRadius: 13, background: 'oklch(0.98 0.012 150)', border: '1px solid oklch(0.9 0.02 150)', display: 'flex', alignItems: 'center', gap: 13, flexWrap: 'wrap' }}>
-            <span style={{ width: 38, height: 38, borderRadius: 11, background: 'oklch(0.95 0.035 150)', color: 'oklch(0.44 0.12 150)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-              <Icon name="money" size={19} />
-            </span>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 800, color: oklch.textStrong }}>Giving a customer a discount?</div>
-              <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', marginTop: 2, lineHeight: 1.45 }}>
-                The list price stays ₹799 for everyone. A discount (e.g. ₹599 for early adopters) is applied per customer on their subscription — it never changes the plan.
-              </div>
-            </div>
-            <PrimaryButton onClick={() => router.push('/admin/subscriptions')} style={{ flex: 'none' }}>
-              Apply a discount
-            </PrimaryButton>
-          </div>
-        </Card>
+        </div>
+        <div style={{ textAlign: 'right', flex: 'none' }}>
+          <div style={{ fontSize: 26, fontWeight: 800, color: oklch.textStrong, lineHeight: 1 }}>{inr(plan.basePriceMinor / 100)}</div>
+          <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>per {plan.billingCycle} · pre-tax</div>
+        </div>
       </div>
+
+      {plan.description ? <div style={{ fontSize: 13, color: oklch.textMuted, marginTop: 10, lineHeight: 1.5 }}>{plan.description}</div> : null}
+
+      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <CapabilityColumn title="Included" keys={included} tone="on" />
+        <CapabilityColumn title="Not included" keys={excluded} tone="off" />
+      </div>
+
+      {/* AI has no registry keys at all yet (GRW-107's own honesty rule) — stated
+          statically rather than fabricated as a capability being "excluded". */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: oklch.textFaint, marginTop: 10 }}>
+        <Icon name="close" size={12} />
+        AI — Future / Not enabled
+      </div>
+
+      <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${oklch.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 13, color: oklch.textFaint, fontWeight: 600 }}>
+          {plan.businessCount} {plan.businessCount === 1 ? 'business' : 'businesses'} on this plan
+        </div>
+        <SecondaryButton onClick={onEdit}>Edit plan</SecondaryButton>
+      </div>
+    </Card>
+  );
+}
+
+function CapabilityColumn({ title, keys, tone }: { title: string; keys: CapabilityKeyMeta[]; tone: 'on' | 'off' }) {
+  const shown = keys.slice(0, 6);
+  const remaining = keys.length - shown.length;
+  return (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>{title}</div>
+      {keys.length === 0 ? (
+        <div style={{ fontSize: 12.5, color: oklch.textFaint }}>{tone === 'on' ? 'Nothing beyond code defaults.' : 'Everything in the registry is granted.'}</div>
+      ) : (
+        <>
+          {shown.map((k) => (
+            <div
+              key={k.key}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: tone === 'on' ? oklch.text : oklch.textFaint, marginBottom: 5 }}
+            >
+              <Icon name={tone === 'on' ? 'check' : 'close'} size={12} />
+              {k.label}
+            </div>
+          ))}
+          {remaining > 0 ? <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 2 }}>+{remaining} more</div> : null}
+        </>
+      )}
     </div>
   );
 }

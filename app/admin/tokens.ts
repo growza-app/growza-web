@@ -49,6 +49,12 @@ export const STATUS_COLORS: Record<string, [fg: string, bg: string]> = {
   // tenant.status (GRW-101) — 'active'/'suspended' already share Active/Suspended above.
   Provisioning: ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
   Churned: ['oklch(0.55 0.17 25)', 'oklch(0.95 0.04 25)'],
+  // plan.status (GRW-108) — shares Suspended's muted grey: retired reads as
+  // "inactive", not "failed"/"in trouble" the way Churned/Overdue do.
+  Retired: ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],
+  // plan_version.activated_at IS NULL (GRW-108) — a version created but not
+  // yet live, same amber as Trial/Grace period/Pending's "not settled yet".
+  Scheduled: ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
 };
 
 /** Business-type color, keyed by hue — matches typeCol()/TYPE_HUE in the design. */

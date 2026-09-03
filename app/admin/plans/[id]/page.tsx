@@ -4,25 +4,26 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';
 import { Card, EmptyState, SecondaryButton } from '../../components/primitives';
-import { PlanForm } from '../../components/PlanForm';
+import { PlanForm, type PlanDetail, type PlanVersion } from '../../components/PlanForm';
 import { oklch } from '../../tokens';
 
 /**
- * GRW-107 — real entitlement data feeds PlanForm's edit-mode entitlement
- * editor; the rest of the form (name/price/status) stays the mock GRW-108
- * makes real, since wiring the whole plan record is that story's own scope.
+ * GRW-108 — the real plan record, its version history, and enough of the
+ * rest of the platform (every other plan's status) to warn before retiring
+ * the last active one (AC-03) — all fetched here so PlanForm stays a pure
+ * presentation/edit component.
  */
 
-interface PlanDetail {
+interface PlansListRow {
   code: string;
-  name: string;
-  limits: Record<string, number>;
-  capabilityGrants: Record<string, boolean>;
+  status: string;
 }
 
 export default function EditPlanPage() {
   const params = useParams<{ id: string }>();
   const [plan, setPlan] = useState<PlanDetail | null>(null);
+  const [versions, setVersions] = useState<PlanVersion[]>([]);
+  const [otherActivePlansCount, setOtherActivePlansCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,9 +34,17 @@ export default function EditPlanPage() {
     setLoading(true);
     setError(null);
     setNotFound(false);
-    adminFetch<PlanDetail>(`/plans/${params.id}`)
-      .then((result) => {
-        if (!cancelled) setPlan(result);
+
+    Promise.all([
+      adminFetch<PlanDetail>(`/plans/${params.id}`),
+      adminFetch<{ rows: PlanVersion[] }>(`/plans/${params.id}/versions`),
+      adminFetch<{ rows: PlansListRow[] }>('/plans'),
+    ])
+      .then(([planResult, versionsResult, plansResult]) => {
+        if (cancelled) return;
+        setPlan(planResult);
+        setVersions(versionsResult.rows);
+        setOtherActivePlansCount(plansResult.rows.filter((p) => p.status === 'active' && p.code !== planResult.code).length);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -45,6 +54,7 @@ export default function EditPlanPage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
@@ -73,5 +83,13 @@ export default function EditPlanPage() {
     );
   }
 
-  return <PlanForm mode="edit" planCode={plan.code} limits={plan.limits} capabilityGrants={plan.capabilityGrants} />;
+  return (
+    <PlanForm
+      plan={plan}
+      versions={versions}
+      otherActivePlansCount={otherActivePlansCount}
+      onPlanUpdated={(updated) => setPlan(updated)}
+      onVersionCreated={() => setRetryToken((n) => n + 1)}
+    />
+  );
 }
