@@ -8,6 +8,13 @@ const API_URL = typeof window !== 'undefined' ? '' : (process.env.API_URL ?? 'ht
 
 export interface Me {
   tenant: { id: string; name: string; timezone: string; locationName: string | null } | null;
+  /**
+   * The owner's own billing state, or null when there is nothing to say
+   * (GRW-122). Null is the healthy case AND the case where the state could
+   * not be resolved — the dashboard shows no banner rather than a false
+   * reassurance or a false warning.
+   */
+  billing: { status: string; message: string | null } | null;
   labels: Record<string, string>;
   capabilities: {
     walkIn: boolean;
