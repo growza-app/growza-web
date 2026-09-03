@@ -90,9 +90,10 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
   );
   const hasChanges = Object.keys(dirtyLimits).length > 0 || Object.keys(dirtyGrants).length > 0;
 
-  // FR-04/AC-03 — a numeric limit combines with min() across layers, so a
-  // plan value above the code ceiling is silently ineffective. State it
-  // rather than let an admin believe they granted more than they did.
+  // FR-04/AC-03 — the plan sets a BASELINE (GRW-110), but the code default is
+  // still a ceiling applied last, so a plan value above it is silently
+  // ineffective. State it rather than let an admin believe they granted more
+  // than they did.
   const overCeiling = registry
     ? (registry.filter((k) => k.type === 'number' && draftLimits[k.key] !== undefined && draftLimits[k.key]! > (k.codeDefault as number)) as CapabilityKeyMeta[])
     : [];
@@ -214,7 +215,8 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
             {overCeiling.map((k) => (
               <div key={k.key}>
                 {k.label}: entered {draftLimits[k.key]!.toLocaleString('en-IN')}, but {(k.codeDefault as number).toLocaleString('en-IN')} is
-                the effective maximum today — the extra has no effect until that ceiling changes.
+                the effective maximum today — the extra has no effect. This ceiling is set in code, so raising it is a
+                code change; a per-customer exception on their subscription cannot exceed it either.
               </div>
             ))}
           </div>
