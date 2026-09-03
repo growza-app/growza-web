@@ -23,6 +23,8 @@ export interface ConfirmDialogProps {
   reasonRequired?: boolean;
   reasonPlaceholder?: string;
   loading?: boolean;
+  /** A failed attempt's message, shown inside the dialog with the typed reason preserved — never surfaced by closing it, which would lose both. */
+  error?: string | null;
   onConfirm: (reason: string) => void;
   onCancel: () => void;
 }
@@ -36,6 +38,7 @@ export function ConfirmDialog({
   reasonRequired,
   reasonPlaceholder = 'Why is this being done?',
   loading,
+  error,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -98,6 +101,10 @@ export function ConfirmDialog({
             </label>
             <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder={reasonPlaceholder} autoFocus />
           </div>
+        ) : null}
+
+        {error ? (
+          <div style={{ marginTop: 14, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div>
         ) : null}
 
         <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>

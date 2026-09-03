@@ -7,7 +7,8 @@ import { adminFetch, AdminApiError } from '../../lib/api';
 import { formatDateTime } from '../../lib/format';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
-import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../../components/primitives';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../../components/primitives';
 import { oklch, typeColor } from '../../tokens';
 
 /**
@@ -34,6 +35,7 @@ interface BusinessDetail {
   businessTypeVersion: number;
   locations: Array<{ id: string; name: string; active: boolean }>;
   members: Array<{ userId: string; email: string; role: string }>;
+  suspensionReason: string | null;
 }
 
 interface RecentBooking {
@@ -110,6 +112,14 @@ function BusinessDetailInner() {
   const [error, setError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
 
+  // GRW-103 — suspend/reactivate. `pendingAction` is which one the confirm
+  // dialog is open for; null means closed. Success bumps retryToken, the
+  // same "refresh this page's data" idiom the Retry button already uses,
+  // rather than patching business.status in local state by hand.
+  const [pendingAction, setPendingAction] = useState<'suspend' | 'reactivate' | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -150,6 +160,23 @@ function BusinessDetailInner() {
     router.push(`/admin/businesses/${params.id}?tab=${key}`);
   }
 
+  const canManage = me?.permissions.includes('admin.business.manage') ?? false;
+
+  function submitAction(reason: string) {
+    if (!pendingAction) return;
+    setActionLoading(true);
+    setActionError(null);
+    adminFetch(`/businesses/${params.id}/${pendingAction}`, { method: 'POST', body: JSON.stringify({ reason }) })
+      .then(() => {
+        setPendingAction(null);
+        setRetryToken((n) => n + 1);
+      })
+      .catch((err) => {
+        setActionError(err instanceof AdminApiError ? err.message : `Could not ${pendingAction} this business.`);
+      })
+      .finally(() => setActionLoading(false));
+  }
+
   // AC-02 — an unknown business id never renders a tab shell around empty data.
   if (notFound) {
     return (
@@ -186,7 +213,30 @@ function BusinessDetailInner() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <SummaryHeader business={business} />
+      <SummaryHeader business={business} canManage={canManage} onRequestAction={setPendingAction} />
+
+      {business.status === 'suspended' ? <SuspendedBanner reason={business.suspensionReason} /> : null}
+
+      <ConfirmDialog
+        open={pendingAction !== null}
+        title={pendingAction === 'suspend' ? `Suspend ${business.name}?` : `Reactivate ${business.name}?`}
+        description={
+          pendingAction === 'suspend'
+            ? 'Its dashboard users will not be able to sign in and no proactive WhatsApp messages will be sent on its behalf. Its bookings, customers, services and WhatsApp number are untouched — this can be reversed at any time.'
+            : 'Dashboard sign-in and proactive WhatsApp messages resume immediately. Nothing else about the business changes.'
+        }
+        confirmLabel={pendingAction === 'suspend' ? 'Suspend business' : 'Reactivate business'}
+        danger={pendingAction === 'suspend'}
+        reasonRequired
+        reasonPlaceholder={pendingAction === 'suspend' ? 'Why is this business being suspended?' : 'Why is this business being reactivated?'}
+        loading={actionLoading}
+        error={actionError}
+        onConfirm={submitAction}
+        onCancel={() => {
+          setPendingAction(null);
+          setActionError(null);
+        }}
+      />
 
       <div
         className="admin-table-scroll"
@@ -229,8 +279,22 @@ function BusinessDetailInner() {
   );
 }
 
-function SummaryHeader({ business }: { business: BusinessDetail }) {
+function SummaryHeader({
+  business,
+  canManage,
+  onRequestAction,
+}: {
+  business: BusinessDetail;
+  canManage: boolean;
+  onRequestAction: (action: 'suspend' | 'reactivate') => void;
+}) {
   const tc = typeColor(business.vertical);
+  // BR-03 — only active<->suspended is this story's transition; a business
+  // that is provisioning or churned offers neither button rather than one
+  // that would just come back 409.
+  const canSuspend = canManage && business.status === 'active';
+  const canReactivate = canManage && business.status === 'suspended';
+
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
@@ -255,8 +319,16 @@ function SummaryHeader({ business }: { business: BusinessDetail }) {
             {business.vertical} · {business.ownerEmail ?? 'No owner recorded'}
           </div>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           <StatusPill status={statusLabel(business.status)} />
+          {canSuspend ? (
+            <SecondaryButton danger onClick={() => onRequestAction('suspend')}>
+              Suspend
+            </SecondaryButton>
+          ) : null}
+          {canReactivate ? (
+            <PrimaryButton onClick={() => onRequestAction('reactivate')}>Reactivate</PrimaryButton>
+          ) : null}
         </div>
       </div>
 
@@ -307,6 +379,34 @@ function SummaryField({ label, value, hint }: { label: string; value: string; hi
         }}
       >
         {value}
+      </div>
+    </div>
+  );
+}
+
+/** GRW-103 FR-05 — the suspended state and its reason, visible wherever this business's detail renders, not just in the audit trail. */
+function SuspendedBanner({ reason }: { reason: string | null }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12,
+        padding: '14px 18px',
+        borderRadius: 14,
+        background: oklch.dangerBg,
+        border: `1px solid ${oklch.danger}`,
+      }}
+    >
+      <span style={{ color: oklch.danger, flex: 'none', marginTop: 1 }}>
+        <Icon name="alert" size={18} />
+      </span>
+      <div style={{ fontSize: 13.5, color: oklch.textStrong, lineHeight: 1.5 }}>
+        <strong>This business is suspended.</strong> Its dashboard users cannot sign in and no proactive WhatsApp
+        messages are sent on its behalf. Its data is untouched.
+        {reason ? (
+          <span style={{ display: 'block', marginTop: 4, color: oklch.textMuted }}>Reason: {reason}</span>
+        ) : null}
       </div>
     </div>
   );
