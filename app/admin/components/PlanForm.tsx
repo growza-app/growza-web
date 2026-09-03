@@ -1,30 +1,34 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Field, PrimaryButton, SecondaryButton, Select, SectionTitle, TextInput } from './primitives';
+import { Card, PrimaryButton, SecondaryButton, Select, SectionTitle, Field, TextInput } from './primitives';
+import { EntitlementEditor } from './EntitlementEditor';
 import { oklch } from '../tokens';
-
-const ENTITLEMENT_CHECKBOXES: [string, boolean][] = [
-  ['Customer CRM', true],
-  ['Bookings', true],
-  ['Staff & services', true],
-  ['Combos', true],
-  ['Offers', true],
-  ['Reports & analytics', true],
-  ['WhatsApp booking', true],
-  ['WhatsApp marketing', false],
-  ['AI conversations', false],
-];
 
 /**
  * The shared plan create/edit form (GRW-80). One component behind both
- * /admin/plans/new and /admin/plans/[id] — the entitlement checkboxes here
- * are a placeholder for the sanctioned `listCapabilityKeys()` export GRW-107
- * builds; this form does not yet enumerate the real registry.
+ * /admin/plans/new and /admin/plans/[id]. GRW-107 replaced the entitlement
+ * section's placeholder checkboxes with the real, registry-driven editor —
+ * the rest of this form (name/price/status) is still the mock GRW-108 makes
+ * real; wiring the whole plan record is that story's own scope, not this one's.
  */
-export function PlanForm({ mode }: { mode: 'create' | 'edit' }) {
+export function PlanForm({
+  mode,
+  planCode,
+  limits,
+  capabilityGrants,
+}: {
+  mode: 'create' | 'edit';
+  /** Present only in edit mode — a plan must exist before its entitlements can be set. */
+  planCode?: string;
+  limits?: Record<string, number>;
+  capabilityGrants?: Record<string, boolean>;
+}) {
   const router = useRouter();
   const creating = mode === 'create';
+  const [liveLimits, setLiveLimits] = useState(limits ?? {});
+  const [liveGrants, setLiveGrants] = useState(capabilityGrants ?? {});
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1.4fr) minmax(280px, 1fr)', gap: 16, alignItems: 'start' }}>
@@ -67,29 +71,24 @@ export function PlanForm({ mode }: { mode: 'create' | 'edit' }) {
           </div>
         </Card>
 
-        <Card>
-          <SectionTitle title="Entitlements & limits" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14, marginBottom: 18 }}>
-            <Field label="Booking limit / mo">
-              <TextInput defaultValue={creating ? '' : '100'} type="number" />
-            </Field>
-            <Field label="WhatsApp limit / mo">
-              <TextInput defaultValue={creating ? '' : '800'} type="number" />
-            </Field>
-            <Field label="AI messages / mo" hint="Future">
-              <TextInput defaultValue="0" disabled style={{ color: 'oklch(0.6 0.02 155)' }} />
-            </Field>
-          </div>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', marginBottom: 10 }}>Feature entitlements</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
-            {ENTITLEMENT_CHECKBOXES.map(([label, checked]) => (
-              <label key={label} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 600, color: checked ? 'oklch(0.3 0.02 155)' : 'oklch(0.6 0.02 155)', cursor: 'pointer' }}>
-                <input type="checkbox" defaultChecked={checked} style={{ width: 17, height: 17, accentColor: oklch.accent }} />
-                {label}
-              </label>
-            ))}
-          </div>
-        </Card>
+        {planCode ? (
+          <EntitlementEditor
+            planCode={planCode}
+            limits={liveLimits}
+            capabilityGrants={liveGrants}
+            onSaved={(updated) => {
+              setLiveLimits(updated.limits);
+              setLiveGrants(updated.capabilityGrants);
+            }}
+          />
+        ) : (
+          <Card>
+            <SectionTitle title="Entitlements & limits" />
+            <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 4 }}>
+              Create the plan first — entitlements are set on a plan that already exists.
+            </div>
+          </Card>
+        )}
       </div>
 
       <Card>

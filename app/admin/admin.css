@@ -145,3 +145,14 @@ body.admin-body {
     display: flex;
   }
 }
+
+/* No spinner arrows on number inputs anywhere in admin (GRW-024's finding,
+   applied portal-wide rather than re-fixed per field). */
+.admin-body input[type='number']::-webkit-outer-spin-button,
+.admin-body input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.admin-body input[type='number'] {
+  -moz-appearance: textfield;
+}
