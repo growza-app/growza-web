@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
@@ -47,6 +47,26 @@ export function ConfirmDialog({
   // silently disabled, no visible reason why. Track that it was tried so a
   // real message can render instead of a click that appears to go nowhere.
   const [triedWithoutReason, setTriedWithoutReason] = useState(false);
+
+  /**
+   * Clear the reason every time the dialog OPENS.
+   *
+   * This component early-returns null when closed rather than unmounting, so
+   * its state survived being closed and reopened — and several screens serve
+   * two different actions from one instance. Suspending a business with
+   * "payment failed x3", then later clicking Reactivate, reopened the dialog
+   * with that reason already filled in and Confirm already enabled. One
+   * unread confirmation and the wrong reason is recorded against a
+   * reason-required, audited action, which is the one thing the reason field
+   * exists to prevent.
+   */
+  useEffect(() => {
+    if (open) {
+      setReason('');
+      setTriedWithoutReason(false);
+    }
+  }, [open]);
+
   if (!open) return null;
 
   const reasonMissing = reasonRequired && reason.trim().length === 0;
@@ -63,7 +83,10 @@ export function ConfirmDialog({
         padding: 24,
         background: 'oklch(0.2 0.02 155 / 0.5)',
       }}
-      onClick={onCancel}
+      // Not while a confirmed action is in flight: dismissing then cleared the
+      // host screen's error state, so a request that subsequently FAILED had
+      // nowhere to report it and the admin was left believing it had worked.
+      onClick={loading ? undefined : onCancel}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -123,7 +146,7 @@ export function ConfirmDialog({
         ) : null}
 
         <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-          <SecondaryButton onClick={onCancel} style={{ flex: 1, height: 44 }}>
+          <SecondaryButton onClick={onCancel} disabled={loading} style={{ flex: 1, height: 44 }}>
             Cancel
           </SecondaryButton>
           <PrimaryButton

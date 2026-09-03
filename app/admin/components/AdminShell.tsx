@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
-import { adminFetch } from '../lib/api';
+import { adminFetch, AdminApiError } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
 import { NAV_GROUPS, isNavItemActive, resolveRouteMeta } from '../nav';
 import { oklch } from '../tokens';
@@ -39,6 +39,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // Null until /me answers — the nav renders nothing rather than flashing
   // items the admin may not be allowed to see.
   const [permissions, setPermissions] = useState<string[] | null>(null);
+  const [meError, setMeError] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
   const { query, setQuery } = useAdminSearch();
@@ -49,10 +50,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // use." That was built server-side and never wired here, so every admin was
   // offered all twelve screens and found out which ones they could open by
   // clicking and reading an error.
-  const visibleNavGroups = NAV_GROUPS.map((grp) => ({
+  // If /me could not be read, show the whole nav rather than none of it: the
+  // endpoints all refuse independently, so an over-generous sidebar is a
+  // wrong-looking link, while an empty one is an admin who cannot work at all
+  // and has no idea why.
+  const visibleNavGroups = (meError ? NAV_GROUPS : NAV_GROUPS.map((grp) => ({
     ...grp,
     items: grp.items.filter((item) => permissions?.includes(item.permission) ?? false),
-  })).filter((grp) => grp.items.length > 0);
+  }))).filter((grp) => grp.items.length > 0);
 
   // Close the mobile drawer on every navigation so a tap-through doesn't
   // leave it hanging open behind the new screen.
@@ -69,10 +74,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
         setMe(result.admin);
         setPermissions(result.permissions);
       })
-      .catch(() => {
-        // SessionGate already guarantees a session exists before this
-        // mounts; a failure here means the token died between then and
-        // now, and adminFetch's own 401 handling is already redirecting.
+      .catch((err) => {
+        if (cancelled) return;
+        // A 401 is genuinely handled elsewhere — SessionGate guarantees a
+        // session before this mounts, and adminFetch redirects on expiry. Any
+        // OTHER failure used to be swallowed entirely, which left the sidebar
+        // stuck on "Loading…" with blank initials and no explanation. That
+        // matters more now the nav itself is built from this response: a
+        // network blip would render an empty portal that looks like a
+        // permissions problem.
+        if (err instanceof AdminApiError && err.status === 401) return;
+        setMeError(true);
       });
     return () => {
       cancelled = true;
