@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
-import { formatDateOnly, formatMoneyMinor } from '../lib/format';
+import { formatDateOnly, formatDateTime, formatMoneyMinor } from '../lib/format';
 import { isTerminalSubscriptionStatus, subscriptionStatusLabel } from '../lib/subscription-status';
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from './primitives';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -42,6 +42,8 @@ export interface SubscriptionPanelSubscription {
   discountReason: string | null;
   discountStartsAt: string | null;
   discountEndsAt: string | null;
+  /** GRW-121 — when the billing worker will next act. Null for a healthy subscription. */
+  nextActionAt: string | null;
 }
 
 export function SubscriptionPanel({
@@ -240,6 +242,13 @@ export function SubscriptionPanel({
           <Fact label="Current period" value={`${formatDateOnly(s.currentPeriodStart)} – ${formatDateOnly(s.currentPeriodEnd)}`} />
           <Fact label="Next billing date" value={formatDateOnly(s.nextBillingDate)} />
           <Fact label="Ends at period end" value={s.cancelAtPeriodEnd ? 'Yes' : 'No'} />
+          {/* "No action scheduled" is a real statement, not a blank — an
+              admin looking at a failing subscription needs to know whether
+              anything is going to happen and when (GRW-121). */}
+          <Fact
+            label="Next billing action"
+            value={s.nextActionAt ? formatDateTime(s.nextActionAt) : 'No action scheduled'}
+          />
         </div>
       </Card>
 
