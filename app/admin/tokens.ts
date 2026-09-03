@@ -58,6 +58,15 @@ export const STATUS_COLORS: Record<string, [fg: string, bg: string]> = {
   // plan_version.activated_at IS NULL (GRW-108) — a version created but not
   // yet live, same amber as Trial/Grace period/Pending's "not settled yet".
   Scheduled: ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
+  // subscription.status (GRW-111). Active/Trial/Past due/Grace period/
+  // Suspended above already cover five of the nine; these are the rest.
+  // Payment failed is red because it is a live problem someone must act on;
+  // Paused/Cancelled/Expired are the muted grey of "not a problem, just not
+  // running" — the same distinction Retired/Superseded draw for plans.
+  'Payment failed': ['oklch(0.55 0.17 25)', 'oklch(0.95 0.04 25)'],
+  Paused: ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],
+  Cancelled: ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],
+  Expired: ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],
 };
 
 /** Business-type color, keyed by hue — matches typeCol()/TYPE_HUE in the design. */

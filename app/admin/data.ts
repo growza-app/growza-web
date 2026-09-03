@@ -1,11 +1,15 @@
 /**
  * Mock data for the admin portal (GRW-95), ported from Admin.dc.html's own
  * mock arrays. Every screen this drives is a real, routed page — only the
- * data source is mock, because the backend for it (businesses: GRW-79,
- * plans: GRW-80, subscriptions: GRW-81, usage: GRW-85, flags: GRW-87, ...)
- * has not landed yet. Each of those epics replaces its own slice of this
- * file with a real fetch when it ships; nothing here should be read as
- * "real data" in the meantime.
+ * data source is mock, because the backend for it has not landed yet. Each
+ * epic replaces its own slice of this file with a real fetch when it ships;
+ * nothing here should be read as "real data" in the meantime, and every
+ * screen still reading it carries a PreviewBanner saying so.
+ *
+ * Retired so far: businesses (GRW-101/102), plans (GRW-108), subscriptions
+ * (GRW-111). Still mock: payments and invoices (GRW-83), usage (GRW-85),
+ * feature flags (GRW-87), platform users (GRW-88), roles (GRW-89),
+ * impersonation (GRW-90).
  */
 
 export interface Business {
@@ -39,10 +43,6 @@ const RAW_BUSINESSES: Omit<Business, 'final'>[] = [
 
 export function getBusinesses(): Business[] {
   return RAW_BUSINESSES.map((b) => ({ ...b, final: b.list - b.discount }));
-}
-
-export function getBusiness(id: string): Business | undefined {
-  return getBusinesses().find((b) => b.id === id);
 }
 
 export interface FeatureFlag {
