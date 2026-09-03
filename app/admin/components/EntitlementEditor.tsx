@@ -6,6 +6,7 @@ import { Icon } from '../icons';
 import { oklch } from '../tokens';
 import { Card, Field, SectionTitle, TextInput, Toggle, PrimaryButton } from './primitives';
 import { ConfirmDialog } from './ConfirmDialog';
+import { capabilityGroupLabel, orderCapabilityGroups } from '../lib/capability-groups';
 
 /**
  * GRW-107 — the plan entitlement editor. Every field it renders comes from
@@ -28,17 +29,6 @@ export interface EntitlementEditorProps {
   capabilityGrants: Record<string, boolean>;
   onSaved: (updated: { limits: Record<string, number>; capabilityGrants: Record<string, boolean> }) => void;
 }
-
-const GROUP_ORDER = ['booking', 'messaging', 'catalog', 'scheduling', 'dashboard', 'conversation', 'limits'];
-const GROUP_LABEL: Record<string, string> = {
-  booking: 'Booking',
-  messaging: 'Messaging',
-  catalog: 'Catalog',
-  scheduling: 'Scheduling',
-  dashboard: 'Dashboard',
-  conversation: 'Conversation',
-  limits: 'Limits',
-};
 
 export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved }: EntitlementEditorProps) {
   const [registry, setRegistry] = useState<CapabilityKeyMeta[] | null>(null);
@@ -70,15 +60,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
     setDraftGrants(capabilityGrants);
   }, [limits, capabilityGrants]);
 
-  const grouped = useMemo(() => {
-    if (!registry) return [];
-    const byGroup = new Map<string, CapabilityKeyMeta[]>();
-    for (const k of registry) {
-      if (!byGroup.has(k.group)) byGroup.set(k.group, []);
-      byGroup.get(k.group)!.push(k);
-    }
-    return GROUP_ORDER.filter((g) => byGroup.has(g)).map((g) => ({ group: g, keys: byGroup.get(g)! }));
-  }, [registry]);
+  const grouped = useMemo(() => (registry ? orderCapabilityGroups(registry) : []), [registry]);
 
   const dirtyLimits = useMemo(
     () => Object.fromEntries(Object.entries(draftLimits).filter(([k, v]) => v !== limits[k])),
@@ -147,10 +129,10 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
         }
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 6 }}>
-        {grouped.map(({ group, keys }) => (
+        {grouped.map(({ group, rows: keys }) => (
           <div key={group}>
             <div style={{ fontSize: 12.5, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
-              {GROUP_LABEL[group] ?? group}
+              {capabilityGroupLabel(group)}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
               {keys.map((k) => {
@@ -165,7 +147,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
                   return (
                     <div key={k.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }} title={k.key}>
                       <span style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>{k.label}</span>
-                      <Toggle on={effective} onClick={() => setDraftGrants((g) => ({ ...g, [k.key]: !effective }))} />
+                      <Toggle label={k.label} on={effective} onClick={() => setDraftGrants((g) => ({ ...g, [k.key]: !effective }))} />
                     </div>
                   );
                 }

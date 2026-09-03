@@ -187,12 +187,29 @@ export function TableRow({
   );
 }
 
-export function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
+export function Toggle({
+  on,
+  onClick,
+  disabled,
+  label,
+}: {
+  on: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  /**
+   * What this toggle controls. The visible label is always a sibling, so
+   * without this the control itself has no accessible name — on a screen
+   * that stacks sixteen of them (the subscription entitlement panel), that
+   * reads out as sixteen identical unnamed buttons.
+   */
+  label?: string;
+}) {
   return (
     <button
       type="button"
       onClick={disabled ? undefined : onClick}
       aria-pressed={on}
+      aria-label={label}
       disabled={disabled}
       style={{
         width: 46,

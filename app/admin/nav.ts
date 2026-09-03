@@ -103,10 +103,10 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
         : { title: 'Plans', subtitle: 'What Growza sells.', showSearch: false };
     case 'subscriptions':
       return sub
-        // Entitlements and lifecycle are not on this screen yet (GRW-112,
-        // GRW-84) — the subtitle named them anyway, which is the header
-        // promising what the page does not have.
-        ? { title: 'Subscription detail', subtitle: 'Pricing and billing period.', showSearch: false, back: { href: '/admin/subscriptions', label: 'Subscriptions' } }
+        // Lifecycle history (GRW-84's dunning/lifecycle machine) is the one
+        // thing genuinely not here yet — everything else this subtitle now
+        // names (pricing, billing period, entitlements) shipped with GRW-112.
+        ? { title: 'Subscription detail', subtitle: 'Pricing, billing period and entitlements.', showSearch: false, back: { href: '/admin/subscriptions', label: 'Subscriptions' } }
         : { title: 'Subscriptions', subtitle: 'What each business currently has.', showSearch: true };
     case 'payments':
       return { title: 'Payments', subtitle: 'Provider payment events.', showSearch: true };

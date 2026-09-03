@@ -423,7 +423,8 @@ function VersionHistoryCard({ versions, currentVersion }: { versions: PlanVersio
       )}
       <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 14, lineHeight: 1.5 }}>
         Only the version the plan currently points at is Active; the rest are kept so a price a customer was sold
-        stays readable. How many subscriptions are pinned to each isn&apos;t shown yet (Jira GRW-112).
+        stays readable. How many subscriptions are pinned to each isn&apos;t shown here — open a subscription from
+        the Subscriptions list to see its own pinned version.
       </div>
     </Card>
   );

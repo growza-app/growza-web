@@ -9,6 +9,8 @@ import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../../components/primitives';
+import { SubscriptionPanel } from '../../components/SubscriptionPanel';
+import { subscriptionStatusLabel } from '../../lib/subscription-status';
 import { inr, oklch, typeColor } from '../../tokens';
 
 /**
@@ -282,10 +284,24 @@ function BusinessDetailInner() {
       {activeTab === 'customers' ? <CustomersTab total={customers.total} /> : null}
       {activeTab === 'audit' ? <AuditLogList fixedTenantId={business.tenantId} /> : null}
       {activeTab === 'subscription' ? (
-        <NotYetBuiltTab
-          what="The full subscription view — its pinned plan version, entitlement overrides and lifecycle history. The headline figures are on Overview"
-          epic="GRW-112"
-        />
+        business.subscription ? (
+          <SubscriptionPanel
+            subscriptionId={business.subscription.id}
+            canManage={me?.permissions.includes('admin.subscription.manage') ?? false}
+            businessName={business.name}
+            planName={business.planName}
+            // Cancelling here changes the status this page's own summary
+            // header shows, so refetch rather than let two parts of one
+            // screen disagree about it.
+            onChanged={() => setRetryToken((t) => t + 1)}
+          />
+        ) : (
+          <EmptyState
+            icon="subs"
+            title="No open subscription"
+            sub="This business is not being charged. A cancelled or expired subscription is not shown here — its history lives in the audit log."
+          />
+        )
       ) : null}
       {activeTab === 'usage' ? <NotYetBuiltTab what="Usage tracking against the plan's limits" epic="GRW-85" /> : null}
       {activeTab === 'whatsapp' ? <NotYetBuiltTab what="WhatsApp message usage, by category" epic="GRW-86" /> : null}
@@ -376,7 +392,10 @@ function SummaryHeader({
         />
         <SummaryField
           label="Subscription"
-          value={business.subscription ? business.subscription.status : 'None'}
+          // The raw enum leaked to the screen here — an admin should never
+          // read PAYMENT_FAILED. One translation, shared with the
+          // subscription screens so both say the same words (GRW-112).
+          value={business.subscription ? subscriptionStatusLabel(business.subscription.status) : 'None'}
           hint={business.subscription ? undefined : 'This business has no open subscription.'}
         />
         <SummaryField
