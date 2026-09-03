@@ -26,6 +26,8 @@ export interface PlanDetail {
   status: string;
   limits: Record<string, number>;
   capabilityGrants: Record<string, boolean>;
+  /** Which version the live values above came from — what tells Active apart from Superseded. */
+  currentVersion: number;
 }
 
 export interface PlanVersion {
@@ -87,7 +89,7 @@ export function PlanForm({
         capabilityGrants={plan.capabilityGrants}
         onSaved={(updated) => onPlanUpdated({ ...plan, ...updated })}
       />
-      <VersionHistoryCard versions={versions} />
+      <VersionHistoryCard versions={versions} currentVersion={plan.currentVersion} />
     </div>
   );
 }
@@ -378,7 +380,19 @@ const VERSION_COLUMNS: TableColumn[] = [
   { label: 'Created', width: '1.2fr' },
 ];
 
-function VersionHistoryCard({ versions }: { versions: PlanVersion[] }) {
+/**
+ * A version that has ever gone live keeps `activatedAt` set forever, so
+ * rendering `activatedAt ? 'Active' : 'Scheduled'` labelled every superseded
+ * version Active — v1 at ₹799 and v2 at ₹899 both claiming to be in force,
+ * on the one screen that exists to say which price is actually charged.
+ * Only the version the plan currently points at is Active.
+ */
+function versionStatus(v: PlanVersion, currentVersion: number): 'Active' | 'Superseded' | 'Scheduled' {
+  if (!v.activatedAt) return 'Scheduled';
+  return v.version === currentVersion ? 'Active' : 'Superseded';
+}
+
+function VersionHistoryCard({ versions, currentVersion }: { versions: PlanVersion[]; currentVersion: number }) {
   return (
     <Card>
       <SectionTitle title="Version history" />
@@ -394,7 +408,7 @@ function VersionHistoryCard({ versions }: { versions: PlanVersion[] }) {
               <div style={{ fontWeight: 700, color: oklch.text }}>{inr(v.basePriceMinor / 100)}/mo</div>
               <div style={{ fontSize: 12.5, color: oklch.textMuted }}>{COHORT_LABEL[v.cohortChoice] ?? v.cohortChoice}</div>
               <div>
-                <StatusPill status={v.activatedAt ? 'Active' : 'Scheduled'} />
+                <StatusPill status={versionStatus(v, currentVersion)} />
               </div>
               <div style={{ fontSize: 12.5, color: oklch.textFaint }}>{formatDateTime(v.createdAt)}</div>
             </TableRow>
@@ -402,7 +416,8 @@ function VersionHistoryCard({ versions }: { versions: PlanVersion[] }) {
         />
       )}
       <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 14, lineHeight: 1.5 }}>
-        Pinned-subscription counts per version aren't shown here — subscriptions don't exist yet (Jira GRW-81).
+        Only the version the plan currently points at is Active; the rest are kept so a price a customer was sold
+        stays readable. How many subscriptions are pinned to each isn&apos;t shown yet (Jira GRW-112).
       </div>
     </Card>
   );

@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';
-import { formatDateTime } from '../../lib/format';
+import { formatDateOnly, formatDateTime } from '../../lib/format';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../../components/primitives';
-import { oklch, typeColor } from '../../tokens';
+import { inr, oklch, typeColor } from '../../tokens';
 
 /**
  * GRW-102's business detail — the one screen support lives in. This story
@@ -26,6 +26,8 @@ interface BusinessDetail {
   vertical: string;
   planCode: string;
   planName: string;
+  planListPriceMinor: number;
+  planCurrency: string;
   ownerEmail: string | null;
   branchCount: number;
   userCount: number;
@@ -36,6 +38,14 @@ interface BusinessDetail {
   locations: Array<{ id: string; name: string; active: boolean }>;
   members: Array<{ userId: string; email: string; role: string }>;
   suspensionReason: string | null;
+  subscription: {
+    id: string;
+    status: string;
+    finalPriceMinor: number;
+    currency: string;
+    currentPeriodEnd: string;
+    nextBillingDate: string;
+  } | null;
 }
 
 interface RecentBooking {
@@ -271,7 +281,12 @@ function BusinessDetailInner() {
       {activeTab === 'bookings' ? <BookingsTab bookings={bookings} timezone={business.timezone} /> : null}
       {activeTab === 'customers' ? <CustomersTab total={customers.total} /> : null}
       {activeTab === 'audit' ? <AuditLogList fixedTenantId={business.tenantId} /> : null}
-      {activeTab === 'subscription' ? <NotYetBuiltTab what="Subscription details — the plan version this business actually bought, and its lifecycle" epic="GRW-81" /> : null}
+      {activeTab === 'subscription' ? (
+        <NotYetBuiltTab
+          what="The full subscription view — its pinned plan version, entitlement overrides and lifecycle history. The headline figures are on Overview"
+          epic="GRW-112"
+        />
+      ) : null}
       {activeTab === 'usage' ? <NotYetBuiltTab what="Usage tracking against the plan's limits" epic="GRW-85" /> : null}
       {activeTab === 'whatsapp' ? <NotYetBuiltTab what="WhatsApp message usage, by category" epic="GRW-86" /> : null}
       {activeTab === 'billing' ? <NotYetBuiltTab what="Invoices and payment history" epic="GRW-83" /> : null}
@@ -347,14 +362,28 @@ function SummaryHeader({
         }}
       >
         <SummaryField label="Plan" value={business.planName} />
-        <SummaryField label="List price" value="—" hint="Plan pricing isn't tracked yet (Jira GRW-80)." />
-        <SummaryField label="Customer price" value="—" hint="Subscription pricing isn't tracked yet (Jira GRW-81)." />
+        <SummaryField label="List price" value={`${inr(business.planListPriceMinor / 100)}/mo`} />
+        {/* Real since GRW-105/GRW-109. These four used to read "isn't tracked
+            yet" and, worse, "No subscription yet" as a flat assertion about a
+            business that had one — an unknown rendered as a definite negative
+            on the screen support opens during a billing call. A business with
+            no OPEN subscription still shows "None", which is a fact, with the
+            reason it might be absent in the hint. */}
+        <SummaryField
+          label="Customer price"
+          value={business.subscription ? `${inr(business.subscription.finalPriceMinor / 100)}/mo` : '—'}
+          hint={business.subscription ? undefined : 'No open subscription, so nothing is being charged.'}
+        />
         <SummaryField
           label="Subscription"
-          value="No subscription yet"
-          hint="The subscription concept isn't built yet (Jira GRW-81) — the tenant status shown above is the closest real signal today."
+          value={business.subscription ? business.subscription.status : 'None'}
+          hint={business.subscription ? undefined : 'This business has no open subscription.'}
         />
-        <SummaryField label="Next billing" value="—" hint="No billing cycle exists yet (Jira GRW-83)." />
+        <SummaryField
+          label="Next billing"
+          value={business.subscription ? formatDateOnly(business.subscription.nextBillingDate) : '—'}
+          hint={business.subscription ? undefined : 'No open subscription to bill.'}
+        />
         <SummaryField label="Bookings" value="—" hint="No monthly booking limit is tracked yet — see the Bookings tab for the real total." />
         <SummaryField label="WhatsApp" value="—" hint="WhatsApp usage isn't metered yet (Jira GRW-86)." />
         <SummaryField label="Branches" value={String(business.branchCount)} />

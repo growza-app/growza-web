@@ -37,7 +37,7 @@ export default function EditPlanPage() {
 
     Promise.all([
       adminFetch<PlanDetail>(`/plans/${params.id}`),
-      adminFetch<{ rows: PlanVersion[] }>(`/plans/${params.id}/versions`),
+      adminFetch<{ rows: PlanVersion[]; currentVersion: number }>(`/plans/${params.id}/versions`),
       adminFetch<{ rows: PlansListRow[] }>('/plans'),
     ])
       .then(([planResult, versionsResult, plansResult]) => {

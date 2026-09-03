@@ -23,3 +23,21 @@ export function formatDateTime(iso: string | Date, timeZone?: string): string {
     timeZone,
   }).format(d);
 }
+
+/**
+ * `3 Oct 2026` — for a plain calendar date (a billing date, a period
+ * boundary), which the API sends as `YYYY-MM-DD` with no time in it.
+ *
+ * Parsed as UTC and rendered in UTC deliberately: `new Date('2026-10-03')` is
+ * midnight UTC, so formatting it in the viewer's zone can shift it a day —
+ * and a billing date that moves depending on who is looking at it is a bug,
+ * not a formatting preference.
+ */
+export function formatDateOnly(isoDate: string): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${isoDate}T00:00:00Z`));
+}

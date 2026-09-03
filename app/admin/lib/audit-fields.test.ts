@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fieldLabel, renderDiffField } from './audit-fields';
+import { KNOWN_ACTIONS } from '../components/AuditLogList';
+import { AUDIT_ACTIONS } from '../../../../src/platform/ports/audit';
 
 describe('renderDiffField', () => {
   // The exact case the story calls out: minor units misread as major ones.
@@ -69,5 +71,16 @@ describe('fieldLabel', () => {
     expect(fieldLabel('paidAmountMinor')).toBe('Paid amount');
     expect(fieldLabel('createdVia')).toBe('Created via');
     expect(fieldLabel('status')).toBe('Status');
+  });
+});
+
+/**
+ * QA pass — the audit screen's filter list had drifted to 3 of the 14 actions
+ * the platform actually writes, so no admin action could be filtered for at
+ * all. Pinning the two lists together is what stops it drifting again.
+ */
+describe('the audit filter offers every action the platform can write', () => {
+  it('matches AUDIT_ACTIONS exactly', () => {
+    expect([...KNOWN_ACTIONS].sort()).toEqual([...AUDIT_ACTIONS].sort());
   });
 });

@@ -231,13 +231,32 @@ export function DiscountModal({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '0 24px 22px' }}>
+        {/* There is no discount API yet — GRW-82 owns it, and nothing
+            server-side can store any of this. The Save button used to be
+            wired to onClose, so a money-changing action closed exactly as it
+            would on success and persisted nothing: a failure indistinguishable
+            from a success. Until there is somewhere real to write to, this
+            says so rather than pretending. */}
+        <div
+          style={{
+            margin: '18px 24px 0',
+            padding: '12px 14px',
+            borderRadius: 11,
+            background: oklch.warnBg,
+            fontSize: 12.5,
+            fontWeight: 600,
+            lineHeight: 1.5,
+            color: 'oklch(0.42 0.12 65)',
+          }}
+        >
+          Preview only — customer-specific pricing can&apos;t be saved yet (Jira GRW-82). The figures above show what
+          this discount would come to; nothing is recorded.
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, padding: '14px 24px 22px' }}>
           <SecondaryButton onClick={onClose} style={{ flex: 1, height: 46 }}>
-            Cancel
+            Close
           </SecondaryButton>
-          <PrimaryButton onClick={onClose} style={{ flex: 1.4, height: 46 }}>
-            Save pricing
-          </PrimaryButton>
         </div>
       </div>
     </div>

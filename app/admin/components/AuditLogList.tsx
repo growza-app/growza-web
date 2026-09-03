@@ -10,8 +10,28 @@ import { Card, EmptyState, Field, SecondaryButton, Select, TextInput } from './p
 import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from './Pagination';
 import { oklch } from '../tokens';
 
-/** The typed audit action vocabulary as of this writing (src/platform/ports/audit.ts) — grown alongside it, one real writer at a time. */
-const KNOWN_ACTIONS = ['appointment.create', 'appointment.status_change', 'appointment.checkout'] as const;
+/**
+ * Mirrors AUDIT_ACTIONS in src/platform/ports/audit.ts. This list had drifted
+ * to three of fourteen entries, so an admin opening the audit log to answer
+ * "who suspended this business, and why" was offered a filter that could not
+ * express the question. `audit-fields.test.ts` now fails if the two diverge.
+ */
+export const KNOWN_ACTIONS = [
+  'appointment.create',
+  'appointment.status_change',
+  'appointment.checkout',
+  'business.suspend',
+  'business.reactivate',
+  'plan.create',
+  'plan.update',
+  'plan.delete',
+  'plan.version_create',
+  'plan.entitlements_update',
+  'subscription.create',
+  'subscription.status_update',
+  'subscription.entitlement_set',
+  'subscription.entitlement_remove',
+] as const;
 
 interface AuditLogRow {
   id: string;
