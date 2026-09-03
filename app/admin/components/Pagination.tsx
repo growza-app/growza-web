@@ -31,6 +31,7 @@ export function Pagination({
   shown,
   state,
   onChange,
+  maxRows,
 }: {
   /** Total rows after filtering, before pagination. */
   total: number;
@@ -38,13 +39,29 @@ export function Pagination({
   shown: number;
   state: PaginationState;
   onChange: (next: PaginationState) => void;
+  /**
+   * QA pass 7 (HIGH) — set only by a caller whose backend enforces a hard
+   * per-request row cap (GRW-100/GRW-111's admin-read layer clamps
+   * `pageSize` to 100 server-side, silently: `src/modules/admin/{businesses,
+   * subscriptions}.ts`'s own `Math.min(Math.max(...), 100)`). Without this,
+   * `totalPages`/`hasMore` below are computed purely from `total` and the
+   * REQUESTED `state.pageSize` — both of which keep climbing past what the
+   * backend will ever actually return, so "Page 6 of 8" kept rendering (and
+   * "Next"/"Load more" kept accepting clicks) past the point where every
+   * further click re-fetched the exact same capped 100 rows. Every other
+   * consumer of this component still paginates purely client-side (this
+   * file's own top comment) and leaves this unset, unaffected.
+   */
+  maxRows?: number;
 }) {
   if (total === 0) return null;
 
-  const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+  const effectiveTotal = maxRows !== undefined ? Math.min(total, maxRows) : total;
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / state.pageSize));
   const atStart = state.page <= 1;
   const atEnd = state.page >= totalPages;
-  const hasMore = shown < total;
+  const hasMore = shown < effectiveTotal;
+  const capped = maxRows !== undefined && total > maxRows;
 
   const goTo = (page: number) => onChange({ ...state, page: Math.min(Math.max(1, page), totalPages) });
   const changeSize = (pageSize: number) => onChange({ page: 1, pageSize });
@@ -53,7 +70,8 @@ export function Pagination({
     <div style={{ marginTop: 14 }}>
       <div className="admin-pagination-desktop" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
-          Showing {Math.min(shown, total)} of {total.toLocaleString('en-IN')}
+          Showing {Math.min(shown, effectiveTotal)} of {total.toLocaleString('en-IN')}
+          {capped ? ` — narrow with filters to reach the rest past ${maxRows!.toLocaleString('en-IN')}` : ''}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
@@ -100,7 +118,9 @@ export function Pagination({
           </button>
         ) : (
           <div style={{ width: '100%', textAlign: 'center', fontSize: 12.5, color: oklch.textFaint, fontWeight: 600, padding: '10px 0' }}>
-            All {total.toLocaleString('en-IN')} shown
+            {capped
+              ? `Showing the first ${maxRows!.toLocaleString('en-IN')} of ${total.toLocaleString('en-IN')} — narrow with filters to see the rest`
+              : `All ${total.toLocaleString('en-IN')} shown`}
           </div>
         )}
       </div>

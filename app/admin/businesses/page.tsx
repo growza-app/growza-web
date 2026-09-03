@@ -281,7 +281,10 @@ function AdminBusinessesInner() {
               );
             })}
           />
-          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} />
+          {/* maxRows=100 mirrors listBusinessesForAdmin's own hard server-side
+              clamp (src/modules/admin/businesses.ts) — QA pass 7, same shared
+              root cause as the Subscriptions list. */}
+          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} maxRows={100} />
         </>
       )}
     </div>

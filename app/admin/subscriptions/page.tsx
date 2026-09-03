@@ -246,7 +246,9 @@ export default function AdminSubscriptionsPage() {
               );
             })}
           />
-          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} />
+          {/* maxRows=100 mirrors listSubscriptionsForAdmin's own hard server-side
+              clamp (src/modules/admin/subscriptions.ts) — QA pass 7. */}
+          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} maxRows={100} />
         </>
       )}
     </div>

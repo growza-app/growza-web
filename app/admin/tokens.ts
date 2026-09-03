@@ -85,8 +85,17 @@ export function typeColor(type: string): { bg: string; fg: string } {
 }
 
 /** ₹ formatter — every money figure in the admin portal goes through this one function. */
+/**
+ * `maximumFractionDigits: 2` alone drops TRAILING zeros mid-precision, not
+ * just whole numbers — ₹79.90 rendered as ₹79.9, ₹719.10 as ₹719.1 (QA pass
+ * 7). Money with one decimal digit reads as a typo, not as ninety paise.
+ * Forcing minimumFractionDigits to 2 whenever there IS a fractional paise
+ * value (and leaving it at 0 for a whole-rupee amount, so ₹200 stays ₹200
+ * rather than becoming ₹200.00 everywhere) keeps both cases honest.
+ */
 export function inr(n: number): string {
-  return '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  const hasFraction = Math.round(n * 100) % 100 !== 0;
+  return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: hasFraction ? 2 : 0, maximumFractionDigits: 2 });
 }
 
 /**

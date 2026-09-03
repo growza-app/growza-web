@@ -36,6 +36,13 @@ const ENTITY_FIELD_KINDS: Record<string, Record<string, FieldKind>> = {
   subscription: {
     discountAmountMinor: 'money',
     finalPriceMinor: 'money',
+    // QA pass 7 — discount_set/discount_remove diffs widened to every field
+    // the route can change, not just the two money columns; discountType
+    // stays undeclared (renders as plain text, same as reaching the
+    // fallback below) since 'fixed'/'percent'/'final' aren't a status
+    // vocabulary.
+    discountReason: 'text',
+    discountEndsAt: 'date',
   },
 };
 

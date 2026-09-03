@@ -102,6 +102,20 @@ export function SubscriptionEntitlements({
   const [pending, setPending] = useState<PendingEdit | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // QA pass 7 (HIGH) — `submit()` below deliberately still re-reads via
+  // `load()` after a save (a clamp on one key can change what another key
+  // resolves to, so the table itself has to come from a full server
+  // resolve, not a local patch). But the PUT response is the ONLY place
+  // `clamped`/`requested`/`clampedBy` for THIS save ever appear — the
+  // confirm dialog's own promise ("a value above a ceiling is capped to it,
+  // and you will be told") — because `EntitlementLine`'s "Asked for X,
+  // capped to Y" banner reads `row.requested`/`row.clampedBy` off the
+  // RESOLVED row, and the override is stored already-clamped (admin-routes.ts's
+  // own comment: "stored CLAMPED, so the stored row and the resolved value
+  // never disagree"), so a later resolve can never again see a gap between
+  // what was asked and what's stored — there is none left to see. This
+  // banner is what actually keeps that promise.
+  const [clampNotice, setClampNotice] = useState<{ label: string; requested: CapabilityValue; effectiveValue: CapabilityValue } | null>(null);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -142,18 +156,34 @@ export function SubscriptionEntitlements({
     if (!pending) return;
     setSaving(true);
     setSaveError(null);
+    setClampNotice(null);
 
     const path = `/subscriptions/${subscriptionId}/entitlements/${encodeURIComponent(pending.row.key)}`;
-    const request =
-      pending.mode === 'set'
-        ? adminFetch<unknown>(path, { method: 'PUT', body: JSON.stringify({ reason, value: pending.value }) })
-        : adminFetch<unknown>(path, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    const row = pending.row;
 
-    request
-      // Always re-read rather than patching state from the response: an
-      // override is clamped server-side, and one key's value can be the
-      // ceiling another key resolves against. Trusting the local guess is how
-      // the panel ends up disagreeing with the resolver it is describing.
+    if (pending.mode === 'set') {
+      adminFetch<{ key: string; requested: CapabilityValue; effectiveValue: CapabilityValue; clamped: boolean; clampedBy?: CapabilitySource }>(
+        path,
+        { method: 'PUT', body: JSON.stringify({ reason, value: pending.value }) },
+      )
+        .then((result) => {
+          // Read straight off THIS response, before the re-read below can
+          // ever have a chance to launder it away — see the state comment.
+          if (result.clamped) setClampNotice({ label: row.label, requested: result.requested, effectiveValue: result.effectiveValue });
+          // Always re-read rather than patching state from the response: an
+          // override is clamped server-side, and one key's value can be the
+          // ceiling another key resolves against. Trusting the local guess is
+          // how the panel ends up disagreeing with the resolver it is
+          // describing.
+          return load();
+        })
+        .then(() => setPending(null))
+        .catch((err) => setSaveError(err instanceof AdminApiError ? err.message : 'Could not save this override.'))
+        .finally(() => setSaving(false));
+      return;
+    }
+
+    adminFetch<unknown>(path, { method: 'DELETE', body: JSON.stringify({ reason }) })
       .then(() => load())
       .then(() => setPending(null))
       .catch((err) => setSaveError(err instanceof AdminApiError ? err.message : 'Could not save this override.'))
@@ -203,6 +233,15 @@ export function SubscriptionEntitlements({
         last word.
       </p>
 
+      {clampNotice ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: 12.5, fontWeight: 600, lineHeight: 1.5, color: 'oklch(0.42 0.12 65)', marginBottom: 16 }}>
+          <Icon name="alert" size={14} />
+          Asked for {formatValue({ type: typeof clampNotice.effectiveValue === 'boolean' ? 'boolean' : 'number' }, clampNotice.requested)} on{' '}
+          {clampNotice.label}, capped to {formatValue({ type: typeof clampNotice.effectiveValue === 'boolean' ? 'boolean' : 'number' }, clampNotice.effectiveValue)}{' '}
+          and saved at that value.
+        </div>
+      ) : null}
+
       {!isOpen ? (
         <div style={{ padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: 12.5, fontWeight: 600, lineHeight: 1.5, color: 'oklch(0.42 0.12 65)', marginBottom: 16 }}>
           This subscription is {statusLabel.toLowerCase()}, so overrides on it are no longer read when capabilities
@@ -233,10 +272,12 @@ export function SubscriptionEntitlements({
                     onDraftChange={(value) => setDrafts((d) => ({ ...d, [row.key]: value }))}
                     onSet={(value) => {
                       setSaveError(null);
+                      setClampNotice(null);
                       setPending({ mode: 'set', row, value });
                     }}
                     onRemove={() => {
                       setSaveError(null);
+                      setClampNotice(null);
                       setPending({ mode: 'remove', row });
                     }}
                   />

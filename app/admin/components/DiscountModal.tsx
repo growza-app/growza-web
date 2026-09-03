@@ -5,6 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly } from '../lib/format';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
+import { ConfirmDialog } from './ConfirmDialog';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
 
 /**
@@ -27,7 +28,21 @@ export interface CurrentDiscount {
   /** What the admin originally typed — rupees for fixed/final, 0-100 for percent. */
   value: number;
   reason: string;
+  startsAt: string | null;
   endsAt: string | null;
+}
+
+/**
+ * Whole calendar months between two 'YYYY-MM-DD' dates, day-of-month
+ * ignored (QA pass 7). Only ever used to prefill the Duration select on
+ * reopen — the server is what actually validates and computes the real
+ * window (this file's own top comment), so an off-by-a-few-days rounding
+ * here has no correctness consequence, only a cosmetic one.
+ */
+function monthsBetween(startISO: string, endISO: string): number {
+  const [sy, sm] = startISO.split('-').map(Number);
+  const [ey, em] = endISO.split('-').map(Number);
+  return Math.max(1, (ey - sy) * 12 + (em - sm));
 }
 
 export interface DiscountModalSubscription {
@@ -69,6 +84,8 @@ export function DiscountModal({
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   // Re-seed the form every time the modal OPENS on a (possibly different)
   // subscription — same reset-on-open discipline ConfirmDialog uses, for the
@@ -82,7 +99,21 @@ export function DiscountModal({
       setType(currentDiscount.type);
       setValue(String(currentDiscount.value));
       setReason(currentDiscount.reason);
-      setDuration(currentDiscount.endsAt ? '3' : '0');
+      // QA pass 7 (HIGH, confirmed independently twice) — this used to
+      // hardcode '3' whenever the discount had any end date at all,
+      // silently truncating a 6- or 12-month discount to 3 months on
+      // every reopen-and-resave, with nothing in the UI hinting it had
+      // changed. Reopening now preselects the discount's OWN original
+      // duration (whole months between when it started and when it
+      // ends) — the closest of this select's fixed options when one
+      // matches exactly, or the real computed value otherwise, so an
+      // uncommon duration is shown honestly rather than snapped to the
+      // nearest preset.
+      setDuration(
+        currentDiscount.endsAt && currentDiscount.startsAt
+          ? String(monthsBetween(currentDiscount.startsAt, currentDiscount.endsAt))
+          : '0',
+      );
     } else {
       setType('fixed');
       setValue('200');
@@ -138,18 +169,28 @@ export function DiscountModal({
       .finally(() => setSaving(false));
   }
 
-  function remove() {
+  // QA pass 7 (MEDIUM) — this used to fire straight off the button with a
+  // hardcoded reason string ('Reverted to list price'), regardless of why
+  // it was actually being removed. That defeated the whole point of this
+  // route's `reasonRequired: true` (GRW-98, BR-02: "an unexplained
+  // entitlement [or price change] is indistinguishable from a bug") — every
+  // removal audited identically, no matter the real reason. Now goes
+  // through the same reason-capture ConfirmDialog every other audited
+  // mutation on this screen uses (cancel, above; entitlement set/remove in
+  // SubscriptionEntitlements.tsx).
+  function remove(reason: string) {
     setRemoving(true);
-    setSaveError(null);
-    adminFetch<DiscountedSubscription>(
-      `/subscriptions/${subscription!.id}/discount`,
-      { method: 'DELETE', body: JSON.stringify({ reason: 'Reverted to list price' }) },
-    )
+    setRemoveError(null);
+    adminFetch<DiscountedSubscription>(`/subscriptions/${subscription!.id}/discount`, {
+      method: 'DELETE',
+      body: JSON.stringify({ reason }),
+    })
       .then((updated) => {
+        setRemoveConfirmOpen(false);
         onSaved(updated);
         onClose();
       })
-      .catch((err) => setSaveError(err instanceof AdminApiError ? err.message : 'Could not remove this discount.'))
+      .catch((err) => setRemoveError(err instanceof AdminApiError ? err.message : 'Could not remove this discount.'))
       .finally(() => setRemoving(false));
   }
 
@@ -300,6 +341,11 @@ export function DiscountModal({
                   cursor: busy ? 'not-allowed' : 'pointer',
                 }}
               >
+                {!['0', '3', '6', '12'].includes(duration) ? (
+                  <option value={duration}>
+                    {duration} month{duration === '1' ? '' : 's'} (current)
+                  </option>
+                ) : null}
                 <option value="3">3 months</option>
                 <option value="6">6 months</option>
                 <option value="12">12 months</option>
@@ -357,7 +403,15 @@ export function DiscountModal({
 
         <div style={{ display: 'flex', gap: 10, padding: '14px 24px 22px' }}>
           {currentDiscount ? (
-            <SecondaryButton danger onClick={remove} disabled={busy} style={{ flex: 1, height: 46 }}>
+            <SecondaryButton
+              danger
+              onClick={() => {
+                setRemoveError(null);
+                setRemoveConfirmOpen(true);
+              }}
+              disabled={busy}
+              style={{ flex: 1, height: 46 }}
+            >
               {removing ? 'Removing…' : 'Remove discount'}
             </SecondaryButton>
           ) : (
@@ -370,6 +424,23 @@ export function DiscountModal({
           </PrimaryButton>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={removeConfirmOpen}
+        danger
+        title="Remove this discount?"
+        description={`${businessName} reverts to the plan's standard price of ${inr(listPriceRupees)}/mo. This change is audited.`}
+        confirmLabel="Remove discount"
+        reasonRequired
+        reasonPlaceholder="Why is this discount being removed?"
+        loading={removing}
+        error={removeError}
+        onConfirm={remove}
+        onCancel={() => {
+          setRemoveConfirmOpen(false);
+          setRemoveError(null);
+        }}
+      />
     </div>
   );
 }

@@ -40,6 +40,7 @@ export interface SubscriptionPanelSubscription {
   discountType: 'fixed' | 'percent' | 'final' | null;
   discountValue: number | null;
   discountReason: string | null;
+  discountStartsAt: string | null;
   discountEndsAt: string | null;
 }
 
@@ -148,6 +149,7 @@ export function SubscriptionPanel({
           type: s.discountType,
           value: s.discountType === 'percent' ? s.discountValue : s.discountValue / 100,
           reason: s.discountReason,
+          startsAt: s.discountStartsAt,
           endsAt: s.discountEndsAt,
         }
       : null;
