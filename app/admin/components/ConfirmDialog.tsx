@@ -43,6 +43,10 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const [reason, setReason] = useState('');
+  // Clicking Save while the reason is blank used to just do nothing —
+  // silently disabled, no visible reason why. Track that it was tried so a
+  // real message can render instead of a click that appears to go nowhere.
+  const [triedWithoutReason, setTriedWithoutReason] = useState(false);
   if (!open) return null;
 
   const reasonMissing = reasonRequired && reason.trim().length === 0;
@@ -99,7 +103,18 @@ export function ConfirmDialog({
             <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
               Reason <span style={{ color: oklch.danger }}>*</span>
             </label>
-            <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder={reasonPlaceholder} autoFocus />
+            <TextInput
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (triedWithoutReason) setTriedWithoutReason(false);
+              }}
+              placeholder={reasonPlaceholder}
+              autoFocus
+            />
+            {triedWithoutReason && reasonMissing ? (
+              <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, color: oklch.danger }}>A reason is required before this can be saved.</div>
+            ) : null}
           </div>
         ) : null}
 
@@ -113,7 +128,11 @@ export function ConfirmDialog({
           </SecondaryButton>
           <PrimaryButton
             onClick={() => {
-              if (reasonMissing || loading) return;
+              if (loading) return;
+              if (reasonMissing) {
+                setTriedWithoutReason(true);
+                return;
+              }
               onConfirm(reason.trim());
             }}
             style={{
@@ -122,8 +141,7 @@ export function ConfirmDialog({
               justifyContent: 'center',
               background: danger ? oklch.danger : oklch.accent,
               opacity: reasonMissing || loading ? 0.6 : 1,
-              cursor: reasonMissing || loading ? 'not-allowed' : 'pointer',
-              pointerEvents: reasonMissing || loading ? 'none' : 'auto',
+              cursor: loading ? 'not-allowed' : 'pointer',
             }}
           >
             {loading ? 'Working…' : confirmLabel}
