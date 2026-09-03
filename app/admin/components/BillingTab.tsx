@@ -49,7 +49,7 @@ interface PaymentRow {
   createdAt: string;
 }
 
-export function BillingTab({ businessId, businessName }: { businessId: string; businessName: string }) {
+export function BillingTab({ businessId }: { businessId: string; businessName?: string }) {
   const router = useRouter();
   const [invoices, setInvoices] = useState<InvoiceRow[] | null>(null);
   const [payments, setPayments] = useState<PaymentRow[] | null>(null);
@@ -58,11 +58,15 @@ export function BillingTab({ businessId, businessName }: { businessId: string; b
   const load = useCallback(
     (signal?: AbortSignal) =>
       Promise.all([
-        // Filtered by the business's own name rather than by id: the list
-        // endpoints filter on what they can search, and this tab is one
-        // business's view of the same data, not a different query.
-        adminFetch<{ rows: InvoiceRow[] }>(`/invoices?search=${encodeURIComponent(businessName)}&pageSize=50`, { signal }),
-        adminFetch<{ rows: PaymentRow[] }>(`/payments?search=${encodeURIComponent(businessName)}&pageSize=50`, { signal }),
+        // Scoped by the business's ID (QA pass 8). This filtered by NAME
+        // through `search`, which is a substring match against the business
+        // name OR the invoice/payment id — so a business called "Glow" saw
+        // every "Glow Salon" row, two businesses sharing a name saw each
+        // other's money, and one called "GRW" matched every invoice number.
+        // On a screen support works refunds and disputes from, that is the
+        // wrong customer's money.
+        adminFetch<{ rows: InvoiceRow[] }>(`/invoices?businessId=${encodeURIComponent(businessId)}&pageSize=50`, { signal }),
+        adminFetch<{ rows: PaymentRow[] }>(`/payments?businessId=${encodeURIComponent(businessId)}&pageSize=50`, { signal }),
       ])
         .then(([inv, pay]) => {
           setInvoices(inv.rows);
@@ -73,7 +77,7 @@ export function BillingTab({ businessId, businessName }: { businessId: string; b
           if (signal?.aborted) return;
           setError(err instanceof AdminApiError ? err.message : 'Could not load billing history.');
         }),
-    [businessName],
+    [businessId],
   );
 
   useEffect(() => {
@@ -106,7 +110,7 @@ export function BillingTab({ businessId, businessName }: { businessId: string; b
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }} data-business-id={businessId}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Card>
         <SectionTitle title={`Invoices (${invoices.length})`} />
         {invoices.length === 0 ? (
