@@ -130,7 +130,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>Growza</div>
-            <div style={{ fontSize: 11.5, color: oklch.sidebarTextFaint }}>Super admin</div>
+            <div style={{ fontSize: 11.5, color: oklch.sidebarTextFaint }}>Platform team</div>
           </div>
           <button
             type="button"

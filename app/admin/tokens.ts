@@ -81,7 +81,11 @@ export function inr(n: number): string {
 }
 
 /**
- * Usage-bar colour band: green under 80%, amber 80–99%, red at/over 100%.
+ * Usage-bar colour band: green under 80%, amber 80–89%, red at/over 90%.
+ *
+ * The comment used to say "red at/over 100%" while the code turned red at 90 —
+ * a bar reads as at-limit ten points early, which for a usage warning is the
+ * difference between "act soon" and "you are cut off".
  * The one place this decision is made — every bar and every usage table cell
  * reads its colour from here.
  */

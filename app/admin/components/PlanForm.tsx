@@ -182,7 +182,11 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const priceChanged = !Number.isNaN(Number(price)) && Math.round(Number(price) * 100) !== plan.basePriceMinor;
+  // `>= 0` as well as "is a number": without it a negative reached the API and
+  // came back as a 400 the admin had to read to discover, on a field the form
+  // could have refused. plans/new has always guarded this; this form did not.
+  const priceValid = price.trim().length > 0 && !Number.isNaN(Number(price)) && Number(price) >= 0;
+  const priceChanged = priceValid && Math.round(Number(price) * 100) !== plan.basePriceMinor;
   const canSubmit = priceChanged && !!cohortChoice && cohortChoice !== 'named_customers_migrate' && (cohortChoice !== 'scheduled' || !!scheduledAt);
 
   function resetAndClose() {
@@ -225,7 +229,7 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
       ) : (
         <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Field label="New base price (₹)" hint="Pre-tax">
-            <TextInput type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <TextInput type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
           </Field>
 
           <div>
