@@ -31,6 +31,8 @@ interface AttentionRow {
   label: string;
   available: boolean;
   count?: number;
+  /** Where the count came from (GRW-119) — an available row is a way in, not a number to stare at. */
+  href?: string;
   epic?: string;
 }
 
@@ -179,7 +181,7 @@ function KpiCard({ icon, label, value, href }: { icon: 'businesses' | 'trend'; l
 
 /** BR-01/BR-02 — unavailable and zero must look different; this is the one place that distinction is drawn. */
 function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean }) {
-  return (
+  const body = (
     <div
       style={{
         display: 'flex',
@@ -207,7 +209,15 @@ function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: row.available ? oklch.textStrong : oklch.textMuted }}>{row.label}</div>
         <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 2 }}>
-          {row.available ? row.count : `Not yet available — lands with Jira ${row.epic}.`}
+          {row.available
+            ? // A count on its own read as a stray number in the subtitle
+              // slot. Say what it means, and — for the zero case — say it is
+              // a real zero rather than a row that has nothing behind it,
+              // which is the distinction BR-01 turns on.
+              row.count === 0
+              ? 'Nothing needs attention.'
+              : 'Currently failing — open to reconcile.'
+            : `Not yet available — lands with Jira ${row.epic}.`}
         </div>
       </div>
       {row.available ? (
@@ -215,12 +225,22 @@ function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean 
           style={{
             fontSize: 20,
             fontWeight: 800,
-            color: 'oklch(0.5 0.14 25)',
+            color: row.count === 0 ? oklch.textFaint : 'oklch(0.5 0.14 25)',
           }}
         >
           {row.count}
         </span>
       ) : null}
     </div>
+  );
+
+  // An available row links to the list it counted; an unavailable one has
+  // nowhere to go and stays inert rather than looking clickable.
+  return row.available && row.href ? (
+    <Link href={row.href} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+      {body}
+    </Link>
+  ) : (
+    body
   );
 }

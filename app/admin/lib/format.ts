@@ -41,3 +41,25 @@ export function formatDateOnly(isoDate: string): string {
     timeZone: 'UTC',
   }).format(new Date(`${isoDate}T00:00:00Z`));
 }
+
+/**
+ * `3 Oct 2026` for a value that is a TIMESTAMP, not a date — `paid_at`,
+ * `created_at`, `issued_at`.
+ *
+ * Its own function rather than making `formatDateOnly` tolerant of both.
+ * That one is deliberately strict about receiving `YYYY-MM-DD`, and loosening
+ * it would remove the very check that caught this: passing a timestamp to it
+ * produces `Invalid time value`, loudly, instead of a quietly wrong date.
+ *
+ * Rendered in UTC for the same reason `formatDateOnly` is: these are billing
+ * facts, and a payment that appears to land on a different day depending on
+ * who is looking at it is a bug, not a formatting preference.
+ */
+export function formatTimestampDate(iso: string): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(iso));
+}

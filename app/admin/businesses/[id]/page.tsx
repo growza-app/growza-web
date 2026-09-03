@@ -10,6 +10,7 @@ import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
+import { BillingTab } from '../../components/BillingTab';
 import { subscriptionStatusLabel } from '../../lib/subscription-status';
 import { inr, oklch, typeColor } from '../../tokens';
 
@@ -305,7 +306,10 @@ function BusinessDetailInner() {
       ) : null}
       {activeTab === 'usage' ? <NotYetBuiltTab what="Usage tracking against the plan's limits" epic="GRW-85" /> : null}
       {activeTab === 'whatsapp' ? <NotYetBuiltTab what="WhatsApp message usage, by category" epic="GRW-86" /> : null}
-      {activeTab === 'billing' ? <NotYetBuiltTab what="Invoices and payment history" epic="GRW-83" /> : null}
+      {/* GRW-119 — replaces GRW-102's placeholder. The same components the
+          standalone Invoices and Payments screens use, so this business's
+          figures cannot render differently here than they do there. */}
+      {activeTab === 'billing' ? <BillingTab businessId={params.id} businessName={business.name} /> : null}
     </div>
   );
 }
