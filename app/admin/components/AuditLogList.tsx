@@ -35,6 +35,7 @@ export const KNOWN_ACTIONS = [
   'subscription.discount_remove',
   'tax_rule.create',
   'tax_rule.update',
+  'subscription.cancel_at_period_end',
 ] as const;
 
 interface AuditLogRow {
