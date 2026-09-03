@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
@@ -60,10 +60,28 @@ function NotYetAvailable({ reason }: { reason: string }) {
 }
 
 export default function AdminBusinessesPage() {
+  return (
+    <Suspense>
+      <AdminBusinessesInner />
+    </Suspense>
+  );
+}
+
+function AdminBusinessesInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { query: search } = useAdminSearch();
   const [vertical, setVertical] = useState('All');
-  const [status, setStatus] = useState('All');
+  // GRW-104's dashboard drill-through (`?status=suspended`) lands here
+  // already filtered — read once on mount rather than staying synced to the
+  // URL, since nothing on this page itself needs to write it back.
+  const [status, setStatus] = useState(() => {
+    const fromUrl = searchParams.get('status');
+    return fromUrl && STATUS_OPTIONS.includes(fromUrl) ? fromUrl : 'All';
+  });
+  const [createdFrom] = useState(() => searchParams.get('createdFrom'));
+  const [createdFromCleared, setCreatedFromCleared] = useState(false);
+  const activeCreatedFrom = createdFromCleared ? null : createdFrom;
   const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
   const [page, setPage] = useState<BusinessPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +100,7 @@ export default function AdminBusinessesPage() {
     // two identical requests per filter click). Returning `p` itself here
     // makes React skip the re-render entirely in that case.
     setPaging((p) => (p.page === 1 ? p : { ...p, page: 1 }));
-  }, [vertical, status, trimmedSearch]);
+  }, [vertical, status, trimmedSearch, activeCreatedFrom]);
 
   useEffect(() => {
     if (searchTooShort) return;
@@ -94,6 +112,7 @@ export default function AdminBusinessesPage() {
     if (trimmedSearch) params.set('search', trimmedSearch);
     if (vertical !== 'All') params.set('vertical', vertical);
     if (status !== 'All') params.set('status', status);
+    if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
     // Accumulating-prefix pagination, same pattern as AuditLogList — the
     // API returns everything from page 1 up to the current window, so
     // mobile's "Load more" appends instead of replacing.
@@ -112,9 +131,9 @@ export default function AdminBusinessesPage() {
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmedSearch, vertical, status, paging, searchTooShort]);
+  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom]);
 
-  const hasActiveFilters = vertical !== 'All' || status !== 'All' || trimmedSearch.length >= 2;
+  const hasActiveFilters = vertical !== 'All' || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
 
   return (
     <div>
@@ -148,6 +167,19 @@ export default function AdminBusinessesPage() {
           <Select options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
         </div>
       </div>
+
+      {activeCreatedFrom ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 13, color: oklch.textMuted }}>
+          Created since {new Date(activeCreatedFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+          <button
+            type="button"
+            onClick={() => setCreatedFromCleared(true)}
+            style={{ background: 'none', border: 'none', color: oklch.accentText, fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 }}
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
 
       {searchTooShort ? (
         <div style={{ fontSize: 13, color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
