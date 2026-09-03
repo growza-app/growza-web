@@ -27,6 +27,16 @@ const ENTITY_FIELD_KINDS: Record<string, Record<string, FieldKind>> = {
     bookingGroupId: 'text',
     schedulableId: 'text',
   },
+  // GRW-82's discount_set/discount_remove diffs — copied straight from what
+  // admin-routes.ts actually writes, same discipline as the appointment map.
+  // Deliberately not adding a `status` entry here too: subscription.status
+  // values ('ACTIVE'/'CANCELLED'/...) aren't in STATUS_COLORS below, and
+  // subscription.status_update's diffs are a different writer's concern —
+  // "grown one real writer at a time," not spoken for by this story.
+  subscription: {
+    discountAmountMinor: 'money',
+    finalPriceMinor: 'money',
+  },
 };
 
 const STATUS_COLORS: Record<string, [fg: string, bg: string]> = {

@@ -31,6 +31,8 @@ export const KNOWN_ACTIONS = [
   'subscription.status_update',
   'subscription.entitlement_set',
   'subscription.entitlement_remove',
+  'subscription.discount_set',
+  'subscription.discount_remove',
 ] as const;
 
 interface AuditLogRow {

@@ -6,6 +6,7 @@ import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { isTerminalSubscriptionStatus, subscriptionStatusLabel } from '../lib/subscription-status';
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from './primitives';
 import { ConfirmDialog } from './ConfirmDialog';
+import { DiscountModal, type CurrentDiscount } from './DiscountModal';
 import { SubscriptionEntitlements } from './SubscriptionEntitlements';
 import { oklch } from '../tokens';
 
@@ -35,6 +36,11 @@ export interface SubscriptionPanelSubscription {
   currentPeriodEnd: string;
   nextBillingDate: string;
   cancelAtPeriodEnd: boolean;
+  /** Null together — see migration 0025's own CHECK. Null means no discount, on list price. */
+  discountType: 'fixed' | 'percent' | 'final' | null;
+  discountValue: number | null;
+  discountReason: string | null;
+  discountEndsAt: string | null;
 }
 
 export function SubscriptionPanel({
@@ -58,6 +64,7 @@ export function SubscriptionPanel({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -131,6 +138,19 @@ export function SubscriptionPanel({
   const discounted = s.discountAmountMinor > 0;
   const status = subscriptionStatusLabel(s.status);
   const terminal = isTerminalSubscriptionStatus(s.status);
+  // Reopening the modal on an already-discounted subscription prefills it
+  // with what's actually there — discountValue is minor-unit rupees for
+  // fixed/final (matching the modal's own rupee-denominated input) and a
+  // raw 0-100 for percent, so only the first two need the /100 conversion.
+  const currentDiscount: CurrentDiscount | null =
+    s.discountType && s.discountValue !== null && s.discountReason !== null
+      ? {
+          type: s.discountType,
+          value: s.discountType === 'percent' ? s.discountValue : s.discountValue / 100,
+          reason: s.discountReason,
+          endsAt: s.discountEndsAt,
+        }
+      : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -167,6 +187,15 @@ export function SubscriptionPanel({
           <div style={{ marginTop: 10, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
             Pre-tax. GST is calculated on top when the invoice is raised (Jira GRW-83).
           </div>
+          {discounted && s.discountReason ? (
+            <div style={{ marginTop: 10, fontSize: 12, color: 'oklch(0.5 0.15 25)', fontWeight: 700 }}>
+              {s.discountReason}
+              {/* §2.1's own line: "the subscription screen says so before it
+                  happens" — a discount that reverts on its own should never
+                  come as a surprise the day it does. */}
+              {s.discountEndsAt ? ` — reverts to list price on ${formatDateOnly(s.discountEndsAt)}` : ' — permanent'}
+            </div>
+          ) : null}
         </div>
 
         <div style={{ display: 'flex', gap: 9, marginTop: 16, flexWrap: 'wrap' }}>
@@ -187,8 +216,18 @@ export function SubscriptionPanel({
           >
             Cancel subscription
           </SecondaryButton>
-          <SecondaryButton disabled title="Changing a customer's price isn't built yet (Jira GRW-82).">
-            Change price
+          <SecondaryButton
+            disabled={!canManage || terminal}
+            onClick={() => setDiscountOpen(true)}
+            title={
+              terminal
+                ? `This subscription is already ${status.toLowerCase()}.`
+                : !canManage
+                  ? 'Changing a price needs the subscription-manage permission.'
+                  : undefined
+            }
+          >
+            {discounted ? 'Change price' : 'Add discount'}
           </SecondaryButton>
         </div>
       </Card>
@@ -222,6 +261,18 @@ export function SubscriptionPanel({
         onCancel={() => {
           setCancelOpen(false);
           setCancelError(null);
+        }}
+      />
+
+      <DiscountModal
+        businessName={discountOpen ? (businessName ?? 'This business') : null}
+        planName={planName}
+        subscription={discountOpen ? s : null}
+        currentDiscount={discountOpen ? currentDiscount : null}
+        onClose={() => setDiscountOpen(false)}
+        onSaved={(updated) => {
+          setSubscription((prev) => (prev ? { ...prev, ...updated } : prev));
+          onChanged?.();
         }}
       />
     </div>

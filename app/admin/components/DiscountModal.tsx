@@ -1,51 +1,112 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { adminFetch, AdminApiError } from '../lib/api';
+import { formatDateOnly } from '../lib/format';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
 
 /**
- * Customer-specific pricing (GRW-82). Ported from Admin.dc.html's discount
- * modal, opened from Businesses, Business detail, Subscriptions and
- * Subscription detail.
+ * Customer-specific pricing (GRW-82/113/114) — opened from the subscription
+ * screen's "Change price" button.
  *
- * The arithmetic mirrors what GRW-113/114 will do server-side: three
- * discount shapes, the same 18% GST rate the design hardcodes, and — the
- * one rule every screen that touches pricing exists to hold — the plan's
- * ₹799 list price is shown, never edited, alongside whatever this customer
- * actually pays.
+ * The math mirrors what `setSubscriptionDiscount` does server-side exactly
+ * (`src/modules/billing/subscriptions.ts`) so the number an admin sees here
+ * before saving is the number that comes back after — but this is a
+ * preview, not the source of truth: the server recomputes and validates
+ * independently, and refuses (never silently clamps) a discount that works
+ * out to more than the list price. The plan's list price is shown, never
+ * edited, alongside whatever this customer actually pays (13-platform-
+ * administration.md §2.1).
  */
 type DiscountType = 'fixed' | 'percent' | 'final';
 
-const LIST_PRICE = 799;
-const GST_RATE = 0.18;
+export interface CurrentDiscount {
+  type: DiscountType;
+  /** What the admin originally typed — rupees for fixed/final, 0-100 for percent. */
+  value: number;
+  reason: string;
+  endsAt: string | null;
+}
+
+export interface DiscountModalSubscription {
+  id: string;
+  listPriceMinor: number;
+  discountAmountMinor: number;
+  finalPriceMinor: number;
+}
+
+/** The full round-trip shape PUT/DELETE .../discount return — matches SubscriptionPanelSubscription's own discount fields exactly, so a caller can spread the response straight onto its existing subscription state with nothing left stale. */
+export interface DiscountedSubscription extends DiscountModalSubscription {
+  discountType: 'fixed' | 'percent' | 'final' | null;
+  discountValue: number | null;
+  discountReason: string | null;
+  discountEndsAt: string | null;
+}
 
 export function DiscountModal({
   businessName,
+  planName,
+  subscription,
+  currentDiscount,
   onClose,
+  onSaved,
 }: {
+  /** null closes the modal — same pattern as the original ported design. */
   businessName: string | null;
+  planName?: string;
+  subscription: DiscountModalSubscription | null;
+  /** The subscription's own discount, prefilled when re-opening on an already-discounted subscription; null starts the form at today's defaults. */
+  currentDiscount: CurrentDiscount | null;
   onClose: () => void;
+  onSaved: (updated: DiscountedSubscription) => void;
 }) {
   const [type, setType] = useState<DiscountType>('fixed');
   const [value, setValue] = useState('200');
   const [duration, setDuration] = useState('6');
-  const [reason, setReason] = useState('Early adopter');
+  const [reason, setReason] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Re-seed the form every time the modal OPENS on a (possibly different)
+  // subscription — same reset-on-open discipline ConfirmDialog uses, for the
+  // same reason: without it, closing this modal on one business and
+  // reopening it on another kept the first business's half-typed discount
+  // sitting in the form.
+  useEffect(() => {
+    if (!businessName) return;
+    setSaveError(null);
+    if (currentDiscount) {
+      setType(currentDiscount.type);
+      setValue(String(currentDiscount.value));
+      setReason(currentDiscount.reason);
+      setDuration(currentDiscount.endsAt ? '3' : '0');
+    } else {
+      setType('fixed');
+      setValue('200');
+      setReason('');
+      setDuration('6');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessName, subscription?.id]);
+
+  const listPriceRupees = (subscription?.listPriceMinor ?? 0) / 100;
 
   const math = useMemo(() => {
     const n = Number(value) || 0;
-    let amount = 0;
-    if (type === 'fixed') amount = n;
-    else if (type === 'percent') amount = Math.round((LIST_PRICE * n) / 100);
-    else amount = LIST_PRICE - n;
-    amount = Math.max(0, Math.min(LIST_PRICE, amount));
-    const taxable = LIST_PRICE - amount;
-    const gst = +(taxable * GST_RATE).toFixed(2);
-    return { amount, taxable, gst, total: +(taxable + gst).toFixed(2) };
-  }, [type, value]);
+    let amountMinor = 0;
+    if (type === 'fixed') amountMinor = Math.round(n * 100);
+    else if (type === 'percent') amountMinor = Math.round(((subscription?.listPriceMinor ?? 0) * n) / 100);
+    else amountMinor = (subscription?.listPriceMinor ?? 0) - Math.round(n * 100);
+    const listPriceMinor = subscription?.listPriceMinor ?? 0;
+    const outOfRange = amountMinor < 0 || amountMinor > listPriceMinor;
+    const clamped = Math.max(0, Math.min(listPriceMinor, amountMinor));
+    return { amountMinor: clamped, outOfRange, finalMinor: listPriceMinor - clamped };
+  }, [type, value, subscription?.listPriceMinor]);
 
-  if (!businessName) return null;
+  if (!businessName || !subscription) return null;
 
   const typeOptions: [DiscountType, string][] = [
     ['fixed', 'Fixed ₹'],
@@ -53,6 +114,47 @@ export function DiscountModal({
     ['final', 'Final price'],
   ];
   const valueLabel = type === 'fixed' ? 'Discount amount (₹)' : type === 'percent' ? 'Discount percent (%)' : 'Final price (₹)';
+
+  function submit() {
+    setSaving(true);
+    setSaveError(null);
+    adminFetch<DiscountedSubscription>(
+      `/subscriptions/${subscription!.id}/discount`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          type,
+          value: type === 'percent' ? Number(value) || 0 : Math.round((Number(value) || 0) * 100),
+          reason,
+          durationMonths: duration === '0' ? null : Number(duration),
+        }),
+      },
+    )
+      .then((updated) => {
+        onSaved(updated);
+        onClose();
+      })
+      .catch((err) => setSaveError(err instanceof AdminApiError ? err.message : 'Could not save this discount.'))
+      .finally(() => setSaving(false));
+  }
+
+  function remove() {
+    setRemoving(true);
+    setSaveError(null);
+    adminFetch<DiscountedSubscription>(
+      `/subscriptions/${subscription!.id}/discount`,
+      { method: 'DELETE', body: JSON.stringify({ reason: 'Reverted to list price' }) },
+    )
+      .then((updated) => {
+        onSaved(updated);
+        onClose();
+      })
+      .catch((err) => setSaveError(err instanceof AdminApiError ? err.message : 'Could not remove this discount.'))
+      .finally(() => setRemoving(false));
+  }
+
+  const busy = saving || removing;
+  const canSave = reason.trim().length > 0 && !math.outOfRange && !busy;
 
   return (
     <div
@@ -66,7 +168,7 @@ export function DiscountModal({
         padding: 24,
         background: 'oklch(0.2 0.02 155 / 0.5)',
       }}
-      onClick={onClose}
+      onClick={busy ? undefined : onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -85,11 +187,15 @@ export function DiscountModal({
             <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
               Customer-specific pricing
             </h3>
-            <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>{businessName} · Growza Base</p>
+            <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
+              {businessName}
+              {planName ? ` · ${planName}` : ''}
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
+            disabled={busy}
             aria-label="Close"
             style={{
               width: 34,
@@ -101,7 +207,7 @@ export function DiscountModal({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer',
+              cursor: busy ? 'not-allowed' : 'pointer',
               flex: 'none',
             }}
           >
@@ -123,10 +229,17 @@ export function DiscountModal({
           >
             <span style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>Standard plan price</span>
             <span style={{ fontSize: 16, fontWeight: 800, color: oklch.text }}>
-              {inr(LIST_PRICE)}
+              {inr(listPriceRupees)}
               <span style={{ fontSize: 12, fontWeight: 600, color: oklch.textFaint }}>/mo</span>
             </span>
           </div>
+
+          {currentDiscount ? (
+            <div style={{ marginTop: 12, fontSize: 12, fontWeight: 600, color: oklch.textFaint }}>
+              Currently: {currentDiscount.reason}
+              {currentDiscount.endsAt ? ` · ends ${formatDateOnly(currentDiscount.endsAt)}` : ' · permanent'}
+            </div>
+          ) : null}
 
           <div style={{ marginTop: 16 }}>
             <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>Discount type</label>
@@ -135,6 +248,7 @@ export function DiscountModal({
                 <button
                   key={v}
                   type="button"
+                  disabled={busy}
                   onClick={() => setType(v)}
                   style={{
                     flex: 1,
@@ -142,7 +256,7 @@ export function DiscountModal({
                     borderRadius: 10,
                     fontSize: 13,
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    cursor: busy ? 'not-allowed' : 'pointer',
                     ...(type === v
                       ? { background: 'oklch(0.31 0.055 158)', color: 'white', border: '1px solid oklch(0.31 0.055 158)' }
                       : { background: 'white', color: 'oklch(0.45 0.02 155)', border: `1px solid ${oklch.borderStrong}` }),
@@ -159,6 +273,8 @@ export function DiscountModal({
               <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>{valueLabel}</label>
               <TextInput
                 type="number"
+                min={0}
+                disabled={busy}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 style={{ marginTop: 7, fontSize: 15, fontWeight: 700 }}
@@ -168,6 +284,7 @@ export function DiscountModal({
               <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>Duration</label>
               <select
                 value={duration}
+                disabled={busy}
                 onChange={(e) => setDuration(e.target.value)}
                 style={{
                   width: '100%',
@@ -180,7 +297,7 @@ export function DiscountModal({
                   fontSize: 14,
                   fontWeight: 600,
                   outline: 'none',
-                  cursor: 'pointer',
+                  cursor: busy ? 'not-allowed' : 'pointer',
                 }}
               >
                 <option value="3">3 months</option>
@@ -197,6 +314,7 @@ export function DiscountModal({
             </label>
             <TextInput
               value={reason}
+              disabled={busy}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Early adopter"
               style={{ marginTop: 7, fontWeight: 500 }}
@@ -207,15 +325,13 @@ export function DiscountModal({
             style={{
               marginTop: 20,
               borderRadius: 14,
-              border: '1px solid oklch(0.9 0.02 150)',
+              border: `1px solid ${math.outOfRange ? 'oklch(0.75 0.15 25)' : 'oklch(0.9 0.02 150)'}`,
               background: 'oklch(0.98 0.012 150)',
               padding: '16px 18px',
             }}
           >
-            <Row label="List price" value={inr(LIST_PRICE)} />
-            <Row label="Discount" value={'− ' + inr(math.amount)} valueColor="oklch(0.5 0.15 25)" />
-            <Row label="Taxable amount" value={inr(math.taxable)} divider />
-            <Row label="GST (18%)" value={inr(math.gst)} />
+            <Row label="List price" value={inr(listPriceRupees)} />
+            <Row label="Discount" value={'− ' + inr(math.amountMinor / 100)} valueColor="oklch(0.5 0.15 25)" />
             <div
               style={{
                 display: 'flex',
@@ -225,38 +341,33 @@ export function DiscountModal({
                 marginTop: 5,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>Total payable / mo</span>
-              <span style={{ fontSize: 19, fontWeight: 800, color: oklch.accentText }}>{inr(math.total)}</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>Charged per month</span>
+              <span style={{ fontSize: 19, fontWeight: 800, color: oklch.accentText }}>{inr(math.finalMinor / 100)}</span>
             </div>
           </div>
-        </div>
 
-        {/* There is no discount API yet — GRW-82 owns it, and nothing
-            server-side can store any of this. The Save button used to be
-            wired to onClose, so a money-changing action closed exactly as it
-            would on success and persisted nothing: a failure indistinguishable
-            from a success. Until there is somewhere real to write to, this
-            says so rather than pretending. */}
-        <div
-          style={{
-            margin: '18px 24px 0',
-            padding: '12px 14px',
-            borderRadius: 11,
-            background: oklch.warnBg,
-            fontSize: 12.5,
-            fontWeight: 600,
-            lineHeight: 1.5,
-            color: 'oklch(0.42 0.12 65)',
-          }}
-        >
-          Preview only — customer-specific pricing can&apos;t be saved yet (Jira GRW-82). The figures above show what
-          this discount would come to; nothing is recorded.
+          {math.outOfRange ? (
+            <div style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: 'oklch(0.5 0.15 25)' }}>
+              {type === 'final' ? 'The final price entered is above list price.' : 'That discount is larger than the list price itself.'}
+            </div>
+          ) : null}
+
+          {saveError ? <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{saveError}</div> : null}
         </div>
 
         <div style={{ display: 'flex', gap: 10, padding: '14px 24px 22px' }}>
-          <SecondaryButton onClick={onClose} style={{ flex: 1, height: 46 }}>
-            Close
-          </SecondaryButton>
+          {currentDiscount ? (
+            <SecondaryButton danger onClick={remove} disabled={busy} style={{ flex: 1, height: 46 }}>
+              {removing ? 'Removing…' : 'Remove discount'}
+            </SecondaryButton>
+          ) : (
+            <SecondaryButton onClick={onClose} disabled={busy} style={{ flex: 1, height: 46 }}>
+              Cancel
+            </SecondaryButton>
+          )}
+          <PrimaryButton onClick={submit} disabled={!canSave} style={{ flex: 1, height: 46, justifyContent: 'center' }}>
+            {saving ? 'Saving…' : 'Save discount'}
+          </PrimaryButton>
         </div>
       </div>
     </div>
@@ -267,24 +378,13 @@ function Row({
   label,
   value,
   valueColor,
-  divider,
 }: {
   label: string;
   value: string;
   valueColor?: string;
-  divider?: boolean;
 }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        fontSize: 13.5,
-        padding: '5px 0',
-        ...(divider ? { borderTop: '1px solid oklch(0.9 0.02 150)', marginTop: 5, paddingTop: 10 } : {}),
-      }}
-    >
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13.5, padding: '5px 0' }}>
       <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
       <span style={{ fontWeight: 700, color: valueColor ?? 'oklch(0.3 0.02 155)' }}>{value}</span>
     </div>
