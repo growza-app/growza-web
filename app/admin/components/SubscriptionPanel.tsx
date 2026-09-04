@@ -7,6 +7,7 @@ import { isTerminalSubscriptionStatus, subscriptionStatusLabel } from '../lib/su
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from './primitives';
 import { ConfirmDialog } from './ConfirmDialog';
 import { DiscountModal, type CurrentDiscount } from './DiscountModal';
+import { RecordPaymentModal } from './RecordPaymentModal';
 import { SubscriptionEntitlements } from './SubscriptionEntitlements';
 import { oklch } from '../tokens';
 
@@ -49,6 +50,7 @@ export interface SubscriptionPanelSubscription {
 export function SubscriptionPanel({
   subscriptionId,
   canManage,
+  canRecordPayment = false,
   /** Shown in the heading when the host already knows them — omitted, the panel just leads with the plan code. */
   businessName,
   planName,
@@ -56,6 +58,14 @@ export function SubscriptionPanel({
 }: {
   subscriptionId: string;
   canManage: boolean;
+  /**
+   * `admin.payment.record` — deliberately its own prop rather than folded
+   * into `canManage`. Asserting money arrived is a separate permission from
+   * changing a subscription (GRW-144), and a UI that implied otherwise would
+   * offer a button the server then refuses. Defaults to false: a host that
+   * has not thought about it shows no button, which is the safe direction.
+   */
+  canRecordPayment?: boolean;
   businessName?: string;
   planName?: string;
   /** Called after a status change, so a host showing the same status elsewhere can refresh it. */
@@ -68,6 +78,7 @@ export function SubscriptionPanel({
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -233,6 +244,21 @@ export function SubscriptionPanel({
           >
             {discounted ? 'Change price' : 'Add discount'}
           </SecondaryButton>
+          {/* GRW-144. Shown only to an admin who actually holds
+              `admin.payment.record`, rather than shown-and-disabled: unlike
+              cancel and discount (which every subscription-manager has and
+              is only blocked by the subscription's state), this permission
+              is one most admins will never hold, and a permanently greyed
+              button on their screen is noise, not information. */}
+          {canRecordPayment ? (
+            <SecondaryButton
+              disabled={terminal}
+              onClick={() => setPaymentOpen(true)}
+              title={terminal ? `This subscription is already ${status.toLowerCase()}.` : undefined}
+            >
+              Record a payment
+            </SecondaryButton>
+          ) : null}
         </div>
       </Card>
 
@@ -283,6 +309,19 @@ export function SubscriptionPanel({
         onClose={() => setDiscountOpen(false)}
         onSaved={(updated) => {
           setSubscription((prev) => (prev ? { ...prev, ...updated } : prev));
+          onChanged?.();
+        }}
+      />
+
+      <RecordPaymentModal
+        businessName={paymentOpen ? (businessName ?? 'This business') : null}
+        subscription={paymentOpen ? s : null}
+        onClose={() => setPaymentOpen(false)}
+        onRecorded={() => {
+          // Refetched rather than patched from the response: recording a
+          // payment can move the status and clear the dunning clock, and the
+          // 201 body is the payment, not the subscription.
+          void load();
           onChanged?.();
         }}
       />

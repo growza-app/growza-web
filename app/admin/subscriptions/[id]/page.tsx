@@ -78,6 +78,7 @@ export default function SubscriptionDetailPage() {
     <SubscriptionPanel
       subscriptionId={params.id}
       canManage={me.permissions.includes('admin.subscription.manage')}
+      canRecordPayment={me.permissions.includes('admin.payment.record')}
       businessName={business?.name}
       planName={business?.planName}
     />
