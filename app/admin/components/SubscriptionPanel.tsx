@@ -90,6 +90,8 @@ export function SubscriptionPanel({
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [recordedNote, setRecordedNote] = useState<string | null>(null);
   const [reenrolOpen, setReenrolOpen] = useState(false);
+  /** GRW-152 — the explicit "forfeit the rest of the paid month" choice inside the cancel dialog. */
+  const [endNow, setEndNow] = useState(false);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -116,19 +118,53 @@ export function SubscriptionPanel({
     return () => controller.abort();
   }, [load]);
 
+  /**
+   * GRW-152 — cancelling runs to the end of the month they already paid for.
+   *
+   * Under arrears, cancelling immediately was defensible: the month had not
+   * been paid for. Under GRW-150 the salon has already paid for the month they
+   * are in, so cutting them off mid-month takes money for a service withdrawn.
+   * End-of-period is what cancelling IS; ending it now is a second, explicit
+   * choice that says what it costs.
+   *
+   * `scheduled` flips the whole control into its opposite — a subscription
+   * already ending at the boundary offers to keep it instead, because that is
+   * the only useful thing left to do to it.
+   */
   function cancel(reason: string) {
+    const scheduled = subscription?.cancelAtPeriodEnd === true;
     setCancelling(true);
     setCancelError(null);
-    adminFetch<SubscriptionPanelSubscription>(`/subscriptions/${subscriptionId}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ reason, status: 'CANCELLED' }),
-    })
-      .then((row) => {
-        setSubscription(row);
+
+    // POST, not PATCH: this route SCHEDULES something rather than patching a
+    // field, and a PATCH 404s — which the panel would have shown as the
+    // useless "could not change this subscription". Caught by the integration
+    // test, which had the same mistake.
+    const atPeriodEnd = (cancelFlag: boolean) =>
+      adminFetch<unknown>(`/subscriptions/${subscriptionId}/cancel-at-period-end`, {
+        method: 'POST',
+        body: JSON.stringify({ reason, cancel: cancelFlag }),
+      });
+
+    const request = scheduled
+      ? atPeriodEnd(false)
+      : endNow
+        ? adminFetch<unknown>(`/subscriptions/${subscriptionId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ reason, status: 'CANCELLED' }),
+          })
+        : atPeriodEnd(true);
+
+    request
+      .then(() => {
+        // Re-read rather than trusting the response shape: the three routes
+        // above return different bodies, and the panel renders one type.
+        void load();
         setCancelOpen(false);
+        setEndNow(false);
         onChanged?.();
       })
-      .catch((err) => setCancelError(err instanceof AdminApiError ? err.message : 'Could not cancel this subscription.'))
+      .catch((err) => setCancelError(err instanceof AdminApiError ? err.message : 'Could not change this subscription.'))
       .finally(() => setCancelling(false));
   }
 
@@ -164,6 +200,8 @@ export function SubscriptionPanel({
   const status = subscriptionStatusLabel(s.status);
   const terminal = isTerminalSubscriptionStatus(s.status);
   const reenrolLabel = reenrolActionLabel(s.status);
+  /** GRW-152 — cancelling schedules the end; this is a subscription still trading with that end already set. */
+  const scheduledToEnd = s.cancelAtPeriodEnd && !terminal;
   // Reopening the modal on an already-discounted subscription prefills it
   // with what's actually there — discountValue is minor-unit rupees for
   // fixed/final (matching the modal's own rupee-denominated input) and a
@@ -227,10 +265,11 @@ export function SubscriptionPanel({
 
         <div style={{ display: 'flex', gap: 9, marginTop: 16, flexWrap: 'wrap' }}>
           <SecondaryButton
-            danger
+            danger={!scheduledToEnd}
             disabled={!canManage || terminal}
             onClick={() => {
               setCancelError(null);
+              setEndNow(false);
               setCancelOpen(true);
             }}
             title={
@@ -241,7 +280,7 @@ export function SubscriptionPanel({
                   : undefined
             }
           >
-            Cancel subscription
+            {scheduledToEnd ? 'Keep subscription' : 'Cancel subscription'}
           </SecondaryButton>
           <SecondaryButton
             disabled={!canManage || terminal}
@@ -294,6 +333,20 @@ export function SubscriptionPanel({
           tell whether anything had happened — which is exactly how it was
           reported. The words come from billing's own STATE_ACCESS table, so
           this and the restriction the engine applies cannot drift apart. */}
+      {/* FR-03 — a subscription that is ending says so, with the date. Without
+          this the only trace is a status pill that still reads Active, which is
+          true and useless: the salon is trading and also leaving. */}
+      {scheduledToEnd ? (
+        <Card>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>
+            Ends on {formatDateOnly(s.currentPeriodEnd)}
+          </div>
+          <div style={{ fontSize: 12.5, color: oklch.textMuted, marginTop: 6, lineHeight: 1.5 }}>
+            Still trading until then — they have paid for this month. Billing stops after it, and nothing is deleted.
+          </div>
+        </Card>
+      ) : null}
+
       {s.access?.restricted ? (
         <Card>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.15 25)' }}>{s.access.summary}</div>
@@ -340,13 +393,21 @@ export function SubscriptionPanel({
       <ConfirmDialog
         open={cancelOpen}
         danger
-        title={`Cancel ${businessName ? `${businessName}'s` : 'this'} subscription?`}
-        // Says what it does AND what it does not: cancelling here takes effect
-        // now, and there is no "cancel at the end of the period" until
-        // GRW-84's lifecycle machine exists. Offering a control that quietly
-        // did one when an admin meant the other is worse than saying so.
-        description="This takes effect immediately: the subscription becomes cancelled, and any per-customer entitlement overrides on it stop applying. Cancelling is final for THIS subscription — a cancelled one is never reopened. The business can be brought back later with Re-enrol, which creates a new subscription on the same plan and carries their discount and any entitlement exceptions across; their bookings and customers are never affected either way. Scheduling a cancellation for the end of the billing period isn't built yet (Jira GRW-84). This change is audited."
-        confirmLabel="Cancel subscription"
+        title={
+          scheduledToEnd
+            ? 'Keep this subscription running?'
+            : `Cancel ${businessName ? `${businessName}'s` : 'this'} subscription?`
+        }
+        /* GRW-152 — this used to say cancelling took effect immediately, and
+           that scheduling it for the period end "isn't built yet". That was
+           false: the machinery existed and worked, and no screen called it.
+           It now says what actually happens. */
+        description={
+          scheduledToEnd
+            ? `This subscription is set to end on ${formatDateOnly(s.currentPeriodEnd)}. Keeping it cancels that, and billing continues as normal. This change is audited.`
+            : `They have already paid for the month they are in, so cancelling lets them keep working until ${formatDateOnly(s.currentPeriodEnd)} and ends the subscription then. Their bookings and customers are never affected either way, and a cancelled business can be brought back later with Re-enrol, which carries their discount and any entitlement exceptions across. This change is audited.`
+        }
+        confirmLabel={scheduledToEnd ? 'Keep subscription' : endNow ? 'End it now' : 'Cancel at period end'}
         reasonRequired
         reasonPlaceholder="Why is this being cancelled?"
         loading={cancelling}
@@ -355,8 +416,20 @@ export function SubscriptionPanel({
         onCancel={() => {
           setCancelOpen(false);
           setCancelError(null);
+          setEndNow(false);
         }}
-      />
+      >
+        {/* FR-02 — ending it now is possible, and says what it costs. Inside
+            the same dialog rather than behind a second one: it is the same
+            decision with a different date, and two dialogs would make an admin
+            choose before knowing what either does. */}
+        {scheduledToEnd ? null : (
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>
+            <input type="checkbox" checked={endNow} onChange={(e) => setEndNow(e.target.checked)} disabled={cancelling} style={{ marginTop: 2 }} />
+            <span>End it now instead — the rest of the month they have paid for is forfeited, and no refund is issued.</span>
+          </label>
+        )}
+      </ConfirmDialog>
 
       <DiscountModal
         businessName={discountOpen ? (businessName ?? 'This business') : null}
