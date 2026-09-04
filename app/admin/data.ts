@@ -91,25 +91,3 @@ export const IMPERSONATION_SESSIONS = [
   { admin: 'Aarav Khanna', biz: 'Glow Salon', user: 'Rahul Sharma', reason: 'Booking issue', dur: '5 min', when: 'Yesterday', live: false },
 ];
 
-export const PLATFORM_ROLES: [string, string][] = [
-  ['Super admin', 'Full platform access'],
-  ['Billing admin', 'Plans, subscriptions, payments'],
-  ['Support admin', 'Businesses, impersonation, tickets'],
-  ['Operations admin', 'Usage, feature flags, config'],
-];
-
-export const BUSINESS_ROLES: [string, string][] = [
-  ['Owner', 'Full business access'],
-  ['Manager', 'Bookings, staff, services, reports'],
-  ['Receptionist', 'Bookings & clients'],
-  ['Service provider', 'Own schedule & bookings'],
-];
-
-/** 0 = No access, 1 = View, 2 = Manage. */
-export const PERMISSION_MATRIX: Record<string, number[]> = {
-  Owner: [2, 2, 2, 2, 2],
-  Manager: [2, 1, 2, 2, 1],
-  Receptionist: [2, 1, 0, 0, 1],
-  'Service provider': [2, 0, 1, 0, 1],
-};
-export const PERMISSION_COLUMNS = ['Bookings', 'Staff', 'Services', 'Reports', 'Clients'];
