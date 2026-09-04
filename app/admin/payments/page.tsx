@@ -23,8 +23,14 @@ import { oklch } from '../tokens';
  * **Read-only by design, and that is the story, not an omission.** There is
  * no refund button, no mark-as-paid and no edit: a payment record comes from
  * the provider's own events (13-platform-administration.md §11), and a
- * mistake is corrected at the provider, not here. The API has no write route
- * to call even if a control existed.
+ * mistake is corrected at the provider, not here.
+ *
+ * GRW-144 added the one exception — an offline payment recorded by hand on
+ * the subscription screen, for money that arrived by bank transfer. It is
+ * still not written from THIS screen, and there is still nothing here that
+ * edits a row. Such a row is marked "Recorded by hand" below, because its
+ * external id cannot be reconciled against any provider dashboard, which is
+ * the reason an admin opens this screen at all.
  */
 const STATUS_OPTIONS = ['All', ...PAYMENT_STATUS_VALUES];
 
@@ -233,10 +239,17 @@ function AdminPaymentsInner() {
  */
 function ExternalId({ provider, id }: { provider: string; id: string }) {
   const [copied, setCopied] = useState(false);
+  // GRW-144 — an offline row is an admin's assertion, not a processor's
+  // report, and there is no provider dashboard to reconcile it against. Said
+  // on the row rather than left to the reader to infer from the word
+  // "offline", because the whole value of the marker is that nobody has to.
+  const offline = provider === 'offline';
 
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600, textTransform: 'capitalize' }}>{provider}</div>
+      <div style={{ fontSize: 11.5, color: offline ? 'oklch(0.52 0.13 65)' : oklch.textFaint, fontWeight: offline ? 700 : 600, textTransform: offline ? 'none' : 'capitalize' }}>
+        {offline ? 'Recorded by hand' : provider}
+      </div>
       <button
         type="button"
         onClick={() => {
