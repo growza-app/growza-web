@@ -410,7 +410,7 @@ function SummaryHeader({
         <SummaryField
           label="Bookings"
           value="—"
-          hint="Booking usage is recorded now (GRW-124), but no plan limit or count is wired to this screen yet (GRW-125/126) — see the Bookings tab for the real total."
+          hint="Enforced since GRW-125 — a booking past the plan's cap is refused. The used/limit number isn't on this screen yet (GRW-126). The Bookings tab counts appointment rows all-time, which is not what the cap measures — don't use it to explain a refusal."
         />
         <SummaryField label="WhatsApp" value="—" hint="WhatsApp usage isn't metered yet (Jira GRW-86)." />
         <SummaryField label="Branches" value={String(business.branchCount)} />
