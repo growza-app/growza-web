@@ -1,68 +1,221 @@
 'use client';
 
-import { PLATFORM_USERS } from '../data';
-import { StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { useCallback, useEffect, useState } from 'react';
+import { adminFetch, AdminApiError } from '../lib/api';
+import { formatDateOnly } from '../lib/format';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { oklch } from '../tokens';
-import { PreviewBanner } from '../components/PreviewBanner';
+import { AddAdminModal, type RoleOption } from './AddAdminModal';
 
-const ROLE_COLORS: Record<string, [string, string]> = {
-  'Super admin': ['oklch(0.32 0.07 158)', 'oklch(0.93 0.04 155)'],
-  'Billing admin': ['oklch(0.5 0.1 210)', 'oklch(0.95 0.035 210)'],
-  'Support admin': ['oklch(0.5 0.1 285)', 'oklch(0.95 0.035 285)'],
-  'Operations admin': ['oklch(0.5 0.1 65)', 'oklch(0.96 0.05 80)'],
-};
+/**
+ * GRW-133 — who can administer Growza, as a page rather than a query.
+ *
+ * This screen rendered `PLATFORM_USERS` from `data.ts` behind a preview banner:
+ * four invented people with invented roles and a "last active" column nothing
+ * recorded. "Who has access?" is a question a security review asks and a
+ * departing colleague creates, and answering it with fiction is worse than not
+ * answering it.
+ *
+ * Every refusal GRW-132 defines is shown here as a sentence and, where it is
+ * knowable up front, as an absent control rather than one that is offered and
+ * then refused (FR-02, FR-03).
+ */
+interface AdminRow {
+  id: string;
+  name: string;
+  email: string;
+  status: 'active' | 'deactivated';
+  roleId: string | null;
+  roleName: string | null;
+  roleIsBuiltin: boolean;
+  createdAt: string;
+}
+
+interface UsersResponse {
+  rows: AdminRow[];
+  roles: RoleOption[];
+  selfId: string;
+}
+
 const COLUMNS: TableColumn[] = [
-  { label: 'User', width: '1.6fr' },
-  { label: 'Email', width: '1.6fr' },
-  { label: 'Role', width: '1.1fr' },
-  { label: 'Last active', width: '1fr' },
+  { label: 'Administrator', width: '1.5fr' },
+  { label: 'Role', width: '1.2fr' },
+  { label: 'Added', width: '0.9fr' },
   { label: 'Status', width: '0.8fr' },
+  { label: '', width: '210px', right: true },
 ];
 
-/** GRW-88's Platform Users screen — Growza's own administrators, never a business user (13-platform-administration.md §6). */
 export default function AdminUsersPage() {
+  const [data, setData] = useState<UsersResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showDeactivated, setShowDeactivated] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [changing, setChanging] = useState<{ user: AdminRow; status: 'active' | 'deactivated' } | null>(null);
+  const [changeError, setChangeError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [roleError, setRoleError] = useState<string | null>(null);
+
+  const load = useCallback(
+    (signal?: AbortSignal) =>
+      adminFetch<UsersResponse>('/users', { signal })
+        .then((body) => {
+          setData(body);
+          setError(null);
+        })
+        .catch((err) => {
+          if (signal?.aborted) return;
+          setError(err instanceof AdminApiError ? err.message : 'Could not load administrators.');
+        }),
+    [],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
+
+  function changeStatus(reason: string) {
+    if (!changing) return;
+    setBusy(true);
+    setChangeError(null);
+    adminFetch(`/users/${changing.user.id}/status`, { method: 'PATCH', body: JSON.stringify({ reason, status: changing.status }) })
+      .then(() => {
+        setChanging(null);
+        void load();
+      })
+      // FR-02 — the server's sentence, which already says "this is the last
+      // active Super Admin" rather than a code.
+      .catch((err) => setChangeError(err instanceof AdminApiError ? err.message : 'Could not change this administrator.'))
+      .finally(() => setBusy(false));
+  }
+
+  function changeRole(user: AdminRow, roleId: string) {
+    setRoleError(null);
+    const reason = window.prompt(`Why is ${user.name}'s role changing?`);
+    if (!reason || reason.trim() === '') return;
+    adminFetch(`/users/${user.id}/role`, { method: 'PATCH', body: JSON.stringify({ roleId, reason: reason.trim() }) })
+      .then(() => void load())
+      .catch((err) => setRoleError(err instanceof AdminApiError ? err.message : 'Could not change that role.'));
+  }
+
+  if (error) return <EmptyState icon="users" title="Could not load administrators" sub={error} />;
+  if (!data) return <div style={{ fontSize: 13.5, color: oklch.textMuted }}>Loading…</div>;
+
+  const visible = data.rows.filter((u) => showDeactivated || u.status === 'active');
+  const activeSupers = data.rows.filter((u) => u.roleIsBuiltin && u.status === 'active').length;
+
   return (
-    <>
-      <PreviewBanner shows="Platform user management" epic="Jira GRW-88" />
-      <Table
-        columns={COLUMNS}
-        minWidthPx={720}
-        rows={PLATFORM_USERS.map((u) => {
-          const [fg, bg] = ROLE_COLORS[u.role] ?? ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'];
-          return (
-            <TableRow key={u.email} columns={COLUMNS}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
-                <span
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: `oklch(0.95 0.045 ${u.hue})`,
-                    color: `oklch(0.45 0.12 ${u.hue})`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: 13,
-                    flex: 'none',
-                  }}
-                >
-                  {u.name.split(' ').map((x) => x[0]).slice(0, 2).join('')}
-                </span>
-                <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong }}>{u.name}</div>
-              </div>
-              <div style={{ fontSize: 13, color: 'oklch(0.5 0.02 155)', fontWeight: 500 }}>{u.email}</div>
-              <div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: fg, background: bg, padding: '4px 10px', borderRadius: 8 }}>{u.role}</span>
-              </div>
-              <div style={{ fontSize: 13, color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{u.last}</div>
-              <div>
-                <StatusPill status={u.status} />
-              </div>
-            </TableRow>
-          );
-        })}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <SectionTitle title="Platform administrators" />
+          <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: oklch.textMuted }}>
+              <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} />
+              Show deactivated
+            </label>
+            <PrimaryButton onClick={() => setAddOpen(true)}>Add administrator</PrimaryButton>
+          </div>
+        </div>
+
+        {roleError ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{roleError}</div> : null}
+
+        {visible.length === 0 ? (
+          <EmptyState icon="users" title="Nobody to show" sub={showDeactivated ? 'No administrators yet.' : 'No active administrators.'} />
+        ) : (
+          <Table
+            columns={COLUMNS}
+            minWidthPx={860}
+            rows={visible.map((user) => {
+              const isSelf = user.id === data.selfId;
+              // AC-03 — the last active Super Admin is protected VISIBLY, so
+              // the control is absent rather than offered and then refused.
+              const isLastSuper = user.roleIsBuiltin && user.status === 'active' && activeSupers === 1;
+              const locked = isSelf ? 'This is you — ask another administrator.' : isLastSuper ? 'The last Super Admin.' : null;
+
+              return (
+                <TableRow key={user.id} columns={COLUMNS}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong }}>{user.name}</div>
+                    <div style={{ fontSize: 12.5, color: oklch.textMuted, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>
+                  </div>
+
+                  <div>
+                    {locked ? (
+                      <span style={{ fontSize: 13, fontWeight: 700, color: oklch.textStrong }}>{user.roleName ?? 'No role'}</span>
+                    ) : (
+                      <select
+                        value={user.roleId ?? ''}
+                        onChange={(e) => changeRole(user, e.target.value)}
+                        style={{ padding: '6px 9px', borderRadius: 9, border: `1px solid ${oklch.border}`, fontSize: 12.5, fontWeight: 600, maxWidth: 170 }}
+                      >
+                        {user.roleId === null ? <option value="">No role</option> : null}
+                        {data.roles.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {/* A role is what they may do; no role is a real state and
+                        must not read as an empty cell. */}
+                    {user.roleId === null ? (
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)', marginTop: 3 }}>No permissions</div>
+                    ) : null}
+                  </div>
+
+                  <div style={{ fontSize: 13, color: oklch.textMuted, fontWeight: 600 }}>{formatDateOnly(user.createdAt)}</div>
+
+                  <div>
+                    <StatusPill status={user.status === 'active' ? 'Active' : 'Deactivated'} />
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    {locked ? (
+                      <span style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600 }}>{locked}</span>
+                    ) : user.status === 'active' ? (
+                      <SecondaryButton danger onClick={() => setChanging({ user, status: 'deactivated' })}>
+                        Deactivate
+                      </SecondaryButton>
+                    ) : (
+                      <SecondaryButton onClick={() => setChanging({ user, status: 'active' })}>Reactivate</SecondaryButton>
+                    )}
+                  </div>
+                </TableRow>
+              );
+            })}
+          />
+        )}
+      </Card>
+
+      <AddAdminModal open={addOpen} roles={data.roles} onClose={() => setAddOpen(false)} onAdded={() => void load()} />
+
+      <ConfirmDialog
+        open={changing !== null}
+        danger={changing?.status === 'deactivated'}
+        title={
+          changing?.status === 'deactivated'
+            ? `Deactivate ${changing?.user.name ?? 'this administrator'}?`
+            : `Reactivate ${changing?.user.name ?? 'this administrator'}?`
+        }
+        description={
+          changing?.status === 'deactivated'
+            ? 'They stop being able to sign in immediately. Nothing is deleted — their name stays on everything they did, which is why administrators are deactivated rather than removed.'
+            : 'They can sign in again, with the role they hold.'
+        }
+        confirmLabel={changing?.status === 'deactivated' ? 'Deactivate' : 'Reactivate'}
+        reasonRequired
+        reasonPlaceholder="Why is this changing?"
+        loading={busy}
+        error={changeError}
+        onConfirm={changeStatus}
+        onCancel={() => {
+          setChanging(null);
+          setChangeError(null);
+        }}
       />
-    </>
+    </div>
   );
 }

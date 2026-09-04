@@ -68,14 +68,6 @@ export function getFlag(key: string) {
   return FEATURE_FLAGS.find((f) => f.key === key);
 }
 
-export const PLATFORM_USERS = [
-  { name: 'Aarav Khanna', email: 'aarav@growza.io', role: 'Super admin', last: 'Just now', status: 'Active', hue: 150 },
-  { name: 'Sneha Patil', email: 'sneha@growza.io', role: 'Billing admin', last: '20m ago', status: 'Active', hue: 210 },
-  { name: 'Rohit Verma', email: 'rohit@growza.io', role: 'Support admin', last: '2h ago', status: 'Active', hue: 285 },
-  { name: 'Divya Nair', email: 'divya@growza.io', role: 'Operations admin', last: 'Yesterday', status: 'Active', hue: 40 },
-  { name: 'Imran Shaikh', email: 'imran@growza.io', role: 'Support admin', last: '3d ago', status: 'Invited', hue: 25 },
-];
-
 export const AUDIT_LOG = [
   { admin: 'Aarav Khanna', action: 'Discount applied', entity: 'Subscription', biz: 'Glow Salon', detail: '₹799 → ₹599 · Early adopter', time: '31 Aug, 10:45', hue: 150 },
   { admin: 'Aarav Khanna', action: 'Impersonation started', entity: 'Session', biz: 'CityCare Clinic', detail: 'Reason: payment support', time: '31 Aug, 09:12', hue: 25 },
