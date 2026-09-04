@@ -52,9 +52,8 @@ interface UsageRow {
   meters: UsageMeterRow[];
   /** False when this business's configuration could not be read — limits unknown, not absent. */
   limitsResolved: boolean;
-  /** The plan the LIMITS came from, which need not be the plan the subscription sells. */
+  /** The plan the LIMITS came from — the open subscription's, or `tenant.plan_code` for a business with none (GRW-147). */
   entitlementPlanCode: string | null;
-  planMismatch: boolean;
 }
 
 interface UsagePage {
@@ -216,21 +215,11 @@ export default function AdminUsagePage() {
                       ) : null}
                     </div>
                     <div style={{ fontSize: 13, color: 'oklch(0.4 0.02 155)', fontWeight: 600 }}>
+                      {/* The "Limits from <other plan>" warning that used to
+                          sit here is gone: GRW-147 made the limits resolve
+                          from this subscription's own plan, so the plan named
+                          in this column is the plan the numbers came from. */}
                       {row.planName ?? row.planCode}
-                      {/* The subscription sells one plan and the limits come
-                          from another (Jira GRW-147). Said on the row, because
-                          a silent mismatch is how it stays unfound — the
-                          customer is billed for one thing and limited by
-                          another, and both this screen and the engine agree
-                          on the wrong one. */}
-                      {row.planMismatch ? (
-                        <div
-                          style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)', marginTop: 3 }}
-                          title={`Limits are resolved from ${row.entitlementPlanCode}, not from the plan this subscription sells.`}
-                        >
-                          Limits from {row.entitlementPlanCode}
-                        </div>
-                      ) : null}
                     </div>
                     <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>
                       {formatDateOnly(row.currentPeriodStart)} – {formatDateOnly(row.currentPeriodEnd)}
