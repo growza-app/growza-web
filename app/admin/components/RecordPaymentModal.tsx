@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
@@ -27,10 +27,21 @@ const METHODS: [string, string][] = [
   ['cheque', 'Cheque'],
 ];
 
+/** Postgres `integer`, which is what `payment.amount_minor` is. */
+const INT4_MAX = 2_147_483_647;
+
+/** A hung request must not leave an admin with a modal they cannot close (QA pass). */
+const REQUEST_TIMEOUT_MS = 30_000;
+
 export interface RecordPaymentSubscription {
   id: string;
   finalPriceMinor: number;
-  currency: string;
+}
+
+/** The 201 body: the payment row, plus what recording it actually did. */
+interface RecordedPayment {
+  recovered: boolean;
+  detail: string;
 }
 
 /**
@@ -45,6 +56,29 @@ function localDateTimeValue(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * What the admin typed, checked as TYPED rather than as a number.
+ *
+ * QA pass — the old guard ended in `Number.isInteger(Math.round(rupees * 100))`,
+ * which `Math.round` makes true for every finite input, so it never rejected
+ * anything. `79.995` was silently recorded as ₹80.00 and `1.005` as ₹1.00 —
+ * two different roundings of the same shape — on the one screen whose whole
+ * premise is that the recorded figure is what the admin asserted. Rupees have
+ * two decimal places; anything else is a typo, and is refused rather than
+ * rounded on the admin's behalf.
+ */
+function parseRupees(raw: string): { ok: true; minor: number } | { ok: false; why: string } {
+  const text = raw.trim();
+  if (text === '') return { ok: false, why: '' };
+  if (!/^\d+(\.\d{1,2})?$/.test(text)) {
+    return { ok: false, why: 'Enter an amount in rupees and paise — digits, and at most two decimal places.' };
+  }
+  const minor = Math.round(Number(text) * 100);
+  if (minor <= 0) return { ok: false, why: 'Enter an amount greater than zero.' };
+  if (minor > INT4_MAX) return { ok: false, why: `That is larger than the biggest amount that can be recorded (${inr(INT4_MAX / 100)}).` };
+  return { ok: true, minor };
+}
+
 export function RecordPaymentModal({
   businessName,
   subscription,
@@ -55,7 +89,7 @@ export function RecordPaymentModal({
   businessName: string | null;
   subscription: RecordPaymentSubscription | null;
   onClose: () => void;
-  onRecorded: () => void;
+  onRecorded: (result: RecordedPayment) => void;
 }) {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('bank_transfer');
@@ -64,51 +98,113 @@ export function RecordPaymentModal({
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ids = useId();
 
-  // Re-seed on every open, so a half-typed reference from one business can
-  // never be submitted against another (DiscountModal's own discipline, and
-  // the stakes are higher here — that field is what a finance team matches
-  // against a bank statement).
+  const open = businessName !== null && subscription !== null;
+  const openedFor = useRef<string | null>(null);
+
+  /**
+   * Seed the form ONCE per opening, on the transition into open.
+   *
+   * QA pass, HIGH — this used to be an effect keyed on
+   * `[businessName, subscription?.id, subscription?.finalPriceMinor]`, and
+   * both of the extra deps change while the modal is open. The subscription
+   * page resolves the business NAME through a second request, so the modal
+   * routinely opened as "This business" and re-rendered with the real name a
+   * moment later — wiping a half-typed reference, resetting the method to
+   * bank transfer and the date to now, silently, with only the subtitle
+   * visibly changing. On a record that cannot afterwards be amended.
+   *
+   * A ref rather than a dep list because the question is "did this open",
+   * which no combination of prop values can answer on its own.
+   */
   useEffect(() => {
-    if (!businessName || !subscription) return;
+    if (!open) {
+      openedFor.current = null;
+      return;
+    }
+    if (openedFor.current === subscription.id) return;
+    openedFor.current = subscription.id;
     setAmount(String(subscription.finalPriceMinor / 100));
     setMethod('bank_transfer');
     setReference('');
     setPaidAt(localDateTimeValue(new Date()));
     setReason('');
     setError(null);
-  }, [businessName, subscription?.id, subscription?.finalPriceMinor]);
+  }, [open, subscription]);
 
-  if (!businessName || !subscription) return null;
+  // Escape closes it, as every dialog should. Not while a request is in
+  // flight: the POST would still land, and closing would tell the admin
+  // nothing happened.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !saving) onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, saving, onClose]);
 
-  const rupees = Number(amount);
-  // Guard the three ways this can be wrong separately, because "amount is
-  // invalid" tells an admin nothing about which one they hit.
-  const amountValid = Number.isFinite(rupees) && rupees > 0 && Number.isInteger(Math.round(rupees * 100));
-  const partial = amountValid && Math.round(rupees * 100) < subscription.finalPriceMinor;
-  const overpaid = amountValid && Math.round(rupees * 100) > subscription.finalPriceMinor;
-  const future = paidAt !== '' && new Date(paidAt).getTime() > Date.now();
-  const canSave = amountValid && !future && reference.trim().length > 0 && reason.trim().length > 0 && paidAt !== '' && !saving;
+  if (!open) return null;
+
+  const parsedAmount = parseRupees(amount);
+  const owed = subscription.finalPriceMinor;
+  const partial = parsedAmount.ok && parsedAmount.minor < owed;
+  const overpaid = parsedAmount.ok && parsedAmount.minor > owed;
+  const paidAtDate = paidAt === '' ? null : new Date(paidAt);
+  const paidAtValid = paidAtDate !== null && !Number.isNaN(paidAtDate.getTime());
+  const future = paidAtValid && paidAtDate.getTime() > Date.now();
+
+  // Said out loud rather than left as a greyed button with no explanation.
+  const blocker = !parsedAmount.ok
+    ? (parsedAmount.why ?? '') || 'Enter the amount received.'
+    : !paidAtValid
+      ? 'Enter when the payment arrived.'
+      : future
+        ? 'That is in the future. A payment can only be recorded after it arrived.'
+        : reference.trim() === ''
+          ? 'Enter the reference from the bank statement.'
+          : reason.trim() === ''
+            ? 'Enter a reason — it is recorded against your name.'
+            : null;
+  const canSave = blocker === null && !saving;
 
   function submit() {
+    if (!parsedAmount.ok || !paidAtValid) return;
     setSaving(true);
     setError(null);
-    adminFetch(`/subscriptions/${subscription!.id}/payments`, {
+    // A fetch with no timeout that never settles leaves `saving` true
+    // forever, and every way out of this modal is gated on `saving`.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    adminFetch<RecordedPayment>(`/subscriptions/${subscription!.id}/payments`, {
       method: 'POST',
+      signal: controller.signal,
       body: JSON.stringify({
-        amountMinor: Math.round(Number(amount) * 100),
+        amountMinor: parsedAmount.minor,
         method,
         reference: reference.trim(),
-        paidAt: new Date(paidAt).toISOString(),
+        paidAt: paidAtDate!.toISOString(),
         reason: reason.trim(),
       }),
     })
-      .then(() => {
-        onRecorded();
+      .then((result) => {
+        onRecorded(result);
         onClose();
       })
-      .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not record this payment.'))
-      .finally(() => setSaving(false));
+      .catch((err) =>
+        setError(
+          err instanceof AdminApiError
+            ? err.message
+            : controller.signal.aborted
+              ? 'That took too long to answer. Check the Payments screen before trying again — it may have been recorded.'
+              : 'Could not record this payment.',
+        ),
+      )
+      .finally(() => {
+        clearTimeout(timer);
+        setSaving(false);
+      });
   }
 
   return (
@@ -126,6 +222,9 @@ export function RecordPaymentModal({
       onClick={saving ? undefined : onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${ids}-title`}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 'min(560px, 100%)',
@@ -139,7 +238,9 @@ export function RecordPaymentModal({
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '22px 24px 0' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>Record a payment</h3>
+            <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
+              Record a payment
+            </h3>
             <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>{businessName}</p>
           </div>
           <button
@@ -178,17 +279,21 @@ export function RecordPaymentModal({
             }}
           >
             <span style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>What they are charged</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: oklch.text }}>{inr(subscription.finalPriceMinor / 100)}</span>
+            <span style={{ fontSize: 16, fontWeight: 800, color: oklch.text }}>{inr(owed / 100)}</span>
           </div>
 
-          <div style={{ marginTop: 16 }}>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>How they paid</label>
+          <div style={{ marginTop: 16 }} role="group" aria-labelledby={`${ids}-method`}>
+            <span id={`${ids}-method`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              How they paid
+            </span>
             <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
               {METHODS.map(([value, label]) => (
                 <button
                   key={value}
                   type="button"
                   disabled={saving}
+                  // Colour alone cannot say which is selected (WCAG 1.4.1).
+                  aria-pressed={method === value}
                   onClick={() => setMethod(value)}
                   style={{
                     flex: '1 1 110px',
@@ -210,11 +315,13 @@ export function RecordPaymentModal({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginTop: 16 }}>
             <div>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>Amount received (₹)</label>
+              <label htmlFor={`${ids}-amount`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+                Amount received (₹)
+              </label>
               <TextInput
-                type="number"
-                min={0}
-                step="0.01"
+                id={`${ids}-amount`}
+                autoFocus
+                inputMode="decimal"
                 disabled={saving}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -222,8 +329,11 @@ export function RecordPaymentModal({
               />
             </div>
             <div>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>When it arrived</label>
+              <label htmlFor={`${ids}-paidat`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+                When it arrived
+              </label>
               <TextInput
+                id={`${ids}-paidat`}
                 type="datetime-local"
                 disabled={saving}
                 max={localDateTimeValue(new Date())}
@@ -235,8 +345,11 @@ export function RecordPaymentModal({
           </div>
 
           <div style={{ marginTop: 16 }}>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>Reference</label>
+            <label htmlFor={`${ids}-reference`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              Reference
+            </label>
             <TextInput
+              id={`${ids}-reference`}
               disabled={saving}
               value={reference}
               onChange={(e) => setReference(e.target.value)}
@@ -244,17 +357,21 @@ export function RecordPaymentModal({
               style={{ marginTop: 7, fontWeight: 500 }}
             />
             {/* Not decoration: the reference is what makes this payment
-                unique in the database, so recording the same transfer twice
-                is refused rather than counted twice. Say so, or an admin
-                who cannot find the UTR will type something arbitrary. */}
+                unique against this subscription, so recording the same
+                transfer twice is refused rather than counted twice. Say so,
+                or an admin who cannot find the UTR will type something
+                arbitrary. */}
             <div style={{ marginTop: 6, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
-              This is what ties the payment to the bank statement. The same reference cannot be recorded twice.
+              This is what ties the payment to the bank statement. The same reference cannot be recorded twice for this business.
             </div>
           </div>
 
           <div style={{ marginTop: 16 }}>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>Reason</label>
+            <label htmlFor={`${ids}-reason`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              Reason
+            </label>
             <TextInput
+              id={`${ids}-reason`}
               disabled={saving}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -263,16 +380,14 @@ export function RecordPaymentModal({
             />
           </div>
 
-          {future ? <Note tone="danger">That is in the future. A payment can only be recorded after it arrived.</Note> : null}
-          {!future && amount !== '' && !amountValid ? <Note tone="danger">Enter an amount greater than zero, in rupees and paise.</Note> : null}
+          {blocker && amount !== '' ? <Note tone="danger">{blocker}</Note> : null}
           {partial ? (
             <Note tone="muted">
-              Less than the {inr(subscription.finalPriceMinor / 100)} charged. That is recorded as exactly what arrived — the rest stays owed.
+              Less than the {inr(owed / 100)} charged. It is recorded as exactly what arrived — the rest stays owed, and the subscription is
+              not restored until the balance is paid.
             </Note>
           ) : null}
-          {overpaid ? (
-            <Note tone="muted">More than the {inr(subscription.finalPriceMinor / 100)} charged. Recorded as received; nothing is refunded here.</Note>
-          ) : null}
+          {overpaid ? <Note tone="muted">More than the {inr(owed / 100)} charged. Recorded as received; nothing is refunded here.</Note> : null}
 
           <div
             style={{
@@ -287,8 +402,7 @@ export function RecordPaymentModal({
               fontWeight: 600,
             }}
           >
-            No payment provider confirms this — you are asserting the money arrived. It is recorded against your name with the reason above, and
-            an overdue subscription is brought back to normal immediately.
+            No payment provider confirms this — you are asserting the money arrived. It is recorded against your name with the reason above.
           </div>
 
           {error ? <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div> : null}
@@ -298,7 +412,12 @@ export function RecordPaymentModal({
           <SecondaryButton onClick={onClose} disabled={saving} style={{ flex: 1, height: 46 }}>
             Cancel
           </SecondaryButton>
-          <PrimaryButton onClick={submit} disabled={!canSave} style={{ flex: 1, height: 46, justifyContent: 'center' }}>
+          <PrimaryButton
+            onClick={submit}
+            disabled={!canSave}
+            title={blocker ?? undefined}
+            style={{ flex: 1, height: 46, justifyContent: 'center' }}
+          >
             {saving ? 'Recording…' : 'Record payment'}
           </PrimaryButton>
         </div>

@@ -79,6 +79,7 @@ export function SubscriptionPanel({
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [recordedNote, setRecordedNote] = useState<string | null>(null);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -262,6 +263,18 @@ export function SubscriptionPanel({
         </div>
       </Card>
 
+      {/* Shown on the screen rather than in a toast: a part payment that did
+          not restore the subscription is a state the admin has to act on, and
+          it must not vanish after three seconds. */}
+      {recordedNote ? (
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.13 65)' }}>{recordedNote}</div>
+            <SecondaryButton onClick={() => setRecordedNote(null)}>Dismiss</SecondaryButton>
+          </div>
+        </Card>
+      ) : null}
+
       <Card>
         <SectionTitle title="Billing period" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
@@ -317,12 +330,16 @@ export function SubscriptionPanel({
         businessName={paymentOpen ? (businessName ?? 'This business') : null}
         subscription={paymentOpen ? s : null}
         onClose={() => setPaymentOpen(false)}
-        onRecorded={() => {
+        onRecorded={(result) => {
           // Refetched rather than patched from the response: recording a
           // payment can move the status and clear the dunning clock, and the
           // 201 body is the payment, not the subscription.
           void load();
           onChanged?.();
+          // A part payment is recorded but does NOT restore the subscription.
+          // The modal closes either way, so this is the only place that says
+          // what actually happened — silence would read as "handled".
+          if (!result.recovered) setRecordedNote(result.detail);
         }}
       />
     </div>
