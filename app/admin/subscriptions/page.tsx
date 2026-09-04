@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { isTerminalSubscriptionStatus } from '../lib/subscription-status';
+import { ReenrolModal, reenrolActionLabel } from '../components/ReenrolModal';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { SUBSCRIPTION_STATUS_VALUES, subscriptionStatusLabel } from '../lib/subscription-status';
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
@@ -34,7 +35,10 @@ const COLUMNS: TableColumn[] = [
   { label: 'Final', width: '0.9fr' },
   { label: 'Status', width: '1.1fr' },
   { label: 'Next billing', width: '1fr' },
-  { label: '', width: '50px', right: true },
+  // GRW-148 widened this from 50px: the row now carries the re-enrol action
+  // as well as the chevron, so a support call can act from the list rather
+  // than opening each subscription to find out whether it needs anything.
+  { label: '', width: '150px', right: true },
 ];
 
 interface SubscriptionRow {
@@ -65,6 +69,16 @@ export default function AdminSubscriptionsPage() {
   const router = useRouter();
   const { query: search } = useAdminSearch();
   const [status, setStatus] = useState('All');
+  /** The subscription the re-enrol dialog is open for, or null (GRW-148). */
+  const [reenrolFor, setReenrolFor] = useState<string | null>(null);
+  /**
+   * Bumped to refetch the list after an action that changed a row.
+   *
+   * The list has no imperative `load()` — it refetches from an effect keyed on
+   * the filters — so this is the one dependency that means "nothing about the
+   * query changed, but the answer did".
+   */
+  const [reloadToken, setReloadToken] = useState(0);
   const [discountedOnly, setDiscountedOnly] = useState(false);
   const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
   const [page, setPage] = useState<SubscriptionPage | null>(null);
@@ -112,7 +126,7 @@ export default function AdminSubscriptionsPage() {
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmedSearch, status, discountedOnly, paging, searchTooShort]);
+  }, [trimmedSearch, status, discountedOnly, paging, searchTooShort, reloadToken]);
 
   const hasActiveFilters = status !== 'All' || discountedOnly || trimmedSearch.length >= 2;
 
@@ -233,7 +247,32 @@ export default function AdminSubscriptionsPage() {
                       <div style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>Ends at period end</div>
                     ) : null}
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div style={{ textAlign: 'right', display: 'flex', gap: 7, justifyContent: 'flex-end', alignItems: 'center' }}>
+                    {/* FR-01 — labelled with the action it will actually
+                        perform, and absent entirely on a subscription that is
+                        already trading normally (FR-05). */}
+                    {reenrolActionLabel(s.status) ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReenrolFor(s.id);
+                        }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: 9,
+                          border: `1px solid ${oklch.borderStrong}`,
+                          background: 'white',
+                          color: oklch.textStrong,
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {reenrolActionLabel(s.status)}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -266,6 +305,16 @@ export default function AdminSubscriptionsPage() {
           <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} maxRows={100} />
         </>
       )}
+
+      <ReenrolModal
+        subscriptionId={reenrolFor}
+        onClose={() => setReenrolFor(null)}
+        // The list is the one screen that must not keep showing a Cancelled
+        // pill next to a subscription that has just been re-enrolled — that is
+        // the "the button did nothing" reading this product has already been
+        // bitten by once.
+        onDone={() => setReloadToken((n) => n + 1)}
+      />
     </div>
   );
 }

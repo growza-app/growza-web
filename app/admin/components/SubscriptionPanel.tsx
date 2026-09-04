@@ -8,6 +8,7 @@ import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from './p
 import { ConfirmDialog } from './ConfirmDialog';
 import { DiscountModal, type CurrentDiscount } from './DiscountModal';
 import { RecordPaymentModal } from './RecordPaymentModal';
+import { ReenrolModal, reenrolActionLabel } from './ReenrolModal';
 import { SubscriptionEntitlements } from './SubscriptionEntitlements';
 import { oklch } from '../tokens';
 
@@ -88,6 +89,7 @@ export function SubscriptionPanel({
   const [discountOpen, setDiscountOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [recordedNote, setRecordedNote] = useState<string | null>(null);
+  const [reenrolOpen, setReenrolOpen] = useState(false);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -161,6 +163,7 @@ export function SubscriptionPanel({
   const discounted = s.discountAmountMinor > 0;
   const status = subscriptionStatusLabel(s.status);
   const terminal = isTerminalSubscriptionStatus(s.status);
+  const reenrolLabel = reenrolActionLabel(s.status);
   // Reopening the modal on an already-discounted subscription prefills it
   // with what's actually there — discountValue is minor-unit rupees for
   // fixed/final (matching the modal's own rupee-denominated input) and a
@@ -268,6 +271,20 @@ export function SubscriptionPanel({
               Record a payment
             </SecondaryButton>
           ) : null}
+          {/* GRW-148 — FR-01/FR-05. Present only where it means something: a
+              subscription that is already trading normally has nothing to
+              re-enrol, and the server refuses it with `nothing_to_do`, so
+              offering the button there would be a button that 409s. The label
+              is the action it will actually perform. */}
+          {reenrolLabel ? (
+            <SecondaryButton
+              disabled={!canManage}
+              onClick={() => setReenrolOpen(true)}
+              title={!canManage ? 'This needs the subscription-manage permission.' : undefined}
+            >
+              {reenrolLabel}
+            </SecondaryButton>
+          ) : null}
         </div>
       </Card>
 
@@ -328,7 +345,7 @@ export function SubscriptionPanel({
         // now, and there is no "cancel at the end of the period" until
         // GRW-84's lifecycle machine exists. Offering a control that quietly
         // did one when an admin meant the other is worse than saying so.
-        description="This takes effect immediately: the subscription becomes cancelled, and any per-customer entitlement overrides on it stop applying. Cancelling is final — a cancelled subscription cannot be reopened, and the business would need a new one. Scheduling a cancellation for the end of the billing period isn't built yet (Jira GRW-84). This change is audited."
+        description="This takes effect immediately: the subscription becomes cancelled, and any per-customer entitlement overrides on it stop applying. Cancelling is final for THIS subscription — a cancelled one is never reopened. The business can be brought back later with Re-enrol, which creates a new subscription on the same plan and carries their discount and any entitlement exceptions across; their bookings and customers are never affected either way. Scheduling a cancellation for the end of the billing period isn't built yet (Jira GRW-84). This change is audited."
         confirmLabel="Cancel subscription"
         reasonRequired
         reasonPlaceholder="Why is this being cancelled?"
@@ -350,6 +367,23 @@ export function SubscriptionPanel({
         onSaved={(updated) => {
           setSubscription((prev) => (prev ? { ...prev, ...updated } : prev));
           onChanged?.();
+        }}
+      />
+
+      <ReenrolModal
+        subscriptionId={reenrolOpen ? subscriptionId : null}
+        onClose={() => setReenrolOpen(false)}
+        onDone={(result) => {
+          void load();
+          onChanged?.();
+          // Same reasoning as the payment note: a part payment that did NOT
+          // restore the subscription is a state the admin has to act on, and
+          // must not vanish with a toast.
+          setRecordedNote(
+            result.trading
+              ? null
+              : `Recorded, but ${formatMoneyMinor(result.outstandingMinor)} is still outstanding — the subscription stays as it is until the balance is cleared.`,
+          );
         }}
       />
 

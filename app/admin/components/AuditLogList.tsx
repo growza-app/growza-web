@@ -36,6 +36,7 @@ export const KNOWN_ACTIONS = [
   'tax_rule.create',
   'tax_rule.update',
   'subscription.cancel_at_period_end',
+  'subscription.reenrol',
   'payment.record_offline',
   'feature_flag.update',
   'feature_flag.override_set',
