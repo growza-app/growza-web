@@ -81,6 +81,7 @@ export interface ReenrolPreview {
   action: 'reenrol' | 'reactivate' | 'resume';
   planCode: string;
   planName: string | null;
+  planRetired: boolean;
   outstandingMinor: number;
   outstandingInvoices: Array<{ id: string; invoiceNumber: string; periodStart: string; periodEnd: string; outstandingMinor: number }>;
   carriesDiscount: { type: string; value: number; reason: string; endsAt: string | null; amountMinor: number } | null;
@@ -191,7 +192,9 @@ export function ReenrolModal({
 
   const blocker = !preview
     ? 'Loading…'
-    : reason.trim() === ''
+    : preview.planRetired
+      ? `${preview.planName ?? preview.planCode} has been retired, so it cannot be sold again. Create a subscription on a current plan from the business page instead.`
+      : reason.trim() === ''
       ? 'Enter a reason — it is recorded against your name.'
       : !withPayment
         ? null
