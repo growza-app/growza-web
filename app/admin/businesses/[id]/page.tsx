@@ -407,7 +407,11 @@ function SummaryHeader({
           value={business.subscription ? formatDateOnly(business.subscription.nextBillingDate) : '—'}
           hint={business.subscription ? undefined : 'No open subscription to bill.'}
         />
-        <SummaryField label="Bookings" value="—" hint="No monthly booking limit is tracked yet — see the Bookings tab for the real total." />
+        <SummaryField
+          label="Bookings"
+          value="—"
+          hint="Booking usage is recorded now (GRW-124), but no plan limit or count is wired to this screen yet (GRW-125/126) — see the Bookings tab for the real total."
+        />
         <SummaryField label="WhatsApp" value="—" hint="WhatsApp usage isn't metered yet (Jira GRW-86)." />
         <SummaryField label="Branches" value={String(business.branchCount)} />
         <SummaryField label="Users" value={String(business.userCount)} />
