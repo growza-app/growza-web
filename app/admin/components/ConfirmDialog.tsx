@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
@@ -27,6 +27,17 @@ export interface ConfirmDialogProps {
   error?: string | null;
   onConfirm: (reason: string) => void;
   onCancel: () => void;
+  /**
+   * A small form the action needs, rendered between the description and the
+   * reason field (GRW-131).
+   *
+   * Deliberately narrow: this is for the one or two inputs an audited action
+   * cannot do without — a business id to add an override for — not a general
+   * modal slot. A dialog whose whole body is arbitrary is a modal component,
+   * and this one's value is that every caller gets the same reason field,
+   * the same blank-reason guard and the same error handling.
+   */
+  children?: ReactNode;
 }
 
 export function ConfirmDialog({
@@ -41,6 +52,7 @@ export function ConfirmDialog({
   error,
   onConfirm,
   onCancel,
+  children,
 }: ConfirmDialogProps) {
   const [reason, setReason] = useState('');
   // Clicking Save while the reason is blank used to just do nothing —
@@ -121,6 +133,8 @@ export function ConfirmDialog({
           </div>
         </div>
 
+        {children ? <div style={{ marginTop: 16 }}>{children}</div> : null}
+
         {reasonRequired ? (
           <div style={{ marginTop: 18 }}>
             <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
@@ -133,7 +147,10 @@ export function ConfirmDialog({
                 if (triedWithoutReason) setTriedWithoutReason(false);
               }}
               placeholder={reasonPlaceholder}
-              autoFocus
+              // Not when the dialog carries a form: the first thing to fill is
+              // that form's first field, and stealing focus past it means
+              // every caller with children has to fight the dialog for it.
+              autoFocus={!children}
             />
             {triedWithoutReason && reasonMissing ? (
               <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, color: oklch.danger }}>A reason is required before this can be saved.</div>

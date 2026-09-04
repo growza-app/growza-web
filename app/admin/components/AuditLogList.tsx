@@ -37,6 +37,9 @@ export const KNOWN_ACTIONS = [
   'tax_rule.update',
   'subscription.cancel_at_period_end',
   'payment.record_offline',
+  'feature_flag.update',
+  'feature_flag.override_set',
+  'feature_flag.override_remove',
 ] as const;
 
 interface AuditLogRow {
