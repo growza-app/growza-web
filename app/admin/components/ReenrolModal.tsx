@@ -88,6 +88,8 @@ export interface ReenrolPreview {
   carriesOverrides: Array<{ capabilityKey: string; value: boolean | number; reason: string }>;
   retainedAppointments: number;
   retainedCustomers: number;
+  /** GRW-153 — the billing date this action will produce. */
+  nextBillingDateAfter: string;
   mayRecordPayment: boolean;
 }
 
@@ -303,6 +305,13 @@ export function ReenrolModal({
               <div style={{ background: 'oklch(0.97 0.02 155)', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: oklch.textStrong, fontWeight: 600 }}>
                 Their {preview.retainedCustomers.toLocaleString('en-IN')} customers and {preview.retainedAppointments.toLocaleString('en-IN')} bookings are not
                 affected — those belong to the business, not to the subscription.
+              </div>
+
+              {/* GRW-153 FR-03 — coming back starts a fresh month today, and
+                  "when am I next billed" is asked in the same breath as "can I
+                  take bookings again". Said before the button, not after. */}
+              <div style={{ fontSize: 13, color: oklch.textStrong, fontWeight: 600 }}>
+                Their month restarts today — next billed {formatDateOnly(preview.nextBillingDateAfter)}.
               </div>
 
               {preview.outstandingMinor > 0 ? (
