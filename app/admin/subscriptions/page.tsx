@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
+import { isTerminalSubscriptionStatus } from '../lib/subscription-status';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { SUBSCRIPTION_STATUS_VALUES, subscriptionStatusLabel } from '../lib/subscription-status';
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
@@ -210,7 +211,21 @@ export default function AdminSubscriptionsPage() {
                     <StatusPill status={subscriptionStatusLabel(s.status)} />
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{formatDateOnly(s.nextBillingDate)}</div>
+                    {/* A cancelled or expired subscription will never bill
+                        again, and `next_billing_date` keeps its last value —
+                        so this cell showed a confident future date next to a
+                        Cancelled pill, which reads as "the cancel did
+                        nothing". It is the first thing an admin checks after
+                        pressing the button. */}
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: isTerminalSubscriptionStatus(s.status) ? 'oklch(0.6 0.02 155)' : 'oklch(0.3 0.02 155)',
+                      }}
+                    >
+                      {isTerminalSubscriptionStatus(s.status) ? 'Not billing' : formatDateOnly(s.nextBillingDate)}
+                    </div>
                     {/* A subscription set to stop at the period end still shows a
                         next billing date, and without this it reads as one that
                         will be charged. */}

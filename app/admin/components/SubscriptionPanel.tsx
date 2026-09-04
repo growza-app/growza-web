@@ -45,6 +45,14 @@ export interface SubscriptionPanelSubscription {
   discountEndsAt: string | null;
   /** GRW-121 — when the billing worker will next act. Null for a healthy subscription. */
   nextActionAt: string | null;
+  /**
+   * What this status MEANS, in billing's own words (`STATE_ACCESS`).
+   *
+   * Optional because the business-detail host renders this panel from a
+   * response shape that predates it; absent, the banner simply does not show
+   * rather than the panel guessing.
+   */
+  access?: { summary: string; restricted: boolean };
 }
 
 export function SubscriptionPanel({
@@ -263,6 +271,22 @@ export function SubscriptionPanel({
         </div>
       </Card>
 
+      {/* What the status actually DOES, said out loud.
+          The screen used to show a pill and nothing else, so an admin who
+          cancelled a subscription saw a word change colour and had no way to
+          tell whether anything had happened — which is exactly how it was
+          reported. The words come from billing's own STATE_ACCESS table, so
+          this and the restriction the engine applies cannot drift apart. */}
+      {s.access?.restricted ? (
+        <Card>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.15 25)' }}>{s.access.summary}</div>
+          <div style={{ fontSize: 12.5, color: oklch.textMuted, marginTop: 6, lineHeight: 1.5 }}>
+            New bookings are refused, walk-ins are off and reminders are not sent. Nothing has been deleted — existing data and past
+            appointments are untouched.
+          </div>
+        </Card>
+      ) : null}
+
       {/* Shown on the screen rather than in a toast: a part payment that did
           not restore the subscription is a state the admin has to act on, and
           it must not vanish after three seconds. */}
@@ -279,7 +303,10 @@ export function SubscriptionPanel({
         <SectionTitle title="Billing period" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
           <Fact label="Current period" value={`${formatDateOnly(s.currentPeriodStart)} – ${formatDateOnly(s.currentPeriodEnd)}`} />
-          <Fact label="Next billing date" value={formatDateOnly(s.nextBillingDate)} />
+          {/* Terminal means it will never bill again; `next_billing_date`
+              keeps its last value, and showing it reads as though the
+              cancellation did not take. */}
+          <Fact label="Next billing date" value={terminal ? 'Not billing' : formatDateOnly(s.nextBillingDate)} />
           <Fact label="Ends at period end" value={s.cancelAtPeriodEnd ? 'Yes' : 'No'} />
           {/* "No action scheduled" is a real statement, not a blank — an
               admin looking at a failing subscription needs to know whether
