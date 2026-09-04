@@ -52,6 +52,9 @@ interface UsageRow {
   meters: UsageMeterRow[];
   /** False when this business's configuration could not be read — limits unknown, not absent. */
   limitsResolved: boolean;
+  /** The plan the LIMITS came from, which need not be the plan the subscription sells. */
+  entitlementPlanCode: string | null;
+  planMismatch: boolean;
 }
 
 interface UsagePage {
@@ -110,9 +113,13 @@ export default function AdminUsagePage() {
     return () => controller.abort();
   }, [trimmedSearch, searchTooShort, paging, reloadToken]);
 
-  // Totals across what is loaded, and labelled as such. "Across the 20
-  // businesses shown" is true; "across the platform" would not be.
+  // Ordered by the server, by PROPORTION of limit rather than absolute volume
+  // — the database can rank by volume but not by a fraction of a limit it does
+  // not know. Not re-sorted here: two sort orders for one list is how a page
+  // and its "next page" stop agreeing about what is on them.
   const rows = page?.rows ?? [];
+  // Totals across what is LOADED, and labelled as such. "Across the 20
+  // businesses shown" is true; "across the platform" would not be.
   const bookingsTotal = rows.reduce((sum, r) => sum + (bookingsOf(r)?.used ?? 0), 0);
   const atOrOverCap = rows.filter((r) => {
     const b = bookingsOf(r);
@@ -208,7 +215,23 @@ export default function AdminUsagePage() {
                         </div>
                       ) : null}
                     </div>
-                    <div style={{ fontSize: 13, color: 'oklch(0.4 0.02 155)', fontWeight: 600 }}>{row.planName ?? row.planCode}</div>
+                    <div style={{ fontSize: 13, color: 'oklch(0.4 0.02 155)', fontWeight: 600 }}>
+                      {row.planName ?? row.planCode}
+                      {/* The subscription sells one plan and the limits come
+                          from another (Jira GRW-147). Said on the row, because
+                          a silent mismatch is how it stays unfound — the
+                          customer is billed for one thing and limited by
+                          another, and both this screen and the engine agree
+                          on the wrong one. */}
+                      {row.planMismatch ? (
+                        <div
+                          style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)', marginTop: 3 }}
+                          title={`Limits are resolved from ${row.entitlementPlanCode}, not from the plan this subscription sells.`}
+                        >
+                          Limits from {row.entitlementPlanCode}
+                        </div>
+                      ) : null}
+                    </div>
                     <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>
                       {formatDateOnly(row.currentPeriodStart)} – {formatDateOnly(row.currentPeriodEnd)}
                     </div>
