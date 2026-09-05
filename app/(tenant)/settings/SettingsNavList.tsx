@@ -1,6 +1,7 @@
 import type { SettingsSummary } from '../lib/api';
 import { IconChevronRight } from '../components/icons';
 import { SETTINGS_GROUPS } from './nav-data';
+import { SignOutButton } from '../components/SignOutButton';
 
 /** The mobile hub's top card — desktop hides it via CSS (`.settings-header-card` under the 861px breakpoint) since the persistent left pane there has no room for it and goes straight into the section groups. */
 function HeaderCard({ settings }: { settings: SettingsSummary }) {
@@ -39,6 +40,21 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
           <div className="menu-list">
             {group.rows.map((row) => {
               const Icon = row.icon;
+              // Before the href check: a row with an action has no href either,
+              // and would otherwise render as disabled with "Coming soon".
+              if (row.action === 'logout') {
+                return (
+                  <SignOutButton key={row.label} className="settings-row settings-row-action">
+                    <span className="settings-row-icon">
+                      <Icon />
+                    </span>
+                    <div className="settings-row-body">
+                      <div className="settings-row-title">{row.label}</div>
+                      <div className="settings-row-sub">{row.sub}</div>
+                    </div>
+                  </SignOutButton>
+                );
+              }
               if (!row.href) {
                 return (
                   <div className="settings-row settings-row-disabled" key={row.label}>

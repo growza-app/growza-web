@@ -114,6 +114,11 @@ body {
   height: 100vh;
   height: 100dvh;
   overflow-y: auto;
+  /* A column so the sign-out footer (GRW-160) can be pushed to the bottom by
+     `margin-top: auto` — and so it still sits below the last nav item, rather
+     than off-screen, when the list is long enough to scroll. */
+  display: flex;
+  flex-direction: column;
 }
 
 .brand {
@@ -709,6 +714,11 @@ input[type='search'],
 input[type='tel'],
 input[type='email'],
 input[type='number'],
+/* Added with the sign-in screen (GRW-160), which is the first password field
+   in the product — without it the input rendered as a bare browser default
+   next to a styled phone field. Added to the shared rule rather than patched
+   on that one screen, so the next password field inherits it too. */
+input[type='password'],
 textarea {
   padding: 9px 12px;
   border: 1px solid var(--border);
@@ -10590,4 +10600,171 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   line-height: 1.45;
   text-align: left;
   white-space: normal;
+}
+
+/* ---------- Jira GRW-66 · GRW-160 — the sign-in screen ----------
+   The first screen a salon owner ever sees. Deliberately styled from the same
+   tokens as the dashboard rather than from the admin plane's palette: the two
+   planes share no visual language on purpose (ADR-14), and this belongs to the
+   salon's product.
+
+   `100dvh`, not `100vh`: on mobile Safari a `100vh` centred card sits partly
+   under the browser's own chrome, so the button an owner has to press is the
+   thing that ends up hidden. */
+.login-page {
+  /* `height`, not `min-height`, and this element owns the scrolling.
+     `html, body` above are `height: 100%; overflow: hidden` — the dashboard's
+     fit-to-screen shell, which this page inherits along with the stylesheet.
+     With `min-height` the card simply overflowed a page that could not scroll,
+     and in mobile landscape (812×375) the Sign in button was below the fold
+     and unreachable. Caught by the standing resolution matrix. */
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  /* Centring is `margin: auto` on the card, NOT `align-items: center` here.
+     A centred flex item that is taller than its scroll container has its
+     overflowing top clipped and unreachable; an auto margin centres when there
+     is room and falls back to the start edge when there is not. */
+  justify-content: center;
+  padding: var(--sp-6);
+  /* Safe-area insets so the card clears a notch or a home indicator when this
+     is opened from the installed PWA rather than a browser tab. */
+  padding-top: max(var(--sp-6), env(safe-area-inset-top));
+  padding-bottom: max(var(--sp-6), env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-deep) 100%);
+}
+
+.login-card {
+  margin: auto;
+  width: 100%;
+  /* Caps the line length on a desktop monitor; the width: 100% above is what
+     makes it fit a 320px phone without a horizontal scrollbar. */
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
+}
+
+.login-head h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.login-head p {
+  margin: var(--sp-2) 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.login-card .field input {
+  width: 100%;
+  box-sizing: border-box;
+  /* 16px is not a style choice: anything smaller makes iOS Safari zoom the
+     page on focus, and it never zooms back out. */
+  font-size: 16px;
+}
+
+.login-error {
+  margin: 0;
+}
+
+.login-submit {
+  justify-content: center;
+  padding: var(--sp-3) var(--sp-5);
+  font-size: 15px;
+}
+
+.login-submit:disabled {
+  background: var(--slate-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.login-foot {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Sign-out in the desktop sidebar's footer (GRW-160). Matches `.nav a` rather
+   than reusing it: it is a <button>, so it needs the button resets too, and
+   `margin-top: auto` is what parks it at the bottom of the column. It is never
+   `.active` — it is not a destination. */
+.nav-signout {
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 12px 10px;
+  color: var(--sidebar-text);
+  font: inherit;
+  font-weight: 500;
+  font-size: 15.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-signout:hover {
+  color: #fff;
+}
+
+.nav-signout svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.nav-signout:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* Sign-out as a row on the mobile More menu (GRW-160). `.menu-row` gives it
+   everything but the button resets and the full width a <button> does not take
+   by default. */
+.menu-row-action {
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-row-action:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* A settings row that is a <button>, not an <a> — see SignOutButton (GRW-160).
+   Resets the button defaults that would otherwise show through: browser
+   chrome background, a border, centred text, and a font that isn't the
+   page's. Everything else it inherits from .settings-row, so it is
+   indistinguishable from the rows around it. */
+.settings-row-action {
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-row-action:disabled {
+  cursor: progress;
+  opacity: 0.6;
 }

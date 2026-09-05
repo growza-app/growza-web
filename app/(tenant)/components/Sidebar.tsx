@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { copy } from '../lib/copy';
+import { SignOutButton } from './SignOutButton';
 import {
   IconAnalytics,
   IconAppointments,
@@ -13,6 +14,7 @@ import {
   IconServices,
   IconSettings,
   IconStaff,
+  IconLogout,
   IconUserPlus,
 } from './icons';
 
@@ -62,6 +64,13 @@ export function Sidebar({ tenantName, labels, role }: { tenantName: string; labe
           </a>
         ))}
       </nav>
+      {/* Jira GRW-66 · GRW-160 — outside `visibleItems`, deliberately. Every
+          role can end their own session; a stylist on a shared salon device is
+          the person who needs it most, and they see almost nothing above. */}
+      <SignOutButton className="nav-signout">
+        <IconLogout />
+        {copy.nav.signOut}
+      </SignOutButton>
     </aside>
   );
 }

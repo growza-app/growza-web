@@ -30,17 +30,18 @@ const NAV = [
 describe('AC-01 — a stylist is offered what they can use', () => {
   it('their appointments, and nothing else', () => {
     /**
-     * `/more` was here on the reasoning that it is where a stylist signs out.
-     * QA (GRW-158) checked: every row on that menu is owner-only, so it
-     * rendered EMPTY — a nav destination that goes nowhere. The only "Log out"
-     * in the product is an unwired row inside owner-only Settings, so nobody
-     * can sign out of the tenant app yet, stylist or owner.
+     * `/more` earns its place back in GRW-160 and only there: it was removed
+     * (GRW-158) because every row on it was owner-only and it rendered EMPTY
+     * for a stylist. It now carries sign-out, outside the policy filter.
      */
-    expect(visibleItems(NAV, 'staff').map((i) => i.href)).toEqual(['/appointments']);
+    expect(visibleItems(NAV, 'staff').map((i) => i.href)).toEqual(['/appointments', '/more']);
   });
 
-  it('not a menu that would render empty for them', () => {
-    expect(canSee('/more', 'staff')).toBe(false);
+  it('a menu that has something on it for them — sign-out (GRW-160)', () => {
+    // The test that used to assert the opposite. Changing it is the point of
+    // the story, not an inconvenience it caused: a stylist on a shared salon
+    // device is the person who most needs to be able to end their session.
+    expect(canSee('/more', 'staff')).toBe(true);
   });
 
   it('not the home screen, which leads with the salon’s takings', () => {

@@ -6,6 +6,37 @@
 // (the latter is what a PWA install over HTTPS requires).
 const API_URL = typeof window !== 'undefined' ? '' : (process.env.API_URL ?? 'http://localhost:3001');
 
+/**
+ * Jira GRW-66 · GRW-160 — the credential the server-side half of this file
+ * would otherwise not send.
+ *
+ * Every page under `(tenant)` is a server component, so most requests in this
+ * file are made by the NEXT SERVER, not the browser — and a server-side `fetch`
+ * inherits nothing from the visitor's browser. The session cookie GRW-159 sets
+ * would simply not be on the request, and every server-rendered page would 401
+ * in production while the client-side calls (same-origin, through the rewrite,
+ * cookie attached automatically) carried on working. Exactly the kind of gap
+ * that looks fine until it is deployed.
+ *
+ * `next/headers` is imported dynamically because this module is also bundled
+ * into client components, where importing it at the top level is a build error.
+ */
+const SESSION_COOKIE = 'growza_session';
+
+async function authHeaders(): Promise<Record<string, string>> {
+  if (typeof window !== 'undefined') return {};
+  try {
+    const { cookies } = await import('next/headers');
+    const token = (await cookies()).get(SESSION_COOKIE)?.value;
+    return token ? { cookie: `${SESSION_COOKIE}=${token}` } : {};
+  } catch {
+    // `cookies()` throws outside a request scope (a build-time render, say).
+    // No cookie is the honest answer there, and the caller's 401 handling is
+    // already correct for it.
+    return {};
+  }
+}
+
 export interface Me {
   tenant: { id: string; name: string; timezone: string; locationName: string | null } | null;
   /**
@@ -435,7 +466,7 @@ export class ApiError extends Error {
 }
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: 'no-store' });
+  const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
   if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
   return res.json() as Promise<T>;
 }
@@ -687,7 +718,10 @@ export interface ClientProfile {
 async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
-    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    headers: {
+      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(await authHeaders()),
+    },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 409) {
@@ -776,7 +810,8 @@ const del = <T>(path: string) => send<T>('DELETE', path);
 async function uploadFile<T>(path: string, field: string, file: File): Promise<T> {
   const form = new FormData();
   form.append(field, file);
-  const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form });
+  // No Content-Type of our own — the browser must set its own boundary'd one.
+  const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form, headers: await authHeaders() });
   if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
   return res.json() as Promise<T>;
 }

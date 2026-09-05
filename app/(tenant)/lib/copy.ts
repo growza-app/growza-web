@@ -29,6 +29,10 @@ export const copy = {
     tryWhatsApp: 'Try WhatsApp',
     settings: 'Settings',
     more: 'More',
+    // "Log out", not "Sign out": it is the wording already on the Settings row
+    // and the plainer of the two, and it has to read the same everywhere
+    // (GRW-160 puts it on three surfaces at once).
+    signOut: 'Log out',
   },
 
   home: {

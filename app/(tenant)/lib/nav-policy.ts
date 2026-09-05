@@ -21,11 +21,15 @@ export type MemberRole = 'owner' | 'manager' | 'staff';
  * simulator, settings — is a route GRW-156 closed.
  *
  * `/more` was included on the reasoning that it is where a stylist signs out.
- * QA (GRW-158) checked: it is not. Every row on that menu is owner-only, so it
- * rendered EMPTY for a stylist — a nav destination that goes nowhere — and the
- * only "Log out" in the product is a static, unwired row inside owner-only
- * Settings. Nobody can sign out of the tenant app yet, stylist or owner; that
- * is the tenant sign-in work, not this.
+ * QA (GRW-158) checked: it was not. Every row on that menu was owner-only, so
+ * it rendered EMPTY for a stylist — a nav destination that went nowhere — and
+ * the only "Log out" in the product was a static, unwired row inside owner-only
+ * Settings. Nobody could sign out of the tenant app at all, stylist or owner.
+ *
+ * GRW-160 built sign-out and put it on that menu, outside this filter, so the
+ * condition GRW-158 removed `/more` for no longer holds: it now has exactly one
+ * row a stylist can use, and it is the one they need most on a shared salon
+ * device. Restored on those grounds, not by reverting the reasoning.
  *
  * `/` is deliberately ABSENT. The owner's home leads with the salon's takings
  * and loads four owner-only endpoints, so for a stylist it would be both a
@@ -33,7 +37,7 @@ export type MemberRole = 'owner' | 'manager' | 'staff';
  * this story puts out of scope — `/` redirects a stylist to their appointments,
  * which is what "their day" already means.
  */
-const STAFF_DESTINATIONS: ReadonlySet<string> = new Set(['/appointments']);
+const STAFF_DESTINATIONS: ReadonlySet<string> = new Set(['/appointments', '/more']);
 
 /**
  * `role` is optional and an absent one means OWNER (BR-03).

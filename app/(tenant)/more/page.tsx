@@ -2,7 +2,8 @@ import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconChevronRight, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { SignOutButton } from '../components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +56,14 @@ export default async function MorePage() {
               </span>
             </a>
           ))}
+          {/* Jira GRW-66 · GRW-160 — outside the policy filter, on purpose.
+              Every role can end their own session. This is also what makes
+              `/more` worth showing a stylist again: GRW-158 removed it because
+              it rendered empty for them, and this is the row it was missing. */}
+          <SignOutButton className="menu-row menu-row-action">
+            <IconLogout />
+            {copy.nav.signOut}
+          </SignOutButton>
         </div>
       </div>
     </>

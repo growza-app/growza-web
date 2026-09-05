@@ -9,6 +9,8 @@ import { LiveRefresh } from './components/LiveRefresh';
 import { LabelsProvider } from './components/LabelsProvider';
 import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
+import { redirect } from 'next/navigation';
+import { shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
 
 export const metadata: Metadata = {
   title: 'Booking Dashboard',
@@ -46,7 +48,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
     role = (me.member?.role as MemberRole | undefined) ?? null;
-  } catch {
+  } catch (error) {
+    /**
+     * Jira GRW-66 · GRW-160 — a 401 is the one failure that means something
+     * we can act on. Everything else still falls through to the degraded
+     * render below (BR-03).
+     *
+     * `redirect()` works by throwing, so it must be the last thing in this
+     * block: anything after it would not run.
+     */
+    if (shouldSignInAgain(error)) redirect(SIGN_IN_PATH);
     // API down — pages render their own error state, and `billing` stays
     // null so no banner claims anything it cannot know (GRW-122).
   }

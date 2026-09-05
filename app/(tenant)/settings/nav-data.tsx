@@ -16,6 +16,16 @@ import {
 export interface SettingsRow {
   /** Present = a real, working page. Absent = shown but disabled — nothing exists to link to yet. */
   href?: string;
+  /**
+   * Jira GRW-66 · GRW-160 — a row that DOES something rather than going
+   * somewhere. Only "Log out" so far.
+   *
+   * It needed its own kind because the two that existed did not fit: it has no
+   * `href`, and without this it fell into the no-href branch and rendered as
+   * disabled with a "Coming soon" pill — telling an owner that signing out was
+   * a future feature.
+   */
+  action?: 'logout';
   label: string;
   sub: string;
   icon: ComponentType;
@@ -68,7 +78,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     title: 'Account',
     rows: [
       { label: 'Account', sub: 'Manage your account', icon: IconUser },
-      { label: 'Log out', sub: 'Sign out from this device', icon: IconLogout },
+      { label: 'Log out', sub: 'Sign out from this device', icon: IconLogout, action: 'logout' },
     ],
   },
 ];
