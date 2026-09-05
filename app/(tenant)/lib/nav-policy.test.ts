@@ -28,8 +28,19 @@ const NAV = [
 ];
 
 describe('AC-01 — a stylist is offered what they can use', () => {
-  it('their appointments and the menu they sign out from, and nothing else', () => {
-    expect(visibleItems(NAV, 'staff').map((i) => i.href)).toEqual(['/appointments', '/more']);
+  it('their appointments, and nothing else', () => {
+    /**
+     * `/more` was here on the reasoning that it is where a stylist signs out.
+     * QA (GRW-158) checked: every row on that menu is owner-only, so it
+     * rendered EMPTY — a nav destination that goes nowhere. The only "Log out"
+     * in the product is an unwired row inside owner-only Settings, so nobody
+     * can sign out of the tenant app yet, stylist or owner.
+     */
+    expect(visibleItems(NAV, 'staff').map((i) => i.href)).toEqual(['/appointments']);
+  });
+
+  it('not a menu that would render empty for them', () => {
+    expect(canSee('/more', 'staff')).toBe(false);
   });
 
   it('not the home screen, which leads with the salon’s takings', () => {

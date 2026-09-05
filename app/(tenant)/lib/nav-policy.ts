@@ -20,8 +20,12 @@ export type MemberRole = 'owner' | 'manager' | 'staff';
  * staff, services, offers, clients, reports, availability, the WhatsApp
  * simulator, settings — is a route GRW-156 closed.
  *
- * `/more` is included because it is where a stylist signs out; its own contents
- * are filtered by this same function.
+ * `/more` was included on the reasoning that it is where a stylist signs out.
+ * QA (GRW-158) checked: it is not. Every row on that menu is owner-only, so it
+ * rendered EMPTY for a stylist — a nav destination that goes nowhere — and the
+ * only "Log out" in the product is a static, unwired row inside owner-only
+ * Settings. Nobody can sign out of the tenant app yet, stylist or owner; that
+ * is the tenant sign-in work, not this.
  *
  * `/` is deliberately ABSENT. The owner's home leads with the salon's takings
  * and loads four owner-only endpoints, so for a stylist it would be both a
@@ -29,7 +33,7 @@ export type MemberRole = 'owner' | 'manager' | 'staff';
  * this story puts out of scope — `/` redirects a stylist to their appointments,
  * which is what "their day" already means.
  */
-const STAFF_DESTINATIONS: ReadonlySet<string> = new Set(['/appointments', '/more']);
+const STAFF_DESTINATIONS: ReadonlySet<string> = new Set(['/appointments']);
 
 /**
  * `role` is optional and an absent one means OWNER (BR-03).
