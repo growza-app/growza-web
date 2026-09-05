@@ -27,3 +27,22 @@ export function shouldSignInAgain(error: unknown): boolean {
  * see `(auth)/layout.tsx` for why that is load-bearing rather than tidy.
  */
 export const SIGN_IN_PATH = '/login';
+
+/**
+ * Jira GRW-79 · GRW-164 — the API says this account may not operate.
+ *
+ * A 403 the owner is meant to read, not a permission failure: suspended, closed,
+ * or still being set up. Returns the server's own sentence, so the screen and
+ * the API can never word it differently — the copy lives in one place
+ * (`platform/tenant-status.ts`) and travels.
+ *
+ * Distinct from `shouldSignInAgain` on purpose. Signing in again is exactly what
+ * will not help here, and sending them to the login screen to find that out is
+ * the failure this replaces.
+ */
+export function accountStatusRefusal(error: unknown): { reason: string; message: string } | null {
+  if (!(error instanceof ApiError) || error.status !== 403) return null;
+  const reason = error.code;
+  if (typeof reason !== 'string' || !reason.startsWith('account_')) return null;
+  return { reason, message: error.message };
+}

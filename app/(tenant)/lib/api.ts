@@ -474,6 +474,13 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    /**
+     * The API's machine-readable `error` field, when it sent one.
+     *
+     * GRW-164 — a screen that has to branch on WHY it was refused should not be
+     * matching on prose. The message is for the person; this is for the code.
+     */
+    public code?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -482,18 +489,27 @@ export class ApiError extends Error {
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
-  if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
+  if (!res.ok) throw await apiError(res, path);
   return res.json() as Promise<T>;
 }
 
-async function extractErrorMessage(res: Response, path: string): Promise<string> {
+/** The one place an error response becomes an ApiError, so `code` can never be dropped by one call site. */
+async function apiError(res: Response, path: string): Promise<ApiError> {
+  const { message, code } = await extractError(res, path);
+  return new ApiError(res.status, message, code);
+}
+
+async function extractError(res: Response, path: string): Promise<{ message: string; code?: string }> {
   const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
   // `detail` first: the API's capability denials follow 00 §4 and put a
   // machine-readable code in `error` with the sentence in `detail`, so
   // reading `error` alone showed an owner the words "capability_denied".
   // Every other endpoint sends a human message in `error` and no `detail`,
   // so this changes nothing for them.
-  return body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
+  return {
+    message: body?.detail ?? body?.error ?? `${path} failed: ${res.status}`,
+    code: body?.error,
+  };
 }
 
 
@@ -740,9 +756,9 @@ async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?:
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 409) {
-    throw new BookingConflictError(await extractErrorMessage(res, path));
+    throw new BookingConflictError((await extractError(res, path)).message);
   }
-  if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
+  if (!res.ok) throw await apiError(res, path);
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
@@ -827,7 +843,7 @@ async function uploadFile<T>(path: string, field: string, file: File): Promise<T
   form.append(field, file);
   // No Content-Type of our own — the browser must set its own boundary'd one.
   const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form, headers: await authHeaders() });
-  if (!res.ok) throw new ApiError(res.status, await extractErrorMessage(res, path));
+  if (!res.ok) throw await apiError(res, path);
   return res.json() as Promise<T>;
 }
 

@@ -11,7 +11,8 @@ import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
-import { shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
+import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
+import { AccountStatusScreen } from './components/AccountStatusScreen';
 
 export const metadata: Metadata = {
   title: 'Booking Dashboard',
@@ -45,6 +46,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let role: MemberRole | null = null;
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
   let impersonation: { businessName: string; role: string } | null = null;
+  /** GRW-164 — set when the API says this account may not operate. */
+  let accountStatus: { reason: string; message: string } | null = null;
 
   try {
     const me = await api.me();
@@ -65,8 +68,27 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
      * block: anything after it would not run.
      */
     if (shouldSignInAgain(error)) redirect(SIGN_IN_PATH);
+    /**
+     * GRW-164 — a suspended, closed or half-provisioned account.
+     *
+     * NOT a redirect to /login: signing in again is precisely what will not
+     * help, and sending them there to discover that is the failure this
+     * replaces. Rendered instead of the shell, so no navigation and no data
+     * appear behind it.
+     */
+    accountStatus = accountStatusRefusal(error);
     // API down — pages render their own error state, and `billing` stays
     // null so no banner claims anything it cannot know (GRW-122).
+  }
+
+  if (accountStatus) {
+    return (
+      <html lang="en">
+        <body>
+          <AccountStatusScreen message={accountStatus.message} />
+        </body>
+      </html>
+    );
   }
 
   return (

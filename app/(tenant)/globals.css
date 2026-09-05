@@ -10912,3 +10912,59 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   font-weight: 600;
   opacity: 0.9;
 }
+
+/* ---------- Jira GRW-79 · GRW-164 — the account-status screen ----------
+   Shown instead of the dashboard when the API says the account cannot
+   operate. Borrows the sign-in screen's shape deliberately: this is the same
+   kind of moment — you are outside the product, being told one thing. */
+.account-status {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-6);
+  padding-top: max(var(--sp-6), env(safe-area-inset-top));
+  padding-bottom: max(var(--sp-6), env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-deep) 100%);
+}
+
+.account-status-card {
+  margin: auto;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--sp-8);
+  text-align: center;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
+}
+
+.account-status-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.account-status-card h1 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.account-status-card p {
+  margin: 0;
+  font-size: 14.5px;
+  /* Wraps rather than truncates: this is a full sentence and it is the only
+     thing on the screen. */
+  line-height: 1.6;
+  color: var(--muted);
+}

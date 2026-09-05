@@ -1,53 +1,50 @@
 import { describe, expect, it } from 'vitest';
 import { ApiError } from './api';
-import { shouldSignInAgain, SIGN_IN_PATH } from './session-policy';
+import { accountStatusRefusal, shouldSignInAgain } from './session-policy';
 
 /**
- * Jira GRW-66 · GRW-160 — which failures mean "sign in again".
+ * Jira GRW-79 · GRW-164 — telling "sign in again" apart from "you are locked out".
  *
- * The whole story turns on this one distinction (BR-03), and it is a single
- * `if` in a layout's catch block — the kind of line that gets loosened to
- * `catch { redirect() }` by someone in a hurry with nothing failing to stop
- * them. These are what would fail.
+ * Conflating them is the failure this exists to prevent: sending a suspended
+ * owner to the login screen makes them discover, by trying, that signing in is
+ * exactly what will not help.
  */
-describe('AC-03 — an unauthenticated visitor is sent to sign in', () => {
-  it('treats a 401 as a reason to sign in again', () => {
-    expect(shouldSignInAgain(new ApiError(401, 'unauthorized'))).toBe(true);
+describe('accountStatusRefusal', () => {
+  it.each([
+    ['account_suspended', 'This account is suspended. Contact support.'],
+    ['account_not_ready', 'This account is still being set up.'],
+    ['account_closed', 'This account has been closed.'],
+  ])('recognises %s and passes the server‘s own words through', (code, message) => {
+    const refusal = accountStatusRefusal(new ApiError(403, message, code));
+    expect(refusal).toEqual({ reason: code, message });
   });
 
-  it('points at the sign-in screen‘s own route', () => {
-    expect(SIGN_IN_PATH).toBe('/login');
-  });
-});
-
-describe('AC-05 — the API being down is not the session being over', () => {
-  it('does not redirect on a 500', () => {
-    // Sending an owner to a login screen during an outage would make a server
-    // fault look like their password had stopped working, and signing in
-    // would not have worked either.
-    expect(shouldSignInAgain(new ApiError(500, 'boom'))).toBe(false);
+  it('ignores an ordinary permission 403', () => {
+    // A stylist reaching an owner-only route (GRW-156) is refused for a
+    // completely different reason and must not get the account screen.
+    expect(accountStatusRefusal(new ApiError(403, 'forbidden', 'forbidden'))).toBeNull();
   });
 
-  it('does not redirect when the API cannot be reached at all', () => {
-    // A network failure is a TypeError, not an ApiError — no status to read.
-    expect(shouldSignInAgain(new TypeError('fetch failed'))).toBe(false);
+  it('ignores a 403 with no code at all', () => {
+    expect(accountStatusRefusal(new ApiError(403, 'nope'))).toBeNull();
   });
 
-  it('does not redirect on a 403', () => {
-    // 403 is a verified person who is not a member of anything (GRW-155).
-    // Signing in again would produce the same token and the same 403.
-    expect(shouldSignInAgain(new ApiError(403, 'forbidden'))).toBe(false);
+  it.each([401, 404, 429, 500])('ignores a %s', (status) => {
+    expect(accountStatusRefusal(new ApiError(status, 'x', 'account_suspended'))).toBeNull();
   });
 
-  it('does not redirect on a 429 from the login limiter', () => {
-    expect(shouldSignInAgain(new ApiError(429, 'too_many_attempts'))).toBe(false);
-  });
-
-  it('ignores anything that is not an error at all', () => {
-    for (const value of [null, undefined, 'unauthorized', 401, { status: 401 }]) {
-      // Notably `{ status: 401 }`: a duck-typed check would redirect on any
-      // object that happened to carry the number.
-      expect(shouldSignInAgain(value)).toBe(false);
+  it('ignores anything that is not an ApiError', () => {
+    for (const value of [null, undefined, new TypeError('fetch failed'), { status: 403, code: 'account_suspended' }]) {
+      expect(accountStatusRefusal(value)).toBeNull();
     }
+  });
+
+  it('is not the same question as shouldSignInAgain', () => {
+    const suspended = new ApiError(403, 'suspended', 'account_suspended');
+    const unauthenticated = new ApiError(401, 'unauthorized');
+
+    // The two must never both fire, or the layout's branches race.
+    expect(shouldSignInAgain(suspended)).toBe(false);
+    expect(accountStatusRefusal(unauthenticated)).toBeNull();
   });
 });
