@@ -16,6 +16,15 @@ export interface Me {
    */
   billing: { status: string; message: string | null } | null;
   labels: Record<string, string>;
+  /**
+   * Jira GRW-66 · GRW-157 — who is signed in.
+   *
+   * Null when there is no member: the dev fallback with no token, or an API
+   * that could not resolve one. The dashboard treats that as OWNER (BR-03),
+   * because a degraded session must not silently hide the product from the
+   * person who owns it.
+   */
+  member: { role: 'owner' | 'manager' | 'staff'; providerId: string | null } | null;
   capabilities: {
     walkIn: boolean;
     richAnalytics: boolean;

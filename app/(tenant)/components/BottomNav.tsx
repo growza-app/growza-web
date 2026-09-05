@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { copy } from '../lib/copy';
 import { IconAppointments, IconDots, IconGrid, IconOffers, IconUserPlus } from './icons';
 
@@ -13,7 +14,7 @@ import { IconAppointments, IconDots, IconGrid, IconOffers, IconUserPlus } from '
  * Everything rarer (staff, services, free times, settings) lives behind
  * "More", which is the one screen that lists them.
  */
-export function BottomNav({ labels }: { labels: Record<string, string> }) {
+export function BottomNav({ labels, role }: { labels: Record<string, string>; role?: MemberRole | null }) {
   const pathname = usePathname();
 
   const items = [
@@ -28,7 +29,7 @@ export function BottomNav({ labels }: { labels: Record<string, string> }) {
 
   return (
     <nav className="bottom-nav">
-      {items.map((item) => {
+      {visibleItems(items, role).map((item) => {
         const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
         return (
           <a key={item.href} href={item.href} className={active ? 'active' : ''}>

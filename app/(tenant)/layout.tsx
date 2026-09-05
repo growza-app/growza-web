@@ -7,6 +7,7 @@ import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
 import { LiveRefresh } from './components/LiveRefresh';
 import { LabelsProvider } from './components/LabelsProvider';
+import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 
 export const metadata: Metadata = {
@@ -35,6 +36,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let tenantName = 'Booking';
   let timezone = 'Asia/Kolkata';
   let billing: { status: string; message: string | null } | null = null;
+  /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
+  let role: MemberRole | null = null;
 
   try {
     const me = await api.me();
@@ -42,6 +45,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
+    role = (me.member?.role as MemberRole | undefined) ?? null;
   } catch {
     // API down — pages render their own error state, and `billing` stays
     // null so no banner claims anything it cannot know (GRW-122).
@@ -54,11 +58,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <LiveRefresh />
         <LabelsProvider labels={labels}>
           <div className="shell">
-            <Sidebar tenantName={tenantName} labels={labels} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} />
             <div className="content">
               <BillingBanner billing={billing} />
               {children}
-              <MobileChrome labels={labels} timezone={timezone} />
+              <MobileChrome labels={labels} timezone={timezone} role={role} />
             </div>
           </div>
         </LabelsProvider>

@@ -1,5 +1,6 @@
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
+import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { PageHeader } from '../components/PageHeader';
 import { IconAnalytics, IconChat, IconChevronRight, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 
@@ -13,10 +14,17 @@ export const dynamic = 'force-dynamic';
  */
 export default async function MorePage() {
   let labels: Record<string, string> = {};
+  // Jira GRW-66 · GRW-157 — this menu is filtered by the same policy the
+  // sidebar and the tab bar use. Three copies of the list is how a stylist
+  // reaches through a menu what the sidebar was careful to hide.
+  let role: MemberRole | null = null;
   try {
-    labels = (await api.me()).labels;
+    const me = await api.me();
+    labels = me.labels;
+    role = (me.member?.role as MemberRole | undefined) ?? null;
   } catch {
-    // Falls back to the plain-language defaults below.
+    // Falls back to the plain-language defaults below, and to the owner nav —
+    // a degraded API must not hide the product from the person who owns it.
   }
 
   // Offers is a tab of its own, so it is deliberately not repeated here.
@@ -38,7 +46,7 @@ export default async function MorePage() {
       <PageHeader title={copy.nav.more} />
       <div className="page-body">
         <div className="menu-list">
-          {items.map((item) => (
+          {visibleItems(items, role).map((item) => (
             <a className="menu-row" key={item.href} href={item.href}>
               {item.icon}
               {item.label}

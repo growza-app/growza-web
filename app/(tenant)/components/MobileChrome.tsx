@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import type { MemberRole } from '../lib/nav-policy';
 import { BottomNav } from './BottomNav';
 import { tomorrowInTimezone } from '../lib/appointment-display';
 import { IconCalendarPlus, IconClose, IconPlus, IconUserPlus } from './icons';
@@ -25,7 +26,7 @@ const NO_FAB = ['/availability', '/search', '/try-whatsapp', '/offers'];
  */
 const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
 
-export function MobileChrome({ labels, timezone }: { labels: Record<string, string>; timezone: string }) {
+export function MobileChrome({ labels, timezone, role }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const showFab = !NO_FAB.some((p) => pathname.startsWith(p)) && !EDIT_ROUTE_RE.test(pathname);
@@ -72,7 +73,7 @@ export function MobileChrome({ labels, timezone }: { labels: Record<string, stri
         </button>
       )}
 
-      <BottomNav labels={labels} />
+      <BottomNav role={role} labels={labels} />
     </>
   );
 }

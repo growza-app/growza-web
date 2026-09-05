@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { copy } from '../lib/copy';
 import {
   IconAnalytics,
@@ -23,7 +24,7 @@ import {
  * salon, "Doctors" for a clinic. Everything else is plain-language UI copy
  * from lib/copy.ts. See 07-product-surfaces.md §1.1.
  */
-export function Sidebar({ tenantName, labels }: { tenantName: string; labels: Record<string, string> }) {
+export function Sidebar({ tenantName, labels, role }: { tenantName: string; labels: Record<string, string>; role?: MemberRole | null }) {
   const pathname = usePathname();
 
   // Only routes that exist. Calendar is still in the design but has no page
@@ -51,7 +52,10 @@ export function Sidebar({ tenantName, labels }: { tenantName: string; labels: Re
         <div className="brand-name">{tenantName}</div>
       </div>
       <nav className="nav">
-        {items.map((item) => (
+        {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
+            API is what refuses (GRW-156); this is about not wasting their time
+            on eight links that 403. */}
+        {visibleItems(items, role).map((item) => (
           <a key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
             {item.icon}
             {item.label}

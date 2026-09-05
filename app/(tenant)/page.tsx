@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { api, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
 import { formatDateWithWeekday } from './lib/format';
@@ -175,6 +176,19 @@ export default async function DashboardPage() {
     providers: Provider[],
     atRiskCount: number,
     providerDay: ProviderDay | null = null;
+
+  /**
+   * Jira GRW-66 · GRW-157 — a stylist's home is their day.
+   *
+   * Resolved BEFORE the rest, because four of the calls below are owner-only
+   * since GRW-156: a staff member would 403 inside the `Promise.all` and land
+   * in the "API is down" state, which is both wrong and alarming. The owner's
+   * home leads with the salon's takings, so there is nothing here to show them
+   * anyway — and designing a second home screen is a product decision this
+   * story deliberately does not take.
+   */
+  const viewer = await api.me().catch(() => null);
+  if (viewer?.member?.role === 'staff') redirect('/appointments');
 
   try {
     let atRisk;
