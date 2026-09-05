@@ -383,7 +383,10 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
           <span>💡</span>
           <div>
             <strong>Tip</strong>
-            <div>Customers can book this combo directly from your WhatsApp offers menu.</div>
+            {/* GRW-165 — future tense, deliberately. Nothing sends or receives a
+                WhatsApp message yet, and a builder that says otherwise is
+                selling the owner a feature they have not got. */}
+            <div>Customers will be able to book this combo from your WhatsApp offers menu, once WhatsApp goes live for you.</div>
           </div>
         </div>
       </div>
@@ -712,7 +715,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                   savingsPct={savingsPct}
                   visibilitySummary={visibilitySummary()}
                 />
-                <div className="preview-caption">📲 Bookable directly from WhatsApp</div>
+                <div className="preview-caption">📲 Will be bookable from WhatsApp</div>
               </div>
             )}
           </div>

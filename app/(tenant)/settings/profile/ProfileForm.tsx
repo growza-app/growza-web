@@ -216,7 +216,7 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
         </div>
 
         <div className="field-hint" style={{ marginTop: 14 }}>
-          These details are visible to your customers when they book you on WhatsApp.
+          These details are what your customers see when they book with you.
         </div>
 
         {error && <div className="field-error">{error}</div>}

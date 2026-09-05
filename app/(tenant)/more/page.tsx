@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
@@ -19,10 +20,13 @@ export default async function MorePage() {
   // sidebar and the tab bar use. Three copies of the list is how a stylist
   // reaches through a menu what the sidebar was careful to hide.
   let role: MemberRole | null = null;
+  /** Jira GRW-158 · GRW-165 — false until this business's WhatsApp is switched on, and false when the API cannot say. */
+  let whatsappLive = false;
   try {
     const me = await api.me();
     labels = me.labels;
     role = (me.member?.role as MemberRole | undefined) ?? null;
+    whatsappLive = me.whatsapp?.booking ?? false;
   } catch {
     // Falls back to the plain-language defaults below, and to the owner nav —
     // a degraded API must not hide the product from the person who owns it.
@@ -30,7 +34,7 @@ export default async function MorePage() {
 
   // Offers is a tab of its own, so it is deliberately not repeated here.
   // Calendar has no page yet — listing it would be a dead link.
-  const items = [
+  const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
     // The design's mobile tab bar puts Reports in Offers' slot. The tab bar's
@@ -38,7 +42,15 @@ export default async function MorePage() {
     // and the four frequent destinations keep their places (GRW-48 decision 2).
     { href: '/reports', label: copy.reports.navLabel, icon: <IconReports /> },
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
-    { href: '/try-whatsapp', label: copy.nav.tryWhatsApp, icon: <IconChat /> },
+    // GRW-165 — marked a preview while WhatsApp is not live, exactly as the
+    // sidebar marks it. Three navs that disagree about what is real is the
+    // failure this list was consolidated to prevent.
+    {
+      href: '/try-whatsapp',
+      label: whatsappLive ? copy.nav.tryWhatsApp : copy.whatsapp.navLabelDemo,
+      icon: <IconChat />,
+      pill: whatsappLive ? null : copy.whatsapp.previewPill,
+    },
     { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },
   ];
 
@@ -51,6 +63,7 @@ export default async function MorePage() {
             <a className="menu-row" key={item.href} href={item.href}>
               {item.icon}
               {item.label}
+              {item.pill ? <span className="menu-row-pill">{item.pill}</span> : null}
               <span className="chev">
                 <IconChevronRight />
               </span>

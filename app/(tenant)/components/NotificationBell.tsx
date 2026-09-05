@@ -189,7 +189,7 @@ export function NotificationBell() {
               </div>
             </div>
             {visibleEvents.length === 0 ? (
-              <div className="notif-empty">Nothing yet — bookings made over WhatsApp will show up here.</div>
+              <div className="notif-empty">Nothing yet — new bookings will show up here.</div>
             ) : (
               <div className="notif-list">
                 {visibleEvents.map((e) => {

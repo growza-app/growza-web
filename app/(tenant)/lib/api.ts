@@ -71,6 +71,19 @@ export interface Me {
    * GRW-145's "Pay now" reads it.
    */
   payments: { online: boolean };
+  /**
+   * Jira GRW-158 · GRW-165 — whether WhatsApp is live for this business.
+   *
+   * False for every business until its number is approved and the flag is
+   * switched on. The dashboard's job while it is false is to be HONEST: say
+   * "coming soon" where a feature depends on messages, and never render a
+   * control that implies one will be sent.
+   *
+   * Optional on the wire so an older API (or a degraded response) does not
+   * make the whole layout throw; absent reads as off, which is the safe
+   * direction — it says "not yet" about something that already does not work.
+   */
+  whatsapp?: { booking: boolean };
   capabilities: {
     walkIn: boolean;
     richAnalytics: boolean;

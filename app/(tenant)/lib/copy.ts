@@ -17,6 +17,55 @@
  * This file is UI chrome only. Translations later swap this one file.
  */
 export const copy = {
+  /**
+   * Jira GRW-158 · GRW-165 — what the dashboard says while WhatsApp is off.
+   *
+   * Written once, here, because the same fact is stated on four screens and
+   * this repo has already paid for two renderings of one fact (commit 895e9ac,
+   * "Make the download say what the screen says").
+   *
+   * Plain words on purpose: an owner is not told about flags, approvals or
+   * Meta. They are told it is coming, and that what they set up now will work
+   * when it arrives.
+   */
+  whatsapp: {
+    /**
+     * The nav marker beside a WhatsApp destination that is a demo, not the
+     * real thing.
+     *
+     * "Demo", not "Preview": the plainer word of the two.
+     */
+    previewPill: 'Demo',
+    /**
+     * The nav label that goes WITH the pill.
+     *
+     * The sidebar row is 200px, which leaves about 145px for label plus
+     * marker, and "Try WhatsApp" alone is already ~95px — with a pill beside
+     * it the row wrapped to two lines while every other row stayed on one.
+     * "WhatsApp · Demo" is both shorter and clearer than "Try WhatsApp · Demo",
+     * where "Try" and "Demo" say the same thing twice.
+     *
+     * Used by the sidebar AND the More menu, so the two navs cannot end up
+     * calling one destination different things.
+     */
+    navLabelDemo: 'WhatsApp',
+    comingSoonPill: 'Coming soon',
+    /** The Notifications screen. The one place an owner could otherwise set something up and believe it was working. */
+    remindersNotLiveTitle: 'WhatsApp is coming soon',
+    remindersNotLive:
+      'Reminders are not going out yet — WhatsApp is still being set up for you. Choose your times now and they will start sending the day it goes live. Nothing to redo.',
+    /** The Try WhatsApp page, so nobody mistakes the demo for a live channel. */
+    tryIsADemo: 'This is a practice run, just for you. Your customers cannot book on WhatsApp yet.',
+  },
+
+  offers: {
+    /** Jira GRW-158 · GRW-165 — the same page, said honestly in each state. */
+    subtitleLive:
+      "Create offers and combos that customers see on your dashboard and in WhatsApp's Offers menu. Customers can book combos directly from WhatsApp.",
+    subtitleCrmOnly:
+      'Create offers and combos to sell more of what you already do. Add them to a booking at the desk today — customers will be able to book them on WhatsApp too, once WhatsApp goes live for you.',
+  },
+
   nav: {
     dashboard: 'Home',
     calendar: 'Calendar',

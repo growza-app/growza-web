@@ -400,7 +400,7 @@ export function ServicesTable({
       {confirmRetire && (
         <ConfirmDialog
           title={`Retire ${confirmRetire.service.name}?`}
-          body="It stops being bookable on WhatsApp and in the dashboard straight away."
+          body="It stops being bookable straight away."
           detail={
             confirmRetire.bookings > 0
               ? `${confirmRetire.bookings} past booking${confirmRetire.bookings === 1 ? '' : 's'} keep${confirmRetire.bookings === 1 ? 's' : ''} this service and its price — nothing in your history changes. Already-booked future appointments are not cancelled. You can restore it any time.`

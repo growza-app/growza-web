@@ -898,6 +898,22 @@ select:focus-visible {
   font-size: 13.5px;
 }
 
+/**
+ * Jira GRW-158 · GRW-165 — a banner that informs rather than warns.
+ *
+ * `.banner` is amber, and amber is right for "something is wrong". "WhatsApp is
+ * coming soon" is not wrong; it is news. Rendering it in the warning colour
+ * would make a roadmap item look like a fault on the owner's account.
+ *
+ * Inherits everything else from `.banner` — the two must never drift apart on
+ * padding or radius, since they appear in the same slots.
+ */
+.banner-info {
+  background: var(--accent-soft);
+  border-color: #bfe9d0;
+  color: var(--accent-deep);
+}
+
 .banner code {
   background: rgba(0, 0, 0, 0.07);
   padding: 1px 6px;
@@ -2863,6 +2879,39 @@ select:focus-visible {
 .settings-row-disabled .settings-row-icon svg {
   width: 12px;
   height: 12px;
+}
+
+/**
+ * Jira GRW-158 · GRW-165 — the marker beside a nav row that is a preview
+ * rather than a live feature.
+ *
+ * Sits on the dark sidebar, so it cannot reuse `.settings-row-soon`'s
+ * page-background chip; same shape, own colours. `margin-left: auto` pushes it
+ * to the trailing edge whatever the label's length.
+ */
+.nav-pill {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+/* No `margin-left: auto` — `.menu-row .chev` already carries it, so the pill
+   sits beside its own label rather than fighting the chevron for the gap. */
+.menu-row-pill {
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--muted);
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  flex-shrink: 0;
 }
 
 .settings-row-soon {

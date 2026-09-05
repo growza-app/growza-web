@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { copy } from '../lib/copy';
@@ -26,12 +27,23 @@ import {
  * salon, "Doctors" for a clinic. Everything else is plain-language UI copy
  * from lib/copy.ts. See 07-product-surfaces.md §1.1.
  */
-export function Sidebar({ tenantName, labels, role }: { tenantName: string; labels: Record<string, string>; role?: MemberRole | null }) {
+export function Sidebar({
+  tenantName,
+  labels,
+  role,
+  whatsappLive,
+}: {
+  tenantName: string;
+  labels: Record<string, string>;
+  role?: MemberRole | null;
+  /** Jira GRW-158 · GRW-165 — false until this business's WhatsApp number is switched on. */
+  whatsappLive?: boolean;
+}) {
   const pathname = usePathname();
 
   // Only routes that exist. Calendar is still in the design but has no page
   // yet — listing it here would be a link to a 404.
-  const items = [
+  const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
     { href: '/', label: copy.nav.dashboard, icon: <IconDashboard /> },
     { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconAppointments /> },
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
@@ -43,7 +55,16 @@ export function Sidebar({ tenantName, labels, role }: { tenantName: string; labe
     // page out of the owner's reach (GRW-48 decision 2).
     { href: '/reports', label: copy.reports.navLabel, icon: <IconReports /> },
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
-    { href: '/try-whatsapp', label: copy.nav.tryWhatsApp, icon: <IconChat /> },
+    // GRW-165 — kept, never hidden: it is how an owner sees what their
+    // customers will get, and it is the demo a salesperson shows. But while
+    // WhatsApp is not live it is marked a preview, so nobody reads a working
+    // simulator as a working channel.
+    {
+      href: '/try-whatsapp',
+      label: whatsappLive ? copy.nav.tryWhatsApp : copy.whatsapp.navLabelDemo,
+      icon: <IconChat />,
+      pill: whatsappLive ? null : copy.whatsapp.previewPill,
+    },
     { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },
   ];
 
@@ -61,6 +82,7 @@ export function Sidebar({ tenantName, labels, role }: { tenantName: string; labe
           <a key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
             {item.icon}
             {item.label}
+            {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
           </a>
         ))}
       </nav>

@@ -42,6 +42,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let billing: { status: string; message: string | null } | null = null;
   /** GRW-145/163 — whether the billing banner may offer "Pay now". */
   let canPayOnline = false;
+  /**
+   * GRW-165 — whether WhatsApp is live for this business.
+   *
+   * Starts FALSE, and stays false when the API cannot be reached. A screen
+   * that cannot tell must say "coming soon" rather than imply a message will
+   * be sent — the safe direction here is the pessimistic one, because the
+   * optimistic one is a promise nothing keeps.
+   */
+  let whatsappLive = false;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
@@ -56,6 +65,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
     canPayOnline = me.payments?.online ?? false;
+    whatsappLive = me.whatsapp?.booking ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     impersonation = me.impersonation ?? null;
   } catch (error) {
@@ -102,7 +112,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {impersonation ? <ImpersonationBanner businessName={impersonation.businessName} role={impersonation.role} /> : null}
         <LabelsProvider labels={labels}>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} whatsappLive={whatsappLive} />
             <div className="content">
               <BillingBanner billing={billing} canPayOnline={canPayOnline} />
               {children}
