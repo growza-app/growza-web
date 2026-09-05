@@ -47,6 +47,11 @@ export const KNOWN_ACTIONS = [
   'feature_flag.update',
   'feature_flag.override_set',
   'feature_flag.override_remove',
+  // GRW-136 — impersonation is never silent. Both ends are filterable, because
+  // "when did support stop looking at my account" is a question this trail has
+  // to be able to answer on its own.
+  'impersonation.start',
+  'impersonation.end',
 ] as const;
 
 interface AuditLogRow {
