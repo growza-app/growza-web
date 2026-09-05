@@ -9,6 +9,7 @@ import { LiveRefresh } from './components/LiveRefresh';
 import { LabelsProvider } from './components/LabelsProvider';
 import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
+import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
 import { shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
 
@@ -40,6 +41,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let billing: { status: string; message: string | null } | null = null;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
+  /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
+  let impersonation: { businessName: string; role: string } | null = null;
 
   try {
     const me = await api.me();
@@ -48,6 +51,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
     role = (me.member?.role as MemberRole | undefined) ?? null;
+    impersonation = me.impersonation ?? null;
   } catch (error) {
     /**
      * Jira GRW-66 · GRW-160 — a 401 is the one failure that means something
@@ -67,8 +71,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <PwaRegister />
         <LiveRefresh />
+        {/* Above the shell, not inside it: this is the most important thing on
+            the screen and it must not scroll away with the content or sit
+            below the billing banner. */}
+        {impersonation ? <ImpersonationBanner businessName={impersonation.businessName} role={impersonation.role} /> : null}
         <LabelsProvider labels={labels}>
-          <div className="shell">
+          <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
             <Sidebar tenantName={tenantName} labels={labels} role={role} />
             <div className="content">
               <BillingBanner billing={billing} />

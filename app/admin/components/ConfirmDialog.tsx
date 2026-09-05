@@ -21,6 +21,17 @@ export interface ConfirmDialogProps {
   danger?: boolean;
   /** When set, a reason field renders and Confirm is disabled until it is non-blank. */
   reasonRequired?: boolean;
+  /**
+   * How long that reason has to be, trimmed. Defaults to 1 — "non-blank",
+   * which is what every caller before GRW-137 meant.
+   *
+   * Impersonation asks for ten (GRW-136 BR-01), enforced in the database as a
+   * CHECK and by the module. This is the third layer, and it is the one that
+   * matters to the person typing: a server 400 after they have already
+   * committed to the action reads like a bug, where a disabled button with a
+   * sentence under it reads like a rule.
+   */
+  reasonMinLength?: number;
   reasonPlaceholder?: string;
   loading?: boolean;
   /** A failed attempt's message, shown inside the dialog with the typed reason preserved — never surfaced by closing it, which would lose both. */
@@ -47,6 +58,7 @@ export function ConfirmDialog({
   confirmLabel = 'Confirm',
   danger,
   reasonRequired,
+  reasonMinLength = 1,
   reasonPlaceholder = 'Why is this being done?',
   loading,
   error,
@@ -81,7 +93,7 @@ export function ConfirmDialog({
 
   if (!open) return null;
 
-  const reasonMissing = reasonRequired && reason.trim().length === 0;
+  const reasonMissing = reasonRequired && reason.trim().length < reasonMinLength;
 
   return (
     <div
@@ -153,7 +165,11 @@ export function ConfirmDialog({
               autoFocus={!children}
             />
             {triedWithoutReason && reasonMissing ? (
-              <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, color: oklch.danger }}>A reason is required before this can be saved.</div>
+              <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, color: oklch.danger }}>
+                {reason.trim().length === 0
+                  ? 'A reason is required before this can be saved.'
+                  : `Say a little more — at least ${reasonMinLength} characters.`}
+              </div>
             ) : null}
           </div>
         ) : null}

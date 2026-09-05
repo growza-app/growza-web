@@ -77,9 +77,4 @@ export const AUDIT_LOG = [
   { admin: 'Aarav Khanna', action: 'Usage limit changed', entity: 'Subscription', biz: 'BrightSmile Dental', detail: 'booking.monthly_limit 100 → 150', time: '28 Aug, 16:47', hue: 65 },
 ];
 
-export const IMPERSONATION_SESSIONS = [
-  { admin: 'Aarav Khanna', biz: 'CityCare Clinic', user: 'Dr. Meera Raj', reason: 'Payment support', dur: '12 min', when: 'Active now', live: true },
-  { admin: 'Rohit Verma', biz: 'Urban Glow', user: 'Sana Malik', reason: 'Onboarding help', dur: '8 min', when: '2h ago', live: false },
-  { admin: 'Aarav Khanna', biz: 'Glow Salon', user: 'Rahul Sharma', reason: 'Booking issue', dur: '5 min', when: 'Yesterday', live: false },
-];
 

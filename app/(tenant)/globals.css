@@ -10768,3 +10768,80 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   cursor: progress;
   opacity: 0.6;
 }
+
+/* ---------- Jira GRW-90 · GRW-137 — the impersonation banner ----------
+   §7: "an unmissable banner for the entire session, with a working exit".
+   Above the shell, not inside it, so it cannot scroll away with the content
+   or end up below the billing banner.
+
+   A FIXED height, and that is structural rather than cosmetic: `.shell` is
+   `height: 100dvh`, so anything stacked above it has to be subtracted back out
+   or the bottom of the app goes off-screen. One token, used in both places.
+   Fixed also means it cannot wrap on a narrow phone and silently grow past
+   what the calc() subtracts — which is why the text ellipses instead. */
+:root {
+  --impersonation-banner-h: 44px;
+}
+
+.impersonation-banner {
+  height: var(--impersonation-banner-h);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4);
+  /* The dashboard has no red in its palette — every existing state colour is
+     amber or green — which is exactly why this one is introduced here and
+     nowhere else. It should not look like anything else in the product. */
+  background: #7f1d1d;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 550;
+}
+
+.impersonation-banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fca5a5;
+  flex: none;
+}
+
+.impersonation-banner-text {
+  /* Ellipsis rather than wrap: wrapping would make the banner taller than the
+     token the shell's calc() subtracts, and push the bottom of the app off. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.impersonation-banner-exit {
+  margin-left: auto;
+  flex: none;
+  padding: 5px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.impersonation-banner-exit:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.impersonation-banner-exit:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* The shell gives back exactly what the banner took. Without this the app is
+   `100dvh` tall UNDER a 44px banner, and its last 44px — the mobile tab bar,
+   a table's pagination — is below the fold with nothing to scroll it. */
+.shell-impersonating {
+  height: calc(100vh - var(--impersonation-banner-h));
+  height: calc(100dvh - var(--impersonation-banner-h));
+}

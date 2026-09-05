@@ -56,6 +56,13 @@ export interface Me {
    * person who owns it.
    */
   member: { role: 'owner' | 'manager' | 'staff'; providerId: string | null } | null;
+  /**
+   * Jira GRW-90 · GRW-137 — a platform admin is looking at this account.
+   *
+   * Null on every ordinary session, which is what keeps the banner off an
+   * owner's own dashboard entirely.
+   */
+  impersonation: { businessName: string; role: string } | null;
   capabilities: {
     walkIn: boolean;
     richAnalytics: boolean;

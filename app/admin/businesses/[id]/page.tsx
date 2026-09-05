@@ -133,6 +133,14 @@ function BusinessDetailInner() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // GRW-137 — impersonation. Its own dialog rather than a third value in
+  // `pendingAction`: it is not a state transition on the business, its confirm
+  // copy is unlike the other two, and success navigates away instead of
+  // refreshing this page.
+  const [impersonateOpen, setImpersonateOpen] = useState(false);
+  const [impersonateLoading, setImpersonateLoading] = useState(false);
+  const [impersonateError, setImpersonateError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -174,6 +182,7 @@ function BusinessDetailInner() {
   }
 
   const canManage = me?.permissions.includes('admin.business.manage') ?? false;
+  const canImpersonate = me?.permissions.includes('admin.impersonation.start') ?? false;
 
   function submitAction(reason: string) {
     if (!pendingAction) return;
@@ -188,6 +197,27 @@ function BusinessDetailInner() {
         setActionError(err instanceof AdminApiError ? err.message : `Could not ${pendingAction} this business.`);
       })
       .finally(() => setActionLoading(false));
+  }
+
+  function startImpersonation(reason: string) {
+    setImpersonateLoading(true);
+    setImpersonateError(null);
+    adminFetch(`/businesses/${params.id}/impersonate`, { method: 'POST', body: JSON.stringify({ reason }) })
+      .then(() => {
+        /**
+         * A full page load to the salon's dashboard.
+         *
+         * The response set the session cookie (GRW-137), so this navigation
+         * arrives already authenticated as the owner. `assign` and not a
+         * router push: this crosses into the tenant app's own root layout, and
+         * nothing rendered as an admin should survive the trip.
+         */
+        window.location.assign('/');
+      })
+      .catch((err) => {
+        setImpersonateError(err instanceof AdminApiError ? err.message : 'Could not start the session.');
+        setImpersonateLoading(false);
+      });
   }
 
   // AC-02 — an unknown business id never renders a tab shell around empty data.
@@ -226,7 +256,30 @@ function BusinessDetailInner() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <SummaryHeader business={business} canManage={canManage} onRequestAction={setPendingAction} />
+      <SummaryHeader
+        business={business}
+        canManage={canManage}
+        canImpersonate={canImpersonate}
+        onRequestAction={setPendingAction}
+        onRequestImpersonate={() => {
+          setImpersonateError(null);
+          setImpersonateOpen(true);
+        }}
+      />
+
+      <ConfirmDialog
+        open={impersonateOpen}
+        title={`View ${business.name} as its owner?`}
+        description={`You will see the dashboard exactly as ${business.ownerEmail ?? 'the owner'} does, and you will not be able to change anything. The session is logged with your name and this reason, and ends after 30 minutes or when you exit.`}
+        confirmLabel={impersonateLoading ? 'Starting…' : 'Start session'}
+        reasonRequired
+        reasonMinLength={10}
+        reasonPlaceholder="What are you looking into?"
+        loading={impersonateLoading}
+        error={impersonateError}
+        onConfirm={startImpersonation}
+        onCancel={() => setImpersonateOpen(false)}
+      />
 
       {business.status === 'suspended' ? <SuspendedBanner reason={business.suspensionReason} /> : null}
 
@@ -318,11 +371,15 @@ function BusinessDetailInner() {
 function SummaryHeader({
   business,
   canManage,
+  canImpersonate,
   onRequestAction,
+  onRequestImpersonate,
 }: {
   business: BusinessDetail;
   canManage: boolean;
+  canImpersonate: boolean;
   onRequestAction: (action: 'suspend' | 'reactivate') => void;
+  onRequestImpersonate: () => void;
 }) {
   const tc = typeColor(business.vertical);
   // BR-03 — only active<->suspended is this story's transition; a business
@@ -364,6 +421,13 @@ function SummaryHeader({
           ) : null}
           {canReactivate ? (
             <PrimaryButton onClick={() => onRequestAction('reactivate')}>Reactivate</PrimaryButton>
+          ) : null}
+          {/* Jira GRW-90 · GRW-137 — AC-04/BR-05: offered only to an admin who
+              holds the permission. The endpoint refuses independently
+              (GRW-136 AC-02); this is about not offering what will not work.
+              Absent with no owner too — there would be nobody to be. */}
+          {canImpersonate && business.ownerEmail ? (
+            <SecondaryButton onClick={onRequestImpersonate}>Impersonate owner</SecondaryButton>
           ) : null}
         </div>
       </div>
