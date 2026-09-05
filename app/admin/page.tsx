@@ -180,6 +180,26 @@ function KpiCard({ icon, label, value, href }: { icon: 'businesses' | 'trend'; l
 }
 
 /** BR-01/BR-02 — unavailable and zero must look different; this is the one place that distinction is drawn. */
+/**
+ * Jira GRW-159 · GRW-167 — what each attention row means, in its own words.
+ *
+ * Keyed by the row's own key rather than written once for all of them: the
+ * rows are not the same kind of problem. A failed payment is a customer who
+ * tried; an uninvoiced period is a customer nobody asked. Telling an admin the
+ * second one is "currently failing" sends them to the payments screen, where
+ * there is nothing to find.
+ */
+const ATTENTION_SUBTITLES: Record<string, { clear: string; action: string }> = {
+  payments_failed: {
+    clear: 'Nothing needs attention.',
+    action: 'Currently failing — open to reconcile.',
+  },
+  uninvoiced_periods: {
+    clear: 'Every live subscription has been invoiced for its current period.',
+    action: 'These salons are not being billed — check a tax rule covers their period.',
+  },
+};
+
 function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean }) {
   const body = (
     <div
@@ -214,9 +234,15 @@ function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean 
               // slot. Say what it means, and — for the zero case — say it is
               // a real zero rather than a row that has nothing behind it,
               // which is the distinction BR-01 turns on.
-              row.count === 0
-              ? 'Nothing needs attention.'
-              : 'Currently failing — open to reconcile.'
+              //
+              // GRW-167 — per row, not one sentence for all of them. "Currently
+              // failing" is true of a declined payment and wrong about an
+              // invoice that was never raised: nothing failed there, nobody was
+              // asked. An admin who reads the wrong noun goes to the wrong
+              // screen, and this tile exists because that salon is invisible
+              // everywhere else.
+              ATTENTION_SUBTITLES[row.key]?.[row.count === 0 ? 'clear' : 'action'] ??
+              (row.count === 0 ? 'Nothing needs attention.' : 'Currently failing — open to reconcile.')
             : `Not yet available — lands with Jira ${row.epic}.`}
         </div>
       </div>

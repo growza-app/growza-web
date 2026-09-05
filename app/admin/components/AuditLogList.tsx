@@ -52,6 +52,8 @@ export const KNOWN_ACTIONS = [
   // to be able to answer on its own.
   'impersonation.start',
   'impersonation.end',
+  // GRW-167 — the worker's own escalation, distinct from an admin's decision.
+  'subscription.dunning_escalate',
 ] as const;
 
 interface AuditLogRow {
