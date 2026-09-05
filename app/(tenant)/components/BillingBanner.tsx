@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { PayNowButton } from './PayNowButton';
 
 /**
  * GRW-122 — the owner's own billing warning, shown while a payment is in
@@ -15,7 +16,20 @@ import type { ReactNode } from 'react';
  * dashboard that cannot tell should claim nothing, rather than reassure
  * falsely or warn falsely.
  */
-export function BillingBanner({ billing }: { billing: { status: string; message: string | null } | null }): ReactNode {
+export function BillingBanner({
+  billing,
+  canPayOnline,
+}: {
+  billing: { status: string; message: string | null } | null;
+  /**
+   * GRW-145/163 — whether to offer "Pay now" at all.
+   *
+   * False for a salon on the offline path, which is every salon until somebody
+   * switches `payments.online` on for them. A button that 404s is worse than no
+   * button: it tells an owner in trouble that the fix is broken.
+   */
+  canPayOnline?: boolean;
+}): ReactNode {
   if (!billing?.message) return null;
 
   // Restriction has already happened for these; the rest are warnings about
@@ -29,6 +43,9 @@ export function BillingBanner({ billing }: { billing: { status: string; message:
       style={{
         display: 'flex',
         alignItems: 'flex-start',
+        // Wraps at 320px rather than squeezing the button off the edge — the
+        // banner is a full sentence at that width and the action must survive it.
+        flexWrap: 'wrap',
         gap: 10,
         margin: '0 0 14px',
         padding: '12px 14px',
@@ -46,7 +63,11 @@ export function BillingBanner({ billing }: { billing: { status: string; message:
       <span aria-hidden style={{ flex: 'none', fontSize: 15, lineHeight: 1.4 }}>
         {restricted ? '⚠' : 'ⓘ'}
       </span>
-      <span style={{ minWidth: 0 }}>{billing.message}</span>
+      <span style={{ minWidth: 0, flex: 1 }}>{billing.message}</span>
+      {/* GRW-145 — the one thing an owner reading this warning can actually do
+          about it. Absent when online payment is off for them, in which case
+          the message itself already tells them how to pay. */}
+      {canPayOnline ? <PayNowButton restricted={restricted} /> : null}
     </div>
   );
 }

@@ -39,6 +39,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let tenantName = 'Booking';
   let timezone = 'Asia/Kolkata';
   let billing: { status: string; message: string | null } | null = null;
+  /** GRW-145/163 — whether the billing banner may offer "Pay now". */
+  let canPayOnline = false;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
@@ -50,6 +52,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
+    canPayOnline = me.payments?.online ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     impersonation = me.impersonation ?? null;
   } catch (error) {
@@ -79,7 +82,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
             <Sidebar tenantName={tenantName} labels={labels} role={role} />
             <div className="content">
-              <BillingBanner billing={billing} />
+              <BillingBanner billing={billing} canPayOnline={canPayOnline} />
               {children}
               <MobileChrome labels={labels} timezone={timezone} role={role} />
             </div>

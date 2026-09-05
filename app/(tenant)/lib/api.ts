@@ -831,8 +831,23 @@ async function uploadFile<T>(path: string, field: string, file: File): Promise<T
   return res.json() as Promise<T>;
 }
 
+export interface PaymentLink {
+  url: string;
+  expiresAt: string;
+  amountMinor: number;
+  currency: string;
+  invoiceId: string;
+}
+
 export const api = {
   me: () => get<Me>('/api/v1/me'),
+  /**
+   * GRW-145 — ask for a hosted page to settle what is owed.
+   *
+   * Takes nothing: the bill is resolved from the session, so there is no field
+   * here that could name somebody else's invoice.
+   */
+  paymentLink: () => post<PaymentLink>('/api/v1/billing/payment-link', {}),
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
   /** `date` alone = one day; `date` + `to` = an inclusive day range (the Bookings From/To filter). */

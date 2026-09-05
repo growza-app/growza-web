@@ -10845,3 +10845,70 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   height: calc(100vh - var(--impersonation-banner-h));
   height: calc(100dvh - var(--impersonation-banner-h));
 }
+
+/* ---------- GRW-145 — "Pay now" in the billing banner ----------
+   The banner inherits its colour from the state it is reporting (amber for a
+   warning, red once access is restricted), so the button borrows it rather than
+   introducing a third: `currentColor` means it always belongs to the message
+   it sits beside, in both states, with no second palette to keep in step. */
+.billing-banner-action {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.billing-pay-now {
+  flex: none;
+  padding: 6px 16px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  /* Tall enough to be a comfortable tap target on a phone without making the
+     banner taller than the sentence needs. */
+  min-height: 32px;
+}
+
+.billing-pay-now:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Once access is restricted this is the only action that lifts it, so it stops
+   being an outline and becomes the obvious thing on the banner.
+
+   Explicit colours, NOT `currentColor`. The first version set
+   `background: currentColor` and then overrode `color` to near-white on the
+   same element — so the background resolved to the new colour too and the
+   label was invisible, in the one state where pressing it is the only way out.
+   Caught by reading the computed styles rather than the screenshot, where a
+   blank button looks like a rendering glitch.
+
+   The fill is the restricted banner's own text colour, so it still belongs to
+   the message it sits beside. */
+.billing-pay-now-urgent {
+  background: oklch(0.42 0.15 25);
+  border-color: transparent;
+  color: oklch(0.97 0.02 25);
+}
+
+.billing-pay-now-urgent:hover {
+  background: oklch(0.36 0.15 25);
+}
+
+.billing-pay-now:disabled {
+  cursor: progress;
+  opacity: 0.65;
+}
+
+.billing-banner-error {
+  flex-basis: 100%;
+  font-size: 12.5px;
+  font-weight: 600;
+  opacity: 0.9;
+}
