@@ -63,6 +63,14 @@ export interface Me {
    * owner's own dashboard entirely.
    */
   impersonation: { businessName: string; role: string } | null;
+  /**
+   * Jira GRW-87 · GRW-163 — whether this business can be asked to pay online.
+   *
+   * Separate from `capabilities` because it is a release decision, not a
+   * commercial one: the first salons pay offline and this stays false for them.
+   * GRW-145's "Pay now" reads it.
+   */
+  payments: { online: boolean };
   capabilities: {
     walkIn: boolean;
     richAnalytics: boolean;
