@@ -481,6 +481,8 @@ export class ApiError extends Error {
      * matching on prose. The message is for the person; this is for the code.
      */
     public code?: string,
+    /** GRW-164 — support contacts, when the API sent them. Rendered as tappable links. */
+    public support?: { email?: string; phone?: string },
   ) {
     super(message);
     this.name = 'ApiError';
@@ -495,12 +497,17 @@ async function get<T>(path: string): Promise<T> {
 
 /** The one place an error response becomes an ApiError, so `code` can never be dropped by one call site. */
 async function apiError(res: Response, path: string): Promise<ApiError> {
-  const { message, code } = await extractError(res, path);
-  return new ApiError(res.status, message, code);
+  const { message, code, support } = await extractError(res, path);
+  return new ApiError(res.status, message, code, support);
 }
 
-async function extractError(res: Response, path: string): Promise<{ message: string; code?: string }> {
-  const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
+async function extractError(
+  res: Response,
+  path: string,
+): Promise<{ message: string; code?: string; support?: { email?: string; phone?: string } }> {
+  const body = (await res.json().catch(() => null)) as
+    | { error?: string; detail?: string; support?: { email?: string; phone?: string } }
+    | null;
   // `detail` first: the API's capability denials follow 00 §4 and put a
   // machine-readable code in `error` with the sentence in `detail`, so
   // reading `error` alone showed an owner the words "capability_denied".
@@ -509,6 +516,7 @@ async function extractError(res: Response, path: string): Promise<{ message: str
   return {
     message: body?.detail ?? body?.error ?? `${path} failed: ${res.status}`,
     code: body?.error,
+    ...(body?.support ? { support: body.support } : {}),
   };
 }
 

@@ -10968,3 +10968,30 @@ tr.cust-row-click:hover { background: #f7f9f7; }
   line-height: 1.6;
   color: var(--muted);
 }
+
+/* The tappable contacts under the account-status message (GRW-164). Stacked
+   rather than side by side: at 320px two of them side by side wrap mid-number,
+   and a phone number broken across lines is worse than one on its own row. */
+.account-status-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+}
+
+.account-status-contact {
+  display: block;
+  padding: 10px var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--accent-deep);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+  /* A long email must not push the card wider than the viewport. */
+  overflow-wrap: anywhere;
+}
+
+.account-status-contact:hover {
+  background: var(--accent-soft);
+}

@@ -47,7 +47,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
   let impersonation: { businessName: string; role: string } | null = null;
   /** GRW-164 — set when the API says this account may not operate. */
-  let accountStatus: { reason: string; message: string } | null = null;
+  let accountStatus: { reason: string; message: string; support?: { email?: string; phone?: string } } | null = null;
 
   try {
     const me = await api.me();
@@ -85,7 +85,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     return (
       <html lang="en">
         <body>
-          <AccountStatusScreen message={accountStatus.message} />
+          <AccountStatusScreen message={accountStatus.message} support={accountStatus.support} />
         </body>
       </html>
     );

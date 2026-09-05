@@ -40,9 +40,11 @@ export const SIGN_IN_PATH = '/login';
  * will not help here, and sending them to the login screen to find that out is
  * the failure this replaces.
  */
-export function accountStatusRefusal(error: unknown): { reason: string; message: string } | null {
+export function accountStatusRefusal(
+  error: unknown,
+): { reason: string; message: string; support?: { email?: string; phone?: string } } | null {
   if (!(error instanceof ApiError) || error.status !== 403) return null;
   const reason = error.code;
   if (typeof reason !== 'string' || !reason.startsWith('account_')) return null;
-  return { reason, message: error.message };
+  return { reason, message: error.message, ...(error.support ? { support: error.support } : {}) };
 }
