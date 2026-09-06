@@ -54,6 +54,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // endpoints all refuse independently, so an over-generous sidebar is a
   // wrong-looking link, while an empty one is an admin who cannot work at all
   // and has no idea why.
+  // Three states, not two. `permissions === null` means /me has not answered
+  // YET — it does not mean "this admin may see nothing", and collapsing the
+  // two is what made the sidebar render zero links for the ~45ms between
+  // domInteractive and /me resolving. The page looked finished, the nav
+  // looked like a nav, and clicking where "Businesses" should be did nothing
+  // because there was no link there to click. Measured on a warm local dev
+  // server; the window stretches with a cold route compile or a slow /me,
+  // which is when a human actually hits it.
+  const navLoading = permissions === null && !meError;
   const visibleNavGroups = (meError ? NAV_GROUPS : NAV_GROUPS.map((grp) => ({
     ...grp,
     items: grp.items.filter((item) => permissions?.includes(item.permission) ?? false),
@@ -154,7 +163,62 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 16, overflowY: 'auto', flex: 1, paddingRight: 2 }}>
+        <nav
+          aria-busy={navLoading}
+          style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 16, overflowY: 'auto', flex: 1, paddingRight: 2 }}
+        >
+          {/*
+            While /me is in flight, show the nav's SHAPE rather than nothing:
+            group headings and inert placeholder rows, sized like the real
+            ones so the sidebar does not jump when they resolve. Deliberately
+            not clickable and aria-hidden — an admin cannot navigate yet, and
+            a placeholder that looked like a link would recreate the original
+            bug with better styling. Which items they may actually see is
+            still decided by /me; this only stops the gap reading as an empty,
+            finished sidebar.
+          */}
+          {navLoading &&
+            NAV_GROUPS.map((grp) => (
+              <div key={grp.group} aria-hidden>
+                <div
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    letterSpacing: '0.09em',
+                    textTransform: 'uppercase',
+                    color: 'oklch(0.62 0.04 150)',
+                    padding: '14px 13px 6px',
+                  }}
+                >
+                  {grp.group}
+                </div>
+                {grp.items.map((item) => (
+                  <div
+                    key={item.href}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 13px',
+                      borderRadius: 11,
+                      fontSize: 14,
+                    }}
+                  >
+                    <span style={{ display: 'flex', opacity: 0.25 }}>
+                      <Icon name={item.icon} />
+                    </span>
+                    <span
+                      style={{
+                        height: 9,
+                        width: `${Math.min(148, 56 + item.label.length * 6)}px`,
+                        borderRadius: 5,
+                        background: 'oklch(1 0 0 / 0.13)',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
           {visibleNavGroups.map((grp) => (
             <div key={grp.group}>
               <div
