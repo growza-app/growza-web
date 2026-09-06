@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { canSee, canSeeRevenue, visibleItems } from './nav-policy';
+// GRW-171 — the API's allowlist as a VALUE. Previously regexed out of the
+// source file, which broke the moment that file moved into src/api/security/.
+import { STAFF_ALLOWED } from '../../../../src/api/security/tenant-policy';
 
 /**
  * Jira GRW-66 · GRW-157 — the dashboard offers a stylist what they can use.
@@ -11,8 +11,6 @@ import { canSee, canSeeRevenue, visibleItems } from './nav-policy';
  * most are the two at the bottom: that an unknown role renders as OWNER, and
  * that this list agrees with the API's.
  */
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-
 const NAV = [
   { href: '/' },
   { href: '/appointments' },
@@ -85,8 +83,9 @@ describe('AC-05 / BR-02 — the nav agrees with the API', () => {
      * left to somebody remembering: a nav entry the API refuses is a link that
      * 403s, which is the exact thing this story exists to remove.
      */
-    const apiPolicy = readFileSync(path.join(repoRoot, 'src/api/tenant-policy.ts'), 'utf-8');
-    const staffAllowed = [...apiPolicy.matchAll(/'GET (\/api\/v1\/[^']*)'/g)].map((m) => m[1]!);
+    const staffAllowed = [...STAFF_ALLOWED]
+      .filter((entry) => entry.startsWith('GET '))
+      .map((entry) => entry.slice('GET '.length));
     expect(staffAllowed.length, 'the API allowlist was not parsed').toBeGreaterThan(3);
 
     // `/more` is a client-side menu with no endpoint of its own; every other
@@ -101,8 +100,9 @@ describe('AC-05 / BR-02 — the nav agrees with the API', () => {
     // The reverse direction is a smell rather than a bug: a route staff may
     // call with no way to reach it is dead permission. Asserted so that adding
     // one is a decision.
-    const apiPolicy = readFileSync(path.join(repoRoot, 'src/api/tenant-policy.ts'), 'utf-8');
-    const staffAllowed = [...apiPolicy.matchAll(/'GET (\/api\/v1\/[^']*)'/g)].map((m) => m[1]!);
+    const staffAllowed = [...STAFF_ALLOWED]
+      .filter((entry) => entry.startsWith('GET '))
+      .map((entry) => entry.slice('GET '.length));
     // These are data the scoped pages need, not destinations of their own.
     const supporting = ['/api/v1/me', '/api/v1/services', '/api/v1/services/all', '/api/v1/service-categories', '/api/v1/offers', '/api/v1/offers/all', '/api/v1/offers/:id', '/api/v1/providers', '/api/v1/provider-day'];
     const unexplained = staffAllowed.filter((r) => !supporting.includes(r) && !visibleItems(NAV, 'staff').some((i) => `/api/v1${i.href}` === r));
