@@ -130,7 +130,7 @@ function AdminBusinessesInner() {
       });
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom]);
 
   const hasActiveFilters = vertical !== 'All' || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;

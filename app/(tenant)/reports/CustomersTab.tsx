@@ -4,13 +4,9 @@ import { copy } from '../lib/copy';
 import type { ReportCustomers } from '../lib/api';
 import {
   IconAlert,
-  IconArrowRight,
   IconClock,
   IconCoins,
-  IconPercent,
   IconRepeat,
-  IconStaff,
-  IconUserPlus,
 } from '../components/icons';
 import { BarList, ReportTable, type Cell } from './charts';
 import { InfoTip } from '../components/InfoTip';
@@ -23,13 +19,6 @@ const SEGMENT_TONE: Record<string, string> = {
   inactive: 'var(--rp-purple)',
 };
 
-const CARD_TONE: Record<string, string> = {
-  quiet30: 'var(--rp-red)',
-  overdue: 'var(--rp-amber)',
-  loyal: 'var(--rp-brand)',
-  highValue: 'var(--rp-teal)',
-  atRisk: 'var(--rp-purple)',
-};
 
 const CARD_ICON: Record<string, React.ReactNode> = {
   quiet30: <IconClock />,

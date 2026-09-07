@@ -174,7 +174,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
       });
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [filters, paging]);
 
   function updateFilter<K extends keyof Filters>(key: K, value: Filters[K]) {

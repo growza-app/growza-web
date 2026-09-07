@@ -9,7 +9,7 @@ function HeaderCard({ settings }: { settings: SettingsSummary }) {
   return (
     <a className="settings-header-card" href="/settings/profile">
       {settings.tenant.logoUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
+         
         <img
           src={settings.tenant.logoUrl}
           alt=""

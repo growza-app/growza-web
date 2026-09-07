@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { api, formatMoney, type SeedCatalog, type SeedCatalogService, type ServiceAdmin } from '../lib/api';
+import { api, formatMoney, type SeedCatalog, type ServiceAdmin } from '../lib/api';
 import { copy } from '../lib/copy';
 import { byNameIndex, type Draft } from './import-drafts';
 import { ImportReview } from './ImportReview';

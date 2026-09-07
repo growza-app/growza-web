@@ -125,7 +125,7 @@ export default function AdminSubscriptionsPage() {
       });
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [trimmedSearch, status, discountedOnly, paging, searchTooShort, reloadToken]);
 
   const hasActiveFilters = status !== 'All' || discountedOnly || trimmedSearch.length >= 2;

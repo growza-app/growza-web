@@ -218,6 +218,11 @@ export function csvFilename(tenantName: string, tabLabel: string, rangeLabel: st
 export function downloadCsv(filename: string, body: string): void {
   // The BOM is what makes Excel open a UTF-8 CSV as UTF-8; without it a
   // customer named "Zoë" arrives mangled.
+  // The \ufeff below is a deliberate UTF-8 BOM. Without it Excel opens a UTF-8
+  // CSV as latin-1 and a salon's own name comes back mangled. It is not stray
+  // whitespace; it is load-bearing, so the rule is silenced rather than the
+  // character removed.
+  // eslint-disable-next-line no-irregular-whitespace
   const blob = new Blob([`﻿${body}`], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

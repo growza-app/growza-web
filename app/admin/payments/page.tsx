@@ -127,7 +127,7 @@ function AdminPaymentsInner() {
       });
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [trimmedSearch, status, unreconciledOnly, range.from, range.to, range.invalid, paging, searchTooShort]);
 
   const hasActiveFilters = status !== 'All' || unreconciledOnly || trimmedSearch.length >= 2 || Boolean(range.from || range.to);

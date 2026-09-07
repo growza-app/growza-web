@@ -306,7 +306,7 @@ export function StaffDetailPanel({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [providerId]);
 
   const aboutDirty = creating

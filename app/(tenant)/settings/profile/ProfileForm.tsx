@@ -101,7 +101,7 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
               }}
             >
               {settings.tenant.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                 
                 <img src={settings.tenant.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 settings.tenant.name.charAt(0).toUpperCase()

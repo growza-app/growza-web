@@ -105,7 +105,7 @@ export default function AdminInvoicesPage() {
       });
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [trimmedSearch, paymentStatus, range.from, range.to, range.invalid, paging, searchTooShort]);
 
   const hasActiveFilters = paymentStatus !== 'All' || trimmedSearch.length >= 2 || Boolean(range.from || range.to);

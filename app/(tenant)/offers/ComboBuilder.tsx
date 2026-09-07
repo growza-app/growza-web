@@ -83,7 +83,7 @@ function PreviewCard({
                 </span>
               ),
               <span key={s.id} className="preview-photo-item">
-                {/* eslint-disable-next-line @next/next/no-img-element -- local service photos (uploads or Pexels placeholders), no CDN/optimization pipeline needed */}
+                { }
                 <img className="preview-photo-avatar" src={servicePhotoUrl(s)} alt="" width={44} height={44} />
                 <span className="preview-photo-name">{s.name}</span>
               </span>,
@@ -473,7 +473,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                     ) : (
                       filteredServices.slice(0, 20).map((s) => (
                         <div key={s.id} className="picker-row" onClick={() => addService(s.id)}>
-                          {/* eslint-disable-next-line @next/next/no-img-element -- local service photos (uploads or placeholders) */}
+                          { }
                           <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
                           <div style={{ flex: 1 }}>
                             <div className="picker-row-name">{s.name}</div>
@@ -504,7 +504,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                             ▼
                           </button>
                         </div>
-                        {/* eslint-disable-next-line @next/next/no-img-element -- local service photos (uploads or placeholders) */}
+                        { }
                         <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
                         <div className="picked-row-main">
                           <div className="picker-row-name">{s.name}</div>

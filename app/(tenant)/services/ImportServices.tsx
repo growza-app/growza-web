@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { api, type ServiceAdmin } from '../lib/api';
-import { byNameIndex, type Draft } from './import-drafts';
+import { type Draft } from './import-drafts';
 import { ImportReview } from './ImportReview';
 
 type Field = 'name' | 'categoryName' | 'durationMin' | 'bufferAfterMin' | 'priceMinor';
