@@ -6,7 +6,7 @@ import { oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
 
 /**
- * GRW-133 — adding a platform administrator. GRW-164 — by inviting them.
+ * GRW-133 — adding a platform administrator. GRW-165 — with a password.
  *
  * This form used to ask for the **auth subject**: Growza records who may
  * administer and the identity provider owns the credential (ADR-14), so the
@@ -15,9 +15,10 @@ import { PrimaryButton, SecondaryButton, TextInput } from '../components/primiti
  * created the provider user, so there was no subject to paste, and a role
  * created here could be assigned to nobody who could actually log in.
  *
- * The subject is now produced by ACCEPTING an invitation, which is the
- * product's job rather than a human's. What is asked for instead is the phone
- * number they will sign in with.
+ * Growza now creates the provider user, so the subject comes back FROM the
+ * provider. What a colleague supplies instead is a starting password they can
+ * say out loud — and it is one-time: the new administrator must replace it the
+ * first time they sign in, so the person who set it cannot go on using it.
  */
 export interface RoleOption {
   id: string;
@@ -41,9 +42,7 @@ export function AddAdminModal({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  /** The link, once. There is no route that returns it again — only its hash is stored. */
-  const [link, setLink] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('');
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
@@ -61,11 +60,7 @@ export function AddAdminModal({
     setName('');
     setEmail('');
     setPhone('');
-    // The link is cleared with everything else: it is shown once, and a stale
-    // one still on screen when the modal reopens would be a link to somebody
-    // else's invitation.
-    setLink(null);
-    setCopied(false);
+    setPassword('');
     // Never defaults to the built-in role: giving somebody full administration
     // should be a choice, not what happens when nobody chose.
     setRoleId('');
@@ -82,6 +77,8 @@ export function AddAdminModal({
         ? 'Enter their email.'
         : phone.trim() === ''
           ? 'Enter the mobile number they will sign in with.'
+          : password.length < 8
+            ? 'Choose a starting password of at least 8 characters.'
           : roleId === ''
             ? 'Choose a role.'
             : reason.trim() === ''
@@ -93,22 +90,21 @@ export function AddAdminModal({
     setError(null);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    adminFetch<{ token: string }>('/invites', {
+    adminFetch<unknown>('/users', {
       method: 'POST',
       signal: controller.signal,
       body: JSON.stringify({
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),
+        password,
         roleId,
         reason: reason.trim(),
       }),
     })
-      .then((created) => {
-        // Shown, not sent — there is no outbound path yet (GRW-165), and the
-        // modal STAYS OPEN because this is the only time the link exists.
-        setLink(`${window.location.origin}/admin/join/${created.token}`);
+      .then(() => {
         onAdded();
+        onClose();
       })
       .catch((err) =>
         setError(
@@ -116,7 +112,7 @@ export function AddAdminModal({
             ? err.message
             : controller.signal.aborted
               ? 'That took too long to answer. Check the list before trying again.'
-              : 'Could not create this invitation.',
+              : 'Could not add this administrator.',
         ),
       )
       .finally(() => {
@@ -160,7 +156,7 @@ export function AddAdminModal({
       >
         <div style={{ padding: '22px 24px 0' }}>
           <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
-            Invite an administrator
+            Add an administrator
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>They can administer Growza itself — never a single business.</p>
         </div>
@@ -177,8 +173,19 @@ export function AddAdminModal({
           <div>
             {label('Mobile number')}
             <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" disabled={saving} />
+          </div>
+          <div>
+            {label('Starting password')}
+            <TextInput
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={saving}
+            />
             <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, marginTop: 5 }}>
-              They sign in with this number and a password they choose themselves.
+              Tell them this password. They must replace it the first time they sign in, so it stops working for you
+              straight away.
             </div>
           </div>
           <div>
@@ -204,54 +211,15 @@ export function AddAdminModal({
           </div>
 
           {error ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
-          {!link && blocker ? <div style={{ fontSize: 12.5, color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
-
-          {/*
-            The link, and the one thing about it that cannot be undone by
-            coming back to this screen: only its hash is stored, so this is the
-            only time it exists. Said plainly, and the modal does not close
-            itself — an invitation that vanished on save would have to be
-            reissued.
-          */}
-          {link ? (
-            <div
-              style={{
-                background: oklch.surfaceSubtle,
-                border: `1px solid ${oklch.borderStrong}`,
-                borderRadius: 12,
-                padding: 14,
-                display: 'grid',
-                gap: 10,
-              }}
-            >
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>Invitation ready</div>
-              <div style={{ fontSize: 12.5, color: oklch.textMuted, fontWeight: 600, lineHeight: 1.45 }}>
-                Send this link to {name.trim() || 'them'}. It works once, expires in 48 hours, and is shown only now — we do
-                not keep a copy.
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <TextInput value={link} readOnly onFocus={(e) => e.currentTarget.select()} />
-                <SecondaryButton
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(link);
-                    setCopied(true);
-                  }}
-                >
-                  {copied ? 'Copied' : 'Copy link'}
-                </SecondaryButton>
-              </div>
-            </div>
-          ) : null}
+          {blocker ? <div style={{ fontSize: 12.5, color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
 
           <div style={{ display: 'flex', gap: 9, justifyContent: 'flex-end' }}>
             <SecondaryButton onClick={onClose} disabled={saving}>
-              {link ? 'Done' : 'Close'}
+              Close
             </SecondaryButton>
-            {link ? null : (
-              <PrimaryButton onClick={save} disabled={blocker !== null || saving}>
-                {saving ? 'Creating…' : 'Create invite'}
-              </PrimaryButton>
-            )}
+            <PrimaryButton onClick={save} disabled={blocker !== null || saving}>
+              {saving ? 'Adding…' : 'Add administrator'}
+            </PrimaryButton>
           </div>
         </div>
       </div>

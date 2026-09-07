@@ -22,6 +22,17 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * GRW-165 — the second step, on this same screen and deliberately not a
+   * route of its own.
+   *
+   * An administrator is created by a colleague with a one-time password. When
+   * they sign in with it the API answers `password_change_required`, and the
+   * form becomes "choose your own" rather than sending them somewhere else:
+   * /admin/login is the only address any administrator ever needs.
+   */
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,12 +40,32 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone.trim(), password }),
-      });
+      const res = await fetch(
+        mustChangePassword ? '/api/admin/v1/auth/first-password' : '/api/admin/v1/auth/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            mustChangePassword
+              ? { phone: phone.trim(), temporaryPassword: password, newPassword }
+              : { phone: phone.trim(), password },
+          ),
+        },
+      );
       const body = (await res.json().catch(() => null)) as { token?: string; expiresAt?: string; detail?: string; error?: string } | null;
+
+      /*
+       * Not a failure: the password was RIGHT and is a one-time one. Swap the
+       * form rather than showing an error, and keep `password` — it is the
+       * temporary credential the next request has to send.
+       */
+      if (res.status === 409 && body?.error === 'password_change_required') {
+        setMustChangePassword(true);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
       if (!res.ok || !body?.token || !body.expiresAt) {
         throw new AdminApiError(res.status, body?.detail ?? body?.error ?? 'Sign-in failed.');
       }
@@ -89,7 +120,9 @@ export default function AdminLoginPage() {
           </div>
           <div>
             <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.01em', color: oklch.textStrong }}>Growza Admin</div>
-            <div style={{ fontSize: 12.5, color: oklch.textMuted }}>Platform team sign-in</div>
+            <div style={{ fontSize: 12.5, color: oklch.textMuted }}>
+              {mustChangePassword ? 'Choose your own password to finish' : 'Platform team sign-in'}
+            </div>
           </div>
         </div>
 
@@ -106,7 +139,7 @@ export default function AdminLoginPage() {
               required
             />
           </Field>
-          <Field label="Password">
+          <Field label={mustChangePassword ? 'One-time password' : 'Password'}>
             <TextInput
               type="password"
               autoComplete="current-password"
@@ -115,6 +148,19 @@ export default function AdminLoginPage() {
               required
             />
           </Field>
+
+          {mustChangePassword ? (
+            <Field label="Choose a new password">
+              <TextInput
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoFocus
+                required
+              />
+            </Field>
+          ) : null}
 
           {error ? (
             <div
@@ -132,7 +178,7 @@ export default function AdminLoginPage() {
           ) : null}
 
           <PrimaryButton type="submit" style={{ height: 44, justifyContent: 'center', opacity: loading ? 0.7 : 1 }}>
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Signing in…' : mustChangePassword ? 'Set password and sign in' : 'Sign in'}
           </PrimaryButton>
         </div>
       </form>

@@ -38,36 +38,12 @@ interface UsersResponse {
   selfId: string;
 }
 
-interface PendingInvite {
-  id: string;
-  name: string;
-  phone: string;
-  roleName: string;
-  expiresAt: string;
-}
-
-const INVITE_COLUMNS: TableColumn[] = [
-  { label: 'Invited', width: '1.5fr' },
-  { label: 'Role', width: '1.2fr' },
-  { label: 'Expires', width: '1fr' },
-  { label: '', width: '140px', right: true },
-];
-
-/** Hours rather than days: these last 48, so "in 1 day" would round away most of their life. */
-function expiryLabel(iso: string): string {
-  const hours = Math.ceil((Date.parse(iso) - Date.now()) / 3_600_000);
-  if (hours <= 0) return 'Expired';
-  if (hours < 24) return `Expires in ${hours} hour${hours === 1 ? '' : 's'}`;
-  const days = Math.round(hours / 24);
-  return `Expires in ${days} day${days === 1 ? '' : 's'}`;
-}
-
 const COLUMNS: TableColumn[] = [
   { label: 'Administrator', width: '1.5fr' },
   { label: 'Role', width: '1.2fr' },
   { label: 'Added', width: '0.9fr' },
   { label: 'Status', width: '0.8fr' },
-  { label: '', width: '210px', right: true },
+  { label: '', width: '300px', right: true },
 ];
 
 export default function AdminUsersPage() {
@@ -79,21 +55,15 @@ export default function AdminUsersPage() {
   const [changeError, setChangeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
-  /** GRW-164 — invitations sent but not yet taken up. */
-  const [invites, setInvites] = useState<PendingInvite[]>([]);
-  const [inviteError, setInviteError] = useState<string | null>(null);
+  /** GRW-165 — the admin's own control: put somebody back to a one-time password. */
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetDone, setResetDone] = useState<string | null>(null);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
-      Promise.all([
-        adminFetch<UsersResponse>('/users', { signal }),
-        // Allowed to fail on its own: the administrator list is still worth
-        // showing if the invitations call is the one that broke.
-        adminFetch<{ invites: PendingInvite[] }>('/invites', { signal }).catch(() => ({ invites: [] as PendingInvite[] })),
-      ])
-        .then(([body, pending]) => {
+      adminFetch<UsersResponse>('/users', { signal })
+        .then((body) => {
           setData(body);
-          setInvites(pending.invites);
           setError(null);
         })
         .catch((err) => {
@@ -133,15 +103,27 @@ export default function AdminUsersPage() {
       .catch((err) => setRoleError(err instanceof AdminApiError ? err.message : 'Could not change that role.'));
   }
 
-  function revokeInvite(invite: PendingInvite) {
-    const reason = window.prompt(`Cancel the invitation for ${invite.name}? This is recorded against your name.`);
-    // Cancelled the prompt rather than answered it — do nothing at all, which
-    // is different from answering with an empty reason.
+  /**
+   * GRW-165 — the admin keeps control without ever knowing a working password.
+   *
+   * A reset produces a NEW one-time password, which this admin hands over and
+   * which dies the first time it is used. Two prompts rather than a modal
+   * because it is a rare, deliberate act; the reason is recorded against the
+   * admin's name like every other write on this screen.
+   */
+  function resetPassword(user: AdminRow) {
+    const password = window.prompt(`New one-time password for ${user.name}. Tell it to them — they must replace it on their next sign-in.`);
+    if (password === null) return;
+    const reason = window.prompt('Why are you resetting it? This is recorded against your name.');
     if (reason === null) return;
-    setInviteError(null);
-    adminFetch(`/invites/${invite.id}`, { method: 'DELETE', body: JSON.stringify({ reason: reason.trim() }) })
-      .then(() => void load())
-      .catch((err) => setInviteError(err instanceof AdminApiError ? err.message : 'Could not cancel that invitation.'));
+    setResetError(null);
+    setResetDone(null);
+    adminFetch(`/users/${user.id}/password-reset`, {
+      method: 'POST',
+      body: JSON.stringify({ password, reason: reason.trim() }),
+    })
+      .then(() => setResetDone(`${user.name} now has a one-time password. They must change it when they next sign in.`))
+      .catch((err) => setResetError(err instanceof AdminApiError ? err.message : 'Could not reset that password.'));
   }
 
   if (error) return <EmptyState icon="users" title="Could not load administrators" sub={error} />;
@@ -160,11 +142,13 @@ export default function AdminUsersPage() {
               <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} />
               Show deactivated
             </label>
-            <PrimaryButton onClick={() => setAddOpen(true)}>Invite administrator</PrimaryButton>
+            <PrimaryButton onClick={() => setAddOpen(true)}>Add administrator</PrimaryButton>
           </div>
         </div>
 
         {roleError ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{roleError}</div> : null}
+        {resetError ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{resetError}</div> : null}
+        {resetDone ? <div style={{ fontSize: 13, fontWeight: 700, color: oklch.textStrong, paddingTop: 8 }}>{resetDone}</div> : null}
 
         {visible.length === 0 ? (
           <EmptyState icon="users" title="Nobody to show" sub={showDeactivated ? 'No administrators yet.' : 'No active administrators.'} />
@@ -216,9 +200,18 @@ export default function AdminUsersPage() {
                     <StatusPill status={user.status === 'active' ? 'Active' : 'Deactivated'} />
                   </div>
 
-                  <div style={{ textAlign: 'right' }}>
+                  <div style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    {/*
+                      GRW-165 — offered on ACTIVE administrators only, including
+                      yourself: resetting your own password is a legitimate
+                      thing to do, unlike deactivating yourself, so the `locked`
+                      guard above does not apply to it.
+                    */}
+                    {user.status === 'active' ? (
+                      <SecondaryButton onClick={() => resetPassword(user)}>Reset password</SecondaryButton>
+                    ) : null}
                     {locked ? (
-                      <span style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600 }}>{locked}</span>
+                      <span style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600, alignSelf: 'center' }}>{locked}</span>
                     ) : user.status === 'active' ? (
                       <SecondaryButton danger onClick={() => setChanging({ user, status: 'deactivated' })}>
                         Deactivate
@@ -230,37 +223,6 @@ export default function AdminUsersPage() {
                 </TableRow>
               );
             })}
-          />
-        )}
-      </Card>
-
-      {/*
-        GRW-164 — sent, not yet taken up. Its own card rather than rows mixed
-        into the table above: an invitation is not an administrator, and
-        showing it as one would put a person in the list who cannot yet sign in.
-      */}
-      <Card>
-        <SectionTitle title="Waiting to join" />
-        {inviteError ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{inviteError}</div> : null}
-        {invites.length === 0 ? (
-          <EmptyState icon="users" title="No invitations waiting" sub="Anyone you invite shows here until they set a password." />
-        ) : (
-          <Table
-            columns={INVITE_COLUMNS}
-            minWidthPx={720}
-            rows={invites.map((invite) => (
-              <TableRow key={invite.id} columns={INVITE_COLUMNS}>
-                <div>
-                  <div style={{ fontWeight: 700, color: oklch.textStrong }}>{invite.name}</div>
-                  <div style={{ fontSize: 12.5, color: oklch.textMuted }}>{invite.phone}</div>
-                </div>
-                <div style={{ fontWeight: 600 }}>{invite.roleName}</div>
-                <div style={{ fontSize: 12.5, color: oklch.textMuted }}>{expiryLabel(invite.expiresAt)}</div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <SecondaryButton onClick={() => void revokeInvite(invite)}>Cancel</SecondaryButton>
-                </div>
-              </TableRow>
-            ))}
           />
         )}
       </Card>

@@ -45,12 +45,10 @@ export const KNOWN_ACTIONS = [
   'platform_user.create',
   'platform_user.role_update',
   'platform_user.status_update',
-  // GRW-164 — handing out platform access, and taking it back. Filterable
-  // separately from `platform_user.create`: an invitation that is never
-  // accepted leaves no administrator row at all, and is still something
-  // somebody did.
-  'platform_invite.create',
-  'platform_invite.revoke',
+  // GRW-165 — a reset hands somebody a credential for another person's
+  // account, so it is filterable on its own rather than folded into a status
+  // change.
+  'platform_user.password_reset',
   'payment.record_offline',
   'feature_flag.update',
   'feature_flag.override_set',
