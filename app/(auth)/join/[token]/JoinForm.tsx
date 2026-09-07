@@ -17,7 +17,7 @@ interface Preview {
 }
 
 const UNREACHABLE = 'Could not reach the server. Please check your connection and try again.';
-const NOT_VALID = 'This invite link is no longer valid. Ask whoever invited you to send a new one.';
+const NOT_VALID = 'Invite links stop working after 7 days, or if they have already been used. Ask whoever invited you for a new one.';
 
 export function JoinForm({ token }: { token: string }) {
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -105,17 +105,57 @@ export function JoinForm({ token }: { token: string }) {
     );
   }
 
+  /**
+   * The server could not be reached — which is NOT "your invite is invalid".
+   * Telling somebody their link is dead when the truth is that we could not ask
+   * sends them back to the owner for a replacement that will fail the same way.
+   */
+  if (error && !preview) {
+    return (
+      <main className="login-page">
+        <div className="login-card">
+          <div className="login-head">
+            <h1>Could not check your invite</h1>
+            <p>{error}</p>
+          </div>
+          <button className="btn login-submit" type="button" onClick={() => window.location.reload()}>
+            Try again
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   if (invalid || !preview) {
     return (
       <main className="login-page">
         <div className="login-card">
           <div className="login-head">
-            <h1>Invite not valid</h1>
-            <p>{error ?? NOT_VALID}</p>
+            <h1>This link no longer works</h1>
+            {/*
+              AC-03 asks for "a way to ask the owner to resend, not a dead end",
+              and the honest way is to say who to ask — NOT a button that does it.
+              An unauthenticated "resend this token" route would be an
+              enumeration oracle: it would confirm which tokens were once real,
+              which is exactly the distinction the preview refuses to draw.
+              There is also nothing to address it to — a token that no longer
+              resolves names no business.
+            */}
+            <p>{NOT_VALID}</p>
           </div>
-          <a className="btn login-submit" href="/login">
-            Go to sign in
-          </a>
+          <p className="login-foot" style={{ marginTop: 0 }}>
+            They can send you a new link from <strong>Settings &rarr; Team access</strong>. It is the same
+            screen they used the first time.
+          </p>
+          {/*
+            Sign-in is the SECONDARY path, not the offered action. It is right
+            for the one case where a spent link is expected — somebody who
+            already joined, or who has an account from another business — and
+            useless for everybody else, which is why it is no longer the button.
+          */}
+          <p className="login-foot">
+            Already joined, or already have an account? <a href="/login">Sign in</a>.
+          </p>
         </div>
       </main>
     );

@@ -140,6 +140,21 @@
   text-align: center;
 }
 
+/* Jira GRW-63 · GRW-67 — the first link to appear in this footer, on the
+   expired-invite screen. Without this it rendered as the browser's default
+   blue-and-underlined, the one piece of unstyled chrome on an otherwise
+   finished page. `--accent-deep` is the colour every other link in the
+   dashboard uses (see `.settings-back-link`). */
+.login-foot a {
+  color: var(--accent-deep);
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.login-foot a:hover {
+  text-decoration: underline;
+}
+
 /* Sign-out in the desktop sidebar's footer (GRW-160). Matches `.nav a` rather
    than reusing it: it is a <button>, so it needs the button resets too, and
    `margin-top: auto` is what parks it at the bottom of the column. It is never

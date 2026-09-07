@@ -55,3 +55,57 @@ export function validateEmail(raw: string): string | null {
 export function validateRequired(raw: string, label: string): string | null {
   return raw.trim() ? null : `${label} is required`;
 }
+
+/**
+ * Jira GRW-63 · GRW-67 — the E.164 form the server actually stores.
+ *
+ * `validatePhone` above is deliberately lenient: it accepts a bare
+ * `9812345678` because most forms in this product post to routes that are
+ * equally lenient. **Team invites are not one of them.** BR-04 says an invite's
+ * phone is stored and compared in E.164, matching `customer.wa_phone` (which
+ * really does hold `+919876543201`), so `POST /api/v1/team/invites` requires
+ * the leading `+`.
+ *
+ * Leaving the looser check in front of the stricter route is precisely the
+ * failure this file's own header warns about — "a looser one lets the user hit
+ * Save and get a raw 400 back". So a bare number is COMPLETED rather than
+ * refused: an owner typing their stylist's ten digits is doing the normal
+ * thing, not making a mistake.
+ *
+ * The `+91` default is the assumption `formatPhone` has always made when it
+ * renders a bare ten-digit number. It is the seam to widen when the product
+ * sells outside India — `tenant.country` (migration 0047) is where the dial
+ * code would come from — and it is written here, once, rather than in the
+ * panel.
+ */
+const DEFAULT_DIAL_CODE = '+91';
+
+/** The phone shape `POST /api/v1/team/invites` accepts. Mirrors `PHONE` in src/api/tenant/team.controller.ts. */
+const E164_RE = /^\+[1-9]\d{7,14}$/;
+
+/**
+ * A number in the shape the invite API takes, or `null` if it cannot be one.
+ *
+ * Never guesses at anything but the country code: a number that is the wrong
+ * length is wrong, not a `+91` short of correct.
+ */
+export function toE164(raw: string): string | null {
+  const value = normalizePhone(raw.trim());
+  const candidate = value.startsWith('+')
+    ? value
+    : /^\d{10}$/.test(value)
+      ? `${DEFAULT_DIAL_CODE}${value}`
+      : value;
+  return E164_RE.test(candidate) ? candidate : null;
+}
+
+/** Null when the number can be sent an invite; otherwise the message to show under the field. */
+export function validateInvitePhone(raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return 'Enter a mobile number';
+  // Defer to the shared validator first, so shape complaints ("too short",
+  // "the + belongs at the start") are worded once for the whole product.
+  const shape = validatePhone(value);
+  if (shape) return shape;
+  return toE164(value) ? null : 'Enter a valid mobile number, e.g. +91 98765 43210';
+}
