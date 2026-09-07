@@ -291,13 +291,22 @@ const inputBase: CSSProperties = {
   outline: 'none',
 };
 
-/** `invalid` also sets `aria-invalid`, so the red border is not the only way to know. */
+/**
+ * `invalid` also sets `aria-invalid`, so the red border is not the only way to
+ * know.
+ *
+ * The invalid style replaces the whole `border` shorthand rather than setting
+ * `borderColor` on top of it. React warns about the mix for a real reason:
+ * when the field is corrected it removes the longhand while the shorthand
+ * stays, so the red border can survive the error that caused it. Found by
+ * opening the page — `npm run build:web` and every test were happy with it.
+ */
 export function TextInput({ invalid, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
   return (
     <input
       {...props}
       aria-invalid={invalid || undefined}
-      style={{ ...inputBase, ...(invalid ? { borderColor: ERROR_COLOR } : {}), ...props.style }}
+      style={{ ...inputBase, ...(invalid ? { border: `1px solid ${ERROR_COLOR}` } : {}), ...props.style }}
     />
   );
 }
@@ -311,7 +320,8 @@ export function Select({
     <select
       {...props}
       aria-invalid={invalid || undefined}
-      style={{ ...inputBase, padding: '0 12px', cursor: 'pointer', ...(invalid ? { borderColor: ERROR_COLOR } : {}), ...props.style }}
+      // Same shorthand-not-longhand rule as TextInput above.
+      style={{ ...inputBase, padding: '0 12px', cursor: 'pointer', ...(invalid ? { border: `1px solid ${ERROR_COLOR}` } : {}), ...props.style }}
     >
       {options.map((o) => (
         <option key={o} value={o}>
