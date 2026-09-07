@@ -1,0 +1,53 @@
+/* ---------- range picker ---------- */
+
+.rp-range {
+  position: relative;
+}
+
+/* Full-viewport, behind the menu: a click anywhere outside closes it without
+   the menu needing a document-level listener that outlives the component. */
+.rp-range-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.rp-range-menu {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  z-index: 40;
+  width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px -18px rgba(20, 50, 35, 0.4);
+  padding: 6px;
+}
+
+.rp-range-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rp-range-menu button:hover {
+  background: var(--page-bg);
+}
+
+.rp-range-menu button.active {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 700;
+}

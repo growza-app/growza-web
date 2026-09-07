@@ -1,0 +1,93 @@
+/* ---------- row actions ---------- */
+
+.staff-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.staff-toggle-label {
+  width: 68px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3d4a43;
+}
+
+.staff-row.is-off .staff-toggle-label {
+  color: var(--muted);
+}
+
+/* Bigger than the shared .switch (36x21) because this one is the primary
+   action on the row and has to survive a thumb, not just a mouse. */
+.switch-lg .switch-track {
+  width: 46px;
+  height: 28px;
+}
+
+.switch-lg .switch-thumb {
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+}
+
+.switch-lg input:checked + .switch-track .switch-thumb {
+  transform: translateX(18px);
+}
+
+/* Edit is a labelled 38px button, not a bare icon — an icon-only pencil next
+   to an icon-only bin is the mis-tap this redesign exists to remove. */
+.staff-edit-btn {
+  height: 38px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4a43;
+  cursor: pointer;
+}
+
+.staff-edit-btn:hover {
+  border-color: #b9c2bb;
+}
+
+.staff-edit-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.staff-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.staff-icon-btn:hover {
+  border-color: #b9c2bb;
+}
+
+.staff-icon-btn.is-open {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.staff-dots {
+  font-size: 17px;
+  line-height: 1;
+  margin-top: -6px;
+}

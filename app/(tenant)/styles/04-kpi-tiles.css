@@ -1,0 +1,47 @@
+/* ---------- KPI tiles ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.tile .label {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tile .value {
+  font-size: 31px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 10px 0 6px;
+  line-height: 1.1;
+}
+
+.tile .delta {
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--muted);
+}
+
+.delta-up {
+  color: var(--accent-deep);
+}
+
+.delta-down {
+  color: var(--accent-deep);
+}
+
+.delta-bad {
+  color: #b91c1c;
+}

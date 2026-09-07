@@ -1,0 +1,55 @@
+/* ---------- appointment list ---------- */
+
+.appt {
+  display: flex;
+  /* flex-start, not center: when the name/service text wraps to 2-3 lines
+     (routine on a phone width), centering against that taller box put the
+     status chip visually in the middle of the wrapped text instead of
+     beside its first line. */
+  align-items: flex-start;
+  gap: 14px;
+  padding: 13px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.appt .chip {
+  margin-top: 1px;
+}
+
+.appt-time {
+  width: 84px;
+  flex-shrink: 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  font-size: 15.5px;
+  white-space: nowrap;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  font-weight: 650;
+  font-size: 12.5px;
+  flex-shrink: 0;
+}
+
+.appt-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.appt-name {
+  font-weight: 620;
+  font-size: 16px;
+}
+
+.appt-sub {
+  color: var(--muted);
+  font-size: 14.5px;
+  margin-top: 1px;
+}

@@ -1,0 +1,57 @@
+/* ---------- donut ---------- */
+
+.rp-donut {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.rp-donut svg { flex: 0 0 136px; }
+.rp-donut circle { transition: stroke-width 0.15s; }
+.rp-donut-value { font-size: 17px; font-weight: 800; fill: var(--text); }
+.rp-donut-label { font-size: 10.5px; font-weight: 600; fill: #9aa39d; }
+
+/* Wraps below the ring rather than being squeezed beside it.
+   With `min-width: 0` the legend shrank to whatever was left over — 155px on
+   a 375px phone, of which the amount took 72 and the share 34, leaving the
+   label thirteen pixels to render "Came back" in. It ellipsised, which is a
+   worse failure than the wrapping it replaced: a truncated nine-character
+   label cannot be told from a different one. Below this width it takes the
+   card's full width on its own line, where everything fits unbroken. */
+.rp-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  /* 230px is the widest row this legend has to hold without breaking:
+     dot 9 + gap 9 + "Came back" 68 + gap 9 + a crore-scale amount ~85 +
+     gap 9 + share 34. Anything narrower and the label is the part that
+     gives, because it is the only flexible thing in the row. */
+  flex: 1 1 230px;
+  min-width: 230px;
+}
+
+.rp-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+}
+
+.rp-legend-dot { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 9px; }
+
+/* Never wrapped mid-phrase. "Came back" broken across two lines next to a
+   right-aligned amount reads as two separate rows, and the three-line legend
+   it produced was taller than the ring beside it. */
+.rp-legend-label {
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rp-legend-value { font-weight: 700; white-space: nowrap; margin-left: auto; }
+.rp-legend-pct { color: #9aa39d; min-width: 34px; text-align: right; white-space: nowrap; }

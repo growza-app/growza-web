@@ -1,0 +1,14 @@
+/* ---------- bottom nav + fab (mobile only; shown in the media query below) ---------- */
+
+.bottom-nav {
+  display: none;
+}
+
+.fab {
+  display: none;
+}
+
+.fab-backdrop,
+.fab-menu {
+  display: none;
+}

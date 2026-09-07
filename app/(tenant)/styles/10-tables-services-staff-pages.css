@@ -1,0 +1,57 @@
+/* ---------- tables (services / staff pages) ---------- */
+
+/* `.card` clips overflow for its rounded corners, so a table wider than a
+   phone screen would otherwise just get cut off rather than scroll — this
+   wrapper is what makes it scroll instead. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/*
+ * Between the card breakpoint and a roomy desktop the sidebar takes 232px and a
+ * seven-column table does not fit what is left: measured at 1024px, 129px of the
+ * Services table was still off to the right, and the column that fell off was
+ * Actions. Tighter gutters buy ~140px, which covers it.
+ */
+@media (min-width: 1001px) and (max-width: 1100px) {
+  th,
+  td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 14px;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 14px;
+  }
+}

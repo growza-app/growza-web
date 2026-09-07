@@ -1,0 +1,187 @@
+/* ---------- finished-booking summary (receipt) ---------- */
+.summary-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 2px 18px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-badge {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+}
+
+.summary-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.summary-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15.5px;
+  font-weight: 640;
+}
+
+.summary-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.summary-combo {
+  margin-top: 7px;
+}
+
+.summary-section-label {
+  padding: 14px 18px 4px;
+  font-size: 12px;
+  font-weight: 640;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+}
+
+.summary-avatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 640;
+}
+
+.summary-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-service {
+  font-size: 14px;
+  font-weight: 560;
+}
+
+.summary-stylist {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.summary-price {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 620;
+}
+
+.summary-totals {
+  margin: 10px 18px 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.summary-line:first-child {
+  margin-top: 0;
+}
+
+.summary-line-total {
+  align-items: baseline;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.summary-total-value {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* The combo saving reads as money off — accent green, like a credit. */
+.summary-discount {
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.summary-totals + .modal-actions {
+  padding: 0 18px;
+}
+
+.sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 18px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.sheet-item:hover {
+  background: var(--page-bg);
+}
+
+.sheet-item svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  color: var(--accent-deep);
+}
+
+.sheet-item .trail {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.sheet-danger {
+  color: #b91c1c;
+}
+
+.sheet-danger svg {
+  color: #b91c1c;
+}
+
+/* "They didn't come" is a neutral record, not a success — a green tick-family
+   icon on it reads as approval. */
+.sheet-neutral svg {
+  color: var(--muted);
+}
+
+.sheet-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

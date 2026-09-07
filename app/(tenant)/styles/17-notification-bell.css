@@ -1,0 +1,88 @@
+/* ---------- notification bell ---------- */
+
+.notif-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: #d84a3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notif-scrim { position: fixed; inset: 0; z-index: 40; background: transparent; }
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 41;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(18, 38, 29, 0.14);
+  overflow: hidden;
+}
+.notif-dropdown-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+}
+.notif-dropdown-actions { display: flex; align-items: center; gap: 10px; }
+.notif-mark-read { background: none; border: none; color: var(--accent-deep); font-size: 12.5px; font-weight: 620; cursor: pointer; padding: 0; }
+.notif-clear-all { background: none; border: none; color: var(--muted); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0; }
+.notif-empty { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.notif-list { max-height: 360px; overflow-y: auto; }
+.notif-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.notif-item:last-child { border-bottom: none; }
+.notif-item-unread { background: #f8fbf9; }
+.notif-icon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.notif-icon svg { width: 15px; height: 15px; }
+.notif-new { background: #dcf8e7; color: #16a34a; }
+.notif-cancel { background: #fde3e3; color: #c0362c; }
+.notif-reschedule { background: #fdf3e3; color: #8a5a10; }
+.notif-item-body { flex: 1; min-width: 0; }
+.notif-item-title { font-size: 13px; color: var(--text); }
+.notif-item-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+
+.notif-toast {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--sidebar);
+  border-radius: 12px;
+  padding: 12px 16px;
+  max-width: 340px;
+  box-shadow: 0 12px 32px rgba(18, 38, 29, 0.24);
+}
+.notif-toast-text { font-size: 13px; color: #fff; }
+
+@media (max-width: 860px) {
+  /* The bell sits close to the right edge of a mobile header (search + bell
+     + avatar all clustered there), so anchoring the dropdown's edge to the
+     bell's edge — fine on desktop — leaves it looking pinned to the left
+     with the bell buried in its corner. Centering on the screen instead
+     reads as deliberate rather than lopsided, and sidesteps having to know
+     exactly where the bell sits on every page's header. */
+  .notif-dropdown { position: fixed; top: var(--notif-mobile-top, 84px); left: 50%; right: auto; transform: translateX(-50%); width: min(320px, calc(100vw - 32px)); }
+  .notif-toast { top: auto; bottom: 78px; left: 16px; right: 16px; max-width: none; }
+}

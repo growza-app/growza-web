@@ -1,0 +1,322 @@
+/* ---------- checkout sheet ---------- */
+
+.checkout-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.checkout-header h3 {
+  margin: 0 0 2px;
+  font-size: 17px;
+}
+
+.checkout-header-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+}
+
+.checkout-header-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.checkout-header-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 620;
+  color: var(--text);
+}
+
+.checkout-call-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.checkout-call-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.checkout-header-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.checkout-total-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.checkout-total-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+}
+
+.checkout-total-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.checkout-total-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.checkout-total-value {
+  font-size: 21px;
+  font-weight: 660;
+  color: var(--text);
+}
+
+.checkout-section-label {
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--text);
+  margin: 18px 0 8px;
+}
+
+.checkout-service-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.checkout-service-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 660;
+}
+
+.checkout-service-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.checkout-service-name {
+  font-size: 15px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkout-service-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.checkout-provider-select {
+  width: 100%;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  min-height: 30px;
+  padding: 3px 8px;
+}
+
+.checkout-amount-field {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+}
+
+.checkout-amount-field span {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.checkout-amount-field input {
+  width: 60px;
+  border: none;
+  padding: 8px 0;
+  font-size: 15px;
+  min-width: 0;
+}
+
+.checkout-amount-field input:focus {
+  outline: none;
+}
+
+.checkout-icon-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--slate-soft);
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.checkout-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.checkout-icon-btn-danger {
+  background: #fde8e8;
+  color: #b91c1c;
+}
+
+.checkout-icon-btn-spacer {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.checkout-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.checkout-add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.checkout-add-row select {
+  flex: 1;
+}
+
+.payment-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.payment-mode-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 560;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.payment-mode-btn.active {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.payment-mode-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/*
+ * Pinned to the foot of the modal. In the default `.modal` (whole box
+ * scrolls), that's `position: sticky` to the bottom of the scroll box. In the
+ * GRW-8 `.modal-fit` shell, `.modal-actions` is already a flex sibling of
+ * `.modal-body` rather than a descendant of it — sticky has nothing to stick
+ * to there (the shell itself doesn't scroll) and renders as a no-op, so
+ * `flex: none` is what actually keeps it pinned in that mode, alongside
+ * sticky staying harmlessly inert. One rule serves both.
+ *
+ * `bottom: 0` with no negative bottom margin. An earlier version used -22px for
+ * both; measured side by side, that clipped 22px of the footer's own padding
+ * below the scrollport for no benefit. It did NOT overlap the last field — that
+ * was a wrong guess at why the Price input was hard to find. The real cause was
+ * simply that the form is taller than a short window, handled by the
+ * height media query further down.
+ *
+ * Only the side margins are negative, so the background reaches the modal's edges
+ * through its 26px padding. At rest the modal's 22px bottom padding shows beneath
+ * the footer, which is what that padding is for. On a modal short enough not to
+ * scroll none of this engages — sticky does nothing without overflow.
+ */
+.modal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 22px -26px 0;
+  padding: 14px 26px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-ghost:hover {
+  background: var(--slate-soft);
+}
+
+.btn-danger {
+  background: transparent;
+  color: #b91c1c;
+}
+
+.btn-danger:hover {
+  background: #fde4e4;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: inherit;
+  font-weight: 620;
+  cursor: pointer;
+  text-decoration: underline;
+}
+

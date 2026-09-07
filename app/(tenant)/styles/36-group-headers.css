@@ -1,0 +1,32 @@
+/* ---------- group headers ---------- */
+
+.staff-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-1) var(--sp-2);
+}
+
+.staff-rows + .staff-group-head,
+.staff-cards + .staff-group-head {
+  padding-top: var(--sp-4);
+}
+
+.staff-group-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c0c9c3;
+}
+
+.staff-group-dot.is-on {
+  background: var(--accent);
+}
+
+.staff-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5c6b63;
+}

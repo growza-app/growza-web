@@ -1,0 +1,23 @@
+/* ---------- grids ---------- */
+
+.rp-kpi-grid {
+  /* Layout only — the column count always comes from a -3 or -4 variant.
+     This used to carry its own `repeat(6)` plus a chain of media queries, and
+     because every row also carries a variant class, the base rule quietly
+     won at some widths: a four-tile row landed in three columns at 1366 and
+     stranded a tile on its own line. Counts live in exactly one place now. */
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.rp-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+.rp-grid-health {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: var(--sp-3);
+}

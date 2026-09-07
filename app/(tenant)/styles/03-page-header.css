@@ -1,0 +1,59 @@
+/* ---------- page header ---------- */
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px var(--page-pad-x) 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+/* The header's trailing controls (page actions, bell, avatar) as ONE group,
+   so .topbar's space-between only ever splits title-vs-controls. As loose
+   siblings they were spread evenly instead, which parked the bell in the
+   middle of the header on any page without an `actions` prop. */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.topbar h1 {
+  margin: 0 0 5px;
+  font-size: 25px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+}
+
+.topbar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15.5px;
+}
+
+.avatar-lg {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 650;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.page-body {
+  /* The middle grid row (.content) already stretches this to fill the
+     leftover height and width; min-height/min-width: 0 is what lets it
+     actually shrink to that track instead of growing to fit its content,
+     which is what makes overflow-y: auto below able to scroll at all. */
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 12px var(--page-pad-x) 12px;
+}

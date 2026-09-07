@@ -1,0 +1,42 @@
+/* ---------- row overflow menu ---------- */
+
+.staff-menu-wrap {
+  position: relative;
+}
+
+.staff-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  width: 232px;
+  padding: var(--sp-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 44px -18px rgba(14, 51, 37, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.staff-menu .sheet-item {
+  padding: 10px 11px;
+  border-radius: 9px;
+  font-size: 14px;
+}
+
+.staff-menu-divider {
+  height: 1px;
+  background: #edf0ec;
+  margin: var(--sp-1) var(--sp-2);
+}
+
+.staff-sheet-toggle {
+  cursor: default;
+}
+
+.staff-sheet-toggle:hover {
+  background: transparent;
+}
+

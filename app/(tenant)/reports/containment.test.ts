@@ -31,10 +31,25 @@ import { describe, expect, it } from 'vitest';
  * itself heavily, so nearly every selector arrived with a paragraph glued to
  * the front of it and matched nothing.
  */
-const CSS = readFileSync(fileURLToPath(new URL('../globals.css', import.meta.url)), 'utf8').replace(
-  /\/\*[\s\S]*?\*\//g,
-  '',
-);
+/**
+ * Jira GRW-160 · GRW-171 — globals.css is now an ordered list of @imports over
+ * `styles/*.css`, so reading it alone would find no rules at all. This follows
+ * the imports and concatenates the partials IN THE SAME ORDER the browser
+ * would, which is also the cascade order.
+ *
+ * Deliberately not pointed at one partial: the point of the test is that a
+ * NEW wide chart anywhere in this stylesheet must declare where it scrolls,
+ * and naming a single file would stop it seeing one added elsewhere.
+ */
+const GLOBALS_URL = new URL('../globals.css', import.meta.url);
+const CSS = readFileSync(fileURLToPath(GLOBALS_URL), 'utf8')
+  .split('\n')
+  .flatMap((line) => {
+    const imported = /^@import '\.\/(.+?)';/.exec(line.trim());
+    return imported ? [readFileSync(fileURLToPath(new URL(`../${imported[1]}`, import.meta.url)), 'utf8')] : [];
+  })
+  .join('\n')
+  .replace(/\/\*[\s\S]*?\*\//g, '');
 
 /**
  * Content wider than the narrowest supported phone, and the box that is

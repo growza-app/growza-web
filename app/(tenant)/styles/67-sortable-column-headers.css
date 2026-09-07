@@ -1,0 +1,352 @@
+/* ---------- sortable column headers ---------- */
+
+.th-sortable { padding: 0; }
+
+.th-sortable button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: inherit;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+.th-numeric button { justify-content: flex-start; }
+
+/* The arrow is faint until the column is the one being sorted, so the header
+   row reads as headings with an affordance rather than as six live controls. */
+.th-arrow { display: inline-flex; align-items: center; opacity: 0.25; }
+.th-arrow svg { width: 13px; height: 13px; }
+.th-arrow.is-on { opacity: 1; color: var(--accent-deep); font-weight: 800; }
+.th-sortable button:hover .th-arrow { opacity: 0.7; }
+
+@media (max-width: 1100px) {
+  .cust-segment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/*
+ * Clients rows, tightened.
+ *
+ * Scoped to this table on purpose: the shared cell padding is what every
+ * other list uses, and none of them has two bands of chrome above it. Here
+ * the rows were 73px each against 465px of room — five of ten visible — so
+ * the padding comes down and the secondary line under a cell stops carrying
+ * a full line-height of its own.
+ */
+.cust-fit .paged-table td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.cust-fit .paged-table td .muted,
+.cust-fit .paged-table .cust-phone {
+  line-height: 1.35;
+}
+
+.cust-fit .paged-table .avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.cust-fit .paged-table .cust-recency {
+  gap: 6px;
+  line-height: 1.35;
+}
+
+/*
+ * The bands aside, in two lengths.
+ *
+ * The full sentence is one line on a desktop and eleven at 320px, where it
+ * pushed the bands card to 405px — most of a phone screen spent on a
+ * footnote. The brief version keeps the only part that has to survive: the
+ * count, without which the four bands look like they should add up to the
+ * total above them.
+ */
+.cust-aside-brief { display: none; }
+
+@media (max-width: 860px) {
+  .cust-aside-full { display: none; }
+  .cust-aside-brief { display: inline; }
+
+  /* Stacked, not squeezed. On one flex row the heading and the aside split a
+     390px screen between them, so a twenty-character aside still wrapped to
+     two lines in the sliver it was left. */
+  .cust-segments-head {
+    display: block;
+  }
+
+  .cust-segments-head h2 { font-size: 13.5px; }
+  .cust-segments-head p { margin-top: 1px; }
+
+  .cust-segments { padding: var(--sp-3); }
+
+  /* The band's window is what the label already implies on a small screen,
+     and it is the line that makes each card three rows tall. */
+  .cust-segment { padding: 7px 9px; }
+  .cust-segment-range { display: none; }
+  .cust-segment-count { font-size: 17px; }
+}
+
+/* ==========================================================================
+   Reports · Clients — one summary card instead of four bands
+
+   Four separate blocks used to sit between the owner and the client list: a
+   tall figure row, a bands card with its own heading and footnote, a card of
+   five action groups, and two distribution charts. On a 900px screen the list
+   started below the fold, on a tab whose whole point is finding someone to
+   call.
+
+   They are all answers about the same people, so they are one card now, with
+   the list immediately after it.
+   ========================================================================== */
+
+.rp-client-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+/* ---- the four headline figures ---- */
+
+.rp-cs-figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.rp-cs-figure { min-width: 0; }
+.rp-cs-figure > span { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+
+.rp-cs-figure > strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+
+.rp-cs-figure > em { font-style: normal; font-size: 11.5px; font-weight: 700; }
+
+/* ---- a block inside the card: heading, then chips ---- */
+
+.rp-cs-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  flex-wrap: wrap;
+}
+
+/* The affordance rides on the heading's line rather than taking one of its
+   own — it is an aside, and the card has no room for asides. */
+.rp-cs-heading em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* ---- recency bands: five chips, each a filter ---- */
+
+.rp-cs-bands {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.rp-cs-band {
+  display: block;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--seg);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+
+.rp-cs-band:hover { background: var(--page-bg); }
+
+.rp-cs-band.is-on {
+  background: var(--accent-soft);
+  border-color: #bfe0cc;
+  border-left-color: var(--seg);
+}
+
+.rp-cs-band-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rp-cs-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--seg); flex: 0 0 7px; }
+
+.rp-cs-band-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+.rp-cs-band-figure em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+
+/* The day window lives on the chip's title rather than a third line. Four
+   words of label plus a count is enough to pick a band by; the exact
+   boundaries are a detail you go looking for, not one you read every time. */
+
+/* "Never been in" is a band by arithmetic, not by behaviour — nobody works a
+   list of people who have not arrived — so it reads quieter than the four. */
+.rp-cs-band-muted .rp-cs-band-figure { font-weight: 700; color: var(--muted); }
+
+/* ---- action groups ---- */
+
+.rp-cs-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.rp-cs-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.rp-cs-group:hover { background: var(--page-bg); }
+
+.rp-cs-group-icon {
+  display: flex;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  color: var(--muted);
+}
+
+.rp-cs-group-icon svg { width: 100%; height: 100%; }
+.rp-cs-group-figure { font-size: 17px; font-weight: 800; flex: none; }
+
+.rp-cs-group-text {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-cs-group-text em {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+  .rp-cs-bands { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  /*
+   * On a phone this card was 576px before the list began — a summary longer
+   * than the thing it summarises. Each of its three rows collapses a
+   * different way rather than all of them stacking:
+   */
+
+  /* Four figures stay four across; they are short enough, and two rows of two
+     cost more height than a smaller type size does legibility. */
+  .rp-cs-figures { gap: var(--sp-2); }
+  .rp-cs-figure > span { font-size: 10.5px; }
+  .rp-cs-figure > strong { font-size: 17px; }
+
+  /* Bands become wrapping pills, one line each. In a two-column grid the five
+     of them made three rows and stranded the fifth on its own. */
+  .rp-cs-bands {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .rp-cs-band {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 5px 9px;
+    border-radius: 8px;
+  }
+
+  .rp-cs-band-name { font-size: 11.5px; }
+  .rp-cs-band-figure { font-size: 13px; margin-top: 0; }
+  .rp-cs-band-figure em { font-size: 10.5px; }
+
+  /* Groups keep one line each: the count and the name carry it, and the
+     qualifying clause is the part that made each of them two rows tall. */
+  .rp-cs-groups { grid-template-columns: 1fr; gap: 6px; }
+  .rp-cs-group { padding: 5px 9px; }
+  .rp-cs-group-text em { display: none; }
+}
+
+/* The Bookings screen, when it is showing one client rather than a day. */
+.bk-client-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-3);
+  padding: 9px 14px;
+  border: 1px solid #bfe0cc;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 13px;
+}
+
+.bk-client-banner strong { font-weight: 700; }
+
+/* On a phone this sits above a fit-to-screen list, so it earns one line and
+   no more — two wrapped lines cost a booking card's worth of height. */
+@media (max-width: 859px) {
+  .bk-client-banner {
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-2);
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .bk-client-banner > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bk-client-banner > a { flex: none; }
+}

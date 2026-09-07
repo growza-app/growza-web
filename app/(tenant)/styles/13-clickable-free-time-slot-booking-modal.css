@@ -1,0 +1,159 @@
+/* ---------- clickable free-time slot + booking modal ---------- */
+
+.slot-clickable {
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.slot-clickable:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.slot-clickable:active {
+  transform: translateY(1px);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 18, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 26px 26px 22px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  /* A big combo's checkout can list many services — the modal scrolls inside
+     itself, and .modal-actions sticks to the bottom of that scroll box so the
+     Save/Cancel actions stay on screen at any window height. The horizontal
+     padding here is what .modal-actions' negative side margins cancel; change
+     one and change the other. This is the DEFAULT, whole-box-scrolls mode —
+     several modals (AddCustomerModal, CreateOfferMenu, AddServicesChooser,
+     ImportServices, the price-import dialogs) still use it as-is. `.modal-fit`
+     below is the GRW-8 shared shell, opt-in per component rather than a
+     change to this base rule, precisely so those other modals keep scrolling
+     instead of silently clipping their content. */
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.modal h3 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * GRW-8's shared modal shell: header / .modal-body / .modal-actions as a flex
+ * column, so the header and actions are pinned by construction and only the
+ * body scrolls — instead of the whole box scrolling with a sticky footer
+ * glued to the bottom of it (the default `.modal` behaviour above). Add
+ * `.modal-fit` alongside `.modal` and wrap everything between the header and
+ * `.modal-actions` in a `.modal-body` div to opt in.
+ */
+.modal.modal-fit {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/*
+ * The one scroll region. Negative side margins plus matching padding move its
+ * true edge out to the modal's own edge — the same trick .modal-actions uses
+ * below — so the scrollbar sits flush in the corner instead of 26px short of
+ * it, and a scrolled-past field doesn't show a sliver of white margin outside
+ * the scroll track.
+ */
+.modal-fit .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -26px;
+  padding: 0 26px;
+}
+
+.modal .field {
+  margin-top: 16px;
+}
+
+.modal input,
+.modal select {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.modal input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/*
+ * Short windows: tighten the modal's vertical rhythm so a full form still fits
+ * without scrolling.
+ *
+ * The Edit-service form runs ~780px at the roomy spacing. `100dvh - 32px` means
+ * any window under about 830px pushed its last field — Price — below the fold,
+ * and the sticky footer's border made the dialog look like it ended there rather
+ * than like there was more to scroll to. Trimming the gaps buys back ~120px,
+ * which covers the common laptop heights.
+ *
+ * Nothing is removed, only tightened. Below ~640px the form genuinely cannot fit
+ * and it scrolls, which is what the sticky footer is for.
+ */
+@media (max-height: 860px) {
+  .modal {
+    padding: 20px 22px 16px;
+  }
+
+  /* Matches .modal's tightened 22px side padding above — otherwise the body's
+     edge-alignment margin would still cancel the old 26px and the scroll
+     track would sit 4px short of the modal's edge. */
+  .modal-body {
+    margin: 0 -22px;
+    padding: 0 22px;
+  }
+
+  .modal .field {
+    margin-top: 11px;
+  }
+
+  .modal .field label {
+    margin-bottom: 4px;
+  }
+
+  .modal input,
+  .modal select {
+    padding: 8px 12px;
+  }
+
+  .modal-actions {
+    margin: 14px -22px 0;
+    padding: 11px 22px 12px;
+  }
+
+  .field-hint {
+    margin-top: 3px;
+    line-height: 1.35;
+  }
+
+  .svc-photo-field {
+    margin-top: var(--sp-3);
+  }
+}

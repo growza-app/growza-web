@@ -1,0 +1,46 @@
+/* ---------- cards ---------- */
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1080px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.card + .card {
+  margin-top: 18px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 20px;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.card-head .link {
+  color: var(--accent-deep);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.card-body {
+  padding: 4px 20px 18px;
+}

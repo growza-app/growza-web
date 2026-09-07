@@ -1,0 +1,162 @@
+/* ---------- summary card ---------- */
+
+.summary {
+  background: var(--sidebar);
+  border-radius: var(--radius);
+  padding: 15px 17px 17px;
+  color: #fff;
+  margin-bottom: 18px;
+}
+
+.summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 13px;
+}
+
+.summary-label {
+  font-size: 12px;
+  font-weight: 620;
+  color: #8fd4b0;
+  letter-spacing: 0.05em;
+}
+
+.summary-more {
+  background: transparent;
+  border: none;
+  color: #8fd4b0;
+  cursor: pointer;
+  /* The icon stays small, but the tappable area is padded out to the ~44px
+     minimum a real thumb needs — the icon alone measured ~24x21px, which is
+     reliable for a mouse pointer but easy to miss on an actual phone. */
+  width: 44px;
+  height: 44px;
+  margin: -12px -12px -12px 0;
+  display: grid;
+  place-items: center;
+}
+
+.summary-more svg {
+  width: 17px;
+  height: 17px;
+}
+
+.summary-ring-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.summary-ring-fig {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+}
+
+.summary-ring-mid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-big {
+  font-size: 21px;
+  font-weight: 660;
+  line-height: 1.1;
+}
+
+.summary-cap {
+  font-size: 12.5px;
+  color: #a7c4b8;
+}
+
+.summary-rule {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 11px 0;
+}
+
+.summary-bar {
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+
+.summary-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #5be08a;
+}
+
+.summary-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 11px;
+}
+
+/* Light "colour tiles" variant — its own surface, so it overrides the dark base. */
+.summary-light {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.summary-light .summary-label {
+  color: var(--muted);
+}
+
+.summary-light .summary-more {
+  color: var(--muted);
+}
+
+.summary-light .range-toggle {
+  background: rgba(15, 61, 46, 0.08);
+}
+
+.summary-light .range-toggle button {
+  color: var(--muted);
+}
+
+.summary-light .range-toggle button.active {
+  background: var(--sidebar);
+  color: #fff;
+}
+
+.summary-light .summary-cap {
+  color: var(--muted);
+}
+
+.summary-light .summary-rule {
+  background: var(--border);
+}
+
+.summary-light .summary-bar {
+  background: var(--border);
+}
+
+.summary-light .range-bar {
+  background: var(--border);
+}
+
+.summary-light .range-bar-current {
+  background: var(--accent);
+}
+
+.summary-light .range-bar-empty {
+  border-color: var(--border);
+}
+
+.summary-light .range-bar-label {
+  color: var(--muted);
+}
+
+.summary-light .range-bar-label-current {
+  color: var(--text);
+}

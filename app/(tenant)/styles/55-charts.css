@@ -1,0 +1,44 @@
+/* ---------- charts ---------- */
+
+.rp-chart {
+  position: relative;
+  width: 100%;
+}
+
+.rp-gridline {
+  stroke: #eef0ee;
+  stroke-width: 1;
+}
+
+.rp-crosshair {
+  stroke: #c8cec9;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.rp-axis-label {
+  fill: #9aa39d;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.rp-chart-tip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.rp-chart-tip-label {
+  color: var(--muted);
+  font-weight: 600;
+}

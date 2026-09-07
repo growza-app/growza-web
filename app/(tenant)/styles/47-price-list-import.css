@@ -1,0 +1,136 @@
+/* ---------- price-list import ---------- */
+
+.import-modal {
+  max-width: 720px;
+}
+
+.import-map {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.import-map select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Scrolls inside the modal so the actions stay reachable on a long list. */
+.import-review {
+  max-height: 46vh;
+  overflow-y: auto;
+  margin-top: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* The last column is a fixed width, not `auto`. It used to size to its content,
+   which meant the header row (an empty cell) and the data rows (a Skip button)
+   resolved different track widths — and every `fr` column drifted with them, so
+   no header sat over its own column. Fixed width, one grid, everything lines up. */
+.import-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 74px 104px minmax(0, 1.6fr) 78px;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.import-row > button {
+  justify-self: end;
+}
+
+.import-row:last-child {
+  border-bottom: none;
+}
+
+.import-row input {
+  min-width: 0;
+  width: 100%;
+  font-size: 13.5px;
+  min-height: 34px;
+  padding: 5px 9px;
+}
+
+/* Reads as a fact, not a field — a re-price row cannot change its duration. */
+.import-row input[readonly] {
+  background: var(--slate-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* Column names for the review table. Sticky, because the list scrolls inside its
+   own box and a header that scrolls away is no header at all. Hidden from screen
+   readers — every input already carries its own aria-label, so announcing the row
+   again would only add noise. */
+.import-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Only the columns whose cell is an input need the inset — an <input> pads its own
+   text by 9px, so the label above it has to match. Price and Status start at the
+   cell edge (the rupee symbol and the status text both do), so they take none. */
+.import-head .ih-pad {
+  padding: 0 9px;
+}
+
+/* Rupee outside the box: the owner types a number, not a currency string. */
+.import-money {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.import-money-sym {
+  flex: none;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* Amber, not red — a row that needs a value is unfinished, not broken. */
+.import-row.is-bad {
+  background: var(--amber-soft);
+}
+
+.import-row.is-skipped {
+  opacity: 0.45;
+}
+
+.import-issue {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.import-note {
+  font-size: 12.5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 860px) {
+  .import-map {
+    grid-template-columns: 1fr;
+  }
+
+  .import-row {
+    grid-template-columns: minmax(0, 1fr) 64px 74px;
+    row-gap: 6px;
+  }
+
+  .import-note,
+  .import-row > button {
+    grid-column: 1 / -1;
+  }
+}

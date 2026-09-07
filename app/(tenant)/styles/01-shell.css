@@ -1,0 +1,111 @@
+/* ---------- shell ---------- */
+
+/* The whole document never scrolls — the sidebar and each page's own header
+   stay fixed on screen, and .page-body (below) is the one scroll region.
+   A page with more rows than fit (an unpaginated table) scrolls internally;
+   a paginated list (e.g. Offers) just fits, no scrollbar, footer always
+   visible without it. */
+.shell {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  /* dvh, not vh: in a mobile browser (app NOT installed) the URL bar and
+     bottom toolbar shrink the visible area, and 100vh measures the TALLER
+     chrome-hidden height — which is what cut the pagination off behind the
+     browser toolbar. dvh tracks the actually-visible height as that chrome
+     shows and hides. vh stays as the fallback for anything without dvh. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-deep) 100%);
+  padding: 22px 16px;
+  color: #fff;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  /* A column so the sign-out footer (GRW-160) can be pushed to the bottom by
+     `margin-top: auto` — and so it still sits below the last nav item, rather
+     than off-screen, when the list is long enough to scroll. */
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 6px 26px;
+}
+
+.brand-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.brand-name {
+  font-weight: 660;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15.5px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.nav a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.nav a.active {
+  background: var(--sidebar-active);
+  color: #fff;
+  font-weight: 600;
+}
+
+.nav svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.content {
+  /* Grid, not flex column: a fixed row plan (header / scroller / footer) is
+     what every page-level .page-fit / .bk-fit / .svc-fit variant has been
+     hand-rolling on top of flex — giving the shell the plan directly means
+     .page-body only has to be the middle row, not re-derive "fill what's
+     left" itself. Rows beyond these three (fixed-position overlays like
+     .fab-menu) don't consume a track, so they don't disturb the layout. */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+  min-width: 0;
+}

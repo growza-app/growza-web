@@ -1,0 +1,50 @@
+/* ---------- bar list ---------- */
+
+.rp-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.rp-bar-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.rp-bar-label {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-bar-note {
+  margin-left: 6px;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rp-bar-value {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rp-bar-track {
+  height: 9px;
+  background: #f0f1f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.rp-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: opacity 0.15s;
+}

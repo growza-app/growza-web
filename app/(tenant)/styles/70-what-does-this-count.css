@@ -1,0 +1,444 @@
+/* ---------- "what does this count?" ---------- */
+
+.rp-tip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+}
+
+.rp-tip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rp-tip-btn:hover,
+.rp-tip-btn[aria-expanded='true'] {
+  border-color: var(--accent-deep);
+  color: var(--accent-deep);
+}
+
+/* Placed by InfoTip in viewport coordinates — see the reasoning there. The
+   stylesheet owns how it looks; where it goes depends on measurements CSS
+   cannot take. */
+.rp-tip-bubble {
+  position: fixed;
+  z-index: 60;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 10px 26px rgba(18, 38, 29, 0.16);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+}
+
+/* ---------- Jira GRW-66 · GRW-160 — the sign-in screen ----------
+   The first screen a salon owner ever sees. Deliberately styled from the same
+   tokens as the dashboard rather than from the admin plane's palette: the two
+   planes share no visual language on purpose (ADR-14), and this belongs to the
+   salon's product.
+
+   `100dvh`, not `100vh`: on mobile Safari a `100vh` centred card sits partly
+   under the browser's own chrome, so the button an owner has to press is the
+   thing that ends up hidden. */
+.login-page {
+  /* `height`, not `min-height`, and this element owns the scrolling.
+     `html, body` above are `height: 100%; overflow: hidden` — the dashboard's
+     fit-to-screen shell, which this page inherits along with the stylesheet.
+     With `min-height` the card simply overflowed a page that could not scroll,
+     and in mobile landscape (812×375) the Sign in button was below the fold
+     and unreachable. Caught by the standing resolution matrix. */
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  /* Centring is `margin: auto` on the card, NOT `align-items: center` here.
+     A centred flex item that is taller than its scroll container has its
+     overflowing top clipped and unreachable; an auto margin centres when there
+     is room and falls back to the start edge when there is not. */
+  justify-content: center;
+  padding: var(--sp-6);
+  /* Safe-area insets so the card clears a notch or a home indicator when this
+     is opened from the installed PWA rather than a browser tab. */
+  padding-top: max(var(--sp-6), env(safe-area-inset-top));
+  padding-bottom: max(var(--sp-6), env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-deep) 100%);
+}
+
+.login-card {
+  margin: auto;
+  width: 100%;
+  /* Caps the line length on a desktop monitor; the width: 100% above is what
+     makes it fit a 320px phone without a horizontal scrollbar. */
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
+}
+
+.login-head h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.login-head p {
+  margin: var(--sp-2) 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.login-card .field input {
+  width: 100%;
+  box-sizing: border-box;
+  /* 16px is not a style choice: anything smaller makes iOS Safari zoom the
+     page on focus, and it never zooms back out. */
+  font-size: 16px;
+}
+
+.login-error {
+  margin: 0;
+}
+
+.login-submit {
+  justify-content: center;
+  padding: var(--sp-3) var(--sp-5);
+  font-size: 15px;
+}
+
+.login-submit:disabled {
+  background: var(--slate-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.login-foot {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Sign-out in the desktop sidebar's footer (GRW-160). Matches `.nav a` rather
+   than reusing it: it is a <button>, so it needs the button resets too, and
+   `margin-top: auto` is what parks it at the bottom of the column. It is never
+   `.active` — it is not a destination. */
+.nav-signout {
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 12px 10px;
+  color: var(--sidebar-text);
+  font: inherit;
+  font-weight: 500;
+  font-size: 15.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-signout:hover {
+  color: #fff;
+}
+
+.nav-signout svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.nav-signout:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* Sign-out as a row on the mobile More menu (GRW-160). `.menu-row` gives it
+   everything but the button resets and the full width a <button> does not take
+   by default. */
+.menu-row-action {
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-row-action:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* A settings row that is a <button>, not an <a> — see SignOutButton (GRW-160).
+   Resets the button defaults that would otherwise show through: browser
+   chrome background, a border, centred text, and a font that isn't the
+   page's. Everything else it inherits from .settings-row, so it is
+   indistinguishable from the rows around it. */
+.settings-row-action {
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-row-action:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* ---------- Jira GRW-90 · GRW-137 — the impersonation banner ----------
+   §7: "an unmissable banner for the entire session, with a working exit".
+   Above the shell, not inside it, so it cannot scroll away with the content
+   or end up below the billing banner.
+
+   A FIXED height, and that is structural rather than cosmetic: `.shell` is
+   `height: 100dvh`, so anything stacked above it has to be subtracted back out
+   or the bottom of the app goes off-screen. One token, used in both places.
+   Fixed also means it cannot wrap on a narrow phone and silently grow past
+   what the calc() subtracts — which is why the text ellipses instead. */
+:root {
+  --impersonation-banner-h: 44px;
+}
+
+.impersonation-banner {
+  height: var(--impersonation-banner-h);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4);
+  /* The dashboard has no red in its palette — every existing state colour is
+     amber or green — which is exactly why this one is introduced here and
+     nowhere else. It should not look like anything else in the product. */
+  background: #7f1d1d;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 550;
+}
+
+.impersonation-banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fca5a5;
+  flex: none;
+}
+
+.impersonation-banner-text {
+  /* Ellipsis rather than wrap: wrapping would make the banner taller than the
+     token the shell's calc() subtracts, and push the bottom of the app off. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.impersonation-banner-exit {
+  margin-left: auto;
+  flex: none;
+  padding: 5px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.impersonation-banner-exit:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.impersonation-banner-exit:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* The shell gives back exactly what the banner took. Without this the app is
+   `100dvh` tall UNDER a 44px banner, and its last 44px — the mobile tab bar,
+   a table's pagination — is below the fold with nothing to scroll it. */
+.shell-impersonating {
+  height: calc(100vh - var(--impersonation-banner-h));
+  height: calc(100dvh - var(--impersonation-banner-h));
+}
+
+/* ---------- GRW-145 — "Pay now" in the billing banner ----------
+   The banner inherits its colour from the state it is reporting (amber for a
+   warning, red once access is restricted), so the button borrows it rather than
+   introducing a third: `currentColor` means it always belongs to the message
+   it sits beside, in both states, with no second palette to keep in step. */
+.billing-banner-action {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.billing-pay-now {
+  flex: none;
+  padding: 6px 16px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  /* Tall enough to be a comfortable tap target on a phone without making the
+     banner taller than the sentence needs. */
+  min-height: 32px;
+}
+
+.billing-pay-now:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Once access is restricted this is the only action that lifts it, so it stops
+   being an outline and becomes the obvious thing on the banner.
+
+   Explicit colours, NOT `currentColor`. The first version set
+   `background: currentColor` and then overrode `color` to near-white on the
+   same element — so the background resolved to the new colour too and the
+   label was invisible, in the one state where pressing it is the only way out.
+   Caught by reading the computed styles rather than the screenshot, where a
+   blank button looks like a rendering glitch.
+
+   The fill is the restricted banner's own text colour, so it still belongs to
+   the message it sits beside. */
+.billing-pay-now-urgent {
+  background: oklch(0.42 0.15 25);
+  border-color: transparent;
+  color: oklch(0.97 0.02 25);
+}
+
+.billing-pay-now-urgent:hover {
+  background: oklch(0.36 0.15 25);
+}
+
+.billing-pay-now:disabled {
+  cursor: progress;
+  opacity: 0.65;
+}
+
+.billing-banner-error {
+  flex-basis: 100%;
+  font-size: 12.5px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* ---------- Jira GRW-79 · GRW-164 — the account-status screen ----------
+   Shown instead of the dashboard when the API says the account cannot
+   operate. Borrows the sign-in screen's shape deliberately: this is the same
+   kind of moment — you are outside the product, being told one thing. */
+.account-status {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-6);
+  padding-top: max(var(--sp-6), env(safe-area-inset-top));
+  padding-bottom: max(var(--sp-6), env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-deep) 100%);
+}
+
+.account-status-card {
+  margin: auto;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--sp-8);
+  text-align: center;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
+}
+
+.account-status-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.account-status-card h1 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.account-status-card p {
+  margin: 0;
+  font-size: 14.5px;
+  /* Wraps rather than truncates: this is a full sentence and it is the only
+     thing on the screen. */
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* The tappable contacts under the account-status message (GRW-164). Stacked
+   rather than side by side: at 320px two of them side by side wrap mid-number,
+   and a phone number broken across lines is worse than one on its own row. */
+.account-status-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+}
+
+.account-status-contact {
+  display: block;
+  padding: 10px var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--accent-deep);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+  /* A long email must not push the card wider than the viewport. */
+  overflow-wrap: anywhere;
+}
+
+.account-status-contact:hover {
+  background: var(--accent-soft);
+}

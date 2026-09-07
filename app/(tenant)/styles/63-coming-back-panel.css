@@ -1,0 +1,36 @@
+/* ---------- coming-back panel ---------- */
+
+.rp-retention-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+
+.rp-headline-box {
+  background: var(--accent-soft);
+  border: 1px solid #dbe7df;
+  border-radius: 14px;
+  padding: var(--sp-4);
+}
+
+.rp-headline-label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--accent-deep);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.rp-headline-value {
+  font-size: 34px;
+  font-weight: 800;
+  margin-top: var(--sp-2);
+  color: var(--accent-deep);
+  line-height: 1.1;
+}
+
+.rp-headline-hint { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+
+.rp-retention-panel .rp-figure-pair { border-top: none; padding-top: 0; margin-top: 0; }

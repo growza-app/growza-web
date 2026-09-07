@@ -1,0 +1,78 @@
+/* ---------- insights ---------- */
+
+.rp-banner {
+  background: var(--sidebar);
+  border-radius: 18px;
+  padding: 22px;
+  color: #e7f0ea;
+}
+
+.rp-banner-kicker {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.8;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.rp-banner-body {
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: var(--sp-2);
+  letter-spacing: -0.3px;
+  max-width: 560px;
+  line-height: 1.35;
+}
+
+.rp-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--sp-3);
+}
+
+.rp-insight { display: flex; flex-direction: column; gap: var(--sp-3); }
+.rp-insight-head { display: flex; align-items: center; gap: 9px; }
+
+.rp-insight-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rp-insight-icon svg { width: 18px; height: 18px; }
+
+.rp-insight-cat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.rp-insight-headline {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* No line clamp anywhere here on purpose: a half-sentence insight is worse
+   than none, so the card grows to fit its text. */
+.rp-insight-body {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.rp-standalone-foot {
+  margin: 0;
+  padding-top: 0;
+  border-top: none;
+  color: var(--muted);
+  font-size: 12.5px;
+}

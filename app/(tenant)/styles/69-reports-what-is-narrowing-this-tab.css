@@ -1,0 +1,77 @@
+/* ---------- Reports · what is narrowing this tab ---------- */
+
+.rp-applied {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--sp-3);
+  font-size: 12.5px;
+}
+
+.rp-applied-label { color: var(--muted); font-weight: 600; }
+
+.rp-applied-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  border: 1px solid #bfe0cc;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rp-applied-clear {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+/* A filter set on another tab, or one that pointed at something gone: a
+   statement, not a control. */
+.rp-applied-inert {
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 7px 11px;
+}
+
+/* The Bookings trend card's answer, said in its own hint line — the heading
+   is a question and this is the reply, so it goes where the explanation
+   would have gone rather than on three lines of its own. */
+.rp-verdict-word { font-weight: 700; color: var(--text); }
+.rp-verdict-word.is-up { color: var(--rp-green-ink); }
+.rp-verdict-word.is-down { color: var(--rp-red); }
+
+/* The heatmap's colour key. Five bands plus "nobody in", with a word at each
+   end — the colours mean nothing without it. */
+.rp-heat-key {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.rp-heat-key-word { white-space: nowrap; }
+.rp-heat-key-word:first-child { margin-right: 2px; }
+.rp-heat-key-word:last-child { margin-left: 2px; }
+
+.rp-heat-key-cell {
+  width: 22px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid rgba(18, 38, 29, 0.06);
+}

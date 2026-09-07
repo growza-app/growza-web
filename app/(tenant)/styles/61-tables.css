@@ -1,0 +1,52 @@
+/* ---------- tables ---------- */
+
+/* Wide tables scroll inside this box, never by widening the page. */
+.rp-table-scroll {
+  overflow-x: auto;
+  min-width: 0;
+  margin-top: var(--sp-3);
+}
+
+.rp-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.rp-table th {
+  text-align: left;
+  padding: 0 14px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #9aa39d;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.rp-table td {
+  padding: 13px 14px;
+  border-top: 1px solid #eef0ee;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.rp-row-clickable { cursor: pointer; }
+.rp-row-clickable:hover { background: #f7f9f7; }
+
+.rp-cell-avatar { display: flex; align-items: center; gap: 10px; }
+.rp-cell-avatar .rp-avatar { width: 30px; height: 30px; flex: 0 0 30px; font-size: 12px; }
+.rp-cell-name { font-weight: 700; font-size: 13.5px; }
+
+.rp-pill {
+  background: var(--accent-soft);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+
+.rp-cell-bar { display: flex; align-items: center; gap: 8px; }
+.rp-cell-bar-track { width: 70px; height: 7px; background: #f0f1f0; border-radius: 5px; overflow: hidden; }
+.rp-cell-bar-fill { display: block; height: 100%; }
+.rp-cell-bar-value { font-size: 12.5px; font-weight: 700; }

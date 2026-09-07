@@ -1,0 +1,87 @@
+/* ---------- header ---------- */
+
+.rp-header {
+  display: flex;
+  flex-direction: column;
+  /* Row 1 of `.content`'s grid. Without min-width:0 the header's widest
+     child sizes the whole grid column, and the scrolling body below it
+     inherits that width — which is how eight nowrap tabs made a 390px phone
+     render a 755px page with half of every card unreachable. */
+  min-width: 0;
+  gap: var(--sp-3);
+  padding: 14px var(--page-pad-x) 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.rp-title-row h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+
+.rp-title-row p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.rp-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.rp-controls-spacer {
+  flex: 1;
+}
+
+.rp-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.rp-control:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rp-control-on {
+  background: var(--accent-soft);
+  border-color: #bfe0cc;
+  color: var(--accent-deep);
+}
+
+.rp-control-primary {
+  background: var(--sidebar);
+  border-color: var(--sidebar);
+  color: #fff;
+}
+
+.rp-control-icon {
+  display: flex;
+  width: 15px;
+  height: 15px;
+}
+
+.rp-control-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.rp-brand-ink { color: var(--accent-deep); }
+.rp-amber-ink { color: var(--rp-amber-ink); }
+.rp-muted { color: var(--muted); }

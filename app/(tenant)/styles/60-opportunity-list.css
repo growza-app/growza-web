@@ -1,0 +1,42 @@
+/* ---------- opportunity list ---------- */
+
+.rp-opps {
+  display: flex;
+  flex-direction: column;
+}
+
+.rp-opp {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 11px 4px;
+  border-bottom: 1px solid #eef0ee;
+  color: inherit;
+  text-decoration: none;
+}
+
+.rp-opp:last-child { border-bottom: none; }
+.rp-opp:hover { background: #f7f9f7; }
+
+.rp-opp-main { flex: 1; min-width: 0; }
+.rp-opp-name { display: block; font-weight: 700; font-size: 13.5px; }
+.rp-opp-meta { display: block; color: var(--muted); font-size: 12px; }
+.rp-opp-right { text-align: right; }
+.rp-opp-spend { display: block; font-weight: 700; font-size: 13px; }
+.rp-opp-status { display: block; font-size: 11.5px; font-weight: 600; }
+.rp-opp-chev { display: flex; width: 14px; height: 14px; color: var(--muted); }
+.rp-opp-chev svg { width: 100%; height: 100%; }
+
+.rp-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}

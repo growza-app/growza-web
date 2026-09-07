@@ -1,0 +1,61 @@
+/* ---------- staff ---------- */
+
+.staff-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.staff-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.staff-search-wrap svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.staff-search-wrap input[type='search'] {
+  width: 100%;
+  padding-left: 36px;
+}
+
+/* Summary line — replaces the three KPI tiles. The tiles cost ~120px of
+   vertical space above the fold to show three numbers that fit on one line,
+   and pushed the actual roster below the fold on a laptop. */
+.staff-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.staff-summary strong {
+  color: var(--text);
+  font-weight: 640;
+}
+
+.staff-summary-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c7cfc9;
+}
+
+.staff-summary-warn {
+  color: var(--amber);
+  font-weight: 600;
+}

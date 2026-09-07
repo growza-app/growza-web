@@ -1,0 +1,56 @@
+/* ---------- provider day timeline ---------- */
+
+.timeline {
+  padding: 6px 20px 20px;
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 12px;
+  align-items: center;
+  min-height: 42px;
+}
+
+.tl-hour {
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-track {
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+}
+
+.tl-block {
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.tl-booking {
+  background: var(--accent-soft);
+  color: #14532d;
+}
+
+.tl-booking-alt {
+  background: var(--blue-soft);
+  color: #1e3a8a;
+}
+
+.tl-booking-late {
+  background: var(--peach);
+  color: #9a3412;
+}
+
+.tl-lunch,
+.tl-open {
+  color: var(--muted);
+  font-size: 14.5px;
+}

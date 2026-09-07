@@ -1,0 +1,2457 @@
+/* ---------- customers ---------- */
+
+.cust-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/*
+ * Deliberately short. This band and the one under it were costing 306px above
+ * a list the owner opened the page to read — three rows of ten were visible
+ * at 1440x900. The figure is the point; the label sits beside it rather than
+ * above it, and the explanatory line is gone (two of the four restated their
+ * own label, and the two that defined something now do it on hover).
+ */
+.cust-kpi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+}
+
+.cust-kpi-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  display: grid;
+  place-items: center;
+}
+
+.cust-kpi-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.cust-kpi-label {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+.cust-kpi-value {
+  font-size: 20px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* Wraps the magnifier and the input as one control so the icon sits inside
+   the field rather than floating beside it. */
+.search-wrap {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  color: var(--muted);
+}
+
+.search-wrap:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  background: var(--surface);
+}
+
+.search-wrap svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.search-input-bare {
+  border: none;
+  background: transparent;
+  padding: 9px 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.search-input-bare:focus {
+  outline: none;
+}
+
+.cust-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cust-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-deep);
+  text-decoration: none;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.cust-phone svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.cust-phone:hover {
+  text-decoration: underline;
+}
+
+.cust-card {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+}
+
+.cust-card:last-child {
+  border-bottom: none;
+}
+
+.cust-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cust-card-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 640;
+  margin-bottom: 3px;
+}
+
+.cust-card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- bookings list (mobile cards) ----------
+   Desktop keeps the six-column table; on a phone the same rows render as cards
+   (time · who/what · call), toggled in the mobile media query. */
+.booking-cards {
+  display: none;
+}
+
+/* Must be declared HERE, above the mobile media query — a base rule placed after
+   it would win on equal specificity and the cards would never show. */
+.paged-cards {
+  display: none;
+}
+
+/*
+ * The card swap for `PaginatedTable` is at 1000px, not the app's usual 860: the
+ * Services table has seven columns and, measured even with tightened gutters,
+ * 900px still left 121px of it — including Actions — off to the right.
+ *
+ * It has to sit AFTER the base rule above and after any later `.paged-*`
+ * declaration; on equal specificity the last one in the file wins, which is what
+ * made the first attempt at this silently do nothing.
+ */
+@media (max-width: 1000px) {
+  .paged-table {
+    display: none;
+  }
+
+  .paged-cards {
+    display: block;
+  }
+}
+
+.booking-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.booking-card:last-child {
+  border-bottom: none;
+}
+
+.booking-time {
+  flex-shrink: 0;
+  width: 56px;
+  font-weight: 680;
+  font-size: 15px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.booking-time span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* Total booked time under the start time — the whole combo as one duration,
+   never split per service. */
+.booking-time .booking-dur {
+  margin-top: 3px;
+  color: var(--accent-deep);
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.booking-staff {
+  font-size: 12px;
+}
+
+.booking-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.booking-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 640;
+}
+
+.booking-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Status chip pinned to the right of the name row on every card, so Finished /
+   Coming line up in one column regardless of how long the customer name is. */
+.booking-name .chip {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Fixed-width slot that holds the call button (or nothing, on a finished
+   booking) — keeps the right edge of .booking-main constant so the status
+   chips above align, and the call button sits directly under them. */
+.booking-call {
+  flex-shrink: 0;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= bookings page (redesigned) ================= */
+
+/* ---- headline counts ---- */
+/* 4 count tiles + the "at a glance" metric card as a wider 5th column
+   (GRW-47, Bookings.dc.html) — the metric card replaced the old static
+   Revenue tile that used to fill this slot. */
+.bk-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 1.6fr;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
+}
+
+/* Stays 5-across at every desktop width (matching the mock) — the tiles are
+   compact enough now that the count value and its label sit on one line, so
+   they don't need the extra room an earlier 3-up wrap was buying them. */
+
+.bk-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-2);
+  min-width: 0;
+}
+
+.bk-kpi-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--sp-2);
+}
+
+.bk-kpi-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.bk-kpi-green {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.bk-kpi-amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.bk-kpi-purple {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+.bk-kpi-red {
+  background: #fde3e3;
+  color: #c0362c;
+}
+
+.bk-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.bk-kpi-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The mock's tiles are value + label only. The day/"Next 2 hrs" qualifier
+   this used to carry is redundant next to the From/To filter right above the
+   row, and squeezing a third line in made the labels ellipsis away. */
+.bk-kpi-sub {
+  display: none;
+}
+.bk-kpi-sub-green {
+  color: var(--accent-deep);
+}
+.bk-kpi-sub-amber {
+  color: var(--amber);
+}
+.bk-kpi-sub-purple {
+  color: var(--purple-deep);
+}
+.bk-kpi-sub-red {
+  color: #c0362c;
+}
+
+/* ---- "at a glance" metric card ----
+   Same dark gradient Home's summary hero already uses (.summary-progress-hero)
+   — one card, reflowed per viewport: the KPI row's 5th column on desktop
+   (icon+select on top, value/label below, an optional busy-% bar — matching
+   Bookings.dc.html), a single full-width row below the 2x2 grid on mobile
+   (value/label left, select right, no icon/bar — matching Bookings Mobile.dc.html,
+   GRW-46). The mobile media query below only touches layout, not these colours. */
+.bk-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: linear-gradient(135deg, #0b3d2d, #104a37);
+  border: 1px solid #163f2f;
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-3) 12px;
+  color: #fff;
+  min-width: 0;
+}
+
+.bk-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bk-metric-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.bk-metric-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bk-metric-select {
+  flex-shrink: 0;
+  max-width: 132px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+}
+
+.bk-metric-select option {
+  color: var(--text);
+}
+
+.bk-metric-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bk-metric-value {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-metric-label {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-metric-bar {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.bk-metric-bar-fill {
+  height: 100%;
+  background: #fff;
+  border-radius: 99px;
+}
+
+/* ---- combined filter card (search / From / To / staff / Show) ----
+   GRW-47: search full-width on its own row, then From, To, Staff and Show
+   sharing the row beneath it — matching Bookings.dc.html. Search and the
+   staff select are desktop-only; mobile keeps its own dedicated search pill
+   and tap chips further down the page (unchanged from GRW-46) and shows just
+   From/To + Show here. */
+.bk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.bk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* inline-flex so the Show/Order labels can carry a funnel / up-down-arrows
+   mark beside the word — the two dropdowns sit next to each other and read
+   almost identically otherwise. */
+.bk-field > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding-left: 2px;
+}
+
+.bk-field > label svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.bk-field input,
+.bk-field select {
+  height: 44px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+}
+
+/* The weekday hint is redundant next to a date input that already renders the
+   date, and keeping it would make the From field taller than every sibling,
+   dropping the row out of alignment with To / Staff / Show. (The old
+   .filters-inline card dropped it on desktop for the same reason.) */
+.bk-filters .field-hint {
+  display: none;
+}
+
+/* Search takes the whole first row; the fields below it then wrap onto the
+   second one on their own. */
+.bk-field-search {
+  flex: 1 1 100%;
+}
+
+/* Staff can hold a long display name, so it keeps the most room. Status and
+   Sort have short, fixed vocabularies ("No-show", "Latest first") and don't
+   grow — Sort in particular was taking a full field's width to show two
+   words. `flex-grow: 0` keeps the spare width with Staff instead of padding
+   all three out. */
+.bk-field-staff {
+  flex: 1 1 170px;
+}
+
+.bk-field-status {
+  flex: 0 1 150px;
+}
+
+.bk-field-sort {
+  flex: 0 1 150px;
+}
+
+.bk-search-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.bk-search-inline svg {
+  width: 17px;
+  height: 17px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.bk-search-inline input {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+
+/* ---- section header + view toggle ---- */
+.bk-sched-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+
+.bk-sched-head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+}
+
+/* "N appts" beside the heading — a real count of what's actually listed
+   below (post search/staff filter), not a static day total that could
+   disagree with an empty/narrowed list right under it. */
+.bk-sched-count {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Segmented Timeline | List — both tabs always visible, the active one
+   raised on a white pill (GRW-47, per the mock). Replaces a single pill that
+   toggled blind, so the owner can see which view they're switching to. */
+.bk-view {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--slate-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.bk-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 15px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bk-view-tab svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bk-view-tab.is-active {
+  background: var(--surface);
+  color: var(--accent-deep);
+  box-shadow: 0 1px 3px rgba(20, 40, 30, 0.15);
+}
+
+/* ---- timeline ---- */
+.bk-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Date separator, shown only when a From/To range actually spans more than
+   one day. Without it the timeline's markers are bare clock times, so 9:00 on
+   the 28th and 9:00 on the 29th look like two entries in the same day —
+   "6 bookings at the same time" then reads as a claim about a day the owner
+   can't identify. Sticky so the day stays named while scrolling through it. */
+.bk-day-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: var(--sp-4) 0 var(--sp-3);
+  padding: 6px 0;
+  background: var(--page-bg);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.bk-day-head:first-child {
+  margin-top: 0;
+}
+
+/* One timeline row per START TIME, not per booking: bookings that start
+   together share the marker and sit side by side beneath it (GRW-47, per the
+   mock), with a badge saying how many. Cards flex-wrap so 3+ at once still
+   fit rather than overflowing the row. */
+.bk-tl-slot {
+  flex: 1;
+  min-width: 0;
+  padding-top: var(--sp-3);
+}
+
+.bk-tl-cards {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.bk-tl-cards > .bk-card {
+  flex: 1 1 320px;
+}
+
+.bk-multi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-bottom: 9px;
+  padding: 4px 11px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+}
+
+.bk-multi-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Duration moved onto the card's bottom row with a clock icon (per the mock).
+   Mobile shows it in .bk-card-timerow instead — see the mobile query. */
+.bk-card-dur {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.bk-card-dur svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Time + status inside the card is a MOBILE affordance: mobile drops the
+   timeline's left gutter entirely, so without this the card would show no
+   time at all. Desktop keeps time in the gutter and status in the card's
+   right-hand column, so this row stays hidden there. */
+.bk-card-timerow {
+  display: none;
+}
+
+.bk-tl-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: stretch;
+  padding-bottom: var(--sp-3);
+}
+
+.bk-tl-time {
+  flex-shrink: 0;
+  width: 58px;
+  padding-top: var(--sp-3);
+}
+
+.bk-tl-clock {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.bk-tl-clock span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* The gutter shows the time only — duration lives on the card's bottom row
+   (per the mock), and printing it in both places read as a stutter. */
+.bk-tl-dur {
+  display: none;
+}
+
+.bk-tl-rail {
+  flex-shrink: 0;
+  width: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(var(--sp-3) + 5px);
+}
+
+.bk-tl-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #cfd6d2;
+  flex-shrink: 0;
+}
+
+.bk-tl-dot.is-up {
+  background: var(--accent);
+}
+
+/* A slot holding more than one booking gets its own marker colour, so the
+   overlap is visible before you read the badge. */
+.bk-tl-dot.is-multi {
+  background: var(--accent-deep);
+}
+
+.bk-tl-line {
+  flex: 1;
+  width: 2px;
+  background: var(--border);
+  margin-top: 4px;
+}
+
+/* ---- booking card (shared by timeline + list) ---- */
+.bk-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  cursor: pointer;
+}
+
+.bk-card:hover {
+  border-color: #d4dbd7;
+}
+
+.bk-card-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.bk-card-name {
+  font-size: 15px;
+  font-weight: 660;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-card-combo {
+  margin: 5px 0 2px;
+}
+
+.bk-card-services {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-card-staff {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.bk-card-staff svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Booking reference, phone, staff avatar, price (GRW-46 built these for
+   mobile; GRW-47 shows them on desktop too, at desktop-appropriate sizing —
+   the mobile media query further down overrides these for its tighter card). */
+.bk-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bk-card-ref {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  background: var(--slate-soft);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.bk-card-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.bk-card-phone svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.bk-card-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.bk-card-bottom-row .bk-card-staff {
+  margin-top: 0;
+}
+
+.bk-card-staff-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bk-staff-bg, var(--slate-soft));
+  color: var(--bk-rail, var(--muted));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.bk-card-price {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.bk-card-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.bk-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+
+.bk-details svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bk-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* ---- revenue summary bar ---- */
+.bk-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  margin-top: var(--sp-4);
+}
+
+.bk-summary-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.bk-summary-icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+}
+
+.bk-summary-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bk-summary-value {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.bk-summary-label {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.bk-summary-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+}
+
+.bk-summary-link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-deep);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bk-summary-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* GRW-46: mobile-only. Hidden by default here so desktop never sees them —
+   the mobile media query below is what turns them on. Both render
+   unconditionally in BookingsList.tsx's JSX (there's no server-side way to
+   know the viewport), so without this desktop would show an unstyled
+   search pill and a row of chips above the schedule. Everything else that
+   used to live in this list (the metric card, booking-ref/phone/price/
+   staff-avatar, the schedule count, the same-time badge) is desktop-visible
+   too as of GRW-47 — see their own default rules below instead. */
+.bk-search-row,
+.bk-staff-chips {
+  display: none;
+}
+
+/*
+ * GRW-46: Bookings, mobile redesign. Desktop is untouched — every rule here
+ * lives inside this mobile-only query, and the three elements it turns on
+ * (.bk-metric-card, .bk-search-row, .bk-staff-chips) default to display:none
+ * above, declared before this query so the mobile override always wins on
+ * source order regardless of specificity (the same gotcha documented
+ * elsewhere in this file: a later declaration wins at equal specificity).
+ */
+@media (max-width: 860px) {
+  /* 4 compact count tiles across one row, exactly as the mobile mock has
+     them; the metric card becomes its own full-width row below (see
+     .bk-metric-card further down) rather than a 5th grid cell. */
+  .bk-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  /* Centred column: icon, then count, then label. Four equal tiles sitting
+     in a row read as a set, and centring each one keeps that symmetry —
+     left-aligned contents put the icon and the number on different optical
+     axes in every tile. */
+  .bk-kpi {
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .bk-kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .bk-kpi-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .bk-kpi-value {
+    font-size: 19px;
+  }
+
+  /* Quarter of a phone's width is not enough for "Completed" on one line —
+     let it wrap instead of ellipsing to "Comple…", which reads as broken. */
+  .bk-kpi-label {
+    font-size: 10.5px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  /* The "Today"/"Next 2 hrs" sub-line has no room in a quarter-width tile
+     and repeats what the day filter above already says. */
+  .bk-kpi-sub {
+    display: none;
+  }
+
+  /* Mobile has no timeline gutter (no room for it) — the card carries its
+     own time in .bk-card-timerow instead, per the mobile mock. */
+  .bk-tl-time,
+  .bk-tl-rail {
+    display: none;
+  }
+
+  .bk-tl-row {
+    padding-bottom: 0;
+  }
+
+  .bk-tl-slot {
+    padding-top: 0;
+  }
+
+  /* One card per row on a phone — the desktop side-by-side flex basis would
+     force a horizontal squeeze instead. */
+  .bk-tl-cards {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bk-tl-cards > .bk-card {
+    flex: 1 1 auto;
+  }
+
+  .bk-timeline {
+    gap: 10px;
+  }
+
+  .bk-multi-badge {
+    margin-bottom: 10px;
+  }
+
+  /* Time + duration on the left, status chip on the right, at the top of the
+     card — the row desktop doesn't need because its gutter and right-hand
+     column cover both. */
+  .bk-card-timerow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .bk-card-time {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .bk-card-time span {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Duration and the status chip both moved into .bk-card-timerow above; the
+     desktop copies would double them up here.
+
+     "Details" goes too. Tapping the card already opens the same sheet, so it
+     was a second control for one action — and being pinned to the card's
+     bottom-right put it directly under the floating + button, which is fixed
+     there. Taps landed on the FAB and the button read as dead. The call
+     action stays: it does something the card tap doesn't, and the mobile
+     mock's card carries only that. */
+  .bk-card-dur,
+  .bk-card-right .chip,
+  .bk-card-right .bk-details {
+    display: none;
+  }
+
+  /* Colour rail per staff member, set inline per-card via --bk-rail /
+     --bk-staff-bg (BookingsList.tsx) — hashed from the staff member's name,
+     not a hardcoded per-name map, since a real roster is arbitrary. Falls
+     back to transparent/muted for a booking with no assigned staff. */
+  .bk-card {
+    border-left: 4px solid var(--bk-rail, transparent);
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  /* Only the call/Details action is left in this column on mobile — the
+     status chip moved up into .bk-card-timerow, so it no longer competes
+     with the name row for width. */
+  .bk-card-right {
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  /* nowrap, not wrap: the ref chip stays glued to the name, same row as the
+     mock — the name's own ellipsis rule (below) truncates first instead. */
+  .bk-card-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .bk-card-name-row .bk-card-name {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .bk-card-ref {
+    display: inline-block;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    background: var(--slate-soft);
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+
+  .bk-card-phone {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+    font-size: 12.5px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .bk-card-phone svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+
+  /* Price moves down here, beside staff, instead of stacking in the card's
+     right-hand status column (GRW-46 follow-up) — that column got crowded
+     enough to force the name/ref-chip row above to wrap onto two lines, and
+     the mock keeps price at the bottom next to the staff line, not the top. */
+  .bk-card-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .bk-card-bottom-row .bk-card-staff {
+    margin-top: 0;
+  }
+
+  .bk-card-staff-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bk-staff-bg, var(--slate-soft));
+    color: var(--bk-rail, var(--muted));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .bk-card-price {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  /* Single row on mobile — value/label on the left, the metric picker on the
+     right, no icon, no busy-% bar (matching Bookings Mobile.dc.html) — versus
+     desktop's icon+select-on-top / value-below / bar layout (Bookings.dc.html,
+     GRW-47). .bk-metric-top's own box is removed (display:contents) so its
+     icon + select become direct flex items of the row here; the icon is then
+     hidden outright, and `order` puts .bk-metric-main first regardless of
+     source order. */
+  .bk-metric-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 16px;
+    margin-top: 10px;
+    grid-column: 1 / -1;
+  }
+
+  .bk-metric-top {
+    display: contents;
+  }
+
+  .bk-metric-icon {
+    display: none;
+  }
+
+  .bk-metric-main {
+    order: 1;
+  }
+
+  .bk-metric-select {
+    order: 2;
+    max-width: none;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .bk-metric-value {
+    font-size: 22px;
+  }
+
+  .bk-metric-label {
+    font-size: 12px;
+  }
+
+  .bk-metric-bar {
+    display: none;
+  }
+
+  /* Search + staff chips: both filter the day's already-loaded bookings
+     client-side (BR-01) and are independent of the date form above them
+     (BR-02) — no relation to that form's own full-page GET navigation. */
+  .bk-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 46px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .bk-search-row svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .bk-search-row input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .bk-staff-chips {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    overflow-x: auto;
+  }
+
+  .bk-staff-chip {
+    flex: none;
+    height: 34px;
+    padding: 0 15px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .bk-staff-chip.is-active {
+    background: var(--sidebar);
+    border-color: var(--sidebar);
+    color: #fff;
+  }
+
+  .bk-no-matches {
+    margin-top: 14px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .bk-no-matches-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .bk-no-matches-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  /* The count sits hard right of the heading on mobile (per the mock), not
+     tucked beside it — .bk-sched-head is already space-between, so pushing
+     the count out of the <h3> flow with margin-left:auto isn't possible;
+     making the h3 itself the flex row does it. */
+  .bk-sched-head h3 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex: 1;
+    gap: 10px;
+    font-size: 19px;
+    font-weight: 800;
+  }
+
+  .bk-sched-count {
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  /* The view toggle has no room beside a full-width heading on a phone, and
+     the timeline (which mobile renders as plain stacked cards anyway) is the
+     only view that reads well at this width. */
+  .bk-view {
+    display: none;
+  }
+
+  /* The filter card is just From/To + Show on mobile (search and staff live
+     in their own dedicated pill/chips below) — two date fields sharing a row
+     with the button wrapping under them, per the mobile mock. Targeted by
+     class, not :first-child: the status-filter banner can render before this
+     card, in which case it isn't the first child. */
+  .bk-filter-card {
+    padding: 12px;
+  }
+
+  .bk-filters {
+    padding: 0;
+    gap: 8px;
+  }
+
+  /* Two per row, not "as many as fit": with four controls all set to shrink
+     freely they crammed onto one line and every value clipped ("30/0…",
+     "All statu…"). The basis is half the row minus the 8px gap. */
+  .bk-field {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+
+  /* Search keeps its own full-width row above the two date fields, the way
+     the mobile mock stacks them. */
+  .bk-field-search.mobile-only {
+    flex: 1 1 100%;
+  }
+
+  /* Status and Sort share the row under From/To — two per row, so neither is
+     squeezed the way three across a phone would be. Labels stay hidden like
+     every other field here; both option sets read as their own labels
+     ("All statuses", "Earliest first"). */
+  .bk-field-status,
+  .bk-field-sort {
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .bk-field-status select,
+  .bk-field-sort select {
+    height: 42px;
+    padding: 0 10px;
+    font-size: 13.5px;
+  }
+
+  /* The labels ("From"/"To") and the weekday hint are what make this card
+     tall; the two date values read as a range on their own at this size. */
+  .bk-field > label,
+  .bk-filters .field-hint {
+    display: none;
+  }
+
+  .bk-field input {
+    height: 42px;
+    padding: 0 10px;
+    font-size: 13.5px;
+  }
+}
+
+.booking-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Purple "🎁 <name>" pill that marks a booking as a real combo package (the
+   customer picked an offer), not just several services added together. */
+.booking-combo {
+  margin: 3px 0 1px;
+}
+
+/* Home stacks three sections (summary, today's schedule, chair timeline) and
+   on a short laptop they cannot all fit. The chair timeline goes first: by its
+   own design note it repeats bookings the schedule above already lists, so the
+   schedule earns the space. Keyed on viewport HEIGHT, not width — this is
+   about vertical room, and a wide-but-short window has the same problem.
+   The threshold clears a 1080p monitor on purpose: the card is ~300px, so
+   below roughly 1150px of viewport it would squeeze the schedule down to a
+   single time slot, which is a worse trade than dropping a duplicate view. */
+@media (max-height: 1150px) {
+  .home-chair {
+    display: none;
+  }
+}
+
+/* ---------- filter toolbar: slim single row, every page (desktop) ----------
+   Any form using .filters-inline (Bookings' day/staff filter, Free Times'
+   service/day filter, ...) collapses to ONE compact row: each label sits to
+   the LEFT of its control instead of stacked above it, and the (desktop-
+   redundant) weekday hint is dropped — the date field already shows the
+   date. ~56px instead of ~130px. Desktop only — mobile keeps the stacked,
+   full-width layout since fields need the width there. */
+/* Counterpart to .desktop-only. Hidden inside a DESKTOP query rather than as
+   an undecorated base rule on purpose: a base `display:none` declared later
+   in this file than the ≤860px block would beat the mobile override at equal
+   specificity (the source-order gotcha documented throughout this file).
+   Scoping it to ≥861px means the two can never collide. */
+@media (min-width: 861px) {
+  .mobile-only {
+    display: none;
+  }
+}
+
+@media (min-width: 861px) {
+  .filters-inline {
+    padding: 10px var(--sp-4);
+    align-items: center;
+    column-gap: var(--sp-4);
+    row-gap: 0;
+  }
+  .filters-inline .field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+  .filters-inline .field > label {
+    margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .filters-inline .field input,
+  .filters-inline .field select {
+    flex: 1;
+  }
+  .filters-inline .field-hint {
+    display: none;
+  }
+  .filters-inline .filters-show {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+}
+
+/* ---------- bookings page: fit-to-screen on desktop ----------
+   The whole dashboard fits one screen with no page scroll. The filter, the KPI
+   row, the section header, the pagination and the revenue bar all stay pinned;
+   only the schedule list (.bk-scroll) scrolls inside its own region. That keeps
+   "Revenue today" on screen at every desktop resolution. Desktop only — below
+   860px the page keeps its natural scroll and the tab bar. */
+/* A status deep-link (e.g. Home's "Cancellation today" -> ?status=cancelled)
+   narrows the whole day's data, not just which rows show — this banner is
+   the only visual cue that's happening, so it can't be missed or mistaken
+   for "there were only N bookings today". */
+.status-filter-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+  border: 1px solid #f7dddd;
+  background: #fff7f7;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  color: var(--text);
+}
+.status-filter-banner strong {
+  color: #c0362c;
+}
+.status-filter-banner a {
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.status-filter-banner a:hover {
+  color: var(--text);
+}
+
+@media (min-width: 861px) {
+  /*
+   * Services and Customers, fit to the window.
+   *
+   * The page ran 152px past the bottom at 1440x900, which put the pager at y=987
+   * in a 900px window — you had to scroll to reach page 2, on a screen with room
+   * to spare. Same treatment as .bk-fit: chrome fixed, rows scroll, pager pinned.
+   *
+   * Customers shares this exact shape with Services — one KPI/toolbar row,
+   * then a single `.card` holding the shared `PaginatedTable` — so it reuses
+   * the same rules under its own `.cust-fit` class rather than a second
+   * hand-written copy (GRW-7).
+   */
+  .page-body.svc-fit,
+  .page-body.cust-fit {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .svc-fit > .staff-toolbar,
+  .svc-fit > .staff-segmented,
+  .cust-fit > .cust-kpis {
+    flex: none;
+  }
+
+  .svc-fit > .card,
+  .cust-fit > .card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /*
+   * ...except the bands panel, which is a card too.
+   *
+   * This rule assumed exactly one `.card` child and gave it the leftover
+   * height. Adding a second one split that height in half: the bands card
+   * stretched into a large empty gap, and the list beneath it was squeezed
+   * down to a single row while its own footer still read "Showing 1–10".
+   * The panel is sized by its contents; only the list takes what is left.
+   */
+  .cust-fit > .cust-segments {
+    flex: none;
+    display: block;
+  }
+
+  .svc-fit .paged-table,
+  .cust-fit .paged-table {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .svc-fit .pagination,
+  .cust-fit .pagination {
+    flex: none;
+  }
+
+  /*
+   * Bookings scrolls the whole page — it is NOT fit-to-screen.
+   *
+   * It used to pin every band (filter, KPIs, section head, pager) and scroll
+   * only .bk-scroll inside whatever height was left. That existed to keep the
+   * "Revenue today" bar on screen, and that bar is gone — revenue is a mode of
+   * the metric card in the KPI row now. What the pinning left behind was a
+   * schedule region squeezed to ~338px on a 900px screen, while a single time
+   * slot holding six simultaneous bookings is ~331px on its own: one slot
+   * filled the entire viewport and every card was sliced through the middle.
+   *
+   * Page-scroll + numbered pagination is also the documented shape for this
+   * page (Offers is the fit-to-screen one), and it matches the design mock,
+   * whose <main> is an ordinary scrolling column.
+   */
+  .bk-fit .bk-filter-card {
+    margin-bottom: var(--sp-3);
+  }
+  .bk-fit .bk-kpis {
+    margin-bottom: var(--sp-3);
+  }
+  .bk-fit .bk-sched-head {
+    margin-bottom: var(--sp-2);
+  }
+  .bk-fit .bk-summary-bar {
+    margin-top: var(--sp-3);
+  }
+
+  /* KPI tiles read horizontally on desktop so the wide cards look filled, not
+     sparse: icon on the left, the count + labels stacked beside it. */
+  .bk-kpi {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 9px var(--sp-3);
+  }
+  .bk-kpi-icon {
+    margin-bottom: 0;
+    width: 30px;
+    height: 30px;
+  }
+  /* One compact line per stat — "4  Bookings  Today" — so the whole KPI row is
+     ~48px tall instead of three stacked lines, leaving the schedule more room. */
+  .bk-kpi-text {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    min-width: 0;
+  }
+  .bk-kpi-value {
+    font-size: 20px;
+    line-height: 1;
+  }
+  .bk-kpi-label {
+    font-size: 13px;
+    margin-top: 0;
+  }
+  .bk-kpi-sub {
+    font-size: 11px;
+    margin-top: 0;
+  }
+
+  /* Denser schedule so more bookings are visible at once. */
+  .bk-fit .bk-tl-row {
+    padding-bottom: var(--sp-2);
+  }
+  .bk-fit .bk-tl-time,
+  .bk-fit .bk-tl-slot {
+    padding-top: var(--sp-2);
+  }
+  .bk-fit .bk-card {
+    padding: var(--sp-3) var(--sp-4);
+  }
+}
+
+/* Kept at the END of the file on purpose: every rule above defines a class
+   exactly once at the base (desktop) specificity, so with equal specificity
+   CSS falls back to source order — a media-query override placed EARLIER
+   than the rule it's meant to override loses to it, even while the media
+   query matches. Putting all mobile overrides last guarantees they win. */
+
+/* Below this the app is phone-shaped (and, installed as a PWA, effectively a
+   phone app): the 232px desktop sidebar is replaced entirely by a bottom tab
+   bar, which puts navigation in the thumb zone instead of behind a hamburger. */
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  /* The drawer and its hamburger are gone on mobile — the tab bar covers the
+     frequent destinations and the "More" tab covers the rest. */
+  .sidebar,
+  .menu-toggle,
+  .sidebar-backdrop {
+    display: none;
+  }
+
+  /* Normal flex flow, NOT position:fixed. It's the last child of .content
+     (a 100dvh flex column — see layout.tsx), so it always sits flush at the
+     true bottom of the viewport with zero extra math. A fixed-position bar
+     is pinned to the browser's LAYOUT viewport, which on some Android Chrome
+     versions doesn't shrink/grow when the address bar auto-hides on scroll —
+     that mismatch is what left a gap of raw page background below the bar.
+     Flow layout has no such quirk: .content's box height already tracks the
+     dynamic viewport (100dvh), so the bar's position falls out of ordinary
+     layout instead of a second, independently-computed coordinate system. */
+  .bottom-nav {
+    display: flex;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 7px 0 max(9px, env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 550;
+  }
+
+  .bottom-nav a.active {
+    color: var(--accent);
+  }
+
+  .bottom-nav svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .bottom-nav .bn-mark {
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: transparent;
+  }
+
+  .bottom-nav a.active .bn-mark {
+    background: var(--accent);
+  }
+
+  .fab {
+    display: flex;
+    position: fixed;
+    right: 16px;
+    bottom: calc(74px + env(safe-area-inset-bottom));
+    z-index: 41;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--sidebar);
+    color: #fff;
+    border: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(15, 61, 46, 0.28);
+  }
+
+  .fab svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .fab-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(9, 20, 15, 0.45);
+    z-index: 39;
+  }
+
+  .fab-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+    position: fixed;
+    right: 16px;
+    bottom: calc(140px + env(safe-area-inset-bottom));
+    z-index: 41;
+  }
+
+  .fab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .fab-menu-label {
+    background: var(--sidebar);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 620;
+    padding: 9px 15px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  .fab-menu-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--accent-deep);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(15, 61, 46, 0.28);
+  }
+
+  .fab-menu-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* One compact bar on a phone: title on the left, primary action on the
+     right. The explanatory subtitle is desktop-only — on every page it ran to
+     three or four lines and cost ~150px of the screen before any content, and
+     an owner who opens "Offers" already knows what offers are. */
+  .topbar {
+    padding: 12px 16px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .topbar h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .topbar p {
+    display: none;
+  }
+
+  /* Opt-in: a page with a SHORT subtitle can still show it on mobile. Long
+     ones stay hidden (they ran 3–4 lines and ate the top of the screen). */
+  .topbar-with-sub p {
+    display: block;
+    font-size: 12.5px;
+    margin-top: 1px;
+  }
+
+  .home-head {
+    padding: 14px 16px 13px;
+  }
+
+  .home-greeting {
+    font-size: 17px;
+  }
+
+  .home-sub {
+    font-size: 12.5px;
+  }
+
+  /* Scrolling pages: the tab bar is a normal flex sibling now (see .bottom-nav
+     above), so .page-body's box already stops above it automatically — no
+     nav-height reservation needed here any more. The remaining padding just
+     clears the floating + button, which still overlays the end of the list. */
+  .page-body {
+    padding: var(--sp-4) var(--sp-4) 84px;
+  }
+
+  /* Fit-to-screen pages don't scroll and hide the + button (see NO_FAB in
+     MobileChrome.tsx), so all that's needed is a small gap above the nav. */
+  .page-body.page-fit {
+    padding: var(--sp-3) var(--sp-4) var(--sp-3);
+  }
+
+  /* The per-provider "chair" column is a wide two-pane view — it has no room
+     on a phone and the day schedule above already covers the same bookings. */
+  .desktop-only {
+    display: none;
+  }
+
+  /* KPI tiles: 4 stacked single-column cards was ~900px of scrolling before
+     reaching anything else on the page — 2-up cuts that roughly in half. */
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .tile {
+    padding: 14px 14px;
+  }
+
+  .tile .value {
+    font-size: 24px;
+    margin: 6px 0 4px;
+  }
+
+  /* Today's bookings row: name/service text routinely wraps to 2-3 lines at
+     this width — give it the full row width on its own line instead of
+     squeezing it beside the avatar AND the status chip. */
+  .appt {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .appt-main {
+    order: 1;
+    flex-basis: 100%;
+    padding-left: 50px; /* lines up under the avatar, not flush with the time column */
+  }
+
+  /* Offer cards: Edit/Turn off/Delete used to run off the right edge of the
+     screen with no way to reach them — wrapping drops them to their own row. */
+  .offer-row {
+    flex-wrap: wrap;
+  }
+
+  .wizard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* A card-head with a full action button (e.g. "+ Create a new combo")
+     needs to stack, not squeeze onto one row next to its title. Other
+     card-heads only ever hold a short text .link, which stays inline fine. */
+  .card-head {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .card-head .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* The mobile header was eating most of the screen before any real form
+     content showed — Back+title on their own row, then two full-width
+     stacked buttons, then the step tabs. Tightened to: Back stays inline
+     with a smaller title, the subtitle drops (it's scene-setting copy, not
+     needed once you're actually filling the form), and both buttons share
+     one row with short labels instead of stacking full-width each. */
+  .wizard-head {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+  }
+
+  .wizard-title {
+    gap: 8px;
+  }
+
+  .wizard-title h1 {
+    font-size: 17px;
+  }
+
+  .wizard-subtitle {
+    display: none;
+  }
+
+  .wizard-actions {
+    width: 100%;
+  }
+
+  .wizard-actions .btn {
+    flex: 1;
+  }
+
+  .wizard-nav-label-full {
+    display: none;
+  }
+
+  .wizard-nav-label-short {
+    display: inline;
+  }
+
+  .wizard-nav {
+    flex-wrap: wrap;
+  }
+
+  .wizard-nav .btn {
+    flex: 1;
+  }
+
+  .wizard-steps {
+    gap: 14px;
+    overflow-x: auto;
+  }
+
+  .wizard-rail {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .wizard-tip-rail {
+    max-width: none;
+  }
+
+  .price-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .offers-toolbar {
+    padding: 12px 14px;
+  }
+
+  .tabs {
+    order: -1;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: center;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  /* Each offer becomes its own card on a phone; the list container stops
+     being a card so the cards read as separate items on the page ground. */
+  .offers-card {
+    background: transparent;
+    border: none;
+    overflow: visible;
+  }
+
+  .offers-toolbar {
+    border-bottom: none;
+    padding: 8px 0;
+    row-gap: 8px;
+  }
+
+  /* Tabs claim the first line; search and the filter button share the second.
+     They must be allowed to WRAP onto it — nowrap pushed both off-screen. */
+  .offers-toolbar .tabs {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  .offers-toolbar .search-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .filter-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+  }
+
+  .filter-btn-text {
+    display: none;
+  }
+
+  .filter-btn-icon {
+    display: grid;
+    place-items: center;
+  }
+
+  .filter-btn-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .filter-btn-on {
+    border-color: var(--accent);
+    color: var(--accent-deep);
+  }
+
+  .offers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Drops the inherited .card-body inset — 40px of horizontal padding that
+       the cards no longer need once they ARE the cards, and which was enough
+       to push each offer's type chip onto its own line. */
+    padding: 0;
+  }
+
+  /* One grid for the whole card. `display: contents` on the two wrappers
+     dissolves them, so head and foot children become direct grid items and
+     the toggle can sit beside the title while the counts stay in the footer
+     row — a nesting the desktop flex layout cannot express. */
+  .offer-card-row,
+  .offer-card-row:last-child {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    column-gap: 10px;
+    row-gap: 6px;
+    align-items: start;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    border-radius: var(--radius);
+    /* Every card — offer OR combo — is the SAME fixed height, so the fit is
+       deterministic and every page shows the same count. The height is sized to
+       the TALLER card type (a combo carries one line more than an offer: the
+       price row), so nothing is ever clipped; an offer just has a little more
+       breathing room. Content is anchored top (name/price) and bottom
+       (rules/stats) via space-between. */
+    height: 112px;
+    overflow: hidden;
+    align-content: space-between;
+  }
+
+  /* Compact the card's internal spacing on a phone — combo cards carry the
+     most rows (services + price + savings + rules), so trimming these gaps is
+     what keeps their height close to the plain offer cards and lets one more
+     fit per screen instead of leaving a near-card-sized gap. */
+  .offer-card-row .offer-subtitle {
+    margin-top: 1px;
+  }
+
+  .offer-card-row .offer-price-row {
+    margin-top: 2px;
+    gap: 6px;
+  }
+
+  .offer-card-row-selected {
+    border-color: var(--accent);
+  }
+
+  .offer-row-head,
+  .offer-row-foot {
+    display: contents;
+  }
+
+  .offer-icon {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .offer-main {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .offer-toggle {
+    grid-row: 1;
+    grid-column: 3;
+    align-self: start;
+    margin-top: 3px;
+  }
+
+  /* Scoped to the card: .dropdown-anchor is also the toolbar's filter wrapper,
+     and an unscoped grid placement here threw that button onto its own row. */
+  .offer-card-row .dropdown-anchor {
+    grid-row: 1;
+    grid-column: 4;
+    align-self: start;
+  }
+
+  /* Both footer items span every column and are pushed to opposite ends of
+     that one full-width cell. Confining them to their own columns instead
+     would make the wide "0 Bookings  ₹0 Revenue" block set the width of the
+     toggle and kebab columns above, squeezing the title to an ellipsis. */
+  .offer-info-col {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-self: start;
+    /* Leaves a clear gutter before the counts on the right — the two share
+       one full-width cell, so without this the rules text runs right up
+       against "Bookings". */
+    max-width: 46%;
+    padding-right: 10px;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .offer-stats-col {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-self: end;
+    gap: 14px;
+  }
+
+  /* Stats go single-line on a phone ("4 Bookings   ₹300 Revenue") instead of
+     value-over-label. That reclaims a whole line per card, which is what lets
+     a combo (name + services + price + rules + stats) fit the same compact
+     fixed height as an offer — and lands 4–5 cards per screen. */
+  .offer-stat {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .offer-stat-label {
+    font-size: 11px;
+  }
+
+  /* The switch alone carries the state on a phone — the word beside it costs
+     ~60px of the title's line, which is what pushed the name onto two lines
+     and shoved its type chip onto a third. */
+  .offer-toggle .switch-label-on,
+  .offer-toggle .switch-label-off {
+    display: none;
+  }
+
+  /* Fixed-height cards can't let the name wrap — a two-line title (plus the
+     chip dropping to its own line) is exactly what used to overflow and clip.
+     The name stays on one line and ellipsises if long. */
+  .offer-title-row {
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .offer-title {
+    font-size: 14.5px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The Offer/Combo chip is pinned to the right of the title row on EVERY card
+     (margin-left: auto), so it lands in the same spot regardless of how long
+     the name is — a short name gets a gap before it, a long name ellipsises up
+     to it. Consistent, scannable column of type badges down the list. */
+  .offer-title-row .chip {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  /* Chips and the price line are the widest things in the card — trimming
+     them is what lets the name and the whole price row stay on one line. */
+  .offer-card-row .chip {
+    padding: 3px 9px;
+    font-size: 12px;
+  }
+
+  .offer-subtitle {
+    font-size: 12.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* ---------- card density (mobile) ----------
+     Combos carried the most rows (services + tagline + a wrapping price line),
+     which made them ~1.6× the height of a plain offer and forced fewer cards
+     per screen. Three trims bring them close to offer height without losing
+     anything load-bearing:
+       · the tagline is decorative — drop it (the name + services already say
+         what the combo is);
+       · keep the price line to ONE line (no wrap);
+       · the "Save ₹X" text is redundant with the % OFF chip beside it. */
+  .offer-desc {
+    display: none;
+  }
+
+  .offer-card-row .offer-price-row {
+    flex-wrap: nowrap;
+    gap: 7px;
+  }
+
+  .offer-card-row .offer-savings {
+    display: none;
+  }
+
+  .offer-price {
+    font-size: 15px;
+  }
+
+  .offer-strike {
+    font-size: 12px;
+  }
+
+  .offer-stat-value {
+    font-size: 13.5px;
+  }
+
+  .offer-info-item {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* Compact mobile pagination: one row — "Showing 1–4 of 6" on the left, the
+     ‹ › (or ‹ Page 2 of 5 ›) controls on the right. Never the wide desktop
+     number strip, and never stacked onto two rows, which cost vertical space a
+     fit-to-screen list can't spare. */
+  .pagination {
+    gap: var(--sp-3);
+    min-height: 0;
+    padding: var(--sp-3) var(--sp-1) 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .pagination-summary {
+    font-size: 12.5px;
+  }
+
+  .pagination-pages {
+    display: none;
+  }
+
+  .pagination-indicator {
+    display: inline-flex;
+  }
+
+  /* Bookings' per-provider chair view: the multi-column table is unreadable on
+     a phone, so the same rows render as cards instead — same data, no
+     horizontal scrolling. Customers and Services use the shared
+     `PaginatedTable` for the same swap now (see `.paged-table`/`.paged-cards`
+     above) instead of a bespoke pair of classes each. */
+  .booking-table {
+    display: none;
+  }
+
+  .booking-cards {
+    display: block;
+  }
+
+  /* The header action is icon-width on a phone — the full "+ Add client"
+     label wraps to two lines and eats a third of the header. */
+  .topbar .btn {
+    white-space: nowrap;
+    font-size: 0;
+    padding: 9px 14px;
+  }
+
+  .topbar .btn::before {
+    content: '+';
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .cust-kpis {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .cust-kpi {
+    gap: 8px;
+    padding: 9px 10px;
+    align-items: center;
+  }
+
+  /* The hint line ("53 new this month") is the least load-bearing thing on a
+     phone — dropping it turns each KPI into one tight two-line stat, which is
+     what buys back the vertical room for the actual customer rows. */
+  .cust-kpi-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .cust-kpi-sub {
+    display: none;
+  }
+
+  .cust-kpi-value {
+    font-size: 18px;
+  }
+
+  /* The WhatsApp link's own box was only 24px tall — text-height, not a tap
+     target. min-height (not padding, which would nudge the icon/text off
+     center) gets it to the 44px minimum without changing how the row looks. */
+  .cust-card .cust-phone {
+    min-height: 44px;
+  }
+
+  /* Customers toolbar only (no tabs): search takes the full first row; Filter
+     and Export share the second rather than Export wrapping alone onto a
+     third. Scoped so it does not disturb the Offers toolbar, which shares the
+     .offers-toolbar class but adds a tab row. */
+  .cust-toolbar .search-wrap {
+    flex-basis: 100%;
+  }
+
+  .cust-toolbar .dropdown-anchor,
+  .cust-toolbar > .btn-ghost {
+    flex: 1;
+  }
+
+  .cust-toolbar .dropdown-anchor > .btn {
+    width: 100%;
+  }
+}

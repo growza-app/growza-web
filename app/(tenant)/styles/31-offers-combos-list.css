@@ -1,0 +1,497 @@
+/* ---------- offers & combos list ---------- */
+
+.offers-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--page-bg);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  /* Labels like "Combos (4)" stay on one line even at 320px — a wrapped tab
+     doubles the toolbar height and looks broken. */
+  white-space: nowrap;
+}
+
+.tab-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 14px;
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+.search-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  background: var(--surface);
+}
+
+.dropdown-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  z-index: 40;
+  min-width: 260px;
+  padding: 6px;
+}
+
+.dropdown-panel-sm {
+  min-width: 160px;
+}
+
+.dropdown-panel-right {
+  right: 0;
+  left: auto;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background: var(--page-bg);
+}
+
+.dropdown-item-plain {
+  font-size: 13.5px;
+  font-weight: 560;
+  padding: 8px 10px;
+}
+
+.dropdown-item-danger {
+  color: #b91c1c;
+}
+
+.dropdown-item-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-item-icon-offer {
+  background: var(--accent-soft);
+}
+
+.dropdown-item-icon-combo {
+  background: var(--purple-soft);
+}
+
+.dropdown-item-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 640;
+}
+
+.dropdown-item-desc {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.offers-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.offer-card-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 7px 20px;
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.offer-card-row:last-child {
+  border-bottom: none;
+}
+
+.offer-card-row:hover {
+  background: var(--page-bg);
+}
+
+.offer-card-row-selected,
+.offer-card-row-selected:hover {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+
+.offer-row-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1.6;
+  min-width: 0;
+}
+
+.offer-row-foot {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.offer-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.offer-icon-combo {
+  background: var(--purple-soft);
+}
+
+.offer-icon-offer {
+  background: var(--accent-soft);
+}
+
+.offer-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.offer-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.offer-title {
+  font-weight: 640;
+  font-size: 15px;
+}
+
+.offer-subtitle {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.offer-price-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.offer-price {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent-deep);
+}
+
+.offer-strike {
+  color: var(--muted);
+  text-decoration: line-through;
+  font-size: 13.5px;
+}
+
+.offer-savings {
+  font-size: 12.5px;
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.offer-info-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+}
+
+.offer-info-item {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.offer-stats-col {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.switch-track {
+  width: 36px;
+  height: 21px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #d8dcda;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--accent);
+}
+
+.switch input:disabled + .switch-track {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(15px);
+}
+
+.switch-label-on {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.switch-label-off {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.offer-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 58px;
+}
+
+.offer-stat-value {
+  font-weight: 660;
+  font-size: 14.5px;
+}
+
+.offer-stat-label {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.kebab-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.kebab-btn:hover {
+  background: var(--page-bg);
+  border-color: var(--border);
+}
+
+.chip-combo {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.chip-offer {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.chip-discount {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+/* ---------- fit-to-screen list layout ----------
+   A list page that fills the viewport instead of scrolling: the body is a
+   non-scrolling flex column, the list region grows to fill the space left
+   after the toolbar, and the pagination pins directly beneath it — always
+   visible, with no gap because the list expands to meet it. `useFitRows({fit})`
+   sizes the row count to exactly what the list region can hold, so it never
+   actually overflows. */
+/* The page never scrolls: useFitRows sizes the visible row count so the list +
+   its pagination footer fit the viewport exactly. The footer then sits in
+   normal flow directly under the last card — any leftover space falls BELOW
+   it, at the natural end of the list, never as a gap between the cards and the
+   footer. */
+.page-body.page-fit {
+  overflow: hidden;
+}
+
+/* ---------- pagination (one shared component, used by every list) ----------
+   Sits in normal flow at the bottom of its list container — never floating.
+   The component renders nothing when there's a single page, so small datasets
+   show no pagination at all. */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-5);
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.pagination-summary strong {
+  color: var(--text);
+  font-weight: 620;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.pagination-pages {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+/* Compact "Page 2 of 5" readout — shown on mobile in place of the number
+   strip. */
+.pagination-indicator {
+  display: none;
+  align-items: center;
+  padding: 0 var(--sp-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pagination-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--sp-2);
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Text on desktop, a square icon button on a phone — same control, sized to
+   the room available. */
+.filter-btn-icon {
+  display: none;
+}
+
+.create-offer-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.create-offer-menu > .btn {
+  white-space: nowrap;
+}

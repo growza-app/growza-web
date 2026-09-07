@@ -1,0 +1,117 @@
+/* ---------- roster rows (web) ---------- */
+
+.staff-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.staff-cards {
+  display: none;
+}
+
+.staff-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-height: 72px;
+}
+
+.staff-row:hover {
+  border-color: #cbd5ce;
+}
+
+.staff-row.is-off {
+  background: #fcfdfc;
+  border-color: #edf0ec;
+}
+
+.staff-avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.staff-avatar.is-muted {
+  background: #f0f2ef !important;
+  color: var(--muted) !important;
+}
+
+.staff-avatar.tone-green { background: var(--accent-soft); color: #12643e; }
+.staff-avatar.tone-purple { background: var(--purple-soft); color: #4c3a78; }
+.staff-avatar.tone-peach { background: var(--peach); color: #7a4a1e; }
+.staff-avatar.tone-blue { background: var(--blue-soft); color: #1e4e73; }
+
+.staff-identity {
+  width: 190px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.staff-identity-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The name is the primary way into the edit screen — a real button, not a
+   div with an onClick, so it is keyboard-reachable and screen-reader-obvious. */
+.staff-name-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 620;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-name-btn:hover {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
+
+.staff-identity-role {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-badge {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.staff-badge-top {
+  color: #8a6a12;
+  background: #fbf3dc;
+}
+
+.staff-badge-free {
+  color: var(--amber);
+  background: var(--amber-soft);
+}

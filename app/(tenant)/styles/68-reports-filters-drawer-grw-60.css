@@ -1,0 +1,128 @@
+/* ---------- Reports · Filters drawer (GRW-60) ---------- */
+
+.rp-control.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.rp-control-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rp-fd-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 62;
+  border: none;
+  padding: 0;
+  background: rgba(17, 32, 25, 0.32);
+  cursor: pointer;
+}
+
+.rp-fd {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 63;
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  max-width: 88%;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -18px 0 44px rgba(18, 38, 29, 0.14);
+}
+
+.rp-fd-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rp-fd-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+
+.rp-fd-close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--muted);
+  padding: 4px;
+  line-height: 1;
+}
+
+/* The only part that scrolls, so the footer's actions stay reachable however
+   long a tenant's service list runs (GRW-024). */
+.rp-fd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+
+.rp-fd-group + .rp-fd-group { margin-top: 18px; }
+
+.rp-fd-group h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+
+.rp-fd-none { margin: 0; font-size: 13px; color: var(--muted); }
+
+.rp-fd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Sized like something you tap, because it is.
+   These went out at 27px tall — the height of the non-interactive status
+   chips they were copied from, against 38-52px for every control in this app
+   you actually press. On the phone this product is used on, that is a miss
+   waiting to happen. */
+.rp-fd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.rp-fd-chip.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.rp-fd-retired { font-size: 10.5px; font-weight: 500; color: var(--muted); }
+
+.rp-fd-foot {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.rp-fd-foot .btn { flex: 1; justify-content: center; }

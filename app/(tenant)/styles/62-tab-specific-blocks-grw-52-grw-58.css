@@ -1,0 +1,102 @@
+/* ---------- tab-specific blocks (GRW-52 … GRW-58) ---------- */
+
+/* Four and five tiles divide differently from six, so each row gets the
+   counts that leave no orphan at any width. */
+.rp-kpi-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rp-kpi-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* A pair of figures under a chart — "usual gap" beside "visits per client". */
+.rp-figure-pair {
+  display: flex;
+  gap: var(--sp-6);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+
+.rp-figure-pair span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rp-figure-pair strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+/* Opportunity cards: a count, what it means, and where to go about it. */
+.rp-opp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.rp-opp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--rp-seg);
+  border-radius: 14px;
+  padding: 15px;
+  min-width: 0;
+}
+
+.rp-opp-card-head { display: flex; align-items: center; gap: 11px; }
+
+.rp-opp-card-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--page-bg);
+  color: var(--rp-seg);
+}
+
+.rp-opp-card-icon svg { width: 18px; height: 18px; }
+.rp-opp-card-count { font-size: 25px; font-weight: 800; letter-spacing: -0.5px; }
+.rp-opp-card-title { font-weight: 700; font-size: 13.5px; }
+
+.rp-opp-card-body {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.rp-opp-card-cta,
+.rp-insight-cta {
+  align-self: flex-start;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-soft);
+  border: 1px solid #dbe7df;
+  color: var(--accent-deep);
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* A heading inside the scroll, marking where one question ends and the next
+   begins. The Clients tab answers two — who they are, and whether they come
+   back — and without a divider the second half reads as more of the first. */
+.rp-section-heading {
+  margin: var(--sp-3) 0 calc(-1 * var(--sp-1));
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}

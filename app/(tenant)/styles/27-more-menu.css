@@ -1,0 +1,38 @@
+/* ---------- more menu ---------- */
+
+.menu-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 18px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.menu-row + .menu-row {
+  border-top: 1px solid var(--border);
+}
+
+.menu-row:hover {
+  background: var(--page-bg);
+}
+
+.menu-row svg {
+  width: 19px;
+  height: 19px;
+  color: var(--accent-deep);
+  flex-shrink: 0;
+}
+
+.menu-row .chev {
+  margin-left: auto;
+  color: #c4ccc7;
+}

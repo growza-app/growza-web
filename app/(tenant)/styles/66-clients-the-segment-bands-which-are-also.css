@@ -1,0 +1,96 @@
+/* ---------- Clients: the segment bands, which are also the filter ---------- */
+
+/*
+ * The bands are a filter, not a report. They used to be laid out like one —
+ * a heading, a hint under it, four tall cards, a footnote — and cost 216px
+ * above the list. Everything explanatory now sits on one line with the
+ * heading, and each band is two tight lines.
+ */
+.cust-segments { padding: var(--sp-3) var(--sp-4); }
+
+.cust-segments-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.cust-segments-head h2 { margin: 0; font-size: 14px; font-weight: 700; }
+
+/* The hint and the never-been-in note share the heading's line: both are
+   asides, and neither earns a row of its own above a list this cramped. */
+.cust-segments-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cust-segment-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.cust-segment {
+  display: block;
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--seg);
+  border-radius: 11px;
+  padding: 8px 11px;
+  min-width: 0;
+}
+
+.cust-segment:hover { background: #f7f9f7; }
+
+/* The chosen band is filled rather than merely outlined, so which filter is
+   on is legible at a glance instead of needing the list read to find out. */
+.cust-segment.is-on {
+  background: var(--accent-soft);
+  border-color: #bfe0cc;
+  border-left-color: var(--seg);
+  box-shadow: inset 0 0 0 1px #bfe0cc;
+}
+
+.cust-segment-label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.cust-segment-label > span:last-child {
+  margin-left: auto;
+  flex: none;
+}
+
+.cust-segment-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--seg); flex: 0 0 8px; }
+
+.cust-segment-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 19px;
+  font-weight: 800;
+  margin-top: 2px;
+  line-height: 1.15;
+}
+
+.cust-segment-count em {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* The band's own window, kept beside its name rather than under its figure. */
+.cust-segment-range { font-size: 11px; color: var(--muted); font-weight: 500; }

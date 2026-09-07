@@ -1,0 +1,600 @@
+/* ---------- add-services chooser + ready-made catalogue (boards 3a, 3b) ---------- */
+
+.chooser-modal {
+  max-width: 620px;
+  width: 100%;
+}
+
+.chooser-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.chooser-head h3 {
+  margin: 0 0 4px;
+}
+
+.chooser-routes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.chooser-route {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chooser-route:hover:not(.is-disabled) {
+  border-color: var(--accent);
+}
+
+/* The catalogue route is the one that is already specific to this tenant, so it
+   leads rather than sitting level with the others. */
+.chooser-route.is-primary {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.chooser-route.is-disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.chooser-route.is-plain {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chooser-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--slate-soft);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.chooser-icon.is-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.chooser-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.chooser-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.chooser-chevron {
+  flex: none;
+  color: var(--muted);
+}
+
+.chooser-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.chooser-or > span:first-child,
+.chooser-or > span:last-child {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.chip-fastest {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.chip-beta {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--amber);
+  background: var(--amber-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/*
+ * The picker's own scroll region is its list, not the whole dialog.
+ *
+ * As a plain scrolling modal it ran past the bottom of the window: the last
+ * category was cut mid-row and "Adjust all prices" — a control, not a footnote —
+ * sat below the fold with nothing on screen saying it was there. Measured at
+ * 1440x900: 895px of content in an 868px box.
+ *
+ * Now the dialog is a flex column that fits the viewport, and only the list
+ * scrolls. Header, toolbar, price scaling and the count line are always on screen.
+ */
+.cat-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cat-modal > * {
+  flex: none;
+}
+
+.cat-modal .cat-list,
+.cat-modal .cat-edit-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.cat-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cat-head h3 {
+  margin: 0 0 2px;
+}
+
+/* The 15px right inset matches .cat-row's padding, so "Clear all" and the
+   View / edit buttons below it share one right edge instead of sitting in two
+   different columns. */
+.cat-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 15px 10px;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.linkish {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.cat-list {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cat-row:last-child {
+  border-bottom: none;
+}
+
+.cat-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cat-samples {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cat-stats {
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* The category editor reuses the review table's grid so the two screens read as
+   one thing, with Remove where Skip sits. Its own column widths only differ in
+   the last track, which holds a wider word. */
+.cat-edit-list {
+  max-height: 44vh;
+}
+
+.import-row.cat-edit-row {
+  grid-template-columns: minmax(0, 2fr) 74px 104px minmax(0, 1.2fr) 92px;
+}
+
+.cat-add-row {
+  margin-top: var(--sp-2);
+}
+
+/* Catalogue-wide actions, above the list. Left-aligned with the header rather
+   than the rows, because they act on the whole catalogue, not on one group. */
+.cat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+}
+
+/* The one action that leaves this screen, pushed away from the two that stay on
+   it so it never gets hit by mistake. */
+.cat-toolbar-next {
+  margin-left: auto;
+  padding: 8px 16px;
+  white-space: nowrap;
+}
+
+.cat-footnote {
+  padding: var(--sp-3) 15px 0;
+  font-size: 13px;
+}
+
+.cat-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.cat-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 10px;
+}
+
+/* Off by default and quiet: plain text is what most owners want, and the toggle
+   should not look like the main event. It lights up when it is doing something. */
+.cat-regex-toggle {
+  flex: none;
+  min-width: 38px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.cat-regex-toggle.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.cat-search-count {
+  flex: none;
+  min-width: 74px;
+  text-align: right;
+  font-size: 12.5px;
+}
+
+/* The flat editor carries a Group column the category editor does not need. */
+.import-row.cat-edit-row-all {
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) 74px 104px minmax(0, 1fr) 92px;
+}
+
+.import-row.cat-edit-row-all select {
+  min-width: 0;
+  width: 100%;
+  font-size: 13px;
+  min-height: 34px;
+  padding: 5px 8px;
+}
+
+/* The group name is a field, not a heading: the same screen creates a category
+   and renames one, so the title has to be typed into. It still reads as a title
+   until focused. */
+.cat-head-name {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cat-name-input {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  padding: 2px 6px;
+  margin-left: -6px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.cat-name-input::placeholder {
+  font-weight: 550;
+  color: var(--muted);
+}
+
+.cat-name-input:hover {
+  border-color: var(--border);
+}
+
+.cat-name-input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  outline: none;
+}
+
+/* Real button chrome, not `.btn`'s 20px inset — that pushed the label 35px clear
+   of the list edge while "Clear all" sat flush against it. It also has to look
+   like it opens something: the previous text link read as decoration. */
+.cat-edit-btn {
+  flex: none;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 620;
+}
+
+.cat-edit-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Both row actions in one group, so the rightmost still lands on the 15px inset
+   that "Clear all" sits on. */
+.cat-row-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* Quieter than View / edit: same row, but this one should never be the thing the
+   eye lands on first. It picks up its colour on hover. */
+.cat-delete-btn {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cat-delete-btn:hover {
+  color: #b91c1c;
+  background: #fde4e4;
+}
+
+.cat-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 14px 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.cat-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.cat-stepper span {
+  min-width: 54px;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.cat-stepper button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--slate-soft);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.cat-stepper button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cat-actions {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cat-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 860px) {
+  .import-row.cat-edit-row {
+    grid-template-columns: minmax(0, 1.6fr) 58px 88px 78px;
+  }
+
+  /* Group drops to its own line's worth of width rather than crushing the name. */
+  .import-row.cat-edit-row-all {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 52px 84px 74px;
+  }
+
+  .cat-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .cat-search-count {
+    min-width: 0;
+  }
+
+  /* On a phone the primary drops to its own full-width line rather than being
+     squeezed to a stub beside the other two. */
+  .cat-toolbar-next {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Stack the two row actions on a phone rather than squeezing the name column. */
+  .cat-row-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  /* Back sits on its own line: side by side, it squeezed the title into a
+     two-line wrap with the arrow stranded beside it. */
+  .cat-head {
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+
+  .cat-head > div {
+    flex: 1 1 100%;
+  }
+
+  .cat-head h3 {
+    font-size: 17px;
+  }
+
+  /* The example names ran to five lines and pushed every row past the fold. One
+     line is enough to recognise a category; the count and price range below it
+     are never clamped, because that is the half an owner reads. */
+  .cat-samples {
+    -webkit-line-clamp: 1;
+  }
+
+  /* Status is the first thing to go on a narrow screen — a bad row is already
+     tinted amber, so the words are a second telling of the same fact. */
+  .import-row.cat-edit-row > .import-note {
+    display: none;
+  }
+
+  .cat-scale {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cat-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* Delete sits left of Save so the destructive one is never under the thumb
+     that was reaching for the safe one. */
+  .cat-actions-buttons {
+    justify-content: space-between;
+  }
+}
+
+/* ---------- narrow phones: keep the mock's four tiles across ----------
+   Four across is the mobile mock's layout and should hold on every phone.
+   The squeeze is "Confirmed"/"Completed" — single words with nowhere to
+   break — against a tile whose 10px side padding was eating the room: at
+   361px they already overflowed by 1-3px, and a 1264px-wide Android at
+   DPR 3.5 reports ~361 CSS px, so real devices hit it.
+
+   Trimming the side padding and the label a little buys enough width to fit
+   them down to 320 (iPhone SE), which beats dropping to a 2x2 the design
+   never asked for. Placed last so it wins over the 860px block above at
+   equal specificity. */
+@media (max-width: 420px) {
+  /* Vertical padding matches the centred tile above; only the sides shrink. */
+  .bk-kpi {
+    padding: 12px 6px;
+  }
+
+  .bk-kpi-label,
+  .bk-kpi-sub {
+    font-size: 9.5px;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ==========================================================================
+   Reports (GRW-48)
+
+   The densest screen in the product: eight tabs over four chart types, two
+   wide tables and a heatmap. Two rules carry most of the weight here —
+
+   1. The header is row 1 of `.content`'s grid and `.rp-body` is row 2, so
+      only the body scrolls and only vertically. Nothing in this section may
+      widen the page: charts, tables and the heatmap each scroll inside their
+      own box (GRW-5's shell grid, and the horizontal-scrollbar rule).
+   2. Colours come from the existing palette. The `--rp-*` aliases below map
+      the design's names onto tokens that already exist rather than starting
+      a second palette that would drift from the first.
+   ========================================================================== */
+
+:root {
+  --rp-brand: var(--accent);
+  --rp-green-ink: var(--accent-deep);
+  --rp-blue: #3b82f6;
+  --rp-amber: #f59e0b;
+  --rp-amber-ink: var(--amber);
+  --rp-red: #e5533c;
+  --rp-purple: var(--purple);
+  --rp-teal: #0d9488;
+  --rp-heat-empty: #f4f6f4;
+  --rp-card-radius: 16px;
+}

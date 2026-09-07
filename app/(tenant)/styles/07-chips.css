@@ -1,0 +1,60 @@
+/* ---------- chips ---------- */
+
+.chip {
+  display: inline-block;
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 630;
+  white-space: nowrap;
+}
+
+.chip-completed {
+  background: var(--slate-soft);
+  color: #5b6660;
+}
+
+.chip-confirmed {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.chip-new {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.chip-reminder {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+/* Deliberately different treatments, not a shared rule: a cancellation is
+   advance notice (the slot can be refilled, routine business), a no-show is
+   a wasted slot with zero warning — the one metric this whole reminders
+   engine exists to cut (see the north star in CLAUDE.md). No-show keeps the
+   alarming red; cancelled gets a neutral, unremarkable gray. */
+.chip-cancelled {
+  background: var(--slate-soft);
+  color: #6b6f6d;
+}
+
+.chip-no_show {
+  background: #fde4e4;
+  color: #b91c1c;
+}
+
+/* A client nobody has seen in 60+ days. Amber, not red — lapsed is a prompt to
+   win them back, not an error state. */
+.chip-lapsed {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+/* Recency + its optional Lapsed chip, in the Clients "Last seen" column. */
+.cust-recency {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}

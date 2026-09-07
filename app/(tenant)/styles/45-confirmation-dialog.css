@@ -1,0 +1,33 @@
+/* ---------- confirmation dialog ---------- */
+
+.confirm-modal {
+  max-width: 400px;
+}
+
+.confirm-body {
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+/* The consequence line — an amber card because it is the thing the owner is
+   actually deciding on, not decoration. */
+.confirm-detail {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: #7c4a09;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.btn-danger-solid {
+  background: #b91c1c;
+  color: #fff;
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+  background: #991b1b;
+}

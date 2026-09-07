@@ -1,0 +1,125 @@
+/* ---------- roster: mobile ---------- */
+/* Same responsive table/cards swap Bookings and Clients already use — the row
+   layout above needs ~900px for its five columns, so below 860px the same
+   data renders as cards and the whole card becomes the tap target. */
+@media (max-width: 860px) {
+  .staff-rows {
+    display: none;
+  }
+
+  .staff-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  .staff-summary {
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+    font-size: 13px;
+  }
+
+  .staff-segmented {
+    display: flex;
+    width: 100%;
+    margin-bottom: var(--sp-3);
+  }
+
+  .staff-seg {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .staff-group-head {
+    padding: var(--sp-4) var(--sp-1) var(--sp-2);
+  }
+
+  .staff-card {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    padding: var(--sp-3) 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    /* The whole card is the tap target, so a tap must not start a text
+       selection — without this, tapping a name highlights the word instead
+       of opening the sheet. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .staff-card.is-off {
+    background: #fcfdfc;
+    border-color: #edf0ec;
+  }
+
+  .staff-card-top {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  .staff-card .staff-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 15px;
+  }
+
+  .staff-card-identity {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .staff-card-name {
+    font-size: 16px;
+    font-weight: 620;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .staff-card.is-off .staff-card-name {
+    color: #3d4a43;
+  }
+
+  .staff-card-identity .staff-identity-role {
+    font-size: 12px;
+  }
+
+  .staff-card-shift {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  .staff-card-shift .staff-shift-bar {
+    flex: 1;
+  }
+
+  .staff-card-count {
+    flex: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3d4a43;
+  }
+
+  .staff-card-count.is-zero {
+    color: #a9b3ac;
+  }
+
+  /* The sheet covers every row action on phone, so the desktop-only inline
+     Edit button and ⋯ menu never render here. */
+  .staff-edit-btn,
+  .staff-menu-wrap {
+    display: none;
+  }
+}

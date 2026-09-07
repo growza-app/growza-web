@@ -1,0 +1,343 @@
+/* ---------- staff edit screen (design Turn 4) ---------- */
+
+.edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--page-pad-x);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.edit-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.edit-header-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 17px;
+}
+
+.edit-crumb {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.edit-crumb a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.edit-crumb a:hover {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
+
+.edit-title {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.edit-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+}
+
+.edit-header-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-right: var(--sp-3);
+  border-right: 1px solid var(--border);
+}
+
+.edit-banner {
+  margin-bottom: var(--sp-4);
+}
+
+/* Form left, read-only context right — the manager can see what a change
+   costs (today's remaining bookings, the 30-day record) without leaving. */
+.edit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 336px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.edit-main,
+.edit-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.edit-card {
+  padding: var(--sp-5);
+}
+
+.edit-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.edit-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: var(--sp-4);
+}
+
+.edit-card-head .edit-card-title {
+  margin-bottom: 0;
+}
+
+.edit-count {
+  font-size: 13px;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.edit-grid .field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4a43;
+  margin-bottom: 7px;
+}
+
+.field-optional {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.edit-grid input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The shared WeekdayHoursEditor puts its switch before the day name; the
+   design leads with the day. Reordering here keeps one shared component
+   instead of forking it for this screen. */
+.edit-hours .weekday-hours-row .switch {
+  order: 2;
+}
+
+.edit-hours .weekday-hours-label {
+  order: 1;
+  width: 84px;
+}
+
+.edit-hours .weekday-hours-inputs,
+.edit-hours .weekday-hours-off {
+  order: 3;
+}
+
+.edit-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.edit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--slate-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  color: #3d4a43;
+  cursor: pointer;
+}
+
+.edit-chip:hover {
+  border-color: #b9c2bb;
+}
+
+.edit-chip.is-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+  font-weight: 600;
+}
+
+.edit-chip svg {
+  width: 13px;
+  height: 13px;
+}
+
+.edit-side-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5c6b63;
+  margin-bottom: var(--sp-3);
+}
+
+.edit-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.edit-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.edit-stat span {
+  font-size: 14px;
+  color: #5c6b63;
+}
+
+.edit-stat strong {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.edit-upcoming {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: var(--sp-3);
+}
+
+.edit-upcoming-row {
+  display: flex;
+  gap: 11px;
+  align-items: baseline;
+}
+
+.edit-upcoming-time {
+  width: 62px;
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+.edit-upcoming-label {
+  font-size: 13px;
+  color: #3d4a43;
+}
+
+.edit-danger {
+  border-color: #f0dedc;
+}
+
+.edit-danger-btn {
+  width: 100%;
+  margin-bottom: var(--sp-3);
+}
+
+/* Desktop keeps Save in the header; the sticky bar is a phone affordance. */
+.edit-savebar {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .edit-header {
+    padding: var(--sp-3) var(--sp-4);
+    gap: var(--sp-3);
+  }
+
+  .edit-header-avatar {
+    display: none;
+  }
+
+  .edit-title {
+    font-size: 18px;
+  }
+
+  /* Save moves to the pinned bar below, so the header keeps only the
+     active/inactive switch — Cancel is the back arrow on a phone. */
+  .edit-header-actions .btn {
+    display: none;
+  }
+
+  .edit-header-toggle {
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .edit-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+
+  .edit-card {
+    padding: var(--sp-4);
+  }
+
+  /* One field per row: two 46px inputs side by side at 390px leaves neither
+     wide enough for a phone number. */
+  .edit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* A native time input needs ~120px for "09:00 AM" plus its picker glyph.
+     Two of them beside an 84px day label and a 46px switch overflow 390px,
+     so the times drop to their own full-width line under the day. */
+  .edit-hours .weekday-hours-row {
+    flex-wrap: wrap;
+    row-gap: var(--sp-2);
+  }
+
+  .edit-hours .weekday-hours-label {
+    width: 44px;
+  }
+
+  .edit-hours .weekday-hours-inputs,
+  .edit-hours .weekday-hours-off {
+    flex-basis: 100%;
+  }
+
+  .edit-savebar {
+    display: block;
+    padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex: none;
+  }
+
+  .edit-savebar-btn {
+    width: 100%;
+    height: 50px;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  /* The pinned save bar replaces the tab bar's job here, and the page body
+     already stops above it — only the normal gutter is needed. */
+  .edit-layout {
+    padding-bottom: 0;
+  }
+}

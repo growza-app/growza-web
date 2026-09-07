@@ -1,0 +1,49 @@
+/* ---------- call button ---------- */
+
+.call {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.call svg {
+  width: 17px;
+  height: 17px;
+}
+
+.call-strong {
+  background: var(--accent);
+  color: #fff;
+}
+
+.call:hover {
+  filter: brightness(0.95);
+}
+
+/* Call button + status chip, side by side, at the end of a rich schedule row. */
+.sched-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sched-actions .chip {
+  white-space: nowrap;
+  /* One lane, so the call buttons form a straight column.
+     The chip is right-aligned and its width follows its label — "Walk-in" is
+     76px, "Didn't come" is 106px — so the button sitting beside it shifted up
+     to 30px from row to row and the edge read as ragged. The width is the
+     widest label in copy.status; centring keeps the shorter ones balanced in
+     the lane rather than hanging off one side. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 106px;
+}

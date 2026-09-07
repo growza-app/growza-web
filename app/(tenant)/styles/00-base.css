@@ -1,0 +1,88 @@
+:root {
+  --sidebar: #0f3d2e;
+  --sidebar-deep: #0b2f23;
+  --sidebar-text: #a7c4b8;
+  --sidebar-active: #17513c;
+  --page-bg: #eef1ef;
+  --surface: #ffffff;
+  --border: #e8eaea;
+  --text: #14201b;
+  --muted: #77857f;
+  --accent: #16a34a;
+  --accent-soft: #dcf5e6;
+  --accent-deep: #15803d;
+  --blue: #1d4ed8;
+  --blue-soft: #dfe7fd;
+  --amber: #b45309;
+  --amber-soft: #fdf0d5;
+  --peach: #fde8dd;
+  --slate-soft: #eceeee;
+  --purple: #7c3aed;
+  --purple-soft: #ede9fe;
+  --purple-deep: #6d28d9;
+  --radius: 14px;
+  --radius-sm: 10px;
+
+  /* ---------- spacing scale (single source of truth) ----------
+     4-based tokens. Use these instead of arbitrary px so every screen shares
+     one rhythm; 13/18/27/35px one-offs are what made the app feel stitched
+     together from different products. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+
+  /* ---------- breakpoint system (GRW-6) ----------
+     Four width tiers and two height tiers, and nothing outside them — a
+     story that thinks it needs a fifth should fit its problem into one of
+     these instead. `@media` can't read a custom property in its condition
+     (`(max-width: var(--x))` isn't valid CSS), so these are documented
+     here as literal numbers rather than usable tokens; every `@media` rule
+     in this file targets a value inside one of these ranges.
+
+       mobile   :          max-width:  860px   (nav swap to the bottom tab bar)
+       tablet   : min-width: 861px, max-width: 1100px
+       desktop  : min-width: 1101px, max-width: 1600px
+       large    : min-width: 1601px
+
+       short         : max-height:  860px   (also covers 1366x768 and 1280x720)
+       medium-height : max-height: 1150px
+
+     A screen is free to pick its own precise number *inside* a tier when it
+     has a measured reason to (Services' 1000px card-swap point, Home's
+     1060/1180px layout thresholds, etc.) — those are exactly the kind of
+     already-measured, already-shipped values this story does NOT rewrite
+     (see GRW-6's Out of Scope); they migrate onto shared components in
+     their own stories (GRW-7, GRW-12) instead. What this system rules out
+     going forward is a new tier boundary outside this list.
+
+     Fluid scale: a layout-bearing value that used to be a single fixed
+     number can instead be `clamp(min, preferred, max)`, so it tapers
+     smoothly across the tablet tier instead of jump-cutting at a media
+     query. `--page-pad-x` below is the first of these — its clamp is tuned
+     to still equal the old fixed 34px at every desktop/large width already
+     verified, so this is not a visual change at 1440x900 or wider. */
+  --page-pad-x: clamp(16px, 3.09vw, 34px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}

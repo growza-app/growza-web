@@ -1,0 +1,113 @@
+/* ---------- services catalogue ---------- */
+
+/* Says a photo is missing, rather than showing an identical grey block whether
+   one exists or not. */
+/* ---------- services (mobile cards) ----------
+   The seven-column table is unusable on a phone: measured at 375px it is 772px
+   wide with 431px off-screen, and the columns that fall off the right are Price
+   and Actions — so Edit and Retire were unreachable without scrolling the table
+   sideways. Same rows as cards below 860px, matching Clients and Bookings. */
+.svc-card {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+}
+
+.svc-card:last-child {
+  border-bottom: none;
+}
+
+.svc-card.is-retired {
+  opacity: 0.6;
+}
+
+.svc-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.svc-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.svc-card-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 640;
+  margin-bottom: 3px;
+}
+
+.svc-card-meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.svc-card-price {
+  flex: none;
+  font-weight: 640;
+}
+
+.svc-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+}
+
+/* Edit is the reason most owners open this row — it leads. */
+.svc-card-edit {
+  color: var(--accent-deep);
+  font-weight: 640;
+}
+
+.svc-card-edit svg {
+  width: 15px;
+  height: 15px;
+}
+
+.svc-photo-empty {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed #c9cfc6;
+  border-radius: 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* A retired service still shows in the catalogue so it can be restored — muted
+   so it never reads as bookable. */
+tr.is-retired td {
+  opacity: 0.6;
+}
+
+/* Photo picker inside the add/edit service form. */
+.svc-photo-field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.svc-photo-preview,
+.svc-photo-empty-lg {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.svc-photo-empty-lg {
+  font-size: 11px;
+}
