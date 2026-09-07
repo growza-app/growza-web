@@ -38,6 +38,30 @@ interface UsersResponse {
   selfId: string;
 }
 
+interface PendingInvite {
+  id: string;
+  name: string;
+  phone: string;
+  roleName: string;
+  expiresAt: string;
+}
+
+const INVITE_COLUMNS: TableColumn[] = [
+  { label: 'Invited', width: '1.5fr' },
+  { label: 'Role', width: '1.2fr' },
+  { label: 'Expires', width: '1fr' },
+  { label: '', width: '140px', right: true },
+];
+
+/** Hours rather than days: these last 48, so "in 1 day" would round away most of their life. */
+function expiryLabel(iso: string): string {
+  const hours = Math.ceil((Date.parse(iso) - Date.now()) / 3_600_000);
+  if (hours <= 0) return 'Expired';
+  if (hours < 24) return `Expires in ${hours} hour${hours === 1 ? '' : 's'}`;
+  const days = Math.round(hours / 24);
+  return `Expires in ${days} day${days === 1 ? '' : 's'}`;
+}
+
 const COLUMNS: TableColumn[] = [
   { label: 'Administrator', width: '1.5fr' },
   { label: 'Role', width: '1.2fr' },
@@ -55,12 +79,21 @@ export default function AdminUsersPage() {
   const [changeError, setChangeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
+  /** GRW-164 — invitations sent but not yet taken up. */
+  const [invites, setInvites] = useState<PendingInvite[]>([]);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
-      adminFetch<UsersResponse>('/users', { signal })
-        .then((body) => {
+      Promise.all([
+        adminFetch<UsersResponse>('/users', { signal }),
+        // Allowed to fail on its own: the administrator list is still worth
+        // showing if the invitations call is the one that broke.
+        adminFetch<{ invites: PendingInvite[] }>('/invites', { signal }).catch(() => ({ invites: [] as PendingInvite[] })),
+      ])
+        .then(([body, pending]) => {
           setData(body);
+          setInvites(pending.invites);
           setError(null);
         })
         .catch((err) => {
@@ -100,6 +133,17 @@ export default function AdminUsersPage() {
       .catch((err) => setRoleError(err instanceof AdminApiError ? err.message : 'Could not change that role.'));
   }
 
+  function revokeInvite(invite: PendingInvite) {
+    const reason = window.prompt(`Cancel the invitation for ${invite.name}? This is recorded against your name.`);
+    // Cancelled the prompt rather than answered it — do nothing at all, which
+    // is different from answering with an empty reason.
+    if (reason === null) return;
+    setInviteError(null);
+    adminFetch(`/invites/${invite.id}`, { method: 'DELETE', body: JSON.stringify({ reason: reason.trim() }) })
+      .then(() => void load())
+      .catch((err) => setInviteError(err instanceof AdminApiError ? err.message : 'Could not cancel that invitation.'));
+  }
+
   if (error) return <EmptyState icon="users" title="Could not load administrators" sub={error} />;
   if (!data) return <div style={{ fontSize: 13.5, color: oklch.textMuted }}>Loading…</div>;
 
@@ -116,7 +160,7 @@ export default function AdminUsersPage() {
               <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} />
               Show deactivated
             </label>
-            <PrimaryButton onClick={() => setAddOpen(true)}>Add administrator</PrimaryButton>
+            <PrimaryButton onClick={() => setAddOpen(true)}>Invite administrator</PrimaryButton>
           </div>
         </div>
 
@@ -186,6 +230,37 @@ export default function AdminUsersPage() {
                 </TableRow>
               );
             })}
+          />
+        )}
+      </Card>
+
+      {/*
+        GRW-164 — sent, not yet taken up. Its own card rather than rows mixed
+        into the table above: an invitation is not an administrator, and
+        showing it as one would put a person in the list who cannot yet sign in.
+      */}
+      <Card>
+        <SectionTitle title="Waiting to join" />
+        {inviteError ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{inviteError}</div> : null}
+        {invites.length === 0 ? (
+          <EmptyState icon="users" title="No invitations waiting" sub="Anyone you invite shows here until they set a password." />
+        ) : (
+          <Table
+            columns={INVITE_COLUMNS}
+            minWidthPx={720}
+            rows={invites.map((invite) => (
+              <TableRow key={invite.id} columns={INVITE_COLUMNS}>
+                <div>
+                  <div style={{ fontWeight: 700, color: oklch.textStrong }}>{invite.name}</div>
+                  <div style={{ fontSize: 12.5, color: oklch.textMuted }}>{invite.phone}</div>
+                </div>
+                <div style={{ fontWeight: 600 }}>{invite.roleName}</div>
+                <div style={{ fontSize: 12.5, color: oklch.textMuted }}>{expiryLabel(invite.expiresAt)}</div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <SecondaryButton onClick={() => void revokeInvite(invite)}>Cancel</SecondaryButton>
+                </div>
+              </TableRow>
+            ))}
           />
         )}
       </Card>

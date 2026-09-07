@@ -8,10 +8,21 @@ import { AdminShell } from './AdminShell';
 const LOGIN_PATH = '/admin/login';
 
 /**
+ * GRW-164 — accepting an invitation is the other screen with no session.
+ *
+ * A prefix rather than an exact path, because the token is in the URL. Without
+ * this the gate sends the invitee to /admin/login — a sign-in form for the
+ * account they are here to create, which is the same deadlock GRW-183 hit on
+ * the tenant plane: the only route to having access was refused for not having
+ * it yet.
+ */
+const JOIN_PREFIX = '/admin/join/';
+
+/**
  * The admin plane's session boundary (GRW-99's login prerequisite).
  *
- * `/admin/login` renders raw — no sidebar, no header, nothing implying the
- * visitor already has access. Everything else requires a session already in
+ * `/admin/login` and `/admin/join/<token>` render raw — no sidebar, no header,
+ * nothing implying the visitor already has access. Everything else requires a session already in
  * sessionStorage or redirects there first; AdminShell only ever wraps a page
  * an authenticated admin is allowed to see.
  *
@@ -25,10 +36,10 @@ export function SessionGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
-  const isLoginPage = pathname === LOGIN_PATH;
+  const isPublicPage = pathname === LOGIN_PATH || pathname.startsWith(JOIN_PREFIX);
 
   useEffect(() => {
-    if (isLoginPage) {
+    if (isPublicPage) {
       setReady(true);
       return;
     }
@@ -37,9 +48,9 @@ export function SessionGate({ children }: { children: ReactNode }) {
       return;
     }
     setReady(true);
-  }, [isLoginPage, pathname, router]);
+  }, [isPublicPage, pathname, router]);
 
-  if (isLoginPage) return <>{children}</>;
+  if (isPublicPage) return <>{children}</>;
   // Nothing rendered while the redirect resolves — avoids a flash of the
   // sidebar shell for a visitor about to be sent to /admin/login anyway.
   if (!ready) return null;
