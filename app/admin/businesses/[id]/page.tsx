@@ -462,7 +462,19 @@ function SummaryHeader({
             {business.vertical} · {business.ownerEmail ?? 'No owner recorded'}
           </div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/*
+          `flexWrap` because these three do not fit a 320px phone.
+          An ACTIVE business shows the status pill, Suspend and Impersonate
+          owner side by side — 283px of controls in a 320px viewport once the
+          card's padding is taken — which pushed a horizontal scrollbar onto the
+          DOCUMENT and dragged the tab strip out with it. The tab strip was
+          fine: it already scrolls inside its own `admin-table-scroll`
+          container, which is the rule this row was quietly breaking.
+
+          Only an active business hit it, which is why it survived: a
+          provisioning or suspended one shows two controls and fits.
+        */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <StatusPill status={statusLabel(business.status)} />
           {canSuspend ? (
             <SecondaryButton danger onClick={() => onRequestAction('suspend')}>
