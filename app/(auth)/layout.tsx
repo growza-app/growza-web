@@ -21,9 +21,11 @@ export const metadata: Metadata = {
   icons: { icon: '/icon.png' },
 };
 
+  /** Jira GRW-17 — see the note in `(tenant)/layout.tsx`: this is what makes `env(safe-area-inset-*)` non-zero. */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   themeColor: '#0f3d2e',
 };
 

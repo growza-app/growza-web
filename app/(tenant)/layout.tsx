@@ -26,9 +26,24 @@ export const metadata: Metadata = {
   },
 };
 
+  /**
+   * Jira GRW-17 — `viewport-fit: cover` is what makes `env(safe-area-inset-*)`
+   * mean anything.
+   *
+   * Without it those insets resolve to 0 in every browser, so the ten
+   * safe-area rules already written across this stylesheet — the tab bar's
+   * padding, the FAB's offset, the sheet footers — have never once taken
+   * effect. They were correct and dead. This is the line that switches them on.
+   *
+   * It also opts the page into drawing UNDER the notch and the home indicator,
+   * which is the point: the app is installable (`display: standalone` in
+   * manifest.json), and a PWA that stops at the safe area has black bars.
+   * Drawing edge-to-edge and padding with the insets is the native look.
+   */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   maximumScale: 1,
   themeColor: '#0f3d2e',
 };

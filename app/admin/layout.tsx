@@ -27,6 +27,21 @@ export const metadata: Metadata = {
   description: 'Platform administration — businesses, billing, usage and control.',
 };
 
+/**
+ * Jira GRW-17 — `viewportFit: 'cover'` is deliberately NOT set here.
+ *
+ * It was, briefly. Setting it makes a page draw under the notch and the home
+ * indicator, which is only an improvement if something then pads the content
+ * back out with `env(safe-area-inset-*)`. The tenant dashboard does, in ten
+ * places. **This stylesheet does so in none** — and it has sticky and fixed
+ * chrome that would have gone straight under a Dynamic Island.
+ *
+ * It also gains nothing: only `(tenant)` links `manifest.json` and registers
+ * the service worker, so the admin plane is not installable and is a
+ * desktop-first internal tool. Turning it on here would have introduced the
+ * exact bug this story exists to fix. If admin ever becomes installable, the
+ * insets go in first and this line follows.
+ */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
