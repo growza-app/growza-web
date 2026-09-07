@@ -10,6 +10,7 @@ import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
+import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
 import { BillingTab } from '../../components/BillingTab';
 import { subscriptionStatusLabel } from '../../lib/subscription-status';
 import { inr, oklch, typeColor } from '../../tokens';
@@ -62,6 +63,8 @@ interface DetailResponse {
   business: BusinessDetail;
   bookings: { total: number; recent: RecentBooking[] };
   customers: { total: number };
+  /** GRW-176 — present only while the business is `provisioning`. */
+  readiness: { ready: boolean; items: ReadinessItem[] } | null;
 }
 
 interface Me {
@@ -137,6 +140,13 @@ function BusinessDetailInner() {
   // `pendingAction`: it is not a state transition on the business, its confirm
   // copy is unlike the other two, and success navigates away instead of
   // refreshing this page.
+  // GRW-176 — going live. Its own dialog for the same reason impersonation has
+  // one: it is not suspend/reactivate's transition, and its confirm copy is
+  // about a decision rather than a reversal.
+  const [goLiveOpen, setGoLiveOpen] = useState(false);
+  const [goLiveBusy, setGoLiveBusy] = useState(false);
+  const [goLiveError, setGoLiveError] = useState<string | null>(null);
+
   const [impersonateOpen, setImpersonateOpen] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState(false);
   const [impersonateError, setImpersonateError] = useState<string | null>(null);
@@ -199,6 +209,23 @@ function BusinessDetailInner() {
       .finally(() => setActionLoading(false));
   }
 
+  function goLive(reason: string) {
+    setGoLiveBusy(true);
+    setGoLiveError(null);
+    adminFetch(`/businesses/${params.id}/activate`, { method: 'POST', body: JSON.stringify({ reason }) })
+      .then(() => {
+        setGoLiveOpen(false);
+        setRetryToken((n) => n + 1);
+      })
+      .catch((err) => {
+        // A 422 here means the checklist changed under the admin between the
+        // page loading and them clicking — the server's message names what is
+        // missing, so it is shown rather than replaced with a generic line.
+        setGoLiveError(err instanceof AdminApiError ? err.message : 'Could not take this business live.');
+      })
+      .finally(() => setGoLiveBusy(false));
+  }
+
   function startImpersonation(reason: string) {
     setImpersonateLoading(true);
     setImpersonateError(null);
@@ -252,7 +279,7 @@ function BusinessDetailInner() {
     );
   }
 
-  const { business, bookings, customers } = data;
+  const { business, bookings, customers, readiness } = data;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -282,6 +309,29 @@ function BusinessDetailInner() {
       />
 
       {business.status === 'suspended' ? <SuspendedBanner reason={business.suspensionReason} /> : null}
+
+      {readiness ? (
+        <GoLiveChecklist
+          items={readiness.items}
+          ready={readiness.ready}
+          canManage={canManage}
+          busy={goLiveBusy}
+          onGoLive={() => setGoLiveOpen(true)}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={goLiveOpen}
+        title={`Take ${business.name} live?`}
+        description="It will be able to take bookings immediately, and its first invoice follows its billing period as normal. This cannot be undone from here — a business that must stop trading is suspended instead."
+        confirmLabel={goLiveBusy ? 'Going live…' : 'Go live'}
+        reasonRequired
+        reasonPlaceholder="Why is this business going live now?"
+        loading={goLiveBusy}
+        error={goLiveError}
+        onConfirm={goLive}
+        onCancel={() => setGoLiveOpen(false)}
+      />
 
       <ConfirmDialog
         open={pendingAction !== null}
