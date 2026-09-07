@@ -20,6 +20,8 @@ export const KNOWN_ACTIONS = [
   'appointment.create',
   'appointment.status_change',
   'appointment.checkout',
+  'business.create',
+  'business.activate',
   'business.suspend',
   'business.reactivate',
   'plan.create',

@@ -4,19 +4,24 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
-import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from '../components/Pagination';
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch, typeColor } from '../tokens';
 
 /**
  * GRW-101's Businesses list, wired to GRW-100's real read layer in place of
- * the mock data module. The two verticals shown are the two the product
- * actually defines (docs/architecture/verticals/*.json) — the mock's
- * Garage/Dental/Spa/Fitness pills were dressing for the design canvas, not
- * real product categories, and this screen shows what is real.
+ * the mock data module.
+ *
+ * The vertical filters used to be `['All', 'Salon', 'Clinic']` here, with a
+ * comment claiming this screen "shows what is real" — while being the one
+ * place in the product that could not know. It was true for exactly as long as
+ * there were two verticals. They now come from `/business-types`, which reads
+ * `business_type_version`, so a vertical shipped as a JSON file appears here
+ * with no frontend change (GRW-175).
  */
-const VERTICAL_FILTERS = ['All', 'Salon', 'Clinic'];
+const ALL = 'All';
 const STATUS_OPTIONS = ['All', 'provisioning', 'active', 'suspended', 'churned'];
 const statusLabel = (s: string) => (s === 'All' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1));
 
@@ -110,7 +115,7 @@ function AdminBusinessesInner() {
 
     const params = new URLSearchParams();
     if (trimmedSearch) params.set('search', trimmedSearch);
-    if (vertical !== 'All') params.set('vertical', vertical);
+    if (vertical !== ALL) params.set('vertical', vertical);
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
     // Accumulating-prefix pagination, same pattern as AuditLogList — the
@@ -133,12 +138,43 @@ function AdminBusinessesInner() {
      
   }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom]);
 
-  const hasActiveFilters = vertical !== 'All' || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
+  const hasActiveFilters = vertical !== ALL || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
+
+  /**
+   * The verticals that exist, and whether this admin may add a business.
+   *
+   * `/me` is the same source `AdminShell` filters the nav from — one answer
+   * about permissions in the frontend, not two that can disagree. AC-02: the
+   * control is not rendered for an admin who cannot use it, and the route
+   * refuses them regardless.
+   */
+  const [verticalNames, setVerticalNames] = useState<string[]>([]);
+  const [canCreate, setCanCreate] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all([
+      adminFetch<{ code: string; name: string }[]>('/business-types', { signal: controller.signal }),
+      adminFetch<{ permissions: string[] }>('/me', { signal: controller.signal }),
+    ])
+      .then(([types, me]) => {
+        if (controller.signal.aborted) return;
+        setVerticalNames(types.map((t) => t.name));
+        setCanCreate(me.permissions.includes('admin.business.create'));
+      })
+      .catch(() => {
+        // A filter list that failed to load is a narrower page, not a broken
+        // one — the list itself still works, unfiltered.
+      });
+    return () => controller.abort();
+  }, []);
+
+  const [adding, setAdding] = useState(false);
+  const [created, setCreated] = useState<CreatedBusiness | null>(null);
 
   return (
     <div>
       <div style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        {VERTICAL_FILTERS.map((f) => (
+        {[ALL, ...verticalNames].map((f) => (
           <button
             key={f}
             type="button"
@@ -159,14 +195,36 @@ function AdminBusinessesInner() {
                 : { background: 'white', color: 'oklch(0.45 0.02 155)', border: `1px solid ${oklch.borderStrong}` }),
             }}
           >
-            {f !== 'All' ? <TypeIcon type={f} size={16} /> : null}
+            {f !== ALL ? <TypeIcon type={f} size={16} /> : null}
             {f}
           </button>
         ))}
         <div style={{ width: 150 }}>
           <Select options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
         </div>
+        {canCreate ? (
+          <div style={{ marginLeft: 'auto' }}>
+            <PrimaryButton onClick={() => setAdding(true)}>Add business</PrimaryButton>
+          </div>
+        ) : null}
       </div>
+
+      {adding ? (
+        <AddBusinessModal
+          onClose={() => setAdding(false)}
+          onCreated={(business) => {
+            setAdding(false);
+            setCreated(business);
+            // Straight back to the server rather than splicing the new row in
+            // locally: the list carries figures this screen does not compute
+            // (branches, users, plan), and a hand-made row would be the one
+            // row on the page that is a guess.
+            setPaging((p) => ({ ...p }));
+          }}
+        />
+      ) : null}
+
+      {created ? <OwnerCredentialNotice created={created} onClose={() => setCreated(null)} /> : null}
 
       {activeCreatedFrom ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 13, color: oklch.textMuted }}>

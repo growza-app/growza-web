@@ -12,15 +12,30 @@ export class AdminApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    /**
+     * The API's own `error` code and the `field` it blamed, when it sent them
+     * (GRW-175). Both optional: most routes send neither, and a screen that
+     * needs them must handle their absence rather than assume a shape.
+     *
+     * Added because the Add Business form shows a refusal against the field it
+     * is about, and the alternative — matching on message text — breaks the
+     * first time someone rewords a sentence.
+     */
+    public code?: string,
+    public field?: string,
   ) {
     super(message);
     this.name = 'AdminApiError';
   }
 }
 
-async function extractErrorMessage(res: Response, path: string): Promise<string> {
-  const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
-  return body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
+async function extractError(res: Response, path: string): Promise<{ message: string; code?: string; field?: string }> {
+  const body = (await res.json().catch(() => null)) as { error?: string; detail?: string; field?: string } | null;
+  return {
+    message: body?.detail ?? body?.error ?? `${path} failed: ${res.status}`,
+    code: body?.error,
+    field: body?.field,
+  };
 }
 
 export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -39,7 +54,10 @@ export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T
     throw new AdminApiError(401, 'Session expired — signing out.');
   }
 
-  if (!res.ok) throw new AdminApiError(res.status, await extractErrorMessage(res, path));
+  if (!res.ok) {
+    const { message, code, field } = await extractError(res, path);
+    throw new AdminApiError(res.status, message, code, field);
+  }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }

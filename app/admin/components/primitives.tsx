@@ -241,17 +241,43 @@ export function Toggle({
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+/**
+ * `error` replaces the hint rather than sitting beside it (GRW-175).
+ *
+ * A field that is wrong has one thing to say, and it is not the tip. Showing
+ * both stacks two lines of small grey-and-red text under a 44px input and
+ * makes the actionable one harder to find, not easier. `role="alert"` so a
+ * screen reader announces it when it appears rather than only on focus.
+ */
+export function Field({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+}) {
   return (
     <div>
       <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
         {label}
       </label>
       {children}
-      {hint ? <div style={{ fontSize: 11.5, color: 'oklch(0.58 0.02 155)', marginTop: 6 }}>{hint}</div> : null}
+      {error ? (
+        <div role="alert" style={{ fontSize: 11.5, fontWeight: 700, color: ERROR_COLOR, marginTop: 6 }}>
+          {error}
+        </div>
+      ) : hint ? (
+        <div style={{ fontSize: 11.5, color: 'oklch(0.58 0.02 155)', marginTop: 6 }}>{hint}</div>
+      ) : null}
     </div>
   );
 }
+
+export const ERROR_COLOR = 'oklch(0.5 0.18 25)';
 
 const inputBase: CSSProperties = {
   width: '100%',
@@ -265,13 +291,28 @@ const inputBase: CSSProperties = {
   outline: 'none',
 };
 
-export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} style={{ ...inputBase, ...props.style }} />;
+/** `invalid` also sets `aria-invalid`, so the red border is not the only way to know. */
+export function TextInput({ invalid, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
+  return (
+    <input
+      {...props}
+      aria-invalid={invalid || undefined}
+      style={{ ...inputBase, ...(invalid ? { borderColor: ERROR_COLOR } : {}), ...props.style }}
+    />
+  );
 }
 
-export function Select({ options, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { options: string[] }) {
+export function Select({
+  options,
+  invalid,
+  ...props
+}: React.SelectHTMLAttributes<HTMLSelectElement> & { options: string[]; invalid?: boolean }) {
   return (
-    <select {...props} style={{ ...inputBase, padding: '0 12px', cursor: 'pointer', ...props.style }}>
+    <select
+      {...props}
+      aria-invalid={invalid || undefined}
+      style={{ ...inputBase, padding: '0 12px', cursor: 'pointer', ...(invalid ? { borderColor: ERROR_COLOR } : {}), ...props.style }}
+    >
       {options.map((o) => (
         <option key={o} value={o}>
           {o}
