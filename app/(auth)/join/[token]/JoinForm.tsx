@@ -71,6 +71,10 @@ export function JoinForm({ token }: { token: string }) {
           setInvalid(true);
           setPreview(null);
         } else {
+          // 409 `belongs_to_another_business` and 401 `existing_account` both
+          // arrive here and both keep the form: the invite is still unclaimed
+          // in either case, so taking the form away would strand somebody who
+          // only needs to try a different number or the right password.
           setError(body?.detail ?? 'Could not join. Please try again.');
           setPassword('');
         }
@@ -208,9 +212,17 @@ export function JoinForm({ token }: { token: string }) {
           {loading ? 'Joining…' : 'Join team'}
         </button>
 
-        <p className="login-foot">
-          Already have a Growza account for this number? Enter its password above to join this team with it.
-        </p>
+        {/*
+          Hidden once there is an error, because the two contradicted each
+          other on screen: this line invites them to use their existing
+          password, directly under a message explaining that the account they
+          already have is the reason they cannot join.
+        */}
+        {!error && (
+          <p className="login-foot">
+            Already have a Growza account for this number? Enter that password above.
+          </p>
+        )}
       </form>
     </main>
   );
