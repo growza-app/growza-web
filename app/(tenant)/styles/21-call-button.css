@@ -10,6 +10,36 @@
   place-items: center;
   flex-shrink: 0;
   text-decoration: none;
+  /* For the hit area below. */
+  position: relative;
+}
+
+/*
+ * Jira GRW-10 — a 44px hit area around a 34px circle.
+ *
+ * Measured on a booking card at 375px: the call button was 34x34, and the
+ * story asks for touch targets of at least 44px. It is the one control on the
+ * card, it dials a customer, and on a phone it is pressed with a thumb while
+ * holding scissors.
+ *
+ * The circle itself is NOT grown. 34px is what the mock draws, the home
+ * dashboard deliberately overrides it to 42px, and widening the painted button
+ * everywhere would reflow three screens to satisfy a rule about fingers. A
+ * transparent overlay gives the finger the 44px it needs and the eye the
+ * 34px the design asked for.
+ *
+ * `max(100%, 44px)` rather than a flat 44px, so the override on
+ * `.home-upcoming .call` keeps whatever it sets when that is already larger.
+ */
+.call::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  border-radius: 50%;
 }
 
 .call svg {

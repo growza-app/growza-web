@@ -1737,6 +1737,36 @@
   }
 }
 
+/*
+ * Jira GRW-10 — the metric card gets its own row until there is width for five.
+ *
+ * The KPI grid is `repeat(4, 1fr) 1.6fr`, and between 861px and roughly 1150px
+ * that fifth cell is too narrow for the metric card's contents: measured at
+ * 1100px it wanted 230px and had 219, and the row overflowed its container by
+ * 75px at 861, 32px at 1024 and 12px at 1100. FR-02 asks for no overflow "at
+ * 1024px or below", so this was failing at the width the story names.
+ *
+ * The fix is the arrangement the phone layout already uses: four count tiles
+ * across, and the metric card spanning its own full-width row beneath them
+ * (`grid-column: 1 / -1`, exactly as the `max-width: 860px` block does). The
+ * count tiles keep the horizontal desktop layout the mock draws — at four
+ * columns they get ~194px each, which is more than the ~135px that layout
+ * needs, so nothing about the tile itself has to change.
+ *
+ * The five-across row returns at 1150px, where it genuinely fits.
+ */
+@media (min-width: 861px) and (max-width: 1149px) {
+  .bk-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .bk-metric-card {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+  }
+}
+
+
 /* Kept at the END of the file on purpose: every rule above defines a class
    exactly once at the base (desktop) specificity, so with equal specificity
    CSS falls back to source order — a media-query override placed EARLIER
