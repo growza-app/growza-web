@@ -5,7 +5,13 @@
  * the design canvas did — the content is a fixed internal set, never user
  * input, so this is the same trust boundary as any other hardcoded SVG.
  */
-const PATHS: Record<string, string> = {
+// GRW-171 — no `Record<string, string>` annotation.
+//
+// It threw away every key, so `IconName = keyof typeof PATHS` resolved to
+// plain `string` and the union this file exists to provide was not a union at
+// all. Under noUncheckedIndexedAccess it also made PATHS.businesses — a key
+// that demonstrably exists — `string | undefined`, which is how it was found.
+const PATHS = {
   dashboard: '<path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-7"/>',
   businesses: '<path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>',
   users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 0 1 0 5M18 20a5.5 5.5 0 0 0-3-4.9"/>',
@@ -48,7 +54,10 @@ const PATHS: Record<string, string> = {
 export type IconName = keyof typeof PATHS;
 
 export function Icon({ name, size = 19 }: { name: IconName | string; size?: number }) {
-  const d = PATHS[name] ?? PATHS.businesses;
+  // GRW-171 — `name` is widened to string for callers that build it
+  // dynamically, so the lookup is genuinely optional. The fallback is a known
+  // key and is annotated as such, rather than asserted away.
+  const d: string = (PATHS as Record<string, string | undefined>)[name] ?? PATHS.businesses;
   return (
     <svg
       width={size}

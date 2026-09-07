@@ -40,8 +40,12 @@ export interface CurrentDiscount {
  * here has no correctness consequence, only a cosmetic one.
  */
 function monthsBetween(startISO: string, endISO: string): number {
-  const [sy, sm] = startISO.split('-').map(Number);
-  const [ey, em] = endISO.split('-').map(Number);
+  // GRW-171 — `split('-')` can yield fewer than two parts for a malformed
+  // date, which noUncheckedIndexedAccess now makes visible. Falling back to 0
+  // keeps the Math.max(1, ...) floor below meaningful: a bad date reads as one
+  // month rather than NaN months, which is what this cosmetic estimate wants.
+  const [sy = 0, sm = 0] = startISO.split('-').map(Number);
+  const [ey = 0, em = 0] = endISO.split('-').map(Number);
   return Math.max(1, (ey - sy) * 12 + (em - sm));
 }
 
