@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, type ProviderOverviewRow, type ProvidersOverview, type Service } from '../lib/api';
+import { api, ApiError, type ProviderOverviewRow, type ProvidersOverview, type Service } from '../lib/api';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconPlus, IconSearch } from '../components/icons';
@@ -45,6 +45,8 @@ export function StaffClient({
   const [confirmAvail, setConfirmAvail] = useState<{ p: ProviderOverviewRow; available: boolean } | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<ProviderOverviewRow | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /** Why a change was refused — most often the plan's seat cap (GRW-23). */
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
     const fresh = await api.providersOverview().catch(() => null);
@@ -62,8 +64,22 @@ export function StaffClient({
       setConfirmRemove(p);
       return;
     }
-    await api.updateProviderProfile(p.id, { active: true });
-    await refresh();
+    /*
+     * QA on GRW-23: this had no error handling at all, and un-retiring can now
+     * be REFUSED — bringing somebody back takes a seat exactly as hiring them
+     * does. An unhandled rejection here meant the switch appeared to do
+     * nothing: the row stayed retired, no message, no reason.
+     */
+    setBusyId(p.id);
+    setError(null);
+    try {
+      await api.updateProviderProfile(p.id, { active: true });
+      await refresh();
+    } catch (e) {
+      setError(e instanceof ApiError && e.status === 403 ? e.message : 'Could not bring them back. Please try again.');
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const doRemove = async (p: ProviderOverviewRow) => {
@@ -180,6 +196,14 @@ export function StaffClient({
           {seatsLeft === 0 ? 'No seats left on your plan' : `${seatsLeft} seat${seatsLeft === 1 ? '' : 's'} left on your plan`}
         </span>
       </div>
+
+      {/* Directly under the seat count, which is the number the message is
+          about — a refusal shown far from the reason reads as a random fault. */}
+      {error && (
+        <div className="banner" role="alert" style={{ marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
 
       <div className="staff-toolbar">
         <div className="staff-search-wrap">

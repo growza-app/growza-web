@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { DateTime } from 'luxon';
 import {
   api,
+  ApiError,
   type ProviderDay,
   type ProviderDetail,
   type ProviderStats,
@@ -218,8 +219,15 @@ export function StaffEditClient({
       setDetail((prev) => ({ ...prev, active: next }));
       router.refresh();
       if (!next) router.push('/providers');
-    } catch {
-      setError(SAVE_ERROR);
+    } catch (e) {
+      /*
+       * QA on GRW-23: un-retiring can now be REFUSED, because bringing
+       * somebody back takes a seat exactly as hiring them does. Swallowing
+       * that into "check the server is running" is the same defect GRW-23
+       * fixed on the Add-staff panel — it sends an owner who has run out of
+       * seats to go and look at their server.
+       */
+      setError(e instanceof ApiError && e.status === 403 ? e.message : SAVE_ERROR);
     } finally {
       setBusy(false);
       setConfirmRemove(false);
