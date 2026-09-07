@@ -264,6 +264,27 @@ export interface PaymentLink {
   invoiceId: string;
 }
 
+export interface PendingInvite {
+  id: string;
+  phone: string;
+  role: string;
+  providerId: string | null;
+  createdAt: string;
+  expiresAt: string;
+}
+
+/**
+ * Jira GRW-63 · GRW-67 — the token comes back ONCE, on creation, and no route
+ * returns it again. The screen has to put it in front of the owner there and
+ * then; there is no "show me that link again".
+ */
+export interface CreatedInvite {
+  id: string;
+  token: string;
+  expiresAt: string;
+  resent: boolean;
+}
+
 export const api = {
   me: () => get<Me>('/api/v1/me'),
   /**
@@ -305,6 +326,10 @@ export const api = {
   // todayStats which runs server-side during SSR and never hits that filter).
   rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
   notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
+  teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
+  createTeamInvite: (body: { phone: string; providerId?: string | null }) =>
+    post<CreatedInvite>('/api/v1/team/invites', body),
+  revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
   settings: () => get<SettingsSummary>('/api/v1/settings'),
   updateProfile: (body: {
     name?: string;

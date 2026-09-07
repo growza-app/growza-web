@@ -9,6 +9,7 @@ import {
   IconShield,
   IconShop,
   IconUser,
+  IconUserPlus,
   IconWallet,
   IconWhatsApp,
 } from '../components/icons';
@@ -77,6 +78,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     title: 'Account',
     rows: [
+      { href: '/settings/team', label: 'Team access', sub: 'Invite people who can sign in', icon: IconUserPlus },
       { label: 'Account', sub: 'Manage your account', icon: IconUser },
       { label: 'Log out', sub: 'Sign out from this device', icon: IconLogout, action: 'logout' },
     ],
