@@ -104,9 +104,21 @@ export default async function AppointmentsPage({
   // server-side pass and a client-side control that can disagree. The KPI row
   // therefore keeps showing the day's real totals while the list narrows —
   // the same split search and the staff filter already use.
-  const appointments = await api
-    .appointments(date, toDate, undefined, customerId)
-    .catch(() => [] as Appointment[]);
+  const [appointments, capacity] = await Promise.all([
+    api.appointments(date, toDate, undefined, customerId).catch(() => [] as Appointment[]),
+    /**
+     * Jira GRW-63 · GRW-168 — the busy figure's denominator, from the same
+     * `working_hours` rows the availability engine books against, over exactly
+     * the range being shown. It used to be `roster size × an assumed nine-hour
+     * day`, computed here in the browser; every tenant sets its own schedule
+     * and a stylist may override theirs, so the assumption was wrong for most
+     * salons and wrong by a different amount for each person in them.
+     *
+     * A failure yields no capacity, and the card shows no percentage rather
+     * than falling back to a number nobody can account for.
+     */
+    api.capacity(date, toDate).catch(() => null),
+  ]);
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
   // A multi-day range is never "today", even when it starts today — the
   // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
@@ -182,6 +194,7 @@ export default async function AppointmentsPage({
           initialSort={sort}
           initialStaff={staff}
           viewerIsStaff={me.member?.role === 'staff'}
+          capacityMin={capacity?.minutes ?? null}
         />
       </div>
     </>

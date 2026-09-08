@@ -450,3 +450,17 @@ export interface CheckoutResponse {
   bookingGroupId: string;
   extraAppointmentIds: string[];
 }
+
+/**
+ * Jira GRW-63 · GRW-168 — how many minutes the caller's roster is rostered for.
+ *
+ * `minutes` is 0 when the range is wider than the API will compute (a client's
+ * whole history, say) — `days` still reports the range that was asked for, so
+ * the screen can tell "nobody works these days" apart from "too wide to say"
+ * and show no percentage rather than a wrong one.
+ */
+export interface Capacity {
+  minutes: number;
+  days: number;
+  schedulables: number;
+}

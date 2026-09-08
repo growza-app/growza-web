@@ -124,6 +124,7 @@ export function BookingsList({
   initialStaff,
   initialSort,
   viewerIsStaff,
+  capacityMin,
 }: {
   appointments: Appointment[];
   /** The full roster, for the mobile staff-filter chips (GRW-46) and the desktop staff select (GRW-47) — not just staff with a booking today, so picking one can honestly show "0 bookings" for someone rather than making them disappear. */
@@ -159,6 +160,15 @@ export function BookingsList({
    * the reader, are noise that reads as a team view.
    */
   viewerIsStaff: boolean;
+  /**
+   * Jira GRW-63 · GRW-168 — minutes this roster is actually rostered for over
+   * the range on screen, from `working_hours` minus `time_block`.
+   *
+   * `null` means the API could not say — the range is wider than it will
+   * compute, or the call failed. Not 0: nobody rostered and "we don't know"
+   * are different answers, and only one of them should be shown as 0%.
+   */
+  capacityMin: number | null;
 }) {
   const [now, setNow] = useState(() => new Date(nowISO));
   const [page, setPage] = useState(1);
@@ -232,38 +242,53 @@ export function BookingsList({
   const comingUp = isToday ? confirmed.filter((b) => within2h(b.startAt)).length : confirmed.length;
   const noShow = filtered.filter((b) => b.status === 'no_show').length;
 
-  // Mobile-only (GRW-46) "at a glance" card. Busy % assumes a 9-hour working
-  // day per staff member — the real per-tenant working-hours configuration
-  // isn't loaded on this screen, and pulling it in is a data-layer change
-  // this story's own Out of Scope excludes; the booked-minutes numerator is
-  // real, only that denominator is a documented stand-in.
-  //
-  // GRW-190 — that stand-in is per PERSON, so both sides of the division have
-  // to describe the same set of people. They didn't: `bookings` was scoped to
-  // the signed-in stylist and `providers` was the whole salon, so Bhavna's own
-  // screen divided her 135 minutes by ten stylists' capacity and told her she
-  // was 3% busy on a day that was a quarter full. The roster is scoped
-  // server-side now (listActiveProviders), which makes `providers.length` 1
-  // for her and leaves the owner's view exactly as it was.
-  const workdayMin = 9 * 60;
-  const staffBusyPct =
-    providers.length > 0
-      ? Math.round((bookings.reduce((sum, b) => sum + b.totalMin, 0) / (providers.length * workdayMin)) * 100)
-      : 0;
+  /**
+   * Mobile-only (GRW-46) "at a glance" card: booked minutes over rostered
+   * minutes.
+   *
+   * Both halves are now real, and it took two fixes to get there.
+   *
+   * GRW-190 — the two halves have to describe the same PEOPLE. They didn't:
+   * `bookings` was scoped to the signed-in stylist and the roster was the
+   * whole salon, so Bhavna's screen divided her 135 minutes by ten stylists'
+   * capacity and told her she was 3% busy on a day that was a quarter full.
+   *
+   * GRW-168 — and the same DAYS, on the real schedule. The denominator was
+   * `roster size × an assumed nine-hour day`, an assumption written into this
+   * component: wrong for every salon that doesn't open 9-to-6, wrong again for
+   * any stylist who overrides their own hours, and wrong by a whole multiple
+   * over a From/To range, where a week of bookings was divided by one day.
+   * `capacityMin` comes from `working_hours` minus `time_block` over exactly
+   * the range on screen, so a half-day Sunday, a lunch gap and a colleague
+   * marked off sick all count for what they are.
+   *
+   * Null capacity is NOT zero: it means the API declined to say (a range wider
+   * than a month, or a failed call), and the card shows no figure rather than
+   * an authoritative-looking 0%.
+   */
+  const bookedMin = bookings.reduce((sum, b) => sum + b.totalMin, 0);
+  const staffBusyPct = capacityMin && capacityMin > 0 ? Math.round((bookedMin / capacityMin) * 100) : null;
   const busiestStaff = busiestStaffName(bookings);
   const topService = topServiceName(bookings);
   const metricValue =
-    metric === 'staff' ? (busiestStaff ?? '—') : metric === 'service' ? (topService ?? '—') : `${staffBusyPct}%`;
+    metric === 'staff'
+      ? (busiestStaff ?? '—')
+      : metric === 'service'
+        ? (topService ?? '—')
+        : staffBusyPct === null
+          ? '—'
+          : `${staffBusyPct}%`;
+  // "today" only when the screen is showing one day. Over a From/To range the
+  // figure covers every day in it, and the old label said otherwise.
+  const oneDay = date === toDate;
   const metricLabel =
     metric === 'staff'
-      ? 'Busiest staff today'
+      ? `Busiest staff ${oneDay ? 'today' : 'in this range'}`
       : metric === 'service'
-        ? viewerIsStaff
-          ? 'Your top service today'
-          : 'Top service today'
+        ? `${viewerIsStaff ? 'Your top service' : 'Top service'} ${oneDay ? 'today' : 'in this range'}`
         : viewerIsStaff
-          ? 'Your day booked'
-          : 'Staff busy today';
+          ? `Your ${oneDay ? 'day' : 'time'} booked`
+          : `Staff busy ${oneDay ? 'today' : 'in this range'}`;
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
@@ -448,7 +473,7 @@ export function BookingsList({
             <div className="bk-metric-value">{metricValue}</div>
             <div className="bk-metric-label">{metricLabel}</div>
           </div>
-          {metric === 'busy' && (
+          {metric === 'busy' && staffBusyPct !== null && (
             <div className="bk-metric-bar">
               <div className="bk-metric-bar-fill" style={{ width: `${Math.min(100, Math.max(0, staffBusyPct))}%` }} />
             </div>

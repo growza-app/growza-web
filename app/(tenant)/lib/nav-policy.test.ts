@@ -104,7 +104,7 @@ describe('AC-05 / BR-02 — the nav agrees with the API', () => {
       .filter((entry) => entry.startsWith('GET '))
       .map((entry) => entry.slice('GET '.length));
     // These are data the scoped pages need, not destinations of their own.
-    const supporting = ['/api/v1/me', '/api/v1/services', '/api/v1/services/all', '/api/v1/service-categories', '/api/v1/offers', '/api/v1/offers/all', '/api/v1/offers/:id', '/api/v1/providers', '/api/v1/provider-day'];
+    const supporting = ['/api/v1/me', '/api/v1/services', '/api/v1/services/all', '/api/v1/service-categories', '/api/v1/offers', '/api/v1/offers/all', '/api/v1/offers/:id', '/api/v1/providers', '/api/v1/provider-day', '/api/v1/capacity'];
     const unexplained = staffAllowed.filter((r) => !supporting.includes(r) && !visibleItems(NAV, 'staff').some((i) => `/api/v1${i.href}` === r));
     expect(unexplained, 'staff-allowed routes with no nav destination and no stated reason').toEqual([]);
   });

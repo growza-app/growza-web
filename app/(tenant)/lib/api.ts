@@ -49,6 +49,7 @@ import type {
   Appointment,
   AppointmentStatus,
   AvailabilityResponse,
+  Capacity,
   ChatState,
   CheckoutExtraServiceInput,
   CheckoutGroupMemberInput,
@@ -296,6 +297,13 @@ export const api = {
   paymentLink: () => post<PaymentLink>('/api/v1/billing/payment-link', {}),
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
+  /**
+   * GRW-168 — the roster's rostered minutes over a day range, already scoped
+   * to the caller. The "busy" figure's denominator; see the route for why it
+   * is not computed in the browser.
+   */
+  capacity: (date: string, to?: string) =>
+    get<Capacity>(`/api/v1/capacity?date=${encodeURIComponent(date)}${to ? `&to=${encodeURIComponent(to)}` : ''}`),
   /** `date` alone = one day; `date` + `to` = an inclusive day range (the Bookings From/To filter). */
   appointments: (date?: string, to?: string, providerId?: string, customerId?: string) => {
     const params = new URLSearchParams();
