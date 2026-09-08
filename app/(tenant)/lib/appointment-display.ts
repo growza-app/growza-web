@@ -68,8 +68,17 @@ export interface BookingGroup {
   endAt: string;
   /** Total booked time = the sum of every leg's duration (e.g. 30 + 45 + 15 = 90). */
   totalMin: number;
-  customerName: string | null;
-  customerPhone: string;
+  /**
+   * GRW-166 — OPTIONAL, and the distinction matters when rendering.
+   *
+   * ABSENT means the salon withholds the client's identity from staff.
+   * `customerName: null` means a client with no name on file. The card shows
+   * nothing for the first and "Unknown" for the second, so collapsing them
+   * into one nullable field would put a placeholder where the answer is
+   * "you may not see this".
+   */
+  customerName?: string | null;
+  customerPhone?: string;
   /** Every service in the booking, in order — e.g. ["Haircut", "Facial", "De-Tan"]. */
   serviceNames: string[];
   /** Distinct providers across the legs (a combo may split staff). */
@@ -124,8 +133,12 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
       startAt: first.startAt,
       endAt: last.endAt,
       totalMin,
-      customerName: first.customerName,
-      customerPhone: first.customerPhone,
+      // Spread conditionally so an absent field STAYS absent through grouping —
+      // writing `customerName: first.customerName` would create the key with
+      // `undefined`, and `'customerName' in group` would then be true for a
+      // client the viewer is not allowed to see.
+      ...('customerName' in first ? { customerName: first.customerName } : {}),
+      ...('customerPhone' in first ? { customerPhone: first.customerPhone } : {}),
       serviceNames: sorted.map((a) => a.serviceName),
       providerNames: [...new Set(sorted.map((a) => a.providerName).filter((n): n is string => !!n))],
       status: groupStatus(sorted),
@@ -138,4 +151,22 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
   });
 
   return groups.sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+}
+
+/**
+ * Jira GRW-166 — what to show where a client's name would go.
+ *
+ * Three cases, and they are genuinely different:
+ *
+ *   withheld  the salon does not let staff see who the client is → show
+ *             nothing, because a placeholder reads as a fault in the product
+ *   no name   a walk-in nobody took a name for → "Unknown", which is true
+ *   named     the name
+ *
+ * Absence of the KEY is what separates the first from the second, so this
+ * takes the whole booking rather than `booking.customerName`.
+ */
+export function clientNameLabel(booking: { customerName?: string | null }): string | null {
+  if (!('customerName' in booking)) return null;
+  return booking.customerName ?? 'Unknown';
 }

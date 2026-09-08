@@ -11,6 +11,7 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
   const [minNoticeMin, setMinNoticeMin] = useState(initial.booking.minNoticeMin);
   const [bookingHorizonDays, setBookingHorizonDays] = useState(initial.booking.bookingHorizonDays);
   const [cancellationCutoffMin, setCancellationCutoffMin] = useState(initial.booking.cancellationCutoffMin);
+  const [staffSeesClientContact, setStaffSeesClientContact] = useState(initial.booking.staffSeesClientContact);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -26,6 +27,7 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
         minNoticeMin,
         bookingHorizonDays,
         cancellationCutoffMin,
+        staffSeesClientContact,
       });
       setSaved(true);
     } catch {
@@ -103,6 +105,34 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           <span className="field-hint">
             Bookings can&apos;t be cancelled within {cancellationCutoffMin || 0} minutes of the start time.
           </span>
+        </div>
+
+        {/*
+          GRW-166 — a privacy decision rather than a booking rule, so it sits
+          apart from the numbers above with its own separator. Worded for an
+          owner: what their team can see, not what the API returns.
+        */}
+        <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <label className="switch" style={{ marginTop: 2 }}>
+              <input
+                type="checkbox"
+                checked={staffSeesClientContact}
+                onChange={() => setStaffSeesClientContact((v) => !v)}
+              />
+              <span className="switch-track">
+                <span className="switch-thumb" />
+              </span>
+            </label>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 620, fontSize: 14.5 }}>Staff can see client name and number</div>
+              <span className="field-hint" style={{ margin: '4px 0 0' }}>
+                {staffSeesClientContact
+                  ? 'Your team sees who each booking is for, and can call them.'
+                  : 'Your team sees the booking, the service and the time — but not who it is for. You and your managers still see everything.'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {error && <div className="field-error">{error}</div>}

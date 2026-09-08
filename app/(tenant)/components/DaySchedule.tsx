@@ -11,6 +11,7 @@ import {
   statusChip,
   summarizeServices,
   type BookingGroup,
+  clientNameLabel,
 } from '../lib/appointment-display';
 import { BookingSheet, dialable } from './BookingSheet';
 import { BookingSummary } from './BookingSummary';
@@ -111,16 +112,19 @@ export function DaySchedule({
   const firstFuture = shown.findIndex((b) => startMs(b) > now.getTime());
   const futureStart = firstFuture === -1 ? shown.length : firstFuture;
 
-  const callButton = (booking: BookingGroup, strong: boolean) => (
-    <a
-      className={`call ${strong ? 'call-strong' : ''}`}
-      href={`tel:${dialable(booking.customerPhone)}`}
-      aria-label={`Call ${booking.customerName ?? 'customer'}`}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <IconPhone />
-    </a>
-  );
+  // GRW-166 — no button at all without a number: one that dials an empty
+  // `tel:` looks like a fault rather than like the owner's choice.
+  const callButton = (booking: BookingGroup, strong: boolean) =>
+    booking.customerPhone ? (
+      <a
+        className={`call ${strong ? 'call-strong' : ''}`}
+        href={`tel:${dialable(booking.customerPhone)}`}
+        aria-label={`Call ${booking.customerName ?? 'customer'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <IconPhone />
+      </a>
+    ) : null;
 
   const renderItem = (booking: BookingGroup, strong = false) =>
     booking.status !== 'confirmed' ? renderSettled(booking) : renderRich(booking, strong);
@@ -128,9 +132,9 @@ export function DaySchedule({
   /** Finished, missed or cancelled — nothing left to do, so it recedes. */
   const renderSettled = (booking: BookingGroup) => (
     <div className="sched-card sched-done" key={booking.key} onClick={() => setOpen(booking)}>
-      <Avatar name={booking.customerName} muted />
+      <Avatar name={booking.customerName ?? null} muted />
       <div className="sched-main">
-        <div className="sched-name">{booking.customerName ?? 'Unknown'}</div>
+        <div className="sched-name">{clientNameLabel(booking)}</div>
         <div className="sched-meta">{metaLine(booking)}</div>
       </div>
       <span className="status-note">{statusChip(booking).text}</span>
@@ -141,9 +145,9 @@ export function DaySchedule({
     const chip = statusChip(booking);
     return (
       <div className="sched-card" key={booking.key} onClick={() => setOpen(booking)}>
-        <Avatar name={booking.customerName} />
+        <Avatar name={booking.customerName ?? null} />
         <div className="sched-main">
-          <div className="sched-name">{booking.customerName ?? 'Unknown'}</div>
+          <div className="sched-name">{clientNameLabel(booking)}</div>
           <div className="sched-meta">{metaLine(booking)}</div>
         </div>
         <div className="sched-actions">

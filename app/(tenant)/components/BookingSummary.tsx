@@ -2,7 +2,7 @@
 
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
-import { formatDuration, type BookingGroup } from '../lib/appointment-display';
+import { clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { IconCheck, IconPhone } from './icons';
 import { useLabel } from './LabelsProvider';
@@ -52,11 +52,14 @@ export function BookingSummary({
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="summary-title">
-              {booking.customerName ?? 'Unknown'}
+              {/* GRW-166 — nothing at all when the salon withholds it, and no
+                  call button without a number to dial. */}
+              {clientNameLabel(booking)}
               <a
                 className="call"
-                href={`tel:${dialable(booking.customerPhone)}`}
+                href={`tel:${dialable(booking.customerPhone ?? '')}`}
                 aria-label="Call"
+                hidden={!booking.customerPhone}
                 onClick={(e) => e.stopPropagation()}
               >
                 <IconPhone />

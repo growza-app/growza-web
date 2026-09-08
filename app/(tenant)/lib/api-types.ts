@@ -247,6 +247,8 @@ export interface SettingsSummary {
     minNoticeMin: number;
     bookingHorizonDays: number;
     cancellationCutoffMin: number;
+    /** GRW-166 — whether staff see a client's name and phone. True unless the owner turned it off. */
+    staffSeesClientContact: boolean;
   };
   reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>;
   workingHours: Array<{ weekday: number; startTime: string; endTime: string }>;

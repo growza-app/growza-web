@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type Provider } from '../lib/api';
 import { copy } from '../lib/copy';
-import { formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
+import { clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
@@ -188,7 +188,7 @@ export function BookingsList({
   const q = query.trim().toLowerCase();
   const matchesQuery = (b: BookingGroup) =>
     !q ||
-    [bookingRef(b.appointments[0]!.id), b.customerName ?? '', ...b.providerNames, b.customerPhone].some((f) =>
+    [bookingRef(b.appointments[0]!.id), b.customerName ?? '', ...b.providerNames, b.customerPhone ?? ''].some((f) =>
       f.toLowerCase().includes(q),
     );
   const matchesStaff = (b: BookingGroup) => staffFilter === 'Everyone' || b.providerNames.includes(staffFilter);
@@ -283,8 +283,14 @@ export function BookingsList({
 
   const openBooking = (b: BookingGroup) => setOpen(b);
 
+  /**
+   * GRW-166 — a salon can withhold the client's identity from its staff, and
+   * an absent `customerPhone` means exactly that. No call button then: one
+   * that dials an empty `tel:` is worse than none, because it looks like the
+   * product is broken rather than like the owner made a choice.
+   */
   const actionFor = (b: BookingGroup) =>
-    b.status === 'confirmed' ? (
+    b.status === 'confirmed' && b.customerPhone ? (
       <a
         className="call"
         href={`tel:${dialable(b.customerPhone)}`}
@@ -331,7 +337,14 @@ export function BookingsList({
             <span className={`chip ${chip.cls}`}>{chip.text}</span>
           </div>
           <div className="bk-card-name-row">
-            <div className="bk-card-name">{b.customerName ?? 'Unknown'}</div>
+            {/*
+              GRW-166 — `customerName` ABSENT means the salon withholds it from
+              staff; `null` means a client with no name on file, which is why
+              those two do not collapse into one placeholder. Withheld, the row
+              still carries the booking reference, so the card keeps something
+              to identify the booking by.
+            */}
+            {clientNameLabel(b) !== null ? <div className="bk-card-name">{clientNameLabel(b)}</div> : <div />}
             <span className="bk-card-ref">{bookingRef(b.appointments[0]!.id)}</span>
           </div>
           {b.offerTitle && (
@@ -340,10 +353,12 @@ export function BookingsList({
             </div>
           )}
           <div className="bk-card-services">{summarizeServices(b.serviceNames)}</div>
-          <div className="bk-card-phone">
-            <IconPhone />
-            {b.customerPhone}
-          </div>
+          {b.customerPhone ? (
+            <div className="bk-card-phone">
+              <IconPhone />
+              {b.customerPhone}
+            </div>
+          ) : null}
           <div className="bk-card-bottom-row">
             {/* Desktop only: mobile already shows duration in .bk-card-timerow
                 above, so repeating it here would print it twice on a phone. */}

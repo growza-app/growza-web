@@ -348,6 +348,7 @@ export const api = {
     minNoticeMin?: number;
     bookingHorizonDays?: number;
     cancellationCutoffMin?: number;
+    staffSeesClientContact?: boolean;
   }) => patch<SettingsSummary>('/api/v1/settings/booking', body),
   updateReminders: (reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>) =>
     patch<SettingsSummary>('/api/v1/settings/reminders', { reminderRules }),
@@ -405,7 +406,8 @@ export const api = {
     holdKey: string;
     serviceId: string;
     startAt: string;
-    customerPhone: string;
+    /** GRW-166 — both ABSENT when the salon withholds client identity from staff. */
+    customerPhone?: string;
     customerName?: string;
   }) => post<ConfirmResponse>('/api/v1/appointments', args),
   chatStart: (phone: string, name?: string) => post<ChatState>('/api/v1/chat/start', { phone, name }),
