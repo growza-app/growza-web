@@ -38,12 +38,10 @@ export default async function AttendancePage({
 
   return (
     <>
-      <PageHeader
-        title="Attendance"
-        subtitle="Who came in, and when they left."
-        mobileSubtitle
-        initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
-      />
+      {/* The mock draws its own page title and strapline INSIDE the body, under
+          a header bar this shell already provides. Kept there (att-head), so
+          the design's heading is not printed twice. */}
+      <PageHeader title="Attendance" initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()} />
       <AttendanceRegister
         initial={register}
         staffWord={me.labels.providers ?? copy.nav.staff}

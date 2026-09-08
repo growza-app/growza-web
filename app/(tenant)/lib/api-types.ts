@@ -476,6 +476,7 @@ export interface Capacity {
 export interface AttendanceRow {
   providerId: string;
   displayName: string;
+  title: string | null;
   onDate: string;
   status: 'present' | 'late' | 'half_day' | 'absent' | 'leave' | null;
   inAt: string | null;
@@ -484,6 +485,8 @@ export interface AttendanceRow {
   markedAt: string | null;
   markedByName: string | null;
   rostered: boolean;
+  /** Their own shift start that day as "HH:mm", or null on a day off — what "came late" is measured against. */
+  shiftStart: string | null;
 }
 
 export interface AttendanceRegister {

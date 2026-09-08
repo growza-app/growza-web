@@ -1,172 +1,632 @@
-/* Jira GRW-63 · GRW-170 — the attendance register.
-   Reuses the shared .card / .btn-ghost / .banner primitives; only the row
-   layout and the status chips are new. */
+/* Jira GRW-63 · GRW-170 — the attendance register (Attendance.dc.html).
+ *
+ * The design's LAYOUT and behaviour, in the product's own materials. The mock
+ * is a standalone page: its own Plus Jakarta font, its own header with a fake
+ * nav, its own oklch(0.98 0.006 140) ground. This screen renders inside the
+ * real shell, which already supplies all three — reproducing them would put a
+ * second header under the real one and a second typeface beside it.
+ *
+ * So the surfaces, radii and spacing come from 00-base.css tokens, and what is
+ * kept verbatim is the part that carries the design's meaning: the five status
+ * hues, the tile-then-toolbar-then-list rhythm, and the inline row with its
+ * In / Out / Hours / Status columns.
+ */
 
-.att-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
-}
-.att-controls label {
-  font-weight: 620;
-  font-size: 14px;
-}
-.att-controls input[type='date'] {
-  padding: 8px 10px;
+.att {
+  /* The mock's five status colours, kept in its own oklch so the hues survive
+     the port exactly. They are attendance's alone — the product's --accent /
+     --amber / --purple are tuned for other jobs and only three of the five
+     have an equivalent. */
+  --att-green: oklch(0.62 0.13 150);
+  --att-amber: oklch(0.72 0.14 75);
+  --att-blue: oklch(0.62 0.13 245);
+  --att-purple: oklch(0.6 0.13 300);
+  --att-red: oklch(0.62 0.14 25);
 }
 
-.att-tally {
+/* ---------- title + day stepper ---------- */
+
+.att-head {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: var(--muted, #5b6b62);
-}
-.att-tally strong {
-  color: var(--text, #14201a);
-  font-size: 15px;
-}
-/* The one number an owner is scanning for. Coloured, not hidden behind the
-   others, because "3 not recorded" is the reason to open this screen. */
-.att-tally-gap strong {
-  color: #b45309;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
 }
 
+.att-title {
+  margin: 0 0 var(--sp-1);
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.att-sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.att-daynav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 5px;
+}
+
+.att-daynav > button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: var(--slate-soft);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.att-daynav > button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.att-daynav-label {
+  text-align: center;
+  min-width: 148px;
+  padding: 0 6px;
+}
+
+.att-daynav-date {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.att-daynav-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.att-daynav-today {
+  width: auto !important;
+  padding: 0 14px;
+  background: var(--accent) !important;
+  color: #fff !important;
+  font-size: 13px !important;
+}
+
+/* ---------- summary tiles ---------- */
+
+/* auto-fit rather than a fixed five columns, so the row reflows to 3 / 2 / 1
+   on the way down to 320px instead of shrinking each tile past legibility. */
+.att-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+.att-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 15px 16px;
+}
+
+.att-tile-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.att-tile-count {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.att-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--muted);
+}
+
+.att-dot-any {
+  background: var(--muted);
+}
+
+/* ---------- toolbar ---------- */
+
+.att-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: var(--sp-4);
+}
+
+.att-search {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 0 13px;
+  height: 42px;
+  color: var(--muted);
+}
+
+.att-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  height: 100%;
+}
+
+.att-filter {
+  height: 42px;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.att-filter-key,
+.att-caret {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.att-caret {
+  font-size: 11px;
+}
+
+.att-markall {
+  height: 42px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.att-markall:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- menus ---------- */
+
+.att-menu-anchor {
+  position: relative;
+}
+
+.att-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgb(20 32 27 / 0.14);
+  padding: 6px;
+  min-width: 176px;
+}
+
+/* The status menu sits at the right end of a row, so a left-anchored popup
+   would hang off the card at narrow widths. */
+.att-menu-right {
+  left: auto;
+  right: 0;
+}
+
+.att-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.att-menu button:hover {
+  background: var(--slate-soft);
+}
+
+.att-menu button.is-on {
+  background: var(--accent-soft);
+}
+
+.att-menu-clear {
+  border-top: 1px solid var(--border) !important;
+  border-radius: 0 0 8px 8px !important;
+  margin-top: 4px;
+  color: var(--muted) !important;
+  font-weight: 500 !important;
+}
+
+/* Catches the click that closes an open menu. Below the menus (z 40), above
+   everything else. */
+.att-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+/* ---------- the list ---------- */
+
 .att-list {
-  padding: 0;
-  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  /* NOT overflow:hidden — the status menu opens downward out of the last row,
+     and clipping it would make the bottom person's status unsettable. */
 }
+
 .att-row {
-  border-bottom: 1px solid var(--line, #e7ede9);
-  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--border);
 }
+
 .att-row:last-child {
   border-bottom: 0;
 }
 
-.att-row-head {
+/* A day off is still listed — an owner needs to see WHY somebody is unmarked —
+   but it recedes, so the rows that want an entry are the ones that catch. */
+.att-row.is-off {
+  background: #fcfdfc;
+}
+
+.att-who {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 190px;
 }
+
+.att-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex: none;
+}
+
+.att-who-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+}
+
 .att-name {
-  font-weight: 620;
   font-size: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  /* Takes the slack so the button stays right-aligned at every width in the
-     resolution matrix rather than drifting in beside the name. */
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.att-times {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.att-clock {
-  font-variant-numeric: tabular-nums;
-  font-size: 14px;
-  color: var(--muted, #5b6b62);
-}
-.att-unmarked {
-  font-size: 14px;
-  color: #b45309;
+  font-weight: 700;
 }
 
-.att-chip {
-  display: inline-block;
-  padding: 2px 9px;
-  border-radius: 999px;
+.att-role {
   font-size: 12.5px;
-  font-weight: 620;
-  white-space: nowrap;
+  color: var(--muted);
 }
-.att-chip-present { background: #dcfce7; color: #166534; }
-.att-chip-late { background: #fef3c7; color: #92400e; }
-.att-chip-half_day { background: #e0e7ff; color: #3730a3; }
-.att-chip-absent { background: #fee2e2; color: #991b1b; }
-.att-chip-leave { background: #f1f5f9; color: #475569; }
-.att-chip-off { background: #f1f5f9; color: #64748b; font-weight: 500; }
 
-.att-edit {
+.att-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
   align-items: flex-end;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--line, #e7ede9);
+  gap: 14px;
 }
-.att-edit label {
+
+.att-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
+  gap: var(--sp-1);
+}
+
+.att-field-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.att-timeset {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.att-timeset input {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 9px;
+  font: inherit;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--muted, #5b6b62);
+  background: #fbfcfb;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  width: 108px;
 }
-.att-edit input,
-.att-edit select {
-  padding: 8px 10px;
+
+.att-timeset button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 8px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.att-timeset input:disabled,
+.att-timeset button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.att-field-hours {
+  min-width: 82px;
+}
+
+.att-hours {
   font-size: 14px;
+  font-weight: 700;
+  padding: 8px 0;
+  font-variant-numeric: tabular-nums;
 }
-.att-note {
-  flex: 1 1 200px;
+
+.att-hours-muted { color: #9aa5a0; }
+.att-hours-live { color: var(--accent-deep); }
+.att-hours-done { color: var(--text); }
+
+.att-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 150px;
+  border-radius: 9px;
+  padding: 8px 11px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.att-pill-text {
+  flex: 1;
+  text-align: left;
+}
+
+.att-pill-none {
+  background: #fbfcfb;
+  color: var(--muted);
+}
+
+.att-pill-present { background: oklch(0.96 0.04 150); border-color: oklch(0.85 0.06 150); color: oklch(0.4 0.1 150); }
+.att-pill-late    { background: oklch(0.96 0.05 80);  border-color: oklch(0.87 0.08 80);  color: oklch(0.46 0.11 65); }
+.att-pill-half_day{ background: oklch(0.96 0.03 245); border-color: oklch(0.86 0.05 245); color: oklch(0.44 0.11 245); }
+.att-pill-leave   { background: oklch(0.96 0.03 300); border-color: oklch(0.87 0.05 300); color: oklch(0.44 0.11 300); }
+.att-pill-absent  { background: oklch(0.96 0.04 25);  border-color: oklch(0.88 0.06 25);  color: oklch(0.46 0.12 25); }
+
+.att-note-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  align-self: flex-end;
+}
+
+.att-note-toggle.has-note {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
+.att-noterow {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-left: 52px;
+}
+
+.att-noterow input {
+  flex: 1;
   min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  background: #fbfcfb;
+  color: var(--text);
 }
-/* Its own row at every width. Sharing a line with the Note field squeezed
-   Save to about 50px against the card edge on a 800px pane, and there is no
-   width where an action button reading as a field's suffix is right. */
-.att-actions {
-  display: flex;
-  gap: 8px;
-  flex-basis: 100%;
-}
-.att-meta {
-  flex-basis: 100%;
-  margin: 0;
+
+.att-note-text,
+.att-note-hint {
   font-size: 12.5px;
-  color: var(--muted, #5b6b62);
+  color: var(--muted);
 }
 
-/* The row is a two-line stack on a phone: name and status can't share a line
-   at 320px without the status wrapping mid-chip. */
-@media (max-width: 640px) {
-  .att-row-head {
-    align-items: flex-start;
-  }
-  .att-name {
-    flex-basis: 100%;
-  }
-  .att-edit label {
-    flex: 1 1 130px;
-  }
-  .att-note {
-    flex-basis: 100%;
-  }
+.att-empty {
+  padding: 54px 20px;
+  text-align: center;
 }
 
-.team-role-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 12px;
+.att-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
 }
-.team-role-field label {
+
+.att-empty-sub {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--muted, #5b6b62);
+  color: var(--muted);
+  margin-top: var(--sp-1);
 }
-.team-role-field select {
-  padding: 9px 10px;
-  font-size: 14px;
-  max-width: 100%;
+
+.att-error {
+  margin-bottom: var(--sp-3);
+}
+
+.att-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ---------- narrow ---------- */
+
+/* The mock is a 1120px desktop board and says nothing about a phone. Below the
+   crossover the row becomes a stack: identity on its own line, then the four
+   controls wrapping under it. The time inputs keep their 108px so the clock
+   stays tappable — what gives is the room around them. */
+@media (max-width: 860px) {
+  .att-head {
+    align-items: stretch;
+  }
+  .att-daynav {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .att-daynav-label {
+    min-width: 0;
+    flex: 1;
+  }
+  .att-who {
+    flex-basis: 100%;
+  }
+  .att-controls {
+    width: 100%;
+    gap: 10px 12px;
+  }
+  .att-pill {
+    min-width: 132px;
+  }
+  .att-noterow {
+    padding-left: 0;
+  }
+}
+
+/* Five tiles two-up is three rows of chrome before the first person on a
+   phone — the work is the list, so the tiles compress rather than the list
+   starting below the fold. */
+@media (max-width: 640px) {
+  .att-summary {
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    gap: var(--sp-2);
+  }
+  .att-tile {
+    padding: 10px 11px;
+  }
+  .att-tile-head {
+    margin-bottom: 4px;
+    font-size: 11.5px;
+  }
+  .att-tile-count {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 420px) {
+  .att-title {
+    font-size: 22px;
+  }
+  .att-timeset input {
+    width: 96px;
+  }
+  /* Hours sits beside Status on the last line rather than taking a line of
+     its own — at 320px a solo "In progress" row is a lot of height for a
+     word. */
+  .att-field-hours {
+    min-width: 0;
+  }
+  .att-markall,
+  .att-filter {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* No sr-only utility existed in this stylesheet set — added here rather than
+   in 00-base.css so it arrives with the one screen that needs it, and can be
+   promoted when a second does. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }

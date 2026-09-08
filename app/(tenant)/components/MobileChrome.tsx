@@ -16,7 +16,10 @@ import { IconCalendarPlus, IconClose, IconPlus, IconUserPlus } from './icons';
 // /offers has its own primary "+ Create a new combo" action — a second,
 // functionally-unrelated "New booking" FAB floating on top of it is
 // confusing, not helpful, the same reasoning that excludes /search.
-const NO_FAB = ['/availability', '/search', '/try-whatsapp', '/offers'];
+// /attendance is the same case as /offers: a full-width row-per-person form
+// with its own primary action ("Mark all present"), and at 390px the FAB sits
+// directly on top of the first row's Out-time control (GRW-170).
+const NO_FAB = ['/availability', '/search', '/try-whatsapp', '/offers', '/attendance'];
 
 /**
  * Full-screen edit forms with their own pinned primary button — the FAB would
@@ -29,7 +32,16 @@ const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
 export function MobileChrome({ labels, timezone, role }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const showFab = !NO_FAB.some((p) => pathname.startsWith(p)) && !EDIT_ROUTE_RE.test(pathname);
+  /**
+   * A stylist cannot create a booking — `POST /api/v1/appointments` is not in
+   * STAFF_ALLOWED (GRW-156) — so the FAB opened a menu whose every destination
+   * refused them. Found while checking the attendance screen; the role was
+   * already being passed here for the tab bar, so the fix is to read it.
+   *
+   * A receptionist CAN book (GRW-169), and keeps it.
+   */
+  const mayBook = role !== 'staff';
+  const showFab = mayBook && !NO_FAB.some((p) => pathname.startsWith(p)) && !EDIT_ROUTE_RE.test(pathname);
 
   const close = () => setOpen(false);
 
