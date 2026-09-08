@@ -30,7 +30,7 @@ export interface Me {
    * because a degraded session must not silently hide the product from the
    * person who owns it.
    */
-  member: { role: 'owner' | 'manager' | 'staff'; providerId: string | null } | null;
+  member: { role: 'owner' | 'manager' | 'staff' | 'receptionist'; providerId: string | null } | null;
   /**
    * Jira GRW-90 · GRW-137 — a platform admin is looking at this account.
    *
@@ -463,4 +463,33 @@ export interface Capacity {
   minutes: number;
   days: number;
   schedulables: number;
+}
+
+/**
+ * Jira GRW-63 · GRW-170 — one line of the attendance register.
+ *
+ * Every active person appears for every day in range, marked or not: `status`
+ * is null when nobody recorded them, which is a different fact from `absent`.
+ * `rostered` says whether they were meant to be in at all — an unmarked day
+ * off is not an omission.
+ */
+export interface AttendanceRow {
+  providerId: string;
+  displayName: string;
+  onDate: string;
+  status: 'present' | 'late' | 'half_day' | 'absent' | 'leave' | null;
+  inAt: string | null;
+  outAt: string | null;
+  note: string | null;
+  markedAt: string | null;
+  markedByName: string | null;
+  rostered: boolean;
+}
+
+export interface AttendanceRegister {
+  date: string;
+  to: string;
+  timezone: string;
+  today: string;
+  rows: AttendanceRow[];
 }

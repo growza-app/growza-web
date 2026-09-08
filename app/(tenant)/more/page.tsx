@@ -35,6 +35,10 @@ export default async function MorePage() {
   // Offers is a tab of its own, so it is deliberately not repeated here.
   // Calendar has no page yet — listing it would be a dead link.
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
+    // GRW-170 — the register lives here on a phone. The bottom bar is five
+    // fixed slots and a sixth would break it, so Attendance rides the menu
+    // rather than displacing a tab everybody uses.
+    { href: '/attendance', label: 'Attendance', icon: <IconStaff /> },
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
     // The design's mobile tab bar puts Reports in Offers' slot. The tab bar's

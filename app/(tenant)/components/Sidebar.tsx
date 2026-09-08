@@ -50,6 +50,10 @@ export function Sidebar({
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
     { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
     { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
+    // GRW-170 — who was here. Sits beside the client list because it is the
+    // other thing the front desk keeps, and next to Staff it would read as
+    // part of hiring, which it is not.
+    { href: '/attendance', label: 'Attendance', icon: <IconStaff /> },
     // Reports is added; nothing is removed. The design's sidebar puts it in
     // Free times' slot, but a Reports mock is not a reason to demote a working
     // page out of the owner's reach (GRW-48 decision 2).

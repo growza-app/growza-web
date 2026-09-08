@@ -48,6 +48,8 @@ import type {
   ActivityEvent,
   Appointment,
   AppointmentStatus,
+  AttendanceRegister,
+  AttendanceRow,
   AvailabilityResponse,
   Capacity,
   ChatState,
@@ -156,7 +158,7 @@ async function extractError(
 
 /* ---- Reports (GRW-48) ------------------------------------------------- */
 
-async function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
+async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
@@ -245,6 +247,9 @@ export function countFilters(filters: ReportFilters): number {
 
 const post = <T>(path: string, body: unknown) => send<T>('POST', path, body);
 const patch = <T>(path: string, body: unknown) => send<T>('PATCH', path, body);
+// PUT, not PATCH: an attendance row is identified by (provider, date), so the
+// same request twice has to mean the same thing (GRW-170).
+const put = <T>(path: string, body: unknown) => send<T>('PUT', path, body);
 const del = <T>(path: string) => send<T>('DELETE', path);
 
 /** Multipart upload — deliberately not routed through send(), the browser needs to set its own boundary'd Content-Type, not JSON. */
@@ -297,6 +302,19 @@ export const api = {
   paymentLink: () => post<PaymentLink>('/api/v1/billing/payment-link', {}),
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
+  /** GRW-170 — the register for a day or a range, including everybody nobody marked. */
+  attendance: (date: string, to?: string) =>
+    get<AttendanceRegister>(`/api/v1/attendance?date=${encodeURIComponent(date)}${to ? `&to=${encodeURIComponent(to)}` : ''}`),
+  markAttendance: (input: {
+    providerId: string;
+    date: string;
+    status: string;
+    inTime?: string | null;
+    outTime?: string | null;
+    note?: string | null;
+  }) => put<AttendanceRow>('/api/v1/attendance', input),
+  clearAttendance: (providerId: string, date: string) =>
+    del<{ ok: true }>(`/api/v1/attendance?providerId=${encodeURIComponent(providerId)}&date=${encodeURIComponent(date)}`),
   /**
    * GRW-168 — the roster's rostered minutes over a day range, already scoped
    * to the caller. The "busy" figure's denominator; see the route for why it
@@ -335,7 +353,7 @@ export const api = {
   rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
   notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
-  createTeamInvite: (body: { phone: string; providerId?: string | null }) =>
+  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
   revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
   settings: () => get<SettingsSummary>('/api/v1/settings'),

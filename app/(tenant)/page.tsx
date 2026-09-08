@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { homeHref } from './lib/nav-policy';
 import { api, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
 import { copy } from './lib/copy';
 import { formatDateWithWeekday } from './lib/format';
@@ -188,7 +189,11 @@ export default async function DashboardPage() {
    * story deliberately does not take.
    */
   const viewer = await api.me().catch(() => null);
-  if (viewer?.member?.role === 'staff') redirect('/appointments');
+  // GRW-169 — the receptionist is redirected for the same reason as a stylist,
+  // and from one place: this page loads four endpoints their role is refused,
+  // so without it they would land on a broken screen full of 403s.
+  const landing = homeHref(viewer?.member?.role);
+  if (landing !== '/') redirect(landing);
 
   try {
     let atRisk;

@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { copy } from '../lib/copy';
-import { IconAppointments, IconDots, IconGrid, IconOffers, IconUserPlus } from './icons';
+import { IconAppointments, IconCheck, IconDots, IconGrid, IconOffers, IconUserPlus } from './icons';
 
 /**
  * Mobile navigation. Replaces the sidebar entirely below the mobile
@@ -24,12 +24,27 @@ export function BottomNav({ labels, role }: { labels: Record<string, string>; ro
     { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconAppointments /> },
     { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
     { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
+    // GRW-170/170 — the register is a front-desk tab, not an owner one. The
+    // bar is five fixed slots; see the trim below.
+    { href: '/attendance', label: 'Attendance', icon: <IconCheck /> },
     { href: '/more', label: copy.nav.more, icon: <IconDots /> },
   ];
 
+  /**
+   * The bar is a five-slot grid and a sixth item overflows it.
+   *
+   * An owner already has five and reaches Attendance from More, so they lose
+   * nothing. A receptionist cannot see Home or Offers, which leaves them three
+   * — and the register, which they fill in every morning, is the obvious
+   * fourth. So the trim drops Attendance only when the bar is actually full,
+   * rather than hiding it from the one role that lives on it.
+   */
+  const visible = visibleItems(items, role);
+  const shown = visible.length > 5 ? visible.filter((i) => i.href !== '/attendance') : visible;
+
   return (
     <nav className="bottom-nav">
-      {visibleItems(items, role).map((item) => {
+      {shown.map((item) => {
         const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
         return (
           <a key={item.href} href={item.href} className={active ? 'active' : ''}>

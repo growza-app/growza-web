@@ -1,0 +1,172 @@
+/* Jira GRW-63 · GRW-170 — the attendance register.
+   Reuses the shared .card / .btn-ghost / .banner primitives; only the row
+   layout and the status chips are new. */
+
+.att-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.att-controls label {
+  font-weight: 620;
+  font-size: 14px;
+}
+.att-controls input[type='date'] {
+  padding: 8px 10px;
+}
+
+.att-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--muted, #5b6b62);
+}
+.att-tally strong {
+  color: var(--text, #14201a);
+  font-size: 15px;
+}
+/* The one number an owner is scanning for. Coloured, not hidden behind the
+   others, because "3 not recorded" is the reason to open this screen. */
+.att-tally-gap strong {
+  color: #b45309;
+}
+
+.att-list {
+  padding: 0;
+  overflow: hidden;
+}
+.att-row {
+  border-bottom: 1px solid var(--line, #e7ede9);
+  padding: 12px 16px;
+}
+.att-row:last-child {
+  border-bottom: 0;
+}
+
+.att-row-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.att-name {
+  font-weight: 620;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Takes the slack so the button stays right-aligned at every width in the
+     resolution matrix rather than drifting in beside the name. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.att-times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.att-clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--muted, #5b6b62);
+}
+.att-unmarked {
+  font-size: 14px;
+  color: #b45309;
+}
+
+.att-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 620;
+  white-space: nowrap;
+}
+.att-chip-present { background: #dcfce7; color: #166534; }
+.att-chip-late { background: #fef3c7; color: #92400e; }
+.att-chip-half_day { background: #e0e7ff; color: #3730a3; }
+.att-chip-absent { background: #fee2e2; color: #991b1b; }
+.att-chip-leave { background: #f1f5f9; color: #475569; }
+.att-chip-off { background: #f1f5f9; color: #64748b; font-weight: 500; }
+
+.att-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line, #e7ede9);
+}
+.att-edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted, #5b6b62);
+}
+.att-edit input,
+.att-edit select {
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.att-note {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+/* Its own row at every width. Sharing a line with the Note field squeezed
+   Save to about 50px against the card edge on a 800px pane, and there is no
+   width where an action button reading as a field's suffix is right. */
+.att-actions {
+  display: flex;
+  gap: 8px;
+  flex-basis: 100%;
+}
+.att-meta {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted, #5b6b62);
+}
+
+/* The row is a two-line stack on a phone: name and status can't share a line
+   at 320px without the status wrapping mid-chip. */
+@media (max-width: 640px) {
+  .att-row-head {
+    align-items: flex-start;
+  }
+  .att-name {
+    flex-basis: 100%;
+  }
+  .att-edit label {
+    flex: 1 1 130px;
+  }
+  .att-note {
+    flex-basis: 100%;
+  }
+}
+
+.team-role-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+.team-role-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted, #5b6b62);
+}
+.team-role-field select {
+  padding: 9px 10px;
+  font-size: 14px;
+  max-width: 100%;
+}

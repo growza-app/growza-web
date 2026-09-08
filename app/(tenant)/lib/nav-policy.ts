@@ -10,7 +10,7 @@
  * thing standing between them and a route. Hiding a link they cannot use is
  * about not wasting their time.
  */
-export type MemberRole = 'owner' | 'manager' | 'staff';
+export type MemberRole = 'owner' | 'manager' | 'staff' | 'receptionist';
 
 /**
  * Destinations a `staff` member is offered.
@@ -40,22 +40,66 @@ export type MemberRole = 'owner' | 'manager' | 'staff';
 const STAFF_DESTINATIONS: ReadonlySet<string> = new Set(['/appointments', '/more']);
 
 /**
+ * Jira GRW-63 · GRW-169 — where the front desk works.
+ *
+ * The whole diary, the client list, the attendance register, and the menu they
+ * sign out from. Not `/reports` or `/settings`, which they cannot reach;
+ * not `/providers` or `/services`, which are hiring and pricing.
+ *
+ * `/` is absent for the same reason it is absent for a stylist: the owner's
+ * home leads with the salon's takings and loads endpoints this role is refused,
+ * so it would be both a disclosure and a broken page. They land on
+ * `/appointments`, which is the desk.
+ */
+const RECEPTIONIST_DESTINATIONS: ReadonlySet<string> = new Set([
+  '/appointments',
+  '/customers',
+  '/attendance',
+  '/more',
+]);
+
+/**
  * `role` is optional and an absent one means OWNER (BR-03).
  *
  * The API being unreachable, or a dev session with no token, must not quietly
  * hide half the product from the person who owns it. Restricting on a *known*
- * staff role is the only case that hides anything.
+ * limited role is the only case that hides anything.
+ *
+ * A table rather than a chain of comparisons, for the reason `mayReach` grew
+ * one: `role !== 'staff'` read as a rule and was really the assumption that
+ * there would only ever be one limited role. Adding the receptionist made it
+ * false, and the failure was silent — the new role saw the entire nav.
  */
+const DESTINATIONS_BY_ROLE: Partial<Record<MemberRole, ReadonlySet<string>>> = {
+  staff: STAFF_DESTINATIONS,
+  receptionist: RECEPTIONIST_DESTINATIONS,
+};
+
 export function canSee(href: string, role?: MemberRole | null): boolean {
-  if (role !== 'staff') return true;
-  return STAFF_DESTINATIONS.has(href);
+  const allowed = role ? DESTINATIONS_BY_ROLE[role] : undefined;
+  // Owner, manager, and an unknown/absent role all see everything (BR-03).
+  // Unlike the API's own table this one errs OPEN, because it hides links
+  // rather than guarding data — `mayReach` is the boundary (BR-01), and a nav
+  // that quietly went blank would be the worse failure here.
+  return allowed ? allowed.has(href) : true;
 }
 
 export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null): T[] {
   return items.filter((item) => canSee(item.href, role));
 }
 
-/** Whether to show this person the salon's money (FR-04). */
+/**
+ * Whether to show this person the salon's money (FR-04).
+ *
+ * A receptionist takes payment for a booking and never sees the day's takings:
+ * `POST /appointments/:id/checkout` is theirs, `/analytics/today` and
+ * `/summary/range` are not (GRW-169). The till is not the books.
+ */
 export function canSeeRevenue(role?: MemberRole | null): boolean {
-  return role !== 'staff';
+  return role !== 'staff' && role !== 'receptionist';
+}
+
+/** Roles whose home is the diary rather than the owner's revenue-led dashboard. */
+export function homeHref(role?: MemberRole | null): string {
+  return role === 'staff' || role === 'receptionist' ? '/appointments' : '/';
 }

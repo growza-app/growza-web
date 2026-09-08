@@ -23,6 +23,16 @@ function expiryLabel(iso: string): string {
 export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
   const [invites, setInvites] = useState<PendingInvite[]>(initial);
   const [phone, setPhone] = useState('');
+  /**
+   * GRW-169 — what this person will be able to do.
+   *
+   * `staff` stays the default because it is the smaller permission and it is
+   * what every invite meant before this control existed. `owner` and `manager`
+   * are not offered: manager is documented as headroom TREATED AS OWNER, so
+   * putting it in this list would be handing over the business behind a
+   * gentler word.
+   */
+  const [role, setRole] = useState<'staff' | 'receptionist'>('staff');
   /** Field-level, shown under the input. Distinct from `error`, which is the server's answer. */
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -55,7 +65,7 @@ export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
     setCreated(null);
     setCopied(false);
     try {
-      const invite = await api.createTeamInvite({ phone: e164 });
+      const invite = await api.createTeamInvite({ phone: e164, role });
       // The normalised number, not what was typed — it is the one the invite
       // is actually for, and the one they will sign in with.
       setCreated({ ...invite, phone: e164 });
@@ -118,6 +128,18 @@ export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
               }}
             />
             {phoneError && <div className="field-error">{phoneError}</div>}
+          </div>
+          <div className="team-role-field">
+            <label htmlFor="invite-role">Role</label>
+            <select
+              id="invite-role"
+              value={role}
+              disabled={busy}
+              onChange={(e) => setRole(e.target.value as typeof role)}
+            >
+              <option value="staff">Stylist — their own bookings only</option>
+              <option value="receptionist">Receptionist — bookings, clients, payments, attendance</option>
+            </select>
           </div>
           <button className="btn" disabled={busy || !phone.trim()} onClick={() => void send()}>
             {busy ? 'Creating…' : 'Create invite'}
