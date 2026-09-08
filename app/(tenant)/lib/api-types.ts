@@ -249,6 +249,8 @@ export interface SettingsSummary {
     cancellationCutoffMin: number;
     /** GRW-166 — whether staff see a client's name and phone. True unless the owner turned it off. */
     staffSeesClientContact: boolean;
+    /** GRW-170 — grace minutes before an arrival reads as "came late". */
+    attendanceLateGraceMin: number;
   };
   reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>;
   workingHours: Array<{ weekday: number; startTime: string; endTime: string }>;
@@ -494,5 +496,7 @@ export interface AttendanceRegister {
   to: string;
   timezone: string;
   today: string;
+  /** Minutes past a person's own shift start before an arrival reads as "came late" (GRW-170). */
+  lateGraceMin: number;
   rows: AttendanceRow[];
 }

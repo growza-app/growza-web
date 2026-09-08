@@ -16,7 +16,8 @@ import { api, type AttendanceRegister as Register, type AttendanceRow } from '..
  * 1. **Late is late for THEIR shift.** The mock compares every arrival to one
  *    salon-wide `lateThreshold` prop (09:30). Growza knows each person's own
  *    rostered start (GRW-191), so 09:47 is late for a 09:00 shift and early
- *    for a 10:00 one.
+ *    for a 10:00 one — plus the salon's own grace period, which IS a setting
+ *    because it is the one part of lateness no schedule can answer.
  * 2. **"Mark all present" skips people who are not rostered**, as well as the
  *    mock's leave/absent. Marking somebody present on their day off is not a
  *    shortcut, it is a wrong record.
@@ -189,7 +190,11 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
     const view = viewOf(row);
     const next: Draft = { ...view, [field]: value };
     if (field === 'inTime' && value && !view.status) {
-      next.status = row.shiftStart && minutesOf(value) > minutesOf(row.shiftStart) ? 'late' : 'present';
+      // Late past their own start PLUS the salon's grace (GRW-170). Strict to
+      // the minute made 10:01 on a 10:00 shift "came late", which is an
+      // argument rather than a record.
+      const lateAfter = row.shiftStart === null ? null : minutesOf(row.shiftStart) + register.lateGraceMin;
+      next.status = lateAfter !== null && minutesOf(value) > lateAfter ? 'late' : 'present';
     }
     void save(row, next);
   }

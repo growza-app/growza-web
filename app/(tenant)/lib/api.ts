@@ -375,6 +375,7 @@ export const api = {
     bookingHorizonDays?: number;
     cancellationCutoffMin?: number;
     staffSeesClientContact?: boolean;
+    attendanceLateGraceMin?: number;
   }) => patch<SettingsSummary>('/api/v1/settings/booking', body),
   updateReminders: (reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>) =>
     patch<SettingsSummary>('/api/v1/settings/reminders', { reminderRules }),
