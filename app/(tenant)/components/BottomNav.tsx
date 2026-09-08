@@ -14,7 +14,7 @@ import { IconAppointments, IconCheck, IconDots, IconGrid, IconOffers, IconUserPl
  * Everything rarer (staff, services, free times, settings) lives behind
  * "More", which is the one screen that lists them.
  */
-export function BottomNav({ labels, role }: { labels: Record<string, string>; role?: MemberRole | null }) {
+export function BottomNav({ labels, role, reportTabs }: { labels: Record<string, string>; role?: MemberRole | null; reportTabs?: readonly string[] }) {
   const pathname = usePathname();
 
   const items = [
@@ -39,7 +39,7 @@ export function BottomNav({ labels, role }: { labels: Record<string, string>; ro
    * fourth. So the trim drops Attendance only when the bar is actually full,
    * rather than hiding it from the one role that lives on it.
    */
-  const visible = visibleItems(items, role);
+  const visible = visibleItems(items, role, reportTabs);
   const shown = visible.length > 5 ? visible.filter((i) => i.href !== '/attendance') : visible;
 
   return (

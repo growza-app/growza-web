@@ -31,11 +31,14 @@ export function Sidebar({
   tenantName,
   labels,
   role,
+  reportTabs,
   whatsappLive,
 }: {
   tenantName: string;
   labels: Record<string, string>;
   role?: MemberRole | null;
+  /** GRW-197 — report tabs this caller may open; an empty list hides the Reports link. */
+  reportTabs?: readonly string[];
   /** Jira GRW-158 · GRW-165 — false until this business's WhatsApp number is switched on. */
   whatsappLive?: boolean;
 }) {
@@ -82,7 +85,7 @@ export function Sidebar({
         {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
             API is what refuses (GRW-156); this is about not wasting their time
             on eight links that 403. */}
-        {visibleItems(items, role).map((item) => (
+        {visibleItems(items, role, reportTabs).map((item) => (
           <a key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
             {item.icon}
             {item.label}

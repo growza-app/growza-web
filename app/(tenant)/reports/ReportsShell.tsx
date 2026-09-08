@@ -48,6 +48,7 @@ export function ReportsShell({
   range,
   compare,
   staffTabAvailable,
+  allowedTabs,
   filters,
   filterOptions,
   droppedFilters,
@@ -70,6 +71,8 @@ export function ReportsShell({
   rangeLabel?: string;
   /** Off for verticals where ranking providers is a product smell (07 §3.2). */
   staffTabAvailable: boolean;
+  /** GRW-197 — report tabs this caller may open. */
+  allowedTabs: readonly string[];
   filters: ReportFilters;
   filterOptions: ReportFilterOptions;
   droppedFilters: number;
@@ -93,7 +96,9 @@ export function ReportsShell({
     router.push(`/reports?${query.toString()}`);
   };
 
-  const tabs = TAB_ORDER.filter((key) => key !== 'staff' || staffTabAvailable);
+  // Two independent gates: the vertical decides whether a staff leaderboard
+  // exists at all, the salon decides who may look at it (GRW-197).
+  const tabs = TAB_ORDER.filter((key) => allowedTabs.includes(key) && (key !== 'staff' || staffTabAvailable));
 
   const filterable = isFilterableReportTab(tab);
   const activeFilters = countFilters(filters);

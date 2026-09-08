@@ -29,7 +29,7 @@ const NO_FAB = ['/availability', '/search', '/try-whatsapp', '/offers', '/attend
  */
 const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
 
-export function MobileChrome({ labels, timezone, role }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null }) {
+export function MobileChrome({ labels, timezone, role, reportTabs }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   /**
@@ -85,7 +85,7 @@ export function MobileChrome({ labels, timezone, role }: { labels: Record<string
         </button>
       )}
 
-      <BottomNav role={role} labels={labels} />
+      <BottomNav role={role} labels={labels} reportTabs={reportTabs} />
     </>
   );
 }

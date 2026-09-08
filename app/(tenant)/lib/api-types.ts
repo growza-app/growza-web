@@ -32,6 +32,17 @@ export interface Me {
    */
   member: { role: 'owner' | 'manager' | 'staff' | 'receptionist'; providerId: string | null } | null;
   /**
+   * Jira GRW-63 · GRW-197 — the Reports tabs THIS caller may open.
+   *
+   * Already resolved for the viewer's own role, so the screen never sees what
+   * another role was granted. Empty means Reports is not theirs at all.
+   *
+   * Optional on the wire so an older API does not make the layout throw;
+   * absent reads as "every tab", which is the pre-GRW-197 behaviour for the
+   * only roles that could reach the screen back then.
+   */
+  reportTabs?: string[];
+  /**
    * Jira GRW-90 · GRW-137 — a platform admin is looking at this account.
    *
    * Null on every ordinary session, which is what keeps the banner off an
@@ -252,6 +263,8 @@ export interface SettingsSummary {
     /** GRW-170 — grace minutes before an arrival reads as "came late". */
     attendanceLateGraceMin: number;
   };
+  /** GRW-197 — report tabs granted per limited role; `{}` means none. */
+  reportAccess: Record<string, string[]>;
   reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>;
   workingHours: Array<{ weekday: number; startTime: string; endTime: string }>;
 }

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import {
+  IconReports,
   IconBell,
   IconCalendarPlus,
   IconClock,
@@ -78,6 +79,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     title: 'Account',
     rows: [
+      { href: '/settings/report-access', label: 'Report access', sub: 'Who else can see Reports', icon: IconReports },
       { href: '/settings/team', label: 'Team access', sub: 'Invite people who can sign in', icon: IconUserPlus },
       { label: 'Account', sub: 'Manage your account', icon: IconUser },
       { label: 'Log out', sub: 'Sign out from this device', icon: IconLogout, action: 'logout' },

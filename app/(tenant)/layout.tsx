@@ -68,6 +68,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let whatsappLive = false;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
+  /**
+   * GRW-197 — the Reports tabs this caller may open, already resolved for
+   * their own role by `/me`. Undefined until it answers; a limited role with
+   * no grant is offered no Reports link, matching an API that would refuse
+   * every report route for them.
+   */
+  let reportTabs: string[] | undefined;
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
   let impersonation: { businessName: string; role: string } | null = null;
   /** GRW-164 — set when the API says this account may not operate. */
@@ -82,6 +89,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     canPayOnline = me.payments?.online ?? false;
     whatsappLive = me.whatsapp?.booking ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
+    reportTabs = me.reportTabs;
     impersonation = me.impersonation ?? null;
   } catch (error) {
     /**
@@ -127,11 +135,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {impersonation ? <ImpersonationBanner businessName={impersonation.businessName} role={impersonation.role} /> : null}
         <LabelsProvider labels={labels}>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} whatsappLive={whatsappLive} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} />
             <div className="content">
               <BillingBanner billing={billing} canPayOnline={canPayOnline} />
               {children}
-              <MobileChrome labels={labels} timezone={timezone} role={role} />
+              <MobileChrome labels={labels} timezone={timezone} role={role} reportTabs={reportTabs} />
             </div>
           </div>
         </LabelsProvider>

@@ -75,7 +75,21 @@ const DESTINATIONS_BY_ROLE: Partial<Record<MemberRole, ReadonlySet<string>>> = {
   receptionist: RECEPTIONIST_DESTINATIONS,
 };
 
-export function canSee(href: string, role?: MemberRole | null): boolean {
+/**
+ * Jira GRW-63 · GRW-197 — Reports is offered to a limited role only when the
+ * salon has granted them a tab.
+ *
+ * Passed in rather than looked up, because the answer is per-salon and this
+ * module is pure. An empty list means the link stays hidden — which matches
+ * the API, where every report route would refuse them.
+ */
+export function canSeeReports(role?: MemberRole | null, reportTabs?: readonly string[]): boolean {
+  if (role !== 'staff' && role !== 'receptionist') return true;
+  return (reportTabs?.length ?? 0) > 0;
+}
+
+export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[]): boolean {
+  if (href === '/reports') return canSeeReports(role, reportTabs);
   const allowed = role ? DESTINATIONS_BY_ROLE[role] : undefined;
   // Owner, manager, and an unknown/absent role all see everything (BR-03).
   // Unlike the API's own table this one errs OPEN, because it hides links
@@ -84,8 +98,12 @@ export function canSee(href: string, role?: MemberRole | null): boolean {
   return allowed ? allowed.has(href) : true;
 }
 
-export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null): T[] {
-  return items.filter((item) => canSee(item.href, role));
+export function visibleItems<T extends { href: string }>(
+  items: readonly T[],
+  role?: MemberRole | null,
+  reportTabs?: readonly string[],
+): T[] {
+  return items.filter((item) => canSee(item.href, role, reportTabs));
 }
 
 /**

@@ -52,6 +52,7 @@ export function ReportsClient({
   range,
   compare,
   staffTabAvailable,
+  allowedTabs,
   filters,
   filterOptions,
   droppedFilters,
@@ -65,6 +66,8 @@ export function ReportsClient({
   range: ReportRangeKey;
   compare: boolean;
   staffTabAvailable: boolean;
+  /** GRW-197 — report tabs this caller may open. */
+  allowedTabs: readonly string[];
   /** Already narrowed to ids this tenant owns — see page.tsx. */
   filters: ReportFilters;
   filterOptions: ReportFilterOptions;
@@ -110,6 +113,7 @@ export function ReportsClient({
       range={range}
       compare={compare}
       staffTabAvailable={staffTabAvailable}
+      allowedTabs={allowedTabs}
       filters={filters}
       filterOptions={filterOptions}
       droppedFilters={droppedFilters}

@@ -11,6 +11,14 @@ import {
 import { copy } from '../lib/copy';
 import { ReportsClient, type TabPayload } from './ReportsClient';
 
+/**
+ * The Reports screen's tabs, in its own order. Mirrors `REPORT_TABS` on the
+ * server (`api/security/report-access.ts`) — the setting, the API and this
+ * screen have to name the same six things or an owner ticks a box that grants
+ * nothing.
+ */
+const ALL_REPORT_TABS = ['overview', 'customers', 'revenue', 'bookings', 'services', 'staff'] as const;
+
 export const dynamic = 'force-dynamic';
 
 const TABS = new Set<string>([
@@ -98,7 +106,37 @@ export default async function ReportsPage({
   // — a clinic has no doctor leaderboard (07 §3.2). The tab is absent, and a
   // deep link to it lands somewhere real instead of on a 403.
   const staffTabAvailable = me.capabilities.staffLeaderboard;
-  const resolvedTab = tab === 'staff' && !staffTabAvailable ? 'overview' : tab;
+
+  /**
+   * Jira GRW-63 · GRW-197 — the tabs this caller may open at all.
+   *
+   * Absent means every tab, which is the pre-GRW-197 behaviour and the answer
+   * for an owner or manager. A limited role gets exactly what the salon
+   * granted, already narrowed to their own role by `/me`.
+   *
+   * Two gates, not one: `staffTabAvailable` is a VERTICAL question (a clinic
+   * has no doctor leaderboard) and this is a PERMISSION question. Collapsing
+   * them would make a salon's grant able to conjure a tab the vertical does
+   * not have.
+   */
+  const allowedTabs = me.reportTabs ?? [...ALL_REPORT_TABS];
+  const canOpen = (key: string) => allowedTabs.includes(key) && (key !== 'staff' || staffTabAvailable);
+
+  /**
+   * A tab they cannot open lands on the first one they can, rather than on a
+   * 403 the screen would have to explain. If they can open nothing, the nav
+   * never offered the link — but a bookmark could still arrive here, so it is
+   * answered plainly.
+   */
+  const firstAllowed = ALL_REPORT_TABS.find(canOpen);
+  if (!firstAllowed) {
+    return (
+      <div className="page-body">
+        <div className="banner">Reports are not available for your role. Ask the owner if you need them.</div>
+      </div>
+    );
+  }
+  const resolvedTab = canOpen(tab) ? tab : firstAllowed;
 
   // One tab's failure must not blank the page: the body renders its own error
   // state while the chrome above stays usable, so the owner can change the
@@ -153,6 +191,7 @@ export default async function ReportsPage({
         range={range}
         compare={compare}
         staffTabAvailable={staffTabAvailable}
+        allowedTabs={allowedTabs}
         filters={filters}
         filterOptions={filterOptions}
         droppedFilters={droppedFilters}
