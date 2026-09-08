@@ -1,35 +1,37 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { AttendanceRegister, AttendanceRow } from '../../lib/api';
 import { isFutureMonth, monthLabel, shiftMonth } from './month';
 
 /**
- * Jira GRW-63 · GRW-200 — one person's month.
+ * Jira GRW-63 · GRW-201 — one person's month, as a calendar.
  *
- * The register answers "who was here today". This answers the other question an
- * owner asks, usually at the end of a month and usually about one person: how
- * often did they come, how late, and how many hours.
+ * This was a list of thirty rows. A calendar answers the question the screen
+ * exists for in one glance: a month of green with two amber days reads as
+ * "reliable, twice late" before anybody has read a word. Thirty rows makes the
+ * reader count.
  *
- * Read-only for everybody. Marking still happens on the register (GRW-192:
- * pay-adjacent, so nobody marks their own), and a stylist reaches this screen
- * for their OWN record — the API scopes it to them whatever id is in the URL,
- * so a colleague's link shows them their own month rather than a 403 they
- * would have to interpret.
+ * Colour carries the status and is never the ONLY thing that does — every cell
+ * also shows a letter, and the selected day spells the status out in full.
+ * About one man in twelve cannot reliably separate the green from the red.
  */
 
 const STATUS = {
-  present: { label: 'Present', tone: 'present' },
-  late: { label: 'Came late', tone: 'late' },
-  half_day: { label: 'Half day', tone: 'half_day' },
-  leave: { label: 'On leave', tone: 'leave' },
-  absent: { label: 'Absent', tone: 'absent' },
+  present: { label: 'Present', short: 'P', tone: 'present' },
+  late: { label: 'Came late', short: 'L', tone: 'late' },
+  half_day: { label: 'Half day', short: '½', tone: 'half_day' },
+  leave: { label: 'On leave', short: 'V', tone: 'leave' },
+  absent: { label: 'Absent', short: 'A', tone: 'absent' },
 } as const;
 
 type StatusKey = keyof typeof STATUS;
 const ORDER: StatusKey[] = ['present', 'late', 'half_day', 'leave', 'absent'];
+
+/** Sunday-first, matching `working_hours.weekday` (0=Sun) and the weekday editor. */
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function toLocalTime(iso: string | null, timezone: string): string {
   if (!iso) return '';
@@ -38,13 +40,25 @@ function toLocalTime(iso: string | null, timezone: string): string {
   );
 }
 
-/** Minutes between arrival and departure, or null when the day is not a worked span. */
 function workedMinutes(row: AttendanceRow): number | null {
   if (!row.inAt || !row.outAt) return null;
   return Math.max(0, Math.round((Date.parse(row.outAt) - Date.parse(row.inAt)) / 60_000));
 }
 
 const hhmm = (mins: number) => `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`;
+
+/**
+ * The class that colours a cell.
+ *
+ * Four states, and the last two are different on purpose: a day nobody was
+ * rostered for is a day off, and a rostered day nobody marked is an omission.
+ * Painting both grey would hide the only thing on this screen an owner can act
+ * on.
+ */
+function cellTone(row: AttendanceRow): string {
+  if (row.status) return `am-c-${STATUS[row.status as StatusKey].tone}`;
+  return row.rostered ? 'am-c-unmarked' : 'am-c-off';
+}
 
 export function AttendanceMonth({
   register,
@@ -55,12 +69,12 @@ export function AttendanceMonth({
   register: AttendanceRegister;
   month: string;
   readOnly: boolean;
-  /** Null for a stylist — the register they would go "back" to is not theirs to open. */
   backHref: string | null;
 }) {
   const router = useRouter();
   const rows = register.rows;
   const person = rows[0];
+  const [selected, setSelected] = useState<string | null>(null);
 
   const summary = useMemo(() => {
     const counts: Record<StatusKey, number> = { present: 0, late: 0, half_day: 0, leave: 0, absent: 0 };
@@ -78,17 +92,22 @@ export function AttendanceMonth({
   }, [rows]);
 
   /**
-   * Days they were not rostered AND nobody marked are dropped from the list.
-   *
-   * A month has eight or nine of them and they carry no information — showing
-   * thirty rows of which nine say "day off, nothing recorded" buries the four
-   * that matter. A day off somebody DID mark stays, because that is somebody
-   * saying something.
+   * Blank cells before the 1st, so the month sits under the right weekday
+   * columns. Derived from the row's own local date rather than a Date the
+   * browser builds in its own zone — the register is keyed on the salon's
+   * dates, and the two disagree for five and a half hours every day.
    */
-  const visible = rows.filter((r) => r.rostered || r.status !== null);
+  const leadingBlanks = useMemo(() => {
+    const first = rows[0]?.onDate;
+    if (!first) return 0;
+    const [y, m, d] = first.split('-').map(Number);
+    return new Date(Date.UTC(y!, m! - 1, d!)).getUTCDay();
+  }, [rows]);
 
   const go = (m: string) => router.push(`/attendance/${person?.providerId ?? ''}?month=${m}`);
   const atCurrentMonth = isFutureMonth(shiftMonth(month, 1), register.timezone);
+  const chosen = selected ? rows.find((r) => r.onDate === selected) : undefined;
+  const chosenMins = chosen ? workedMinutes(chosen) : null;
 
   return (
     <div className="page-body att">
@@ -96,7 +115,7 @@ export function AttendanceMonth({
         <div>
           {backHref && (
             <Link href={backHref} className="am-back">
-              ‹ All {register.rows.length === 0 ? 'staff' : 'staff'}
+              ‹ All staff
             </Link>
           )}
           <h2 className="att-title">{person?.displayName ?? 'Attendance'}</h2>
@@ -116,8 +135,6 @@ export function AttendanceMonth({
               {summary.rostered} rostered · {summary.unrecorded} not recorded
             </div>
           </div>
-          {/* Stopped at the current month: a register of days that have not
-              happened records nothing, and the API refuses a future date. */}
           <button type="button" aria-label="Next month" disabled={atCurrentMonth} onClick={() => go(shiftMonth(month, 1))}>
             ›
           </button>
@@ -139,60 +156,111 @@ export function AttendanceMonth({
             <span className="att-dot att-swatch-hours" />
             <span>Hours worked</span>
           </div>
-          {/* Only from days with BOTH times. A month where nobody recorded
-              departures would otherwise read as zero hours worked, which is a
-              different claim from "we did not write it down". */}
           <div className="att-tile-count">{summary.worked > 0 ? hhmm(summary.worked) : '—'}</div>
         </div>
       </div>
 
-      {visible.length === 0 ? (
-        <div className="att-list">
-          <div className="att-empty">
-            <div className="att-empty-title">Nothing recorded for {monthLabel(month)}</div>
-            <div className="att-empty-sub">No shifts were rostered and no attendance was marked.</div>
-          </div>
+      <div className="am-cal-card">
+        <div className="am-grid am-dow-row" aria-hidden="true">
+          {DOW.map((d) => (
+            <div key={d} className="am-dow-head">
+              {d}
+            </div>
+          ))}
         </div>
-      ) : (
-        <div className="att-list am-days">
-          {visible.map((row) => {
+
+        <div className="am-grid">
+          {Array.from({ length: leadingBlanks }, (_, i) => (
+            <div key={`blank-${i}`} className="am-cell am-c-blank" />
+          ))}
+          {rows.map((row) => {
             const conf = row.status ? STATUS[row.status as StatusKey] : null;
-            const mins = workedMinutes(row);
-            const d = new Date(`${row.onDate}T12:00:00`);
+            const day = Number(row.onDate.slice(8));
+            const label = conf
+              ? `${day} ${monthLabel(month)}: ${conf.label}`
+              : `${day} ${monthLabel(month)}: ${row.rostered ? 'not recorded' : 'not rostered'}`;
             return (
-              <div key={row.onDate} className={`am-day ${row.status ? '' : 'is-unmarked'}`}>
-                <div className="am-date">
-                  <span className="am-dom">{d.getDate()}</span>
-                  <span className="am-dow">{d.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
-                </div>
-                <div className="am-body">
-                  <div className="am-status">
-                    {conf ? (
-                      <span className={`att-chip att-chip-${conf.tone}`}>{conf.label}</span>
-                    ) : (
-                      <span className="att-unmarked">Not recorded</span>
-                    )}
-                    {!row.rostered && <span className="att-chip att-chip-off">Not rostered</span>}
-                  </div>
-                  {row.note && <div className="am-note">{row.note}</div>}
-                </div>
-                <div className="am-times">
-                  {row.inAt ? (
-                    <>
-                      <span className="att-clock">
-                        {toLocalTime(row.inAt, register.timezone)}
-                        {' → '}
-                        {row.outAt ? toLocalTime(row.outAt, register.timezone) : 'still in'}
-                      </span>
-                      {mins !== null && <span className="am-hours">{hhmm(mins)}</span>}
-                    </>
-                  ) : (
-                    <span className="att-clock am-none">—</span>
-                  )}
-                </div>
-              </div>
+              <button
+                key={row.onDate}
+                type="button"
+                className={`am-cell ${cellTone(row)} ${selected === row.onDate ? 'is-selected' : ''}`}
+                aria-label={label}
+                aria-pressed={selected === row.onDate}
+                onClick={() => setSelected(selected === row.onDate ? null : row.onDate)}
+              >
+                <span className="am-cell-day">{day}</span>
+                {/* A letter as well as the colour. Roughly one man in twelve
+                    cannot reliably tell the green from the red, and a screen
+                    that says "the green ones" to everybody else is telling them
+                    nothing. */}
+                <span className="am-cell-mark">{conf ? conf.short : row.rostered ? '·' : ''}</span>
+              </button>
             );
           })}
+        </div>
+
+        <div className="am-legend">
+          {ORDER.map((key) => (
+            <span key={key} className="am-legend-item">
+              <span className={`am-swatch am-c-${STATUS[key].tone}`} />
+              {STATUS[key].label}
+            </span>
+          ))}
+          <span className="am-legend-item">
+            <span className="am-swatch am-c-unmarked" />
+            Not recorded
+          </span>
+          <span className="am-legend-item">
+            <span className="am-swatch am-c-off" />
+            Day off
+          </span>
+        </div>
+      </div>
+
+      {/* Tapping a day opens it rather than navigating: the times and the note
+          are the detail behind a colour, and losing the month to read one day
+          would make comparing two days a round trip each way. */}
+      {chosen && (
+        <div className="card am-detail">
+          <div className="am-detail-head">
+            <strong>
+              {new Date(`${chosen.onDate}T12:00:00`).toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+            </strong>
+            <button type="button" className="btn-ghost" onClick={() => setSelected(null)}>
+              Close
+            </button>
+          </div>
+          <div className="am-detail-body">
+            <span className={`att-chip att-chip-${chosen.status ? STATUS[chosen.status as StatusKey].tone : 'off'}`}>
+              {chosen.status ? STATUS[chosen.status as StatusKey].label : chosen.rostered ? 'Not recorded' : 'Not rostered'}
+            </span>
+            {chosen.inAt && (
+              <span className="att-clock">
+                {toLocalTime(chosen.inAt, register.timezone)}
+                {' → '}
+                {chosen.outAt ? toLocalTime(chosen.outAt, register.timezone) : 'still in'}
+              </span>
+            )}
+            {chosenMins !== null && <span className="am-hours">{hhmm(chosenMins)}</span>}
+            {chosen.shiftStart && <span className="am-detail-shift">shift from {chosen.shiftStart}</span>}
+          </div>
+          {chosen.note && <p className="am-note">{chosen.note}</p>}
+          {chosen.markedByName && (
+            <p className="att-meta">
+              Marked by {chosen.markedByName}
+              {chosen.markedAt
+                ? ` · ${new Intl.DateTimeFormat('en-GB', {
+                    timeZone: register.timezone,
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  }).format(new Date(chosen.markedAt))}`
+                : ''}
+            </p>
+          )}
         </div>
       )}
 
