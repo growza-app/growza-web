@@ -1,0 +1,60 @@
+import { api } from '../../lib/api';
+import { copy } from '../../lib/copy';
+import { PageHeader } from '../../components/PageHeader';
+import { AttendanceMonth } from './AttendanceMonth';
+import { monthBounds, monthOf } from './month';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Jira GRW-63 · GRW-200 — one person's attendance, a month at a time.
+ *
+ * Reached by tapping somebody on the register, and it is also where a stylist
+ * lands: they may READ their own record, and the API scopes this to them
+ * whatever id is in the URL — so a stylist following a colleague's link sees
+ * their own month rather than a 403 they would have to interpret.
+ */
+export default async function AttendanceMonthPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ providerId: string }>;
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { providerId } = await params;
+  const { month } = await searchParams;
+
+  let me, register;
+  try {
+    me = await api.me();
+    const tz = me.tenant?.timezone ?? 'Asia/Kolkata';
+    const { from, to } = monthBounds(monthOf(month, tz), tz);
+    register = await api.attendance(from, to, providerId);
+  } catch {
+    return (
+      <>
+        <PageHeader title="Attendance" />
+        <div className="page-body">
+          <div className="banner">
+            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const isOwnRecord = me.member?.role === 'staff';
+
+  return (
+    <>
+      <PageHeader title="Attendance" initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()} />
+      <AttendanceMonth
+        register={register}
+        month={monthOf(month, register.timezone)}
+        /** A stylist reads their own and marks nothing — the API refuses the writes either way. */
+        readOnly={isOwnRecord}
+        backHref={isOwnRecord ? null : '/attendance'}
+      />
+    </>
+  );
+}

@@ -37,7 +37,14 @@ export type MemberRole = 'owner' | 'manager' | 'staff' | 'receptionist';
  * this story puts out of scope — `/` redirects a stylist to their appointments,
  * which is what "their day" already means.
  */
-const STAFF_DESTINATIONS: ReadonlySet<string> = new Set(['/appointments', '/more']);
+const STAFF_DESTINATIONS: ReadonlySet<string> = new Set([
+  '/appointments',
+  // GRW-200 — their own attendance, read-only. The screen shows one month of
+  // their own record and offers no way to change it; the API refuses the
+  // writes regardless.
+  '/attendance',
+  '/more',
+]);
 
 /**
  * Jira GRW-63 · GRW-169 — where the front desk works.

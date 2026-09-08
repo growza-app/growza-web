@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
@@ -19,6 +20,16 @@ export default async function AttendancePage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const params = await searchParams;
+
+  /**
+   * Jira GRW-63 · GRW-200 — a stylist has no register to fill in, only a
+   * record to read. They are sent to their own month rather than shown an
+   * empty marking screen; the API scopes that page to them regardless.
+   */
+  const viewer = await api.me().catch(() => null);
+  if (viewer?.member?.role === 'staff' && viewer.member.providerId) {
+    redirect(`/attendance/${viewer.member.providerId}`);
+  }
 
   let me, register;
   try {

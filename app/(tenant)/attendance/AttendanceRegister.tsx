@@ -391,7 +391,13 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
                     {initialsOf(row.displayName)}
                   </span>
                   <span className="att-who-text">
-                    <span className="att-name">{row.displayName}</span>
+                    {/* GRW-200 — the name opens their month. The register
+                        answers "who was here today"; this is the other question
+                        an owner asks, usually at the end of a month and usually
+                        about one person. */}
+                    <a className="att-name att-name-link" href={`/attendance/${row.providerId}`}>
+                      {row.displayName}
+                    </a>
                     {/* The design's "role" line. Their real title, and when
                         there is none, the fact that carries more for a
                         register: whether they were meant to be in at all. */}

@@ -688,3 +688,128 @@
   color: var(--accent-deep);
   opacity: 0.75;
 }
+
+/* ── GRW-200: one person's month ─────────────────────────────────────────── */
+
+.att-name-link {
+  color: inherit;
+  text-decoration: none;
+}
+.att-name-link:hover {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
+
+.am-back {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+.am-back:hover {
+  color: var(--accent-deep);
+}
+
+/* Swatches for the summary tiles. The month view has no per-status inline
+   style to hang a colour on the way the register's dot does, so the five hues
+   are classes here instead of repeating the oklch literals in TSX. */
+.att-swatch-present { background: var(--att-green); }
+.att-swatch-late { background: var(--att-amber); }
+.att-swatch-half_day { background: var(--att-blue); }
+.att-swatch-leave { background: var(--att-purple); }
+.att-swatch-absent { background: var(--att-red); }
+.att-swatch-hours { background: var(--muted); }
+
+.am-days {
+  padding: 0;
+}
+
+.am-day {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.am-day:last-child {
+  border-bottom: 0;
+}
+
+/* A day nobody wrote anything about recedes, so a month's four exceptions are
+   what the eye lands on rather than its twenty-two ordinary days. */
+.am-day.is-unmarked {
+  background: #fcfdfc;
+}
+
+.am-date {
+  width: 44px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+.am-dom {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.am-dow {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.am-body {
+  flex: 1;
+  min-width: 0;
+}
+.am-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.am-note {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.am-times {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: none;
+  text-align: right;
+}
+.am-hours {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 62px;
+}
+.am-none {
+  color: #b8c2bd;
+}
+
+@media (max-width: 560px) {
+  /* The clock and the hours drop under the status rather than squeezing it —
+     at 320px three columns leaves the status chip mid-word. */
+  .am-day {
+    flex-wrap: wrap;
+    gap: 8px var(--sp-3);
+  }
+  .am-times {
+    flex-basis: 100%;
+    padding-left: 56px;
+    text-align: left;
+    justify-content: flex-start;
+  }
+  .am-hours {
+    min-width: 0;
+  }
+}

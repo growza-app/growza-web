@@ -303,8 +303,12 @@ export const api = {
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
   /** GRW-170 — the register for a day or a range, including everybody nobody marked. */
-  attendance: (date: string, to?: string) =>
-    get<AttendanceRegister>(`/api/v1/attendance?date=${encodeURIComponent(date)}${to ? `&to=${encodeURIComponent(to)}` : ''}`),
+  attendance: (date: string, to?: string, providerId?: string) =>
+    get<AttendanceRegister>(
+      `/api/v1/attendance?date=${encodeURIComponent(date)}` +
+        `${to ? `&to=${encodeURIComponent(to)}` : ''}` +
+        `${providerId ? `&providerId=${encodeURIComponent(providerId)}` : ''}`,
+    ),
   markAttendance: (input: {
     providerId: string;
     date: string;

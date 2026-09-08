@@ -18,6 +18,9 @@ const NAV = [
   { href: '/services' },
   { href: '/offers' },
   { href: '/customers' },
+  // GRW-169/200 — a real destination for the receptionist and, read-only, for
+  // a stylist looking at their own record.
+  { href: '/attendance' },
   { href: '/reports' },
   { href: '/availability' },
   { href: '/try-whatsapp' },
@@ -32,7 +35,13 @@ describe('AC-01 — a stylist is offered what they can use', () => {
      * (GRW-158) because every row on it was owner-only and it rendered EMPTY
      * for a stylist. It now carries sign-out, outside the policy filter.
      */
-    expect(visibleItems(NAV, 'staff').map((i) => i.href)).toEqual(['/appointments', '/more']);
+    expect(visibleItems(NAV, 'staff').map((i) => i.href)).toEqual([
+      '/appointments',
+      // GRW-200 — their own record, read-only. The API scopes it to them and
+      // refuses both writes, so this is a place to look and not to edit.
+      '/attendance',
+      '/more',
+    ]);
   });
 
   it('a menu that has something on it for them — sign-out (GRW-160)', () => {
