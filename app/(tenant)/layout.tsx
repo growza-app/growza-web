@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
 import { LiveRefresh } from './components/LiveRefresh';
+import { SessionProvider } from './components/SessionProvider';
 import { LabelsProvider } from './components/LabelsProvider';
 import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
@@ -75,6 +76,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
    * every report route for them.
    */
   let reportTabs: string[] | undefined;
+  /** GRW-203 — the number they sign in with, for the account menu. */
+  let memberPhone: string | null = null;
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
   let impersonation: { businessName: string; role: string } | null = null;
   /** GRW-164 — set when the API says this account may not operate. */
@@ -90,6 +93,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     whatsappLive = me.whatsapp?.booking ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     reportTabs = me.reportTabs;
+    memberPhone = me.member?.phone ?? null;
     impersonation = me.impersonation ?? null;
   } catch (error) {
     /**
@@ -133,6 +137,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             the screen and it must not scroll away with the content or sit
             below the billing banner. */}
         {impersonation ? <ImpersonationBanner businessName={impersonation.businessName} role={impersonation.role} /> : null}
+        <SessionProvider
+          session={{
+            initial: (tenantName ?? 'S').charAt(0).toUpperCase(),
+            role: role ?? null,
+            phone: memberPhone,
+            businessName: tenantName ?? null,
+          }}
+        >
         <LabelsProvider labels={labels}>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
             <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} />
@@ -143,6 +155,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             </div>
           </div>
         </LabelsProvider>
+        </SessionProvider>
       </body>
     </html>
   );

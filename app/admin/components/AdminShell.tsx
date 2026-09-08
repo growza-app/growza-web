@@ -123,7 +123,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%', position: 'relative' }}>
       <aside className="admin-sidebar" data-open={navOpen}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 8px 8px' }}>
-          <div
+          <button
+            type="button"
+            onClick={() => setChangingPassword(true)}
+            aria-label="Your account"
+            title="Your account"
             style={{
               width: 40,
               height: 40,
@@ -136,10 +140,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
               fontWeight: 800,
               fontSize: 19,
               flex: 'none',
+              // GRW-203 — was a <div>. It looks like an account button on every
+              // other product and did nothing when clicked.
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
             G
-          </div>
+          </button>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>Growza</div>
             <div style={{ fontSize: 11.5, color: oklch.sidebarTextFaint }}>Platform team</div>

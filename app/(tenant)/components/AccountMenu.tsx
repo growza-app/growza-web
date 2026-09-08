@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { useSession } from './SessionProvider';
 
 /**
  * Jira GRW-63 · GRW-202 — the avatar in the header, which did nothing.
@@ -22,44 +23,25 @@ const ROLE_LABEL: Record<string, { name: string; sub: string }> = {
   staff: { name: 'Stylist', sub: 'Your own day, and your own attendance' },
 };
 
-export function AccountMenu({ initial }: { initial: string }) {
-  const [open, setOpen] = useState(false);
+export function AccountMenu() {
   /**
-   * Loaded when the menu is first opened, not on every page render.
+   * GRW-203 — from the layout's own `/me`, not a fetch of its own.
    *
-   * `PageHeader` appears on every screen and its callers already pass whatever
-   * they needed; threading a role and a phone through all of them to fill a
-   * panel most visits never open would be a request and a prop drilled
-   * everywhere for a rare interaction. Null until it answers, and the panel
-   * says so rather than showing a wrong role.
+   * The first version took an `initial` prop and looked the rest up when
+   * opened. Two things were wrong. `initial` was optional on `PageHeader` and
+   * ELEVEN OF FOURTEEN screens never passed it, so the account button did not
+   * exist on most of the product — which is exactly how it was reported:
+   * "clicking the name icon does nothing", on a page with no icon to click.
+   * And re-fetching `/me` duplicated a request the layout had already made.
    */
-  const [who, setWho] = useState<{ role: string | null; phone: string | null; businessName: string | null } | null>(null);
-  const [whoFailed, setWhoFailed] = useState(false);
+  const session = useSession();
+  const [open, setOpen] = useState(false);
   const [changing, setChanging] = useState(false);
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    if (!open || who || whoFailed) return;
-    let cancelled = false;
-    api
-      .me()
-      .then((me) => {
-        if (cancelled) return;
-        setWho({
-          role: me.member?.role ?? null,
-          phone: me.member?.phone ?? null,
-          businessName: me.tenant?.name ?? null,
-        });
-      })
-      .catch(() => !cancelled && setWhoFailed(true));
-    return () => {
-      cancelled = true;
-    };
-  }, [open, who, whoFailed]);
 
   useEffect(() => {
     if (!open) return;
@@ -79,7 +61,7 @@ export function AccountMenu({ initial }: { initial: string }) {
     setDone(false);
   };
 
-  const label = ROLE_LABEL[who?.role ?? 'owner'] ?? ROLE_LABEL.owner!;
+  const label = ROLE_LABEL[session?.role ?? 'owner'] ?? ROLE_LABEL.owner!;
 
   const submit = async () => {
     setBusy(true);
@@ -108,7 +90,7 @@ export function AccountMenu({ initial }: { initial: string }) {
         aria-label="Your account"
         onClick={() => (open ? close() : setOpen(true))}
       >
-        {initial}
+        {session?.initial ?? 'S'}
       </button>
 
       {open && (
@@ -116,26 +98,12 @@ export function AccountMenu({ initial }: { initial: string }) {
           <div className="acct-scrim" onClick={close} aria-hidden="true" />
           <div className="acct-menu" role="dialog" aria-label="Your account">
             <div className="acct-head">
-              {whoFailed ? (
-                <>
-                  <div className="acct-role">Signed in</div>
-                  <div className="acct-sub">Could not load your details just now.</div>
-                </>
-              ) : !who ? (
-                <>
-                  <div className="acct-role">Signed in</div>
-                  <div className="acct-sub">Loading…</div>
-                </>
-              ) : (
-                <>
-                  <div className="acct-role">{label.name}</div>
-                  <div className="acct-sub">{label.sub}</div>
-                </>
-              )}
+              <div className="acct-role">{label.name}</div>
+              <div className="acct-sub">{label.sub}</div>
               {/* The number, because it is what they sign in with (GRW-198) —
                   not an email, which this product never uses as a credential. */}
-              {who?.phone && <div className="acct-phone">{who.phone}</div>}
-              {who?.businessName && <div className="acct-biz">{who.businessName}</div>}
+              {session?.phone && <div className="acct-phone">{session.phone}</div>}
+              {session?.businessName && <div className="acct-biz">{session.businessName}</div>}
             </div>
 
             {!changing ? (

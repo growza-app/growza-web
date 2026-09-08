@@ -30,9 +30,15 @@ export function PageHeader({
       <div className="topbar-actions">
         {actions}
         <NotificationBell />
-        {/* GRW-202 — was a bare <div>: it looked like every other product's
-            account button and did nothing. */}
-        {initial && <AccountMenu initial={initial} />}
+        {/*
+          GRW-202 — was a bare <div>: it looked like every other product's
+          account button and did nothing.
+          GRW-203 — and it is UNCONDITIONAL now. `initial` was optional and
+          eleven of fourteen screens never passed it, so the account button did
+          not exist on most of the product. A control somebody needs on every
+          screen cannot be opt-in per page.
+        */}
+        <AccountMenu />
       </div>
     </header>
   );
