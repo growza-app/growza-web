@@ -181,6 +181,7 @@ export default async function AppointmentsPage({
           initialQuery={query}
           initialSort={sort}
           initialStaff={staff}
+          viewerIsStaff={me.member?.role === 'staff'}
         />
       </div>
     </>

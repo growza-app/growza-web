@@ -123,6 +123,7 @@ export function BookingsList({
   initialQuery,
   initialStaff,
   initialSort,
+  viewerIsStaff,
 }: {
   appointments: Appointment[];
   /** The full roster, for the mobile staff-filter chips (GRW-46) and the desktop staff select (GRW-47) — not just staff with a booking today, so picking one can honestly show "0 bookings" for someone rather than making them disappear. */
@@ -150,6 +151,14 @@ export function BookingsList({
   initialQuery: string;
   initialStaff: string;
   initialSort: 'asc' | 'desc';
+  /**
+   * Jira GRW-63 · GRW-190 — a stylist is looking at their own day, not the
+   * salon's. `providers` is already just them (the API scopes the roster), so
+   * this only decides WORDING and which controls are worth showing: a staff
+   * filter with one name in it, and a "Busiest staff" that can only ever name
+   * the reader, are noise that reads as a team view.
+   */
+  viewerIsStaff: boolean;
 }) {
   const [now, setNow] = useState(() => new Date(nowISO));
   const [page, setPage] = useState(1);
@@ -228,6 +237,14 @@ export function BookingsList({
   // isn't loaded on this screen, and pulling it in is a data-layer change
   // this story's own Out of Scope excludes; the booked-minutes numerator is
   // real, only that denominator is a documented stand-in.
+  //
+  // GRW-190 — that stand-in is per PERSON, so both sides of the division have
+  // to describe the same set of people. They didn't: `bookings` was scoped to
+  // the signed-in stylist and `providers` was the whole salon, so Bhavna's own
+  // screen divided her 135 minutes by ten stylists' capacity and told her she
+  // was 3% busy on a day that was a quarter full. The roster is scoped
+  // server-side now (listActiveProviders), which makes `providers.length` 1
+  // for her and leaves the owner's view exactly as it was.
   const workdayMin = 9 * 60;
   const staffBusyPct =
     providers.length > 0
@@ -238,7 +255,15 @@ export function BookingsList({
   const metricValue =
     metric === 'staff' ? (busiestStaff ?? '—') : metric === 'service' ? (topService ?? '—') : `${staffBusyPct}%`;
   const metricLabel =
-    metric === 'staff' ? 'Busiest staff today' : metric === 'service' ? 'Top service today' : 'Staff busy today';
+    metric === 'staff'
+      ? 'Busiest staff today'
+      : metric === 'service'
+        ? viewerIsStaff
+          ? 'Your top service today'
+          : 'Top service today'
+        : viewerIsStaff
+          ? 'Your day booked'
+          : 'Staff busy today';
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
@@ -412,8 +437,10 @@ export function BookingsList({
               value={metric}
               onChange={(e) => setMetric(e.target.value as typeof metric)}
             >
-              <option value="busy">Staff busy</option>
-              <option value="staff">Busiest staff</option>
+              <option value="busy">{viewerIsStaff ? 'My day' : 'Staff busy'}</option>
+              {/* "Busiest staff" over a one-person roster can only ever name
+                  the reader. Offered to owners and managers only. */}
+              {!viewerIsStaff && <option value="staff">Busiest staff</option>}
               <option value="service">Top service</option>
             </select>
           </div>
@@ -512,6 +539,7 @@ export function BookingsList({
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
             />
           </div>
+          {!viewerIsStaff && (
           <div className="bk-field bk-field-staff desktop-only">
             <label htmlFor="bk-staff-select">{copy.bookings.staff}</label>
             <select
@@ -529,6 +557,7 @@ export function BookingsList({
               ))}
             </select>
           </div>
+          )}
           {/* Status, order — both client-side like search and staff: they
               narrow/reorder the range already loaded, never re-query. Each
               carries its own mark (funnel = narrowing, up/down arrows =
@@ -589,6 +618,7 @@ export function BookingsList({
         </div>
       ) : (
         <>
+      {!viewerIsStaff && (
       <div className="bk-staff-chips">
         {staffChipNames.map((name) => (
           <button
@@ -604,6 +634,7 @@ export function BookingsList({
           </button>
         ))}
       </div>
+      )}
 
       <div className="bk-sched-head">
         <h3>
