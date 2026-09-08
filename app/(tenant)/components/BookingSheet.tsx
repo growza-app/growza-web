@@ -30,6 +30,7 @@ export function BookingSheet({
   comboServiceNames,
   comboTotalMin,
   comboLegs,
+  canSettle = true,
 }: {
   appointment: Appointment;
   timezone: string;
@@ -40,6 +41,24 @@ export function BookingSheet({
   comboTotalMin?: number;
   /** All legs of the combo, so "Mark as done" can complete every still-booked service in one go. */
   comboLegs?: Appointment[];
+  /**
+   * Jira GRW-63 · GRW-195 — may this viewer settle the booking's outcome?
+   *
+   * False for a stylist, and it hides ALL THREE outcome actions — done, missed
+   * and cancelled. Settling a booking is the record of what happened in the
+   * salon, and it belongs to the owner.
+   *
+   * "Mark as done" is the checkout flow, and checkout sets
+   * `status = 'completed'`, so it is an outcome action wearing a till's
+   * clothing. Leaving it visible would have offered a stylist a button that
+   * did exactly what the other two were removed for.
+   *
+   * Hiding matters as much as the 403 behind it: a control that answers
+   * "forbidden" reads as the product being broken rather than as a boundary.
+   *
+   * Defaults to true, so the Home timeline (owner-only) is unaffected.
+   */
+  canSettle?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -133,7 +152,7 @@ export function BookingSheet({
           {copy.booking.message}
         </a>
 
-        {!settled && (
+        {!settled && canSettle && (
           <>
             <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
               <IconCheck />
