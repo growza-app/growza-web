@@ -30,7 +30,12 @@ export interface Me {
    * because a degraded session must not silently hide the product from the
    * person who owns it.
    */
-  member: { role: 'owner' | 'manager' | 'staff' | 'receptionist'; providerId: string | null } | null;
+  member: {
+    role: 'owner' | 'manager' | 'staff' | 'receptionist';
+    providerId: string | null;
+    /** GRW-202 — the number they signed in with, shown in the account menu. */
+    phone?: string | null;
+  } | null;
   /**
    * Jira GRW-63 · GRW-197 — the Reports tabs THIS caller may open.
    *

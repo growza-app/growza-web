@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { NotificationBell } from './NotificationBell';
 
+import { AccountMenu } from './AccountMenu';
+
 export function PageHeader({
   title,
   subtitle,
@@ -28,7 +30,9 @@ export function PageHeader({
       <div className="topbar-actions">
         {actions}
         <NotificationBell />
-        {initial && <div className="avatar-lg">{initial}</div>}
+        {/* GRW-202 — was a bare <div>: it looked like every other product's
+            account button and did nothing. */}
+        {initial && <AccountMenu initial={initial} />}
       </div>
     </header>
   );

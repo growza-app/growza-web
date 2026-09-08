@@ -928,3 +928,133 @@
     font-size: 12px;
   }
 }
+
+/* ── GRW-202: the account menu behind the header avatar ──────────────────── */
+
+.acct {
+  position: relative;
+}
+
+.acct-trigger {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+/* Below the menu, above everything else — the same two-layer arrangement the
+   attendance status menus use. */
+.acct-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.acct-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 70;
+  width: 288px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgb(20 32 27 / 0.16);
+  overflow: hidden;
+}
+
+.acct-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.acct-role {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.acct-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.acct-phone {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.acct-biz {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.acct-actions {
+  padding: 6px;
+}
+
+.acct-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  padding: 10px 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.acct-item:hover {
+  background: var(--slate-soft);
+}
+
+.acct-form {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.acct-form label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.acct-form input {
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fbfcfb;
+  color: var(--text);
+  width: 100%;
+}
+
+.acct-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.acct-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.acct-done {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--accent-deep);
+  font-weight: 600;
+}

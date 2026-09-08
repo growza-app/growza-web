@@ -7,12 +7,14 @@ import { Icon } from '../icons';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
 import { NAV_GROUPS, isNavItemActive, resolveRouteMeta } from '../nav';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
 import { useAdminSearch } from './SearchContext';
 
 interface Me {
-  admin: { id: string; email: string; name: string };
+  /** GRW-202 — `phone` and `roleName` so the account panel can name the role and the credential. */
+  admin: { id: string; email: string; name: string; phone: string | null; roleName: string | null };
   permissions: string[];
 }
 
@@ -40,6 +42,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // items the admin may not be allowed to see.
   const [permissions, setPermissions] = useState<string[] | null>(null);
   const [meError, setMeError] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
   const { query, setQuery } = useAdminSearch();
@@ -301,9 +304,38 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <div style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {me?.name ?? 'Loading…'}
             </div>
+            {/* GRW-202 — the ROLE, which is what somebody checks here, and the
+                number they sign in with (GRW-198). The email sat in this slot
+                and is neither: it is a contact detail this product never
+                authenticates with. */}
             <div style={{ fontSize: 11, color: oklch.sidebarTextFaint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {me?.email ?? ''}
+              {me?.roleName ?? (me ? 'No role assigned' : '')}
             </div>
+            {me?.phone && (
+              <div style={{ fontSize: 11, color: oklch.sidebarTextFaint, fontVariantNumeric: 'tabular-nums' }}>
+                {me.phone}
+              </div>
+            )}
+            {me && (
+              <button
+                type="button"
+                onClick={() => setChangingPassword(true)}
+                style={{
+                  marginTop: 4,
+                  padding: 0,
+                  border: 'none',
+                  background: 'none',
+                  color: oklch.sidebarText,
+                  font: 'inherit',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                Change password
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -331,6 +363,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
+      {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}
       <div className="admin-nav-scrim" data-open={navOpen} onClick={() => setNavOpen(false)} />
 
       <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>

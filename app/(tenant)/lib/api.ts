@@ -293,6 +293,9 @@ export interface CreatedInvite {
 
 export const api = {
   me: () => get<Me>('/api/v1/me'),
+  /** GRW-202 — change your own password. Needs the current one; the session says who you are. */
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    post<{ ok: true }>('/api/v1/auth/change-password', body),
   /**
    * GRW-145 — ask for a hosted page to settle what is owed.
    *
