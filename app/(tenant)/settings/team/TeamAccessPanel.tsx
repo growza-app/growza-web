@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { api, ApiError, type CreatedInvite, type PendingInvite } from '../../lib/api';
+import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider } from '../../lib/api';
 import { toE164, validateInvitePhone } from '../../lib/validate';
 
 /**
@@ -20,7 +20,7 @@ function expiryLabel(iso: string): string {
   return `Expires in ${days} day${days === 1 ? '' : 's'}`;
 }
 
-export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
+export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite[]; providers: Provider[] }) {
   const [invites, setInvites] = useState<PendingInvite[]>(initial);
   const [phone, setPhone] = useState('');
   /**
@@ -33,6 +33,19 @@ export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
    * gentler word.
    */
   const [role, setRole] = useState<'staff' | 'receptionist'>('staff');
+  /**
+   * Jira GRW-63 · GRW-171 — WHICH stylist this login belongs to.
+   *
+   * QA found the gap this closes: the form sent only a phone and a role, so
+   * every stylist invite created a member with a null `provider_id`. That
+   * resolves to `NO_PROVIDER` — a scope that matches nothing, correctly — and
+   * the person signed in to an **empty diary**. The permission worked, the
+   * account worked, and the product had nothing to show them.
+   *
+   * Required for `staff` (BR-01 below) and meaningless for a receptionist, who
+   * runs everybody's day; the API drops it for them either way.
+   */
+  const [providerId, setProviderId] = useState('');
   /** Field-level, shown under the input. Distinct from `error`, which is the server's answer. */
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,6 +70,16 @@ export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
       setPhoneError(complaint);
       return;
     }
+    /**
+     * BR-01 — a stylist invite MUST name a stylist. Refusing here rather than
+     * defaulting to the first on the roster: guessing whose calendar somebody
+     * gets is worse than asking, and the wrong guess is invisible until they
+     * sign in to somebody else's day.
+     */
+    if (role === 'staff' && !providerId) {
+      setError('Choose which stylist this login is for.');
+      return;
+    }
     const e164 = toE164(phone)!;
 
     setBusy(true);
@@ -65,7 +88,7 @@ export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
     setCreated(null);
     setCopied(false);
     try {
-      const invite = await api.createTeamInvite({ phone: e164, role });
+      const invite = await api.createTeamInvite({ phone: e164, role, providerId: role === 'staff' ? providerId : null });
       // The normalised number, not what was typed — it is the one the invite
       // is actually for, and the one they will sign in with.
       setCreated({ ...invite, phone: e164 });
@@ -141,7 +164,42 @@ export function TeamAccessPanel({ initial }: { initial: PendingInvite[] }) {
               <option value="receptionist">Receptionist — bookings, clients, payments, attendance</option>
             </select>
           </div>
-          <button className="btn" disabled={busy || !phone.trim()} onClick={() => void send()}>
+          {/* Only for a stylist. A receptionist runs the whole diary, so a
+              "whose calendar?" question has no answer for them and the API
+              drops the field anyway. */}
+          {role === 'staff' && (
+            <div className="team-role-field">
+              <label htmlFor="invite-provider">Whose calendar</label>
+              {providers.length === 0 ? (
+                <p className="field-hint" style={{ margin: 0 }}>
+                  No staff on the roster yet — add someone under Staff first, then invite them here.
+                </p>
+              ) : (
+                <select
+                  id="invite-provider"
+                  value={providerId}
+                  disabled={busy}
+                  onChange={(e) => {
+                    setProviderId(e.target.value);
+                    setError(null);
+                  }}
+                >
+                  <option value="">Choose a stylist…</option>
+                  {providers.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.displayName}
+                      {p.title ? ` · ${p.title}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+          <button
+            className="btn"
+            disabled={busy || !phone.trim() || (role === 'staff' && !providerId)}
+            onClick={() => void send()}
+          >
             {busy ? 'Creating…' : 'Create invite'}
           </button>
         </div>

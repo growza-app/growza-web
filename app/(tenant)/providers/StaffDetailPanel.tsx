@@ -358,9 +358,40 @@ export function StaffDetailPanel({
     const aboutPayload = { displayName, phone, title: title || null, email: email || null, bio: bio || null, languages: languages || null };
     try {
       if (creating) {
+        /**
+         * Jira GRW-63 · GRW-171 — the hours the form just collected have to be
+         * SAVED.
+         *
+         * They were not. Creating a stylist sent only the profile fields, and
+         * the hours editor and the "Same as the business" switch sitting right
+         * above the button were silently discarded. The new stylist landed with
+         * zero `working_hours` rows and `uses_org_hours` false, which means:
+         * not bookable by the availability engine, zero capacity on the
+         * Bookings screen, and no shift for attendance to call anybody late
+         * against. A form that asks for something and throws it away is worse
+         * than a form that never asked.
+         *
+         * Sequenced, not parallel: the hours address a provider by id, so they
+         * cannot be written until the row exists.
+         */
         const created = await api.createProvider(aboutPayload);
-        setDetail(created);
-        resetEditableStateFrom(created);
+        if (usesOrgHours) {
+          // Copies the salon's current hours into their own rows server-side
+          // (updateProvider), which is what makes working_hours the single
+          // answer for inherited and overridden schedules alike.
+          await api.updateProviderProfile(created.id, { usesOrgHours: true });
+        } else if (openRows.length > 0) {
+          await api.updateProviderWorkingHours(
+            created.id,
+            openRows.map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime })),
+          );
+        }
+        if (selectedServiceIds.size > 0) {
+          await api.updateProviderServices(created.id, [...selectedServiceIds]);
+        }
+        const fresh = await api.providerDetail(created.id);
+        setDetail(fresh);
+        resetEditableStateFrom(fresh);
       } else if (detail) {
         const calls: Array<Promise<unknown>> = [];
         if (aboutDirty) calls.push(api.updateProviderProfile(detail.id, { ...aboutPayload, active }));

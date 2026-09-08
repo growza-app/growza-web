@@ -138,3 +138,28 @@ export function isNavItemActive(pathname: string, href: string): boolean {
   if (href === '/admin') return pathname === '/admin';
   return pathname === href || pathname.startsWith(href + '/');
 }
+
+/**
+ * Jira GRW-88 · GRW-171 — the first screen this administrator can actually
+ * open.
+ *
+ * Everybody landed on `/admin` after signing in, and the Dashboard needs
+ * `admin.dashboard.view`. A Support administrator without it arrived on a
+ * permission error whose only control was a **Retry that could never
+ * succeed** — the permission was not going to change between clicks. Their
+ * sidebar meanwhile listed the screens they could open, which made the dead
+ * page look like an outage rather than a landing they were never meant to
+ * have.
+ *
+ * `null` when their permissions open nothing at all. That is a real state — a
+ * role can be created holding nothing (GRW-134) — and it needs a different
+ * answer from "go here", so it is not collapsed into a default route.
+ */
+export function firstPermittedHref(permissions: readonly string[]): string | null {
+  for (const group of NAV_GROUPS) {
+    for (const item of group.items) {
+      if (permissions.includes(item.permission)) return item.href;
+    }
+  }
+  return null;
+}

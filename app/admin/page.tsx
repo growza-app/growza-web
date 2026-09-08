@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { adminFetch, AdminApiError } from './lib/api';
+import { firstPermittedHref } from './nav';
 import { Icon } from './icons';
 import { Card, SecondaryButton, StatusPill } from './components/primitives';
 import { oklch } from './tokens';
@@ -59,16 +61,46 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
+  /**
+   * GRW-171 — where somebody goes who cannot see this page.
+   *
+   * Sign-in lands everyone on `/admin`, and the Dashboard needs
+   * `admin.dashboard.view`. A Support administrator without it used to get a
+   * permission error offering a Retry that could never succeed. A 403 here is
+   * not a failure to recover from, it is a signpost: send them to the first
+   * screen their permissions actually open.
+   */
+  const router = useRouter();
+  const [noWayIn, setNoWayIn] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setNoWayIn(false);
     adminFetch<DashboardResponse>('/dashboard')
       .then((result) => {
         if (!cancelled) setData(result);
       })
-      .catch((err) => {
+      .catch(async (err) => {
+        if (cancelled) return;
+        if (err instanceof AdminApiError && err.status === 403) {
+          try {
+            const me = await adminFetch<{ permissions: string[] }>('/me');
+            const href = firstPermittedHref(me.permissions);
+            if (cancelled) return;
+            if (href && href !== '/admin') {
+              router.replace(href);
+              return;
+            }
+            // Their role opens nothing. Saying so is the only honest answer,
+            // and it is an administrator problem rather than a page problem.
+            setNoWayIn(true);
+            return;
+          } catch {
+            // /me is unreachable too — fall through to the ordinary error.
+          }
+        }
         if (!cancelled) setError(err instanceof AdminApiError ? err.message : 'Could not load the dashboard.');
       })
       .finally(() => {
@@ -77,7 +109,22 @@ export default function AdminDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [retryToken]);
+  }, [retryToken, router]);
+
+  if (noWayIn) {
+    return (
+      <Card>
+        <div style={{ textAlign: 'center', padding: '24px 12px' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>
+            Your role does not open any screens yet
+          </div>
+          <div style={{ fontSize: 13, color: oklch.textMuted }}>
+            Ask a Super Admin to add permissions to it. Retrying will not change this.
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (error) {
     return (

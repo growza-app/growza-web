@@ -12,7 +12,17 @@ export const dynamic = 'force-dynamic';
  * booked, and a visiting stylist is booked and never logs in.
  */
 export default async function TeamSettingsPage() {
-  const initial = await api.teamInvites().catch(() => null);
+  /**
+   * The roster comes with the invites (GRW-171): a `staff` invite has to name
+   * WHICH stylist the person is, and the picker cannot offer a list it does
+   * not have. Its own failure is not fatal — an owner can still invite a
+   * receptionist, who needs no provider — so it degrades to an empty list
+   * rather than taking the screen down with it.
+   */
+  const [initial, providers] = await Promise.all([
+    api.teamInvites().catch(() => null),
+    api.providers().catch(() => []),
+  ]);
   if (!initial) return <div className="banner">Could not load invites — check the server is running.</div>;
-  return <TeamAccessPanel initial={initial.invites} />;
+  return <TeamAccessPanel initial={initial.invites} providers={providers} />;
 }
