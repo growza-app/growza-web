@@ -23,7 +23,6 @@ export function JoinForm({ token }: { token: string }) {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [checking, setChecking] = useState(true);
   const [invalid, setInvalid] = useState(false);
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +46,16 @@ export function JoinForm({ token }: { token: string }) {
     };
   }, [token]);
 
-  const ready = email.trim().length > 0 && password.length >= 8;
+  /**
+   * Jira GRW-63 · GRW-198 — a password, and nothing else.
+   *
+   * This screen used to ask for an email address, directly beneath a line
+   * saying "You will sign in with that number". The email signed nobody in —
+   * it was stored and displayed back — so the form contradicted its own
+   * instruction and gave the invitee a field to invent before they could
+   * finish.
+   */
+  const ready = password.length >= 8;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -59,7 +67,7 @@ export function JoinForm({ token }: { token: string }) {
       const res = await fetch('/api/v1/team/invites/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, email: email.trim(), password }),
+        body: JSON.stringify({ token, password }),
       });
 
       if (!res.ok) {
@@ -173,19 +181,6 @@ export function JoinForm({ token }: { token: string }) {
           {/* Their own number, shown back to them: it is how they know the
               invite was meant for them and not forwarded from someone else. */}
           <p>Set a password for {preview.phone}. You will sign in with that number.</p>
-        </div>
-
-        <div className="field">
-          <label htmlFor="join-email">Email address</label>
-          <input
-            id="join-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-          />
         </div>
 
         <div className="field">
