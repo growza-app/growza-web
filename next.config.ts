@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 import { networkInterfaces } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const API_ORIGIN = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -19,6 +21,23 @@ function currentLanIps(): string[] {
 }
 
 const nextConfig: NextConfig = {
+  /**
+   * Jira GRW-181 — the dashboard needs a container, and this is what makes it
+   * a small one.
+   *
+   * `standalone` emits a self-contained server plus only the node_modules it
+   * actually traced, so the runtime image carries neither the build toolchain
+   * nor the API's dependency tree. Without it the deployable is the whole
+   * workspace — 08 §4 puts api, worker and web on ONE box, so image size is
+   * that box's disk, not somebody else's problem.
+   *
+   * `outputFileTracingRoot` has to be the REPO root, not web/: this is an npm
+   * workspace, so `next` and `react` are hoisted to the root node_modules and
+   * tracing from web/ alone would emit a server whose dependencies are all
+   * missing — and it fails at container start, not at build.
+   */
+  output: 'standalone',
+  outputFileTracingRoot: path.join(path.dirname(fileURLToPath(import.meta.url)), '..'),
   env: {
     API_URL: API_ORIGIN,
   },

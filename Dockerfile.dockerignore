@@ -1,0 +1,52 @@
+# Jira GRW-181 — the ignore file for `docker build -f web/Dockerfile .`
+#
+# BuildKit looks for `<dockerfile-path>.dockerignore` before falling back to
+# the context root's `.dockerignore`. That fallback would be wrong here: the
+# root file ends with
+#
+#     web/*
+#     !web/package.json
+#
+# because the api/worker image deliberately carries no dashboard. Building the
+# dashboard against that ignore file yields a context with no dashboard in it —
+# and the failure is a confusing "module not found" deep in `next build`, not a
+# missing-file error.
+#
+# So this file exists to say the opposite: keep web/, drop the API's world.
+
+node_modules
+web/node_modules
+.git
+.github
+.cognito
+coverage
+uploads
+dist
+*.log
+*.tsbuildinfo
+
+# Never in an image.
+.env
+.env.*
+!.env.example
+
+# The API's own source and tests are not part of the dashboard build. Its
+# package.json stays — npm workspaces needs it to resolve the workspace at all.
+src
+test
+docs
+scripts
+Dockerfile
+docker-compose*.yml
+
+# Next rebuilds these; a stale local copy would be baked in.
+web/.next
+
+# The dashboard's own unit tests. `next build` type-checks everything it can
+# see, and these import the API's source across the workspace boundary
+# (`../../../../src/api/security/tenant-policy`) — which is excluded above and
+# should stay excluded. They are tests; `npm test` runs them, a production
+# image has no business carrying them, and their absence is what lets the
+# build's typecheck pass without dragging src/ into the context.
+web/**/*.test.ts
+web/**/*.test.tsx
