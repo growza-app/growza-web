@@ -67,6 +67,28 @@ export function backOnLabel(p: ProviderOverviewRow): string | null {
   return `Back ${when}, ${formatTime12h(startTime)}`;
 }
 
+
+/**
+ * Jira GRW-183 — what to say about somebody who is not working right now.
+ *
+ * Three different situations that used to collapse into two strings:
+ *
+ *   - "called in sick"        → unavailableToday, today only
+ *   - "day off"               → no hours TODAY, back on a named day
+ *   - "nobody can book them"  → no hours on ANY day, ever, until somebody sets some
+ *
+ * The third used to read "No hours set", inferred from there being no next
+ * working day within a week. It is now read from `hasWorkingHours` directly,
+ * and it says what it means and what to do — an owner scanning the roster has
+ * no way to know that "No hours set" is the difference between a quiet week and
+ * a stylist the booking engine will never once offer.
+ */
+function shiftOffLabel(p: ProviderOverviewRow): string {
+  if (p.unavailableToday) return 'Unavailable today';
+  if (!p.hasWorkingHours) return 'Not bookable — add hours';
+  return backOnLabel(p) ?? 'No hours today';
+}
+
 /**
  * Where the day is already sold, as percentages of the shift window. Bookings
  * outside the shift (an overrun, or hours edited after the fact) are clamped
@@ -227,7 +249,7 @@ function StaffRow({
 
       <div className="staff-shift">
         {off ? (
-          <span className="staff-shift-off">{p.unavailableToday ? 'Unavailable today' : (backOnLabel(p) ?? 'No hours set')}</span>
+          <span className="staff-shift-off">{shiftOffLabel(p)}</span>
         ) : (
           <>
             <div className="staff-shift-head">
@@ -314,7 +336,7 @@ function StaffCard({
             {freeAllDay && <span className="staff-badge staff-badge-free">FREE</span>}
           </div>
           <div className="staff-identity-role">
-            {off ? (p.unavailableToday ? 'Unavailable today' : (backOnLabel(p) ?? 'No hours set')) : `${p.title ?? '—'} · ${hours}`}
+            {off ? shiftOffLabel(p) : `${p.title ?? '—'} · ${hours}`}
           </div>
         </div>
         {p.active ? (

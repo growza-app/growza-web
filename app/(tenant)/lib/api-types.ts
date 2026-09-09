@@ -172,6 +172,8 @@ export interface ProviderOverviewRow {
   workingHoursTodayStart: string | null;
   workingHoursTodayEnd: string | null;
   /** Manual "called in sick" override for today only — takes precedence over the working-hours schedule above. */
+  /** GRW-183 — false means nobody can book them on any day, which is different from a day off or a sick day. */
+  hasWorkingHours: boolean;
   unavailableToday: boolean;
   /** Today's booked spans as minutes since local midnight — drives the roster shift bar. */
   todayBookedSegments: { startMin: number; endMin: number }[];

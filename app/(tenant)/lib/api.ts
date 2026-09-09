@@ -410,6 +410,8 @@ export const api = {
     bio?: string | null;
     languages?: string | null;
     hiredAt?: string | null;
+    /** GRW-183 — omitted means "follows the salon's hours", which is what almost every new hire does. */
+    usesOrgHours?: boolean;
   }) => post<ProviderDetail>('/api/v1/providers', body),
   updateProviderProfile: (
     id: string,

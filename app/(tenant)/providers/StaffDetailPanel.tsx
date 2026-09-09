@@ -256,7 +256,16 @@ export function StaffDetailPanel({
   const [active, setActive] = useState(true);
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
   const [hourRows, setHourRows] = useState<WeekdayRow[]>(() => toWeekdayRows([]));
-  const [usesOrgHours, setUsesOrgHours] = useState(false);
+  /**
+   * Jira GRW-183 — a new stylist follows the salon by default.
+   *
+   * This started `false`, which made "not bookable by anybody, ever" the state
+   * an owner had to notice and correct. Almost every new hire works the salon's
+   * hours; the exception is the one worth a click. On the EDIT path this is
+   * overwritten by the provider's real value as soon as the detail loads, so
+   * the initial value only ever describes a person who does not exist yet.
+   */
+  const [usesOrgHours, setUsesOrgHours] = useState(true);
 
   const [nameInvalid, setNameInvalid] = useState(false);
   const [phoneInvalid, setPhoneInvalid] = useState(false);
@@ -361,13 +370,17 @@ export function StaffDetailPanel({
          * Sequenced, not parallel: the hours address a provider by id, so they
          * cannot be written until the row exists.
          */
-        const created = await api.createProvider(aboutPayload);
-        if (usesOrgHours) {
-          // Copies the salon's current hours into their own rows server-side
-          // (updateProvider), which is what makes working_hours the single
-          // answer for inherited and overridden schedules alike.
-          await api.updateProviderProfile(created.id, { usesOrgHours: true });
-        } else if (openRows.length > 0) {
+        /**
+         * GRW-183 — the intent goes in the CREATE call now, not a follow-up.
+         *
+         * This used to create the provider and then PATCH `usesOrgHours: true`
+         * to make the server copy the salon's hours. Two requests, and a
+         * stylist who existed unbookable in between — so a create that
+         * succeeded and a patch that failed left exactly the state this ticket
+         * is about. `createProvider` copies them itself now.
+         */
+        const created = await api.createProvider({ ...aboutPayload, usesOrgHours });
+        if (!usesOrgHours && openRows.length > 0) {
           await api.updateProviderWorkingHours(
             created.id,
             openRows.map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime })),

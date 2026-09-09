@@ -46,13 +46,17 @@ describe('creating a staff member', () => {
 
   it('or copies the salon’s, when they follow the business', () => {
     /**
-     * Not the same thing as writing the rows directly: `usesOrgHours: true`
-     * makes the server copy the organisation's current hours into their own
-     * rows, which is what keeps `working_hours` the single answer for
-     * inherited and overridden schedules alike.
+     * Still `usesOrgHours` — but it rides on the CREATE now, not a follow-up
+     * PATCH.
+     *
+     * This asserted `api.updateProviderProfile(created.id, …)` until GRW-183.
+     * Two requests meant a stylist who existed unbookable in between, so a
+     * create that succeeded and a patch that failed left exactly the state
+     * GRW-171 and GRW-183 both exist to prevent. `createProvider` copies the
+     * salon's hours itself now, and the second request is gone.
      */
-    expect(createBranch).toMatch(/usesOrgHours/);
-    expect(createBranch).toMatch(/api\.updateProviderProfile\(\s*created\.id/);
+    expect(createBranch).toMatch(/api\.createProvider\([^)]*usesOrgHours/);
+    expect(createBranch, 'the follow-up PATCH should be gone').not.toMatch(/api\.updateProviderProfile\(/);
   });
 
   it('and the services they were given', () => {
