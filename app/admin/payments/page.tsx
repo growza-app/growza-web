@@ -6,7 +6,8 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { formatMoneyMinor, formatTimestampDate } from '../lib/format';
 import { billingStatusLabel, PAYMENT_STATUS_VALUES } from '../lib/billing-status';
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
-import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from '../components/Pagination';
+import { Pagination, type PaginationState } from '../components/Pagination';
+import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { DateRangeFilter, useDateRange } from '../components/DateRangeFilter';
 import { oklch } from '../tokens';
@@ -86,7 +87,12 @@ function AdminPaymentsInner() {
   });
   const [unreconciledOnly, setUnreconciledOnly] = useState(false);
   const range = useDateRange();
-  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
+  /**
+   * Jira GRW-140 — what is on screen, which is no longer the same thing as
+   * the last response. A numbered page replaces this; "Load more" adds to it.
+   */
+  const [rows, setRows] = useState<PaymentPage['rows']>([]);
   const [page, setPage] = useState<PaymentPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +101,7 @@ function AdminPaymentsInner() {
   const searchTooShort = trimmedSearch.length > 0 && trimmedSearch.length < 2;
 
   useEffect(() => {
-    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1 }));
+    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
   }, [status, unreconciledOnly, trimmedSearch, range.from, range.to]);
 
   useEffect(() => {
@@ -113,11 +119,13 @@ function AdminPaymentsInner() {
     if (unreconciledOnly) params.set('unreconciled', 'true');
     if (range.from) params.set('from', range.from);
     if (range.to) params.set('to', range.to);
-    params.set('page', '1');
-    params.set('pageSize', String(paging.page * paging.pageSize));
+    applyPageParams(params, paging);
 
     adminFetch<PaymentPage>(`/payments?${params}`, { signal: controller.signal })
-      .then(setPage)
+      .then((result) => {
+        setPage(result);
+        setRows((prev) => mergeRows(prev, result.rows, paging.intent));
+      })
       .catch((err) => {
         if (controller.signal.aborted) return;
         setError(err instanceof AdminApiError ? err.message : 'Could not load payments.');
@@ -198,7 +206,7 @@ function AdminPaymentsInner() {
           <Table
             columns={COLUMNS}
             minWidthPx={920}
-            rows={page.rows.map((p) => (
+            rows={rows.map((p) => (
               <TableRow key={p.id} columns={COLUMNS}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -225,7 +233,7 @@ function AdminPaymentsInner() {
               </TableRow>
             ))}
           />
-          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} maxRows={100} />
+          <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
     </div>

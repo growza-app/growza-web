@@ -7,7 +7,8 @@ import { fieldLabel, renderDiffField } from '../lib/audit-fields';
 import { formatDateTime } from '../lib/format';
 import { Icon } from '../icons';
 import { Card, EmptyState, Field, SecondaryButton, Select, TextInput } from './primitives';
-import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from './Pagination';
+import { Pagination, type PaginationState } from './Pagination';
+import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { oklch } from '../tokens';
 
 /**
@@ -126,8 +127,13 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
   const searchParams = useSearchParams();
 
   const [filters, setFilters] = useState<Filters>(() => ({ ...filtersFromParams(searchParams), ...(fixedTenantId ? { tenantId: fixedTenantId } : {}) }));
-  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<AuditLogPage | null>(null);
+  /**
+   * Jira GRW-140 — what is on screen, which is no longer the same thing as
+   * the last response. A numbered page replaces this; "Load more" adds to it.
+   */
+  const [rows, setRows] = useState<AuditLogPage['rows']>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -162,15 +168,13 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
     if (filters.tenantId) params.set('tenantId', filters.tenantId);
     if (filters.from) params.set('from', filters.from);
     if (filters.to) params.set('to', filters.to);
-    // The accumulating-prefix pattern GRW-96's Pagination assumes everywhere
-    // else (usePagedSlice): page 1 at a growing page size, not a moving page
-    // number — so "Load more" on mobile appends and desktop's Page N label
-    // stays meaningful without a second round-trip per page.
-    params.set('page', '1');
-    params.set('pageSize', String(paging.page * paging.pageSize));
+    applyPageParams(params, paging);
 
     adminFetch<AuditLogPage>(`/audit?${params}`, { signal: controller.signal })
-      .then((result) => setPage(result))
+      .then((result) => {
+        setPage(result);
+        setRows((prev) => mergeRows(prev, result.rows, paging.intent));
+      })
       .catch((err) => {
         if (controller.signal.aborted) return;
         setError(err instanceof AdminApiError ? err.message : 'Could not load the audit log.');
@@ -185,13 +189,13 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
 
   function updateFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
-    setPaging({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+    setPaging((p) => ({ ...p, page: 1, intent: 'replace' }));
   }
 
   const hasActiveFilters = Object.entries(filters).some(([k, v]) => v && k !== 'tenantId') || (!fixedTenantId && filters.tenantId);
   const clearFilters = () => {
     setFilters(fixedTenantId ? { ...EMPTY_FILTERS, tenantId: fixedTenantId } : EMPTY_FILTERS);
-    setPaging({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+    setPaging((p) => ({ ...p, page: 1, intent: 'replace' }));
   };
 
   const filterFields = (
@@ -287,10 +291,10 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
         <>
           <Card>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {page.rows.map((row, i) => {
+              {rows.map((row, i) => {
                 const expanded = expandedId === row.id;
                 return (
-                  <div key={row.id} style={{ borderBottom: i < page.rows.length - 1 ? `1px solid ${oklch.divider}` : 'none' }}>
+                  <div key={row.id} style={{ borderBottom: i < rows.length - 1 ? `1px solid ${oklch.divider}` : 'none' }}>
                     <button
                       type="button"
                       onClick={() => setExpandedId(expanded ? null : row.id)}
@@ -348,7 +352,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
               })}
             </div>
           </Card>
-          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} />
+          <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
     </div>

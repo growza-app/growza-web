@@ -6,7 +6,8 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { billingStatusLabel, INVOICE_PAYMENT_STATUS_VALUES } from '../lib/billing-status';
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
-import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from '../components/Pagination';
+import { Pagination, type PaginationState } from '../components/Pagination';
+import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { DateRangeFilter, useDateRange } from '../components/DateRangeFilter';
 import { Icon } from '../icons';
@@ -68,7 +69,12 @@ export default function AdminInvoicesPage() {
   const { query: search } = useAdminSearch();
   const [paymentStatus, setPaymentStatus] = useState('All');
   const range = useDateRange();
-  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
+  /**
+   * Jira GRW-140 — what is on screen, which is no longer the same thing as
+   * the last response. A numbered page replaces this; "Load more" adds to it.
+   */
+  const [rows, setRows] = useState<InvoicePage['rows']>([]);
   const [page, setPage] = useState<InvoicePage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +83,7 @@ export default function AdminInvoicesPage() {
   const searchTooShort = trimmedSearch.length > 0 && trimmedSearch.length < 2;
 
   useEffect(() => {
-    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1 }));
+    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
   }, [paymentStatus, trimmedSearch, range.from, range.to]);
 
   useEffect(() => {
@@ -91,11 +97,13 @@ export default function AdminInvoicesPage() {
     if (paymentStatus !== 'All') params.set('paymentStatus', paymentStatus);
     if (range.from) params.set('from', range.from);
     if (range.to) params.set('to', range.to);
-    params.set('page', '1');
-    params.set('pageSize', String(paging.page * paging.pageSize));
+    applyPageParams(params, paging);
 
     adminFetch<InvoicePage>(`/invoices?${params}`, { signal: controller.signal })
-      .then(setPage)
+      .then((result) => {
+        setPage(result);
+        setRows((prev) => mergeRows(prev, result.rows, paging.intent));
+      })
       .catch((err) => {
         if (controller.signal.aborted) return;
         setError(err instanceof AdminApiError ? err.message : 'Could not load invoices.');
@@ -155,7 +163,7 @@ export default function AdminInvoicesPage() {
           <Table
             columns={COLUMNS}
             minWidthPx={1080}
-            rows={page.rows.map((inv) => (
+            rows={rows.map((inv) => (
               <TableRow key={inv.id} columns={COLUMNS} onClick={() => router.push(`/admin/invoices/${inv.id}`)}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
                   {inv.invoiceNumber}
@@ -204,7 +212,7 @@ export default function AdminInvoicesPage() {
               </TableRow>
             ))}
           />
-          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} maxRows={100} />
+          <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
     </div>

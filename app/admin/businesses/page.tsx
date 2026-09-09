@@ -6,7 +6,8 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
-import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from '../components/Pagination';
+import { Pagination, type PaginationState } from '../components/Pagination';
+import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch, typeColor } from '../tokens';
 
@@ -87,8 +88,13 @@ function AdminBusinessesInner() {
   const [createdFrom] = useState(() => searchParams.get('createdFrom'));
   const [createdFromCleared, setCreatedFromCleared] = useState(false);
   const activeCreatedFrom = createdFromCleared ? null : createdFrom;
-  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<BusinessPage | null>(null);
+  /**
+   * Jira GRW-140 — what is on screen, which is no longer the same thing as
+   * the last response. A numbered page replaces this; "Load more" adds to it.
+   */
+  const [rows, setRows] = useState<BusinessRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,7 +110,7 @@ function AdminBusinessesInner() {
     // second time for every filter change (confirmed via network trace:
     // two identical requests per filter click). Returning `p` itself here
     // makes React skip the re-render entirely in that case.
-    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1 }));
+    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
   }, [vertical, status, trimmedSearch, activeCreatedFrom]);
 
   useEffect(() => {
@@ -118,14 +124,13 @@ function AdminBusinessesInner() {
     if (vertical !== ALL) params.set('vertical', vertical);
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
-    // Accumulating-prefix pagination, same pattern as AuditLogList — the
-    // API returns everything from page 1 up to the current window, so
-    // mobile's "Load more" appends instead of replacing.
-    params.set('page', '1');
-    params.set('pageSize', String(paging.page * paging.pageSize));
+    applyPageParams(params, paging);
 
     adminFetch<BusinessPage>(`/businesses?${params}`, { signal: controller.signal })
-      .then((result) => setPage(result))
+      .then((result) => {
+        setPage(result);
+        setRows((prev) => mergeRows(prev, result.rows, paging.intent));
+      })
       .catch((err) => {
         if (controller.signal.aborted) return;
         setError(err instanceof AdminApiError ? err.message : 'Could not load businesses.');
@@ -267,7 +272,7 @@ function AdminBusinessesInner() {
           <Table
             columns={COLUMNS}
             minWidthPx={1180}
-            rows={page.rows.map((b) => {
+            rows={rows.map((b) => {
               const tc = typeColor(b.vertical);
               return (
                 <TableRow key={b.tenantId} columns={COLUMNS} onClick={() => router.push(`/admin/businesses/${b.tenantId}`)}>
@@ -339,10 +344,7 @@ function AdminBusinessesInner() {
               );
             })}
           />
-          {/* maxRows=100 mirrors listBusinessesForAdmin's own hard server-side
-              clamp (src/modules/admin/businesses.ts) — QA pass 7, same shared
-              root cause as the Subscriptions list. */}
-          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} maxRows={100} />
+          <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
     </div>

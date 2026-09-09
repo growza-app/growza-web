@@ -1,78 +1,66 @@
 'use client';
 
-import { useMemo } from 'react';
 import { oklch } from '../tokens';
 import { Icon } from '../icons';
 import { Select } from './primitives';
+import {
+  PAGE_SIZE_OPTIONS,
+  changePageSize,
+  goToPage,
+  hasMore,
+  loadMore,
+  showingLabel,
+  totalPages,
+  type PagingState,
+} from '../lib/paging';
 
 /**
- * GRW-96's pagination primitive — the one control every list screen with a
- * potentially large dataset uses (businesses, subscriptions, payments,
- * invoices, usage records, audit logs). 20 by default, 50 and 100
- * selectable, desktop page controls collapsing to a mobile "Load more"
- * below the standing 860px breakpoint. Purely client-side slicing here,
- * since every list is still mock data — the shape is what a real
- * server-paginated endpoint will slot into.
+ * GRW-96's pagination primitive — the one control every admin list screen with
+ * a potentially large dataset uses (businesses, subscriptions, payments,
+ * invoices, usage records, audit logs).
+ *
+ * Jira GRW-140 · GRW-212 rewrote how it pages. The arithmetic and the two
+ * interaction models live in `../lib/paging`, which is where they can be
+ * tested; this file is the control that dispatches them. Read that file's
+ * header for why the request stopped being an accumulating prefix.
+ *
+ * Two things went with that change:
+ *
+ * - `usePagedSlice`, the client-side `items.slice(0, page * pageSize)` from
+ *   when every list was mock data. It had no call sites left and it modelled
+ *   the accumulate-always semantics this ticket removed.
+ * - `maxRows`, QA pass 7's containment. It disabled "Next" at the server's
+ *   hundred-row cap and told the reader to "narrow with filters to reach the
+ *   rest" — an honest description of a list that could not be paged. With real
+ *   offset paging there is no rest to reach, so the prop and its copy are gone.
  */
-export interface PaginationState {
-  page: number;
-  pageSize: number;
-}
-
-export const DEFAULT_PAGE_SIZE = 20;
-export const PAGE_SIZE_OPTIONS = [20, 50, 100];
-
-export function usePagedSlice<T>(items: T[], state: PaginationState): T[] {
-  return useMemo(() => items.slice(0, state.page * state.pageSize), [items, state.page, state.pageSize]);
-}
+export { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '../lib/paging';
+export type { PagingState as PaginationState } from '../lib/paging';
 
 export function Pagination({
   total,
-  shown,
+  loaded,
   state,
   onChange,
-  maxRows,
 }: {
   /** Total rows after filtering, before pagination. */
   total: number;
-  /** Rows actually rendered so far (state.page * state.pageSize, clamped). */
-  shown: number;
-  state: PaginationState;
-  onChange: (next: PaginationState) => void;
-  /**
-   * QA pass 7 (HIGH) — set only by a caller whose backend enforces a hard
-   * per-request row cap (GRW-100/GRW-111's admin-read layer clamps
-   * `pageSize` to 100 server-side, silently: `src/modules/admin/{businesses,
-   * subscriptions}.ts`'s own `Math.min(Math.max(...), 100)`). Without this,
-   * `totalPages`/`hasMore` below are computed purely from `total` and the
-   * REQUESTED `state.pageSize` — both of which keep climbing past what the
-   * backend will ever actually return, so "Page 6 of 8" kept rendering (and
-   * "Next"/"Load more" kept accepting clicks) past the point where every
-   * further click re-fetched the exact same capped 100 rows. Every other
-   * consumer of this component still paginates purely client-side (this
-   * file's own top comment) and leaves this unset, unaffected.
-   */
-  maxRows?: number;
+  /** Rows actually on screen — one page after a numbered step, the accumulated run after "Load more". */
+  loaded: number;
+  state: PagingState;
+  onChange: (next: PagingState) => void;
 }) {
   if (total === 0) return null;
 
-  const effectiveTotal = maxRows !== undefined ? Math.min(total, maxRows) : total;
-  const totalPages = Math.max(1, Math.ceil(effectiveTotal / state.pageSize));
+  const pages = totalPages(total, state.pageSize);
   const atStart = state.page <= 1;
-  const atEnd = state.page >= totalPages;
-  const hasMore = shown < effectiveTotal;
-  const capped = maxRows !== undefined && total > maxRows;
-
-  const goTo = (page: number) => onChange({ ...state, page: Math.min(Math.max(1, page), totalPages) });
-  const changeSize = (pageSize: number) => onChange({ page: 1, pageSize });
+  const atEnd = state.page >= pages;
+  const more = hasMore(state, loaded, total);
 
   return (
     <div style={{ marginTop: 14 }}>
       <div className="admin-pagination-desktop" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
-          Showing {Math.min(shown, effectiveTotal)} of {total.toLocaleString('en-IN')}
-          {capped ? ` — narrow with filters to reach the rest past ${maxRows!.toLocaleString('en-IN')}` : ''}
-        </div>
+        <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>{showingLabel(state, loaded, total)}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
             Rows
@@ -80,28 +68,28 @@ export function Pagination({
               <Select
                 options={PAGE_SIZE_OPTIONS.map(String)}
                 value={String(state.pageSize)}
-                onChange={(e) => changeSize(Number(e.target.value))}
+                onChange={(e) => onChange(changePageSize(Number(e.target.value)))}
                 style={{ height: 34, fontSize: 12.5 }}
               />
             </div>
           </div>
-          <PageButton onClick={() => goTo(state.page - 1)} disabled={atStart} label="Previous page">
+          <PageButton onClick={() => onChange(goToPage(state, state.page - 1, total))} disabled={atStart} label="Previous page">
             <Icon name="chevronLeft" size={14} />
           </PageButton>
           <span style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)', minWidth: 64, textAlign: 'center' }}>
-            Page {state.page} of {totalPages}
+            Page {state.page} of {pages}
           </span>
-          <PageButton onClick={() => goTo(state.page + 1)} disabled={atEnd} label="Next page">
+          <PageButton onClick={() => onChange(goToPage(state, state.page + 1, total))} disabled={atEnd} label="Next page">
             <Icon name="chevronRight" size={14} />
           </PageButton>
         </div>
       </div>
 
       <div className="admin-pagination-mobile" style={{ justifyContent: 'center' }}>
-        {hasMore ? (
+        {more ? (
           <button
             type="button"
-            onClick={() => onChange({ ...state, page: state.page + 1 })}
+            onClick={() => onChange(loadMore(state))}
             style={{
               width: '100%',
               height: 44,
@@ -118,9 +106,7 @@ export function Pagination({
           </button>
         ) : (
           <div style={{ width: '100%', textAlign: 'center', fontSize: 12.5, color: oklch.textFaint, fontWeight: 600, padding: '10px 0' }}>
-            {capped
-              ? `Showing the first ${maxRows!.toLocaleString('en-IN')} of ${total.toLocaleString('en-IN')} — narrow with filters to see the rest`
-              : `All ${total.toLocaleString('en-IN')} shown`}
+            {`All ${total.toLocaleString('en-IN')} shown`}
           </div>
         )}
       </div>

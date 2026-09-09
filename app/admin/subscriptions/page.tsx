@@ -8,7 +8,8 @@ import { ReenrolModal, reenrolActionLabel } from '../components/ReenrolModal';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { SUBSCRIPTION_STATUS_VALUES, subscriptionStatusLabel } from '../lib/subscription-status';
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
-import { DEFAULT_PAGE_SIZE, Pagination, type PaginationState } from '../components/Pagination';
+import { Pagination, type PaginationState } from '../components/Pagination';
+import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { Icon, TypeIcon } from '../icons';
 import { oklch, typeColor } from '../tokens';
@@ -80,7 +81,12 @@ export default function AdminSubscriptionsPage() {
    */
   const [reloadToken, setReloadToken] = useState(0);
   const [discountedOnly, setDiscountedOnly] = useState(false);
-  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
+  /**
+   * Jira GRW-140 — what is on screen, which is no longer the same thing as
+   * the last response. A numbered page replaces this; "Load more" adds to it.
+   */
+  const [rows, setRows] = useState<SubscriptionPage['rows']>([]);
   const [page, setPage] = useState<SubscriptionPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +101,7 @@ export default function AdminSubscriptionsPage() {
     // stable, so React does not treat `paging` as changed and fire the fetch
     // below twice for one filter click (the double-request bug traced on
     // Businesses).
-    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1 }));
+    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
   }, [status, discountedOnly, trimmedSearch]);
 
   useEffect(() => {
@@ -108,14 +114,13 @@ export default function AdminSubscriptionsPage() {
     if (trimmedSearch) params.set('search', trimmedSearch);
     if (status !== 'All') params.set('status', status);
     if (discountedOnly) params.set('discounted', 'true');
-    // Accumulating-prefix pagination, as everywhere else in this portal: the
-    // API returns page 1 through the current window so mobile's "Load more"
-    // appends instead of replacing.
-    params.set('page', '1');
-    params.set('pageSize', String(paging.page * paging.pageSize));
+    applyPageParams(params, paging);
 
     adminFetch<SubscriptionPage>(`/subscriptions?${params}`, { signal: controller.signal })
-      .then((result) => setPage(result))
+      .then((result) => {
+        setPage(result);
+        setRows((prev) => mergeRows(prev, result.rows, paging.intent));
+      })
       .catch((err) => {
         if (controller.signal.aborted) return;
         setError(err instanceof AdminApiError ? err.message : 'Could not load subscriptions.');
@@ -190,7 +195,7 @@ export default function AdminSubscriptionsPage() {
           <Table
             columns={COLUMNS}
             minWidthPx={980}
-            rows={page.rows.map((s) => {
+            rows={rows.map((s) => {
               const tc = typeColor(s.vertical);
               const discounted = s.discountAmountMinor > 0;
               return (
@@ -300,9 +305,7 @@ export default function AdminSubscriptionsPage() {
               );
             })}
           />
-          {/* maxRows=100 mirrors listSubscriptionsForAdmin's own hard server-side
-              clamp (src/modules/admin/subscriptions.ts) — QA pass 7. */}
-          <Pagination total={page.total} shown={page.rows.length} state={paging} onChange={setPaging} maxRows={100} />
+          <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
 

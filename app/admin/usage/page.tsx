@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly } from '../lib/format';
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
-import { Pagination, DEFAULT_PAGE_SIZE, type PaginationState } from '../components/Pagination';
+import { Pagination, type PaginationState } from '../components/Pagination';
+import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { subscriptionStatusLabel } from '../lib/subscription-status';
 import { oklch, usageState } from '../tokens';
@@ -73,7 +74,12 @@ const bookingsOf = (row: UsageRow) => row.meters.find((m) => m.usageType === 'bo
 
 export default function AdminUsagePage() {
   const { query } = useAdminSearch();
-  const [paging, setPaging] = useState<PaginationState>({ page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
+  /**
+   * Jira GRW-140 — what is on screen, which is no longer the same thing as
+   * the last response. A numbered page replaces this; "Load more" adds to it.
+   */
+  const [rows, setRows] = useState<UsagePage['rows']>([]);
   const [page, setPage] = useState<UsagePage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +89,7 @@ export default function AdminUsagePage() {
   const searchTooShort = trimmedSearch.length > 0 && trimmedSearch.length < 2;
 
   useEffect(() => {
-    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1 }));
+    setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
   }, [trimmedSearch]);
 
   useEffect(() => {
@@ -94,11 +100,13 @@ export default function AdminUsagePage() {
 
     const params = new URLSearchParams();
     if (trimmedSearch) params.set('search', trimmedSearch);
-    params.set('page', '1');
-    params.set('pageSize', String(paging.page * paging.pageSize));
+    applyPageParams(params, paging);
 
     adminFetch<UsagePage>(`/usage?${params}`, { signal: controller.signal })
-      .then(setPage)
+      .then((result) => {
+        setPage(result);
+        setRows((prev) => mergeRows(prev, result.rows, paging.intent));
+      })
       .catch((err) => {
         if (controller.signal.aborted) return;
         // Never an empty state on a failed read — "no usage" is a claim about
@@ -116,7 +124,6 @@ export default function AdminUsagePage() {
   // — the database can rank by volume but not by a fraction of a limit it does
   // not know. Not re-sorted here: two sort orders for one list is how a page
   // and its "next page" stop agreeing about what is on them.
-  const rows = page?.rows ?? [];
   // Totals across what is LOADED, and labelled as such. "Across the 20
   // businesses shown" is true; "across the platform" would not be.
   const bookingsTotal = rows.reduce((sum, r) => sum + (bookingsOf(r)?.used ?? 0), 0);
@@ -230,7 +237,7 @@ export default function AdminUsagePage() {
                 );
               })}
             />
-            <Pagination total={page?.total ?? 0} shown={rows.length} state={paging} onChange={setPaging} maxRows={100} />
+            <Pagination total={page?.total ?? 0} loaded={rows.length} state={paging} onChange={setPaging} />
           </>
         )}
       </Card>
