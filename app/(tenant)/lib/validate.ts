@@ -7,12 +7,8 @@
  * worse than one rule expressed in two places, so when the server changes,
  * change these with it.
  *
- * Server counterparts live in `src/api/index.ts` (`EMAIL_RE`,
- * `validateProviderBody`).
+ * Server counterparts live in `src/api/index.ts` (`validateProviderBody`).
  */
-
-/** Mirrors `EMAIL_RE` in src/api/index.ts. */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * E.164-ish: an optional +, a non-zero leading digit, 8–15 digits total.
@@ -40,14 +36,6 @@ export function validatePhone(raw: string, { required = true } = {}): string | n
     if (digits > 15) return 'That looks too long for a phone number';
     return 'Enter a valid mobile number, e.g. +91 98765 43210';
   }
-  return null;
-}
-
-/** Null when valid. Empty is valid — email is optional everywhere it is used. */
-export function validateEmail(raw: string): string | null {
-  const value = raw.trim();
-  if (!value) return null;
-  if (!EMAIL_RE.test(value)) return 'Enter a valid email address, e.g. name@salon.in';
   return null;
 }
 

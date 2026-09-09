@@ -117,7 +117,7 @@ export class ApiError extends Error {
      */
     public code?: string,
     /** GRW-164 — support contacts, when the API sent them. Rendered as tappable links. */
-    public support?: { email?: string; phone?: string },
+    public support?: { phone?: string },
   ) {
     super(message);
     this.name = 'ApiError';
@@ -139,9 +139,9 @@ async function apiError(res: Response, path: string): Promise<ApiError> {
 async function extractError(
   res: Response,
   path: string,
-): Promise<{ message: string; code?: string; support?: { email?: string; phone?: string } }> {
+): Promise<{ message: string; code?: string; support?: { phone?: string } }> {
   const body = (await res.json().catch(() => null)) as
-    | { error?: string; detail?: string; support?: { email?: string; phone?: string } }
+    | { error?: string; detail?: string; support?: { phone?: string } }
     | null;
   // `detail` first: the API's capability denials follow 00 §4 and put a
   // machine-readable code in `error` with the sentence in `detail`, so
@@ -368,7 +368,6 @@ export const api = {
     name?: string;
     timezone?: string;
     phone?: string;
-    email?: string;
     description?: string;
     locationName?: string;
     addressLine1?: string;
@@ -408,7 +407,6 @@ export const api = {
     displayName: string;
     phone: string;
     title?: string | null;
-    email?: string | null;
     bio?: string | null;
     languages?: string | null;
     hiredAt?: string | null;
@@ -419,7 +417,6 @@ export const api = {
       displayName?: string;
       title?: string | null;
       phone?: string | null;
-      email?: string | null;
       bio?: string | null;
       languages?: string | null;
       hiredAt?: string | null;

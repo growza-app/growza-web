@@ -85,7 +85,6 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   const setBranch = (index: number, patch: Partial<Branch>) =>
     setBranches((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   const [nationalNumber, setNationalNumber] = useState('');
-  const [email, setEmail] = useState('');
   const [reason, setReason] = useState('');
 
   const [saving, setSaving] = useState(false);
@@ -132,7 +131,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   async function submit() {
     setFormError(null);
 
-    const found = validate({ name, country, typeCode, planCode, branches: visibleBranches, nationalNumber, dialCode, email, reason });
+    const found = validate({ name, country, typeCode, planCode, branches: visibleBranches, nationalNumber, dialCode, reason });
     if (Object.keys(found).length > 0) {
       setErrors(found);
       return;
@@ -167,7 +166,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
            * admin never typed a `+`. A pasted `+919876543210`, `919876543210`
            * or `09876543210` all reduce to the same ten digits below.
            */
-          owner: { phone: `${dialCode}${nationalNumber.replace(/\D/g, '')}`, email: email.trim().toLowerCase() },
+          owner: { phone: `${dialCode}${nationalNumber.replace(/\D/g, '')}` },
           reason,
         }),
       });
@@ -192,7 +191,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   // on submit against the field — a button that stays grey without saying why
   // is the worse of the two failures.
   const complete =
-    name && country && typeCode && planCode && visibleBranches.every((b) => b.name.trim()) && nationalNumber && email && reason;
+    name && country && typeCode && planCode && visibleBranches.every((b) => b.name.trim()) && nationalNumber && reason;
 
   return (
     <div
@@ -371,18 +370,6 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
                   style={dialCode ? { borderRadius: '0 11px 11px 0' } : undefined}
                 />
               </div>
-            </Field>
-            <Field label="Owner’s email" error={errorFor('owner.email')}>
-              <TextInput
-                value={email}
-                type="email"
-                invalid={!!errorFor('owner.email')}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  clear('owner.email');
-                }}
-                placeholder="owner@salon.com"
-              />
             </Field>
           </Row>
 

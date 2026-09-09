@@ -42,7 +42,7 @@ export const SIGN_IN_PATH = '/login';
  */
 export function accountStatusRefusal(
   error: unknown,
-): { reason: string; message: string; support?: { email?: string; phone?: string } } | null {
+): { reason: string; message: string; support?: { phone?: string } } | null {
   if (!(error instanceof ApiError) || error.status !== 403) return null;
   const reason = error.code;
   if (typeof reason !== 'string' || !reason.startsWith('account_')) return null;

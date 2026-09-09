@@ -166,7 +166,6 @@ export interface ProviderOverviewRow {
   displayName: string;
   title: string | null;
   phone: string | null;
-  email: string | null;
   active: boolean;
   sortOrder: number | null;
   todayBookings: number;
@@ -196,7 +195,6 @@ export interface ProviderDetail {
   displayName: string;
   title: string | null;
   phone: string | null;
-  email: string | null;
   bio: string | null;
   languages: string | null;
   hiredAt: string | null;
@@ -252,7 +250,6 @@ export interface SettingsSummary {
     name: string;
     timezone: string;
     phone: string;
-    email: string;
     description: string;
     logoUrl: string | null;
   };

@@ -17,7 +17,6 @@ const good = {
   branches: [{ name: 'MG Road', line1: '', city: '' }],
   nationalNumber: '9876543210',
   dialCode: '+91',
-  email: 'owner@salon.com',
   reason: 'Signed up on a call',
 };
 
@@ -119,11 +118,11 @@ describe('the other fields', () => {
     expect(validate(good)['branch.0.line1']).toBeUndefined();
   });
 
-  it('refuses an email that is not one', () => {
-    for (const bad of ['owner', 'owner@', '@salon.com', 'owner@salon', 'owner salon@x.com']) {
-      expect(validate({ ...good, email: bad })['owner.email'], bad).toBeTruthy();
-    }
-    expect(validate({ ...good, email: '' })['owner.email']).toBe('Enter the owner’s email address');
+  it('asks for no email at all — GRW-189 removed it from the product', () => {
+    // The form used to require the owner's email and this suite used to assert
+    // five malformed shapes. There is no field to be malformed now: an owner is
+    // a phone number, and `owner.email` is not a key this validator can emit.
+    expect(Object.keys(validate({ ...good, name: '', reason: '', nationalNumber: '' }))).not.toContain('owner.email');
   });
 
   it('refuses a reason too short to be a reason', () => {
@@ -169,7 +168,7 @@ describe('branches', () => {
 
 describe('reporting', () => {
   it('reports every bad field at once, not just the first', () => {
-    const errors = validate({ ...good, name: '', email: 'nope', reason: '', nationalNumber: '' });
-    expect(Object.keys(errors).sort()).toEqual(['name', 'owner.email', 'owner.phone', 'reason']);
+    const errors = validate({ ...good, name: '', reason: '', nationalNumber: '' });
+    expect(Object.keys(errors).sort()).toEqual(['name', 'owner.phone', 'reason']);
   });
 });

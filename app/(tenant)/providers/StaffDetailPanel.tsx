@@ -40,8 +40,6 @@ function AboutFields({
   onTitleChange,
   phone,
   onPhoneChange,
-  email,
-  onEmailChange,
   languages,
   onLanguagesChange,
   bio,
@@ -58,8 +56,6 @@ function AboutFields({
   onTitleChange: (v: string) => void;
   phone: string;
   onPhoneChange: (v: string) => void;
-  email: string;
-  onEmailChange: (v: string) => void;
   languages: string;
   onLanguagesChange: (v: string) => void;
   bio: string;
@@ -106,12 +102,6 @@ function AboutFields({
           placeholder="+91 98765 12345"
           className={phoneInvalid ? 'field-invalid' : ''}
         />
-      </div>
-      <div className="field" style={{ marginTop: 12 }}>
-        <label>
-          <span>Email</span>
-        </label>
-        <input type="text" value={email} onChange={(e) => onEmailChange(e.target.value)} placeholder="name@example.com" />
       </div>
       <div className="field" style={{ marginTop: 12 }}>
         <label>
@@ -261,7 +251,6 @@ export function StaffDetailPanel({
   const [displayName, setDisplayName] = useState('');
   const [title, setTitle] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
   const [bio, setBio] = useState('');
   const [languages, setLanguages] = useState('');
   const [active, setActive] = useState(true);
@@ -279,7 +268,6 @@ export function StaffDetailPanel({
     setDisplayName(d.displayName);
     setTitle(d.title ?? '');
     setPhone(d.phone ?? '');
-    setEmail(d.email ?? '');
     setBio(d.bio ?? '');
     setLanguages(d.languages ?? '');
     setActive(d.active);
@@ -310,12 +298,11 @@ export function StaffDetailPanel({
   }, [providerId]);
 
   const aboutDirty = creating
-    ? displayName !== '' || title !== '' || phone !== '' || email !== '' || bio !== '' || languages !== ''
+    ? displayName !== '' || title !== '' || phone !== '' || bio !== '' || languages !== ''
     : !!detail &&
       (displayName !== detail.displayName ||
         title !== (detail.title ?? '') ||
         phone !== (detail.phone ?? '') ||
-        email !== (detail.email ?? '') ||
         bio !== (detail.bio ?? '') ||
         languages !== (detail.languages ?? '') ||
         active !== detail.active);
@@ -355,7 +342,7 @@ export function StaffDetailPanel({
     setBusy(true);
     setError(null);
     setSaved(false);
-    const aboutPayload = { displayName, phone, title: title || null, email: email || null, bio: bio || null, languages: languages || null };
+    const aboutPayload = { displayName, phone, title: title || null, bio: bio || null, languages: languages || null };
     try {
       if (creating) {
         /**
@@ -476,8 +463,6 @@ export function StaffDetailPanel({
                   setPhone(v);
                   if (phoneInvalid) setPhoneInvalid(false);
                 }}
-                email={email}
-                onEmailChange={setEmail}
                 languages={languages}
                 onLanguagesChange={setLanguages}
                 bio={bio}

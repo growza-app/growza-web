@@ -22,7 +22,6 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
   const [name, setName] = useState(initial.tenant.name);
   const [timezone, setTimezone] = useState(initial.tenant.timezone);
   const [phone, setPhone] = useState(initial.tenant.phone);
-  const [email, setEmail] = useState(initial.tenant.email);
   const [description, setDescription] = useState(initial.tenant.description);
   const [locationName, setLocationName] = useState(initial.location?.name ?? '');
   const [addressLine1, setAddressLine1] = useState(initial.location?.addressLine1 ?? '');
@@ -46,7 +45,6 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
         name,
         timezone,
         phone,
-        email,
         description,
         locationName,
         addressLine1,
@@ -190,12 +188,6 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
               <span>Business phone</span>
             </label>
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 12345" />
-          </div>
-          <div className="field">
-            <label>
-              <span>Business email</span>
-            </label>
-            <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           </div>
         </div>
 

@@ -68,7 +68,7 @@ interface AuditLogRow {
   actorType: string;
   actorId: string | null;
   actorName: string | null;
-  actorEmail: string | null;
+  actorPhone: string | null;
   action: string;
   entityType: string | null;
   entityId: string | null;

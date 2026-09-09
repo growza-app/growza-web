@@ -44,7 +44,7 @@ interface BusinessRow {
   status: string;
   vertical: string;
   planName: string;
-  ownerEmail: string | null;
+  ownerPhone: string | null;
   branchCount: number;
   userCount: number;
   createdAt: string;
@@ -295,7 +295,7 @@ function AdminBusinessesInner() {
                     </div>
                   </div>
                   <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {b.ownerEmail ?? <span style={{ color: oklch.textFaint }}>—</span>}
+                    {b.ownerPhone ?? <span style={{ color: oklch.textFaint }}>—</span>}
                   </div>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.branchCount}</div>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.userCount}</div>

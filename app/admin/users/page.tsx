@@ -24,7 +24,7 @@ import { AddAdminModal, type RoleOption } from './AddAdminModal';
 interface AdminRow {
   id: string;
   name: string;
-  email: string;
+  phone: string | null;
   status: 'active' | 'deactivated';
   roleId: string | null;
   roleName: string | null;
@@ -167,7 +167,7 @@ export default function AdminUsersPage() {
                 <TableRow key={user.id} columns={COLUMNS}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong }}>{user.name}</div>
-                    <div style={{ fontSize: 12.5, color: oklch.textMuted, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>
+                    <div style={{ fontSize: 12.5, color: oklch.textMuted, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.phone ?? '—'}</div>
                   </div>
 
                   <div>

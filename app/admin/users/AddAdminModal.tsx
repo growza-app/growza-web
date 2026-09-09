@@ -40,7 +40,6 @@ export function AddAdminModal({
   onAdded: () => void;
 }) {
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('');
@@ -58,7 +57,6 @@ export function AddAdminModal({
     if (wasOpen.current) return;
     wasOpen.current = true;
     setName('');
-    setEmail('');
     setPhone('');
     setPassword('');
     // Never defaults to the built-in role: giving somebody full administration
@@ -73,9 +71,7 @@ export function AddAdminModal({
   const blocker =
     name.trim() === ''
       ? 'Enter their name.'
-      : email.trim() === ''
-        ? 'Enter their email.'
-        : phone.trim() === ''
+      : phone.trim() === ''
           ? 'Enter the mobile number they will sign in with.'
           : password.length < 8
             ? 'Choose a starting password of at least 8 characters.'
@@ -95,7 +91,6 @@ export function AddAdminModal({
       signal: controller.signal,
       body: JSON.stringify({
         name: name.trim(),
-        email: email.trim(),
         phone: phone.trim(),
         password,
         roleId,
@@ -165,10 +160,6 @@ export function AddAdminModal({
           <div>
             {label('Name')}
             <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya Sharma" disabled={saving} />
-          </div>
-          <div>
-            {label('Email')}
-            <TextInput value={email} onChange={(e) => setEmail(e.target.value)} placeholder="priya@growza.app" disabled={saving} />
           </div>
           <div>
             {label('Mobile number')}

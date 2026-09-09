@@ -32,7 +32,7 @@ interface BusinessDetail {
   planName: string;
   planListPriceMinor: number;
   planCurrency: string;
-  ownerEmail: string | null;
+  ownerPhone: string | null;
   branchCount: number;
   userCount: number;
   createdAt: string;
@@ -40,7 +40,7 @@ interface BusinessDetail {
   waPhoneNumber: string | null;
   businessTypeVersion: number;
   locations: Array<{ id: string; name: string; active: boolean }>;
-  members: Array<{ userId: string; email: string; role: string }>;
+  members: Array<{ userId: string; phone: string | null; role: string }>;
   suspensionReason: string | null;
   subscription: {
     id: string;
@@ -297,7 +297,7 @@ function BusinessDetailInner() {
       <ConfirmDialog
         open={impersonateOpen}
         title={`View ${business.name} as its owner?`}
-        description={`You will see the dashboard exactly as ${business.ownerEmail ?? 'the owner'} does, and you will not be able to change anything. The session is logged with your name and this reason, and ends after 30 minutes or when you exit.`}
+        description={`You will see the dashboard exactly as ${business.ownerPhone ?? 'the owner'} does, and you will not be able to change anything. The session is logged with your name and this reason, and ends after 30 minutes or when you exit.`}
         confirmLabel={impersonateLoading ? 'Starting…' : 'Start session'}
         reasonRequired
         reasonMinLength={10}
@@ -459,7 +459,7 @@ function SummaryHeader({
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 19, fontWeight: 800, color: oklch.textStrong }}>{business.name}</div>
           <div style={{ fontSize: 13, color: oklch.textMuted }}>
-            {business.vertical} · {business.ownerEmail ?? 'No owner recorded'}
+            {business.vertical} · {business.ownerPhone ?? 'No owner recorded'}
           </div>
         </div>
         {/*
@@ -488,7 +488,7 @@ function SummaryHeader({
               holds the permission. The endpoint refuses independently
               (GRW-136 AC-02); this is about not offering what will not work.
               Absent with no owner too — there would be nobody to be. */}
-          {canImpersonate && business.ownerEmail ? (
+          {canImpersonate && business.ownerPhone ? (
             <SecondaryButton onClick={onRequestImpersonate}>Impersonate owner</SecondaryButton>
           ) : null}
         </div>
@@ -622,7 +622,7 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
           <SummaryField label="Vertical" value={`${business.vertical} · v${business.businessTypeVersion}`} />
           <SummaryField label="Timezone" value={business.timezone} />
           <SummaryField label="WhatsApp number" value={business.waPhoneNumber ?? '—'} />
-          <SummaryField label="Owner" value={business.ownerEmail ?? '—'} />
+          <SummaryField label="Owner" value={business.ownerPhone ?? '—'} />
         </div>
       </Card>
 
@@ -667,7 +667,7 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
 }
 
 const USERS_COLUMNS: TableColumn[] = [
-  { label: 'Email', width: '2fr' },
+  { label: 'Phone', width: '2fr' },
   { label: 'Role', width: '1fr' },
 ];
 
@@ -681,7 +681,7 @@ function UsersTab({ members }: { members: BusinessDetail['members'] }) {
       minWidthPx={420}
       rows={members.map((m) => (
         <TableRow key={m.userId} columns={USERS_COLUMNS}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>{m.email}</div>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>{m.phone ?? '—'}</div>
           <div style={{ fontSize: 13, fontWeight: 700, color: oklch.textMuted, textTransform: 'capitalize' }}>{m.role}</div>
         </TableRow>
       ))}

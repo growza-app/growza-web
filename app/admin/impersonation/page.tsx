@@ -20,10 +20,10 @@ import { oklch } from '../tokens';
 interface SessionRow {
   id: string;
   adminName: string | null;
-  adminEmail: string;
+  adminPhone: string | null;
   tenantId: string;
   businessName: string;
-  targetEmail: string;
+  targetPhone: string | null;
   reason: string;
   startedAt: string;
   endedAt: string | null;
@@ -125,9 +125,9 @@ export default function AdminImpersonationPage() {
               >
                 <div>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>
-                    {row.businessName} · {row.targetEmail}
+                    {row.businessName} · {row.targetPhone ?? '—'}
                   </div>
-                  <div style={{ fontSize: 12, color: oklch.textFaint }}>by {row.adminName ?? row.adminEmail}</div>
+                  <div style={{ fontSize: 12, color: oklch.textFaint }}>by {row.adminName ?? row.adminPhone ?? '—'}</div>
                 </div>
                 {/* The reason, at the same weight as everything else. It is the
                     field that makes the row reviewable, so it is not a tooltip. */}

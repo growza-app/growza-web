@@ -40,7 +40,6 @@ export const DIAL_CODES: Record<string, string> = {
 /** National-number length per dial code, where it is a fixed, well-known rule. */
 export const NATIONAL_DIGITS: Record<string, number> = { '+91': 10, '+971': 9, '+65': 8, '+1': 10 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const hasLetterOrDigit = (v: string) => /[\p{L}\p{N}]/u.test(v);
 
 /**
@@ -59,7 +58,6 @@ export function validate(values: {
   branches: { name: string; line1: string; city: string }[];
   nationalNumber: string;
   dialCode: string | null;
-  email: string;
   reason: string;
 }): Record<string, string> {
   const errors: Record<string, string> = {};
@@ -103,11 +101,6 @@ export function validate(values: {
   else if (expected && digits.length !== expected) errors['owner.phone'] = `${expected} digits after ${values.dialCode}`;
   else if (!expected && (digits.length < 7 || digits.length > 14)) errors['owner.phone'] = 'That does not look like a phone number';
   else if (values.dialCode === '+91' && !/^[6-9]/.test(digits)) errors['owner.phone'] = 'An Indian mobile number starts with 6, 7, 8 or 9';
-
-  const email = values.email.trim();
-  if (!email) errors['owner.email'] = 'Enter the owner’s email address';
-  else if (!EMAIL_RE.test(email)) errors['owner.email'] = 'Enter a valid email address';
-  else if (email.length > 254) errors['owner.email'] = 'Email is too long';
 
   const reason = values.reason.trim();
   if (reason.length < 5 || !hasLetterOrDigit(reason)) errors.reason = 'Say why this business is being created (at least 5 characters)';

@@ -14,7 +14,7 @@ import { useAdminSearch } from './SearchContext';
 
 interface Me {
   /** GRW-202 — `phone` and `roleName` so the account panel can name the role and the credential. */
-  admin: { id: string; email: string; name: string; phone: string | null; roleName: string | null };
+  admin: { id: string; name: string; phone: string | null; roleName: string | null };
   permissions: string[];
 }
 

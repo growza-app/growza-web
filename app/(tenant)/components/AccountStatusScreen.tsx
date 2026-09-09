@@ -15,8 +15,8 @@ export function AccountStatusScreen({
   support,
 }: {
   message: string;
-  /** Absent until SUPPORT_EMAIL / SUPPORT_PHONE are configured. Never invented. */
-  support?: { email?: string; phone?: string };
+  /** Absent until SUPPORT_PHONE is configured. Never invented. */
+  support?: { phone?: string };
 }) {
   return (
     <main className="account-status">
@@ -31,18 +31,11 @@ export function AccountStatusScreen({
             They deliberately do not repeat the number — at 320px that read as
             the same thing said twice, and a tap-to-call button means nobody has
             to retype it anyway. Nothing renders when nothing is configured. */}
-        {support?.phone || support?.email ? (
+        {support?.phone ? (
           <div className="account-status-contacts">
-            {support.phone ? (
-              <a className="account-status-contact" href={`tel:${support.phone.replace(/\s+/g, '')}`}>
-                Call support
-              </a>
-            ) : null}
-            {support.email ? (
-              <a className="account-status-contact" href={`mailto:${support.email}`}>
-                Email support
-              </a>
-            ) : null}
+            <a className="account-status-contact" href={`tel:${support.phone.replace(/\s+/g, '')}`}>
+              Call support
+            </a>
           </div>
         ) : null}
       </div>

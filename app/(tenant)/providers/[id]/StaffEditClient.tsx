@@ -17,7 +17,7 @@ import { toWeekdayRows, WeekdayHoursEditor, type WeekdayRow } from '../../compon
 import { IconArrowLeft, IconCheck } from '../../components/icons';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { copy } from '../../lib/copy';
-import { normalizePhone, validateEmail, validatePhone, validateRequired } from '../../lib/validate';
+import { normalizePhone, validatePhone, validateRequired } from '../../lib/validate';
 import { avatarTone, initials } from '../StaffRoster';
 import { useLabel } from '../../components/LabelsProvider';
 
@@ -61,7 +61,6 @@ export function StaffEditClient({
   const [displayName, setDisplayName] = useState(detail.displayName);
   const [title, setTitle] = useState(detail.title ?? '');
   const [phone, setPhone] = useState(detail.phone ?? '');
-  const [email, setEmail] = useState(detail.email ?? '');
   const [active, setActive] = useState(detail.active);
   const [unavailableToday, setUnavailableToday] = useState(detail.unavailableToday);
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set(detail.serviceIds));
@@ -74,14 +73,13 @@ export function StaffEditClient({
   const [showAllDays, setShowAllDays] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   /** Per-field messages, shown under the field itself rather than as one banner — a top-level "check the form" makes the user hunt. */
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; email?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({});
 
   const resetFrom = (d: ProviderDetail) => {
     setDetail(d);
     setDisplayName(d.displayName);
     setTitle(d.title ?? '');
     setPhone(d.phone ?? '');
-    setEmail(d.email ?? '');
     setActive(d.active);
     setUnavailableToday(d.unavailableToday);
     setSelectedServiceIds(new Set(d.serviceIds));
@@ -93,7 +91,6 @@ export function StaffEditClient({
     displayName !== detail.displayName ||
     title !== (detail.title ?? '') ||
     phone !== (detail.phone ?? '') ||
-    email !== (detail.email ?? '') ||
     active !== detail.active;
   const skillsDirty = !setsEqual(selectedServiceIds, new Set(detail.serviceIds));
   const orgHoursDirty = usesOrgHours !== detail.usesOrgHours;
@@ -134,7 +131,6 @@ export function StaffEditClient({
     const next = {
       name: validateRequired(displayName, 'Name') ?? undefined,
       phone: validatePhone(phone) ?? undefined,
-      email: validateEmail(email) ?? undefined,
     };
     setFieldErrors(next);
     return next;
@@ -142,7 +138,7 @@ export function StaffEditClient({
 
   const save = async () => {
     const errs = validateAll();
-    if (errs.name || errs.phone || errs.email) {
+    if (errs.name || errs.phone) {
       setError(null);
       return;
     }
@@ -164,8 +160,7 @@ export function StaffEditClient({
             // here rather than leaving "+91 98765 43210" in the column.
             phone: normalizePhone(phone.trim()),
             title: title.trim() || null,
-            email: email.trim() || null,
-            active,
+                  active,
             usesOrgHours,
           }),
         );
@@ -331,27 +326,6 @@ export function StaffEditClient({
                     onBlur={() => setFieldErrors((f) => ({ ...f, phone: validatePhone(phone) ?? undefined }))}
                   />
                   {fieldErrors.phone && <div className="field-error">{fieldErrors.phone}</div>}
-                </label>
-                <label className="field">
-                  <span className="field-label">
-                    Email <span className="field-optional">optional</span>
-                  </span>
-                  <input
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    value={email}
-                    placeholder="name@example.com"
-                    className={fieldErrors.email ? 'field-invalid' : undefined}
-                    aria-invalid={!!fieldErrors.email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setSaved(false);
-                      if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined }));
-                    }}
-                    onBlur={() => setFieldErrors((f) => ({ ...f, email: validateEmail(email) ?? undefined }))}
-                  />
-                  {fieldErrors.email && <div className="field-error">{fieldErrors.email}</div>}
                 </label>
               </div>
             </section>
