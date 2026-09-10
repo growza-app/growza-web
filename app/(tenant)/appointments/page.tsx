@@ -1,3 +1,4 @@
+import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api, type Appointment } from '../lib/api';
 import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
@@ -200,3 +201,9 @@ export default async function AppointmentsPage({
     </>
   );
 }
+
+/**
+ * Jira GRW-192 — the vertical names this screen, not us. A clinic reads
+ * "Doctors" / "Patients" / "Visits" here; a garage "Mechanics" / "Jobs".
+ */
+export const generateMetadata = () => labelledTitle('appointments', TITLE_FALLBACK.appointments);

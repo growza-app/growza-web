@@ -1,3 +1,4 @@
+import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api, type CustomerSort, type CustomerStatusFilter, type SortDirection } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { CustomersClient } from './CustomersClient';
@@ -62,3 +63,9 @@ export default async function CustomersPage({
     />
   );
 }
+
+/**
+ * Jira GRW-192 — the vertical names this screen, not us. A clinic reads
+ * "Doctors" / "Patients" / "Visits" here; a garage "Mechanics" / "Jobs".
+ */
+export const generateMetadata = () => labelledTitle('customers', TITLE_FALLBACK.customers);

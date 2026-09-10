@@ -1,3 +1,4 @@
+import { screenTitle } from '../../../lib/page-title';
 import { notFound } from 'next/navigation';
 import { api, ApiError } from '../../../lib/api';
 import { PageHeader } from '../../../components/PageHeader';
@@ -31,3 +32,6 @@ export default async function EditComboPage({ params }: { params: Promise<{ id: 
     </div>
   );
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('Edit offer');

@@ -109,3 +109,34 @@
   padding: 0;
   min-width: 0;
 }
+
+/*
+ * Jira GRW-192 — the shell's `<main>` landmark, laid out as if it were not there.
+ *
+ * `display: contents` and not a grid pass-through, which was the first attempt
+ * and was wrong. `.content` is a three-row grid — `auto minmax(0, 1fr) auto` —
+ * and the three items it expects are the page's own `<header>`, its
+ * `.page-body`, and the mobile nav. Wrapping `{children}` in an element
+ * collapses the first two into ONE item, so that item took the `auto` track,
+ * grew to the full viewport height, and pushed the bottom nav to y=844 on an
+ * 844px-tall phone. The nav was simply off the bottom of the screen.
+ *
+ * Measured, not guessed: `.content` reported `grid-template-rows: 844px 0px
+ * 0px` and `nav.bottom-nav` a 17px box at y=844. `.page-body`'s own comment in
+ * 03-page-header.css says what it needs — "the middle grid row already
+ * stretches this to fill the leftover height" — and an extra wrapper is exactly
+ * what stops that being true.
+ *
+ * `display: contents` removes the box while keeping the element, so the header,
+ * body and nav stay the grid's own three items and the layout is byte-identical
+ * to before the landmark existed.
+ *
+ * The cost is real and was checked rather than assumed: browsers used to drop
+ * `display: contents` elements out of the accessibility tree entirely, which
+ * would make this landmark invisible — the same defect as not having one. It is
+ * fixed in current engines, and `title-coverage`/the browser check below verify
+ * the role actually resolves rather than trusting that.
+ */
+.content-main {
+  display: contents;
+}

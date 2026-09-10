@@ -1,3 +1,4 @@
+import { screenTitle } from '../lib/page-title';
 import { Suspense } from 'react';
 
 import {
@@ -204,3 +205,6 @@ export default async function ReportsPage({
     </Suspense>
   );
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('Reports');

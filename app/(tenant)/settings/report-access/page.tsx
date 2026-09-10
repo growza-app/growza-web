@@ -1,3 +1,4 @@
+import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { ReportAccessForm } from './ReportAccessForm';
 
@@ -8,3 +9,6 @@ export default async function ReportAccessSettingsPage() {
   if (!settings) return <div className="banner">Could not load settings — check the server is running.</div>;
   return <ReportAccessForm initial={settings} />;
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('Who sees Reports');

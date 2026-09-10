@@ -1,3 +1,4 @@
+import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
@@ -41,3 +42,9 @@ export default async function ProvidersPage() {
     </>
   );
 }
+
+/**
+ * Jira GRW-192 — the vertical names this screen, not us. A clinic reads
+ * "Doctors" / "Patients" / "Visits" here; a garage "Mechanics" / "Jobs".
+ */
+export const generateMetadata = () => labelledTitle('providers', TITLE_FALLBACK.providers);

@@ -1,3 +1,4 @@
+import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
 import { ComboBuilder } from '../ComboBuilder';
@@ -27,3 +28,6 @@ export default async function NewComboPage() {
     </div>
   );
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('New offer');

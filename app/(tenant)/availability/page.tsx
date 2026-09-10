@@ -1,3 +1,4 @@
+import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
@@ -107,3 +108,6 @@ export default async function AvailabilityPage({
     </>
   );
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('Free times');

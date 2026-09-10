@@ -1,3 +1,4 @@
+import { screenTitle } from '../lib/page-title';
 import { redirect } from 'next/navigation';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
@@ -70,3 +71,6 @@ export default async function AttendancePage({
 function todayFallback(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('Attendance');

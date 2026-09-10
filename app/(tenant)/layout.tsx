@@ -15,17 +15,55 @@ import { redirect } from 'next/navigation';
 import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
 import { AccountStatusScreen } from './components/AccountStatusScreen';
 
-export const metadata: Metadata = {
-  title: 'Booking Dashboard',
-  description: 'Manage bookings, staff, services, and offers.',
-  manifest: '/manifest.json',
-  icons: { icon: '/icon.png', apple: '/icons/apple-touch-icon.png' },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Bookings',
-  },
-};
+/**
+ * Jira GRW-192 — the tab says which screen, and whose business.
+ *
+ * Every screen used to render `<title>Booking Dashboard</title>`. Thirteen
+ * tabs, one name: the tab strip, the bookmark dialog and the history list
+ * could not tell them apart. It cost real time during the GRW-216 device
+ * sweep, where a correct navigation looked like a failed one because the title
+ * never changed, and the harness had to start recording `location.pathname` on
+ * every row before its results could be trusted.
+ *
+ * `template` is what each page's own `title` drops into, so a page declares
+ * "Bookings" and the tab reads "Bookings · Glow Salon". The business name is
+ * there because the first cohort is white-glove: Growza staff will have
+ * several salons open at once, and "Bookings" three times over is the same
+ * problem one level up.
+ *
+ * `default` covers a route declaring no title of its own, and is deliberately
+ * the business name rather than a screen name — inheriting some OTHER screen's
+ * name is exactly the confusion being removed, so an undeclared route says
+ * less rather than something wrong. `title-coverage.test.ts` fails when a
+ * route relies on it.
+ *
+ * The `/me` call here is free: React memoises identical fetches within a
+ * render pass, so it is the same request the shell below already makes.
+ * Counted in the API log rather than assumed — one `/api/v1/me` per page load,
+ * not two.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  let business = 'Growza';
+  try {
+    const me = await api.me();
+    business = me.tenant?.name ?? business;
+  } catch {
+    // A title is never worth a broken page. The shell below already renders
+    // degraded when `/me` is unreachable; this matches it.
+  }
+
+  return {
+    title: { template: `%s · ${business}`, default: business },
+    description: 'Manage bookings, staff, services, and offers.',
+    manifest: '/manifest.json',
+    icons: { icon: '/icon.png', apple: '/icons/apple-touch-icon.png' },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'Bookings',
+    },
+  };
+}
 
   /**
    * Jira GRW-17 — `viewport-fit: cover` is what makes `env(safe-area-inset-*)`
@@ -150,7 +188,24 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} />
             <div className="content">
               <BillingBanner billing={billing} canPayOnline={canPayOnline} />
-              {children}
+              {/*
+                * Jira GRW-192 — one `<main>`, in the shell, for every screen.
+                *
+                * The ticket said `/search` was the odd one out. It was not: only
+                * Home had a `<main>` at all, so twelve screens offered no "skip to
+                * main content" target and nothing scoped to the landmark could
+                * find the page. Putting it here fixes all of them at once and
+                * cannot be forgotten by the next route — which is the same
+                * argument GRW-203 made about the account button being an
+                * opt-in prop.
+                *
+                * It sits INSIDE `.content` rather than replacing it because the
+                * banner above and the mobile nav below are not main content. It
+                * passes the grid sizing through (see `.content-main`) so the
+                * middle row still behaves exactly as it did when `{children}`
+                * was the grid item directly.
+                */}
+              <main className="content-main">{children}</main>
               <MobileChrome labels={labels} timezone={timezone} role={role} reportTabs={reportTabs} />
             </div>
           </div>

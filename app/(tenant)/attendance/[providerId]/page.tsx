@@ -1,3 +1,4 @@
+import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { copy } from '../../lib/copy';
 import { PageHeader } from '../../components/PageHeader';
@@ -58,3 +59,6 @@ export default async function AttendanceMonthPage({
     </>
   );
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('Attendance');

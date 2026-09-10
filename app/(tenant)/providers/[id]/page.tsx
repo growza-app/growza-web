@@ -1,3 +1,4 @@
+import { screenTitle } from '../../lib/page-title';
 import { notFound } from 'next/navigation';
 import { api } from '../../lib/api';
 import { copy } from '../../lib/copy';
@@ -43,3 +44,6 @@ export default async function StaffEditPage({ params }: { params: Promise<{ id: 
     />
   );
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('Staff member');

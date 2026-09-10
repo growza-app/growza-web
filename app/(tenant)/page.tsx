@@ -1,3 +1,4 @@
+import { rootTitle } from './lib/page-title';
 import { redirect } from 'next/navigation';
 import { homeHref } from './lib/nav-policy';
 import { api, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
@@ -362,7 +363,9 @@ export default async function DashboardPage() {
 
       <div className="page-body home-page">
         <div className="home-layout">
-          <main className="home-main">
+          {/* GRW-192 — this was the app's only main landmark. The shell owns that now, for
+              every screen rather than just this one, and two nested would be invalid. */}
+          <div className="home-main">
             <SummaryCard stats={stats} newCustomers={newCustomers} />
 
             <section className="home-section">
@@ -409,7 +412,7 @@ export default async function DashboardPage() {
             <section className="home-section mobile-only-section">
               <TopInsight />
             </section>
-          </main>
+          </div>
 
           <aside className="home-rail desktop-only">
             <BookingsChart buckets={bookingBuckets} trendPct={bookingTrendPct} />
@@ -422,3 +425,12 @@ export default async function DashboardPage() {
     </>
   );
 }
+
+/**
+ * Jira GRW-192 — Home spells its own tab out in full.
+ *
+ * The layout's `title.template` reaches child segments only, and this page
+ * shares a segment with that layout — so it read "Home" while every other tab
+ * read "<Screen> · <Business>".
+ */
+export const generateMetadata = () => rootTitle('Home');

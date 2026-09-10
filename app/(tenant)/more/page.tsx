@@ -1,3 +1,4 @@
+import { screenTitle } from '../lib/page-title';
 import type { ReactNode } from 'react';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
@@ -86,3 +87,6 @@ export default async function MorePage() {
     </>
   );
 }
+
+// Jira GRW-192 — the tab says which screen this is.
+export const metadata = screenTitle('More');
