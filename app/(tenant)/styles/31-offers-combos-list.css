@@ -188,7 +188,26 @@
   align-items: center;
   gap: 20px;
   flex: 1;
-  min-width: 0;
+  /*
+   * Jira GRW-193 · GRW-216 — `fit-content`, not 0.
+   *
+   * At `min-width: 0` this footer shrank below its own contents between about
+   * 1000px and 1180px — every iPad and Android tablet held sideways. Its two
+   * `flex: 0 0 auto` children (the stats column and the ⋮ menu) cannot shrink,
+   * so they were pushed past the row's right edge and `.offers-card`'s
+   * `overflow: hidden` cut them off. Measured at 1024x768: the footer had 241px
+   * for 312px of content, the ⋮ sat at 1021px against a card edge of 992px, and
+   * `.offer-info-col` had been squeezed to ZERO pixels wide.
+   *
+   * So on an iPad in landscape an owner could not edit, duplicate or delete an
+   * offer at all — the menu was not merely awkward, it was not on the screen.
+   *
+   * `fit-content` lets the footer grow but never shrink below what it holds.
+   * The shrinking moves to `.offer-row-head`, which is the right place for it:
+   * that column is `min-width: 0` with an ellipsis, so it gives up characters
+   * rather than controls.
+   */
+  min-width: fit-content;
 }
 
 .offer-icon {
