@@ -1,0 +1,120 @@
+/* ---------- one header, three controls (Jira GRW-30) ---------- */
+
+/*
+ * Search, as a control that exists at two widths rather than two controls.
+ *
+ * Home used to render both a 302px pill and a 48px icon button, one of them
+ * always `display: none`. Two elements for one affordance is two things to keep
+ * in step, and it only worked because exactly one screen had it.
+ *
+ * The base is the icon: a 38px circle matching `.row-edit-btn` and
+ * `.staff-icon-btn`, which is what the header's other two controls already are.
+ */
+.hdr-search {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.hdr-search:hover {
+  background: var(--page-bg);
+}
+
+.hdr-search svg {
+  width: 18px;
+  height: 18px;
+}
+
+/*
+ * The pill. Home only — it is the landing screen, it has the room, and there
+ * the control is an invitation rather than a shortcut back to a page you can
+ * already see the title of.
+ */
+.hdr-search-wide {
+  width: 302px;
+  height: 46px;
+  padding: 0 15px;
+  border-radius: 12px;
+  gap: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hdr-search-wide svg {
+  color: var(--text);
+}
+
+/*
+ * ...until there is not room. Below the tablet breakpoint the pill collapses
+ * to the same circle every other screen has — same element, so nothing needs
+ * hiding and nothing can drift.
+ *
+ * `width` and `height` are overridden rather than the whole rule reset: the
+ * span inside is what actually has to go, and `display: grid` with a hidden
+ * child re-centres the icon on its own.
+ */
+@media (max-width: 860px) {
+  .hdr-search-wide {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+  }
+
+  .hdr-search-wide span {
+    display: none;
+  }
+}
+
+/*
+ * Reports' title row was a block div with one child. It needs the same
+ * title-left / controls-right split `.topbar` has, and gets it from the same
+ * two class names so the two headers cannot drift apart.
+ */
+.rp-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/*
+ * The title column yields first. Without this the trailing controls are what
+ * shrink — a 46px avatar squashed to 20px while a long vertical label ("Free
+ * times for your customers") takes the whole row — because a flex item's
+ * default minimum size is its content, and the controls' content is smaller.
+ */
+.topbar-title {
+  min-width: 0;
+}
+
+.topbar-title h1,
+.topbar-title p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * On a phone the header carries a title and three controls in 320px. The
+ * page's own action keeps its words — it is the thing the screen is for — and
+ * everything else is already an icon.
+ */
+@media (max-width: 640px) {
+  .topbar-actions {
+    gap: 8px;
+  }
+}

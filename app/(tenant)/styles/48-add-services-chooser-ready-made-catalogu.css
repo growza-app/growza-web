@@ -142,26 +142,19 @@
  * sat below the fold with nothing on screen saying it was there. Measured at
  * 1440x900: 895px of content in an 868px box.
  *
- * Now the dialog is a flex column that fits the viewport, and only the list
- * scrolls. Header, toolbar, price scaling and the count line are always on screen.
+ * ## Jira GRW-196 — this used to be `.cat-modal`, thirteen lines of it
+ *
+ * Everything it did — flex column, overflow hidden, every child fixed except
+ * one scrolling region — is what GRW-8's `.modal-fit` shell does, and the two
+ * were written independently within a month of each other. The markup now says
+ * `modal modal-fit`, and the list says `modal-body is-boxed`.
+ *
+ * `is-boxed` is the one thing the shell did not already have, and it is a
+ * property of this content rather than of this screen: the scroll region here
+ * is a bordered card, so it keeps the modal's gutter instead of being pulled
+ * out to the edge for a flush scrollbar. It lives in 13-*.css with the rest of
+ * the shell, where the next bordered body will find it.
  */
-.cat-modal {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.cat-modal > * {
-  flex: none;
-}
-
-.cat-modal .cat-list,
-.cat-modal .cat-edit-list {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
-  overflow-y: auto;
-}
 
 .cat-head {
   display: flex;

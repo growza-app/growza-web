@@ -30,22 +30,10 @@
 .home-greeting { font-size: 28px; }
 .home-sub { font-size: 15px; margin-top: 2px; }
 
-.home-search {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  width: 302px;
-  height: 46px;
-  padding: 0 15px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 13px;
-}
-.home-search svg { width: 18px; color: var(--text); }
-.mobile-home-search { display: none; }
+/* Jira GRW-30 — `.home-search` / `.desktop-home-search` / `.mobile-home-search`
+   lived here: a 302px pill and a 48px icon button, one of them always hidden,
+   for one affordance on one screen. They are `.hdr-search` / `.hdr-search-wide`
+   in 76-header-controls.css now, shared with every other screen's header. */
 
 /* The style picker is deliberately retained. This only changes how the
    selected Day progress summary is presented on the redesigned Home. A soft
@@ -208,7 +196,11 @@
   .home-head { padding: 14px 20px 10px; align-items: flex-start; }
   .home-greeting { font-size: 22px; line-height: 1.15; }
   .home-sub { font-size: 13px; margin-top: 2px; }
-  .desktop-home-search { display: none; }.mobile-home-search { display: grid; margin-top: 5px; width: 48px; height: 48px; }.home-head .avatar-lg { width: 48px !important; height: 48px !important; margin-top: 5px; }.home-head .notif-wrap { margin-top: 5px; }.home-head .notif-bell { width: 48px; height: 48px; }
+  /* The header wraps to two lines on a phone (the greeting is long), so the
+     controls sit below the text and need the 5px that puts their optical
+     centres on the same line as each other. Sizes come from
+     76-header-controls.css; only the offset is Home's. */
+  .home-head .hdr-search, .home-head .avatar-lg, .home-head .notif-wrap { margin-top: 5px; }
   .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 12.5px; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 15px; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 10px; white-space: normal; line-height: 1.2; }
   /* repeat(2, 1fr), not 3: three columns in .home-main's full mobile width
      (no rail to share it with here) measured at 81-108px per card at 320px —

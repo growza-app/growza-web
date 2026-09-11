@@ -111,6 +111,9 @@ export const copy = {
 
   search: {
     title: 'Search',
+    /* The pill in Home's header. An invitation, not an instruction — the
+       instruction is `placeholder`, on the field you land on. GRW-30. */
+    prompt: 'Search anything...',
     placeholder: 'Name, phone, or booking ID',
     customers: 'CUSTOMERS',
     bookings: 'BOOKINGS',

@@ -286,7 +286,7 @@ function StaffRow({
         ) : (
           <span className="staff-toggle-label">Inactive</span>
         )}
-        <button type="button" className="staff-edit-btn" onClick={() => actions.onEdit(p)}>
+        <button type="button" className="row-edit-btn" onClick={() => actions.onEdit(p)}>
           <IconEdit /> Edit
         </button>
         <RowMenu p={p} actions={actions} />

@@ -19,13 +19,13 @@
     font-size: 13px;
   }
 
-  .staff-segmented {
+  .page-tabs {
     display: flex;
     width: 100%;
     margin-bottom: var(--sp-3);
   }
 
-  .staff-seg {
+  .page-tab {
     flex: 1;
     text-align: center;
     padding: 8px 10px;
@@ -116,10 +116,23 @@
     color: #a9b3ac;
   }
 
-  /* The sheet covers every row action on phone, so the desktop-only inline
-     Edit button and ⋯ menu never render here. */
-  .staff-edit-btn,
-  .staff-menu-wrap {
-    display: none;
-  }
+  /*
+   * Jira GRW-196 — there used to be a rule here hiding `.staff-edit-btn` and
+   * `.staff-menu-wrap`, and it never did anything.
+   *
+   * Both of them render only inside `StaffRow`, which renders only inside
+   * `.staff-rows`, which this same media query sets to `display: none` forty
+   * lines above. Hiding a child of a hidden parent is a no-op.
+   *
+   * So its ONLY reachable effect was on other screens: `.staff-edit-btn` was
+   * the generic row Edit button (now `.row-edit-btn`), and Services' desktop
+   * table used it too. The day that table rendered at a narrow width its Edit
+   * button would have vanished — and the device sweep could not have caught
+   * it, because a button that is missing is not a button that overflows. The
+   * same silent deletion GRW-11 was filed for.
+   *
+   * Deleted rather than scoped. A rule that does nothing where it was written
+   * and something where it was not is not a rule worth keeping the good half
+   * of.
+   */
 }

@@ -37,9 +37,25 @@
   transform: translateX(18px);
 }
 
-/* Edit is a labelled 38px button, not a bare icon — an icon-only pencil next
-   to an icon-only bin is the mis-tap this redesign exists to remove. */
-.staff-edit-btn {
+/*
+ * Edit is a labelled 38px button, not a bare icon — an icon-only pencil next
+ * to an icon-only bin is the mis-tap this redesign exists to remove.
+ *
+ * ## Jira GRW-196 — this was `.staff-edit-btn`, and Services wore it
+ *
+ * The style is generic: a labelled inline control at the end of a desktop
+ * table row. Two screens want exactly that, so two screens used it — and
+ * because the name said "staff", 42-roster-mobile.css felt free to write
+ * `display: none` on it for the Staff screen's phone layout, which would have
+ * hit Services' table too.
+ *
+ * GRW-11's BR-01 is the rule that forbids this, and it was written down BEFORE
+ * this happened. What made it happen anyway is the name. A class named after
+ * the first screen that wanted it is a class the second screen has to borrow,
+ * and there is no point at which borrowing feels like the wrong thing to do.
+ * `.row-edit-btn` is named after the row, which is what it is.
+ */
+.row-edit-btn {
   height: 38px;
   padding: 0 13px;
   display: inline-flex;
@@ -55,11 +71,11 @@
   cursor: pointer;
 }
 
-.staff-edit-btn:hover {
+.row-edit-btn:hover {
   border-color: #b9c2bb;
 }
 
-.staff-edit-btn svg {
+.row-edit-btn svg {
   width: 14px;
   height: 14px;
 }

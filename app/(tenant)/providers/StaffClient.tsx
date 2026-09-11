@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api, ApiError, type ProviderOverviewRow, type ProvidersOverview, type Service } from '../lib/api';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
 import { StaffDetailPanel } from './StaffDetailPanel';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
@@ -183,6 +184,24 @@ export function StaffClient({
 
   return (
     <>
+      {/*
+        Jira GRW-30 — the header moved in here so "Add staff" can live in it.
+
+        `PageHeader`'s `actions` slot is the one primary-action position, and
+        reaching it means the component that owns `setCreating` has to be the
+        one that renders the header. Same shape `CustomersClient` already uses;
+        the screen's `page.tsx` keeps the header only for its API-down state,
+        where there is no client component at all.
+      */}
+      <PageHeader
+        title={staffWord}
+        actions={
+          <button type="button" className="btn" onClick={() => setCreating(true)} disabled={seatsLeft === 0}>
+            <IconPlus /> Add {staffWord.toLowerCase()}
+          </button>
+        }
+      />
+      <div className="page-body">
       <div className="staff-summary">
         <span>
           <strong>{workingTodayCount}</strong> working today
@@ -205,7 +224,13 @@ export function StaffClient({
         </div>
       )}
 
-      <div className="staff-toolbar">
+      {/*
+        The row beneath the header FINDS things. It used to create one too —
+        `[search][Add staff]` here, `[Add service][search][Export]` on Services
+        — and neither order looked wrong, which is how they stayed different.
+        Creating is the header's job now; this row is search and tabs.
+      */}
+      <div className="page-toolbar">
         <div className="staff-search-wrap">
           <IconSearch />
           <input
@@ -219,22 +244,19 @@ export function StaffClient({
             aria-label={`Search ${staffWord.toLowerCase()}`}
           />
         </div>
-        <button type="button" className="btn" onClick={() => setCreating(true)} disabled={seatsLeft === 0}>
-          <IconPlus /> Add staff
-        </button>
       </div>
 
-      <div className="staff-segmented" role="tablist">
+      <div className="page-tabs" role="tablist">
         {tabs.map((t) => (
           <button
             key={t.key}
             type="button"
             role="tab"
             aria-selected={tab === t.key}
-            className={`staff-seg ${tab === t.key ? 'active' : ''}`}
+            className={`page-tab ${tab === t.key ? 'active' : ''}`}
             onClick={() => changeTab(t.key)}
           >
-            {t.label} <span className="staff-seg-count">{t.count}</span>
+            {t.label} <span className="page-tab-count">{t.count}</span>
           </button>
         ))}
       </div>
@@ -336,6 +358,7 @@ export function StaffClient({
           onSaved={refresh}
         />
       )}
+      </div>
     </>
   );
 }

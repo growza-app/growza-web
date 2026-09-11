@@ -288,7 +288,7 @@ export function CustomersClient({
           </button>
         }
       />
-      <div className="page-body cust-fit">
+      <div className="page-body table-fit cust-fit">
         <div className="cust-kpis">
           {/* Four distinct facts. Previously tile 1's subtitle repeated tile 2's
               value, and tile 3's subtitle repeated tile 4's — so half the row

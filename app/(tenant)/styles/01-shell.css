@@ -96,7 +96,7 @@
 
 .content {
   /* Grid, not flex column: a fixed row plan (header / scroller / footer) is
-     what every page-level .page-fit / .bk-fit / .svc-fit variant has been
+     what every page-level .page-fit / .bk-fit / .table-fit variant has been
      hand-rolling on top of flex — giving the shell the plan directly means
      .page-body only has to be the middle row, not re-derive "fill what's
      left" itself. Rows beyond these three (fixed-position overlays like

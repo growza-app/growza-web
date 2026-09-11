@@ -7,19 +7,9 @@ import { formatDateWithWeekday } from './lib/format';
 import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
 import { StaffCapacity } from './components/StaffCapacity';
-import { NotificationBell } from './components/NotificationBell';
+import { HeaderControls } from './components/HeaderControls';
 import { QuickActions } from './components/QuickActions';
-import {
-  IconAnalytics,
-  IconBell,
-  IconCalendar,
-  IconChevronRight,
-  IconPlus,
-  IconSearch,
-  IconStaff,
-  IconUser,
-  IconUserPlus,
-} from './components/icons';
+import { IconBell, IconCalendar, IconChevronRight, IconStaff } from './components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -319,15 +309,20 @@ export default async function DashboardPage() {
             {me.tenant?.locationName ? ` · ${me.tenant.locationName}` : ''}
           </div>
         </div>
-        <a className="home-search desktop-home-search" href="/search" aria-label={copy.search.title}>
-          <IconSearch />
-          <span>Search anything...</span>
-        </a>
-        <a className="icon-btn mobile-home-search" href="/search" aria-label={copy.search.title}><IconSearch /></a>
-        <NotificationBell />
-        <div className="avatar-lg" style={{ width: 36, height: 36, fontSize: 14 }}>
-          {(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
-        </div>
+        {/*
+          Jira GRW-30 — the same three controls every other screen has.
+
+          This header used to hand-roll them, and it got two of the three
+          wrong in ways nothing could see: a search pill AND a separate mobile
+          icon button (two elements, one always hidden), and an avatar that was
+          a bare `<div>` — the exact control GRW-202 found doing nothing and
+          GRW-203 made unconditional, fixed inside `PageHeader`, on the one
+          screen in the product that does not use `PageHeader`.
+
+          `wide` is Home's only difference: it is the landing screen, it has the
+          room, and the pill is an invitation rather than a shortcut.
+        */}
+        <HeaderControls wide />
       </header>
 
       <div className="page-body home-page">

@@ -48,7 +48,7 @@ export default async function AttendanceMonthPage({
 
   return (
     <>
-      <PageHeader title="Attendance" initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()} />
+      <PageHeader title="Attendance" />
       <AttendanceMonth
         register={register}
         month={monthOf(month, register.timezone)}

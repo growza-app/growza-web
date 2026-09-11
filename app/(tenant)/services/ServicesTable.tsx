@@ -7,6 +7,7 @@ import { copy } from '../lib/copy';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { PageHeader } from '../components/PageHeader';
 import { IconEdit, IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
 import { ImportServices } from './ImportServices';
@@ -154,10 +155,25 @@ export function ServicesTable({
 
   return (
     <>
-      <div className="staff-toolbar">
-        <button type="button" className="btn" onClick={() => setChoosing(true)}>
-          <IconPlus /> Add {serviceLabel.toLowerCase()}
-        </button>
+      {/*
+        Jira GRW-30 — the header lives here now so Add can sit in it.
+
+        Add was the FIRST control in the row below, where Staff had it last.
+        Two screens, two orders, both using the same toolbar class —
+        and neither looked wrong on its own, which is why it survived. Creating
+        is the header's slot; this row searches and exports.
+      */}
+      <PageHeader
+        title={serviceLabel}
+        subtitle={copy.services.subtitle}
+        actions={
+          <button type="button" className="btn" onClick={() => setChoosing(true)}>
+            <IconPlus /> Add {serviceLabel.toLowerCase()}
+          </button>
+        }
+      />
+      <div className="page-body table-fit">
+      <div className="page-toolbar">
         <div className="staff-search-wrap">
           <IconSearch />
           <input
@@ -173,15 +189,15 @@ export function ServicesTable({
         </button>
       </div>
 
-      <div className="staff-segmented" role="tablist">
+      <div className="page-tabs" role="tablist">
         <button
           type="button"
           role="tab"
           aria-selected={categoryId === 'all'}
-          className={`staff-seg ${categoryId === 'all' ? 'active' : ''}`}
+          className={`page-tab ${categoryId === 'all' ? 'active' : ''}`}
           onClick={() => setCategoryId('all')}
         >
-          All <span className="staff-seg-count">{services.length}</span>
+          All <span className="page-tab-count">{services.length}</span>
         </button>
         {categories.map((c) => (
           <button
@@ -189,10 +205,10 @@ export function ServicesTable({
             type="button"
             role="tab"
             aria-selected={categoryId === c.id}
-            className={`staff-seg ${categoryId === c.id ? 'active' : ''}`}
+            className={`page-tab ${categoryId === c.id ? 'active' : ''}`}
             onClick={() => setCategoryId(c.id)}
           >
-            {c.name} <span className="staff-seg-count">{counts.get(c.id) ?? 0}</span>
+            {c.name} <span className="page-tab-count">{counts.get(c.id) ?? 0}</span>
           </button>
         ))}
       </div>
@@ -225,8 +241,8 @@ export function ServicesTable({
                   <div className="svc-card-price">{formatMoney(s.priceMinor, s.currency)}</div>
                 </div>
                 <div className="svc-card-foot">
-                  {/* Not `.staff-edit-btn`: the Staff screen hides that class on
-                      mobile because its bottom sheet covers row actions there. */}
+                  {/* `.svc-card-edit`, not `.row-edit-btn`: a card's footer
+                      button is full-bleed, not a 38px inline control. */}
                   <button type="button" className="btn btn-ghost svc-card-edit" onClick={() => setEditing(s)}>
                     <IconEdit /> Edit
                   </button>
@@ -318,7 +334,7 @@ export function ServicesTable({
                 <td>{formatMoney(s.priceMinor, s.currency)}</td>
                 <td>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <button type="button" className="staff-edit-btn" onClick={() => setEditing(s)}>
+                    <button type="button" className="row-edit-btn" onClick={() => setEditing(s)}>
                       <IconEdit /> Edit
                     </button>
                     {s.active ? (
@@ -413,6 +429,7 @@ export function ServicesTable({
           onCancel={() => setConfirmRetire(null)}
         />
       )}
+      </div>
     </>
   );
 }

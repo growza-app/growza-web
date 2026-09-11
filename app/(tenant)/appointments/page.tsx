@@ -148,7 +148,6 @@ export default async function AppointmentsPage({
         title={bookingsWord}
         subtitle="All your appointments in one place."
         mobileSubtitle
-        initial={(me.tenant?.name ?? 'S').charAt(0).toUpperCase()}
       />
 
       <div className="page-body bk-fit">

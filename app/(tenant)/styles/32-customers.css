@@ -1604,32 +1604,50 @@
 
 @media (min-width: 861px) {
   /*
-   * Services and Customers, fit to the window.
+   * A paged table, fit to the window. Services and Clients both wear this.
    *
    * The page ran 152px past the bottom at 1440x900, which put the pager at y=987
    * in a 900px window — you had to scroll to reach page 2, on a screen with room
    * to spare. Same treatment as .bk-fit: chrome fixed, rows scroll, pager pinned.
    *
-   * Customers shares this exact shape with Services — one KPI/toolbar row,
-   * then a single `.card` holding the shared `PaginatedTable` — so it reuses
-   * the same rules under its own `.cust-fit` class rather than a second
-   * hand-written copy (GRW-7).
+   * ## Jira GRW-196 — one name, because it was always one behaviour
+   *
+   * This block used to list `.svc-fit` and `.cust-fit` side by side in every
+   * selector: the same declarations, twice, under two screens' names. GRW-12
+   * was supposed to retire the Services copy and never did, and the duplication
+   * then propagated — a rule added for one screen had to be remembered for the
+   * other, and `.cust-fit > .cust-segments` below is what happens when it is
+   * not.
+   *
+   * `.table-fit` is the behaviour: a page body whose chrome is fixed and whose
+   * single `.card` holds a `PaginatedTable` that scrolls inside itself. It is
+   * named after what it does rather than after the first screen that wanted
+   * it, which is the whole of BR-01 — a class named for a screen is a class
+   * the next screen has to borrow.
+   *
+   * Distinct from `.page-fit` (Offers), which is the OTHER fit-to-screen shape:
+   * `useFitRows` sizes the row count so nothing scrolls at all. Two different
+   * answers to "no page scrollbar", both deliberate — see
+   * 31-offers-combos-list.css.
+   *
+   * `.cust-fit` survives, but only as the Clients screen's identity: the cell
+   * density in 67-sortable-column-headers.css is genuinely about that table's
+   * two bands of chrome and belongs to no other screen. Screen-specific styling
+   * under a screen's own class is correct; shared LAYOUT under it was not.
    */
-  .page-body.svc-fit,
-  .page-body.cust-fit {
+  .page-body.table-fit {
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
-  .svc-fit > .staff-toolbar,
-  .svc-fit > .staff-segmented,
-  .cust-fit > .cust-kpis {
+  .table-fit > .page-toolbar,
+  .table-fit > .page-tabs,
+  .table-fit > .cust-kpis {
     flex: none;
   }
 
-  .svc-fit > .card,
-  .cust-fit > .card {
+  .table-fit > .card {
     flex: 1;
     min-height: 0;
     display: flex;
@@ -1645,20 +1663,18 @@
    * down to a single row while its own footer still read "Showing 1–10".
    * The panel is sized by its contents; only the list takes what is left.
    */
-  .cust-fit > .cust-segments {
+  .table-fit > .cust-segments {
     flex: none;
     display: block;
   }
 
-  .svc-fit .paged-table,
-  .cust-fit .paged-table {
+  .table-fit .paged-table {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
   }
 
-  .svc-fit .pagination,
-  .cust-fit .pagination {
+  .table-fit .pagination {
     flex: none;
   }
 

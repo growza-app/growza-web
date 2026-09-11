@@ -69,18 +69,59 @@
 }
 
 /*
- * The one scroll region. Negative side margins plus matching padding move its
- * true edge out to the modal's own edge — the same trick .modal-actions uses
- * below — so the scrollbar sits flush in the corner instead of 26px short of
- * it, and a scrolled-past field doesn't show a sliver of white margin outside
- * the scroll track.
+ * Everything that is not the body keeps its own height. Jira GRW-196.
+ *
+ * The three original users had exactly three children — header, body, actions
+ * — so "only the body flexes" held by arithmetic rather than by a rule. The
+ * catalogue picker has five, and a flex item's default `flex-shrink: 1` means
+ * a toolbar or a count line will give up its own height before the scroll
+ * region gives up any of its overflow. `.cat-modal` had this same rule
+ * privately and it is the reason that modal worked; it belongs to the shell.
+ */
+.modal-fit > * {
+  flex: none;
+}
+
+/*
+ * The one scroll region.
+ *
+ * `max-height: none` because the body's height comes from the flex row plan,
+ * and a static cap somewhere else on the element — `.import-review` carries a
+ * `46vh` — would silently win and re-introduce the short box this shell exists
+ * to replace.
  */
 .modal-fit .modal-body {
   flex: 1 1 auto;
   min-height: 0;
+  max-height: none;
   overflow-y: auto;
-  margin: 0 -26px;
-  padding: 0 26px;
+  /*
+   * Negative side margins plus matching padding move the scroll region's true
+   * edge out to the modal's own edge — the same trick .modal-actions uses
+   * below — so the scrollbar sits flush in the corner instead of 26px short of
+   * it, and a scrolled-past field doesn't show a sliver of white margin
+   * outside the scroll track.
+   *
+   * Inline axis only. `margin: 0 -26px` would also flatten a body that brings
+   * its own top gap — `.import-review` has one — and losing it is a layout
+   * change this rule has no business making.
+   */
+  margin-inline: -26px;
+  padding-inline: 26px;
+}
+
+/*
+ * ...except when the body is itself a bordered box.
+ *
+ * The inset above assumes the body's content runs edge to edge, so widening it
+ * to the modal's own edge is invisible. The catalogue picker's body is a card
+ * with a border and a 12px radius, and pulling it 26px wider on each side
+ * would push that border under the modal's padding and off its corners.
+ * Boxed bodies keep the modal's gutter and scroll inside their own frame.
+ */
+.modal-fit .modal-body.is-boxed {
+  margin-inline: 0;
+  padding-inline: 0;
 }
 
 .modal .field {

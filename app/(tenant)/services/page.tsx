@@ -1,7 +1,6 @@
 import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
-import { PageHeader } from '../components/PageHeader';
 import { ServicesTable } from './ServicesTable';
 
 export const dynamic = 'force-dynamic';
@@ -13,17 +12,17 @@ export default async function ServicesPage() {
 
   return (
     <>
-      <PageHeader title={me.labels.services ?? copy.nav.services} subtitle={copy.services.subtitle} />
-      {/* svc-fit: desktop pins the toolbar, tabs and pagination and lets only
-          the rows scroll, so the pager is never below the fold. */}
-      <div className="page-body svc-fit">
-        <ServicesTable
-          services={services}
-          categories={categories}
-          tenantName={me.tenant?.name ?? null}
-          serviceLabel={me.labels.services ?? copy.nav.services}
-        />
-      </div>
+      {/* GRW-30 — the header and the `table-fit` body are ServicesTable's own,
+          because "Add service" lives in the header's action slot and the state
+          behind it lives in the table. `table-fit`: desktop pins the toolbar,
+          tabs and pagination and lets only the rows scroll, so the pager is
+          never below the fold. Shared with Clients — see 32-customers.css. */}
+      <ServicesTable
+        services={services}
+        categories={categories}
+        tenantName={me.tenant?.name ?? null}
+        serviceLabel={me.labels.services ?? copy.nav.services}
+      />
     </>
   );
 }

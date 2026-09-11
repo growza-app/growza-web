@@ -277,7 +277,7 @@ export function CataloguePicker({
     return (
       <>
         <div className="modal-backdrop" onClick={onClose}>
-          <div className="modal import-modal cat-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal modal-fit import-modal" onClick={(e) => e.stopPropagation()}>
             <div className="cat-head">
               <button type="button" className="btn btn-ghost" onClick={() => setEditing(null)}>
                 ← Back
@@ -331,7 +331,7 @@ export function CataloguePicker({
               </div>
             )}
 
-            <div className="import-review cat-edit-list">
+            <div className="import-review cat-edit-list modal-body is-boxed">
               <div
                 className={`import-row cat-edit-row ${editing.scope === 'all' ? 'cat-edit-row-all' : ''} import-head`}
                 aria-hidden="true"
@@ -454,7 +454,7 @@ export function CataloguePicker({
   return (
     <>
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal import-modal cat-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal modal-fit import-modal" onClick={(e) => e.stopPropagation()}>
         <div className="cat-head">
           <button type="button" className="btn btn-ghost" onClick={onBack}>
             ← Back
@@ -498,7 +498,7 @@ export function CataloguePicker({
                 </span>
               </div>
 
-              <div className="cat-list">
+              <div className="cat-list modal-body is-boxed">
                 {categories.map((c) => {
                   const range =
                     c.minPriceMinor !== null && c.maxPriceMinor !== null

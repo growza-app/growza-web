@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 
 import { copy } from '../lib/copy';
+import { HeaderControls } from '../components/HeaderControls';
 import {
   countFilters,
   isFilterableReportTab,
@@ -146,9 +147,21 @@ export function ReportsShell({
     <>
       <header className="rp-header">
         <div className="rp-title-row">
-          <div>
+          <div className="topbar-title">
             <h1>{copy.reports.title}</h1>
             <p>{copy.reports.subtitles[tab]}</p>
+          </div>
+          {/*
+            Jira GRW-30 — this row was a flex container with one child in it.
+
+            Reports had no search, no notification bell and no account menu:
+            the screen the owner named as one of the three things they are
+            buying the product for was the one screen you could not sign out
+            of. Not a styling gap — the controls were simply absent, and a
+            header with nothing on its right looks finished.
+          */}
+          <div className="topbar-actions">
+            <HeaderControls />
           </div>
         </div>
 
