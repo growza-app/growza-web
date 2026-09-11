@@ -1,5 +1,27 @@
 'use client';
 
+/**
+ * A UUID for one attempt at recording a visit. Jira GRW-204.
+ *
+ * `crypto.randomUUID()` requires a SECURE CONTEXT, and the dev box is reached
+ * over plain http on a LAN — where it is `undefined` in Chrome and Safari. So
+ * the fallback is not theoretical; it is the path taken every time anybody
+ * tests this from a phone on the office wifi.
+ *
+ * Built as 32 hex characters formatted 8-4-4-4-12, because the server validates
+ * the shape (`uuidish`) and the column is a Postgres `uuid`. A first draft
+ * concatenated `Date.now().toString(16)` into the first group, which is eleven
+ * characters, not eight — a string that looks like a UUID at a glance and is
+ * rejected by the cast.
+ *
+ * Not cryptographic, and does not need to be: this value only has to be unique
+ * within one tenant for the few seconds between a request and its retry.
+ */
+function newAttemptKey(): string {
+  const hex = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -132,6 +154,25 @@ export function NewVisitSheet({
   const providerNoun = useLabel('provider', 'Staff member');
 
   const [stage, setStage] = useState<Stage>({ step: 'client' });
+
+  /*
+   * Jira GRW-204 — one token for this attempt, generated once and reused.
+   *
+   * `useState` with an initialiser, NOT `useMemo` and not a fresh value per
+   * render: this must survive every re-render between pressing Start and the
+   * response arriving, because the whole point is that the RETRY carries the
+   * same token as the request that already succeeded.
+   *
+   * The sheet unmounts when it closes, so the next visit gets a new one. That
+   * is the correct scope — a key that outlived the sheet would make the second
+   * genuine walk-in of the day return the first one's visit.
+   *
+   * `crypto.randomUUID()` needs a secure context; on plain http over a LAN it
+   * is undefined in some browsers, which is exactly how the dev box is
+   * reached. The fallback is not cryptographic and does not need to be — this
+   * value only has to be unique within one tenant.
+   */
+  const [attemptKey] = useState(newAttemptKey);
 
   // Stage 1 — find them
   const [term, setTerm] = useState('');
@@ -443,6 +484,7 @@ export function NewVisitSheet({
         ...(offerId ? { offerId } : {}),
         ...(schedulableId ? { schedulableId } : {}),
         ...(reclaim && schedulableId ? { reclaimAppointmentId: reclaim } : {}),
+        idempotencyKey: attemptKey,
       });
       router.refresh();
       setStage({

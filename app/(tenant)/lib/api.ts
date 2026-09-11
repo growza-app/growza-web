@@ -537,6 +537,16 @@ export const api = {
     schedulableId?: string;
     /** GRW-198 — the booking whose chair this walk-in is taking over. */
     reclaimAppointmentId?: string;
+    /**
+     * GRW-204 — one token per attempt, so a retry is not a second visit.
+     *
+     * Generated when the sheet opens and reused across every retry of the same
+     * Start. The failure it exists for is not a double-tap — the button
+     * disables itself — it is a request that SUCCEEDS and whose response never
+     * arrives on a salon's wifi, leaving the receptionist looking at an error
+     * for a visit that was already recorded.
+     */
+    idempotencyKey?: string;
   }) =>
     post<{
       appointmentId: string;
