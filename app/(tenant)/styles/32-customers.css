@@ -2445,18 +2445,32 @@
     display: block;
   }
 
-  /* The header action is icon-width on a phone — the full "+ Add client"
-     label wraps to two lines and eats a third of the header. */
+  /*
+   * The header action is icon-width on a phone — the full "+ Add client" label
+   * wraps to two lines and eats a third of the header.
+   *
+   * ## Jira GRW-30 — it used to draw the plus itself, and then there were two
+   *
+   * This rule was written when Clients was the only screen with a header
+   * action, and that button's plus was a typed character. So it set
+   * `font-size: 0` to collapse the label and added the icon back as a
+   * `::before` of its own.
+   *
+   * GRW-30 moved Staff's and Services' Add buttons into the same slot, and
+   * those carry a real `<IconPlus />`. Both plus signs then rendered: the SVG
+   * and the pseudo-element. The header read "+ +", measured at 390px on Staff.
+   *
+   * All four header actions carry the real icon now, so the pseudo-element is
+   * gone and `font-size: 0` does the one job it should: hide the words. The
+   * SVG has explicit width and height, so it is unaffected.
+   *
+   * The label survives for a screen reader — it is still in the DOM, and
+   * `font-size: 0` is not `display: none`.
+   */
   .topbar .btn {
     white-space: nowrap;
     font-size: 0;
     padding: 9px 14px;
-  }
-
-  .topbar .btn::before {
-    content: '+';
-    font-size: 20px;
-    line-height: 1;
   }
 
   .cust-kpis {

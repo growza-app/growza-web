@@ -2,7 +2,6 @@ import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
-import { toWeekdayRows } from '../components/WeekdayHoursEditor';
 import { StaffClient } from './StaffClient';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +14,11 @@ export default async function ProvidersPage() {
       api.providersOverview(),
       api.services(),
       // GRW-22 — the salon's own week, so the wizard's Hours step opens on what
-      // a new hire will actually work rather than on an empty seven days.
+      // a new hire will actually work rather than on an empty seven days. Passed
+      // RAW: `toWeekdayRows` lives in a 'use client' module, and calling it from
+      // here is a 500 ("Attempted to call toWeekdayRows() from the server").
+      // The seven-row shape is the client's business anyway — it is an editor
+      // concern, not a transport one.
       api.settings(),
     ]);
   } catch {
@@ -45,7 +48,7 @@ export default async function ProvidersPage() {
         services={services}
         staffWord={staffWord}
         maxProviders={me.capabilities.maxProviders}
-        orgHours={toWeekdayRows(settings.workingHours)}
+        orgHours={settings.workingHours}
       />
     </>
   );

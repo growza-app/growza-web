@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { api, ApiError, type ProviderOverviewRow, type Service } from '../lib/api';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone, validateNationalPhone } from '../lib/phone';
@@ -113,10 +113,6 @@ export function StaffWizard({
   const [nameInvalid, setNameInvalid] = useState(false);
   const [phoneInvalid, setPhoneInvalid] = useState(false);
 
-  useEffect(() => {
-    setHourRows(orgHours);
-  }, [orgHours]);
-
   /** The titles this salon already uses, in the order they first appear. */
   const roles = useMemo(() => {
     const seen = new Set<string>();
@@ -194,6 +190,8 @@ export function StaffWizard({
 
   const index = STEPS.findIndex((s) => s.key === step);
   const openDays = hourRows.filter((r) => r.open).length;
+  /** The salon itself has no week — following it is an intent, not hours. */
+  const salonHasNoHours = orgHours.every((r) => !r.open);
 
   return (
     <>
@@ -336,10 +334,32 @@ export function StaffWizard({
                 <WeekdayHoursEditor rows={hourRows} onChange={updateHourRow} disabled={followsSalon} />
               </div>
 
+              {/*
+                Two ways to end up with nobody bookable, and they need different
+                sentences because they have different fixes.
+
+                The second one is not hypothetical: the dev salon has no
+                `settings.working_hours` at all, so ticking "Same hours as the
+                salon" — the default — produced a stylist the roster
+                immediately marked "Not bookable", with the wizard having said
+                nothing. Following a salon that has not set its hours is a
+                perfectly good ANSWER (GRW-183 makes it a standing intent, and
+                they get picked up the day the salon does set them); it is just
+                not a good SILENCE.
+              */}
               {!followsSalon && openDays === 0 && (
                 <div className="field-hint wiz-warn">
                   Nobody can book {displayName.trim() || 'them'} with no working days. Turn a day on, or switch the salon
                   hours back on above.
+                </div>
+              )}
+
+              {followsSalon && salonHasNoHours && (
+                <div className="field-hint wiz-warn">
+                  This business has no opening hours set yet, so nobody can book{' '}
+                  {displayName.trim() || 'them'} until it does. Saving is fine — they will pick the hours up
+                  automatically. Set them in <strong>Settings → Working hours</strong>, or turn the switch off above and
+                  give {displayName.trim() || 'them'} their own days.
                 </div>
               )}
             </>

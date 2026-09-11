@@ -109,12 +109,44 @@
 }
 
 /*
- * On a phone the header carries a title and three controls in 320px. The
- * page's own action keeps its words — it is the thing the screen is for — and
- * everything else is already an icon.
+ * Nothing in the trailing group gives up its own size.
+ *
+ * `.topbar-actions` is `flex-shrink: 0`, but its CHILDREN are not, and a flex
+ * item's default is to shrink. Measured on Staff at 390px: the "Add staff"
+ * button resolved to 69px against the ~110px its icon and label need, so the
+ * label was clipped down to a second plus sign — the header read "+ +".
+ */
+.topbar-actions > * {
+  flex: none;
+}
+
+/*
+ * On a phone the header wraps rather than squeezing.
+ *
+ * The same measurement: `.topbar-title` collapsed to 40px, so "Staff" was two
+ * characters and an ellipsis. That is `min-width: 0` doing exactly what it was
+ * asked to — yield first — with nowhere left to yield to, because a title and
+ * four controls do not fit across 390px however the space is divided.
+ *
+ * `min-width` here is the threshold, not a layout: it says a title narrower
+ * than 140px is not a title, so the controls go to their own row instead. A
+ * screen with no page action still fits on one line (three icons and a title
+ * clear 320px comfortably), so only the screens that need the second row get
+ * one — no breakpoint per screen, and nothing to keep in step.
  */
 @media (max-width: 640px) {
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .topbar-title {
+    min-width: 140px;
+  }
+
+  /* Right-aligned when it is on a row of its own, and harmless when it is not. */
   .topbar-actions {
+    margin-left: auto;
     gap: 8px;
   }
 }

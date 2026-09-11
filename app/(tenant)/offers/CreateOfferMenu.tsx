@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
+import { IconPlus } from '../components/icons';
 
 const OFFER_TITLE_MAX = 60;
 const OFFER_DESCRIPTION_MAX = 120;
@@ -33,7 +34,8 @@ export function CreateOfferMenu() {
   return (
     <div className="create-offer-menu" ref={menuRef}>
       <button type="button" className="btn" onClick={() => setOpen((v) => !v)}>
-        + Create offer
+        {/* GRW-30 — a real icon, for the same reason as Clients'. */}
+        <IconPlus /> Create offer
       </button>
       {open && (
         <div className="dropdown-panel">

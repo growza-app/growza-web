@@ -6,7 +6,7 @@ import { api, ApiError, type ProviderOverviewRow, type ProvidersOverview, type S
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
-import type { WeekdayRow } from '../components/WeekdayHoursEditor';
+import { toWeekdayRows } from '../components/WeekdayHoursEditor';
 import { IconPlus, IconSearch } from '../components/icons';
 import { StaffWizard } from './StaffWizard';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
@@ -24,8 +24,8 @@ export function StaffClient({
   services: Service[];
   staffWord: string;
   maxProviders: number;
-  /** GRW-22 — the salon's own week, so the wizard's step 2 opens on what this person will actually work. */
-  orgHours: WeekdayRow[];
+  /** GRW-22 — the salon's own week, as stored. Expanded to seven editor rows here, on the client, because `toWeekdayRows` is a client module. */
+  orgHours: Array<{ weekday: number; startTime: string; endTime: string }>;
 }) {
   const router = useRouter();
   const [overview, setOverview] = useState(initialOverview);
@@ -180,6 +180,17 @@ export function StaffClient({
     { key: 'off', label: 'Off', count: offTodayCount },
     { key: 'inactive', label: 'Inactive', count: inactiveCount },
   ];
+
+  /*
+   * Memoised, and not for speed.
+   *
+   * `toWeekdayRows` builds a NEW array every call, and this component
+   * re-renders on every LiveRefresh tick (15s) as well as on every local state
+   * change. Handing the wizard a fresh array identity each time would reset the
+   * week it is holding — under the owner's hands, mid-edit, every fifteen
+   * seconds.
+   */
+  const orgHourRows = useMemo(() => toWeekdayRows(orgHours), [orgHours]);
 
   const changeTab = (key: Tab) => {
     setTab(key);
@@ -364,7 +375,7 @@ export function StaffClient({
           staffWord={staffWord}
           services={services}
           roster={providers}
-          orgHours={orgHours}
+          orgHours={orgHourRows}
           onClose={() => setCreating(false)}
           onCreated={refresh}
         />

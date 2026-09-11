@@ -20,6 +20,7 @@ import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
 import {
   IconPercent,
+  IconPlus,
   IconRepeat,
   IconSearch,
   IconSort,
@@ -284,7 +285,10 @@ export function CustomersClient({
         subtitle={`View and manage your ${label.toLowerCase()}. See their booking history and spend.`}
         actions={
           <button type="button" className="btn" onClick={() => setAdding(true)}>
-            + Add {singular}
+            {/* A real icon, not a typed "+". GRW-30: on a phone the header
+                action collapses to its icon, and a button whose plus is a
+                character has nothing left to show. */}
+            <IconPlus /> Add {singular}
           </button>
         }
       />
