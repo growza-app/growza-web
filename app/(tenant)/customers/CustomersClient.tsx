@@ -29,6 +29,8 @@ import {
 } from '../components/icons';
 import { copy } from '../lib/copy';
 import { ClientProfileCard } from '../components/ClientProfileCard';
+import { PhoneField } from '../components/PhoneField';
+import { toStoredPhone, validateNationalPhone } from '../lib/phone';
 
 /** The same four words the cards, the chips and `?status=` all use. */
 function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
@@ -463,17 +465,20 @@ export function CustomersClient({
                         {recencyChip(c.segment)}
                       </div>
                       {/* Stops the row's own click: tapping the number should
-                          open WhatsApp, not the card behind it. */}
-                      <a
-                        className="cust-phone"
-                        href={`https://wa.me/${dialable(c.waPhone)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <IconWhatsApp />
-                        {formatPhone(c.waPhone)}
-                      </a>
+                          open WhatsApp, not the card behind it.
+                          GRW-199 — and there may be no number to tap. */}
+                      {c.waPhone && (
+                        <a
+                          className="cust-phone"
+                          href={`https://wa.me/${dialable(c.waPhone)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <IconWhatsApp />
+                          {formatPhone(c.waPhone)}
+                        </a>
+                      )}
                       {c.lastBookingAt && (
                         <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
                           📅 {formatDate(c.lastBookingAt)} · {c.lastServiceName}
@@ -499,16 +504,23 @@ export function CustomersClient({
                     </div>
                   </td>
                   <td>
-                    <a
-                      className="cust-phone"
-                      href={`https://wa.me/${dialable(c.waPhone)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <IconWhatsApp />
-                      {formatPhone(c.waPhone)}
-                    </a>
+                    {/* GRW-199 — a client recorded at the desk may have no
+                        number; a wa.me link built from nothing opens WhatsApp
+                        on a blank chat. */}
+                    {c.waPhone ? (
+                      <a
+                        className="cust-phone"
+                        href={`https://wa.me/${dialable(c.waPhone)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <IconWhatsApp />
+                        {formatPhone(c.waPhone)}
+                      </a>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
                   </td>
                   <td>
                     {c.lastBookingAt ? (
@@ -578,14 +590,17 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
   const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
-    if (!phone.trim()) {
-      setPhoneError('Phone number is required');
+    // GRW-199 — ten digits, or nothing. This used to accept any non-empty
+    // string, which is how "abc" and half-typed numbers reached `wa_phone`.
+    const phoneProblem = validateNationalPhone(phone);
+    if (phoneProblem) {
+      setPhoneError(phoneProblem);
       return;
     }
     setBusy(true);
     setError(null);
     try {
-      await api.createCustomer({ phone: phone.trim(), name: name.trim() || undefined });
+      await api.createCustomer({ phone: toStoredPhone(phone)!, name: name.trim() || undefined });
       onSaved();
       onClose();
     } catch (err) {
@@ -601,23 +616,18 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
         <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>
           Someone already on file with this number is updated, never duplicated.
         </p>
-        <div className="field">
-          <label>
-            <span>WhatsApp number *</span>
-          </label>
-          <input
-            type="tel"
-            value={phone}
-            autoFocus
-            placeholder="+91 98765 43210"
-            className={phoneError ? 'field-invalid' : undefined}
-            onChange={(e) => {
-              setPhone(e.target.value);
-              if (phoneError && e.target.value.trim()) setPhoneError(null);
-            }}
-          />
-          {phoneError && <div className="field-error">{phoneError}</div>}
-        </div>
+        <PhoneField
+          id="add-client-phone"
+          label="WhatsApp number"
+          required
+          autoFocus
+          value={phone}
+          onChange={(v) => {
+            setPhone(v);
+            if (phoneError) setPhoneError(null);
+          }}
+          error={phoneError}
+        />
         <div className="field">
           <label>
             <span>Name (optional)</span>

@@ -171,6 +171,83 @@ export const copy = {
     free: '— free —',
   },
 
+  /**
+   * Jira GRW-199 — the walk-in sheet.
+   *
+   * Plain words for a person who is standing at the desk with a customer in
+   * front of them. "Start now" rather than "Confirm booking", because nothing
+   * is being reserved — the visit is beginning.
+   */
+  newVisit: {
+    title: 'Walk-in',
+    close: 'Close',
+    clear: 'Clear',
+    whoIsThis: (client: string) => `Search for the ${client}, or add them.`,
+    searchPlaceholder: 'Name or phone number',
+    noName: 'No name',
+    noNumber: 'no number',
+    noMatch: 'Nobody on file matches that.',
+    visits: (n: number) => (n === 1 ? '1 visit' : `${n} visits`),
+    addNew: 'Add someone new',
+    nameRequired: 'Name',
+    namePlaceholder: 'First name is enough',
+    nameMissing: 'A name is needed, even a first name.',
+    phoneOptional: 'Phone (optional)',
+    phonePlaceholder: '+91 98765 43210',
+    phoneWhy: 'Leave it blank if they would rather not say.',
+    useThisPerson: 'Continue',
+    whichService: 'What are they having?',
+    searchServices: (n: number) => (n ? `Search ${n} services…` : 'Loading services…'),
+    noServiceMatch: 'No service matches that.',
+    combos: 'Combos & offers',
+    comboServices: (n: number) => `${n} services`,
+    picked: 'Chosen',
+    removeService: 'Remove',
+    addMore: 'Add another service',
+    total: 'Total',
+    comboPrice: 'Combo price',
+    withWhom: (provider: string) => `Which ${provider}?`,
+    whoeverIsFree: 'Whoever is free',
+    startsNow: (minutes: number) => `Starts now · ${minutes} min in total`,
+    back: 'Back',
+    start: 'Start now',
+    saving: 'Recording…',
+    saveFailed: 'That did not save. Check the connection and try again.',
+    /*
+     * When we genuinely do not know.
+     *
+     * A lost RESPONSE looks identical to a lost request from the browser, but
+     * the visit may well be recorded. Telling the receptionist to try again
+     * would duplicate the client and the visit, so this sends them to Bookings
+     * to look instead.
+     */
+    saveUnknown: 'The connection dropped. Check Bookings before recording this again — it may already be there.',
+    recorded: 'Recorded',
+    overlap: (provider: string) => `${provider} is also with someone else right now.`,
+    takePayment: 'Take payment now',
+    // --- book-for-later only ---
+    laterTitle: 'Book for later',
+    modeLabel: 'When is this visit?',
+    modeNow: 'Walk-in now',
+    modeLater: 'For later',
+    whichDay: 'Which day?',
+    today: 'Today',
+    whichTime: 'Which time?',
+    loadingTimes: 'Finding free times…',
+    noTimes: 'No free times that day. Try another day, or a different stylist.',
+    phoneRequired: 'Phone number',
+    phoneWhyLater: 'Needed so we can send them a reminder.',
+    phoneMissing: 'A phone number is needed so they can be reminded.',
+    next: 'Next',
+    bookIt: 'Book it',
+    booking: 'Booking…',
+    booked: 'Booked',
+    slotTaken: 'That time was just taken. Pick another.',
+    openingTill: 'Opening…',
+    tillFailed: 'Could not open the till here. The visit is saved — take the payment from Bookings.',
+    done: 'Done',
+  },
+
   freeTimes: {
     title: 'Free times',
     subtitle: 'Times customers can book right now. Already-booked times and breaks are removed automatically.',

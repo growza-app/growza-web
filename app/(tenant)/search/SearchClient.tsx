@@ -97,12 +97,16 @@ export function SearchClient({ timezone }: { timezone: string }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 620, fontSize: 14.5 }}>{c.name ?? 'Unknown'}</div>
                   <div className="muted" style={{ fontSize: 13 }}>
-                    {c.phone} · {copy.search.visits(c.visitCount)}
+                    {c.phone ? `${c.phone} · ` : ''}
+                    {copy.search.visits(c.visitCount)}
                   </div>
                 </div>
-                <a className="call" href={`tel:${dialable(c.phone)}`} aria-label={`Call ${c.name ?? 'customer'}`}>
-                  <IconPhone />
-                </a>
+                {/* GRW-199 — no number, no call button. */}
+                {c.phone && (
+                  <a className="call" href={`tel:${dialable(c.phone)}`} aria-label={`Call ${c.name ?? 'customer'}`}>
+                    <IconPhone />
+                  </a>
+                )}
               </div>
             ))}
           </div>

@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { PhoneField } from '../../components/PhoneField';
+import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
 import { api, type SettingsSummary } from '../../lib/api';
 
 const TIMEZONES = [
@@ -21,7 +23,8 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
   const [settings, setSettings] = useState(initial);
   const [name, setName] = useState(initial.tenant.name);
   const [timezone, setTimezone] = useState(initial.tenant.timezone);
-  const [phone, setPhone] = useState(initial.tenant.phone);
+  // GRW-199 — the field holds ten NATIONAL digits; the stored value is E.164.
+  const [phone, setPhone] = useState(() => fromStoredPhone(initial.tenant.phone));
   const [description, setDescription] = useState(initial.tenant.description);
   const [locationName, setLocationName] = useState(initial.location?.name ?? '');
   const [addressLine1, setAddressLine1] = useState(initial.location?.addressLine1 ?? '');
@@ -44,7 +47,7 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
       const updated = await api.updateProfile({
         name,
         timezone,
-        phone,
+        phone: toStoredPhone(phone) ?? '',
         description,
         locationName,
         addressLine1,
@@ -183,12 +186,9 @@ export function ProfileForm({ initial }: { initial: SettingsSummary }) {
         )}
 
         <div className="grid-2" style={{ marginTop: 14, gap: 14 }}>
-          <div className="field">
-            <label>
-              <span>Business phone</span>
-            </label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 12345" />
-          </div>
+          {/* GRW-199 — the same field as everywhere else. Optional: a salon
+              may not publish a number, and this one is display, not identity. */}
+          <PhoneField id="business-phone" label="Business phone" value={phone} onChange={setPhone} />
         </div>
 
         <div className="field" style={{ marginTop: 14 }}>

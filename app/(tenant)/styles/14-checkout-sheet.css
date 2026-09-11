@@ -320,3 +320,45 @@
   text-decoration: underline;
 }
 
+
+/*
+ * GRW-199 — what the combo took off, under the total.
+ *
+ * Quiet: the total is the number being agreed, and this explains it. Loud
+ * enough to answer "why is this row ₹676.92?" without anyone having to ask.
+ */
+.checkout-total-saving {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+/* Pushed left, away from the two destructive-adjacent controls on the right,
+   so "Back" is never the button a thumb finds when reaching for "Save". */
+.checkout-back {
+  margin-right: auto;
+}
+
+/*
+ * Three buttons in a footer sized for two.
+ *
+ * Adding "Back" put "Save and close" over the width it had to itself, and it
+ * wrapped onto two lines at 390px — the primary action, the widest label, made
+ * to look broken. Buttons keep their words on one line and give up padding
+ * instead; the row still fits an iPhone SE at 320px.
+ */
+.modal-actions .btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .modal-actions {
+    gap: 6px;
+  }
+
+  .modal-actions .btn {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+}

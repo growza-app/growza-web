@@ -3,7 +3,14 @@
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { copy } from '../lib/copy';
-import { IconAppointments, IconCheck, IconDots, IconGrid, IconOffers, IconUserPlus } from './icons';
+import {
+  IconNavAttendance,
+  IconNavBookings,
+  IconNavClients,
+  IconNavHome,
+  IconNavMore,
+  IconNavOffers,
+} from './icons';
 
 /**
  * Mobile navigation. Replaces the sidebar entirely below the mobile
@@ -20,14 +27,14 @@ export function BottomNav({ labels, role, reportTabs }: { labels: Record<string,
   const items = [
     // Same label as the sidebar's first item — this is the same route, and
     // calling it "Today" on a phone and "Home" on a laptop read as two places.
-    { href: '/', label: copy.nav.dashboard, icon: <IconGrid /> },
-    { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconAppointments /> },
-    { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
-    { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
+    { href: '/', label: copy.nav.dashboard, icon: <IconNavHome /> },
+    { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconNavBookings /> },
+    { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconNavClients /> },
+    { href: '/offers', label: copy.nav.offers, icon: <IconNavOffers /> },
     // GRW-170/170 — the register is a front-desk tab, not an owner one. The
     // bar is five fixed slots; see the trim below.
-    { href: '/attendance', label: 'Attendance', icon: <IconCheck /> },
-    { href: '/more', label: copy.nav.more, icon: <IconDots /> },
+    { href: '/attendance', label: 'Attendance', icon: <IconNavAttendance /> },
+    { href: '/more', label: copy.nav.more, icon: <IconNavMore /> },
   ];
 
   /**

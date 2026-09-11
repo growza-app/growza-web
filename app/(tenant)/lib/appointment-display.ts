@@ -78,7 +78,7 @@ export interface BookingGroup {
    * "you may not see this".
    */
   customerName?: string | null;
-  customerPhone?: string;
+  customerPhone?: string | null;
   /** Every service in the booking, in order — e.g. ["Haircut", "Facial", "De-Tan"]. */
   serviceNames: string[];
   /** Distinct providers across the legs (a combo may split staff). */

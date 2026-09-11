@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { PhoneField } from '../components/PhoneField';
+import { toStoredPhone, validateNationalPhone } from '../lib/phone';
 import { DateTime } from 'luxon';
 import { api, ApiError, type ProviderDay, type ProviderDetail, type Service } from '../lib/api';
 import { IconCheck, IconClose, IconWhatsApp } from '../components/icons';
@@ -89,18 +91,16 @@ function AboutFields({
         </label>
         <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)} placeholder={`e.g. Senior ${providerWord}`} />
       </div>
-      <div className="field" style={{ marginTop: 12 }}>
-        <label>
-          <span>
-            Phone <span style={{ color: 'var(--amber)' }}>*</span>
-          </span>
-        </label>
-        <input
-          type="tel"
+      {/* GRW-199 — the shared field. The value it holds is the ten NATIONAL
+          digits; the parent converts to `+91…` when it saves. */}
+      <div style={{ marginTop: 12 }}>
+        <PhoneField
+          id="staff-phone"
+          label="Phone"
+          required
           value={phone}
-          onChange={(e) => onPhoneChange(e.target.value)}
-          placeholder="+91 98765 12345"
-          className={phoneInvalid ? 'field-invalid' : ''}
+          onChange={onPhoneChange}
+          error={phoneInvalid ? 'Enter a 10-digit mobile number' : null}
         />
       </div>
       <div className="field" style={{ marginTop: 12 }}>
@@ -335,11 +335,13 @@ export function StaffDetailPanel({
 
   const save = async () => {
     const nameMissing = !displayName.trim();
-    const phoneMissing = !phone.trim();
+    // GRW-199 — not just "is it empty": a stylist saved with four digits is a
+    // stylist nobody can reach, and the field can no longer hold anything else.
+    const phoneProblem = validateNationalPhone(phone);
     setNameInvalid(nameMissing);
-    setPhoneInvalid(phoneMissing);
-    if (nameMissing || phoneMissing) {
-      setError(nameMissing && phoneMissing ? 'Name and phone are required' : nameMissing ? 'Name is required' : 'Phone is required');
+    setPhoneInvalid(Boolean(phoneProblem));
+    if (nameMissing || phoneProblem) {
+      setError(nameMissing && phoneProblem ? 'Name and phone are required' : nameMissing ? 'Name is required' : phoneProblem!);
       return;
     }
     const openRows = hourRows.filter((r) => r.open);
@@ -351,7 +353,7 @@ export function StaffDetailPanel({
     setBusy(true);
     setError(null);
     setSaved(false);
-    const aboutPayload = { displayName, phone, title: title || null, bio: bio || null, languages: languages || null };
+    const aboutPayload = { displayName, phone: toStoredPhone(phone) ?? '', title: title || null, bio: bio || null, languages: languages || null };
     try {
       if (creating) {
         /**

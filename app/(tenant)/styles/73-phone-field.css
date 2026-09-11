@@ -1,0 +1,66 @@
+/* ---------- the phone field (Jira GRW-199) ---------- */
+
+/*
+ * A dial code welded to the left of the box, not a second input.
+ *
+ * The border lives on the WRAPPER and the inner input gives its own up, so the
+ * two halves read as one control. Doing it the other way — two bordered boxes
+ * side by side — reads as two fields, and the first one looks like something
+ * you are meant to fill in.
+ */
+.phone-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.phone-field:focus-within {
+  border-color: var(--accent);
+}
+
+.phone-dial {
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+  background: var(--slate-soft);
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  /* Greyed AND inert: no selection, no caret, nothing to drag. */
+  user-select: none;
+  flex: none;
+}
+
+/*
+ * The input inside gives up every border the shared control rule gives it —
+ * `input[type='tel']` in 11-availability.css carries an attribute selector, so
+ * a bare class here would lose to it and the inner box would keep its own
+ * outline inside the wrapper's.
+ */
+.phone-field input[type='tel'] {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  /* 16px or iOS zooms the whole page when the field takes focus. */
+  font-size: 16px;
+  /* Digits are easier to check against a scrap of paper when they line up. */
+  letter-spacing: 0.4px;
+}
+
+.phone-field input[type='tel']:focus {
+  outline: none;
+}
+
+.phone-field-invalid {
+  border-color: var(--amber);
+}
+
+.phone-field-off {
+  opacity: 0.55;
+}

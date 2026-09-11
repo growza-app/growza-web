@@ -226,7 +226,15 @@ export interface Appointment {
   status: 'confirmed' | 'completed' | 'cancelled' | 'no_show';
   createdVia: 'whatsapp' | 'dashboard';
   customerName: string | null;
-  customerPhone: string;
+  /**
+   * GRW-199 — NULL for a walk-in who gave no number.
+   *
+   * Was `string` until walk-ins were allowed without a phone. Every call
+   * button, `wa.me` link and `dialable()` call site has to decide what it shows
+   * when there is nothing to dial; typing it honestly is what makes the
+   * compiler point at each one.
+   */
+  customerPhone: string | null;
   serviceName: string;
   priceMinor: string | null;
   /** What was actually charged at checkout — null until completed; fall back to priceMinor for display. */
@@ -325,7 +333,10 @@ export interface ProviderDay {
 }
 
 export interface AvailabilityResponse {
+  /** The chain's first service, with the WHOLE chain's duration (GRW-199). */
   service: { id: string; name: string; durationMin: number };
+  /** Every service in the chain, in running order. Absent on older callers. */
+  services?: Array<{ id: string; name: string; durationMin: number }>;
   date: string;
   timezone: string;
   slotCount: number;
@@ -385,7 +396,8 @@ export interface OfferInput {
 export interface Customer {
   id: string;
   name: string | null;
-  waPhone: string;
+  /** GRW-199 — NULL for a client recorded at the desk who gave no number. */
+  waPhone: string | null;
   optIn: boolean;
   firstSeenAt: string | null;
   totalBookings: number;
@@ -424,13 +436,14 @@ export type SortDirection = 'asc' | 'desc';
 export type AppointmentStatus = 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
 export interface SearchResult {
-  customers: Array<{ id: string; name: string | null; phone: string; visitCount: number }>;
+  // GRW-199 — a client may have no number; both shapes below carry that.
+  customers: Array<{ id: string; name: string | null; phone: string | null; visitCount: number }>;
   bookings: Array<{
     id: string;
     startAt: string;
     status: string;
     customerName: string | null;
-    customerPhone: string;
+    customerPhone: string | null;
     serviceName: string;
     providerName: string | null;
   }>;

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, BookingConflictError, type AvailabilityResponse } from '../lib/api';
 import { copy } from '../lib/copy';
+import { PhoneField } from '../components/PhoneField';
+import { fromStoredPhone, toStoredPhone, validateNationalPhone } from '../lib/phone';
 
 type Slot = AvailabilityResponse['sections'][number]['slots'][number];
 
@@ -53,6 +55,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
   const router = useRouter();
   const [modal, setModal] = useState<ModalState>({ step: 'closed' });
   const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [name, setName] = useState('');
   // Remembered across bookings (and across the page navigations changing
   // service/date causes) so "book another service for this customer"
@@ -96,7 +99,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
   };
 
   const openBooking = (slot: Slot) => {
-    setPhone(rememberedCustomer?.phone ?? '');
+    setPhone(fromStoredPhone(rememberedCustomer?.phone) || (rememberedCustomer?.phone ?? ''));
     setName(rememberedCustomer?.name ?? '');
     setModal({ step: 'form', slot });
   };
@@ -110,6 +113,13 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
 
   const submit = async () => {
     if (modal.step !== 'form') return;
+    // GRW-199 — one shape for every number in the app. A half-typed one saved
+    // as-is is how `+91786545789` got into the live customer table.
+    const phoneProblem = validateNationalPhone(phone);
+    if (phoneProblem) {
+      setPhoneError(phoneProblem);
+      return;
+    }
     const { slot } = modal;
     setModal({ step: 'submitting', slot });
 
@@ -119,10 +129,10 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
         holdKey: hold.holdKey,
         serviceId,
         startAt: slot.utc,
-        customerPhone: phone.trim(),
+        customerPhone: toStoredPhone(phone)!,
         customerName: name.trim() || undefined,
       });
-      rememberCustomer({ phone: phone.trim(), name: name.trim() });
+      rememberCustomer({ phone, name: name.trim() });
       setModal({ step: 'success', slot });
       router.refresh(); // the booked slot should vanish from the free-times list
     } catch (error) {
@@ -186,17 +196,18 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
                 </h3>
                 <p className="muted">{providerName(modal.slot.assignedProviderId)}</p>
 
-                <div className="field">
-                  <label htmlFor="phone">Phone number</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={modal.step === 'submitting'}
-                  />
-                </div>
+                <PhoneField
+                  id="phone"
+                  label="Phone number"
+                  required
+                  value={phone}
+                  onChange={(v) => {
+                    setPhone(v);
+                    if (phoneError) setPhoneError(null);
+                  }}
+                  error={phoneError}
+                  disabled={modal.step === 'submitting'}
+                />
                 <div className="field">
                   <label htmlFor="name">Name (optional)</label>
                   <input
@@ -221,7 +232,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
                   <button className="btn btn-ghost" onClick={close} disabled={modal.step === 'submitting'}>
                     Cancel
                   </button>
-                  <button className="btn" onClick={submit} disabled={modal.step === 'submitting' || !phone.trim()}>
+                  <button className="btn" onClick={submit} disabled={modal.step === 'submitting' || phone.length === 0}>
                     {modal.step === 'submitting' ? 'Booking…' : 'Confirm booking'}
                   </button>
                 </div>

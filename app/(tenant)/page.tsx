@@ -8,6 +8,7 @@ import { SummaryCard } from './components/SummaryCard';
 import { DaySchedule } from './components/DaySchedule';
 import { StaffCapacity } from './components/StaffCapacity';
 import { NotificationBell } from './components/NotificationBell';
+import { QuickActions } from './components/QuickActions';
 import {
   IconAnalytics,
   IconBell,
@@ -65,38 +66,6 @@ function ChairTimeline({ day }: { day: ProviderDay }) {
   );
 }
 
-/**
- * Desktop-only: the floating "+" button covers this same ground on mobile
- * (walk-in / book for later), but has no desktop equivalent — without this,
- * starting a booking from Home meant a detour through the sidebar. Every
- * action here is vertical-agnostic (a salon walk-in and a garage walk-in are
- * the same underlying flow) and links to a route that actually exists —
- * "View reports" points at Bookings, the same placeholder the "View report"
- * glance row already uses, since there's no dedicated reports page yet.
- */
-function QuickActions() {
-  return (
-    <section className="rail-card rail-actions">
-      <h3>Quick actions</h3>
-      <a className="quick-action quick-action-primary" href="/availability?intent=book">
-        <IconPlus />
-        New booking
-      </a>
-      <a className="quick-action" href="/availability?intent=book">
-        <IconUserPlus />
-        Add walk-in
-      </a>
-      <a className="quick-action" href="/customers?add=1">
-        <IconUser />
-        New client
-      </a>
-      <a className="quick-action" href="/appointments">
-        <IconAnalytics />
-        View reports
-      </a>
-    </section>
-  );
-}
 
 function TopInsight() {
   return (
@@ -416,7 +385,7 @@ export default async function DashboardPage() {
 
           <aside className="home-rail desktop-only">
             <BookingsChart buckets={bookingBuckets} trendPct={bookingTrendPct} />
-            <QuickActions />
+            <QuickActions timezone={timezone} />
             <StaffCapacity label={me.labels.providers ?? copy.nav.staff} staff={staffShown} hiddenCount={staffHiddenCount} />
             <TopInsight />
           </aside>

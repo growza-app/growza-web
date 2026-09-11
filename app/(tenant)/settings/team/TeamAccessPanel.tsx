@@ -2,7 +2,17 @@
 
 import { useState } from 'react';
 import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider } from '../../lib/api';
-import { toE164, validateInvitePhone } from '../../lib/validate';
+/*
+ * GRW-199 — the shared phone rule, replacing this panel's own.
+ *
+ * `toE164`/`validateInvitePhone` existed because an owner typing ten digits for
+ * a stylist was doing the normal thing while the invite route demanded a
+ * leading `+`. With the dial code rendered as chrome the two can no longer
+ * disagree: what the field holds is ten digits, and what is sent is always
+ * `+91` and those ten.
+ */
+import { PhoneField } from '../../components/PhoneField';
+import { toStoredPhone, validateNationalPhone } from '../../lib/phone';
 
 /**
  * Jira GRW-63 · GRW-67 — send an invite, see what is outstanding, take one back.
@@ -62,10 +72,10 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
     /**
      * Checked here, before the request, so a mistyped number is a message
      * under the field rather than a round trip that comes back a raw 400.
-     * `toE164` completes a bare ten-digit number, which is what an owner
-     * actually types — the API stores E.164 (BR-04) and will not do it for us.
+     * The API stores E.164 (BR-04) and will not complete a bare number for us;
+     * `toStoredPhone` below is what always prepends the dial code.
      */
-    const complaint = validateInvitePhone(phone);
+    const complaint = validateNationalPhone(phone);
     if (complaint) {
       setPhoneError(complaint);
       return;
@@ -80,7 +90,7 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
       setError('Choose which stylist this login is for.');
       return;
     }
-    const e164 = toE164(phone)!;
+    const e164 = toStoredPhone(phone)!;
 
     setBusy(true);
     setError(null);
@@ -126,31 +136,22 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
         </p>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          {/* Validate on blur and clear on change — the pattern the staff edit
-              screen uses. Complaining on every keystroke marks a number invalid
-              while it is still being typed. */}
+          {/* GRW-199 — the shared field: a greyed +91 and ten digits. It
+              cannot hold an invalid character, so the old validate-on-blur
+              dance is gone; what remains is the length check on submit. */}
           <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-            <input
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              aria-label="Mobile number"
-              placeholder="+91 98765 43210"
-              style={{ width: '100%' }}
+            <PhoneField
+              id="invite-phone"
+              label="Mobile number"
+              required
               value={phone}
               disabled={busy}
-              className={phoneError ? 'field-invalid' : undefined}
-              aria-invalid={!!phoneError}
-              onChange={(e) => {
-                setPhone(e.target.value);
+              error={phoneError}
+              onChange={(v) => {
+                setPhone(v);
                 if (phoneError) setPhoneError(null);
               }}
-              onBlur={() => setPhoneError(phone.trim() ? validateInvitePhone(phone) : null)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && phone.trim() && !busy) void send();
-              }}
             />
-            {phoneError && <div className="field-error">{phoneError}</div>}
           </div>
           <div className="team-role-field">
             <label htmlFor="invite-role">Role</label>

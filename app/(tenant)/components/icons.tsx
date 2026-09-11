@@ -386,3 +386,72 @@ export const IconChevronDown = () => (
     <path d="m6 9 6 6 6-6" />
   </svg>
 );
+
+/* ---------- the tab bar's own set (Jira GRW-199) ---------- */
+
+/**
+ * Five icons drawn as one family, replacing five borrowed from elsewhere.
+ *
+ * The old bar reused whatever was nearest: a four-square grid for Home (that
+ * is an "apps" icon, not a home), a ticked box for Bookings (that reads
+ * "done", not "diary"), and — the one that actually misled — `IconUserPlus`
+ * for Clients, a person with a PLUS beside them, which every other product on
+ * the phone uses to mean ADD a person. A tab that says "add" and navigates is
+ * the icon telling one story and the tap telling another.
+ *
+ * Drawn on one 24px grid at one stroke weight, with the same rounded joins, so
+ * five glyphs at 23px read as a set rather than as five decisions.
+ */
+
+/** Home — a house. The one metaphor nobody has to learn. */
+export const IconNavHome = () => (
+  <svg {...base}>
+    <path d="M3.5 10.2 12 3.5l8.5 6.7" />
+    <path d="M5.5 9.2V19a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5V9.2" />
+  </svg>
+);
+
+/** Bookings — a calendar with the day marked, not a ticked box. */
+export const IconNavBookings = () => (
+  <svg {...base}>
+    <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
+    <path d="M3.5 9.75h17M8 3.5v3M16 3.5v3" />
+    <circle cx="12" cy="14.75" r="1.5" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+/** Clients — two people. A group, which is what the screen is. */
+export const IconNavClients = () => (
+  <svg {...base}>
+    <circle cx="9.5" cy="8.5" r="3.2" />
+    <path d="M3.5 20c0-3.2 2.7-5.2 6-5.2s6 2 6 5.2" />
+    <path d="M16.5 6.4a3.2 3.2 0 0 1 0 6.1M17.8 14.9c1.7.6 2.7 2.1 2.7 4.2" />
+  </svg>
+);
+
+/** Offers — a price tag. Legible at 23px, which the old gift box was not. */
+export const IconNavOffers = () => (
+  <svg {...base}>
+    <path d="M11.6 3.5H19a1.5 1.5 0 0 1 1.5 1.5v7.4a2 2 0 0 1-.6 1.4l-6.6 6.6a2 2 0 0 1-2.8 0l-6-6a2 2 0 0 1 0-2.8l6.7-6.6a2 2 0 0 1 1.4-.5Z" />
+    <circle cx="16" cy="8" r="1.5" />
+  </svg>
+);
+
+/** Attendance — a person with a tick. Present, not added. */
+export const IconNavAttendance = () => (
+  <svg {...base}>
+    <circle cx="10" cy="8" r="3.4" />
+    <path d="M3.8 20c0-3.4 2.8-5.5 6.2-5.5 1 0 2 .2 2.8.6" />
+    <path d="m15 17.5 2 2 4-4" />
+  </svg>
+);
+
+/** More — an ellipsis in a circle, so it sits as a shape beside four shapes. */
+export const IconNavMore = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="8.6" cy="12" r="1.1" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
+    <circle cx="15.4" cy="12" r="1.1" fill="currentColor" stroke="none" />
+  </svg>
+);

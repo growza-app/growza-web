@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import type { MemberRole } from '../lib/nav-policy';
 import { BottomNav } from './BottomNav';
-import { tomorrowInTimezone } from '../lib/appointment-display';
-import { IconCalendarPlus, IconClose, IconPlus, IconUserPlus } from './icons';
+import { IconPlus } from './icons';
+import { NewVisitSheet, type VisitMode } from './NewVisitSheet';
 
 /**
  * The fixed mobile furniture: tab bar everywhere, plus the floating booking
@@ -31,7 +31,7 @@ const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
 
 export function MobileChrome({ labels, timezone, role, reportTabs }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[] }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [sheet, setSheet] = useState<VisitMode | null>(null);
   /**
    * A stylist cannot create a booking — `POST /api/v1/appointments` is not in
    * STAFF_ALLOWED (GRW-156) — so the FAB opened a menu whose every destination
@@ -43,47 +43,28 @@ export function MobileChrome({ labels, timezone, role, reportTabs }: { labels: R
   const mayBook = role !== 'staff';
   const showFab = mayBook && !NO_FAB.some((p) => pathname.startsWith(p)) && !EDIT_ROUTE_RE.test(pathname);
 
-  const close = () => setOpen(false);
-
   return (
     <>
-      {showFab && open && <div className="fab-backdrop" onClick={close} />}
-
-      {showFab && open && (
-        <div className="fab-menu">
-          {/* A walk-in IS a booking that starts now, so this is the same
-              screen as "Book for later" — just today's date, no detour
-              through a separate walk-in-only flow. */}
-          <a className="fab-menu-item" href="/availability?intent=book" onClick={close}>
-            <span className="fab-menu-label">Walk-in now</span>
-            <span className="fab-menu-icon">
-              <IconUserPlus />
-            </span>
-          </a>
-          <a
-            className="fab-menu-item"
-            href={`/availability?intent=book&date=${tomorrowInTimezone(timezone)}`}
-            onClick={close}
-          >
-            <span className="fab-menu-label">Book for later</span>
-            <span className="fab-menu-icon">
-              <IconCalendarPlus />
-            </span>
-          </a>
-        </div>
-      )}
-
+      {/*
+        Jira GRW-199 — the pop-up menu is gone, and the reason is not visual.
+        It existed to ask which of two screens you wanted. There is now ONE
+        screen with two modes, so the question it asks has no answer the sheet
+        cannot ask better — and it asked it with three nested shapes per item
+        (a white card holding a dark pill holding a white circle), stacked
+        above a third floating button.
+        Apple has no floating action button at all; the nearest thing in the
+        current language is a single action attached to the tab bar, with the
+        choice made inside the surface it opens. So: one tap fewer, one whole
+        overlay fewer, and the mode toggle lives where the rest of the decision
+        already is.
+      */}
       {showFab && (
-        <button
-          type="button"
-          className="fab"
-          aria-label={open ? 'Close' : 'New booking'}
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-        >
-          {open ? <IconClose /> : <IconPlus />}
+        <button type="button" className="fab" aria-label="New booking" onClick={() => setSheet('now')}>
+          <IconPlus />
         </button>
       )}
+
+      {sheet && <NewVisitSheet mode={sheet} timezone={timezone} onClose={() => setSheet(null)} />}
 
       <BottomNav role={role} labels={labels} reportTabs={reportTabs} />
     </>

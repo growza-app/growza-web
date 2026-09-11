@@ -8,9 +8,15 @@ import { formatDuration, summarizeServices } from '../lib/appointment-display';
 import { CheckoutSheet } from './CheckoutSheet';
 import { IconCheck, IconClose, IconPhone, IconWhatsApp } from './icons';
 
-/** Digits only — `tel:` and `wa.me` both choke on spaces and punctuation. */
-export function dialable(phone: string): string {
-  return phone.replace(/[^0-9]/g, '');
+/**
+ * Digits only — `tel:` and `wa.me` both choke on spaces and punctuation.
+ *
+ * GRW-199 — accepts null, because a walk-in may have given no number at all.
+ * Returns an empty string, which callers test to decide whether to render a
+ * call button; a `tel:` link built from nothing is a button that does nothing.
+ */
+export function dialable(phone: string | null | undefined): string {
+  return (phone ?? '').replace(/[^0-9]/g, '');
 }
 
 /** Short human reference, derived from the appointment id exactly as the WhatsApp confirmation does. */
@@ -141,16 +147,28 @@ export function BookingSheet({
           <div style={{ padding: '10px 18px 0', fontSize: 13, color: '#b91c1c' }}>{error}</div>
         )}
 
-        <a className="sheet-item" href={`tel:${digits}`}>
-          <IconPhone />
-          {copy.booking.call(appointment.customerName?.split(' ')[0] ?? 'customer')}
-          <span className="trail">{appointment.customerPhone}</span>
-        </a>
+        {/*
+          GRW-199 — no number, no contact rows.
+          Same rule GRW-166 applied when a salon withholds the client's identity
+          from its staff, now reached a second way: a walk-in may simply never
+          have given a number. A `tel:`/`wa.me` link built from an empty string
+          looks like the product is broken rather than like there is nothing to
+          dial.
+        */}
+        {digits && (
+          <>
+            <a className="sheet-item" href={`tel:${digits}`}>
+              <IconPhone />
+              {copy.booking.call(appointment.customerName?.split(' ')[0] ?? 'customer')}
+              <span className="trail">{appointment.customerPhone}</span>
+            </a>
 
-        <a className="sheet-item" href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
-          <IconWhatsApp />
-          {copy.booking.message}
-        </a>
+            <a className="sheet-item" href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
+              <IconWhatsApp />
+              {copy.booking.message}
+            </a>
+          </>
+        )}
 
         {!settled && canSettle && (
           <>

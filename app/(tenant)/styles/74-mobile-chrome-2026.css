@@ -1,0 +1,210 @@
+/* ---------- mobile chrome, current Apple language (Jira GRW-199) ---------- */
+
+/*
+ * What changed and why.
+ *
+ * The tab bar was welded to the bottom edge: full width, square corners, opaque
+ * white, 21px outline icons and an 11.5px label. That is the 2014 bar. Since
+ * iOS 26 and refined in iOS 27, Apple's tab bar is a FLOATING, inset, pill-
+ * shaped capsule of translucent "Liquid Glass" that content passes beneath,
+ * with the material reserved for the navigation layer above the content.
+ *
+ * Two of Apple's rules are adopted literally, because they are measurements
+ * rather than taste: the capsule is inset ~21pt from the left, right and bottom
+ * edges, and the labels are 11pt.
+ *
+ * ## What is deliberately NOT copied
+ *
+ * **The bar stays in normal flow.** Apple's floats over content, which needs
+ * `position: fixed`. This bar is the third row of `.content`'s grid on purpose
+ * — GRW-192's own comment records what fixed positioning cost here: a
+ * fixed-position bar is pinned to the browser's LAYOUT viewport, and on some
+ * Android Chrome versions that does not shrink when the address bar auto-hides,
+ * leaving a strip of raw page background under the bar. Flow layout has no such
+ * quirk. Looking like it floats is worth having; actually floating is not worth
+ * that bug, on a product sold to people holding mid-range Android phones.
+ *
+ * **Glass degrades to a solid.** `backdrop-filter` is expensive, and this
+ * product runs on whatever phone is at the salon counter. The `@supports` block
+ * below is additive: without it the bar is opaque and perfectly usable.
+ *
+ * **Labels never go translucent.** Owners of these businesses are not always
+ * confident readers (it is why this product says "Minutes" and not "Takes"), so
+ * contrast is not something to trade for a material effect. The glass is on the
+ * container; the words on top of it stay solid.
+ */
+
+@media (max-width: 860px) {
+  .bottom-nav {
+    /* Apple's inset, and the safe-area on top of it rather than instead of it:
+       the home indicator sits inside the inset on a notched phone. */
+    margin: 0 21px calc(12px + env(safe-area-inset-bottom));
+    padding: 8px 6px;
+    border-radius: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(252, 253, 252, 0.82);
+    /* Two shadows: a tight one to lift the capsule off the page, and a wide
+       soft one for the depth that makes it read as a separate layer. */
+    box-shadow:
+      0 1px 2px rgba(9, 20, 15, 0.06),
+      0 10px 30px rgba(9, 20, 15, 0.14);
+  }
+
+  /* The material, where the device can afford it. */
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .bottom-nav {
+      background: rgba(252, 253, 252, 0.72);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      backdrop-filter: saturate(180%) blur(20px);
+    }
+  }
+
+  /*
+   * Content fades out as it reaches the bar, rather than being cut by it.
+   *
+   * Apple's own description of the floating tab bar. Painted on `.page-body`'s
+   * bottom edge as a gradient of the page colour, so a list ends in a soft
+   * disappearance instead of a hard line under the capsule.
+   */
+  .page-body::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: 24px;
+    margin-top: -24px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(244, 246, 245, 0), var(--bg, #f4f6f5));
+  }
+
+  .bottom-nav a {
+    gap: 3px;
+    border-radius: 18px;
+    /* 11pt, Apple's tab label size. */
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    /* The tap target is the whole cell, not the glyph. */
+    min-height: 48px;
+    justify-content: center;
+  }
+
+  .bottom-nav svg {
+    width: 23px;
+    height: 23px;
+    /* Rounder joins read as the current icon language rather than the older
+       sharp-cornered outline set. */
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /*
+   * The active tab: a filled capsule behind the icon, not an underline.
+   *
+   * The underline was a 2px mark under an 11px word — the smallest possible
+   * signal for the single most-asked question on the screen, "where am I".
+   */
+  .bottom-nav a.active {
+    color: var(--accent-deep);
+  }
+
+  .bottom-nav a.active::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 46px;
+    height: 30px;
+    border-radius: 15px;
+    background: var(--accent-soft);
+    z-index: 0;
+  }
+
+  .bottom-nav a {
+    position: relative;
+  }
+
+  .bottom-nav a svg,
+  .bottom-nav a span,
+  .bottom-nav a {
+    z-index: 1;
+  }
+
+  /* The old underline mark, retired by the capsule above. */
+  .bottom-nav .bn-mark,
+  .bottom-nav a.active .bn-mark {
+    display: none;
+  }
+
+  /*
+   * The single action, sitting just above the capsule and inset to match it.
+   *
+   * It was a 56px circle with a hard green drop shadow; now it is the same
+   * material family as the bar it belongs to, so the two read as one
+   * navigation layer rather than two competing floating things.
+   */
+  .fab {
+    right: max(21px, env(safe-area-inset-right));
+    bottom: calc(96px + env(safe-area-inset-bottom));
+    width: 54px;
+    height: 54px;
+    border-radius: 27px;
+    box-shadow:
+      0 1px 2px rgba(9, 20, 15, 0.12),
+      0 8px 24px rgba(15, 61, 46, 0.32);
+    transition: transform 0.18s ease;
+  }
+
+  /* A press that answers. `:active` rather than `:hover` — a finger has no
+     hover, and the old button gave no feedback at all until the menu appeared. */
+  .fab:active {
+    transform: scale(0.94);
+  }
+
+  .fab svg {
+    width: 25px;
+    height: 25px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+/* ---------- the mode toggle inside the sheet ---------- */
+
+/*
+ * A segmented control, which is what this choice actually is: two mutually
+ * exclusive answers to one question, both worth seeing at once. It replaces a
+ * pop-up menu of two floating buttons that had to be dismissed before the real
+ * screen appeared.
+ */
+.wi-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin: 12px 18px 14px;
+  padding: 3px;
+  background: var(--slate-soft);
+  border-radius: 12px;
+}
+
+.wi-segmented button {
+  padding: 9px 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  /* Apple's minimum tap target; a two-up control is easy to under-size. */
+  min-height: 38px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.wi-segmented button.is-on {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(9, 20, 15, 0.12);
+}

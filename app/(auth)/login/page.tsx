@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { PhoneField } from '../../(tenant)/components/PhoneField';
+import { toStoredPhone } from '../../(tenant)/lib/phone';
 
 /**
  * Jira GRW-66 · GRW-160 — where a salon owner signs in.
@@ -21,7 +23,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const ready = phone.trim().length > 0 && password.length > 0;
+  const ready = toStoredPhone(phone) !== null && password.length > 0;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -33,7 +35,16 @@ export default function LoginPage() {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone.trim(), password }),
+        /*
+         * GRW-199 — the field holds ten NATIONAL digits; the API matches on the
+         * stored `+91…` form. Sending `phone.trim()` sent "9876500001" against
+         * an account stored as "+919876500001" and the sign-in simply said the
+         * number or password was wrong.
+         *
+         * Caught by the device sweep's setup, which signs in for real. Every
+         * one of the 154 viewport tests depends on this one request.
+         */
+        body: JSON.stringify({ phone: toStoredPhone(phone) ?? phone.trim(), password }),
       });
 
       if (!res.ok) {
@@ -80,20 +91,17 @@ export default function LoginPage() {
           <p>Manage your bookings, staff and services.</p>
         </div>
 
-        <div className="field">
-          <label htmlFor="login-phone">Phone number</label>
-          <input
-            id="login-phone"
-            name="phone"
-            type="tel"
-            autoComplete="username"
-            inputMode="tel"
-            placeholder="+91 98765 43210"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            disabled={loading}
-          />
-        </div>
+        {/* GRW-199 — the same field as everywhere else. Signing in with a
+            number typed one way and stored another is the login half of the
+            duplicate-client problem: the account is found by exact match. */}
+        <PhoneField
+          id="login-phone"
+          label="Phone number"
+          required
+          value={phone}
+          onChange={setPhone}
+          disabled={loading}
+        />
 
         <div className="field">
           <label htmlFor="login-password">Password</label>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PhoneField } from '../../components/PhoneField';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DateTime } from 'luxon';
@@ -17,7 +18,8 @@ import { toWeekdayRows, WeekdayHoursEditor, type WeekdayRow } from '../../compon
 import { IconArrowLeft, IconCheck } from '../../components/icons';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { copy } from '../../lib/copy';
-import { normalizePhone, validatePhone, validateRequired } from '../../lib/validate';
+import { validateRequired } from '../../lib/validate';
+import { fromStoredPhone, toStoredPhone, validateNationalPhone } from '../../lib/phone';
 import { avatarTone, initials } from '../StaffRoster';
 import { useLabel } from '../../components/LabelsProvider';
 
@@ -79,7 +81,8 @@ export function StaffEditClient({
     setDetail(d);
     setDisplayName(d.displayName);
     setTitle(d.title ?? '');
-    setPhone(d.phone ?? '');
+    // GRW-199 — the field holds ten NATIONAL digits; the stored value is E.164.
+    setPhone(fromStoredPhone(d.phone));
     setActive(d.active);
     setUnavailableToday(d.unavailableToday);
     setSelectedServiceIds(new Set(d.serviceIds));
@@ -130,7 +133,7 @@ export function StaffEditClient({
   const validateAll = () => {
     const next = {
       name: validateRequired(displayName, 'Name') ?? undefined,
-      phone: validatePhone(phone) ?? undefined,
+      phone: validateNationalPhone(phone) ?? undefined,
     };
     setFieldErrors(next);
     return next;
@@ -158,7 +161,7 @@ export function StaffEditClient({
             displayName: displayName.trim(),
             // Stored E.164, so the separators a human typed are stripped once
             // here rather than leaving "+91 98765 43210" in the column.
-            phone: normalizePhone(phone.trim()),
+            phone: toStoredPhone(phone) ?? '',
             title: title.trim() || null,
                   active,
             usesOrgHours,
@@ -308,25 +311,21 @@ export function StaffEditClient({
                   <span className="field-label">Role</span>
                   <input type="text" value={title} placeholder={providerWord} onChange={(e) => (setTitle(e.target.value), setSaved(false))} />
                 </label>
-                <label className="field">
-                  <span className="field-label">Mobile</span>
-                  <input
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    value={phone}
-                    placeholder="+91 98765 43210"
-                    className={fieldErrors.phone ? 'field-invalid' : undefined}
-                    aria-invalid={!!fieldErrors.phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      setSaved(false);
-                      if (fieldErrors.phone) setFieldErrors((f) => ({ ...f, phone: undefined }));
-                    }}
-                    onBlur={() => setFieldErrors((f) => ({ ...f, phone: validatePhone(phone) ?? undefined }))}
-                  />
-                  {fieldErrors.phone && <div className="field-error">{fieldErrors.phone}</div>}
-                </label>
+                {/* GRW-199 — the shared field. The validate-on-blur dance is
+                    gone: an invalid character can no longer be typed, so only
+                    the length can be wrong and that is checked on save. */}
+                <PhoneField
+                  id="staff-edit-phone"
+                  label="Mobile"
+                  required
+                  value={phone}
+                  error={fieldErrors.phone ?? null}
+                  onChange={(v) => {
+                    setPhone(v);
+                    setSaved(false);
+                    if (fieldErrors.phone) setFieldErrors((f) => ({ ...f, phone: undefined }));
+                  }}
+                />
               </div>
             </section>
 

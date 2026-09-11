@@ -1,0 +1,336 @@
+/* ---------- walk-in sheet (Jira GRW-199) ---------- */
+
+/*
+ * `.sheet` has no horizontal padding — every child supplies its own 18px. This
+ * is the child that does it for the walk-in flow's two form stages.
+ *
+ * The height cap is the reason this file exists at all. `.sheet` is
+ * `max-height: 86vh` and holds a `.picker-results` list that scrolls on its
+ * own, so on a short viewport (a phone in landscape, a Fold shut) the two
+ * scrollers fight: the outer one runs out of room and the inner one never gets
+ * any. Bounding the body and letting IT be the scroller means the sheet's head
+ * and the action row stay put and only the middle moves.
+ */
+.wi-body {
+  padding: 0 18px;
+  max-height: calc(86vh - 96px);
+  overflow-y: auto;
+}
+
+.wi-close {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: var(--slate-soft);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+
+.wi-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+/*
+ * Search field with a leading icon, matching the Clients screen's search.
+ *
+ * `input.wi-search-input`, not `.wi-search-input` alone. The shared control
+ * rule in 11-availability.css is `input[type='search'], …` — an attribute
+ * selector, which carries class-level specificity, so a bare class here LOSES
+ * to it and the 12px default padding wins. The icon then renders on top of the
+ * first character the receptionist types. Adding the element name is what makes
+ * this rule apply at all.
+ */
+input.wi-search-input {
+  width: 100%;
+  padding-left: 34px;
+  font-size: 16px; /* iOS zooms the page on focus below 16px. */
+}
+
+input.wi-search-input-plain {
+  padding-left: 12px;
+}
+
+.wi-search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.wi-search-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* `.picker-row` is a div in ComboBuilder; here it is a button, so it needs the
+   button reset the shared rule does not carry. */
+.wi-row {
+  width: 100%;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.wi-service-results {
+  max-height: 176px;
+}
+
+.wi-section-label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+  margin: 16px 0 8px;
+}
+
+.wi-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wi-chip {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  /* A button is inline-block by default, and `flex-direction` on the combo
+     variant below silently does nothing without this — which is exactly how
+     the combo's price ended up jammed against its title with no gap. */
+  display: inline-flex;
+  align-items: center;
+  /* 44px is Apple's minimum tap target; a chip row is the easiest place in a
+     sheet to end up below it. */
+  min-height: 40px;
+}
+
+.wi-chip-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.wi-summary {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--slate-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wi-actions {
+  margin-top: 18px;
+  padding-bottom: 4px;
+}
+
+.wi-error {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.wi-done {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 0 8px;
+}
+
+.wi-done svg {
+  width: 26px;
+  height: 26px;
+  color: var(--accent-deep);
+  flex: none;
+}
+
+.wi-done-title {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.wi-done-sub {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* Amber, not red: the visit was recorded and nothing failed. This is a fact
+   about the chair, not an error about the save. */
+.wi-overlap {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+}
+
+/* The sheet's own action rows sit flush; `.wi-body` already supplies the
+   gutter, so undo it for full-bleed `.sheet-item`s in the done state. */
+.wi-body .sheet-item {
+  margin: 0 -18px;
+  width: calc(100% + 36px);
+}
+
+/* ---------- multi-service picking (GRW-199) ---------- */
+
+/*
+ * The chosen list sits ABOVE the search, because it is the answer being
+ * assembled and the search is the tool. A receptionist adding a fourth service
+ * should not have to scroll past the picker to see what they already have.
+ */
+.wi-picked {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.wi-picked-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wi-picked-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14.5px;
+  /* The list is the one place a long service name must not push the remove
+     button off the row. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wi-remove {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: var(--slate-soft);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.wi-remove svg {
+  width: 13px;
+  height: 13px;
+}
+
+.wi-picked-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 12px;
+  background: var(--slate-soft);
+  font-size: 14px;
+}
+
+.wi-add-new {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent-deep);
+  font: inherit;
+  font-weight: 620;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.wi-add-new svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* A combo chip carries two lines — its name and its price — so it is taller
+   than a stylist chip and stacks rather than centring. */
+.wi-chip-combo {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  /* A combo's name is a sentence ("Manicure + Facial combo"), not a word, so
+     it needs a ceiling — otherwise one long combo fills the row and pushes
+     every other one onto its own line. */
+  max-width: 100%;
+  text-align: left;
+}
+
+.wi-chip-meta {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+/* ---------- picking a time, for Book for later (GRW-199) ---------- */
+
+/*
+ * An even GRID, not the free-times screen's ragged wrap.
+ *
+ * That page lays slots out with `flex-wrap`, so every card sizes to its own
+ * text: "9:00 AM" is narrower than "10:30 AM", columns do not line up, and a
+ * list of nineteen times is markedly harder to scan than it needs to be.
+ * `auto-fill` with a floor gives equal columns at every width — three across a
+ * phone, more on a tablet — without a breakpoint per device.
+ */
+.wi-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+  /* Its own scroll region: a busy day is forty slots, and the day chips and
+     the Book button both have to stay put above and below it. */
+  max-height: 208px;
+  overflow-y: auto;
+}
+
+.wi-slot {
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  /* Apple's 44px minimum: a grid of small time chips is the easiest place in
+     the app to end up with targets a thumb cannot hit. */
+  min-height: 44px;
+}
+
+.wi-slot-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}

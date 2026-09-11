@@ -432,8 +432,19 @@ export const api = {
     patch<{ unavailableToday: boolean }>(`/api/v1/providers/${id}/availability-today`, { unavailableToday }),
   updateProviderServices: (id: string, serviceIds: string[]) =>
     patch<{ serviceIds: string[] }>(`/api/v1/providers/${id}/services`, { serviceIds }),
-  availability: (serviceId: string, date: string, providerId = 'any') =>
-    get<AvailabilityResponse>(`/api/v1/availability?serviceId=${serviceId}&date=${date}&providerId=${providerId}`),
+  /**
+   * `serviceId` may repeat — the API sums the chain into one span (GRW-199).
+   *
+   * Built with `URLSearchParams` and `append`, not interpolated: an array
+   * dropped into a template literal comma-joins, which Fastify would parse as
+   * ONE id containing a comma and the lookup would 404. Same trap `reportGet`
+   * documents a few lines above for provider and service filters.
+   */
+  availability: (serviceId: string | string[], date: string, providerId = 'any') => {
+    const params = new URLSearchParams({ date, providerId });
+    for (const id of ([] as string[]).concat(serviceId)) params.append('serviceId', id);
+    return get<AvailabilityResponse>(`/api/v1/availability?${params.toString()}`);
+  },
   createHold: (serviceId: string, startAt: string, providerId?: string) =>
     post<HoldResponse>('/api/v1/holds', { serviceId, startAt, providerId }),
   confirmAppointment: (args: {
@@ -489,7 +500,55 @@ export const api = {
   },
   customerStats: () => get<CustomerStats>('/api/v1/customers/stats'),
   createCustomer: (input: { phone: string; name?: string }) =>
-    post<{ id: string; waPhone: string; name: string | null }>('/api/v1/customers', input),
+    post<{ id: string; waPhone: string | null; name: string | null }>('/api/v1/customers', input),
+  /**
+   * Jira GRW-199 — record a walk-in. Not `confirmAppointment`: there is no
+   * hold, no future `startAt`, and this must succeed when every chair is taken.
+   */
+  createWalkIn: (input: {
+    customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    serviceIds: string[];
+    offerId?: string;
+    schedulableId?: string;
+  }) =>
+    post<{
+      appointmentId: string;
+      bookingGroupId: string | null;
+      customerId: string;
+      schedulableId: string;
+      startAt: string;
+      endAt: string;
+      overlapping: boolean;
+      legs: { appointmentId: string; serviceId: string; startAt: string; endAt: string; overlapping: boolean }[];
+    }>('/api/v1/walk-ins', input),
+  /**
+   * Jira GRW-199 — an advance booking, in one request.
+   *
+   * The two-step `createHold` + `confirmAppointment` pair stays for the
+   * free-times screen. This one resolves the client by id (or creates them),
+   * books 1..N services as one visit, and refuses with a 409 when the slot went
+   * — which `BookingConflictError` already carries.
+   */
+  createBooking: (input: {
+    customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    serviceIds: string[];
+    offerId?: string;
+    startAt: string;
+    schedulableId?: string;
+  }) =>
+    post<{
+      appointmentIds: string[];
+      appointmentId: string;
+      customerId: string;
+      schedulableId: string;
+      startAt: string;
+      endAt: string;
+      remindersScheduled: number;
+    }>('/api/v1/bookings', input),
   uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
   removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),
 };

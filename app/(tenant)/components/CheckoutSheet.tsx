@@ -16,9 +16,19 @@ import { summarizeServices } from '../lib/appointment-display';
 import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
 import { useLabel } from './LabelsProvider';
 
-/** Digits only — `tel:` chokes on spaces and punctuation. Duplicated from BookingSheet.tsx rather than imported, to avoid a circular import (BookingSheet renders CheckoutSheet). */
-function dialable(phone: string): string {
-  return phone.replace(/[^0-9]/g, '');
+/**
+ * Digits only — `tel:` chokes on spaces and punctuation. Duplicated from
+ * BookingSheet.tsx rather than imported, to avoid a circular import
+ * (BookingSheet renders CheckoutSheet).
+ *
+ * GRW-199 — and the duplication cost something the moment a walk-in was allowed
+ * without a phone: the copy here still took a plain `string`, so a no-number
+ * client crashed the whole page with "Cannot read properties of null (reading
+ * 'replace')" while the original had already been made safe. Two copies of a
+ * function are two places to remember.
+ */
+function dialable(phone: string | null | undefined): string {
+  return (phone ?? '').replace(/[^0-9]/g, '');
 }
 
 interface ExtraRow {
@@ -191,6 +201,7 @@ export function CheckoutSheet({
   groupMembers = [],
   timezone,
   onClose,
+  onBack,
 }: {
   appointment: Appointment;
   services: Service[];
@@ -199,6 +210,16 @@ export function CheckoutSheet({
   groupMembers?: Appointment[];
   timezone: string;
   onClose: () => void;
+  /**
+   * GRW-199 — go back to whatever opened this, instead of only out.
+   *
+   * The till is the last step of the walk-in flow, and "Cancel" there closes
+   * the whole thing: a receptionist who opened it to check the total, or who
+   * picked the wrong client, had no way back to the step before without
+   * starting the visit again. Absent when the till is opened from a booking
+   * row, where there is no previous step to return to.
+   */
+  onBack?: () => void;
 }) {
   const router = useRouter();
   // Pre-filled from the booked service's list price (or its share of the
@@ -206,6 +227,16 @@ export function CheckoutSheet({
   // its own provider — the common case (paid exactly what was quoted, same
   // stylist) needs zero typing. Staff only change what's actually different.
   const comboDefaultsMinor = splitComboDefaults([appointment, ...groupMembers]);
+  /*
+   * What the combo takes off the list price, for the line under the total.
+   *
+   * Derived from the same legs `splitComboDefaults` uses, so the two can never
+   * disagree about which bookings are part of the combo.
+   */
+  const comboLegs = [appointment, ...groupMembers].filter((a) => a.offerTitle && a.comboPriceMinor);
+  const comboTitle = comboLegs[0]?.offerTitle ?? null;
+  const comboListTotal = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
+  const comboSaving = comboLegs.length > 0 ? comboListTotal - Number(comboLegs[0]!.comboPriceMinor) : 0;
   const [amount, setAmount] = useState(() => minorToRupees(String(comboDefaultsMinor.get(appointment.id))));
   const [providerId, setProviderId] = useState(appointment.providerId ?? '');
   // The customer changed their mind at the desk and never got the originally
@@ -296,9 +327,18 @@ export function CheckoutSheet({
             <h3>Mark as done</h3>
             <div className="checkout-header-name">
               {appointment.customerName ?? 'Unknown'}
-              <a className="checkout-call-btn" href={`tel:${dialable(appointment.customerPhone)}`} aria-label="Call">
-                <IconPhone />
-              </a>
+              {/* No number, no call button — GRW-199. A walk-in may have given
+                  only a name, and a `tel:` link built from an empty string is a
+                  control that looks live and does nothing. */}
+              {dialable(appointment.customerPhone) && (
+                <a
+                  className="checkout-call-btn"
+                  href={`tel:${dialable(appointment.customerPhone)}`}
+                  aria-label="Call"
+                >
+                  <IconPhone />
+                </a>
+              )}
             </div>
             <div className="checkout-header-sub">
               {groupMembers.length > 0
@@ -318,6 +358,21 @@ export function CheckoutSheet({
             <div>
               <div className="checkout-total-label">Total amount</div>
               <div className="checkout-total-value">{formatMoney(String(totalMinor))}</div>
+              {/*
+                GRW-199 — say what the combo took off.
+
+                `splitComboDefaults` already spreads the combo price across the
+                rows, so the discount was applied and never mentioned: the rows
+                showed ₹676.92 and ₹423.08, which look like nothing in the price
+                list and read as a mistake. The saving is the reason the customer
+                chose the combo, and the till is where they ask about it.
+              */}
+              {comboSaving > 0 && (
+                <div className="checkout-total-saving">
+                  {comboTitle ? `${comboTitle} — ` : 'Combo — '}
+                  {formatMoney(String(comboListTotal))} list, saves {formatMoney(String(comboSaving))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -414,6 +469,11 @@ export function CheckoutSheet({
         </div>
 
         <div className="modal-actions">
+          {onBack && (
+            <button className="btn btn-ghost checkout-back" onClick={onBack} disabled={busy}>
+              Back
+            </button>
+          )}
           <button className="btn btn-ghost" onClick={onClose} disabled={busy}>
             Cancel
           </button>
