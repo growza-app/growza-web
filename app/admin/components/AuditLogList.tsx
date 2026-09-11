@@ -77,6 +77,8 @@ interface AuditLogRow {
   entityId: string | null;
   diff: { before?: Record<string, unknown>; after?: Record<string, unknown> } | null;
   reason: string | null;
+  /** Jira GRW-184 — where the caller was. Null on every row written before that ticket, and on any row old enough to have been purged. */
+  ip: string | null;
   impersonatedBy: string | null;
   impersonatedByName: string | null;
   createdAt: string;
@@ -347,6 +349,27 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
                         ) : (
                           <DiffTable entityType={row.entityType} before={row.diff.before} after={row.diff.after} />
                         )}
+                        {/*
+                          Jira GRW-184 — in the expanded detail, not the row.
+                          An address is what you check once you have found the
+                          action you are arguing about; it is never what you
+                          scan a list by, and a column of them would push the
+                          action and the actor off a narrow screen.
+
+                          "Not recorded" is spelled out rather than left blank
+                          (AC-03). Every row written before GRW-184 has a NULL
+                          here, and so does every row old enough to have been
+                          purged — an empty cell reads as an address of
+                          nothing, which is the only reading that is wrong.
+                        */}
+                        <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 10 }}>
+                          From{' '}
+                          {row.ip ? (
+                            <code style={{ fontSize: 12 }}>{row.ip}</code>
+                          ) : (
+                            <span style={{ fontStyle: 'italic' }}>not recorded</span>
+                          )}
+                        </div>
                       </div>
                     ) : null}
                   </div>
