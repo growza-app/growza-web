@@ -7,8 +7,10 @@ import {
   ApiError,
   BookingConflictError,
   formatMoney,
+  formatTime,
   type Appointment,
   type AvailabilityResponse,
+  type ChairNow,
   type Customer,
   type Offer,
   type Provider,
@@ -316,6 +318,36 @@ export function NewVisitSheet({
     };
   }, [later, stage.step, day, picked, schedulableId]);
 
+  /*
+   * GRW-198 — who is in each chair, refreshed while the sheet is open.
+   *
+   * A salon moves: by the time the receptionist has found the client and
+   * picked a service, a chair may have freed. Re-read on entering the stylist
+   * step rather than once on open, so the answer is current at the moment it
+   * is acted on. Walk-ins only — "later" is a question about a different day.
+   */
+  const [chairs, setChairs] = useState<ChairNow[]>([]);
+  const [reclaim, setReclaim] = useState<string | null>(null);
+
+  const freeCount = chairs.length > 0 ? chairs.filter((c) => c.free).length : null;
+
+  useEffect(() => {
+    if (later || stage.step !== 'details') return;
+    let cancelled = false;
+    void api
+      .chairs()
+      .then((r) => {
+        if (!cancelled) setChairs(r.chairs);
+      })
+      .catch(() => {
+        // The chips fall back to bare names, which is what they were before.
+        if (!cancelled) setChairs([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [later, stage.step]);
+
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
   /**
@@ -410,6 +442,7 @@ export function NewVisitSheet({
         serviceIds: picked.map((p) => p.serviceId),
         ...(offerId ? { offerId } : {}),
         ...(schedulableId ? { schedulableId } : {}),
+        ...(reclaim && schedulableId ? { reclaimAppointmentId: reclaim } : {}),
       });
       router.refresh();
       setStage({
@@ -767,26 +800,85 @@ export function NewVisitSheet({
             )}
 
             <div className="wi-section-label">{copy.newVisit.withWhom(providerNoun.toLowerCase())}</div>
-            <div className="wi-chips">
+            {/*
+              GRW-198 — chairs, not a list of names.
+              The receptionist's question is "who can take this person", and a
+              bare list of stylists asked them to guess: three of the five might
+              be mid-haircut. Each chair now says what it is doing, and the one
+              whose customer never turned up says so where the decision is made
+              rather than in a banner afterwards. Only for a walk-in — "later"
+              is about a day that has not happened.
+            */}
+            <div className="wi-chair-list">
               <button
                 type="button"
-                className={`wi-chip ${schedulableId === null ? 'wi-chip-on' : ''}`}
-                onClick={() => setSchedulableId(null)}
+                className={`wi-chair ${schedulableId === null ? 'wi-chair-on' : ''}`}
+                onClick={() => {
+                  setSchedulableId(null);
+                  setReclaim(null);
+                }}
                 disabled={busy}
               >
-                {copy.newVisit.whoeverIsFree}
+                <span className="wi-chair-name">{copy.newVisit.whoeverIsFree}</span>
+                {!later && freeCount !== null && (
+                  <span className="wi-chair-state">{copy.newVisit.freeCount(freeCount)}</span>
+                )}
               </button>
-              {(providers ?? []).map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`wi-chip ${schedulableId === p.id ? 'wi-chip-on' : ''}`}
-                  onClick={() => setSchedulableId(p.id)}
-                  disabled={busy}
-                >
-                  {p.displayName}
-                </button>
-              ))}
+
+              {(providers ?? []).map((p) => {
+                const chair = later ? null : chairs.find((c) => c.schedulableId === p.id);
+                const picked = schedulableId === p.id;
+                return (
+                  <div key={p.id} className="wi-chair-wrap">
+                    <button
+                      type="button"
+                      className={`wi-chair ${picked ? 'wi-chair-on' : ''}`}
+                      onClick={() => {
+                        setSchedulableId(p.id);
+                        setReclaim(null);
+                      }}
+                      disabled={busy}
+                    >
+                      <span className="wi-chair-name">{p.displayName}</span>
+                      {chair && (
+                        <span className={`wi-chair-state ${chair.free ? 'is-free' : 'is-busy'}`}>
+                          {chair.free
+                            ? copy.newVisit.chairFree
+                            : copy.newVisit.chairBusy(
+                                chair.occupant?.customerName ?? copy.newVisit.someone,
+                                formatTime(chair.occupant!.freesAt, timezone),
+                              )}
+                        </span>
+                      )}
+                    </button>
+
+                    {/*
+                      The action the overlap banner never offered.
+                      Only on a chair whose booking has started, is still open,
+                      and is past the grace period — at 2:00 a 4:00 booking is
+                      the future, not an absence, and offering to take it
+                      invites destroying a booking by misreading a row.
+                    */}
+                    {picked && chair?.occupant?.couldBeANoShow && (
+                      <button
+                        type="button"
+                        className={`wi-reclaim ${reclaim === chair.occupant.appointmentId ? 'is-on' : ''}`}
+                        onClick={() =>
+                          setReclaim(reclaim === chair.occupant!.appointmentId ? null : chair.occupant!.appointmentId)
+                        }
+                        disabled={busy}
+                      >
+                        {reclaim === chair.occupant.appointmentId
+                          ? copy.newVisit.reclaimOn(chair.occupant.customerName ?? copy.newVisit.someone)
+                          : copy.newVisit.reclaimOffer(
+                              chair.occupant.customerName ?? copy.newVisit.someone,
+                              chair.occupant.startedMinAgo,
+                            )}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {picked.length > 0 && !later && (

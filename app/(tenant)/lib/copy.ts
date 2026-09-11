@@ -208,6 +208,14 @@ export const copy = {
     comboPrice: 'Combo price',
     withWhom: (provider: string) => `Which ${provider}?`,
     whoeverIsFree: 'Whoever is free',
+    freeCount: (n: number) => (n === 0 ? 'nobody free' : n === 1 ? '1 free' : `${n} free`),
+    chairFree: 'free now',
+    chairBusy: (name: string, until: string) => `with ${name} · till ${until}`,
+    someone: 'someone',
+    // Plain, and it names the person — "Override" would not tell the
+    // receptionist whose booking they are about to end.
+    reclaimOffer: (name: string, minAgo: number) => `${name} hasn't turned up (${minAgo} min) — use this chair`,
+    reclaimOn: (name: string) => `${name} will be marked as a no-show`,
     startsNow: (minutes: number) => `Starts now · ${minutes} min in total`,
     back: 'Back',
     start: 'Start now',

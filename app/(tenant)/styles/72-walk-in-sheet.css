@@ -334,3 +334,139 @@ input.wi-search-input-plain {
   border-color: var(--accent);
   color: #fff;
 }
+
+/* ---------- chairs, not a list of names (Jira GRW-198) ---------- */
+
+/*
+ * A column, not a wrapped chip row.
+ *
+ * Each chair now carries a second line — who is in it and until when — and
+ * pills that wrap at different widths make a two-line label unreadable. A
+ * column also gives the reclaim button somewhere to appear underneath the
+ * chair it belongs to, rather than floating free.
+ *
+ * On a wide screen the column becomes a grid: a desktop has room for three
+ * across, and a single narrow stack up the middle of a 1400px screen looks
+ * like a phone layout somebody forgot to finish.
+ */
+.wi-chair-list {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .wi-chair-list {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    align-items: start;
+  }
+}
+
+.wi-chair-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.wi-chair {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  /* Apple's minimum, and a two-line chair clears it comfortably. */
+  min-height: 48px;
+}
+
+.wi-chair-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.wi-chair-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wi-chair-state {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* Free is the answer the receptionist is hoping for, so it is the one with
+   colour. Busy stays muted — it is information, not a warning. */
+.wi-chair-state.is-free {
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+/*
+ * The reclaim. Amber, not red: nothing has failed, and the receptionist is
+ * about to end somebody's booking — which deserves a pause, not an alarm.
+ *
+ * It appears only under the selected chair, so it cannot be tapped by accident
+ * while scanning the list.
+ */
+.wi-reclaim {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed #d19a2a;
+  border-radius: var(--radius-sm);
+  background: #fffaf0;
+  color: #92400e;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+/* Armed: solid, so "this will happen when I press Start" is unmistakable. */
+.wi-reclaim.is-on {
+  border-style: solid;
+  border-color: #b45309;
+  background: #fef3c7;
+  color: #7c2d12;
+}
+
+/* ---------- the same sheet, on a screen that is not a phone ---------- */
+
+/*
+ * A bottom sheet is a phone idiom. On a 1440px desktop it stretched the full
+ * width, so a service row ran a metre from its name to its price and the
+ * stylist grid floated in a field of white.
+ *
+ * Above the tablet breakpoint it becomes a centred panel: same markup, same
+ * stages, same code — only the frame changes. Scoped to `.walk-in-sheet`
+ * rather than `.sheet`, because the booking, summary and roster sheets are
+ * mobile-only surfaces and widening them would be a change nobody asked for.
+ */
+@media (min-width: 861px) {
+  .walk-in-sheet {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(620px, calc(100vw - 48px));
+    max-height: min(84vh, 780px);
+    /* All four corners: it is no longer rising from the bottom edge. */
+    border-radius: 18px;
+  }
+
+  /* The grab handle is for dragging a sheet off the bottom of a phone. */
+  .walk-in-sheet .sheet-grab {
+    display: none;
+  }
+
+  .walk-in-sheet .wi-body {
+    max-height: calc(min(84vh, 780px) - 104px);
+  }
+}

@@ -530,3 +530,26 @@ export interface AttendanceRegister {
   lateGraceMin: number;
   rows: AttendanceRow[];
 }
+
+
+/** GRW-198 — one chair as the receptionist sees it right now. */
+export interface ChairNow {
+  schedulableId: string;
+  displayName: string;
+  free: boolean;
+  occupant: {
+    appointmentId: string;
+    customerName: string | null;
+    serviceName: string;
+    startedMinAgo: number;
+    freesAt: string;
+    /** Started, still confirmed, past the grace period — so "they never turned up" is sayable. */
+    couldBeANoShow: boolean;
+  } | null;
+}
+
+export interface ChairsNow {
+  chairs: ChairNow[];
+  /** Minutes after a booking starts before it may be called a no-show. */
+  graceMin: number;
+}

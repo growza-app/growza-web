@@ -52,6 +52,7 @@ import type {
   AttendanceRow,
   AvailabilityResponse,
   Capacity,
+  ChairsNow,
   ChatState,
   CheckoutExtraServiceInput,
   CheckoutGroupMemberInput,
@@ -505,6 +506,14 @@ export const api = {
    * Jira GRW-199 — record a walk-in. Not `confirmAppointment`: there is no
    * hold, no future `startAt`, and this must succeed when every chair is taken.
    */
+  /**
+   * GRW-198 — every chair and who is in it, right now.
+   *
+   * Not availability: working hours and lead time are irrelevant to somebody
+   * already standing in the room. The only question is whether the chair is
+   * taken, and if so by whom and for how much longer.
+   */
+  chairs: () => get<ChairsNow>('/api/v1/chairs'),
   createWalkIn: (input: {
     customerId?: string;
     customerName?: string;
@@ -512,6 +521,8 @@ export const api = {
     serviceIds: string[];
     offerId?: string;
     schedulableId?: string;
+    /** GRW-198 — the booking whose chair this walk-in is taking over. */
+    reclaimAppointmentId?: string;
   }) =>
     post<{
       appointmentId: string;
