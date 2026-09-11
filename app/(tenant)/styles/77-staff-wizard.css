@@ -1,0 +1,336 @@
+/* ---------- add staff, in three steps (Jira GRW-22) ---------- */
+
+/*
+ * A centred panel on anything wider than a phone, a bottom sheet below it.
+ *
+ * Board 5a is a web modal and 5b a pushed mobile flow, and they are the same
+ * three steps either way — so this is one element whose frame changes, not two
+ * components. The same decision GRW-198's walk-in sheet made, for the same
+ * reason: a second implementation is a second thing to keep in step.
+ *
+ * Phone first, because that is where it is hardest to fit.
+ */
+.wiz {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+  /* dvh, not vh: on iOS Safari `vh` is the address-bar-hidden height, so the
+     action row sits under the browser chrome until you scroll. */
+  max-height: 88dvh;
+  /* The home indicator on a modern iPhone overlaps the last 34px. */
+  /* max(), not the bare inset: on a phone with no notch `env()` is 0 and the
+     action row would sit flush against the bottom edge. Guarded by
+     safe-areas.test.ts, which caught exactly that here. */
+  padding-bottom: max(env(safe-area-inset-bottom), 8px);
+}
+
+.wiz-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  flex: none;
+}
+
+.wiz-head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+}
+
+.wiz-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.wiz-close {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: var(--slate-soft);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.wiz-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+/*
+ * The progress bar, as three labelled segments rather than three dots.
+ *
+ * A dot says "three of something"; a labelled segment says which one you are on
+ * and what the other two are, which is the difference between a progress
+ * indicator and a map. The design calls for low-literacy legibility, and a
+ * number plus a word beats a filled circle for that.
+ *
+ * Every step is clickable, in both directions. The steps are not a gate —
+ * "Save & close" works from step 1 — so making them a one-way corridor would
+ * contradict the thing the screen is built around.
+ */
+.wiz-steps {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0 18px 14px;
+  list-style: none;
+  flex: none;
+}
+
+.wiz-step {
+  flex: 1;
+  min-width: 0;
+}
+
+.wiz-step button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  color: var(--muted);
+  cursor: pointer;
+  /* Apple's minimum — three segments across a 320px phone is the easiest place
+     in this flow to end up with a target a thumb cannot hit. */
+  min-height: 44px;
+}
+
+.wiz-step-num {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--slate-soft);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.wiz-step-num svg {
+  width: 11px;
+  height: 11px;
+}
+
+.wiz-step-label {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wiz-step.is-on button {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.wiz-step.is-on .wiz-step-num {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Done is colour plus a tick, not colour alone — the same rule the hours
+   picker follows, and the reason it is in this design at all. */
+.wiz-step.is-done button {
+  color: var(--accent-deep);
+}
+
+.wiz-step.is-done .wiz-step-num {
+  background: var(--accent-deep);
+  color: #fff;
+}
+
+/*
+ * The one scroll region. The head, the steps and the action row are all `flex:
+ * none` above and below, so a long service list scrolls without taking the
+ * Save button off screen — which is the failure mode a 52-service picker inside
+ * a 88dvh box walks straight into.
+ */
+.wiz-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 18px;
+}
+
+.wiz-section-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.wiz-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.wiz-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wiz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.wiz-chip svg {
+  width: 14px;
+  height: 14px;
+}
+
+.wiz-chip.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.wiz-chip-new {
+  border-style: dashed;
+  color: var(--accent-deep);
+}
+
+.wiz-new-role {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font: inherit;
+  /* 16px or iOS zooms the whole page when this gains focus. */
+  font-size: 16px;
+  max-width: 180px;
+}
+
+.wiz-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 14px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.wiz-toggle input {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.wiz-toggle strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 620;
+}
+
+.wiz-toggle-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.wiz-hours {
+  margin-top: 14px;
+}
+
+/* Following the salon is not an error state, so the locked week is dimmed
+   rather than greyed to the point of being unreadable — it is still the answer
+   to "what will they work?", which is why it stays on screen at all. */
+.wiz-hours.is-locked {
+  opacity: 0.55;
+}
+
+.wiz-warn {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.wiz-actions {
+  flex: none;
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.wiz-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wiz-spacer {
+  flex: 1;
+}
+
+.wiz-error {
+  margin: 0 0 10px;
+}
+
+/* ---------- the same three steps, on a screen that is not a phone ---------- */
+
+@media (min-width: 861px) {
+  .wiz {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(560px, calc(100vw - 48px));
+    max-height: min(86vh, 760px);
+    /* All four corners: it is no longer rising from the bottom edge. */
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    padding-bottom: 0;
+  }
+}

@@ -6,8 +6,9 @@ import { api, ApiError, type ProviderOverviewRow, type ProvidersOverview, type S
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
+import type { WeekdayRow } from '../components/WeekdayHoursEditor';
 import { IconPlus, IconSearch } from '../components/icons';
-import { StaffDetailPanel } from './StaffDetailPanel';
+import { StaffWizard } from './StaffWizard';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
 
 type Tab = 'all' | 'working' | 'off' | 'inactive';
@@ -17,11 +18,14 @@ export function StaffClient({
   services,
   staffWord,
   maxProviders,
+  orgHours,
 }: {
   initialOverview: ProvidersOverview;
   services: Service[];
   staffWord: string;
   maxProviders: number;
+  /** GRW-22 — the salon's own week, so the wizard's step 2 opens on what this person will actually work. */
+  orgHours: WeekdayRow[];
 }) {
   const router = useRouter();
   const [overview, setOverview] = useState(initialOverview);
@@ -348,14 +352,21 @@ export function StaffClient({
         />
       )}
 
-      {/* The drawer now only serves "Add staff" — editing an existing person
-          goes to /providers/[id]. GRW-004 replaces this with the 3-step wizard. */}
+      {/*
+        Jira GRW-22 — the 3-step wizard GRW-004 asked for.
+        `StaffDetailPanel` used to serve this too, and on the create path it
+        gated Skills and Working hours behind `detail &&` — behind already
+        having saved. Editing an existing person goes to /providers/[id]; this
+        is only ever the create.
+      */}
       {creating && (
-        <StaffDetailPanel
-          providerId={null}
+        <StaffWizard
+          staffWord={staffWord}
           services={services}
+          roster={providers}
+          orgHours={orgHours}
           onClose={() => setCreating(false)}
-          onSaved={refresh}
+          onCreated={refresh}
         />
       )}
       </div>

@@ -17,8 +17,9 @@ import { DIAL_CODE, toNationalDigits } from '../lib/phone';
  * sees nothing appear, which is a clearer "no" than a message under the field.
  *
  * `inputMode="numeric"` puts a phone keypad in front of a receptionist rather
- * than a full keyboard, and `maxLength` stops at ten so the eleventh press does
- * nothing instead of arming a validation error.
+ * than a full keyboard. The ten-digit limit is enforced in the change handler
+ * and NOT with `maxLength` — see the comment on `onChange` for what that cost
+ * the first time.
  */
 export function PhoneField({
   id,

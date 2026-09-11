@@ -413,6 +413,20 @@ export const api = {
     hiredAt?: string | null;
     /** GRW-183 — omitted means "follows the salon's hours", which is what almost every new hire does. */
     usesOrgHours?: boolean;
+    /**
+     * GRW-22 — the wizard's steps 3 and 2, sent with step 1.
+     *
+     * Omitting `serviceIds` means EVERY active service; omitting
+     * `workingHours` keeps GRW-183's "follow the salon". Both defaults exist so
+     * that "Save & close" from step 1 leaves a usable stylist rather than one
+     * who is in the team list and bookable for nothing.
+     *
+     * They travel with the create rather than as follow-up requests because a
+     * create that succeeds and a follow-up that fails is exactly the half-made
+     * record this ticket is about.
+     */
+    serviceIds?: string[];
+    workingHours?: ProviderWorkingHourRow[];
   }) => post<ProviderDetail>('/api/v1/providers', body),
   updateProviderProfile: (
     id: string,

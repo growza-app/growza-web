@@ -2,14 +2,22 @@ import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { PageHeader } from '../components/PageHeader';
+import { toWeekdayRows } from '../components/WeekdayHoursEditor';
 import { StaffClient } from './StaffClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProvidersPage() {
-  let me, overview, services;
+  let me, overview, services, settings;
   try {
-    [me, overview, services] = await Promise.all([api.me(), api.providersOverview(), api.services()]);
+    [me, overview, services, settings] = await Promise.all([
+      api.me(),
+      api.providersOverview(),
+      api.services(),
+      // GRW-22 — the salon's own week, so the wizard's Hours step opens on what
+      // a new hire will actually work rather than on an empty seven days.
+      api.settings(),
+    ]);
   } catch {
     return (
       <>
@@ -37,6 +45,7 @@ export default async function ProvidersPage() {
         services={services}
         staffWord={staffWord}
         maxProviders={me.capabilities.maxProviders}
+        orgHours={toWeekdayRows(settings.workingHours)}
       />
     </>
   );
