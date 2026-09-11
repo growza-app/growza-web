@@ -1,4 +1,5 @@
 import '../(tenant)/globals.css';
+import { BrowserGate } from '../(tenant)/components/BrowserGate';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
@@ -32,7 +33,13 @@ export const viewport: Viewport = {
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/* GRW-197 — the sign-in screen is where an unsupported browser lands
+            FIRST. Telling them here saves a password attempt on a form whose
+            button will never respond. */}
+        <BrowserGate />
+        {children}
+      </body>
     </html>
   );
 }

@@ -5,6 +5,7 @@ import { api } from './lib/api';
 import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
+import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionProvider } from './components/SessionProvider';
 import { LabelsProvider } from './components/LabelsProvider';
@@ -160,6 +161,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     return (
       <html lang="en">
         <body>
+          <BrowserGate />
           <AccountStatusScreen message={accountStatus.message} support={accountStatus.support} />
         </body>
       </html>
@@ -169,6 +171,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en">
       <body>
+        {/* GRW-197 — first in the body, so it runs before the app bundle has a
+            chance to fail to parse. */}
+        <BrowserGate />
         <PwaRegister />
         <LiveRefresh />
         {/* Above the shell, not inside it: this is the most important thing on
