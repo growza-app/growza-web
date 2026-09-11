@@ -92,6 +92,26 @@
 }
 
 /*
+ * `min-width: 0` on the HEADER as well as on the title, and the header's is the
+ * one that was missing.
+ *
+ * `.topbar` sits in row 1 of `.content`'s grid, and a grid item's automatic
+ * minimum size is its own min-content width. Without this the header cannot be
+ * narrower than its widest child wants to be, so instead of the title
+ * shrinking, the whole header — and with it the grid column, and with it every
+ * screen below — grows past the viewport.
+ *
+ * Measured: `/offers` at 1536px reported `header.topbar (right edge 1977px)`
+ * and `div.content (441px cut off)`, on eleven desktop widths between 1280 and
+ * 1920. `49-header.css` already carries this exact fix for Reports' header,
+ * with the same note about the grid column, and `.topbar` never needed it
+ * before because nothing in it refused to wrap.
+ */
+.topbar {
+  min-width: 0;
+}
+
+/*
  * The title column yields first. Without this the trailing controls are what
  * shrink — a 46px avatar squashed to 20px while a long vertical label ("Free
  * times for your customers") takes the whole row — because a flex item's
@@ -101,8 +121,19 @@
   min-width: 0;
 }
 
-.topbar-title h1,
-.topbar-title p {
+/*
+ * The TITLE is one line with an ellipsis. The SUBTITLE wraps.
+ *
+ * Both were `nowrap` for one revision, and that is what made `/offers`
+ * overflow: its subtitle is a sentence, and a sentence that may not wrap has a
+ * min-content width of the whole sentence.
+ *
+ * The distinction is right independently of that bug. A screen's name is two or
+ * three words and truncating it loses nothing a reader cannot infer; a subtitle
+ * is the sentence explaining what the screen is for, and an ellipsis through the
+ * middle of it hides the half that was worth reading.
+ */
+.topbar-title h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
