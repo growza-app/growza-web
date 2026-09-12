@@ -43,7 +43,24 @@ export default async function AppointmentsPage({
   let me, providers;
   try {
     [me, providers] = await Promise.all([api.me(), api.providers()]);
-  } catch {
+  } catch (error) {
+    /*
+     * Jira GRW-220 — say what happened, somewhere.
+     *
+     * This was a bare `catch {}`. The owner got "Cannot reach the server" and
+     * the cause went nowhere at all: not to a log, not to a correlation id,
+     * not to disk. Support would have had a screenshot and nothing else.
+     *
+     * `console.error` on purpose rather than the pino logger — this runs in
+     * the Next SERVER process, which does not have the API's logger, and its
+     * stdout is the deployable's log stream either way (08 §3).
+     *
+     * Found by the device sweep: eight viewports failed on this banner while
+     * the API was answering every request in four milliseconds and neither
+     * process wrote a single line about it. A failure nobody records is a
+     * failure nobody can fix.
+     */
+    console.error('[bookings] could not load the page shell', error);
     return (
       <>
         <PageHeader title={copy.nav.appointments} />
@@ -116,8 +133,26 @@ export default async function AppointmentsPage({
    * route refuses rather than answering zero — the card is just absent, not
    * showing a zero that would look like unrecorded work.
    */
-  const [appointments, capacity, earnings] = await Promise.all([
-    api.appointments(date, toDate, undefined, customerId).catch(() => [] as Appointment[]),
+  /**
+   * Jira GRW-220 — a failed fetch is recorded, never disguised as an empty day.
+   *
+   * This was `.catch(() => [])`, and an empty array is indistinguishable from a
+   * day with no bookings: the screen drew "No bookings that day." and four zero
+   * KPIs. For an owner on a busy Saturday that is not a degraded experience, it
+   * is a false statement about their business — and the one they would act on,
+   * by going to look for what went wrong at the desk.
+   *
+   * Found by the device sweep, which flaked on ten viewports for exactly this
+   * reason: under two parallel browsers the fetch occasionally lost, the page
+   * rendered an honest-looking empty state, and the spec could not tell that
+   * from a real layout fault. A screen that lies to a person lies to a test
+   * too.
+   */
+  const [appointmentsResult, capacity, earnings] = await Promise.all([
+    api
+      .appointments(date, toDate, undefined, customerId)
+      .then((rows) => ({ rows, failed: false }))
+      .catch(() => ({ rows: [] as Appointment[], failed: true })),
     /**
      * Jira GRW-63 · GRW-168 — the busy figure's denominator, from the same
      * `working_hours` rows the availability engine books against, over exactly
@@ -132,6 +167,7 @@ export default async function AppointmentsPage({
     api.capacity(date, toDate).catch(() => null),
     api.myEarnings().catch(() => null),
   ]);
+  const appointments = appointmentsResult.rows;
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
   // A multi-day range is never "today", even when it starts today — the
   // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
@@ -206,6 +242,8 @@ export default async function AppointmentsPage({
           initialSort={sort}
           initialStaff={staff}
           viewerIsStaff={me.member?.role === 'staff'}
+          canReschedule={me.capabilities.reschedule}
+          loadFailed={appointmentsResult.failed}
           earnings={earnings}
           capacityMin={capacity?.minutes ?? null}
         />

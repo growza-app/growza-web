@@ -73,11 +73,14 @@ export function DaySchedule({
   appointments,
   timezone,
   nowISO,
+  canMove = true,
 }: {
   appointments: Appointment[];
   timezone: string;
   /** Server's clock, passed in so the first client render matches the server HTML exactly. */
   nowISO: string;
+  /** GRW-219 — `me.capabilities.reschedule`, threaded from the page that fetched it. */
+  canMove?: boolean;
 }) {
   // Seeded from the server value, then switched to the real device clock
   // after mount and ticked every minute so the "now" line stays honest.
@@ -230,6 +233,7 @@ export function DaySchedule({
             comboServiceNames={open.isCombo ? open.serviceNames : undefined}
             comboTotalMin={open.totalMin}
             comboLegs={open.isCombo ? open.appointments : undefined}
+            canMove={canMove}
           />
         ))}
     </>

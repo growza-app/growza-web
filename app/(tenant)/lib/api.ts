@@ -510,6 +510,28 @@ export const api = {
       groupMembers?: CheckoutGroupMemberInput[];
     },
   ) => post<CheckoutResponse>(`/api/v1/appointments/${appointmentId}/checkout`, args),
+  /**
+   * Jira GRW-219 — move a booking to another time.
+   *
+   * Addressed by ANY leg of the visit: a combo moves as one, so the caller
+   * hands over the row the receptionist tapped rather than working out which
+   * of three appointments is the first one.
+   *
+   * `overlapping` in the response means it was recorded on a chair that is
+   * already taken — the booking exists either way, and the sheet says so.
+   */
+  rescheduleAppointment: (
+    appointmentId: string,
+    args: { startAt: string; schedulableId?: string | null },
+  ) =>
+    post<{
+      appointmentId: string;
+      bookingGroupId: string;
+      startAt: string;
+      endAt: string;
+      overlapping: boolean;
+      remindersScheduled: number;
+    }>(`/api/v1/appointments/${appointmentId}/reschedule`, args),
   search: (q: string) => get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}`),
   offers: () => get<Offer[]>('/api/v1/offers/all'),
   offer: (id: string) => get<Offer>(`/api/v1/offers/${id}`),

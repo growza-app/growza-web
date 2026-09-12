@@ -127,6 +127,8 @@ export function BookingsList({
   viewerIsStaff,
   earnings,
   capacityMin,
+  canReschedule = true,
+  loadFailed = false,
 }: {
   appointments: Appointment[];
   /** The full roster, for the mobile staff-filter chips (GRW-46) and the desktop staff select (GRW-47) — not just staff with a booking today, so picking one can honestly show "0 bookings" for someone rather than making them disappear. */
@@ -162,6 +164,18 @@ export function BookingsList({
    * the reader, are noise that reads as a team view.
    */
   viewerIsStaff: boolean;
+  /** Jira GRW-219 — `me.capabilities.reschedule`. Combined with the role below, never instead of it. */
+  canReschedule?: boolean;
+  /**
+   * Jira GRW-220 — the list could not be FETCHED, which is not the same as a
+   * day with nothing on it.
+   *
+   * Kept as its own flag rather than folded into `emptyMessage`, because the
+   * two states differ in more than their words: an empty day is a fact the
+   * owner can act on, and a failed fetch is a thing to retry. Defaults to
+   * false, so a caller that does not know stays on the old behaviour.
+   */
+  loadFailed?: boolean;
   /** Jira GRW-216 — null when the owner has not shown this stylist their takings, or the viewer is not one. */
   earnings?: MyEarnings | null;
   /**
@@ -567,6 +581,13 @@ export function BookingsList({
         </div>
       )}
 
+      {/*
+        Jira GRW-220 — no figures at all when the list could not be fetched.
+        Four zeros sitting above a banner that says "could not load" is the same
+        false statement the banner exists to withdraw, only in larger type. A
+        number the screen cannot stand behind should not be on screen.
+      */}
+      {!loadFailed && (
       <div className="bk-kpis">
         <Kpi tone="green" icon={<IconCalendar />} value={filtered.length} label="Bookings" sub={isToday ? 'Today' : dayLabel} />
         <Kpi
@@ -612,6 +633,7 @@ export function BookingsList({
           )}
         </div>
       </div>
+      )}
 
       {/* Filters sit BELOW the headline row in both mocks, not above it — the
           numbers are what the owner looks at first. Search and the staff
@@ -771,7 +793,20 @@ export function BookingsList({
 
       {bookings.length === 0 ? (
         <div className="card">
-          <div className="empty">{emptyMessage}</div>
+          {loadFailed ? (
+            /*
+             * Jira GRW-220 — "could not load", never "nothing booked".
+             *
+             * A banner rather than the quiet grey `.empty` line, because this
+             * is not a calm fact about the day: something failed and the owner
+             * needs to know the number above is not their business.
+             */
+            <div className="banner">
+              <strong>{copy.errors.bookingsUnavailable}</strong> {copy.errors.bookingsUnavailableHelp}
+            </div>
+          ) : (
+            <div className="empty">{emptyMessage}</div>
+          )}
         </div>
       ) : (
         <>
@@ -888,6 +923,7 @@ export function BookingsList({
         ) : (
           <BookingSheet
             canSettle={!viewerIsStaff}
+            canMove={!viewerIsStaff && canReschedule}
             appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
             timezone={timezone}
             onClose={() => setOpen(null)}

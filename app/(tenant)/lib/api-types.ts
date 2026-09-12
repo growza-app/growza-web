@@ -77,6 +77,8 @@ export interface Me {
   whatsapp?: { booking: boolean };
   capabilities: {
     walkIn: boolean;
+    /** GRW-219 — may a booking be moved to another time. Read by `BookingSheet`. */
+    reschedule: boolean;
     richAnalytics: boolean;
     staffLeaderboard: boolean;
     providerSelection: boolean;
@@ -237,6 +239,8 @@ export interface Appointment {
    * compiler point at each one.
    */
   customerPhone: string | null;
+  /** GRW-219 — what the move sheet asks the availability endpoint about. */
+  serviceId: string;
   serviceName: string;
   priceMinor: string | null;
   /** What was actually charged at checkout — null until completed; fall back to priceMinor for display. */

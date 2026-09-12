@@ -356,7 +356,12 @@ export default async function DashboardPage() {
                   owner still needs to action — so the heading is what changes,
                   matching the Bookings page's own wording. */}
               <div className="home-section-head"><h2>{copy.today.heading(me.labels.appointment_plural ?? 'bookings')}</h2><a href="/appointments">See all ({countBookings(appointments)})</a></div>
-              <DaySchedule appointments={appointments} timezone={timezone} nowISO={now.toISOString()} />
+              <DaySchedule
+                appointments={appointments}
+                timezone={timezone}
+                nowISO={now.toISOString()}
+                canMove={me.capabilities.reschedule}
+              />
             </section>
 
             {providerDay && (

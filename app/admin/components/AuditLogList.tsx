@@ -22,6 +22,11 @@ export const KNOWN_ACTIONS = [
   'appointment.status_change',
   'appointment.checkout',
   'appointment.walk_in',
+  // GRW-219 — a booking moved to another time. Its own entry because in the
+  // table a move looks like a cancellation plus an unrelated new booking, and
+  // an admin asked "did somebody lose this booking?" needs to be able to see
+  // that nobody did.
+  'appointment.rescheduled',
   'appointment.reclaimed',
   // GRW-202 — a client asked to be forgotten, and then was. Two entries
   // because they happen days apart: the request is reversible for the length

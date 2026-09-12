@@ -109,6 +109,36 @@ export const copy = {
     reference: 'Booking ID',
   },
 
+  /**
+   * Jira GRW-219 — moving a booking.
+   *
+   * `booking.reschedule` above has said "Move to another time" since the sheet
+   * was written, with no call site anywhere. These are the words the screen it
+   * finally opens needs.
+   */
+  move: {
+    title: 'Move this booking',
+    whichDay: 'Which day?',
+    whichTime: 'What time?',
+    loadingTimes: 'Finding free times…',
+    noTimes: 'Nothing free that day.',
+    anotherTime: 'Another time',
+    anotherTimeHint: 'Any time you like — even one that is already taken.',
+    withWhom: (noun: string) => `Same ${noun}?`,
+    keepStylist: 'Keep as is',
+    back: 'Back',
+    confirm: 'Move it',
+    confirmAnyway: 'Move anyway',
+    saving: 'Moving…',
+    /** Named BEFORE the save, which is the whole difference from the walk-in sheet. */
+    clash: (who: string) => `${who} already has someone at that time.`,
+    clashUnknown: 'That time is already taken.',
+    moved: (when: string) => `Moved to ${when}`,
+    movedOverlap: 'Recorded — two bookings now share that time.',
+    failed: 'That did not save. Check the connection and try again.',
+    done: 'Done',
+  },
+
   search: {
     title: 'Search',
     /* The pill in Home's header. An invitation, not an instruction — the
@@ -790,5 +820,14 @@ export const copy = {
   errors: {
     apiDown: 'Cannot reach the server.',
     apiDownHelp: 'Ask your developer to start it, or run',
+    /*
+     * Jira GRW-220 — said instead of "No bookings that day."
+     *
+     * The distinction is the whole point: an owner who is told their busy
+     * Saturday is empty will go looking for what went wrong in the salon. An
+     * owner told the list could not be loaded will refresh the page.
+     */
+    bookingsUnavailable: 'Could not load your bookings.',
+    bookingsUnavailableHelp: 'The list below is not empty — it could not be fetched. Refresh to try again.',
   },
 } as const;

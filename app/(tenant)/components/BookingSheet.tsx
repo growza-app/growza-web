@@ -6,7 +6,8 @@ import { api, formatTime, type Appointment, type AppointmentStatus, type Provide
 import { copy } from '../lib/copy';
 import { formatDuration, summarizeServices } from '../lib/appointment-display';
 import { CheckoutSheet } from './CheckoutSheet';
-import { IconCheck, IconClose, IconPhone, IconWhatsApp } from './icons';
+import { MoveBookingSheet } from './MoveBookingSheet';
+import { IconCheck, IconClose, IconMoveTime, IconPhone, IconWhatsApp } from './icons';
 
 /**
  * Digits only — `tel:` and `wa.me` both choke on spaces and punctuation.
@@ -37,6 +38,7 @@ export function BookingSheet({
   comboTotalMin,
   comboLegs,
   canSettle = true,
+  canMove = true,
 }: {
   appointment: Appointment;
   timezone: string;
@@ -65,11 +67,26 @@ export function BookingSheet({
    * Defaults to true, so the Home timeline (owner-only) is unaffected.
    */
   canSettle?: boolean;
+  /**
+   * Jira GRW-219 — may this viewer move the booking to another time?
+   *
+   * Two things at once, both of which have to be true. The ROLE: a stylist is
+   * not on `RECEPTIONIST_ALLOWED`, for GRW-195's reason — moving a booking
+   * changes the salon's day, and moving one onto a colleague's chair changes
+   * theirs. And the CAPABILITY: `me.capabilities.reschedule`, so the control
+   * is absent when the API would refuse it rather than present and answering
+   * 403, which reads as the product being broken rather than as a boundary.
+   *
+   * Defaults to true so a caller that has neither answer yet is not silently
+   * denied a feature — the route is the gate, this is the courtesy.
+   */
+  canMove?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [services, setServices] = useState<Service[] | null>(null);
   const [providers, setProviders] = useState<Provider[] | null>(null);
 
@@ -104,6 +121,18 @@ export function BookingSheet({
       setBusy(false);
     }
   };
+
+  if (moving) {
+    return (
+      <MoveBookingSheet
+        appointment={appointment}
+        comboLegs={comboLegs}
+        timezone={timezone}
+        onClose={() => setMoving(false)}
+        onMoved={onClose}
+      />
+    );
+  }
 
   if (checkingOut && services && providers) {
     // The combo's OTHER still-booked services — completed in the same checkout
@@ -185,6 +214,19 @@ export function BookingSheet({
               <IconClose />
               {copy.booking.markMissed}
             </button>
+            {/*
+              GRW-219 — the words `copy.booking.reschedule` has carried since
+              this sheet was written, finally attached to something. Above
+              Cancel deliberately: moving is what a client usually wants when
+              they ring, and the destructive action stays furthest from the
+              thumb.
+            */}
+            {canMove && (
+              <button type="button" className="sheet-item" disabled={busy} onClick={() => setMoving(true)}>
+                <IconMoveTime />
+                {copy.booking.reschedule}
+              </button>
+            )}
             <button
               type="button"
               className="sheet-item sheet-danger"

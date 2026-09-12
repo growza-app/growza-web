@@ -1,0 +1,203 @@
+/* ---------- move a booking to another time (Jira GRW-219) ---------- */
+
+/*
+ * This sheet borrows the walk-in sheet's `wi-*` vocabulary for everything the
+ * two genuinely share — the scrolling body, the day chips, the slot grid, the
+ * error line, the action row.
+ *
+ * That prefix now means "the sheet vocabulary GRW-199 established", not
+ * "walk-in only": the same classes already dress both the `now` and the
+ * `later` halves of `NewVisitSheet`, which are different flows. Restyling
+ * identical widgets under a second prefix would be a second opinion about one
+ * control, and the two would drift the first time either was touched. Renaming
+ * the prefix outright is worth doing and is not this story's change — it would
+ * touch a 1,000-line component and the device spec beside it for no behaviour.
+ *
+ * Only what is actually NEW here gets `mv-`.
+ */
+
+/*
+ * The escape hatch: any time at all, including one that is already taken.
+ *
+ * The reason the whole sheet is not just the free-times grid in a drawer. The
+ * availability endpoint clamps to an hour's notice and only returns unbooked
+ * times, so at 3:30 on a running-late afternoon it cannot offer 3:45 — which
+ * is the everyday request, not the edge case.
+ */
+.mv-any-time {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+/*
+ * Sized like the attendance register's time field, because it is the same
+ * control doing the same job and a salon uses both in one shift.
+ *
+ * A fixed width rather than `flex: 1`: `input[type=time]` renders its own
+ * spinner and AM/PM control inside a shadow root, and a percentage width lets
+ * the browser clip that on a narrow phone — the failure GRW-208 chased, where
+ * "09:00 AM" arrived on screen as "09:00 AN". Nothing automated catches it,
+ * because `scrollWidth` reports the box and not what is drawn in it.
+ */
+.mv-any-time input {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 9px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  background: #fbfcfb;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  width: 128px;
+  flex: none;
+}
+
+.mv-any-time input:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mv-any-hint {
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+/*
+ * Amber, and deliberately the same amber as `.wi-overlap`.
+ *
+ * The difference between them is WHEN, not what: the walk-in sheet reports an
+ * overlap that has already happened, this one warns about an overlap about to
+ * be created. Giving the same fact two colours would suggest they are two
+ * different kinds of thing.
+ *
+ * Not red, because nothing has failed and nothing is being refused — the
+ * button beside it changes its own words to "Move anyway" and the move goes
+ * through. This is the product telling the receptionist what they are about to
+ * do, which is the whole of the owner's rule: never restricted, always told.
+ */
+.mv-clash {
+  margin: 12px 0 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+}
+
+/*
+ * Below 360px the hint drops under the field rather than squeezing beside it.
+ *
+ * A Fold shut is 344px, which is narrower than an iPhone SE, and a 128px time
+ * field plus a sentence does not fit — the sentence would wrap to one or two
+ * words a line and push the action row off the sheet.
+ */
+@media (max-width: 360px) {
+  .mv-any-hint {
+    flex-basis: 100%;
+  }
+}
+
+/*
+ * A phone held sideways, and what a wrapping chip row costs there.
+ *
+ * `.sheet` caps at `86vh`. On a 320px-tall viewport that is 275px of sheet,
+ * and the seven wrapped day chips took ALL of it: the device sweep's 568x320
+ * screenshot showed the title, the day row cut off mid-second-line, and then
+ * the footer. Everything the screen is for — the free-slot grid, the stylist
+ * chips, and the "Another time" field that is the entire reason this sheet is
+ * not just the free-times page in a drawer — was below a scroll nobody would
+ * think to make in a 90px-tall region.
+ *
+ * So below 560px of height the day row stops wrapping and scrolls sideways
+ * instead. One row of chips is ~46px where two were ~100, which is the
+ * difference between "the time field is on screen" and "it is not".
+ *
+ * A HEIGHT query, which is the kind this repo added to its matrix and then
+ * almost never writes. Width was never the problem here: 568px is wider than
+ * most phones in portrait, where this same sheet is comfortable.
+ */
+@media (max-height: 560px) {
+  /*
+   * Full height, not a sheet.
+   *
+   * At 320px of viewport the 86vh cap leaves 275px, and the 45px of blurred
+   * page it politely reveals above is 45px this screen cannot spare. A bottom
+   * sheet is an affordance for "the page is still there behind me", which is
+   * worth nothing when the thing in front cannot fit its own controls.
+   *
+   * `dvh` rather than `vh` on purpose: mobile Safari's `vh` is the address
+   * bar's largest guess, so `100vh` would push the footer under the browser
+   * chrome — the one place a full-height sheet is worse than a capped one.
+   */
+  .move-sheet {
+    top: 0;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .move-sheet .wi-body {
+    max-height: calc(100dvh - 96px);
+  }
+
+  .move-sheet .mv-days {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* Momentum scrolling without a visible bar eating one of the 275px. */
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .move-sheet .mv-days::-webkit-scrollbar {
+    display: none;
+  }
+
+  .move-sheet .mv-days .wi-chip {
+    flex: none;
+  }
+
+  /* Section labels lose their generous top margin; four of them at 14px each
+     is another 40px of a screen that has barely 300. */
+  .move-sheet .wi-section-label {
+    margin-top: 10px;
+  }
+
+  /*
+   * The slot grid gets a ceiling and scrolls inside it.
+   *
+   * Without one, a day with eighteen free half-hours is eighteen cells of grid
+   * — several hundred pixels — and everything under it (the time field, the
+   * stylist chips, the clash warning) is pushed off a screen that has none to
+   * give. Capped, the receptionist sees four rows of times and can still reach
+   * the two controls that do the work.
+   */
+  .move-sheet .wi-slot-grid {
+    max-height: 116px;
+    overflow-y: auto;
+  }
+}
+
+/*
+ * The empty state, sized for a sheet rather than for a page.
+ *
+ * `.empty` is the shell's own, tuned for a screen-sized region: in a bottom
+ * sheet its generous vertical padding put "Nothing free that day" alone in the
+ * middle of the one area a person needs to scroll past. Shrunk here rather than
+ * globally — on a full page that spacing is right, and this is the first place
+ * it is used inside a sheet.
+ */
+.move-sheet .empty {
+  padding: 16px 0;
+  font-size: 13px;
+}
+
+@media (max-height: 560px) {
+  .move-sheet .empty {
+    padding: 8px 0;
+  }
+}
