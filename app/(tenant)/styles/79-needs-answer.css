@@ -1,0 +1,97 @@
+/* ---------- the day's unanswered bookings (Jira GRW-214) ---------- */
+
+/*
+ * A strip, not a KPI tile.
+ *
+ * The KPI row above it is a designed 2x2-plus-one (GRW-46/47) and a sixth card
+ * reflows it at every breakpoint in the matrix. More to the point, the four
+ * tiles are statistics and this is a thing to do — a row with a verb in it
+ * reads as work, and a tile with a number in it reads as a fact about the day.
+ */
+.bk-needs-answer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  margin-bottom: 12px;
+  border: 1px solid #f0d9a8;
+  border-radius: var(--radius-md);
+  background: #fdf8ec;
+  color: #6b5423;
+}
+
+.bk-needs-answer svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  color: #b8860b;
+}
+
+/*
+ * `min-width: 0` on the text, so the button keeps its words at 320px instead
+ * of being squeezed to an ellipsis. The count is the part that must survive a
+ * narrow screen — the sentence around it can wrap.
+ */
+.bk-needs-answer-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.bk-needs-answer-btn {
+  flex: none;
+  border: 1px solid #e0c489;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 13px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #6b5423;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bk-needs-answer-btn:hover {
+  border-color: #c9a961;
+  background: #fffdf7;
+}
+
+/*
+ * Below 420px the button drops to its own line rather than fighting the
+ * sentence for width. Both keep their words; neither is truncated.
+ */
+@media (max-width: 420px) {
+  .bk-needs-answer {
+    flex-wrap: wrap;
+  }
+
+  .bk-needs-answer-text {
+    flex: 1 1 100%;
+  }
+
+  .bk-needs-answer-btn {
+    margin-left: 27px;
+  }
+}
+
+/*
+ * The same strip, saying the filter is ON rather than offering to turn it on.
+ * Cooler than the amber prompt: the work is in progress, not waiting.
+ */
+.bk-needs-answer-active {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.bk-needs-answer-active svg {
+  color: var(--muted);
+}
+
+.bk-needs-answer-active .bk-needs-answer-btn {
+  border-color: var(--border);
+  color: var(--text);
+}

@@ -320,6 +320,21 @@ export const copy = {
     // column header for this same field.
     statusLabel: 'Status',
     allStatuses: 'All bookings',
+    /*
+     * Jira GRW-214 — the same fact, worded for who is reading it.
+     *
+     * The receptionist has something to do; the stylist has something to ask
+     * about. One sentence for both would have to be vague enough to fit
+     * neither — and the plainer word wins here, so it is "not marked" rather
+     * than "unsettled" or "pending outcome".
+     */
+    needsAnswer: (n: number, viewerIsStaff: boolean) =>
+      viewerIsStaff
+        ? `${n} of your ${n === 1 ? 'bookings has' : 'bookings have'} finished and ${n === 1 ? 'is' : 'are'} not marked`
+        : `${n} ${n === 1 ? 'booking has' : 'bookings have'} finished and ${n === 1 ? 'is' : 'are'} not marked yet`,
+    needsAnswerAction: 'Show them',
+    needsAnswerActive: (n: number) => `Showing ${n} not marked`,
+    needsAnswerClear: 'Show all',
     sort: 'Order',
     oldestFirst: 'Oldest first',
     newestFirst: 'Newest first',
