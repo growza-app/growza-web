@@ -685,6 +685,17 @@ export const copy = {
     neverVisitedShort: (n: number, pct: number) => `${n} (${pct}%) never been in`,
     showingAll: 'Showing everyone',
     clearFilter: 'Show everyone',
+    /*
+     * Jira GRW-207 — one number, one noun.
+     *
+     * This value was rendered as "2 bookings" on the list and "2 visits" in the
+     * walk-in picker, while also deciding "Returning clients" and "Repeat rate".
+     * It counts times the client has been in, so "visits" is the true word and
+     * the other three sites now use this.
+     */
+    visitCount: (n: number) => `${n} ${n === 1 ? 'visit' : 'visits'}`,
+    visitsColumn: 'Visits',
+    visitsCsvHeader: 'Total visits',
     segments: {
       active: { label: 'Coming in', range: '0–30 days' },
       due: { label: 'Due a visit', range: '31–45 days' },

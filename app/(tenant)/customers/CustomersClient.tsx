@@ -255,7 +255,7 @@ export function CustomersClient({
   const visibleRows = page.rows.slice(0, pageSize);
 
   const exportCsv = () => {
-    const header = ['Name', 'Phone', 'Last booking', 'Last service', 'Total bookings', 'Total spent', 'Last seen'];
+    const header = ['Name', 'Phone', 'Last booking', 'Last service', copy.clients.visitsCsvHeader, 'Total spent', 'Last seen'];
     const rows = page.rows.map((c) => [
       c.name ?? '',
       formatPhone(c.waPhone),
@@ -441,7 +441,7 @@ export function CustomersClient({
                   <SortableTh col="name" label="Customer" sort={sort} direction={direction} onSort={setSortColumn} />
                   <th>Phone / WhatsApp</th>
                   <th>Last booking</th>
-                  <SortableTh col="visits" label="Bookings" sort={sort} direction={direction} onSort={setSortColumn} numeric />
+                  <SortableTh col="visits" label={copy.clients.visitsColumn} sort={sort} direction={direction} onSort={setSortColumn} numeric />
                   <SortableTh col="spent" label="Total spent" sort={sort} direction={direction} onSort={setSortColumn} numeric />
                   <SortableTh col="recent" label="Last seen" sort={sort} direction={direction} onSort={setSortColumn} />
                 </tr>
@@ -491,7 +491,7 @@ export function CustomersClient({
                     </div>
                   </div>
                   <div className="cust-card-foot">
-                    <span>{c.totalBookings} bookings</span>
+                    <span>{copy.clients.visitCount(c.totalBookings)}</span>
                     <span>{formatMoney(c.totalSpentMinor)} spent</span>
                   </div>
                 </div>
