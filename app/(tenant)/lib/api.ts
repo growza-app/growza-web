@@ -44,6 +44,7 @@ export * from './report-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
+import type { MyEarnings } from './api-types.js';
 import type {
   ActivityEvent,
   Appointment,
@@ -393,6 +394,16 @@ export const api = {
     get<ProviderDay>(
       `/api/v1/provider-day${providerId || date ? `?${new URLSearchParams({ ...(providerId ? { providerId } : {}), ...(date ? { date } : {}) })}` : ''}`,
     ),
+  /*
+   * Jira GRW-216 — takes no provider id, deliberately. The route reads the one
+   * on the caller's own session, so asking for a colleague's earnings is not a
+   * check the frontend could forget — it is a request that cannot be made.
+   *
+   * 403 when the owner has not turned this on for them, which the caller must
+   * distinguish from zero earnings: a stylist on revenue share who saw a blank
+   * would reasonably conclude none of their work had been recorded.
+   */
+  myEarnings: () => get<MyEarnings>('/api/v1/my-earnings'),
   allServices: () => get<ServiceAdmin[]>('/api/v1/services/all'),
   serviceCategories: () => get<ServiceCategory[]>('/api/v1/service-categories'),
   createService: (body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', body),
@@ -439,6 +450,8 @@ export const api = {
       hiredAt?: string | null;
       active?: boolean;
       usesOrgHours?: boolean;
+      /** Jira GRW-216 — absent leaves it alone; the server COALESCEs. */
+      seesOwnRevenue?: boolean;
     },
   ) => patch<ProviderDetail>(`/api/v1/providers/${id}`, body),
   updateProviderWorkingHours: (id: string, workingHours: ProviderWorkingHourRow[]) =>

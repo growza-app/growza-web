@@ -291,6 +291,20 @@ export const copy = {
     minutes: (n: number) => `${n} min`,
   },
 
+  /*
+   * Jira GRW-216 — the owner's switch for one stylist's earnings visibility.
+   *
+   * Plain words, because this switch decides whether somebody can check their
+   * own pay. "Show their own earnings" says what happens; "revenue visibility"
+   * would make the owner guess.
+   */
+  staffEdit: {
+    seesOwnRevenue: 'Show their own earnings',
+    revenueOnHint:
+      'They can see the money their own bookings brought in \u2014 today and this month. Never anybody else\u2019s, and never the salon\u2019s total.',
+    revenueOffHint:
+      'They see their schedule only, no money. Turn this on for anyone paid a share of what their chair takes.',
+  },
   staff: {
     subtitle: (used: number, allowed: number) => `${used} of ${allowed} people on your plan.`,
     name: 'Name',
@@ -334,6 +348,14 @@ export const copy = {
         : `${n} ${n === 1 ? 'booking has' : 'bookings have'} finished and ${n === 1 ? 'is' : 'are'} not marked yet`,
     needsAnswerAction: 'Show them',
     needsAnswerActive: (n: number) => `Showing ${n} not marked`,
+    /*
+     * Jira GRW-216 — "your", every time. On a revenue share this is the
+     * stylist's pay, and the words have to make unmistakable that it is their
+     * own chair and nobody else's.
+     */
+    yourEarnings: 'Your earnings',
+    earningsToday: (n: number) => `Today \u00b7 ${n} ${n === 1 ? 'visit' : 'visits'}`,
+    earningsMonth: (n: number) => `This month \u00b7 ${n} ${n === 1 ? 'visit' : 'visits'}`,
     needsAnswerClear: 'Show all',
     sort: 'Order',
     oldestFirst: 'Oldest first',

@@ -1,0 +1,63 @@
+/* ---------- a stylist's own takings (Jira GRW-216) ---------- */
+
+/*
+ * Rendered only for the person whose chair it is, and only when the owner has
+ * turned it on for them. Above the day's KPIs, because for somebody paid a
+ * share of what their chair takes this is the number they opened the app for.
+ *
+ * Deliberately quiet rather than celebratory: it is a payslip, not a score. The
+ * staff leaderboard is a different feature with different manners.
+ */
+.bk-earnings {
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.bk-earnings-head {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/*
+ * Two columns that become two rows when there is no room for both amounts.
+ * A currency figure must never be the thing that gets an ellipsis.
+ */
+.bk-earnings-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+}
+
+.bk-earnings-slice {
+  min-width: 0;
+}
+
+.bk-earnings-amount {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1.15;
+}
+
+.bk-earnings-label {
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Below 360px the two figures stack, so neither amount is squeezed. */
+@media (max-width: 360px) {
+  .bk-earnings-figures {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

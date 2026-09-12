@@ -68,6 +68,13 @@ export function StaffEditClient({
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set(detail.serviceIds));
   const [hourRows, setHourRows] = useState<WeekdayRow[]>(() => toWeekdayRows(detail.workingHours));
   const [usesOrgHours, setUsesOrgHours] = useState(detail.usesOrgHours);
+  /*
+   * Jira GRW-216 — whether THIS person is shown the takings from their own
+   * chair. Per stylist because one salon runs revenue-share and salaried staff
+   * side by side, often at once: a senior on a percentage beside a junior on a
+   * wage. A setting keyed on the role would have to be right for both.
+   */
+  const [seesOwnRevenue, setSeesOwnRevenue] = useState(detail.seesOwnRevenue);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +95,7 @@ export function StaffEditClient({
     setSelectedServiceIds(new Set(d.serviceIds));
     setHourRows(toWeekdayRows(d.workingHours));
     setUsesOrgHours(d.usesOrgHours);
+    setSeesOwnRevenue(d.seesOwnRevenue);
   };
 
   const aboutDirty =
@@ -97,11 +105,12 @@ export function StaffEditClient({
     active !== detail.active;
   const skillsDirty = !setsEqual(selectedServiceIds, new Set(detail.serviceIds));
   const orgHoursDirty = usesOrgHours !== detail.usesOrgHours;
+  const revenueDirty = seesOwnRevenue !== detail.seesOwnRevenue;
   const availabilityDirty = unavailableToday !== detail.unavailableToday;
   // While "Same as the business" is on the rows are a read-only preview of the org
   // week, so there is nothing of the user's own in them to be dirty about.
   const hoursDirty = !usesOrgHours && !rowsEqual(hourRows, toWeekdayRows(detail.workingHours));
-  const dirty = aboutDirty || skillsDirty || hoursDirty || orgHoursDirty || availabilityDirty;
+  const dirty = aboutDirty || skillsDirty || hoursDirty || orgHoursDirty || revenueDirty || availabilityDirty;
 
   const updateHourRow = (weekday: number, patch: Partial<WeekdayRow>) => {
     setHourRows((prev) => prev.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r)));
@@ -155,7 +164,10 @@ export function StaffEditClient({
     setSaved(false);
     try {
       const calls: Array<Promise<unknown>> = [];
-      if (aboutDirty || orgHoursDirty) {
+      // Jira GRW-216 — `revenueDirty` belongs here too. Without it, flipping
+      // only the earnings switch marked the form dirty, enabled Save, sent
+      // nothing, and silently reverted on reload.
+      if (aboutDirty || orgHoursDirty || revenueDirty) {
         calls.push(
           api.updateProviderProfile(detail.id, {
             displayName: displayName.trim(),
@@ -165,6 +177,7 @@ export function StaffEditClient({
             title: title.trim() || null,
                   active,
             usesOrgHours,
+            seesOwnRevenue,
           }),
         );
       }
@@ -326,6 +339,29 @@ export function StaffEditClient({
                     if (fieldErrors.phone) setFieldErrors((f) => ({ ...f, phone: undefined }));
                   }}
                 />
+              </div>
+            </section>
+
+            <section className="card edit-card">
+              <div className="edit-card-head">
+                <div className="edit-card-title">Earnings</div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={seesOwnRevenue}
+                    disabled={busy}
+                    onChange={(e) => { setSeesOwnRevenue(e.target.checked); setSaved(false); }}
+                  />
+                  <span className="switch-track">
+                    <span className="switch-thumb" />
+                  </span>
+                  <span className={seesOwnRevenue ? 'switch-label-on' : 'switch-label-off'}>
+                    {copy.staffEdit.seesOwnRevenue}
+                  </span>
+                </label>
+              </div>
+              <div className="field-hint">
+                {seesOwnRevenue ? copy.staffEdit.revenueOnHint : copy.staffEdit.revenueOffHint}
               </div>
             </section>
 

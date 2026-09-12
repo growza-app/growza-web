@@ -105,7 +105,18 @@ export default async function AppointmentsPage({
   // server-side pass and a client-side control that can disagree. The KPI row
   // therefore keeps showing the day's real totals while the list narrows —
   // the same split search and the staff filter already use.
-  const [appointments, capacity] = await Promise.all([
+  /*
+   * Jira GRW-216 — a stylist's own takings, when the owner has turned that on
+   * for them.
+   *
+   * `.catch(() => null)` because the route 403s for a salaried stylist and 404s
+   * for an owner, and neither is an error worth a broken page: both simply mean
+   * "there is nothing of this kind to show you". The difference between 403 and
+   * zero earnings still matters to the person reading it, which is why the
+   * route refuses rather than answering zero — the card is just absent, not
+   * showing a zero that would look like unrecorded work.
+   */
+  const [appointments, capacity, earnings] = await Promise.all([
     api.appointments(date, toDate, undefined, customerId).catch(() => [] as Appointment[]),
     /**
      * Jira GRW-63 · GRW-168 — the busy figure's denominator, from the same
@@ -119,6 +130,7 @@ export default async function AppointmentsPage({
      * than falling back to a number nobody can account for.
      */
     api.capacity(date, toDate).catch(() => null),
+    api.myEarnings().catch(() => null),
   ]);
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
   // A multi-day range is never "today", even when it starts today — the
@@ -194,6 +206,7 @@ export default async function AppointmentsPage({
           initialSort={sort}
           initialStaff={staff}
           viewerIsStaff={me.member?.role === 'staff'}
+          earnings={earnings}
           capacityMin={capacity?.minutes ?? null}
         />
       </div>

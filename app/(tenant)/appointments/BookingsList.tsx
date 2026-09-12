@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { formatMoney, formatTime, type Appointment, type Provider } from '../lib/api';
+import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
 import { copy } from '../lib/copy';
 import { clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
@@ -124,6 +124,7 @@ export function BookingsList({
   initialStaff,
   initialSort,
   viewerIsStaff,
+  earnings,
   capacityMin,
 }: {
   appointments: Appointment[];
@@ -160,6 +161,8 @@ export function BookingsList({
    * the reader, are noise that reads as a team view.
    */
   viewerIsStaff: boolean;
+  /** Jira GRW-216 — null when the owner has not shown this stylist their takings, or the viewer is not one. */
+  earnings?: MyEarnings | null;
   /**
    * Jira GRW-63 · GRW-168 — minutes this roster is actually rostered for over
    * the range on screen, from `working_hours` minus `time_block`.
@@ -468,6 +471,38 @@ export function BookingsList({
 
   return (
     <>
+      {/*
+        * Jira GRW-216 — the stylist's own takings.
+        *
+        * Only rendered when the route answered, which is only when the owner
+        * turned it on for THIS person. A salaried stylist gets no card rather
+        * than a zero — showing ₹0 to somebody paid a wage invites them to think
+        * their work went unrecorded, which is the exact anxiety this feature
+        * exists to remove for the people on a share.
+        *
+        * Above the day's KPIs because for somebody on revenue share it is the
+        * number they opened the app for.
+        */}
+      {earnings && (
+        <div className="bk-earnings">
+          <div className="bk-earnings-head">{copy.bookings.yourEarnings}</div>
+          <div className="bk-earnings-figures">
+            <div className="bk-earnings-slice">
+              <div className="bk-earnings-amount">{formatMoney(earnings.today.revenueMinor)}</div>
+              <div className="bk-earnings-label">
+                {copy.bookings.earningsToday(earnings.today.bookings)}
+              </div>
+            </div>
+            <div className="bk-earnings-slice">
+              <div className="bk-earnings-amount">{formatMoney(earnings.thisMonth.revenueMinor)}</div>
+              <div className="bk-earnings-label">
+                {copy.bookings.earningsMonth(earnings.thisMonth.bookings)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/*
         * Jira GRW-214 — one strip, two audiences, no new permission.
         *

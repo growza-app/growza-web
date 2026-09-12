@@ -113,7 +113,19 @@ describe('AC-05 / BR-02 — the nav agrees with the API', () => {
       .filter((entry) => entry.startsWith('GET '))
       .map((entry) => entry.slice('GET '.length));
     // These are data the scoped pages need, not destinations of their own.
-    const supporting = ['/api/v1/me', '/api/v1/services', '/api/v1/services/all', '/api/v1/service-categories', '/api/v1/offers', '/api/v1/offers/all', '/api/v1/offers/:id', '/api/v1/providers', '/api/v1/provider-day', '/api/v1/capacity'];
+    const supporting = [
+      '/api/v1/me', '/api/v1/services', '/api/v1/services/all', '/api/v1/service-categories',
+      '/api/v1/offers', '/api/v1/offers/all', '/api/v1/offers/:id', '/api/v1/providers',
+      '/api/v1/provider-day', '/api/v1/capacity',
+      /*
+       * Jira GRW-216 — read by the Bookings screen, which IS a stylist's nav
+       * destination; it is not a page of its own. Stated here rather than left
+       * to fail, which is what this assertion is for: a route granted with no
+       * way to reach it is dead permission, and the last one removed from this
+       * allowlist (`POST /customers`) came out for exactly that.
+       */
+      '/api/v1/my-earnings',
+    ];
     const unexplained = staffAllowed.filter((r) => !supporting.includes(r) && !visibleItems(NAV, 'staff').some((i) => `/api/v1${i.href}` === r));
     expect(unexplained, 'staff-allowed routes with no nav destination and no stated reason').toEqual([]);
   });

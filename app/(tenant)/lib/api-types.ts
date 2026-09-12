@@ -203,6 +203,8 @@ export interface ProviderDetail {
   active: boolean;
   /** True when workingHours below is a synced copy of the organization's default hours rather than this provider's own — the drawer shows it read-only. */
   usesOrgHours: boolean;
+  /** Jira GRW-216 — is this stylist shown the takings from their own bookings. */
+  seesOwnRevenue: boolean;
   /** Manual "off today" override — the same switch the roster row carries. */
   unavailableToday: boolean;
   workingHours: ProviderWorkingHourRow[];
@@ -552,4 +554,16 @@ export interface ChairsNow {
   chairs: ChairNow[];
   /** Minutes after a booking starts before it may be called a no-show. */
   graceMin: number;
+}
+
+/** Jira GRW-216 — one stylist's own takings, when the owner has chosen to show them. */
+export interface EarningsSlice {
+  bookings: number;
+  /** Minor units as a string: this is somebody's pay and must not round through a float. */
+  revenueMinor: string;
+}
+
+export interface MyEarnings {
+  today: EarningsSlice;
+  thisMonth: EarningsSlice;
 }
