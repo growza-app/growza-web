@@ -1,0 +1,253 @@
+/* ---------- the week, as few rows as it has answers (Jira GRW-201) ---------- */
+
+/*
+ * Board 5c. Replaces `.weekday-hours-*` — seven near-identical lines, of which
+ * only the one that differs carried information.
+ *
+ * Grid, not flex: the switch, the day strip, the times and the split control
+ * have to line up DOWN the column as well as across, and a flex row lines up
+ * only across. With three rows of different content, ragged columns are what
+ * made the old seven-row version hard to scan even before the repetition.
+ */
+.wk-row {
+  display: grid;
+  /*
+   * Named areas rather than counted columns.
+   *
+   * The first version gave three columns to four children, so on a phone the
+   * times wrapped into the strip's cell and the strip collapsed to a single
+   * visible letter — a row that said "S" and nothing else. Counting columns is
+   * what made that possible to write and hard to see; naming the areas makes
+   * the mobile layout below a re-statement rather than an arithmetic change.
+   */
+  grid-template-columns: auto minmax(150px, auto) minmax(0, 1fr) auto;
+  grid-template-areas: 'sw days times split';
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.wk-switch {
+  grid-area: sw;
+}
+
+.wk-days {
+  grid-area: days;
+}
+
+.wk-times {
+  grid-area: times;
+}
+
+.wk-split {
+  grid-area: split;
+}
+
+.wk-row:first-of-type {
+  border-top: none;
+}
+
+.wk-row-disabled {
+  opacity: 0.55;
+}
+
+.wk-row-disabled input[type='time'] {
+  cursor: not-allowed;
+}
+
+/* ---------- the day strip ---------- */
+
+/*
+ * Seven fixed positions, every row, with this row's days filled.
+ *
+ * The board asks for initials rather than words, and initials alone cannot be
+ * read: T is Tuesday and Thursday, S is Saturday and Sunday, so a row labelled
+ * "S" says nothing. Position is the channel that works — the same seven slots
+ * in the same order on every row, so a shape is recognised rather than a
+ * sentence parsed. That is the whole point of the low-literacy brief.
+ */
+.wk-days {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.wk-days-strip {
+  display: flex;
+  gap: 3px;
+}
+
+.wk-day {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  /* The unfilled days are still legible, not invisible: the strip has to read
+     as "these of the seven", which needs the seven to be there. */
+  color: var(--muted);
+  background: var(--slate-soft);
+}
+
+.wk-day.is-on {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* A day off keeps the strip's shape and drops its colour — the row's meaning
+   is carried by the glyph and the word beside it, never by this alone. */
+.wk-row-off .wk-day.is-on {
+  background: #cfd8d2;
+  color: #3d4a43;
+}
+
+/*
+ * The words, under the letters.
+ *
+ * Small deliberately: it is the fallback for anyone the strip does not reach,
+ * and the confirmation for everyone else. Making it the primary label would
+ * put "Monday to Saturday" back as the thing to read, which is what the strip
+ * exists to replace.
+ */
+.wk-days-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- the times ---------- */
+
+.wk-times {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.wk-glyph {
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--accent-deep);
+}
+
+.wk-glyph svg {
+  width: 16px;
+  height: 16px;
+}
+
+/*
+ * Chrome draws its own clock inside `input[type='time']`, so the row rendered
+ * THREE clocks: the semantic one this design asks for, and one inside each
+ * input. Hidden, because the glyph that means "this is a working day" is the
+ * one at the start of the row — the two inside the fields meant nothing and
+ * ate the width that clipped "09:00 AM" to "09:00 AI".
+ *
+ * Tapping the field still opens the picker; only the icon goes.
+ */
+.wk-times input[type='time']::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+/*
+ * 20px, from the board.
+ *
+ * It is also above iOS Safari's 16px threshold, below which focusing an input
+ * zooms the whole page — the old editor's times were 13px and did exactly
+ * that, on the screen where somebody is most likely to be tapping through
+ * seven of them on a phone.
+ */
+.wk-times input[type='time'] {
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* Bordered only on interaction: at 20px the times are the row's content, and a
+   box around each one turns a readable week into a form. */
+.wk-times input[type='time']:hover:not(:disabled),
+.wk-times input[type='time']:focus {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.wk-dash {
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.wk-closed {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wk-closed .wk-glyph {
+  color: var(--muted);
+}
+
+/* ---------- splitting a group ---------- */
+
+.wk-split {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wk-split:hover {
+  color: var(--text);
+  border-color: #b9c2bb;
+}
+
+.wk-regroup {
+  margin-top: 10px;
+}
+
+/*
+ * On a phone the row becomes two columns and three lines.
+ *
+ * Four things do not fit across 390px: the switch, seven day circles, two 20px
+ * times and a worded button need about 520px between them. So the switch keeps
+ * the left column and everything else stacks beside it — which also gives the
+ * times the full remaining width, and "09:00 AM" at 20px needs ~110px each.
+ *
+ * The split control keeps its words rather than becoming an icon: "Set one day
+ * differently" is not a thing anybody guesses from a glyph.
+ */
+@media (max-width: 640px) {
+  .wk-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'sw days'
+      '. times'
+      '. split';
+    row-gap: 8px;
+    align-items: start;
+  }
+
+  .wk-split {
+    justify-self: start;
+  }
+}
