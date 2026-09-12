@@ -27,6 +27,7 @@ export const KNOWN_ACTIONS = [
   // because they happen days apart: the request is reversible for the length
   // of the grace period, the completion is not.
   'customer.erasure_requested',
+  'customer.erasure_cancelled',
   'customer.erased',
   'business.create',
   'business.activate',
