@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { copy } from '../lib/copy.js';
+import { visitNeedsAnswer } from '../lib/appointment-display.js';
 
 /**
  * Jira GRW-214 — the bookings nobody has said anything about.
@@ -27,16 +28,31 @@ interface Row {
   endAt: string;
 }
 
-/** The same predicate the component applies, so these cases describe its behaviour. */
-const needsAnswer = (rows: Row[], now: Date) =>
-  rows.filter((b) => b.status === 'confirmed' && new Date(b.endAt).getTime() <= now.getTime());
+/** A visit: one or more legs sharing a booking group. */
+interface Visit {
+  appointments: Row[];
+  endAt: string;
+}
+
+const visit = (legs: Row[]): Visit => ({ appointments: legs, endAt: legs[legs.length - 1]!.endAt });
+
+/**
+ * THE function the component calls, not a copy of its rules.
+ *
+ * It used to be a closure inside `BookingsList` and these tests re-derived the
+ * predicate locally — so when the settled-leg bug was introduced, every
+ * behavioural case here passed against its own correct copy and only a
+ * source-text assertion caught it. A rule worth testing is worth exporting.
+ */
+const needsAnswer = (visits: Visit[], now: Date) =>
+  visits.filter((v) => visitNeedsAnswer(v as never, now));
 
 const NOW = new Date('2026-09-12T15:00:00+05:30');
 const at = (hhmm: string) => `2026-09-12T${hhmm}:00+05:30`;
 
 describe('what counts as needing an answer', () => {
   it('counts a confirmed booking whose time has passed', () => {
-    expect(needsAnswer([{ status: 'confirmed', endAt: at('14:30') }], NOW)).toHaveLength(1);
+    expect(needsAnswer([visit([{ status: 'confirmed', endAt: at('14:30') }])], NOW)).toHaveLength(1);
   });
 
   it('does not count one that is still running', () => {
@@ -45,38 +61,90 @@ describe('what counts as needing an answer', () => {
      * 15:30 is in progress — asking the receptionist to settle it while the
      * customer is in the chair is how a prompt teaches people to ignore it.
      */
-    expect(needsAnswer([{ status: 'confirmed', endAt: at('15:30') }], NOW)).toHaveLength(0);
+    expect(needsAnswer([visit([{ status: 'confirmed', endAt: at('15:30') }])], NOW)).toHaveLength(0);
   });
 
   it('treats the exact end moment as needing an answer', () => {
     // <= rather than <: at 15:00 sharp the booking is over.
-    expect(needsAnswer([{ status: 'confirmed', endAt: at('15:00') }], NOW)).toHaveLength(1);
+    expect(needsAnswer([visit([{ status: 'confirmed', endAt: at('15:00') }])], NOW)).toHaveLength(1);
   });
 
   it('ignores anything already settled', () => {
-    const rows = [
-      { status: 'completed', endAt: at('10:00') },
-      { status: 'no_show', endAt: at('11:00') },
-      { status: 'cancelled', endAt: at('12:00') },
+    const visits = [
+      visit([{ status: 'completed', endAt: at('10:00') }]),
+      visit([{ status: 'no_show', endAt: at('11:00') }]),
+      visit([{ status: 'cancelled', endAt: at('12:00') }]),
     ];
-    expect(needsAnswer(rows, NOW)).toHaveLength(0);
+    expect(needsAnswer(visits, NOW)).toHaveLength(0);
   });
 
   it('counts several, and only the unsettled ones', () => {
-    const rows = [
-      { status: 'confirmed', endAt: at('10:00') },
-      { status: 'completed', endAt: at('11:00') },
-      { status: 'confirmed', endAt: at('12:00') },
-      { status: 'confirmed', endAt: at('16:00') },
+    const visits = [
+      visit([{ status: 'confirmed', endAt: at('10:00') }]),
+      visit([{ status: 'completed', endAt: at('11:00') }]),
+      visit([{ status: 'confirmed', endAt: at('12:00') }]),
+      visit([{ status: 'confirmed', endAt: at('16:00') }]),
     ];
-    expect(needsAnswer(rows, NOW)).toHaveLength(2);
+    expect(needsAnswer(visits, NOW)).toHaveLength(2);
   });
 
-  it('is asserted in the source, so startAt cannot creep back in', () => {
-    const i = source.indexOf('const isUnmarked =');
-    const block = source.slice(i, i + 200);
-    expect(block).toContain('endAt');
-    expect(block, 'a running booking is not overdue').not.toContain('startAt');
+  it('a checked-out multi-service visit is NOT counted, even though a leg stays confirmed', () => {
+    /*
+     * Jira GRW-217 — the bug the owner's end-to-end QA found.
+     *
+     * Checkout settles ONE leg of a visit: it puts the whole payment on that
+     * leg and leaves the others `confirmed`, which is what stops revenue
+     * double-counting. `groupStatus` returns `confirmed` when ANY leg is, so a
+     * cut-and-facial paid in full read as unsettled and this strip told the
+     * receptionist to mark a visit they had just taken ₹1,100 for.
+     *
+     * Worse for the stylist: chasing an already-settled booking is precisely
+     * what teaches them to stop trusting the prompt, and that trust is the
+     * whole control.
+     */
+    const paidVisit = visit([
+      { status: 'completed', endAt: at('13:30') },
+      { status: 'confirmed', endAt: at('14:30') },
+    ]);
+    expect(needsAnswer([paidVisit], NOW)).toHaveLength(0);
+  });
+
+  it('still counts a multi-service visit where NOTHING was settled', () => {
+    const untouched = visit([
+      { status: 'confirmed', endAt: at('13:30') },
+      { status: 'confirmed', endAt: at('14:30') },
+    ]);
+    expect(needsAnswer([untouched], NOW)).toHaveLength(1);
+  });
+
+  it('does not count a visit where one leg was a no-show', () => {
+    // Somebody made a judgement about this sitting. It has an answer.
+    const partlyMissed = visit([
+      { status: 'no_show', endAt: at('13:30') },
+      { status: 'confirmed', endAt: at('14:30') },
+    ]);
+    expect(needsAnswer([partlyMissed], NOW)).toHaveLength(0);
+  });
+
+  it('the component delegates rather than growing its own copy of the rule', () => {
+    /*
+     * The only source-text assertion left, and the one worth keeping. The
+     * behaviour above is now tested directly against `visitNeedsAnswer`; this
+     * guards against the predicate being reimplemented inline later, which is
+     * how the copy these tests used to check drifted from the code in the
+     * first place.
+     */
+    expect(source).toMatch(/const isUnmarked = \(b: BookingGroup\) => visitNeedsAnswer\(b, now\);/);
+    expect(source, 'no inline status arithmetic').not.toMatch(/isUnmarked[\s\S]{0,80}b\.status === 'confirmed'/);
+  });
+
+  it('reads endAt, never startAt — a visit still running is not overdue', () => {
+    /*
+     * Tested through the function rather than asserted against its text: a
+     * visit that started long ago and has not finished must not be counted.
+     */
+    expect(needsAnswer([visit([{ status: 'confirmed', endAt: at('23:00') }])], NOW)).toHaveLength(0);
+    expect(needsAnswer([visit([{ status: 'confirmed', endAt: at('09:00') }])], NOW)).toHaveLength(1);
   });
 
   it('counts and filters through ONE predicate, so the strip cannot promise a different number from what it opens', () => {

@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
+import { visitNeedsAnswer } from '../lib/appointment-display';
 import { copy } from '../lib/copy';
 import { clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
@@ -225,9 +226,28 @@ export function BookingsList({
     );
   const matchesStaff = (b: BookingGroup) => staffFilter === 'Everyone' || b.providerNames.includes(staffFilter);
   const matchesStatus = (b: BookingGroup) => !statusFilter || b.status === statusFilter;
-  /** Identical to `needsAnswer` below, deliberately — one predicate, two uses. */
-  const isUnmarked = (b: BookingGroup) =>
-    b.status === 'confirmed' && new Date(b.endAt).getTime() <= now.getTime();
+  /**
+   * Identical to `needsAnswer` below, deliberately — one predicate, two uses.
+   *
+   * ## Every leg, not the group's status — Jira GRW-217
+   *
+   * `groupStatus` returns `confirmed` when ANY leg is confirmed, and checkout
+   * deliberately settles only ONE leg of a multi-service visit: it puts the
+   * whole payment on that leg and leaves the others `confirmed`, which is what
+   * keeps revenue from double-counting (a second `completed` leg would add its
+   * own booked price on top of the amount actually taken).
+   *
+   * So a cut-and-facial checked out for ₹1,100 read as unsettled, and this
+   * strip told the receptionist to go and mark a visit they had just been paid
+   * for. Worse for the stylist: chasing a booking that was already settled is
+   * exactly what teaches them to stop trusting the prompt, and their trust in
+   * it is the whole control (GRW-214).
+   *
+   * `every` rather than `some`: a visit needs an answer only when NOTHING has
+   * been settled about it. One settled leg means somebody dealt with the
+   * sitting.
+   */
+  const isUnmarked = (b: BookingGroup) => visitNeedsAnswer(b, now);
   const matchesUnmarked = (b: BookingGroup) => !unmarkedOnly || isUnmarked(b);
   const matching = bookings.filter((b) => matchesStaff(b) && matchesQuery(b) && matchesStatus(b) && matchesUnmarked(b));
   // groupBookings already returns ascending by start time, so descending is a

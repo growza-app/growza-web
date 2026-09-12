@@ -111,6 +111,42 @@ function groupStatus(legs: Appointment[]): Appointment['status'] {
   return 'completed';
 }
 
+/**
+ * Jira GRW-214 · GRW-217 — has anybody said what happened to this visit?
+ *
+ * Exported and pure so the tests exercise THIS function rather than a copy of
+ * its rules. It lived inside `BookingsList` as a closure, and the tests that
+ * covered it re-derived the predicate locally — so when the bug below was
+ * introduced, the behavioural tests all passed against their own correct copy
+ * and only a source-text assertion caught it. A rule worth testing is worth
+ * exporting.
+ *
+ * ## Every leg, not the group's status
+ *
+ * `groupStatus` returns `confirmed` when ANY leg is confirmed, and checkout
+ * settles only ONE leg of a multi-service visit: it puts the whole payment on
+ * that leg and leaves the rest `confirmed`, which is what stops revenue
+ * double-counting — a second `completed` leg would add its own booked price on
+ * top of the amount actually taken.
+ *
+ * So a cut-and-facial checked out for ₹1,100 read as unsettled, and the prompt
+ * told the receptionist to go and mark a visit they had just been paid for.
+ * Worse for the stylist, whose trust in that prompt is the whole control
+ * (GRW-216): chasing an already-settled booking is what teaches them to ignore
+ * it.
+ *
+ * `every`, so a visit needs an answer only when NOTHING has been settled about
+ * it. One settled leg means somebody dealt with the sitting.
+ *
+ * `endAt`, not `startAt`: a visit still running is not overdue.
+ */
+export function visitNeedsAnswer(group: Pick<BookingGroup, 'appointments' | 'endAt'>, now: Date): boolean {
+  return (
+    group.appointments.every((a) => a.status === 'confirmed') &&
+    new Date(group.endAt).getTime() <= now.getTime()
+  );
+}
+
 export function groupBookings(appointments: Appointment[]): BookingGroup[] {
   const byGroup = new Map<string, Appointment[]>();
   for (const a of appointments) {

@@ -189,7 +189,32 @@
 .rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 21px; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 11px; }.rail-insight p { margin: 2px 0 0; font-size: 11.5px; }.rail-insight svg { width: 17px; color: var(--accent); }
 
 @media (max-width: 1180px) { .home-layout { grid-template-columns: minmax(0, 1fr) 305px; }.summary-metric { padding: 0 12px; }.summary-metric strong { font-size: 20px; }.summary-metric > span:not(.summary-metric-icon) { white-space: normal; } }
-@media (min-width: 861px) and (max-width: 1060px) { .home-main .summary-progress-layout { flex-direction: column; }.summary-progress-hero { flex-basis: auto; }.summary-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/*
+ * Jira GRW-217 — the ceiling is 1180, matching the rule above it.
+ *
+ * It was 1060, which left the band 1061–1180 laying the hero and the three
+ * metrics out as a ROW inside 402px. That gives each metric ~61px, and the
+ * numbers are `white-space: nowrap` inside a parent with `overflow: hidden`, so
+ * nothing can give — the money is simply cut and unreachable.
+ *
+ * The device sweep passed for months because the seed salon takes ₹300 a day:
+ * four glyphs, 40px, comfortable. Running the owner's own end-to-end scenario
+ * put realistic money on the screen and it failed at 1061 immediately:
+ *
+ *   ₹2,200   needs 66px in a 61px column   →  3px cut
+ *   ₹23,131  needs 70px                    →  9px cut
+ *   ₹1,23,456 needs 91px                   → 30px cut, and 1100 fails too
+ *
+ * The 1180 rule directly above already reduces the metric padding and the
+ * number's size for exactly this pressure. Its band and this one disagreeing
+ * was the bug: the mitigation applied where the layout had already stacked, and
+ * stopped applying just where the row began.
+ *
+ * Aligning them means the row only appears above 1180, where a column is wide
+ * enough for a lakh-rupee day at the full type size. Checked at 1181, 1200,
+ * 1280 and 1366 rather than assumed.
+ */
+@media (min-width: 861px) and (max-width: 1180px) { .home-main .summary-progress-layout { flex-direction: column; }.summary-progress-hero { flex-basis: auto; }.summary-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 @media (max-width: 860px) {
   .home-page { padding-top: 4px; }
