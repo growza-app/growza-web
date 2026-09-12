@@ -26,6 +26,7 @@ export const KNOWN_ACTIONS = [
   // GRW-202 — a client asked to be forgotten, and then was. Two entries
   // because they happen days apart: the request is reversible for the length
   // of the grace period, the completion is not.
+  'customer.updated',
   'customer.erasure_requested',
   'customer.erasure_cancelled',
   'customer.erased',

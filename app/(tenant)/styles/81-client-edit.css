@@ -1,0 +1,142 @@
+/* ---------- correcting a client, in place (Jira GRW-218) ---------- */
+
+/*
+ * Inline in the profile card rather than a second sheet.
+ *
+ * The card already IS an overlay; opening another one over it to change two
+ * fields would put the figures the receptionist is looking at behind two
+ * layers. Editing where the name is displayed also makes it obvious which
+ * client is being corrected, which a detached form has to restate.
+ */
+.cpc-edit {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cpc-edit-name,
+.cpc-edit-phone {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 7px 10px;
+  font: inherit;
+  /*
+   * 16px, not smaller. Under it iOS Safari zooms the page when the field takes
+   * focus — and this card is most often opened on a phone at a counter, which
+   * is the worst possible moment to have the viewport jump.
+   */
+  font-size: 16px;
+  color: var(--text);
+}
+
+.cpc-edit-name {
+  font-weight: 650;
+}
+
+.cpc-edit-name:focus,
+.cpc-edit-phone:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* The country code is shown and not editable: every number in this product is
+   +91 (platform/phone.ts), and offering it as a field invites somebody to
+   break the one part that is never wrong. */
+.cpc-edit-phone-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+}
+
+.cpc-edit-cc {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-right: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--slate-soft);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cpc-edit-phone-row .cpc-edit-phone {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/*
+ * The server's message, not a generic one. It is the only text here that can
+ * say whose number this already is, so it gets room to wrap rather than being
+ * truncated to a line.
+ */
+.cpc-edit-error {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #b3261e;
+}
+
+.cpc-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cpc-edit-save,
+.cpc-edit-cancel {
+  border-radius: 999px;
+  padding: 7px 15px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cpc-edit-save {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.cpc-edit-cancel {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.cpc-edit-save:disabled,
+.cpc-edit-cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Sits with the name, not in the card's corner: it edits the identity beside
+   it, and a control in the corner would read as acting on the whole card. */
+.cpc-edit-open {
+  flex: none;
+  margin-left: auto;
+  align-self: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cpc-edit-open:hover {
+  color: var(--text);
+  border-color: #b9c2bb;
+}

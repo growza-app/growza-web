@@ -404,6 +404,16 @@ export const api = {
    * would reasonably conclude none of their work had been recorded.
    */
   myEarnings: () => get<MyEarnings>('/api/v1/my-earnings'),
+  /*
+   * Jira GRW-218 — correcting a client.
+   *
+   * PATCH, and the body is built by the caller so that omitting a key means
+   * "leave it alone" while an explicit null means "clear it". A walk-in may
+   * legitimately have no name and no number, so those two cases must stay
+   * distinguishable all the way to the column.
+   */
+  updateCustomer: (id: string, body: { name?: string | null; phone?: string | null }) =>
+    patch<{ id: string; name: string | null; waPhone: string | null }>(`/api/v1/customers/${id}`, body),
   allServices: () => get<ServiceAdmin[]>('/api/v1/services/all'),
   serviceCategories: () => get<ServiceCategory[]>('/api/v1/service-categories'),
   createService: (body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', body),

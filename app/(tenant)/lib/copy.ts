@@ -743,6 +743,18 @@ export const copy = {
   },
 
   clientCard: {
+    /*
+     * Jira GRW-218 — the plainest words available. "Edit" and "Save", not
+     * "Update record" or "Amend details": the person using this is at a counter
+     * with somebody waiting.
+     */
+    edit: 'Edit',
+    save: 'Save',
+    saving: 'Saving…',
+    cancel: 'Cancel',
+    namePlaceholder: 'Name',
+    phonePlaceholder: '10-digit mobile',
+    saveFailed: 'Could not save. Try again.',
     kicker: 'Client',
     totalSpent: 'Total spent',
     totalVisits: 'Visits',

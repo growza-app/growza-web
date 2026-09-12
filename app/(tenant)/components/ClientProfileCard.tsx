@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { api, formatMoney, type ClientProfile, type ClientProfileRow } from '../lib/api';
 import { copy } from '../lib/copy';
@@ -25,13 +26,37 @@ import { IconClose, IconPhone } from './icons';
 export function ClientProfileCard({ clientId, onClose }: { clientId: string; onClose: () => void }) {
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [failed, setFailed] = useState(false);
+  /*
+   * Jira GRW-218 — the card stops being read-only for the ONE thing the front
+   * desk needs to fix: a mistyped name or number.
+   *
+   * Still no "Message" button and no price editing. The rule the note above
+   * states holds — every proactive send goes through the compliance funnel —
+   * and this is not a send. It is the identity, which somebody at a counter
+   * gets wrong daily and could not correct anywhere in the product until now.
+   *
+   * No role gate: `/api/v1/customers` is absent from `STAFF_ALLOWED`, so a
+   * stylist cannot reach the Clients screen and never sees this card. Everybody
+   * who can open it may edit, which is exactly the owner's rule — the
+   * receptionist may correct and may not delete, and there is no delete here.
+   */
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState('');
+  const [draftPhone, setDraftPhone] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const c = copy.clientCard;
+  const router = useRouter();
 
   useEffect(() => {
     let live = true;
     setProfile(null);
     setFailed(false);
+    // A card reopened on a different client must not inherit the last one's
+    // half-typed correction.
+    setEditing(false);
+    setSaveError(null);
     api
       .clientProfile(clientId)
       .then((p) => live && setProfile(p))
@@ -81,6 +106,65 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
   const tone = (row: ClientProfileRow) =>
     row.tone === 'bad' ? 'var(--rp-red)' : row.tone === 'warn' ? 'var(--rp-amber)' : undefined;
 
+  const startEditing = () => {
+    setDraftName(profile?.name ?? '');
+    /*
+     * The stored value is E.164; the field shows the ten digits a person types
+     * and the server's `toStoredPhone` puts it back. Showing "+919876543210"
+     * and asking somebody to edit it invites them to break the country code —
+     * the same reason `PhoneField` exists for every other number in the app.
+     */
+    setDraftPhone((profile?.phone ?? '').replace(/^\+91/, ''));
+    setSaveError(null);
+    setEditing(true);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const updated = await api.updateCustomer(clientId, {
+        name: draftName.trim() || null,
+        phone: draftPhone.trim() || null,
+      });
+      /*
+       * Patched in place rather than refetched. The figures below — spend,
+       * visits, the insight rows — cannot be changed by renaming somebody, so a
+       * refetch would redraw the whole card to move two lines. `router.refresh`
+       * updates the list underneath, which DOES show the name.
+       */
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              /*
+               * The server's own fallback, mirrored: `reports.customers.ts`
+               * renders a nameless client as their phone number
+               * (`r.name?.trim() || r.waPhone`). Applying the same rule here
+               * keeps the card showing what a reload would show, instead of
+               * going briefly blank until somebody refreshes.
+               */
+              name: updated.name?.trim() || updated.waPhone || '',
+              phone: updated.waPhone ?? '',
+            }
+          : prev,
+      );
+      setEditing(false);
+      router.refresh();
+    } catch (err) {
+      /*
+       * The server's own message, verbatim. It knows things this component
+       * cannot — whose number that is, or that the holder is mid-erasure — and
+       * a generic "could not save" would throw away the only part of the answer
+       * the receptionist can act on.
+       */
+      setSaveError(err instanceof Error && err.message ? err.message : c.saveFailed);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
   return (
     <>
       <button type="button" className="cpc-scrim" aria-label={c.close} onClick={onClose} />
@@ -99,10 +183,50 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
             <>
               <div className="cpc-identity">
                 <span className="cpc-avatar">{profile?.initial ?? '·'}</span>
-                <div style={{ minWidth: 0 }}>
-                  <div className="cpc-name">{profile?.name ?? ' '}</div>
-                  <div className="cpc-phone">{profile ? formatPhone(profile.phone) : ' '}</div>
-                </div>
+                {editing ? (
+                  <div className="cpc-edit">
+                    <input
+                      className="cpc-edit-name"
+                      value={draftName}
+                      onChange={(e) => setDraftName(e.target.value)}
+                      placeholder={c.namePlaceholder}
+                      disabled={saving}
+                      aria-label={c.namePlaceholder}
+                      autoFocus
+                    />
+                    <div className="cpc-edit-phone-row">
+                      <span className="cpc-edit-cc">+91</span>
+                      <input
+                        className="cpc-edit-phone"
+                        value={draftPhone}
+                        onChange={(e) => setDraftPhone(e.target.value)}
+                        placeholder={c.phonePlaceholder}
+                        inputMode="numeric"
+                        disabled={saving}
+                        aria-label={c.phonePlaceholder}
+                      />
+                    </div>
+                    {saveError && <p className="cpc-edit-error">{saveError}</p>}
+                    <div className="cpc-edit-actions">
+                      <button type="button" className="cpc-edit-save" onClick={save} disabled={saving}>
+                        {saving ? c.saving : c.save}
+                      </button>
+                      <button type="button" className="cpc-edit-cancel" onClick={() => setEditing(false)} disabled={saving}>
+                        {c.cancel}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ minWidth: 0 }}>
+                    <div className="cpc-name">{profile?.name ?? ' '}</div>
+                    <div className="cpc-phone">{profile ? formatPhone(profile.phone) : ' '}</div>
+                  </div>
+                )}
+                {profile && !editing && (
+                  <button type="button" className="cpc-edit-open" onClick={startEditing}>
+                    {c.edit}
+                  </button>
+                )}
               </div>
               <div className="cpc-summary">
                 <div>
