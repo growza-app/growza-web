@@ -470,3 +470,16 @@ input.wi-search-input-plain {
     max-height: calc(min(84vh, 780px) - 104px);
   }
 }
+
+/* Jira GRW-222 — "Add to waiting queue" is a third button in a row built for
+   two, and at 320px Back + Add to waiting queue + Start now do not fit on one
+   line. On a phone it takes a row of its own above the pair. */
+@media (max-width: 860px) {
+  .wi-actions {
+    flex-wrap: wrap;
+  }
+  .wi-actions .wi-queue-btn {
+    order: -1;
+    flex: 1 0 100%;
+  }
+}

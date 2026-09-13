@@ -258,6 +258,8 @@ export interface Appointment {
   offerTitle: string | null;
   /** The combo package's special price — shown against the combo services' list prices to reveal the discount. */
   comboPriceMinor: string | null;
+  /** Jira GRW-222 — the branch this visit is at. Optional so an older API does not break the list. */
+  locationId?: string;
 }
 
 export interface SettingsSummary {
@@ -571,3 +573,4 @@ export interface MyEarnings {
   today: EarningsSlice;
   thisMonth: EarningsSlice;
 }
+

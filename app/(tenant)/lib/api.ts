@@ -41,6 +41,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 // existing `import { Service } from '../lib/api'` still resolves.
 export * from './api-types';
 export * from './report-types';
+export * from './home-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
@@ -86,6 +87,7 @@ import type {
   SortDirection,
   TodayStats,
 } from './api-types';
+import type { DaySummary, HomeOverview, HomePeriod, QueueEntry } from './home-types';
 import type {
   ClientProfile,
   ReportBookings,
@@ -342,6 +344,18 @@ export const api = {
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
   todayStats: () => get<TodayStats>('/api/v1/analytics/today'),
+  /** Jira GRW-222 — the owner's Home. `location` null or absent means the whole business. */
+  home: (period: HomePeriod = 'today', location?: string | null) =>
+    get<HomeOverview>(`/api/v1/home?period=${period}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
+  /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
+  walkInQueue: () => get<QueueEntry[]>('/api/v1/walk-in-queue'),
+  addToQueue: (input: { customerId?: string; customerName?: string; customerPhone?: string; serviceIds: string[]; offerId?: string; idempotencyKey?: string }) =>
+    post<QueueEntry>('/api/v1/walk-in-queue', input),
+  giveToStaff: (entryId: string, schedulableId: string) =>
+    post<{ appointmentId: string; schedulableId: string; startAt: string; endAt: string; overlapping: boolean }>(`/api/v1/walk-in-queue/${entryId}/give`, { schedulableId }),
+  queueEntryLeft: (entryId: string) => post<{ status: 'left' }>(`/api/v1/walk-in-queue/${entryId}/left`, {}),
+  daySummary: (location?: string | null) =>
+    get<DaySummary>(`/api/v1/home/day-summary${location ? `?location=${encodeURIComponent(location)}` : ''}`),
   /**
    * Reports. Under /reports/, never /analytics/ — this is fetched from the
    * browser on every tab and range change, and that path segment is a common

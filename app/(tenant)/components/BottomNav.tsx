@@ -2,65 +2,101 @@
 
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
-import { copy } from '../lib/copy';
+import { homeCopy } from '../lib/home-copy';
+import type { Lang } from '../lib/lang';
 import {
+  IconCalendarPlus,
   IconNavAttendance,
   IconNavBookings,
   IconNavClients,
   IconNavHome,
   IconNavMore,
-  IconNavOffers,
+  IconUserPlus,
 } from './icons';
 
 /**
  * Mobile navigation. Replaces the sidebar entirely below the mobile
- * breakpoint (see globals.css) — putting the frequent destinations in the
- * thumb zone rather than behind a hamburger.
+ * breakpoint (see globals.css) — the frequent destinations in the thumb zone
+ * rather than behind a hamburger.
  *
- * Five tabs, and every one resolves to a page that actually exists.
- * Everything rarer (staff, services, free times, settings) lives behind
- * "More", which is the one screen that lists them.
+ * ## Jira GRW-222 — the raised centre action
+ *
+ * The floating "+" in the corner is gone. The design puts the one action that
+ * matters most for the role in the middle of the bar, raised above it: New
+ * booking for the owner, Walk-in for the front desk. Apple's own tab-bar
+ * language has no floating button, and a button that floats over the content
+ * is a button that covers a row — GRW-170 hid it on five screens for exactly
+ * that. Attached to the bar, it covers nothing and needs no hiding list.
+ *
+ * A stylist cannot create a booking (`POST /api/v1/appointments` is not theirs,
+ * GRW-156), so their bar is flat: four tabs, no centre action.
+ *
+ * Offers left the bar to make room; it is on the owner's Home quick links and
+ * on More, one tap from either.
  */
-export function BottomNav({ labels, role, reportTabs }: { labels: Record<string, string>; role?: MemberRole | null; reportTabs?: readonly string[] }) {
+export function BottomNav({
+  labels,
+  role,
+  reportTabs,
+  lang = 'en',
+  onCentre,
+}: {
+  labels: Record<string, string>;
+  role?: MemberRole | null;
+  reportTabs?: readonly string[];
+  lang?: Lang;
+  /** Absent means no centre action (a stylist, or a screen where it would sit on a pinned Save). */
+  onCentre?: () => void;
+}) {
   const pathname = usePathname();
+  const t = homeCopy(lang, labels);
+  const stylist = role === 'staff';
 
-  const items = [
-    // Same label as the sidebar's first item — this is the same route, and
-    // calling it "Today" on a phone and "Home" on a laptop read as two places.
-    { href: '/', label: copy.nav.dashboard, icon: <IconNavHome /> },
-    { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconNavBookings /> },
-    { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconNavClients /> },
-    { href: '/offers', label: copy.nav.offers, icon: <IconNavOffers /> },
-    // GRW-170/170 — the register is a front-desk tab, not an owner one. The
-    // bar is five fixed slots; see the trim below.
-    { href: '/attendance', label: 'Attendance', icon: <IconNavAttendance /> },
-    { href: '/more', label: copy.nav.more, icon: <IconNavMore /> },
-  ];
+  const items = stylist
+    ? [
+        { href: '/', label: t.nav.home, icon: <IconNavHome /> },
+        { href: '/appointments', label: t.nav.schedule, icon: <IconNavBookings /> },
+        { href: '/attendance', label: t.nav.attendance, icon: <IconNavAttendance /> },
+        { href: '/more', label: t.nav.more, icon: <IconNavMore /> },
+      ]
+    : [
+        { href: '/', label: t.nav.home, icon: <IconNavHome /> },
+        { href: '/appointments', label: t.nav.bookings, icon: <IconNavBookings /> },
+        { href: '/customers', label: t.nav.clients, icon: <IconNavClients /> },
+        { href: '/more', label: t.nav.more, icon: <IconNavMore /> },
+      ];
 
-  /**
-   * The bar is a five-slot grid and a sixth item overflows it.
-   *
-   * An owner already has five and reaches Attendance from More, so they lose
-   * nothing. A receptionist cannot see Home or Offers, which leaves them three
-   * — and the register, which they fill in every morning, is the obvious
-   * fourth. So the trim drops Attendance only when the bar is actually full,
-   * rather than hiding it from the one role that lives on it.
-   */
   const visible = visibleItems(items, role, reportTabs);
-  const shown = visible.length > 5 ? visible.filter((i) => i.href !== '/attendance') : visible;
+  const centre = !stylist && onCentre;
+  const half = Math.ceil(visible.length / 2);
+
+  const tab = (item: (typeof visible)[number]) => {
+    const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+    return (
+      <a key={item.href} href={item.href} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}>
+        {item.icon}
+        {item.label}
+        <span className="bn-mark" />
+      </a>
+    );
+  };
 
   return (
-    <nav className="bottom-nav">
-      {shown.map((item) => {
-        const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
-        return (
-          <a key={item.href} href={item.href} className={active ? 'active' : ''}>
-            {item.icon}
-            {item.label}
-            <span className="bn-mark" />
-          </a>
-        );
-      })}
+    <nav className={`bottom-nav ${centre ? 'has-centre' : ''}`}>
+      {centre ? (
+        <>
+          {visible.slice(0, half).map(tab)}
+          <button type="button" className="bn-centre" onClick={onCentre}>
+            <span className="bn-centre-btn" aria-hidden>
+              {role === 'receptionist' ? <IconUserPlus /> : <IconCalendarPlus />}
+            </span>
+            <span className="bn-centre-label">{role === 'receptionist' ? t.walkInShort : t.nav.newBooking}</span>
+          </button>
+          {visible.slice(half).map(tab)}
+        </>
+      ) : (
+        visible.map(tab)
+      )}
     </nav>
   );
 }

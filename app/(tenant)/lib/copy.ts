@@ -266,6 +266,10 @@ export const copy = {
     recorded: 'Recorded',
     overlap: (provider: string) => `${provider} is also with someone else right now.`,
     takePayment: 'Take payment now',
+    // Jira GRW-222 — the walk-in queue. "Queue", the word the front desk uses.
+    addToQueue: 'Add to waiting queue',
+    queued: 'Added to the queue',
+    queuePosition: (n: number) => (n === 1 ? 'First in line' : `Number ${n} in line`),
     // --- book-for-later only ---
     laterTitle: 'Book for later',
     modeLabel: 'When is this visit?',

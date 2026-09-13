@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconOffers, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 import { SignOutButton } from '../components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
@@ -33,13 +33,14 @@ export default async function MorePage() {
     // a degraded API must not hide the product from the person who owns it.
   }
 
-  // Offers is a tab of its own, so it is deliberately not repeated here.
-  // Calendar has no page yet — listing it would be a dead link.
+  // Jira GRW-222 — Offers left the tab bar for the raised centre action, so it
+  // is listed here now. Calendar has no page yet — listing it would be a dead link.
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
     // GRW-170 — the register lives here on a phone. The bottom bar is five
     // fixed slots and a sixth would break it, so Attendance rides the menu
     // rather than displacing a tab everybody uses.
     { href: '/attendance', label: 'Attendance', icon: <IconStaff /> },
+    { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
     // The design's mobile tab bar puts Reports in Offers' slot. The tab bar's

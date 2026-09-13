@@ -14,11 +14,19 @@ export function statusChip(appt: Pick<Appointment, 'status' | 'reminderSent' | '
 }
 
 export function initials(name: string | null): string {
-  return (name ?? '?')
-    .split(' ')
-    .filter(Boolean)
+  /*
+   * Letters and digits only, in any script. "Simran (test)" read "S(" — the
+   * bracket was the first character of the second word. `\p{L}` keeps a
+   * Devanagari or Tamil name's first letter, which `[A-Za-z]` would drop.
+   */
+  const words = (name ?? '')
+    .split(/\s+/)
+    .map((w) => w.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter(Boolean);
+  if (words.length === 0) return '?';
+  return words
     .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
+    .map((w) => Array.from(w)[0]!.toUpperCase())
     .join('');
 }
 

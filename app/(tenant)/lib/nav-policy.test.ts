@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canSee, canSeeRevenue, visibleItems } from './nav-policy';
+import { canSee, canSeeRevenue, homeKind, visibleItems } from './nav-policy';
 // GRW-171 — the API's allowlist as a VALUE. Previously regexed out of the
 // source file, which broke the moment that file moved into src/api/security/.
 import { STAFF_ALLOWED } from '../../../../src/api/security/tenant-policy';
@@ -36,6 +36,8 @@ describe('AC-01 — a stylist is offered what they can use', () => {
      * for a stylist. It now carries sign-out, outside the policy filter.
      */
     expect(visibleItems(NAV, 'staff').map((i) => i.href)).toEqual([
+      // Jira GRW-222 — their own Home, built from the reads below.
+      '/',
       '/appointments',
       // GRW-200 — their own record, read-only. The API scopes it to them and
       // refuses both writes, so this is a place to look and not to edit.
@@ -51,11 +53,9 @@ describe('AC-01 — a stylist is offered what they can use', () => {
     expect(canSee('/more', 'staff')).toBe(true);
   });
 
-  it('not the home screen, which leads with the salon’s takings', () => {
-    // `/` redirects a stylist to their appointments rather than rendering a
-    // second home screen; offering it in the nav as well would be two ways to
-    // the same place, one of them a bounce.
-    expect(canSee('/', 'staff')).toBe(false);
+  it('their own Home, which shows their day and not the salon’s takings (Jira GRW-222)', () => {
+    expect(canSee('/', 'staff')).toBe(true);
+    expect(homeKind('staff')).toBe('stylist');
   });
 
   it('and not the money', () => {
@@ -100,7 +100,9 @@ describe('AC-05 / BR-02 — the nav agrees with the API', () => {
     // `/more` is a client-side menu with no endpoint of its own; every other
     // destination must have a route a stylist may call.
     for (const { href } of visibleItems(NAV, 'staff')) {
-      if (href === '/more') continue;
+      // `/` is Home, which has no endpoint of its own either: a stylist's Home
+      // reads `/appointments`, `/provider-day`, `/attendance` and `/my-earnings`.
+      if (href === '/more' || href === '/') continue;
       expect(staffAllowed, `${href} is offered in the nav`).toContain(`/api/v1${href}`);
     }
   });

@@ -33,13 +33,11 @@
 @import './styles/15-whatsapp-chat-simulator-try-whatsapp.css';
 @import './styles/16-home-header.css';
 @import './styles/17-notification-bell.css';
-@import './styles/18-summary-card.css';
 @import './styles/19-range-toggle-week-month-bar-chart.css';
 @import './styles/20-day-schedule-timeline.css';
 @import './styles/21-call-button.css';
 @import './styles/22-bottom-sheet.css';
 @import './styles/23-finished-booking-summary-receipt.css';
-@import './styles/24-summary-style-picker.css';
 @import './styles/25-bottom-nav-fab-mobile-only-shown-in-the-.css';
 @import './styles/26-search.css';
 @import './styles/27-more-menu.css';
@@ -98,3 +96,4 @@
 @import './styles/80-own-earnings.css';
 @import './styles/81-client-edit.css';
 @import './styles/82-move-booking.css';
+@import './styles/83-role-home.css';

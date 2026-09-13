@@ -1,4 +1,5 @@
 import './globals.css';
+import { Figtree, Noto_Sans_Devanagari } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { api } from './lib/api';
@@ -15,6 +16,19 @@ import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
 import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
 import { AccountStatusScreen } from './components/AccountStatusScreen';
+import { serverLang } from './lib/lang';
+
+/**
+ * Jira GRW-222 — the Home redesign's typeface, and the Devanagari one Hindi needs.
+ *
+ * Through `next/font`, which downloads the files at build time and serves them
+ * from this origin: no request to Google from an owner's phone, and nothing
+ * that breaks when the PWA is offline. Exposed as CSS variables so 00-base.css
+ * keeps owning the stack and its system-font fallback.
+ */
+const figtree = Figtree({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap', variable: '--font-figtree' });
+const devanagari = Noto_Sans_Devanagari({ subsets: ['devanagari'], weight: ['400', '500', '600', '700'], display: 'swap', variable: '--font-devanagari' });
+const fontClass = `${figtree.variable} ${devanagari.variable}`;
 
 /**
  * Jira GRW-192 — the tab says which screen, and whose business.
@@ -121,6 +135,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let impersonation: { businessName: string; role: string } | null = null;
   /** GRW-164 — set when the API says this account may not operate. */
   let accountStatus: { reason: string; message: string; support?: { phone?: string } } | null = null;
+  /** Jira GRW-222 — the primary branch's name for the sidebar, when there is one. */
+  let locationName: string | null = null;
+  const lang = await serverLang();
 
   try {
     const me = await api.me();
@@ -134,6 +151,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
     impersonation = me.impersonation ?? null;
+    locationName = me.tenant?.locationName ?? null;
   } catch (error) {
     /**
      * Jira GRW-66 · GRW-160 — a 401 is the one failure that means something
@@ -159,7 +177,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   if (accountStatus) {
     return (
-      <html lang="en">
+      <html lang={lang} className={fontClass}>
         <body>
           <BrowserGate />
           <AccountStatusScreen message={accountStatus.message} support={accountStatus.support} />
@@ -169,7 +187,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   }
 
   return (
-    <html lang="en">
+    <html lang={lang} className={fontClass}>
       <body>
         {/* GRW-197 — first in the body, so it runs before the app bundle has a
             chance to fail to parse. */}
@@ -190,7 +208,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
         <LabelsProvider labels={labels}>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} lang={lang} locationName={locationName} phone={memberPhone} />
             <div className="content">
               <BillingBanner billing={billing} canPayOnline={canPayOnline} />
               {/*
@@ -211,7 +229,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 * was the grid item directly.
                 */}
               <main className="content-main">{children}</main>
-              <MobileChrome labels={labels} timezone={timezone} role={role} reportTabs={reportTabs} />
+              <MobileChrome labels={labels} timezone={timezone} role={role} reportTabs={reportTabs} lang={lang} />
             </div>
           </div>
         </LabelsProvider>

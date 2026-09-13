@@ -81,7 +81,10 @@ body {
   overflow: hidden;
   background: var(--page-bg);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Jira GRW-222 — Figtree for Latin and Noto Sans Devanagari for Hindi, both
+     self-hosted by next/font (layout.tsx). The system stack stays behind them,
+     so a font that has not loaded yet still draws a readable screen. */
+  font-family: var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 15.5px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;

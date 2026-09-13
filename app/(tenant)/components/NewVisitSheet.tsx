@@ -103,6 +103,8 @@ type Stage =
   | { step: 'when'; client: PickedClient }
   | { step: 'saving'; client: PickedClient }
   | { step: 'done'; client: PickedClient; result: WalkInDone }
+  /** Jira GRW-222 — waiting in the queue; no stylist and no visit yet. */
+  | { step: 'queued'; client: PickedClient; position: number }
   | { step: 'error'; client: PickedClient; message: string };
 
 interface WalkInDone {
@@ -442,6 +444,34 @@ export function NewVisitSheet({
       setCheckoutError(error instanceof Error ? error.message : copy.newVisit.tillFailed);
     } finally {
       setLoadingCheckout(false);
+    }
+  };
+
+  /**
+   * Jira GRW-222 — into the waiting queue instead of a chair.
+   *
+   * For a busy salon where nobody is free yet: the person is standing at the
+   * desk, so this IS their arrival, and "Give to staff" on Home starts the visit
+   * later. The same attempt key as a walk-in, so a retried tap is one place in
+   * line.
+   */
+  const queueIt = async (client: PickedClient) => {
+    if (picked.length === 0) return;
+    setStage({ step: 'saving', client });
+    try {
+      await api.addToQueue({
+        ...(client.kind === 'existing'
+          ? { customerId: client.id }
+          : { customerName: client.name, ...(client.phone ? { customerPhone: client.phone } : {}) }),
+        serviceIds: picked.map((p) => p.serviceId),
+        ...(offerId ? { offerId } : {}),
+        idempotencyKey: attemptKey,
+      });
+      const waiting = await api.walkInQueue().catch(() => []);
+      router.refresh();
+      setStage({ step: 'queued', client, position: Math.max(waiting.length, 1) });
+    } catch (error) {
+      setStage({ step: 'error', client, message: error instanceof ApiError ? error.message : copy.newVisit.saveUnknown });
     }
   };
 
@@ -936,6 +966,16 @@ export function NewVisitSheet({
               >
                 {copy.newVisit.back}
               </button>
+              {!later && !reclaim && (
+                <button
+                  type="button"
+                  className="btn btn-ghost wi-queue-btn"
+                  onClick={() => void queueIt(stage.client)}
+                  disabled={busy || picked.length === 0}
+                >
+                  {copy.newVisit.addToQueue}
+                </button>
+              )}
               <button
                 type="button"
                 className="btn"
@@ -1020,6 +1060,24 @@ export function NewVisitSheet({
                 {copy.newVisit.bookIt}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ---------- Stage 3a: waiting in the queue (Jira GRW-222) ---------- */}
+        {stage.step === 'queued' && (
+          <div className="wi-body">
+            <div className="wi-done">
+              <IconCheck />
+              <div>
+                <div className="wi-done-title">{copy.newVisit.queued}</div>
+                <div className="wi-done-sub">
+                  {picked.map((p) => p.name).join(' + ')} · {copy.newVisit.queuePosition(stage.position)}
+                </div>
+              </div>
+            </div>
+            <button type="button" className="sheet-item" onClick={onClose}>
+              {copy.newVisit.done}
+            </button>
           </div>
         )}
 

@@ -1,174 +1,55 @@
 import { rootTitle } from './lib/page-title';
-import { redirect } from 'next/navigation';
-import { homeHref } from './lib/nav-policy';
-import { api, type Appointment, type Provider, type ProviderDay, type TodayStats } from './lib/api';
+import { DateTime } from 'luxon';
+import { api, type Appointment, type AttendanceRegister, type CustomerStats, type HomeOverview, type Me, type ProviderDay } from './lib/api';
 import { copy } from './lib/copy';
-import { formatDateWithWeekday } from './lib/format';
-import { SummaryCard } from './components/SummaryCard';
-import { DaySchedule } from './components/DaySchedule';
-import { StaffCapacity } from './components/StaffCapacity';
-import { HeaderControls } from './components/HeaderControls';
-import { QuickActions } from './components/QuickActions';
-import { IconBell, IconCalendar, IconChevronRight, IconStaff } from './components/icons';
+import { serverLang, type Lang } from './lib/lang';
+import { canSeeRevenue, homeKind, type MemberRole } from './lib/nav-policy';
+import { OwnerHome } from './components/home/OwnerHome';
+import { ReceptionHome } from './components/home/ReceptionHome';
+import { StylistHome } from './components/home/StylistHome';
 
 export const dynamic = 'force-dynamic';
 
-function ChairTimeline({ day }: { day: ProviderDay }) {
-  const hours = Array.from({ length: 11 }, (_, i) => 9 + i); // 09:00 – 19:00
-
-  const localHour = (iso: string) =>
-    Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: day.timezone }).format(new Date(iso)));
-
-  const entryAt = (hour: number) =>
-    day.entries.find((e) => {
-      const start = localHour(e.startAt);
-      const end = localHour(e.endAt);
-      return hour >= start && hour < Math.max(end, start + 1);
-    });
-
-  const blockClass = (hour: number) => {
-    if (hour < 12) return 'tl-booking';
-    if (hour < 16) return 'tl-booking-alt';
-    return 'tl-booking-late';
-  };
-
-  return (
-    <div className="timeline">
-      {hours.map((hour) => {
-        const entry = entryAt(hour);
-        const label = `${hour > 12 ? hour - 12 : hour}:00`;
-        return (
-          <div className="tl-row" key={hour}>
-            <div className="tl-hour">{label}</div>
-            <div className="tl-track">
-              {!entry ? (
-                <span className="tl-open">{copy.today.free}</span>
-              ) : entry.kind === 'block' ? (
-                <span className="tl-lunch">{entry.label.toLowerCase()}</span>
-              ) : (
-                <div className={`tl-block ${blockClass(hour)}`}>{entry.label}</div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-
-function TopInsight() {
-  return (
-    <a href="/services" className="rail-insight">
-      <span>✦</span>
-      <div>
-        <strong>Top insight</strong>
-        <p>Keep an eye on your most booked service today.</p>
-      </div>
-      <IconChevronRight />
-    </a>
-  );
-}
-
 /**
- * A real hourly booking count for today (bucketed into four 3-hour windows,
- * matching the reference design), not a fabricated curve — every point comes
- * straight from today's appointments' own start times. Cancelled bookings
- * are excluded (they didn't actually happen in that slot); no-shows count,
- * since the slot was genuinely booked. The trend badge compares against
- * stats.bookingsYesterday, the same figure the summary card's own "vs
- * yesterday" comparisons use elsewhere — no separate fetch needed.
+ * Jira GRW-222 — Home, for whoever signed in.
+ *
+ * Until this story only the owner had a Home: a stylist and a receptionist were
+ * redirected to `/appointments`, because the one Home there was led with the
+ * salon's takings and loaded endpoints their roles are refused. Each role now
+ * gets its own, and each loads ONLY reads its role already has — which is what
+ * keeps a role Home from being a disclosure, not the rendering.
+ *
+ * ## One failed read is one broken card (BR-12)
+ *
+ * Every read is caught on its own and handed down as `null`, and the card
+ * that needed it shows an error with a retry. The old page wrapped everything
+ * in one `Promise.all` and replaced the whole screen with "the API is down"
+ * when any single call failed — including the one a role was not allowed.
+ * Only `/me` failing still takes the page down, because without it there is no
+ * telling whose Home to draw.
  */
-function BookingsChart({ buckets, trendPct }: { buckets: Array<{ label: string; count: number }>; trendPct: number | null }) {
-  const max = Math.max(...buckets.map((b) => b.count), 1);
-  const w = 280;
-  const plotH = 90; // the line/fill area only — value labels live above it, time labels below; sized to match the summary card's height
-  const topPad = 16; // headroom so the peak point's value label never clips the card edge
-  const stepX = w / (buckets.length - 1);
-  const points = buckets.map((b, i) => ({
-    x: i * stepX,
-    y: topPad + (1 - b.count / max) * (plotH - topPad),
-    count: b.count,
-  }));
-  const line = points.map((p) => `${p.x},${p.y}`).join(' ');
-  const area = `${line} ${w},${plotH} 0,${plotH}`;
 
-  return (
-    <section className="rail-card rail-chart">
-      <div className="rail-head-row">
-        <h3>Bookings today</h3>
-        {trendPct !== null && (
-          <span className={`rail-trend ${trendPct >= 0 ? 'up' : 'down'}`}>
-            {trendPct >= 0 ? '↑' : '↓'} {Math.abs(trendPct)}%
-          </span>
-        )}
-      </div>
-      <svg viewBox={`0 0 ${w} ${plotH + 20}`} width="100%" height={plotH + 20} role="img" aria-label={`Bookings by time of day: ${buckets.map((b) => `${b.count} at ${b.label}`).join(', ')}`}>
-        <polygon points={area} className="rail-chart-fill" />
-        <polyline points={line} className="rail-chart-line" />
-        {points.map((p, i) => (
-          <text
-            key={`v-${buckets[i]!.label}`}
-            x={p.x}
-            y={Math.max(p.y - 9, 10)}
-            textAnchor={i === 0 ? 'start' : i === buckets.length - 1 ? 'end' : 'middle'}
-            className="rail-chart-value"
-          >
-            {p.count}
-          </text>
-        ))}
-        {points.map((p, i) => (
-          <circle key={buckets[i]!.label} cx={p.x} cy={p.y} r="3" className="rail-chart-dot" />
-        ))}
-        {buckets.map((b, i) => (
-          <text key={b.label} x={points[i]!.x} y={plotH + 17} textAnchor={i === 0 ? 'start' : i === buckets.length - 1 ? 'end' : 'middle'} className="rail-chart-label">
-            {b.label}
-          </text>
-        ))}
-      </svg>
-    </section>
-  );
+const soft = <T,>(p: Promise<T>): Promise<T | null> => p.catch(() => null);
+
+function greetingPart(timezone: string, now: Date): 'morning' | 'afternoon' | 'evening' {
+  const hour = DateTime.fromJSDate(now, { zone: timezone }).hour;
+  return hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+}
+
+function dateLabel(lang: Lang, timezone: string, now: Date): string {
+  return new Intl.DateTimeFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone }).format(now);
+}
+
+/** Active staff on today's roster with no attendance row. Off-today people are not rostered, so they never count. */
+function notMarkedIn(register: AttendanceRegister | null): number | null {
+  if (!register) return null;
+  return register.rows.filter((r) => r.onDate === register.today && r.rostered && r.status === null).length;
 }
 
 export default async function DashboardPage() {
-  let stats: TodayStats,
-    appointments: Appointment[],
-    me,
-    providers: Provider[],
-    atRiskCount: number,
-    providerDay: ProviderDay | null = null;
-
-  /**
-   * Jira GRW-66 · GRW-157 — a stylist's home is their day.
-   *
-   * Resolved BEFORE the rest, because four of the calls below are owner-only
-   * since GRW-156: a staff member would 403 inside the `Promise.all` and land
-   * in the "API is down" state, which is both wrong and alarming. The owner's
-   * home leads with the salon's takings, so there is nothing here to show them
-   * anyway — and designing a second home screen is a product decision this
-   * story deliberately does not take.
-   */
-  const viewer = await api.me().catch(() => null);
-  // GRW-169 — the receptionist is redirected for the same reason as a stylist,
-  // and from one place: this page loads four endpoints their role is refused,
-  // so without it they would land on a broken screen full of 403s.
-  const landing = homeHref(viewer?.member?.role);
-  if (landing !== '/') redirect(landing);
-
+  let me: Me;
   try {
-    let atRisk;
-    [stats, appointments, me, providers, atRisk] = await Promise.all([
-      api.todayStats(),
-      api.appointments(),
-      api.me(),
-      api.providers(),
-      // Just the count for the attention card — the list itself lives on
-      // the Clients page (?status=at_risk&sort=spent), one click away, and
-      // the filter there is the same band this counts.
-      api.customers({ status: 'at_risk', limit: 1 }),
-    ]);
-    atRiskCount = atRisk.total;
-    providerDay = await api.providerDay().catch(() => null);
+    me = await api.me();
   } catch {
     return (
       <div className="page-body">
@@ -179,219 +60,66 @@ export default async function DashboardPage() {
     );
   }
 
+  const lang = await serverLang();
+  const role = (me.member?.role as MemberRole | undefined) ?? null;
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
   const now = new Date();
-  const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: timezone }).format(now));
-  const part = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-  const dateLine = formatDateWithWeekday(now, timezone);
-  // A combo booking is several appointment ROWS (one per service) sharing one
-  // bookingGroupId — counting rows would count that one customer visit 2-3x.
-  // Every "how many bookings" figure below counts DISTINCT bookings instead,
-  // matching how the Bookings page itself groups combo legs into one row.
-  const bookingKey = (a: Appointment) => a.bookingGroupId ?? a.id;
-  const countBookings = (list: Appointment[]) => new Set(list.map(bookingKey)).size;
+  const today = DateTime.fromJSDate(now, { zone: timezone });
+  const common = {
+    lang,
+    labels: me.labels,
+    businessName: me.tenant?.name ?? 'Your business',
+    timezone,
+    nowISO: now.toISOString(),
+    dateLabel: dateLabel(lang, timezone, now),
+    greetingPart: greetingPart(timezone, now),
+  };
 
-  const newCustomers = countBookings(appointments.filter((appointment) => appointment.customerIsNew));
-  const attention = [
-    {
-      /**
-       * Bookings whose time has gone and that nobody has marked done or
-       * didn't-come. That is the only thing here the status vocabulary can
-       * honestly name: there is no "unconfirmed" booking in this system —
-       * `confirmed` IS the live state, and a hold is a separate 5-minute-TTL
-       * row that never appears on this list. The card was counting confirmed
-       * bookings and calling them unconfirmed.
-       *
-       * The old sum was `bookingsToday - completedToday - comingUp`. It landed
-       * on the right figure this evening only because nothing was within two
-       * hours; subtracting `comingUp` means the count FALLS as appointments
-       * draw near, which is backwards for a card asking to be acted on.
-       *
-       * `endAt`, not `startAt` — a booking still running isn't overdue.
-       */
-      label: 'Not marked done yet',
-      value: countBookings(
-        appointments.filter(
-          (a) => a.status === 'confirmed' && new Date(a.endAt).getTime() <= now.getTime(),
-        ),
-      ),
-      tone: 'amber',
-      href: '/appointments?status=confirmed',
-      icon: <IconBell />,
-    },
-    { label: 'Cancellation today', value: countBookings(appointments.filter((appointment) => appointment.status === 'cancelled')), tone: 'rose', href: '/appointments?status=cancelled', icon: <IconCalendar /> },
-    {
-      /**
-       * One band, and the same one the word names everywhere else.
-       *
-       * This counted `lapsed` — the single wide band that Due a visit and
-       * Slipping away replaced — while wearing the narrower band's name. So
-       * Home said 730 Slipping away and the Clients page said 462, because
-       * Home was quietly adding Due a visit's 268 to it. Same defect as the
-       * Reports one conventions §3 was written for, in a second place.
-       *
-       * Labels come from copy.clients.segments so the card cannot drift from
-       * the band card it links to.
-       */
-      label: `${copy.clients.segments.at_risk.label} · ${copy.clients.segments.at_risk.range}`,
-      value: atRiskCount,
-      tone: 'violet',
-      href: '/customers?status=at_risk&sort=spent',
-      icon: <IconStaff />,
-    },
-  ];
-  // Real, derived-from-today's-appointments numbers — not a fabricated fill.
-  // Both a "Total" (the whole day) and an "Upcoming" (only what's still
-  // ahead of now) figure are computed here so the widget can toggle between
-  // them client-side — "booked minutes" comes straight from each confirmed
-  // appointment's own start/end, summed either over the whole day or only
-  // the ones still ahead (minutes are correctly leg-based: a 3-service combo
-  // really does take the sum of its legs' time). Counts are booking-based.
-  // Sorted by the TOTAL figure regardless of which one ends up displayed, so
-  // the list doesn't reshuffle when switching.
-  const durationMin = (a: Appointment) => (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60_000;
-  const staffCapacity = providers
-    .map((provider) => {
-      // "Total" means the whole day's real workload — completed and no-show
-      // bookings genuinely happened/were scheduled, so they count too (only
-      // cancelled doesn't, matching the backend's own bookingsToday
-      // definition). "Upcoming" narrows to still-pending: confirmed AND not
-      // yet started — a completed appointment isn't "in queue" anymore.
-      const mine = appointments.filter((a) => a.providerId === provider.id && a.status !== 'cancelled');
-      const upcoming = mine.filter((a) => a.status === 'confirmed' && new Date(a.startAt).getTime() >= now.getTime());
-      return {
-        id: provider.id,
-        name: provider.displayName,
-        totalCount: countBookings(mine),
-        totalBookedMin: mine.reduce((sum, a) => sum + durationMin(a), 0),
-        upcomingCount: countBookings(upcoming),
-        upcomingBookedMin: upcoming.reduce((sum, a) => sum + durationMin(a), 0),
-      };
-    })
-    .sort((a, b) => b.totalBookedMin - a.totalBookedMin);
-  const staffShown = staffCapacity.slice(0, 3);
-  const staffHiddenCount = staffCapacity.length - staffShown.length;
+  const kind = homeKind(role);
 
-  const localHour = (iso: string) =>
-    Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: timezone }).format(new Date(iso)));
-  const BOOKING_WINDOWS: Array<{ label: string; from: number; to: number }> = [
-    { label: '9 AM', from: 9, to: 12 },
-    { label: '12 PM', from: 12, to: 15 },
-    { label: '3 PM', from: 15, to: 18 },
-    { label: '6 PM', from: 18, to: 21 },
-  ];
-  // Bucket by each DISTINCT booking's earliest leg, not every leg
-  // independently — otherwise a combo whose legs straddle a window boundary
-  // (e.g. starts at 11:45, second service starts at 12:15) would count once
-  // in both the 9 AM and 12 PM windows instead of once, in the window it
-  // actually started in.
-  const firstStartByBooking = new Map<string, string>();
-  for (const a of appointments) {
-    if (a.status === 'cancelled') continue;
-    const key = bookingKey(a);
-    const existing = firstStartByBooking.get(key);
-    if (!existing || new Date(a.startAt) < new Date(existing)) firstStartByBooking.set(key, a.startAt);
+  if (kind === 'stylist') {
+    const [appointments, day, attendanceMonth] = await Promise.all([
+      soft(api.appointments()),
+      soft(api.providerDay()) as Promise<ProviderDay | null>,
+      soft(api.attendance(today.startOf('month').toISODate()!, today.toISODate()!)),
+    ]);
+    // Own takings (GRW-216) stay on the Bookings screen: the design's stylist
+    // Home has no money card, and this Home draws the design.
+    return <StylistHome {...common} locationName={me.tenant?.locationName ?? null} appointments={appointments} day={day} attendanceMonth={attendanceMonth} />;
   }
-  const bookingStarts = [...firstStartByBooking.values()];
-  const bookingBuckets = BOOKING_WINDOWS.map(({ label, from, to }) => ({
-    label,
-    count: bookingStarts.filter((startAt) => localHour(startAt) >= from && localHour(startAt) < to).length,
-  }));
-  const bookingTrendPct = stats.bookingsYesterday > 0 ? Math.round(((stats.bookingsToday - stats.bookingsYesterday) / stats.bookingsYesterday) * 100) : null;
+
+  if (kind === 'reception') {
+    const [appointments, queue, providers] = await Promise.all([soft(api.appointments()), soft(api.walkInQueue()), soft(api.providers())]);
+    return <ReceptionHome {...common} locationName={me.tenant?.locationName ?? null} appointments={appointments} queue={queue} providers={providers ?? []} />;
+  }
+
+  // Owner and manager. `canSeeRevenue` is asserted rather than assumed: this is
+  // the one Home that shows the takings, and a future role falling into this
+  // branch by default should fail loudly here, not quietly show money.
+  if (!canSeeRevenue(role)) throw new Error(`Home: role ${role} reached the owner's Home`);
+
+  const [overview, stats, register] = await Promise.all([
+    soft(api.home('today')) as Promise<HomeOverview | null>,
+    soft(api.customerStats()) as Promise<CustomerStats | null>,
+    soft(api.attendance(today.toISODate()!)),
+  ]);
+  // After closing, the list that matters is tomorrow's (FR-09).
+  const listIsTomorrow = overview?.hoursToday.afterClose ?? false;
+  const appointments: Appointment[] | null = await soft(api.appointments(listIsTomorrow ? today.plus({ days: 1 }).toISODate()! : undefined));
 
   return (
-    <>
-      <header className="home-head">
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="home-greeting">{copy.home.greeting(part)}</div>
-          <div className="home-sub">
-            {me.tenant?.name ?? 'Your business'} · {dateLine}
-            {me.tenant?.locationName ? ` · ${me.tenant.locationName}` : ''}
-          </div>
-        </div>
-        {/*
-          Jira GRW-30 — the same three controls every other screen has.
-
-          This header used to hand-roll them, and it got two of the three
-          wrong in ways nothing could see: a search pill AND a separate mobile
-          icon button (two elements, one always hidden), and an avatar that was
-          a bare `<div>` — the exact control GRW-202 found doing nothing and
-          GRW-203 made unconditional, fixed inside `PageHeader`, on the one
-          screen in the product that does not use `PageHeader`.
-
-          `wide` is Home's only difference: it is the landing screen, it has the
-          room, and the pill is an invitation rather than a shortcut.
-        */}
-        <HeaderControls wide />
-      </header>
-
-      <div className="page-body home-page">
-        <div className="home-layout">
-          {/* GRW-192 — this was the app's only main landmark. The shell owns that now, for
-              every screen rather than just this one, and two nested would be invalid. */}
-          <div className="home-main">
-            <SummaryCard stats={stats} newCustomers={newCustomers} />
-
-            <section className="home-section">
-              <div className="home-section-head"><h2>Needs attention</h2></div>
-              <div className="attention-grid">
-                {attention.map((item) => (
-                  <a className={`attention-card ${item.tone}`} href={item.href} key={item.label}>
-                    <span className="attention-top">
-                      <span className="attention-icon">{item.icon}</span>
-                      <span className="attention-value">{item.value}</span>
-                    </span>
-                    <span>{item.label}</span>
-                    <IconChevronRight />
-                  </a>
-                ))}
-              </div>
-            </section>
-
-            <section className="home-section home-upcoming">
-              {/* DaySchedule renders the WHOLE day, past entries included, so
-                  "Up next" was labelling a booking that started three hours
-                  ago. Filtering to future-only would hide work that has
-                  happened but not been marked done — which is exactly what the
-                  owner still needs to action — so the heading is what changes,
-                  matching the Bookings page's own wording. */}
-              <div className="home-section-head"><h2>{copy.today.heading(me.labels.appointment_plural ?? 'bookings')}</h2><a href="/appointments">See all ({countBookings(appointments)})</a></div>
-              <DaySchedule
-                appointments={appointments}
-                timezone={timezone}
-                nowISO={now.toISOString()}
-                canMove={me.capabilities.reschedule}
-              />
-            </section>
-
-            {providerDay && (
-              <div className="card desktop-only home-chair" style={{ marginTop: 18 }}>
-            <div className="card-head">
-              <span>{copy.today.chairToday(providerDay.provider.displayName, me.labels.resource ?? 'chair')}</span>
-            </div>
-            <ChairTimeline day={providerDay} />
-              </div>
-            )}
-
-            {/* Same insight card as the desktop rail — shown here only below
-                860px, where there's no rail to hold it (see .mobile-only-section).
-                "Today at a glance" isn't repeated here: it was a straight
-                repeat of the summary card above, so it was dropped everywhere,
-                not just on desktop. */}
-            <section className="home-section mobile-only-section">
-              <TopInsight />
-            </section>
-          </div>
-
-          <aside className="home-rail desktop-only">
-            <BookingsChart buckets={bookingBuckets} trendPct={bookingTrendPct} />
-            <QuickActions timezone={timezone} />
-            <StaffCapacity label={me.labels.providers ?? copy.nav.staff} staff={staffShown} hiddenCount={staffHiddenCount} />
-            <TopInsight />
-          </aside>
-        </div>
-      </div>
-    </>
+    <OwnerHome
+      {...common}
+      primaryLocationName={me.tenant?.locationName ?? null}
+      role={role}
+      reportTabs={me.reportTabs}
+      whatsappLive={me.whatsapp?.booking ?? false}
+      initial={overview}
+      appointments={appointments}
+      listIsTomorrow={listIsTomorrow}
+      customerStats={stats}
+      staffNotMarkedIn={notMarkedIn(register)}
+    />
   );
 }
 

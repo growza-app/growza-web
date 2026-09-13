@@ -455,3 +455,44 @@ export const IconNavMore = () => (
     <circle cx="15.4" cy="12" r="1.1" fill="currentColor" stroke="none" />
   </svg>
 );
+
+/* Jira GRW-222 — the Home redesign's extra glyphs. Drawn on the same 24px grid
+   and 1.8 stroke as the set above, rather than loading the design's Phosphor
+   icon font from a CDN: this is an installable PWA, and a Home screen whose
+   icons depend on a third-party server is a Home screen that breaks offline. */
+
+export const IconMapPin = () => (
+  <svg {...base}>
+    <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
+    <circle cx="12" cy="10" r="2.3" />
+  </svg>
+);
+
+export const IconReceipt = () => (
+  <svg {...base}>
+    <path d="M6 3v18l2-1.2 2 1.2 2-1.2 2 1.2 2-1.2 2 1.2V3l-2 1.2L14 3l-2 1.2L10 3 8 4.2Z" />
+    <path d="M9 9h6M9 13h4" />
+  </svg>
+);
+
+export const IconClipboardCheck = () => (
+  <svg {...base}>
+    <rect x="4.5" y="4.5" width="15" height="16.5" rx="3.5" />
+    <path d="M9 3.2h6a1.3 1.3 0 0 1 1.3 1.3v.9A1.3 1.3 0 0 1 15 6.7H9a1.3 1.3 0 0 1-1.3-1.3v-.9A1.3 1.3 0 0 1 9 3.2ZM9 13.4l2 2 4.2-4.2" />
+  </svg>
+);
+
+export const IconDaySummary = () => (
+  <svg {...base}>
+    <path d="M12 3a9 9 0 1 0 9 9" />
+    <path d="M12 7v5l3.5 2M16.5 3.6A9 9 0 0 1 20.4 7.5" />
+  </svg>
+);
+
+export const IconScissors = () => (
+  <svg {...base}>
+    <circle cx="6" cy="6" r="2.8" />
+    <circle cx="6" cy="18" r="2.8" />
+    <path d="M20 4 8.2 15.8M14.5 14.5 20 20M8.2 8.2 12 12" />
+  </svg>
+);

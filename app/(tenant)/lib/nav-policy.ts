@@ -31,13 +31,15 @@ export type MemberRole = 'owner' | 'manager' | 'staff' | 'receptionist';
  * row a stylist can use, and it is the one they need most on a shared salon
  * device. Restored on those grounds, not by reverting the reasoning.
  *
- * `/` is deliberately ABSENT. The owner's home leads with the salon's takings
- * and loads four owner-only endpoints, so for a stylist it would be both a
- * disclosure and a broken page. Rather than design a second home screen — which
- * this story puts out of scope — `/` redirects a stylist to their appointments,
- * which is what "their day" already means.
+ * `/` was absent until Jira GRW-222. The owner's home led with the salon's
+ * takings and loaded owner-only endpoints, so a stylist was redirected to their
+ * appointments rather than shown it. GRW-222 gave every role its own Home: a
+ * stylist's is their current client, their next one and their day, built only
+ * from reads already on `STAFF_ALLOWED` — so `/` is theirs now, and it shows
+ * nothing the appointments screen did not.
  */
 const STAFF_DESTINATIONS: ReadonlySet<string> = new Set([
+  '/',
   '/appointments',
   // GRW-200 — their own attendance, read-only. The screen shows one month of
   // their own record and offers no way to change it; the API refuses the
@@ -53,12 +55,12 @@ const STAFF_DESTINATIONS: ReadonlySet<string> = new Set([
  * sign out from. Not `/reports` or `/settings`, which they cannot reach;
  * not `/providers` or `/services`, which are hiring and pricing.
  *
- * `/` is absent for the same reason it is absent for a stylist: the owner's
- * home leads with the salon's takings and loads endpoints this role is refused,
- * so it would be both a disclosure and a broken page. They land on
- * `/appointments`, which is the desk.
+ * `/` joined in Jira GRW-222: the front desk's Home is who is in now, who is
+ * late and who comes next, with the walk-in one tap away — built from the diary
+ * and the register they already read, and carrying no takings.
  */
 const RECEPTIONIST_DESTINATIONS: ReadonlySet<string> = new Set([
+  '/',
   '/appointments',
   '/customers',
   '/attendance',
@@ -124,7 +126,23 @@ export function canSeeRevenue(role?: MemberRole | null): boolean {
   return role !== 'staff' && role !== 'receptionist';
 }
 
-/** Roles whose home is the diary rather than the owner's revenue-led dashboard. */
-export function homeHref(role?: MemberRole | null): string {
-  return role === 'staff' || role === 'receptionist' ? '/appointments' : '/';
+/**
+ * Where a role lands.
+ *
+ * Jira GRW-222 — everyone lands on Home now; which Home is decided by
+ * `homeKind`. Kept as a function rather than inlined as `'/'` because the
+ * sign-in flow and the layout both ask it, and the day a role needs a different
+ * landing again should be a one-line change here, not a search.
+ */
+export function homeHref(_role?: MemberRole | null): string {
+  return '/';
+}
+
+export type HomeKind = 'owner' | 'reception' | 'stylist';
+
+/** Which Home a role gets. An absent role is the owner (BR-03). */
+export function homeKind(role?: MemberRole | null): HomeKind {
+  if (role === 'staff') return 'stylist';
+  if (role === 'receptionist') return 'reception';
+  return 'owner';
 }

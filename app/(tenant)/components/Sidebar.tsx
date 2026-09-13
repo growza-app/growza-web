@@ -3,7 +3,8 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
-import { copy } from '../lib/copy';
+import { homeCopy } from '../lib/home-copy';
+import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
 import {
   IconAnalytics,
@@ -17,6 +18,7 @@ import {
   IconStaff,
   IconLogout,
   IconUserPlus,
+  IconClipboardCheck,
 } from './icons';
 
 /**
@@ -33,6 +35,9 @@ export function Sidebar({
   role,
   reportTabs,
   whatsappLive,
+  lang,
+  locationName,
+  phone,
 }: {
   tenantName: string;
   labels: Record<string, string>;
@@ -41,52 +46,53 @@ export function Sidebar({
   reportTabs?: readonly string[];
   /** Jira GRW-158 · GRW-165 — false until this business's WhatsApp number is switched on. */
   whatsappLive?: boolean;
+  /** Jira GRW-222 — nav labels follow the Home language toggle. */
+  lang?: Lang;
+  /** Jira GRW-222 — the primary branch, under the business name. */
+  locationName?: string | null;
+  /** Jira GRW-222 — who is signed in, at the foot of the sidebar. */
+  phone?: string | null;
 }) {
   const pathname = usePathname();
+  const t = homeCopy(lang ?? 'en', labels);
 
   // Only routes that exist. Calendar is still in the design but has no page
   // yet — listing it here would be a link to a 404.
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
-    { href: '/', label: copy.nav.dashboard, icon: <IconDashboard /> },
-    { href: '/appointments', label: labels.appointments ?? copy.nav.appointments, icon: <IconAppointments /> },
-    { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
-    { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
-    { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
-    { href: '/customers', label: labels.customers ?? copy.nav.customers, icon: <IconUserPlus /> },
+    { href: '/', label: t.nav.home, icon: <IconDashboard /> },
+    { href: '/appointments', label: role === 'staff' ? t.nav.schedule : t.nav.bookings, icon: <IconAppointments /> },
+    { href: '/providers', label: t.nav.staff, icon: <IconStaff /> },
+    { href: '/services', label: t.nav.services, icon: <IconServices /> },
+    { href: '/offers', label: t.nav.offers, icon: <IconOffers /> },
+    { href: '/customers', label: t.nav.clients, icon: <IconUserPlus /> },
     // GRW-170 — who was here. Sits beside the client list because it is the
     // other thing the front desk keeps, and next to Staff it would read as
     // part of hiring, which it is not.
-    { href: '/attendance', label: 'Attendance', icon: <IconStaff /> },
-    // Reports is added; nothing is removed. The design's sidebar puts it in
-    // Free times' slot, but a Reports mock is not a reason to demote a working
-    // page out of the owner's reach (GRW-48 decision 2).
-    { href: '/reports', label: copy.reports.navLabel, icon: <IconReports /> },
-    { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
-    // GRW-165 — kept, never hidden: it is how an owner sees what their
-    // customers will get, and it is the demo a salesperson shows. But while
-    // WhatsApp is not live it is marked a preview, so nobody reads a working
-    // simulator as a working channel.
-    {
-      href: '/try-whatsapp',
-      label: whatsappLive ? copy.nav.tryWhatsApp : copy.whatsapp.navLabelDemo,
-      icon: <IconChat />,
-      pill: whatsappLive ? null : copy.whatsapp.previewPill,
-    },
-    { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },
+    { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck /> },
+    // Reports is added; nothing is removed (GRW-48 decision 2).
+    { href: '/reports', label: t.nav.reports, icon: <IconReports /> },
+    { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics /> },
+    // GRW-165 — kept, never hidden, and marked a demo while WhatsApp is not live
+    // so nobody reads a working simulator as a working channel.
+    { href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, pill: whatsappLive ? null : t.nav.demo },
+    { href: '/settings', label: t.nav.settings, icon: <IconSettings /> },
   ];
 
   return (
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
-        <div className="brand-name">{tenantName}</div>
+        <div className="brand-text">
+          <div className="brand-name">{tenantName}</div>
+          {locationName ? <div className="brand-location">{locationName}</div> : null}
+        </div>
       </div>
       <nav className="nav">
         {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
             API is what refuses (GRW-156); this is about not wasting their time
             on eight links that 403. */}
         {visibleItems(items, role, reportTabs).map((item) => (
-          <a key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
+          <a key={item.href} href={item.href} className={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'active' : ''}>
             {item.icon}
             {item.label}
             {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
@@ -96,10 +102,22 @@ export function Sidebar({
       {/* Jira GRW-66 · GRW-160 — outside `visibleItems`, deliberately. Every
           role can end their own session; a stylist on a shared salon device is
           the person who needs it most, and they see almost nothing above. */}
-      <SignOutButton className="nav-signout">
-        <IconLogout />
-        {copy.nav.signOut}
-      </SignOutButton>
+      <div className="nav-foot">
+        {/* Jira GRW-222 — who is signed in. A role and a number, because a
+            person IS their phone number here (GRW-189) and the product holds
+            no display name for a login. */}
+        <div className="nav-who">
+          <span className="nav-who-avatar">{t.role[role ?? 'owner']?.charAt(0) ?? 'O'}</span>
+          <span className="nav-who-text">
+            <strong>{t.role[role ?? 'owner']}</strong>
+            {phone ? <span>{phone}</span> : null}
+          </span>
+        </div>
+        <SignOutButton className="nav-signout">
+          <IconLogout />
+          {t.nav.signOut}
+        </SignOutButton>
+      </div>
     </aside>
   );
 }
