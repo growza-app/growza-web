@@ -2057,8 +2057,8 @@
     height: 30px;
   }
 
-  /* Shorter row 1 (≈1280×680): the money card drops its colour bar and the
-     weekday letters, and the tiles go to one line each. Every figure stays. */
+  /* Shorter row 1 (≈1280×680): the money card drops the weekday letters, slims
+     the colour bar, and puts each payment tile on one line. Every figure stays. */
   @container (max-height: 215px) {
     .hm-fit .hm-hero {
       gap: 4px;
@@ -2070,9 +2070,12 @@
     .hm-fit .hm-hero-stats {
       margin-top: 4px;
     }
-    .hm-fit .hm-spark-days,
-    .hm-fit .hm-hero-pay .hm-paybar {
+    .hm-fit .hm-spark-days {
       display: none;
+    }
+    /* The payment split's colour bar stays — the owner asked for it back — just slimmer. */
+    .hm-fit .hm-hero-pay .hm-paybar {
+      height: 6px;
     }
     .hm-fit .hm-spark svg {
       height: 22px;
