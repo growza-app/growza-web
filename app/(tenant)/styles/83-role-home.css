@@ -195,6 +195,18 @@
   flex-direction: column;
   gap: var(--sp-4);
   color: var(--hm-ink);
+  padding-bottom: var(--sp-7);
+}
+/*
+ * Never shrink a section to fit the window. `.page-body` is the scroll region
+ * with a fixed height, and flex items default to `flex-shrink: 1` — so on a
+ * short laptop screen (1487×723) the owner grid was squeezed to the viewport
+ * and "How your clients are doing" was cut off at the bottom instead of the
+ * page scrolling. Reported from a real screen; the device sweep measures
+ * document overflow and could not see a section shrinking inside its column.
+ */
+.hm-page > * {
+  flex-shrink: 0;
 }
 .hm-card {
   background: var(--surface);
