@@ -3,6 +3,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, type Appointment, type CustomerStats, type HomeOverview, type HomePeriod } from '../../lib/api';
 import { groupBookings } from '../../lib/appointment-display';
+import { branchPace } from '../../lib/branch-pace';
 import { homeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
 import { canSee, type MemberRole } from '../../lib/nav-policy';
@@ -50,23 +51,22 @@ const HOME_BOOKINGS_SHOWN = 6;
  * width and a page at least 680px tall. Below that (phones, tablets, a very
  * short window) Home scrolls as a normal page.
  *
- * In fit mode Bookings today keeps a FIXED size — three rows, side by side when
- * the business has one branch — and the money row above it is the part that
- * gives up height. The owner's call: the day's bookings are what they act on,
- * the money card can say the same thing in less room.
+ * The money row keeps its own (compact) height and Bookings today gets the rest
+ * of the page, in whole rows — side by side when the business has one branch.
  */
 const FIT_QUERY = '(min-width: 1101px) and (min-height: 680px)';
-/** Bookings never show fewer rows than this in fit mode; the money row gives up height first. */
-const FIT_MIN_ROWS = 3;
 
 /**
  * Fit mode, and how many bookings the list's box holds.
  *
  * The box's height is decided by CSS (row 2 of the owner grid takes whatever
- * the capped money row leaves), so counting rows is a measurement, not a guess:
- * whole rows that fit, never fewer than FIT_MIN_ROWS, times the columns the list
- * is laid out in. On a 13-inch screen that is three rows; on a larger one, more
- * of the day — instead of a money card stretched to fill the space.
+ * the money row leaves), so counting rows is a measurement, not a guess: whole
+ * rows that fit, times the columns the list is laid out in.
+ *
+ * Jira GRW-225 — the measurement must never feed itself. The box sits in a
+ * `minmax(0, 1fr)` row and clips, so the rows rendered from this count cannot
+ * make the box taller; before, the first paint's six rows set the row's
+ * min-content and every later measurement read six back.
  */
 function useFitBookings(multiBranch: boolean) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -81,7 +81,7 @@ function useFitBookings(multiBranch: boolean) {
       }
       const cols = multiBranch ? 1 : 2;
       const rowH = el?.querySelector<HTMLElement>('.hm-row')?.offsetHeight || 47;
-      const rows = el ? Math.max(FIT_MIN_ROWS, Math.floor(el.clientHeight / rowH)) : FIT_MIN_ROWS;
+      const rows = el ? Math.max(1, Math.floor(el.clientHeight / rowH)) : 1;
       setState((prev) => (prev.fit && prev.count === rows * cols ? prev : { fit: true, count: rows * cols }));
     };
     measure();
@@ -281,7 +281,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           ) : null}
         </div>
 
-        <div className="hm-owner-grid">
+        <div className={`hm-owner-grid ${multiBranch ? 'hm-multi' : ''}`}>
           <div className="hm-area-hero">{data ? <MoneyHero t={t} data={data} loading={loading} /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/* The design gives "Needs your attention" to the laptop only; a phone's
@@ -297,27 +297,31 @@ export function OwnerHome(p: OwnerHomeProps) {
           {multiBranch && data ? (
             <Card className="hm-area-branches" title={t.yourBranches}>
               <ul className="hm-rows">
-                {branches.map((b) => (
-                  <li key={b.id} className="hm-row hm-row-button">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBranch(b.id);
-                        load(period, b.id);
-                      }}
-                    >
-                      <span className="hm-branch-tile">{b.name.slice(0, 2).toUpperCase()}</span>
-                      <span className="hm-row-main">
-                        <span className="hm-row-name">
-                          {b.name}
-                          {b.isPrimary ? <span className="hm-tag">{t.mainBranch}</span> : null}
+                {branches.map((b, i) => {
+                  const pace = branchPace(b.bookingsToday, branches.map((x) => x.bookingsToday));
+                  const picked = branch === b.id;
+                  return (
+                    <li key={b.id} className={`hm-row hm-row-button ${picked ? 'is-picked' : ''}`}>
+                      <button
+                        type="button"
+                        aria-pressed={picked}
+                        onClick={() => {
+                          // Tapping the branch already picked goes back to all of them.
+                          const next = picked ? null : b.id;
+                          setBranch(next);
+                          load(period, next);
+                        }}
+                      >
+                        <span className={`hm-branch-tile hm-tone-${BRANCH_TONES[i % BRANCH_TONES.length]}`}>{branchInitials(b.name)}</span>
+                        <span className="hm-row-main">
+                          <span className="hm-row-name">{b.isPrimary ? `${b.name} (${t.mainBranch})` : b.name}</span>
+                          <span className="hm-row-sub">{t.branchMeta(b.bookingsToday, rupees(b.revenueTodayMinor))}</span>
                         </span>
-                        <span className="hm-row-sub">{t.branchMeta(b.bookingsToday, rupees(b.revenueTodayMinor))}</span>
-                      </span>
-                      <IconChevronRight />
-                    </button>
-                  </li>
-                ))}
+                        {pace ? <span className={`hm-pace hm-pace-${pace}`}>{pace === 'busy' ? t.branchBusy : t.branchSlow}</span> : null}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           ) : null}
@@ -356,6 +360,15 @@ export function OwnerHome(p: OwnerHomeProps) {
       ) : null}
     </>
   );
+}
+
+const BRANCH_TONES = ['green', 'blue', 'amber', 'violet', 'rose'] as const;
+
+/** "MG Road" → "MG", "Koramangala" → "KO": the design's two-letter branch tile. */
+function branchInitials(name: string): string {
+  const words = name.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w));
+  const letters = words.length > 1 ? words[0]!.charAt(0) + words[1]!.charAt(0) : name.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2);
+  return letters.toUpperCase();
 }
 
 /** "20:00" → "8:00 pm". */

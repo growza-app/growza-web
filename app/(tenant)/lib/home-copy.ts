@@ -95,6 +95,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     yourBranches: S('Your branches', 'आपकी ब्रांच'),
     branchMeta: (bookings: number, money: string) => `${bookings} ${bookingWord(bookings)} · ${money}`,
     mainBranch: S('Main', 'मुख्य'),
+    branchBusy: S('Busy', 'व्यस्त'),
+    branchSlow: S('Slow', 'धीमा'),
+    branchCount: (n: number) => S(`${n} branches`, `${n} ब्रांच`),
 
     clientsDoingTitle: hi ? 'आपके ग्राहक कैसे हैं' : copy.clients.segmentsTitle,
     clientsDoingHint: hi ? 'किसी एक पर टैप करें' : copy.clients.segmentsHint,

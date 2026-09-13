@@ -274,6 +274,16 @@ export function StatusPill({ t, group, now }: { t: HomeCopy; group: BookingGroup
   return <span className={`hm-pill hm-pill-${PILL_TONE[state]}`}>{label}</span>;
 }
 
+/**
+ * Jira GRW-225 — one client, one avatar colour, however many visits they have
+ * today. Keyed by the booking only when the salon withholds who the client is
+ * (GRW-166: `customerName` absent), so a matching colour cannot say it either.
+ */
+export function avatarKey(g: BookingGroup): string {
+  // A client's phone is their identity here (GRW-189); the name is the fallback for a walk-in with none.
+  return g.customerName !== undefined ? (g.customerPhone ?? g.customerName ?? g.key) : g.key;
+}
+
 /** The compact list rows every Home uses: time, who, what, where it stands. */
 export function BookingRows({ t, groups, timezone, now, empty, showStaff = true }: { t: HomeCopy; groups: BookingGroup[]; timezone: string; now: Date; empty: string; showStaff?: boolean }) {
   if (groups.length === 0) return <p className="hm-empty">{empty}</p>;
@@ -285,7 +295,7 @@ export function BookingRows({ t, groups, timezone, now, empty, showStaff = true 
         return (
           <li key={g.key} className="hm-row">
             <span className="hm-row-time">{formatTime(g.startAt, timezone)}</span>
-            <Avatar name={name} id={g.key} size={34} />
+            <Avatar name={name} id={avatarKey(g)} size={34} />
             <span className="hm-row-main">
               <span className="hm-row-name">{name ?? services}</span>
               <span className="hm-row-sub">{showStaff && g.providerNames.length ? `${services} · ${g.providerNames.join(', ')}` : services}</span>

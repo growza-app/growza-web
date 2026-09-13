@@ -36,8 +36,14 @@ function greetingPart(timezone: string, now: Date): 'morning' | 'afternoon' | 'e
   return hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
 }
 
+/**
+ * "Sun, 13 Sep" — the design's date. Jira GRW-225: `en-IN` spells September
+ * "Sept", so the English label is assembled from parts with a three-letter month.
+ */
 function dateLabel(lang: Lang, timezone: string, now: Date): string {
-  return new Intl.DateTimeFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone }).format(now);
+  if (lang === 'hi') return new Intl.DateTimeFormat('hi-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone }).format(now);
+  const part = (type: string) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone }).formatToParts(now).find((p) => p.type === type)?.value ?? '';
+  return `${part('weekday')}, ${part('day')} ${part('month').slice(0, 3)}`;
 }
 
 /** Active staff on today's roster with no attendance row. Off-today people are not rostered, so they never count. */

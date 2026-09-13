@@ -9,7 +9,7 @@ import { countsAsNotMarked, liveState, longerThanBooked, minutesBetween } from '
 import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconReceipt, IconSearch, IconUserPlus } from '../icons';
 import { NewVisitSheet, type VisitMode } from '../NewVisitSheet';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
-import { Avatar, CardError, HomeHeader, QuickTiles } from './parts';
+import { Avatar, avatarKey, CardError, HomeHeader, QuickTiles } from './parts';
 
 /**
  * Jira GRW-222 — the front desk's Home, as the design draws it.
@@ -139,7 +139,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
                   const st = hereNowStatus(t, g, now, p.timezone);
                   return (
                     <li key={g.key} className="hm-row">
-                      <Avatar name={name} id={g.key} />
+                      <Avatar name={name} id={avatarKey(g)} />
                       <span className="hm-row-main">
                         <span className="hm-row-name">{name ?? summarizeServices(g.serviceNames)}</span>
                         <span className="hm-row-sub">

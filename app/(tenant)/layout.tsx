@@ -137,6 +137,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let accountStatus: { reason: string; message: string; support?: { phone?: string } } | null = null;
   /** Jira GRW-222 — the primary branch's name for the sidebar, when there is one. */
   let locationName: string | null = null;
+  let branchCount = 1;
   const lang = await serverLang();
 
   try {
@@ -152,6 +153,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     memberPhone = me.member?.phone ?? null;
     impersonation = me.impersonation ?? null;
     locationName = me.tenant?.locationName ?? null;
+    // Jira GRW-225 — an owner of several branches watches all of them (multi-branch
+    // is owner-only); naming the primary under the business read as "you are in
+    // Koramangala" while Home showed every branch.
+    branchCount = me.tenant?.branchCount ?? 1;
   } catch (error) {
     /**
      * Jira GRW-66 · GRW-160 — a 401 is the one failure that means something
@@ -208,7 +213,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
         <LabelsProvider labels={labels}>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} lang={lang} locationName={locationName} phone={memberPhone} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
             <div className="content">
               <BillingBanner billing={billing} canPayOnline={canPayOnline} />
               {/*

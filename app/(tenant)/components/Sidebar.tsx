@@ -37,6 +37,7 @@ export function Sidebar({
   whatsappLive,
   lang,
   locationName,
+  branchCount = 1,
   phone,
 }: {
   tenantName: string;
@@ -50,6 +51,8 @@ export function Sidebar({
   lang?: Lang;
   /** Jira GRW-222 — the primary branch, under the business name. */
   locationName?: string | null;
+  /** Jira GRW-225 — more than one: say how many instead of naming the primary. Owners only; the layout passes 1 for everyone else. */
+  branchCount?: number;
   /** Jira GRW-222 — who is signed in, at the foot of the sidebar. */
   phone?: string | null;
 }) {
@@ -84,7 +87,7 @@ export function Sidebar({
         <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
         <div className="brand-text">
           <div className="brand-name">{tenantName}</div>
-          {locationName ? <div className="brand-location">{locationName}</div> : null}
+          {branchCount > 1 ? <div className="brand-location">{t.branchCount(branchCount)}</div> : locationName ? <div className="brand-location">{locationName}</div> : null}
         </div>
       </div>
       <nav className="nav">
