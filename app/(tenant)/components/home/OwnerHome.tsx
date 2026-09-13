@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, type Appointment, type CustomerStats, type HomeOverview, type HomePeriod } from '../../lib/api';
 import { groupBookings } from '../../lib/appointment-display';
 import { homeCopy } from '../../lib/home-copy';
@@ -42,6 +42,59 @@ import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Se
  */
 
 const HOME_BOOKINGS_SHOWN = 6;
+
+/**
+ * Jira GRW-222 — the laptop Home is one screen, no scroll.
+ *
+ * The same media query as the `.hm-fit` block in 83-role-home.css: a desktop
+ * width and a page at least 680px tall. Below that (phones, tablets, a very
+ * short window) Home scrolls as a normal page.
+ *
+ * In fit mode Bookings today keeps a FIXED size — three rows, side by side when
+ * the business has one branch — and the money row above it is the part that
+ * gives up height. The owner's call: the day's bookings are what they act on,
+ * the money card can say the same thing in less room.
+ */
+const FIT_QUERY = '(min-width: 1101px) and (min-height: 680px)';
+/** Bookings never show fewer rows than this in fit mode; the money row gives up height first. */
+const FIT_MIN_ROWS = 3;
+
+/**
+ * Fit mode, and how many bookings the list's box holds.
+ *
+ * The box's height is decided by CSS (row 2 of the owner grid takes whatever
+ * the capped money row leaves), so counting rows is a measurement, not a guess:
+ * whole rows that fit, never fewer than FIT_MIN_ROWS, times the columns the list
+ * is laid out in. On a 13-inch screen that is three rows; on a larger one, more
+ * of the day — instead of a money card stretched to fill the space.
+ */
+function useFitBookings(multiBranch: boolean) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [state, setState] = useState<{ fit: boolean; count: number }>({ fit: false, count: HOME_BOOKINGS_SHOWN });
+  useLayoutEffect(() => {
+    const mq = window.matchMedia(FIT_QUERY);
+    const el = listRef.current;
+    const measure = () => {
+      if (!mq.matches) {
+        setState({ fit: false, count: HOME_BOOKINGS_SHOWN });
+        return;
+      }
+      const cols = multiBranch ? 1 : 2;
+      const rowH = el?.querySelector<HTMLElement>('.hm-row')?.offsetHeight || 47;
+      const rows = el ? Math.max(FIT_MIN_ROWS, Math.floor(el.clientHeight / rowH)) : FIT_MIN_ROWS;
+      setState((prev) => (prev.fit && prev.count === rows * cols ? prev : { fit: true, count: rows * cols }));
+    };
+    measure();
+    mq.addEventListener('change', measure);
+    const ro = el ? new ResizeObserver(measure) : null;
+    if (el) ro!.observe(el);
+    return () => {
+      mq.removeEventListener('change', measure);
+      ro?.disconnect();
+    };
+  }, [multiBranch]);
+  return { listRef, ...state };
+}
 
 export interface OwnerHomeProps {
   lang: Lang;
@@ -95,6 +148,10 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   const locationLine = multiBranch ? (selected?.name ?? t.allBranches) : p.primaryLocationName;
 
+  // Two columns when there is no branches card beside the list (see .hm-bookings-wide).
+  const fit = useFitBookings((data?.branches ?? []).length > 1);
+  const bookingsShown = fit.count;
+
   const groups = useMemo(() => {
     // Cancelled visits are counted in Needs attention and listed on Bookings;
     // on Home they would push the day's real work out of a six-row window.
@@ -103,8 +160,8 @@ export function OwnerHome(p: OwnerHomeProps) {
     // Anchor the window on now: one visit already under way, then what is next.
     const firstLive = all.findIndex((g) => new Date(g.endAt).getTime() > now.getTime());
     const from = p.listIsTomorrow || firstLive < 0 ? 0 : Math.max(0, firstLive - 1);
-    return { shown: all.slice(from, from + HOME_BOOKINGS_SHOWN), total: all.length };
-  }, [p.appointments, p.listIsTomorrow, branch, now]);
+    return { shown: all.slice(from, from + bookingsShown), total: all.length };
+  }, [p.appointments, p.listIsTomorrow, branch, now, bookingsShown]);
 
   const closeTime = hours?.closesAt ? formatClock(hours.closesAt) : null;
 
@@ -167,7 +224,7 @@ export function OwnerHome(p: OwnerHomeProps) {
         onDaySummary={() => setSummaryOpen(true)}
       />
 
-      <div className="page-body hm-page">
+      <div className="page-body hm-page hm-fit">
         {afterClose && closeTime ? (
           <button type="button" className="hm-closed" onClick={() => setSummaryOpen(true)}>
             <span className="hm-closed-icon">
@@ -274,11 +331,13 @@ export function OwnerHome(p: OwnerHomeProps) {
               </a>
             }
           >
-            {p.appointments === null ? (
-              <CardError t={t} />
-            ) : (
-              <BookingRows t={t} groups={groups.shown} timezone={p.timezone} now={now} empty={p.listIsTomorrow ? t.nothingTomorrow : t.nothingToday} />
-            )}
+            <div className="hm-fit-list" ref={fit.listRef}>
+              {p.appointments === null ? (
+                <CardError t={t} />
+              ) : (
+                <BookingRows t={t} groups={groups.shown} timezone={p.timezone} now={now} empty={p.listIsTomorrow ? t.nothingTomorrow : t.nothingToday} />
+              )}
+            </div>
           </Card>
 
           <Card className="hm-area-clients" title={t.clientsDoingTitle}>

@@ -1931,3 +1931,230 @@
     font-size: 12px;
   }
 }
+
+/* ---------- owner Home: one laptop screen, no scroll (Jira GRW-222) ----------
+ *
+ * The owner, on a 13-inch MacBook (≈1470×720 of page): "fit it in a single
+ * screen, no scroll should be required" — and then: shrink the money card, not
+ * the bookings. So:
+ *
+ *   row 1  money + needs attention   ← minmax(0, 1fr): takes what is left, and
+ *                                       tightens itself with container queries
+ *   row 2  bookings today            ← auto: three rows, always (FIT_ROWS)
+ *   row 3  how your clients are doing ← auto
+ *
+ * Gated on a desktop width AND a 680px-tall page (FIT_QUERY in OwnerHome.tsx).
+ * Shorter than that the page scrolls, because the money card cannot say what
+ * it has to in less than ~180px.
+ */
+@media (min-width: 1101px) and (min-height: 680px) {
+  .hm-head:has(+ .hm-fit) {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .hm-head:has(+ .hm-fit) .hm-head-title {
+    font-size: 20px;
+  }
+  .hm-head:has(+ .hm-fit) .hm-head-sub {
+    font-size: 13px;
+  }
+
+  .page-body.hm-fit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px var(--page-pad-x) 16px;
+    overflow: hidden;
+  }
+  .hm-fit > .hm-owner-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+    /* Row 1 (money) is capped and gives up height first; row 2 (bookings)
+       takes what is left, never less than three rows of bookings. */
+    grid-template-rows: minmax(0, 250px) minmax(min-content, 1fr) auto;
+  }
+  .hm-fit .hm-toolbar .hm-seg button {
+    min-height: 34px;
+    font-size: 13px;
+  }
+  .hm-fit .hm-branch-btn {
+    min-height: 38px;
+  }
+  .hm-fit .hm-card {
+    padding: 14px 16px;
+  }
+  .hm-fit .hm-card-head {
+    margin-bottom: 4px;
+  }
+  .hm-fit .hm-card-head h2 {
+    font-size: 15px;
+  }
+
+  /* Row 1 — elastic. Both cells are size containers, so what is inside can
+     respond to the height the row was actually given. */
+  .hm-fit .hm-area-hero,
+  .hm-fit .hm-area-attention {
+    min-height: 0;
+    overflow: hidden;
+    container-type: size;
+  }
+  .hm-fit .hm-area-attention {
+    display: flex;
+    flex-direction: column;
+  }
+  .hm-fit .hm-hero {
+    height: 100%;
+    gap: 8px;
+    padding: 14px 18px;
+    overflow: hidden;
+  }
+  .hm-fit .hm-hero-amount {
+    font-size: 32px;
+  }
+  .hm-fit .hm-hero-stats {
+    margin-top: 8px;
+  }
+  .hm-fit .hm-hero-stats span {
+    padding: 3px 9px;
+  }
+  .hm-fit .hm-hero-week strong {
+    font-size: 15px;
+  }
+  .hm-fit .hm-spark svg {
+    height: 30px;
+  }
+  .hm-fit .hm-hero-pay {
+    margin-top: auto;
+  }
+  .hm-fit .hm-pay {
+    margin-top: 8px;
+    gap: 10px;
+  }
+  .hm-fit .hm-pay-tiles .hm-pay-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'label label'
+      'value share';
+    align-items: baseline;
+    padding: 8px 12px;
+  }
+  .hm-fit .hm-pay-tiles .hm-pay-label { grid-area: label; }
+  .hm-fit .hm-pay-tiles .hm-pay-value { grid-area: value; font-size: 18px; }
+  .hm-fit .hm-pay-tiles .hm-pay-share { grid-area: share; }
+  .hm-fit .hm-attention {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 8px;
+  }
+  .hm-fit .hm-att {
+    min-height: 0;
+    padding: 4px 12px;
+  }
+  .hm-fit .hm-att-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* Shorter row 1 (≈1280×680): the money card drops its colour bar and the
+     weekday letters, and the tiles go to one line each. Every figure stays. */
+  @container (max-height: 215px) {
+    .hm-fit .hm-hero {
+      gap: 4px;
+      padding: 10px 16px;
+    }
+    .hm-fit .hm-hero-amount {
+      font-size: 26px;
+    }
+    .hm-fit .hm-hero-stats {
+      margin-top: 4px;
+    }
+    .hm-fit .hm-spark-days,
+    .hm-fit .hm-hero-pay .hm-paybar {
+      display: none;
+    }
+    .hm-fit .hm-spark svg {
+      height: 22px;
+    }
+    .hm-fit .hm-pay {
+      margin-top: 4px;
+    }
+    .hm-fit .hm-pay-tiles .hm-pay-item {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: 'label value share';
+      column-gap: 8px;
+      padding: 6px 10px;
+    }
+    .hm-fit .hm-pay-tiles .hm-pay-value {
+      font-size: 15px;
+      text-align: right;
+    }
+    .hm-fit .hm-att-sub {
+      display: none;
+    }
+    .hm-fit .hm-att-icon {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  /* Row 2 — Bookings today: at least three rows, more when there is room. */
+  .hm-fit .hm-area-bookings {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .hm-fit .hm-area-bookings .hm-fit-list {
+    flex: 1 1 auto;
+    min-height: calc(3 * 47px);
+    overflow: hidden;
+  }
+  .hm-fit .hm-area-bookings .hm-row {
+    min-height: 46px;
+    height: 47px;
+    padding: 4px 0;
+  }
+  .hm-fit .hm-area-bookings .hm-row .hm-avatar {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px;
+  }
+  .hm-fit .hm-area-bookings .hm-row-sub {
+    font-size: 12px;
+  }
+  .hm-fit .hm-area-branches {
+    overflow: hidden;
+  }
+
+  /* Row 3 — the client bands, title and hint on one line as the design has it. */
+  .hm-fit .hm-area-clients {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 12px;
+  }
+  .hm-fit .hm-area-clients > .hm-card-head {
+    margin-bottom: 8px;
+  }
+  .hm-fit .hm-area-clients > .hm-card-hint {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hm-fit .hm-area-clients > .hm-segments {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .hm-fit .hm-seg-card {
+    min-height: 0;
+    padding: 8px 11px 8px 15px;
+    gap: 2px;
+  }
+  .hm-fit .hm-seg-count strong {
+    font-size: 20px;
+  }
+}
