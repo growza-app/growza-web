@@ -13,7 +13,7 @@
  */
 
 export interface Me {
-  tenant: { id: string; name: string; timezone: string; locationName: string | null } | null;
+  tenant: { id: string; name: string; timezone: string; locationName: string | null; branchCount?: number } | null;
   /**
    * The owner's own billing state, or null when there is nothing to say
    * (GRW-122). Null is the healthy case AND the case where the state could
@@ -263,6 +263,8 @@ export interface Appointment {
 }
 
 export interface SettingsSummary {
+  /** Jira GRW-230 — the business defaults (`locationId` null) or one branch, and the keys that branch has its own value for. */
+  scope: { locationId: string | null; ownKeys: string[] };
   tenant: {
     id: string;
     name: string;
@@ -272,6 +274,8 @@ export interface SettingsSummary {
     logoUrl: string | null;
   };
   location: { id: string; name: string; timezone: string | null; addressLine1: string; addressCity: string } | null;
+  /** Jira GRW-227 — active branches; more than one shows Settings › Branches. */
+  branchCount: number;
   booking: {
     slotGranularityMin: number;
     slotPolicy: 'fixed_grid' | 'gap_packed';
@@ -536,6 +540,8 @@ export interface AttendanceRegister {
   today: string;
   /** Minutes past a person's own shift start before an arrival reads as "came late" (GRW-170). */
   lateGraceMin: number;
+  /** Jira GRW-230 — staff whose branch has its own grace; anyone absent uses `lateGraceMin`. */
+  lateGraceByProvider?: Record<string, number>;
   rows: AttendanceRow[];
 }
 

@@ -1,10 +1,11 @@
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
+import { loadScopedSettings, scopeKey } from '../scope';
 import { RemindersForm } from './RemindersForm';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NotificationsSettingsPage() {
+export default async function NotificationsSettingsPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   /**
    * Jira GRW-158 · GRW-165 — both, together, because the answer to "will these
    * actually be sent?" is as much a part of this screen as the rules are.
@@ -14,9 +15,10 @@ export default async function NotificationsSettingsPage() {
    * which is the honest direction — it says "not yet" about something that
    * genuinely does not send.
    */
-  const [settings, me] = await Promise.all([api.settings().catch(() => null), api.me().catch(() => null)]);
+  // Jira GRW-230 — the picked branch's reminders, or the business's.
+  const [{ settings, branchName }, me] = await Promise.all([loadScopedSettings(searchParams), api.me().catch(() => null)]);
   if (!settings) return <div className="banner">Could not load settings — check the server is running.</div>;
-  return <RemindersForm initial={settings} whatsappLive={me?.whatsapp?.booking ?? false} />;
+  return <RemindersForm key={scopeKey(settings)} initial={settings} branchName={branchName} whatsappLive={me?.whatsapp?.booking ?? false} />;
 }
 
 // Jira GRW-192 — the tab says which screen this is.

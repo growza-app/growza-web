@@ -193,7 +193,7 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
       // Late past their own start PLUS the salon's grace (GRW-170). Strict to
       // the minute made 10:01 on a 10:00 shift "came late", which is an
       // argument rather than a record.
-      const lateAfter = row.shiftStart === null ? null : minutesOf(row.shiftStart) + register.lateGraceMin;
+      const lateAfter = row.shiftStart === null ? null : minutesOf(row.shiftStart) + (register.lateGraceByProvider?.[row.providerId] ?? register.lateGraceMin);
       next.status = lateAfter !== null && minutesOf(value) > lateAfter ? 'late' : 'present';
     }
     void save(row, next);

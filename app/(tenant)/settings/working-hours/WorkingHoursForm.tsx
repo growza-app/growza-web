@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
 import { toWeekdayRows, WeekdayHoursEditor } from '../../components/WeekdayHoursEditor';
+import { BranchScopeNote } from '../BranchScopeNote';
 
 const SAVE_ERROR = 'Could not save — check the server is running.';
 
-export function WorkingHoursForm({ initial }: { initial: SettingsSummary }) {
+export function WorkingHoursForm({ initial, branchName = null }: { initial: SettingsSummary; branchName?: string | null }) {
+  // Jira GRW-230 — null: the business's hours; a branch id: that branch's own.
+  const branchId = initial.scope.locationId;
   const [rows, setRows] = useState(() => toWeekdayRows(initial.workingHours));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export function WorkingHoursForm({ initial }: { initial: SettingsSummary }) {
     setGraceError(null);
     setGraceSaved(false);
     try {
-      await api.updateBookingRules({ attendanceLateGraceMin: graceNum });
+      await api.updateBookingRules({ attendanceLateGraceMin: graceNum }, branchId);
       setGraceSaved(true);
     } catch {
       setGraceError(SAVE_ERROR);
@@ -54,7 +57,10 @@ export function WorkingHoursForm({ initial }: { initial: SettingsSummary }) {
     setError(null);
     setSaved(false);
     try {
-      await api.updateOrgWorkingHours(open.map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime })));
+      await api.updateOrgWorkingHours(
+        open.map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime })),
+        branchId,
+      );
       setSaved(true);
     } catch {
       setError(SAVE_ERROR);
@@ -65,11 +71,14 @@ export function WorkingHoursForm({ initial }: { initial: SettingsSummary }) {
 
   return (
     <>
+    <BranchScopeNote settings={initial} branchName={branchName} keys={['working_hours', 'attendance_late_grace_min']} what="hours" />
     <div className="card">
-      <div className="card-head">Working hours</div>
+      <div className="card-head">{branchId ? `${branchName ?? 'Branch'} hours` : 'Working hours'}</div>
       <div className="card-body">
-        <p className="field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
-          Your business&apos;s default open hours. Staff can follow these automatically from their own profile, or set their own instead.
+        <p className="field-hint settings-card-hint" style={{ marginTop: 0, marginBottom: 14 }}>
+          {branchId
+            ? `When ${branchName ?? 'this branch'} is open. Staff at ${branchName ?? 'this branch'} who follow the salon's hours follow these.`
+            : "Your business's default open hours. Staff can follow these automatically from their own profile, or set their own instead."}
         </p>
         <WeekdayHoursEditor rows={rows} onChange={update} />
         {error && <div className="field-error">{error}</div>}
@@ -98,7 +107,7 @@ export function WorkingHoursForm({ initial }: { initial: SettingsSummary }) {
     <div className="card" style={{ marginTop: 16 }}>
       <div className="card-head">Attendance</div>
       <div className="card-body">
-        <p className="field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
+        <p className="field-hint settings-card-hint" style={{ marginTop: 0, marginBottom: 14 }}>
           Lateness is measured against each person&apos;s own shift start, not one time for
           the whole business. This is how long after it somebody can arrive before the
           register marks them late.

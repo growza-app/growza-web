@@ -1,4 +1,6 @@
+import { useSearchParams } from 'next/navigation';
 import type { SettingsSummary } from '../lib/api';
+import { withBranch } from './SettingsBranchPicker';
 import { IconChevronRight } from '../components/icons';
 import { SETTINGS_GROUPS } from './nav-data';
 import { SignOutButton } from '../components/SignOutButton';
@@ -31,6 +33,8 @@ function HeaderCard({ settings }: { settings: SettingsSummary }) {
 }
 
 export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
+  // Jira GRW-230 — moving between tabs keeps the branch that is picked.
+  const branch = useSearchParams().get('branch');
   return (
     <>
       <HeaderCard settings={settings} />
@@ -38,7 +42,7 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
         <div className="settings-group" key={group.title}>
           <div className="settings-group-title">{group.title}</div>
           <div className="menu-list">
-            {group.rows.map((row) => {
+            {group.rows.filter((row) => !row.multiBranchOnly || settings.branchCount > 1).map((row) => {
               const Icon = row.icon;
               // Before the href check: a row with an action has no href either,
               // and would otherwise render as disabled with "Coming soon".
@@ -70,7 +74,7 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
                 );
               }
               return (
-                <a className="settings-row" href={row.href} key={row.label}>
+                <a className="settings-row" href={withBranch(row.href, branch)} key={row.label}>
                   <span className="settings-row-icon">
                     <Icon />
                   </span>

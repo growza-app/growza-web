@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
 import { copy } from '../../lib/copy';
+import { BranchScopeNote } from '../BranchScopeNote';
 
 const SAVE_ERROR = 'Could not save — check the server is running.';
 
@@ -22,8 +23,11 @@ const REMINDER_DEFS = [
 export function RemindersForm({
   initial,
   whatsappLive,
+  branchName = null,
 }: {
   initial: SettingsSummary;
+  /** Jira GRW-230 — set when a branch is picked: these are that branch's reminders. */
+  branchName?: string | null;
   /**
    * Jira GRW-158 · GRW-165 — whether anything on this screen actually sends.
    *
@@ -62,7 +66,7 @@ export function RemindersForm({
       const reminderRules = rows
         .filter((r) => r.enabled)
         .map((r) => ({ ruleKey: r.key, offsetMin: -(r.hours * 60), template: r.template }));
-      await api.updateReminders(reminderRules);
+      await api.updateReminders(reminderRules, initial.scope.locationId);
       setSaved(true);
     } catch {
       setError(SAVE_ERROR);
@@ -72,8 +76,10 @@ export function RemindersForm({
   };
 
   return (
+    <>
+    <BranchScopeNote settings={initial} branchName={branchName} keys={['reminder_rules']} what="reminders" />
     <div className="card">
-      <div className="card-head">Notifications</div>
+      <div className="card-head">{initial.scope.locationId ? `${branchName ?? 'Branch'} reminders` : 'Notifications'}</div>
       <div className="card-body">
         {whatsappLive ? (
           <p className="field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
@@ -138,5 +144,6 @@ export function RemindersForm({
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import {
   IconClock,
   IconLock,
   IconLogout,
+  IconMapPin,
   IconPalette,
   IconShield,
   IconShop,
@@ -28,6 +29,12 @@ export interface SettingsRow {
    * a future feature.
    */
   action?: 'logout';
+  /**
+   * Jira GRW-227 — listed only for a business with more than one active
+   * branch. With one, its address lives on Business profile and a Branches
+   * screen with a single card would be the same form twice.
+   */
+  multiBranchOnly?: boolean;
   label: string;
   sub: string;
   icon: ComponentType;
@@ -56,6 +63,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     title: 'Business',
     rows: [
       { href: '/settings/profile', label: 'Business profile', sub: 'Name, address, contact details', icon: IconShop },
+      { href: '/settings/branches', label: 'Branches', sub: 'Name and address of each branch', icon: IconMapPin, multiBranchOnly: true },
       { href: '/settings/working-hours', label: 'Working hours', sub: 'Manage open hours and days', icon: IconClock },
     ],
   },

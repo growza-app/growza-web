@@ -1,0 +1,463 @@
+/* ---------- Settings: every tab on one laptop screen (Jira GRW-228) ----------
+ *
+ * Measured at 1470×760 before this: EVERY settings tab scrolled, because the
+ * settings list alone was 647px in a 667px page (Log out below the fold), and
+ * Business profile, Booking settings and Branches ran 150–210px further. The
+ * form column was capped at 640px with ~250px empty beside it, so forms grew
+ * down instead of across.
+ *
+ * On a laptop the shell now fills the page. The list and the form are each
+ * their own scroll box, which is a safety net (4+ branches, a long invite
+ * list), not the plan: at 13 inches every tab fits without either scrolling.
+ * Below 680px tall the page scrolls as before. Phones are untouched.
+ */
+@media (min-width: 861px) {
+  .settings-shell {
+    /* 276px: narrower, "WhatsApp settings" beside its Coming soon pill wrapped to two lines and cost the list a row. */
+    grid-template-columns: 276px minmax(0, 960px);
+    gap: 18px;
+  }
+  /* Worded times need ~118px each at 20px ("10:00 AM"); the 640px column clipped them. */
+  .wk-times input[type='time'] {
+    min-width: 118px;
+  }
+}
+
+@media (min-width: 861px) and (min-height: 680px) {
+  .page-body.settings-page {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .settings-page > .settings-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+  }
+  .settings-page .settings-nav-pane,
+  .settings-page .settings-content-pane {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Room for a card's shadow and a scrollbar, if one is ever needed. */
+    padding-right: 4px;
+    scrollbar-width: thin;
+  }
+  .settings-page .settings-content-pane {
+    padding-bottom: 2px;
+  }
+
+  /* The list: same rows, less air. 14 rows and 4 headings in ~600px. */
+  .settings-page .settings-group + .settings-group {
+    margin-top: 7px;
+  }
+  .settings-page .settings-group-title {
+    margin-bottom: 3px;
+  }
+  .settings-page .settings-nav-pane .settings-row {
+    min-height: 0;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .settings-page .settings-nav-pane .settings-row-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .settings-page .settings-nav-pane .settings-row-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* The profile's Save bar pins to the form column, which is now the scroller. */
+  .settings-page .bp-savebar {
+    bottom: 0;
+  }
+}
+
+/* ≈1280×720 — the last 10–12px: tighter list rows and card heads. */
+@media (min-width: 861px) and (min-height: 680px) and (max-height: 740px) {
+  .settings-page .settings-nav-pane .settings-row {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .settings-page .settings-group + .settings-group {
+    margin-top: 5px;
+  }
+  .settings-page .settings-content-pane .card-head {
+    padding-top: 13px;
+    padding-bottom: 13px;
+  }
+  /* Direct children only: the profile and branch cards manage their own gaps. */
+  .settings-page .settings-content-pane > .card + .card {
+    margin-top: 12px;
+  }
+  .settings-page .bp-form .field textarea {
+    min-height: 56px;
+  }
+}
+
+/* ---------- wide form column: across, not down ---------- */
+.bp-columns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.bp-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.bp-branches {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+/* A lone field (Contact's phone) takes the whole card, not half of it. */
+.bp-grid > .field:only-child {
+  grid-column: 1 / -1;
+}
+/* A card narrower than two comfortable fields stacks them. */
+.bp-card {
+  container-type: inline-size;
+}
+@container (max-width: 360px) {
+  .bp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1101px) {
+  .bp-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .bp-branches {
+    /* 320px: two branches side by side even in a 1280px window's ~700px column. */
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+/* Laptop fit: the profile's cards trim their padding so two columns fit 13". */
+@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
+  .settings-page .bp-form {
+    gap: 12px;
+  }
+  .settings-page .bp-columns,
+  .settings-page .bp-col,
+  .settings-page .bp-branches {
+    gap: 12px;
+  }
+  .settings-page .bp-card {
+    padding: 14px 16px;
+  }
+  .settings-page .bp-card-head {
+    margin-bottom: 10px;
+  }
+  .settings-page .bp-grid {
+    gap: 10px 14px;
+  }
+  .settings-page .bp-form .field label {
+    margin-bottom: 5px;
+  }
+  .settings-page .bp-form .field textarea {
+    min-height: 64px;
+  }
+  .settings-page .bp-logo-preview {
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+  }
+  .settings-page .bp-savebar {
+    padding: 10px 14px;
+  }
+  .settings-page .bp-card-actions {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+}
+
+/* ---------- Booking settings: two columns ---------- */
+.rules-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.rules-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+@media (min-width: 1101px) {
+  .rules-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+  }
+  .rules-col + .rules-col {
+    padding-left: 28px;
+    border-left: 1px solid var(--border);
+  }
+}
+
+/* ---------- Team access: labels above their fields, one row on a laptop ---------- */
+.team-invite-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+.team-role-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.team-role-field > label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.team-invite-grid select,
+.team-invite-phone .phone-field {
+  width: 100%;
+  min-width: 0;
+}
+.team-invite-phone .field {
+  margin: 0;
+}
+.team-invite-btn {
+  justify-content: center;
+  min-height: 42px;
+}
+@media (min-width: 1101px) {
+  .team-invite-grid {
+    /* The role options are sentences ("Stylist — their own bookings only"); they get the widest track. */
+    grid-template-columns: minmax(190px, 1fr) minmax(0, 1.6fr) minmax(0, 1fr) auto;
+  }
+}
+
+/*
+ * Short laptops (≈680–859px tall: 1366×680, 1280×720). Measured after the
+ * rules above, the settings list still ran 12–52px long and Working hours
+ * 10–50px, so the page chrome gives up the room rather than the forms:
+ *
+ * - the header keeps its title and drops the one-line subtitle;
+ * - the list drops its own Log out row — the sidebar's Log out is on screen
+ *   beside it on every desktop, so this was the same button twice;
+ * - Working hours' two cards lose some air.
+ */
+@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
+  .topbar:has(+ .settings-page) {
+    align-items: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .topbar:has(+ .settings-page) h1 {
+    margin-bottom: 0;
+    font-size: 22px;
+  }
+  .topbar:has(+ .settings-page) .topbar-title p {
+    display: none;
+  }
+  .settings-page .settings-nav-pane .settings-row-action {
+    display: none;
+  }
+  .settings-page .settings-content-pane > .card + .card {
+    margin-top: 12px !important;
+  }
+  .settings-page .settings-content-pane .card-head {
+    padding-top: 12px;
+    padding-bottom: 10px;
+  }
+  .settings-page .settings-content-pane .card-body {
+    padding-bottom: 14px;
+  }
+}
+
+/* A "Coming soon" row keeps to one line in the 248px list ("WhatsApp settings" wrapped at 1366). */
+@media (min-width: 861px) {
+  .settings-page .settings-nav-pane .settings-row-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ---------- Settings by branch (Jira GRW-230) ---------- */
+.sbp {
+  position: relative;
+}
+.sbp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  max-width: 220px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.sbp-btn.is-branch {
+  border-color: #cdeedb;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.sbp-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.sbp-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sbp-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  width: 230px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(11, 54, 28, 0.18);
+}
+.sbp-menu button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sbp-menu button:hover,
+.sbp-menu button[aria-checked='true'] {
+  background: var(--accent-soft);
+}
+.sbp-menu strong {
+  font-size: 14px;
+}
+.sbp-menu span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Whose settings these are — one line above the tab. */
+.bsn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13.5px;
+  color: #4a574f;
+}
+.bsn strong {
+  color: var(--text);
+}
+.bsn-own {
+  border-color: #cdeedb;
+  background: #f0faf4;
+}
+.bsn-all {
+  border-color: #f6e6cd;
+  background: #fdf6ec;
+}
+.bsn-reset {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.bp-form .bsn {
+  margin-bottom: 0;
+}
+@media (max-width: 860px) {
+  .sbp-btn {
+    max-width: 150px;
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .bsn {
+    flex-wrap: wrap;
+  }
+}
+
+/* Short laptops: the branch note is one slim line and the form's own subtitle
+   goes, so adding "whose settings" costs a tab no scroll (GRW-228 still holds). */
+@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
+  .settings-page .bsn {
+    margin-bottom: 6px;
+    padding: 5px 10px;
+    font-size: 12.5px;
+  }
+  .settings-page .bp-form .bsn {
+    margin-bottom: 0;
+  }
+  .settings-page .bsn-reset {
+    min-height: 28px;
+  }
+  .settings-page .bp-sub {
+    display: none;
+  }
+}
+@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
+  /* The neutral notes ("All branches…", "Indiranagar uses the business's…") repeat
+     what the header picker already shows; on a short laptop only the notes
+     that change what a Save does stay: "has its own" and "same for every branch". */
+  .settings-page .bsn:not(.bsn-own):not(.bsn-all) {
+    display: none;
+  }
+  /* Working hours' explanatory sentences — the card titles say the same in fewer words. */
+  .settings-page .settings-card-hint {
+    display: none;
+  }
+}
+
+/* Phones: a smaller picker. The header wraps onto a second row when it must,
+   the rule 76-header-controls.css settled for every screen — squeezing it
+   pushed the account button off a 360px screen. */
+@media (max-width: 860px) {
+  .sbp-btn {
+    max-width: 118px;
+    min-height: 36px;
+    gap: 4px;
+    padding: 0 8px;
+    font-size: 12.5px;
+  }
+  .sbp-btn > svg:first-child {
+    display: none;
+  }
+}

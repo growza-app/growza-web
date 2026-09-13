@@ -135,11 +135,11 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
           Invite someone to sign in to this business. They choose their own password.
         </p>
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div className="team-invite-grid">
           {/* GRW-199 — the shared field: a greyed +91 and ten digits. It
               cannot hold an invalid character, so the old validate-on-blur
               dance is gone; what remains is the length check on submit. */}
-          <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+          <div className="team-invite-phone">
             <PhoneField
               id="invite-phone"
               label="Mobile number"
@@ -197,7 +197,7 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
             </div>
           )}
           <button
-            className="btn"
+            className="btn team-invite-btn"
             disabled={busy || !phone.trim() || (role === 'staff' && !providerId)}
             onClick={() => void send()}
           >

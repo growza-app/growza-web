@@ -41,6 +41,9 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
     <div className="card">
       <div className="card-head">Booking settings</div>
       <div className="card-body">
+        {/* Jira GRW-228 — how times are offered | when customers may book, side by side on a laptop. */}
+        <div className="rules-columns">
+        <div className="rules-col">
         <div className="field">
           <label>
             <span>Slot length</span>
@@ -75,7 +78,9 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           </label>
         </div>
 
-        <div className="field" style={{ marginTop: 18 }}>
+        </div>
+        <div className="rules-col">
+        <div className="field">
           <label>
             <span>Minimum notice</span>
           </label>
@@ -105,6 +110,8 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           <span className="field-hint">
             Bookings can&apos;t be cancelled within {cancellationCutoffMin || 0} minutes of the start time.
           </span>
+        </div>
+        </div>
         </div>
 
         {/*

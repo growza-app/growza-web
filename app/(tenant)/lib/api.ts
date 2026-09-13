@@ -42,6 +42,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 export * from './api-types';
 export * from './report-types';
 export * from './home-types';
+export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
@@ -88,6 +89,7 @@ import type {
   TodayStats,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry } from './home-types';
+import type { BranchSettings } from './branch-types';
 import type {
   ClientProfile,
   ReportBookings,
@@ -127,6 +129,9 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
+
+/** Jira GRW-230 — `?location=` for a branch's settings, nothing for the business's. */
+const atBranch = (location?: string | null) => (location ? `?location=${encodeURIComponent(location)}` : '');
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
@@ -379,7 +384,10 @@ export const api = {
   createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
   revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
-  settings: () => get<SettingsSummary>('/api/v1/settings'),
+  // Jira GRW-230 — `location`: that branch's settings; omitted: the business defaults.
+  settings: (location?: string | null) => get<SettingsSummary>(`/api/v1/settings${atBranch(location)}`),
+  resetBranchSettings: (location: string, keys: string[]) =>
+    post<SettingsSummary>(`/api/v1/settings/branch-reset${atBranch(location)}`, { keys }),
   updateProfile: (body: {
     name?: string;
     timezone?: string;
@@ -388,7 +396,10 @@ export const api = {
     locationName?: string;
     addressLine1?: string;
     addressCity?: string;
-  }) => patch<SettingsSummary>('/api/v1/settings/profile', body),
+  }, location?: string | null) => patch<SettingsSummary>(`/api/v1/settings/profile${atBranch(location)}`, body),
+  branchSettings: () => get<{ branches: BranchSettings[] }>('/api/v1/settings/branches'),
+  updateBranch: (id: string, body: { name?: string; addressLine1?: string; addressCity?: string }) =>
+    patch<{ branch: BranchSettings }>(`/api/v1/settings/branches/${id}`, body),
   uploadBusinessLogo: (file: File) => uploadFile<SettingsSummary>('/api/v1/settings/logo', 'logo', file),
   updateBookingRules: (body: {
     slotGranularityMin?: number;
@@ -399,11 +410,11 @@ export const api = {
     staffSeesClientContact?: boolean;
     attendanceLateGraceMin?: number;
     reportAccess?: Record<string, string[]>;
-  }) => patch<SettingsSummary>('/api/v1/settings/booking', body),
-  updateReminders: (reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>) =>
-    patch<SettingsSummary>('/api/v1/settings/reminders', { reminderRules }),
-  updateOrgWorkingHours: (workingHours: Array<{ weekday: number; startTime: string; endTime: string }>) =>
-    patch<SettingsSummary>('/api/v1/settings/working-hours', { workingHours }),
+  }, location?: string | null) => patch<SettingsSummary>(`/api/v1/settings/booking${atBranch(location)}`, body),
+  updateReminders: (reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>, location?: string | null) =>
+    patch<SettingsSummary>(`/api/v1/settings/reminders${atBranch(location)}`, { reminderRules }),
+  updateOrgWorkingHours: (workingHours: Array<{ weekday: number; startTime: string; endTime: string }>, location?: string | null) =>
+    patch<SettingsSummary>(`/api/v1/settings/working-hours${atBranch(location)}`, { workingHours }),
   providerDay: (providerId?: string, date?: string) =>
     get<ProviderDay>(
       `/api/v1/provider-day${providerId || date ? `?${new URLSearchParams({ ...(providerId ? { providerId } : {}), ...(date ? { date } : {}) })}` : ''}`,
