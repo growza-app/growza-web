@@ -121,7 +121,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     dayClosedSub: S('Tap to see the full day summary', 'पूरा हिसाब देखने के लिए टैप करें'),
     closedToday: S('Closed today', 'आज बंद है'),
     daySummary: S('Day summary', 'दिन का हिसाब'),
-    todaysSummary: S('How today went', 'आज का पूरा हिसाब'),
+    todaysSummary: S("Today's summary", 'आज का पूरा हिसाब'),
     moneyTaken: S('Money today', 'आज मिला पैसा'),
     done: S('done', 'पूरे हुए'),
     notDone: S('still to do', 'बाकी हैं'),
@@ -132,13 +132,14 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     close: S('Close', 'बंद करें'),
     // Day summary — clients (Jira GRW-222). Plain words on purpose: the owner's
     // rule is that the people reading this may not be confident readers, so
-    // "Came in" not "Served", "First time" not "New", "Booked again" not
-    // "Booked next visit" (12-conventions.md, rule 12).
+    // "First time" not "New", "Booked again" not "Booked next visit"
+    // (12-conventions.md, rule 12). "Today's summary", "Served" and "Returned
+    // clients" are the owner's own choice of words, kept on review.
     clientsToday: S(`${clientsWord} today`, 'आज के ग्राहक'),
     clientsTodaySub: S('Who came today', 'आज कौन आया'),
-    served: S('Came in', 'आए'),
+    served: S('Served', 'सेवा दी'),
     newToday: S('First time', 'पहली बार'),
-    cameBackToday: S('Came before', 'पहले भी आए'),
+    cameBackToday: S('Returned clients', 'दोबारा आए ग्राहक'),
     bookedNext: S('Booked again', 'फिर से बुक किया'),
     didntCome: S("Didn't come", 'नहीं आए'),
     walkedOut: S('Left without service', 'बिना सेवा चले गए'),
