@@ -751,7 +751,7 @@
     height: 28px;
   }
   .hm-hero-week .hm-spark-days {
-    display: none;
+    font-size: 9px;
   }
   /* The design's phone hero: a ruled strip of three figures, not chips —
      number over its word, so "came back" is never cut to "came ba…". */
@@ -2103,7 +2103,7 @@
     height: 30px;
   }
 
-  /* Shorter row 1 (≈1280×680): the money card drops the weekday letters, slims
+  /* Shorter row 1 (≈1280×680): the money card shrinks the weekday letters, slims
      the colour bar, and puts each payment tile on one line. Every figure stays. */
   @container (max-height: 215px) {
     .hm-fit .hm-hero {
@@ -2117,14 +2117,15 @@
       margin-top: 4px;
     }
     .hm-fit .hm-spark-days {
-      display: none;
+      font-size: 9px;
+      line-height: 1.1;
     }
     /* The payment split's colour bar stays — the owner asked for it back — just slimmer. */
     .hm-fit .hm-hero-pay .hm-paybar {
       height: 6px;
     }
     .hm-fit .hm-spark svg {
-      height: 22px;
+      height: 16px;
     }
     .hm-fit .hm-pay {
       margin-top: 4px;
@@ -2295,5 +2296,101 @@
   .hm-ds-lists {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sp-3);
+  }
+}
+
+/* ---------- phone money card, compact (Jira GRW-222) ----------
+ *
+ * The owner on a phone: the money card "has captured half of the screen".
+ * Same figures, about 40% less height — tighter padding, a smaller menu
+ * button, "This week" and its total on one line, a shorter graph, and a
+ * slimmer ruled strip. Appended last so it wins over the phone rules above
+ * without reordering them.
+ */
+@media (max-width: 860px) {
+  .hm-page .hm-hero:not(.hm-hero-small) {
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-top {
+    min-height: 28px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-menu {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-menu svg {
+    width: 15px;
+    height: 15px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-delta {
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-amount {
+    font-size: 26px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-week {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    column-gap: 6px;
+    row-gap: 0;
+    max-width: 160px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-eyebrow {
+    font-size: 9px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-week strong {
+    font-size: 12px;
+    text-align: right;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark {
+    grid-column: 1 / -1;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark svg {
+    height: 20px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark-days {
+    font-size: 8px;
+    line-height: 1.1;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-stats {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-stats span {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-stats strong {
+    font-size: 14px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-pay .hm-pay {
+    margin-top: 6px;
+  }
+}
+@media (max-width: 860px) {
+  /* Figures size to their words, spread across the strip, so "100% came back"
+     is never cut at 320px (it was, by a few pixels, with equal thirds). */
+  .hm-hero:not(.hm-hero-small) .hm-hero-stats {
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-stats span {
+    flex: 0 1 auto;
+  }
+}
+@media (max-width: 360px) {
+  .hm-hero:not(.hm-hero-small) .hm-hero-stats span {
+    font-size: 9.5px;
+  }
+  .hm-hero:not(.hm-hero-small) .hm-hero-stats strong {
+    font-size: 13px;
   }
 }
