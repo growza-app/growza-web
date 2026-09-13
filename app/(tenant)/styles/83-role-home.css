@@ -706,11 +706,57 @@
     padding: 0;
     background: transparent;
   }
+  /*
+   * Jira GRW-222 — the phone hero: the amount on the left, a small week graph
+   * in the space beside it (the owner pointed at that empty corner), and a
+   * ruled strip of three figures below both.
+   *
+   * `display: contents` on the main column lets the amount and the strip be
+   * grid items of the body directly, so the graph can sit beside the amount
+   * while the strip spans the full width under them.
+   */
   .hm-hero-body {
-    display: block;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'amount week'
+      'stats stats';
+    align-items: center;
+    column-gap: var(--sp-3);
   }
-  /* The design's phone hero: a ruled strip of three figures, not chips. */
+  .hm-hero-main {
+    display: contents;
+  }
+  .hm-hero-amount {
+    grid-area: amount;
+  }
+  .hm-hero-week {
+    grid-area: week;
+    justify-self: end;
+    align-items: flex-end;
+    min-width: 0;
+    max-width: 150px;
+  }
+  .hm-hero-week .hm-eyebrow {
+    font-size: 9.5px;
+  }
+  .hm-hero-week strong {
+    font-size: 13px;
+  }
+  .hm-hero-week .hm-spark,
+  .hm-hero-week .hm-spark svg {
+    width: 100%;
+  }
+  .hm-hero-week .hm-spark svg {
+    height: 28px;
+  }
+  .hm-hero-week .hm-spark-days {
+    display: none;
+  }
+  /* The design's phone hero: a ruled strip of three figures, not chips —
+     number over its word, so "came back" is never cut to "came ba…". */
   .hm-hero-stats {
+    grid-area: stats;
     flex-wrap: nowrap;
     gap: var(--sp-3);
     margin-top: var(--sp-3);
@@ -720,15 +766,15 @@
   .hm-hero-stats span {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
     padding: 0;
     background: transparent;
     font-size: 11px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
   }
   .hm-hero-stats strong {
-    font-size: 15px;
+    font-size: 16px;
   }
 }
 .hm-hero-small {

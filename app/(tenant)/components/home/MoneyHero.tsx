@@ -121,7 +121,7 @@ export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOvervie
             ) : null}
           </div>
         </div>
-        <div className="hm-hero-week hm-desktop">
+        <div className="hm-hero-week">
           <span className="hm-eyebrow">{t.thisWeek}</span>
           <strong>{rupees(week.revenueMinor)}</strong>
           <Sparkline days={week.days} />
