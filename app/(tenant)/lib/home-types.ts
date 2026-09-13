@@ -44,6 +44,20 @@ export interface DaySummary {
   notDone: number;
   byPaymentMode: PaymentModeSlice[];
   staff: Array<{ id: string; name: string; bookings: number; revenueMinor: number }>;
+  /** Jira GRW-222 — who the day was for. */
+  clients: {
+    served: number;
+    newClients: number;
+    newNames: Array<{ id: string; name: string | null }>;
+    cameBack: number;
+    rebooked: number;
+    noShows: number;
+    noShowNames: Array<{ id: string; name: string | null }>;
+    walkedOut: number;
+    topSpenders: Array<{ id: string; name: string | null; revenueMinor: number }>;
+    byChannel: { whatsapp: number; counter: number };
+    tomorrowBookings: number;
+  };
 }
 
 /** Jira GRW-222 — one walk-in waiting to be seen, first come first served. */

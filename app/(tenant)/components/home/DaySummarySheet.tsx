@@ -79,6 +79,80 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
               <PaymentBar t={t} slices={data.byPaymentMode} total={data.revenueMinor} variant="list" />
             </section>
 
+            <section className="hm-card hm-sheet-wide hm-ds-clients">
+              <div className="hm-card-head">
+                <h2>
+                  {t.clientsToday} <small>{t.clientsTodaySub}</small>
+                </h2>
+              </div>
+              <div className="hm-ds-stats">
+                {[
+                  { k: 'served', n: data.clients.served, label: t.served, tone: 'green' },
+                  { k: 'new', n: data.clients.newClients, label: t.newToday, tone: 'blue' },
+                  { k: 'back', n: data.clients.cameBack, label: t.cameBackToday, tone: 'violet' },
+                  { k: 'rebooked', n: data.clients.rebooked, label: t.bookedNext, tone: 'green' },
+                  { k: 'noshow', n: data.clients.noShows, label: t.didntCome, tone: 'amber' },
+                  { k: 'left', n: data.clients.walkedOut, label: t.walkedOut, tone: 'rose' },
+                ].map((x) => (
+                  <span key={x.k} className={`hm-ds-stat hm-tone-${x.tone}`}>
+                    <strong>{x.n}</strong>
+                    {x.label}
+                  </span>
+                ))}
+              </div>
+              <div className="hm-ds-lists">
+                <div>
+                  <h3>{t.newTodayList}</h3>
+                  {data.clients.newNames.length === 0 ? (
+                    <p className="hm-empty">{t.nobodyNew}</p>
+                  ) : (
+                    <ul>
+                      {data.clients.newNames.map((c) => (
+                        <li key={c.id}>
+                          <Avatar name={c.name} id={c.id} size={28} />
+                          <span>{c.name ?? t.unnamed}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <h3>{t.callThem}</h3>
+                  {data.clients.noShowNames.length === 0 ? (
+                    <p className="hm-empty">{t.everyoneCame}</p>
+                  ) : (
+                    <ul>
+                      {data.clients.noShowNames.map((c) => (
+                        <li key={c.id}>
+                          <Avatar name={c.name} id={c.id} size={28} />
+                          <span>{c.name ?? t.unnamed}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <h3>{t.topClients}</h3>
+                  {data.clients.topSpenders.length === 0 ? (
+                    <p className="hm-empty">{t.noSpendYet}</p>
+                  ) : (
+                    <ul>
+                      {data.clients.topSpenders.map((c) => (
+                        <li key={c.id}>
+                          <Avatar name={c.name} id={c.id} size={28} />
+                          <span>{c.name ?? t.unnamed}</span>
+                          <strong>{rupees(c.revenueMinor)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+              <p className="hm-ds-foot">
+                {t.viaWhatsApp(data.clients.byChannel.whatsapp)} · {t.atCounter(data.clients.byChannel.counter)} · {t.tomorrowCount(data.clients.tomorrowBookings)}
+              </p>
+            </section>
+
             <section className="hm-card hm-sheet-wide">
               <div className="hm-card-head">
                 <h2>
