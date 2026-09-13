@@ -602,11 +602,19 @@
   fill: #fff;
 }
 .hm-spark-days {
-  display: flex;
-  justify-content: space-between;
+  /* Each label sits under its own point on the line (the same x the graph
+     uses), so a month's 1 · 8 · 15 · 22 · 29 land where those days are. */
+  position: relative;
+  height: 1.3em;
   font-size: 10px;
   font-weight: 600;
   color: #7fb897;
+}
+.hm-spark-days span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 .hm-hero-empty {
   margin: 0;
@@ -2392,5 +2400,59 @@
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats strong {
     font-size: 13px;
+  }
+}
+
+/* ---------- more than three payment types (Jira GRW-222) ----------
+ * A month can hold UPI, Cash, Card, Other and Not known — five tiles in a row
+ * built for three, and in the compact laptop card their amounts ran into each
+ * other. With four or more, each tile drops its % (the colour bar above
+ * already shows the share) and the amount gets smaller, so every rupee figure
+ * stays whole.
+ */
+.hm-pay-tiles:has(.hm-pay-item:nth-child(4)) {
+  gap: 6px;
+}
+.hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-item {
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-share {
+  display: none;
+}
+.hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-value {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-label {
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@container (max-height: 215px) {
+  .hm-fit .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-item {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'label'
+      'value';
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .hm-fit .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-value {
+    font-size: 13px;
+    text-align: left;
+  }
+}
+@media (max-width: 860px) {
+  /* On a phone, four or five payment types wrap to two rows of three instead
+     of crowding one row ("Not kn…", a clipped UPI amount). */
+  .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-item {
+    flex: 1 1 calc(33.333% - 6px);
   }
 }

@@ -51,7 +51,7 @@ export function PaymentBar({ t, slices, total, variant }: { t: HomeCopy; slices:
 function Sparkline({ days }: { days: HomeOverview['week']['days'] }) {
   const shown = days.filter((d) => !d.future);
   const max = Math.max(...days.map((d) => d.revenueMinor), 1);
-  const x = (i: number) => 4 + (i * 192) / 6;
+  const x = (i: number) => 4 + (i * 192) / Math.max(days.length - 1, 1);
   const y = (v: number) => 36 - (v / max) * 30;
   const points = shown.map((d, i) => `${x(i)},${y(d.revenueMinor)}`).join(' ');
   const last = shown.at(-1);
@@ -62,9 +62,14 @@ function Sparkline({ days }: { days: HomeOverview['week']['days'] }) {
         {last ? <circle cx={x(shown.length - 1)} cy={y(last.revenueMinor)} r="3.5" /> : null}
       </svg>
       <div className="hm-spark-days">
-        {days.map((d) => (
-          <span key={d.date}>{d.weekday.charAt(0)}</span>
-        ))}
+        {/* A week: M T W T F S S. A month: every seventh date, spaced to where it falls. */}
+        {days.map((d, i) =>
+          d.weekday ? (
+            <span key={d.date} style={{ left: `${(x(i) / 200) * 100}%` }}>
+              {/^\d/.test(d.weekday) ? d.weekday : d.weekday.charAt(0)}
+            </span>
+          ) : null,
+        )}
       </div>
     </div>
   );
@@ -122,7 +127,7 @@ export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOvervie
           </div>
         </div>
         <div className="hm-hero-week">
-          <span className="hm-eyebrow">{t.thisWeek}</span>
+          <span className="hm-eyebrow">{week.span === 'month' ? t.thisMonth : t.thisWeek}</span>
           <strong>{rupees(week.revenueMinor)}</strong>
           <Sparkline days={week.days} />
         </div>

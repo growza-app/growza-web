@@ -28,7 +28,8 @@ export interface HomeOverview {
     cameBackPct: number | null;
     byPaymentMode: PaymentModeSlice[];
   };
-  week: { revenueMinor: number; days: Array<{ date: string; weekday: string; revenueMinor: number; future: boolean }> };
+  /** The graph's span follows the period: this week for Today and Week, this month for Month. */
+  week: { span: 'week' | 'month'; revenueMinor: number; days: Array<{ date: string; weekday: string; revenueMinor: number; future: boolean }> };
   attention: { notMarkedDone: number; cancelledToday: number };
   /** Every active branch, primary first. More than one is what "multi-branch" means. */
   branches: Array<{ id: string; name: string; isPrimary: boolean; bookingsToday: number; revenueTodayMinor: number }>;

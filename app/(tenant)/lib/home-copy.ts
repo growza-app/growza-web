@@ -72,6 +72,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     moneyMenu: S('Change what this card shows', 'यह कार्ड क्या दिखाए'),
     noMoneyYet: S('No money taken yet', 'अभी तक कोई पैसा नहीं'),
     thisWeek: S('This week', 'इस हफ़्ते'),
+    thisMonth: S('This month', 'इस महीने'),
     payment: {
       upi: 'UPI',
       cash: S('Cash', 'नकद'),
