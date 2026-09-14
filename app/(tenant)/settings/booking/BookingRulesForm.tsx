@@ -51,6 +51,7 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           <input
             type="number"
             min={5}
+            max={240}
             step={5}
             value={slotGranularityMin}
             onChange={(e) => setSlotGranularityMin(Number(e.target.value))}
@@ -84,7 +85,7 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           <label>
             <span>Minimum notice</span>
           </label>
-          <input type="number" min={0} step={5} value={minNoticeMin} onChange={(e) => setMinNoticeMin(Number(e.target.value))} />
+          <input type="number" min={0} max={2880} step={5} value={minNoticeMin} onChange={(e) => setMinNoticeMin(Number(e.target.value))} />
           <span className="field-hint">Customers must book at least {minNoticeMin || 0} minutes ahead.</span>
         </div>
 
@@ -92,7 +93,7 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           <label>
             <span>Booking horizon</span>
           </label>
-          <input type="number" min={1} value={bookingHorizonDays} onChange={(e) => setBookingHorizonDays(Number(e.target.value))} />
+          <input type="number" min={1} max={365} value={bookingHorizonDays} onChange={(e) => setBookingHorizonDays(Number(e.target.value))} />
           <span className="field-hint">Customers can book up to {bookingHorizonDays || 0} days ahead.</span>
         </div>
 
@@ -103,12 +104,13 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           <input
             type="number"
             min={0}
+            max={2880}
             step={15}
             value={cancellationCutoffMin}
             onChange={(e) => setCancellationCutoffMin(Number(e.target.value))}
           />
           <span className="field-hint">
-            Bookings can&apos;t be cancelled within {cancellationCutoffMin || 0} minutes of the start time.
+            Customers can&apos;t cancel within {cancellationCutoffMin || 0} minutes of the start time.
           </span>
         </div>
         </div>
