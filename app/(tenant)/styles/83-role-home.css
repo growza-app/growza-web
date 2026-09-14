@@ -166,6 +166,15 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  /* Where you work matters more than the date: the name keeps up to 70% of the line
+     and gives way only past that; the date gives way first (Jira GRW-253 QA). */
+  .hm-head-branch-name {
+    flex-shrink: 0;
+    max-width: 70%;
+  }
+  .hm-head-branch-date {
+    min-width: 0;
+  }
   .hm-head-branch svg {
     width: 14px;
     height: 14px;

@@ -491,8 +491,10 @@ export function NewVisitSheet({
         serviceIds: picked.map((p) => p.serviceId),
         ...(offerId ? { offerId } : {}),
         idempotencyKey: attemptKey,
+        // Jira GRW-244 — they wait at the branch picked above, not at the main one.
+        ...atBranch,
       });
-      const waiting = await api.walkInQueue().catch(() => []);
+      const waiting = await api.walkInQueue(atBranch.location).catch(() => []);
       router.refresh();
       setStage({ step: 'queued', client, position: Math.max(waiting.length, 1) });
     } catch (error) {

@@ -50,6 +50,19 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       afterClose ? S(`${business} is closed for today.`, 'आज दुकान बंद हो गई।') : S(`See how ${business} is doing today.`, 'देखें आज दुकान कैसी चल रही है।'),
     receptionSub: S("Take care of today's customers.", 'आज के ग्राहकों का ध्यान रखें।'),
     stylistSub: S('Your work for today.', 'आज आपका काम।'),
+    /** Jira GRW-251 — "21:00" → "Your work for today. Open till 9 pm." */
+    stylistSubUntil: (hhmm: string) => {
+      const [raw = 0, m = 0] = hhmm.split(':').map(Number);
+      const h = raw % 24; // "24:00" is midnight, not noon (GRW-253 QA)
+      const clock = `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''}`;
+      if (!hi) return `Your work for today. Open till ${h === 0 && m === 0 ? 'midnight' : `${clock} ${h < 12 ? 'am' : 'pm'}`}.`;
+      // The same 12-hour clock as the English, said the Hindi way: सुबह / दोपहर / शाम / रात.
+      const part = h < 4 ? 'रात' : h < 12 ? 'सुबह' : h < 16 ? 'दोपहर' : h < 20 ? 'शाम' : 'रात';
+      return `आज आपका काम। शाखा ${part} ${clock} बजे तक खुली है।`;
+    },
+    stylistSubClosedToday: S('Your branch is closed today.', 'आज आपकी शाखा बंद है।'),
+    /** Jira GRW-251 — a branch closed while they still work there. */
+    branchClosed: (name: string) => (hi ? `${name} (बंद)` : `${name} (closed)`),
 
     today: S('Today', 'आज'),
     week: S('Week', 'हफ़्ता'),

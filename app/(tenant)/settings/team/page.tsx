@@ -21,18 +21,25 @@ export default async function TeamSettingsPage({ searchParams }: { searchParams:
    * receptionist, who needs no provider — so it degrades to an empty list
    * rather than taking the screen down with it.
    */
-  const [initial, providers, settings, { branch }] = await Promise.all([
+  const [initial, providers, settings, members, me, { branch }] = await Promise.all([
     api.teamInvites().catch(() => null),
     api.providers().catch(() => []),
     api.settings().catch(() => null),
+    api.teamMembers().catch(() => null),
+    api.me().catch(() => null),
     searchParams,
   ]);
   if (!initial) return <div className="banner">Could not load invites — check the server is running.</div>;
   return (
     <>
-      {/* Jira GRW-230 Phase 1 — a login is for the whole business until members have a branch. */}
+      {/* Jira GRW-230 — invites are for the whole business; Jira GRW-237 — a receptionist's branch is chosen on the invite. */}
       {branch && settings ? <BranchScopeNote settings={settings} branchName={null} sameForAll what="team access" /> : null}
-      <TeamAccessPanel initial={initial.invites} providers={providers} />
+      <TeamAccessPanel
+        initial={initial.invites}
+        providers={providers}
+        initialMembers={members?.members ?? []}
+        branches={me?.branches ?? []}
+      />
     </>
   );
 }

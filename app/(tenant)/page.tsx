@@ -91,12 +91,23 @@ export default async function DashboardPage() {
     ]);
     // Own takings (GRW-216) stay on the Bookings screen: the design's stylist
     // Home has no money card, and this Home draws the design.
-    return <StylistHome {...common} locationName={me.tenant?.locationName ?? null} appointments={appointments} day={day} attendanceMonth={attendanceMonth} />;
+    // Jira GRW-251 — a stylist at a branch sees that branch, its closing time, and whether it was closed.
+    return (
+      <StylistHome
+        {...common}
+        locationName={me.member?.locationName ?? me.tenant?.locationName ?? null}
+        branch={me.member?.locationName ? { closed: me.member.locationClosed ?? false, closesAt: me.member.locationClosesAt ?? null, openToday: me.member.locationOpenToday ?? null } : null}
+        appointments={appointments}
+        day={day}
+        attendanceMonth={attendanceMonth}
+      />
+    );
   }
 
   if (kind === 'reception') {
     const [appointments, queue, providers] = await Promise.all([soft(api.appointments()), soft(api.walkInQueue()), soft(api.providers())]);
-    return <ReceptionHome {...common} locationName={me.tenant?.locationName ?? null} appointments={appointments} queue={queue} providers={providers ?? []} />;
+    // Jira GRW-237 — a receptionist with a branch sees that branch's name, not the main one's.
+    return <ReceptionHome {...common} locationName={me.member?.locationName ?? me.tenant?.locationName ?? null} appointments={appointments} queue={queue} providers={providers ?? []} />;
   }
 
   // Owner and manager. `canSeeRevenue` is asserted rather than assumed: this is

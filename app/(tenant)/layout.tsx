@@ -154,7 +154,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     memberPhone = me.member?.phone ?? null;
     branches = me.branches ?? [];
     impersonation = me.impersonation ?? null;
-    locationName = me.tenant?.locationName ?? null;
+    // Jira GRW-237 — a receptionist with a branch is named at that branch.
+    locationName = me.member?.locationName ?? me.tenant?.locationName ?? null;
     // Jira GRW-225 — an owner of several branches watches all of them (multi-branch
     // is owner-only); naming the primary under the business read as "you are in
     // Koramangala" while Home showed every branch.

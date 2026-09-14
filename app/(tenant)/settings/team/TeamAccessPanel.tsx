@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider } from '../../lib/api';
+import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider, type TeamMember } from '../../lib/api';
 /*
  * GRW-199 — the shared phone rule, replacing this panel's own.
  *
@@ -30,8 +30,27 @@ function expiryLabel(iso: string): string {
   return `Expires in ${days} day${days === 1 ? '' : 's'}`;
 }
 
-export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite[]; providers: Provider[] }) {
+export function TeamAccessPanel({
+  initial,
+  providers,
+  initialMembers = [],
+  branches = [],
+}: {
+  initial: PendingInvite[];
+  providers: Provider[];
+  initialMembers?: TeamMember[];
+  branches?: Array<{ id: string; name: string }>;
+}) {
   const [invites, setInvites] = useState<PendingInvite[]>(initial);
+  /**
+   * Jira GRW-237 — each branch has its own receptionist. Asked only when there
+   * is more than one branch; with one, there is nothing to choose.
+   */
+  const multiBranch = branches.length > 1;
+  const [locationId, setLocationId] = useState('');
+  const [members, setMembers] = useState<TeamMember[]>(initialMembers);
+  const [savingMember, setSavingMember] = useState<string | null>(null);
+  const branchName = (id: string | null | undefined) => branches.find((b) => b.id === id)?.name ?? null;
   const [phone, setPhone] = useState('');
   /**
    * GRW-169 — what this person will be able to do.
@@ -90,6 +109,10 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
       setError('Choose which stylist this login is for.');
       return;
     }
+    if (role === 'receptionist' && multiBranch && !locationId) {
+      setError('Choose which branch this receptionist works at.');
+      return;
+    }
     const e164 = toStoredPhone(phone)!;
 
     setBusy(true);
@@ -98,11 +121,19 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
     setCreated(null);
     setCopied(false);
     try {
-      const invite = await api.createTeamInvite({ phone: e164, role, providerId: role === 'staff' ? providerId : null });
+      const invite = await api.createTeamInvite({
+        phone: e164,
+        role,
+        providerId: role === 'staff' ? providerId : null,
+        locationId: role === 'receptionist' && multiBranch ? locationId : null,
+      });
       // The normalised number, not what was typed — it is the one the invite
       // is actually for, and the one they will sign in with.
       setCreated({ ...invite, phone: e164 });
       setPhone('');
+      // The next invite is for somebody else: nothing from this one is carried into it (GRW-253 QA).
+      setLocationId('');
+      setProviderId('');
       await refresh();
     } catch (e) {
       // The server's own words when it has any — "That number is already on
@@ -121,6 +152,21 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
       await refresh();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : LOAD_ERROR);
+    }
+  };
+
+  /** Jira GRW-237 — move a receptionist to a branch. Saved on choosing; there is nothing else on the row to save. */
+  const moveMember = async (userId: string, next: string) => {
+    if (!next) return;
+    setError(null);
+    setSavingMember(userId);
+    try {
+      await api.setTeamMemberBranch(userId, next);
+      setMembers((all) => all.map((m) => (m.userId === userId ? { ...m, locationId: next, locationName: branchName(next) } : m)));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : LOAD_ERROR);
+    } finally {
+      setSavingMember(null);
     }
   };
 
@@ -196,9 +242,30 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
               )}
             </div>
           )}
+          {role === 'receptionist' && multiBranch && (
+            <div className="team-role-field">
+              <label htmlFor="invite-branch">Which branch</label>
+              <select
+                id="invite-branch"
+                value={locationId}
+                disabled={busy}
+                onChange={(e) => {
+                  setLocationId(e.target.value);
+                  setError(null);
+                }}
+              >
+                <option value="">Choose a branch…</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <button
             className="btn team-invite-btn"
-            disabled={busy || !phone.trim() || (role === 'staff' && !providerId)}
+            disabled={busy || !phone.trim() || (role === 'staff' && !providerId) || (role === 'receptionist' && multiBranch && !locationId)}
             onClick={() => void send()}
           >
             {busy ? 'Creating…' : 'Create invite'}
@@ -254,7 +321,10 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 620, fontSize: 14.5 }}>{invite.phone}</div>
-                  <div className="field-hint" style={{ margin: 0 }}>{expiryLabel(invite.expiresAt)}</div>
+                  <div className="field-hint" style={{ margin: 0 }}>
+                    {expiryLabel(invite.expiresAt)}
+                    {multiBranch && branchName(invite.locationId) ? ` · ${branchName(invite.locationId)}` : ''}
+                  </div>
                 </div>
                 {/* `btn-ghost btn-danger`, the pattern the services table
                     already uses for a destructive row action — cancelling
@@ -268,6 +338,51 @@ export function TeamAccessPanel({ initial, providers }: { initial: PendingInvite
             ))
           )}
         </div>
+
+        {/* Jira GRW-237 — each branch has its own front desk. Only with more than one
+            branch: one branch has nothing to choose, and the screen stays as it was. */}
+        {multiBranch && members.some((m) => m.role === 'receptionist') && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontWeight: 620, fontSize: 14.5, marginBottom: 8 }}>Receptionists</div>
+            {members
+              .filter((m) => m.role === 'receptionist')
+              .map((m, i) => (
+                <div
+                  key={m.userId}
+                  className="team-member-row"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                    padding: '12px 0',
+                    borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                  }}
+                >
+                  <div style={{ flex: '1 1 160px', minWidth: 0 }}>
+                    <div style={{ fontWeight: 620, fontSize: 14.5 }}>{m.phone ?? 'Receptionist'}</div>
+                    <div className="field-hint" style={{ margin: 0 }}>
+                      {m.locationId ? `Works at ${m.locationName ?? branchName(m.locationId)}` : 'Every branch — choose one'}
+                    </div>
+                  </div>
+                  <select
+                    aria-label={`Branch for ${m.phone ?? 'receptionist'}`}
+                    value={m.locationId ?? ''}
+                    disabled={savingMember === m.userId}
+                    onChange={(e) => void moveMember(m.userId, e.target.value)}
+                    style={{ flex: '0 1 260px', minWidth: 0 }}
+                  >
+                    {!m.locationId && <option value="">Choose a branch…</option>}
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );

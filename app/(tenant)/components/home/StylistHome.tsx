@@ -30,6 +30,8 @@ export interface StylistHomeProps {
   labels: Record<string, string>;
   businessName: string;
   locationName: string | null;
+  /** Jira GRW-251 — their own branch at a business with more than one; null keeps the header as it was. */
+  branch?: { closed: boolean; closesAt: string | null; openToday: boolean | null } | null;
   timezone: string;
   nowISO: string;
   dateLabel: string;
@@ -100,7 +102,14 @@ export function StylistHome(p: StylistHomeProps) {
 
   return (
     <>
-      <HomeHeader t={t} title={t.greeting(p.greetingPart)} sub={t.stylistSub} businessName={p.businessName} locationName={p.locationName} dateLabel={p.dateLabel} />
+      <HomeHeader
+        t={t}
+        title={t.greeting(p.greetingPart)}
+        sub={p.branch?.closesAt ? t.stylistSubUntil(p.branch.closesAt) : p.branch && !p.branch.closed && p.branch.openToday === false ? t.stylistSubClosedToday : t.stylistSub}
+        businessName={p.businessName}
+        locationName={p.locationName && p.branch?.closed ? t.branchClosed(p.locationName) : p.locationName}
+        dateLabel={p.dateLabel}
+      />
 
       <div className="page-body hm-page hm-stylist">
         {p.appointments === null ? <CardError t={t} /> : null}

@@ -287,8 +287,21 @@ export interface PendingInvite {
   phone: string;
   role: string;
   providerId: string | null;
+  /** Jira GRW-237 — the branch a receptionist is invited to; null for one branch or a stylist. */
+  locationId?: string | null;
   createdAt: string;
   expiresAt: string;
+}
+
+/** Jira GRW-237 — somebody who can sign in, and the branch a receptionist works at (null = every branch). */
+export interface TeamMember {
+  userId: string;
+  role: string;
+  phone: string | null;
+  providerId: string | null;
+  providerName: string | null;
+  locationId: string | null;
+  locationName: string | null;
 }
 
 /**
@@ -356,8 +369,9 @@ export const api = {
   home: (period: HomePeriod = 'today', location?: string | null) =>
     get<HomeOverview>(`/api/v1/home?period=${period}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
   /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
-  walkInQueue: () => get<QueueEntry[]>('/api/v1/walk-in-queue'),
-  addToQueue: (input: { customerId?: string; customerName?: string; customerPhone?: string; serviceIds: string[]; offerId?: string; idempotencyKey?: string }) =>
+  // Jira GRW-244 — `location`: one branch's queue (owner); a receptionist's is their own.
+  walkInQueue: (location?: string | null) => get<QueueEntry[]>(`/api/v1/walk-in-queue${atBranch(location)}`),
+  addToQueue: (input: { customerId?: string; customerName?: string; customerPhone?: string; serviceIds: string[]; offerId?: string; idempotencyKey?: string; location?: string }) =>
     post<QueueEntry>('/api/v1/walk-in-queue', input),
   giveToStaff: (entryId: string, schedulableId: string) =>
     post<{ appointmentId: string; schedulableId: string; startAt: string; endAt: string; overlapping: boolean }>(`/api/v1/walk-in-queue/${entryId}/give`, { schedulableId }),
@@ -384,8 +398,11 @@ export const api = {
   rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
   notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
-  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' }) =>
+  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
+  teamMembers: () => get<{ members: TeamMember[] }>('/api/v1/team/members'),
+  setTeamMemberBranch: (userId: string, locationId: string) =>
+    patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { locationId }),
   revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
   // Jira GRW-230 — `location`: that branch's settings; omitted: the business defaults.
   settings: (location?: string | null) => get<SettingsSummary>(`/api/v1/settings${atBranch(location)}`),

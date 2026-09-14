@@ -37,6 +37,15 @@ export interface Me {
     providerId: string | null;
     /** GRW-202 — the number they signed in with, shown in the account menu. */
     phone?: string | null;
+    /** Jira GRW-237 — a receptionist's own branch; null means every branch. */
+    locationId?: string | null;
+    locationName?: string | null;
+    /** Jira GRW-251 — their branch has been closed and they have not been moved. */
+    locationClosed?: boolean;
+    /** Jira GRW-251 — "HH:mm" their branch closes today; null when closed today or one branch. */
+    locationClosesAt?: string | null;
+    /** Jira GRW-251 — false: closed today; null: not known. */
+    locationOpenToday?: boolean | null;
   } | null;
   /**
    * Jira GRW-63 · GRW-197 — the Reports tabs THIS caller may open.

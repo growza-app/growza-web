@@ -98,7 +98,10 @@ export function HomeHeader({
         {/* The design's phone header: "MG Road · Thu, 11 Sep". */}
         <div className="hm-head-branch">
           <IconMapPin />
-          <span>{locationName ? `${locationName} · ${dateLabel}` : dateLabel}</span>
+          {/* Two spans (Jira GRW-253 QA): on a narrow phone a long branch name no longer
+              pushes the date out entirely — each keeps part of the line. */}
+          {locationName ? <span className="hm-head-branch-name">{locationName}</span> : null}
+          <span className="hm-head-branch-date">{locationName ? `· ${dateLabel}` : dateLabel}</span>
         </div>
         <h1 className="hm-head-title">{title}</h1>
         <div className="hm-head-sub">{sub}</div>

@@ -236,8 +236,17 @@
 }
 @media (min-width: 1101px) {
   .team-invite-grid {
-    /* The role options are sentences ("Stylist — their own bookings only"); they get the widest track. */
-    grid-template-columns: minmax(190px, 1fr) minmax(0, 1.6fr) minmax(0, 1fr) auto;
+    /*
+     * Two columns, not one row of four (Jira GRW-253 QA). Beside the settings list the
+     * card is ~520px at 1101 and ~790px at 1366: four tracks left "Which branch" an empty
+     * 48px box and cut the Role sentence to "Re". Phone and Role share the first row;
+     * the stylist or branch choice and the button the second.
+     */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+  .team-invite-btn {
+    justify-self: start;
+    padding-inline: 22px;
   }
 }
 
