@@ -96,9 +96,20 @@ function hoursCell(row: AttendanceRow, inTime: string, outTime: string): { label
 /** Local edits, so a row reads back what was typed while its save is in flight. */
 type Draft = { inTime: string; outTime: string; status: StatusKey | null };
 
-export function AttendanceRegister({ initial, staffWord }: { initial: Register; staffWord: string }) {
+export function AttendanceRegister({
+  initial,
+  staffWord,
+  /** Jira GRW-249 — a multi-branch owner's open branches, main first; empty hides the picker (BR-01). */
+  branches = [],
+}: {
+  initial: Register;
+  staffWord: string;
+  branches?: Array<{ id: string; name: string }>;
+}) {
   const [register, setRegister] = useState(initial);
   const [date, setDate] = useState(initial.date);
+  /** Jira GRW-249 — the branch picked on the register; null is every branch. */
+  const [branch, setBranch] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | StatusKey>('all');
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -128,13 +139,14 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
     return () => window.removeEventListener('keydown', close);
   }, [openMenu]);
 
-  async function load(nextDate: string) {
+  async function load(nextDate: string, nextBranch: string | null = branch) {
     setBusy(true);
     setError(null);
     try {
-      const next = await api.attendance(nextDate);
+      const next = await api.attendance(nextDate, undefined, undefined, nextBranch);
       setRegister(next);
       setDate(next.date);
+      setBranch(nextBranch);
       setDrafts({});
       setOpenMenu(null);
     } catch {
@@ -142,6 +154,12 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
     } finally {
       setBusy(false);
     }
+  }
+
+  /** Jira GRW-249 — switch branches without leaving the day the desk was on. */
+  function pickBranch(id: string | null) {
+    setOpenMenu(null);
+    void load(date, id);
   }
 
   /**
@@ -166,7 +184,7 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
         outTime: away ? null : next.outTime || null,
         note: row.note,
       });
-      const fresh = await api.attendance(date);
+      const fresh = await api.attendance(date, undefined, undefined, branch);
       setRegister(fresh);
       setDrafts((d) => {
         const { [row.providerId]: _gone, ...rest } = d;
@@ -261,6 +279,9 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
   const dateLabel = dayObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
   const dateSub = isToday ? 'Today' : date === addDays(register.today, -1) ? 'Yesterday' : String(dayObj.getFullYear());
   const filterLabel = filter === 'all' ? `All ${staffWord.toLowerCase()}` : STATUS[filter].label;
+  /** Jira GRW-249 — the picked branch's name, for the toolbar button and the empty state. */
+  const branchName = branch ? (branches.find((b) => b.id === branch)?.name ?? 'this branch') : null;
+  const branchLabel = branchName ?? 'All branches';
   const canMarkAll = rows.some((r) => r.rostered && !r.status);
 
   return (
@@ -322,6 +343,50 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
           />
         </div>
 
+        {/* Jira GRW-249 — one branch's register. `branches` is already empty
+            for anyone but a multi-branch owner (BR-01), so this never shows
+            for a receptionist (their own branch is fixed) or a single-branch
+            business. */}
+        {branches.length > 1 && (
+          <div className="att-menu-anchor">
+            <button
+              type="button"
+              className={`att-filter ${branch ? 'att-filter-on' : ''}`}
+              aria-haspopup="listbox"
+              aria-expanded={openMenu === 'branch'}
+              onClick={() => setOpenMenu((m) => (m === 'branch' ? null : 'branch'))}
+            >
+              <span className="att-filter-key">Branch:</span> {branchLabel}
+              <span className="att-caret" aria-hidden="true">▾</span>
+            </button>
+            {openMenu === 'branch' && (
+              <div className="att-menu" role="listbox">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={branch === null}
+                  className={branch === null ? 'is-on' : ''}
+                  onClick={() => pickBranch(null)}
+                >
+                  All branches
+                </button>
+                {branches.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    role="option"
+                    aria-selected={branch === b.id}
+                    className={branch === b.id ? 'is-on' : ''}
+                    onClick={() => pickBranch(b.id)}
+                  >
+                    {b.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="att-menu-anchor">
           <button
             type="button"
@@ -367,10 +432,20 @@ export function AttendanceRegister({ initial, staffWord }: { initial: Register; 
         {filtered.length === 0 ? (
           <div className="att-empty">
             <div className="att-empty-title">
-              {rows.length === 0 ? `No ${staffWord.toLowerCase()} yet` : `No ${staffWord.toLowerCase()} match your filters`}
+              {rows.length === 0
+                ? // Jira GRW-249 — "nobody here" and "nobody at THIS BRANCH" are
+                  // different facts; naming the branch says which one it is.
+                  branchName
+                  ? `Nobody works at ${branchName} yet`
+                  : `No ${staffWord.toLowerCase()} yet`
+                : `No ${staffWord.toLowerCase()} match your filters`}
             </div>
             <div className="att-empty-sub">
-              {rows.length === 0 ? 'Add someone to the team and they will appear here.' : 'Try clearing the search or status filter.'}
+              {rows.length === 0
+                ? branchName
+                  ? 'Move someone to this branch, or add them here, and they will appear.'
+                  : 'Add someone to the team and they will appear here.'
+                : 'Try clearing the search or status filter.'}
             </div>
           </div>
         ) : (

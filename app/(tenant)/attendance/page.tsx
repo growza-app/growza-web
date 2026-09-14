@@ -57,6 +57,13 @@ export default async function AttendancePage({
       <AttendanceRegister
         initial={register}
         staffWord={me.labels.providers ?? copy.nav.staff}
+        /*
+         * Jira GRW-249 — the branch picker, owner-only, same restriction
+         * Reports draws (GRW-238): a manager or receptionist never gets to
+         * pick, and a single-branch business never sees the control at all
+         * (BR-01).
+         */
+        branches={(me.member?.role ?? 'owner') === 'owner' && (me.branches?.length ?? 0) > 1 ? me.branches! : []}
       />
     </>
   );

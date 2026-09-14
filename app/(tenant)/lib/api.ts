@@ -336,12 +336,17 @@ export const api = {
   bill: (id: string) => get<OwnerBill>(`/api/v1/billing/invoices/${encodeURIComponent(id)}`),
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
-  /** GRW-170 — the register for a day or a range, including everybody nobody marked. */
-  attendance: (date: string, to?: string, providerId?: string) =>
+  /**
+   * GRW-170 — the register for a day or a range, including everybody nobody
+   * marked. `location` is Jira GRW-249 — one branch's register; a receptionist
+   * has one already and this is ignored for them.
+   */
+  attendance: (date: string, to?: string, providerId?: string, location?: string | null) =>
     get<AttendanceRegister>(
       `/api/v1/attendance?date=${encodeURIComponent(date)}` +
         `${to ? `&to=${encodeURIComponent(to)}` : ''}` +
-        `${providerId ? `&providerId=${encodeURIComponent(providerId)}` : ''}`,
+        `${providerId ? `&providerId=${encodeURIComponent(providerId)}` : ''}` +
+        `${location ? `&location=${encodeURIComponent(location)}` : ''}`,
     ),
   markAttendance: (input: {
     providerId: string;

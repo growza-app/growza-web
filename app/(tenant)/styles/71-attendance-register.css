@@ -206,6 +206,17 @@
   font-weight: 500;
 }
 
+/* Jira GRW-249 — the branch picker, once a branch is picked. */
+.att-filter-on {
+  background: var(--accent-soft);
+  border-color: #bfe0cc;
+  color: var(--accent-deep);
+}
+
+.att-filter-on .att-filter-key {
+  color: inherit;
+}
+
 .att-caret {
   font-size: 11px;
 }
