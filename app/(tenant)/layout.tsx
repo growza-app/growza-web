@@ -2,7 +2,7 @@ import './globals.css';
 import { Figtree, Noto_Sans_Devanagari } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { api } from './lib/api';
+import { api, type Me } from './lib/api';
 import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
@@ -12,6 +12,7 @@ import { SessionProvider } from './components/SessionProvider';
 import { LabelsProvider } from './components/LabelsProvider';
 import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
+import { BillChangeBanner } from './components/BillChangeBanner';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
 import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
@@ -109,6 +110,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let tenantName = 'Booking';
   let timezone = 'Asia/Kolkata';
   let billing: { status: string; message: string | null } | null = null;
+  /** Jira GRW-240 — the owner's "your bill changes on" notice. */
+  let billingChange: Me['billingChange'] = null;
   /** GRW-145/163 — whether the billing banner may offer "Pay now". */
   let canPayOnline = false;
   /**
@@ -147,6 +150,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
+    billingChange = me.billingChange ?? null;
     canPayOnline = me.payments?.online ?? false;
     whatsappLive = me.whatsapp?.booking ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
@@ -220,6 +224,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
             <div className="content">
               <BillingBanner billing={billing} canPayOnline={canPayOnline} />
+              <BillChangeBanner change={billingChange} />
               {/*
                 * Jira GRW-192 — one `<main>`, in the shell, for every screen.
                 *

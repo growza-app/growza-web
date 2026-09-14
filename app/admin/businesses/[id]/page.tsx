@@ -1,5 +1,6 @@
 'use client';
 
+import { BranchBillPreview } from '../../components/BranchBillPreview';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -852,6 +853,8 @@ function BranchesTab({
           </label>
           <TextInput id="add-branch-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Bengaluru" />
         </div>
+        {/* Jira GRW-240 — the bill with this branch, before confirming. */}
+        <BranchBillPreview businessId={businessId} change="add" open={adding} />
       </ConfirmDialog>
 
       <ConfirmDialog
@@ -866,7 +869,9 @@ function BranchesTab({
         error={error}
         onConfirm={close}
         onCancel={() => setClosing(null)}
-      />
+      >
+        <BranchBillPreview businessId={businessId} change="close" open={closing !== null} />
+      </ConfirmDialog>
     </div>
   );
 }

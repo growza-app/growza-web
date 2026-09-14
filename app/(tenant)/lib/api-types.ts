@@ -23,6 +23,8 @@ export interface Me {
    * reassurance or a false warning.
    */
   billing: { status: string; message: string | null } | null;
+  /** Jira GRW-240 — the next bill differs from this month's (owner only). Amounts before GST. */
+  billingChange?: { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number } | null;
   labels: Record<string, string>;
   /**
    * Jira GRW-66 · GRW-157 — who is signed in.
