@@ -6,6 +6,8 @@ import { formatDateOnly, formatDateTime, formatMoneyMinor } from '../lib/format'
 import { isTerminalSubscriptionStatus, subscriptionStatusLabel } from '../lib/subscription-status';
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from './primitives';
 import { ConfirmDialog } from './ConfirmDialog';
+import { BranchPriceDialog } from './BranchPriceDialog';
+import { SubscriptionPriceBox } from './SubscriptionPriceBox';
 import { DiscountModal, type CurrentDiscount } from './DiscountModal';
 import { RecordPaymentModal } from './RecordPaymentModal';
 import { ReenrolModal, reenrolActionLabel } from './ReenrolModal';
@@ -46,6 +48,22 @@ export interface SubscriptionPanelSubscription {
   discountEndsAt: string | null;
   /** GRW-121 — when the billing worker will next act. Null for a healthy subscription. */
   nextActionAt: string | null;
+  /** Jira GRW-161 — pinned plan price per extra branch, and this customer's own if support set one. */
+  branchAddonMinor?: number;
+  branchesIncluded?: number;
+  branchAddonOverrideMinor?: number | null;
+  branchAddonOverrideReason?: string | null;
+  /** Jira GRW-161 — the next invoice on today's open branches, worked out by the invoice generator's own pricing. */
+  nextBill?: {
+    basePriceMinor: number;
+    openBranches: number;
+    extraBranches: number;
+    branchAddonMinor: number;
+    branchAmountMinor: number;
+    listPriceMinor: number;
+    discountAmountMinor: number;
+    finalPriceMinor: number;
+  };
   /**
    * What this status MEANS, in billing's own words (`STATE_ACCESS`).
    *
@@ -87,6 +105,8 @@ export function SubscriptionPanel({
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
+  /** Jira GRW-161 — this customer's price per extra branch. */
+  const [branchPriceOpen, setBranchPriceOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [recordedNote, setRecordedNote] = useState<string | null>(null);
   const [reenrolOpen, setReenrolOpen] = useState(false);
@@ -196,7 +216,7 @@ export function SubscriptionPanel({
   }
 
   const s = subscription;
-  const discounted = s.discountAmountMinor > 0;
+  const discounted = (s.nextBill?.discountAmountMinor ?? s.discountAmountMinor) > 0;
   const status = subscriptionStatusLabel(s.status);
   const terminal = isTerminalSubscriptionStatus(s.status);
   const reenrolLabel = reenrolActionLabel(s.status);
@@ -233,35 +253,7 @@ export function SubscriptionPanel({
           <StatusPill status={status} />
         </div>
 
-        <div style={{ marginTop: 18, borderRadius: 14, border: '1px solid oklch(0.9 0.02 150)', background: 'oklch(0.98 0.012 150)', padding: '16px 18px' }}>
-          <PriceRow label="List price" value={formatMoneyMinor(s.listPriceMinor)} />
-          <PriceRow
-            label="Discount"
-            value={discounted ? '− ' + formatMoneyMinor(s.discountAmountMinor) : formatMoneyMinor(0)}
-            color={discounted ? 'oklch(0.5 0.15 25)' : undefined}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, marginTop: 5, borderTop: '1px solid oklch(0.9 0.02 150)' }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>
-              Charged per {s.billingCycle === 'monthly' ? 'month' : s.billingCycle}
-            </span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: oklch.accentText }}>{formatMoneyMinor(s.finalPriceMinor)}</span>
-          </div>
-          {/* GST is calculated on top and is GRW-83's to compute and record.
-              This card used to show an 18% line from a hardcoded frontend
-              constant — a tax figure invented by a UI. */}
-          <div style={{ marginTop: 10, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
-            Pre-tax. GST is calculated on top when the invoice is raised (Jira GRW-83).
-          </div>
-          {discounted && s.discountReason ? (
-            <div style={{ marginTop: 10, fontSize: 12, color: 'oklch(0.5 0.15 25)', fontWeight: 700 }}>
-              {s.discountReason}
-              {/* §2.1's own line: "the subscription screen says so before it
-                  happens" — a discount that reverts on its own should never
-                  come as a surprise the day it does. */}
-              {s.discountEndsAt ? ` — reverts to list price on ${formatDateOnly(s.discountEndsAt)}` : ' — permanent'}
-            </div>
-          ) : null}
-        </div>
+        <SubscriptionPriceBox s={s} />
 
         <div style={{ display: 'flex', gap: 9, marginTop: 16, flexWrap: 'wrap' }}>
           <SecondaryButton
@@ -294,6 +286,13 @@ export function SubscriptionPanel({
             }
           >
             {discounted ? 'Change price' : 'Add discount'}
+          </SecondaryButton>
+          <SecondaryButton
+            disabled={!canManage || terminal}
+            onClick={() => setBranchPriceOpen(true)}
+            title={terminal ? `This subscription is already ${status.toLowerCase()}.` : !canManage ? 'Changing a price needs the subscription-manage permission.' : undefined}
+          >
+            Branch price
           </SecondaryButton>
           {/* GRW-144. Shown only to an admin who actually holds
               `admin.payment.record`, rather than shown-and-disabled: unlike
@@ -431,6 +430,21 @@ export function SubscriptionPanel({
         )}
       </ConfirmDialog>
 
+      {/* Jira GRW-161 — this customer's own price per extra branch, with the reason every price change needs. */}
+      <BranchPriceDialog
+        open={branchPriceOpen}
+        subscriptionId={subscriptionId}
+        planAddonMinor={s.branchAddonMinor ?? 0}
+        branchesIncluded={s.branchesIncluded ?? 1}
+        currentMinor={s.branchAddonOverrideMinor ?? s.branchAddonMinor ?? 0}
+        onClose={() => setBranchPriceOpen(false)}
+        onSaved={() => {
+          setBranchPriceOpen(false);
+          void load();
+          onChanged?.();
+        }}
+      />
+
       <DiscountModal
         businessName={discountOpen ? (businessName ?? 'This business') : null}
         planName={planName}
@@ -480,14 +494,6 @@ export function SubscriptionPanel({
   );
 }
 
-function PriceRow({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, padding: '5px 0' }}>
-      <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
-      <span style={{ fontWeight: 700, color: color ?? 'oklch(0.3 0.02 155)' }}>{value}</span>
-    </div>
-  );
-}
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (

@@ -52,6 +52,7 @@ export const KNOWN_ACTIONS = [
   'subscription.entitlement_remove',
   'subscription.discount_set',
   'subscription.discount_remove',
+  'subscription.branch_price_set',
   'tax_rule.create',
   'tax_rule.update',
   'subscription.cancel_at_period_end',

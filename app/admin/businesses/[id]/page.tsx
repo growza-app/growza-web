@@ -47,6 +47,8 @@ interface BusinessDetail {
     id: string;
     status: string;
     finalPriceMinor: number;
+    /** Jira GRW-161 — the next bill with its branches. */
+    nextBillMinor?: number;
     currency: string;
     currentPeriodEnd: string;
     nextBillingDate: string;
@@ -527,7 +529,8 @@ function SummaryHeader({
             reason it might be absent in the hint. */}
         <SummaryField
           label="Customer price"
-          value={business.subscription ? `${inr(business.subscription.finalPriceMinor / 100)}/mo` : '—'}
+          // Jira GRW-161 — the next bill with its branches, when the API sends it.
+          value={business.subscription ? `${inr((business.subscription.nextBillMinor ?? business.subscription.finalPriceMinor) / 100)}/mo` : '—'}
           hint={business.subscription ? undefined : 'No open subscription, so nothing is being charged.'}
         />
         <SummaryField

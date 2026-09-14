@@ -27,6 +27,11 @@ export interface InvoiceFigures {
   totalMinor: number;
   /** Basis points, as stored on the invoice: 1800 → "GST (18%)". Shown because "why 18?" is the next question after "why ₹706.82?". */
   taxRateBps: number;
+  /** Jira GRW-161 — the branch line, as stored. Null on invoices issued before branch pricing (plan price only). */
+  basePriceMinor?: number | null;
+  extraBranches?: number | null;
+  branchAddonMinor?: number | null;
+  branchAmountMinor?: number | null;
 }
 
 export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures; compact?: boolean }) {
@@ -48,6 +53,16 @@ export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures
           padding: compact ? '13px 15px' : '16px 18px',
         }}
       >
+        {/* Jira GRW-161 — a branch on the bill is its own line, never folded into the plan price. */}
+        {figures.basePriceMinor != null && (figures.branchAmountMinor ?? 0) > 0 ? (
+          <>
+            <Line label="Plan price" value={formatMoneyMinor(figures.basePriceMinor)} />
+            <Line
+              label={`Extra branches (${figures.extraBranches} × ${formatMoneyMinor(figures.branchAddonMinor ?? 0)})`}
+              value={formatMoneyMinor(figures.branchAmountMinor ?? 0)}
+            />
+          </>
+        ) : null}
         <Line label="List price" value={formatMoneyMinor(figures.listPriceMinor)} />
         <Line
           label="Discount"

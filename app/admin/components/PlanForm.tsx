@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
+import { BranchPriceFields, branchPriceState } from './BranchPriceFields';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateTime } from '../lib/format';
 import { Card, Field, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, TextInput, type TableColumn } from './primitives';
@@ -28,6 +29,9 @@ export interface PlanDetail {
   capabilityGrants: Record<string, boolean>;
   /** Which version the live values above came from — what tells Active apart from Superseded. */
   currentVersion: number;
+  /** Jira GRW-161 — price per open branch beyond `branchesIncluded`; 0 until set. */
+  branchAddonMinor?: number;
+  branchesIncluded?: number;
 }
 
 export interface PlanVersion {
@@ -176,6 +180,9 @@ function SummaryField({ label, value }: { label: string; value: string }) {
 function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCreated: () => void }) {
   const [editing, setEditing] = useState(false);
   const [price, setPrice] = useState(String(plan.basePriceMinor / 100));
+  // Jira GRW-161 — the branch price is part of the plan's price, so it changes through a new version too.
+  const [branchPrice, setBranchPrice] = useState(String((plan.branchAddonMinor ?? 0) / 100));
+  const [included, setIncluded] = useState(String(plan.branchesIncluded ?? 1));
   const [cohortChoice, setCohortChoice] = useState<string | null>(null);
   const [scheduledAt, setScheduledAt] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -186,7 +193,8 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
   // came back as a 400 the admin had to read to discover, on a field the form
   // could have refused. plans/new has always guarded this; this form did not.
   const priceValid = price.trim().length > 0 && !Number.isNaN(Number(price)) && Number(price) >= 0;
-  const priceChanged = priceValid && Math.round(Number(price) * 100) !== plan.basePriceMinor;
+  const branch = branchPriceState(branchPrice, included, plan);
+  const priceChanged = priceValid && branch.valid && (Math.round(Number(price) * 100) !== plan.basePriceMinor || branch.changed);
   const canSubmit = priceChanged && !!cohortChoice && cohortChoice !== 'named_customers_migrate' && (cohortChoice !== 'scheduled' || !!scheduledAt);
 
   function resetAndClose() {
@@ -194,6 +202,8 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
     setCohortChoice(null);
     setScheduledAt('');
     setPrice(String(plan.basePriceMinor / 100));
+    setBranchPrice(String((plan.branchAddonMinor ?? 0) / 100));
+    setIncluded(String(plan.branchesIncluded ?? 1));
   }
 
   function submit(reason: string) {
@@ -205,6 +215,8 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
         reason,
         cohortChoice,
         basePriceMinor: Math.round(Number(price) * 100),
+        branchAddonMinor: Math.round(Number(branchPrice) * 100),
+        branchesIncluded: Number(included),
         ...(cohortChoice === 'scheduled' && scheduledAt ? { scheduledAt: new Date(scheduledAt).toISOString() } : {}),
       }),
     })
@@ -223,6 +235,7 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
       {!editing ? (
         <div style={{ marginTop: 6, display: 'flex', gap: 28, flexWrap: 'wrap' }}>
           <SummaryField label="List price" value={`${inr(plan.basePriceMinor / 100)}/mo`} />
+          <SummaryField label="Per extra branch" value={`${inr((plan.branchAddonMinor ?? 0) / 100)}/mo · ${plan.branchesIncluded ?? 1} included`} />
           <SummaryField label="Currency" value={plan.currency} />
           <SummaryField label="Billing cycle" value={plan.billingCycle} />
         </div>
@@ -231,6 +244,7 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
           <Field label="New base price (₹)" hint="Pre-tax">
             <TextInput type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
           </Field>
+          <BranchPriceFields branchPrice={branchPrice} included={included} onBranchPrice={setBranchPrice} onIncluded={setIncluded} />
 
           <div>
             <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted, marginBottom: 8 }}>
