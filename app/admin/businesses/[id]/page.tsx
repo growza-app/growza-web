@@ -1,6 +1,7 @@
 'use client';
 
 import { BranchBillPreview } from '../../components/BranchBillPreview';
+import { BranchRowActions } from '../../components/BranchRowActions';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -705,7 +706,7 @@ function UsersTab({ members }: { members: BusinessDetail['members'] }) {
 const BRANCHES_COLUMNS: TableColumn[] = [
   { label: 'Branch', width: '2fr' },
   { label: 'Status', width: '1fr' },
-  { label: '', width: '0.8fr' },
+  { label: '', width: '1.6fr' },
 ];
 
 /**
@@ -809,7 +810,9 @@ function BranchesTab({
               <div>
                 <StatusPill status={l.active ? 'Active' : 'Closed'} />
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                {/* Jira GRW-246 — Reopen on a closed branch, Make main on an open one. */}
+                {canManage ? <BranchRowActions businessId={businessId} branch={l} onChanged={onChanged} /> : null}
                 {canManage && l.active && !l.isMain ? (
                   <SecondaryButton
                     danger

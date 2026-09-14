@@ -41,6 +41,8 @@ export const KNOWN_ACTIONS = [
   'business.reactivate',
   'business.branch_add',
   'business.branch_close',
+  'business.branch_reopen',
+  'business.branch_make_main',
   'plan.create',
   'plan.update',
   'plan.delete',

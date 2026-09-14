@@ -55,12 +55,12 @@ export function BranchBillPreview({ businessId, change, open }: { businessId: st
     <div style={box} data-testid="branch-bill-preview">
       <div style={{ fontWeight: 700, color: oklch.textStrong }}>
         {same ? (
-          <>The monthly bill stays {formatMoneyMinor(preview.monthlyBeforeMinor)} + GST.</>
+          <>The monthly bill stays {formatMoneyMinor(preview.monthlyBeforeMinor)}, tax included.</>
         ) : (
           <>
             Now {formatMoneyMinor(preview.monthlyBeforeMinor)}/month → from {formatDateOnly(preview.effectiveFrom)} {formatMoneyMinor(preview.monthlyAfterMinor)}/month (
             {preview.differenceMinor > 0 ? '+' : '−'}
-            {formatMoneyMinor(Math.abs(preview.differenceMinor))}) + GST
+            {formatMoneyMinor(Math.abs(preview.differenceMinor))}), tax included
           </>
         )}
       </div>

@@ -8,8 +8,8 @@ import type { Me } from '../lib/api-types';
  * The API decides whether there is anything to say (it compares this month's
  * invoice with the next bill, worked out by the invoice generator's own
  * pricing). This only words it — plainly, because an owner reading it may not
- * be a confident reader — and says the amount is before GST, as the invoice will
- * add GST on top.
+ * be a confident reader. No GST details on the owner's screens (owner decision,
+ * 2026-09-14): the amounts are plan amounts.
  */
 export function BillChangeBanner({ change }: { change: Me['billingChange'] }): ReactNode {
   if (!change) return null;
@@ -33,7 +33,7 @@ export function BillChangeBanner({ change }: { change: Me['billingChange'] }): R
         color: 'oklch(0.38 0.08 255)',
       }}
     >
-      Your bill {up ? 'goes up' : 'goes down'} from {day}: {money(change.nextMonthlyMinor)} a month + GST (now {money(change.currentMonthlyMinor)}), for{' '}
+      Your bill {up ? 'goes up' : 'goes down'} from {day}: {money(change.nextMonthlyMinor)} a month (now {money(change.currentMonthlyMinor)}), for{' '}
       {change.openBranches} {change.openBranches === 1 ? 'branch' : 'branches'}.
     </div>
   );

@@ -241,7 +241,7 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
         </div>
       ) : (
         <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Field label="New base price (₹)" hint="Pre-tax">
+          <Field label="New base price (₹)" hint="Includes tax">
             <TextInput type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
           </Field>
           <BranchPriceFields branchPrice={branchPrice} included={included} onBranchPrice={setBranchPrice} onIncluded={setIncluded} />

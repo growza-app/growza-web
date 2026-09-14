@@ -1,6 +1,8 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { BranchActionDialog } from './BranchActionDialog';
 import { IconCheck, IconMapPin, IconStaff } from '../../components/icons';
 import { ApiError, BookingConflictError, api, type BranchSettings } from '../../lib/api';
 
@@ -35,13 +37,16 @@ export function BranchesForm({ initial }: { initial: BranchSettings[] }) {
           <BranchCard key={b.id} initial={b} />
         ))}
       </div>
-      <p className="field-hint bp-foot">To add or close a branch, contact Growza support.</p>
+      {/* Jira GRW-246 — the owner closes a branch or makes one main here; adding or reopening one raises the bill, so it goes through support. */}
+      <p className="field-hint bp-foot">To add a branch, or open a closed one again, contact Growza support.</p>
     </div>
   );
 }
 
 function BranchCard({ initial }: { initial: BranchSettings }) {
+  const router = useRouter();
   const [branch, setBranch] = useState(initial);
+  const [action, setAction] = useState<'close' | 'make-main' | null>(null);
   const [d, setD] = useState<Draft>(() => draftOf(initial));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +107,28 @@ function BranchCard({ initial }: { initial: BranchSettings }) {
             <IconStaff /> {branch.staffCount === 1 ? '1 staff member' : `${branch.staffCount} staff`}
           </div>
         </div>
+        {branch.isPrimary ? null : (
+          <div className="bp-branch-actions">
+            <button type="button" className="btn btn-ghost bp-action-btn" onClick={() => setAction('make-main')}>
+              Make main
+            </button>
+            <button type="button" className="btn btn-ghost btn-danger bp-action-btn" onClick={() => setAction('close')}>
+              Close branch
+            </button>
+          </div>
+        )}
       </div>
+      {action ? (
+        <BranchActionDialog
+          action={action}
+          branch={{ id: branch.id, name: branch.name }}
+          onCancel={() => setAction(null)}
+          onDone={() => {
+            setAction(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
 
       <div className="bp-grid">
         <div className="field">

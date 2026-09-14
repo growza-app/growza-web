@@ -89,6 +89,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     rows: [
       { href: '/settings/report-access', label: 'Report access', sub: 'Who else can see Reports', icon: IconReports },
       { href: '/settings/team', label: 'Team access', sub: 'Invite people who can sign in', icon: IconUserPlus },
+      // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
+      { href: '/settings/billing', label: 'Billing', sub: 'Plan, branches and bills', icon: IconWallet },
       { label: 'Account', sub: 'Manage your account', icon: IconUser },
       { label: 'Log out', sub: 'Sign out from this device', icon: IconLogout, action: 'logout' },
     ],

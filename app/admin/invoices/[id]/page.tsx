@@ -35,6 +35,7 @@ interface InvoiceDetail {
   totalMinor: number;
   currency: string;
   taxRateBps: number;
+  pricesIncludeTax?: boolean;
   status: string;
   paymentStatus: string;
   periodStart: string;

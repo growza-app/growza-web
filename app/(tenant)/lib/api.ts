@@ -90,6 +90,7 @@ import type {
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry } from './home-types';
 import type { BranchSettings } from './branch-types';
+import type { BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import type {
   ClientProfile,
   ReportBookings,
@@ -328,6 +329,11 @@ export const api = {
    * here that could name somebody else's invoice.
    */
   paymentLink: () => post<PaymentLink>('/api/v1/billing/payment-link', {}),
+  // Jira GRW-243 — Settings › Billing.
+  billing: () => get<OwnerBilling>('/api/v1/billing'),
+  // Jira GRW-254 — every bill, and one opened.
+  bills: (page = 1) => get<OwnerBillPage>(`/api/v1/billing/invoices?page=${page}`),
+  bill: (id: string) => get<OwnerBill>(`/api/v1/billing/invoices/${encodeURIComponent(id)}`),
   services: () => get<Service[]>('/api/v1/services'),
   providers: () => get<Provider[]>('/api/v1/providers'),
   /** GRW-170 — the register for a day or a range, including everybody nobody marked. */
@@ -418,6 +424,10 @@ export const api = {
     addressCity?: string;
   }, location?: string | null) => patch<SettingsSummary>(`/api/v1/settings/profile${atBranch(location)}`, body),
   branchSettings: () => get<{ branches: BranchSettings[] }>('/api/v1/settings/branches'),
+  // Jira GRW-246 — the owner closes a branch, or makes one main; the close shows the new bill first (GRW-240).
+  branchClosePreview: (id: string) => get<BranchClosePreview>(`/api/v1/settings/branches/${id}/close-preview`),
+  closeBranch: (id: string, reason: string) => post<{ branches: BranchSettings[] }>(`/api/v1/settings/branches/${id}/close`, { reason }),
+  makeMainBranch: (id: string, reason: string) => post<{ branches: BranchSettings[] }>(`/api/v1/settings/branches/${id}/make-main`, { reason }),
   updateBranch: (id: string, body: { name?: string; addressLine1?: string; addressCity?: string }) =>
     patch<{ branch: BranchSettings }>(`/api/v1/settings/branches/${id}`, body),
   uploadBusinessLogo: (file: File) => uploadFile<SettingsSummary>('/api/v1/settings/logo', 'logo', file),

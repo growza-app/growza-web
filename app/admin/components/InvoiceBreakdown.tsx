@@ -27,6 +27,12 @@ export interface InvoiceFigures {
   totalMinor: number;
   /** Basis points, as stored on the invoice: 1800 → "GST (18%)". Shown because "why 18?" is the next question after "why ₹706.82?". */
   taxRateBps: number;
+  /**
+   * Jira GRW-255 — as stored. True from then on: the total is the price and the
+   * GST is carved out of it, shown under the total. False on older invoices,
+   * where GST was added on top; those still read the old way.
+   */
+  pricesIncludeTax?: boolean;
   /** Jira GRW-161 — the branch line, as stored. Null on invoices issued before branch pricing (plan price only). */
   basePriceMinor?: number | null;
   extraBranches?: number | null;
@@ -70,25 +76,39 @@ export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures
           color={discounted ? 'oklch(0.5 0.15 25)' : undefined}
         />
         <Rule />
-        <Line label="Taxable" value={formatMoneyMinor(figures.taxableAmountMinor)} />
-        <Line label={`GST (${ratePercent}%)`} value={formatMoneyMinor(figures.taxAmountMinor)} />
-        <Rule />
+        {figures.pricesIncludeTax ? null : (
+          <>
+            <Line label="Taxable" value={formatMoneyMinor(figures.taxableAmountMinor)} />
+            <Line label={`GST (${ratePercent}%)`} value={formatMoneyMinor(figures.taxAmountMinor)} />
+            <Rule />
+          </>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingTop: 8 }}>
           <span style={{ fontSize: compact ? 13.5 : 14, fontWeight: 800, color: oklch.textStrong }}>Total</span>
           <span style={{ fontSize: compact ? 16 : 19, fontWeight: 800, color: oklch.accentText, whiteSpace: 'nowrap' }}>
             {formatMoneyMinor(figures.totalMinor)}
           </span>
         </div>
+        {figures.pricesIncludeTax ? (
+          figures.taxAmountMinor > 0 ? (
+            <>
+              <Line label={`Includes GST (${ratePercent}%)`} value={formatMoneyMinor(figures.taxAmountMinor)} faint />
+              <Line label="Before GST" value={formatMoneyMinor(figures.taxableAmountMinor)} faint />
+            </>
+          ) : (
+            <Line label="GST" value="None on this invoice" faint />
+          )
+        ) : null}
       </div>
     </div>
   );
 }
 
-function Line({ label, value, color }: { label: string; value: string; color?: string }) {
+function Line({ label, value, color, faint }: { label: string; value: string; color?: string; faint?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, fontSize: 13.5, padding: '5px 0' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, fontSize: faint ? 12.5 : 13.5, padding: faint ? '3px 0' : '5px 0' }}>
       <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
-      <span style={{ fontWeight: 700, color: color ?? 'oklch(0.3 0.02 155)', whiteSpace: 'nowrap' }}>{value}</span>
+      <span style={{ fontWeight: faint ? 600 : 700, color: color ?? (faint ? 'oklch(0.5 0.02 155)' : 'oklch(0.3 0.02 155)'), whiteSpace: 'nowrap' }}>{value}</span>
     </div>
   );
 }

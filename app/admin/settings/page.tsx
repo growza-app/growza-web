@@ -42,10 +42,11 @@ export default function AdminSettingsPage() {
               <Select disabled options={['INR (₹)', 'USD ($)']} defaultValue="INR (₹)" />
             </div>
           </SettingsRow>
-          <SettingsRow label="GST rate" hint="Applied on taxable amount">
-            <TextInput readOnly defaultValue="18" style={{ width: 90, textAlign: 'center' }} />
+          {/* Jira GRW-255 — no GST number yet: the rate comes from the tax rules, and with none in force invoices carry 0%. */}
+          <SettingsRow label="GST rate" hint="From the tax rules; 0% while none is in force">
+            <TextInput readOnly defaultValue="0" style={{ width: 90, textAlign: 'center' }} />
           </SettingsRow>
-          <SettingsRow label="Prices are pre-tax" hint="Tax calculated separately at billing">
+          <SettingsRow label="Prices include tax" hint="The plan price is what the customer pays; any GST is inside it">
             <Toggle on onClick={() => {}} disabled />
           </SettingsRow>
         </SettingsSection>

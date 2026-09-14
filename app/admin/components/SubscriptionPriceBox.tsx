@@ -36,11 +36,12 @@ export function SubscriptionPriceBox({ s }: { s: SubscriptionPanelSubscription }
         </span>
         <span style={{ fontSize: 18, fontWeight: 800, color: oklch.accentText }}>{formatMoneyMinor(bill?.finalPriceMinor ?? s.finalPriceMinor)}</span>
       </div>
-      {/* GST is calculated on top and is GRW-83's to compute and record.
-          This card used to show an 18% line from a hardcoded frontend
-          constant — a tax figure invented by a UI. */}
+      {/* Jira GRW-255 — prices include tax: this is what the salon pays, and
+          any GST is carved out of it on the invoice. This card once showed an
+          18% line from a hardcoded frontend constant — a tax figure invented
+          by a UI; it still shows none. */}
       <div style={{ marginTop: 10, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
-        Pre-tax. GST is calculated on top when the invoice is raised (Jira GRW-83).
+        Includes tax. This is what the customer pays; any GST is inside it on the invoice.
         {bill ? ` Branches are counted when the bill is raised on ${formatDateOnly(s.nextBillingDate)}.` : ''}
       </div>
       {s.branchAddonOverrideMinor != null ? (

@@ -30,6 +30,7 @@ interface InvoiceRow {
   taxAmountMinor: number;
   totalMinor: number;
   taxRateBps: number;
+  pricesIncludeTax?: boolean;
   status: string;
   paymentStatus: string;
   periodStart: string;

@@ -23,7 +23,7 @@ export interface Me {
    * reassurance or a false warning.
    */
   billing: { status: string; message: string | null } | null;
-  /** Jira GRW-240 — the next bill differs from this month's (owner only). Amounts before GST. */
+  /** Jira GRW-240 — the next bill differs from this month's (owner only). Amounts include tax (Jira GRW-255). */
   billingChange?: { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number } | null;
   labels: Record<string, string>;
   /**
@@ -606,3 +606,63 @@ export interface MyEarnings {
   thisMonth: EarningsSlice;
 }
 
+
+/** Jira GRW-246 — what closing a branch does to the bill (GRW-240's preview). Amounts include tax (Jira GRW-255). */
+export type BranchClosePreview =
+  | { subscription: false }
+  | {
+      subscription: true;
+      currency: string;
+      openBranchesBefore: number;
+      openBranchesAfter: number;
+      monthlyBeforeMinor: number;
+      monthlyAfterMinor: number;
+      differenceMinor: number;
+      effectiveFrom: string;
+      mandateReapprovalNeeded: boolean;
+    };
+
+/** Jira GRW-243 — Settings › Billing (owner only). Money in minor units, plan amounts — no GST on owner screens (2026-09-14). */
+export interface OwnerBilling {
+  subscription: null | {
+    planName: string;
+    status: string;
+    currency: string;
+    planPriceMinor: number;
+    branches: Array<{ id: string; name: string; included: boolean; amountMinor: number }>;
+    discount: null | { amountMinor: number; reason: string | null; endsAt: string | null };
+    nextBill: { date: string; amountMinor: number };
+    paidBy: 'online_link' | 'offline';
+    pendingChange: null | { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number };
+  };
+  invoices: Array<{ id: string; invoiceNumber: string; periodStart: string; periodEnd: string; amountMinor: number; paymentStatus: string; unpaid: boolean }>;
+  due: null | { invoiceNumber: string };
+}
+
+/** Jira GRW-254 — the owner's bills: plan amounts only, no tax fields. */
+export interface OwnerBillRow {
+  id: string;
+  invoiceNumber: string;
+  periodStart: string;
+  periodEnd: string;
+  amountMinor: number;
+  currency: string;
+  paymentStatus: string;
+  unpaid: boolean;
+}
+export interface OwnerBillPage {
+  bills: OwnerBillRow[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+export interface OwnerBill extends Omit<OwnerBillRow, never> {
+  issuedAt: string;
+  planCode: string;
+  planName: string | null;
+  planPriceMinor: number;
+  extraBranches: number;
+  branchAddonMinor: number;
+  branchAmountMinor: number;
+  discountAmountMinor: number;
+}

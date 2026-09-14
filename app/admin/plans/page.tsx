@@ -125,7 +125,7 @@ function PlanCard({ plan, registry, onEdit }: { plan: PlanSummary; registry: Cap
         </div>
         <div style={{ textAlign: 'right', flex: 'none' }}>
           <div style={{ fontSize: 26, fontWeight: 800, color: oklch.textStrong, lineHeight: 1 }}>{inr(plan.basePriceMinor / 100)}</div>
-          <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>per {plan.billingCycle} · pre-tax</div>
+          <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>per {plan.billingCycle} · includes tax</div>
         </div>
       </div>
 

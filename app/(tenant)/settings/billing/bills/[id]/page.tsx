@@ -1,0 +1,79 @@
+import { screenTitle } from '../../../../lib/page-title';
+import { api, ApiError } from '../../../../lib/api';
+import { serverLang } from '../../../../lib/lang';
+import { billingCopy } from '../../../../lib/billing-copy';
+import { PayNowButton } from '../../../../components/PayNowButton';
+import { PrintButton } from './PrintButton';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Jira GRW-254 — one bill, opened: plan, extra branches, discount, the amount and
+ * whether it is paid. No GST (owner decision, 2026-09-14): the figures are the
+ * stored invoice's plan figures. Prints on one page.
+ */
+export default async function BillPage({ params }: { params: Promise<{ id: string }> }) {
+  const lang = await serverLang();
+  const t = billingCopy(lang);
+  const { id } = await params;
+  const [bill, me] = await Promise.all([
+    api.bill(id).catch((e) => (e instanceof ApiError && e.status === 404 ? 'missing' : null)),
+    api.me().catch(() => null),
+  ]);
+  if (bill === 'missing') return <div className="banner">{t.notFound}</div>;
+  if (!bill) return <div className="banner">{t.loadError}</div>;
+
+  const locale = lang === 'hi' ? 'hi-IN' : 'en-IN';
+  const money = (minor: number) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency: bill.currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+  const date = (iso: string, opts: Intl.DateTimeFormatOptions) => {
+    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { ...opts, timeZone: 'UTC' });
+  };
+  const full = { day: 'numeric', month: 'short', year: 'numeric' } as const;
+
+  return (
+    <div className="bill-page bill-print">
+      <a className="bill-link bill-back no-print" href="/settings/billing/bills">‹ {t.allBills}</a>
+      <section className="card bill-card bill-doc">
+        <div className="bill-doc-head">
+          <div>
+            <h2 className="bp-title">{t.billFor(date(bill.periodStart, { month: 'long', year: 'numeric' }))}</h2>
+            <p className="bill-muted bill-doc-meta">
+              {t.billNumber}: {bill.invoiceNumber} · {t.period}: {date(bill.periodStart, full)} – {date(bill.periodEnd, full)} · {t.issued}: {date(bill.issuedAt, full)}
+            </p>
+          </div>
+          <span className={`bill-status ${bill.unpaid ? 'is-due' : 'is-paid'}`}>{t.status(bill.paymentStatus)}</span>
+        </div>
+        <div className="bill-line">
+          <span>
+            {t.plan}: {bill.planName ?? bill.planCode}
+          </span>
+          <span>{money(bill.planPriceMinor)}</span>
+        </div>
+        {bill.branchAmountMinor > 0 ? (
+          <div className="bill-line">
+            <span>{t.extraBranches(bill.extraBranches, money(bill.branchAddonMinor))}</span>
+            <span>{money(bill.branchAmountMinor)}</span>
+          </div>
+        ) : null}
+        {bill.discountAmountMinor > 0 ? (
+          <div className="bill-line bill-discount">
+            <span>{t.discount}</span>
+            <span>− {money(bill.discountAmountMinor)}</span>
+          </div>
+        ) : null}
+        <div className="bill-line bill-line-total">
+          <span>{t.amount}</span>
+          <span>{money(bill.amountMinor)}</span>
+        </div>
+        <div className="bill-doc-actions no-print">
+          {bill.unpaid && (me?.payments?.online ?? false) ? <PayNowButton restricted={false} /> : null}
+          <PrintButton label={t.print} />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export const metadata = screenTitle('Bill');

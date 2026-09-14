@@ -21,7 +21,7 @@ export function BranchPriceFields({
   return (
     <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
       <div style={{ flex: '1 1 180px' }}>
-        <Field label="Price per extra branch (₹)" hint="Pre-tax, per month. 0 = branches are free">
+        <Field label="Price per extra branch (₹)" hint="Includes tax, per month. 0 = branches are free">
           <TextInput type="number" min={0} value={branchPrice} onChange={(e) => onBranchPrice(e.target.value)} />
         </Field>
       </div>
