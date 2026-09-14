@@ -47,6 +47,7 @@ export function StaffEditClient({
   stats,
   staffWord,
   orgWorkingHours,
+  branches = [],
 }: {
   detail: ProviderDetail;
   services: Service[];
@@ -55,6 +56,8 @@ export function StaffEditClient({
   staffWord: string;
   /** The business's default week — previewed in the editor when "Same as the business" is on, so that switch can defer to Save like every other field. */
   orgWorkingHours: ProviderWorkingHourRow[];
+  /** Jira GRW-234 — a multi-branch business's branches, main first. Empty: no field. */
+  branches?: Array<{ id: string; name: string }>;
 }) {
   const providerWord = useLabel('provider', 'Staff member');
   const router = useRouter();
@@ -63,6 +66,7 @@ export function StaffEditClient({
   const [displayName, setDisplayName] = useState(detail.displayName);
   const [title, setTitle] = useState(detail.title ?? '');
   const [phone, setPhone] = useState(detail.phone ?? '');
+  const [locationId, setLocationId] = useState(detail.locationId ?? '');
   const [active, setActive] = useState(detail.active);
   const [unavailableToday, setUnavailableToday] = useState(detail.unavailableToday);
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set(detail.serviceIds));
@@ -90,6 +94,7 @@ export function StaffEditClient({
     setTitle(d.title ?? '');
     // GRW-199 — the field holds ten NATIONAL digits; the stored value is E.164.
     setPhone(fromStoredPhone(d.phone));
+    setLocationId(d.locationId ?? '');
     setActive(d.active);
     setUnavailableToday(d.unavailableToday);
     setSelectedServiceIds(new Set(d.serviceIds));
@@ -102,6 +107,7 @@ export function StaffEditClient({
     displayName !== detail.displayName ||
     title !== (detail.title ?? '') ||
     phone !== (detail.phone ?? '') ||
+    locationId !== (detail.locationId ?? '') ||
     active !== detail.active;
   const skillsDirty = !setsEqual(selectedServiceIds, new Set(detail.serviceIds));
   const orgHoursDirty = usesOrgHours !== detail.usesOrgHours;
@@ -178,6 +184,7 @@ export function StaffEditClient({
                   active,
             usesOrgHours,
             seesOwnRevenue,
+            ...(branches.length > 1 && locationId && locationId !== detail.locationId ? { locationId } : {}),
           }),
         );
       }
@@ -320,6 +327,21 @@ export function StaffEditClient({
                   />
                   {fieldErrors.name && <div className="field-error">{fieldErrors.name}</div>}
                 </label>
+                {branches.length > 1 ? (
+                  <label className="field">
+                    <span className="field-label">Branch</span>
+                    <select value={locationId} onChange={(e) => (setLocationId(e.target.value), setSaved(false))}>
+                      {branches.map((b, i) => (
+                        <option key={b.id} value={b.id}>
+                          {i === 0 ? `${b.name} (Main)` : b.name}
+                        </option>
+                      ))}
+                    </select>
+                    {usesOrgHours && locationId !== detail.locationId ? (
+                      <span className="field-hint">They follow the salon&apos;s hours, so they will take this branch&apos;s hours.</span>
+                    ) : null}
+                  </label>
+                ) : null}
                 <label className="field">
                   <span className="field-label">Role</span>
                   <input type="text" value={title} placeholder={providerWord} onChange={(e) => (setTitle(e.target.value), setSaved(false))} />

@@ -113,6 +113,10 @@ export function ConfirmDialog({
       onClick={loading ? undefined : onCancel}
     >
       <div
+        // Jira GRW-236 — announced as a dialog, named by its title; it was an unnamed div to a screen reader.
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 'min(440px, 100%)',

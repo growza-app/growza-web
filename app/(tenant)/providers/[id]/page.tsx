@@ -15,15 +15,17 @@ export const dynamic = 'force-dynamic';
 export default async function StaffEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let detail, services, day, stats, me, settings;
+  let detail, services, day, stats, me, settings, branches;
   try {
-    [me, detail, services, day, stats, settings] = await Promise.all([
+    [me, detail, services, day, stats, settings, branches] = await Promise.all([
       api.me(),
       api.providerDetail(id),
       api.services(),
       api.providerDay(id).catch(() => null),
       api.providerStats(id).catch(() => null),
       api.settings().catch(() => null),
+      // Jira GRW-234 — where this person can be moved to (owner only; nobody else gets the field).
+      api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name }))).catch(() => []),
     ]);
   } catch {
     notFound();
@@ -41,6 +43,7 @@ export default async function StaffEditPage({ params }: { params: Promise<{ id: 
       stats={stats}
       staffWord={staffWord}
       orgWorkingHours={settings?.workingHours ?? []}
+      branches={branches.length > 1 ? branches : []}
     />
   );
 }

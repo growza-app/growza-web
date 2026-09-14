@@ -7,9 +7,9 @@ import { StaffClient } from './StaffClient';
 export const dynamic = 'force-dynamic';
 
 export default async function ProvidersPage() {
-  let me, overview, services, settings;
+  let me, overview, services, settings, branches;
   try {
-    [me, overview, services, settings] = await Promise.all([
+    [me, overview, services, settings, branches] = await Promise.all([
       api.me(),
       api.providersOverview(),
       api.services(),
@@ -20,6 +20,8 @@ export default async function ProvidersPage() {
       // The seven-row shape is the client's business anyway — it is an editor
       // concern, not a transport one.
       api.settings(),
+      // Jira GRW-234 — the branches a new person can be placed at (owner only; anybody else gets no picker).
+      api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name }))).catch(() => []),
     ]);
   } catch {
     return (
@@ -49,6 +51,7 @@ export default async function ProvidersPage() {
         staffWord={staffWord}
         maxProviders={me.capabilities.maxProviders}
         orgHours={settings.workingHours}
+        branches={branches.length > 1 ? branches : []}
       />
     </>
   );

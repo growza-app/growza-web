@@ -453,6 +453,8 @@ export const api = {
   createProvider: (body: {
     displayName: string;
     phone: string;
+    /** Jira GRW-234 — which branch; omitted means the main branch. */
+    locationId?: string;
     title?: string | null;
     bio?: string | null;
     languages?: string | null;
@@ -487,6 +489,8 @@ export const api = {
       usesOrgHours?: boolean;
       /** Jira GRW-216 — absent leaves it alone; the server COALESCEs. */
       seesOwnRevenue?: boolean;
+      /** Jira GRW-234 — move to another branch; absent leaves it where it is. */
+      locationId?: string;
     },
   ) => patch<ProviderDetail>(`/api/v1/providers/${id}`, body),
   updateProviderWorkingHours: (id: string, workingHours: ProviderWorkingHourRow[]) =>
@@ -503,8 +507,10 @@ export const api = {
    * ONE id containing a comma and the lookup would 404. Same trap `reportGet`
    * documents a few lines above for provider and service filters.
    */
-  availability: (serviceId: string | string[], date: string, providerId = 'any') => {
+  availability: (serviceId: string | string[], date: string, providerId = 'any', location?: string | null) => {
     const params = new URLSearchParams({ date, providerId });
+    // Jira GRW-235 — free times at one branch; omitted: every branch.
+    if (location) params.set('location', location);
     for (const id of ([] as string[]).concat(serviceId)) params.append('serviceId', id);
     return get<AvailabilityResponse>(`/api/v1/availability?${params.toString()}`);
   },
@@ -605,6 +611,8 @@ export const api = {
     serviceIds: string[];
     offerId?: string;
     schedulableId?: string;
+    /** Jira GRW-235 — the branch; "whoever is free" is picked from its staff. */
+    location?: string;
     /** GRW-198 — the booking whose chair this walk-in is taking over. */
     reclaimAppointmentId?: string;
     /**
@@ -644,6 +652,8 @@ export const api = {
     offerId?: string;
     startAt: string;
     schedulableId?: string;
+    /** Jira GRW-235 — the branch; "whoever is free" is picked from its staff. */
+    location?: string;
   }) =>
     post<{
       appointmentIds: string[];

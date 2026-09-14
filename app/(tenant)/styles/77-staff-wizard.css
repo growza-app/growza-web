@@ -15,7 +15,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 60;
+  /*
+   * Jira GRW-234 — ABOVE its own scrim. This was 60 under `.drawer-scrim`'s 70
+   * (43-staff-detail-drawer.css), so every tap inside Add staff landed on the
+   * scrim, whose onClick closes the wizard. Typing still worked, which is why
+   * nothing noticed; the two-branch browser journey clicking a Branch chip did.
+   */
+  z-index: 71;
   display: flex;
   flex-direction: column;
   background: var(--surface);

@@ -70,6 +70,7 @@ export function StaffWizard({
   services,
   roster,
   orgHours,
+  branches = [],
   onClose,
   onCreated,
 }: {
@@ -80,6 +81,8 @@ export function StaffWizard({
   roster: ProviderOverviewRow[];
   /** The salon's own week, so step 2 opens on what this person will actually work. */
   orgHours: WeekdayRow[];
+  /** Jira GRW-234 — a multi-branch business's branches, main first. Empty: no choice to make. */
+  branches?: Array<{ id: string; name: string }>;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -90,6 +93,7 @@ export function StaffWizard({
   const [title, setTitle] = useState('');
   const [newRole, setNewRole] = useState('');
   const [addingRole, setAddingRole] = useState(false);
+  const [branchId, setBranchId] = useState<string | null>(branches[0]?.id ?? null);
 
   /*
    * Step 2 opens on the salon's hours, and `followsSalon` says whether the
@@ -166,6 +170,7 @@ export function StaffWizard({
         displayName: displayName.trim(),
         phone: stored,
         title: title.trim() || null,
+        ...(branches.length > 1 && branchId ? { locationId: branchId } : {}),
         /*
          * Omitted, not copied, when the owner has not touched the week — see
          * `followsSalon` above. And `serviceIds` is only sent when it is not
@@ -306,6 +311,27 @@ export function StaffWizard({
                   </button>
                 )}
               </div>
+
+              {/* Jira GRW-234 — where this person works. Their bookings, hours and figures follow it. */}
+              {branches.length > 1 ? (
+                <>
+                  <div className="wiz-section-label">Branch</div>
+                  <div className="wiz-chips" role="radiogroup" aria-label="Branch">
+                    {branches.map((b, i) => (
+                      <button
+                        key={b.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={branchId === b.id}
+                        className={`wiz-chip ${branchId === b.id ? 'is-on' : ''}`}
+                        onClick={() => setBranchId(b.id)}
+                      >
+                        {i === 0 ? `${b.name} (Main)` : b.name}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </>
           )}
 

@@ -40,6 +40,7 @@ import {
 } from '../lib/api';
 import { copy } from '../lib/copy';
 import { useLabel } from './LabelsProvider';
+import { useSession } from './SessionProvider';
 import { PhoneField } from './PhoneField';
 import { toStoredPhone, validateNationalPhone } from '../lib/phone';
 import { CheckoutSheet } from './CheckoutSheet';
@@ -196,6 +197,24 @@ export function NewVisitSheet({
   const [offerId, setOfferId] = useState<string | null>(null);
   const [comboPriceMinor, setComboPriceMinor] = useState<string | null>(null);
   const [schedulableId, setSchedulableId] = useState<string | null>(null);
+  /*
+   * Jira GRW-235 — which branch the client is at, for a business with more
+   * than one. "Whoever is free" and the chairs below are that branch's staff
+   * only; without it an Indiranagar client could be handed a stylist at MG
+   * Road. Defaults to the main branch; absent (one branch) the API behaves as
+   * it always has.
+   *
+   * OWNER ONLY (product decision, 2026-09-14: "multi branch is only for
+   * owner"). A receptionist books as before — "whoever is free" across the
+   * business, and the booking still lands at its stylist's branch (GRW-230) —
+   * until members have a branch of their own. A degraded session with no role
+   * is treated as owner, as everywhere else (GRW-157 BR-03).
+   */
+  const session = useSession();
+  const isOwner = (session?.role ?? 'owner') === 'owner';
+  const branches = isOwner ? (session?.branches ?? []) : [];
+  const [branchId, setBranchId] = useState<string | null>(branches.length > 1 ? branches[0]!.id : null);
+  const atBranch = branches.length > 1 && branchId ? { location: branchId } : {};
 
   /*
    * The REAL appointment rows for this visit, fetched before checkout opens.
@@ -346,7 +365,7 @@ export function NewVisitSheet({
     setSlotUtc(null);
     setSlotError(null);
     void api
-      .availability(picked.map((p) => p.serviceId), day, schedulableId ?? 'any')
+      .availability(picked.map((p) => p.serviceId), day, schedulableId ?? 'any', branchId)
       .then((r) => {
         if (!cancelled) setSlots(r);
       })
@@ -359,7 +378,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, day, picked, schedulableId]);
+  }, [later, stage.step, day, picked, schedulableId, branchId]);
 
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
@@ -372,7 +391,13 @@ export function NewVisitSheet({
   const [chairs, setChairs] = useState<ChairNow[]>([]);
   const [reclaim, setReclaim] = useState<string | null>(null);
 
-  const freeCount = chairs.length > 0 ? chairs.filter((c) => c.free).length : null;
+  // Jira GRW-235 — only this branch's people, when there is a branch to choose.
+  const branchProviders = useMemo(
+    () => (providers ?? []).filter((p) => !branchId || !p.locationId || p.locationId === branchId),
+    [providers, branchId],
+  );
+  const branchChairs = chairs.filter((c) => branchProviders.some((p) => p.id === c.schedulableId));
+  const freeCount = branchChairs.length > 0 ? branchChairs.filter((c) => c.free).length : null;
 
   useEffect(() => {
     if (later || stage.step !== 'details') return;
@@ -489,6 +514,7 @@ export function NewVisitSheet({
           ...(offerId ? { offerId } : {}),
           startAt: slotUtc!,
           ...(schedulableId ? { schedulableId } : {}),
+          ...atBranch,
         });
         router.refresh();
         setStage({
@@ -514,6 +540,7 @@ export function NewVisitSheet({
         ...(offerId ? { offerId } : {}),
         ...(schedulableId ? { schedulableId } : {}),
         ...(reclaim && schedulableId ? { reclaimAppointmentId: reclaim } : {}),
+        ...atBranch,
         idempotencyKey: attemptKey,
       });
       router.refresh();
@@ -871,6 +898,32 @@ export function NewVisitSheet({
               </>
             )}
 
+            {branches.length > 1 ? (
+              <>
+                <div className="wi-section-label">{copy.newVisit.whichBranch}</div>
+                <div className="wi-chips" role="radiogroup" aria-label={copy.newVisit.whichBranch}>
+                  {branches.map((b, i) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={branchId === b.id}
+                      className={`wi-chip ${branchId === b.id ? 'wi-chip-on' : ''}`}
+                      onClick={() => {
+                        setBranchId(b.id);
+                        // A stylist from the other branch cannot take this visit.
+                        setSchedulableId(null);
+                        setReclaim(null);
+                      }}
+                      disabled={busy}
+                    >
+                      {i === 0 ? `${b.name} (Main)` : b.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
             <div className="wi-section-label">{copy.newVisit.withWhom(providerNoun.toLowerCase())}</div>
             {/*
               GRW-198 — chairs, not a list of names.
@@ -897,7 +950,7 @@ export function NewVisitSheet({
                 )}
               </button>
 
-              {(providers ?? []).map((p) => {
+              {branchProviders.map((p) => {
                 const chair = later ? null : chairs.find((c) => c.schedulableId === p.id);
                 const picked = schedulableId === p.id;
                 return (

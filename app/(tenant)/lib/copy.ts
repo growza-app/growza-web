@@ -240,6 +240,8 @@ export const copy = {
     total: 'Total',
     comboPrice: 'Combo price',
     withWhom: (provider: string) => `Which ${provider}?`,
+    // Jira GRW-235 — a multi-branch business's booking sheet.
+    whichBranch: 'Which branch?',
     whoeverIsFree: 'Whoever is free',
     freeCount: (n: number) => (n === 0 ? 'nobody free' : n === 1 ? '1 free' : `${n} free`),
     chairFree: 'free now',

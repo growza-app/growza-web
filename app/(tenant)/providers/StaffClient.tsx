@@ -19,6 +19,7 @@ export function StaffClient({
   staffWord,
   maxProviders,
   orgHours,
+  branches = [],
 }: {
   initialOverview: ProvidersOverview;
   services: Service[];
@@ -26,6 +27,8 @@ export function StaffClient({
   maxProviders: number;
   /** GRW-22 — the salon's own week, as stored. Expanded to seven editor rows here, on the client, because `toWeekdayRows` is a client module. */
   orgHours: Array<{ weekday: number; startTime: string; endTime: string }>;
+  /** Jira GRW-234 — a multi-branch business's branches, main first; empty for one branch. */
+  branches?: Array<{ id: string; name: string }>;
 }) {
   const router = useRouter();
   const [overview, setOverview] = useState(initialOverview);
@@ -125,7 +128,12 @@ export function StaffClient({
     }
   };
 
-  const { providers, topPerformer } = overview;
+  const { topPerformer } = overview;
+  // Jira GRW-234 — with branches, each row says where the person works.
+  const providers = useMemo(
+    () => (branches.length > 1 ? overview.providers.map((p) => ({ ...p, branchLabel: p.locationName })) : overview.providers),
+    [overview.providers, branches.length],
+  );
   const activeCount = providers.filter((p) => p.active).length;
   const workingTodayCount = providers.filter((p) => p.active && isWorkingToday(p)).length;
   const offTodayCount = providers.filter((p) => p.active && !isWorkingToday(p)).length;
@@ -376,6 +384,7 @@ export function StaffClient({
           services={services}
           roster={providers}
           orgHours={orgHourRows}
+          branches={branches}
           onClose={() => setCreating(false)}
           onCreated={refresh}
         />

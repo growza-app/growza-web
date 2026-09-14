@@ -138,6 +138,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   /** Jira GRW-222 — the primary branch's name for the sidebar, when there is one. */
   let locationName: string | null = null;
   let branchCount = 1;
+  let branches: Array<{ id: string; name: string }> = [];
   const lang = await serverLang();
 
   try {
@@ -151,6 +152,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     role = (me.member?.role as MemberRole | undefined) ?? null;
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
+    branches = me.branches ?? [];
     impersonation = me.impersonation ?? null;
     locationName = me.tenant?.locationName ?? null;
     // Jira GRW-225 — an owner of several branches watches all of them (multi-branch
@@ -209,6 +211,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             role: role ?? null,
             phone: memberPhone,
             businessName: tenantName ?? null,
+            branches,
           }}
         >
         <LabelsProvider labels={labels}>

@@ -14,6 +14,8 @@
 
 export interface Me {
   tenant: { id: string; name: string; timezone: string; locationName: string | null; branchCount?: number } | null;
+  /** Jira GRW-235 — open branches, main first. */
+  branches?: Array<{ id: string; name: string }>;
   /**
    * The owner's own billing state, or null when there is nothing to say
    * (GRW-122). Null is the healthy case AND the case where the state could
@@ -159,6 +161,8 @@ export interface ServiceInput {
 export interface Provider {
   id: string;
   displayName: string;
+  /** Jira GRW-235 — which branch they work at (the booking sheet narrows by it). */
+  locationId?: string;
   title: string | null;
   sortOrder: number | null;
 }
@@ -166,6 +170,10 @@ export interface Provider {
 export interface ProviderOverviewRow {
   id: string;
   displayName: string;
+  /** Jira GRW-234 — the branch this person works at. `branchLabel` is set by the Staff screen only for a multi-branch business. */
+  locationId?: string;
+  locationName?: string;
+  branchLabel?: string;
   title: string | null;
   phone: string | null;
   active: boolean;
@@ -197,6 +205,9 @@ export interface ProviderWorkingHourRow {
 export interface ProviderDetail {
   id: string;
   displayName: string;
+  /** Jira GRW-234 — the branch this person works at. */
+  locationId?: string;
+  locationName?: string;
   title: string | null;
   phone: string | null;
   bio: string | null;

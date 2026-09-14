@@ -20,6 +20,8 @@ export interface SessionInfo {
   /** What they sign in with (GRW-198). Null where none was recorded. */
   phone: string | null;
   businessName: string | null;
+  /** Jira GRW-235 — open branches, main first; one or none means there is no branch to choose. */
+  branches?: Array<{ id: string; name: string }>;
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);

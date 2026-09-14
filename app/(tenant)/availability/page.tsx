@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function AvailabilityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ serviceId?: string; date?: string; intent?: string }>;
+  searchParams: Promise<{ serviceId?: string; date?: string; intent?: string; branch?: string }>;
 }) {
   const params = await searchParams;
   const isBookingIntent = params.intent === 'book';
@@ -37,7 +37,11 @@ export default async function AvailabilityPage({
   const serviceId = params.serviceId ?? services[0]?.id;
   const date = params.date ?? todayISO;
 
-  const availability = serviceId ? await api.availability(serviceId, date, 'any') : null;
+  // Jira GRW-235 — a multi-branch business looks at one branch's free times; the main branch unless another is picked.
+  // Owner only, like the booking sheet (product decision 2026-09-14).
+  const branches = (me.member?.role ?? 'owner') === 'owner' ? (me.branches ?? []) : [];
+  const branch = branches.length > 1 ? (branches.find((b) => b.id === params.branch) ?? branches[0]!).id : null;
+  const availability = serviceId ? await api.availability(serviceId, date, 'any', branch) : null;
 
   const dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -66,6 +70,18 @@ export default async function AvailabilityPage({
                 ))}
               </select>
             </div>
+            {branch ? (
+              <div className="field">
+                <label htmlFor="branch">{copy.newVisit.whichBranch}</label>
+                <select id="branch" name="branch" defaultValue={branch}>
+                  {branches.map((b, i) => (
+                    <option key={b.id} value={b.id}>
+                      {i === 0 ? `${b.name} (Main)` : b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div className="field">
               <label htmlFor="date">{copy.freeTimes.pickDay}</label>
               <select id="date" name="date" defaultValue={date}>

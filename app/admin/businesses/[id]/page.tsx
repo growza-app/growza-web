@@ -8,7 +8,7 @@ import { formatDateOnly, formatDateTime } from '../../lib/format';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
 import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
 import { BillingTab } from '../../components/BillingTab';
@@ -39,7 +39,8 @@ interface BusinessDetail {
   timezone: string;
   waPhoneNumber: string | null;
   businessTypeVersion: number;
-  locations: Array<{ id: string; name: string; active: boolean }>;
+  // Jira GRW-236 — main branch first; `isMain` marks it.
+  locations: Array<{ id: string; name: string; active: boolean; isMain: boolean }>;
   members: Array<{ userId: string; phone: string | null; role: string }>;
   suspensionReason: string | null;
   subscription: {
@@ -383,7 +384,15 @@ function BusinessDetailInner() {
 
       {activeTab === 'overview' ? <OverviewTab business={business} /> : null}
       {activeTab === 'users' ? <UsersTab members={business.members} /> : null}
-      {activeTab === 'branches' ? <BranchesTab locations={business.locations} /> : null}
+      {activeTab === 'branches' ? (
+        <BranchesTab
+          businessId={params.id}
+          businessName={business.name}
+          locations={business.locations}
+          canManage={canManage}
+          onChanged={() => setRetryToken((n) => n + 1)}
+        />
+      ) : null}
       {activeTab === 'bookings' ? <BookingsTab bookings={bookings} timezone={business.timezone} /> : null}
       {activeTab === 'customers' ? <CustomersTab total={customers.total} /> : null}
       {activeTab === 'audit' ? <AuditLogList fixedTenantId={business.tenantId} /> : null}
@@ -692,25 +701,170 @@ function UsersTab({ members }: { members: BusinessDetail['members'] }) {
 const BRANCHES_COLUMNS: TableColumn[] = [
   { label: 'Branch', width: '2fr' },
   { label: 'Status', width: '1fr' },
+  { label: '', width: '0.8fr' },
 ];
 
-function BranchesTab({ locations }: { locations: BusinessDetail['locations'] }) {
-  if (locations.length === 0) {
-    return <EmptyState icon="businesses" title="No branches yet" sub="This business has no locations set up." />;
+/**
+ * Jira GRW-236 — support adds a branch after enrolment, or closes one.
+ *
+ * The tenant app has told owners "contact Growza support to add or close a
+ * branch" since GRW-227; this is the other end of that sentence. Both actions
+ * are audited with a reason. A close the server refuses (the main branch, or a
+ * branch with staff or upcoming bookings) shows the server's own words, which
+ * name how many of each are still there.
+ */
+function BranchesTab({
+  businessId,
+  businessName,
+  locations,
+  canManage,
+  onChanged,
+}: {
+  businessId: string;
+  businessName: string;
+  locations: BusinessDetail['locations'];
+  canManage: boolean;
+  onChanged: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState('');
+  const [line1, setLine1] = useState('');
+  const [city, setCity] = useState('');
+  const [closing, setClosing] = useState<{ id: string; name: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const openCount = locations.filter((l) => l.active).length;
+
+  function add(reason: string) {
+    if (name.trim().length < 2) {
+      setError('A branch name of at least 2 characters is needed.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    adminFetch(`/businesses/${businessId}/branches`, {
+      method: 'POST',
+      body: JSON.stringify({ name: name.trim(), address: { line1: line1.trim(), city: city.trim() }, reason }),
+    })
+      .then(() => {
+        setAdding(false);
+        setName('');
+        setLine1('');
+        setCity('');
+        onChanged();
+      })
+      .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not add the branch.'))
+      .finally(() => setBusy(false));
   }
+
+  function close(reason: string) {
+    if (!closing) return;
+    setBusy(true);
+    setError(null);
+    adminFetch(`/businesses/${businessId}/branches/${closing.id}/close`, { method: 'POST', body: JSON.stringify({ reason }) })
+      .then(() => {
+        setClosing(null);
+        onChanged();
+      })
+      .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not close the branch.'))
+      .finally(() => setBusy(false));
+  }
+
   return (
-    <Table
-      columns={BRANCHES_COLUMNS}
-      minWidthPx={420}
-      rows={locations.map((l) => (
-        <TableRow key={l.id} columns={BRANCHES_COLUMNS}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>{l.name}</div>
-          <div>
-            <StatusPill status={l.active ? 'Active' : 'Suspended'} />
-          </div>
-        </TableRow>
-      ))}
-    />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {canManage ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <PrimaryButton
+            onClick={() => {
+              setError(null);
+              setAdding(true);
+            }}
+            disabled={openCount >= 20}
+            title={openCount >= 20 ? 'A business can have at most 20 open branches' : undefined}
+          >
+            Add branch
+          </PrimaryButton>
+        </div>
+      ) : null}
+
+      {locations.length === 0 ? (
+        <EmptyState icon="businesses" title="No branches yet" sub="This business has no locations set up." />
+      ) : (
+        <Table
+          columns={BRANCHES_COLUMNS}
+          minWidthPx={480}
+          rows={locations.map((l) => (
+            <TableRow key={l.id} columns={BRANCHES_COLUMNS}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>
+                {l.name}
+                {l.isMain ? (
+                  <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 800, color: oklch.textMuted }}>MAIN</span>
+                ) : null}
+              </div>
+              <div>
+                <StatusPill status={l.active ? 'Active' : 'Closed'} />
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                {canManage && l.active && !l.isMain ? (
+                  <SecondaryButton
+                    danger
+                    onClick={() => {
+                      setError(null);
+                      setClosing({ id: l.id, name: l.name });
+                    }}
+                  >
+                    Close
+                  </SecondaryButton>
+                ) : null}
+              </div>
+            </TableRow>
+          ))}
+        />
+      )}
+
+      <ConfirmDialog
+        open={adding}
+        title={`Add a branch to ${businessName}`}
+        description="It is added after the existing branches. The owner can change its address and hours in Settings once it exists."
+        confirmLabel={busy ? 'Adding…' : 'Add branch'}
+        reasonRequired
+        reasonPlaceholder="Why is this branch being added?"
+        loading={busy}
+        error={error}
+        onConfirm={add}
+        onCancel={() => setAdding(false)}
+      >
+        <div style={{ display: 'grid', gap: 10 }}>
+          <label htmlFor="add-branch-name" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+            Branch name
+          </label>
+          <TextInput id="add-branch-name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder="Koramangala" />
+          <label htmlFor="add-branch-line1" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+            Address (optional)
+          </label>
+          <TextInput id="add-branch-line1" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="80 Feet Road" />
+          <label htmlFor="add-branch-city" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+            City (optional)
+          </label>
+          <TextInput id="add-branch-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Bengaluru" />
+        </div>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={closing !== null}
+        title={`Close ${closing?.name ?? 'this branch'}?`}
+        description="It disappears from the owner's branches, booking sheet and Home. A branch with staff or upcoming bookings cannot be closed until they are moved. Its past bookings stay in Reports."
+        confirmLabel={busy ? 'Closing…' : 'Close branch'}
+        danger
+        reasonRequired
+        reasonPlaceholder="Why is this branch being closed?"
+        loading={busy}
+        error={error}
+        onConfirm={close}
+        onCancel={() => setClosing(null)}
+      />
+    </div>
   );
 }
 

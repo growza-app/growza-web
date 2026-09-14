@@ -244,7 +244,7 @@ function StaffRow({
           </button>
           {isTop && <span className="staff-badge staff-badge-top">TOP</span>}
         </div>
-        <div className="staff-identity-role">{p.title ?? '—'}</div>
+        <div className="staff-identity-role">{p.title ?? '—'}{p.branchLabel ? ` · ${p.branchLabel}` : ''}</div>
       </div>
 
       <div className="staff-shift">
@@ -336,7 +336,7 @@ function StaffCard({
             {freeAllDay && <span className="staff-badge staff-badge-free">FREE</span>}
           </div>
           <div className="staff-identity-role">
-            {off ? shiftOffLabel(p) : `${p.title ?? '—'} · ${hours}`}
+            {off ? `${shiftOffLabel(p)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}` : `${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''} · ${hours}`}
           </div>
         </div>
         {p.active ? (
@@ -392,7 +392,7 @@ export function StaffActionSheet({
           <div>
             <div className="sheet-title">{p.displayName}</div>
             <div className="sheet-sub">
-              {p.title ?? '—'} · {p.todayBookings} booking{p.todayBookings === 1 ? '' : 's'} today
+              {p.title ?? '—'}{p.branchLabel ? ` · ${p.branchLabel}` : ''} · {p.todayBookings} booking{p.todayBookings === 1 ? '' : 's'} today
             </div>
           </div>
         </div>
