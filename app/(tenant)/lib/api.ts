@@ -199,8 +199,11 @@ function reportGet<T>(
   from?: string,
   to?: string,
   filters?: ReportFilters,
+  /** Jira GRW-238 — one branch; omitted: the whole business. */
+  location?: string | null,
 ) {
   const params = new URLSearchParams({ range, compare: String(compare) });
+  if (location) params.set('location', location);
   if (from) params.set('from', from);
   if (to) params.set('to', to);
   // Repeated rather than comma-joined: a service called "Cut & Blow-dry, Long"
@@ -366,13 +369,13 @@ export const api = {
    * browser on every tab and range change, and that path segment is a common
    * ad-blocker pattern, same reasoning as rangeSummary below.
    */
-  reportsOverview: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportOverview>('overview', r, c, f, t),
+  reportsOverview: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportOverview>('overview', r, c, f, t, undefined, b),
   reportFilterOptions: () => get<ReportFilterOptions>('/api/v1/reports/filters'),
-  reportsRevenue: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportRevenue>('revenue', r, c, f, t, x),
-  reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportBookings>('bookings', r, c, f, t, x),
-  reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportServices>('services', r, c, f, t, x),
-  reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters) => reportGet<ReportStaff>('staff', r, c, f, t, x),
-  reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string) => reportGet<ReportCustomers>('customers', r, c, f, t),
+  reportsRevenue: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportRevenue>('revenue', r, c, f, t, x, b),
+  reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportBookings>('bookings', r, c, f, t, x, b),
+  reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportServices>('services', r, c, f, t, x, b),
+  reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportStaff>('staff', r, c, f, t, x, b),
+  reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportCustomers>('customers', r, c, f, t, undefined, b),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),
   // Not /analytics/range — that path segment gets silently blocked by

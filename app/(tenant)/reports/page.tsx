@@ -64,6 +64,8 @@ export default async function ReportsPage({
     providerId?: string | string[];
     serviceId?: string | string[];
     status?: string | string[];
+    /** Jira GRW-238 — one branch of a multi-branch business. */
+    branch?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -172,15 +174,24 @@ export default async function ReportsPage({
   // unnarrowed figures and say so rather than implying a filter is in force.
   const applied = isFilterableReportTab(resolvedTab) ? filters : undefined;
 
+  /*
+   * Jira GRW-238 — one branch, or all of them. Owner only, like every other
+   * branch choice (product decision 2026-09-14), and only with more than one
+   * branch. A stale or foreign id falls back to all branches rather than
+   * erroring the page.
+   */
+  const branches = (me.member?.role ?? 'owner') === 'owner' && (me.branches?.length ?? 0) > 1 ? me.branches! : [];
+  const branch = branches.find((b) => b.id === params.branch)?.id ?? null;
+
   let payload: TabPayload = null;
   try {
     payload =
-      resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare, from, to) }
-      : resolvedTab === 'revenue' ? { tab: 'revenue', data: await api.reportsRevenue(range, compare, from, to, applied) }
-      : resolvedTab === 'bookings' ? { tab: 'bookings', data: await api.reportsBookings(range, compare, from, to, applied) }
-      : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare, from, to, applied) }
-      : resolvedTab === 'staff' ? { tab: 'staff', data: await api.reportsStaff(range, compare, from, to, applied) }
-      : { tab: 'customers', data: await api.reportsCustomers(range, compare, from, to) };
+      resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare, from, to, branch) }
+      : resolvedTab === 'revenue' ? { tab: 'revenue', data: await api.reportsRevenue(range, compare, from, to, applied, branch) }
+      : resolvedTab === 'bookings' ? { tab: 'bookings', data: await api.reportsBookings(range, compare, from, to, applied, branch) }
+      : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare, from, to, applied, branch) }
+      : resolvedTab === 'staff' ? { tab: 'staff', data: await api.reportsStaff(range, compare, from, to, applied, branch) }
+      : { tab: 'customers', data: await api.reportsCustomers(range, compare, from, to, branch) };
   } catch {
     payload = null;
   }
@@ -201,6 +212,8 @@ export default async function ReportsPage({
         rangeLabel={rangeLabelOf(payload) ?? range}
         labels={me.labels}
         payload={payload}
+        branches={branches}
+        branch={branch}
       />
     </Suspense>
   );

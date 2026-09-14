@@ -61,6 +61,8 @@ export function ReportsClient({
   rangeLabel,
   labels,
   payload,
+  branches = [],
+  branch = null,
 }: {
   tab: ReportTabKey;
   range: ReportRangeKey;
@@ -79,6 +81,9 @@ export function ReportsClient({
   rangeLabel: string;
   labels: Record<string, string>;
   payload: TabPayload;
+  /** Jira GRW-238 — a multi-branch owner's branches, main first; empty otherwise. */
+  branches?: Array<{ id: string; name: string }>;
+  branch?: string | null;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -122,6 +127,8 @@ export function ReportsClient({
       canExport={csv.trim().length > 0}
       labels={labels}
       rangeLabel={range === 'custom' ? payload?.data.range.label : undefined}
+      branches={branches}
+      branch={branch}
     >
       {payload === null ? (
         <section className="rp-card rp-card-quiet">

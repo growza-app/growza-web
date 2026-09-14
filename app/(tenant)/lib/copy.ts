@@ -433,6 +433,9 @@ export const copy = {
    * every other tab carries only what is its own.
    */
   reports: {
+    // Jira GRW-238 — the Reports branch control.
+    allBranches: 'All branches',
+    branchClientsNote: (branch: string) => `Money and bookings are for ${branch}. Client groups count every branch.`,
     title: 'Reports',
     navLabel: 'Reports',
 

@@ -58,6 +58,8 @@ export function ReportsShell({
   canExport,
   labels,
   rangeLabel,
+  branches = [],
+  branch = null,
   children,
 }: {
   tab: ReportTabKey;
@@ -84,11 +86,22 @@ export function ReportsShell({
   canExport: boolean;
   /** The vertical's own nouns — "Stylists" for a salon, "Doctors" for a clinic. */
   labels: Record<string, string>;
+  /** Jira GRW-238 — a multi-branch owner's branches, main first; empty hides the control. */
+  branches?: Array<{ id: string; name: string }>;
+  branch?: string | null;
   children: ReactNode;
 }) {
   const router = useRouter();
   const params = useSearchParams();
   const [rangeOpen, setRangeOpen] = useState(false);
+  const [branchOpen, setBranchOpen] = useState(false);
+  const pickBranch = (id: string | null) => {
+    setBranchOpen(false);
+    const query = new URLSearchParams(params.toString());
+    if (id) query.set('branch', id);
+    else query.delete('branch');
+    router.push(`/reports?${query.toString()}`);
+  };
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const go = (next: Record<string, string>) => {
@@ -203,6 +216,33 @@ export function ReportsShell({
             )}
           </div>
 
+          {/* Jira GRW-238 — Reports for one branch. Every tab's period figures narrow to it; client recency stays the business's. */}
+          {branches.length > 1 ? (
+            <div className="rp-range">
+              <button type="button" className={`rp-control ${branch ? 'rp-control-on' : ''}`} aria-haspopup="menu" aria-expanded={branchOpen} onClick={() => setBranchOpen((open) => !open)}>
+                <span>{branches.find((b) => b.id === branch)?.name ?? copy.reports.allBranches}</span>
+                <span className="rp-control-icon rp-muted">
+                  <IconChevronDown />
+                </span>
+              </button>
+              {branchOpen && (
+                <>
+                  <button type="button" className="rp-range-scrim" aria-label="Close" onClick={() => setBranchOpen(false)} />
+                  <div className="rp-range-menu" role="menu">
+                    <button type="button" role="menuitemradio" aria-checked={branch === null} className={branch === null ? 'active' : ''} onClick={() => pickBranch(null)}>
+                      {copy.reports.allBranches}
+                    </button>
+                    {branches.map((b) => (
+                      <button key={b.id} type="button" role="menuitemradio" aria-checked={branch === b.id} className={branch === b.id ? 'active' : ''} onClick={() => pickBranch(b.id)}>
+                        {b.name}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : null}
+
           <button
             type="button"
             className={`rp-control ${compare ? 'rp-control-on' : ''}`}
@@ -305,6 +345,13 @@ export function ReportsShell({
             <span>{copy.reports.droppedFilters(droppedFilters)}</span>
           </div>
         )}
+
+        {/* Jira GRW-238 — said, not implied: a client belongs to the business, so client groups are not split by branch. */}
+        {branch && (tab === 'overview' || tab === 'customers') ? (
+          <div className="rp-applied rp-applied-inert">
+            <span>{copy.reports.branchClientsNote(branches.find((b) => b.id === branch)?.name ?? '')}</span>
+          </div>
+        ) : null}
 
         {children}
       </div>
