@@ -470,3 +470,48 @@
     display: none;
   }
 }
+
+/* ---------- Jira GRW-248 — closed days on Booking rules ---------- */
+.closed-days-add {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+.closed-days-add input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.closed-days-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.closed-days-list:empty {
+  display: none;
+}
+.closed-day-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2, #f1f3f2);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+.closed-day-chip button {
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.closed-day-all {
+  padding-right: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}

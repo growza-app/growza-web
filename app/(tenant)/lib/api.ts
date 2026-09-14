@@ -430,6 +430,7 @@ export const api = {
     staffSeesClientContact?: boolean;
     attendanceLateGraceMin?: number;
     reportAccess?: Record<string, string[]>;
+    closedDates?: string[];
   }, location?: string | null) => patch<SettingsSummary>(`/api/v1/settings/booking${atBranch(location)}`, body),
   updateReminders: (reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>, location?: string | null) =>
     patch<SettingsSummary>(`/api/v1/settings/reminders${atBranch(location)}`, { reminderRules }),

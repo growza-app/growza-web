@@ -1,11 +1,27 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { api, type SettingsSummary } from '../../lib/api';
+import { api, ApiError, type SettingsSummary } from '../../lib/api';
+import { BranchScopeNote } from '../BranchScopeNote';
 
 const SAVE_ERROR = 'Could not save — check the server is running.';
 
-export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
+/** Jira GRW-248 — the settings keys this form can keep per branch, for the "own / business's" note. */
+const BRANCH_KEYS = ['slot_granularity_min', 'slot_policy', 'min_notice_min', 'booking_horizon_days', 'cancellation_cutoff_min', 'closed_dates'];
+
+/** "Mon, 20 Oct" for a stored "2026-10-20" — read as a calendar date, never shifted by the browser's timezone. */
+function dayLabel(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+}
+
+export function BookingRulesForm({ initial, branchName = null }: { initial: SettingsSummary; branchName?: string | null }) {
+  const router = useRouter();
+  /** Jira GRW-248 — a branch is picked: these rules and closed days are that branch's. */
+  const branchId = initial.scope.locationId;
+  const [closedDates, setClosedDates] = useState<string[]>(initial.booking.closedDates ?? []);
+  const [newClosed, setNewClosed] = useState('');
   const [slotGranularityMin, setSlotGranularityMin] = useState(initial.booking.slotGranularityMin);
   const [slotPolicy, setSlotPolicy] = useState(initial.booking.slotPolicy);
   const [minNoticeMin, setMinNoticeMin] = useState(initial.booking.minNoticeMin);
@@ -21,23 +37,52 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
     setError(null);
     setSaved(false);
     try {
-      await api.updateBookingRules({
-        slotGranularityMin,
-        slotPolicy,
-        minNoticeMin,
-        bookingHorizonDays,
-        cancellationCutoffMin,
-        staffSeesClientContact,
-      });
+      const b = initial.booking;
+      const sameDays = closedDates.join() === (b.closedDates ?? []).join();
+      if (branchId) {
+        // Only what was changed becomes the branch's own; untouched rules keep following the business.
+        await api.updateBookingRules(
+          {
+            ...(slotGranularityMin !== b.slotGranularityMin ? { slotGranularityMin } : {}),
+            ...(slotPolicy !== b.slotPolicy ? { slotPolicy } : {}),
+            ...(minNoticeMin !== b.minNoticeMin ? { minNoticeMin } : {}),
+            ...(bookingHorizonDays !== b.bookingHorizonDays ? { bookingHorizonDays } : {}),
+            ...(cancellationCutoffMin !== b.cancellationCutoffMin ? { cancellationCutoffMin } : {}),
+            ...(sameDays ? {} : { closedDates }),
+          },
+          branchId,
+        );
+        router.refresh();
+      } else {
+        await api.updateBookingRules({
+          slotGranularityMin,
+          slotPolicy,
+          minNoticeMin,
+          bookingHorizonDays,
+          cancellationCutoffMin,
+          staffSeesClientContact,
+          ...(sameDays ? {} : { closedDates }),
+        });
+      }
       setSaved(true);
-    } catch {
-      setError(SAVE_ERROR);
+    } catch (e) {
+      // The server's own words ("Minimum notice must be shorter than…", "20 Sep 2026 has already passed").
+      setError(e instanceof ApiError ? e.message : SAVE_ERROR);
     } finally {
       setBusy(false);
     }
   };
 
+  const addClosed = () => {
+    if (!newClosed || closedDates.includes(newClosed)) return;
+    setClosedDates([...closedDates, newClosed].sort());
+    setNewClosed('');
+    setSaved(false);
+  };
+
   return (
+    <>
+    <BranchScopeNote settings={initial} branchName={branchName} keys={BRANCH_KEYS} what="booking rules" />
     <div className="card">
       <div className="card-head">Booking settings</div>
       <div className="card-body">
@@ -113,6 +158,48 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
             Customers can&apos;t cancel within {cancellationCutoffMin || 0} minutes of the start time.
           </span>
         </div>
+
+        {/* Jira GRW-248 — days nobody can book: the business's, or with a branch picked, that branch's own. */}
+        <div className="field closed-days" style={{ marginTop: 14 }}>
+          <label htmlFor="closed-day-new">
+            <span>{branchId ? `Days ${branchName ?? 'this branch'} is closed` : 'Days you are closed'}</span>
+          </label>
+          <div className="closed-days-add">
+            <input id="closed-day-new" type="date" value={newClosed} onChange={(e) => setNewClosed(e.target.value)} />
+            <button type="button" className="btn btn-ghost" disabled={!newClosed} onClick={addClosed}>
+              Add
+            </button>
+          </div>
+          <div className="closed-days-list">
+            {closedDates.map((d) => (
+              <span key={d} className="closed-day-chip">
+                {dayLabel(d)}
+                <button
+                  type="button"
+                  aria-label={`Open again on ${dayLabel(d)}`}
+                  onClick={() => {
+                    setClosedDates(closedDates.filter((x) => x !== d));
+                    setSaved(false);
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {branchId
+              ? (initial.booking.businessClosedDates ?? []).map((d) => (
+                  <span key={`all-${d}`} className="closed-day-chip closed-day-all" title="Closed at every branch — change it under All branches">
+                    {dayLabel(d)} · all branches
+                  </span>
+                ))
+              : null}
+          </div>
+          <span className="field-hint">
+            {closedDates.length === 0 && !(branchId && (initial.booking.businessClosedDates ?? []).length > 0)
+              ? 'No closed days. Add a holiday and nobody can book that day.'
+              : 'Nobody can book on these days. Bookings already made are not cancelled.'}
+          </span>
+        </div>
         </div>
         </div>
 
@@ -121,6 +208,8 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
           apart from the numbers above with its own separator. Worded for an
           owner: what their team can see, not what the API returns.
         */}
+        {/* Who sees client contact is the business's decision, not a branch's (Jira GRW-248). */}
+        {branchId ? null : (
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
             <label className="switch" style={{ marginTop: 2 }}>
@@ -143,6 +232,7 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
             </div>
           </div>
         </div>
+        )}
 
         {error && <div className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -157,5 +247,6 @@ export function BookingRulesForm({ initial }: { initial: SettingsSummary }) {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -306,6 +306,10 @@ export interface SettingsSummary {
     staffSeesClientContact: boolean;
     /** GRW-170 — grace minutes before an arrival reads as "came late". */
     attendanceLateGraceMin: number;
+    /** Jira GRW-248 — closed days at this scope (a branch: its own). */
+    closedDates?: string[];
+    /** Jira GRW-248 — the business's closed days, which close every branch. */
+    businessClosedDates?: string[];
   };
   /** GRW-197 — report tabs granted per limited role; `{}` means none. */
   reportAccess: Record<string, string[]>;
