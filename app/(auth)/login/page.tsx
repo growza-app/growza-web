@@ -22,6 +22,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Jira GRW-233 — a newly enrolled owner signs in with the one-time password
+   * Growza gave them, and the API answers 409 `password_change_required`. The
+   * card then asks for their own password (twice) and posts it with the
+   * one-time one to /auth/first-password, which signs them in.
+   */
+  const [temporary, setTemporary] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
 
   const ready = toStoredPhone(phone) !== null && password.length > 0;
 
@@ -47,6 +56,15 @@ export default function LoginPage() {
         body: JSON.stringify({ phone: toStoredPhone(phone) ?? phone.trim(), password }),
       });
 
+      if (res.status === 409) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (body?.error === 'password_change_required') {
+          setTemporary(password);
+          setPassword('');
+          setLoading(false);
+          return;
+        }
+      }
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
         // BR-04 — the API's own words. It answers generically on purpose
@@ -81,6 +99,106 @@ export default function LoginPage() {
      * offers a second submit of credentials that have already been accepted.
      * Each path that STAYS on this page clears it for itself.
      */
+  }
+
+  async function onChoosePassword(event: React.FormEvent) {
+    event.preventDefault();
+    if (loading || temporary === null) return;
+    if (newPassword.length < 8) {
+      setError('Choose a password of at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirm) {
+      setError('The two passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/v1/auth/first-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: toStoredPhone(phone) ?? phone.trim(), temporaryPassword: temporary, newPassword }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
+        setError(body?.detail ?? 'Could not set your password. Please try again.');
+        // A refused one-time password cannot be retried from here; start again.
+        if (body?.error === 'invalid_credentials') setTemporary(null);
+        setLoading(false);
+        return;
+      }
+      window.location.replace('/');
+    } catch {
+      setError('Could not reach the server. Please check your connection and try again.');
+      setLoading(false);
+    }
+  }
+
+  if (temporary !== null) {
+    return (
+      <main className="login-page">
+        <form className="login-card" onSubmit={onChoosePassword}>
+          <div className="login-head">
+            <h1>Choose your password</h1>
+            <p>You signed in with a one-time password. Pick your own to finish — at least 8 characters.</p>
+          </div>
+
+          <div className="field">
+            <label htmlFor="login-new-password">New password</label>
+            <input
+              id="login-new-password"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setError(null);
+              }}
+              disabled={loading}
+              autoFocus
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="login-confirm-password">Type it again</label>
+            <input
+              id="login-confirm-password"
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => {
+                setConfirm(e.target.value);
+                setError(null);
+              }}
+              disabled={loading}
+            />
+          </div>
+
+          {error ? (
+            <p className="field-error login-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <button className="btn login-submit" type="submit" disabled={loading || !newPassword || !confirm}>
+            {loading ? 'Saving…' : 'Save and sign in'}
+          </button>
+
+          <button
+            type="button"
+            className="login-back"
+            onClick={() => {
+              setTemporary(null);
+              setNewPassword('');
+              setConfirm('');
+              setError(null);
+            }}
+          >
+            Use a different number
+          </button>
+        </form>
+      </main>
+    );
   }
 
   return (
