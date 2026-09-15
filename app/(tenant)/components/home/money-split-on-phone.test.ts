@@ -14,7 +14,10 @@ const hero = readFileSync(resolve(__dirname, 'MoneyHero.tsx'), 'utf8');
 describe('Money today on a phone', () => {
   it('AC-01 — the split is never hidden behind a view switch', () => {
     expect(hero).toMatch(/<div className="hm-hero-pay">/);
-    expect(hero).not.toMatch(/hm-desktop/);
+    // `hm-desktop-inline` on the "vs yesterday" words is fine; the split and the
+    // figures strip must carry no phone-hiding class.
+    expect(hero).not.toMatch(/hm-hero-pay[^"]*hm-desktop/);
+    expect(hero).toMatch(/<div className="hm-hero-stats">/);
     expect(hero).not.toMatch(/setView/);
   });
 
