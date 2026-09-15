@@ -1,6 +1,7 @@
 {
-  "name": "Booking Dashboard",
-  "short_name": "Bookings",
+  "id": "/",
+  "name": "Growza",
+  "short_name": "Growza",
   "description": "Manage bookings, staff, services, and offers.",
   "start_url": "/",
   "scope": "/",

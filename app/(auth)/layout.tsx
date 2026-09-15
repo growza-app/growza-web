@@ -1,5 +1,6 @@
 import '../(tenant)/globals.css';
 import { BrowserGate } from '../(tenant)/components/BrowserGate';
+import { PwaRegister } from '../(tenant)/components/PwaRegister';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
@@ -17,9 +18,23 @@ import type { ReactNode } from 'react';
  * It borrows the dashboard's stylesheet and nothing else — no sidebar, no nav,
  * no billing banner. Chrome for a product the visitor cannot use yet.
  */
+/**
+ * Jira GRW-262 · GRW-269 — installable from here, not only from the dashboard.
+ *
+ * Chrome offers "Install app" only on a page that links a manifest, and this is
+ * the first page every new owner is sent to. While only `(tenant)` linked it,
+ * an owner holding a phone and a sign-in link could not put Growza on the home
+ * screen until after they had signed in.
+ */
 export const metadata: Metadata = {
   title: 'Sign in',
-  icons: { icon: '/icon.png' },
+  manifest: '/manifest.json',
+  icons: { icon: '/icon.png', apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Growza',
+  },
 };
 
   /** Jira GRW-17 — see the note in `(tenant)/layout.tsx`: this is what makes `env(safe-area-inset-*)` non-zero. */
@@ -39,6 +54,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             button will never respond. */}
         <BrowserGate />
         {children}
+        <PwaRegister />
       </body>
     </html>
   );
