@@ -6,6 +6,8 @@ import { api, type Me } from './lib/api';
 import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
+import { InstallBanner } from '../shared/install/InstallBanner';
+import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
 import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionProvider } from './components/SessionProvider';
@@ -207,6 +209,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {/* GRW-197 — first in the body, so it runs before the app bundle has a
             chance to fail to parse. */}
         <BrowserGate />
+        <InstallPromptCapture />
         <PwaRegister />
         <LiveRefresh />
         {/* Above the shell, not inside it: this is the most important thing on
@@ -251,6 +254,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </div>
         </LabelsProvider>
         </SessionProvider>
+        <InstallBanner app="salon" />
       </body>
     </html>
   );

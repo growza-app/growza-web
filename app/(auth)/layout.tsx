@@ -1,6 +1,8 @@
 import '../(tenant)/globals.css';
 import { BrowserGate } from '../(tenant)/components/BrowserGate';
 import { PwaRegister } from '../(tenant)/components/PwaRegister';
+import { InstallBanner } from '../shared/install/InstallBanner';
+import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
@@ -53,8 +55,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             FIRST. Telling them here saves a password attempt on a form whose
             button will never respond. */}
         <BrowserGate />
+        <InstallPromptCapture />
         {children}
         <PwaRegister />
+        <InstallBanner app="salon" />
       </body>
     </html>
   );
