@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { HomeOverview, PaymentModeSlice } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
 import { IconDots } from '../icons';
@@ -76,8 +76,17 @@ function Sparkline({ days }: { days: HomeOverview['week']['days'] }) {
 }
 
 export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOverview; loading: boolean }) {
-  const [view, setView] = useState<'total' | 'methods'>('total');
   const [menu, setMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // Nothing to pick in this menu any more, so a tap anywhere else closes it.
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: PointerEvent) => {
+      if (!menuRef.current?.parentElement?.contains(e.target as Node)) setMenu(false);
+    };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [menu]);
   const { money, week } = data;
   const eyebrow = money.period === 'today' ? t.moneyToday : money.period === 'week' ? t.moneyWeek : t.moneyMonth;
   const vs = money.period === 'today' ? t.vsYesterday : money.period === 'week' ? t.vsLastWeek : t.vsLastMonth;
@@ -94,17 +103,23 @@ export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOvervie
             {money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(money.deltaPct)}% <span className="hm-desktop-inline">{vs}</span>
           </span>
         ) : null}
-        <button type="button" className="hm-hero-menu hm-mobile-inline" aria-label={t.moneyMenu} aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
+        {/*
+          Jira GRW-270 · GRW-275 — the ⋯ menu shows how the money came in, as a
+          list with the rupees and the share of each. It used to swap the card
+          between "All money" and "How they paid", so a phone only ever showed
+          one of the two; the split now sits under the amount on every screen,
+          and this is the same answer, one tap closer to the numbers.
+        */}
+        <button type="button" className="hm-hero-menu hm-mobile-inline" aria-label={t.howPaid} aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
           <IconDots />
         </button>
         {menu ? (
-          <div className="hm-menu" role="menu">
-            <button type="button" role="menuitemradio" aria-checked={view === 'total'} onClick={() => (setView('total'), setMenu(false))}>
-              {t.allMoney}
-            </button>
-            <button type="button" role="menuitemradio" aria-checked={view === 'methods'} onClick={() => (setView('methods'), setMenu(false))}>
-              {t.howPaid}
-            </button>
+          <div ref={menuRef} className="hm-menu hm-pay-menu" role="dialog" aria-label={t.howPaid}>
+            <div className="hm-pay-menu-head">
+              <strong>{t.howPaid}</strong>
+              <span>{rupees(money.revenueMinor)}</span>
+            </div>
+            <PaymentBar t={t} slices={money.byPaymentMode} total={money.revenueMinor} variant="list" />
           </div>
         ) : null}
       </div>
@@ -112,7 +127,7 @@ export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOvervie
       <div className="hm-hero-body">
         <div className="hm-hero-main">
           <div className="hm-hero-amount">{rupees(money.revenueMinor)}</div>
-          <div className={`hm-hero-stats ${view === 'methods' ? 'hm-desktop-flex' : ''}`}>
+          <div className="hm-hero-stats">
             <span>
               <strong>{money.bookings}</strong> {t.bookingWord(money.bookings)}
             </span>
@@ -133,8 +148,8 @@ export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOvervie
         </div>
       </div>
 
-      {/* Phones pick totals OR the split from the ⋯ menu; laptops always have room for both. */}
-      <div className={`hm-hero-pay ${view === 'total' ? 'hm-desktop' : ''}`}>
+      {/* Jira GRW-270 · GRW-275 — the split under the amount on a phone too, not only on a laptop. */}
+      <div className="hm-hero-pay">
         <PaymentBar t={t} slices={money.byPaymentMode} total={money.revenueMinor} variant="tiles" />
       </div>
     </section>
