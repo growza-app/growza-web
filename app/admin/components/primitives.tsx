@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
+import { Children, type CSSProperties, type ReactNode } from 'react';
 import { Icon, type IconName } from '../icons';
 import { oklch, usageState, STATUS_COLORS } from '../tokens';
 
@@ -14,6 +14,7 @@ import { oklch, usageState, STATUS_COLORS } from '../tokens';
 export function Card({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
     <div
+      className="admin-card"
       style={{
         background: oklch.surface,
         border: `1px solid ${oklch.border}`,
@@ -117,20 +118,34 @@ export interface TableColumn {
   right?: boolean;
   /** CSS grid track, e.g. '1.5fr' or '120px'. */
   width: string;
+  /**
+   * Jira GRW-267 · GRW-272 — `false` leaves this column off the phone card.
+   * For what a phone does not need: a placeholder for a figure not built yet,
+   * or an "open" chevron on a row that already opens when tapped.
+   */
+  mobile?: boolean;
 }
 
 /**
  * A grid-based table with its own horizontal scroll — the row content never
  * widens the page. `minWidthPx` is the point below which it scrolls instead
  * of squeezing; every screen picks one for its own column set.
+ *
+ * Jira GRW-267 · GRW-272 — on a phone (≤860px) it is not a table at all. A
+ * 1,180px table in a 390px screen showed the name and the owner and hid the
+ * status, the price and the action behind a sideways scroll nobody finds. Each
+ * row becomes a card instead: the first column across the top, the rest as
+ * labelled pairs beneath (admin.css). No screen changes to get this — the
+ * column labels a row already has are the labels the card prints.
  */
 export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColumn[]; rows: ReactNode; minWidthPx?: number }) {
   const grid = columns.map((c) => c.width).join(' ');
   return (
-    <div style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}>
+    <div className="admin-table" style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}>
       <div className="admin-table-scroll">
-        <div style={{ minWidth: minWidthPx }}>
+        <div className="admin-table-inner" style={{ minWidth: minWidthPx }}>
           <div
+            className="admin-table-head"
             style={{
               display: 'grid',
               gridTemplateColumns: grid,
@@ -171,6 +186,8 @@ export function TableRow({
   const grid = columns.map((c) => c.width).join(' ');
   return (
     <div
+      className="admin-table-row"
+      data-clickable={onClick ? 'true' : undefined}
       onClick={onClick}
       style={{
         display: 'grid',
@@ -182,7 +199,24 @@ export function TableRow({
         ...style,
       }}
     >
-      {children}
+      {/* Each cell wrapped once, so the phone card can label it from its column.
+          A null child stays null: on desktop it was never a grid item, and
+          wrapping it would shift every column after it by one. */}
+      {Children.map(children, (child, i) => {
+        if (child === null || child === undefined || typeof child === 'boolean') return child;
+        const column = columns[i];
+        return (
+          <div
+            className="admin-cell"
+            data-label={column?.label || undefined}
+            data-first={i === 0 ? 'true' : undefined}
+            data-mobile={column?.mobile === false ? 'hide' : undefined}
+            style={{ minWidth: 0 }}
+          >
+            {child}
+          </div>
+        );
+      })}
     </div>
   );
 }

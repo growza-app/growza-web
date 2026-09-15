@@ -102,7 +102,7 @@ export function BranchFields({
             />
           </Field>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 14 }}>
             <Field label="Address (optional)" error={errorFor(`branch.${index}.line1`)}>
               <TextInput
                 value={branch.line1}

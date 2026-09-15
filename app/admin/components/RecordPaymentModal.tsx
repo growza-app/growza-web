@@ -209,6 +209,7 @@ export function RecordPaymentModal({
 
   return (
     <div
+      className="admin-dialog-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
@@ -313,7 +314,7 @@ export function RecordPaymentModal({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 14, marginTop: 16 }}>
             <div>
               <label htmlFor={`${ids}-amount`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
                 Amount received (₹)
