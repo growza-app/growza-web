@@ -35,7 +35,7 @@ export default function AdminSettingsPage() {
   return (
     <>
       <PreviewBanner shows="Platform configuration — tax rates, grace periods and message caps" epic="Jira GRW-92" />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16, alignItems: 'start' }}>
         <SettingsSection title="Tax & currency">
           <SettingsRow label="Currency">
             <div style={{ width: 150 }}>

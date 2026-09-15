@@ -34,7 +34,8 @@ const COLUMNS: TableColumn[] = [
   { label: 'GST', width: '0.8fr' },
   { label: 'Total', width: '0.9fr' },
   { label: 'Payment', width: '0.95fr' },
-  { label: '', width: '50px', right: true },
+  // Jira GRW-267 · GRW-272 — the card opens when tapped; no chevron on a phone.
+  { label: '', width: '50px', right: true, mobile: false },
 ];
 
 interface InvoiceRow {

@@ -140,7 +140,7 @@ export default function AdminDashboardPage() {
   if (loading || !data) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+        <div className="admin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 14 }}>
           {Array.from({ length: 3 }, (_, i) => (
             <Card key={i}>
               <div style={{ height: 74, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* FR-01/AC-01 — the only three figures on this screen with a real query behind them. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+      <div className="admin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 14 }}>
         <KpiCard icon="businesses" label="Total businesses" value={data.totalBusinesses} href="/admin/businesses" />
         <KpiCard
           icon="trend"
@@ -167,6 +167,7 @@ export default function AdminDashboardPage() {
           value={data.newBusinesses.count}
           href={`/admin/businesses?createdFrom=${encodeURIComponent(data.newBusinesses.period.from)}`}
         />
+        <div className="admin-kpi-wide">
         <Card>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted, marginBottom: 10 }}>By status</div>
           {empty ? (
@@ -186,6 +187,7 @@ export default function AdminDashboardPage() {
             </div>
           )}
         </Card>
+        </div>
       </div>
 
       {/* FR-02/AC-02 — every row present whether or not its epic has shipped; none of them is a real count yet. */}

@@ -195,6 +195,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
 
   return (
     <div
+      className="admin-dialog-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
@@ -425,6 +426,7 @@ export function OwnerCredentialNotice({ created, onClose }: { created: CreatedBu
   const ids = useId();
   return (
     <div
+      className="admin-dialog-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
@@ -473,7 +475,7 @@ export function OwnerCredentialNotice({ created, onClose }: { created: CreatedBu
 }
 
 function Row({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>{children}</div>;
+  return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 14 }}>{children}</div>;
 }
 
 function ErrorText({ text }: { text: string }) {

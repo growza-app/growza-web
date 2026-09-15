@@ -134,7 +134,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
             <div style={{ fontSize: 12.5, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
               {capabilityGroupLabel(group)}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 14 }}>
               {keys.map((k) => {
                 // A key absent from this plan's own JSONB isn't "off"/"zero"
                 // — resolveCapabilities falls through to the code default

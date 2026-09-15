@@ -83,7 +83,7 @@ export default function CreatePlanPage() {
             }}
           />
         </Field>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', gap: 14 }}>
           <Field label="Base price (₹)" hint="Includes tax">
             <TextInput type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
           </Field>

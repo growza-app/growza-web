@@ -116,7 +116,7 @@ export default function AdminImpersonationPage() {
                 key={row.id}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))',
                   gap: 12,
                   alignItems: 'center',
                   padding: '13px 0',

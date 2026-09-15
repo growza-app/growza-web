@@ -94,7 +94,7 @@ export default function AdminFeatureFlagsPage() {
 
   if (!rows) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 14 }}>
         {Array.from({ length: 6 }, (_, i) => (
           <div key={i} style={{ height: 150, borderRadius: 16, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
         ))}
@@ -115,7 +115,7 @@ export default function AdminFeatureFlagsPage() {
         </div>
       </Card>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 14 }}>
         {rows.map((flag) => (
           <Card key={flag.key}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>

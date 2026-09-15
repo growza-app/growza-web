@@ -33,10 +33,12 @@ const COLUMNS: TableColumn[] = [
   { label: 'Users', width: '0.7fr' },
   { label: 'Plan', width: '1fr' },
   { label: 'Status', width: '1fr' },
-  { label: 'Bookings', width: '0.9fr' },
-  { label: 'Usage', width: '0.9fr' },
+  // Jira GRW-267 · GRW-272 — `mobile: false`: two placeholders for figures not
+  // counted yet, and a chevron on a card that already opens when tapped.
+  { label: 'Bookings', width: '0.9fr', mobile: false },
+  { label: 'Usage', width: '0.9fr', mobile: false },
   { label: 'Created', width: '1fr' },
-  { label: '', width: '50px', right: true },
+  { label: '', width: '50px', right: true, mobile: false },
 ];
 
 interface BusinessRow {
@@ -178,7 +180,10 @@ function AdminBusinessesInner() {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="admin-filter-bar" style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Jira GRW-267 · GRW-272 — `display: contents` on a desktop, so the chips
+            still wrap in this row as before; one sideways-scrolling row on a phone. */}
+        <div className="admin-chip-row" style={{ display: 'contents' }}>
         {[ALL, ...verticalNames].map((f) => (
           <button
             key={f}
@@ -204,7 +209,8 @@ function AdminBusinessesInner() {
             {f}
           </button>
         ))}
-        <div style={{ width: 150 }}>
+        </div>
+        <div className="admin-filter-grow" style={{ width: 150 }}>
           <Select options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
         </div>
         {canCreate ? (

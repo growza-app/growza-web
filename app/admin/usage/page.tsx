@@ -134,7 +134,7 @@ export default function AdminUsagePage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+      <div className="admin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 14 }}>
         <Stat label="Bookings counted" value={bookingsTotal.toLocaleString('en-IN')} sub={`across ${rows.length} business${rows.length === 1 ? '' : 'es'} shown`} />
         <Stat label="At or over their limit" value={String(atOrOverCap)} sub={atOrOverCap > 0 ? 'bookings are being refused' : 'nobody is capped out'} />
         {/* BR-03 — named as not yet counted, never rendered as a zero that

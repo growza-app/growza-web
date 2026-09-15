@@ -6,7 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
-import { NAV_GROUPS, isNavItemActive, resolveRouteMeta } from '../nav';
+import { NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
@@ -70,6 +70,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
     ...grp,
     items: grp.items.filter((item) => permissions?.includes(item.permission) ?? false),
   }))).filter((grp) => grp.items.length > 0);
+
+  /**
+   * Jira GRW-267 · GRW-272 — the phone's bottom bar, filtered by the same /me
+   * answer as the sidebar. Empty while /me is in flight rather than guessing:
+   * More is always there, and it opens a drawer that shows its own loading
+   * shape.
+   */
+  const bottomTabs = navLoading ? [] : bottomNavItems(permissions, meError);
+  const onBottomTab = bottomTabs.some((tab) => isNavItemActive(pathname, tab.href));
 
   // Close the mobile drawer on every navigation so a tap-through doesn't
   // leave it hanging open behind the new screen.
@@ -416,6 +425,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         ) : null}
 
         <header
+          className="admin-header"
           style={{
             position: 'sticky',
             top: 0,
@@ -430,27 +440,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
             flexWrap: 'wrap',
           }}
         >
-          <button
-            type="button"
-            className="admin-mobile-only"
-            onClick={() => setNavOpen(true)}
-            aria-label="Open navigation"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 11,
-              border: `1px solid ${oklch.border}`,
-              background: 'white',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'oklch(0.3 0.02 155)',
-              cursor: 'pointer',
-              flex: 'none',
-            }}
-          >
-            <Icon name="menu" size={20} />
-          </button>
-          <div style={{ minWidth: 0 }}>
+          {/* Jira GRW-267 · GRW-272 — no hamburger on a phone any more: the bottom
+              bar's More opens the same drawer. */}
+          <div className="admin-header-title" style={{ minWidth: 0 }}>
             {meta.back ? (
               <button
                 type="button"
@@ -487,11 +479,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
             >
               {meta.title}
             </h1>
-            <p style={{ margin: '2px 0 0', fontSize: 13, color: oklch.textMuted }}>{meta.subtitle}</p>
+            <p className="admin-header-subtitle" style={{ margin: '2px 0 0', fontSize: 13, color: oklch.textMuted }}>{meta.subtitle}</p>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div className="admin-header-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 11 }}>
             {meta.showSearch ? (
-              <div style={{ position: 'relative' }}>
+              <div className="admin-header-search" style={{ position: 'relative' }}>
                 <span
                   style={{
                     position: 'absolute',
@@ -528,6 +520,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               aria-label="Notifications"
+              className="admin-header-bell"
               style={{
                 position: 'relative',
                 width: 40,
@@ -569,8 +562,39 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div style={{ padding: 24, flex: 1, animation: 'admin-fade 0.25s ease' }}>{children}</div>
+        <div className="admin-content" style={{ padding: 24, flex: 1, animation: 'admin-fade 0.25s ease' }}>{children}</div>
       </main>
+
+      {/*
+        Jira GRW-267 · GRW-272 — phones only (admin.css hides it above 860px).
+        `bottom-nav` as well as its own class: the install banner (GRW-270)
+        measures `.bottom-nav` to sit above whatever bar a screen has.
+      */}
+      <nav className="admin-bottom-nav bottom-nav" aria-label="Main">
+        {bottomTabs.map((tab) => {
+          const active = !navOpen && isNavItemActive(pathname, tab.href);
+          return (
+            <Link key={tab.href} href={tab.href} className="admin-bottom-tab" data-active={active ? 'true' : undefined} aria-current={active ? 'page' : undefined}>
+              <span className="admin-bottom-icon">
+                <Icon name={tab.icon} size={20} />
+              </span>
+              <span className="admin-bottom-label">{tab.short}</span>
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          className="admin-bottom-tab"
+          data-active={navOpen || !onBottomTab ? 'true' : undefined}
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen(true)}
+        >
+          <span className="admin-bottom-icon">
+            <Icon name="menu" size={20} />
+          </span>
+          <span className="admin-bottom-label">More</span>
+        </button>
+      </nav>
     </div>
   );
 }
