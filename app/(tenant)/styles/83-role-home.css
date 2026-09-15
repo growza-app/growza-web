@@ -571,6 +571,34 @@
   right: var(--sp-4);
   top: 56px;
 }
+/* Jira GRW-270 · GRW-275 — the ⋯ menu is the payment split as a list. */
+.hm-pay-menu {
+  width: min(300px, calc(100vw - 48px));
+  padding: 12px 14px 4px;
+  color: var(--hm-ink);
+}
+.hm-pay-menu-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 13.5px;
+}
+.hm-pay-menu-head span {
+  font-weight: 800;
+}
+.hm-pay-menu .hm-paybar {
+  background: #eef1ee;
+}
+.hm-pay-menu .hm-pay-list .hm-pay-item:last-child {
+  border-bottom: 0;
+}
+.hm-pay-menu .hm-empty {
+  margin: 4px 0 10px;
+  color: var(--hm-muted);
+  font-size: 13px;
+}
 .hm-hero-body {
   display: flex;
   align-items: flex-end;
@@ -2135,6 +2163,11 @@
   }
   .hm-fit .hm-hero-pay {
     margin-top: auto;
+  }
+  /* Jira GRW-270 · GRW-275 — the split now always sits under the figures
+     strip on a phone; a little air so the colour bar is not glued to it. */
+  .hm-hero-pay {
+    padding-top: 6px;
   }
   .hm-fit .hm-pay {
     margin-top: 8px;
