@@ -23,11 +23,14 @@ export default async function MorePage() {
   let role: MemberRole | null = null;
   /** Jira GRW-158 · GRW-165 — false until this business's WhatsApp is switched on, and false when the API cannot say. */
   let whatsappLive = false;
+  /** Jira GRW-266 · GRW-271 — off in production, and off when the API cannot say. */
+  let whatsappDemo = false;
   try {
     const me = await api.me();
     labels = me.labels;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     whatsappLive = me.whatsapp?.booking ?? false;
+    whatsappDemo = me.whatsapp?.demo ?? false;
   } catch {
     // Falls back to the plain-language defaults below, and to the owner nav —
     // a degraded API must not hide the product from the person who owns it.
@@ -50,13 +53,18 @@ export default async function MorePage() {
     { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
     // GRW-165 — marked a preview while WhatsApp is not live, exactly as the
     // sidebar marks it. Three navs that disagree about what is real is the
-    // failure this list was consolidated to prevent.
-    {
-      href: '/try-whatsapp',
-      label: whatsappLive ? copy.nav.tryWhatsApp : copy.whatsapp.navLabelDemo,
-      icon: <IconChat />,
-      pill: whatsappLive ? null : copy.whatsapp.previewPill,
-    },
+    // failure this list was consolidated to prevent. Jira GRW-266 · GRW-271 — and left
+    // out in production, exactly as the sidebar leaves it out.
+    ...(whatsappDemo
+      ? [
+          {
+            href: '/try-whatsapp',
+            label: whatsappLive ? copy.nav.tryWhatsApp : copy.whatsapp.navLabelDemo,
+            icon: <IconChat />,
+            pill: whatsappLive ? null : copy.whatsapp.previewPill,
+          },
+        ]
+      : []),
     { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },
   ];
 

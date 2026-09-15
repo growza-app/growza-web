@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { ChatWindow } from './ChatWindow';
 import { copy } from '../lib/copy';
+import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,13 @@ export default async function TryWhatsAppPage() {
       </>
     );
   }
+
+  /**
+   * Jira GRW-266 · GRW-271 — production has no demo: the API does not register `/chat/*`
+   * there, so this screen could only fail. A typed-in or bookmarked URL gets the
+   * ordinary not-found page instead of a phone that cannot start a chat.
+   */
+  if (!me.whatsapp?.demo) notFound();
 
   return (
     <>

@@ -123,6 +123,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
    * optimistic one is a promise nothing keeps.
    */
   let whatsappLive = false;
+  /** Jira GRW-266 · GRW-271 — the Try WhatsApp demo exists only off production. False when the API cannot say. */
+  let whatsappDemo = false;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
   /**
@@ -153,6 +155,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     billingChange = me.billingChange ?? null;
     canPayOnline = me.payments?.online ?? false;
     whatsappLive = me.whatsapp?.booking ?? false;
+    whatsappDemo = me.whatsapp?.demo ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
@@ -221,7 +224,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
         <LabelsProvider labels={labels}>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
             <div className="content">
               <BillingBanner billing={billing} canPayOnline={canPayOnline} />
               <BillChangeBanner change={billingChange} />

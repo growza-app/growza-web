@@ -131,6 +131,7 @@ export default async function DashboardPage() {
       role={role}
       reportTabs={me.reportTabs}
       whatsappLive={me.whatsapp?.booking ?? false}
+      whatsappDemo={me.whatsapp?.demo ?? false}
       initial={overview}
       appointments={appointments}
       listIsTomorrow={listIsTomorrow}

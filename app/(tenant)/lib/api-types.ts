@@ -87,7 +87,8 @@ export interface Me {
    * make the whole layout throw; absent reads as off, which is the safe
    * direction — it says "not yet" about something that already does not work.
    */
-  whatsapp?: { booking: boolean };
+  /** `demo` — Jira GRW-266 · GRW-271: whether this server has the Try WhatsApp simulator at all (off in production). */
+  whatsapp?: { booking: boolean; demo?: boolean };
   capabilities: {
     walkIn: boolean;
     /** GRW-219 — may a booking be moved to another time. Read by `BookingSheet`. */

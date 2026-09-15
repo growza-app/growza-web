@@ -108,6 +108,8 @@ export interface OwnerHomeProps {
   role: MemberRole | null;
   reportTabs?: string[];
   whatsappLive: boolean;
+  /** Jira GRW-266 · GRW-271 — false in production: no Try WhatsApp tile. */
+  whatsappDemo: boolean;
   initial: HomeOverview | null;
   /** Today's visits — or tomorrow's once the business has closed for the day. */
   appointments: Appointment[] | null;
@@ -208,7 +210,7 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
     { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics />, tone: 'amber' },
-    { href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, tone: 'green', pill: p.whatsappLive ? null : t.nav.demo },
+    ...(p.whatsappDemo ? [{ href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, tone: 'green', pill: p.whatsappLive ? null : t.nav.demo }] : []),
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
