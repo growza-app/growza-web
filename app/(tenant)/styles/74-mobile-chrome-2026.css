@@ -60,22 +60,18 @@
   }
 
   /*
-   * Content fades out as it reaches the bar, rather than being cut by it.
+   * Jira GRW-269 · GRW-274 — no fade above the bar.
    *
-   * Apple's own description of the floating tab bar. Painted on `.page-body`'s
-   * bottom edge as a gradient of the page colour, so a list ends in a soft
-   * disappearance instead of a hard line under the capsule.
+   * There was one: a 24px gradient on `.page-body::after`, `position: sticky;
+   * bottom: 0`, borrowed from Apple's floating bar that content passes beneath.
+   * This bar is in flow (above), so nothing ever passes beneath it and the fade
+   * had nothing to soften. Worse, a sticky box sticks to the scroll container's
+   * edge MINUS its padding, and a fit-to-screen `.page-body` carries ~68px of
+   * bottom padding to clear the bar — so the "fade" hung 68px up the screen as
+   * a blurred band with a hard lower edge, straight across whatever was there:
+   * the staff chips on Bookings, a card's middle line elsewhere. Reported from a
+   * phone as "what is this line?".
    */
-  .page-body::after {
-    content: '';
-    position: sticky;
-    bottom: 0;
-    display: block;
-    height: 24px;
-    margin-top: -24px;
-    pointer-events: none;
-    background: linear-gradient(to bottom, rgba(244, 246, 245, 0), var(--bg, #f4f6f5));
-  }
 
   .bottom-nav a {
     gap: 3px;
