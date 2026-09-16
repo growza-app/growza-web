@@ -531,3 +531,29 @@ input.wi-search-input-plain {
   font-size: 11px;
   font-weight: 700;
 }
+
+/* Jira GRW-290 — payment mode pinned in the footer, on its own row above Back / Mark done. */
+.wi-pay-actions {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 10px;
+}
+.wi-pay-modes {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.wi-pay-modes-label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+.wi-pay-modes .wi-chips {
+  gap: 6px;
+}
+.wi-pay-modes .wi-chip {
+  min-height: 36px;
+  padding: 6px 12px;
+}

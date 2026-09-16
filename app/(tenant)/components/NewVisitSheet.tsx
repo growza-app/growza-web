@@ -1230,28 +1230,33 @@ export function NewVisitSheet({
               <div className="wi-summary">{copy.newVisit.startsNow(totalMinutes(picked))}</div>
             )}
 
-            {forPayment && (
-              <>
-                <div className="wi-section-label">{copy.newVisit.howPaid}</div>
-                <div className="wi-chips" role="radiogroup" aria-label={copy.newVisit.howPaid}>
-                  {PAYMENT_MODES.map((m) => (
-                    <button
-                      key={m.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={paymentMode === m.value}
-                      className={`wi-chip ${paymentMode === m.value ? 'wi-chip-on' : ''}`}
-                      onClick={() => setPaymentMode(m.value)}
-                      disabled={busy}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
+            <div className={`modal-actions wi-actions ${forPayment ? 'wi-pay-actions' : ''}`}>
+              {/*
+                Jira GRW-290 — the payment mode lives in the pinned footer, not
+                the scrolling body. On a phone the body scrolls, and chips above
+                the footer ended up half-hidden behind it: the one choice that
+                goes with Mark done has to be on screen with Mark done.
+              */}
+              {forPayment && (
+                <div className="wi-pay-modes" role="radiogroup" aria-label={copy.newVisit.howPaid}>
+                  <span className="wi-pay-modes-label">{copy.newVisit.howPaid}</span>
+                  <div className="wi-chips">
+                    {PAYMENT_MODES.map((m) => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentMode === m.value}
+                        className={`wi-chip ${paymentMode === m.value ? 'wi-chip-on' : ''}`}
+                        onClick={() => setPaymentMode(m.value)}
+                        disabled={busy}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </>
-            )}
-
-            <div className="modal-actions wi-actions">
+              )}
               <button
                 type="button"
                 className="btn btn-ghost"
