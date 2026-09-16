@@ -893,9 +893,21 @@ body.admin-body {
   .admin-range-picker {
     flex: 1;
   }
+  /*
+   * QA — a 29px-tall button on a touch screen. `padding: 6px 4px` around
+   * 12.5px text gives roughly that on desktop too, but a mouse pointer does
+   * not need the target a finger does; this is the block that only applies
+   * below 860px, so only the touch case changes. `min-height` rather than a
+   * taller `padding`, so a short label still centres in a tall box instead of
+   * the box growing however tall its own padding makes it.
+   */
   .admin-range-picker button {
     flex: 1;
+    min-height: 44px;
     padding: 6px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

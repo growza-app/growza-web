@@ -42,6 +42,8 @@ export default function NetworkMonitoringPage() {
   const [data, setData] = useState<Monitoring | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // QA — a permission refusal is not a transient error. See the render below.
+  const [noAccess, setNoAccess] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function NetworkMonitoringPage() {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+    setNoAccess(false);
 
     adminFetch<Monitoring>(`/network-monitoring?range=${range}`, { signal: controller.signal })
       .then((result) => {
@@ -63,6 +66,20 @@ export default function NetworkMonitoringPage() {
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
+        /*
+         * QA — a 403 used to fall into the ordinary error branch below, which
+         * offers a Retry button. Retrying a permission refusal asks the same
+         * question and gets the same answer every time; the control was
+         * there because every OTHER failure on this screen is worth a retry,
+         * and this one condition got swept in with them. `admin.system.view`
+         * is not the kind of thing that resolves itself between one click
+         * and the next, so this is the plain "you can't be here" GRW-171
+         * already established for the dashboard, not a dead button.
+         */
+        if (err instanceof AdminApiError && err.status === 403) {
+          setNoAccess(true);
+          return;
+        }
         setError(err instanceof AdminApiError ? err.message : 'Could not read the platform’s health.');
       })
       .finally(() => {
@@ -73,6 +90,19 @@ export default function NetworkMonitoringPage() {
   }, [range, reloadToken]);
 
   const refresh = useCallback(() => setReloadToken((n) => n + 1), []);
+
+  if (noAccess) {
+    return (
+      <Card>
+        <div style={{ textAlign: 'center', padding: '24px 12px' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>Your role does not open this screen</div>
+          <div style={{ fontSize: 13, color: oklch.textMuted }}>
+            Ask a Super Admin to add platform-health access to it. Retrying will not change this.
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (error) {
     return (
