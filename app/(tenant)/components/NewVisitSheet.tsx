@@ -249,6 +249,22 @@ export function NewVisitSheet({
    */
   const [comboTitle, setComboTitle] = useState<string | null>(null);
   const [comboAmountText, setComboAmountText] = useState('');
+  /**
+   * Jira GRW-292 — a service added while a combo is chosen used to dissolve
+   * the whole combo back to full-price rows: `assertOfferPricesTheseServices`
+   * on the server refuses an offer whose `serviceIds` are not EXACTLY its own
+   * set, so the sheet cleared `offerId` the moment the list changed — silently,
+   * with the discount gone and nothing on screen saying so.
+   *
+   * Extras are the fix: the combo's own `picked` never changes, so the walk-in
+   * still books it at its offer price, and anything added alongside it lives
+   * here instead — its own row, its own price. Record payment settles both in
+   * one checkout via `extraServices` (the same mechanism a stylist already
+   * uses to sell something extra in the chair). Walk-in now and For later have
+   * no such second step, so there the primary button stays disabled with an
+   * explanation while an extra sits next to a combo — see the footer.
+   */
+  const [extras, setExtras] = useState<PickedItem[]>([]);
   const [schedulableId, setSchedulableId] = useState<string | null>(null);
   // Jira GRW-290 — Record payment: how they paid, and the visit once it exists.
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
@@ -375,22 +391,20 @@ export function NewVisitSheet({
   }, [combos, serviceTerm]);
 
   const addService = (s: Service) => {
-    setPicked((prev) => [
-      ...prev,
-      {
-        serviceId: s.id,
-        name: s.name,
-        durationMin: s.durationMin,
-        priceMinor: s.priceMinor,
-        ...(forPayment ? { paidRupees: String(Number(s.priceMinor ?? 0) / 100) } : {}),
-      },
-    ]);
+    const item: PickedItem = {
+      serviceId: s.id,
+      name: s.name,
+      durationMin: s.durationMin,
+      priceMinor: s.priceMinor,
+      ...(forPayment ? { paidRupees: String(Number(s.priceMinor ?? 0) / 100) } : {}),
+    };
+    // Jira GRW-292 — beside the combo, not instead of it.
+    if (comboActive) {
+      setExtras((prev) => [...prev, item]);
+    } else {
+      setPicked((prev) => [...prev, item]);
+    }
     setServiceTerm('');
-    // Adding a loose service means this is no longer that combo's fixed price.
-    setOfferId(null);
-    setComboPriceMinor(null);
-    setComboTitle(null);
-    setComboAmountText('');
   };
 
   const applyCombo = (offer: Offer) => {
@@ -405,6 +419,7 @@ export function NewVisitSheet({
     setComboPriceMinor(offer.comboPriceMinor);
     setComboTitle(offer.title);
     setComboAmountText(offer.comboPriceMinor ? String(Number(offer.comboPriceMinor) / 100) : '');
+    setExtras([]);
     setServiceTerm('');
   };
 
@@ -429,12 +444,25 @@ export function NewVisitSheet({
     setPicked((prev) => prev.map((item, i) => ({ ...item, paidRupees: shares[i] })));
   };
 
+  /**
+   * Removing the combo does not throw away whatever was added beside it —
+   * those rows just stop being "beside a combo" and become the plain list.
+   */
   const removeCombo = () => {
-    setPicked([]);
+    setPicked(extras);
+    setExtras([]);
     setOfferId(null);
     setComboPriceMinor(null);
     setComboTitle(null);
     setComboAmountText('');
+  };
+
+  const removeExtraAt = (index: number) => {
+    setExtras((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const setExtraAmountAt = (index: number, value: string) => {
+    setExtras((prev) => prev.map((item, i) => (i === index ? { ...item, paidRupees: value } : item)));
   };
 
   const removeAt = (index: number) => {
@@ -449,13 +477,26 @@ export function NewVisitSheet({
     setPicked((prev) => prev.map((item, i) => (i === index ? { ...item, paidRupees: value } : item)));
   };
 
-  const amountsValid = picked.every((item) => rupeesToMinor(item.paidRupees) !== null);
-  const paidTotalMinor = picked.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0);
-
   // Jira GRW-291 — a combo renders as one line: what the services list for, what it saves, what it costs.
   const comboActive = Boolean(offerId && comboPriceMinor);
   const comboListMinor = picked.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
   const comboSavingMinor = comboPriceMinor ? Math.max(0, comboListMinor - Number(comboPriceMinor)) : 0;
+
+  const amountsValid =
+    picked.every((item) => rupeesToMinor(item.paidRupees) !== null) &&
+    extras.every((item) => rupeesToMinor(item.paidRupees) !== null);
+  const paidTotalMinor =
+    picked.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0) +
+    extras.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0);
+  // Jira GRW-292 — the combo's own price (typed, in Record payment) plus whatever sits beside it.
+  const comboWithExtrasTotalMinor = forPayment
+    ? (rupeesToMinor(comboAmountText) ?? 0) + extras.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0)
+    : Number(comboPriceMinor ?? 0) + extras.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
+  // Jira GRW-292 — Walk-in now / For later have no checkout step to settle an
+  // extra through, so a combo cannot share a slot with one there: the primary
+  // button stays disabled (see the footer) until the extra is removed or the
+  // combo is.
+  const comboBlocksSubmit = !forPayment && comboActive && extras.length > 0;
 
   // --- `later` only: which day, and which slot on it ---
   const [day, setDay] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()));
@@ -659,11 +700,24 @@ export function NewVisitSheet({
       setStage({ step: 'error', client, message: copy.newVisit.paymentNotSaved });
       return;
     }
+    /*
+     * Jira GRW-292 — whatever was added beside a combo goes in as
+     * `extraServices`: new rows on this same visit, checkout's own
+     * mechanism for something sold in the chair beyond what was booked.
+     * `checkoutAppointment` refuses the whole request unless `first` is
+     * still `confirmed`, so a retry either creates these exactly once or
+     * not at all — nothing here needs its own idempotency key.
+     */
+    const extraServices = extras.map((item) => ({
+      serviceId: item.serviceId,
+      paidAmountMinor: rupeesToMinor(item.paidRupees) ?? 0,
+    }));
     try {
       await api.checkout(first, {
         paidAmountMinor: amounts[0],
         paymentMode,
         groupMembers: rest.map((appointmentId, i) => ({ appointmentId, paidAmountMinor: amounts[i + 1]! })),
+        ...(extraServices.length > 0 ? { extraServices } : {}),
       });
     } catch (error) {
       const settled =
@@ -681,7 +735,13 @@ export function NewVisitSheet({
       }
     }
     router.refresh();
-    setStage({ step: 'paid', client, result: visit, totalMinor: amounts.reduce((a, b) => a + b, 0), mode: paymentMode });
+    setStage({
+      step: 'paid',
+      client,
+      result: visit,
+      totalMinor: amounts.reduce((a, b) => a + b, 0) + extraServices.reduce((sum, e) => sum + e.paidAmountMinor, 0),
+      mode: paymentMode,
+    });
   };
 
   const queueIt = async (client: PickedClient) => {
@@ -1043,7 +1103,7 @@ export function NewVisitSheet({
             {stage.step === 'error' && <div className="wi-error">{stage.message}</div>}
 
             {/* Chosen list first — it is the answer being assembled. */}
-            {picked.length > 0 && (
+            {(picked.length > 0 || extras.length > 0) && (
               <>
                 <div className="wi-section-label">{copy.newVisit.picked}</div>
                 <div className="wi-picked">
@@ -1090,7 +1150,58 @@ export function NewVisitSheet({
                         <IconClose />
                       </button>
                     </div>
-                  ) : (
+                  ) : null}
+                  {/*
+                   * Jira GRW-292 — whatever was added beside the combo: its
+                   * own row, its own price, same markup the plain (no-combo)
+                   * list below uses. Record payment settles these through
+                   * `extraServices` at Mark done; Walk-in now / For later have
+                   * no second step to settle them through, so the footer
+                   * disables the primary button and says why while any of
+                   * these sit next to a combo.
+                   */}
+                  {extras.map((item, i) => (
+                    <div className="wi-picked-row" key={`extra-${item.serviceId}-${i}`}>
+                      <span className="wi-picked-name">{item.name}</span>
+                      {forPayment ? (
+                        <label className="wi-amount">
+                          <span aria-hidden>₹</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            aria-label={copy.newVisit.amountFor(item.name)}
+                            aria-invalid={rupeesToMinor(item.paidRupees) === null}
+                            value={item.paidRupees ?? ''}
+                            onChange={(e) => setExtraAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
+                            disabled={busy}
+                          />
+                        </label>
+                      ) : (
+                        <span className="picker-row-meta">{copy.services.minutes(item.durationMin)}</span>
+                      )}
+                      <button
+                        type="button"
+                        className="wi-remove"
+                        aria-label={`${copy.newVisit.removeService} ${item.name}`}
+                        onClick={() => removeExtraAt(i)}
+                        disabled={busy || linesLocked}
+                      >
+                        <IconClose />
+                      </button>
+                    </div>
+                  ))}
+                  {/*
+                   * Jira GRW-292 — the combo row already says its own price;
+                   * this total only appears once there is something ELSE to
+                   * add it to, same as the plain list's total below.
+                   */}
+                  {comboActive && extras.length > 0 && (
+                    <div className="wi-picked-total">
+                      <span>{copy.newVisit.total}</span>
+                      <strong>{formatMoney(String(comboWithExtrasTotalMinor))}</strong>
+                    </div>
+                  )}
+                  {!comboActive && (
                     <>
                       {picked.map((item, i) => (
                         <div className="wi-picked-row" key={`${item.serviceId}-${i}`}>
@@ -1351,6 +1462,18 @@ export function NewVisitSheet({
                   </div>
                 </div>
               )}
+              {/*
+               * Jira GRW-292 — Walk-in now / For later have no checkout step
+               * to settle an extra through the way Record payment does, so a
+               * combo cannot leave this screen with one still sitting beside
+               * it. Said here, at the moment it blocks the tap, not
+               * discovered later as a booking that silently lost its combo.
+               */}
+              {comboBlocksSubmit && (
+                <div className="wi-error" role="status">
+                  {copy.newVisit.comboBlocksExtra(comboTitle ?? copy.newVisit.combo)}
+                </div>
+              )}
               <button
                 type="button"
                 className="btn btn-ghost"
@@ -1364,7 +1487,7 @@ export function NewVisitSheet({
                   type="button"
                   className="btn btn-ghost wi-queue-btn"
                   onClick={() => void queueIt(stage.client)}
-                  disabled={busy || linesLocked}
+                  disabled={busy || linesLocked || comboBlocksSubmit}
                 >
                   {copy.newVisit.addToQueue}
                 </button>
@@ -1375,7 +1498,7 @@ export function NewVisitSheet({
                 onClick={() =>
                   later ? setStage({ step: 'when', client: stage.client }) : void submit(stage.client)
                 }
-                disabled={busy || picked.length === 0 || (forPayment && !amountsValid)}
+                disabled={busy || picked.length === 0 || (forPayment && !amountsValid) || comboBlocksSubmit}
               >
                 {busy ? copy.newVisit.saving : later ? copy.newVisit.next : forPayment ? copy.newVisit.markDone : copy.newVisit.start}
               </button>

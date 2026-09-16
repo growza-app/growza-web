@@ -59,7 +59,9 @@ describe('FR-05 — one Mark done, no till', () => {
 
   it('the button says Mark done and is disabled while an amount is unusable', () => {
     expect(copy.newVisit.markDone).toBe('Mark done');
-    expect(sheet).toMatch(/disabled=\{busy \|\| picked\.length === 0 \|\| \(forPayment && !amountsValid\)\}/);
+    expect(sheet).toMatch(
+      /disabled=\{busy \|\| picked\.length === 0 \|\| \(forPayment && !amountsValid\) \|\| comboBlocksSubmit\}/,
+    );
   });
 });
 
