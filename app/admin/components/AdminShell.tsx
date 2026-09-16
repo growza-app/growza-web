@@ -8,6 +8,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
 import { NAV_GROUPS, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
+import { NotificationBell } from './NotificationBell';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
 import { useAdminSearch } from './SearchContext';
@@ -32,6 +33,14 @@ function initialsOf(name: string): string {
  * The admin shell (GRW-95): sidebar, header, mobile drawer, impersonation
  * banner. One instance, composed around every /admin page from
  * admin/layout.tsx — no screen builds its own nav or header.
+ *
+ * GRW-273 added a bottom tab bar (Home / Businesses / More) below the mobile
+ * breakpoint, in normal flow as the last child of `main` rather than the
+ * header hamburger it replaces — see the comment at the `<nav
+ * className="admin-bottom-nav">` below for why. "Reports" from the original
+ * design mockup isn't a tab: nothing in `NAV_GROUPS` answers to that name
+ * today (the closest real screen is Usage), so it was dropped rather than
+ * pointed at a screen it doesn't mean.
  */
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -430,27 +439,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             flexWrap: 'wrap',
           }}
         >
-          <button
-            type="button"
-            className="admin-mobile-only"
-            onClick={() => setNavOpen(true)}
-            aria-label="Open navigation"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 11,
-              border: `1px solid ${oklch.border}`,
-              background: 'white',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'oklch(0.3 0.02 155)',
-              cursor: 'pointer',
-              flex: 'none',
-            }}
-          >
-            <Icon name="menu" size={20} />
-          </button>
-          <div style={{ minWidth: 0 }}>
+          <div className="admin-header-title" style={{ minWidth: 0, flex: 1 }}>
             {meta.back ? (
               <button
                 type="button"
@@ -489,87 +478,96 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </h1>
             <p style={{ margin: '2px 0 0', fontSize: 13, color: oklch.textMuted }}>{meta.subtitle}</p>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 11 }}>
-            {meta.showSearch ? (
-              <div style={{ position: 'relative' }}>
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                    color: 'oklch(0.6 0.02 155)',
-                    display: 'flex',
-                  }}
-                >
-                  <Icon name="search" size={16} />
-                </span>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search…"
-                  className="admin-search-input"
-                  style={{
-                    width: 260,
-                    height: 40,
-                    padding: '0 14px 0 38px',
-                    borderRadius: 11,
-                    border: `1px solid ${oklch.borderStrong}`,
-                    background: 'white',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            ) : null}
-            <button
-              type="button"
-              aria-label="Notifications"
-              style={{
-                position: 'relative',
-                width: 40,
-                height: 40,
-                borderRadius: 11,
-                border: `1px solid ${oklch.border}`,
-                background: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'oklch(0.45 0.02 155)',
-                cursor: 'pointer',
-                flex: 'none',
-              }}
-            >
-              <Icon name="bell" size={18} />
+          {/*
+            GRW-277 QA — the bell is its own header child, not grouped with the
+            search box.
+
+            Grouped, the pair had to wrap as one: a search box needs the whole
+            line on a phone, so the bell was dragged down with it onto a line
+            of its own, sitting under the title with nothing beside it. Apart,
+            each wraps on its own terms — the bell stays up on the title's line
+            where a notification control is looked for, and only the search box
+            takes a second line. `order` in `admin.css` keeps the laptop
+            arrangement (search, then bell) that the DOM order here reverses.
+          */}
+          <div className="admin-header-bell">
+            <NotificationBell />
+          </div>
+          {meta.showSearch ? (
+            <div className="admin-search-wrap" style={{ position: 'relative' }}>
               <span
                 style={{
                   position: 'absolute',
-                  top: -5,
-                  right: -5,
-                  minWidth: 18,
-                  height: 18,
-                  padding: '0 5px',
-                  borderRadius: 9,
-                  background: 'oklch(0.55 0.19 25)',
-                  color: 'white',
-                  fontSize: 10.5,
-                  fontWeight: 700,
+                  left: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  color: 'oklch(0.6 0.02 155)',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '2px solid oklch(0.97 0.005 150)',
                 }}
               >
-                6
+                <Icon name="search" size={16} />
               </span>
-            </button>
-          </div>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search…"
+                className="admin-search-input"
+                style={{
+                  width: 260,
+                  height: 40,
+                  padding: '0 14px 0 38px',
+                  borderRadius: 11,
+                  border: `1px solid ${oklch.borderStrong}`,
+                  background: 'white',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  outline: 'none',
+                }}
+              />
+            </div>
+          ) : null}
         </header>
 
         <div style={{ padding: 24, flex: 1, animation: 'admin-fade 0.25s ease' }}>{children}</div>
+
+        {/*
+          Jira GRW-273 — replaces the header hamburger on mobile rather than
+          sitting alongside it: two controls that both open the same drawer
+          would leave an admin guessing which one does what. "More" opens
+          that same drawer (`navOpen`/`setNavOpen`, unchanged) for the 10 nav
+          items that don't get their own tab — this bar doesn't duplicate the
+          drawer, it's a second way into it plus 2 shortcuts.
+
+          `position: sticky` rather than `fixed`, on purpose: the tenant
+          portal's own bottom nav (74-mobile-chrome-2026.css) documents a real
+          Android Chrome bug where a fixed bar stays pinned to the stale
+          layout viewport when the address bar auto-hides, leaving a gap of
+          raw page background beneath it. Sticky recomputes against the live
+          viewport on every scroll, so it doesn't have that failure mode, and
+          the root shell's own `minHeight: 100vh` (with default flex stretch)
+          already guarantees `main` is tall enough for "sticky to the bottom"
+          to mean the actual bottom of the screen even on a short page.
+        */}
+        <nav className="admin-bottom-nav" aria-label="Primary">
+          <Link href="/admin" className={isNavItemActive(pathname, '/admin') ? 'active' : undefined} aria-current={isNavItemActive(pathname, '/admin') ? 'page' : undefined}>
+            <Icon name="dashboard" size={20} />
+            <span>Home</span>
+          </Link>
+          <Link
+            href="/admin/businesses"
+            className={isNavItemActive(pathname, '/admin/businesses') ? 'active' : undefined}
+            aria-current={isNavItemActive(pathname, '/admin/businesses') ? 'page' : undefined}
+          >
+            <Icon name="businesses" size={20} />
+            <span>Businesses</span>
+          </Link>
+          <button type="button" className={navOpen ? 'active' : undefined} onClick={() => setNavOpen(true)} aria-haspopup="true" aria-expanded={navOpen}>
+            <Icon name="menu" size={20} />
+            <span>More</span>
+          </button>
+        </nav>
       </main>
     </div>
   );

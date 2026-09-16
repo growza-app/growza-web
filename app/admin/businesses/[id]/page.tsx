@@ -487,7 +487,7 @@ function SummaryHeader({
           Only an active business hit it, which is why it survived: a
           provisioning or suspended one shows two controls and fits.
         */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className="admin-bar-end" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <StatusPill status={statusLabel(business.status)} />
           {canSuspend ? (
             <SecondaryButton danger onClick={() => onRequestAction('suspend')}>
@@ -514,7 +514,7 @@ function SummaryHeader({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(130px, 100%), 1fr))',
           gap: 16,
           marginTop: 20,
           paddingTop: 20,
@@ -631,7 +631,7 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Card>
         <SectionTitle title="Identity" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginTop: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 16, marginTop: 12 }}>
           <SummaryField label="Business ID" value={business.tenantId} />
           <SummaryField label="Vertical" value={`${business.vertical} · v${business.businessTypeVersion}`} />
           <SummaryField label="Timezone" value={business.timezone} />

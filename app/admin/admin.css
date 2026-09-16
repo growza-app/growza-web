@@ -87,6 +87,40 @@ body.admin-body {
   display: none;
 }
 
+.admin-bottom-nav {
+  display: none;
+}
+
+/* ---------- header row order (GRW-277 QA) ----------
+   The header is a wrapping flex row and its three children are written in the
+   order the PHONE needs (title, bell, search), because that is the order
+   wrapping has to respect. `order` restores the laptop reading — search box,
+   then bell — without the DOM having to choose one over the other.
+
+   These sit ABOVE the 860px query, not below it. Everything in this file that
+   a media query overrides has to: the rules have equal specificity, so the
+   one written last wins whether or not it is inside the query. Putting a
+   default underneath its own override silently disables it — which is what
+   happened to `.admin-bar-end`'s `margin-left` here, harmlessly only because
+   `width: 100%` left no free margin for `auto` to take. */
+.admin-header-title {
+  order: 1;
+}
+.admin-search-wrap {
+  order: 2;
+}
+.admin-header-bell {
+  order: 3;
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+/* Right-aligned on a laptop; the mobile media query below takes the full line. */
+.admin-bar-end {
+  margin-left: auto;
+}
+
 @media (max-width: 860px) {
   .admin-sidebar {
     width: 270px;
@@ -121,13 +155,424 @@ body.admin-body {
     background: oklch(0.2 0.02 155 / 0.45);
     z-index: 40;
   }
+  /* ---------- GRW-277: header and page action bars on a phone ----------
+     `margin-left: auto` sits these right on a laptop. Wrapped onto their own
+     line on a phone that reads as a control stranded against the right edge
+     with a wide empty gap beside it, so on mobile they take the full line. */
+  .admin-bar-end {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+
+  /* The search box gets the whole second line; the bell does NOT come with it
+     (it is a separate header child now) and stays up beside the title. */
+  .admin-search-wrap {
+    order: 3;
+    width: 100%;
+    flex: none;
+  }
+
+  /* Level with the page title rather than centred against the title BLOCK —
+     centring on a two-line block (heading + subtitle) drops the bell half a
+     line below the heading it belongs to. */
+  .admin-header-bell {
+    order: 2;
+    align-self: flex-start;
+  }
+
   .admin-search-input {
-    width: 160px !important;
+    width: 100% !important;
+  }
+
+  /* A lone primary action reads as the row's button when it fills it. */
+  .admin-bar-end > button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ---------- Jira GRW-273: bottom tab bar, mobile only ----------
+     `position: sticky`, not `fixed` — the tenant portal's own bottom nav
+     (74-mobile-chrome-2026.css) already paid for this lesson: a fixed bar
+     stays pinned to the stale layout viewport when Android Chrome's address
+     bar auto-hides, leaving a gap under it. Sticky recomputes against the
+     live viewport on scroll and has no such gap. */
+  .admin-bottom-nav {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 45;
+    background: oklch(1 0 0 / 0.92);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid oklch(0.92 0.008 150);
+    padding: 6px 4px max(6px, env(safe-area-inset-bottom));
+  }
+  .admin-bottom-nav a,
+  .admin-bottom-nav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border: none;
+    background: none;
+    color: oklch(0.55 0.02 155);
+    font: inherit;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .admin-bottom-nav a.active,
+  .admin-bottom-nav button.active {
+    color: oklch(0.48 0.11 150);
   }
 }
 
 .admin-table-scroll {
   overflow-x: auto;
+}
+
+
+/* ---------- the dashboard's grids ----------
+   Defined here rather than inline for the same reason the table's are: an
+   inline `grid-template-columns` cannot be overridden by a media query
+   without `!important`.
+
+   GRW-277 QA: these were written mobile-first and then never given a desktop
+   rule, so a laptop rendered the PHONE layout at laptop width — two stat
+   cards stretched to ~550px each to hold a 38px icon and the word "Total
+   businesses", and five quick-action tiles at ~220px apiece. A 2-up grid is
+   the right answer on a 390px screen and the wrong one on a 1440px screen;
+   both need saying. */
+.admin-stat-grid {
+  display: grid;
+  /* Four cards, four columns — the shape the cards were drawn for. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-quick-grid {
+  display: grid;
+  /* A capped track, not `1fr`: five actions should not each become a 220px
+     block just because the window is wide. They keep tile proportions and
+     the row ends where the tiles do. */
+  grid-template-columns: repeat(5, minmax(0, 168px));
+  gap: 10px;
+}
+
+/* ---------- the stat card itself (GRW-277 QA) ----------
+   Laptop shape: icon on the left, label / number / movement stacked beside
+   it — exactly what the flex version drew. The phone shape is in the 860px
+   query below, and the only reason this is CSS rather than inline style
+   objects is that a media query cannot reach an inline one. */
+.admin-stat-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'icon label'
+    'icon value'
+    'icon delta';
+  align-content: start;
+  column-gap: 10px;
+  border-radius: 16px;
+  padding: 13px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.admin-stat-icon {
+  grid-area: icon;
+  align-self: start;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-stat-label {
+  grid-area: label;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  /* Two lines reserved, so a one-line label does not lift its number above
+     its neighbour's. */
+  min-height: 30px;
+  /* A last-resort break for a single unbreakable word in a narrow column —
+     "Cancellations" overflowed its box rather than wrapping, because there is
+     nowhere in it a normal wrap is allowed. */
+  overflow-wrap: anywhere;
+}
+
+.admin-stat-value {
+  grid-area: value;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.admin-stat-delta {
+  grid-area: delta;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  /* Two lines: beside the icon "↑ 400% vs last month" wraps, and reserving
+     one line let the cards with a movement grow taller than those without. */
+  min-height: 32px;
+}
+
+.admin-stat-chevron {
+  position: absolute;
+  top: 13px;
+  right: 11px;
+  display: flex;
+}
+
+/* Only where there is a chevron to clear: 24px is its 15px box plus the 11px
+   inset, less the card's own padding. */
+@media (min-width: 861px) {
+  .admin-stat-card[data-chevron='true'] .admin-stat-label {
+    padding-right: 24px;
+  }
+}
+
+/* ---------- the phone shape ----------
+   The movement line moves OUT from beside the icon and takes the card's full
+   width, where it fits on one line instead of two. That, a smaller icon and
+   no chevron take the card from ~130px tall to ~95px — on a 780px-tall phone
+   the four of them were eating a third of the screen before anything else
+   was read. */
+@media (max-width: 860px) {
+  .admin-stat-card {
+    grid-template-areas:
+      'icon label'
+      'icon value'
+      'delta delta';
+    column-gap: 8px;
+    padding: 11px;
+  }
+
+  .admin-stat-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+  /* The glyph is sized by an attribute on the <svg>; CSS outranks it. */
+  .admin-stat-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .admin-stat-label {
+    font-size: 11.5px;
+    min-height: 29px;
+  }
+
+  .admin-stat-value {
+    font-size: 22px;
+  }
+
+  .admin-stat-delta {
+    margin-top: 3px;
+    font-size: 11px;
+    /* One line now that it has the whole card — nothing left to reserve. */
+    min-height: 0;
+  }
+
+  .admin-stat-chevron {
+    display: none;
+  }
+}
+
+/* Tablets and small laptops: four stat cards get too narrow for
+   "Total businesses" before they get too wide, so fold to 2-up early. */
+@media (max-width: 1000px) {
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .admin-stat-grid {
+    gap: 10px;
+  }
+  .admin-quick-grid {
+    /* On a phone the five tiles SHOULD share the line — there is no width to
+       leave on the table. */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+}
+
+/* ---------- GRW-277 QA: the dashboard body is two columns on a laptop ----------
+   Stacked full-width, Revenue's six bars were ~125px wide each and "Business
+   status" was a 1400px-wide strip carrying four short rows. The narrow column
+   takes the two blocks that are lists of short lines; the wide one takes the
+   chart and the table-ish panels. Recent signups spans both because it is a
+   horizontal strip and reads better long.
+
+   Below 1001px it is a plain column in DOM order — which is the phone order
+   the earlier passes settled on (quick actions, then revenue, then status). */
+.admin-dash-cols {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 1001px) {
+  .admin-dash-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    grid-template-areas:
+      'revenue quick'
+      'attention status'
+      'signups signups';
+    /* Otherwise every card stretches to the tallest in its row and the short
+       ones grow a band of empty surface under their content. */
+    align-items: start;
+    gap: 16px;
+  }
+  .admin-dash-quick {
+    grid-area: quick;
+  }
+  .admin-dash-revenue {
+    grid-area: revenue;
+  }
+  .admin-dash-status {
+    grid-area: status;
+  }
+  .admin-dash-attention {
+    grid-area: attention;
+  }
+  .admin-dash-signups {
+    grid-area: signups;
+  }
+}
+
+/* ---------- GRW-277: the narrowest phones get fewer columns ----------
+   Two stat cards side by side stop working below ~360px: after the icon,
+   the padding and the chevron there is about 33px of text column left, and
+   "Cancellations" is one unbreakable word far wider than that — it ran under
+   the chevron rather than wrapping. Five quick-action tiles hit the same wall.
+   No amount of padding fixes a column narrower than a single word, so the
+   grid gives up a column instead. */
+@media (max-width: 359px) {
+  .admin-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One card per row means every label has the whole screen and none of them
+     wraps, so the second reserved line is 15px of nothing — four times over,
+     on the shortest screen there is. Nothing can go ragged here either: one
+     card per row has no neighbour to be ragged against. */
+  .admin-stat-label {
+    min-height: 0;
+  }
+  .admin-quick-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 12px;
+  }
+}
+
+/* ---------- tables: a grid on a laptop, cards on a phone (GRW-277) ----------
+   The grid template and minimum width arrive as custom properties from
+   `primitives.tsx`, so the media query below can drop both. Inline styles
+   could not be overridden without `!important`, and a table that needs
+   `!important` to become readable is a table nobody will keep readable. */
+
+.admin-table-min {
+  min-width: var(--admin-table-min, 640px);
+}
+
+.admin-table-head,
+.admin-table-row {
+  display: grid;
+  grid-template-columns: var(--admin-cols);
+  align-items: center;
+}
+
+.admin-table-head {
+  padding: 13px 20px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-table-row {
+  padding: 14px 20px;
+}
+
+/* Laptop: the wrapper is not a box at all, so cells remain direct grid items
+   and the column layout is exactly what it was before cards existed. */
+.admin-cell {
+  display: contents;
+}
+
+@media (max-width: 860px) {
+  /* No sideways scroll to discover: the row IS the card. */
+  .admin-table-min {
+    min-width: 0;
+  }
+
+  /* Every value carries its own label below, so the header strip is noise. */
+  .admin-table-head {
+    display: none;
+  }
+
+  .admin-table-row {
+    display: block;
+    padding: 12px 14px;
+  }
+
+  .admin-cell {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 3px 0;
+    min-width: 0;
+    /* A cell aligned right in the grid is aligned left here — it is the
+       right-hand half of its own line now, not a column. */
+    text-align: left;
+  }
+
+  .admin-cell::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: oklch(0.55 0.02 155);
+  }
+
+  /* An actions or icon column has no heading to show, and an empty label
+     would still reserve its gap. A trailing one (the row's own "open"
+     chevron) belongs on the right edge, where an open affordance is read. */
+  .admin-cell[data-label='']::before {
+    display: none;
+  }
+  .admin-cell[data-label='']:not(:first-child) {
+    justify-content: flex-end;
+  }
+
+  /* The first cell reads as the card's title rather than another labelled
+     field — it is what the row is ABOUT. */
+  .admin-cell:first-child {
+    justify-content: flex-start;
+    padding-bottom: 6px;
+  }
+  .admin-cell:first-child::before {
+    display: none;
+  }
 }
 
 /* ---------- pagination: desktop controls vs mobile "Load more" ---------- */

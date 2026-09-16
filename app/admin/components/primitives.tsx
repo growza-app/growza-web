@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
+import { Children, cloneElement, isValidElement, useId, type CSSProperties, type ReactNode } from 'react';
 import { Icon, type IconName } from '../icons';
 import { oklch, usageState, STATUS_COLORS } from '../tokens';
 
@@ -11,16 +11,26 @@ import { oklch, usageState, STATUS_COLORS } from '../tokens';
  * to the platform plane's own design language.
  */
 
-export function Card({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+export function Card({
+  children,
+  style,
+  className,
+}: {
+  children: ReactNode;
+  style?: CSSProperties;
+  /**
+   * For placement only — a grid area or column the CARD's parent decides
+   * (GRW-277's dashboard columns). Deliberately a class rather than a `style`
+   * override: an inline `grid-area` cannot be dropped by the media query that
+   * collapses those columns on a phone, which is the same trap the admin
+   * table's own template fell into.
+   */
+  className?: string;
+}) {
   return (
     <div
-      style={{
-        background: oklch.surface,
-        border: `1px solid ${oklch.border}`,
-        borderRadius: 16,
-        padding: 20,
-        ...style,
-      }}
+      className={className}
+      style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 20, ...style }}
     >
       {children}
     </div>
@@ -120,29 +130,38 @@ export interface TableColumn {
 }
 
 /**
- * A grid-based table with its own horizontal scroll — the row content never
- * widens the page. `minWidthPx` is the point below which it scrolls instead
- * of squeezing; every screen picks one for its own column set.
+ * A grid-based table that becomes a list of cards on a phone (Jira GRW-277).
+ *
+ * On a laptop this is what it always was: one grid, `minWidthPx` wide at
+ * minimum, scrolling sideways inside its own box rather than widening the
+ * page.
+ *
+ * Below the shell's 860px breakpoint that stops being readable — a six-column
+ * table in ~340px of phone showed two columns and hid the rest behind a
+ * sideways scroll nobody discovers. So each row turns into a small card with
+ * one line per field, and the column header supplies each line's label (the
+ * header strip itself is then redundant and hidden). Nothing about the layout
+ * is decided in JavaScript: the grid template and the minimum width are
+ * handed to CSS as custom properties so a media query can drop both, which
+ * keeps this consistent with `admin.css`'s own note about not letting the
+ * shell flash an unstyled layout while hydrating.
  */
 export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColumn[]; rows: ReactNode; minWidthPx?: number }) {
   const grid = columns.map((c) => c.width).join(' ');
   return (
     <div style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}>
       <div className="admin-table-scroll">
-        <div style={{ minWidth: minWidthPx }}>
+        <div className="admin-table-min" style={{ '--admin-table-min': `${minWidthPx}px` } as CSSProperties}>
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: grid,
-              padding: '13px 20px',
-              background: oklch.surfaceSubtle,
-              borderBottom: `1px solid ${oklch.borderStrong}`,
-              fontSize: 11,
-              fontWeight: 800,
-              color: oklch.textFaint,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
+            className="admin-table-head"
+            style={
+              {
+                '--admin-cols': grid,
+                background: oklch.surfaceSubtle,
+                borderBottom: `1px solid ${oklch.borderStrong}`,
+                color: oklch.textFaint,
+              } as CSSProperties
+            }
           >
             {columns.map((c, i) => (
               <div key={i} style={c.right ? { textAlign: 'right' } : undefined}>
@@ -169,20 +188,31 @@ export function TableRow({
   style?: CSSProperties;
 }) {
   const grid = columns.map((c) => c.width).join(' ');
+  /*
+   * Each cell is wrapped so the phone layout can label it with its own
+   * column heading. The wrapper is `display: contents` on a laptop, so the
+   * cells stay direct grid items and that layout is byte-for-byte what it was
+   * — and the label pseudo-element only exists inside the mobile media query,
+   * where the wrapper becomes a real box.
+   */
   return (
     <div
       onClick={onClick}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: grid,
-        alignItems: 'center',
-        padding: '14px 20px',
-        borderBottom: `1px solid ${oklch.divider}`,
-        cursor: onClick ? 'pointer' : undefined,
-        ...style,
-      }}
+      className="admin-table-row"
+      style={
+        {
+          '--admin-cols': grid,
+          borderBottom: `1px solid ${oklch.divider}`,
+          cursor: onClick ? 'pointer' : undefined,
+          ...style,
+        } as CSSProperties
+      }
     >
-      {children}
+      {Children.toArray(children).map((cell, i) => (
+        <div key={i} className="admin-cell" data-label={columns[i]?.label ?? ''}>
+          {cell}
+        </div>
+      ))}
     </div>
   );
 }
@@ -249,23 +279,33 @@ export function Toggle({
  * makes the actionable one harder to find, not easier. `role="alert"` so a
  * screen reader announces it when it appears rather than only on focus.
  */
-export function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  error?: string;
-  children: ReactNode;
-}) {
+export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: ReactNode }) {
+  /**
+   * Jira GRW-277 — the label is actually attached to the control.
+   *
+   * It was a bare `<label>` beside the input with no `htmlFor` and no `id`,
+   * so every field in the admin portal was an unlabelled box: a screen reader
+   * announced "edit text, blank" and clicking the word "Phone number" focused
+   * nothing. Found because a browser test could not locate the sign-in field
+   * by its own visible label — which is the same thing a person using one
+   * experiences, only louder.
+   *
+   * An id the caller already set wins, so a field that is addressed by id
+   * elsewhere keeps the id it is addressed by.
+   */
+  const generatedId = useId();
+  const child = isValidElement<{ id?: string }>(children) ? children : null;
+  const controlId = child ? (child.props.id ?? generatedId) : undefined;
+
   return (
     <div>
-      <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
+      <label
+        htmlFor={controlId}
+        style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}
+      >
         {label}
       </label>
-      {children}
+      {child ? cloneElement(child, { id: controlId }) : children}
       {error ? (
         <div role="alert" style={{ fontSize: 11.5, fontWeight: 700, color: ERROR_COLOR, marginTop: 6 }}>
           {error}
@@ -321,7 +361,13 @@ export function Select({
       {...props}
       aria-invalid={invalid || undefined}
       // Same shorthand-not-longhand rule as TextInput above.
-      style={{ ...inputBase, padding: '0 12px', cursor: 'pointer', ...(invalid ? { border: `1px solid ${ERROR_COLOR}` } : {}), ...props.style }}
+      style={{
+        ...inputBase,
+        padding: '0 12px',
+        cursor: 'pointer',
+        ...(invalid ? { border: `1px solid ${ERROR_COLOR}` } : {}),
+        ...props.style,
+      }}
     >
       {options.map((o) => (
         <option key={o} value={o}>

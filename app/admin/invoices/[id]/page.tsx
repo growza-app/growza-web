@@ -126,7 +126,7 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+        <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 14 }}>
           <Fact label="Billing period" value={`${formatDateOnly(invoice.periodStart)} – ${formatDateOnly(invoice.periodEnd)}`} />
           <Fact label="Currency" value={invoice.currency} />
           {/* Recorded ON the invoice, not looked up now: the rule that

@@ -85,7 +85,7 @@ export default function AdminPlansPage() {
           </div>
         </Card>
       ) : loading || !plans || !registry ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 16 }}>
           {Array.from({ length: 2 }, (_, i) => (
             <Card key={i}>
               <div style={{ height: 300, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
@@ -95,7 +95,7 @@ export default function AdminPlansPage() {
       ) : plans.length === 0 ? (
         <EmptyState icon="plans" title="No plans yet" sub="Create the first plan to start selling." />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 16, alignItems: 'start' }}>
           {plans.map((plan) => (
             <PlanCard key={plan.code} plan={plan} registry={registry} onEdit={() => router.push(`/admin/plans/${plan.code}`)} />
           ))}
@@ -131,7 +131,7 @@ function PlanCard({ plan, registry, onEdit }: { plan: PlanSummary; registry: Cap
 
       {plan.description ? <div style={{ fontSize: 13, color: oklch.textMuted, marginTop: 10, lineHeight: 1.5 }}>{plan.description}</div> : null}
 
-      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
         <CapabilityColumn title="Included" keys={included} tone="on" />
         <CapabilityColumn title="Not included" keys={excluded} tone="off" />
       </div>

@@ -370,7 +370,7 @@ export function SubscriptionPanel({
 
       <Card>
         <SectionTitle title="Billing period" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 14 }}>
           <Fact label="Current period" value={`${formatDateOnly(s.currentPeriodStart)} – ${formatDateOnly(s.currentPeriodEnd)}`} />
           {/* Terminal means it will never bill again; `next_billing_date`
               keeps its last value, and showing it reads as though the

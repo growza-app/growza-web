@@ -13,6 +13,9 @@
 // that demonstrably exists — `string | undefined`, which is how it was found.
 const PATHS = {
   dashboard: '<path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-7"/>',
+  // GRW-274 — a "not settled yet" KPI card (Provisioning). Not in the
+  // original Admin.dc.html canvas, same convention as `logout`'s own note.
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   businesses: '<path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>',
   users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 0 1 0 5M18 20a5.5 5.5 0 0 0-3-4.9"/>',
   roles: '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',

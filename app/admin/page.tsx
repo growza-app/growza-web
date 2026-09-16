@@ -5,9 +5,24 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminFetch, AdminApiError } from './lib/api';
 import { firstPermittedHref } from './nav';
-import { Icon } from './icons';
-import { Card, SecondaryButton, StatusPill } from './components/primitives';
-import { oklch } from './tokens';
+import { Icon, type IconName } from './icons';
+import { Card, EmptyState, SecondaryButton } from './components/primitives';
+import {
+  StatCard,
+  AttentionRowView,
+  RevenueCard,
+  wholePercentages,
+  type RevenueMonth,
+  ACTION_TINTS,
+  countDelta,
+  initials,
+  percentDelta,
+  tintFor,
+  type AttentionRow,
+  type StatTint,
+  type StatIcon,
+} from './components/DashboardParts';
+import { oklch, STATUS_COLORS } from './tokens';
 
 /**
  * GRW-104's platform dashboard. GRW-020 — "Two Home labels that were not
@@ -15,12 +30,15 @@ import { oklch } from './tokens';
  * dashboard figure is a claim a platform admin acts on, and most of what a
  * dashboard like this one eventually shows (MRR, payment failures,
  * near-limit counts) belongs to epics that have not shipped. So this screen
- * only renders the three counts with a real query behind them (total
- * businesses, the status breakdown, new businesses this period) plus an
- * honest attention panel — every row present, every row unavailable today,
- * naming the Jira epic that fills it in rather than a fabricated zero
- * (BR-01/BR-02). The mock version this replaced had exactly the MRR-tile,
- * payment-failure-count shape BR-01 forbids.
+ * only renders figures with a real query behind them — total businesses,
+ * the status breakdown, new businesses this period, an honest attention
+ * panel (every row present, every unbuilt one naming the Jira epic that
+ * fills it in rather than a fabricated zero, BR-01/BR-02), and, since
+ * GRW-265, real navigation (Quick actions) and a real recent-signups list.
+ * GRW-265's own mobile-redesign pass deliberately left out everything else a
+ * design import proposed (Revenue, platform health, usage metering, support
+ * tickets) because none of it has a data source yet — see that story's
+ * ticket record for where each piece belongs once it does.
  */
 
 interface StatusCount {
@@ -28,33 +46,80 @@ interface StatusCount {
   count: number;
 }
 
-interface AttentionRow {
-  key: string;
-  label: string;
-  available: boolean;
-  count?: number;
-  /** Where the count came from (GRW-119) — an available row is a way in, not a number to stare at. */
-  href?: string;
-  epic?: string;
+interface RecentSignup {
+  tenantId: string;
+  name: string;
+  vertical: string;
+  createdAt: string;
 }
 
 interface DashboardResponse {
   totalBusinesses: number;
+  totalAtPeriodStart: number;
   byStatus: StatusCount[];
-  newBusinesses: { count: number; period: { from: string; to: string } };
+  newBusinesses: { count: number; previous: number; period: { from: string; to: string } };
   attention: AttentionRow[];
+  recentSignups: RecentSignup[];
+  revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; months: RevenueMonth[] } | null;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  provisioning: 'Provisioning',
-  active: 'Active',
-  suspended: 'Suspended',
-  churned: 'Churned',
-};
+/** GRW-275 — the reference design's four card tints, one per card. */
+const STAT_TINTS = {
+  green: { bg: 'oklch(0.965 0.025 155)', fg: 'oklch(0.45 0.12 150)', border: 'oklch(0.92 0.04 155)' },
+  blue: { bg: 'oklch(0.96 0.025 250)', fg: 'oklch(0.5 0.15 250)', border: 'oklch(0.92 0.035 250)' },
+  amber: { bg: 'oklch(0.965 0.035 75)', fg: 'oklch(0.55 0.13 65)', border: 'oklch(0.93 0.05 75)' },
+  rose: { bg: 'oklch(0.965 0.025 25)', fg: 'oklch(0.53 0.16 25)', border: 'oklch(0.93 0.035 25)' },
+} satisfies Record<string, StatTint>;
 
-function monthLabel(iso: string): string {
-  return new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(new Date(iso));
+const STATUS_LABEL: Record<string, string> = { provisioning: 'Provisioning', active: 'Active', suspended: 'Suspended', churned: 'Churned' };
+
+function shortDate(iso: string): string {
+  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(iso));
 }
+
+/**
+ * GRW-275 — which attention rows earn a headline card.
+ *
+ * Only rows the registry already marks `available` render here (the guard is
+ * in the JSX): an unbuilt row stays in the Billing attention list below,
+ * where it can say so honestly, rather than becoming a card showing a zero
+ * that means "not built" — the exact BR-01 confusion this dashboard exists
+ * to avoid.
+ */
+const ATTENTION_CARDS: Array<{
+  key: string;
+  label: string;
+  icon: StatIcon;
+  tint: StatTint;
+  /** Fills the movement row these cards have no movement for — and carries the period the short label drops. */
+  note: (count: number) => string;
+}> = [
+  {
+    key: 'payments_failed',
+    label: 'Payments failed',
+    icon: 'alert',
+    tint: STAT_TINTS.amber,
+    note: (count) => (count > 0 ? 'Open to reconcile' : 'Nothing failing'),
+  },
+  {
+    key: 'cancellations',
+    label: 'Cancellations',
+    icon: 'money',
+    tint: STAT_TINTS.rose,
+    // The label is shortened to fit one line at phone width, so "this month"
+    // — which is genuinely part of what this number means — moves here rather
+    // than being lost.
+    note: () => 'This month',
+  },
+];
+
+const QUICK_ACTIONS: Array<{ icon: IconName; label: string; href: string; tint: keyof typeof ACTION_TINTS }> = [
+  { icon: 'businesses', label: 'Add business', href: '/admin/businesses', tint: 'businesses' },
+  { icon: 'users', label: 'Invite admin', href: '/admin/users', tint: 'users' },
+  { icon: 'plans', label: 'Create plan', href: '/admin/plans/new', tint: 'plans' },
+  { icon: 'usage', label: 'View usage', href: '/admin/usage', tint: 'usage' },
+  { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit' },
+];
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -140,180 +205,286 @@ export default function AdminDashboardPage() {
   if (loading || !data) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-          {Array.from({ length: 3 }, (_, i) => (
+        <div className="admin-stat-grid">
+          {Array.from({ length: 4 }, (_, i) => (
             <Card key={i}>
-              <div style={{ height: 74, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
+              <div
+                style={{ height: 74, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }}
+              />
             </Card>
           ))}
         </div>
-        <Card>
-          <div style={{ height: 220, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
-        </Card>
+        {Array.from({ length: 4 }, (_, i) => (
+          <Card key={i}>
+            <div
+              style={{ height: 120, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }}
+            />
+          </Card>
+        ))}
       </div>
     );
   }
 
   const empty = data.totalBusinesses === 0;
+  // Computed across the whole breakdown at once, so the four shares total 100
+  // rather than each rounding independently — see `wholePercentages`.
+  const statusPercentages = wholePercentages(data.byStatus.map((s) => s.count));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* FR-01/AC-01 — the only three figures on this screen with a real query behind them. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-        <KpiCard icon="businesses" label="Total businesses" value={data.totalBusinesses} href="/admin/businesses" />
-        <KpiCard
+      {/* FR-01/AC-01 — every figure here has a real query behind it: Total and
+          New this month are their own dedicated reads; Active and
+          Provisioning are the same `byStatus` array the status bar below
+          reads, just pulled out as headline cards — no new query, and the
+          same `STATUS_COLORS` tint as their dot in that bar, so a card and
+          its own legend row can't disagree about what color means what.
+          A fixed 2-column grid, not auto-fit/minmax: at a 360px-wide phone (the device matrix's "common Android" entry) minus
+          this shell's 24px side padding, minmax(min(150px, 100%),1fr) needed 314px for 2 tracks and had 312 — it silently collapsed to
+          one giant card per row instead of the intended 2-up. A fixed template can't fall through that threshold. */}
+      <div className="admin-stat-grid">
+        <StatCard
+          icon="businesses"
+          label="Total businesses"
+          value={data.totalBusinesses}
+          href="/admin/businesses"
+          tint={STAT_TINTS.green}
+          delta={percentDelta(data.totalBusinesses, data.totalAtPeriodStart)}
+        />
+        <StatCard
           icon="trend"
-          label={`New businesses — ${monthLabel(data.newBusinesses.period.from)}`}
+          label="New this month"
           value={data.newBusinesses.count}
           href={`/admin/businesses?createdFrom=${encodeURIComponent(data.newBusinesses.period.from)}`}
+          tint={STAT_TINTS.blue}
+          delta={countDelta(data.newBusinesses.count, data.newBusinesses.previous)}
         />
-        <Card>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted, marginBottom: 10 }}>By status</div>
+        {/* The reference's bottom two cards are attention-flavoured (warm tint,
+            chevron). These are the two attention rows that already have a real
+            query and a real place to go — no invented grace-period or past-due
+            count, which is what that mockup used the slots for. */}
+        {ATTENTION_CARDS.map(({ key, label, tint, icon, note }) => {
+          const row = data.attention.find((r) => r.key === key);
+          if (!row?.available || row.href === undefined) return null;
+          return (
+            <StatCard
+              key={key}
+              icon={icon}
+              label={label}
+              value={row.count ?? 0}
+              href={row.href}
+              tint={tint}
+              note={note(row.count ?? 0)}
+              chevron
+            />
+          );
+        })}
+      </div>
+
+      {/* GRW-277 QA — one column on a phone, two on a laptop. The DOM order
+          below IS the phone order (quick actions, revenue, status, attention,
+          signups); `admin.css`'s grid areas rearrange it above 1000px. */}
+      <div className="admin-dash-cols">
+        {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}
+        <Card className="admin-dash-quick">
+          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
+          {/* Fixed 5-column grid, not auto-fit/minmax — same reasoning as the KPI
+            grid above. Icon-above-label, centered, no border: matches the
+            tenant Home's own compact tile pattern (`hm-tile`,
+            83-role-home.css) rather than this admin plane's own bordered-row
+            style used elsewhere, on purpose — 5 short labels read better
+            stacked than they did squeezed into a 2-up bordered row. */}
+          <div className="admin-quick-grid">
+            {QUICK_ACTIONS.map((action) => {
+              const tint = ACTION_TINTS[action.tint];
+              return (
+                // The reference tints the whole tile, not just an icon badge —
+                // the tile IS the coloured surface, icon plain on top of it.
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: 7,
+                    padding: '12px 4px 10px',
+                    borderRadius: 14,
+                    background: tint.bg,
+                    textDecoration: 'none',
+                    color: oklch.textStrong,
+                    minWidth: 0,
+                  }}
+                >
+                  <span style={{ color: tint.fg, display: 'flex', flex: 'none' }}>
+                    <Icon name={action.icon} size={21} />
+                  </span>
+                  <span style={{ fontSize: 10.5, fontWeight: 600, lineHeight: 1.25, textAlign: 'center' }}>{action.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* GRW-276 — collected revenue, from settled `payment` rows. Absent
+          entirely (not zeroed) for an admin without `admin.payment.view`:
+          platform takings are not every role's business. */}
+        {data.revenue ? (
+          <RevenueCard
+            className="admin-dash-revenue"
+            months={data.revenue.months}
+            thisMonthMinor={data.revenue.thisMonthMinor}
+            delta={percentDelta(data.revenue.thisMonthMinor, data.revenue.previousMonthMinor)}
+          />
+        ) : null}
+
+        {/* GRW-274 — a segmented bar + legend reading the exact same `byStatus`
+          array the old plain list did; no new query, no fabricated trend. */}
+        <Card className="admin-dash-status">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>Business status</div>
+            <div style={{ fontSize: 12, color: oklch.textFaint }}>
+              Total <strong style={{ color: oklch.textStrong, fontWeight: 800 }}>{data.totalBusinesses}</strong>
+            </div>
+          </div>
           {empty ? (
             <div style={{ fontSize: 13, color: oklch.textFaint }}>No businesses on the platform yet.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {data.byStatus.map((s) => (
-                <Link
-                  key={s.status}
-                  href={`/admin/businesses?status=${s.status}`}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', textDecoration: 'none' }}
-                >
-                  <StatusPill status={STATUS_LABEL[s.status] ?? s.status} />
-                  <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
-                </Link>
-              ))}
+            <>
+              <div
+                style={{ height: 10, borderRadius: 6, overflow: 'hidden', display: 'flex', background: oklch.divider, marginBottom: 12 }}
+              >
+                {data.byStatus
+                  .filter((s) => s.count > 0)
+                  .map((s) => (
+                    <div
+                      key={s.status}
+                      style={{
+                        width: `${(s.count / data.totalBusinesses) * 100}%`,
+                        background: STATUS_COLORS[STATUS_LABEL[s.status] ?? '']?.[0] ?? oklch.textFaint,
+                      }}
+                    />
+                  ))}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {data.byStatus.map((s, i) => {
+                  const pct = statusPercentages[i] ?? 0;
+                  const dotColor = STATUS_COLORS[STATUS_LABEL[s.status] ?? '']?.[0] ?? oklch.textFaint;
+                  return (
+                    <Link
+                      key={s.status}
+                      href={`/admin/businesses?status=${s.status}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        textDecoration: 'none',
+                        padding: '5px 0',
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span
+                          style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, display: 'inline-block', flex: 'none' }}
+                        />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{STATUS_LABEL[s.status] ?? s.status}</span>
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
+                        <span style={{ fontSize: 11.5, color: oklch.textFaint }}>({pct}%)</span>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </Card>
+
+        {/* FR-02/AC-02 — every row present whether or not its epic has shipped; a row without a real count yet names it. */}
+        <Card className="admin-dash-attention">
+          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {data.attention.map((row, i) => (
+              <AttentionRowView key={row.key} row={row} isLast={i === data.attention.length - 1} />
+            ))}
+          </div>
+        </Card>
+
+        {/* GRW-265/274 FR-02 — real signups, `tenant.created_at`, the same
+          column the KPI above already counts. "View all" is real: `/admin/
+          businesses` lists every business this list is a preview of. */}
+        <Card className="admin-dash-signups">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Recent signups</h3>
+            <Link href="/admin/businesses" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.accent, textDecoration: 'none' }}>
+              View all
+            </Link>
+          </div>
+          {data.recentSignups.length === 0 ? (
+            <EmptyState title="No signups yet" sub="New businesses will appear here as they join." icon="businesses" />
+          ) : (
+            // The reference lays each signup out as avatar + (name over date)
+            // side by side, scrolling sideways, with a round "more" control at
+            // the end — that control goes to the same real list "View all" does.
+            // `minWidth: 0` is what makes the sideways scroll actually scroll.
+            // Without it this flex row's automatic minimum size is its content,
+            // so at 320px it widened the card, the card widened the page, and
+            // the whole document scrolled sideways instead of just this strip.
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, overflowX: 'auto', minWidth: 0, paddingBottom: 2 }}>
+              {data.recentSignups.map((signup) => {
+                const tint = tintFor(signup.tenantId);
+                return (
+                  <Link
+                    key={signup.tenantId}
+                    href={`/admin/businesses/${signup.tenantId}`}
+                    style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit', flex: '0 0 auto' }}
+                  >
+                    <span
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        background: tint.bg,
+                        color: tint.fg,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: 13.5,
+                        flex: 'none',
+                      }}
+                    >
+                      {initials(signup.name)}
+                    </span>
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap' }}>{signup.name}</span>
+                      <span style={{ fontSize: 11, color: oklch.textFaint, whiteSpace: 'nowrap' }}>{shortDate(signup.createdAt)}</span>
+                    </span>
+                  </Link>
+                );
+              })}
+              <Link
+                href="/admin/businesses"
+                aria-label="All businesses"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  border: `1px solid ${oklch.border}`,
+                  background: oklch.surface,
+                  color: oklch.textMuted,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 'none',
+                }}
+              >
+                <Icon name="chevronRight" size={16} />
+              </Link>
             </div>
           )}
         </Card>
       </div>
-
-      {/* FR-02/AC-02 — every row present whether or not its epic has shipped; none of them is a real count yet. */}
-      <Card>
-        <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {data.attention.map((row, i) => (
-            <AttentionRowView key={row.key} row={row} isLast={i === data.attention.length - 1} />
-          ))}
-        </div>
-      </Card>
     </div>
-  );
-}
-
-function KpiCard({ icon, label, value, href }: { icon: 'businesses' | 'trend'; label: string; value: number; href: string }) {
-  return (
-    <Link href={href} style={{ textDecoration: 'none' }}>
-      <Card>
-        <span
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 11,
-            background: 'oklch(0.95 0.04 150)',
-            color: 'oklch(0.45 0.12 150)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon name={icon} />
-        </span>
-        <div style={{ fontSize: 27, fontWeight: 800, lineHeight: 1, marginTop: 14, color: oklch.textStrong }}>{value.toLocaleString('en-IN')}</div>
-        <div style={{ fontSize: 12.5, color: oklch.textMuted, marginTop: 5, fontWeight: 500 }}>{label}</div>
-      </Card>
-    </Link>
-  );
-}
-
-/** BR-01/BR-02 — unavailable and zero must look different; this is the one place that distinction is drawn. */
-/**
- * Jira GRW-159 · GRW-167 — what each attention row means, in its own words.
- *
- * Keyed by the row's own key rather than written once for all of them: the
- * rows are not the same kind of problem. A failed payment is a customer who
- * tried; an uninvoiced period is a customer nobody asked. Telling an admin the
- * second one is "currently failing" sends them to the payments screen, where
- * there is nothing to find.
- */
-const ATTENTION_SUBTITLES: Record<string, { clear: string; action: string }> = {
-  payments_failed: {
-    clear: 'Nothing needs attention.',
-    action: 'Currently failing — open to reconcile.',
-  },
-  uninvoiced_periods: {
-    clear: 'Every live subscription has been invoiced for its current period.',
-    action: 'These salons are not being billed — check a tax rule covers their period.',
-  },
-};
-
-function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean }) {
-  const body = (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 13,
-        padding: '12px 0',
-        borderBottom: isLast ? 'none' : `1px solid ${oklch.divider}`,
-      }}
-    >
-      <span
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 11,
-          background: row.available ? 'oklch(0.95 0.04 25)' : 'oklch(0.96 0.006 150)',
-          color: row.available ? 'oklch(0.5 0.14 25)' : oklch.textFaint,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flex: 'none',
-        }}
-      >
-        <Icon name="alert" size={18} />
-      </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: row.available ? oklch.textStrong : oklch.textMuted }}>{row.label}</div>
-        <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 2 }}>
-          {row.available
-            ? // A count on its own read as a stray number in the subtitle
-              // slot. Say what it means, and — for the zero case — say it is
-              // a real zero rather than a row that has nothing behind it,
-              // which is the distinction BR-01 turns on.
-              //
-              // GRW-167 — per row, not one sentence for all of them. "Currently
-              // failing" is true of a declined payment and wrong about an
-              // invoice that was never raised: nothing failed there, nobody was
-              // asked. An admin who reads the wrong noun goes to the wrong
-              // screen, and this tile exists because that salon is invisible
-              // everywhere else.
-              ATTENTION_SUBTITLES[row.key]?.[row.count === 0 ? 'clear' : 'action'] ??
-              (row.count === 0 ? 'Nothing needs attention.' : 'Currently failing — open to reconcile.')
-            : `Not yet available — lands with Jira ${row.epic}.`}
-        </div>
-      </div>
-      {row.available ? (
-        <span
-          style={{
-            fontSize: 20,
-            fontWeight: 800,
-            color: row.count === 0 ? oklch.textFaint : 'oklch(0.5 0.14 25)',
-          }}
-        >
-          {row.count}
-        </span>
-      ) : null}
-    </div>
-  );
-
-  // An available row links to the list it counted; an unavailable one has
-  // nowhere to go and stays inert rather than looking clickable.
-  return row.available && row.href ? (
-    <Link href={row.href} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-      {body}
-    </Link>
-  ) : (
-    body
   );
 }

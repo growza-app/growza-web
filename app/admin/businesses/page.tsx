@@ -208,7 +208,7 @@ function AdminBusinessesInner() {
           <Select options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
         </div>
         {canCreate ? (
-          <div style={{ marginLeft: 'auto' }}>
+          <div className="admin-bar-end">
             <PrimaryButton onClick={() => setAdding(true)}>Add business</PrimaryButton>
           </div>
         ) : null}
