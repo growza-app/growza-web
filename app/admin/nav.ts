@@ -30,7 +30,11 @@ export type AdminPermission =
   | 'admin.feature_flag.view'
   | 'admin.impersonation.start'
   | 'admin.audit.view'
-  | 'admin.configuration.view';
+  | 'admin.configuration.view'
+  // GRW-279 — platform system health. Its own key, not folded into
+  // `configuration.view`: that one is about settings a human chose, this is
+  // about whether the machinery is running, and they go to different people.
+  | 'admin.system.view';
 export interface NavGroup {
   group: string;
   items: NavItem[];
@@ -63,6 +67,14 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Impersonation', href: '/admin/impersonation', permission: 'admin.impersonation.start', icon: 'impersonate' },
       { label: 'Audit logs', href: '/admin/audit-logs', permission: 'admin.audit.view', icon: 'audit' },
+      /*
+       * Jira GRW-279 — Operations, beside Impersonation and Audit logs, which
+       * is already where "how is the platform behaving" lives. Not Overview:
+       * the dashboard is read every morning and this is checked when something
+       * is wrong, and mixing them fills the morning view with tiles that are
+       * green 364 days a year and stop being read on the 365th.
+       */
+      { label: 'Network monitoring', href: '/admin/network-monitoring', permission: 'admin.system.view', icon: 'trend' },
       { label: 'Settings', href: '/admin/settings', permission: 'admin.configuration.view', icon: 'settings' },
     ],
   },
@@ -114,6 +126,11 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
       return { title: 'Invoices', subtitle: 'Billing documents with tax breakdown.', showSearch: true };
     case 'usage':
       return { title: 'Usage', subtitle: 'Bookings, WhatsApp and future AI.', showSearch: true };
+    case 'network-monitoring':
+      // No search: there is nothing here to search. Every figure is an
+      // aggregate over the whole platform, and a box that returns nothing
+      // whatever you type is worse than no box.
+      return { title: 'Network monitoring', subtitle: "Is the platform's machinery running.", showSearch: false };
     case 'feature-flags':
       return sub
         ? { title: 'Feature flag', subtitle: 'Global, plan and business targeting.', showSearch: false, back: { href: '/admin/feature-flags', label: 'Feature flags' } }

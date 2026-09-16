@@ -719,3 +719,79 @@ body.admin-body {
     max-height: calc(100dvh - 24px) !important;
   }
 }
+
+/* ---------- GRW-279: Network monitoring ---------- */
+
+/* The range picker and Refresh sit right of the freshness line on a laptop and
+   take their own line on a phone, where the freshness text alone fills one. */
+.admin-monitor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-monitor-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Four tiles, and they inherit the stat grid's 4/2/1 behaviour rather than
+   inventing a second set of breakpoints — `.admin-monitor-grid` only tightens
+   the gap, because these tiles are denser than the dashboard's cards. */
+.admin-monitor-grid {
+  gap: 10px;
+}
+
+.admin-range-picker {
+  display: inline-flex;
+  border: 1px solid var(--admin-range-border, oklch(0.88 0.01 150));
+  border-radius: 10px;
+  overflow: hidden;
+  flex: none;
+}
+
+.admin-range-picker button {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: oklch(0.45 0.02 155);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.admin-range-picker button + button {
+  border-left: 1px solid oklch(0.92 0.01 150);
+}
+
+.admin-range-picker button[data-active='true'] {
+  background: oklch(0.94 0.045 150);
+  color: oklch(0.36 0.1 152);
+}
+
+.admin-range-picker button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+@media (max-width: 860px) {
+  /* Both take the full line: a three-segment picker plus a button is wider
+     than the room left beside the freshness text at 360px, and wrapping them
+     one at a time reads as two stray controls rather than one row. */
+  .admin-monitor-bar,
+  .admin-monitor-controls {
+    width: 100%;
+  }
+  .admin-range-picker {
+    flex: 1;
+  }
+  .admin-range-picker button {
+    flex: 1;
+    padding: 6px 4px;
+  }
+}
