@@ -22,8 +22,14 @@ export interface DateRange {
   clear: () => void;
 }
 
-export function useDateRange(): DateRange {
-  const [from, setFrom] = useState('');
+/**
+ * `initialFrom` is a drill-through's starting point (Jira GRW-287: the
+ * dashboard's "Payments failed this month" opens the list from the 1st, so the
+ * list shows the rows the count counted). Only a plain ISO date is accepted —
+ * anything else from a URL starts the filter empty rather than half-set.
+ */
+export function useDateRange(initialFrom?: string | null): DateRange {
+  const [from, setFrom] = useState(() => (initialFrom && /^\d{4}-\d{2}-\d{2}$/.test(initialFrom) ? initialFrom : ''));
   const [to, setTo] = useState('');
   return {
     from,

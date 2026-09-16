@@ -45,7 +45,9 @@ export const ATTENTION_CARDS: Array<{
     label: 'Payments failed',
     icon: 'alert',
     tint: STAT_TINTS.amber,
-    note: (count) => (count > 0 ? 'Open to reconcile' : 'Nothing failing'),
+    // Jira GRW-287 — the count is this month's (GRW-276 AC-04), and the short
+    // label cannot say so, so the note does — as the Cancellations card's does.
+    note: (count) => (count > 0 ? 'This month · open to reconcile' : 'None this month'),
   },
   {
     key: 'cancellations',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { wholePercentages } from '../components/DashboardParts';
+import { shareLabel, wholePercentages } from '../components/DashboardParts';
 
 /**
  * Jira GRW-276 — the dashboard's status breakdown claimed 101%.
@@ -37,5 +37,38 @@ describe('wholePercentages', () => {
 
   it('gives a single non-zero bucket the whole 100', () => {
     expect(wholePercentages([7, 0, 0, 0])).toEqual([100, 0, 0, 0]);
+  });
+});
+
+/**
+ * Jira GRW-287 (QA of GRW-280, D2) — "Upcoming 24 (0%)" out of 10,011.
+ *
+ * The rounding is right and stays; what was wrong is printing a share that
+ * contradicts the count beside it.
+ */
+describe('shareLabel', () => {
+  it('writes a non-zero share that rounds to 0 as "<1%" — the exact QA split', () => {
+    const counts = [24, 9_200, 80, 707];
+    const total = counts.reduce((a, b) => a + b, 0);
+    const pct = wholePercentages(counts);
+    expect(pct[0]).toBe(0);
+    expect(shareLabel(counts[0]!, total, pct[0]!)).toBe('<1%');
+  });
+
+  it('keeps a real zero as "0%"', () => {
+    expect(shareLabel(0, 40, 0)).toBe('0%');
+  });
+
+  it('never writes "100%" beside another non-zero share', () => {
+    const counts = [9_990, 3];
+    const pct = wholePercentages(counts);
+    expect(pct[0]).toBe(100);
+    expect(shareLabel(counts[0]!, 9_993, pct[0]!)).toBe('>99%');
+    expect(shareLabel(counts[1]!, 9_993, pct[1]!)).toBe('<1%');
+  });
+
+  it('writes a genuine whole as "100%" and an ordinary share as itself', () => {
+    expect(shareLabel(7, 7, 100)).toBe('100%');
+    expect(shareLabel(29, 40, 73)).toBe('73%');
   });
 });
