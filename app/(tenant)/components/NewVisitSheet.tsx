@@ -35,6 +35,7 @@ import {
   type ChairNow,
   type Customer,
   type Offer,
+  type PaymentMode,
   type Provider,
   type Service,
 } from '../lib/api';
@@ -43,7 +44,7 @@ import { useLabel } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { PhoneField } from './PhoneField';
 import { toStoredPhone, validateNationalPhone } from '../lib/phone';
-import { CheckoutSheet } from './CheckoutSheet';
+import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
 
 /**
@@ -79,6 +80,37 @@ export interface PickedItem {
   name: string;
   durationMin: number;
   priceMinor: string | null;
+  /**
+   * Jira GRW-290 — Record payment only: what they paid for this line, as typed
+   * (rupees). Prefilled from the price, or the line's share of a combo price.
+   */
+  paidRupees?: string;
+}
+
+/** Rupees as typed → minor units, or null when it is not a usable amount (BR-02: 0 is fine, blank or negative is not). */
+export function rupeesToMinor(value: string | undefined): number | null {
+  if (value === undefined || value.trim() === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100);
+}
+
+/**
+ * A combo's fixed price spread over its lines by each line's list price, the
+ * remainder on the last line so the shares always sum to the combo price —
+ * the same rule CheckoutSheet's `splitComboDefaults` uses for a booked combo.
+ */
+export function splitComboRupees(items: PickedItem[], comboPriceMinor: string | null): string[] {
+  const list = items.map((i) => Number(i.priceMinor ?? 0));
+  if (!comboPriceMinor) return list.map((m) => String(m / 100));
+  const combo = Number(comboPriceMinor);
+  const listTotal = list.reduce((a, b) => a + b, 0);
+  let allocated = 0;
+  return list.map((m, i) => {
+    const share = i === list.length - 1 ? combo - allocated : listTotal > 0 ? Math.round((m / listTotal) * combo) : 0;
+    allocated += share;
+    return String(share / 100);
+  });
 }
 
 /** Total minutes of a chosen list — what "starts now" runs until. */
@@ -106,7 +138,9 @@ type Stage =
   | { step: 'done'; client: PickedClient; result: WalkInDone }
   /** Jira GRW-222 — waiting in the queue; no stylist and no visit yet. */
   | { step: 'queued'; client: PickedClient; tokenNo: number | null }
-  | { step: 'error'; client: PickedClient; message: string };
+  | { step: 'error'; client: PickedClient; message: string }
+  /** Jira GRW-290 — Record payment settled in one go. */
+  | { step: 'paid'; client: PickedClient; result: WalkInDone; totalMinor: number; mode: PaymentMode };
 
 interface WalkInDone {
   appointmentId: string;
@@ -209,6 +243,15 @@ export function NewVisitSheet({
   const [offerId, setOfferId] = useState<string | null>(null);
   const [comboPriceMinor, setComboPriceMinor] = useState<string | null>(null);
   const [schedulableId, setSchedulableId] = useState<string | null>(null);
+  // Jira GRW-290 — Record payment: how they paid, and the visit once it exists.
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
+  /*
+   * Kept after the walk-in saves, so a retry after a failed payment pays for
+   * THAT visit instead of asking for a second one. The lines are locked from
+   * then on — the visit's services are already written — but the amounts and
+   * the mode can still be corrected before trying again.
+   */
+  const [savedVisit, setSavedVisit] = useState<WalkInDone | null>(null);
   /*
    * Jira GRW-235 — which branch the client is at, for a business with more
    * than one. "Whoever is free" and the chairs below are that branch's staff
@@ -318,10 +361,22 @@ export function NewVisitSheet({
   /** Combos only — an offer with no fixed price is an announcement, not something to book. */
   const combos = useMemo(() => (offers ?? []).filter((o) => o.serviceIds.length > 0), [offers]);
 
+  /** Jira GRW-290 — the search bar finds combos too, not only the chips under an empty search. */
+  const matchingCombos = useMemo(() => {
+    const q = serviceTerm.trim().toLowerCase();
+    return q ? combos.filter((o) => o.title.toLowerCase().includes(q)) : [];
+  }, [combos, serviceTerm]);
+
   const addService = (s: Service) => {
     setPicked((prev) => [
       ...prev,
-      { serviceId: s.id, name: s.name, durationMin: s.durationMin, priceMinor: s.priceMinor },
+      {
+        serviceId: s.id,
+        name: s.name,
+        durationMin: s.durationMin,
+        priceMinor: s.priceMinor,
+        ...(forPayment ? { paidRupees: String(Number(s.priceMinor ?? 0) / 100) } : {}),
+      },
     ]);
     setServiceTerm('');
     // Adding a loose service means this is no longer that combo's fixed price.
@@ -335,7 +390,8 @@ export function NewVisitSheet({
       .filter((s): s is Service => Boolean(s))
       .map((s) => ({ serviceId: s.id, name: s.name, durationMin: s.durationMin, priceMinor: s.priceMinor }));
     if (items.length === 0) return;
-    setPicked(items);
+    const shares = forPayment ? splitComboRupees(items, offer.comboPriceMinor) : [];
+    setPicked(forPayment ? items.map((item, i) => ({ ...item, paidRupees: shares[i] })) : items);
     setOfferId(offer.id);
     setComboPriceMinor(offer.comboPriceMinor);
     setServiceTerm('');
@@ -346,6 +402,13 @@ export function NewVisitSheet({
     setOfferId(null);
     setComboPriceMinor(null);
   };
+
+  const setAmountAt = (index: number, value: string) => {
+    setPicked((prev) => prev.map((item, i) => (i === index ? { ...item, paidRupees: value } : item)));
+  };
+
+  const amountsValid = picked.every((item) => rupeesToMinor(item.paidRupees) !== null);
+  const paidTotalMinor = picked.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0);
 
   // --- `later` only: which day, and which slot on it ---
   const [day, setDay] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()));
@@ -517,6 +580,63 @@ export function NewVisitSheet({
    * later. The same attempt key as a walk-in, so a retried tap is one place in
    * line.
    */
+  /**
+   * Jira GRW-290 — this visit's rows as the API has them now. The fetch
+   * window is today and tomorrow for the same reason `openCheckout` gives: a
+   * late visit's legs can run past local midnight.
+   */
+  const visitRows = async (visit: WalkInDone): Promise<Appointment[]> => {
+    const zoned = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(d);
+    const now = new Date();
+    const all = await api.appointments(zoned(now), zoned(new Date(now.getTime() + 24 * 60 * 60 * 1000)), undefined, visit.customerId);
+    const byId = new Map(all.map((a) => [a.id, a]));
+    return visit.legIds.map((id) => byId.get(id)).filter((a): a is Appointment => Boolean(a));
+  };
+
+  /**
+   * Jira GRW-290 — settle the visit with the amounts and mode on this screen.
+   *
+   * One checkout: the first leg is the appointment and the rest ride along as
+   * group members, exactly as the till did. Lines and legs are in the same
+   * order — `recordWalkIn` writes one leg per `serviceIds` entry, in order.
+   *
+   * A 409 is checkout refusing a visit that is no longer `confirmed`. After a
+   * lost response that is OUR first attempt having succeeded, so the rows are
+   * read back: every leg completed means paid, and it is shown as paid rather
+   * than as an error that invites a third try.
+   */
+  const payFor = async (client: PickedClient, visit: WalkInDone) => {
+    const amounts = picked.map((item) => rupeesToMinor(item.paidRupees) ?? 0);
+    const [first, ...rest] = visit.legIds;
+    if (!first || visit.legIds.length !== amounts.length) {
+      setStage({ step: 'error', client, message: copy.newVisit.paymentNotSaved });
+      return;
+    }
+    try {
+      await api.checkout(first, {
+        paidAmountMinor: amounts[0],
+        paymentMode,
+        groupMembers: rest.map((appointmentId, i) => ({ appointmentId, paidAmountMinor: amounts[i + 1]! })),
+      });
+    } catch (error) {
+      const settled =
+        error instanceof BookingConflictError &&
+        (await visitRows(visit)
+          .then((rows) => rows.length === visit.legIds.length && rows.every((r) => r.status === 'completed'))
+          .catch(() => false));
+      if (!settled) {
+        setStage({
+          step: 'error',
+          client,
+          message: error instanceof ApiError && error.status < 500 ? error.message : copy.newVisit.paymentNotSaved,
+        });
+        return;
+      }
+    }
+    router.refresh();
+    setStage({ step: 'paid', client, result: visit, totalMinor: amounts.reduce((a, b) => a + b, 0), mode: paymentMode });
+  };
+
   const queueIt = async (client: PickedClient) => {
     // Jira GRW-284 — no services is fine: a token by name alone, services at payment.
     setStage({ step: 'saving', client });
@@ -570,6 +690,11 @@ export function NewVisitSheet({
         return;
       }
 
+      if (forPayment && savedVisit) {
+        await payFor(client, savedVisit);
+        return;
+      }
+
       const result = await api.createWalkIn({
         ...(client.kind === 'existing'
           ? { customerId: client.id }
@@ -591,11 +716,15 @@ export function NewVisitSheet({
         overlapping: result.overlapping,
       };
       /*
-       * Record payment: straight into the till, no "Recorded" stop between.
-       * If the till cannot open, the done screen below shows why and offers
-       * "Take payment now" again — the visit itself is already saved.
+       * Jira GRW-290 — Record payment settles on this screen: no till, no
+       * "Recorded" stop. The visit is remembered first, so a failed payment
+       * is retried against it and never records a second visit.
        */
-      if (forPayment) await openCheckout(recorded);
+      if (forPayment) {
+        setSavedVisit(recorded);
+        await payFor(client, recorded);
+        return;
+      }
       setStage({ step: 'done', client, result: recorded });
     } catch (error) {
       /*
@@ -672,6 +801,8 @@ export function NewVisitSheet({
   }
 
   const busy = stage.step === 'saving';
+  /** Jira GRW-290 — once a Record payment visit exists, its lines are what was written. */
+  const linesLocked = forPayment && savedVisit !== null;
   const headSub =
     stage.step === 'client'
       ? copy.newVisit.whoIsThis(clientNoun.toLowerCase())
@@ -872,21 +1003,36 @@ export function NewVisitSheet({
                   {picked.map((item, i) => (
                     <div className="wi-picked-row" key={`${item.serviceId}-${i}`}>
                       <span className="wi-picked-name">{item.name}</span>
-                      <span className="picker-row-meta">{copy.services.minutes(item.durationMin)}</span>
+                      {forPayment ? (
+                        <label className="wi-amount">
+                          <span aria-hidden>₹</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            aria-label={copy.newVisit.amountFor(item.name)}
+                            aria-invalid={rupeesToMinor(item.paidRupees) === null}
+                            value={item.paidRupees ?? ''}
+                            onChange={(e) => setAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
+                            disabled={busy}
+                          />
+                        </label>
+                      ) : (
+                        <span className="picker-row-meta">{copy.services.minutes(item.durationMin)}</span>
+                      )}
                       <button
                         type="button"
                         className="wi-remove"
                         aria-label={`${copy.newVisit.removeService} ${item.name}`}
                         onClick={() => removeAt(i)}
-                        disabled={busy}
+                        disabled={busy || linesLocked}
                       >
                         <IconClose />
                       </button>
                     </div>
                   ))}
                   <div className="wi-picked-total">
-                    <span>{comboPriceMinor ? copy.newVisit.comboPrice : copy.newVisit.total}</span>
-                    <strong>{formatMoney(totalMinor(picked, comboPriceMinor))}</strong>
+                    <span>{comboPriceMinor && !forPayment ? copy.newVisit.comboPrice : copy.newVisit.total}</span>
+                    <strong>{formatMoney(forPayment ? String(paidTotalMinor) : totalMinor(picked, comboPriceMinor))}</strong>
                   </div>
                 </div>
               </>
@@ -899,20 +1045,36 @@ export function NewVisitSheet({
               <input
                 type="search"
                 className="wi-search-input wi-search-input-plain"
-                placeholder={copy.newVisit.searchServices(services?.length ?? 0)}
+                placeholder={services === null ? copy.newVisit.loadingServices : copy.newVisit.searchServices(services.length)}
                 value={serviceTerm}
                 onChange={(e) => setServiceTerm(e.target.value)}
-                disabled={busy}
+                disabled={busy || linesLocked}
               />
             </div>
             <div className="picker-results wi-service-results">
+              {matchingCombos.map((o) => (
+                <button
+                  key={`combo-${o.id}`}
+                  type="button"
+                  className="picker-row wi-row"
+                  onClick={() => applyCombo(o)}
+                  disabled={busy || linesLocked}
+                >
+                  <span className="picker-row-name">
+                    {o.title} <span className="wi-combo-tag">{copy.newVisit.combo}</span>
+                  </span>
+                  <span className="picker-row-meta">
+                    {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : copy.newVisit.comboServices(o.serviceIds.length)}
+                  </span>
+                </button>
+              ))}
               {filteredServices.map((s) => (
                 <button
                   key={s.id}
                   type="button"
                   className="picker-row wi-row"
                   onClick={() => addService(s)}
-                  disabled={busy}
+                  disabled={busy || linesLocked}
                 >
                   <span className="picker-row-name">{s.name}</span>
                   <span className="picker-row-meta">
@@ -920,7 +1082,14 @@ export function NewVisitSheet({
                   </span>
                 </button>
               ))}
-              {filteredServices.length === 0 && <div className="empty">{copy.newVisit.noServiceMatch}</div>}
+              {services === null ? (
+                <div className="empty">{copy.newVisit.loadingServices}</div>
+              ) : services.length === 0 ? (
+                <div className="empty">{copy.newVisit.noServicesYet}</div>
+              ) : (
+                filteredServices.length === 0 &&
+                matchingCombos.length === 0 && <div className="empty">{copy.newVisit.noServiceMatch}</div>
+              )}
             </div>
 
             {/* Combos replace the whole list rather than appending to it — a
@@ -935,7 +1104,7 @@ export function NewVisitSheet({
                       type="button"
                       className={`wi-chip wi-chip-combo ${offerId === o.id ? 'wi-chip-on' : ''}`}
                       onClick={() => applyCombo(o)}
-                      disabled={busy}
+                      disabled={busy || linesLocked}
                     >
                       {o.title}
                       <span className="wi-chip-meta">
@@ -966,7 +1135,7 @@ export function NewVisitSheet({
                         setSchedulableId(null);
                         setReclaim(null);
                       }}
-                      disabled={busy}
+                      disabled={busy || linesLocked}
                     >
                       {i === 0 ? `${b.name} (Main)` : b.name}
                     </button>
@@ -993,7 +1162,7 @@ export function NewVisitSheet({
                   setSchedulableId(null);
                   setReclaim(null);
                 }}
-                disabled={busy}
+                disabled={busy || linesLocked}
               >
                 <span className="wi-chair-name">{copy.newVisit.whoeverIsFree}</span>
                 {!later && freeCount !== null && (
@@ -1013,7 +1182,7 @@ export function NewVisitSheet({
                         setSchedulableId(p.id);
                         setReclaim(null);
                       }}
-                      disabled={busy}
+                      disabled={busy || linesLocked}
                     >
                       <span className="wi-chair-name">{p.displayName}</span>
                       {chair && (
@@ -1042,7 +1211,7 @@ export function NewVisitSheet({
                         onClick={() =>
                           setReclaim(reclaim === chair.occupant!.appointmentId ? null : chair.occupant!.appointmentId)
                         }
-                        disabled={busy}
+                        disabled={busy || linesLocked}
                       >
                         {reclaim === chair.occupant.appointmentId
                           ? copy.newVisit.reclaimOn(chair.occupant.customerName ?? copy.newVisit.someone)
@@ -1061,12 +1230,33 @@ export function NewVisitSheet({
               <div className="wi-summary">{copy.newVisit.startsNow(totalMinutes(picked))}</div>
             )}
 
+            {forPayment && (
+              <>
+                <div className="wi-section-label">{copy.newVisit.howPaid}</div>
+                <div className="wi-chips" role="radiogroup" aria-label={copy.newVisit.howPaid}>
+                  {PAYMENT_MODES.map((m) => (
+                    <button
+                      key={m.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMode === m.value}
+                      className={`wi-chip ${paymentMode === m.value ? 'wi-chip-on' : ''}`}
+                      onClick={() => setPaymentMode(m.value)}
+                      disabled={busy}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
             <div className="modal-actions wi-actions">
               <button
                 type="button"
                 className="btn btn-ghost"
                 onClick={() => setStage({ step: 'client' })}
-                disabled={busy}
+                disabled={busy || linesLocked}
               >
                 {copy.newVisit.back}
               </button>
@@ -1075,7 +1265,7 @@ export function NewVisitSheet({
                   type="button"
                   className="btn btn-ghost wi-queue-btn"
                   onClick={() => void queueIt(stage.client)}
-                  disabled={busy}
+                  disabled={busy || linesLocked}
                 >
                   {copy.newVisit.addToQueue}
                 </button>
@@ -1086,9 +1276,9 @@ export function NewVisitSheet({
                 onClick={() =>
                   later ? setStage({ step: 'when', client: stage.client }) : void submit(stage.client)
                 }
-                disabled={busy || picked.length === 0}
+                disabled={busy || picked.length === 0 || (forPayment && !amountsValid)}
               >
-                {busy ? copy.newVisit.saving : later ? copy.newVisit.next : forPayment ? copy.newVisit.finish : copy.newVisit.start}
+                {busy ? copy.newVisit.saving : later ? copy.newVisit.next : forPayment ? copy.newVisit.markDone : copy.newVisit.start}
               </button>
             </div>
           </div>
@@ -1174,6 +1364,29 @@ export function NewVisitSheet({
               <IconCheck />
               <div>
                 <div className="wi-done-title">{stage.tokenNo ? copy.newVisit.token(stage.tokenNo) : copy.newVisit.queued}</div>
+                <div className="wi-done-sub">
+                  {[clientName(stage.client), picked.map((p) => p.name).join(' + ')].filter(Boolean).join(' · ')}
+                </div>
+              </div>
+            </div>
+            <button type="button" className="sheet-item" onClick={onClose}>
+              {copy.newVisit.done}
+            </button>
+          </div>
+        )}
+
+        {/* ---------- Stage 3p: paid (Jira GRW-290) ---------- */}
+        {stage.step === 'paid' && (
+          <div className="wi-body">
+            <div className="wi-done">
+              <IconCheck />
+              <div>
+                <div className="wi-done-title">
+                  {copy.newVisit.paid(
+                    formatMoney(String(stage.totalMinor)),
+                    PAYMENT_MODES.find((m) => m.value === stage.mode)?.label ?? stage.mode,
+                  )}
+                </div>
                 <div className="wi-done-sub">
                   {[clientName(stage.client), picked.map((p) => p.name).join(' + ')].filter(Boolean).join(' · ')}
                 </div>

@@ -215,7 +215,13 @@ export const copy = {
     title: 'Walk-in',
     // Home's "Record payment": the walk-in steps, ending in the till instead of a started visit.
     paymentTitle: 'Record payment',
-    finish: 'Finish (mark as done)',
+    // Jira GRW-290 — Record payment ends on the services screen, no separate till.
+    markDone: 'Mark done',
+    howPaid: 'How did they pay?',
+    amountFor: (service: string) => `Amount for ${service}`,
+    paid: (amount: string, mode: string) => `Paid ${amount} · ${mode}`,
+    paymentNotSaved: 'The visit is saved, but the payment did not save. Tap Mark done to try again.',
+    combo: 'Combo',
     close: 'Close',
     clear: 'Clear',
     whoIsThis: (client: string) => `Search for the ${client}, or add them.`,
@@ -233,7 +239,10 @@ export const copy = {
     phoneWhy: 'Leave it blank if they would rather not say.',
     useThisPerson: 'Continue',
     whichService: 'What are they having?',
-    searchServices: (n: number) => (n ? `Search ${n} services…` : 'Loading services…'),
+    // Jira GRW-290 — "Loading…" only while loading. An empty catalogue said it forever.
+    searchServices: (n: number) => (n ? `Search ${n} services or combos…` : 'Search services…'),
+    loadingServices: 'Loading services…',
+    noServicesYet: 'No services yet. Add them under Services first.',
     noServiceMatch: 'No service matches that.',
     combos: 'Combos & offers',
     comboServices: (n: number) => `${n} services`,

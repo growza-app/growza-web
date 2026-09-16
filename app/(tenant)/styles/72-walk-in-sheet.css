@@ -483,3 +483,43 @@ input.wi-search-input-plain {
     flex: 1 0 100%;
   }
 }
+
+/* Jira GRW-290 — Record payment: what was paid for each line, typed in place. */
+.wi-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 0 10px;
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+}
+.wi-amount input {
+  width: 72px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+}
+.wi-amount:focus-within {
+  border-color: var(--accent);
+}
+.wi-amount:has(input[aria-invalid='true']) {
+  border-color: #b91c1c; /* the sheet's own error colour, .wi-error */
+}
+.wi-combo-tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--slate-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}

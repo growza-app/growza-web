@@ -88,7 +88,7 @@ function splitComboDefaults(legs: Appointment[]): Map<string, number> {
   return defaults;
 }
 
-const PAYMENT_MODES: Array<{ value: PaymentMode; label: string }> = [
+export const PAYMENT_MODES: Array<{ value: PaymentMode; label: string }> = [
   { value: 'cash', label: 'Cash' },
   { value: 'card', label: 'Card' },
   { value: 'upi', label: 'UPI' },
