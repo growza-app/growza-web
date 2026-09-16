@@ -202,6 +202,7 @@ export function CheckoutSheet({
   timezone,
   onClose,
   onBack,
+  onSaved,
 }: {
   appointment: Appointment;
   services: Service[];
@@ -220,6 +221,15 @@ export function CheckoutSheet({
    * row, where there is no previous step to return to.
    */
   onBack?: () => void;
+  /**
+   * Jira GRW-289 — called after a successful save, INSTEAD of `onClose`.
+   *
+   * `onClose` meant both "saved" and "walked away" (Cancel, the backdrop), so a
+   * caller could not tell a paid visit from an abandoned till. Record payment
+   * needs to: abandoning it leaves a visit recorded and unpaid. Absent, a save
+   * still calls `onClose`, which is every other caller's behaviour unchanged.
+   */
+  onSaved?: () => void;
 }) {
   const router = useRouter();
   // Pre-filled from the booked service's list price (or its share of the
@@ -309,7 +319,7 @@ export function CheckoutSheet({
         })),
       });
       router.refresh();
-      onClose();
+      (onSaved ?? onClose)();
     } catch (err) {
       setError(err instanceof BookingConflictError ? err.message : 'That did not save. Check the connection and try again.');
       setBusy(false);

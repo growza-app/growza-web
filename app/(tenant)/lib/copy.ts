@@ -296,6 +296,8 @@ export const copy = {
     slotTaken: 'That time was just taken. Pick another.',
     openingTill: 'Opening…',
     tillFailed: 'Could not open the till here. The visit is saved — take the payment from Bookings.',
+    // Jira GRW-289 — Record payment's till closed without saving.
+    notPaidYet: 'The visit is saved, but it is not paid yet. Take the payment now, or later from Bookings.',
     done: 'Done',
   },
 

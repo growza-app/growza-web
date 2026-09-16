@@ -243,6 +243,17 @@ export function NewVisitSheet({
    */
   const [checkoutRows, setCheckoutRows] = useState<Appointment[] | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  /*
+   * Jira GRW-289 — Record payment's till was closed without saving.
+   *
+   * Cancel, the close button and a tap on the backdrop all called the same
+   * `onClose`, which shut the whole sheet: the visit had been recorded by
+   * Finish, nothing had been paid, and nothing on screen said so. The owner
+   * believed the money was in. Now the sheet steps back to the done screen and
+   * says it plainly — "Take payment now" is right there, and "Done" still
+   * leaves. Telling, not blocking.
+   */
+  const [tillClosedUnpaid, setTillClosedUnpaid] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -443,6 +454,7 @@ export function NewVisitSheet({
   const openCheckout = async (result: WalkInDone) => {
     setLoadingCheckout(true);
     setCheckoutError(null);
+    setTillClosedUnpaid(false);
     try {
       /*
        * Today AND tomorrow — a late visit runs past midnight.
@@ -478,7 +490,20 @@ export function NewVisitSheet({
       if (rows.length !== result.legIds.length) throw new Error(copy.newVisit.tillFailed);
       setCheckoutRows(rows);
     } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : copy.newVisit.tillFailed);
+      /*
+       * Jira GRW-289 — only a sentence the API wrote reaches the screen.
+       *
+       * This passed on the message of ANY `Error`, and a dropped
+       * connection IS an Error, so QA read the browser's raw "Failed to fetch"
+       * instead of the copy below — the same mistake `submit` documents fixing
+       * for the walk-in save. A 5xx, or a 4xx with no body, carries only
+       * "/api/v1/appointments failed: 500", which is not for a receptionist
+       * either. The "every leg, or none" guard above throws `tillFailed` itself,
+       * so it lands here too.
+       */
+      setCheckoutError(
+        error instanceof ApiError && error.status < 500 && error.code ? error.message : copy.newVisit.tillFailed,
+      );
     } finally {
       setLoadingCheckout(false);
     }
@@ -627,10 +652,20 @@ export function NewVisitSheet({
         providers={providers}
         groupMembers={rest}
         timezone={timezone}
-        onBack={() => setCheckoutRows(null)}
-        onClose={() => {
+        onBack={() => {
+          setCheckoutRows(null);
+          if (forPayment) setTillClosedUnpaid(true);
+        }}
+        onSaved={() => {
           setCheckoutRows(null);
           onClose();
+        }}
+        onClose={() => {
+          setCheckoutRows(null);
+          // Jira GRW-289 — Record payment exists to take the money; leaving the
+          // till unsaved must not look like it did. Back to the done screen.
+          if (forPayment) setTillClosedUnpaid(true);
+          else onClose();
         }}
       />
     );
@@ -1187,6 +1222,7 @@ export function NewVisitSheet({
             */}
             {!later && (
               <>
+                {tillClosedUnpaid && <div className="wi-overlap" role="status">{copy.newVisit.notPaidYet}</div>}
                 {checkoutError && <div className="wi-error">{checkoutError}</div>}
                 <button
                   type="button"
