@@ -12,7 +12,9 @@ import {
   AttentionRowView,
   RevenueCard,
   BookingsCard,
+  PLATFORM_EMPTY_COPY,
   type PlatformBookings,
+  shareLabel,
   wholePercentages,
   type RevenueMonth,
   ACTION_TINTS,
@@ -22,6 +24,7 @@ import {
   tintFor,
   type AttentionRow,
 } from './components/DashboardParts';
+import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
 import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL } from './dashboard-config';
 
@@ -151,28 +154,8 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (loading || !data) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="admin-stat-grid">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Card key={i}>
-              <div
-                style={{ height: 74, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }}
-              />
-            </Card>
-          ))}
-        </div>
-        {Array.from({ length: 4 }, (_, i) => (
-          <Card key={i}>
-            <div
-              style={{ height: 120, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }}
-            />
-          </Card>
-        ))}
-      </div>
-    );
-  }
+  // Jira GRW-287 — the loaded page's own grid, placeholders and all; see DashboardSkeleton.
+  if (loading || !data) return <DashboardSkeleton />;
 
   const empty = data.totalBusinesses === 0;
   // Computed across the whole breakdown at once, so the four shares total 100
@@ -291,69 +274,74 @@ export default function AdminDashboardPage() {
             as a pair: what was sold, then whether it is being used. The laptop
             places it by grid area. Not gated on admin.payment.view the way
             revenue is — a count of visits is not a figure about money. */}
-        <BookingsCard className="admin-dash-bookings" bookings={data.bookings} />
+        {/* Jira GRW-287 — Bookings and Business status share one grid item on a
+            laptop, so a tall attention list beside them cannot stretch the gap
+            between them (admin.css, `.admin-dash-side`). */}
+        <div className="admin-dash-side">
+          <BookingsCard bookings={data.bookings} platformEmpty={empty} />
 
-        {/* GRW-274 — a segmented bar + legend reading the exact same `byStatus`
-          array the old plain list did; no new query, no fabricated trend. */}
-        <Card className="admin-dash-status">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>Business status</div>
-            <div style={{ fontSize: 12, color: oklch.textFaint }}>
-              Total <strong style={{ color: oklch.textStrong, fontWeight: 800 }}>{data.totalBusinesses}</strong>
+          {/* GRW-274 — a segmented bar + legend reading the exact same `byStatus`
+            array the old plain list did; no new query, no fabricated trend. */}
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>Business status</div>
+              <div style={{ fontSize: 12, color: oklch.textFaint }}>
+                Total <strong style={{ color: oklch.textStrong, fontWeight: 800 }}>{data.totalBusinesses}</strong>
+              </div>
             </div>
-          </div>
-          {empty ? (
-            <div style={{ fontSize: 13, color: oklch.textFaint }}>No businesses on the platform yet.</div>
-          ) : (
-            <>
-              <div
-                style={{ height: 10, borderRadius: 6, overflow: 'hidden', display: 'flex', background: oklch.divider, marginBottom: 12 }}
-              >
-                {data.byStatus
-                  .filter((s) => s.count > 0)
-                  .map((s) => (
-                    <div
-                      key={s.status}
-                      style={{
-                        width: `${(s.count / data.totalBusinesses) * 100}%`,
-                        background: STATUS_COLORS[STATUS_LABEL[s.status] ?? '']?.[0] ?? oklch.textFaint,
-                      }}
-                    />
-                  ))}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {data.byStatus.map((s, i) => {
-                  const pct = statusPercentages[i] ?? 0;
-                  const dotColor = STATUS_COLORS[STATUS_LABEL[s.status] ?? '']?.[0] ?? oklch.textFaint;
-                  return (
-                    <Link
-                      key={s.status}
-                      href={`/admin/businesses?status=${s.status}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        textDecoration: 'none',
-                        padding: '5px 0',
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span
-                          style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, display: 'inline-block', flex: 'none' }}
-                        />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{STATUS_LABEL[s.status] ?? s.status}</span>
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                        <span style={{ fontSize: 13.5, fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
-                        <span style={{ fontSize: 11.5, color: oklch.textFaint }}>({pct}%)</span>
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </Card>
+            {empty ? (
+              <div style={{ fontSize: 13, color: oklch.textFaint }}>{PLATFORM_EMPTY_COPY}</div>
+            ) : (
+              <>
+                <div
+                  style={{ height: 10, borderRadius: 6, overflow: 'hidden', display: 'flex', background: oklch.divider, marginBottom: 12 }}
+                >
+                  {data.byStatus
+                    .filter((s) => s.count > 0)
+                    .map((s) => (
+                      <div
+                        key={s.status}
+                        style={{
+                          width: `${(s.count / data.totalBusinesses) * 100}%`,
+                          background: STATUS_COLORS[STATUS_LABEL[s.status] ?? '']?.[0] ?? oklch.textFaint,
+                        }}
+                      />
+                    ))}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {data.byStatus.map((s, i) => {
+                    const pct = statusPercentages[i] ?? 0;
+                    const dotColor = STATUS_COLORS[STATUS_LABEL[s.status] ?? '']?.[0] ?? oklch.textFaint;
+                    return (
+                      <Link
+                        key={s.status}
+                        href={`/admin/businesses?status=${s.status}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          textDecoration: 'none',
+                          padding: '5px 0',
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span
+                            style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, display: 'inline-block', flex: 'none' }}
+                          />
+                          <span style={{ fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{STATUS_LABEL[s.status] ?? s.status}</span>
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                          <span style={{ fontSize: 13.5, fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
+                          <span style={{ fontSize: 11.5, color: oklch.textFaint }}>({shareLabel(s.count, data.totalBusinesses, pct)})</span>
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
 
         {/* FR-02/AC-02 — every row present whether or not its epic has shipped; a row without a real count yet names it. */}
         <Card className="admin-dash-attention">

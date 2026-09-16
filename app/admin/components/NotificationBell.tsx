@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon } from '../icons';
 import { adminFetch } from '../lib/api';
@@ -29,21 +29,59 @@ export function NotificationBell() {
   const pathname = usePathname();
   const [alerts, setAlerts] = useState<AttentionRow[] | null>(null);
   const [open, setOpen] = useState(false);
+  /** Bumped each time the panel opens, to re-read. */
+  const [openCount, setOpenCount] = useState(0);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
+  /*
+   * Jira GRW-287 (QA of GRW-276) — re-read on every route change, and every
+   * time the panel opens.
+   *
+   * It read once, when the admin shell mounted, and the shell does not
+   * remount as an admin moves between its screens. So the admin who opened
+   * the failed payment from the bell, reconciled it, and came back was still
+   * told it needed attention — for as long as the tab stayed open. A route
+   * change is the moment somebody has plausibly just resolved something, and
+   * opening the panel is the moment they are about to trust what it says.
+   *
+   * Not a timer: the admin plane has nothing that changes while one screen
+   * sits open, and the dashboard read is not free. A later read that fails
+   * hides the bell, exactly as a first one does (FR-06) — a count that could
+   * not be refreshed is not one to keep showing as current.
+   */
   useEffect(() => {
     let cancelled = false;
     adminFetch<{ attention: AttentionRow[] }>('/dashboard')
       .then((result) => {
         if (!cancelled) setAlerts(result.attention.filter((row) => row.available));
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setAlerts(null);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname, openCount]);
 
   // Don't leave the panel hanging open behind a screen the admin just opened.
   useEffect(() => setOpen(false), [pathname]);
+
+  /*
+   * Jira GRW-287 — Escape closes the panel and puts focus back on the bell,
+   * the keyboard's half of "click anywhere else to dismiss". Without the focus
+   * return, a keyboard user who dismissed the panel was left focused on
+   * nothing and had to tab in again from the top of the page.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
 
   if (!alerts) return null;
 
@@ -57,7 +95,11 @@ export function NotificationBell() {
         aria-label={total > 0 ? `Notifications, ${total} needing attention` : 'Notifications'}
         aria-haspopup="true"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        ref={buttonRef}
+        onClick={() => {
+          if (!open) setOpenCount((n) => n + 1);
+          setOpen(!open);
+        }}
         style={{
           position: 'relative',
           width: 40,

@@ -349,18 +349,29 @@ body.admin-body {
   gap: 16px;
 }
 
+/* GRW-280 — Bookings above Business status, the pair stacked beside the
+   attention list on a laptop.
+
+   Jira GRW-287 — as ONE grid item rather than two grid rows. They used to be
+   two rows of their own, with the attention list spanning both; when that list is taller than the two cards together, the
+   grid hands the difference to the spanned rows, so the Bookings row grew and
+   left ~44px under its card where every other gap on the page is 16. A flex
+   column sized by its own content has no spare row to grow. On a phone the
+   wrapper is invisible: the same 16px column, in the same DOM order. */
+.admin-dash-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
 @media (min-width: 1001px) {
   .admin-dash-cols {
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-    /* GRW-280 — Bookings joins the narrow column above Business status. The
-       attention list is the one tall block here, so it spans both of those
-       rows on the left and the two compact cards stack beside it; without the
-       span the right column ran out a card early and left a hole. */
     grid-template-areas:
       'revenue quick'
-      'attention bookings'
-      'attention status'
+      'attention side'
       'signups signups';
     /* Otherwise every card stretches to the tallest in its row and the short
        ones grow a band of empty surface under their content. */
@@ -373,14 +384,11 @@ body.admin-body {
   .admin-dash-revenue {
     grid-area: revenue;
   }
-  .admin-dash-status {
-    grid-area: status;
+  .admin-dash-side {
+    grid-area: side;
   }
   .admin-dash-attention {
     grid-area: attention;
-  }
-  .admin-dash-bookings {
-    grid-area: bookings;
   }
   .admin-dash-signups {
     grid-area: signups;

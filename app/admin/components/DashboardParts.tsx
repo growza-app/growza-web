@@ -101,6 +101,29 @@ export function wholePercentages(counts: number[]): number[] {
   return out;
 }
 
+/**
+ * Jira GRW-287 (QA of GRW-280, D2) — how a whole-number share is WRITTEN.
+ *
+ * `wholePercentages` is right that 24 of 10,011 rounds to 0, and right to keep
+ * the column totalling 100. But "Upcoming 24 (0%)" printed a count and a share
+ * that contradict each other on one line. A share that is not nothing reads
+ * "<1%", and — the same lie the other way round — a share that is not
+ * everything never reads "100%" beside it: ">99%". Only the label changes; the
+ * numbers underneath, and the bar widths, are untouched.
+ */
+export function shareLabel(count: number, total: number, pct: number): string {
+  if (count > 0 && pct === 0) return '<1%';
+  if (pct === 100 && count < total) return '>99%';
+  return `${pct}%`;
+}
+
+/**
+ * Jira GRW-287 (QA of GRW-280, D6) — the one sentence for "there is no
+ * platform yet", so every card on an empty platform says the same thing
+ * rather than each card inventing its own.
+ */
+export const PLATFORM_EMPTY_COPY = 'No businesses on the platform yet.';
+
 /** The same idea in whole businesses rather than a percentage — what "12 more than last month" actually means. */
 export function countDelta(current: number, previous: number): { direction: 'up' | 'down' | 'flat'; text: string } {
   const diff = current - previous;
@@ -328,7 +351,8 @@ export function RevenueCard({
   );
 }
 
-export type BookingOutcome = 'confirmed' | 'completed' | 'no_show' | 'cancelled';
+/** `other` is a status the API does not recognise (GRW-280 Validations) — counted, never filed under cancelled. */
+export type BookingOutcome = 'confirmed' | 'completed' | 'no_show' | 'cancelled' | 'other';
 
 export interface PlatformBookings {
   thisMonth: number;
@@ -346,6 +370,8 @@ const OUTCOME_STYLE: Record<BookingOutcome, { label: string; color: string }> = 
   completed: { label: 'Completed', color: 'oklch(0.6 0.13 150)' },
   no_show: { label: 'No-show', color: 'oklch(0.72 0.13 75)' },
   cancelled: { label: 'Cancelled', color: 'oklch(0.66 0.15 25)' },
+  // Neutral on purpose: it is not good news or bad news, it is unexplained.
+  other: { label: 'Other', color: 'oklch(0.7 0.01 150)' },
 };
 
 /**
@@ -366,12 +392,24 @@ const OUTCOME_STYLE: Record<BookingOutcome, { label: string; color: string }> = 
  * yet happened", and "Confirmed" sat next to "Completed" reads as two words for
  * the same thing.
  */
-export function BookingsCard({ bookings, className }: { bookings: PlatformBookings; className?: string }) {
+export function BookingsCard({
+  bookings,
+  platformEmpty,
+  className,
+}: {
+  bookings: PlatformBookings;
+  /** No businesses at all — the card then says what every other card says (GRW-280 UI States: "the platform-empty copy the other cards use"). */
+  platformEmpty: boolean;
+  className?: string;
+}) {
   const delta = percentDelta(bookings.thisMonth, bookings.previousMonth);
   const deltaColor =
     delta?.direction === 'up' ? 'oklch(0.5 0.13 150)' : delta?.direction === 'down' ? 'oklch(0.53 0.16 25)' : oklch.textFaint;
-  // BR-04 — one call across all four, so the shares total exactly 100.
+  // BR-04 — one call across every outcome, so the shares total exactly 100.
   const pcts = wholePercentages(bookings.outcomes.map((o) => o.count));
+  // `other` only appears when something is in it — a permanent "Other 0" row
+  // would be a question on screen about a state the database cannot hold today.
+  const legend = bookings.outcomes.map((o, i) => ({ ...o, pct: pcts[i] ?? 0 })).filter((o) => o.status !== 'other' || o.count > 0);
 
   return (
     <div className={className} style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 16 }}>
@@ -391,7 +429,11 @@ export function BookingsCard({ bookings, className }: { bookings: PlatformBookin
 
       {bookings.thisMonth === 0 ? (
         // A real zero, said as one — not an empty bar that looks like a fault.
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 12 }}>No bookings made yet this month.</div>
+        // In the same words as the cards beside it: on an empty platform that
+        // is the shared sentence, otherwise their "No … yet" shape.
+        <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 12 }}>
+          {platformEmpty ? PLATFORM_EMPTY_COPY : 'No bookings this month yet.'}
+        </div>
       ) : (
         <>
           <div style={{ height: 10, borderRadius: 6, overflow: 'hidden', display: 'flex', background: oklch.divider, margin: '14px 0 10px' }}>
@@ -402,7 +444,7 @@ export function BookingsCard({ bookings, className }: { bookings: PlatformBookin
               ))}
           </div>
           <div className="admin-outcome-legend">
-            {bookings.outcomes.map((o, i) => (
+            {legend.map((o) => (
               <div key={o.status} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '3px 0', minWidth: 0 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: OUTCOME_STYLE[o.status].color, flex: 'none' }} />
@@ -410,7 +452,7 @@ export function BookingsCard({ bookings, className }: { bookings: PlatformBookin
                 </span>
                 <span style={{ display: 'flex', alignItems: 'baseline', gap: 4, flex: 'none' }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: oklch.textStrong }}>{o.count.toLocaleString('en-IN')}</span>
-                  <span style={{ fontSize: 11, color: oklch.textFaint }}>({pcts[i] ?? 0}%)</span>
+                  <span style={{ fontSize: 11, color: oklch.textFaint }}>({shareLabel(o.count, bookings.thisMonth, o.pct)})</span>
                 </span>
               </div>
             ))}

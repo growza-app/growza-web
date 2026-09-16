@@ -86,7 +86,9 @@ function AdminPaymentsInner() {
     return fromUrl && (STATUS_OPTIONS as readonly string[]).includes(fromUrl) ? fromUrl : 'All';
   });
   const [unreconciledOnly, setUnreconciledOnly] = useState(false);
-  const range = useDateRange();
+  // And `?from=` — Jira GRW-287: the tile counts THIS month's failures, so it
+  // opens the list from the 1st and the list agrees with the number.
+  const range = useDateRange(searchParams.get('from'));
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   /**
    * Jira GRW-140 — what is on screen, which is no longer the same thing as
