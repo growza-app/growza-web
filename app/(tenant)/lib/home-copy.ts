@@ -211,7 +211,6 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     nothingDone: S('Nothing finished yet today.', 'आज अभी कुछ पूरा नहीं हुआ।'),
     couldNotGive: S('That did not save. Try again.', 'सेव नहीं हुआ। फिर से कोशिश करें।'),
     addCustomer: S('Add customer', 'ग्राहक जोड़ें'),
-    takeMoney: S('Take money', 'पैसे लें'),
     recordPayment: S('Record payment', 'पेमेंट दर्ज करें'),
     findCustomer: S('Find customer', 'ग्राहक खोजें'),
 

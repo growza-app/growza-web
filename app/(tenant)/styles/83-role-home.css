@@ -344,7 +344,6 @@
   margin-left: auto;
 }
 .hm-toolbar-actions .hm-action {
-  text-decoration: none;
   min-height: 40px;
   padding: 0 var(--sp-4);
   border-radius: 12px;
@@ -1400,6 +1399,7 @@
 /* ---------- front desk ---------- */
 .hm-primary-actions {
   display: flex;
+  flex-wrap: wrap; /* three front-desk actions do not fit one row on a tablet held sideways */
   gap: var(--sp-3);
 }
 .hm-action {

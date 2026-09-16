@@ -54,7 +54,8 @@ function hereNowStatus(t: HomeCopy, g: BookingGroup, now: Date, timezone: string
 export function ReceptionHome(p: ReceptionHomeProps) {
   const t = homeCopy(p.lang, p.labels);
   const now = useMemo(() => new Date(p.nowISO), [p.nowISO]);
-  const [sheet, setSheet] = useState<VisitMode | null>(null);
+  /** `payment` is Record payment: the walk-in steps, ending in the till. */
+  const [sheet, setSheet] = useState<VisitMode | 'payment' | null>(null);
   const [tab, setTab] = useState<Tab>('waiting');
   const [giving, setGiving] = useState<QueueEntry | null>(null);
 
@@ -101,6 +102,10 @@ export function ReceptionHome(p: ReceptionHomeProps) {
           <button type="button" className="hm-action" onClick={() => setSheet('later')}>
             <IconCalendarPlus />
             <strong>{t.newAppointment}</strong>
+          </button>
+          <button type="button" className="hm-action" onClick={() => setSheet('payment')}>
+            <IconReceipt />
+            <strong>{t.recordPayment}</strong>
           </button>
         </div>
 
@@ -249,8 +254,9 @@ export function ReceptionHome(p: ReceptionHomeProps) {
         <QuickTiles
           items={[
             { href: '/customers?add=1', label: t.addCustomer, icon: <IconUserPlus />, tone: 'blue' },
-            // Path C — record the walk-in and take the money in one go.
-            { onClick: () => setSheet('now'), label: t.takeMoney, icon: <IconReceipt />, tone: 'green' },
+            // Path C — record the walk-in and take the money in one go: the
+            // same Record payment flow as the owner's Home, not a started visit.
+            { onClick: () => setSheet('payment'), label: t.recordPayment, icon: <IconReceipt />, tone: 'green' },
             { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
             // `/customers` search, not `/search`: the global search route is not
             // on the receptionist's allowlist (GRW-199), the client list's is.
@@ -259,7 +265,14 @@ export function ReceptionHome(p: ReceptionHomeProps) {
         />
       </div>
 
-      {sheet ? <NewVisitSheet mode={sheet} timezone={p.timezone} onClose={() => setSheet(null)} /> : null}
+      {sheet ? (
+        <NewVisitSheet
+          mode={sheet === 'payment' ? 'now' : sheet}
+          purpose={sheet === 'payment' ? 'payment' : 'visit'}
+          timezone={p.timezone}
+          onClose={() => setSheet(null)}
+        />
+      ) : null}
       {giving ? <GiveToStaffSheet t={t} entry={giving} providers={p.providers} busy={busy} onClose={() => setGiving(null)} /> : null}
     </>
   );

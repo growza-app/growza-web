@@ -133,14 +133,25 @@ function clientName(client: PickedClient): string {
  */
 export type VisitMode = 'now' | 'later';
 
+/**
+ * `payment` is "Record payment" on Home: the same walk-in steps — who, what,
+ * which stylist — for a visit that has already happened, so it ends in the
+ * till rather than in a started visit. It is always a walk-in (money is never
+ * taken for a future slot), so the phone stays optional: a client who will not
+ * give a number must not stop the money being recorded.
+ */
+export type VisitPurpose = 'visit' | 'payment';
+
 export function NewVisitSheet({
   onClose,
   timezone,
   mode: initialMode = 'now',
+  purpose = 'visit',
 }: {
   onClose: () => void;
   timezone: string;
   mode?: VisitMode;
+  purpose?: VisitPurpose;
 }) {
   /*
    * The mode is a control, not only a prop.
@@ -150,7 +161,8 @@ export function NewVisitSheet({
    * rest of the decision is, and a receptionist who opens "walk-in" and then
    * realises the customer wants Saturday should not have to close and reopen.
    */
-  const [mode, setMode] = useState<VisitMode>(initialMode);
+  const forPayment = purpose === 'payment';
+  const [mode, setMode] = useState<VisitMode>(forPayment ? 'now' : initialMode);
   const later = mode === 'later';
   const router = useRouter();
   const clientNoun = useLabel('customer', 'Client');
@@ -546,18 +558,21 @@ export function NewVisitSheet({
         idempotencyKey: attemptKey,
       });
       router.refresh();
-      setStage({
-        step: 'done',
-        client,
-        result: {
-          appointmentId: result.appointmentId,
-          customerId: result.customerId,
-          legIds: result.legs.map((l) => l.appointmentId),
-          schedulableId: result.schedulableId,
-          startAt: result.startAt,
-          overlapping: result.overlapping,
-        },
-      });
+      const recorded: WalkInDone = {
+        appointmentId: result.appointmentId,
+        customerId: result.customerId,
+        legIds: result.legs.map((l) => l.appointmentId),
+        schedulableId: result.schedulableId,
+        startAt: result.startAt,
+        overlapping: result.overlapping,
+      };
+      /*
+       * Record payment: straight into the till, no "Recorded" stop between.
+       * If the till cannot open, the done screen below shows why and offers
+       * "Take payment now" again — the visit itself is already saved.
+       */
+      if (forPayment) await openCheckout(recorded);
+      setStage({ step: 'done', client, result: recorded });
     } catch (error) {
       /*
        * Only the API's own message reaches the receptionist.
@@ -633,12 +648,12 @@ export function NewVisitSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />
-      <div className="sheet walk-in-sheet" role="dialog" aria-label={later ? copy.newVisit.laterTitle : copy.newVisit.title}>
+      <div className="sheet walk-in-sheet" role="dialog" aria-label={forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title}>
         <div className="sheet-grab" />
 
         <div className="sheet-head">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sheet-title">{later ? copy.newVisit.laterTitle : copy.newVisit.title}</div>
+            <div className="sheet-title">{forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title}</div>
             <div className="sheet-sub">{headSub}</div>
           </div>
           <button type="button" className="wi-close" aria-label={copy.newVisit.close} onClick={onClose} disabled={busy}>
@@ -651,7 +666,7 @@ export function NewVisitSheet({
           booked, a toggle that would silently rewrite what just happened is a
           trap, not a convenience.
         */}
-        {(stage.step === 'client' || stage.step === 'newClient') && (
+        {!forPayment && (stage.step === 'client' || stage.step === 'newClient') && (
           <div className="wi-segmented" role="tablist" aria-label={copy.newVisit.modeLabel}>
             <button
               type="button"
@@ -1008,7 +1023,7 @@ export function NewVisitSheet({
               })}
             </div>
 
-            {picked.length > 0 && !later && (
+            {picked.length > 0 && !later && !forPayment && (
               <div className="wi-summary">{copy.newVisit.startsNow(totalMinutes(picked))}</div>
             )}
 
@@ -1021,7 +1036,7 @@ export function NewVisitSheet({
               >
                 {copy.newVisit.back}
               </button>
-              {!later && !reclaim && (
+              {!later && !reclaim && !forPayment && (
                 <button
                   type="button"
                   className="btn btn-ghost wi-queue-btn"
@@ -1039,7 +1054,7 @@ export function NewVisitSheet({
                 }
                 disabled={busy || picked.length === 0}
               >
-                {busy ? copy.newVisit.saving : later ? copy.newVisit.next : copy.newVisit.start}
+                {busy ? copy.newVisit.saving : later ? copy.newVisit.next : forPayment ? copy.newVisit.finish : copy.newVisit.start}
               </button>
             </div>
           </div>

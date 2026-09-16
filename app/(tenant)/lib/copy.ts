@@ -213,6 +213,9 @@ export const copy = {
    */
   newVisit: {
     title: 'Walk-in',
+    // Home's "Record payment": the walk-in steps, ending in the till instead of a started visit.
+    paymentTitle: 'Record payment',
+    finish: 'Finish (mark as done)',
     close: 'Close',
     clear: 'Clear',
     whoIsThis: (client: string) => `Search for the ${client}, or add them.`,

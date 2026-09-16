@@ -24,7 +24,7 @@ import {
   IconSettings,
   IconStaff,
 } from '../icons';
-import { NewVisitSheet, type VisitMode } from '../NewVisitSheet';
+import { NewVisitSheet, type VisitPurpose } from '../NewVisitSheet';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards, rupees } from './parts';
@@ -131,7 +131,7 @@ export function OwnerHome(p: OwnerHomeProps) {
   const [branchMenu, setBranchMenu] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   /** Laptop only — on a phone the tab bar's centre button opens this same sheet. */
-  const [visitSheet, setVisitSheet] = useState<VisitMode | null>(null);
+  const [visitSheet, setVisitSheet] = useState<VisitPurpose | null>(null);
   const mayBook = p.role !== 'staff';
 
   const load = (nextPeriod: HomePeriod, nextBranch: string | null) => {
@@ -262,15 +262,14 @@ export function OwnerHome(p: OwnerHomeProps) {
             {mayBook ? (
               /* One booking button, not "Walk-in" + "New appointment": both opened
                  the same sheet, whose own toggle chooses now-or-later.
-                 Payment is taken against a visit (CheckoutSheet needs an
-                 appointment), so "Record payment" goes to the visits not yet
-                 settled — the same list as "Not marked done yet". */
+                 "Record payment" is the walk-in steps ending in the till, for a
+                 visit that has just finished. */
               <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
-                <a className="hm-action" href="/appointments?status=confirmed">
+                <button type="button" className="hm-action" onClick={() => setVisitSheet('payment')}>
                   <IconReceipt />
                   <strong>{t.recordPayment}</strong>
-                </a>
-                <button type="button" className="hm-action hm-action-dark" onClick={() => setVisitSheet('now')}>
+                </button>
+                <button type="button" className="hm-action hm-action-dark" onClick={() => setVisitSheet('visit')}>
                   <IconCalendarPlus />
                   <strong>{t.nav.newBooking}</strong>
                 </button>
@@ -383,7 +382,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           onClose={() => setSummaryOpen(false)}
         />
       ) : null}
-      {visitSheet ? <NewVisitSheet mode={visitSheet} timezone={p.timezone} onClose={() => setVisitSheet(null)} /> : null}
+      {visitSheet ? <NewVisitSheet purpose={visitSheet} timezone={p.timezone} onClose={() => setVisitSheet(null)} /> : null}
     </>
   );
 }
