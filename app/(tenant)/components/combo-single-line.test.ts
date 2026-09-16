@@ -39,9 +39,19 @@ describe('the combo row replaces the per-service rows', () => {
     expect(sheet).toMatch(/setComboAmountText\(offer\.comboPriceMinor \? String\(Number\(offer\.comboPriceMinor\) \/ 100\) : ''\);/);
   });
 
-  it('the total row is skipped for a combo — the combo row already says the price', () => {
-    const comboBranch = sheet.slice(sheet.indexOf('comboActive ? ('), sheet.indexOf(') : ('));
-    expect(comboBranch).not.toMatch(/wi-picked-total/);
+  it('a combo alone has no separate total row — the combo row already says the price', () => {
+    expect(sheet).toMatch(/\{comboActive && extras\.length > 0 && \(/);
+  });
+
+  it('Jira GRW-292 — something added beside a combo is a new row, not a dissolved combo', () => {
+    // The old behaviour this replaces: adding a service cleared offerId,
+    // silently dropping the combo's discount.
+    expect(sheet).not.toMatch(/setServiceTerm\(''\);\s*\/\/ Adding a loose service means this is no longer/);
+    expect(sheet).toMatch(/if \(comboActive\) \{\s*setExtras\(\(prev\) => \[\.\.\.prev, item\]\);/);
+  });
+
+  it('removing the combo keeps whatever was added beside it, as the plain list', () => {
+    expect(sheet).toMatch(/const removeCombo = \(\) => \{\s*setPicked\(extras\);\s*setExtras\(\[\]\);/);
   });
 });
 
