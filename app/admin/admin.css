@@ -184,7 +184,6 @@ body.admin-body {
   overflow-x: auto;
 }
 
-
 /* ---------- the dashboard's grids ----------
    Defined here rather than inline for the same reason the table's are: an
    inline `grid-template-columns` cannot be overridden by a media query
@@ -419,6 +418,23 @@ body.admin-body {
   .admin-dash-signups {
     grid-area: signups;
   }
+
+  /*
+   * QA GRW-276 — an admin without `admin.payment.view` gets no `RevenueCard`
+   * (page.tsx renders nothing for that grid area), but this stylesheet still
+   * reserved the `revenue` column of the first row for it. Nothing filled the
+   * cell, so it sat empty: ~690x150px of surface beside Quick actions on a
+   * laptop, at every width ≥1001px. `page.tsx` sets `data-has-revenue="false"`
+   * on `.admin-dash-cols` for exactly this case; here that collapses the top
+   * row to one area so Quick actions takes the full width instead of leaving
+   * a column with nothing in it.
+   */
+  .admin-dash-cols[data-has-revenue='false'] {
+    grid-template-areas:
+      'quick quick'
+      'attention side'
+      'signups signups';
+  }
 }
 
 /* ---------- GRW-277: the narrowest phones get fewer columns ----------
@@ -598,7 +614,6 @@ body.admin-body {
   text-align: left !important;
   justify-content: flex-start !important;
 }
-
 
 /* ---------- pagination: desktop controls vs mobile "Load more" ---------- */
 .admin-pagination-desktop {

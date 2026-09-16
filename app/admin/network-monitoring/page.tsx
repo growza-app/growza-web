@@ -90,7 +90,22 @@ export default function NetworkMonitoringPage() {
       <div className="admin-monitor-bar">
         <Freshness readAt={data?.readAt ?? null} staleAfterMinutes={data?.figuresStaleAfterMinutes ?? Number.POSITIVE_INFINITY} />
         <div className="admin-monitor-controls">
-          <RangePicker value={range} onChange={setRange} disabled={loading} />
+          {/*
+            QA GRW-279 — not disabled while loading.
+            It was: `disabled={loading}` meant a range click that landed while
+            the previous range's request was still in flight did nothing at
+            all — no request, no visual change, no error. A user who clicked
+            7 days and then, mid-load, changed their mind to 30 days had that
+            second click silently swallowed by a disabled button; the screen
+            settled on 7 days and never said why.
+
+            Safe to leave enabled: the effect above already keys off `range`
+            with its own `AbortController`, so a second click aborts the
+            first request in flight and starts a fresh one — "last click
+            wins" was already the architecture, `disabled` was the only thing
+            stopping it from working.
+          */}
+          <RangePicker value={range} onChange={setRange} />
           <SecondaryButton onClick={refresh}>Refresh</SecondaryButton>
         </div>
       </div>

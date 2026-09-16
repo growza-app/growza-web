@@ -214,8 +214,11 @@ export default function AdminDashboardPage() {
 
       {/* GRW-277 QA — one column on a phone, two on a laptop. The DOM order
           below IS the phone order (quick actions, revenue, status, attention,
-          signups); `admin.css`'s grid areas rearrange it above 1000px. */}
-      <div className="admin-dash-cols">
+          signups); `admin.css`'s grid areas rearrange it above 1000px.
+          `data-has-revenue` — QA GRW-276 — lets that stylesheet collapse the
+          revenue column when there is no RevenueCard to put in it, instead of
+          leaving the cell empty. */}
+      <div className="admin-dash-cols" data-has-revenue={data.revenue ? 'true' : 'false'}>
         {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}
         <Card className="admin-dash-quick">
           <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>

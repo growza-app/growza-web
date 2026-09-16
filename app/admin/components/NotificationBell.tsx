@@ -32,6 +32,7 @@ export function NotificationBell() {
   /** Bumped each time the panel opens, to re-read. */
   const [openCount, setOpenCount] = useState(0);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   /*
    * Jira GRW-287 (QA of GRW-276) — re-read on every route change, and every
@@ -83,13 +84,43 @@ export function NotificationBell() {
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
+  /*
+   * QA GRW-276 — a real document-level listener, not a full-viewport overlay
+   * div.
+   *
+   * The overlay this replaced was `position: fixed; inset: 0` inside this
+   * component, which the header renders inside its own `backdropFilter`
+   * element (AdminShell). `backdrop-filter`, like `filter` and `transform`,
+   * establishes a containing block for fixed-position descendants — the CSS
+   * spec's own rule, not a browser bug — so the "full viewport" overlay was
+   * silently confined to the header's own ~53px-tall box. Verified directly:
+   * a `position:fixed; inset:0` div inside a `backdrop-filter` ancestor
+   * measured 1440x53 in headless Chromium, not 1440x900. A click anywhere in
+   * the actual page body — everywhere below the header — went straight
+   * through to whatever was underneath, at every viewport width.
+   *
+   * `pointerdown`, not `click`: it fires before the click that might follow
+   * it opens a menu inside the panel, so this cannot close the panel and then
+   * immediately have that same click count as "outside" on a target that was
+   * removed by the close.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (rootRef.current?.contains(event.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [open]);
+
   if (!alerts) return null;
 
   const total = alerts.reduce((sum, row) => sum + (row.count ?? 0), 0);
   const live = alerts.filter((row) => (row.count ?? 0) > 0);
 
   return (
-    <div style={{ position: 'relative', flex: 'none' }}>
+    <div ref={rootRef} style={{ position: 'relative', flex: 'none' }}>
       <button
         type="button"
         aria-label={total > 0 ? `Notifications, ${total} needing attention` : 'Notifications'}
@@ -142,75 +173,71 @@ export function NotificationBell() {
       </button>
 
       {open ? (
-        <>
-          {/* Click-anywhere-else to dismiss, without a visible scrim. */}
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
+        <div
+          style={{
+            position: 'absolute',
+            top: 48,
+            right: 0,
+            zIndex: 21,
+            width: 288,
+            maxWidth: 'calc(100vw - 32px)',
+            background: 'white',
+            border: `1px solid ${oklch.border}`,
+            borderRadius: 14,
+            boxShadow: '0 12px 32px oklch(0.2 0.02 155 / 0.16)',
+            overflow: 'hidden',
+          }}
+        >
           <div
             style={{
-              position: 'absolute',
-              top: 48,
-              right: 0,
-              zIndex: 21,
-              width: 288,
-              maxWidth: 'calc(100vw - 32px)',
-              background: 'white',
-              border: `1px solid ${oklch.border}`,
-              borderRadius: 14,
-              boxShadow: '0 12px 32px oklch(0.2 0.02 155 / 0.16)',
-              overflow: 'hidden',
+              padding: '11px 14px',
+              borderBottom: `1px solid ${oklch.divider}`,
+              fontSize: 12.5,
+              fontWeight: 800,
+              color: oklch.textStrong,
             }}
           >
-            <div
-              style={{
-                padding: '11px 14px',
-                borderBottom: `1px solid ${oklch.divider}`,
-                fontSize: 12.5,
-                fontWeight: 800,
-                color: oklch.textStrong,
-              }}
-            >
-              Needs attention
-            </div>
-            {live.length === 0 ? (
-              <div style={{ padding: '16px 14px', fontSize: 13, color: oklch.textFaint }}>Nothing needs attention right now.</div>
-            ) : (
-              live.map((row) => (
-                <Link
-                  key={row.key}
-                  href={row.href ?? '/admin'}
-                  onClick={() => setOpen(false)}
+            Needs attention
+          </div>
+          {live.length === 0 ? (
+            <div style={{ padding: '16px 14px', fontSize: 13, color: oklch.textFaint }}>Nothing needs attention right now.</div>
+          ) : (
+            live.map((row) => (
+              <Link
+                key={row.key}
+                href={row.href ?? '/admin'}
+                onClick={() => setOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '11px 14px',
+                  borderBottom: `1px solid ${oklch.divider}`,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                }}
+              >
+                <span
                   style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 9,
+                    background: 'oklch(0.95 0.04 25)',
+                    color: 'oklch(0.5 0.14 25)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 10,
-                    padding: '11px 14px',
-                    borderBottom: `1px solid ${oklch.divider}`,
-                    textDecoration: 'none',
-                    color: 'inherit',
+                    justifyContent: 'center',
+                    flex: 'none',
                   }}
                 >
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 9,
-                      background: 'oklch(0.95 0.04 25)',
-                      color: 'oklch(0.5 0.14 25)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flex: 'none',
-                    }}
-                  >
-                    <Icon name="alert" size={15} />
-                  </span>
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{row.label}</span>
-                  <span style={{ fontSize: 13.5, fontWeight: 800, color: 'oklch(0.5 0.14 25)' }}>{row.count}</span>
-                </Link>
-              ))
-            )}
-          </div>
-        </>
+                  <Icon name="alert" size={15} />
+                </span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{row.label}</span>
+                <span style={{ fontSize: 13.5, fontWeight: 800, color: 'oklch(0.5 0.14 25)' }}>{row.count}</span>
+              </Link>
+            ))
+          )}
+        </div>
       ) : null}
     </div>
   );
