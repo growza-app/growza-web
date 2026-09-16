@@ -53,7 +53,10 @@ describe('Record payment settles the combo and its extras in one checkout', () =
 
 describe('Walk-in now / For later refuse to leave a combo half-booked', () => {
   it('the primary button and Add to waiting queue are blocked while an extra sits beside a combo', () => {
-    expect(sheet).toMatch(/const comboBlocksSubmit = !forPayment && comboActive && extras\.length > 0;/);
+    // Jira GRW-293 — "No stylist" (Record payment) is the same shape as
+    // Walk-in now / For later: one call, no second checkout step to settle
+    // an extra through, so it joins the condition that blocks submit.
+    expect(sheet).toMatch(/const comboBlocksSubmit = \(!forPayment \|\| noStylist\) && comboActive && extras\.length > 0;/);
     expect(sheet).toMatch(/disabled=\{busy \|\| picked\.length === 0 \|\| \(forPayment && !amountsValid\) \|\| comboBlocksSubmit\}/);
     expect(sheet).toMatch(/disabled=\{busy \|\| linesLocked \|\| comboBlocksSubmit\}/);
   });
