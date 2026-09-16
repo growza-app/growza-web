@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { inr, oklch } from '../tokens';
-import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
+import { FieldLabel, PrimaryButton, SecondaryButton, TextInput } from './primitives';
 
 /**
  * GRW-148 — "the salon called, they want to continue", as one dialog.
@@ -249,6 +249,9 @@ export function ReenrolModal({
       });
   }
 
+  // A heading over a read-only figure. A field's label is `FieldLabel`
+  // (Jira GRW-288): these were the fields' labels too, as <div>s that named
+  // nothing.
   const label = (text: string) => (
     <div style={{ fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{text}</div>
   );
@@ -366,12 +369,13 @@ export function ReenrolModal({
               {withPayment ? (
                 <div style={{ display: 'grid', gap: 12 }}>
                   <div>
-                    {label('Amount received (₹)')}
-                    <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" disabled={saving} />
+                    <FieldLabel htmlFor={`${ids}-amount`}>Amount received (₹)</FieldLabel>
+                    <TextInput id={`${ids}-amount`} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" disabled={saving} />
                   </div>
                   <div>
-                    {label('How it arrived')}
+                    <FieldLabel htmlFor={`${ids}-method`}>How it arrived</FieldLabel>
                     <select
+                      id={`${ids}-method`}
                       value={method}
                       onChange={(e) => setMethod(e.target.value)}
                       disabled={saving}
@@ -385,12 +389,13 @@ export function ReenrolModal({
                     </select>
                   </div>
                   <div>
-                    {label('Reference')}
-                    <TextInput value={reference} onChange={(e) => setReference(e.target.value)} placeholder="UTR / cheque number" disabled={saving} />
+                    <FieldLabel htmlFor={`${ids}-reference`}>Reference</FieldLabel>
+                    <TextInput id={`${ids}-reference`} value={reference} onChange={(e) => setReference(e.target.value)} placeholder="UTR / cheque number" disabled={saving} />
                   </div>
                   <div>
-                    {label('When it arrived')}
+                    <FieldLabel htmlFor={`${ids}-paid-at`}>When it arrived</FieldLabel>
                     <input
+                      id={`${ids}-paid-at`}
                       type="datetime-local"
                       value={paidAt}
                       onChange={(e) => setPaidAt(e.target.value)}
@@ -411,8 +416,8 @@ export function ReenrolModal({
               ) : null}
 
               <div>
-                {label('Reason')}
-                <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this is being done" disabled={saving} />
+                <FieldLabel htmlFor={`${ids}-reason`}>Reason</FieldLabel>
+                <TextInput id={`${ids}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this is being done" disabled={saving} />
               </div>
 
               {error ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
@@ -433,3 +438,4 @@ export function ReenrolModal({
     </div>
   );
 }
+

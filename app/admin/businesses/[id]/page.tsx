@@ -470,7 +470,12 @@ function SummaryHeader({
           <TypeIcon type={business.vertical} size={26} />
         </span>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 19, fontWeight: 800, color: oklch.textStrong }}>{business.name}</div>
+          {/* Jira GRW-288 — a 118-character name with a long unbroken run
+              scrolled the page 9px sideways at 320px: the word was wider
+              than the card, and nothing let it break. */}
+          <div className="admin-name" style={{ fontSize: 19, fontWeight: 800, color: oklch.textStrong }}>
+            {business.name}
+          </div>
           <div style={{ fontSize: 13, color: oklch.textMuted }}>
             {business.vertical} · {business.ownerPhone ?? 'No owner recorded'}
           </div>
@@ -801,7 +806,7 @@ function BranchesTab({
           minWidthPx={480}
           rows={locations.map((l) => (
             <TableRow key={l.id} columns={BRANCHES_COLUMNS}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>
+              <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>
                 {l.name}
                 {l.isMain ? (
                   <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 800, color: oklch.textMuted }}>MAIN</span>

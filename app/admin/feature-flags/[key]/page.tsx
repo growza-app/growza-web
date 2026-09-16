@@ -283,6 +283,7 @@ export default function FeatureFlagDetailPage() {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Link
                     href={`/admin/businesses/${row.businessId}`}
+                    className="admin-name"
                     style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, textDecoration: 'none' }}
                   >
                     {row.businessName}
@@ -374,9 +375,9 @@ export default function FeatureFlagDetailPage() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 4 }}>
-          <TextInput placeholder="Business id" value={addBusinessId} onChange={(e) => setAddBusinessId(e.target.value)} />
+          <TextInput aria-label="Business id" placeholder="Business id" value={addBusinessId} onChange={(e) => setAddBusinessId(e.target.value)} />
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>
-            <Toggle on={addEnabled} onClick={() => setAddEnabled((v) => !v)} />
+            <Toggle on={addEnabled} onClick={() => setAddEnabled((v) => !v)} label="Switched on for this business" />
             {addEnabled ? 'On for this business' : 'Off for this business'}
           </label>
         </div>

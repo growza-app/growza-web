@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { billingStatusLabel, INVOICE_PAYMENT_STATUS_VALUES } from '../lib/billing-status';
-import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
+import { INVOICE_COLUMNS } from '../lib/list-columns';
 import { Pagination, type PaginationState } from '../components/Pagination';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
@@ -24,19 +25,9 @@ import { oklch } from '../tokens';
  */
 const STATUS_OPTIONS = ['All', ...INVOICE_PAYMENT_STATUS_VALUES];
 
-const COLUMNS: TableColumn[] = [
-  { label: 'Invoice', width: '0.95fr' },
-  { label: 'Business', width: '1.3fr' },
-  // Widest column by some way: it holds two formatted dates and an en dash,
-  // and at 1.1fr it ran into the Taxable figure beside it.
-  { label: 'Period', width: '1.7fr' },
-  { label: 'Taxable', width: '0.85fr' },
-  { label: 'GST', width: '0.8fr' },
-  { label: 'Total', width: '0.9fr' },
-  { label: 'Payment', width: '0.95fr' },
-  // Jira GRW-267 · GRW-272 — the card opens when tapped; no chevron on a phone.
-  { label: '', width: '50px', right: true, mobile: false },
-];
+// Jira GRW-288 — the columns live in lib/list-columns.ts, where a test holds
+// their minimums to the widths this table has to fit.
+const COLUMNS = INVOICE_COLUMNS;
 
 interface InvoiceRow {
   id: string;
@@ -124,6 +115,7 @@ export default function AdminInvoicesPage() {
       <div style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ width: 170 }}>
           <Select
+            aria-label="Filter by payment"
             options={STATUS_OPTIONS.map(billingStatusLabel)}
             value={billingStatusLabel(paymentStatus)}
             onChange={(e) => setPaymentStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(billingStatusLabel).indexOf(e.target.value)] ?? 'All')}
@@ -163,7 +155,6 @@ export default function AdminInvoicesPage() {
         <>
           <Table
             columns={COLUMNS}
-            minWidthPx={1080}
             rows={rows.map((inv) => (
               <TableRow key={inv.id} columns={COLUMNS} onClick={() => router.push(`/admin/invoices/${inv.id}`)}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>

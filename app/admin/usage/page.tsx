@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly } from '../lib/format';
-import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill, Table, TableRow } from '../components/primitives';
+import { USAGE_COLUMNS } from '../lib/list-columns';
 import { Pagination, type PaginationState } from '../components/Pagination';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
@@ -62,13 +63,9 @@ interface UsagePage {
   total: number;
 }
 
-const COLUMNS: TableColumn[] = [
-  { label: 'Business', width: '1.6fr' },
-  { label: 'Plan', width: '1fr' },
-  { label: 'Billing period', width: '1.2fr' },
-  { label: 'Bookings', width: '0.9fr' },
-  { label: 'Of limit', width: '1.3fr' },
-];
+// Jira GRW-288 — the columns live in lib/list-columns.ts, where a test holds
+// their minimums to the widths this table has to fit.
+const COLUMNS = USAGE_COLUMNS;
 
 const bookingsOf = (row: UsageRow) => row.meters.find((m) => m.usageType === 'booking');
 
@@ -192,7 +189,6 @@ export default function AdminUsagePage() {
           <>
             <Table
               columns={COLUMNS}
-              minWidthPx={820}
               rows={rows.map((row) => {
                 const bookings = bookingsOf(row);
                 const used = bookings?.used ?? 0;

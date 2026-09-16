@@ -7,7 +7,8 @@ import { isTerminalSubscriptionStatus } from '../lib/subscription-status';
 import { ReenrolModal, reenrolActionLabel } from '../components/ReenrolModal';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { SUBSCRIPTION_STATUS_VALUES, subscriptionStatusLabel } from '../lib/subscription-status';
-import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
+import { SUBSCRIPTION_COLUMNS } from '../lib/list-columns';
 import { Pagination, type PaginationState } from '../components/Pagination';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
@@ -28,19 +29,9 @@ import { oklch, typeColor } from '../tokens';
  */
 const STATUS_OPTIONS = ['All', ...SUBSCRIPTION_STATUS_VALUES];
 
-const COLUMNS: TableColumn[] = [
-  { label: 'Business', width: '1.7fr' },
-  { label: 'Plan', width: '1.1fr' },
-  { label: 'List', width: '0.9fr' },
-  { label: 'Discount', width: '0.9fr' },
-  { label: 'Final', width: '0.9fr' },
-  { label: 'Status', width: '1.1fr' },
-  { label: 'Next billing', width: '1fr' },
-  // GRW-148 widened this from 50px: the row now carries the re-enrol action
-  // as well as the chevron, so a support call can act from the list rather
-  // than opening each subscription to find out whether it needs anything.
-  { label: '', width: '150px', right: true },
-];
+// Jira GRW-288 — the columns live in lib/list-columns.ts, where a test holds
+// their minimums to the widths this table has to fit.
+const COLUMNS = SUBSCRIPTION_COLUMNS;
 
 interface SubscriptionRow {
   id: string;
@@ -140,6 +131,7 @@ export default function AdminSubscriptionsPage() {
       <div style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ width: 180 }}>
           <Select
+            aria-label="Filter by status"
             options={STATUS_OPTIONS.map(subscriptionStatusLabel)}
             value={subscriptionStatusLabel(status)}
             onChange={(e) =>
@@ -194,7 +186,6 @@ export default function AdminSubscriptionsPage() {
         <>
           <Table
             columns={COLUMNS}
-            minWidthPx={980}
             rows={rows.map((s) => {
               const tc = typeColor(s.vertical);
               const discounted = s.discountAmountMinor > 0;

@@ -103,7 +103,11 @@ export default function AdminRolesPage() {
             {data.rows.map((role) => (
               <div key={role.id} style={{ borderTop: `1px solid ${oklch.divider}`, paddingTop: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  {/* Jira GRW-288 — `minWidth: 0` and `admin-name`: an 80-character
+                      role name with no spaces (the most the API allows) had a
+                      minimum width of the whole word, and pushed the page 305px
+                      sideways at 390px. */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
                     <span
                       style={{
                         width: 32,
@@ -119,8 +123,10 @@ export default function AdminRolesPage() {
                     >
                       <Icon name="roles" size={15} />
                     </span>
-                    <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>{role.name}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>
+                        {role.name}
+                      </div>
                       <div style={{ fontSize: 12, color: oklch.textFaint }}>
                         {role.holders} {role.holders === 1 ? 'administrator' : 'administrators'} ·{' '}
                         {role.isBuiltin ? 'every permission' : `${role.permissions.length} permissions`}

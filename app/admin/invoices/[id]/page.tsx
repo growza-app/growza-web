@@ -115,7 +115,7 @@ export default function InvoiceDetailPage() {
             <div style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
               {invoice.invoiceNumber}
             </div>
-            <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 3 }}>
+            <div className="admin-name" style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 3 }}>
               {businessName ? `${businessName} · ` : ''}
               {invoice.planCode} v{invoice.planVersion} · issued {formatTimestampDate(invoice.issuedAt)}
             </div>

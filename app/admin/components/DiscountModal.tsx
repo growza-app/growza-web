@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly } from '../lib/format';
 import { Icon } from '../icons';
@@ -85,6 +85,14 @@ export function DiscountModal({
   const [value, setValue] = useState('200');
   const [duration, setDuration] = useState('6');
   const [reason, setReason] = useState('');
+  // Jira GRW-288 (AC-05) — these four labels were bare `<label>`s beside their
+  // controls: clicking "Duration" focused nothing, and each control read out
+  // to a screen reader with no name at all.
+  const fieldId = useId();
+  const typeLabelId = `${fieldId}-type`;
+  const valueId = `${fieldId}-value`;
+  const durationId = `${fieldId}-duration`;
+  const reasonId = `${fieldId}-reason`;
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -288,8 +296,12 @@ export function DiscountModal({
           ) : null}
 
           <div style={{ marginTop: 16 }}>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>Discount type</label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            {/* A choice of buttons, not one control, so nothing for a <label>
+                to point at: the group is named by the heading instead. */}
+            <div id={typeLabelId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              Discount type
+            </div>
+            <div role="group" aria-labelledby={typeLabelId} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               {typeOptions.map(([v, label]) => (
                 <button
                   key={v}
@@ -316,8 +328,11 @@ export function DiscountModal({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14, marginTop: 16 }}>
             <div>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>{valueLabel}</label>
+              <label htmlFor={valueId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+                {valueLabel}
+              </label>
               <TextInput
+                id={valueId}
                 type="number"
                 min={0}
                 disabled={busy}
@@ -327,8 +342,11 @@ export function DiscountModal({
               />
             </div>
             <div>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>Duration</label>
+              <label htmlFor={durationId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+                Duration
+              </label>
               <select
+                id={durationId}
                 value={duration}
                 disabled={busy}
                 onChange={(e) => setDuration(e.target.value)}
@@ -360,10 +378,11 @@ export function DiscountModal({
           </div>
 
           <div>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginTop: 16 }}>
+            <label htmlFor={reasonId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginTop: 16 }}>
               Reason
             </label>
             <TextInput
+              id={reasonId}
               value={reason}
               disabled={busy}
               onChange={(e) => setReason(e.target.value)}

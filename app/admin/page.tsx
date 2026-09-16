@@ -411,8 +411,26 @@ export default function AdminDashboardPage() {
                     >
                       {initials(signup.name)}
                     </span>
-                    <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap' }}>{signup.name}</span>
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                      {/* Jira GRW-288 — capped, with an ellipsis and the full
+                          name on hover. Uncapped, one 118-character name took
+                          the whole strip at 1440px and the next signup was cut
+                          mid-word at the card's edge, with nothing to say it
+                          had been. */}
+                      <span
+                        title={signup.name}
+                        style={{
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          color: oklch.textStrong,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: 200,
+                        }}
+                      >
+                        {signup.name}
+                      </span>
                       <span style={{ fontSize: 11, color: oklch.textFaint, whiteSpace: 'nowrap' }}>{shortDate(signup.createdAt)}</span>
                     </span>
                   </Link>

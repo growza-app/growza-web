@@ -60,11 +60,16 @@ describe('tables become cards on a phone', () => {
     expect(primitives).toMatch(/data-mobile=\{column\?\.mobile === false \? 'hide' : undefined\}/);
   });
 
-  it('the phone stylesheet drops the heading row and the table’s minimum width', () => {
+  it('the card stylesheet drops the heading row and the table’s minimum width', () => {
+    // Jira GRW-288 — keyed on the measured `data-layout` rather than written
+    // inside the 860px query, because a laptop table that does not fit needs
+    // the same card. A phone is always `cards` (lib/table-layout.ts).
     const css = admin('admin.css');
-    expect(css).toMatch(/\.admin-table-head \{\s*display: none !important;/);
-    expect(css).toMatch(/\.admin-table-inner \{\s*min-width: 0 !important;/);
-    expect(css).toMatch(/\.admin-cell\[data-label\]:not\(\[data-first='true'\]\)::before \{\s*content: attr\(data-label\);/);
+    expect(css).toMatch(/\.admin-table\[data-layout='cards'\] \.admin-table-head \{\s*display: none;/);
+    expect(css).toMatch(/\.admin-table\[data-layout='cards'\] \.admin-table-inner \{\s*min-width: 0;/);
+    expect(css).toMatch(
+      /\.admin-table\[data-layout='cards'\] \.admin-cell\[data-label\]:not\(\[data-first='true'\]\)::before \{\s*content: attr\(data-label\);/,
+    );
   });
 });
 

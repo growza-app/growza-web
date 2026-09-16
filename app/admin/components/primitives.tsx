@@ -1,8 +1,9 @@
 'use client';
 
-import { Children, cloneElement, isValidElement, useId, type CSSProperties, type ReactNode } from 'react';
+import { Children, cloneElement, isValidElement, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon, type IconName } from '../icons';
 import { oklch, usageState, STATUS_COLORS } from '../tokens';
+import { ADMIN_PHONE_QUERY, chooseTableLayout, gridTemplate, tableMinWidth, type TableColumn, type TableLayout } from '../lib/table-layout';
 
 /**
  * Shared admin primitives (GRW-96 in miniature). Every screen composes from
@@ -124,23 +125,11 @@ export function EmptyState({ title, sub, icon = 'businesses' }: { title: string;
   );
 }
 
-export interface TableColumn {
-  label: string;
-  right?: boolean;
-  /** CSS grid track, e.g. '1.5fr' or '120px'. */
-  width: string;
-  /**
-   * Jira GRW-267 · GRW-272 — `false` leaves this column off the phone card.
-   * For what a phone does not need: a placeholder for a figure not built yet,
-   * or an "open" chevron on a row that already opens when tapped.
-   */
-  mobile?: boolean;
-}
+export type { TableColumn } from '../lib/table-layout';
 
 /**
- * A grid-based table with its own horizontal scroll — the row content never
- * widens the page. `minWidthPx` is the point below which it scrolls instead
- * of squeezing; every screen picks one for its own column set.
+ * A grid-based table that never scrolls sideways — not the page, and not
+ * itself.
  *
  * Jira GRW-267 · GRW-272 — on a phone (≤860px) it is not a table at all. A
  * 1,180px table in a 390px screen showed the name and the owner and hid the
@@ -150,22 +139,67 @@ export interface TableColumn {
  * column labels a row already has are the labels the card prints.
  *
  * GRW-277 — the grid template and the minimum width travel as CSS custom
- * properties rather than inline values, so the phone rules can drop both
- * without `!important`. An inline `grid-template-columns` cannot be overridden
- * by a media query, and a table that needs `!important` to become readable is
- * a table nobody will keep readable.
+ * properties rather than inline values, so the card rules can drop both
+ * without `!important`.
+ *
+ * Jira GRW-288 — the same card, wherever the table does not fit, not only on a
+ * phone. Between 861px and ~1400px the sidebar is back and a ten-column table
+ * had 718px of room at 1024; it scrolled inside its own box and hid Status and
+ * Created behind that scroll. Which layout a table gets is now decided by the
+ * width of the box it is actually drawn in against the minimum its own columns
+ * add up to (`lib/table-layout.ts`, which says why that is a measurement and
+ * not a media query). `minWidthPx` is only for tables whose columns declare no
+ * `min` of their own.
  */
 export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColumn[]; rows: ReactNode; minWidthPx?: number }) {
-  const grid = columns.map((c) => c.width).join(' ');
+  const ref = useRef<HTMLDivElement>(null);
+  // `table` until measured. Every list screen mounts its table only once its
+  // rows have arrived, on the client, so the layout effect below runs before
+  // that first paint — nothing flashes from one shape to the other.
+  const [layout, setLayout] = useState<TableLayout>('table');
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const phone = window.matchMedia(ADMIN_PHONE_QUERY);
+    const update = () =>
+      // `offsetWidth` is the border box, which does not change between layouts
+      // — the card drops the border, and measuring inside it would let a table
+      // exactly at its minimum flip to cards and back on every resize callback.
+      setLayout(chooseTableLayout({ boxWidth: el.offsetWidth, phone: phone.matches, columns, fallbackMinWidth: minWidthPx }));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    phone.addEventListener('change', update);
+    return () => {
+      observer.disconnect();
+      phone.removeEventListener('change', update);
+    };
+  }, [columns, minWidthPx]);
+
   return (
-    <div className="admin-table" style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}>
+    <div
+      ref={ref}
+      className="admin-table"
+      data-layout={layout}
+      style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}
+    >
       <div className="admin-table-scroll">
-        <div className="admin-table-inner" style={{ '--admin-table-min': `${minWidthPx}px` } as CSSProperties}>
+        <div
+          className="admin-table-inner"
+          style={
+            {
+              '--admin-table-min': `${tableMinWidth(columns, { fallback: minWidthPx })}px`,
+              '--admin-table-min-compact': `${tableMinWidth(columns, { compact: true, fallback: minWidthPx })}px`,
+            } as CSSProperties
+          }
+        >
           <div
             className="admin-table-head"
             style={
               {
-                '--admin-cols': grid,
+                '--admin-cols': gridTemplate(columns),
+                '--admin-cols-compact': gridTemplate(columns, true),
                 background: oklch.surfaceSubtle,
                 borderBottom: `1px solid ${oklch.borderStrong}`,
                 color: oklch.textFaint,
@@ -173,7 +207,7 @@ export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColum
             }
           >
             {columns.map((c, i) => (
-              <div key={i} style={c.right ? { textAlign: 'right' } : undefined}>
+              <div key={i} data-optional={c.optional ? 'true' : undefined} style={c.right ? { textAlign: 'right' } : undefined}>
                 {c.label}
               </div>
             ))}
@@ -196,7 +230,6 @@ export function TableRow({
   onClick?: () => void;
   style?: CSSProperties;
 }) {
-  const grid = columns.map((c) => c.width).join(' ');
   return (
     <div
       className="admin-table-row"
@@ -204,7 +237,8 @@ export function TableRow({
       onClick={onClick}
       style={
         {
-          '--admin-cols': grid,
+          '--admin-cols': gridTemplate(columns),
+          '--admin-cols-compact': gridTemplate(columns, true),
           borderBottom: `1px solid ${oklch.divider}`,
           cursor: onClick ? 'pointer' : undefined,
           ...style,
@@ -231,6 +265,7 @@ export function TableRow({
             data-label={column?.label || undefined}
             data-first={i === 0 ? 'true' : undefined}
             data-mobile={column?.mobile === false ? 'hide' : undefined}
+            data-optional={column?.optional ? 'true' : undefined}
           >
             {child}
           </div>
@@ -302,7 +337,26 @@ export function Toggle({
  * makes the actionable one harder to find, not easier. `role="alert"` so a
  * screen reader announces it when it appears rather than only on focus.
  */
-export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: ReactNode }) {
+export function Field({
+  label,
+  hint,
+  error,
+  id,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  /**
+   * Jira GRW-288 — the id of the control, for a field whose child is a
+   * WRAPPER round it (a dial-code prefix beside a phone input). Without it the
+   * id below is cloned onto the wrapper `<div>`, and the label points at a box
+   * that cannot take focus — which is what "Owner's phone" did. When set,
+   * nothing is cloned: the caller puts this id on the control itself.
+   */
+  id?: string;
+  children: ReactNode;
+}) {
   /**
    * Jira GRW-277 — the label is actually attached to the control.
    *
@@ -317,8 +371,8 @@ export function Field({ label, hint, error, children }: { label: string; hint?: 
    * elsewhere keeps the id it is addressed by.
    */
   const generatedId = useId();
-  const child = isValidElement<{ id?: string }>(children) ? children : null;
-  const controlId = child ? (child.props.id ?? generatedId) : undefined;
+  const child = id === undefined && isValidElement<{ id?: string }>(children) ? children : null;
+  const controlId = id ?? (child ? (child.props.id ?? generatedId) : undefined);
 
   return (
     <div>
@@ -337,6 +391,27 @@ export function Field({ label, hint, error, children }: { label: string; hint?: 
         <div style={{ fontSize: 11.5, color: 'oklch(0.58 0.02 155)', marginTop: 6 }}>{hint}</div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Jira GRW-288 (AC-05) — the small uppercase label the admin dialogs put over
+ * a field, as a real `<label>` for the control `htmlFor` names.
+ *
+ * Every dialog that drew this heading drew it as a `<div>` (AddAdminModal,
+ * RoleEditor, ReenrolModal), so none of their fields had a name a screen
+ * reader could read and clicking "Reference" did not put the cursor in the
+ * box. `Field` is the other way to get this right; this is for the dialogs
+ * whose layout is not `Field`'s.
+ */
+export function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      style={{ display: 'block', fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}
+    >
+      {children}
+    </label>
   );
 }
 

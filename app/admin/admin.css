@@ -32,6 +32,32 @@ body.admin-body {
   color: oklch(0.4 0.1 150);
 }
 
+/* ---------- Jira GRW-288: a name may be one 80-character word ----------
+   Role, business, branch and administrator names are typed by people, and
+   the API accepts 80 characters with no spaces. Nothing in the admin plane
+   allowed such a word to break: /admin/roles scrolled 305px sideways at 390px
+   (98px at 861), which on a phone also widened the layout viewport and
+   pushed the New role dialog's Cancel button off the screen, and a long
+   business name scrolled its detail page at 320px.
+
+   `anywhere`, not `break-word`: only `anywhere` lowers the element's
+   min-content width, and min-content is what a flex or grid item with the
+   default `min-width: auto` refuses to shrink below. `break-word` breaks the
+   word only once the box is already too narrow — which it never becomes.
+
+   Headings and paragraphs get it everywhere, because that is where a dialog
+   puts a name ("Delete <role>?", "Edit <role>", a business under a title).
+   Any other element that prints a name carries `.admin-name`. Text that
+   ellipsizes instead (`nowrap`) is unaffected. */
+.admin-body h1,
+.admin-body h2,
+.admin-body h3,
+.admin-body h4,
+.admin-body p,
+.admin-name {
+  overflow-wrap: anywhere;
+}
+
 .admin-body input,
 .admin-body select,
 .admin-body button,
@@ -430,6 +456,11 @@ body.admin-body {
 .admin-table-row {
   display: grid;
   grid-template-columns: var(--admin-cols);
+  /* Jira GRW-288 — there was none, so at a table's minimum width a business
+     name ran straight into the owner's phone number beside it. 12px is
+     TABLE_COLUMN_GAP_PX in lib/table-layout.ts, which counts it into every
+     table's minimum; change one, change both. */
+  column-gap: 12px;
   align-items: center;
 }
 
@@ -449,6 +480,115 @@ body.admin-body {
    and the column layout is exactly what it was before cards existed. */
 .admin-cell {
   display: contents;
+}
+
+/* ---------- Jira GRW-288: which layout a table is in ----------
+   `data-layout` is set by `Table` (primitives.tsx) from the width of the box
+   the table is drawn in, measured against the minimum its own columns add up
+   to — `lib/table-layout.ts` says why that is a measurement rather than a
+   media query. Three values:
+
+   - `table`   — the rules above, unchanged.
+   - `compact` — the same grid without the columns marked `optional`.
+   - `cards`   — the GRW-267 · GRW-272 phone card, now also used on a laptop
+                 or tablet whose table would not fit. Before this, from 861px
+                 to ~1400px a wide table scrolled sideways INSIDE its own box
+                 and hid its last columns there (Businesses at 1024x768 showed
+                 718 of 1180px: Status cut, Created gone).
+
+   Written once, keyed on the attribute, not duplicated per breakpoint. */
+
+.admin-table[data-layout='compact'] .admin-table-inner {
+  min-width: var(--admin-table-min-compact, var(--admin-table-min, 640px));
+}
+.admin-table[data-layout='compact'] .admin-table-head,
+.admin-table[data-layout='compact'] .admin-table-row {
+  grid-template-columns: var(--admin-cols-compact, var(--admin-cols));
+}
+.admin-table[data-layout='compact'] [data-optional='true'] {
+  display: none;
+}
+
+/* Tables become cards. The heading row goes; each row is a card with its
+   first column across the top and the rest as labelled pairs. `!important`
+   only where the value it beats is an inline style on the table (primitives). */
+.admin-table[data-layout='cards'] {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+/* Only the table's own scroller: the class is also borrowed by tab bars
+   (business detail) that must keep scrolling sideways on a phone. */
+.admin-table[data-layout='cards'] > .admin-table-scroll {
+  overflow: visible;
+}
+.admin-table[data-layout='cards'] .admin-table-inner {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin-table[data-layout='cards'] .admin-table-head {
+  display: none;
+}
+.admin-table[data-layout='cards'] .admin-table-row {
+  /* Two labelled pairs a line on a phone, as GRW-267 drew it; more on a
+     tablet or laptop card, where two would leave a 700px card mostly air.
+     `min(150px, 50% - 8px)`: on a phone half the card is under 150px, so the
+     track is half the card and exactly two fit (8, not 7, so rounding can
+     never make it one); from ~330px of card up it is 150px and as many fit as
+     the card has room for. No fixed minimum wider than a 320px phone — the
+     `minmax(<px>, 1fr)` shape mobile-layout.test.ts forbids. */
+  grid-template-columns: repeat(auto-fill, minmax(min(150px, calc(50% - 8px)), 1fr));
+  align-items: start;
+  gap: 12px 14px;
+  padding: 14px 16px;
+  background: oklch(1 0 0);
+  border: 1px solid oklch(0.92 0.01 150) !important;
+  border-radius: 14px;
+}
+/* The cell wrapper is `display: contents` in a table, so the cells inside it
+   stay direct grid items and that layout is untouched. In a card it has to
+   become a box of its own: every rule below — the label pseudo-element, the
+   full-width first cell, the hidden columns — needs something to hang on, and
+   `contents` leaves nothing. */
+.admin-table[data-layout='cards'] .admin-cell {
+  display: block;
+  min-width: 0;
+}
+/* A labelled value has part of a card: let a date range wrap rather than push
+   the card a pixel past the screen at 320px. */
+.admin-table[data-layout='cards'] .admin-cell[data-label]:not([data-first='true']) * {
+  white-space: normal !important;
+}
+.admin-table[data-layout='cards'] .admin-table-row[data-clickable='true']:active {
+  background: oklch(0.97 0.01 150);
+}
+.admin-table[data-layout='cards'] .admin-cell[data-first='true'] {
+  grid-column: 1 / -1;
+}
+.admin-table[data-layout='cards'] .admin-cell[data-mobile='hide'] {
+  display: none;
+}
+/* A column with no heading is an action: its own line, at the card's end. */
+.admin-table[data-layout='cards'] .admin-cell:not([data-label]):not([data-first='true']) {
+  grid-column: 1 / -1;
+}
+.admin-table[data-layout='cards'] .admin-cell[data-label]:not([data-first='true'])::before {
+  content: attr(data-label);
+  display: block;
+  margin-bottom: 3px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: oklch(0.6 0.02 155);
+}
+.admin-table[data-layout='cards'] .admin-cell[data-label]:not([data-first='true']),
+.admin-table[data-layout='cards'] .admin-cell[data-label]:not([data-first='true']) > * {
+  text-align: left !important;
+  justify-content: flex-start !important;
 }
 
 
@@ -582,84 +722,16 @@ body.admin-body {
     font-weight: 800;
   }
 
-  /* Tables become cards. The heading row goes; each row is a card with its
-     first column across the top and the rest as labelled pairs, two a line. */
-  .admin-table {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-  }
-  /* Only the table's own scroller: the class is also borrowed by tab bars
-     (business detail) that must keep scrolling sideways on a phone. */
-  .admin-table > .admin-table-scroll {
-    overflow: visible;
-  }
+  /* Tables become cards on a phone — Jira GRW-288 moved those rules out of
+     this query to `.admin-table[data-layout='cards']` above, because a laptop
+     table that does not fit needs the same card. What stays here is phone-only:
+     a sideways scroller (the tab bars that borrow `.admin-table-scroll`) shows
+     no scrollbar. */
   .admin-table-scroll {
     scrollbar-width: none;
   }
   .admin-table-scroll::-webkit-scrollbar {
     display: none;
-  }
-  .admin-table-inner {
-    min-width: 0 !important;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .admin-table-head {
-    display: none !important;
-  }
-  .admin-table-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    align-items: start !important;
-    gap: 12px 14px;
-    padding: 14px 16px !important;
-    background: oklch(1 0 0);
-    border: 1px solid oklch(0.92 0.01 150) !important;
-    border-radius: 14px;
-  }
-  /* The cell wrapper is `display: contents` on a laptop, so the cells inside
-     it stay direct grid items and that layout is untouched. Here it has to
-     become a box of its own: every rule below — the label pseudo-element, the
-     full-width first cell, the hidden columns — needs something to hang on,
-     and `contents` leaves nothing. */
-  .admin-cell {
-    display: block;
-    min-width: 0;
-  }
-  /* A labelled value has half a card: let a date range wrap rather than push
-     the card a pixel past the screen at 320px. */
-  .admin-cell[data-label]:not([data-first='true']) * {
-    white-space: normal !important;
-  }
-  .admin-table-row[data-clickable='true']:active {
-    background: oklch(0.97 0.01 150);
-  }
-  .admin-cell[data-first='true'] {
-    grid-column: 1 / -1;
-  }
-  .admin-cell[data-mobile='hide'] {
-    display: none;
-  }
-  /* A column with no heading is an action: its own line, at the card's end. */
-  .admin-cell:not([data-label]):not([data-first='true']) {
-    grid-column: 1 / -1;
-  }
-  .admin-cell[data-label]:not([data-first='true'])::before {
-    content: attr(data-label);
-    display: block;
-    margin-bottom: 3px;
-    font-size: 10.5px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: oklch(0.6 0.02 155);
-  }
-  .admin-cell[data-label]:not([data-first='true']),
-  .admin-cell[data-label]:not([data-first='true']) > * {
-    text-align: left !important;
-    justify-content: flex-start !important;
   }
 
   /* A row of filter chips scrolls sideways instead of wrapping to three lines. */
