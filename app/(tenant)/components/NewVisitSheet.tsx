@@ -1661,7 +1661,7 @@ export function NewVisitSheet({
                 {checkoutError && <div className="wi-error">{checkoutError}</div>}
                 <button
                   type="button"
-                  className="sheet-item"
+                  className="sheet-item wi-take-payment"
                   disabled={loadingCheckout}
                   onClick={() => void openCheckout(stage.result)}
                 >
