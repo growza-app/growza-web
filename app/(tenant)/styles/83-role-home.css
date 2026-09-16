@@ -1804,11 +1804,20 @@
 .hm-queue-card .hm-rows > .hm-row:first-child {
   border-top: 0;
 }
+/* Jira GRW-284 — services picked while giving a name-only token. Scrolls
+   inside the sheet so a 50-service menu cannot push the stylists off-screen. */
+.hm-give-services {
+  max-height: 34dvh;
+  overflow-y: auto;
+  padding: 0 var(--sp-4) var(--sp-3);
+}
 .hm-idx {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
+  /* A token reaches three digits on a busy day (GRW-284). */
+  min-width: 28px;
+  padding: 0 6px;
   height: 28px;
   flex-shrink: 0;
   border-radius: 8px;

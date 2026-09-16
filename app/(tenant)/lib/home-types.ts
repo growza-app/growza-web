@@ -72,4 +72,6 @@ export interface QueueEntry {
   offerId: string | null;
   /** When they were added — which is when they arrived. */
   addedAt: string;
+  /** Jira GRW-284 — the number the client is told, per branch per day. */
+  tokenNo: number | null;
 }

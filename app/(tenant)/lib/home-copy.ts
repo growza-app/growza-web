@@ -205,6 +205,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     free: S('Free', 'खाली'),
     busyWith: (client: string, min: number) => S(`Busy · ${client} · ${min} min`, `व्यस्त · ${client} · ${min} मिनट`),
     theyLeft: S('They left', 'चले गए'),
+    // Jira GRW-284 — a token issued by name alone.
+    whatHaving: S('What are they having?', 'क्या करवा रहे हैं?'),
+    pickServiceFirst: S('Pick what they are having first.', 'पहले सेवा चुनें।'),
     stillBusy: (stylist: string) => S(`${stylist} still busy`, `${stylist} अभी व्यस्त`),
     longerThanBooked: S('Longer than booked', 'समय से ज़्यादा'),
     nobodyWaiting: S('Nobody is waiting.', 'कोई इंतज़ार में नहीं।'),

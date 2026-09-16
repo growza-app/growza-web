@@ -382,10 +382,14 @@ export const api = {
   /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
   // Jira GRW-244 — `location`: one branch's queue (owner); a receptionist's is their own.
   walkInQueue: (location?: string | null) => get<QueueEntry[]>(`/api/v1/walk-in-queue${atBranch(location)}`),
-  addToQueue: (input: { customerId?: string; customerName?: string; customerPhone?: string; serviceIds: string[]; offerId?: string; idempotencyKey?: string; location?: string }) =>
+  addToQueue: (input: { customerId?: string; customerName?: string; customerPhone?: string; /** May be empty (GRW-284). */ serviceIds: string[]; offerId?: string; idempotencyKey?: string; location?: string }) =>
     post<QueueEntry>('/api/v1/walk-in-queue', input),
-  giveToStaff: (entryId: string, schedulableId: string) =>
-    post<{ appointmentId: string; schedulableId: string; startAt: string; endAt: string; overlapping: boolean }>(`/api/v1/walk-in-queue/${entryId}/give`, { schedulableId }),
+  /** Jira GRW-284 — `serviceIds` only when the token was issued by name alone. */
+  giveToStaff: (entryId: string, schedulableId: string, serviceIds?: string[]) =>
+    post<{ appointmentId: string; schedulableId: string; startAt: string; endAt: string; overlapping: boolean }>(`/api/v1/walk-in-queue/${entryId}/give`, {
+      schedulableId,
+      ...(serviceIds?.length ? { serviceIds } : {}),
+    }),
   queueEntryLeft: (entryId: string) => post<{ status: 'left' }>(`/api/v1/walk-in-queue/${entryId}/left`, {}),
   daySummary: (location?: string | null) =>
     get<DaySummary>(`/api/v1/home/day-summary${location ? `?location=${encodeURIComponent(location)}` : ''}`),

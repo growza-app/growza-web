@@ -274,7 +274,8 @@ export const copy = {
     // Jira GRW-222 — the walk-in queue. "Queue", the word the front desk uses.
     addToQueue: 'Add to waiting queue',
     queued: 'Added to the queue',
-    queuePosition: (n: number) => (n === 1 ? 'First in line' : `Number ${n} in line`),
+    // Jira GRW-284 — the number the desk says out loud.
+    token: (n: number) => `Token ${n}`,
     // --- book-for-later only ---
     laterTitle: 'Book for later',
     modeLabel: 'When is this visit?',

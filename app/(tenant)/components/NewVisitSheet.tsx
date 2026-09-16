@@ -105,7 +105,7 @@ type Stage =
   | { step: 'saving'; client: PickedClient }
   | { step: 'done'; client: PickedClient; result: WalkInDone }
   /** Jira GRW-222 — waiting in the queue; no stylist and no visit yet. */
-  | { step: 'queued'; client: PickedClient; position: number }
+  | { step: 'queued'; client: PickedClient; tokenNo: number | null }
   | { step: 'error'; client: PickedClient; message: string };
 
 interface WalkInDone {
@@ -493,10 +493,10 @@ export function NewVisitSheet({
    * line.
    */
   const queueIt = async (client: PickedClient) => {
-    if (picked.length === 0) return;
+    // Jira GRW-284 — no services is fine: a token by name alone, services at payment.
     setStage({ step: 'saving', client });
     try {
-      await api.addToQueue({
+      const entry = await api.addToQueue({
         ...(client.kind === 'existing'
           ? { customerId: client.id }
           : { customerName: client.name, ...(client.phone ? { customerPhone: client.phone } : {}) }),
@@ -506,9 +506,8 @@ export function NewVisitSheet({
         // Jira GRW-244 — they wait at the branch picked above, not at the main one.
         ...atBranch,
       });
-      const waiting = await api.walkInQueue(atBranch.location).catch(() => []);
       router.refresh();
-      setStage({ step: 'queued', client, position: Math.max(waiting.length, 1) });
+      setStage({ step: 'queued', client, tokenNo: entry.tokenNo });
     } catch (error) {
       setStage({ step: 'error', client, message: error instanceof ApiError ? error.message : copy.newVisit.saveUnknown });
     }
@@ -1041,7 +1040,7 @@ export function NewVisitSheet({
                   type="button"
                   className="btn btn-ghost wi-queue-btn"
                   onClick={() => void queueIt(stage.client)}
-                  disabled={busy || picked.length === 0}
+                  disabled={busy}
                 >
                   {copy.newVisit.addToQueue}
                 </button>
@@ -1139,9 +1138,9 @@ export function NewVisitSheet({
             <div className="wi-done">
               <IconCheck />
               <div>
-                <div className="wi-done-title">{copy.newVisit.queued}</div>
+                <div className="wi-done-title">{stage.tokenNo ? copy.newVisit.token(stage.tokenNo) : copy.newVisit.queued}</div>
                 <div className="wi-done-sub">
-                  {picked.map((p) => p.name).join(' + ')} · {copy.newVisit.queuePosition(stage.position)}
+                  {[clientName(stage.client), picked.map((p) => p.name).join(' + ')].filter(Boolean).join(' · ')}
                 </div>
               </div>
             </div>

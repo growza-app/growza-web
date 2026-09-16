@@ -182,7 +182,8 @@ export function ReceptionHome(p: ReceptionHomeProps) {
                   <ol className="hm-rows">
                     {queue.map((q, i) => (
                       <li key={q.id} className="hm-row">
-                        <span className="hm-idx">{i + 1}</span>
+                        {/* Jira GRW-284 — the token the client was told, not a row position that shifts when somebody leaves. */}
+                        <span className="hm-idx">{q.tokenNo ?? i + 1}</span>
                         <span className="hm-row-main">
                           <span className="hm-row-name">{q.customerName}</span>
                           <span className="hm-row-sub">{q.serviceNames.join(' + ')}</span>
