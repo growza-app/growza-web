@@ -10,6 +10,7 @@ import { canSee, type MemberRole } from '../../lib/nav-policy';
 import {
   IconAnalytics,
   IconBan,
+  IconCalendarPlus,
   IconChat,
   IconChevronDown,
   IconChevronRight,
@@ -17,11 +18,13 @@ import {
   IconClock,
   IconDaySummary,
   IconOffers,
+  IconReceipt,
   IconReports,
   IconServices,
   IconSettings,
   IconStaff,
 } from '../icons';
+import { NewVisitSheet, type VisitMode } from '../NewVisitSheet';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards, rupees } from './parts';
@@ -127,6 +130,9 @@ export function OwnerHome(p: OwnerHomeProps) {
   const [failed, setFailed] = useState(p.initial === null);
   const [branchMenu, setBranchMenu] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  /** Laptop only — on a phone the tab bar's centre button opens this same sheet. */
+  const [visitSheet, setVisitSheet] = useState<VisitMode | null>(null);
+  const mayBook = p.role !== 'staff';
 
   const load = (nextPeriod: HomePeriod, nextBranch: string | null) => {
     setLoading(true);
@@ -252,33 +258,52 @@ export function OwnerHome(p: OwnerHomeProps) {
               load(v, branch);
             }}
           />
-          {multiBranch ? (
-            <div className="hm-branch">
-              <button type="button" className="hm-branch-btn" aria-haspopup="menu" aria-expanded={branchMenu} onClick={() => setBranchMenu((o) => !o)}>
-                {selected?.name ?? t.allBranches}
-                <IconChevronDown />
-              </button>
-              {branchMenu ? (
-                <div className="hm-menu hm-menu-right" role="menu">
-                  {[{ id: null as string | null, name: t.allBranches }, ...branches].map((b) => (
-                    <button
-                      key={b.id ?? 'all'}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={branch === b.id}
-                      onClick={() => {
-                        setBranch(b.id);
-                        setBranchMenu(false);
-                        load(period, b.id);
-                      }}
-                    >
-                      {b.name}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <div className="hm-toolbar-end">
+            {mayBook ? (
+              /* One booking button, not "Walk-in" + "New appointment": both opened
+                 the same sheet, whose own toggle chooses now-or-later.
+                 Payment is taken against a visit (CheckoutSheet needs an
+                 appointment), so "Record payment" goes to the visits not yet
+                 settled — the same list as "Not marked done yet". */
+              <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
+                <a className="hm-action" href="/appointments?status=confirmed">
+                  <IconReceipt />
+                  <strong>{t.recordPayment}</strong>
+                </a>
+                <button type="button" className="hm-action hm-action-dark" onClick={() => setVisitSheet('now')}>
+                  <IconCalendarPlus />
+                  <strong>{t.nav.newBooking}</strong>
+                </button>
+              </div>
+            ) : null}
+            {multiBranch ? (
+              <div className="hm-branch">
+                <button type="button" className="hm-branch-btn" aria-haspopup="menu" aria-expanded={branchMenu} onClick={() => setBranchMenu((o) => !o)}>
+                  {selected?.name ?? t.allBranches}
+                  <IconChevronDown />
+                </button>
+                {branchMenu ? (
+                  <div className="hm-menu hm-menu-right" role="menu">
+                    {[{ id: null as string | null, name: t.allBranches }, ...branches].map((b) => (
+                      <button
+                        key={b.id ?? 'all'}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={branch === b.id}
+                        onClick={() => {
+                          setBranch(b.id);
+                          setBranchMenu(false);
+                          load(period, b.id);
+                        }}
+                      >
+                        {b.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className={`hm-owner-grid ${multiBranch ? 'hm-multi' : ''}`}>
@@ -358,6 +383,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           onClose={() => setSummaryOpen(false)}
         />
       ) : null}
+      {visitSheet ? <NewVisitSheet mode={visitSheet} timezone={p.timezone} onClose={() => setVisitSheet(null)} /> : null}
     </>
   );
 }

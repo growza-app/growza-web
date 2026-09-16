@@ -29,11 +29,14 @@ export function MobileChrome({ labels, timezone, role, reportTabs, lang }: { lab
   const [sheet, setSheet] = useState<VisitMode | null>(null);
   /**
    * A stylist cannot create a booking — `POST /api/v1/appointments` is not in
-   * STAFF_ALLOWED (GRW-156). A receptionist CAN (GRW-169), and their centre
-   * action is the walk-in standing at the desk; the owner's is a booking.
+   * STAFF_ALLOWED (GRW-156). A receptionist CAN (GRW-169).
+   *
+   * The sheet opens on "Walk-in now" for every role. An owner's button says
+   * "New booking", but the person most often in front of them is standing in
+   * the shop — and "For later" is one tap away on the same sheet.
    */
   const mayBook = role !== 'staff';
-  const onCentre = mayBook && !EDIT_ROUTE_RE.test(pathname) ? () => setSheet(role === 'receptionist' ? 'now' : 'later') : undefined;
+  const onCentre = mayBook && !EDIT_ROUTE_RE.test(pathname) ? () => setSheet('now') : undefined;
 
   return (
     <>

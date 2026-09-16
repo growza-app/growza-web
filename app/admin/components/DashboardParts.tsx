@@ -328,6 +328,99 @@ export function RevenueCard({
   );
 }
 
+export type BookingOutcome = 'confirmed' | 'completed' | 'no_show' | 'cancelled';
+
+export interface PlatformBookings {
+  thisMonth: number;
+  previousMonth: number;
+  outcomes: Array<{ status: BookingOutcome; count: number }>;
+}
+
+/**
+ * Colours mean the same thing they mean everywhere else in the admin plane:
+ * green for what happened, blue for what is still to come, amber for the
+ * customer who did not turn up, rose for the visit that was called off.
+ */
+const OUTCOME_STYLE: Record<BookingOutcome, { label: string; color: string }> = {
+  confirmed: { label: 'Upcoming', color: 'oklch(0.62 0.12 250)' },
+  completed: { label: 'Completed', color: 'oklch(0.6 0.13 150)' },
+  no_show: { label: 'No-show', color: 'oklch(0.72 0.13 75)' },
+  cancelled: { label: 'Cancelled', color: 'oklch(0.66 0.15 25)' },
+};
+
+/**
+ * Jira GRW-280 — whether Growza is USED, not only whether it is sold.
+ *
+ * Every other figure on this dashboard counts businesses or money. A business
+ * whose subscription is active and whose payments clear looks perfectly
+ * healthy right up to the renewal it does not take; bookings are the leading
+ * indicator and revenue the lagging one. So this card sits beside Revenue on
+ * purpose — the two read as a pair.
+ *
+ * Its own card rather than a fifth `StatCard`, which GRW-280's own Technical
+ * Notes warned about: five cards in the 4/2/1 grid orphan one on its own row at
+ * every width, and the outcome split below needs room a stat card does not
+ * have.
+ *
+ * `confirmed` is labelled "Upcoming". In the schema it means "booked and not
+ * yet happened", and "Confirmed" sat next to "Completed" reads as two words for
+ * the same thing.
+ */
+export function BookingsCard({ bookings, className }: { bookings: PlatformBookings; className?: string }) {
+  const delta = percentDelta(bookings.thisMonth, bookings.previousMonth);
+  const deltaColor =
+    delta?.direction === 'up' ? 'oklch(0.5 0.13 150)' : delta?.direction === 'down' ? 'oklch(0.53 0.16 25)' : oklch.textFaint;
+  // BR-04 — one call across all four, so the shares total exactly 100.
+  const pcts = wholePercentages(bookings.outcomes.map((o) => o.count));
+
+  return (
+    <div className={className} style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Bookings</h3>
+        <span style={{ fontSize: 12, color: oklch.textFaint }}>This month · all businesses</span>
+      </div>
+      <div style={{ fontSize: 25, fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{bookings.thisMonth.toLocaleString('en-IN')}</div>
+      {/* No movement line when last month had nothing to compare against —
+          "↑ 100%" on a first month is noise, not information. */}
+      {delta ? (
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: 12 }}>
+          <span style={{ color: deltaColor, fontWeight: 800 }}>{delta.direction === 'up' ? '↑' : delta.direction === 'down' ? '↓' : '—'}</span>
+          <span style={{ color: oklch.textFaint, fontWeight: 500 }}>{delta.text}</span>
+        </div>
+      ) : null}
+
+      {bookings.thisMonth === 0 ? (
+        // A real zero, said as one — not an empty bar that looks like a fault.
+        <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 12 }}>No bookings made yet this month.</div>
+      ) : (
+        <>
+          <div style={{ height: 10, borderRadius: 6, overflow: 'hidden', display: 'flex', background: oklch.divider, margin: '14px 0 10px' }}>
+            {bookings.outcomes
+              .filter((o) => o.count > 0)
+              .map((o) => (
+                <div key={o.status} style={{ width: `${(o.count / bookings.thisMonth) * 100}%`, background: OUTCOME_STYLE[o.status].color }} />
+              ))}
+          </div>
+          <div className="admin-outcome-legend">
+            {bookings.outcomes.map((o, i) => (
+              <div key={o.status} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '3px 0', minWidth: 0 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: OUTCOME_STYLE[o.status].color, flex: 'none' }} />
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: oklch.textStrong }}>{OUTCOME_STYLE[o.status].label}</span>
+                </span>
+                <span style={{ display: 'flex', alignItems: 'baseline', gap: 4, flex: 'none' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: oklch.textStrong }}>{o.count.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: 11, color: oklch.textFaint }}>({pcts[i] ?? 0}%)</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function monthShort(iso: string): string {
   return new Intl.DateTimeFormat('en-IN', { month: 'short' }).format(new Date(iso));
 }

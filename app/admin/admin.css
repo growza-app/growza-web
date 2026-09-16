@@ -353,8 +353,13 @@ body.admin-body {
   .admin-dash-cols {
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    /* GRW-280 — Bookings joins the narrow column above Business status. The
+       attention list is the one tall block here, so it spans both of those
+       rows on the left and the two compact cards stack beside it; without the
+       span the right column ran out a card early and left a hole. */
     grid-template-areas:
       'revenue quick'
+      'attention bookings'
       'attention status'
       'signups signups';
     /* Otherwise every card stretches to the tallest in its row and the short
@@ -373,6 +378,9 @@ body.admin-body {
   }
   .admin-dash-attention {
     grid-area: attention;
+  }
+  .admin-dash-bookings {
+    grid-area: bookings;
   }
   .admin-dash-signups {
     grid-area: signups;
@@ -794,4 +802,13 @@ body.admin-body {
     flex: 1;
     padding: 6px 4px;
   }
+}
+
+/* GRW-280 — the bookings outcome legend. Two columns where the card is wide
+   enough to hold them, one where it is not; four short rows stacked in a wide
+   card is a column of whitespace with numbers stranded at the far edge. */
+.admin-outcome-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  column-gap: 18px;
 }

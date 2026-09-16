@@ -335,6 +335,28 @@
   justify-content: space-between;
   gap: var(--sp-3);
 }
+/* Jira GRW-222 — the owner's booking buttons share the toolbar row, so the
+   fit-to-screen laptop Home loses no height to them. */
+.hm-toolbar-end {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-left: auto;
+}
+.hm-toolbar-actions .hm-action {
+  text-decoration: none;
+  min-height: 40px;
+  padding: 0 var(--sp-4);
+  border-radius: 12px;
+}
+.hm-toolbar-actions .hm-action svg {
+  width: 18px;
+  height: 18px;
+}
+.hm-toolbar-actions .hm-action strong {
+  font-size: 14px;
+  white-space: nowrap;
+}
 .hm-seg {
   display: inline-flex;
   padding: 3px;

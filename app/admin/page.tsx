@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminFetch, AdminApiError } from './lib/api';
 import { firstPermittedHref } from './nav';
-import { Icon, type IconName } from './icons';
+import { Icon } from './icons';
 import { Card, EmptyState, SecondaryButton } from './components/primitives';
 import {
   StatCard,
   AttentionRowView,
   RevenueCard,
+  BookingsCard,
+  type PlatformBookings,
   wholePercentages,
   type RevenueMonth,
   ACTION_TINTS,
@@ -19,10 +21,9 @@ import {
   percentDelta,
   tintFor,
   type AttentionRow,
-  type StatTint,
-  type StatIcon,
 } from './components/DashboardParts';
 import { oklch, STATUS_COLORS } from './tokens';
+import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL } from './dashboard-config';
 
 /**
  * GRW-104's platform dashboard. GRW-020 — "Two Home labels that were not
@@ -61,65 +62,13 @@ interface DashboardResponse {
   attention: AttentionRow[];
   recentSignups: RecentSignup[];
   revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; months: RevenueMonth[] } | null;
+  /** GRW-280 — visits booked across every business, counted as visits rather than rows. */
+  bookings: PlatformBookings;
 }
-
-/** GRW-275 — the reference design's four card tints, one per card. */
-const STAT_TINTS = {
-  green: { bg: 'oklch(0.965 0.025 155)', fg: 'oklch(0.45 0.12 150)', border: 'oklch(0.92 0.04 155)' },
-  blue: { bg: 'oklch(0.96 0.025 250)', fg: 'oklch(0.5 0.15 250)', border: 'oklch(0.92 0.035 250)' },
-  amber: { bg: 'oklch(0.965 0.035 75)', fg: 'oklch(0.55 0.13 65)', border: 'oklch(0.93 0.05 75)' },
-  rose: { bg: 'oklch(0.965 0.025 25)', fg: 'oklch(0.53 0.16 25)', border: 'oklch(0.93 0.035 25)' },
-} satisfies Record<string, StatTint>;
-
-const STATUS_LABEL: Record<string, string> = { provisioning: 'Provisioning', active: 'Active', suspended: 'Suspended', churned: 'Churned' };
 
 function shortDate(iso: string): string {
   return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(iso));
 }
-
-/**
- * GRW-275 — which attention rows earn a headline card.
- *
- * Only rows the registry already marks `available` render here (the guard is
- * in the JSX): an unbuilt row stays in the Billing attention list below,
- * where it can say so honestly, rather than becoming a card showing a zero
- * that means "not built" — the exact BR-01 confusion this dashboard exists
- * to avoid.
- */
-const ATTENTION_CARDS: Array<{
-  key: string;
-  label: string;
-  icon: StatIcon;
-  tint: StatTint;
-  /** Fills the movement row these cards have no movement for — and carries the period the short label drops. */
-  note: (count: number) => string;
-}> = [
-  {
-    key: 'payments_failed',
-    label: 'Payments failed',
-    icon: 'alert',
-    tint: STAT_TINTS.amber,
-    note: (count) => (count > 0 ? 'Open to reconcile' : 'Nothing failing'),
-  },
-  {
-    key: 'cancellations',
-    label: 'Cancellations',
-    icon: 'money',
-    tint: STAT_TINTS.rose,
-    // The label is shortened to fit one line at phone width, so "this month"
-    // — which is genuinely part of what this number means — moves here rather
-    // than being lost.
-    note: () => 'This month',
-  },
-];
-
-const QUICK_ACTIONS: Array<{ icon: IconName; label: string; href: string; tint: keyof typeof ACTION_TINTS }> = [
-  { icon: 'businesses', label: 'Add business', href: '/admin/businesses', tint: 'businesses' },
-  { icon: 'users', label: 'Invite admin', href: '/admin/users', tint: 'users' },
-  { icon: 'plans', label: 'Create plan', href: '/admin/plans/new', tint: 'plans' },
-  { icon: 'usage', label: 'View usage', href: '/admin/usage', tint: 'usage' },
-  { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit' },
-];
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -337,6 +286,12 @@ export default function AdminDashboardPage() {
             delta={percentDelta(data.revenue.thisMonthMinor, data.revenue.previousMonthMinor)}
           />
         ) : null}
+
+        {/* GRW-280 — right after Revenue in the DOM, so on a phone the two read
+            as a pair: what was sold, then whether it is being used. The laptop
+            places it by grid area. Not gated on admin.payment.view the way
+            revenue is — a count of visits is not a figure about money. */}
+        <BookingsCard className="admin-dash-bookings" bookings={data.bookings} />
 
         {/* GRW-274 — a segmented bar + legend reading the exact same `byStatus`
           array the old plain list did; no new query, no fabricated trend. */}
