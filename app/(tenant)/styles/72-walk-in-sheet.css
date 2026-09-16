@@ -498,8 +498,16 @@ input.wi-search-input-plain {
   color: var(--muted);
   font-size: 14px;
 }
-.wi-amount input {
-  width: 72px;
+/* A fixed box, not the input's own width: on a phone a sheet-wide input rule
+   stretched it to half the row and squeezed the service name to nothing. */
+.wi-picked-row .wi-amount {
+  width: 112px;
+  box-sizing: border-box;
+}
+.wi-picked-row .wi-amount input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
   border: 0;
   outline: 0;
   background: transparent;
