@@ -31,9 +31,11 @@ export function MobileChrome({ labels, timezone, role, reportTabs, lang }: { lab
    * A stylist cannot create a booking — `POST /api/v1/appointments` is not in
    * STAFF_ALLOWED (GRW-156). A receptionist CAN (GRW-169).
    *
-   * The sheet opens on "Walk-in now" for every role. An owner's button says
-   * "New booking", but the person most often in front of them is standing in
-   * the shop — and "For later" is one tap away on the same sheet.
+   * Jira GRW-268 · GRW-273 — the sheet opens on "Walk-in now" for everyone who
+   * can book, owner included. It used to open an owner on "For later", on the
+   * theory that an owner's centre action is an appointment. In a salon the
+   * person tapping it on a phone mostly has a customer in front of them, and
+   * one tap on "For later" is still there when they do not.
    */
   const mayBook = role !== 'staff';
   const onCentre = mayBook && !EDIT_ROUTE_RE.test(pathname) ? () => setSheet('now') : undefined;

@@ -35,6 +35,7 @@ export function Sidebar({
   role,
   reportTabs,
   whatsappLive,
+  whatsappDemo = false,
   lang,
   locationName,
   branchCount = 1,
@@ -47,6 +48,8 @@ export function Sidebar({
   reportTabs?: readonly string[];
   /** Jira GRW-158 · GRW-165 — false until this business's WhatsApp number is switched on. */
   whatsappLive?: boolean;
+  /** Jira GRW-266 · GRW-271 — false in production, where the Try WhatsApp demo does not exist. */
+  whatsappDemo?: boolean;
   /** Jira GRW-222 — nav labels follow the Home language toggle. */
   lang?: Lang;
   /** Jira GRW-222 — the primary branch, under the business name. */
@@ -75,9 +78,10 @@ export function Sidebar({
     // Reports is added; nothing is removed (GRW-48 decision 2).
     { href: '/reports', label: t.nav.reports, icon: <IconReports /> },
     { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics /> },
-    // GRW-165 — kept, never hidden, and marked a demo while WhatsApp is not live
-    // so nobody reads a working simulator as a working channel.
-    { href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, pill: whatsappLive ? null : t.nav.demo },
+    // GRW-165 — marked a demo while WhatsApp is not live, so nobody reads a
+    // working simulator as a working channel. Jira GRW-266 · GRW-271 — and not listed at
+    // all in production, where the simulator is switched off.
+    ...(whatsappDemo ? [{ href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, pill: whatsappLive ? null : t.nav.demo }] : []),
     { href: '/settings', label: t.nav.settings, icon: <IconSettings /> },
   ];
 

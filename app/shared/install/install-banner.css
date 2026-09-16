@@ -1,0 +1,139 @@
+/* Jira GRW-265 · GRW-270 — the install banner, shared by the salon app and the
+   admin portal, laid out like the browser's own "Install app" dialog.
+   Self-contained: neither plane's tokens reach here, so the design scale is
+   written out (4/8/12/16/24 spacing, 44px targets). */
+
+.install-banner {
+  position: fixed;
+  z-index: 45; /* above the bottom nav (40) and + button (41), below sheets and modals (50+) */
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  padding: 20px 20px 16px;
+  background: #ffffff;
+  color: #1c1f1e;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(15, 30, 25, 0.22), 0 1px 3px rgba(15, 30, 25, 0.12);
+  animation: install-banner-in 240ms ease-out;
+}
+
+@keyframes install-banner-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-banner {
+    animation: none;
+  }
+}
+
+.install-banner-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.install-banner-app {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.install-banner-icon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+.install-banner-app-text {
+  min-width: 0;
+}
+
+.install-banner-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.install-banner-host {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #5f6865;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.install-banner-steps {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #3f4744;
+}
+
+.install-banner-steps li + li {
+  margin-top: 4px;
+}
+
+.install-banner-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.install-banner-cancel,
+.install-banner-install {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 22px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.install-banner-cancel {
+  background: transparent;
+  color: #0f3d2e;
+}
+
+.install-banner-install {
+  background: #0f3d2e;
+  color: #ffffff;
+  padding: 0 28px;
+}
+
+.install-banner-cancel:focus-visible,
+.install-banner-install:focus-visible {
+  outline: 2px solid #0f3d2e;
+  outline-offset: 2px;
+}
+
+/* Desktop: the browser's install dialog opens top right, under the address
+   bar — the card sits there too, compact. */
+@media (min-width: 861px) {
+  .install-banner {
+    left: auto;
+    right: 24px;
+    bottom: auto;
+    top: 24px;
+    width: 340px;
+  }
+}
