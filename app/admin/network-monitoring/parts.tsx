@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { Card } from '../components/primitives';
+import { Card, SecondaryButton } from '../components/primitives';
 import { oklch } from '../tokens';
+import type { Tone } from './format';
 
 /**
  * Jira GRW-279 — the Network monitoring screen's own small components.
@@ -21,10 +22,17 @@ export interface Bucket {
   count: number;
 }
 
+/** GRW-286 — each panel arrives as its data or as its own error, never all-or-nothing. */
+export type PanelResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
 export interface Monitoring {
   range: Range;
   readAt: string;
-  worker: {
+  /** BR-04 — configured on the API; past this the header says the figures are old. */
+  figuresStaleAfterMinutes: number;
+  worker: PanelResult<{
+    lastProcessedAt: string | null;
+    lastProcessedSeconds: number | null;
     lastBeatAt: string | null;
     beatAgeSeconds: number | null;
     alive: boolean;
@@ -35,17 +43,19 @@ export interface Monitoring {
     givenUp: number;
     processed: Bucket[];
     processedTotal: number;
-  };
-  webhooks: { received: number; failed: number; ignored: number; pendingNow: number; oldestPendingSeconds: number | null };
-  dunning: { outcomes: Array<{ outcome: string; count: number }>; inRetryNow: number };
+  }>;
+  webhooks: PanelResult<{ received: number; failed: number; ignored: number; pendingNow: number; oldestPendingSeconds: number | null }>;
+  dunning: PanelResult<{ outcomes: Array<{ outcome: string; count: number }>; inRetryNow: number }>;
   limits: { available: false; epic: string };
 }
 
-const TONES = {
+const TONES: Record<Tone, { fg: string; bg: string }> = {
   good: { fg: 'oklch(0.42 0.11 150)', bg: 'oklch(0.94 0.04 150)' },
   warn: { fg: 'oklch(0.45 0.12 65)', bg: 'oklch(0.95 0.05 75)' },
   bad: { fg: 'oklch(0.48 0.16 25)', bg: 'oklch(0.94 0.04 25)' },
-} as const;
+  // AC-04 — a state that is neither good nor a problem: nothing has happened yet.
+  neutral: { fg: oklch.textMuted, bg: oklch.divider },
+};
 
 export function Panel({
   title,
@@ -54,7 +64,7 @@ export function Panel({
   children,
 }: {
   title: string;
-  status: { tone: keyof typeof TONES; text: string };
+  status: { tone: Tone; text: string };
   /** Present when this panel's figures are bounded by the selected range. */
   windowed?: string;
   children: ReactNode;
@@ -83,6 +93,30 @@ export function Panel({
 }
 
 /**
+ * GRW-286 — one panel's failure, drawn in that panel's place.
+ *
+ * Keeps the panel's title so the admin knows WHICH figures are missing, and
+ * offers Retry. Retry re-reads the whole endpoint — there is one request for
+ * the screen by design (FR-07/BR-06) — and the panels that were fine simply
+ * come back again.
+ */
+export function PanelFailure({ title, error, onRetry, disabled }: { title: string; error: string; onRetry: () => void; disabled?: boolean }) {
+  return (
+    <Card>
+      <div role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
+          <div style={{ fontSize: 13, color: TONES.bad.fg }}>{error}</div>
+        </div>
+        <SecondaryButton onClick={onRetry} disabled={disabled}>
+          Retry
+        </SecondaryButton>
+      </div>
+    </Card>
+  );
+}
+
+/**
  * `live` is the load-bearing prop on this screen.
  *
  * A figure is windowed only if it counts something that HAPPENED. Anything
@@ -96,12 +130,15 @@ export function StatTile({
   live = false,
   bad = false,
   note,
+  title,
 }: {
   label: string;
   value: string;
   live?: boolean;
   bad?: boolean;
   note?: string;
+  /** The absolute time behind a relative value, shown on hover (GRW-286). */
+  title?: string;
 }) {
   return (
     <div
@@ -121,7 +158,7 @@ export function StatTile({
         />
       ) : null}
       <div style={{ fontSize: 11.5, color: oklch.textMuted, fontWeight: 500, paddingRight: live ? 14 : 0, overflowWrap: 'anywhere' }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.2, marginTop: 3, color: bad ? 'oklch(0.48 0.16 25)' : oklch.textStrong }}>
+      <div title={title} style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.2, marginTop: 3, color: bad ? 'oklch(0.48 0.16 25)' : oklch.textStrong }}>
         {value}
       </div>
       {note ? <div style={{ fontSize: 11, color: oklch.textFaint, marginTop: 2 }}>{note}</div> : null}
@@ -164,9 +201,11 @@ export function Bars({ buckets, caption }: { buckets: Bucket[]; caption: string 
   return (
     <div style={{ marginTop: 14 }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 64 }}>
-        {buckets.map((b) => (
+        {/* Keyed by position: a 24-hour window opens and closes in the same
+            clock hour, so its first and last labels are the same string. */}
+        {buckets.map((b, i) => (
           <div
-            key={b.label}
+            key={i}
             title={`${b.label}: ${b.count.toLocaleString('en-IN')}`}
             style={{
               flex: 1,
@@ -199,7 +238,7 @@ export function Bars({ buckets, caption }: { buckets: Bucket[]; caption: string 
  * screen is the most dangerous staleness there is — it is the exact number
  * somebody would act on.
  */
-export function Freshness({ readAt }: { readAt: string | null }) {
+export function Freshness({ readAt, staleAfterMinutes }: { readAt: string | null; staleAfterMinutes: number }) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -213,7 +252,8 @@ export function Freshness({ readAt }: { readAt: string | null }) {
   const minutes = Math.floor(ageMs / 60_000);
   const clock = new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(readAt));
 
-  if (minutes >= 15) {
+  // BR-04 — the threshold comes from the API's configuration, not a literal here.
+  if (minutes >= staleAfterMinutes) {
     return (
       <span style={{ fontSize: 12, fontWeight: 700, color: 'oklch(0.5 0.13 65)' }}>
         Figures are {minutes} minutes old — refresh

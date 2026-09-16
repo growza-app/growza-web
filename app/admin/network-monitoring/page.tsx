@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Card, SecondaryButton } from '../components/primitives';
 import { oklch } from '../tokens';
-import { Panel, RangePicker, StatTile, Bars, Freshness, type Monitoring, type Range } from './parts';
+import { Panel, PanelFailure, RangePicker, StatTile, Bars, Freshness, type Monitoring, type Range } from './parts';
+import { absoluteIst, lastDrainedTile, OUTCOME_WORDS, PANEL_COUNT, relative, workerStatus } from './format';
 
 /**
  * Jira GRW-279 — is the platform's machinery running.
@@ -25,6 +26,16 @@ import { Panel, RangePicker, StatTile, Bars, Freshness, type Monitoring, type Ra
  * the header ages itself client-side (`Freshness`), which costs no network at
  * all: a `setInterval` that re-renders a string is not a `setInterval` that
  * fetches.
+ *
+ * ## When a panel fails
+ *
+ * GRW-286 — each panel arrives as its data or its own error. A failed panel is
+ * drawn as `PanelFailure` in its own place, with Retry, and every other panel
+ * renders as normal: a health screen that blanks entirely because one query
+ * failed is useless on exactly the day it is needed. Only a failure of the
+ * request ITSELF — the API unreachable — replaces the screen with one error,
+ * because then there are no figures at all and old ones must not pass as
+ * current.
  */
 export default function NetworkMonitoringPage() {
   const [range, setRange] = useState<Range>('24h');
@@ -77,7 +88,7 @@ export default function NetworkMonitoringPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="admin-monitor-bar">
-        <Freshness readAt={data?.readAt ?? null} />
+        <Freshness readAt={data?.readAt ?? null} staleAfterMinutes={data?.figuresStaleAfterMinutes ?? Number.POSITIVE_INFINITY} />
         <div className="admin-monitor-controls">
           <RangePicker value={range} onChange={setRange} disabled={loading} />
           <SecondaryButton onClick={refresh}>Refresh</SecondaryButton>
@@ -86,7 +97,8 @@ export default function NetworkMonitoringPage() {
 
       {loading && !data ? (
         <>
-          {Array.from({ length: 3 }, (_, i) => (
+          {/* One skeleton per panel the screen draws — GRW-279's UI states. */}
+          {Array.from({ length: PANEL_COUNT }, (_, i) => (
             <Card key={i}>
               <div style={{ height: 120, borderRadius: 12, background: oklch.divider, animation: 'admin-fade 1.2s ease infinite alternate' }} />
             </Card>
@@ -94,95 +106,9 @@ export default function NetworkMonitoringPage() {
         </>
       ) : data ? (
         <>
-          <Panel
-            title="Worker and queue"
-            status={
-              data.worker.alive
-                ? { tone: 'good', text: 'Running' }
-                : { tone: 'bad', text: data.worker.lastBeatAt === null ? 'Never started' : 'Not running' }
-            }
-          >
-            <div className="admin-stat-grid admin-monitor-grid">
-              <StatTile
-                live
-                label="Last drained"
-                /* "never" is not "a long time ago". One is a database that has
-                   never had a worker — a fresh install, not an incident — and
-                   the other is a worker that stopped. */
-                value={data.worker.lastBeatAt === null ? 'never' : relative(data.worker.beatAgeSeconds)}
-                bad={!data.worker.alive}
-              />
-              <StatTile live label="Pending" value={data.worker.pending.toLocaleString('en-IN')} />
-              <StatTile
-                live
-                label="Oldest waiting"
-                value={data.worker.oldestPendingSeconds === null ? '—' : relative(data.worker.oldestPendingSeconds)}
-              />
-              <StatTile
-                live
-                label="Failing"
-                value={data.worker.failing.toLocaleString('en-IN')}
-                bad={data.worker.failing > 0}
-                note={data.worker.givenUp > 0 ? `${data.worker.givenUp} given up` : undefined}
-              />
-            </div>
-            <Bars
-              buckets={data.worker.processed}
-              caption={`${data.worker.processedTotal.toLocaleString('en-IN')} processed in ${RANGE_WORDS[data.range]}`}
-            />
-          </Panel>
-
-          <Panel
-            title="Payment webhooks"
-            status={
-              data.webhooks.pendingNow > 0
-                ? { tone: 'warn', text: `${data.webhooks.pendingNow} stuck` }
-                : { tone: 'good', text: 'Clear' }
-            }
-            windowed={RANGE_WORDS[data.range]}
-          >
-            <div className="admin-stat-grid admin-monitor-grid">
-              <StatTile label="Received" value={data.webhooks.received.toLocaleString('en-IN')} />
-              <StatTile label="Failed" value={data.webhooks.failed.toLocaleString('en-IN')} bad={data.webhooks.failed > 0} />
-              <StatTile live label="Pending now" value={data.webhooks.pendingNow.toLocaleString('en-IN')} bad={data.webhooks.pendingNow > 0} />
-              <StatTile
-                live
-                label="Oldest pending"
-                value={data.webhooks.oldestPendingSeconds === null ? '—' : relative(data.webhooks.oldestPendingSeconds)}
-              />
-            </div>
-          </Panel>
-
-          <Panel
-            title="Billing retries"
-            status={data.dunning.inRetryNow > 0 ? { tone: 'warn', text: `${data.dunning.inRetryNow} in retry` } : { tone: 'good', text: 'None in retry' }}
-            windowed={RANGE_WORDS[data.range]}
-          >
-            {data.dunning.outcomes.length === 0 ? (
-              <div style={{ fontSize: 13, color: oklch.textFaint }}>No retries attempted in {RANGE_WORDS[data.range]}.</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {data.dunning.outcomes.map((row, i) => (
-                  <div
-                    key={row.outcome}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 0',
-                      fontSize: 13,
-                      borderBottom: i === data.dunning.outcomes.length - 1 ? 'none' : `1px solid ${oklch.divider}`,
-                    }}
-                  >
-                    <span style={{ color: oklch.textMuted }}>{OUTCOME_WORDS[row.outcome] ?? row.outcome}</span>
-                    <span style={{ fontWeight: 800, color: row.outcome === 'not_made' ? 'oklch(0.55 0.13 65)' : oklch.textStrong }}>
-                      {row.count.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Panel>
+          <WorkerSection data={data} onRetry={refresh} loading={loading} />
+          <WebhookSection data={data} onRetry={refresh} loading={loading} />
+          <DunningSection data={data} onRetry={refresh} loading={loading} />
 
           {/* BR-02 — present, and honest about being empty. A zero here would
               read as "nobody is near their limit", which is a much more
@@ -204,26 +130,100 @@ export default function NetworkMonitoringPage() {
 
 const RANGE_WORDS: Record<Range, string> = { '24h': 'the last 24 hours', '7d': 'the last 7 days', '30d': 'the last 30 days' };
 
-/**
- * GRW-167's lesson, applied to `dunning_attempt`: say what the row MEANS.
- *
- * `not_made` is the one that matters. It means the provider could not be
- * reached — so nothing was declined, nobody's card was refused, and no retry
- * should have been consumed from their budget. An admin who reads it as
- * "failed" goes looking for a customer problem that does not exist.
- */
-const OUTCOME_WORDS: Record<string, string> = {
-  charged: 'Charged',
-  declined: 'Declined',
-  not_made: 'Not made — provider unreachable',
-  skipped: 'Skipped',
-};
+interface SectionProps {
+  data: Monitoring;
+  onRetry: () => void;
+  loading: boolean;
+}
 
-/** Whole units, largest that fits. "41 min" is what somebody reads; "2,460 s" is not. */
-function relative(seconds: number | null): string {
-  if (seconds === null) return '—';
-  if (seconds < 60) return `${Math.max(0, Math.round(seconds))}s`;
-  if (seconds < 3_600) return `${Math.round(seconds / 60)} min`;
-  if (seconds < 86_400) return `${Math.round(seconds / 3_600)}h`;
-  return `${Math.round(seconds / 86_400)}d`;
+function WorkerSection({ data, onRetry, loading }: SectionProps) {
+  const title = 'Worker and queue';
+  if (!data.worker.ok) return <PanelFailure title={title} error={data.worker.error} onRetry={onRetry} disabled={loading} />;
+  const w = data.worker.data;
+  /* "never" is not "a long time ago". One is a platform nothing has been
+     processed on yet — a fresh install, not an incident (AC-04) — and the
+     other is a worker that stopped. */
+  const drained = lastDrainedTile(w);
+  return (
+    <Panel title={title} status={workerStatus(w)}>
+      <div className="admin-stat-grid admin-monitor-grid">
+        <StatTile
+          live
+          label="Last drained"
+          value={drained.value}
+          bad={drained.bad}
+          note={drained.note}
+          title={absoluteIst(data.readAt, w.lastProcessedSeconds)}
+        />
+        <StatTile live label="Pending" value={w.pending.toLocaleString('en-IN')} />
+        <StatTile live label="Oldest waiting" value={relative(w.oldestPendingSeconds)} title={absoluteIst(data.readAt, w.oldestPendingSeconds)} />
+        <StatTile
+          live
+          label="Failing"
+          value={w.failing.toLocaleString('en-IN')}
+          bad={w.failing > 0}
+          note={w.givenUp > 0 ? `${w.givenUp} given up` : undefined}
+        />
+      </div>
+      <Bars buckets={w.processed} caption={`${w.processedTotal.toLocaleString('en-IN')} processed in ${RANGE_WORDS[data.range]}`} />
+    </Panel>
+  );
+}
+
+function WebhookSection({ data, onRetry, loading }: SectionProps) {
+  const title = 'Payment webhooks';
+  if (!data.webhooks.ok) return <PanelFailure title={title} error={data.webhooks.error} onRetry={onRetry} disabled={loading} />;
+  const h = data.webhooks.data;
+  return (
+    <Panel
+      title={title}
+      status={h.pendingNow > 0 ? { tone: 'warn', text: `${h.pendingNow} stuck` } : { tone: 'good', text: 'Clear' }}
+      windowed={RANGE_WORDS[data.range]}
+    >
+      <div className="admin-stat-grid admin-monitor-grid">
+        <StatTile label="Received" value={h.received.toLocaleString('en-IN')} />
+        <StatTile label="Failed" value={h.failed.toLocaleString('en-IN')} bad={h.failed > 0} />
+        <StatTile live label="Pending now" value={h.pendingNow.toLocaleString('en-IN')} bad={h.pendingNow > 0} />
+        <StatTile live label="Oldest pending" value={relative(h.oldestPendingSeconds)} title={absoluteIst(data.readAt, h.oldestPendingSeconds)} />
+      </div>
+    </Panel>
+  );
+}
+
+function DunningSection({ data, onRetry, loading }: SectionProps) {
+  const title = 'Billing retries';
+  if (!data.dunning.ok) return <PanelFailure title={title} error={data.dunning.error} onRetry={onRetry} disabled={loading} />;
+  const d = data.dunning.data;
+  return (
+    <Panel
+      title={title}
+      status={d.inRetryNow > 0 ? { tone: 'warn', text: `${d.inRetryNow} in retry` } : { tone: 'good', text: 'None in retry' }}
+      windowed={RANGE_WORDS[data.range]}
+    >
+      {d.outcomes.length === 0 ? (
+        <div style={{ fontSize: 13, color: oklch.textFaint }}>No retries attempted in {RANGE_WORDS[data.range]}.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {d.outcomes.map((row, i) => (
+            <div
+              key={row.outcome}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                fontSize: 13,
+                borderBottom: i === d.outcomes.length - 1 ? 'none' : `1px solid ${oklch.divider}`,
+              }}
+            >
+              <span style={{ color: oklch.textMuted }}>{OUTCOME_WORDS[row.outcome] ?? row.outcome}</span>
+              <span style={{ fontWeight: 800, color: row.outcome === 'not_made' ? 'oklch(0.55 0.13 65)' : oklch.textStrong }}>
+                {row.count.toLocaleString('en-IN')}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Panel>
+  );
 }
