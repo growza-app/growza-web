@@ -91,32 +91,14 @@ body.admin-body {
   display: none;
 }
 
-/* ---------- header row order (GRW-277 QA) ----------
-   The header is a wrapping flex row and its three children are written in the
-   order the PHONE needs (title, bell, search), because that is the order
-   wrapping has to respect. `order` restores the laptop reading — search box,
-   then bell — without the DOM having to choose one over the other.
+/* A default and its media-query override have EQUAL specificity, so the one
+   written last wins whether or not it sits inside the query. Every default in
+   this file therefore belongs above the 860px block — putting one underneath
+   its own override silently disables it, which is what had happened to
+   `.admin-bar-end`'s `margin-left` (harmlessly, only because `width: 100%`
+   leaves no free margin for `auto` to take).
 
-   These sit ABOVE the 860px query, not below it. Everything in this file that
-   a media query overrides has to: the rules have equal specificity, so the
-   one written last wins whether or not it is inside the query. Putting a
-   default underneath its own override silently disables it — which is what
-   happened to `.admin-bar-end`'s `margin-left` here, harmlessly only because
-   `width: 100%` left no free margin for `auto` to take. */
-.admin-header-title {
-  order: 1;
-}
-.admin-search-wrap {
-  order: 2;
-}
-.admin-header-bell {
-  order: 3;
-  display: flex;
-  align-items: center;
-  flex: none;
-}
-
-/* Right-aligned on a laptop; the mobile media query below takes the full line. */
+   Right-aligned on a laptop; the mobile query below takes the full line. */
 .admin-bar-end {
   margin-left: auto;
 }
@@ -165,69 +147,10 @@ body.admin-body {
     justify-content: flex-end;
   }
 
-  /* The search box gets the whole second line; the bell does NOT come with it
-     (it is a separate header child now) and stays up beside the title. */
-  .admin-search-wrap {
-    order: 3;
-    width: 100%;
-    flex: none;
-  }
-
-  /* Level with the page title rather than centred against the title BLOCK —
-     centring on a two-line block (heading + subtitle) drops the bell half a
-     line below the heading it belongs to. */
-  .admin-header-bell {
-    order: 2;
-    align-self: flex-start;
-  }
-
-  .admin-search-input {
-    width: 100% !important;
-  }
-
   /* A lone primary action reads as the row's button when it fills it. */
   .admin-bar-end > button {
     width: 100%;
     justify-content: center;
-  }
-
-  /* ---------- Jira GRW-273: bottom tab bar, mobile only ----------
-     `position: sticky`, not `fixed` — the tenant portal's own bottom nav
-     (74-mobile-chrome-2026.css) already paid for this lesson: a fixed bar
-     stays pinned to the stale layout viewport when Android Chrome's address
-     bar auto-hides, leaving a gap under it. Sticky recomputes against the
-     live viewport on scroll and has no such gap. */
-  .admin-bottom-nav {
-    display: flex;
-    position: sticky;
-    bottom: 0;
-    z-index: 45;
-    background: oklch(1 0 0 / 0.92);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid oklch(0.92 0.008 150);
-    padding: 6px 4px max(6px, env(safe-area-inset-bottom));
-  }
-  .admin-bottom-nav a,
-  .admin-bottom-nav button {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    padding: 6px 4px;
-    border: none;
-    background: none;
-    color: oklch(0.55 0.02 155);
-    font: inherit;
-    font-size: 10.5px;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .admin-bottom-nav a.active,
-  .admin-bottom-nav button.active {
-    color: oklch(0.48 0.11 150);
   }
 }
 
@@ -481,13 +404,17 @@ body.admin-body {
   }
 }
 
-/* ---------- tables: a grid on a laptop, cards on a phone (GRW-277) ----------
+/* ---------- tables: the laptop grid (GRW-277) ----------
    The grid template and minimum width arrive as custom properties from
-   `primitives.tsx`, so the media query below can drop both. Inline styles
-   could not be overridden without `!important`, and a table that needs
-   `!important` to become readable is a table nobody will keep readable. */
+   `primitives.tsx` rather than as inline styles, so the phone rules further
+   down can drop both. An inline value needs `!important` to override, and a
+   table that needs `!important` to become readable is a table nobody will
+   keep readable.
 
-.admin-table-min {
+   The phone's card layout is the GRW-267 · GRW-272 block at the end of this
+   file — one place, not two. */
+
+.admin-table-inner {
   min-width: var(--admin-table-min, 640px);
 }
 
@@ -516,64 +443,6 @@ body.admin-body {
   display: contents;
 }
 
-@media (max-width: 860px) {
-  /* No sideways scroll to discover: the row IS the card. */
-  .admin-table-min {
-    min-width: 0;
-  }
-
-  /* Every value carries its own label below, so the header strip is noise. */
-  .admin-table-head {
-    display: none;
-  }
-
-  .admin-table-row {
-    display: block;
-    padding: 12px 14px;
-  }
-
-  .admin-cell {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 3px 0;
-    min-width: 0;
-    /* A cell aligned right in the grid is aligned left here — it is the
-       right-hand half of its own line now, not a column. */
-    text-align: left;
-  }
-
-  .admin-cell::before {
-    content: attr(data-label);
-    flex: none;
-    font-size: 10.5px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: oklch(0.55 0.02 155);
-  }
-
-  /* An actions or icon column has no heading to show, and an empty label
-     would still reserve its gap. A trailing one (the row's own "open"
-     chevron) belongs on the right edge, where an open affordance is read. */
-  .admin-cell[data-label='']::before {
-    display: none;
-  }
-  .admin-cell[data-label='']:not(:first-child) {
-    justify-content: flex-end;
-  }
-
-  /* The first cell reads as the card's title rather than another labelled
-     field — it is what the row is ABOUT. */
-  .admin-cell:first-child {
-    justify-content: flex-start;
-    padding-bottom: 6px;
-  }
-  .admin-cell:first-child::before {
-    display: none;
-  }
-}
 
 /* ---------- pagination: desktop controls vs mobile "Load more" ---------- */
 .admin-pagination-desktop {
@@ -600,4 +469,253 @@ body.admin-body {
 }
 .admin-body input[type='number'] {
   -moz-appearance: textfield;
+}
+
+/* ---------- Jira GRW-267 · GRW-272 — the admin portal on a phone ----------
+   Everything below applies at ≤860px only; the desktop layout above that is
+   untouched. `!important` is here because the admin screens are styled
+   inline, and an inline style beats any class — this is the one place a
+   phone is allowed to overrule them. */
+
+.admin-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /* Header: one line — title and bell — with search as a full-width row
+     beneath where the screen has one. The subtitle is dropped; on a phone
+     the title says enough and the list needs the height. */
+  .admin-header {
+    padding: 10px 16px !important;
+    gap: 10px !important;
+  }
+  .admin-header-title {
+    flex: 1;
+  }
+  .admin-header-title h1 {
+    font-size: 19px !important;
+  }
+  .admin-header-subtitle {
+    display: none;
+  }
+  .admin-header-actions {
+    display: contents !important;
+  }
+  .admin-header-bell {
+    order: 2;
+  }
+  .admin-header-search {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .admin-header-search input,
+  .admin-search-input {
+    width: 100% !important;
+  }
+
+  .admin-content {
+    padding: 16px 16px calc(84px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Bottom bar: four screens and More, like the salon app. */
+  .admin-bottom-nav {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: oklch(1 0 0 / 0.96);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid oklch(0.9 0.01 150);
+    box-shadow: 0 -6px 20px oklch(0.2 0.03 155 / 0.06);
+  }
+  .admin-bottom-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    min-height: 52px;
+    padding: 4px 2px;
+    border: none;
+    background: none;
+    font: inherit;
+    color: oklch(0.5 0.02 155) !important;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .admin-bottom-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 28px;
+    border-radius: 14px;
+  }
+  .admin-bottom-label {
+    max-width: 100%;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .admin-bottom-tab[data-active='true'] {
+    color: oklch(0.3 0.07 158) !important;
+  }
+  .admin-bottom-tab[data-active='true'] .admin-bottom-icon {
+    background: oklch(0.93 0.05 150);
+  }
+  .admin-bottom-tab[data-active='true'] .admin-bottom-label {
+    font-weight: 800;
+  }
+
+  /* Tables become cards. The heading row goes; each row is a card with its
+     first column across the top and the rest as labelled pairs, two a line. */
+  .admin-table {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+  /* Only the table's own scroller: the class is also borrowed by tab bars
+     (business detail) that must keep scrolling sideways on a phone. */
+  .admin-table > .admin-table-scroll {
+    overflow: visible;
+  }
+  .admin-table-scroll {
+    scrollbar-width: none;
+  }
+  .admin-table-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-table-inner {
+    min-width: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .admin-table-head {
+    display: none !important;
+  }
+  .admin-table-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 12px 14px;
+    padding: 14px 16px !important;
+    background: oklch(1 0 0);
+    border: 1px solid oklch(0.92 0.01 150) !important;
+    border-radius: 14px;
+  }
+  /* The cell wrapper is `display: contents` on a laptop, so the cells inside
+     it stay direct grid items and that layout is untouched. Here it has to
+     become a box of its own: every rule below — the label pseudo-element, the
+     full-width first cell, the hidden columns — needs something to hang on,
+     and `contents` leaves nothing. */
+  .admin-cell {
+    display: block;
+    min-width: 0;
+  }
+  /* A labelled value has half a card: let a date range wrap rather than push
+     the card a pixel past the screen at 320px. */
+  .admin-cell[data-label]:not([data-first='true']) * {
+    white-space: normal !important;
+  }
+  .admin-table-row[data-clickable='true']:active {
+    background: oklch(0.97 0.01 150);
+  }
+  .admin-cell[data-first='true'] {
+    grid-column: 1 / -1;
+  }
+  .admin-cell[data-mobile='hide'] {
+    display: none;
+  }
+  /* A column with no heading is an action: its own line, at the card's end. */
+  .admin-cell:not([data-label]):not([data-first='true']) {
+    grid-column: 1 / -1;
+  }
+  .admin-cell[data-label]:not([data-first='true'])::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: oklch(0.6 0.02 155);
+  }
+  .admin-cell[data-label]:not([data-first='true']),
+  .admin-cell[data-label]:not([data-first='true']) > * {
+    text-align: left !important;
+    justify-content: flex-start !important;
+  }
+
+  /* A row of filter chips scrolls sideways instead of wrapping to three lines. */
+  .admin-chip-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    width: calc(100% + 32px);
+    margin: 0 -16px;
+    padding: 0 16px 2px;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+  .admin-chip-row::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-chip-row > * {
+    flex: none;
+  }
+  .admin-filter-bar {
+    gap: 10px !important;
+  }
+  .admin-filter-grow {
+    flex: 1;
+    min-width: 0;
+    margin-left: 0 !important;
+  }
+  .admin-filter-grow > * {
+    width: 100% !important;
+  }
+
+  /* An iPhone SE is 320px: five tabs of 64px, and "Subscriptions" still has
+     to fit. Tighter type there only. */
+  @media (max-width: 360px) {
+    .admin-bottom-nav {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .admin-bottom-label {
+      font-size: 10px;
+      letter-spacing: -0.02em;
+    }
+    .admin-bottom-icon {
+      width: 40px;
+    }
+  }
+
+  /* Dashboard figures two a line, not one full-width card each. */
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .admin-kpi-grid > .admin-kpi-wide {
+    grid-column: 1 / -1;
+  }
+  .admin-kpi-grid .admin-card {
+    padding: 14px !important;
+  }
+
+  /* Dialogs: full width, a little less padding, and never taller than the screen. */
+  .admin-dialog-backdrop {
+    padding: 12px !important;
+  }
+  .admin-dialog-backdrop > * {
+    max-height: calc(100dvh - 24px) !important;
+  }
 }

@@ -163,3 +163,29 @@ export function firstPermittedHref(permissions: readonly string[]): string | nul
   }
   return null;
 }
+
+/**
+ * Jira GRW-267 · GRW-272 — the phone's bottom bar: four screens, then More.
+ *
+ * Chosen by the owner from the ones an admin opens most on the move. Everything
+ * else stays one tap away in the full menu More opens. Each entry is looked up
+ * in NAV_GROUPS rather than restated, so the icon, the label's source and — most
+ * of all — the permission that hides it cannot drift from the sidebar's.
+ */
+export const BOTTOM_NAV: { href: string; label: string }[] = [
+  { href: '/admin', label: 'Home' },
+  { href: '/admin/businesses', label: 'Businesses' },
+  { href: '/admin/subscriptions', label: 'Subscriptions' },
+  { href: '/admin/invoices', label: 'Invoices' },
+];
+
+/** The bottom bar's tabs this admin may open, in bar order. `null` permissions = /me not answered yet. */
+export function bottomNavItems(permissions: readonly string[] | null, showAll: boolean): (NavItem & { short: string })[] {
+  const all = NAV_GROUPS.flatMap((grp) => grp.items);
+  return BOTTOM_NAV.flatMap(({ href, label }) => {
+    const item = all.find((i) => i.href === href);
+    if (!item) return [];
+    if (!showAll && !(permissions?.includes(item.permission) ?? false)) return [];
+    return [{ ...item, short: label }];
+  });
+}

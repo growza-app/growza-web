@@ -203,6 +203,7 @@ export function DiscountModal({
 
   return (
     <div
+      className="admin-dialog-backdrop"
       style={{
         position: 'fixed',
         inset: 0,

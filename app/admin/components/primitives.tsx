@@ -29,7 +29,9 @@ export function Card({
 }) {
   return (
     <div
-      className={className}
+      // `admin-card` always, so the phone rules can reach any card; the
+      // caller's own class is for placement (a dashboard grid area).
+      className={className ? `admin-card ${className}` : 'admin-card'}
       style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 20, ...style }}
     >
       {children}
@@ -127,31 +129,38 @@ export interface TableColumn {
   right?: boolean;
   /** CSS grid track, e.g. '1.5fr' or '120px'. */
   width: string;
+  /**
+   * Jira GRW-267 · GRW-272 — `false` leaves this column off the phone card.
+   * For what a phone does not need: a placeholder for a figure not built yet,
+   * or an "open" chevron on a row that already opens when tapped.
+   */
+  mobile?: boolean;
 }
 
 /**
- * A grid-based table that becomes a list of cards on a phone (Jira GRW-277).
+ * A grid-based table with its own horizontal scroll — the row content never
+ * widens the page. `minWidthPx` is the point below which it scrolls instead
+ * of squeezing; every screen picks one for its own column set.
  *
- * On a laptop this is what it always was: one grid, `minWidthPx` wide at
- * minimum, scrolling sideways inside its own box rather than widening the
- * page.
+ * Jira GRW-267 · GRW-272 — on a phone (≤860px) it is not a table at all. A
+ * 1,180px table in a 390px screen showed the name and the owner and hid the
+ * status, the price and the action behind a sideways scroll nobody finds. Each
+ * row becomes a card instead: the first column across the top, the rest as
+ * labelled pairs beneath (admin.css). No screen changes to get this — the
+ * column labels a row already has are the labels the card prints.
  *
- * Below the shell's 860px breakpoint that stops being readable — a six-column
- * table in ~340px of phone showed two columns and hid the rest behind a
- * sideways scroll nobody discovers. So each row turns into a small card with
- * one line per field, and the column header supplies each line's label (the
- * header strip itself is then redundant and hidden). Nothing about the layout
- * is decided in JavaScript: the grid template and the minimum width are
- * handed to CSS as custom properties so a media query can drop both, which
- * keeps this consistent with `admin.css`'s own note about not letting the
- * shell flash an unstyled layout while hydrating.
+ * GRW-277 — the grid template and the minimum width travel as CSS custom
+ * properties rather than inline values, so the phone rules can drop both
+ * without `!important`. An inline `grid-template-columns` cannot be overridden
+ * by a media query, and a table that needs `!important` to become readable is
+ * a table nobody will keep readable.
  */
 export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColumn[]; rows: ReactNode; minWidthPx?: number }) {
   const grid = columns.map((c) => c.width).join(' ');
   return (
-    <div style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}>
+    <div className="admin-table" style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}>
       <div className="admin-table-scroll">
-        <div className="admin-table-min" style={{ '--admin-table-min': `${minWidthPx}px` } as CSSProperties}>
+        <div className="admin-table-inner" style={{ '--admin-table-min': `${minWidthPx}px` } as CSSProperties}>
           <div
             className="admin-table-head"
             style={
@@ -188,17 +197,11 @@ export function TableRow({
   style?: CSSProperties;
 }) {
   const grid = columns.map((c) => c.width).join(' ');
-  /*
-   * Each cell is wrapped so the phone layout can label it with its own
-   * column heading. The wrapper is `display: contents` on a laptop, so the
-   * cells stay direct grid items and that layout is byte-for-byte what it was
-   * — and the label pseudo-element only exists inside the mobile media query,
-   * where the wrapper becomes a real box.
-   */
   return (
     <div
-      onClick={onClick}
       className="admin-table-row"
+      data-clickable={onClick ? 'true' : undefined}
+      onClick={onClick}
       style={
         {
           '--admin-cols': grid,
@@ -208,11 +211,31 @@ export function TableRow({
         } as CSSProperties
       }
     >
-      {Children.toArray(children).map((cell, i) => (
-        <div key={i} className="admin-cell" data-label={columns[i]?.label ?? ''}>
-          {cell}
-        </div>
-      ))}
+      {/* Each cell wrapped once, so the phone card can label it from its column.
+          A null child stays null: on desktop it was never a grid item, and
+          wrapping it would shift every column after it by one.
+
+          `Children.map`, NOT `Children.toArray`: toArray DROPS null and
+          boolean children and renumbers what is left, so a row with a
+          conditional cell — `{canManage ? <Actions/> : null}` in the branch
+          list, for one — would label every cell after it with the wrong
+          column. The wrapper is `display: contents` on a laptop, so cells stay
+          direct grid items and that layout is unchanged; below 860px it
+          becomes a real box and prints its label. */}
+      {Children.map(children, (child, i) => {
+        if (child === null || child === undefined || typeof child === 'boolean') return child;
+        const column = columns[i];
+        return (
+          <div
+            className="admin-cell"
+            data-label={column?.label || undefined}
+            data-first={i === 0 ? 'true' : undefined}
+            data-mobile={column?.mobile === false ? 'hide' : undefined}
+          >
+            {child}
+          </div>
+        );
+      })}
     </div>
   );
 }

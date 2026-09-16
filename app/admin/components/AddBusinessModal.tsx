@@ -195,6 +195,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
 
   return (
     <div
+      className="admin-dialog-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
@@ -425,6 +426,7 @@ export function OwnerCredentialNotice({ created, onClose }: { created: CreatedBu
   const ids = useId();
   return (
     <div
+      className="admin-dialog-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
