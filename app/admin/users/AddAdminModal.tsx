@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
-import { PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
+import { FieldLabel, PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
 
 /**
  * GRW-133 — adding a platform administrator. GRW-165 — with a password.
@@ -116,10 +116,6 @@ export function AddAdminModal({
       });
   }
 
-  const label = (text: string) => (
-    <div style={{ fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{text}</div>
-  );
-
   return (
     <div
       className="admin-dialog-backdrop"
@@ -159,16 +155,17 @@ export function AddAdminModal({
 
         <div style={{ padding: '18px 24px 24px', display: 'grid', gap: 14 }}>
           <div>
-            {label('Name')}
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya Sharma" disabled={saving} />
+            <FieldLabel htmlFor={`${ids}-name`}>Name</FieldLabel>
+            <TextInput id={`${ids}-name`} value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya Sharma" disabled={saving} />
           </div>
           <div>
-            {label('Mobile number')}
-            <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" disabled={saving} />
+            <FieldLabel htmlFor={`${ids}-phone`}>Mobile number</FieldLabel>
+            <TextInput id={`${ids}-phone`} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" disabled={saving} />
           </div>
           <div>
-            {label('Starting password')}
+            <FieldLabel htmlFor={`${ids}-password`}>Starting password</FieldLabel>
             <TextInput
+              id={`${ids}-password`}
               type="password"
               autoComplete="new-password"
               value={password}
@@ -181,8 +178,9 @@ export function AddAdminModal({
             </div>
           </div>
           <div>
-            {label('Role')}
+            <FieldLabel htmlFor={`${ids}-role`}>Role</FieldLabel>
             <select
+              id={`${ids}-role`}
               value={roleId}
               onChange={(e) => setRoleId(e.target.value)}
               disabled={saving}
@@ -198,8 +196,8 @@ export function AddAdminModal({
             </select>
           </div>
           <div>
-            {label('Reason')}
-            <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why they need access" disabled={saving} />
+            <FieldLabel htmlFor={`${ids}-reason`}>Reason</FieldLabel>
+            <TextInput id={`${ids}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why they need access" disabled={saving} />
           </div>
 
           {error ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}

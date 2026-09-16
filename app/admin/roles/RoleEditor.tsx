@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
-import { PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
+import { FieldLabel, PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
 
 /**
  * GRW-135 — creating and editing a platform role.
@@ -178,10 +178,9 @@ export function RoleEditor({
 
         <div style={{ padding: '18px 24px 24px', display: 'grid', gap: 16 }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
-              Name
-            </div>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Support" disabled={saving} />
+            {/* Jira GRW-288 (AC-05) — was a <div>: the role's name field had no name. */}
+            <FieldLabel htmlFor={`${ids}-name`}>Name</FieldLabel>
+            <TextInput id={`${ids}-name`} value={name} onChange={(e) => setName(e.target.value)} placeholder="Support" disabled={saving} />
           </div>
 
           <div>
@@ -212,10 +211,8 @@ export function RoleEditor({
           </div>
 
           <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
-              Reason
-            </div>
-            <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this role exists, or why it is changing" disabled={saving} />
+            <FieldLabel htmlFor={`${ids}-reason`}>Reason</FieldLabel>
+            <TextInput id={`${ids}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this role exists, or why it is changing" disabled={saving} />
           </div>
 
           {error ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}

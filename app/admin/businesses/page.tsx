@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
+import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { Pagination, type PaginationState } from '../components/Pagination';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
@@ -26,20 +27,9 @@ const ALL = 'All';
 const STATUS_OPTIONS = ['All', 'provisioning', 'active', 'suspended', 'churned'];
 const statusLabel = (s: string) => (s === 'All' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1));
 
-const COLUMNS: TableColumn[] = [
-  { label: 'Business', width: '1.8fr' },
-  { label: 'Owner', width: '1.4fr' },
-  { label: 'Branches', width: '0.8fr' },
-  { label: 'Users', width: '0.7fr' },
-  { label: 'Plan', width: '1fr' },
-  { label: 'Status', width: '1fr' },
-  // Jira GRW-267 · GRW-272 — `mobile: false`: two placeholders for figures not
-  // counted yet, and a chevron on a card that already opens when tapped.
-  { label: 'Bookings', width: '0.9fr', mobile: false },
-  { label: 'Usage', width: '0.9fr', mobile: false },
-  { label: 'Created', width: '1fr' },
-  { label: '', width: '50px', right: true, mobile: false },
-];
+// Jira GRW-288 — the columns live in lib/list-columns.ts, where a test holds
+// their minimums to the widths this table has to fit.
+const COLUMNS = BUSINESS_COLUMNS;
 
 interface BusinessRow {
   tenantId: string;
@@ -211,7 +201,7 @@ function AdminBusinessesInner() {
         ))}
         </div>
         <div className="admin-filter-grow" style={{ width: 150 }}>
-          <Select options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
+          <Select aria-label="Filter by status" options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
         </div>
         {canCreate ? (
           <div className="admin-bar-end">
@@ -277,7 +267,6 @@ function AdminBusinessesInner() {
         <>
           <Table
             columns={COLUMNS}
-            minWidthPx={1180}
             rows={rows.map((b) => {
               const tc = typeColor(b.vertical);
               return (

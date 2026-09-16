@@ -66,6 +66,7 @@ export function Pagination({
             Rows
             <div style={{ width: 76 }}>
               <Select
+                aria-label="Rows per page"
                 options={PAGE_SIZE_OPTIONS.map(String)}
                 value={String(state.pageSize)}
                 onChange={(e) => onChange(changePageSize(Number(e.target.value)))}

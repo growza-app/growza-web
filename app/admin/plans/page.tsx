@@ -117,8 +117,10 @@ function PlanCard({ plan, registry, onEdit }: { plan: PlanSummary; registry: Cap
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>{plan.name}</div>
+        <div style={{ minWidth: 0 }}>
+          <div className="admin-name" style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>
+            {plan.name}
+          </div>
           <div style={{ marginTop: 6 }}>
             <StatusPill status={plan.status === 'active' ? 'Active' : 'Retired'} />
           </div>

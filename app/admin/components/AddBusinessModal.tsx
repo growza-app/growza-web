@@ -324,6 +324,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
           <Row>
             <Field
               label="Owner’s phone"
+              id={`${ids}-owner-phone`}
               hint={dialCode ? `${dialCode} is added automatically` : 'No dial code known for this country — enter the full number'}
               error={errorFor('owner.phone')}
             >
@@ -352,6 +353,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
                   </span>
                 ) : null}
                 <TextInput
+                  id={`${ids}-owner-phone`}
                   value={nationalNumber}
                   invalid={!!errorFor('owner.phone')}
                   inputMode="numeric"

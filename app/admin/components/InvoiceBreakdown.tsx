@@ -45,14 +45,16 @@ export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures
   const ratePercent = figures.taxRateBps / 100;
 
   return (
-    // Its own overflow container. This block is the most horizontally
-    // fragile thing on the screen — a right-aligned figure column next to a
-    // label column — so at 320px it scrolls inside itself rather than
-    // pushing the page sideways.
-    <div style={{ overflowX: 'auto' }}>
+    // Jira GRW-288 — it fits instead of scrolling. This used to be its own
+    // sideways scroller with a 280px minimum, so on a 320px phone (246px of
+    // card) the figure column was cut at "₹79…" and the rest of every amount
+    // sat behind a scroll nobody finds — on the one block whose whole job is
+    // to show the numbers. Now the LABEL column gives way (it wraps) and the
+    // figure column never does (`nowrap`, `flex: none`), so an amount is
+    // always whole and the block is never wider than its card.
+    <div style={{ minWidth: 0 }}>
       <div
         style={{
-          minWidth: compact ? 240 : 280,
           borderRadius: 14,
           border: '1px solid oklch(0.9 0.02 150)',
           background: 'oklch(0.98 0.012 150)',
@@ -83,9 +85,9 @@ export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures
             <Rule />
           </>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, paddingTop: 8 }}>
           <span style={{ fontSize: compact ? 13.5 : 14, fontWeight: 800, color: oklch.textStrong }}>Total</span>
-          <span style={{ fontSize: compact ? 16 : 19, fontWeight: 800, color: oklch.accentText, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: compact ? 16 : 19, fontWeight: 800, color: oklch.accentText, whiteSpace: 'nowrap', flex: 'none' }}>
             {formatMoneyMinor(figures.totalMinor)}
           </span>
         </div>
@@ -106,9 +108,19 @@ export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures
 
 function Line({ label, value, color, faint }: { label: string; value: string; color?: string; faint?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, fontSize: faint ? 12.5 : 13.5, padding: faint ? '3px 0' : '5px 0' }}>
-      <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
-      <span style={{ fontWeight: faint ? 600 : 700, color: color ?? (faint ? 'oklch(0.5 0.02 155)' : 'oklch(0.3 0.02 155)'), whiteSpace: 'nowrap' }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: faint ? 12.5 : 13.5, padding: faint ? '3px 0' : '5px 0' }}>
+      <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600, minWidth: 0 }}>{label}</span>
+      <span
+        style={{
+          fontWeight: faint ? 600 : 700,
+          color: color ?? (faint ? 'oklch(0.5 0.02 155)' : 'oklch(0.3 0.02 155)'),
+          whiteSpace: 'nowrap',
+          flex: 'none',
+          textAlign: 'right',
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
 }

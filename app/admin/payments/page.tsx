@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatMoneyMinor, formatTimestampDate } from '../lib/format';
 import { billingStatusLabel, PAYMENT_STATUS_VALUES } from '../lib/billing-status';
-import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
+import { PAYMENT_COLUMNS } from '../lib/list-columns';
 import { Pagination, type PaginationState } from '../components/Pagination';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
@@ -35,14 +36,9 @@ import { oklch } from '../tokens';
  */
 const STATUS_OPTIONS = ['All', ...PAYMENT_STATUS_VALUES];
 
-const COLUMNS: TableColumn[] = [
-  { label: 'Business', width: '1.4fr' },
-  { label: 'Amount', width: '0.9fr' },
-  { label: 'Refunded', width: '0.8fr' },
-  { label: 'Status', width: '1fr' },
-  { label: 'Provider · payment id', width: '1.4fr' },
-  { label: 'Date', width: '0.9fr' },
-];
+// Jira GRW-288 — the columns live in lib/list-columns.ts, where a test holds
+// their minimums to the widths this table has to fit.
+const COLUMNS = PAYMENT_COLUMNS;
 
 interface PaymentRow {
   id: string;
@@ -147,6 +143,7 @@ function AdminPaymentsInner() {
       <div style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ width: 170 }}>
           <Select
+            aria-label="Filter by status"
             options={STATUS_OPTIONS.map(billingStatusLabel)}
             value={billingStatusLabel(status)}
             onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(billingStatusLabel).indexOf(e.target.value)] ?? 'All')}
@@ -207,7 +204,6 @@ function AdminPaymentsInner() {
         <>
           <Table
             columns={COLUMNS}
-            minWidthPx={920}
             rows={rows.map((p) => (
               <TableRow key={p.id} columns={COLUMNS}>
                 <div style={{ minWidth: 0 }}>

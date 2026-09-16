@@ -242,7 +242,7 @@ export function SubscriptionPanel({
       <Card>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>
+            <div className="admin-name" style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>
               {businessName ? `${businessName} · ` : ''}
               {planName ?? s.planCode}
             </div>

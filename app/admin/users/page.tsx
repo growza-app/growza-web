@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly } from '../lib/format';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, type TableColumn } from '../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow } from '../components/primitives';
+import { ADMIN_USER_COLUMNS } from '../lib/list-columns';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { oklch } from '../tokens';
 import { AddAdminModal, type RoleOption } from './AddAdminModal';
@@ -38,13 +39,9 @@ interface UsersResponse {
   selfId: string;
 }
 
-const COLUMNS: TableColumn[] = [
-  { label: 'Administrator', width: '1.5fr' },
-  { label: 'Role', width: '1.2fr' },
-  { label: 'Added', width: '0.9fr' },
-  { label: 'Status', width: '0.8fr' },
-  { label: '', width: '300px', right: true },
-];
+// Jira GRW-288 — the columns live in lib/list-columns.ts, where a test holds
+// their minimums to the widths this table has to fit.
+const COLUMNS = ADMIN_USER_COLUMNS;
 
 export default function AdminUsersPage() {
   const [data, setData] = useState<UsersResponse | null>(null);
@@ -155,7 +152,6 @@ export default function AdminUsersPage() {
         ) : (
           <Table
             columns={COLUMNS}
-            minWidthPx={860}
             rows={visible.map((user) => {
               const isSelf = user.id === data.selfId;
               // AC-03 — the last active Super Admin is protected VISIBLY, so
@@ -166,7 +162,9 @@ export default function AdminUsersPage() {
               return (
                 <TableRow key={user.id} columns={COLUMNS}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong }}>{user.name}</div>
+                    <div className="admin-name" style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong }}>
+                      {user.name}
+                    </div>
                     <div style={{ fontSize: 12.5, color: oklch.textMuted, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.phone ?? '—'}</div>
                   </div>
 
@@ -175,6 +173,7 @@ export default function AdminUsersPage() {
                       <span style={{ fontSize: 13, fontWeight: 700, color: oklch.textStrong }}>{user.roleName ?? 'No role'}</span>
                     ) : (
                       <select
+                        aria-label={`Role for ${user.name}`}
                         value={user.roleId ?? ''}
                         onChange={(e) => changeRole(user, e.target.value)}
                         style={{ padding: '6px 9px', borderRadius: 9, border: `1px solid ${oklch.border}`, fontSize: 12.5, fontWeight: 600, maxWidth: 170 }}

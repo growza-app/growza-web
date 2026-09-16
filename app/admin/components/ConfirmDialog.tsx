@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
@@ -71,6 +71,10 @@ export function ConfirmDialog({
   // silently disabled, no visible reason why. Track that it was tried so a
   // real message can render instead of a click that appears to go nowhere.
   const [triedWithoutReason, setTriedWithoutReason] = useState(false);
+  // Jira GRW-288 (AC-05) — "Reason *" was a `<label>` pointing at nothing, so
+  // the one field every confirm dialog makes mandatory (Impersonate owner,
+  // Deactivate, Suspend…) had no name for a screen reader.
+  const reasonId = useId();
 
   /**
    * Clear the reason every time the dialog OPENS.
@@ -154,10 +158,11 @@ export function ConfirmDialog({
 
         {reasonRequired ? (
           <div style={{ marginTop: 18 }}>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
+            <label htmlFor={reasonId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
               Reason <span style={{ color: oklch.danger }}>*</span>
             </label>
             <TextInput
+              id={reasonId}
               value={reason}
               onChange={(e) => {
                 setReason(e.target.value);
