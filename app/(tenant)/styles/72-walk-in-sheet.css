@@ -557,3 +557,62 @@ input.wi-search-input-plain {
   min-height: 36px;
   padding: 6px 12px;
 }
+
+/*
+ * Jira GRW-291 — a combo as one line: title, what it saves, what it costs.
+ *
+ * `.wi-picked-name` stays a plain (non-flex) element here — nesting a second
+ * flex container inside a flex ITEM of `.wi-picked-row` collapsed it to zero
+ * width the moment the row ran out of space (measured at 320px: the name's
+ * box was 0px wide with the title rendered nowhere). A `min-width` is enough
+ * to stop that collapse without reintroducing the ellipsis this combo row
+ * does not want.
+ */
+.wi-picked-combo .wi-picked-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: initial;
+  min-width: 64px;
+  flex: 1 1 auto;
+}
+.wi-combo-tag {
+  vertical-align: middle;
+}
+/*
+ * The figures (list price, saving, final price) wrap onto their own line on
+ * a narrow phone rather than squeezing the title — `flex-basis: 100%` only
+ * claims the row once there is no room left on the title's line, the normal
+ * wrap behaviour, because `.wi-picked-name` above is what actually shrinks
+ * first (`flex: 1 1 auto`) and only gives way at its own `min-width`.
+ */
+.wi-combo-figures {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: fit-content;
+}
+.wi-combo-list {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+.wi-combo-save {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.wi-combo-price {
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+/* The row itself may wrap: figures move under the title once both cannot
+   fit on one line, instead of a mid-word collision. */
+.wi-picked-combo {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}

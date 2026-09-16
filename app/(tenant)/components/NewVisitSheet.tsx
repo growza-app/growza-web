@@ -242,6 +242,13 @@ export function NewVisitSheet({
   const [picked, setPicked] = useState<PickedItem[]>([]);
   const [offerId, setOfferId] = useState<string | null>(null);
   const [comboPriceMinor, setComboPriceMinor] = useState<string | null>(null);
+  /**
+   * Jira GRW-291 — a combo is one line, not its services split apart: the
+   * title, and the amount typed for it (Record payment only; otherwise the
+   * fixed combo price).
+   */
+  const [comboTitle, setComboTitle] = useState<string | null>(null);
+  const [comboAmountText, setComboAmountText] = useState('');
   const [schedulableId, setSchedulableId] = useState<string | null>(null);
   // Jira GRW-290 — Record payment: how they paid, and the visit once it exists.
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
@@ -382,6 +389,8 @@ export function NewVisitSheet({
     // Adding a loose service means this is no longer that combo's fixed price.
     setOfferId(null);
     setComboPriceMinor(null);
+    setComboTitle(null);
+    setComboAmountText('');
   };
 
   const applyCombo = (offer: Offer) => {
@@ -394,13 +403,46 @@ export function NewVisitSheet({
     setPicked(forPayment ? items.map((item, i) => ({ ...item, paidRupees: shares[i] })) : items);
     setOfferId(offer.id);
     setComboPriceMinor(offer.comboPriceMinor);
+    setComboTitle(offer.title);
+    setComboAmountText(offer.comboPriceMinor ? String(Number(offer.comboPriceMinor) / 100) : '');
     setServiceTerm('');
+  };
+
+  /**
+   * Jira GRW-291 — one amount for the whole combo, not one per service.
+   *
+   * Typed value drives the per-service split that `payFor` already reads
+   * (`item.paidRupees`), so checkout still settles each leg with its own
+   * share and nothing downstream of Mark done has to know a combo is one
+   * line on screen. An amount that doesn't parse is written straight to
+   * every line as blank, so the existing per-line validity check is what
+   * disables Mark done — one rule, not two.
+   */
+  const setComboAmount = (value: string) => {
+    setComboAmountText(value);
+    const minor = rupeesToMinor(value);
+    if (minor === null) {
+      setPicked((prev) => prev.map((item) => ({ ...item, paidRupees: '' })));
+      return;
+    }
+    const shares = splitComboRupees(picked, String(minor));
+    setPicked((prev) => prev.map((item, i) => ({ ...item, paidRupees: shares[i] })));
+  };
+
+  const removeCombo = () => {
+    setPicked([]);
+    setOfferId(null);
+    setComboPriceMinor(null);
+    setComboTitle(null);
+    setComboAmountText('');
   };
 
   const removeAt = (index: number) => {
     setPicked((prev) => prev.filter((_, i) => i !== index));
     setOfferId(null);
     setComboPriceMinor(null);
+    setComboTitle(null);
+    setComboAmountText('');
   };
 
   const setAmountAt = (index: number, value: string) => {
@@ -409,6 +451,11 @@ export function NewVisitSheet({
 
   const amountsValid = picked.every((item) => rupeesToMinor(item.paidRupees) !== null);
   const paidTotalMinor = picked.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0);
+
+  // Jira GRW-291 — a combo renders as one line: what the services list for, what it saves, what it costs.
+  const comboActive = Boolean(offerId && comboPriceMinor);
+  const comboListMinor = picked.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
+  const comboSavingMinor = comboPriceMinor ? Math.max(0, comboListMinor - Number(comboPriceMinor)) : 0;
 
   // --- `later` only: which day, and which slot on it ---
   const [day, setDay] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()));
@@ -1000,40 +1047,87 @@ export function NewVisitSheet({
               <>
                 <div className="wi-section-label">{copy.newVisit.picked}</div>
                 <div className="wi-picked">
-                  {picked.map((item, i) => (
-                    <div className="wi-picked-row" key={`${item.serviceId}-${i}`}>
-                      <span className="wi-picked-name">{item.name}</span>
-                      {forPayment ? (
-                        <label className="wi-amount">
-                          <span aria-hidden>₹</span>
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            aria-label={copy.newVisit.amountFor(item.name)}
-                            aria-invalid={rupeesToMinor(item.paidRupees) === null}
-                            value={item.paidRupees ?? ''}
-                            onChange={(e) => setAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
-                            disabled={busy}
-                          />
-                        </label>
-                      ) : (
-                        <span className="picker-row-meta">{copy.services.minutes(item.durationMin)}</span>
-                      )}
+                  {comboActive ? (
+                    /*
+                     * Jira GRW-291 — a combo is one line: what it would have
+                     * cost, what it saves, and what it costs — not its
+                     * services listed apart with the discount invisible
+                     * between them. `applyCombo` always replaces the whole
+                     * list, so `picked` here IS the combo and nothing else.
+                     */
+                    <div className="wi-picked-row wi-picked-combo">
+                      <span className="wi-picked-name">
+                        {comboTitle}
+                        <span className="wi-combo-tag">{copy.newVisit.combo}</span>
+                      </span>
+                      <span className="wi-combo-figures">
+                        <span className="wi-combo-list">{formatMoney(String(comboListMinor))}</span>
+                        <span className="wi-combo-save">{copy.newVisit.comboSaves(formatMoney(String(comboSavingMinor)))}</span>
+                        {forPayment ? (
+                          <label className="wi-amount">
+                            <span aria-hidden>₹</span>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              aria-label={copy.newVisit.amountFor(comboTitle ?? copy.newVisit.combo)}
+                              aria-invalid={rupeesToMinor(comboAmountText) === null}
+                              value={comboAmountText}
+                              onChange={(e) => setComboAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                              disabled={busy || linesLocked}
+                            />
+                          </label>
+                        ) : (
+                          <strong className="wi-combo-price">{formatMoney(comboPriceMinor!)}</strong>
+                        )}
+                      </span>
                       <button
                         type="button"
                         className="wi-remove"
-                        aria-label={`${copy.newVisit.removeService} ${item.name}`}
-                        onClick={() => removeAt(i)}
+                        aria-label={`${copy.newVisit.removeService} ${comboTitle ?? copy.newVisit.combo}`}
+                        onClick={removeCombo}
                         disabled={busy || linesLocked}
                       >
                         <IconClose />
                       </button>
                     </div>
-                  ))}
-                  <div className="wi-picked-total">
-                    <span>{comboPriceMinor && !forPayment ? copy.newVisit.comboPrice : copy.newVisit.total}</span>
-                    <strong>{formatMoney(forPayment ? String(paidTotalMinor) : totalMinor(picked, comboPriceMinor))}</strong>
-                  </div>
+                  ) : (
+                    <>
+                      {picked.map((item, i) => (
+                        <div className="wi-picked-row" key={`${item.serviceId}-${i}`}>
+                          <span className="wi-picked-name">{item.name}</span>
+                          {forPayment ? (
+                            <label className="wi-amount">
+                              <span aria-hidden>₹</span>
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                aria-label={copy.newVisit.amountFor(item.name)}
+                                aria-invalid={rupeesToMinor(item.paidRupees) === null}
+                                value={item.paidRupees ?? ''}
+                                onChange={(e) => setAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
+                                disabled={busy}
+                              />
+                            </label>
+                          ) : (
+                            <span className="picker-row-meta">{copy.services.minutes(item.durationMin)}</span>
+                          )}
+                          <button
+                            type="button"
+                            className="wi-remove"
+                            aria-label={`${copy.newVisit.removeService} ${item.name}`}
+                            onClick={() => removeAt(i)}
+                            disabled={busy || linesLocked}
+                          >
+                            <IconClose />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="wi-picked-total">
+                        <span>{copy.newVisit.total}</span>
+                        <strong>{formatMoney(forPayment ? String(paidTotalMinor) : totalMinor(picked, comboPriceMinor))}</strong>
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}

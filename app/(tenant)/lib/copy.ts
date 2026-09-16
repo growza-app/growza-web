@@ -222,6 +222,9 @@ export const copy = {
     paid: (amount: string, mode: string) => `Paid ${amount} · ${mode}`,
     paymentNotSaved: 'The visit is saved, but the payment did not save. Tap Mark done to try again.',
     combo: 'Combo',
+    // Jira GRW-291 — the combo's discount, said in one line: what it saves off the list price.
+    // Matches CheckoutSheet's own "X list, saves Y" phrasing for the same discount.
+    comboSaves: (amount: string) => `Saves ${amount}`,
     close: 'Close',
     clear: 'Clear',
     whoIsThis: (client: string) => `Search for the ${client}, or add them.`,
