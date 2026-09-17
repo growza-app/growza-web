@@ -32,6 +32,9 @@ const PATHS = {
   money: '<rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/>',
   alert:
     '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
+  // GRW-296 — the entitlement editor's per-field tooltip trigger. Not in the
+  // original Admin.dc.html canvas, same convention as `clock`'s own note.
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
   chat: '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/>',

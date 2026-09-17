@@ -330,6 +330,128 @@ export function Toggle({
 }
 
 /**
+ * GRW-296 — a small hover/focus popover naming what a control actually does,
+ * for a screen (the entitlement editor) whose labels used to be the only
+ * explanation on offer. A bare `title` attribute was considered and
+ * rejected: it never reliably reaches a keyboard user, only a mouse one.
+ */
+export function InfoTooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', flex: 'none' }}>
+      <button
+        type="button"
+        aria-label={`About: ${text}`}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        style={{
+          width: 16,
+          height: 16,
+          borderRadius: '50%',
+          border: 'none',
+          background: oklch.surfaceSubtle,
+          color: oklch.textFaint,
+          cursor: 'help',
+          display: 'grid',
+          placeItems: 'center',
+          padding: 0,
+        }}
+      >
+        <Icon name="info" size={11} />
+      </button>
+      {open ? (
+        <span
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            bottom: '130%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 220,
+            padding: '8px 10px',
+            borderRadius: 8,
+            background: oklch.textStrong,
+            color: 'white',
+            fontSize: 11.5,
+            lineHeight: 1.45,
+            zIndex: 10,
+            boxShadow: '0 4px 12px oklch(0.2 0.02 150 / 0.25)',
+            pointerEvents: 'none',
+          }}
+        >
+          {text}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/**
+ * GRW-296 — the chrome one entitlement row shares regardless of what's
+ * actually being edited: label (+ optional tooltip/badge/description) on
+ * the left, the control on the right, every row the same height and shape.
+ * Extracted from `SubscriptionEntitlements`' `EntitlementLine`, which had
+ * already solved this; `EntitlementEditor`'s old per-cell grid had not,
+ * which is why a boolean toggle and a numeric field used to look like two
+ * different kinds of row on that screen.
+ *
+ * A slot-based wrapper, not a smart component: it owns border/padding/
+ * layout only. Draft state, save flow, clamp notices, per-field buttons —
+ * all of that stays with whichever screen is calling this.
+ */
+export function EntitlementRow({
+  label,
+  keyForTitle,
+  tooltip,
+  badge,
+  description,
+  overridden,
+  control,
+}: {
+  label: string;
+  /** The raw capability key, shown as a native tooltip on the row itself — parity with what both screens did before this extraction. */
+  keyForTitle?: string;
+  /** Plain-language explanation shown via `InfoTooltip` next to the label. */
+  tooltip?: string;
+  /** e.g. a source `Pill` (`SubscriptionEntitlements`) — `EntitlementEditor` passes nothing. */
+  badge?: ReactNode;
+  /** A clamp notice, override reason, or ceiling hint — rendered under the label. */
+  description?: ReactNode;
+  /** Amber border/background, for a row a per-customer override has touched. */
+  overridden?: boolean;
+  control: ReactNode;
+}) {
+  return (
+    <div
+      title={keyForTitle}
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: 14,
+        flexWrap: 'wrap',
+        padding: '11px 13px',
+        borderRadius: 12,
+        border: `1px solid ${overridden ? 'oklch(0.88 0.06 80)' : oklch.border}`,
+        background: overridden ? 'oklch(0.99 0.02 85)' : oklch.surfaceSubtle,
+      }}
+    >
+      <div style={{ minWidth: 200, flex: '1 1 240px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700, color: oklch.text }}>{label}</span>
+          {tooltip ? <InfoTooltip text={tooltip} /> : null}
+          {badge}
+        </div>
+        {description}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 'none' }}>{control}</div>
+    </div>
+  );
+}
+
+/**
  * `error` replaces the hint rather than sitting beside it (GRW-175).
  *
  * A field that is wrong has one thing to say, and it is not the tip. Showing

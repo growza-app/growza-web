@@ -5,7 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { capabilityGroupLabel, orderCapabilityGroups } from '../lib/capability-groups';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';
-import { Card, Pill, SecondaryButton, SectionTitle, TextInput, Toggle } from './primitives';
+import { Card, EntitlementRow, Pill, SecondaryButton, SectionTitle, TextInput, Toggle } from './primitives';
 import { ConfirmDialog } from './ConfirmDialog';
 
 /**
@@ -34,7 +34,11 @@ import { ConfirmDialog } from './ConfirmDialog';
 type CapabilityValue = boolean | number;
 type CapabilitySource = 'code' | 'vertical' | 'plan' | 'tenant_capability' | 'subscription';
 
-interface EntitlementRow {
+// GRW-296 — named `...Data` so it doesn't collide with the `EntitlementRow`
+// component this file now renders through (a type and a value CAN share a
+// name in TS, since they live in separate namespaces, but doing it on
+// purpose here would only make every `row: EntitlementRow` read ambiguous).
+interface EntitlementRowData {
   key: string;
   label: string;
   type: 'boolean' | 'number';
@@ -51,7 +55,7 @@ interface EntitlementsResponse {
   subscriptionId: string;
   businessId: string;
   planCode: string;
-  rows: EntitlementRow[];
+  rows: EntitlementRowData[];
 }
 
 /**
@@ -78,8 +82,8 @@ function formatValue(row: { type: 'boolean' | 'number' }, value: CapabilityValue
 }
 
 type PendingEdit =
-  | { mode: 'set'; row: EntitlementRow; value: CapabilityValue }
-  | { mode: 'remove'; row: EntitlementRow };
+  | { mode: 'set'; row: EntitlementRowData; value: CapabilityValue }
+  | { mode: 'remove'; row: EntitlementRowData };
 
 export function SubscriptionEntitlements({
   subscriptionId,
@@ -326,7 +330,7 @@ function EntitlementLine({
   onSet,
   onRemove,
 }: {
-  row: EntitlementRow;
+  row: EntitlementRowData;
   draft: CapabilityValue;
   editable: boolean;
   onDraftChange: (value: CapabilityValue) => void;
@@ -340,79 +344,68 @@ function EntitlementLine({
   const changed = row.type === 'number' ? Number(draft) !== Number(row.override?.value ?? row.value) : false;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        gap: 14,
-        flexWrap: 'wrap',
-        padding: '11px 13px',
-        borderRadius: 12,
-        border: `1px solid ${row.override ? 'oklch(0.88 0.06 80)' : oklch.border}`,
-        background: row.override ? 'oklch(0.99 0.02 85)' : oklch.surfaceSubtle,
-      }}
-    >
-      <div style={{ minWidth: 200, flex: '1 1 240px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: oklch.text }} title={row.key}>
-            {row.label}
-          </span>
-          <Pill text={SOURCE_LABEL[row.source]} fg={pill.fg} bg={pill.bg} />
-        </div>
-
-        {/* The resolver reports `requested` only when a ceiling overruled the
-            stated value. Saying just the capped number would leave an admin
-            who typed 500 wondering whether their write landed at all. */}
-        {row.requested !== undefined && row.clampedBy ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, fontSize: 12, fontWeight: 600, color: 'oklch(0.42 0.12 65)' }}>
-            <Icon name="alert" size={13} />
-            Asked for {formatValue(row, row.requested)}, capped to {formatValue(row, row.value)} by the{' '}
-            {SOURCE_LABEL[row.clampedBy].toLowerCase()}.
-          </div>
-        ) : null}
-
-        {row.override ? (
-          <div style={{ marginTop: 5, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
-            Override reason: {row.override.reason}
-          </div>
-        ) : null}
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 'none' }}>
-        {row.type === 'boolean' ? (
-          <>
-            <span style={{ fontSize: 13, fontWeight: 700, color: oklch.textMuted, minWidth: 26 }}>{formatValue(row, row.value)}</span>
-            <Toggle label={row.label} on={Boolean(row.value)} disabled={!editable} onClick={() => onSet(!row.value)} />
-          </>
-        ) : (
-          <>
-            <div style={{ width: 110 }}>
-              <TextInput
-                type="number"
-                min={0}
-                value={String(draft)}
-                disabled={!editable}
-                aria-label={row.label}
-                onChange={(e) => onDraftChange(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-              />
+    <EntitlementRow
+      label={row.label}
+      keyForTitle={row.key}
+      overridden={Boolean(row.override)}
+      badge={<Pill text={SOURCE_LABEL[row.source]} fg={pill.fg} bg={pill.bg} />}
+      description={
+        <>
+          {/* The resolver reports `requested` only when a ceiling overruled
+              the stated value. Saying just the capped number would leave an
+              admin who typed 500 wondering whether their write landed at
+              all. */}
+          {row.requested !== undefined && row.clampedBy ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, fontSize: 12, fontWeight: 600, color: 'oklch(0.42 0.12 65)' }}>
+              <Icon name="alert" size={13} />
+              Asked for {formatValue(row, row.requested)}, capped to {formatValue(row, row.value)} by the{' '}
+              {SOURCE_LABEL[row.clampedBy].toLowerCase()}.
             </div>
-            <SecondaryButton
-              onClick={() => onSet(Number(draft))}
-              disabled={!editable || !changed}
-              title={!editable ? undefined : !changed ? 'This is already the value in force' : undefined}
-              style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
-            >
-              Set
+          ) : null}
+
+          {row.override ? (
+            <div style={{ marginTop: 5, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
+              Override reason: {row.override.reason}
+            </div>
+          ) : null}
+        </>
+      }
+      control={
+        <>
+          {row.type === 'boolean' ? (
+            <>
+              <span style={{ fontSize: 13, fontWeight: 700, color: oklch.textMuted, minWidth: 26 }}>{formatValue(row, row.value)}</span>
+              <Toggle label={row.label} on={Boolean(row.value)} disabled={!editable} onClick={() => onSet(!row.value)} />
+            </>
+          ) : (
+            <>
+              <div style={{ width: 110 }}>
+                <TextInput
+                  type="number"
+                  min={0}
+                  value={String(draft)}
+                  disabled={!editable}
+                  aria-label={row.label}
+                  onChange={(e) => onDraftChange(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                />
+              </div>
+              <SecondaryButton
+                onClick={() => onSet(Number(draft))}
+                disabled={!editable || !changed}
+                title={!editable ? undefined : !changed ? 'This is already the value in force' : undefined}
+                style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
+              >
+                Set
+              </SecondaryButton>
+            </>
+          )}
+          {row.override ? (
+            <SecondaryButton danger onClick={onRemove} disabled={!editable} style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}>
+              Remove
             </SecondaryButton>
-          </>
-        )}
-        {row.override ? (
-          <SecondaryButton danger onClick={onRemove} disabled={!editable} style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}>
-            Remove
-          </SecondaryButton>
-        ) : null}
-      </div>
-    </div>
+          ) : null}
+        </>
+      }
+    />
   );
 }
