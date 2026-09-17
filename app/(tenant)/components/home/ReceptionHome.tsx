@@ -7,7 +7,7 @@ import { homeCopy, type HomeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
 import { countsAsNotMarked, liveState, longerThanBooked, minutesBetween } from '../../lib/live-state';
 import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconReceipt, IconSearch, IconUserPlus } from '../icons';
-import { NewVisitSheet, type VisitMode } from '../NewVisitSheet';
+import { NewVisitSheet } from '../NewVisitSheet';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
 import { Avatar, avatarKey, CardError, HomeHeader, QuickTiles } from './parts';
 
@@ -54,8 +54,12 @@ function hereNowStatus(t: HomeCopy, g: BookingGroup, now: Date, timezone: string
 export function ReceptionHome(p: ReceptionHomeProps) {
   const t = homeCopy(p.lang, p.labels);
   const now = useMemo(() => new Date(p.nowISO), [p.nowISO]);
-  /** `payment` is Record payment: the walk-in steps, ending in the till. */
-  const [sheet, setSheet] = useState<VisitMode | 'payment' | null>(null);
+  /**
+   * Record payment only now — Jira GRW-297 moved "Walk-in now" and "New
+   * appointment" off this overlay onto their own page (`/appointments/new`);
+   * Record payment (the walk-in steps, ending in the till) is unchanged.
+   */
+  const [sheet, setSheet] = useState<'payment' | null>(null);
   const [tab, setTab] = useState<Tab>('waiting');
   const [giving, setGiving] = useState<QueueEntry | null>(null);
 
@@ -95,14 +99,14 @@ export function ReceptionHome(p: ReceptionHomeProps) {
       <div className="page-body hm-page hm-desk">
         {/* Laptop only: on a phone the tab bar's raised Walk-in is this button. */}
         <div className="hm-primary-actions hm-desktop">
-          <button type="button" className="hm-action hm-action-dark" onClick={() => setSheet('now')}>
+          <a href="/appointments/new?mode=now" className="hm-action hm-action-dark">
             <IconUserPlus />
             <strong>{t.walkInNow}</strong>
-          </button>
-          <button type="button" className="hm-action" onClick={() => setSheet('later')}>
+          </a>
+          <a href="/appointments/new?mode=later" className="hm-action">
             <IconCalendarPlus />
             <strong>{t.newAppointment}</strong>
-          </button>
+          </a>
           <button type="button" className="hm-action" onClick={() => setSheet('payment')}>
             <IconReceipt />
             <strong>{t.recordPayment}</strong>
@@ -266,14 +270,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
         />
       </div>
 
-      {sheet ? (
-        <NewVisitSheet
-          mode={sheet === 'payment' ? 'now' : sheet}
-          purpose={sheet === 'payment' ? 'payment' : 'visit'}
-          timezone={p.timezone}
-          onClose={() => setSheet(null)}
-        />
-      ) : null}
+      {sheet ? <NewVisitSheet mode="now" purpose="payment" timezone={p.timezone} onClose={() => setSheet(null)} /> : null}
       {giving ? <GiveToStaffSheet t={t} entry={giving} providers={p.providers} busy={busy} onClose={() => setGiving(null)} /> : null}
     </>
   );

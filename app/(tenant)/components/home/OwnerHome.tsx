@@ -24,7 +24,7 @@ import {
   IconSettings,
   IconStaff,
 } from '../icons';
-import { NewVisitSheet, type VisitPurpose } from '../NewVisitSheet';
+import { NewVisitSheet } from '../NewVisitSheet';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards, rupees } from './parts';
@@ -132,8 +132,12 @@ export function OwnerHome(p: OwnerHomeProps) {
   const [failed, setFailed] = useState(p.initial === null);
   const [branchMenu, setBranchMenu] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
-  /** Laptop only — on a phone the tab bar's centre button opens this same sheet. */
-  const [visitSheet, setVisitSheet] = useState<VisitPurpose | null>(null);
+  /**
+   * Record payment only now — Jira GRW-297 moved "New booking" off this
+   * overlay onto its own page (`/appointments/new`); Record payment is
+   * unchanged and still opens here.
+   */
+  const [visitSheet, setVisitSheet] = useState<'payment' | null>(null);
   const mayBook = p.role !== 'staff';
 
   const load = (nextPeriod: HomePeriod, nextBranch: string | null) => {
@@ -262,19 +266,20 @@ export function OwnerHome(p: OwnerHomeProps) {
           />
           <div className="hm-toolbar-end">
             {mayBook ? (
-              /* One booking button, not "Walk-in" + "New appointment": both opened
-                 the same sheet, whose own toggle chooses now-or-later.
-                 "Record payment" is the walk-in steps ending in the till, for a
-                 visit that has just finished. */
+              /* One booking button, not "Walk-in" + "New appointment": New
+                 booking's own page (GRW-297) has a toggle that chooses
+                 now-or-later. "Record payment" is the walk-in steps ending
+                 in the till, for a visit that has just finished — still an
+                 overlay, unchanged. */
               <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
                 <button type="button" className="hm-action" onClick={() => setVisitSheet('payment')}>
                   <IconReceipt />
                   <strong>{t.recordPayment}</strong>
                 </button>
-                <button type="button" className="hm-action hm-action-dark" onClick={() => setVisitSheet('visit')}>
+                <a href="/appointments/new" className="hm-action hm-action-dark">
                   <IconCalendarPlus />
                   <strong>{t.nav.newBooking}</strong>
-                </button>
+                </a>
               </div>
             ) : null}
             {multiBranch ? (

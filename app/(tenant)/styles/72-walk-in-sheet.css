@@ -636,3 +636,44 @@ input.wi-search-input-plain {
   flex-wrap: wrap;
   row-gap: 6px;
 }
+
+/* ---------- the same sheet, as its own page (Jira GRW-297) ---------- */
+
+/*
+ * New Booking's route (`/appointments/new`), not a pop-up over one. Same
+ * markup, same stages, same `.wi-*` classes as the overlay below — only the
+ * frame changes: no backdrop, no fixed position, sitting in normal page flow
+ * inside `.page-body` instead. The card width matches the overlay's own
+ * desktop-panel width so the design reads as identical, not merely similar.
+ */
+.walk-in-page {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 10px 0 22px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* `.wi-body`'s height cap exists to stop the sheet's own scroller fighting
+   the page's — a full page has no outer scroller to fight, the document
+   itself scrolls, so the cap (and the scrollbar it would otherwise draw) is
+   dropped here. */
+.walk-in-page .wi-body {
+  max-height: none;
+  overflow: visible;
+}
+
+/*
+ * `.modal-actions` (14-checkout-sheet.css) is `position: sticky; bottom: 0`
+ * so Back/Start now stays pinned to the FOOT OF THE SHEET'S OWN SCROLLBOX —
+ * `.wi-body`, above. That box no longer scrolls here, so sticky escalated to
+ * the next one that does: the document itself, pinning the footer to the
+ * bottom of the browser viewport instead and drawing it over whatever
+ * section (Combos, Which stylist…) the page happened to be scrolled to.
+ * A full page has no footer to pin at all — Back/Start now belongs at the
+ * end of the form, like every other page's primary action in this app.
+ */
+.walk-in-page .wi-actions {
+  position: static;
+}
