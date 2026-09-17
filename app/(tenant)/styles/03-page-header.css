@@ -86,8 +86,11 @@
    * min-height/min-width: 0 is what lets it actually shrink to that track
    * instead of growing to fit its content, which is what makes
    * overflow-y: auto below able to scroll at all.
+   *
+   * Row 3, not row 2 — `.content` grew a 4th row for `.content-banners`
+   * (row 1); the page's own header is row 2, whether or not one renders.
    */
-  grid-row: 2;
+  grid-row: 3;
   min-height: 0;
   min-width: 0;
   overflow-y: auto;

@@ -115,14 +115,31 @@
 }
 
 .content {
-  /* Grid, not flex column: a fixed row plan (header / scroller / footer) is
-     what every page-level .page-fit / .bk-fit / .table-fit variant has been
-     hand-rolling on top of flex — giving the shell the plan directly means
-     .page-body only has to be the middle row, not re-derive "fill what's
-     left" itself. Rows beyond these three (fixed-position overlays like
-     .fab-menu) don't consume a track, so they don't disturb the layout. */
+  /*
+   * Grid, not flex column: a fixed row plan (banners / header / scroller /
+   * footer) is what every page-level .page-fit / .bk-fit / .table-fit
+   * variant has been hand-rolling on top of flex — giving the shell the
+   * plan directly means .page-body only has to be the middle row, not
+   * re-derive "fill what's left" itself. Rows beyond these four
+   * (fixed-position overlays like .fab-menu) don't consume a track, so
+   * they don't disturb the layout.
+   *
+   * Jira GRW-300 — four explicit rows now, not three, and every one of
+   * them is pinned by `grid-row` on the element itself (`.content-banners`,
+   * the page's own header, `.page-body`, `.bottom-nav`) rather than left to
+   * auto-placement. Auto-placement fills rows strictly in DOM order, which
+   * silently assumed EXACTLY one item per row: a tenant with both
+   * `BillingBanner` and `BillChangeBanner` showing pushed the page's own
+   * header into an implicit 5th row — below `.bottom-nav`, off the bottom
+   * of the screen — and a page with no header at all (`/appointments/new`)
+   * pushed `.page-body` into the banner's row instead, stretching
+   * `.bottom-nav` to fill the leftover space. Pinning every row makes the
+   * layout correct for 0, 1 or 2 banners and for a page with or without
+   * its own header, instead of correct only for the one combination that
+   * happened to be tested.
+   */
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
@@ -130,8 +147,16 @@
   min-width: 0;
 }
 
+.content-banners {
+  grid-row: 1;
+}
+
 /*
  * Jira GRW-192 — the shell's `<main>` landmark, laid out as if it were not there.
+ *
+ * (Jira GRW-300 grew `.content` a 4th row and pinned every row's item with
+ * its own `grid-row` — see `.content`'s own comment above. The bug this
+ * comment describes, and the fix below, are otherwise unchanged.)
  *
  * `display: contents` and not a grid pass-through, which was the first attempt
  * and was wrong. `.content` is a three-row grid — `auto minmax(0, 1fr) auto` —

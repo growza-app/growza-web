@@ -1861,12 +1861,13 @@
      layout instead of a second, independently-computed coordinate system. */
   .bottom-nav {
     /* Jira GRW-300 — pinned to the last row explicitly. `.content`'s grid
-       (01-shell.css) is `auto minmax(0,1fr) auto`, and grid auto-placement
-       fills rows strictly in DOM order — a page with no header ahead of
-       `.page-body` (e.g. `/appointments/new`) otherwise pushes this into
-       row 2 (the flexible one) and stretches it to fill the leftover
-       height. See `.page-body`'s own note for the other half of this fix. */
-    grid-row: 3;
+       (01-shell.css) is `auto auto minmax(0,1fr) auto` (banners / header /
+       scroller / nav), and grid auto-placement fills rows strictly in DOM
+       order — a page with no header ahead of `.page-body` (e.g.
+       `/appointments/new`), or a tenant with more than one banner showing,
+       otherwise pushes this out of row 4. See `.content-banners` and
+       `.page-body`'s own notes for the rest of this fix. */
+    grid-row: 4;
     display: flex;
     flex-shrink: 0;
     background: var(--surface);
@@ -2004,6 +2005,14 @@
     padding-left: max(58px, calc(env(safe-area-inset-left) + 58px));
     align-items: center;
     gap: 12px;
+  }
+
+  /* Jira GRW-300 — `BillingBanner`/`BillChangeBanner` sit above every
+     header (row 1 of `.content`'s grid) and run edge-to-edge, so they need
+     their own clearance for the same fixed hamburger toggle — `.topbar`
+     and `.hm-head`'s padding-left only helps the row below them. */
+  .content-banners {
+    padding: 10px max(16px, env(safe-area-inset-right)) 0 max(58px, calc(env(safe-area-inset-left) + 58px));
   }
 
   .topbar h1 {

@@ -231,8 +231,21 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
             <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
             <div className="content">
-              <BillingBanner billing={billing} canPayOnline={canPayOnline} />
-              <BillChangeBanner change={billingChange} />
+              {/*
+                * Jira GRW-300 — ONE grid item for both banners, not two.
+                * `.content`'s grid places each direct/`display:contents`-
+                * unwrapped child into its own row by DOM order; with
+                * `BillingBanner` and `BillChangeBanner` as separate items,
+                * a tenant with BOTH pending pushed the page's own header
+                * (`.topbar`/`.hm-head`, next in DOM order) out of row 2 and
+                * into an implicit row after `.bottom-nav` — invisible,
+                * scrolled past the fold. Wrapping them is what makes "how
+                * many banners are showing right now" not a layout question.
+                */}
+              <div className="content-banners">
+                <BillingBanner billing={billing} canPayOnline={canPayOnline} />
+                <BillChangeBanner change={billingChange} />
+              </div>
               {/*
                 * Jira GRW-192 — one `<main>`, in the shell, for every screen.
                 *
