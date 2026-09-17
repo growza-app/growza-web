@@ -28,6 +28,27 @@
   letter-spacing: -0.02em;
 }
 
+/* Jira GRW-301 — a screen with `onBack` (Notifications; reached from wherever
+   the bottom-nav tab was tapped, so it needs a way back that a fixed link
+   can't give it — see PageHeader's own note). The back icon sits inline with
+   the H1 rather than above it, reusing the same icon-button `.staff-icon-btn`
+   already is elsewhere in this header. */
+.topbar-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.topbar-title-row h1 {
+  margin: 0;
+  min-width: 0;
+}
+
+.topbar-back {
+  flex-shrink: 0;
+}
+
 .topbar p {
   margin: 0;
   color: var(--muted);

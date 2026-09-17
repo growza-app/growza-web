@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { HeaderControls } from './HeaderControls';
+import { IconArrowLeft } from './icons';
 
 /**
  * Jira GRW-30 — the one header. Title and subtitle left; the page's primary
@@ -29,17 +30,35 @@ export function PageHeader({
   subtitle,
   actions,
   mobileSubtitle,
+  onBack,
 }: {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
   /** Keep the (short) subtitle visible on mobile too — off by default, since long subtitles eat the screen. */
   mobileSubtitle?: boolean;
+  /**
+   * Jira GRW-301 — for a screen reached from wherever a bottom-nav tab was
+   * tapped rather than always from the same parent, so a fixed "back to X"
+   * link would be wrong as often as right. Absent on every other screen here
+   * — they're peer destinations a person navigates TO, not pushed on top of
+   * one another, so nothing else needs a way back besides the nav itself.
+   */
+  onBack?: () => void;
 }) {
   return (
     <header className={`topbar ${mobileSubtitle ? 'topbar-with-sub' : ''}`}>
       <div className="topbar-title">
-        <h1>{title}</h1>
+        {onBack ? (
+          <div className="topbar-title-row">
+            <button type="button" className="staff-icon-btn topbar-back" aria-label="Back" onClick={onBack}>
+              <IconArrowLeft />
+            </button>
+            <h1>{title}</h1>
+          </div>
+        ) : (
+          <h1>{title}</h1>
+        )}
         {subtitle && <p>{subtitle}</p>}
       </div>
       {/* One group, not loose children: .topbar is space-between, so bare

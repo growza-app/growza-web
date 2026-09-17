@@ -10,25 +10,41 @@ const TOAST_MS = 6_000;
 const STORAGE_KEY = 'wa-booking:notifLastSeenId';
 const CLEARED_KEY = 'wa-booking:notifClearedBeforeId';
 
+/**
+ * Jira GRW-301 — exported so the full-page version (notifications/page.tsx,
+ * admin mobile's own equivalent replaced with a page rather than a popover)
+ * reads and writes the SAME read/cleared state as this bell, rather than a
+ * second copy that could disagree about what's already been seen.
+ */
+
 /** Highest event id the owner has explicitly acknowledged ("Mark all read") — per-device, since there's no per-user login yet to key this to. */
-function readLastSeenId(): number {
+export function readLastSeenId(): number {
   if (typeof window === 'undefined') return 0;
   return Number(window.localStorage.getItem(STORAGE_KEY) ?? 0);
 }
 
 /** Events at or below this id are hidden entirely ("Clear all") — a display-only cutoff, never touches the underlying outbox rows. */
-function readClearedBeforeId(): number {
+export function readClearedBeforeId(): number {
   if (typeof window === 'undefined') return 0;
   return Number(window.localStorage.getItem(CLEARED_KEY) ?? 0);
 }
 
-const TOPIC_META: Record<ActivityEvent['topic'], { label: string; icon: ComponentType; cls: string }> = {
+export function writeLastSeenId(id: number): void {
+  window.localStorage.setItem(STORAGE_KEY, String(id));
+}
+
+export function writeClearedBeforeId(id: number): void {
+  window.localStorage.setItem(CLEARED_KEY, String(id));
+  window.localStorage.setItem(STORAGE_KEY, String(id));
+}
+
+export const TOPIC_META: Record<ActivityEvent['topic'], { label: string; icon: ComponentType; cls: string }> = {
   'appointment.confirmed': { label: 'New booking', icon: IconCalendarPlus, cls: 'notif-new' },
   'appointment.cancelled': { label: 'Cancelled', icon: IconClose, cls: 'notif-cancel' },
   'appointment.rescheduled': { label: 'Rescheduled', icon: IconMoveTime, cls: 'notif-reschedule' },
 };
 
-function timeAgo(iso: string, now: Date): string {
+export function timeAgo(iso: string, now: Date): string {
   const diffMin = Math.round((now.getTime() - new Date(iso).getTime()) / 60000);
   if (diffMin < 1) return 'just now';
   if (diffMin < 60) return `${diffMin}m ago`;
@@ -37,7 +53,7 @@ function timeAgo(iso: string, now: Date): string {
   return `${Math.round(diffH / 24)}d ago`;
 }
 
-function eventLine(e: ActivityEvent, timezone: string): { title: string; subtitle: string } {
+export function eventLine(e: ActivityEvent, timezone: string): { title: string; subtitle: string } {
   const services = e.serviceNames.join(' + ');
   const local = DateTime.fromISO(e.startAt).setZone(timezone).toFormat('ccc, h:mm a');
   return {
@@ -123,14 +139,13 @@ export function NotificationBell() {
 
   const markAllRead = () => {
     const newest = events.length > 0 ? Number(events[0]!.id) : lastSeenId;
-    window.localStorage.setItem(STORAGE_KEY, String(newest));
+    writeLastSeenId(newest);
     setLastSeenId(newest);
   };
 
   const clearAll = () => {
     const newest = Math.max(events.length > 0 ? Number(events[0]!.id) : 0, maxKnownId.current);
-    window.localStorage.setItem(CLEARED_KEY, String(newest));
-    window.localStorage.setItem(STORAGE_KEY, String(newest));
+    writeClearedBeforeId(newest);
     setClearedBeforeId(newest);
     setLastSeenId(newest);
   };
@@ -154,8 +169,12 @@ export function NotificationBell() {
   };
 
   return (
+    // Jira GRW-301 — desktop-only: on a phone, Notifications is its own
+    // bottom-nav tab and full page now (notifications/page.tsx), so the
+    // header's copy of this would be a second, redundant way in — the same
+    // reasoning the admin portal's header bell was hidden on mobile for.
     <div
-      className="notif-wrap"
+      className="notif-wrap desktop-only"
       ref={wrapRef}
       style={mobileTop != null ? ({ '--notif-mobile-top': `${mobileTop}px` } as CSSProperties) : undefined}
     >

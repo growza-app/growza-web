@@ -45,6 +45,10 @@ const STAFF_DESTINATIONS: ReadonlySet<string> = new Set([
   // their own record and offers no way to change it; the API refuses the
   // writes regardless.
   '/attendance',
+  // Jira GRW-301 — their own confirmations/cancellations/reschedules, built
+  // from `GET /api/v1/notifications` now that it's scoped by provider
+  // (`staffProviderScope`) rather than owner-only.
+  '/notifications',
   '/more',
 ]);
 
@@ -64,6 +68,9 @@ const RECEPTIONIST_DESTINATIONS: ReadonlySet<string> = new Set([
   '/appointments',
   '/customers',
   '/attendance',
+  // Jira GRW-301 — the same whole-tenant feed the owner reads; a receptionist
+  // is never provider-scoped (see `RECEPTIONIST_ALLOWED`'s own note).
+  '/notifications',
   '/more',
 ]);
 

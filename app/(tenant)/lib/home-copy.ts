@@ -248,6 +248,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       services: hi ? 'सेवाएँ' : (labels.services ?? copy.nav.services),
       offers: S(copy.nav.offers, 'ऑफर'),
       attendance: S('Attendance', 'हाज़िरी'),
+      notifications: S('Notifications', 'सूचनाएं'),
       reports: S(copy.reports.navLabel, 'रिपोर्ट'),
       freeTimes: S(copy.nav.availability, 'खाली समय'),
       whatsapp: 'WhatsApp',

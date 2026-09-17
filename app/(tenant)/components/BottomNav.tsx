@@ -5,6 +5,7 @@ import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import {
+  IconBell,
   IconCalendarPlus,
   IconNavAttendance,
   IconNavBookings,
@@ -52,17 +53,23 @@ export function BottomNav({
   const t = homeCopy(lang, labels);
   const stylist = role === 'staff';
 
+  // Jira GRW-301 — Notifications, right before More on both bars: the
+  // remaining screens `visibleItems` can hide from a limited role (nothing
+  // hides it from an owner/manager, since neither destination set restricts
+  // them — see nav-policy.ts's own `canSee`).
   const items = stylist
     ? [
         { href: '/', label: t.nav.home, icon: <IconNavHome /> },
         { href: '/appointments', label: t.nav.schedule, icon: <IconNavBookings /> },
         { href: '/attendance', label: t.nav.attendance, icon: <IconNavAttendance /> },
+        { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
         { href: '/more', label: t.nav.more, icon: <IconNavMore /> },
       ]
     : [
         { href: '/', label: t.nav.home, icon: <IconNavHome /> },
         { href: '/appointments', label: t.nav.bookings, icon: <IconNavBookings /> },
         { href: '/customers', label: t.nav.clients, icon: <IconNavClients /> },
+        { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
         { href: '/more', label: t.nav.more, icon: <IconNavMore /> },
       ];
 

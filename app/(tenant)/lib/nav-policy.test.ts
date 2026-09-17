@@ -21,6 +21,9 @@ const NAV = [
   // GRW-169/200 — a real destination for the receptionist and, read-only, for
   // a stylist looking at their own record.
   { href: '/attendance' },
+  // Jira GRW-301 — a real destination for both limited roles now, scoped by
+  // `staffProviderScope` for a stylist and unscoped for a receptionist.
+  { href: '/notifications' },
   { href: '/reports' },
   { href: '/availability' },
   { href: '/try-whatsapp' },
@@ -42,6 +45,9 @@ describe('AC-01 — a stylist is offered what they can use', () => {
       // GRW-200 — their own record, read-only. The API scopes it to them and
       // refuses both writes, so this is a place to look and not to edit.
       '/attendance',
+      // Jira GRW-301 — their own confirmations/cancellations/reschedules,
+      // scoped by `staffProviderScope` the same way `/attendance` is.
+      '/notifications',
       '/more',
     ]);
   });
