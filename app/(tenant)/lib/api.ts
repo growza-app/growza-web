@@ -677,6 +677,35 @@ export const api = {
       legs: { appointmentId: string; serviceId: string; startAt: string; endAt: string; overlapping: boolean }[];
     }>('/api/v1/walk-ins', input),
   /**
+   * Jira GRW-293 (epic GRW-283) — a paid visit with no stylist. "Record
+   * payment" only: `noStylist: true` is the only way this route is ever
+   * called from the sheet — Walk-in now and For later keep `createWalkIn` /
+   * `createBooking` untouched, always with a chair.
+   */
+  recordCounterSale: (input: {
+    queueEntryId?: string;
+    customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    services: { serviceId: string; paidAmountMinor: number }[];
+    offerId?: string;
+    noStylist: true;
+    paymentMode?: PaymentMode;
+    idempotencyKey?: string;
+    location?: string;
+  }) =>
+    post<{
+      appointmentId: string;
+      bookingGroupId: string | null;
+      customerId: string;
+      schedulableId: string | null;
+      stylistUnassigned: boolean;
+      startAt: string;
+      endAt: string;
+      overlapping: boolean;
+      legs: { appointmentId: string; serviceId: string; paidAmountMinor: number; startAt: string; endAt: string }[];
+    }>('/api/v1/counter-sales', input),
+  /**
    * Jira GRW-199 — an advance booking, in one request.
    *
    * The two-step `createHold` + `confirmAppointment` pair stays for the

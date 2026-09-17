@@ -260,6 +260,10 @@ export const copy = {
     // Jira GRW-235 — a multi-branch business's booking sheet.
     whichBranch: 'Which branch?',
     whoeverIsFree: 'Whoever is free',
+    // Jira GRW-293 — Record payment only: a visit can be paid for without
+    // choosing anyone. "No stylist" over "Unassigned" — the front desk is
+    // choosing an option, not reading a report's label back at themselves.
+    noStylist: 'No stylist',
     freeCount: (n: number) => (n === 0 ? 'nobody free' : n === 1 ? '1 free' : `${n} free`),
     chairFree: 'free now',
     chairBusy: (name: string, until: string) => `with ${name} · till ${until}`,

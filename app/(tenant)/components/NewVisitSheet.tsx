@@ -147,7 +147,8 @@ interface WalkInDone {
   customerId: string;
   /** Every leg, in running order — the whole visit is settled in one checkout. */
   legIds: string[];
-  schedulableId: string;
+  /** Jira GRW-293 — null for a visit recorded with no stylist. */
+  schedulableId: string | null;
   startAt: string;
   overlapping: boolean;
 }
@@ -266,6 +267,14 @@ export function NewVisitSheet({
    */
   const [extras, setExtras] = useState<PickedItem[]>([]);
   const [schedulableId, setSchedulableId] = useState<string | null>(null);
+  /**
+   * Jira GRW-293 (epic GRW-283) — Record payment only: the desk can settle a
+   * visit without choosing anyone. A separate boolean rather than overloading
+   * `schedulableId === null`, which already means "whoever is free" for
+   * Walk-in now / For later — those two modes must keep reserving a chair
+   * exactly as before, so this can only ever be true when `forPayment` is.
+   */
+  const [noStylist, setNoStylist] = useState(false);
   // Jira GRW-290 — Record payment: how they paid, and the visit once it exists.
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   /*
@@ -496,7 +505,11 @@ export function NewVisitSheet({
   // extra through, so a combo cannot share a slot with one there: the primary
   // button stays disabled (see the footer) until the extra is removed or the
   // combo is.
-  const comboBlocksSubmit = !forPayment && comboActive && extras.length > 0;
+  //
+  // Jira GRW-293 — "No stylist" is the same shape as those two: one call,
+  // no second checkout step to settle an extra through afterwards. Blocked
+  // here rather than taught a new combo+extra split the till never needed.
+  const comboBlocksSubmit = (!forPayment || noStylist) && comboActive && extras.length > 0;
 
   // --- `later` only: which day, and which slot on it ---
   const [day, setDay] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()));
@@ -793,6 +806,48 @@ export function NewVisitSheet({
             startAt: booked.startAt,
             overlapping: false,
           },
+        });
+        return;
+      }
+
+      /*
+       * Jira GRW-293 (epic GRW-283) — "No stylist": one call, born paid,
+       * born settled. Not the `createWalkIn` + `payFor` pair below — there is
+       * no chair to walk in to, and `recordCounterSale`'s whole point is that
+       * it never writes a hold or an allocation. `noStylist` can only be true
+       * under `forPayment` (the chip only renders there), so this is checked
+       * before the `savedVisit` retry path, which is that pair's own concern.
+       */
+      if (forPayment && noStylist) {
+        const services = [...picked, ...extras].map((item) => ({
+          serviceId: item.serviceId,
+          paidAmountMinor: rupeesToMinor(item.paidRupees) ?? 0,
+        }));
+        const result = await api.recordCounterSale({
+          ...(client.kind === 'existing'
+            ? { customerId: client.id }
+            : { customerName: client.name, ...(client.phone ? { customerPhone: client.phone } : {}) }),
+          services,
+          ...(offerId ? { offerId } : {}),
+          noStylist: true,
+          paymentMode,
+          idempotencyKey: attemptKey,
+          ...atBranch,
+        });
+        router.refresh();
+        setStage({
+          step: 'paid',
+          client,
+          result: {
+            appointmentId: result.appointmentId,
+            customerId: result.customerId,
+            legIds: result.legs.map((l) => l.appointmentId),
+            schedulableId: null,
+            startAt: result.startAt,
+            overlapping: false,
+          },
+          totalMinor: result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
+          mode: paymentMode,
         });
         return;
       }
@@ -1360,11 +1415,35 @@ export function NewVisitSheet({
               is about a day that has not happened.
             */}
             <div className="wi-chair-list">
+              {/*
+                Jira GRW-293 (epic GRW-283) — "No stylist", Record payment
+                only. `noStylist` and `schedulableId === null` used to mean
+                the same thing ("whoever is free"); they are now two
+                different choices, so every chip below also clears
+                `noStylist` when it is not the one being picked — a selected
+                chair or "Whoever is free" must never leave this flag on.
+              */}
+              {forPayment && (
+                <button
+                  type="button"
+                  className={`wi-chair ${noStylist ? 'wi-chair-on' : ''}`}
+                  onClick={() => {
+                    setSchedulableId(null);
+                    setNoStylist(true);
+                    setReclaim(null);
+                  }}
+                  disabled={busy || linesLocked}
+                >
+                  <span className="wi-chair-name">{copy.newVisit.noStylist}</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                className={`wi-chair ${schedulableId === null ? 'wi-chair-on' : ''}`}
+                className={`wi-chair ${schedulableId === null && !noStylist ? 'wi-chair-on' : ''}`}
                 onClick={() => {
                   setSchedulableId(null);
+                  setNoStylist(false);
                   setReclaim(null);
                 }}
                 disabled={busy || linesLocked}
@@ -1385,6 +1464,7 @@ export function NewVisitSheet({
                       className={`wi-chair ${picked ? 'wi-chair-on' : ''}`}
                       onClick={() => {
                         setSchedulableId(p.id);
+                        setNoStylist(false);
                         setReclaim(null);
                       }}
                       disabled={busy || linesLocked}

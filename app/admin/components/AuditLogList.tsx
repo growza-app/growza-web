@@ -28,6 +28,9 @@ export const KNOWN_ACTIONS = [
   // that nobody did.
   'appointment.rescheduled',
   'appointment.reclaimed',
+  // Jira GRW-293 — a stylist named after the fact for a visit recorded with
+  // none (epic GRW-283, "a paid visit with no stylist").
+  'appointment.stylist_assigned',
   // GRW-202 — a client asked to be forgotten, and then was. Two entries
   // because they happen days apart: the request is reversible for the length
   // of the grace period, the completion is not.
