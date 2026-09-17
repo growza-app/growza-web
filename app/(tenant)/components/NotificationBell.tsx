@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react';
 import { DateTime } from 'luxon';
-import { api, type ActivityEvent } from '../lib/api';
-import { IconBell, IconCalendarPlus, IconClose, IconMoveTime } from './icons';
+import { api, formatMoney, type ActivityEvent } from '../lib/api';
+import { IconBell, IconCalendarPlus, IconClose, IconMoveTime, IconReceipt } from './icons';
 
 const POLL_MS = 15_000;
 const TOAST_MS = 6_000;
@@ -42,6 +42,9 @@ export const TOPIC_META: Record<ActivityEvent['topic'], { label: string; icon: C
   'appointment.confirmed': { label: 'New booking', icon: IconCalendarPlus, cls: 'notif-new' },
   'appointment.cancelled': { label: 'Cancelled', icon: IconClose, cls: 'notif-cancel' },
   'appointment.rescheduled': { label: 'Rescheduled', icon: IconMoveTime, cls: 'notif-reschedule' },
+  // Jira GRW-301 — replaces the old top-of-page BillChangeBanner, which had
+  // no dismiss and no read state; this is a normal feed entry now.
+  'billing.change_pending': { label: 'Billing', icon: IconReceipt, cls: 'notif-billing' },
 };
 
 export function timeAgo(iso: string, now: Date): string {
@@ -53,12 +56,28 @@ export function timeAgo(iso: string, now: Date): string {
   return `${Math.round(diffH / 24)}d ago`;
 }
 
+/**
+ * Jira GRW-301 — the same sentence `BillChangeBanner` used to render as a
+ * permanent banner, now one feed entry: "Bill going down · from 1 Oct:
+ * ₹798/month (now ₹998), for 2 branches."
+ */
+function billingLine(billing: NonNullable<ActivityEvent['billing']>): { title: string; subtitle: string } {
+  const [y, m, d] = billing.effectiveFrom.split('-').map(Number);
+  const day = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const up = billing.nextMonthlyMinor > billing.currentMonthlyMinor;
+  return {
+    title: up ? 'Bill going up' : 'Bill going down',
+    subtitle: `From ${day}: ${formatMoney(String(billing.nextMonthlyMinor), billing.currency)} a month (now ${formatMoney(String(billing.currentMonthlyMinor), billing.currency)}), for ${billing.openBranches} ${billing.openBranches === 1 ? 'branch' : 'branches'}.`,
+  };
+}
+
 export function eventLine(e: ActivityEvent, timezone: string): { title: string; subtitle: string } {
-  const services = e.serviceNames.join(' + ');
-  const local = DateTime.fromISO(e.startAt).setZone(timezone).toFormat('ccc, h:mm a');
+  if (e.topic === 'billing.change_pending' && e.billing) return billingLine(e.billing);
+  const services = (e.serviceNames ?? []).join(' + ');
+  const local = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).toFormat('ccc, h:mm a') : '';
   return {
     title: `${TOPIC_META[e.topic].label} — ${services}`,
-    subtitle: `${e.customerName ?? 'Customer'} · ${local}`,
+    subtitle: local ? `${e.customerName ?? 'Customer'} · ${local}` : (e.customerName ?? 'Customer'),
   };
 }
 

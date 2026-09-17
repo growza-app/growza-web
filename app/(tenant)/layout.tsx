@@ -2,7 +2,7 @@ import './globals.css';
 import { Figtree, Noto_Sans_Devanagari } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { api, type Me } from './lib/api';
+import { api } from './lib/api';
 import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { PwaRegister } from './components/PwaRegister';
@@ -15,7 +15,6 @@ import { LabelsProvider } from './components/LabelsProvider';
 import { MobileNavProvider } from './components/MobileNavProvider';
 import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
-import { BillChangeBanner } from './components/BillChangeBanner';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
 import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
@@ -113,8 +112,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let tenantName = 'Booking';
   let timezone = 'Asia/Kolkata';
   let billing: { status: string; message: string | null } | null = null;
-  /** Jira GRW-240 — the owner's "your bill changes on" notice. */
-  let billingChange: Me['billingChange'] = null;
   /** GRW-145/163 — whether the billing banner may offer "Pay now". */
   let canPayOnline = false;
   /**
@@ -155,7 +152,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
-    billingChange = me.billingChange ?? null;
     canPayOnline = me.payments?.online ?? false;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
@@ -232,19 +228,20 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
             <div className="content">
               {/*
-                * Jira GRW-300 — ONE grid item for both banners, not two.
-                * `.content`'s grid places each direct/`display:contents`-
-                * unwrapped child into its own row by DOM order; with
-                * `BillingBanner` and `BillChangeBanner` as separate items,
-                * a tenant with BOTH pending pushed the page's own header
-                * (`.topbar`/`.hm-head`, next in DOM order) out of row 2 and
-                * into an implicit row after `.bottom-nav` — invisible,
-                * scrolled past the fold. Wrapping them is what makes "how
-                * many banners are showing right now" not a layout question.
+                * Jira GRW-300 — its own grid item, not a bare `BillingBanner`
+                * sibling. `.content`'s grid places each direct/
+                * `display:contents`-unwrapped child into its own row by DOM
+                * order; a banner as its own top-level item pushed the page's
+                * own header (`.topbar`/`.hm-head`, next in DOM order) out of
+                * row 2 and into an implicit row after `.bottom-nav` —
+                * invisible, scrolled past the fold. Kept as a wrapper (not
+                * just pinning `BillingBanner` itself) because a second
+                * account-status banner is exactly the kind of thing that
+                * gets added here again later — Jira GRW-301 just removed the
+                * one that used to make this two.
                 */}
               <div className="content-banners">
                 <BillingBanner billing={billing} canPayOnline={canPayOnline} />
-                <BillChangeBanner change={billingChange} />
               </div>
               {/*
                 * Jira GRW-192 — one `<main>`, in the shell, for every screen.
