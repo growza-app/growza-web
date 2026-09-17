@@ -61,10 +61,20 @@ export const ATTENTION_CARDS: Array<{
   },
 ];
 
-export const QUICK_ACTIONS: Array<{ icon: IconName; label: string; href: string; tint: keyof typeof ACTION_TINTS }> = [
+export const QUICK_ACTIONS: Array<{
+  icon: IconName;
+  label: string;
+  href: string;
+  tint: keyof typeof ACTION_TINTS;
+  /** Admin mobile dashboard only — desktop still shows all five in one row. */
+  hideOnMobile?: boolean;
+}> = [
   { icon: 'businesses', label: 'Add business', href: '/admin/businesses', tint: 'businesses' },
   { icon: 'users', label: 'Invite admin', href: '/admin/users', tint: 'users' },
   { icon: 'plans', label: 'Create plan', href: '/admin/plans/new', tint: 'plans' },
   { icon: 'usage', label: 'View usage', href: '/admin/usage', tint: 'usage' },
-  { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit' },
+  // Least likely of the five to be reached for from a phone mid-task — kept
+  // on desktop, dropped from the mobile grid so the remaining four sit in one
+  // even 4-up row instead of a lone tile on its own second line.
+  { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit', hideOnMobile: true },
 ];

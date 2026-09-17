@@ -8,9 +8,10 @@ import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, T
 import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { Pagination, type PaginationState } from '../components/Pagination';
+import { VerticalFilterSheet } from '../components/VerticalFilterSheet';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
-import { oklch, typeColor } from '../tokens';
+import { oklch, STATUS_COLORS, typeColor } from '../tokens';
 
 /**
  * GRW-101's Businesses list, wired to GRW-100's real read layer in place of
@@ -43,9 +44,16 @@ interface BusinessRow {
   createdAt: string;
 }
 
+interface BusinessStatusCount {
+  status: string;
+  count: number;
+}
+
 interface BusinessPage {
   rows: BusinessRow[];
   total: number;
+  /** Jira GRW-297 — the admin-mobile status chips' counts; see businesses.ts's own comment for why these ignore the `status` filter itself. */
+  statusCounts: BusinessStatusCount[];
 }
 
 /** No metering epic has shipped — a real count here would be a claim nothing backs (GRW-101 BR-02: "a zero is a claim"). */
@@ -136,6 +144,7 @@ function AdminBusinessesInner() {
   }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom]);
 
   const hasActiveFilters = vertical !== ALL || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
+  const totalStatusCount = (page?.statusCounts ?? []).reduce((sum, s) => sum + s.count, 0);
 
   /**
    * The verticals that exist, and whether this admin may add a business.
@@ -168,47 +177,137 @@ function AdminBusinessesInner() {
   const [adding, setAdding] = useState(false);
   const [created, setCreated] = useState<CreatedBusiness | null>(null);
 
+  // The vertical filter's admin-mobile picker — see VerticalFilterSheet's own comment.
+  const [mobileVerticalOpen, setMobileVerticalOpen] = useState(false);
+  const verticalOptions = [ALL, ...verticalNames];
+
   return (
     <div>
       <div className="admin-filter-bar" style={{ display: 'flex', gap: 9, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        {/* Jira GRW-267 · GRW-272 — `display: contents` on a desktop, so the chips
-            still wrap in this row as before; one sideways-scrolling row on a phone. */}
-        <div className="admin-chip-row" style={{ display: 'contents' }}>
-        {[ALL, ...verticalNames].map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setVertical(f)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7,
-              height: 38,
-              padding: '0 15px',
-              borderRadius: 10,
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: 'none',
-              ...(vertical === f
-                ? { background: 'oklch(0.31 0.055 158)', color: 'white' }
-                : { background: 'white', color: 'oklch(0.45 0.02 155)', border: `1px solid ${oklch.borderStrong}` }),
-            }}
-          >
-            {f !== ALL ? <TypeIcon type={f} size={16} /> : null}
-            {f}
-          </button>
-        ))}
+        {/* Jira GRW-267 · GRW-272 first made this a chip row — wrapping to three
+            lines on a laptop, sideways-scrolling on a phone once verticals grew
+            past a couple. A dropdown has neither problem at any width, and
+            already matches the Status filter beside it. */}
+        <div className="admin-filter-grow" style={{ width: 170 }}>
+          <div className="admin-desktop-only">
+            <Select
+              aria-label="Filter by vertical"
+              options={verticalOptions}
+              value={vertical}
+              onChange={(e) => setVertical(e.target.value)}
+            />
+          </div>
+          <div className="admin-mobile-only" style={{ width: '100%' }}>
+            <button
+              type="button"
+              onClick={() => setMobileVerticalOpen(true)}
+              style={{
+                width: '100%',
+                height: 44,
+                padding: '0 14px',
+                borderRadius: 11,
+                border: `1px solid ${oklch.borderStrong}`,
+                background: oklch.inputBg,
+                fontSize: 14,
+                fontWeight: 600,
+                color: oklch.textStrong,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vertical}</span>
+              <span style={{ display: 'inline-flex', transform: 'rotate(90deg)', flex: 'none', color: oklch.textFaint }}>
+                <Icon name="chevronRight" size={14} />
+              </span>
+            </button>
+          </div>
         </div>
-        <div className="admin-filter-grow" style={{ width: 150 }}>
+        {/* Desktop only — on admin mobile, status is the chip row below the bar
+            instead (GRW-297): a fixed four-status set reads better as chips
+            with their own counts than as a dropdown, and doesn't need a
+            drawer's search the way the open-ended vertical list does. Its own
+            `admin-desktop-only` (not a wrapped inner div, unlike the vertical
+            filter above) so the whole slot is removed from the mobile flex
+            row rather than left behind as an empty gap. */}
+        <div className="admin-filter-grow admin-desktop-only" style={{ width: 150 }}>
           <Select aria-label="Filter by status" options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
         </div>
         {canCreate ? (
-          <div className="admin-bar-end">
+          // `admin-businesses-add-first`: admin mobile only — "Add business"
+          // renders first in the flex row so it appears above the two filter
+          // dropdowns instead of below them, without reordering `admin-bar-end`
+          // globally (the business detail page uses that same class for an
+          // unrelated action bar).
+          <div className="admin-bar-end admin-businesses-add-first">
             <PrimaryButton onClick={() => setAdding(true)}>Add business</PrimaryButton>
           </div>
         ) : null}
       </div>
+
+      {/* Jira GRW-297 — admin mobile's status filter: a clickable chip per
+          status, each carrying the count of businesses that fall into it
+          (matching the current vertical/search filters, not the whole
+          platform — see BusinessPage.statusCounts's own comment). Desktop
+          keeps the plain dropdown above. */}
+      <div className="admin-mobile-only admin-status-chip-row" style={{ gap: 8, marginBottom: 16 }}>
+        {STATUS_OPTIONS.map((s) => {
+          const label = statusLabel(s);
+          const count = s === ALL ? totalStatusCount : (page?.statusCounts.find((sc) => sc.status === s)?.count ?? 0);
+          const selected = status === s;
+          const [fg] = STATUS_COLORS[label] ?? ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'];
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatus(s)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                height: 34,
+                padding: '0 12px',
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: 'none',
+                ...(selected
+                  ? { background: 'oklch(0.31 0.055 158)', color: 'white' }
+                  : { background: 'white', color: 'oklch(0.45 0.02 155)', border: `1px solid ${oklch.borderStrong}` }),
+              }}
+            >
+              {s !== ALL ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: selected ? 'white' : fg, flex: 'none' }} /> : null}
+              {label}
+              <span
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  padding: '1px 6px',
+                  borderRadius: 999,
+                  background: selected ? 'oklch(1 0 0 / 0.2)' : oklch.divider,
+                  color: selected ? 'white' : oklch.textMuted,
+                }}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <VerticalFilterSheet
+        open={mobileVerticalOpen}
+        options={verticalOptions}
+        value={vertical}
+        onSelect={(v) => {
+          setVertical(v);
+          setMobileVerticalOpen(false);
+        }}
+        onClose={() => setMobileVerticalOpen(false)}
+      />
 
       {adding ? (
         <AddBusinessModal

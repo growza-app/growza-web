@@ -237,6 +237,7 @@ export default function AdminDashboardPage() {
                 <Link
                   key={action.href}
                   href={action.href}
+                  data-mobile={action.hideOnMobile ? 'hide' : undefined}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',

@@ -2,13 +2,17 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BOTTOM_NAV, NAV_GROUPS, bottomNavItems } from '../nav';
+import { BOTTOM_NAV, BROWSER_BACK, NAV_GROUPS, bottomNavItems, resolveRouteMeta } from '../nav';
 
 /**
  * Jira GRW-267 · GRW-272 — the admin portal on a phone.
  *
- * A bottom bar the owner chose (Home · Businesses · Subscriptions · Invoices ·
- * More), and tables that become cards. The layout itself is checked in a real
+ * A bottom bar the owner chose (Home · Businesses · Subscriptions · Invoices),
+ * and tables that become cards. "More" was originally this bar's fifth tab;
+ * Jira GRW-298 moved it to the header, beside the heading, instead, and
+ * GRW-299 put Notifications in that freed slot — its own full page rather
+ * than the header bell's popover, with a back button rather than a
+ * dismiss-on-outside-click panel. The layout itself is checked in a real
  * browser across the device matrix; these pin the parts a refactor could
  * quietly undo.
  */
@@ -37,10 +41,20 @@ describe('the bottom bar', () => {
     expect(bottomNavItems(null, true)).toHaveLength(4);
   });
 
-  it('the shell renders it, with More opening the full menu, and no hamburger left', () => {
+  // Jira GRW-298 — "More" moved off this bar into the header, beside the
+  // heading, so it no longer competes with the four real screens for a tab
+  // slot. Pinned here rather than left to the browser-only device matrix
+  // because a refactor moving it back (or dropping it entirely) would not
+  // fail typecheck, lint or any other test.
+  it('"More" opens the same menu from the header now, not from a bottom-bar tab', () => {
     const shell = admin('components/AdminShell.tsx');
     expect(shell).toMatch(/className="admin-bottom-nav bottom-nav"/);
-    expect(shell).toMatch(/onClick=\{\(\) => setNavOpen\(true\)\}[\s\S]{0,200}More/);
+
+    const headerBlock = shell.slice(shell.indexOf('<header'), shell.indexOf('</header>'));
+    expect(headerBlock).toMatch(/onClick=\{\(\) => setNavOpen\(true\)\}[\s\S]{0,200}aria-label="More"/);
+
+    const bottomNavBlock = shell.slice(shell.indexOf('<nav className="admin-bottom-nav'), shell.lastIndexOf('</nav>'));
+    expect(bottomNavBlock).not.toMatch(/More/);
     expect(shell).not.toMatch(/aria-label="Open navigation"/);
   });
 
@@ -49,6 +63,63 @@ describe('the bottom bar', () => {
     expect(css).toMatch(/\.admin-bottom-nav \{\s*display: none;/);
     const phone = css.slice(css.indexOf('GRW-267 · GRW-272'));
     expect(phone).toMatch(/@media \(max-width: 860px\)[\s\S]*\.admin-bottom-nav \{\s*display: grid;/);
+  });
+});
+
+describe('Notifications, admin mobile only (Jira GRW-299)', () => {
+  it('resolveRouteMeta gives it a browser-back button, not a fixed parent link', () => {
+    // Every OTHER back link is a fixed parent screen, right for a page reached
+    // from one place. This one is reached from wherever the bottom tab is
+    // tapped, so it has no single fixed parent — see BROWSER_BACK's own note.
+    expect(resolveRouteMeta('/admin/notifications')).toMatchObject({ title: 'Notifications', back: { href: BROWSER_BACK, label: 'Back' } });
+  });
+
+  it('the header back button resolves the sentinel to router.back(), everything else to router.push()', () => {
+    const shell = admin('components/AdminShell.tsx');
+    expect(shell).toMatch(/meta\.back!\.href === BROWSER_BACK \? router\.back\(\) : router\.push\(meta\.back!\.href\)/);
+  });
+
+  it('is its own bottom-bar tab — the slot "More" left behind — not one of the four looked up from NAV_GROUPS', () => {
+    const shell = admin('components/AdminShell.tsx');
+    const bottomNavBlock = shell.slice(shell.indexOf('<nav className="admin-bottom-nav'), shell.lastIndexOf('</nav>'));
+    expect(bottomNavBlock).toMatch(/href="\/admin\/notifications"/);
+    expect(bottomNavBlock).toMatch(/Notifications/);
+    // Not a sidebar screen — there is no NAV_GROUPS entry for it to leak into the desktop sidebar.
+    expect(NAV_GROUPS.flatMap((g) => g.items).some((i) => i.href === '/admin/notifications')).toBe(false);
+  });
+
+  it('slides in from the right; every other route keeps the plain fade', () => {
+    const shell = admin('components/AdminShell.tsx');
+    expect(shell).toMatch(/pathname === '\/admin\/notifications' \? 'admin-slide-in-right 0\.25s ease' : 'admin-fade 0\.25s ease'/);
+    const css = admin('admin.css');
+    expect(css).toMatch(/@keyframes admin-slide-in-right/);
+  });
+
+  it('replaces the header bell on a phone instead of sitting beside it as a second way in', () => {
+    const css = admin('admin.css');
+    const phone = css.slice(css.indexOf('GRW-267 · GRW-272'));
+    expect(phone).toMatch(/@media \(max-width: 860px\)[\s\S]*\.admin-header-bell \{\s*display: none !important;/);
+  });
+
+  // Jira GRW-300 — Notifications has a back button (its own meta.back), which
+  // used to sit ABOVE the header's hamburger rather than replacing it: two
+  // different ways to leave the same screen. Any other back-having screen
+  // (Business detail, Plan edit…) gets the identical fix, since the
+  // conflict is the same one everywhere a back button exists.
+  it('hides the header hamburger on any screen that already has a back button', () => {
+    const shell = admin('components/AdminShell.tsx');
+    expect(shell).toMatch(/\{!meta\.back \? \(\s*<button\s*type="button"\s*className="admin-mobile-only"\s*onClick=\{\(\) => setNavOpen\(true\)\}/);
+  });
+
+  // Jira GRW-300 (follow-up) — specifically Notifications' own back button:
+  // icon-only, inline with the H1 in the hamburger's slot, not the
+  // text-and-chevron line every OTHER back-having screen still uses above
+  // its title. Scoped to this one route, not a rule about back buttons
+  // generally — Business detail's "← Businesses" is unchanged.
+  it('Notifications\' back button is icon-only and inline with the H1, not the text-above-title style other back screens use', () => {
+    const shell = admin('components/AdminShell.tsx');
+    expect(shell).toMatch(/meta\.back && pathname !== '\/admin\/notifications'/);
+    expect(shell).toMatch(/meta\.back && pathname === '\/admin\/notifications'[\s\S]{0,400}aria-label=\{meta\.back\.label\}[\s\S]{0,600}<Icon name="chevronLeft" size=\{18\} \/>/);
   });
 });
 

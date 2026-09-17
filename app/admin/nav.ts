@@ -88,6 +88,16 @@ export interface RouteMeta {
 }
 
 /**
+ * Jira GRW-299 — `back.href`'s one sentinel value. Every other back link is a
+ * fixed parent screen (a business detail's back always means "the businesses
+ * list"), which is right for a screen reached from one place. Notifications
+ * is reached from wherever the bottom tab is tapped, so its back has no
+ * single fixed parent — this makes the header button call `router.back()`
+ * instead of `router.push()`.
+ */
+export const BROWSER_BACK = '__back__';
+
+/**
  * Static route → header metadata, matching Admin.dc.html's own `meta`
  * object. A page's own content shows anything dynamic (a business's actual
  * name); the header only ever needs the generic "what kind of screen is
@@ -145,6 +155,10 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
       return { title: 'Audit logs', subtitle: 'Every sensitive admin action.', showSearch: false };
     case 'settings':
       return { title: 'Settings', subtitle: 'Platform configuration.', showSearch: false };
+    // Jira GRW-299 — admin mobile's own full-page notifications (the bottom
+    // tab replaces the header bell there; see AdminShell's own note).
+    case 'notifications':
+      return { title: 'Notifications', subtitle: 'What needs attention right now.', showSearch: false, back: { href: BROWSER_BACK, label: 'Back' } };
     default:
       return { title: 'Admin', subtitle: '', showSearch: false };
   }
@@ -182,12 +196,16 @@ export function firstPermittedHref(permissions: readonly string[]): string | nul
 }
 
 /**
- * Jira GRW-267 · GRW-272 — the phone's bottom bar: four screens, then More.
+ * Jira GRW-267 · GRW-272 — the phone's bottom bar: four screens.
  *
- * Chosen by the owner from the ones an admin opens most on the move. Everything
- * else stays one tap away in the full menu More opens. Each entry is looked up
- * in NAV_GROUPS rather than restated, so the icon, the label's source and — most
- * of all — the permission that hides it cannot drift from the sidebar's.
+ * Chosen by the owner from the ones an admin opens most on the move.
+ * Everything else stays one tap away in the full menu the header's own
+ * "More" button opens (moved there from a fifth bottom tab by GRW-298), and
+ * Notifications is a fifth tab of its own (GRW-299) rendered directly in
+ * AdminShell rather than through this list — it has no sidebar screen to look
+ * an icon or permission up from. Each entry below is looked up in NAV_GROUPS
+ * rather than restated, so the icon, the label's source and — most of all —
+ * the permission that hides it cannot drift from the sidebar's.
  */
 export const BOTTOM_NAV: { href: string; label: string }[] = [
   { href: '/admin', label: 'Home' },

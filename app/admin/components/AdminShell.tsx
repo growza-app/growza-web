@@ -6,7 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
-import { NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
+import { BROWSER_BACK, NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { NotificationBell } from './NotificationBell';
 import { oklch } from '../tokens';
@@ -79,7 +79,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
    * shape.
    */
   const bottomTabs = navLoading ? [] : bottomNavItems(permissions, meError);
-  const onBottomTab = bottomTabs.some((tab) => isNavItemActive(pathname, tab.href));
 
   // Close the mobile drawer on every navigation so a tap-through doesn't
   // leave it hanging open behind the new screen.
@@ -441,13 +440,19 @@ export function AdminShell({ children }: { children: ReactNode }) {
             flexWrap: 'wrap',
           }}
         >
-          {/* Jira GRW-267 · GRW-272 — no hamburger on a phone any more: the bottom
-              bar's More opens the same drawer. */}
           <div className="admin-header-title" style={{ minWidth: 0 }}>
-            {meta.back ? (
+            {/*
+              Jira GRW-300 — Notifications' back button is icon-only, inline
+              with the H1 (the same slot the hamburger sits in for a screen
+              with no back button), not this text-and-chevron line above the
+              title. Every OTHER back-having screen (Business detail, Plan
+              edit…) keeps that line as it always has — this is Notifications'
+              own header, not a rule about back buttons generally.
+            */}
+            {meta.back && pathname !== '/admin/notifications' ? (
               <button
                 type="button"
-                onClick={() => router.push(meta.back!.href)}
+                onClick={() => (meta.back!.href === BROWSER_BACK ? router.back() : router.push(meta.back!.href))}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -466,20 +471,81 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 {meta.back.label}
               </button>
             ) : null}
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 22,
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                color: oklch.textStrong,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {meta.title}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              {meta.back && pathname === '/admin/notifications' ? (
+                <button
+                  type="button"
+                  onClick={() => (meta.back!.href === BROWSER_BACK ? router.back() : router.push(meta.back!.href))}
+                  aria-label={meta.back.label}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9,
+                    border: `1px solid ${oklch.borderStrong}`,
+                    background: 'white',
+                    color: oklch.textMuted,
+                    cursor: 'pointer',
+                    flex: 'none',
+                  }}
+                >
+                  <Icon name="chevronLeft" size={18} />
+                </button>
+              ) : null}
+              {/*
+                Jira GRW-298 — "More" moves here from the bottom bar, beside
+                the heading it now opens alongside, rather than sitting as a
+                fifth bottom tab. Admin mobile only: the sidebar already gives
+                a laptop this same nav with no drawer needed.
+
+                Jira GRW-300 — not when this screen already has a back button
+                (Notifications, Business detail, Plan edit…): a back arrow
+                ABOVE the title and a hamburger BESIDE it were two different
+                ways to leave the screen on the same header, and the back
+                button already answers "how do I leave" for a screen that has
+                one. The hamburger is for screens with no way out otherwise.
+              */}
+              {!meta.back ? (
+                <button
+                  type="button"
+                  className="admin-mobile-only"
+                  onClick={() => setNavOpen(true)}
+                  aria-label="More"
+                  aria-expanded={navOpen}
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9,
+                    border: `1px solid ${oklch.borderStrong}`,
+                    background: 'white',
+                    color: oklch.textMuted,
+                    cursor: 'pointer',
+                    flex: 'none',
+                  }}
+                >
+                  <Icon name="menu" size={18} />
+                </button>
+              ) : null}
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  color: oklch.textStrong,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
+                }}
+              >
+                {meta.title}
+              </h1>
+            </div>
             <p className="admin-header-subtitle" style={{ margin: '2px 0 0', fontSize: 13, color: oklch.textMuted }}>{meta.subtitle}</p>
           </div>
           <div className="admin-header-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 11 }}>
@@ -536,13 +602,28 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="admin-content" style={{ padding: 24, flex: 1, animation: 'admin-fade 0.25s ease' }}>{children}</div>
+        {/*
+          Jira GRW-299 — Notifications slides in from the right rather than
+          fading in place, so leaving the bottom tab reads as pushing onto a
+          stack, not landing on an unrelated page. Every other route keeps the
+          plain fade.
+        */}
+        <div className="admin-content" style={{ padding: 24, flex: 1, animation: pathname === '/admin/notifications' ? 'admin-slide-in-right 0.25s ease' : 'admin-fade 0.25s ease' }}>
+          {children}
+        </div>
       </main>
 
       {/*
         Jira GRW-267 · GRW-272 — phones only (admin.css hides it above 860px).
         `bottom-nav` as well as its own class: the install banner (GRW-270)
         measures `.bottom-nav` to sit above whatever bar a screen has.
+
+        Jira GRW-298 — "More" moved to the header instead of sitting here as a
+        fifth tab. Jira GRW-299 puts Notifications in that freed slot instead,
+        rendered directly (not through `bottomTabs`) since it has no sidebar
+        screen in NAV_GROUPS to look an icon/permission up from — gated on
+        `admin.dashboard.view` directly, the same permission its own page's
+        `/dashboard` read needs.
       */}
       <nav className="admin-bottom-nav bottom-nav" aria-label="Main">
         {bottomTabs.map((tab) => {
@@ -556,18 +637,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        <button
-          type="button"
-          className="admin-bottom-tab"
-          data-active={navOpen || !onBottomTab ? 'true' : undefined}
-          aria-expanded={navOpen}
-          onClick={() => setNavOpen(true)}
-        >
-          <span className="admin-bottom-icon">
-            <Icon name="menu" size={20} />
-          </span>
-          <span className="admin-bottom-label">More</span>
-        </button>
+        {/* Same fail-open rule `bottomNavItems`/the sidebar apply: an unreadable /me shows every tab rather than none. */}
+        {!navLoading && (meError || permissions?.includes('admin.dashboard.view')) ? (
+          <Link
+            href="/admin/notifications"
+            className="admin-bottom-tab"
+            data-active={!navOpen && isNavItemActive(pathname, '/admin/notifications') ? 'true' : undefined}
+            aria-current={isNavItemActive(pathname, '/admin/notifications') ? 'page' : undefined}
+          >
+            <span className="admin-bottom-icon">
+              <Icon name="bell" size={20} />
+            </span>
+            <span className="admin-bottom-label">Notifications</span>
+          </Link>
+        ) : null}
       </nav>
     </div>
   );

@@ -86,6 +86,31 @@ body.admin-body {
   }
 }
 
+/* A bottom sheet's own entrance — slides up from off-screen rather than
+   fading in place, so it reads as a drawer rather than a dialog that
+   happens to be docked to the bottom edge. */
+@keyframes admin-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Jira GRW-299 — Notifications' own entrance: right to left, like a screen
+   pushed onto a stack, rather than the plain fade every other route uses. */
+@keyframes admin-slide-in-right {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 /* ---------- layout: sidebar / mobile drawer ----------
    One documented breakpoint (860px), matching CLAUDE.md's convention for
    the tenant portal — a media query here rather than JS-computed widths, so
@@ -177,6 +202,14 @@ body.admin-body {
   .admin-bar-end > button {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Businesses list, admin mobile only — "Add business" above the vertical/
+     status filters instead of below them. Flex `order` rather than moving the
+     JSX: desktop keeps its own (correct) right-of-the-filters order, so this
+     has to be a mobile-only visual reorder, not a DOM reorder. */
+  .admin-businesses-add-first {
+    order: -1;
   }
 }
 
@@ -352,10 +385,21 @@ body.admin-body {
     gap: 10px;
   }
   .admin-quick-grid {
-    /* On a phone the five tiles SHOULD share the line — there is no width to
-       leave on the table. */
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    /* Five-across left each tile ~60px on a 390px phone — icon and label both
+       cramped, and the two-word labels ("Add business", "Invite admin",
+       "Create plan") wrapped to two lines with almost nothing to wrap into.
+       Admin mobile dashboard: Audit log drops out here (`[data-mobile=hide]`
+       below — desktop still shows it, at `repeat(5, ...)` above this query),
+       leaving four tiles that fit one even row at four-across. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
+  }
+  /* `!important`: each tile is `display: flex` inline (page.tsx's own
+     comment: matches the tenant Home tile pattern, styled inline rather than
+     by class), which beats an ordinary class rule regardless of specificity.
+     This is the one property on this screen that genuinely needs it to win. */
+  .admin-quick-grid [data-mobile='hide'] {
+    display: none !important;
   }
 }
 
@@ -653,9 +697,9 @@ body.admin-body {
 }
 
 @media (max-width: 860px) {
-  /* Header: one line — title and bell — with search as a full-width row
-     beneath where the screen has one. The subtitle is dropped; on a phone
-     the title says enough and the list needs the height. */
+  /* Header: one line — title and menu button — with search as a full-width
+     row beneath where the screen has one. The subtitle is dropped; on a
+     phone the title says enough and the list needs the height. */
   .admin-header {
     padding: 10px 16px !important;
     gap: 10px !important;
@@ -672,8 +716,12 @@ body.admin-body {
   .admin-header-actions {
     display: contents !important;
   }
+  /* Jira GRW-299 — the bell's popover is a laptop-beside-a-sidebar fit; on a
+     phone Notifications is its own bottom-bar tab and full page instead
+     (AdminShell.tsx), so the header copy of it would just be a second,
+     redundant way in. */
   .admin-header-bell {
-    order: 2;
+    display: none !important;
   }
   .admin-header-search {
     order: 3;
@@ -757,23 +805,28 @@ body.admin-body {
     display: none;
   }
 
-  /* A row of filter chips scrolls sideways instead of wrapping to three lines. */
-  .admin-chip-row {
-    display: flex !important;
-    flex-wrap: nowrap !important;
+  /* Businesses list, admin mobile only — the status chips (GRW-297) scroll
+     sideways as one row instead of wrapping to several lines. `display` stays
+     `.admin-mobile-only`'s job alone (see this file's own note on defaults vs.
+     overrides at equal specificity); this class only adds the scroll
+     behaviour on top of it. Bleeds past the page's own side padding so the
+     scroll area reaches the true screen edges, same as the old vertical chip
+     row this pattern is borrowed from. */
+  .admin-status-chip-row {
+    flex-wrap: nowrap;
     overflow-x: auto;
+    scrollbar-width: none;
     width: calc(100% + 32px);
     margin: 0 -16px;
     padding: 0 16px 2px;
-    gap: 8px;
-    scrollbar-width: none;
   }
-  .admin-chip-row::-webkit-scrollbar {
+  .admin-status-chip-row::-webkit-scrollbar {
     display: none;
   }
-  .admin-chip-row > * {
+  .admin-status-chip-row > * {
     flex: none;
   }
+
   .admin-filter-bar {
     gap: 10px !important;
   }

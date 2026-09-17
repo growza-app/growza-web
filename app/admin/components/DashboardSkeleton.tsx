@@ -106,6 +106,7 @@ export function DashboardSkeleton() {
             {QUICK_ACTIONS.map((action) => (
               <div
                 key={action.href}
+                data-mobile={action.hideOnMobile ? 'hide' : undefined}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
