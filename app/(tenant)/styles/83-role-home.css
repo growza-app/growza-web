@@ -1443,6 +1443,10 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  /* Jira GRW-297 — "New booking"/"Walk-in now"/"New appointment" are now
+     links (`<a href>`) rather than buttons that open a sheet; nothing else
+     in this file resets an anchor's default underline. */
+  text-decoration: none;
 }
 .hm-action svg {
   width: 22px;

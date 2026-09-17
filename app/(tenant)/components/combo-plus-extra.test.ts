@@ -12,11 +12,16 @@ import { copy } from '../lib/copy';
  * so. Owner-reported bug, 2026-09-16.
  *
  * The fix: the combo's own `picked` never changes once chosen. Anything
- * added alongside it becomes an `extras` row instead — Record payment settles
- * both through one checkout call (`extraServices`, the same mechanism a
- * stylist already uses to sell something extra in the chair); Walk-in now and
- * For later have no such step, so there the primary button stays disabled
- * with an explanation instead of silently dropping the combo.
+ * added alongside it becomes an `extras` row instead.
+ *
+ * Jira GRW-297 — Walk-in now / For later used to refuse to submit at all
+ * while an extra sat beside a combo ("no second checkout step to settle it
+ * through"). The server-side fix (`resolveComboServiceIds` in
+ * `walk-in.ts`/`counter-sale.ts`, per-leg `offerId` in the booking route) made
+ * that no longer true: `offerId`/its price is now applied per LEG, not to the
+ * whole request, so an extra riding alongside a combo's `serviceIds` books as
+ * its own leg at its own list price without diluting the combo's discount.
+ * The restriction is gone; extras merge straight into the same request.
  *
  * Source-read, same reasoning as combo-single-line.test.ts.
  */
@@ -51,20 +56,21 @@ describe('Record payment settles the combo and its extras in one checkout', () =
   });
 });
 
-describe('Walk-in now / For later refuse to leave a combo half-booked', () => {
-  it('the primary button and Add to waiting queue are blocked while an extra sits beside a combo', () => {
-    // Jira GRW-293 — "No stylist" (Record payment) is the same shape as
-    // Walk-in now / For later: one call, no second checkout step to settle
-    // an extra through, so it joins the condition that blocks submit.
-    expect(sheet).toMatch(/const comboBlocksSubmit = \(!forPayment \|\| noStylist\) && comboActive && extras\.length > 0;/);
-    expect(sheet).toMatch(/disabled=\{busy \|\| picked\.length === 0 \|\| \(forPayment && !amountsValid\) \|\| comboBlocksSubmit\}/);
-    expect(sheet).toMatch(/disabled=\{busy \|\| linesLocked \|\| comboBlocksSubmit\}/);
+describe('Walk-in now / For later book a combo and its extras together', () => {
+  const submit = sheet.slice(sheet.indexOf('const submit = async'), sheet.indexOf('if (checkoutRows && checkoutRows.length > 0'));
+
+  it('there is no restriction left to block submit', () => {
+    expect(sheet).not.toMatch(/comboBlocksSubmit/);
+    expect(sheet).not.toMatch(/comboBlocksExtra/);
+    expect(copy.newVisit).not.toHaveProperty('comboBlocksExtra');
   });
 
-  it('says why, not just that it is disabled', () => {
-    expect(sheet).toMatch(/\{comboBlocksSubmit && \(/);
-    expect(sheet).toMatch(/copy\.newVisit\.comboBlocksExtra\(comboTitle \?\? copy\.newVisit\.combo\)/);
-    expect(copy.newVisit.comboBlocksExtra('Weekly glow')).toMatch(/Weekly glow/);
+  it('For later merges the extras into the same booking request', () => {
+    expect(submit).toMatch(/serviceIds: \[\.\.\.picked, \.\.\.extras\]\.map\(\(p\) => p\.serviceId\),/);
+  });
+
+  it('plain Walk-in now merges extras too, but Record payment does not (extras go through payFor/checkout there instead)', () => {
+    expect(submit).toMatch(/serviceIds: \(forPayment \? picked : \[\.\.\.picked, \.\.\.extras\]\)\.map\(\(p\) => p\.serviceId\),/);
   });
 });
 

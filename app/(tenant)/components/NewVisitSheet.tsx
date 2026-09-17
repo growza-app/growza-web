@@ -182,11 +182,20 @@ export function NewVisitSheet({
   timezone,
   mode: initialMode = 'now',
   purpose = 'visit',
+  presentation = 'sheet',
 }: {
   onClose: () => void;
   timezone: string;
   mode?: VisitMode;
   purpose?: VisitPurpose;
+  /**
+   * Jira GRW-297 — `'page'` renders the same stages, the same markup and
+   * copy, without the backdrop and the fixed-position bottom-sheet frame:
+   * the New Booking route (`/appointments/new`), not a pop-up over it.
+   * `onClose` is what a page presentation navigates back with; a sheet
+   * unmounts on it as before.
+   */
+  presentation?: 'sheet' | 'page';
 }) {
   /*
    * The mode is a control, not only a prop.
@@ -228,6 +237,11 @@ export function NewVisitSheet({
   const [term, setTerm] = useState('');
   const [results, setResults] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
+  /**
+   * Jira GRW-297 — who to pick before anyone has typed anything.
+   * `null` is "still loading", distinct from an empty tenant.
+   */
+  const [recent, setRecent] = useState<Customer[] | null>(null);
 
   // Stage 1b — add them
   const [newName, setNewName] = useState('');
@@ -381,6 +395,26 @@ export function NewVisitSheet({
     };
   }, [term]);
 
+  /**
+   * Jira GRW-297 — the client-picker step's default list, most-recently-active
+   * first (the API's own `sort=recent` default). Fetched once: this is a small,
+   * cheap read and the list only needs to be roughly current, not live.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    void api
+      .customers({ limit: 20 })
+      .then((page) => {
+        if (!cancelled) setRecent(page.rows);
+      })
+      .catch(() => {
+        if (!cancelled) setRecent([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const serviceById = useMemo(() => new Map((services ?? []).map((s) => [s.id, s])), [services]);
 
   const filteredServices = useMemo(() => {
@@ -501,16 +535,6 @@ export function NewVisitSheet({
   const comboWithExtrasTotalMinor = forPayment
     ? (rupeesToMinor(comboAmountText) ?? 0) + extras.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0)
     : Number(comboPriceMinor ?? 0) + extras.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
-  // Jira GRW-292 — Walk-in now / For later have no checkout step to settle an
-  // extra through, so a combo cannot share a slot with one there: the primary
-  // button stays disabled (see the footer) until the extra is removed or the
-  // combo is.
-  //
-  // Jira GRW-293 — "No stylist" is the same shape as those two: one call,
-  // no second checkout step to settle an extra through afterwards. Blocked
-  // here rather than taught a new combo+extra split the till never needed.
-  const comboBlocksSubmit = (!forPayment || noStylist) && comboActive && extras.length > 0;
-
   // --- `later` only: which day, and which slot on it ---
   const [day, setDay] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()));
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
@@ -551,8 +575,11 @@ export function NewVisitSheet({
     setLoadingSlots(true);
     setSlotUtc(null);
     setSlotError(null);
+    // Jira GRW-297 — an extra beside a combo is a real leg on the same visit
+    // now, so the slot search has to fit its duration too, same reasoning as
+    // the chain comment above.
     void api
-      .availability(picked.map((p) => p.serviceId), day, schedulableId ?? 'any', branchId)
+      .availability([...picked, ...extras].map((p) => p.serviceId), day, schedulableId ?? 'any', branchId)
       .then((r) => {
         if (!cancelled) setSlots(r);
       })
@@ -565,7 +592,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, day, picked, schedulableId, branchId]);
+  }, [later, stage.step, day, picked, extras, schedulableId, branchId]);
 
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
@@ -765,7 +792,7 @@ export function NewVisitSheet({
         ...(client.kind === 'existing'
           ? { customerId: client.id }
           : { customerName: client.name, ...(client.phone ? { customerPhone: client.phone } : {}) }),
-        serviceIds: picked.map((p) => p.serviceId),
+        serviceIds: [...picked, ...extras].map((p) => p.serviceId),
         ...(offerId ? { offerId } : {}),
         idempotencyKey: attemptKey,
         // Jira GRW-244 — they wait at the branch picked above, not at the main one.
@@ -788,7 +815,10 @@ export function NewVisitSheet({
           ...(client.kind === 'existing'
             ? { customerId: client.id }
             : { customerName: client.name, customerPhone: client.phone }),
-          serviceIds: picked.map((p) => p.serviceId),
+          // Jira GRW-297 — an extra beside a combo books as its own leg,
+          // priced at its own service's list price; the server only prices
+          // the combo's own legs off `offerId`.
+          serviceIds: [...picked, ...extras].map((p) => p.serviceId),
           ...(offerId ? { offerId } : {}),
           startAt: slotUtc!,
           ...(schedulableId ? { schedulableId } : {}),
@@ -861,7 +891,14 @@ export function NewVisitSheet({
         ...(client.kind === 'existing'
           ? { customerId: client.id }
           : { customerName: client.name, ...(client.phone ? { customerPhone: client.phone } : {}) }),
-        serviceIds: picked.map((p) => p.serviceId),
+        /*
+         * Jira GRW-297 — plain Walk-in now books an extra as its own leg,
+         * same reasoning as `later` above. Record payment (forPayment) does
+         * NOT merge it here: `payFor` below settles it through checkout's
+         * own `extraServices`, unrelated to `offerId`/combo pricing, so
+         * folding it into this call would book — and pay for — it twice.
+         */
+        serviceIds: (forPayment ? picked : [...picked, ...extras]).map((p) => p.serviceId),
         ...(offerId ? { offerId } : {}),
         ...(schedulableId ? { schedulableId } : {}),
         ...(reclaim && schedulableId ? { reclaimAppointmentId: reclaim } : {}),
@@ -972,11 +1009,17 @@ export function NewVisitSheet({
         ? copy.newVisit.addNew
         : clientName(stage.client);
 
+  const asPage = presentation === 'page';
+
   return (
     <>
-      <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />
-      <div className="sheet walk-in-sheet" role="dialog" aria-label={forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title}>
-        <div className="sheet-grab" />
+      {!asPage && <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />}
+      <div
+        className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
+        role={asPage ? undefined : 'dialog'}
+        aria-label={asPage ? undefined : forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title}
+      >
+        {!asPage && <div className="sheet-grab" />}
 
         <div className="sheet-head">
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1038,7 +1081,7 @@ export function NewVisitSheet({
               )}
             </div>
 
-            {term.trim().length >= 2 && (
+            {term.trim().length >= 2 ? (
               <div className="picker-results">
                 {results.map((c) => (
                   <button
@@ -1058,6 +1101,35 @@ export function NewVisitSheet({
                 ))}
                 {!searching && results.length === 0 && <div className="empty">{copy.newVisit.noMatch}</div>}
               </div>
+            ) : (
+              /*
+               * Jira GRW-297 — browsable before a search term exists. Same row
+               * markup as the search results above (kept as one JSX block would
+               * duplicate this onClick either way), just a different source list.
+               */
+              <>
+                <div className="wi-section-label">{copy.newVisit.recentCustomers}</div>
+                <div className="picker-results">
+                  {(recent ?? []).map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="picker-row wi-row"
+                      onClick={() =>
+                        setStage({ step: 'details', client: { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone } })
+                      }
+                    >
+                      <span>
+                        <span className="picker-row-name">{c.name?.trim() || copy.newVisit.noName}</span>
+                        <span className="picker-row-meta"> · {c.waPhone ?? copy.newVisit.noNumber}</span>
+                      </span>
+                      <span className="picker-row-meta">{copy.newVisit.visits(c.totalBookings)}</span>
+                    </button>
+                  ))}
+                  {recent === null && <div className="empty">{copy.newVisit.loadingCustomers}</div>}
+                  {recent !== null && recent.length === 0 && <div className="empty">{copy.newVisit.noCustomersYet}</div>}
+                </div>
+              </>
             )}
 
             <button
@@ -1512,7 +1584,7 @@ export function NewVisitSheet({
             </div>
 
             {picked.length > 0 && !later && !forPayment && (
-              <div className="wi-summary">{copy.newVisit.startsNow(totalMinutes(picked))}</div>
+              <div className="wi-summary">{copy.newVisit.startsNow(totalMinutes([...picked, ...extras]))}</div>
             )}
 
             <div className={`modal-actions wi-actions ${forPayment ? 'wi-pay-actions' : ''}`}>
@@ -1542,18 +1614,6 @@ export function NewVisitSheet({
                   </div>
                 </div>
               )}
-              {/*
-               * Jira GRW-292 — Walk-in now / For later have no checkout step
-               * to settle an extra through the way Record payment does, so a
-               * combo cannot leave this screen with one still sitting beside
-               * it. Said here, at the moment it blocks the tap, not
-               * discovered later as a booking that silently lost its combo.
-               */}
-              {comboBlocksSubmit && (
-                <div className="wi-error" role="status">
-                  {copy.newVisit.comboBlocksExtra(comboTitle ?? copy.newVisit.combo)}
-                </div>
-              )}
               <button
                 type="button"
                 className="btn btn-ghost"
@@ -1567,7 +1627,7 @@ export function NewVisitSheet({
                   type="button"
                   className="btn btn-ghost wi-queue-btn"
                   onClick={() => void queueIt(stage.client)}
-                  disabled={busy || linesLocked || comboBlocksSubmit}
+                  disabled={busy || linesLocked}
                 >
                   {copy.newVisit.addToQueue}
                 </button>
@@ -1578,7 +1638,7 @@ export function NewVisitSheet({
                 onClick={() =>
                   later ? setStage({ step: 'when', client: stage.client }) : void submit(stage.client)
                 }
-                disabled={busy || picked.length === 0 || (forPayment && !amountsValid) || comboBlocksSubmit}
+                disabled={busy || picked.length === 0 || (forPayment && !amountsValid)}
               >
                 {busy ? copy.newVisit.saving : later ? copy.newVisit.next : forPayment ? copy.newVisit.markDone : copy.newVisit.start}
               </button>

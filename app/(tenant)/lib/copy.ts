@@ -225,8 +225,6 @@ export const copy = {
     // Jira GRW-291 — the combo's discount, said in one line: what it saves off the list price.
     // Matches CheckoutSheet's own "X list, saves Y" phrasing for the same discount.
     comboSaves: (amount: string) => `Saves ${amount}`,
-    // Jira GRW-292 — Walk-in now / For later have no step to settle an extra through.
-    comboBlocksExtra: (title: string) => `Remove ${title} or the extra service to continue — a combo can't share a visit with something else yet here. Try Record payment instead.`,
     close: 'Close',
     clear: 'Clear',
     whoIsThis: (client: string) => `Search for the ${client}, or add them.`,
@@ -235,6 +233,10 @@ export const copy = {
     noNumber: 'no number',
     noMatch: 'Nobody on file matches that.',
     visits: (n: number) => (n === 1 ? '1 visit' : `${n} visits`),
+    // Jira GRW-297 — browsable before a search term is typed.
+    recentCustomers: 'Previous customers',
+    loadingCustomers: 'Loading…',
+    noCustomersYet: 'No customers yet.',
     addNew: 'Add someone new',
     nameRequired: 'Name',
     namePlaceholder: 'First name is enough',
