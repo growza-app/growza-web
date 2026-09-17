@@ -189,6 +189,26 @@ input.wi-search-input-plain {
   width: calc(100% + 36px);
 }
 
+/* Take payment is the reason a walk-in got recorded at all — the comment two
+   screens up (Jira GRW-289) already says "'Take payment now' is right
+   there," but plain `.sheet-item` is transparent with no border, so it read
+   as inert text next to "Done", not the option that matters. Give it the
+   same filled weight `.btn` carries everywhere else a primary action is
+   offered, instead of the full-bleed list-row treatment above. */
+.wi-body .sheet-item.wi-take-payment {
+  margin: 6px 0 0;
+  width: 100%;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-weight: 620;
+}
+
+.wi-body .sheet-item.wi-take-payment:hover {
+  background: var(--accent-deep);
+}
+
 /* ---------- multi-service picking (GRW-199) ---------- */
 
 /*
