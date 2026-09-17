@@ -12,6 +12,7 @@ import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionProvider } from './components/SessionProvider';
 import { LabelsProvider } from './components/LabelsProvider';
+import { MobileNavProvider } from './components/MobileNavProvider';
 import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 import { BillChangeBanner } from './components/BillChangeBanner';
@@ -226,6 +227,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           }}
         >
         <LabelsProvider labels={labels}>
+        <MobileNavProvider>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
             <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
             <div className="content">
@@ -252,6 +254,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <MobileChrome labels={labels} timezone={timezone} role={role} reportTabs={reportTabs} lang={lang} />
             </div>
           </div>
+        </MobileNavProvider>
         </LabelsProvider>
         </SessionProvider>
         <InstallBanner app="salon" />

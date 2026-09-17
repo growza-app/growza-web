@@ -4,10 +4,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { MemberRole } from '../lib/nav-policy';
 import type { Lang } from '../lib/lang';
 import { BottomNav } from './BottomNav';
+import { useMobileNav } from './MobileNavProvider';
+import { IconMenu } from './icons';
 
 /**
- * The fixed mobile furniture: the tab bar, and the centre action's booking
- * page.
+ * The fixed mobile furniture: the hamburger toggle, the tab bar, and the
+ * centre action's booking page.
  *
  * Jira GRW-222 — the floating "+" button this used to render is gone; its job
  * moved into the bar (see BottomNav). The five-screen NO_FAB list went with it,
@@ -18,6 +20,16 @@ import { BottomNav } from './BottomNav';
  * overlay here; it now navigates to the New Booking page instead
  * (`/appointments/new`), which is `NewVisitSheet` again underneath, just
  * routed rather than popped up.
+ *
+ * Jira GRW-300 — the bar was tuned for 4 tabs + the centre action; a 5th
+ * flat tab (Notifications, GRW-301) made every slot "very contracted"
+ * (owner-reported). `More` and `Notifications` both moved into `Sidebar`,
+ * reused as the mobile drawer admin's `AdminShell` already proved this
+ * pattern with — same full nav a laptop gets, one tap away instead of a
+ * fixed tab. The toggle renders here (fixed-position, so it doesn't matter
+ * which subtree draws it) rather than inside every page's own header,
+ * which would mean editing `PageHeader` AND `HomeHeader` for the same
+ * button.
  */
 
 /**
@@ -31,6 +43,7 @@ const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
 export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[]; lang?: Lang }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { toggle } = useMobileNav();
   /**
    * A stylist cannot create a booking — `POST /api/v1/appointments` is not in
    * STAFF_ALLOWED (GRW-156). A receptionist CAN (GRW-169).
@@ -45,5 +58,12 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   const onCentre =
     mayBook && !EDIT_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
 
-  return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />;
+  return (
+    <>
+      <button type="button" className="menu-toggle" aria-label="Menu" onClick={toggle}>
+        <IconMenu />
+      </button>
+      <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />
+    </>
+  );
 }

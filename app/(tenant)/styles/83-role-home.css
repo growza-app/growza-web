@@ -139,6 +139,9 @@
 @media (max-width: 860px) {
   .hm-head {
     padding: calc(var(--sp-3) + env(safe-area-inset-top, 0px)) var(--sp-4) var(--sp-3);
+    /* Jira GRW-300 — clears the fixed hamburger toggle (38px, inset 12px
+       from the edge) that floats over every mobile screen now. */
+    padding-left: max(58px, calc(env(safe-area-inset-left) + 58px));
     background: transparent;
     border-bottom: 0;
   }

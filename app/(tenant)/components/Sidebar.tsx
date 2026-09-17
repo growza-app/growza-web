@@ -6,9 +6,11 @@ import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
+import { useMobileNav } from './MobileNavProvider';
 import {
   IconAnalytics,
   IconAppointments,
+  IconBell,
   IconChat,
   IconDashboard,
   IconOffers,
@@ -19,11 +21,17 @@ import {
   IconLogout,
   IconUserPlus,
   IconClipboardCheck,
+  IconClose,
 } from './icons';
 
 /**
- * Desktop navigation. Hidden below the mobile breakpoint, where BottomNav
- * takes over — so this component carries no drawer/hamburger state.
+ * Desktop navigation. Below the mobile breakpoint it becomes the hamburger's
+ * off-canvas drawer instead — same nav, same component, just a different
+ * frame (Jira GRW-300, matching how the admin portal's own sidebar doubles
+ * as its drawer: "the sidebar already gives a laptop this same nav with no
+ * drawer needed"). `MobileChrome` renders the fixed top-left toggle; both it
+ * and this component read the same `useMobileNav()` state, since they are
+ * siblings under `.shell` rather than one inside the other.
  *
  * Domain nouns come from ctx.labels (the vertical config) — "Staff" for a
  * salon, "Doctors" for a clinic. Everything else is plain-language UI copy
@@ -61,12 +69,17 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const t = homeCopy(lang ?? 'en', labels);
+  const { open, close } = useMobileNav();
 
   // Only routes that exist. Calendar is still in the design but has no page
   // yet — listing it here would be a link to a 404.
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
     { href: '/', label: t.nav.home, icon: <IconDashboard /> },
     { href: '/appointments', label: role === 'staff' ? t.nav.schedule : t.nav.bookings, icon: <IconAppointments /> },
+    // Jira GRW-300 — moved off the bottom tab bar, which a 5th flat tab plus
+    // the raised centre action made "very contracted" (owner-reported). Same
+    // destination (`notifications/page.tsx`), reached from here now.
+    { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
     { href: '/providers', label: t.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: t.nav.services, icon: <IconServices /> },
     { href: '/offers', label: t.nav.offers, icon: <IconOffers /> },
@@ -86,45 +99,58 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="sidebar">
-      <div className="brand">
-        <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
-        <div className="brand-text">
-          <div className="brand-name">{tenantName}</div>
-          {branchCount > 1 ? <div className="brand-location">{t.branchCount(branchCount)}</div> : locationName ? <div className="brand-location">{locationName}</div> : null}
+    <>
+      {/* Jira GRW-300 — the drawer's scrim. Desktop never sets `open` (the
+          toggle that would is mobile-only), so this never mounts there. */}
+      {open && <div className="sidebar-backdrop" onClick={close} />}
+      <aside className="sidebar" data-open={open}>
+        <div className="brand">
+          <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
+          <div className="brand-text">
+            <div className="brand-name">{tenantName}</div>
+            {branchCount > 1 ? <div className="brand-location">{t.branchCount(branchCount)}</div> : locationName ? <div className="brand-location">{locationName}</div> : null}
+          </div>
+          <button type="button" className="sidebar-close" aria-label="Close menu" onClick={close}>
+            <IconClose />
+          </button>
         </div>
-      </div>
-      <nav className="nav">
-        {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
-            API is what refuses (GRW-156); this is about not wasting their time
-            on eight links that 403. */}
-        {visibleItems(items, role, reportTabs).map((item) => (
-          <a key={item.href} href={item.href} className={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'active' : ''}>
-            {item.icon}
-            {item.label}
-            {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
-          </a>
-        ))}
-      </nav>
-      {/* Jira GRW-66 · GRW-160 — outside `visibleItems`, deliberately. Every
-          role can end their own session; a stylist on a shared salon device is
-          the person who needs it most, and they see almost nothing above. */}
-      <div className="nav-foot">
-        {/* Jira GRW-222 — who is signed in. A role and a number, because a
-            person IS their phone number here (GRW-189) and the product holds
-            no display name for a login. */}
-        <div className="nav-who">
-          <span className="nav-who-avatar">{t.role[role ?? 'owner']?.charAt(0) ?? 'O'}</span>
-          <span className="nav-who-text">
-            <strong>{t.role[role ?? 'owner']}</strong>
-            {phone ? <span>{phone}</span> : null}
-          </span>
+        <nav className="nav">
+          {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
+              API is what refuses (GRW-156); this is about not wasting their time
+              on eight links that 403. */}
+          {visibleItems(items, role, reportTabs).map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'active' : ''}
+              onClick={close}
+            >
+              {item.icon}
+              {item.label}
+              {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
+            </a>
+          ))}
+        </nav>
+        {/* Jira GRW-66 · GRW-160 — outside `visibleItems`, deliberately. Every
+            role can end their own session; a stylist on a shared salon device is
+            the person who needs it most, and they see almost nothing above. */}
+        <div className="nav-foot">
+          {/* Jira GRW-222 — who is signed in. A role and a number, because a
+              person IS their phone number here (GRW-189) and the product holds
+              no display name for a login. */}
+          <div className="nav-who">
+            <span className="nav-who-avatar">{t.role[role ?? 'owner']?.charAt(0) ?? 'O'}</span>
+            <span className="nav-who-text">
+              <strong>{t.role[role ?? 'owner']}</strong>
+              {phone ? <span>{phone}</span> : null}
+            </span>
+          </div>
+          <SignOutButton className="nav-signout">
+            <IconLogout />
+            {t.nav.signOut}
+          </SignOutButton>
         </div>
-        <SignOutButton className="nav-signout">
-          <IconLogout />
-          {t.nav.signOut}
-        </SignOutButton>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
