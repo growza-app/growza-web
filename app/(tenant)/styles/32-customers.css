@@ -1860,6 +1860,13 @@
      dynamic viewport (100dvh), so the bar's position falls out of ordinary
      layout instead of a second, independently-computed coordinate system. */
   .bottom-nav {
+    /* Jira GRW-300 — pinned to the last row explicitly. `.content`'s grid
+       (01-shell.css) is `auto minmax(0,1fr) auto`, and grid auto-placement
+       fills rows strictly in DOM order — a page with no header ahead of
+       `.page-body` (e.g. `/appointments/new`) otherwise pushes this into
+       row 2 (the flexible one) and stretches it to fill the leftover
+       height. See `.page-body`'s own note for the other half of this fix. */
+    grid-row: 3;
     display: flex;
     flex-shrink: 0;
     background: var(--surface);

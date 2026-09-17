@@ -69,10 +69,25 @@
 }
 
 .page-body {
-  /* The middle grid row (.content) already stretches this to fill the
-     leftover height and width; min-height/min-width: 0 is what lets it
-     actually shrink to that track instead of growing to fit its content,
-     which is what makes overflow-y: auto below able to scroll at all. */
+  /*
+   * Jira GRW-300 — pinned to the middle row explicitly, not just "whichever
+   * row grid auto-placement gets to". `.content`'s 3-row grid
+   * (`auto minmax(0,1fr) auto`) assumes every page renders a header
+   * (`.topbar`/`.hm-head`) as its own first grid item, ahead of
+   * `.page-body`, filling row 1 — true everywhere except a page with no
+   * `PageHeader` (`/appointments/new`, matching `offers/new`'s own
+   * header-less convention). There, `.page-body` was DOM-first and grid
+   * auto-placement gave it row 1 instead, bumping `.bottom-nav` into row 2
+   * (the flexible one) and stretching it to fill the leftover space —
+   * a bottom nav several hundred px tall with its icons centred somewhere
+   * in the middle of it. An explicit `grid-row` makes this hold regardless
+   * of how many (if any) items precede `.page-body` in the DOM.
+   *
+   * min-height/min-width: 0 is what lets it actually shrink to that track
+   * instead of growing to fit its content, which is what makes
+   * overflow-y: auto below able to scroll at all.
+   */
+  grid-row: 2;
   min-height: 0;
   min-width: 0;
   overflow-y: auto;
