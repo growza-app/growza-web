@@ -43,6 +43,16 @@ describe('the menu button sits in the header row', () => {
     expect(code('Sidebar.tsx')).toMatch(/id="site-menu"/);
   });
 
+  it('the title lead takes what the actions leave, so page actions stay on the title row', () => {
+    const css = code('../styles/76-header-controls.css');
+    // Basis 0 and a small minimum: the wrap decision sees 150px, not the subtitle's full width,
+    // and the 96px title minimum leaves Clients / Services / Staff on one row from 360px up.
+    expect(css).toMatch(/\.topbar-lead\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*150px;/);
+    expect(css).toMatch(/\.topbar-lead \.topbar-title\s*\{[^}]*min-width:\s*96px;/);
+    // A long title wraps to two lines beside the 44px button instead of dropping the actions a row.
+    expect(css).toMatch(/\.topbar-lead \.topbar-title h1\s*\{[^}]*white-space:\s*normal;/);
+  });
+
   it('it is a phone control: display:none from 861px, and a 44px target below', () => {
     const css = code('../styles/76-header-controls.css');
     expect(css).toMatch(/\.menu-btn\s*\{\s*display:\s*none;/);
