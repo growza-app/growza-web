@@ -131,6 +131,13 @@ describe('Home on a phone', () => {
     expect(owner).toMatch(/className="hm-closed hm-desktop"/);
   });
 
+  it('the branch list closes on a tap anywhere else, and on Escape', () => {
+    expect(owner).toMatch(/addEventListener\('pointerdown', onPointer\)/);
+    expect(owner).toMatch(/!branchRef\.current\?\.contains\(e\.target as Node\)/);
+    expect(owner).toMatch(/e\.key !== 'Escape'/);
+    expect(owner).toMatch(/<div className="hm-branch" ref=\{branchRef\}>/);
+  });
+
   it('the greeting stays an h1 for a screen reader — visually hidden, not display:none', () => {
     const css = code('../styles/83-role-home.css');
     expect(css).toMatch(/\.hm-head-title\s*\{[^}]*clip:[^}]*\}/);
