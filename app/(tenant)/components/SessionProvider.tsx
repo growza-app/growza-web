@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import type { Lang } from '../lib/lang';
 
 /**
  * Jira GRW-63 · GRW-203 — who is signed in, for any client component.
@@ -22,6 +23,8 @@ export interface SessionInfo {
   businessName: string | null;
   /** Jira GRW-235 — open branches, main first; one or none means there is no branch to choose. */
   branches?: Array<{ id: string; name: string }>;
+  /** Jira GRW-306 — the language the page was rendered in, for the language switch in the account menu. */
+  lang?: Lang;
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);

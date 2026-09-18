@@ -11,8 +11,10 @@
 
 :root {
   --hm-ink: #14311f;
-  --hm-muted: #6b7770;
-  --hm-faint: #8a938c;
+  /* Jira GRW-306 — were #6b7770 (4.1:1 on the page) and #8a938c (3.2:1 on white),
+     both under WCAG 1.4.3's 4.5:1 for the small text they colour. */
+  --hm-muted: #5f6a65;
+  --hm-faint: #66716b;
   --hm-line: #e6ebe7;
   --hm-line-soft: #f0f2f0;
   --hm-green: #16a34a;
@@ -83,7 +85,6 @@
   gap: var(--sp-2);
   flex-shrink: 0;
 }
-.hm-lang,
 .hm-summary-btn,
 .hm-date-chip {
   display: inline-flex;
@@ -102,9 +103,6 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.hm-lang {
-  min-width: 44px;
-}
 .hm-summary-btn {
   background: var(--hm-green-soft);
   border-color: #cdeedb;
@@ -114,11 +112,12 @@
   width: 18px;
   height: 18px;
 }
-/* The label is a laptop's: at the tablet edge (861px) the header was 3px wider
-   than the page. The icon keeps its accessible name. */
+/* Jira GRW-306 — below 1181px the header has no room for the label (at 861px it
+   was 3px wider than the page), and an icon on its own read as a mystery clock,
+   so the button moves into the money card, where it is a labelled row. */
 @media (max-width: 1180px) {
-  .hm-summary-btn .hm-desktop-inline {
-    display: none !important;
+  .hm-summary-btn {
+    display: none;
   }
 }
 .hm-date-chip {
@@ -134,26 +133,36 @@
   .hm-head .hdr-search-wide span {
     display: none;
   }
+  /* Its words are hidden here, so the pill collapses with them: it was left 302px wide
+     with only an icon at its left edge (Jira GRW-309). Same circle as everywhere else. */
+  .hm-head .hdr-search-wide {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 860px) {
   .hm-head {
     padding: calc(var(--sp-3) + env(safe-area-inset-top, 0px)) var(--sp-4) var(--sp-3);
-    /* Jira GRW-300 — clears the fixed hamburger toggle (38px, inset 12px
-       from the edge) that floats over every mobile screen now. */
-    padding-left: max(58px, calc(env(safe-area-inset-left) + 58px));
+    padding-left: max(var(--sp-4), env(safe-area-inset-left));
     background: transparent;
     border-bottom: 0;
   }
+  /* Jira GRW-306 — the whole name, on up to two lines, instead of "Velvet Sciss…". */
   .hm-head-business {
-    display: block;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     font-size: 21px;
     font-weight: 800;
     letter-spacing: -0.02em;
+    line-height: 1.2;
     color: var(--hm-ink);
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
   .hm-head-branch {
     display: flex;
@@ -183,21 +192,22 @@
     height: 14px;
     flex-shrink: 0;
   }
-  /* A phone shows who and where; the greeting is a laptop's luxury. */
-  .hm-head-title,
+  /* A phone shows who and where; the greeting is a laptop's luxury. It stays as
+     the page's `h1` for a screen reader — display:none would take it out of the
+     heading list — and only leaves the picture. */
   .hm-head-sub {
     display: none;
   }
-  .hm-lang,
-  .hm-summary-btn {
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0 var(--sp-2);
-    border-radius: 13px;
-    background: var(--surface);
-  }
-  .hm-summary-btn {
-    background: var(--hm-green-soft);
+  .hm-head-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
   }
 }
 
@@ -378,7 +388,7 @@
   cursor: pointer;
 }
 .hm-seg button.is-on {
-  background: var(--hm-green);
+  background: var(--hm-green-deep);
   color: #fff;
   font-weight: 700;
 }
@@ -692,7 +702,7 @@
   height: 1.3em;
   font-size: 10px;
   font-weight: 600;
-  color: #7fb897;
+  color: #a9d6bd;
 }
 .hm-spark-days span {
   position: absolute;
@@ -843,7 +853,7 @@
     height: 28px;
   }
   .hm-hero-week .hm-spark-days {
-    font-size: 9px;
+    font-size: 10px;
   }
   /* The design's phone hero: a ruled strip of three figures, not chips —
      number over its word, so "came back" is never cut to "came ba…". */
@@ -1088,7 +1098,7 @@
 .hm-seg-range {
   font-size: 11.5px;
   font-weight: 600;
-  color: #9aa39d;
+  color: var(--hm-faint);
   white-space: nowrap;
 }
 .hm-seg-count {
@@ -1121,7 +1131,7 @@
     font-size: 12.5px;
   }
   .hm-seg-range {
-    font-size: 10.5px;
+    font-size: 11.5px;
   }
 }
 
@@ -2478,7 +2488,7 @@
     max-width: 160px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-eyebrow {
-    font-size: 9px;
+    font-size: 10px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week strong {
     font-size: 12px;
@@ -2491,7 +2501,7 @@
     height: 20px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark-days {
-    font-size: 8px;
+    font-size: 10px;
     line-height: 1.1;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats {
@@ -2583,5 +2593,131 @@
   }
   .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-item {
     flex: 1 1 calc(33.333% - 6px);
+  }
+}
+
+/* ---------- accessibility pass (Jira GRW-306) ---------- */
+
+/* The card's Day summary row: tablets only. From 1181px the header button has its
+   label; on a phone the button sits on the row under the header (`.hm-toolbar-summary`). */
+.hm-hero-summary {
+  display: none;
+}
+@media (min-width: 861px) and (max-width: 1180px) {
+  .hm-hero-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    min-height: 44px;
+    margin-top: var(--sp-3);
+    padding: 0 var(--sp-1) 0 0;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: #dff5e8;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+  .hm-hero-summary svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .hm-hero-summary span {
+    flex: 1;
+  }
+  .hm-hero-summary svg:last-child {
+    width: 16px;
+    height: 16px;
+    opacity: 0.8;
+  }
+}
+
+/* 44px tap targets without changing what the eye sees. */
+@media (max-width: 860px) {
+  .hm-seg button {
+    min-height: 44px;
+  }
+  .hm-hero-menu {
+    position: relative;
+  }
+  .hm-hero-menu::after,
+  .hm-link::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+  .hm-link {
+    position: relative;
+  }
+  .hm-link::after {
+    inset: -14px -6px;
+  }
+}
+
+/* The phone's Day summary: an icon beside the branch picker, on the row the period switch used to take. */
+.hm-toolbar-summary {
+  display: none;
+}
+@media (max-width: 860px) {
+  .hm-toolbar-summary {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #cdeedb;
+    border-radius: 13px;
+    background: var(--hm-green-soft);
+    color: var(--hm-green-deep);
+    cursor: pointer;
+  }
+  .hm-toolbar-summary svg {
+    width: 20px;
+    height: 20px;
+  }
+  /* The branch picker (`.hm-toolbar-end` pushes it right) and the summary icon sit
+     together, not at opposite ends of the row. */
+  .hm-toolbar {
+    gap: var(--sp-2);
+  }
+
+  /* The period switch, in the money card. It takes the eyebrow's line, and carries
+     the eyebrow's words as its accessible name (see MoneyHero). */
+  .hm-hero-top {
+    flex-wrap: wrap;
+    row-gap: var(--sp-2);
+  }
+  .hm-hero-top:has(.hm-seg-hero) .hm-eyebrow {
+    display: none;
+  }
+  .hm-seg-hero {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .hm-seg-hero button {
+    min-height: 38px;
+    padding: 0 var(--sp-3);
+    color: #d5efe0;
+    font-size: 13px;
+  }
+  .hm-seg-hero button.is-on {
+    background: #fff;
+    color: var(--hm-ink);
+  }
+}
+
+/* A 320px phone gives the business name ~116px between the menu button and search;
+   at 18px a three-word name still reads on two lines instead of "Lotus Unisex…". */
+@media (max-width: 360px) {
+  .hm-head {
+    gap: var(--sp-2);
+  }
+  .hm-head-business {
+    font-size: 18px;
   }
 }

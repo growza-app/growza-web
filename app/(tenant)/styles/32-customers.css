@@ -1807,21 +1807,23 @@
    * desktop, off-canvas here instead of hidden — the admin portal's own
    * `AdminShell` already proved this exact pattern for its sidebar.
    */
-  .menu-toggle {
-    display: flex;
-  }
-
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 56;
     width: min(300px, 86vw);
     transform: translateX(-100%);
-    transition: transform 0.22s ease;
+    /* Jira GRW-306 — hidden, not just slid away: an off-screen sidebar still had
+       14 links in the tab order and the accessibility tree. `visibility` flips
+       after the slide-out finishes, so the close animation still plays. */
+    visibility: hidden;
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
   }
 
   .sidebar[data-open='true'] {
     transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.22s ease, visibility 0s;
     box-shadow: 4px 0 24px rgba(9, 20, 15, 0.28);
   }
 
@@ -1839,8 +1841,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.12);
   }
@@ -2000,19 +2002,8 @@
        pushes the bar down a second time on the phones that have one. */
     padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px
       max(16px, env(safe-area-inset-left));
-    /* Jira GRW-300 — clears the fixed hamburger toggle (38px, inset 12px
-       from the edge) that floats over every mobile screen now. */
-    padding-left: max(58px, calc(env(safe-area-inset-left) + 58px));
     align-items: center;
     gap: 12px;
-  }
-
-  /* Jira GRW-300 — `BillingBanner`/`BillChangeBanner` sit above every
-     header (row 1 of `.content`'s grid) and run edge-to-edge, so they need
-     their own clearance for the same fixed hamburger toggle — `.topbar`
-     and `.hm-head`'s padding-left only helps the row below them. */
-  .content-banners {
-    padding: 10px max(16px, env(safe-area-inset-right)) 0 max(58px, calc(env(safe-area-inset-left) + 58px));
   }
 
   .topbar h1 {

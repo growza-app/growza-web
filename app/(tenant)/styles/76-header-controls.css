@@ -65,13 +65,21 @@
  * child re-centres the icon on its own.
  */
 @media (max-width: 860px) {
+  .hdr-search {
+    width: 44px;
+    height: 44px;
+  }
+
   .hdr-search-wide {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border-radius: 50%;
     display: grid;
     place-items: center;
+    /* `.hdr-search-wide` sets `justify-content: flex-start` for the pill; in a grid that
+       parks the one column at the left edge and the icon with it (Jira GRW-309). */
+    justify-content: center;
   }
 
   .hdr-search-wide span {
@@ -179,5 +187,79 @@
   .topbar-actions {
     margin-left: auto;
     gap: 8px;
+  }
+}
+
+/* ---------- the menu button, in the header row (Jira GRW-306) ---------- */
+
+/* Not a phone: the sidebar is on screen. */
+.menu-btn {
+  display: none;
+}
+
+/* On a laptop the lead wrapper is not a box at all, so `.topbar`'s layout —
+   title left, controls right — is exactly what it was before the button existed. */
+.topbar-lead {
+  display: contents;
+}
+
+@media (max-width: 860px) {
+  .menu-btn {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .menu-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .topbar-lead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  /*
+   * The wrap threshold, with the menu button beside the title.
+   *
+   * `.topbar-title` above says a title narrower than 140px goes to its own row. With the
+   * button (44px + 10px gap) in the same row that became 194px, and a screen with a page
+   * action (Clients: `+`, search, avatar = 154px) no longer fit one row until 392px: at
+   * 375px the actions dropped to a second line of their own, right-aligned under nothing.
+   * The button is a fixed cost, so the title's own minimum comes down to match: 96px is
+   * still "Clients" and "Services" whole, and the row wraps only where it truly must.
+   */
+  .topbar-lead {
+    /* Basis 0, so the wrap decision sees its 150px minimum rather than its content's full
+       width: a title with a subtitle ("Bookings — All your appointments in one place")
+       has a long max-content width and used to push the search and avatar to a second
+       line of their own. It now takes what is left and its text wraps inside it. */
+    flex: 1 1 0;
+    min-width: 150px;
+  }
+  .topbar-lead .topbar-title {
+    min-width: 96px;
+  }
+  /* A title that does not fit wraps to two lines (about the height of the 44px menu
+     button beside it) instead of a dropped second row of controls or an ellipsis
+     through "Offers & Combos". */
+  .topbar-lead .topbar-title h1 {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
   }
 }

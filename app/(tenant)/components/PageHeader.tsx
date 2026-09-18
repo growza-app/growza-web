@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { HeaderControls } from './HeaderControls';
+import { MenuButton } from './MenuButton';
 import { IconArrowLeft } from './icons';
 
 /**
@@ -48,18 +49,24 @@ export function PageHeader({
 }) {
   return (
     <header className={`topbar ${mobileSubtitle ? 'topbar-with-sub' : ''}`}>
-      <div className="topbar-title">
-        {onBack ? (
-          <div className="topbar-title-row">
-            <button type="button" className="staff-icon-btn topbar-back" aria-label="Back" onClick={onBack}>
-              <IconArrowLeft />
-            </button>
+      {/* Jira GRW-306 — the phone's menu button, in the row. A screen with a Back
+          arrow shows that instead: it is a step deeper than the tab bar, and
+          Back is the one control it needs at the left. */}
+      <div className="topbar-lead">
+        {onBack ? null : <MenuButton />}
+        <div className="topbar-title">
+          {onBack ? (
+            <div className="topbar-title-row">
+              <button type="button" className="staff-icon-btn topbar-back" aria-label="Back" onClick={onBack}>
+                <IconArrowLeft />
+              </button>
+              <h1>{title}</h1>
+            </div>
+          ) : (
             <h1>{title}</h1>
-          </div>
-        ) : (
-          <h1>{title}</h1>
-        )}
-        {subtitle && <p>{subtitle}</p>}
+          )}
+          {subtitle && <p>{subtitle}</p>}
+        </div>
       </div>
       {/* One group, not loose children: .topbar is space-between, so bare
           siblings get spread across the width — a page with no `actions`

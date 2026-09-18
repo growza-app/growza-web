@@ -56,10 +56,12 @@
 }
 
 .avatar-lg {
-  width: 42px;
-  height: 42px;
+  /* Jira GRW-306 — 44px, and --accent-deep so the white letter clears 4.5:1
+     (5.0 against 3.3 on --accent). */
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
   display: grid;
   place-items: center;

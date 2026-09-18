@@ -1069,3 +1069,144 @@
   color: var(--accent-deep);
   font-weight: 600;
 }
+
+/* ── Jira GRW-306: the same card, as the phone's Menu sheet ──────────────── */
+
+.acct-head {
+  position: relative;
+}
+
+.acct-menu:focus {
+  outline: none;
+}
+
+.acct-item:focus-visible,
+.acct-lang button:focus-visible,
+.acct-close:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+
+.acct-lang {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin: 4px 4px 8px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--slate-soft);
+}
+
+.acct-lang button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.acct-lang button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(9, 20, 15, 0.12);
+}
+
+.acct-signout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #b42318;
+}
+
+.acct-signout svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.acct-close {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .acct-scrim {
+    background: rgba(9, 20, 15, 0.45);
+  }
+
+  /* A bottom sheet, not a popover: a thumb reaches the foot of the screen, and
+     the list is long enough to want the room. */
+  .acct-menu {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    max-height: min(88dvh, 720px);
+    overflow-y: auto;
+    border: 0;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    box-shadow: 0 -10px 40px rgb(20 32 27 / 0.22);
+  }
+
+  .acct-head {
+    padding: 12px 60px 12px 16px;
+  }
+
+  /* The role's one-line description is a laptop's; a phone needs the room for the list. */
+  .acct-sub {
+    display: none;
+  }
+
+  .acct-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--slate-soft);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .acct-close svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .acct-actions {
+    padding: 6px;
+  }
+
+  .acct-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 48px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 15.5px;
+  }
+
+  .acct-item svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .acct-form input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}

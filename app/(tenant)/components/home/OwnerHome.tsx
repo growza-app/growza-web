@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, type Appointment, type CustomerStats, type HomeOverview, type HomePeriod } from '../../lib/api';
 import { groupBookings } from '../../lib/appointment-display';
 import { branchPace } from '../../lib/branch-pace';
@@ -131,6 +131,32 @@ export function OwnerHome(p: OwnerHomeProps) {
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(p.initial === null);
   const [branchMenu, setBranchMenu] = useState(false);
+  const branchRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Jira GRW-309 — the branch list closes when you tap anywhere else, or press Escape
+   * (and hands focus back to its button). It only closed by choosing a branch or
+   * pressing the button again, so it sat open over the money card while you tapped
+   * elsewhere. `pointerdown`, not `click`: it closes before the tap lands, so the
+   * thing you tapped still gets it.
+   */
+  useEffect(() => {
+    if (!branchMenu) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!branchRef.current?.contains(e.target as Node)) setBranchMenu(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setBranchMenu(false);
+      branchRef.current?.querySelector<HTMLElement>('.hm-branch-btn')?.focus();
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [branchMenu]);
   const [summaryOpen, setSummaryOpen] = useState(false);
   /**
    * Record payment only now — Jira GRW-297 moved "New booking" off this
@@ -231,14 +257,14 @@ export function OwnerHome(p: OwnerHomeProps) {
         title={t.greeting(p.greetingPart)}
         sub={t.ownerSub(p.businessName, afterClose)}
         businessName={p.businessName}
-        locationName={locationLine}
+        locationName={multiBranch ? null : locationLine}
         dateLabel={p.dateLabel}
         onDaySummary={() => setSummaryOpen(true)}
       />
 
       <div className="page-body hm-page hm-fit">
         {afterClose && closeTime ? (
-          <button type="button" className="hm-closed" onClick={() => setSummaryOpen(true)}>
+          <button type="button" className="hm-closed hm-desktop" onClick={() => setSummaryOpen(true)}>
             <span className="hm-closed-icon">
               <IconDaySummary />
             </span>
@@ -252,6 +278,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
         <div className="hm-toolbar">
           <Segmented
+            className="hm-desktop"
             label={t.today}
             value={period}
             options={[
@@ -283,7 +310,7 @@ export function OwnerHome(p: OwnerHomeProps) {
               </div>
             ) : null}
             {multiBranch ? (
-              <div className="hm-branch">
+              <div className="hm-branch" ref={branchRef}>
                 <button type="button" className="hm-branch-btn" aria-haspopup="menu" aria-expanded={branchMenu} onClick={() => setBranchMenu((o) => !o)}>
                   {selected?.name ?? t.allBranches}
                   <IconChevronDown />
@@ -310,10 +337,27 @@ export function OwnerHome(p: OwnerHomeProps) {
               </div>
             ) : null}
           </div>
+          {/* Jira GRW-306 — the Day summary on a phone: an icon beside the branch picker,
+              on the row the period switch used to take. The "Day closed" banner that
+              opened the same sheet is laptop-only now; it cost a phone a whole card of
+              height. From 861px it is the header's button or the card's row. */}
+          <button type="button" className="hm-toolbar-summary" aria-label={t.daySummary} title={t.daySummary} onClick={() => setSummaryOpen(true)}>
+            <IconDaySummary />
+          </button>
         </div>
 
         <div className={`hm-owner-grid ${multiBranch ? 'hm-multi' : ''}`}>
-          <div className="hm-area-hero">{data ? <MoneyHero t={t} data={data} loading={loading} /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
+          <div className="hm-area-hero">{data ? <MoneyHero
+                t={t}
+                data={data}
+                loading={loading}
+                onDaySummary={() => setSummaryOpen(true)}
+                period={period}
+                onPeriod={(v) => {
+                  setPeriod(v);
+                  load(v, branch);
+                }}
+              /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/* The design gives "Needs your attention" to the laptop only; a phone's
               Home is money, shortcuts, branches, clients and the day. */}
