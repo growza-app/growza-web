@@ -129,6 +129,10 @@ export function NotificationBell() {
   useEffect(() => {
     const load = async () => {
       if (document.visibilityState !== 'visible') return;
+      // Jira GRW-310 — not while it is not on screen. On a phone the bell is hidden (the
+      // Notifications tab is the way in), and so is its toast; polling for an unseen
+      // bell is a request every 15 seconds that nothing can show.
+      if (wrapRef.current && getComputedStyle(wrapRef.current).display === 'none') return;
       const rows = await api.notifications(20).catch(() => null);
       if (!rows) return;
 

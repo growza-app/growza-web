@@ -133,6 +133,11 @@ describe('AC-05 / BR-02 — the nav agrees with the API', () => {
        * allowlist (`POST /customers`) came out for exactly that.
        */
       '/api/v1/my-earnings',
+      /*
+       * Jira GRW-310 — `LiveRefresh` asks this on Home, Bookings and Free times, which
+       * a stylist opens, before deciding whether to redraw. An opaque hash, no page.
+       */
+      '/api/v1/live-version',
     ];
     const unexplained = staffAllowed.filter((r) => !supporting.includes(r) && !visibleItems(NAV, 'staff').some((i) => `/api/v1${i.href}` === r));
     expect(unexplained, 'staff-allowed routes with no nav destination and no stated reason').toEqual([]);

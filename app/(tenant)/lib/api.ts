@@ -7,6 +7,18 @@
 const API_URL = typeof window !== 'undefined' ? '' : (process.env.API_URL ?? 'http://localhost:3001');
 
 /**
+ * Jira GRW-310 — `/me` once per server render.
+ *
+ * The layout, the page and the page title (`generateMetadata`) each asked for it,
+ * so a single page load fetched it up to three times, and the dashboard re-renders
+ * that whole tree every few seconds on the live screens. `cache` is React's
+ * per-request memo: every caller inside one render shares one call, and the next
+ * request starts clean. Server only — in the browser it would hold a stale answer
+ * for the life of the tab, so the client keeps calling straight through.
+ */
+const meThisRender = cache(() => get<Me>('/api/v1/me'));
+
+/**
  * Jira GRW-66 · GRW-160 — the credential the server-side half of this file
  * would otherwise not send.
  *
@@ -46,6 +58,7 @@ export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
+import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   ActivityEvent,
@@ -318,7 +331,7 @@ export interface CreatedInvite {
 }
 
 export const api = {
-  me: () => get<Me>('/api/v1/me'),
+  me: () => (typeof window === 'undefined' ? meThisRender() : get<Me>('/api/v1/me')),
   /** GRW-202 — change your own password. Needs the current one; the session says who you are. */
   changePassword: (body: { currentPassword: string; newPassword: string }) =>
     post<{ ok: true }>('/api/v1/auth/change-password', body),
@@ -412,6 +425,8 @@ export const api = {
   // todayStats which runs server-side during SSR and never hits that filter).
   rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
   notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
+  /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. */
+  liveVersion: () => get<{ version: string }>('/api/v1/live-version').then((r) => r.version),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
   createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
