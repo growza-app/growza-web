@@ -146,6 +146,7 @@ export function BookingsList({
   initialStaff,
   initialSort,
   initialUnmarked,
+  initialBranch,
   openAppointmentId,
   viewerIsStaff,
   earnings,
@@ -214,6 +215,8 @@ export function BookingsList({
    * and opening 9. Cleared with the chip above the tiles.
    */
   initialUnmarked: boolean;
+  /** Jira GRW-312 — the branch Home was showing when it sent the owner here; null is every branch. */
+  initialBranch: { id: string; name: string } | null;
   /** Jira GRW-216 — null when the owner has not shown this stylist their takings, or the viewer is not one. */
   earnings?: MyEarnings | null;
   /**
@@ -243,6 +246,7 @@ export function BookingsList({
   // to untangle for the staff filter).
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [unmarkedOnly, setUnmarkedOnly] = useState(initialUnmarked);
+  const [branch, setBranch] = useState(initialBranch);
   // Earliest-first by default: on today's schedule that's the running order of
   // the day, which is what the page is for. Latest-first earns its keep on a
   // From/To range, where the most recent day is usually the interesting end.
@@ -251,7 +255,9 @@ export function BookingsList({
   // desktop (GRW-47), a full-width row below the 2x2 grid on mobile (GRW-46).
   const [metric, setMetric] = useState<'busy' | 'staff' | 'service'>('busy');
 
-  const bookings = groupBookings(appointments);
+  // Jira GRW-312 — a branch narrows the day itself, before the tiles are counted, so what Home
+  // counted for that branch is what these tiles and this list show.
+  const bookings = groupBookings(branch ? appointments.filter((a) => a.locationId === branch.id) : appointments);
 
   const openedFromSearch = useRef(false);
   useEffect(() => {
@@ -291,7 +297,7 @@ export function BookingsList({
   // reverse rather than a second sort — and reversing keeps bookings that
   // share a start instant adjacent, which the slot grouping below depends on.
   const filtered = sort === 'desc' ? [...matching].reverse() : matching;
-  const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '' || unmarkedOnly;
+  const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '' || unmarkedOnly || branch !== null;
   const noMatches = filtering && filtered.length === 0;
 
   const staffChipNames = useMemo(() => ['Everyone', ...providers.map((p) => p.displayName)], [providers]);
@@ -350,7 +356,9 @@ export function BookingsList({
    * an authoritative-looking 0%.
    */
   const bookedMin = bookings.reduce((sum, b) => sum + b.totalMin, 0);
-  const staffBusyPct = capacityMin && capacityMin > 0 ? Math.round((bookedMin / capacityMin) * 100) : null;
+  // Jira GRW-312 — with one branch picked the minutes are that branch's and `capacityMin` is the whole
+  // business's: the mismatch GRW-190 fixed for a stylist. No figure until the capacity is per branch.
+  const staffBusyPct = capacityMin && capacityMin > 0 && !branch ? Math.round((bookedMin / capacityMin) * 100) : null;
   const busiestStaff = busiestStaffName(bookings);
   const topService = topServiceName(bookings);
   const metricValue =
@@ -568,6 +576,28 @@ export function BookingsList({
         </div>
       )}
 
+      {branch && (
+        <div className="bk-unmarked-chip bk-branch-chip" role="status">
+          <IconStaff />
+          <span>{copy.bookings.branchOnly(branch.name)}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setBranch(null);
+              setPage(1);
+              // The address said this branch; leaving it there would bring it back on a reload.
+              const url = new URL(window.location.href);
+              if (url.searchParams.has('location')) {
+                url.searchParams.delete('location');
+                window.history.replaceState(null, '', url);
+              }
+            }}
+          >
+            {copy.bookings.branchClear}
+          </button>
+        </div>
+      )}
+
       {!loadFailed && (
       <div className="bk-kpis">
         <Kpi
@@ -644,6 +674,7 @@ export function BookingsList({
           {query && <input type="hidden" name="q" value={query} />}
           {staffFilter !== 'Everyone' && <input type="hidden" name="staff" value={staffFilter} />}
           {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+          {branch && <input type="hidden" name="location" value={branch.id} />}
           {sort !== 'asc' && <input type="hidden" name="sort" value={sort} />}
 
           <div className="bk-field bk-field-search desktop-only">

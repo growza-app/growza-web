@@ -1,0 +1,140 @@
+/* ---------- the phone money card, in words (Jira GRW-312) ----------
+ *
+ * Amount and how it changed, what still needs marking, where the money came from and how it
+ * was paid — each on one line, with no graph. Phone only (up to 860px): from 861px the card
+ * is the laptop's and none of this is drawn (`.hm-mobile` is display:none there).
+ *
+ * The week graph and the payment bar are hidden here rather than removed from the markup,
+ * because the laptop card still draws both.
+ */
+@media (max-width: 860px) {
+  .hm-hero .hm-delta-top,
+  .hm-page .hm-hero:not(.hm-hero-small) .hm-hero-week {
+    display: none;
+  }
+
+  /* The change chip moves from the top row to beside the amount, where it is read. */
+  .hm-hero .hm-hero-top .hm-hero-menu {
+    margin-left: auto;
+  }
+  .hm-page .hm-hero:not(.hm-hero-small) .hm-hero-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'amount chip'
+      'stats stats';
+  }
+  .hm-hero .hm-hero-chip {
+    grid-area: chip;
+    align-self: center;
+    justify-self: end;
+    margin-left: 0;
+  }
+
+  .hm-hero-phone {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .hm-todo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: rgba(253, 224, 71, 0.16);
+    color: #fde68a;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .hm-todo span {
+    flex: 1;
+    min-width: 0;
+  }
+  .hm-todo svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+  }
+
+  .hm-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 32px;
+    padding-top: 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    color: #e8f5ed;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .hm-line-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .hm-line-item i {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .hm-line b {
+    flex: none;
+    color: #fff;
+    font-weight: 700;
+  }
+  .hm-line-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hm-line-pick {
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .hm-line-more {
+    flex: none;
+    margin-left: auto;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 6px;
+    border: 0;
+    background: transparent;
+    color: #bbf7d0;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .hm-line-empty {
+    margin: 0;
+    color: #c5e6d2;
+  }
+  .hm-line-foot {
+    margin: 0;
+    color: #c5e6d2;
+    font-size: 12px;
+  }
+  .hm-line-foot b {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .hm-todo:focus-visible,
+  .hm-line-pick:focus-visible,
+  .hm-line-more:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}

@@ -203,6 +203,13 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   const closeTime = hours?.closesAt ? formatClock(hours.closesAt) : null;
 
+  /*
+   * Jira GRW-312 — the count above was made for the branch picked here, so the link takes
+   * that branch to Bookings. Without it the list opened across every branch and
+   * disagreed with the number that led to it.
+   */
+  const unmarkedHref = `/appointments?status=confirmed&unmarked=1${branch ? `&location=${encodeURIComponent(branch)}` : ''}`;
+
   const attention = data
     ? [
         {
@@ -211,7 +218,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           label: t.notMarkedDone,
           sub: t.fromToday,
           tone: 'amber' as const,
-          href: '/appointments?status=confirmed&unmarked=1',
+          href: unmarkedHref,
           icon: <IconClock />,
         },
         {
@@ -357,6 +364,13 @@ export function OwnerHome(p: OwnerHomeProps) {
                   setPeriod(v);
                   load(v, branch);
                 }}
+                unmarkedHref={unmarkedHref}
+                branchId={branch}
+                onPickBranch={(id) => {
+                  setBranch(id);
+                  load(period, id);
+                }}
+                onMoreBranches={() => setBranchMenu(true)}
               /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/* The design gives "Needs your attention" to the laptop only; a phone's

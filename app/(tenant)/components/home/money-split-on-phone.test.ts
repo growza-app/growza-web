@@ -13,10 +13,13 @@ const hero = readFileSync(resolve(__dirname, 'MoneyHero.tsx'), 'utf8');
 
 describe('Money today on a phone', () => {
   it('AC-01 — the split is never hidden behind a view switch', () => {
-    expect(hero).toMatch(/<div className="hm-hero-pay">/);
-    // `hm-desktop-inline` on the "vs yesterday" words is fine; the split and the
-    // figures strip must carry no phone-hiding class.
-    expect(hero).not.toMatch(/hm-hero-pay[^"]*hm-desktop/);
+    // Jira GRW-312 — a phone reads the split as ONE line (PaymentLine) in its own block, the laptop
+    // keeps the bar and tiles; both are drawn, each for its own width, and neither is behind a switch.
+    expect(hero).toMatch(/<div className="hm-hero-phone hm-mobile">/);
+    expect(hero).toMatch(/<PaymentLine t=\{t\} slices=\{money\.byPaymentMode\}/);
+    expect(hero).toMatch(/<div className="hm-hero-pay hm-desktop">/);
+    // The figures strip carries no phone-hiding class (`hm-desktop-inline` on the "vs yesterday"
+    // words is fine).
     expect(hero).toMatch(/<div className="hm-hero-stats">/);
     expect(hero).not.toMatch(/setView/);
   });

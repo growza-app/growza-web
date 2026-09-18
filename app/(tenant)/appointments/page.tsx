@@ -29,6 +29,8 @@ export default async function AppointmentsPage({
     open?: string;
     /** Jira GRW-310 — '1' from Home's "Not marked done" card: narrow to the bookings it counted. */
     unmarked?: string;
+    /** Jira GRW-312 — a branch, from Home: the bookings it counted are that branch's. */
+    location?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -81,6 +83,12 @@ export default async function AppointmentsPage({
   // a since-removed stylist would otherwise match nothing and read as "this
   // day is empty" rather than "that filter no longer applies".
   const staff = params.staff && providers.some((p) => p.displayName === params.staff) ? params.staff : 'Everyone';
+
+  // Jira GRW-312 — only a branch this business really has. A stale or edited id, or a login with
+  // no branches to choose between, is ignored rather than filtering the day down to nothing.
+  const locationParam = params.location?.trim();
+  const initialBranch =
+    locationParam && /^[0-9a-f-]{36}$/i.test(locationParam) ? ((me.branches ?? []).find((b) => b.id === locationParam) ?? null) : null;
 
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date());
@@ -250,6 +258,7 @@ export default async function AppointmentsPage({
           initialStaff={staff}
           openAppointmentId={openAppointmentId}
           initialUnmarked={params.unmarked === '1'}
+          initialBranch={initialBranch}
           viewerIsStaff={me.member?.role === 'staff'}
           canReschedule={me.capabilities.reschedule}
           loadFailed={appointmentsResult.failed}

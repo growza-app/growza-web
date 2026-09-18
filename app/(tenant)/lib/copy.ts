@@ -399,6 +399,8 @@ export const copy = {
     /** Jira GRW-310 — Home's "Not marked done" card, opened. */
     unmarkedOnly: (n: number) => `Showing ${n} finished and not marked`,
     unmarkedClear: 'Show all',
+    branchOnly: (name: string) => `Showing ${name} only`,
+    branchClear: 'All branches',
     /*
      * Jira GRW-216 — "your", every time. On a revenue share this is the
      * stylist's pay, and the words have to make unmistakable that it is their

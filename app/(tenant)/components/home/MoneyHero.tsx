@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { HomeOverview, HomePeriod, PaymentModeSlice } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
-import { IconChevronRight, IconDaySummary, IconDots } from '../icons';
+import { IconChevronRight, IconClock, IconDaySummary, IconDots } from '../icons';
 import { rupees, Segmented } from './parts';
 
 /**
@@ -48,6 +48,78 @@ export function PaymentBar({ t, slices, total, variant }: { t: HomeCopy; slices:
   );
 }
 
+/** The branch's dot on the money card, the same colours as its tile in "Your branches". */
+const BRANCH_DOT = ['#86efac', '#93c5fd', '#fcd34d', '#d8b4fe', '#fda4af'];
+
+/**
+ * Jira GRW-312 — how the money came in, on ONE line: "Cash ₹2,000 · UPI ₹900 · Card ₹360".
+ *
+ * A phone has no room for a bar and a row per method, and a bar at 100% cash
+ * says nothing. One method reads "All cash ₹3,260"; more than three keep the
+ * three biggest and a "+N" that opens the same list the ⋯ button does.
+ */
+export function planPaymentLine(slices: PaymentModeSlice[]): { shown: PaymentModeSlice[]; more: number; only: boolean } {
+  const sorted = [...slices].sort((a, b) => b.revenueMinor - a.revenueMinor);
+  const shown = sorted.slice(0, 3);
+  return { shown, more: sorted.length - shown.length, only: sorted.length === 1 && sorted[0]!.mode !== 'not_recorded' };
+}
+
+export function PaymentLine({ t, slices, total, onMore }: { t: HomeCopy; slices: PaymentModeSlice[]; total: number; onMore: () => void }) {
+  if (slices.length === 0 || total === 0) return <p className="hm-line hm-line-empty">{t.noMoneyYet}</p>;
+  const { shown, more, only } = planPaymentLine(slices);
+  return (
+    <div className="hm-line" role="group" aria-label={t.howPaid}>
+      {shown.map((s) => (
+        <span key={s.mode} className="hm-line-item">
+          <i style={{ background: MODE_COLOR[s.mode] }} />
+          {only ? t.allPaidBy(t.payment[s.mode] ?? s.mode, s.mode) : t.payment[s.mode]} <b>{rupees(s.revenueMinor)}</b>
+        </span>
+      ))}
+      {more > 0 ? (
+        <button type="button" className="hm-line-more" aria-label={`${t.howPaid}: +${more}`} onClick={onMore}>
+          +{more}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Jira GRW-312 — where the money was earned, on one line, for a business with
+ * branches. Two branches fit; more show the two earning most and a "+N" that
+ * opens the branch list. A tap on a name picks that branch, as the list does.
+ */
+function BranchLine({
+  t,
+  branches,
+  onPick,
+  onMore,
+}: {
+  t: HomeCopy;
+  branches: HomeOverview['branches'];
+  onPick: (id: string) => void;
+  onMore: () => void;
+}) {
+  const ranked = branches.map((b, i) => ({ b, colour: BRANCH_DOT[i % BRANCH_DOT.length]! })).sort((x, y) => y.b.revenueTodayMinor - x.b.revenueTodayMinor);
+  const shown = branches.length > 2 ? ranked.slice(0, 2) : ranked;
+  const more = branches.length - shown.length;
+  return (
+    <div className="hm-line" role="group" aria-label={t.yourBranches}>
+      {shown.map(({ b, colour }) => (
+        <button key={b.id} type="button" className="hm-line-item hm-line-pick" onClick={() => onPick(b.id)}>
+          <i style={{ background: colour }} />
+          <span className="hm-line-name">{b.name}</span> <b>{rupees(b.revenueTodayMinor)}</b>
+        </button>
+      ))}
+      {more > 0 ? (
+        <button type="button" className="hm-line-more" aria-label={`${t.yourBranches}: +${more}`} onClick={onMore}>
+          +{more}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function Sparkline({ days }: { days: HomeOverview['week']['days'] }) {
   const shown = days.filter((d) => !d.future);
   const max = Math.max(...days.map((d) => d.revenueMinor), 1);
@@ -82,6 +154,10 @@ export function MoneyHero({
   onDaySummary,
   period,
   onPeriod,
+  unmarkedHref,
+  branchId = null,
+  onPickBranch,
+  onMoreBranches,
 }: {
   t: HomeCopy;
   data: HomeOverview;
@@ -90,6 +166,15 @@ export function MoneyHero({
   /** Jira GRW-306 — the period switch, drawn in the card on a phone. */
   period?: HomePeriod;
   onPeriod?: (p: HomePeriod) => void;
+  /**
+   * Jira GRW-312 — where the "not marked done" pill goes. It carries the picked
+   * branch, so Bookings opens on the same bookings the count was made from.
+   */
+  unmarkedHref?: string;
+  /** The branch picked above the card; null is all of them. */
+  branchId?: string | null;
+  onPickBranch?: (id: string) => void;
+  onMoreBranches?: () => void;
 }) {
   const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -105,6 +190,15 @@ export function MoneyHero({
   const { money, week } = data;
   const eyebrow = money.period === 'today' ? t.moneyToday : money.period === 'week' ? t.moneyWeek : t.moneyMonth;
   const vs = money.period === 'today' ? t.vsYesterday : money.period === 'week' ? t.vsLastWeek : t.vsLastMonth;
+  const deltaChip = (className: string, hideWords: boolean) =>
+    money.deltaPct !== null && money.revenueMinor > 0 ? (
+      <span className={`${className} ${money.deltaPct >= 0 ? 'up' : 'down'}`}>
+        {money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(money.deltaPct)}% <span className={hideWords ? 'hm-desktop-inline' : ''}>{vs}</span>
+      </span>
+    ) : null;
+  const notMarked = data.attention.notMarkedDone;
+  const branches = data.branches;
+  const showBranchLine = branches.length > 1 && branchId === null && money.period === 'today' && Boolean(onPickBranch && onMoreBranches);
 
   return (
     <section className={`hm-hero ${loading ? 'is-loading' : ''}`} aria-busy={loading}>
@@ -130,11 +224,7 @@ export function MoneyHero({
         {/* BR-08 — no badge when there is nothing to compare with, and none
             until something has come in: "↓ 100%" at 9 am is not news, it is
             the time of day. */}
-        {money.deltaPct !== null && money.revenueMinor > 0 ? (
-          <span className={`hm-delta ${money.deltaPct >= 0 ? 'up' : 'down'}`}>
-            {money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(money.deltaPct)}% <span className="hm-desktop-inline">{vs}</span>
-          </span>
-        ) : null}
+        {deltaChip('hm-delta hm-delta-top', true)}
         {/*
           Jira GRW-270 · GRW-275 — the ⋯ menu shows how the money came in, as a
           list with the rupees and the share of each. It used to swap the card
@@ -159,6 +249,7 @@ export function MoneyHero({
       <div className="hm-hero-body">
         <div className="hm-hero-main">
           <div className="hm-hero-amount">{rupees(money.revenueMinor)}</div>
+          {deltaChip('hm-delta hm-hero-chip hm-mobile-inline', false)}
           <div className="hm-hero-stats">
             <span>
               <strong>{money.bookings}</strong> {t.bookingWord(money.bookings)}
@@ -180,8 +271,30 @@ export function MoneyHero({
         </div>
       </div>
 
-      {/* Jira GRW-270 · GRW-275 — the split under the amount on a phone too, not only on a laptop. */}
-      <div className="hm-hero-pay">
+      {/*
+        Jira GRW-312 — the phone card, in words: what needs marking, where the money
+        was earned and how it was paid, each on one line, and no graph. From 861px
+        the card is the laptop's, unchanged, and this block is not drawn.
+      */}
+      <div className="hm-hero-phone hm-mobile">
+        {notMarked > 0 && unmarkedHref ? (
+          <a className="hm-todo" href={unmarkedHref}>
+            <IconClock />
+            <span>{t.notMarkedPill(notMarked)}</span>
+            <IconChevronRight />
+          </a>
+        ) : null}
+        {showBranchLine ? <BranchLine t={t} branches={branches} onPick={onPickBranch!} onMore={onMoreBranches!} /> : null}
+        <PaymentLine t={t} slices={money.byPaymentMode} total={money.revenueMinor} onMore={() => setMenu(true)} />
+        {money.period === 'today' ? (
+          <p className="hm-line-foot">
+            {t.thisWeek} <b>{rupees(week.revenueMinor)}</b>
+          </p>
+        ) : null}
+      </div>
+
+      {/* Jira GRW-270 · GRW-275 — the split under the amount on a laptop; a phone has the one line above. */}
+      <div className="hm-hero-pay hm-desktop">
         <PaymentBar t={t} slices={money.byPaymentMode} total={money.revenueMinor} variant="tiles" />
       </div>
 

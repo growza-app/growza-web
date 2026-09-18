@@ -60,7 +60,9 @@ describe("Home's 'Not marked done' cards open the set they counted (Jira GRW-310
   const read = (rel: string) => readFileSync(path.join(dir, rel), 'utf-8');
 
   it('both Home cards link with unmarked=1, and Bookings narrows by the same rule Home counts by', () => {
-    expect(read('../components/home/OwnerHome.tsx')).toContain("href: '/appointments?status=confirmed&unmarked=1'");
+    // Jira GRW-312 — the owner's link also carries the branch picked above the card.
+    expect(read('../components/home/OwnerHome.tsx')).toContain('`/appointments?status=confirmed&unmarked=1${branch');
+    expect(read('../components/home/OwnerHome.tsx')).toContain('href: unmarkedHref');
     expect(read('../components/home/ReceptionHome.tsx')).toContain("href: '/appointments?status=confirmed&unmarked=1'");
     expect(list).toMatch(/import \{ countsAsNotMarked \} from '\.\.\/lib\/live-state';/);
     expect(list).toMatch(/!unmarkedOnly \|\| countsAsNotMarked\(b, now\)/);
