@@ -42,8 +42,8 @@ export const NOT_MARKED_GRACE_MIN = 30;
 const MIN = 60_000;
 
 function unsettled(group: Pick<BookingGroup, 'appointments'>): boolean {
-  // Checkout settles ONE leg of a multi-service sitting (see visitNeedsAnswer),
-  // so one completed leg means somebody dealt with the visit.
+  // Checkout settles ONE leg of a multi-service sitting and leaves the rest
+  // `confirmed`, so one completed leg means somebody dealt with the visit.
   return group.appointments.every((a) => a.status === 'confirmed');
 }
 

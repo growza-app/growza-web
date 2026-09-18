@@ -290,6 +290,33 @@
   min-width: 0;
 }
 
+/* Jira GRW-308 — a tile that filters the list. A button under the same look: the reset lets
+   it keep the tile's box, the pressed state fills it, and focus shows where you are. */
+.bk-kpi-btn {
+  display: block;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bk-kpi-btn:hover {
+  border-color: var(--accent);
+}
+
+.bk-kpi-btn.is-active {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent-deep);
+}
+
+.bk-kpi-btn:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
 .bk-kpi-icon {
   width: 34px;
   height: 34px;
