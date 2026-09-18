@@ -10,6 +10,7 @@ import { InstallBanner } from '../shared/install/InstallBanner';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
 import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
+import { SessionRefresh } from './components/SessionRefresh';
 import { SessionProvider } from './components/SessionProvider';
 import { LabelsProvider } from './components/LabelsProvider';
 import { MobileNavProvider } from './components/MobileNavProvider';
@@ -209,6 +210,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <InstallPromptCapture />
         <PwaRegister />
         <LiveRefresh />
+        <SessionRefresh />
         {/* Above the shell, not inside it: this is the most important thing on
             the screen and it must not scroll away with the content or sit
             below the billing banner. */}
