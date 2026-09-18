@@ -1,5 +1,39 @@
 /* ---------- search ---------- */
 
+/*
+ * Back arrow and search box on ONE row (Jira GRW-307). `.srch-bar-row` had no rule at all,
+ * so it was a plain block: the arrow sat on a line of its own above the box, a lone circle
+ * with nothing beside it. Both are 44px tall — the arrow is a tap target and the box is the
+ * whole point of the screen — and the box is 16px type so a phone does not zoom in on focus.
+ */
+.srch-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.srch-bar-row .icon-btn {
+  width: 44px;
+  height: 44px;
+}
+
+.srch-bar-row .search-bar {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(9, 20, 15, 0.04);
+}
+
+.srch-bar-row .search-bar:focus-within {
+  border-color: var(--accent-deep);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.srch-bar-row .search-bar input {
+  font-size: 16px;
+  min-height: 44px;
+}
+
 .search-bar {
   display: flex;
   align-items: center;
