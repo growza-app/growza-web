@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { HomeOverview, PaymentModeSlice } from '../../lib/api';
+import type { HomeOverview, HomePeriod, PaymentModeSlice } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
-import { IconDots } from '../icons';
-import { rupees } from './parts';
+import { IconChevronRight, IconDaySummary, IconDots } from '../icons';
+import { rupees, Segmented } from './parts';
 
 /**
  * Jira GRW-222 — the money card.
@@ -75,7 +75,22 @@ function Sparkline({ days }: { days: HomeOverview['week']['days'] }) {
   );
 }
 
-export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOverview; loading: boolean }) {
+export function MoneyHero({
+  t,
+  data,
+  loading,
+  onDaySummary,
+  period,
+  onPeriod,
+}: {
+  t: HomeCopy;
+  data: HomeOverview;
+  loading: boolean;
+  onDaySummary?: () => void;
+  /** Jira GRW-306 — the period switch, drawn in the card on a phone. */
+  period?: HomePeriod;
+  onPeriod?: (p: HomePeriod) => void;
+}) {
   const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   // Nothing to pick in this menu any more, so a tap anywhere else closes it.
@@ -95,6 +110,23 @@ export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOvervie
     <section className={`hm-hero ${loading ? 'is-loading' : ''}`} aria-busy={loading}>
       <div className="hm-hero-top">
         <span className="hm-eyebrow">{eyebrow}</span>
+        {/* Jira GRW-306 — on a phone the period switch lives here, in the card it
+            changes (it scopes the money and nothing else on Home), instead of a
+            row of its own above it. The eyebrow gives the line to the switch, and
+            its words ("Money today") become the switch's accessible name. */}
+        {period && onPeriod ? (
+          <Segmented
+            className="hm-seg-hero hm-mobile"
+            label={eyebrow}
+            value={period}
+            options={[
+              { value: 'today', label: t.today },
+              { value: 'week', label: t.week },
+              { value: 'month', label: t.month },
+            ]}
+            onChange={onPeriod}
+          />
+        ) : null}
         {/* BR-08 — no badge when there is nothing to compare with, and none
             until something has come in: "↓ 100%" at 9 am is not news, it is
             the time of day. */}
@@ -152,6 +184,17 @@ export function MoneyHero({ t, data, loading }: { t: HomeCopy; data: HomeOvervie
       <div className="hm-hero-pay">
         <PaymentBar t={t} slices={money.byPaymentMode} total={money.revenueMinor} variant="tiles" />
       </div>
+
+      {/* Jira GRW-306 — the Day summary, in words. It was a bare clock icon in the
+          phone header; the header button keeps its label only from 1181px, so
+          below that this row is where it lives. */}
+      {onDaySummary ? (
+        <button type="button" className="hm-hero-summary" onClick={onDaySummary}>
+          <IconDaySummary />
+          <span>{t.daySummary}</span>
+          <IconChevronRight />
+        </button>
+      ) : null}
     </section>
   );
 }

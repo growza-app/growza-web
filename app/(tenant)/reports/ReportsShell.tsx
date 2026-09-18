@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react';
 
 import { copy } from '../lib/copy';
 import { HeaderControls } from '../components/HeaderControls';
+import { MenuButton } from '../components/MenuButton';
 import {
   countFilters,
   isFilterableReportTab,
@@ -160,9 +161,12 @@ export function ReportsShell({
     <>
       <header className="rp-header">
         <div className="rp-title-row">
-          <div className="topbar-title">
-            <h1>{copy.reports.title}</h1>
-            <p>{copy.reports.subtitles[tab]}</p>
+          <div className="topbar-lead">
+            <MenuButton />
+            <div className="topbar-title">
+              <h1>{copy.reports.title}</h1>
+              <p>{copy.reports.subtitles[tab]}</p>
+            </div>
           </div>
           {/*
             Jira GRW-30 — this row was a flex container with one child in it.

@@ -1,14 +1,13 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
 import { copy } from '../../lib/copy';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import type { HomeCopy } from '../../lib/home-copy';
-import { rememberLang } from '../../lib/lang';
 import { liveState, minutesBetween, type LiveState } from '../../lib/live-state';
 import { AccountMenu } from '../AccountMenu';
+import { MenuButton } from '../MenuButton';
 import { NotificationBell } from '../NotificationBell';
 import { IconChevronRight, IconDaySummary, IconMapPin, IconSearch } from '../icons';
 
@@ -51,27 +50,18 @@ export function Avatar({ name, id, size = 38 }: { name: string | null; id: strin
   );
 }
 
-export function LangToggle({ t }: { t: HomeCopy }) {
-  const router = useRouter();
-  return (
-    <button
-      type="button"
-      className="hm-lang"
-      aria-label={t.langToggleLabel}
-      onClick={() => {
-        rememberLang(t.lang === 'hi' ? 'en' : 'hi');
-        router.refresh();
-      }}
-    >
-      {t.langToggle}
-    </button>
-  );
-}
-
 /**
- * The Home header. On a phone: business name over the branch line, then the
- * controls in one compact row. On a laptop: the greeting over one line of
- * context, search, and the same controls.
+ * The Home header. On a phone: the menu button, the business name in full over
+ * the date (and the branch, when the owner has no branch picker to say it), then
+ * search and the avatar — the same controls every other screen has. On a laptop:
+ * the greeting over one line of context, search, and the rest.
+ *
+ * Jira GRW-306 — the phone header used to carry five things (hamburger, name,
+ * language, day summary, avatar) and cut the name to "Velvet Sciss…". Language
+ * moved into the avatar's menu (a setting changed once, not a control worth a
+ * permanent slot), Day summary onto the row under the header, and the period
+ * switch into the money card. The greeting stays an `h1` for screen readers; it
+ * is only hidden from sight on a phone.
  */
 export function HomeHeader({
   t,
@@ -93,11 +83,12 @@ export function HomeHeader({
 }) {
   return (
     <header className="hm-head">
+      <MenuButton />
       <div className="hm-head-id">
         <div className="hm-head-business">{businessName}</div>
         {/* The design's phone header: "MG Road · Thu, 11 Sep". */}
         <div className="hm-head-branch">
-          <IconMapPin />
+          {locationName ? <IconMapPin /> : null}
           {/* Two spans (Jira GRW-253 QA): on a narrow phone a long branch name no longer
               pushes the date out entirely — each keeps part of the line. */}
           {locationName ? <span className="hm-head-branch-name">{locationName}</span> : null}
@@ -107,11 +98,10 @@ export function HomeHeader({
         <div className="hm-head-sub">{sub}</div>
       </div>
       <div className="hm-head-controls">
-        <a className="hdr-search hdr-search-wide hm-desktop" href="/search" aria-label={copy.search.title}>
+        <a className="hdr-search hdr-search-wide" href="/search" aria-label={copy.search.title}>
           <IconSearch />
           <span>{copy.search.prompt}</span>
         </a>
-        <LangToggle t={t} />
         {onDaySummary ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>
             <IconDaySummary />
@@ -154,9 +144,9 @@ export function CardError({ t, onRetry }: { t: HomeCopy; onRetry?: () => void })
   );
 }
 
-export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: Array<{ value: T; label: string }>; onChange: (v: T) => void; label: string }) {
+export function Segmented<T extends string>({ value, options, onChange, label, className = '' }: { value: T; options: Array<{ value: T; label: string }>; onChange: (v: T) => void; label: string; className?: string }) {
   return (
-    <div className="hm-seg" role="radiogroup" aria-label={label}>
+    <div className={`hm-seg ${className}`} role="radiogroup" aria-label={label}>
       {options.map((o) => (
         <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={value === o.value ? 'is-on' : ''} onClick={() => onChange(o.value)}>
           {o.label}

@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { api } from './lib/api';
 import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
+import { MobileNavProvider } from './components/MobileNavProvider';
 import { PwaRegister } from './components/PwaRegister';
 import { InstallBanner } from '../shared/install/InstallBanner';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
@@ -13,7 +14,6 @@ import { LiveRefresh } from './components/LiveRefresh';
 import { SessionRefresh } from './components/SessionRefresh';
 import { SessionProvider } from './components/SessionProvider';
 import { LabelsProvider } from './components/LabelsProvider';
-import { MobileNavProvider } from './components/MobileNavProvider';
 import type { MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
@@ -102,7 +102,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  maximumScale: 1,
+  // No maximumScale: pinch-zoom is how a low-vision owner reads the small print (WCAG 1.4.4, Jira GRW-306).
   themeColor: '#0f3d2e',
 };
 
@@ -222,6 +222,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             phone: memberPhone,
             businessName: tenantName ?? null,
             branches,
+            lang,
           }}
         >
         <LabelsProvider labels={labels}>

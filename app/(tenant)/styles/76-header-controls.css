@@ -65,9 +65,14 @@
  * child re-centres the icon on its own.
  */
 @media (max-width: 860px) {
+  .hdr-search {
+    width: 44px;
+    height: 44px;
+  }
+
   .hdr-search-wide {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border-radius: 50%;
     display: grid;
@@ -179,5 +184,54 @@
   .topbar-actions {
     margin-left: auto;
     gap: 8px;
+  }
+}
+
+/* ---------- the menu button, in the header row (Jira GRW-306) ---------- */
+
+/* Not a phone: the sidebar is on screen. */
+.menu-btn {
+  display: none;
+}
+
+/* On a laptop the lead wrapper is not a box at all, so `.topbar`'s layout —
+   title left, controls right — is exactly what it was before the button existed. */
+.topbar-lead {
+  display: contents;
+}
+
+@media (max-width: 860px) {
+  .menu-btn {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .menu-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .topbar-lead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  /* The wrap threshold in `.topbar-title` above, plus the button beside it. */
+  .topbar-lead {
+    min-width: 194px;
   }
 }

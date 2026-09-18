@@ -231,14 +231,14 @@ export function OwnerHome(p: OwnerHomeProps) {
         title={t.greeting(p.greetingPart)}
         sub={t.ownerSub(p.businessName, afterClose)}
         businessName={p.businessName}
-        locationName={locationLine}
+        locationName={multiBranch ? null : locationLine}
         dateLabel={p.dateLabel}
         onDaySummary={() => setSummaryOpen(true)}
       />
 
       <div className="page-body hm-page hm-fit">
         {afterClose && closeTime ? (
-          <button type="button" className="hm-closed" onClick={() => setSummaryOpen(true)}>
+          <button type="button" className="hm-closed hm-desktop" onClick={() => setSummaryOpen(true)}>
             <span className="hm-closed-icon">
               <IconDaySummary />
             </span>
@@ -252,6 +252,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
         <div className="hm-toolbar">
           <Segmented
+            className="hm-desktop"
             label={t.today}
             value={period}
             options={[
@@ -310,10 +311,27 @@ export function OwnerHome(p: OwnerHomeProps) {
               </div>
             ) : null}
           </div>
+          {/* Jira GRW-306 — the Day summary on a phone: an icon beside the branch picker,
+              on the row the period switch used to take. The "Day closed" banner that
+              opened the same sheet is laptop-only now; it cost a phone a whole card of
+              height. From 861px it is the header's button or the card's row. */}
+          <button type="button" className="hm-toolbar-summary" aria-label={t.daySummary} title={t.daySummary} onClick={() => setSummaryOpen(true)}>
+            <IconDaySummary />
+          </button>
         </div>
 
         <div className={`hm-owner-grid ${multiBranch ? 'hm-multi' : ''}`}>
-          <div className="hm-area-hero">{data ? <MoneyHero t={t} data={data} loading={loading} /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
+          <div className="hm-area-hero">{data ? <MoneyHero
+                t={t}
+                data={data}
+                loading={loading}
+                onDaySummary={() => setSummaryOpen(true)}
+                period={period}
+                onPeriod={(v) => {
+                  setPeriod(v);
+                  load(v, branch);
+                }}
+              /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/* The design gives "Needs your attention" to the laptop only; a phone's
               Home is money, shortcuts, branches, clients and the day. */}

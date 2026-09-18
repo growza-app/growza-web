@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { homeCopy } from '../lib/home-copy';
@@ -29,9 +29,9 @@ import {
  * off-canvas drawer instead — same nav, same component, just a different
  * frame (Jira GRW-300, matching how the admin portal's own sidebar doubles
  * as its drawer: "the sidebar already gives a laptop this same nav with no
- * drawer needed"). `MobileChrome` renders the fixed top-left toggle; both it
- * and this component read the same `useMobileNav()` state, since they are
- * siblings under `.shell` rather than one inside the other.
+ * drawer needed"). The toggle is `MenuButton`, drawn inside each screen's own
+ * header row (Jira GRW-306 — it used to float over the screen and cover page
+ * titles); it and this component read the same `useMobileNav()` state.
  *
  * Domain nouns come from ctx.labels (the vertical config) — "Staff" for a
  * salon, "Doctors" for a clinic. Everything else is plain-language UI copy
@@ -70,6 +70,45 @@ export function Sidebar({
   const pathname = usePathname();
   const t = homeCopy(lang ?? 'en', labels);
   const { open, close } = useMobileNav();
+  const drawerRef = useRef<HTMLElement>(null);
+  const wasOpen = useRef(false);
+
+  /**
+   * Jira GRW-306 — the drawer is a real modal while it is open: focus moves in,
+   * Tab stays inside, Escape closes, and focus goes back to the button that
+   * opened it. Closed, it is `visibility: hidden` (see the mobile CSS), so its
+   * links are neither tabbable nor read out from off-screen. On a laptop
+   * `open` is never set and none of this runs.
+   */
+  useEffect(() => {
+    if (open) {
+      drawerRef.current?.querySelector<HTMLElement>('.sidebar-close')?.focus();
+    } else if (wasOpen.current) {
+      document.querySelector<HTMLElement>('.menu-btn')?.focus();
+    }
+    wasOpen.current = open;
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, close]);
+
+  const keepFocusInside = (e: ReactKeyboardEvent<HTMLElement>) => {
+    if (!open || e.key !== 'Tab') return;
+    const nodes = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ?? []);
+    const first = nodes[0];
+    const last = nodes[nodes.length - 1];
+    if (!first || !last) return;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   // Only routes that exist. Calendar is still in the design but has no page
   // yet — listing it here would be a link to a 404.
@@ -102,8 +141,17 @@ export function Sidebar({
     <>
       {/* Jira GRW-300 — the drawer's scrim. Desktop never sets `open` (the
           toggle that would is mobile-only), so this never mounts there. */}
-      {open && <div className="sidebar-backdrop" onClick={close} />}
-      <aside className="sidebar" data-open={open}>
+      {open && <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />}
+      <aside
+        ref={drawerRef}
+        id="site-menu"
+        className="sidebar"
+        data-open={open}
+        role={open ? 'dialog' : undefined}
+        aria-modal={open ? true : undefined}
+        aria-label={open ? 'Menu' : undefined}
+        onKeyDown={keepFocusInside}
+      >
         <div className="brand">
           <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
           <div className="brand-text">
@@ -114,7 +162,7 @@ export function Sidebar({
             <IconClose />
           </button>
         </div>
-        <nav className="nav">
+        <nav className="nav" aria-label="Main">
           {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
               API is what refuses (GRW-156); this is about not wasting their time
               on eight links that 403. */}
@@ -123,6 +171,7 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               className={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'active' : ''}
+              aria-current={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'page' : undefined}
               onClick={close}
             >
               {item.icon}

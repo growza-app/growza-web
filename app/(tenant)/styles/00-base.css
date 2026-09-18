@@ -7,7 +7,10 @@
   --surface: #ffffff;
   --border: #e8eaea;
   --text: #14201b;
-  --muted: #77857f;
+  /* Jira GRW-305 — was #77857f (3.86:1 on white, fails WCAG 1.4.3's 4.5:1).
+     Darkened enough to clear it with margin (5.6:1) while staying the same
+     muted grey-green everywhere this token is already used. */
+  --muted: #5f6a65;
   --accent: #16a34a;
   --accent-soft: #dcf5e6;
   --accent-deep: #15803d;

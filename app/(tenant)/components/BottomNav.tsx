@@ -87,7 +87,7 @@ export function BottomNav({
   };
 
   return (
-    <nav className={`bottom-nav ${centre ? 'has-centre' : ''}`}>
+    <nav className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label="Main">
       {centre ? (
         <>
           {visible.slice(0, half).map(tab)}
