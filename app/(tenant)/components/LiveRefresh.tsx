@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useVisibleInterval } from './useVisibleInterval';
+import { api } from '../lib/api';
+import { useVisibleInterval, type VisibleReason } from './useVisibleInterval';
 
 /**
  * Every page here is `force-dynamic` — fetched fresh on navigation, but never
@@ -42,16 +44,70 @@ export function shouldPoll(pathname: string): boolean {
   return LIVE_ROUTES.includes(pathname);
 }
 
+/** Every this-many ticks, redraw regardless: a minute, for time-driven state no change signal announces. */
+export const FORCE_EVERY_TICKS = 4;
+
+/**
+ * Jira GRW-310 — what a timer tick does.
+ *
+ * It used to `router.refresh()` every time: a full server render, six or seven
+ * API calls, four times a minute, whether or not anything had moved. It now asks
+ * `/api/v1/live-version` first (one query) and redraws only if the answer changed
+ * since the last one. Pure, so the decision can be tested without a browser.
+ *
+ * - `refresh` — redraw now.
+ * - `baseline` — the version to compare the NEXT tick against (null: none yet).
+ *
+ * A forced tick (every `FORCE_EVERY_TICKS`) redraws regardless, which is what keeps
+ * clock-driven state ("running late", "next up") moving even when no row has
+ * changed; it also re-baselines. A failed check (null) redraws nothing and keeps the
+ * old baseline: a rate-limited or offline tab must go quiet, not hammer.
+ */
+export function decideTick(input: { tick: number; version: string | null; baseline: string | null }): { refresh: boolean; baseline: string | null } {
+  const forced = input.tick % FORCE_EVERY_TICKS === 0;
+  if (forced) return { refresh: true, baseline: input.version ?? input.baseline };
+  if (input.version === null) return { refresh: false, baseline: input.baseline };
+  if (input.baseline === null) return { refresh: false, baseline: input.version };
+  return { refresh: input.version !== input.baseline, baseline: input.version };
+}
+
 export function LiveRefresh() {
   const router = useRouter();
   const pathname = usePathname();
   const isLive = shouldPoll(pathname);
+  const tick = useRef(0);
+  const baseline = useRef<string | null>(null);
+  const busy = useRef(false);
+
+  // A different screen is a different page: start its count and its baseline over.
+  useEffect(() => {
+    tick.current = 0;
+    baseline.current = null;
+  }, [pathname]);
 
   // Coming back to the tab refreshes wherever you are: you have been away,
   // and the first thing you look at should be current. That is one refetch
   // on a deliberate action, not a standing timer. The timer itself only runs
   // where the screen is about right now.
-  useVisibleInterval(() => router.refresh(), isLive ? POLL_MS : null);
+  useVisibleInterval(async (reason: VisibleReason) => {
+    if (reason === 'visible') {
+      tick.current = 0;
+      baseline.current = null;
+      router.refresh();
+      return;
+    }
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      tick.current += 1;
+      const version = await api.liveVersion().catch(() => null);
+      const next = decideTick({ tick: tick.current, version, baseline: baseline.current });
+      baseline.current = next.baseline;
+      if (next.refresh) router.refresh();
+    } finally {
+      busy.current = false;
+    }
+  }, isLive ? POLL_MS : null);
 
   return null;
 }
