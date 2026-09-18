@@ -5,7 +5,7 @@ import { formatDate } from '../lib/format';
 import { PageHeader } from '../components/PageHeader';
 import { api, formatTime, type SearchResult } from '../lib/api';
 import { copy } from '../lib/copy';
-import { initials } from '../lib/appointment-display';
+import { initials, statusChip } from '../lib/appointment-display';
 import { bookingRef, dialable } from '../components/BookingSheet';
 import { IconArrowLeft, IconClose, IconPhone, IconSearch } from '../components/icons';
 
@@ -146,7 +146,13 @@ export function SearchClient({ timezone }: { timezone: string }) {
                       {b.providerName ? ` · ${b.providerName}` : ''}
                     </div>
                   </div>
-                  <span className="ref">{bookingRef(b.id)}</span>
+                  {/* Jira GRW-307 — what became of the booking. Without it a cancelled, a
+                      not-yet-marked and a done booking all read as a service the client
+                      had, beside a visit count that only counts the done ones. */}
+                  <div className="res-side">
+                    <span className={`chip ${statusChip(b).cls}`}>{statusChip(b).text}</span>
+                    <span className="ref">{bookingRef(b.id)}</span>
+                  </div>
                 </div>
               ))}
             </div>

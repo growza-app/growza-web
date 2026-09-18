@@ -55,3 +55,12 @@
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* A booking's status above its reference, right-aligned (Jira GRW-307). */
+.res-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}

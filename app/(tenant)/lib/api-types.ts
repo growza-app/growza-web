@@ -481,7 +481,7 @@ export interface SearchResult {
   bookings: Array<{
     id: string;
     startAt: string;
-    status: string;
+    status: AppointmentStatus;
     customerName: string | null;
     customerPhone: string | null;
     serviceName: string;
