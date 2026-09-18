@@ -67,3 +67,18 @@ describe('the search bar row', () => {
     expect(searchCss).toMatch(/\.srch-bar-row \.search-bar input\s*\{[^}]*font-size:\s*16px;/);
   });
 });
+
+describe('the Search screen has no search button in its header', () => {
+  const header = readFileSync(resolve(__dirname, '../components/HeaderControls.tsx'), 'utf8');
+  const pageHeader = readFileSync(resolve(__dirname, '../components/PageHeader.tsx'), 'utf8');
+
+  it('asks the header to leave it out', () => {
+    expect(client).toMatch(/<PageHeader title=\{copy\.search\.title\} hideSearch \/>/);
+  });
+
+  it('and the header honours it, only on request — every other screen keeps its search button', () => {
+    expect(pageHeader).toMatch(/<HeaderControls hideSearch=\{hideSearch\} \/>/);
+    expect(header).toMatch(/\{hideSearch \? null : \(/);
+    expect(header).toMatch(/hideSearch = false/);
+  });
+});
