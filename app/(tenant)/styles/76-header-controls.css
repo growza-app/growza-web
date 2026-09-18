@@ -77,6 +77,9 @@
     border-radius: 50%;
     display: grid;
     place-items: center;
+    /* `.hdr-search-wide` sets `justify-content: flex-start` for the pill; in a grid that
+       parks the one column at the left edge and the icon with it (Jira GRW-309). */
+    justify-content: center;
   }
 
   .hdr-search-wide span {

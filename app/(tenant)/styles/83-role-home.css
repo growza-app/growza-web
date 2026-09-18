@@ -133,6 +133,15 @@
   .hm-head .hdr-search-wide span {
     display: none;
   }
+  /* Its words are hidden here, so the pill collapses with them: it was left 302px wide
+     with only an icon at its left edge (Jira GRW-309). Same circle as everywhere else. */
+  .hm-head .hdr-search-wide {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 860px) {

@@ -131,6 +131,13 @@ describe('Home on a phone', () => {
     expect(owner).toMatch(/className="hm-closed hm-desktop"/);
   });
 
+  it('the collapsed search icon is centred in its circle at every width it collapses', () => {
+    const header = code('../styles/76-header-controls.css');
+    expect(header).toMatch(/@media \(max-width: 860px\)\s*\{[\s\S]*?\.hdr-search-wide\s*\{[^}]*justify-content:\s*center;/);
+    // 861–1180px: words hidden, so the pill collapses with them instead of staying 302px wide.
+    expect(code('../styles/83-role-home.css')).toMatch(/\.hm-head \.hdr-search-wide\s*\{[^}]*width:\s*44px;[^}]*justify-content:\s*center;/);
+  });
+
   it('the branch list closes on a tap anywhere else, and on Escape', () => {
     expect(owner).toMatch(/addEventListener\('pointerdown', onPointer\)/);
     expect(owner).toMatch(/!branchRef\.current\?\.contains\(e\.target as Node\)/);
