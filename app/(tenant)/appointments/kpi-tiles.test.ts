@@ -32,7 +32,7 @@ describe('the tiles filter the list', () => {
 
   it('the counts do not move when a tile is pressed — they count what is in view before the status', () => {
     expect(list).toMatch(/const inView = bookings\.filter\(\(b\) => matchesStaff\(b\) && matchesQuery\(b\)\);/);
-    expect(list).toMatch(/const matching = inView\.filter\(matchesStatus\);/);
+    expect(list).toMatch(/const matching = inView\.filter\(matchesStatus\)\.filter\(/);
     expect(list).toMatch(/const countIn = \(status: string\) => inView\.filter/);
   });
 
@@ -49,7 +49,42 @@ describe('the tiles filter the list', () => {
 
 describe('the "not marked yet" strip is gone', () => {
   it('nothing renders it, and nothing is left of it', () => {
-    expect(list).not.toMatch(/needsAnswer|unmarkedOnly|bk-needs-answer|visitNeedsAnswer/);
+    // The prompt strip, its predicate and its copy. (`unmarkedOnly` is back, but only as the
+    // narrowing Home's card opens with — see the block below — never as a strip on every visit.)
+    expect(list).not.toMatch(/needsAnswer|bk-needs-answer|visitNeedsAnswer/);
     expect(css).not.toMatch(/bk-needs-answer/);
+  });
+});
+
+describe("Home's 'Not marked done' cards open the set they counted (Jira GRW-310)", () => {
+  const read = (rel: string) => readFileSync(path.join(dir, rel), 'utf-8');
+
+  it('both Home cards link with unmarked=1, and Bookings narrows by the same rule Home counts by', () => {
+    expect(read('../components/home/OwnerHome.tsx')).toContain("href: '/appointments?status=confirmed&unmarked=1'");
+    expect(read('../components/home/ReceptionHome.tsx')).toContain("href: '/appointments?status=confirmed&unmarked=1'");
+    expect(list).toMatch(/import \{ countsAsNotMarked \} from '\.\.\/lib\/live-state';/);
+    expect(list).toMatch(/!unmarkedOnly \|\| countsAsNotMarked\(b, now\)/);
+    expect(read('page.tsx')).toMatch(/initialUnmarked=\{params\.unmarked === '1'\}/);
+  });
+
+  it('the narrowing is visible and can be cleared', () => {
+    expect(list).toMatch(/className="bk-unmarked-chip" role="status"/);
+    expect(list).toMatch(/setUnmarkedOnly\(false\)/);
+    expect(list).toMatch(/statusFilter !== '' \|\| unmarkedOnly/);
+  });
+
+  it('there is no clock of its own left running: `now` comes from the server render', () => {
+    expect(list).not.toMatch(/setNow|setInterval/);
+    expect(list).toMatch(/const now = useMemo\(\(\) => new Date\(nowISO\), \[nowISO\]\);/);
+  });
+});
+
+describe('opening a booking from Search', () => {
+  it('latches only once the booking is found, and removes ?open= from the address', () => {
+    const effect = list.slice(list.indexOf('const openedFromSearch'), list.indexOf('const q = query'));
+    expect(effect.indexOf('if (!group) return;')).toBeGreaterThan(-1);
+    expect(effect.indexOf('if (!group) return;')).toBeLessThan(effect.indexOf('openedFromSearch.current = true;'));
+    expect(effect).toMatch(/url\.searchParams\.delete\('open'\)/);
+    expect(effect).toMatch(/window\.history\.replaceState/);
   });
 });

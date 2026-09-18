@@ -27,6 +27,8 @@ export default async function AppointmentsPage({
     customerId?: string;
     /** Jira GRW-307 — an appointment to open on arrival, from Search. */
     open?: string;
+    /** Jira GRW-310 — '1' from Home's "Not marked done" card: narrow to the bookings it counted. */
+    unmarked?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -247,6 +249,7 @@ export default async function AppointmentsPage({
           initialSort={sort}
           initialStaff={staff}
           openAppointmentId={openAppointmentId}
+          initialUnmarked={params.unmarked === '1'}
           viewerIsStaff={me.member?.role === 'staff'}
           canReschedule={me.capabilities.reschedule}
           loadFailed={appointmentsResult.failed}

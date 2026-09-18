@@ -317,6 +317,44 @@
   outline-offset: 2px;
 }
 
+.bk-unmarked-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: 8px 12px;
+  border: 1px solid #f0d9a8;
+  border-radius: var(--radius-sm);
+  background: #fdf8ec;
+  color: #6b5423;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.bk-unmarked-chip svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: #b8860b;
+}
+
+.bk-unmarked-chip span {
+  flex: 1;
+  min-width: 0;
+}
+
+.bk-unmarked-chip button {
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .bk-kpi-icon {
   width: 34px;
   height: 34px;
@@ -1377,7 +1415,9 @@
     border: none;
     outline: none;
     background: transparent;
-    font-size: 14.5px;
+    /* 16px, not 14.5: iOS Safari zooms the page when a field under 16px is focused, and
+       pinch-zoom is allowed now (Jira GRW-306), so nothing else holds that zoom back. */
+    font-size: 16px;
     font-weight: 500;
     color: var(--text);
   }
@@ -1507,10 +1547,15 @@
     display: none;
   }
 
+  /* 16px for the same reason as the search field above. */
   .bk-field input {
-    height: 42px;
+    height: 44px;
     padding: 0 10px;
-    font-size: 13.5px;
+    font-size: 16px;
+  }
+
+  .bk-field select {
+    font-size: 16px;
   }
 }
 
@@ -2031,6 +2076,14 @@
       max(16px, env(safe-area-inset-left));
     align-items: center;
     gap: 12px;
+  }
+
+  /* Jira GRW-306 — the gutter the account-status banner lost with the hamburger's clearance: it
+     was one rule carrying both, and deleting the clearance took the sides and the top with it,
+     leaving the banner flush against the screen edges. Only when there is a banner (`:empty`
+     otherwise), so a page without one does not gain a strip above its header. */
+  .content-banners:not(:empty) {
+    padding: 10px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
   }
 
   .topbar h1 {

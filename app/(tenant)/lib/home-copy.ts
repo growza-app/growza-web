@@ -41,7 +41,6 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
 
   return {
     lang,
-    langToggle: hi ? 'हिं' : 'EN',
     langToggleLabel: S('Change language', 'भाषा बदलें'),
 
     greeting: (part: 'morning' | 'afternoon' | 'evening') =>

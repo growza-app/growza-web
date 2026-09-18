@@ -71,18 +71,33 @@ export function decideTick(input: { tick: number; version: string | null; baseli
   return { refresh: input.version !== input.baseline, baseline: input.version };
 }
 
-export function LiveRefresh() {
+/** A version check that has not answered by then is treated as failed, so it cannot hold the poll shut. */
+const VERSION_TIMEOUT_MS = 8_000;
+
+export function LiveRefresh({ initialVersion = null }: { initialVersion?: string | null }) {
   const router = useRouter();
   const pathname = usePathname();
   const isLive = shouldPoll(pathname);
   const tick = useRef(0);
-  const baseline = useRef<string | null>(null);
+  const baseline = useRef<string | null>(initialVersion);
+  /** Bumped whenever the page has been (or is about to be) redrawn, so a check that was in flight for the old one is dropped. */
+  const generation = useRef(0);
   const busy = useRef(false);
 
-  // A different screen is a different page: start its count and its baseline over.
+  // The version this render was drawn FROM. Every server render brings a fresh one (a full page
+  // load, a tab return, a redraw this component asked for) and it is what the next tick is
+  // compared against — not whatever the first poll happens to return, which would swallow a
+  // change made in the gap between the render and that poll.
+  useEffect(() => {
+    baseline.current = initialVersion;
+    generation.current += 1;
+  }, [initialVersion]);
+
+  // A different screen restarts the count. The baseline stays: at worst it is a version older
+  // than the new page's, which costs one extra redraw, never a missed one.
   useEffect(() => {
     tick.current = 0;
-    baseline.current = null;
+    generation.current += 1;
   }, [pathname]);
 
   // Coming back to the tab refreshes wherever you are: you have been away,
@@ -92,16 +107,20 @@ export function LiveRefresh() {
   useVisibleInterval(async (reason: VisibleReason) => {
     if (reason === 'visible') {
       tick.current = 0;
-      baseline.current = null;
+      generation.current += 1;
       router.refresh();
       return;
     }
     if (busy.current) return;
     busy.current = true;
+    const mine = generation.current;
+    tick.current += 1;
+    const thisTick = tick.current;
     try {
-      tick.current += 1;
-      const version = await api.liveVersion().catch(() => null);
-      const next = decideTick({ tick: tick.current, version, baseline: baseline.current });
+      const version = await api.liveVersion(VERSION_TIMEOUT_MS).catch(() => null);
+      // The page was redrawn or left while this was in flight: the answer is about a page that is gone.
+      if (mine !== generation.current) return;
+      const next = decideTick({ tick: thisTick, version, baseline: baseline.current });
       baseline.current = next.baseline;
       if (next.refresh) router.refresh();
     } finally {

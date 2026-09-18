@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
 import { copy } from '../lib/copy';
+import { countsAsNotMarked } from '../lib/live-state';
 import { clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
@@ -144,6 +145,7 @@ export function BookingsList({
   initialQuery,
   initialStaff,
   initialSort,
+  initialUnmarked,
   openAppointmentId,
   viewerIsStaff,
   earnings,
@@ -204,6 +206,14 @@ export function BookingsList({
    * cancel, move) and combo legs grouped as they are everywhere else.
    */
   openAppointmentId?: string;
+  /**
+   * Jira GRW-310 — arriving from Home's "Not marked done" card, which counts bookings
+   * that ended more than 30 minutes ago and were never marked. The Confirmed tile counts
+   * every confirmed booking, including ones still to come, so the card's link narrows to
+   * exactly the set it counted (`countsAsNotMarked`, the same rule) instead of promising 3
+   * and opening 9. Cleared with the chip above the tiles.
+   */
+  initialUnmarked: boolean;
   /** Jira GRW-216 — null when the owner has not shown this stylist their takings, or the viewer is not one. */
   earnings?: MyEarnings | null;
   /**
@@ -216,7 +226,9 @@ export function BookingsList({
    */
   capacityMin: number | null;
 }) {
-  const [now, setNow] = useState(() => new Date(nowISO));
+  // The server's clock at render. Every redraw (LiveRefresh forces one a minute) brings a fresh
+  // `nowISO`, so nothing here needs a timer of its own.
+  const now = useMemo(() => new Date(nowISO), [nowISO]);
   const [page, setPage] = useState(1);
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
   const [open, setOpen] = useState<BookingGroup | null>(null);
@@ -230,6 +242,7 @@ export function BookingsList({
   // second server-side filter racing this one (the contradiction GRW-47 had
   // to untangle for the staff filter).
   const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [unmarkedOnly, setUnmarkedOnly] = useState(initialUnmarked);
   // Earliest-first by default: on today's schedule that's the running order of
   // the day, which is what the page is for. Latest-first earns its keep on a
   // From/To range, where the most recent day is usually the interesting end.
@@ -238,21 +251,25 @@ export function BookingsList({
   // desktop (GRW-47), a full-width row below the 2x2 grid on mobile (GRW-46).
   const [metric, setMetric] = useState<'busy' | 'staff' | 'service'>('busy');
 
-  useEffect(() => {
-    setNow(new Date());
-    const t = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(t);
-  }, []);
-
   const bookings = groupBookings(appointments);
 
   const openedFromSearch = useRef(false);
   useEffect(() => {
     if (!openAppointmentId || openedFromSearch.current) return;
+    const group = bookings.find((g) => g.appointments.some((a) => a.id === openAppointmentId));
+    // Latched only once it is FOUND: the list can be empty on the first render (a failed
+    // fetch) and fill in on the next redraw, and a flag set before the look would have
+    // shut the sheet out for good.
+    if (!group) return;
     openedFromSearch.current = true;
-    const group = groupBookings(appointments).find((g) => g.appointments.some((a) => a.id === openAppointmentId));
-    if (group) setOpen(group);
-  }, [openAppointmentId, appointments]);
+    setOpen(group);
+    // The link has done its job; leaving `?open=` in the address would reopen the sheet on reload.
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('open')) {
+      url.searchParams.delete('open');
+      window.history.replaceState(null, '', url);
+    }
+  }, [openAppointmentId, bookings]);
 
   // Mobile-only (GRW-46): search + staff chips narrow the SCHEDULE only — the
   // KPI row above and the "at a glance" metric card both stay computed from
@@ -269,12 +286,12 @@ export function BookingsList({
   // What the tiles count: everything that matches the search and the staff chips, before the
   // status is applied (the status is what the tiles choose between; see `statusTile`).
   const inView = bookings.filter((b) => matchesStaff(b) && matchesQuery(b));
-  const matching = inView.filter(matchesStatus);
+  const matching = inView.filter(matchesStatus).filter((b) => !unmarkedOnly || countsAsNotMarked(b, now));
   // groupBookings already returns ascending by start time, so descending is a
   // reverse rather than a second sort — and reversing keeps bookings that
   // share a start instant adjacent, which the slot grouping below depends on.
   const filtered = sort === 'desc' ? [...matching].reverse() : matching;
-  const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '';
+  const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '' || unmarkedOnly;
   const noMatches = filtering && filtered.length === 0;
 
   const staffChipNames = useMemo(() => ['Everyone', ...providers.map((p) => p.displayName)], [providers]);
@@ -539,6 +556,18 @@ export function BookingsList({
         false statement the banner exists to withdraw, only in larger type. A
         number the screen cannot stand behind should not be on screen.
       */}
+      {/* Jira GRW-310 — the way out of Home's "not marked" narrowing, which the Status dropdown
+          cannot show. Only present when a person arrived that way. */}
+      {unmarkedOnly && (
+        <div className="bk-unmarked-chip" role="status">
+          <IconClock />
+          <span>{copy.bookings.unmarkedOnly(filtered.length)}</span>
+          <button type="button" onClick={() => { setUnmarkedOnly(false); setPage(1); }}>
+            {copy.bookings.unmarkedClear}
+          </button>
+        </div>
+      )}
+
       {!loadFailed && (
       <div className="bk-kpis">
         <Kpi

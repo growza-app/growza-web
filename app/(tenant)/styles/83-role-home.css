@@ -113,8 +113,9 @@
   height: 18px;
 }
 /* Jira GRW-306 — below 1181px the header has no room for the label (at 861px it
-   was 3px wider than the page), and an icon on its own read as a mystery clock,
-   so the button moves into the money card, where it is a labelled row. */
+   was 3px wider than the page), and an icon on its own read as a mystery clock, so
+   from 861px the button is a labelled row in the money card (`.hm-hero-summary`);
+   on a phone it is the icon beside the branch picker (`.hm-toolbar-summary`). */
 @media (max-width: 1180px) {
   .hm-summary-btn {
     display: none;

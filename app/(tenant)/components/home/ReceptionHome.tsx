@@ -81,7 +81,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
   }, [hereNow, now]);
 
   const attention = [
-    { key: 'unmarked', count: groups.filter((g) => countsAsNotMarked(g, now)).length, label: t.notMarkedDone, tone: 'amber', href: '/appointments?status=confirmed', icon: <IconClock /> },
+    { key: 'unmarked', count: groups.filter((g) => countsAsNotMarked(g, now)).length, label: t.notMarkedDone, tone: 'amber', href: '/appointments?status=confirmed&unmarked=1', icon: <IconClock /> },
     { key: 'waiting', count: queue.filter((q) => minutesBetween(q.addedAt, now) >= 10).length, label: t.waitingOver10, tone: 'rose', href: '#hm-queue', icon: <IconMenu /> },
     { key: 'cancelled', count: groups.filter((g) => g.status === 'cancelled').length, label: t.cancelledTodayShort, tone: 'violet', href: '/appointments?status=cancelled', icon: <IconBan /> },
   ];

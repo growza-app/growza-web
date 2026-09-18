@@ -396,6 +396,9 @@ export const copy = {
     // column header for this same field.
     statusLabel: 'Status',
     allStatuses: 'All bookings',
+    /** Jira GRW-310 — Home's "Not marked done" card, opened. */
+    unmarkedOnly: (n: number) => `Showing ${n} finished and not marked`,
+    unmarkedClear: 'Show all',
     /*
      * Jira GRW-216 — "your", every time. On a revenue share this is the
      * stylist's pay, and the words have to make unmistakable that it is their

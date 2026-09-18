@@ -211,7 +211,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           label: t.notMarkedDone,
           sub: t.fromToday,
           tone: 'amber' as const,
-          href: '/appointments?status=confirmed',
+          href: '/appointments?status=confirmed&unmarked=1',
           icon: <IconClock />,
         },
         {

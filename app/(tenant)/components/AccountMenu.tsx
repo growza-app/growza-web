@@ -73,9 +73,15 @@ export function AccountMenu() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // Focus follows what the dialog is showing. It used to move only when the menu opened, so
+  // pressing "Change password" (which unmounts the focused button), Cancel, a finished save, or
+  // a save disabling the inputs all dropped it onto <body> — outside the Tab trap, behind an
+  // aria-modal dialog. The form's first field when there is a form; the dialog otherwise.
   useEffect(() => {
-    if (open) dialogRef.current?.focus();
-  }, [open]);
+    if (!open || busy) return;
+    if (changing && !done) document.getElementById('acct-current')?.focus();
+    else dialogRef.current?.focus();
+  }, [open, changing, done, busy]);
 
   const close = () => {
     setOpen(false);

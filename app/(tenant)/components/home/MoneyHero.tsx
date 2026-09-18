@@ -185,9 +185,8 @@ export function MoneyHero({
         <PaymentBar t={t} slices={money.byPaymentMode} total={money.revenueMinor} variant="tiles" />
       </div>
 
-      {/* Jira GRW-306 — the Day summary, in words. It was a bare clock icon in the
-          phone header; the header button keeps its label only from 1181px, so
-          below that this row is where it lives. */}
+      {/* Jira GRW-306 — the Day summary, in words, for 861–1180px. From 1181px the header
+          button has room for its label; on a phone it is the icon beside the branch picker. */}
       {onDaySummary ? (
         <button type="button" className="hm-hero-summary" onClick={onDaySummary}>
           <IconDaySummary />

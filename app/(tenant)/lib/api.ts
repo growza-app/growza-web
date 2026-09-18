@@ -147,8 +147,8 @@ export class ApiError extends Error {
 /** Jira GRW-230 — `?location=` for a branch's settings, nothing for the business's. */
 const atBranch = (location?: string | null) => (location ? `?location=${encodeURIComponent(location)}` : '');
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders(), signal });
   if (!res.ok) throw await apiError(res, path);
   return res.json() as Promise<T>;
 }
@@ -425,8 +425,9 @@ export const api = {
   // todayStats which runs server-side during SSR and never hits that filter).
   rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
   notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
-  /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. */
-  liveVersion: () => get<{ version: string }>('/api/v1/live-version').then((r) => r.version),
+  /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. A timeout in the browser, so a stalled request cannot hold the poll shut. */
+  liveVersion: (timeoutMs?: number) =>
+    get<{ version: string }>('/api/v1/live-version', timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined).then((r) => r.version),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
   createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),

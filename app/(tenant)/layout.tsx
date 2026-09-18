@@ -145,10 +145,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let locationName: string | null = null;
   let branchCount = 1;
   let branches: Array<{ id: string; name: string }> = [];
+  /** Jira GRW-310 — what LiveRefresh treats as "unchanged" until it sees a different one. */
+  let liveVersionAtRender: string | null = null;
   const lang = await serverLang();
 
   try {
-    const me = await api.me();
+    // Jira GRW-310 — read alongside `/me`, before the page's own data, so LiveRefresh compares
+    // against the version this render was drawn from. A change landing after this read shows up
+    // as a difference on the next tick; one landing before it is already on the page.
+    const [me, version] = await Promise.all([api.me(), api.liveVersion().catch(() => null)]);
+    liveVersionAtRender = version;
     labels = me.labels;
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
@@ -209,7 +215,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <BrowserGate />
         <InstallPromptCapture />
         <PwaRegister />
-        <LiveRefresh />
+        <LiveRefresh initialVersion={liveVersionAtRender} />
         <SessionRefresh />
         {/* Above the shell, not inside it: this is the most important thing on
             the screen and it must not scroll away with the content or sit

@@ -1101,12 +1101,11 @@ export function NewVisitSheet({
             </div>
 
             {term.trim().length >= 2 ? (
-              <div className="picker-results" role="list">
+              <div className="picker-results">
                 {results.map((c) => (
                   <button
                     key={c.id}
                     type="button"
-                    role="listitem"
                     className="picker-row wi-row"
                     onClick={() =>
                       setStage({ step: 'details', client: { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone } })
@@ -1129,12 +1128,11 @@ export function NewVisitSheet({
                */
               <>
                 <h2 className="wi-section-label">{copy.newVisit.recentCustomers}</h2>
-                <div className="picker-results" role="list">
+                <div className="picker-results">
                   {(recent ?? []).map((c) => (
                     <button
                       key={c.id}
                       type="button"
-                      role="listitem"
                       className="picker-row wi-row"
                       onClick={() =>
                         setStage({ step: 'details', client: { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone } })
@@ -1173,7 +1171,7 @@ export function NewVisitSheet({
 
         {/* ---------- Stage 1b: add them ---------- */}
         {stage.step === 'newClient' && (
-          <div className="wi-body">
+          <div className="wi-body" id="wi-client-panel">
             <div className="field">
               <label htmlFor="wi-name">{copy.newVisit.nameRequired}</label>
               <input
@@ -1405,12 +1403,11 @@ export function NewVisitSheet({
                 disabled={busy || linesLocked}
               />
             </div>
-            <div className="picker-results wi-service-results" role="list">
+            <div className="picker-results wi-service-results">
               {matchingCombos.map((o) => (
                 <button
                   key={`combo-${o.id}`}
                   type="button"
-                  role="listitem"
                   className="picker-row wi-row"
                   onClick={() => applyCombo(o)}
                   disabled={busy || linesLocked}
@@ -1427,7 +1424,6 @@ export function NewVisitSheet({
                 <button
                   key={s.id}
                   type="button"
-                  role="listitem"
                   className="picker-row wi-row"
                   onClick={() => addService(s)}
                   disabled={busy || linesLocked}
@@ -1510,7 +1506,7 @@ export function NewVisitSheet({
               rather than in a banner afterwards. Only for a walk-in — "later"
               is about a day that has not happened.
             */}
-            <div className="wi-chair-list" role="radiogroup" aria-label={copy.newVisit.withWhom(providerNoun.toLowerCase())}>
+            <div className="wi-chair-list" role="group" aria-label={copy.newVisit.withWhom(providerNoun.toLowerCase())}>
               {/*
                 Jira GRW-293 (epic GRW-283) — "No stylist", Record payment
                 only. `noStylist` and `schedulableId === null` used to mean
@@ -1522,8 +1518,7 @@ export function NewVisitSheet({
               {forPayment && (
                 <button
                   type="button"
-                  role="radio"
-                  aria-checked={noStylist}
+                  aria-pressed={noStylist}
                   className={`wi-chair ${noStylist ? 'wi-chair-on' : ''}`}
                   onClick={() => {
                     setSchedulableId(null);
@@ -1538,8 +1533,7 @@ export function NewVisitSheet({
 
               <button
                 type="button"
-                role="radio"
-                aria-checked={schedulableId === null && !noStylist}
+                aria-pressed={schedulableId === null && !noStylist}
                 className={`wi-chair ${schedulableId === null && !noStylist ? 'wi-chair-on' : ''}`}
                 onClick={() => {
                   setSchedulableId(null);
@@ -1561,8 +1555,7 @@ export function NewVisitSheet({
                   <div key={p.id} className="wi-chair-wrap">
                     <button
                       type="button"
-                      role="radio"
-                      aria-checked={picked}
+                      aria-pressed={picked}
                       className={`wi-chair ${picked ? 'wi-chair-on' : ''}`}
                       onClick={() => {
                         setSchedulableId(p.id);
@@ -1681,13 +1674,12 @@ export function NewVisitSheet({
           <div className="wi-body">
             {slotError && <div className="wi-error">{slotError}</div>}
             <h2 className="wi-section-label">{copy.newVisit.whichDay}</h2>
-            <div className="wi-chips" role="radiogroup" aria-label={copy.newVisit.whichDay}>
+            <div className="wi-chips" role="group" aria-label={copy.newVisit.whichDay}>
               {days.map((d) => (
                 <button
                   key={d.iso}
                   type="button"
-                  role="radio"
-                  aria-checked={day === d.iso}
+                  aria-pressed={day === d.iso}
                   className={`wi-chip ${day === d.iso ? 'wi-chip-on' : ''}`}
                   onClick={() => setDay(d.iso)}
                 >
@@ -1711,14 +1703,13 @@ export function NewVisitSheet({
                * columns that do not line up. Equal columns are easier to scan
                * and the whole point of this screen is scanning.
                */
-              <div className="wi-slot-grid" role="radiogroup" aria-label={copy.newVisit.whichTime}>
+              <div className="wi-slot-grid" role="group" aria-label={copy.newVisit.whichTime}>
                 {slots.sections.flatMap((sec) =>
                   sec.slots.map((slot) => (
                     <button
                       key={slot.utc}
                       type="button"
-                      role="radio"
-                      aria-checked={slotUtc === slot.utc}
+                      aria-pressed={slotUtc === slot.utc}
                       className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
                       onClick={() => setSlotUtc(slot.utc)}
                     >

@@ -486,6 +486,8 @@ export interface SearchResult {
     customerPhone: string | null;
     serviceName: string;
     providerName: string | null;
+    createdVia: 'whatsapp' | 'dashboard';
+    reminderSent: boolean;
   }>;
 }
 

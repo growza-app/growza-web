@@ -105,7 +105,7 @@ export function HomeHeader({
         {onDaySummary ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>
             <IconDaySummary />
-            <span className="hm-desktop-inline">{t.daySummary}</span>
+            <span>{t.daySummary}</span>
           </button>
         ) : null}
         <span className="hm-date-chip hm-desktop">{dateLabel}</span>

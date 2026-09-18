@@ -52,7 +52,7 @@ describe('which screens poll', () => {
 describe('what a tick does', () => {
   const tick = (n: number, version: string | null, baseline: string | null) => decideTick({ tick: n, version, baseline });
 
-  it('the first answer is only remembered — the page was just drawn', () => {
+  it('with no version from the render, the first answer is only remembered', () => {
     expect(tick(1, 'a', null)).toEqual({ refresh: false, baseline: 'a' });
   });
 
@@ -110,5 +110,38 @@ describe('the other two background costs', () => {
   it('a return to the tab redraws unconditionally, and is told apart from a tick', () => {
     expect(read('useVisibleInterval.ts')).toMatch(/callbackRef\.current\('visible'\)/);
     expect(read('LiveRefresh.tsx')).toMatch(/if \(reason === 'visible'\) \{[\s\S]*?router\.refresh\(\);/);
+  });
+});
+
+describe('what a tick compares against, and how it can go wrong', () => {
+  const read = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
+  const live = read('LiveRefresh.tsx');
+
+  it('the baseline is the version the page was DRAWN from, not whatever the first poll returns', () => {
+    // A change landing between the render and the first poll used to be baselined away and
+    // shown only at the forced tick a minute later.
+    expect(read('../layout.tsx')).toMatch(/Promise\.all\(\[api\.me\(\), api\.liveVersion\(\)\.catch\(\(\) => null\)\]\)/);
+    expect(read('../layout.tsx')).toMatch(/<LiveRefresh initialVersion=\{liveVersionAtRender\} \/>/);
+    expect(live).toMatch(/useRef<string \| null>\(initialVersion\)/);
+    expect(live).toMatch(/baseline\.current = initialVersion;/);
+  });
+
+  it('a tab return or a route change does not throw the baseline away', () => {
+    const visible = live.slice(live.indexOf("if (reason === 'visible')"), live.indexOf('if (busy.current) return;'));
+    expect(visible).not.toMatch(/baseline\.current = null/);
+    const pathnameEffect = live.slice(live.indexOf('[pathname]') - 160, live.indexOf('[pathname]'));
+    expect(pathnameEffect).not.toMatch(/baseline\.current = null/);
+  });
+
+  it('a stalled check cannot hold the poll shut: the request times out', () => {
+    expect(live).toMatch(/api\.liveVersion\(VERSION_TIMEOUT_MS\)/);
+    expect(read('../lib/api.ts')).toMatch(/AbortSignal\.timeout\(timeoutMs\)/);
+    expect(read('../lib/api.ts')).toMatch(/fetch\(`\$\{API_URL\}\$\{path\}`, \{ cache: 'no-store', headers: await authHeaders\(\), signal \}\)/);
+  });
+
+  it('an answer that arrives after a redraw or a navigation is dropped, and the tick number is read before the await', () => {
+    expect(live).toMatch(/const thisTick = tick\.current;/);
+    expect(live).toMatch(/if \(mine !== generation\.current\) return;/);
+    expect(live).toMatch(/decideTick\(\{ tick: thisTick,/);
   });
 });

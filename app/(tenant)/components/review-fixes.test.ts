@@ -1,0 +1,61 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+/**
+ * Jira GRW-305 · GRW-306 — fixes from the review of the tenant UX pass.
+ *
+ * Source-text checks, like the rest of this folder: the pieces below are ARIA
+ * attributes and CSS sizes, and a browser test would only read the same strings.
+ */
+const read = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
+const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+describe('the walk-in sheet says only what its controls do', () => {
+  const sheet = code('NewVisitSheet.tsx');
+
+  it('no button is turned into a list item, and no list has non-item children', () => {
+    expect(sheet).not.toMatch(/role="listitem"/);
+    expect(sheet).not.toMatch(/role="list"/);
+  });
+
+  it('chairs, days and times are labelled groups of toggle buttons, not a radiogroup with no arrow keys', () => {
+    for (const label of ['copy.newVisit.withWhom(providerNoun.toLowerCase())', 'copy.newVisit.whichDay', 'copy.newVisit.whichTime']) {
+      expect(sheet).toContain(`role="group" aria-label={${label}}`);
+    }
+    expect(sheet).toMatch(/aria-pressed=\{noStylist\}/);
+    expect(sheet).toMatch(/aria-pressed=\{day === d\.iso\}/);
+    expect(sheet).toMatch(/aria-pressed=\{slotUtc === slot\.utc\}/);
+  });
+
+  it('both tabs point at a panel that exists in both stages', () => {
+    expect(sheet.match(/id="wi-client-panel"/g)).toHaveLength(2);
+  });
+});
+
+describe('the account menu keeps focus inside as it changes', () => {
+  const menu = code('AccountMenu.tsx');
+
+  it('focus follows the form, and comes back to the dialog when it closes', () => {
+    expect(menu).toMatch(/if \(!open \|\| busy\) return;/);
+    expect(menu).toMatch(/if \(changing && !done\) document\.getElementById\('acct-current'\)\?\.focus\(\);/);
+    expect(menu).toMatch(/\[open, changing, done, busy\]/);
+  });
+});
+
+describe('a phone does not zoom when these fields are focused (pinch-zoom is allowed now)', () => {
+  const css = (p: string) => read(`../styles/${p}`);
+
+  it('the Bookings search and filter fields and the checkout amount are 16px', () => {
+    expect(css('32-customers.css')).toMatch(/\.bk-search-row input \{[^}]*font-size: 16px;/);
+    expect(css('32-customers.css')).toMatch(/\.bk-field input \{[^}]*font-size: 16px;/);
+    expect(css('32-customers.css')).toMatch(/\.bk-field select \{\s*font-size: 16px;/);
+    expect(css('14-checkout-sheet.css')).toMatch(/\.checkout-amount-field input \{[^}]*font-size: 16px;/);
+  });
+});
+
+describe('a phone keeps the account banner off the screen edges', () => {
+  it('only when there is a banner', () => {
+    expect(read('../styles/32-customers.css')).toMatch(/\.content-banners:not\(:empty\) \{\s*padding: 10px max\(16px, env\(safe-area-inset-right\)\) 0 max\(16px, env\(safe-area-inset-left\)\);/);
+  });
+});
