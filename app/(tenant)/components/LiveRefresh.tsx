@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useVisibleInterval } from './useVisibleInterval';
 
 /**
  * Every page here is `force-dynamic` — fetched fresh on navigation, but never
@@ -47,24 +47,11 @@ export function LiveRefresh() {
   const pathname = usePathname();
   const isLive = shouldPoll(pathname);
 
-  useEffect(() => {
-    const refreshIfVisible = () => {
-      if (document.visibilityState === 'visible') router.refresh();
-    };
-
-    // Coming back to the tab refreshes wherever you are: you have been away,
-    // and the first thing you look at should be current. That is one refetch
-    // on a deliberate action, not a standing timer.
-    document.addEventListener('visibilitychange', refreshIfVisible);
-
-    // The timer, though, only runs where the screen is about right now.
-    const id = isLive ? setInterval(refreshIfVisible, POLL_MS) : undefined;
-
-    return () => {
-      if (id) clearInterval(id);
-      document.removeEventListener('visibilitychange', refreshIfVisible);
-    };
-  }, [router, isLive]);
+  // Coming back to the tab refreshes wherever you are: you have been away,
+  // and the first thing you look at should be current. That is one refetch
+  // on a deliberate action, not a standing timer. The timer itself only runs
+  // where the screen is about right now.
+  useVisibleInterval(() => router.refresh(), isLive ? POLL_MS : null);
 
   return null;
 }

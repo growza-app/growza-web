@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useVisibleInterval } from './useVisibleInterval';
 
 /**
  * Jira GRW-304 — keeps an actively-used dashboard tab signed in.
@@ -19,22 +19,9 @@ import { useEffect } from 'react';
 const REFRESH_INTERVAL_MS = 15 * 60_000;
 
 export function SessionRefresh() {
-  useEffect(() => {
-    const tick = () => {
-      if (document.visibilityState !== 'visible') return;
-      void fetch('/api/v1/auth/refresh', { method: 'POST' });
-    };
-
-    // Catches up a tab that was backgrounded past an interval tick — the
-    // same reasoning LiveRefresh applies to refetching data on refocus.
-    document.addEventListener('visibilitychange', tick);
-    const id = setInterval(tick, REFRESH_INTERVAL_MS);
-
-    return () => {
-      clearInterval(id);
-      document.removeEventListener('visibilitychange', tick);
-    };
-  }, []);
+  useVisibleInterval(() => {
+    void fetch('/api/v1/auth/refresh', { method: 'POST' });
+  }, REFRESH_INTERVAL_MS);
 
   return null;
 }
