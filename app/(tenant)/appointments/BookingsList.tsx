@@ -2,7 +2,6 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
-import { visitNeedsAnswer } from '../lib/appointment-display';
 import { copy } from '../lib/copy';
 import { clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
@@ -76,6 +75,8 @@ function Kpi({
   label,
   sub,
   className,
+  active,
+  onPress,
 }: {
   tone: string;
   icon: ReactNode;
@@ -84,20 +85,39 @@ function Kpi({
   sub: string;
   /** e.g. "desktop-only" — the Revenue tile hides on mobile in favour of the "at a glance" metric card (GRW-46). */
   className?: string;
+  /**
+   * Jira GRW-308 — a tile that filters the list. `active` is whether it is the
+   * filter in force; `onPress` toggles it. Absent, the tile is a plain figure.
+   */
+  active?: boolean;
+  onPress?: () => void;
 }) {
-  return (
-    // The "Today" / "Next 2 hrs" sub-line is dropped at narrower widths
-    // (there is no room for it in a quarter-width tile), which leaves the
-    // counts with nothing saying WHICH day they cover. The tooltip carries
-    // that on hover, and aria-label gives a screen reader the same sentence
-    // rather than three unlabelled numbers in a row.
-    <div className={`bk-kpi ${className ?? ''}`} title={`${label} — ${sub}`} aria-label={`${value} ${label}, ${sub}`}>
+  const body = (
+    <>
       <span className={`bk-kpi-icon bk-kpi-${tone}`}>{icon}</span>
       <div className="bk-kpi-text">
         <div className="bk-kpi-value">{value}</div>
         <div className="bk-kpi-label">{label}</div>
         <div className={`bk-kpi-sub bk-kpi-sub-${tone}`}>{sub}</div>
       </div>
+    </>
+  );
+  // The "Today" / "Next 2 hrs" sub-line is dropped at narrower widths
+  // (there is no room for it in a quarter-width tile), which leaves the
+  // counts with nothing saying WHICH day they cover. The tooltip carries
+  // that on hover, and aria-label gives a screen reader the same sentence
+  // rather than three unlabelled numbers in a row.
+  const name = `${value} ${label}, ${sub}`;
+  if (onPress) {
+    return (
+      <button type="button" className={`bk-kpi bk-kpi-btn ${active ? 'is-active' : ''} ${className ?? ''}`} title={`${label} — ${sub}`} aria-label={name} aria-pressed={active} onClick={onPress}>
+        {body}
+      </button>
+    );
+  }
+  return (
+    <div className={`bk-kpi ${className ?? ''}`} title={`${label} — ${sub}`} aria-label={name}>
+      {body}
     </div>
   );
 }
@@ -210,16 +230,6 @@ export function BookingsList({
   // second server-side filter racing this one (the contradiction GRW-47 had
   // to untangle for the staff filter).
   const [statusFilter, setStatusFilter] = useState(initialStatus);
-  /*
-   * Jira GRW-214 — its own filter, not a reuse of `status=confirmed`.
-   *
-   * The first version borrowed that status, and the strip then promised seven
-   * and delivered nine: `confirmed` also matches bookings that have not
-   * finished, so the worklist included two the receptionist could not act on.
-   * A prompt whose count does not match what it opens teaches people to
-   * distrust the count.
-   */
-  const [unmarkedOnly, setUnmarkedOnly] = useState(false);
   // Earliest-first by default: on today's schedule that's the running order of
   // the day, which is what the page is for. Latest-first earns its keep on a
   // From/To range, where the most recent day is usually the interesting end.
@@ -256,77 +266,47 @@ export function BookingsList({
     );
   const matchesStaff = (b: BookingGroup) => staffFilter === 'Everyone' || b.providerNames.includes(staffFilter);
   const matchesStatus = (b: BookingGroup) => !statusFilter || b.status === statusFilter;
-  /**
-   * Identical to `needsAnswer` below, deliberately — one predicate, two uses.
-   *
-   * ## Every leg, not the group's status — Jira GRW-217
-   *
-   * `groupStatus` returns `confirmed` when ANY leg is confirmed, and checkout
-   * deliberately settles only ONE leg of a multi-service visit: it puts the
-   * whole payment on that leg and leaves the others `confirmed`, which is what
-   * keeps revenue from double-counting (a second `completed` leg would add its
-   * own booked price on top of the amount actually taken).
-   *
-   * So a cut-and-facial checked out for ₹1,100 read as unsettled, and this
-   * strip told the receptionist to go and mark a visit they had just been paid
-   * for. Worse for the stylist: chasing a booking that was already settled is
-   * exactly what teaches them to stop trusting the prompt, and their trust in
-   * it is the whole control (GRW-214).
-   *
-   * `every` rather than `some`: a visit needs an answer only when NOTHING has
-   * been settled about it. One settled leg means somebody dealt with the
-   * sitting.
-   */
-  const isUnmarked = (b: BookingGroup) => visitNeedsAnswer(b, now);
-  const matchesUnmarked = (b: BookingGroup) => !unmarkedOnly || isUnmarked(b);
-  const matching = bookings.filter((b) => matchesStaff(b) && matchesQuery(b) && matchesStatus(b) && matchesUnmarked(b));
+  // What the tiles count: everything that matches the search and the staff chips, before the
+  // status is applied (the status is what the tiles choose between; see `statusTile`).
+  const inView = bookings.filter((b) => matchesStaff(b) && matchesQuery(b));
+  const matching = inView.filter(matchesStatus);
   // groupBookings already returns ascending by start time, so descending is a
   // reverse rather than a second sort — and reversing keeps bookings that
   // share a start instant adjacent, which the slot grouping below depends on.
   const filtered = sort === 'desc' ? [...matching].reverse() : matching;
-  const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '' || unmarkedOnly;
+  const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '';
   const noMatches = filtering && filtered.length === 0;
 
   const staffChipNames = useMemo(() => ['Everyone', ...providers.map((p) => p.displayName)], [providers]);
 
-  const within2h = (iso: string) => {
-    const t = new Date(iso).getTime();
-    return t >= now.getTime() && t <= now.getTime() + 2 * 60 * 60 * 1000;
-  };
-  // Counted over `filtered`, i.e. exactly what the list below is showing —
-  // NOT the whole day. These tiles are labelled with the same statuses the
-  // Status filter offers, so leaving them on day totals meant picking
-  // "Didn't come" and still being shown "27 Completed" directly above four
-  // no-shows: the headline contradicted the list it was heading. It also
-  // makes the staff filter read properly ("Priya: 7 bookings, 5 completed").
-  // The metric card below deliberately stays whole-day — its labels all say
-  // "today", so it reads as a day fact rather than a description of the list.
-  const completed = filtered.filter((b) => b.status === 'completed');
-  const confirmed = filtered.filter((b) => b.status === 'confirmed');
-  // "Next 2 hrs" only means something against the real clock, i.e. on today's
-  // schedule. Looking at a past/future day, show the day's total confirmed
-  // count instead — "next 2 hours" would silently read 0 for every other day.
-  const comingUp = isToday ? confirmed.filter((b) => within2h(b.startAt)).length : confirmed.length;
-  const noShow = filtered.filter((b) => b.status === 'no_show').length;
 
-  /**
-   * Jira GRW-214 — the bookings whose time has passed and which nobody has
-   * said anything about.
+  /*
+   * Jira GRW-308 — the tiles are the status filter, so they count what is in view BEFORE it.
    *
-   * `endAt`, not `startAt`: a booking still running is not overdue, which is
-   * the same distinction Home's own attention card had to learn.
+   * They used to count `filtered`, exactly what the list showed. That was right for tiles that
+   * only reported: picking "Didn't come" and still seeing "27 Completed" above four no-shows
+   * contradicted the list. But a tile you can press has to keep its count when another is
+   * pressed, or a person who chose "Completed" could never see how many "Confirmed" were left
+   * to switch to. The contradiction is gone the other way round: the pressed tile is highlighted
+   * and its number is the length of the list under it; the rest are the other answers to
+   * "what if I chose that one". Search and staff still narrow all four, so "Priya: 7 bookings,
+   * 5 completed" still reads properly.
    *
-   * This is the number that decides whether the day's data is true. Seven of
-   * this salon's twelve past bookings sat in `confirmed` forever — served,
-   * almost certainly, and recorded as neither done nor missed. Every rule for
-   * counting visits breaks on that, because no counting rule can recover what
-   * was never written down.
+   * Confirmed is every confirmed booking in view. On today's schedule it used to be only those
+   * starting in the next two hours, which a press could not deliver: the tile said 3 and the
+   * list showed 7.
    *
-   * It is deliberately computed from the SAME `filtered` list the rows below
-   * render, so it can never disagree with what tapping it shows — the failure
-   * Home's card had when it derived a count by subtraction instead.
+   * The metric card below deliberately stays whole-day — its labels all say "today", so it
+   * reads as a day fact rather than a description of the list.
    */
-  const needsAnswer = bookings.filter((b) => matchesStaff(b) && matchesQuery(b) && isUnmarked(b));
+  const countIn = (status: string) => inView.filter((b) => b.status === status).length;
+  const statusTile = (status: string) => ({
+    active: statusFilter === status,
+    onPress: () => {
+      setStatusFilter(statusFilter === status ? '' : status);
+      setPage(1);
+    },
+  });
 
   /**
    * Mobile-only (GRW-46) "at a glance" card: booked minutes over rostered
@@ -554,50 +534,6 @@ export function BookingsList({
       )}
 
       {/*
-        * Jira GRW-214 — one strip, two audiences, no new permission.
-        *
-        * A receptionist sees a worklist to clear before locking up. A stylist
-        * sees the same count read-only and knows to ask why the haircut they
-        * did is not marked — which is the only control here that does not
-        * depend on the person entering the data being careful. The person who
-        * did the work is the one who notices it missing.
-        *
-        * Not a fifth KPI: that grid is a designed 2x2-plus-one (GRW-46/47) and
-        * a sixth card reflows it at every breakpoint. This is also not a
-        * statistic — it is a thing to do — so a strip reads truer than a tile.
-        */}
-      {/*
-        * The way back out.
-        *
-        * `unmarkedOnly` is not one of the status dropdown's values, so while it
-        * is on the dropdown still reads "All bookings" and the list is filtered
-        * by something invisible. A filter a person cannot see is a filter they
-        * cannot undo — worse than the count mismatch this whole control was
-        * corrected for.
-        */}
-      {unmarkedOnly && (
-        <div className="bk-needs-answer bk-needs-answer-active">
-          <IconClock />
-          <span className="bk-needs-answer-text">{copy.bookings.needsAnswerActive(filtered.length)}</span>
-          <button type="button" className="bk-needs-answer-btn" onClick={() => { setUnmarkedOnly(false); setPage(1); }}>
-            {copy.bookings.needsAnswerClear}
-          </button>
-        </div>
-      )}
-
-      {needsAnswer.length > 0 && !unmarkedOnly && (
-        <div className="bk-needs-answer">
-          <IconClock />
-          <span className="bk-needs-answer-text">
-            {copy.bookings.needsAnswer(needsAnswer.length, viewerIsStaff)}
-          </span>
-          <button type="button" className="bk-needs-answer-btn" onClick={() => { setUnmarkedOnly(true); setStatusFilter(''); setPage(1); }}>
-            {copy.bookings.needsAnswerAction}
-          </button>
-        </div>
-      )}
-
-      {/*
         Jira GRW-220 — no figures at all when the list could not be fetched.
         Four zeros sitting above a banner that says "could not load" is the same
         false statement the banner exists to withdraw, only in larger type. A
@@ -605,16 +541,21 @@ export function BookingsList({
       */}
       {!loadFailed && (
       <div className="bk-kpis">
-        <Kpi tone="green" icon={<IconCalendar />} value={filtered.length} label="Bookings" sub={isToday ? 'Today' : dayLabel} />
         <Kpi
-          tone="amber"
-          icon={<IconClock />}
-          value={comingUp}
-          label={copy.status.confirmed}
-          sub={isToday ? 'Next 2 hrs' : dayLabel}
+          tone="green"
+          icon={<IconCalendar />}
+          value={inView.length}
+          label="Bookings"
+          sub={isToday ? 'Today' : dayLabel}
+          active={statusFilter === ''}
+          onPress={() => {
+            setStatusFilter('');
+            setPage(1);
+          }}
         />
-        <Kpi tone="purple" icon={<IconCheck />} value={completed.length} label={copy.status.done} sub={isToday ? 'Today' : dayLabel} />
-        <Kpi tone="red" icon={<IconUserPlus />} value={noShow} label={copy.status.didNotCome} sub={isToday ? 'Today' : dayLabel} />
+        <Kpi tone="amber" icon={<IconClock />} value={countIn('confirmed')} label={copy.status.confirmed} sub={isToday ? 'Today' : dayLabel} {...statusTile('confirmed')} />
+        <Kpi tone="purple" icon={<IconCheck />} value={countIn('completed')} label={copy.status.done} sub={isToday ? 'Today' : dayLabel} {...statusTile('completed')} />
+        <Kpi tone="red" icon={<IconUserPlus />} value={countIn('no_show')} label={copy.status.didNotCome} sub={isToday ? 'Today' : dayLabel} {...statusTile('no_show')} />
 
         {/* "At a glance" — the KPI row's 5th column on desktop (Bookings.dc.html,
             GRW-47), and its own full-width row below the 2x2 grid on mobile

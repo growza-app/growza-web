@@ -397,20 +397,6 @@ export const copy = {
     statusLabel: 'Status',
     allStatuses: 'All bookings',
     /*
-     * Jira GRW-214 — the same fact, worded for who is reading it.
-     *
-     * The receptionist has something to do; the stylist has something to ask
-     * about. One sentence for both would have to be vague enough to fit
-     * neither — and the plainer word wins here, so it is "not marked" rather
-     * than "unsettled" or "pending outcome".
-     */
-    needsAnswer: (n: number, viewerIsStaff: boolean) =>
-      viewerIsStaff
-        ? `${n} of your ${n === 1 ? 'bookings has' : 'bookings have'} finished and ${n === 1 ? 'is' : 'are'} not marked`
-        : `${n} ${n === 1 ? 'booking has' : 'bookings have'} finished and ${n === 1 ? 'is' : 'are'} not marked yet`,
-    needsAnswerAction: 'Show them',
-    needsAnswerActive: (n: number) => `Showing ${n} not marked`,
-    /*
      * Jira GRW-216 — "your", every time. On a revenue share this is the
      * stylist's pay, and the words have to make unmistakable that it is their
      * own chair and nobody else's.
@@ -418,7 +404,6 @@ export const copy = {
     yourEarnings: 'Your earnings',
     earningsToday: (n: number) => `Today \u00b7 ${n} ${n === 1 ? 'visit' : 'visits'}`,
     earningsMonth: (n: number) => `This month \u00b7 ${n} ${n === 1 ? 'visit' : 'visits'}`,
-    needsAnswerClear: 'Show all',
     sort: 'Order',
     oldestFirst: 'Oldest first',
     newestFirst: 'Newest first',
