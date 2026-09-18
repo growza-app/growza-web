@@ -39,17 +39,20 @@ import { copy } from '../lib/copy';
  * pill is an invitation rather than a shortcut. Everywhere else the title
  * beside it is the thing to read, so search is the icon.
  */
-export function HeaderControls({ wide = false }: { wide?: boolean }) {
+export function HeaderControls({ wide = false, hideSearch = false }: { wide?: boolean; hideSearch?: boolean }) {
   return (
     <>
-      <a
-        className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`}
-        href="/search"
-        aria-label={copy.search.title}
-      >
-        <IconSearch />
-        {wide && <span>{copy.search.prompt}</span>}
-      </a>
+      {/* Jira GRW-307 — not on the Search screen, where it would only reload the page you are on. */}
+      {hideSearch ? null : (
+        <a
+          className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`}
+          href="/search"
+          aria-label={copy.search.title}
+        >
+          <IconSearch />
+          {wide && <span>{copy.search.prompt}</span>}
+        </a>
+      )}
       <NotificationBell />
       <AccountMenu />
     </>

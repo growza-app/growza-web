@@ -32,6 +32,7 @@ export function PageHeader({
   actions,
   mobileSubtitle,
   onBack,
+  hideSearch,
 }: {
   title: string;
   subtitle?: string;
@@ -46,6 +47,8 @@ export function PageHeader({
    * one another, so nothing else needs a way back besides the nav itself.
    */
   onBack?: () => void;
+  /** Jira GRW-307 — leave out the header's search button: the Search screen is what it opens. */
+  hideSearch?: boolean;
 }) {
   return (
     <header className={`topbar ${mobileSubtitle ? 'topbar-with-sub' : ''}`}>
@@ -74,7 +77,7 @@ export function PageHeader({
           next to the avatar. */}
       <div className="topbar-actions">
         {actions}
-        <HeaderControls />
+        <HeaderControls hideSearch={hideSearch} />
       </div>
     </header>
   );

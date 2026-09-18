@@ -2,7 +2,7 @@ import { copy } from './copy';
 import type { Appointment } from './api';
 
 /** Shared with the dashboard's "today" list so a booking's status reads identically everywhere it appears. */
-export function statusChip(appt: Pick<Appointment, 'status' | 'reminderSent' | 'createdVia'>) {
+export function statusChip(appt: Pick<Appointment, 'status'> & Partial<Pick<Appointment, 'reminderSent' | 'createdVia'>>) {
   if (appt.status === 'completed') return { cls: 'chip-completed', text: copy.status.done };
   if (appt.status === 'no_show') return { cls: 'chip-no_show', text: copy.status.didNotCome };
   if (appt.status === 'cancelled') return { cls: 'chip-cancelled', text: copy.status.cancelled };

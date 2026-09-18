@@ -5,17 +5,29 @@ import { formatDate } from '../lib/format';
 import { PageHeader } from '../components/PageHeader';
 import { api, formatTime, type SearchResult } from '../lib/api';
 import { copy } from '../lib/copy';
-import { initials } from '../lib/appointment-display';
+import { initials, statusChip } from '../lib/appointment-display';
 import { bookingRef, dialable } from '../components/BookingSheet';
+import { ClientProfileCard } from '../components/ClientProfileCard';
 import { IconArrowLeft, IconClose, IconPhone, IconSearch } from '../components/icons';
 
 const EMPTY: SearchResult = { customers: [], bookings: [] };
+
+/**
+ * Jira GRW-307 — a booking's own page is the Bookings screen on its day with the sheet
+ * open. The day is the salon's, not the browser's: a 10:30 pm booking belongs to the
+ * date the salon calls it, wherever the phone thinks it is.
+ */
+function bookingHref(id: string, startAt: string, timezone: string): string {
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(startAt));
+  return `/appointments?date=${day}&open=${id}`;
+}
 
 /** Same field matches a name, any part of a phone number, or a booking reference — the backend decides which. */
 export function SearchClient({ timezone }: { timezone: string }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<SearchResult>(EMPTY);
   const [loading, setLoading] = useState(false);
+  const [openClientId, setOpenClientId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,11 +80,13 @@ export function SearchClient({ timezone }: { timezone: string }) {
         arrive from anywhere — and arriving somewhere that has lost the app's
         navigation reads as having left the app.
 
-        The header's own search control is deliberately still here. It points
-        at this page, and a control that reloads the screen you are on is
-        better than one that vanishes on exactly the screen it is about.
+        Jira GRW-307 — the header's search button is left out HERE. It used to be
+        kept on the argument that a control which reloads the screen you are on
+        beats one that vanishes; in practice it was a second, dead search icon
+        beside a screen that is one big search box, and it read as broken. Every
+        other screen still has it.
       */}
-      <PageHeader title={copy.search.title} />
+      <PageHeader title={copy.search.title} hideSearch />
       <div className="page-body">
         <div className="srch-bar-row">
           <a className="icon-btn" href="/" aria-label="Back">
@@ -110,14 +124,18 @@ export function SearchClient({ timezone }: { timezone: string }) {
             <div className="card">
               {results.customers.map((c) => (
                 <div className="res-row" key={c.id}>
-                  <div className="avatar">{initials(c.name)}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 620, fontSize: 14.5 }}>{c.name ?? 'Unknown'}</div>
-                    <div className="muted" style={{ fontSize: 13 }}>
-                      {c.phone ? `${c.phone} · ` : ''}
-                      {copy.search.visits(c.visitCount)}
+                  {/* Jira GRW-307 — the client, one tap away: opens their card (visits, bookings,
+                      call, edit) where you are, the same card the Clients screen opens. */}
+                  <button type="button" className="res-main" onClick={() => setOpenClientId(c.id)}>
+                    <div className="avatar">{initials(c.name)}</div>
+                    <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>{c.name ?? 'Unknown'}</div>
+                      <div className="muted" style={{ fontSize: 13 }}>
+                        {c.phone ? `${c.phone} · ` : ''}
+                        {copy.search.visits(c.visitCount)}
+                      </div>
                     </div>
-                  </div>
+                  </button>
                   {/* GRW-199 — no number, no call button. */}
                   {c.phone && (
                     <a className="call" href={`tel:${dialable(c.phone)}`} aria-label={`Call ${c.name ?? 'customer'}`}>
@@ -135,7 +153,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
             <div className="sec-label">{copy.search.bookings}</div>
             <div className="card">
               {results.bookings.map((b) => (
-                <div className="res-row" key={b.id}>
+                <a className="res-row res-link" key={b.id} href={bookingHref(b.id, b.startAt, timezone)}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 620, fontSize: 14 }}>
                       {formatDate(b.startAt, timezone)}{' '}
@@ -146,13 +164,20 @@ export function SearchClient({ timezone }: { timezone: string }) {
                       {b.providerName ? ` · ${b.providerName}` : ''}
                     </div>
                   </div>
-                  <span className="ref">{bookingRef(b.id)}</span>
-                </div>
+                  {/* Jira GRW-307 — what became of the booking. Without it a cancelled, a
+                      not-yet-marked and a done booking all read as a service the client
+                      had, beside a visit count that only counts the done ones. */}
+                  <div className="res-side">
+                    <span className={`chip ${statusChip(b).cls}`}>{statusChip(b).text}</span>
+                    <span className="ref">{bookingRef(b.id)}</span>
+                  </div>
+                </a>
               ))}
             </div>
           </>
         )}
       </div>
+      {openClientId && <ClientProfileCard clientId={openClientId} onClose={() => setOpenClientId(null)} />}
     </>
   );
 }
