@@ -80,11 +80,13 @@ export function SearchClient({ timezone }: { timezone: string }) {
         arrive from anywhere — and arriving somewhere that has lost the app's
         navigation reads as having left the app.
 
-        The header's own search control is deliberately still here. It points
-        at this page, and a control that reloads the screen you are on is
-        better than one that vanishes on exactly the screen it is about.
+        Jira GRW-307 — the header's search button is left out HERE. It used to be
+        kept on the argument that a control which reloads the screen you are on
+        beats one that vanishes; in practice it was a second, dead search icon
+        beside a screen that is one big search box, and it read as broken. Every
+        other screen still has it.
       */}
-      <PageHeader title={copy.search.title} />
+      <PageHeader title={copy.search.title} hideSearch />
       <div className="page-body">
         <div className="srch-bar-row">
           <a className="icon-btn" href="/" aria-label="Back">
