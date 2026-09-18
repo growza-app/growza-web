@@ -10,6 +10,8 @@ import {
   type ReportTabKey,
 } from '../lib/api';
 import { copy } from '../lib/copy';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
 
 /**
@@ -95,12 +97,10 @@ export default async function ReportsPage({
   let me;
   try {
     me = await api.me();
-  } catch {
+  } catch (error) {
     return (
       <div className="page-body">
-        <div className="banner">
-          <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-        </div>
+        <LoadErrorBanner kind={loadErrorKind(error)} />
       </div>
     );
   }
@@ -184,6 +184,7 @@ export default async function ReportsPage({
   const branch = branches.find((b) => b.id === params.branch)?.id ?? null;
 
   let payload: TabPayload = null;
+  let loadError: LoadErrorKind = 'down';
   try {
     payload =
       resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare, from, to, branch) }
@@ -192,8 +193,9 @@ export default async function ReportsPage({
       : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare, from, to, applied, branch) }
       : resolvedTab === 'staff' ? { tab: 'staff', data: await api.reportsStaff(range, compare, from, to, applied, branch) }
       : { tab: 'customers', data: await api.reportsCustomers(range, compare, from, to, branch) };
-  } catch {
+  } catch (error) {
     payload = null;
+    loadError = loadErrorKind(error);
   }
 
   return (
@@ -212,6 +214,7 @@ export default async function ReportsPage({
         rangeLabel={rangeLabelOf(payload) ?? range}
         labels={me.labels}
         payload={payload}
+        loadError={loadError}
         branches={branches}
         branch={branch}
       />

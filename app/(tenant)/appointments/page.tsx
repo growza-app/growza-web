@@ -2,6 +2,8 @@ import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api, type Appointment } from '../lib/api';
 import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { BookingsList } from './BookingsList';
 
@@ -71,9 +73,7 @@ export default async function AppointmentsPage({
       <>
         <PageHeader title={copy.nav.appointments} />
         <div className="page-body">
-          <div className="banner">
-            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );
