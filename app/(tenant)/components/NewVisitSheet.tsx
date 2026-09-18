@@ -1037,11 +1037,28 @@ export function NewVisitSheet({
           trap, not a convenience.
         */}
         {!forPayment && (stage.step === 'client' || stage.step === 'newClient') && (
-          <div className="wi-segmented" role="tablist" aria-label={copy.newVisit.modeLabel}>
+          <div
+            className="wi-segmented"
+            role="tablist"
+            aria-label={copy.newVisit.modeLabel}
+            onKeyDown={(e) => {
+              // WAI-ARIA Tabs pattern — a screen-reader user is told "use
+              // arrow keys" the moment AT announces role="tab", so the
+              // widget has to actually honor that, not just Tab+Enter.
+              // Only two tabs, so either arrow always means "the other one".
+              if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+              e.preventDefault();
+              const tabs = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+              const otherIndex = tabs.indexOf(document.activeElement as HTMLButtonElement) === 0 ? 1 : 0;
+              tabs[otherIndex]?.focus();
+              setMode(otherIndex === 0 ? 'now' : 'later');
+            }}
+          >
             <button
               type="button"
               role="tab"
               aria-selected={!later}
+              aria-controls="wi-client-panel"
               className={!later ? 'is-on' : ''}
               onClick={() => setMode('now')}
             >
@@ -1051,6 +1068,7 @@ export function NewVisitSheet({
               type="button"
               role="tab"
               aria-selected={later}
+              aria-controls="wi-client-panel"
               className={later ? 'is-on' : ''}
               onClick={() => setMode('later')}
             >
@@ -1061,7 +1079,7 @@ export function NewVisitSheet({
 
         {/* ---------- Stage 1: find them ---------- */}
         {stage.step === 'client' && (
-          <div className="wi-body">
+          <div className="wi-body" id="wi-client-panel">
             <div className="picker-search">
               <span className="wi-search-icon">
                 <IconSearch />
@@ -1070,6 +1088,7 @@ export function NewVisitSheet({
                 type="search"
                 className="wi-search-input"
                 placeholder={copy.newVisit.searchPlaceholder}
+                aria-label={copy.newVisit.searchPlaceholder}
                 value={term}
                 autoFocus
                 onChange={(e) => setTerm(e.target.value)}
@@ -1082,11 +1101,12 @@ export function NewVisitSheet({
             </div>
 
             {term.trim().length >= 2 ? (
-              <div className="picker-results">
+              <div className="picker-results" role="list">
                 {results.map((c) => (
                   <button
                     key={c.id}
                     type="button"
+                    role="listitem"
                     className="picker-row wi-row"
                     onClick={() =>
                       setStage({ step: 'details', client: { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone } })
@@ -1108,12 +1128,13 @@ export function NewVisitSheet({
                * duplicate this onClick either way), just a different source list.
                */
               <>
-                <div className="wi-section-label">{copy.newVisit.recentCustomers}</div>
-                <div className="picker-results">
+                <h2 className="wi-section-label">{copy.newVisit.recentCustomers}</h2>
+                <div className="picker-results" role="list">
                   {(recent ?? []).map((c) => (
                     <button
                       key={c.id}
                       type="button"
+                      role="listitem"
                       className="picker-row wi-row"
                       onClick={() =>
                         setStage({ step: 'details', client: { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone } })
@@ -1232,7 +1253,7 @@ export function NewVisitSheet({
             {/* Chosen list first — it is the answer being assembled. */}
             {(picked.length > 0 || extras.length > 0) && (
               <>
-                <div className="wi-section-label">{copy.newVisit.picked}</div>
+                <h2 className="wi-section-label">{copy.newVisit.picked}</h2>
                 <div className="wi-picked">
                   {comboActive ? (
                     /*
@@ -1370,24 +1391,26 @@ export function NewVisitSheet({
               </>
             )}
 
-            <div className="wi-section-label">
+            <h2 className="wi-section-label">
               {picked.length > 0 ? copy.newVisit.addMore : copy.newVisit.whichService}
-            </div>
+            </h2>
             <div className="picker-search">
               <input
                 type="search"
                 className="wi-search-input wi-search-input-plain"
                 placeholder={services === null ? copy.newVisit.loadingServices : copy.newVisit.searchServices(services.length)}
+                aria-label={picked.length > 0 ? copy.newVisit.addMore : copy.newVisit.whichService}
                 value={serviceTerm}
                 onChange={(e) => setServiceTerm(e.target.value)}
                 disabled={busy || linesLocked}
               />
             </div>
-            <div className="picker-results wi-service-results">
+            <div className="picker-results wi-service-results" role="list">
               {matchingCombos.map((o) => (
                 <button
                   key={`combo-${o.id}`}
                   type="button"
+                  role="listitem"
                   className="picker-row wi-row"
                   onClick={() => applyCombo(o)}
                   disabled={busy || linesLocked}
@@ -1404,6 +1427,7 @@ export function NewVisitSheet({
                 <button
                   key={s.id}
                   type="button"
+                  role="listitem"
                   className="picker-row wi-row"
                   onClick={() => addService(s)}
                   disabled={busy || linesLocked}
@@ -1428,7 +1452,7 @@ export function NewVisitSheet({
                 combo is priced as a unit, so half of one is not a thing. */}
             {combos.length > 0 && serviceTerm.trim() === '' && (
               <>
-                <div className="wi-section-label">{copy.newVisit.combos}</div>
+                <h2 className="wi-section-label">{copy.newVisit.combos}</h2>
                 <div className="wi-chips">
                   {combos.map((o) => (
                     <button
@@ -1452,7 +1476,7 @@ export function NewVisitSheet({
 
             {branches.length > 1 ? (
               <>
-                <div className="wi-section-label">{copy.newVisit.whichBranch}</div>
+                <h2 className="wi-section-label">{copy.newVisit.whichBranch}</h2>
                 <div className="wi-chips" role="radiogroup" aria-label={copy.newVisit.whichBranch}>
                   {branches.map((b, i) => (
                     <button
@@ -1476,7 +1500,7 @@ export function NewVisitSheet({
               </>
             ) : null}
 
-            <div className="wi-section-label">{copy.newVisit.withWhom(providerNoun.toLowerCase())}</div>
+            <h2 className="wi-section-label">{copy.newVisit.withWhom(providerNoun.toLowerCase())}</h2>
             {/*
               GRW-198 — chairs, not a list of names.
               The receptionist's question is "who can take this person", and a
@@ -1486,7 +1510,7 @@ export function NewVisitSheet({
               rather than in a banner afterwards. Only for a walk-in — "later"
               is about a day that has not happened.
             */}
-            <div className="wi-chair-list">
+            <div className="wi-chair-list" role="radiogroup" aria-label={copy.newVisit.withWhom(providerNoun.toLowerCase())}>
               {/*
                 Jira GRW-293 (epic GRW-283) — "No stylist", Record payment
                 only. `noStylist` and `schedulableId === null` used to mean
@@ -1498,6 +1522,8 @@ export function NewVisitSheet({
               {forPayment && (
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={noStylist}
                   className={`wi-chair ${noStylist ? 'wi-chair-on' : ''}`}
                   onClick={() => {
                     setSchedulableId(null);
@@ -1512,6 +1538,8 @@ export function NewVisitSheet({
 
               <button
                 type="button"
+                role="radio"
+                aria-checked={schedulableId === null && !noStylist}
                 className={`wi-chair ${schedulableId === null && !noStylist ? 'wi-chair-on' : ''}`}
                 onClick={() => {
                   setSchedulableId(null);
@@ -1533,6 +1561,8 @@ export function NewVisitSheet({
                   <div key={p.id} className="wi-chair-wrap">
                     <button
                       type="button"
+                      role="radio"
+                      aria-checked={picked}
                       className={`wi-chair ${picked ? 'wi-chair-on' : ''}`}
                       onClick={() => {
                         setSchedulableId(p.id);
@@ -1650,12 +1680,14 @@ export function NewVisitSheet({
         {stage.step === 'when' && (
           <div className="wi-body">
             {slotError && <div className="wi-error">{slotError}</div>}
-            <div className="wi-section-label">{copy.newVisit.whichDay}</div>
-            <div className="wi-chips">
+            <h2 className="wi-section-label">{copy.newVisit.whichDay}</h2>
+            <div className="wi-chips" role="radiogroup" aria-label={copy.newVisit.whichDay}>
               {days.map((d) => (
                 <button
                   key={d.iso}
                   type="button"
+                  role="radio"
+                  aria-checked={day === d.iso}
                   className={`wi-chip ${day === d.iso ? 'wi-chip-on' : ''}`}
                   onClick={() => setDay(d.iso)}
                 >
@@ -1664,11 +1696,13 @@ export function NewVisitSheet({
               ))}
             </div>
 
-            <div className="wi-section-label">{copy.newVisit.whichTime}</div>
+            <h2 className="wi-section-label">{copy.newVisit.whichTime}</h2>
             {loadingSlots ? (
               <div className="empty">{copy.newVisit.loadingTimes}</div>
             ) : !slots || slots.slotCount === 0 ? (
-              <div className="empty">{copy.newVisit.noTimes}</div>
+              <div className="empty" id="wi-no-times">
+                {copy.newVisit.noTimes}
+              </div>
             ) : (
               /*
                * Times as a grid, not the ragged wrap the free-times screen
@@ -1677,12 +1711,14 @@ export function NewVisitSheet({
                * columns that do not line up. Equal columns are easier to scan
                * and the whole point of this screen is scanning.
                */
-              <div className="wi-slot-grid">
+              <div className="wi-slot-grid" role="radiogroup" aria-label={copy.newVisit.whichTime}>
                 {slots.sections.flatMap((sec) =>
                   sec.slots.map((slot) => (
                     <button
                       key={slot.utc}
                       type="button"
+                      role="radio"
+                      aria-checked={slotUtc === slot.utc}
                       className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
                       onClick={() => setSlotUtc(slot.utc)}
                     >
@@ -1712,6 +1748,7 @@ export function NewVisitSheet({
                 className="btn"
                 onClick={() => void submit(stage.client)}
                 disabled={!slotUtc}
+                aria-describedby={!slots || slots.slotCount === 0 ? 'wi-no-times' : undefined}
               >
                 {copy.newVisit.bookIt}
               </button>

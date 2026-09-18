@@ -194,8 +194,9 @@
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
-  /* Apple's minimum tap target; a two-up control is easy to under-size. */
-  min-height: 38px;
+  /* Jira GRW-305 — was 38px, under Apple's/WCAG 2.5.5's 44px minimum; a
+     two-up control is easy to under-size. */
+  min-height: 44px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
