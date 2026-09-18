@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
 import { visitNeedsAnswer } from '../lib/appointment-display';
 import { copy } from '../lib/copy';
@@ -124,6 +124,7 @@ export function BookingsList({
   initialQuery,
   initialStaff,
   initialSort,
+  openAppointmentId,
   viewerIsStaff,
   earnings,
   capacityMin,
@@ -176,6 +177,13 @@ export function BookingsList({
    * false, so a caller that does not know stays on the old behaviour.
    */
   loadFailed?: boolean;
+  /**
+   * Jira GRW-307 — Search sends you here for one booking. The sheet opens on it
+   * the moment the page lands, so a tap on a search result is one tap to the
+   * booking, with every action the sheet already has (mark done, didn't come,
+   * cancel, move) and combo legs grouped as they are everywhere else.
+   */
+  openAppointmentId?: string;
   /** Jira GRW-216 — null when the owner has not shown this stylist their takings, or the viewer is not one. */
   earnings?: MyEarnings | null;
   /**
@@ -227,6 +235,14 @@ export function BookingsList({
   }, []);
 
   const bookings = groupBookings(appointments);
+
+  const openedFromSearch = useRef(false);
+  useEffect(() => {
+    if (!openAppointmentId || openedFromSearch.current) return;
+    openedFromSearch.current = true;
+    const group = groupBookings(appointments).find((g) => g.appointments.some((a) => a.id === openAppointmentId));
+    if (group) setOpen(group);
+  }, [openAppointmentId, appointments]);
 
   // Mobile-only (GRW-46): search + staff chips narrow the SCHEDULE only — the
   // KPI row above and the "at a glance" metric card both stay computed from

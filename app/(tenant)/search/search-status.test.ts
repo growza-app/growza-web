@@ -13,6 +13,8 @@ import { statusChip } from '../lib/appointment-display';
  * he had had. The API always returned `status`; the row never drew it.
  */
 const client = readFileSync(resolve(__dirname, 'SearchClient.tsx'), 'utf8');
+const bookingsPage = readFileSync(resolve(__dirname, '../appointments/page.tsx'), 'utf8');
+const bookingsList = readFileSync(resolve(__dirname, '../appointments/BookingsList.tsx'), 'utf8');
 
 describe('a search result says what became of the booking', () => {
   it('draws the status chip on every booking row', () => {
@@ -24,5 +26,30 @@ describe('a search result says what became of the booking', () => {
     expect(statusChip({ status: 'completed' }).text).toBe('Completed');
     expect(statusChip({ status: 'no_show' }).text).toBe("Didn't come");
     expect(statusChip({ status: 'cancelled' }).text).toBe('Cancelled');
+  });
+});
+
+describe('the rows are pressable', () => {
+  it('a client opens their card in place, and the call button stays its own control', () => {
+    expect(client).toMatch(/<button type="button" className="res-main" onClick=\{\(\) => setOpenClientId\(c\.id\)\}>/);
+    expect(client).toMatch(/<ClientProfileCard clientId=\{openClientId\}/);
+    // A link inside a button is invalid and unreachable by keyboard: the call link is a sibling.
+    expect(client).toMatch(/<\/button>\s*\{\/\* GRW-199[^]*?<a className="call"/);
+  });
+
+  it('a booking is a link to its day on Bookings with the sheet open', () => {
+    expect(client).toMatch(/<a className="res-row res-link"[^>]*href=\{bookingHref\(b\.id, b\.startAt, timezone\)\}/);
+    expect(client).toMatch(/`\/appointments\?date=\$\{day\}&open=\$\{id\}`/);
+  });
+
+  it("the day is the salon's, not the browser's", () => {
+    expect(client).toMatch(/new Intl\.DateTimeFormat\('en-CA', \{ timeZone: timezone \}\)/);
+  });
+
+  it('Bookings shape-checks ?open= and opens the booking once, whole combo included', () => {
+    expect(bookingsPage).toMatch(/openIdParam && \/\^\[0-9a-f-\]\{36\}\$\/i\.test\(openIdParam\)/);
+    expect(bookingsPage).toMatch(/openAppointmentId=\{openAppointmentId\}/);
+    expect(bookingsList).toMatch(/openedFromSearch\.current/);
+    expect(bookingsList).toMatch(/g\.appointments\.some\(\(a\) => a\.id === openAppointmentId\)/);
   });
 });

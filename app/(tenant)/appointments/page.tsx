@@ -25,6 +25,8 @@ export default async function AppointmentsPage({
     staff?: string;
     sort?: string;
     customerId?: string;
+    /** Jira GRW-307 — an appointment to open on arrival, from Search. */
+    open?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -92,6 +94,9 @@ export default async function AppointmentsPage({
    */
   // Shape-checked before it goes near the query: the column is a uuid, so
   // "?customerId=abc" would be a cast error rather than an empty result.
+  // Same shape check for the booking Search sends us to open.
+  const openIdParam = params.open?.trim();
+  const openAppointmentId = openIdParam && /^[0-9a-f-]{36}$/i.test(openIdParam) ? openIdParam : undefined;
   const customerIdParam = params.customerId?.trim();
   const customerId =
     customerIdParam && /^[0-9a-f-]{36}$/i.test(customerIdParam) ? customerIdParam : undefined;
@@ -241,6 +246,7 @@ export default async function AppointmentsPage({
           initialQuery={query}
           initialSort={sort}
           initialStaff={staff}
+          openAppointmentId={openAppointmentId}
           viewerIsStaff={me.member?.role === 'staff'}
           canReschedule={me.capabilities.reschedule}
           loadFailed={appointmentsResult.failed}

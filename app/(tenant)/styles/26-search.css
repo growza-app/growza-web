@@ -64,3 +64,36 @@
   gap: 4px;
   flex-shrink: 0;
 }
+
+/* Rows you can press (Jira GRW-307): the client opens their card, the booking opens on
+   its day. Both are at least 44px tall and show where focus is. */
+.res-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.res-link {
+  cursor: pointer;
+}
+
+.res-link:hover,
+.res-row:has(.res-main:hover) {
+  background: var(--page-bg);
+}
+
+.res-link:focus-visible,
+.res-main:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
