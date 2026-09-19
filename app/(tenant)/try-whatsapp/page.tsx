@@ -4,6 +4,8 @@ import { PageHeader } from '../components/PageHeader';
 import { ChatWindow } from './ChatWindow';
 import { copy } from '../lib/copy';
 import { notFound } from 'next/navigation';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,14 +14,12 @@ export default async function TryWhatsAppPage() {
   let me;
   try {
     me = await api.me();
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title="Try WhatsApp booking" />
         <div className="page-body">
-          <div className="banner">
-            <strong>Cannot reach the server.</strong> Ask your developer to start it, or run <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );

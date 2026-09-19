@@ -2,6 +2,8 @@ import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
 import { ComboBuilder } from '../ComboBuilder';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
+import { loadErrorKind } from '../../lib/load-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,14 +11,12 @@ export default async function NewComboPage() {
   let services;
   try {
     services = await api.services();
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title="Create a new combo" />
         <div className="page-body">
-          <div className="banner">
-            <strong>Cannot reach the server.</strong> Ask your developer to start it, or run <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );

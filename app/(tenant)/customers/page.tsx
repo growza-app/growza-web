@@ -2,6 +2,10 @@ import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api, type CustomerSort, type CustomerStatusFilter, type SortDirection } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { CustomersClient } from './CustomersClient';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
+import { pickNoun } from '../lib/nouns';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +33,9 @@ export default async function CustomersPage({
   // looking at — sorting by name would come back descending.
   const direction: SortDirection = params.dir === 'asc' ? 'asc' : 'desc';
 
+  const nouns = await getTranslations('nouns');
+  const locale = await getLocale();
+
   let stats, first, me;
   try {
     [stats, first, me] = await Promise.all([
@@ -36,14 +43,12 @@ export default async function CustomersPage({
       api.customers({ status, sort, direction, limit: 20, offset: 0 }),
       api.me(),
     ]);
-  } catch {
+  } catch (error) {
     return (
       <>
-        <PageHeader title="Customers" />
+        <PageHeader title={nouns('customersTitle')} />
         <div className="page-body">
-          <div className="banner">
-            <strong>Cannot reach the server.</strong> Ask your developer to start it, or run <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );
@@ -59,7 +64,7 @@ export default async function CustomersPage({
       initialStatus={status}
       initialSort={sort}
       initialDirection={direction}
-      label={me.labels.customers ?? 'Customers'}
+      label={pickNoun(locale, me.labels.customers ?? 'Customers', nouns('customersTitle'))}
     />
   );
 }

@@ -89,5 +89,71 @@
     "thisClient": "this client",
     "thisClientTitle": "This client",
     "everyBookingFor": "Every booking for {name}"
+  },
+  "nouns": {
+    "customers": "customers",
+    "customer": "customer",
+    "customersTitle": "Customers"
+  },
+  "customers": {
+    "subtitle": "View and manage your {noun}. See their booking history and spend.",
+    "addNoun": "Add {noun}",
+    "adding": "Adding…",
+    "cancel": "Cancel",
+    "export": "Export",
+    "filter": "Filter",
+    "kpiTotal": "Total {noun}",
+    "kpiTotalSub": "All time",
+    "kpiNew": "New this month",
+    "kpiNewSub": "First seen this month",
+    "kpiReturning": "Returning {noun}",
+    "kpiReturningSub": "Booked more than once",
+    "kpiRepeat": "Repeat rate",
+    "kpiRepeatSub": "Returning ÷ total {noun}",
+    "segmentsTitle": "How your clients are doing",
+    "segmentsHint": "Tap one to see just those",
+    "neverVisited": "{count} ({pct}%) have not been in yet, so they are in none of these",
+    "neverVisitedShort": "{count} ({pct}%) never been in",
+    "clearFilter": "Show everyone",
+    "visitsColumn": "Visits",
+    "visitCount": "{count, plural, one {# visit} other {# visits}}",
+    "sortBy": "Sort by {column}",
+    "segments": {
+      "active": {
+        "label": "Coming in",
+        "range": "0–30 days"
+      },
+      "due": {
+        "label": "Due a visit",
+        "range": "31–45 days"
+      },
+      "at_risk": {
+        "label": "Slipping away",
+        "range": "46–90 days"
+      },
+      "inactive": {
+        "label": "Gone quiet",
+        "range": "90+ days"
+      }
+    },
+    "statusNever": "Never been in",
+    "statusLapsed": "Due or slipping",
+    "searchPlaceholder": "Search {noun} by name or phone…",
+    "allNoun": "All {noun}",
+    "noMatch": "No {noun} match your search.",
+    "loading": "Loading…",
+    "colCustomer": "Customer",
+    "colPhone": "Phone / WhatsApp",
+    "colLastBooking": "Last booking",
+    "colTotalSpent": "Total spent",
+    "colLastSeen": "Last seen",
+    "unnamed": "Unnamed",
+    "never": "Never",
+    "spent": "{amount} spent",
+    "addHint": "Someone already on file with this number is updated, never duplicated.",
+    "whatsappNumber": "WhatsApp number",
+    "nameOptional": "Name (optional)",
+    "namePlaceholder": "e.g. Priya Sharma",
+    "couldNotAdd": "Could not add the {noun}."
   }
 }

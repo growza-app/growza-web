@@ -4,6 +4,8 @@ import { PageHeader } from '../components/PageHeader';
 import { OffersList } from './OffersList';
 import { CreateOfferMenu } from './CreateOfferMenu';
 import { copy } from '../lib/copy';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,14 +24,12 @@ export default async function OffersPage() {
     offers = o;
     services = sv;
     whatsappLive = me?.whatsapp?.booking ?? false;
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title="Offers & Combos" />
         <div className="page-body">
-          <div className="banner">
-            <strong>Cannot reach the server.</strong> Ask your developer to start it, or run <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );

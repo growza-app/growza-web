@@ -28,17 +28,11 @@ import {
   IconUserPlus,
   IconWhatsApp,
 } from '../components/icons';
+import { useTranslations } from 'next-intl';
 import { copy } from '../lib/copy';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone, validateNationalPhone } from '../lib/phone';
-
-/** The same four words the cards, the chips and `?status=` all use. */
-function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
-  if (s === 'never') return 'Never been in';
-  if (s === 'lapsed') return 'Due or slipping';
-  return copy.clients.segments[s].label;
-}
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -52,9 +46,9 @@ function statusLabel(s: Exclude<CustomerStatusFilter, 'all'>): string {
  * — so filtering to "Gone quiet" returned rows chipped "Due a visit".
  */
 function recencyChip(segment: Customer['segment']) {
-  if (segment === 'due') return <span className="chip chip-lapsed">{copy.clients.segments.due.label}</span>;
-  if (segment === 'at_risk') return <span className="chip chip-cancelled">{copy.clients.segments.at_risk.label}</span>;
-  if (segment === 'inactive') return <span className="chip chip-completed">{copy.clients.segments.inactive.label}</span>;
+  if (segment === 'due') return { cls: 'chip-lapsed', key: 'segments.due.label' } as const;
+  if (segment === 'at_risk') return { cls: 'chip-cancelled', key: 'segments.at_risk.label' } as const;
+  if (segment === 'inactive') return { cls: 'chip-completed', key: 'segments.inactive.label' } as const;
   return null;
 }
 
@@ -82,10 +76,11 @@ function SortableTh({
   onSort: (col: CustomerSort) => void;
   numeric?: boolean;
 }) {
+  const t = useTranslations('customers');
   const active = sort === col;
   return (
     <th className={numeric ? 'th-sortable th-numeric' : 'th-sortable'}>
-      <button type="button" onClick={() => onSort(col)} title={copy.clients.sortBy(label.toLowerCase())}>
+      <button type="button" onClick={() => onSort(col)} title={t('sortBy', { column: label.toLowerCase() })}>
         {label}
         <span className={`th-arrow ${active ? 'is-on' : ''}`} aria-hidden>
           {active ? (direction === 'desc' ? '↓' : '↑') : <IconSort />}
@@ -114,8 +109,15 @@ export function CustomersClient({
   /** "Clients" for a salon, "Patients" for a clinic — from the vertical config. */
   label: string;
 }) {
+  const t = useTranslations('customers');
   const lower = label.toLowerCase();
   const singular = lower.replace(/s$/, '');
+  const statusLabel = (s: Exclude<CustomerStatusFilter, 'all'>) =>
+    s === 'never' ? t('statusNever') : s === 'lapsed' ? t('statusLapsed') : t(`segments.${s}.label`);
+  const chipOf = (segment: Customer['segment']) => {
+    const chip = recencyChip(segment);
+    return chip ? <span className={`chip ${chip.cls}`}>{t(chip.key)}</span> : null;
+  };
   const [stats] = useState(initialStats);
   const [page, setPage] = useState(initialPage);
   const [search, setSearch] = useState('');
@@ -282,13 +284,13 @@ export function CustomersClient({
     <>
       <PageHeader
         title={label}
-        subtitle={`View and manage your ${label.toLowerCase()}. See their booking history and spend.`}
+        subtitle={t('subtitle', { noun: lower })}
         actions={
           <button type="button" className="btn" onClick={() => setAdding(true)}>
             {/* A real icon, not a typed "+". GRW-30: on a phone the header
                 action collapses to its icon, and a button whose plus is a
                 character has nothing left to show. */}
-            <IconPlus /> Add {singular}
+            <IconPlus /> {t('addNoun', { noun: singular })}
           </button>
         }
       />
@@ -298,10 +300,10 @@ export function CustomersClient({
               value, and tile 3's subtitle repeated tile 4's — so half the row
               restated the other half and the numbers read as contradicting
               each other. */}
-          <Kpi icon={<IconStaff />} label={`Total ${lower}`} value={String(stats.total)} sub="All time" />
-          <Kpi icon={<IconUserPlus />} label="New this month" value={String(stats.newThisMonth)} sub="First seen this month" />
-          <Kpi icon={<IconRepeat />} label={`Returning ${lower}`} value={String(stats.returning)} sub="Booked more than once" />
-          <Kpi icon={<IconPercent />} label="Repeat rate" value={`${stats.repeatRatePct}%`} sub={`Returning ÷ total ${lower}`} />
+          <Kpi icon={<IconStaff />} label={t('kpiTotal', { noun: lower })} value={String(stats.total)} sub={t('kpiTotalSub')} />
+          <Kpi icon={<IconUserPlus />} label={t('kpiNew')} value={String(stats.newThisMonth)} sub={t('kpiNewSub')} />
+          <Kpi icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} />
+          <Kpi icon={<IconPercent />} label={t('kpiRepeat')} value={`${stats.repeatRatePct}%`} sub={t('kpiRepeatSub', { noun: lower })} />
         </div>
 
         {/* The cards are also the filter. Their counts come back with the
@@ -310,7 +312,7 @@ export function CustomersClient({
             rows than it counted (platform/segments.ts). */}
         <div className="card cust-segments">
           <div className="cust-segments-head">
-            <h2>{copy.clients.segmentsTitle}</h2>
+            <h2>{t('segmentsTitle')}</h2>
             {/*
               Two versions of the same aside, one per screen size — not one
               string left to wrap. On a phone the full sentence ran to eleven
@@ -324,24 +326,24 @@ export function CustomersClient({
             */}
             <p>
               <span className="cust-aside-full">
-                {copy.clients.segmentsHint}
-                {neverPct !== null && ` · ${copy.clients.neverVisited(stats.neverVisited, neverPct)}`}
+                {t('segmentsHint')}
+                {neverPct !== null && ` · ${t('neverVisited', { count: stats.neverVisited, pct: neverPct })}`}
               </span>
               {neverPct !== null && (
                 <span className="cust-aside-brief">
-                  {copy.clients.neverVisitedShort(stats.neverVisited, neverPct)}
+                  {t('neverVisitedShort', { count: stats.neverVisited, pct: neverPct })}
                 </span>
               )}
             </p>
             {status !== 'all' && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setStatus('all'); setPageIndex(0); }}>
-                {copy.clients.clearFilter}
+                {t('clearFilter')}
               </button>
             )}
           </div>
           <div className="cust-segment-grid">
             {stats.segments.map((seg) => {
-              const words = copy.clients.segments[seg.key];
+              const words = { label: t(`segments.${seg.key}.label`), range: t(`segments.${seg.key}.range`) };
               const on = status === seg.key;
               return (
                 <button
@@ -386,7 +388,7 @@ export function CustomersClient({
               <input
                 type="text"
                 className="search-input search-input-bare"
-                placeholder={`Search ${lower} by name or phone…`}
+                placeholder={t('searchPlaceholder', { noun: lower })}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -396,7 +398,7 @@ export function CustomersClient({
             </label>
             <div className="dropdown-anchor">
               <button type="button" className="btn btn-ghost" onClick={() => setFilterOpen((v) => !v)}>
-                {status === 'all' ? 'Filter' : statusLabel(status)} ⌄
+                {status === 'all' ? t('filter') : statusLabel(status)} ⌄
               </button>
               {filterOpen && (
                 <div className="dropdown-panel dropdown-panel-sm" onMouseLeave={() => setFilterOpen(false)}>
@@ -416,19 +418,19 @@ export function CustomersClient({
                         setFilterOpen(false);
                       }}
                     >
-                      {s === 'all' ? `All ${lower}` : statusLabel(s)}
+                      {s === 'all' ? t('allNoun', { noun: lower }) : statusLabel(s)}
                     </button>
                   ))}
                 </div>
               )}
             </div>
             <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={page.rows.length === 0}>
-              Export
+              {t('export')}
             </button>
           </div>
 
           {page.rows.length === 0 ? (
-            <div className="empty">{loading ? 'Loading…' : `No ${lower} match your search.`}</div>
+            <div className="empty">{loading ? t('loading') : t('noMatch', { noun: lower })}</div>
           ) : (
             <PaginatedTable
               noun={lower}
@@ -438,12 +440,12 @@ export function CustomersClient({
               onPageChange={(p) => setPageIndex(p - 1)}
               head={
                 <tr>
-                  <SortableTh col="name" label="Customer" sort={sort} direction={direction} onSort={setSortColumn} />
-                  <th>Phone / WhatsApp</th>
-                  <th>Last booking</th>
-                  <SortableTh col="visits" label={copy.clients.visitsColumn} sort={sort} direction={direction} onSort={setSortColumn} numeric />
-                  <SortableTh col="spent" label="Total spent" sort={sort} direction={direction} onSort={setSortColumn} numeric />
-                  <SortableTh col="recent" label="Last seen" sort={sort} direction={direction} onSort={setSortColumn} />
+                  <SortableTh col="name" label={t('colCustomer')} sort={sort} direction={direction} onSort={setSortColumn} />
+                  <th>{t('colPhone')}</th>
+                  <th>{t('colLastBooking')}</th>
+                  <SortableTh col="visits" label={t('visitsColumn')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
+                  <SortableTh col="spent" label={t('colTotalSpent')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
+                  <SortableTh col="recent" label={t('colLastSeen')} sort={sort} direction={direction} onSort={setSortColumn} />
                 </tr>
               }
               cards={visibleRows.map((c) => (
@@ -465,8 +467,8 @@ export function CustomersClient({
                     <span className="avatar">{initials(c.name)}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="cust-card-name">
-                        {c.name ?? 'Unnamed'}
-                        {recencyChip(c.segment)}
+                        {c.name ?? t('unnamed')}
+                        {chipOf(c.segment)}
                       </div>
                       {/* Stops the row's own click: tapping the number should
                           open WhatsApp, not the card behind it.
@@ -491,8 +493,8 @@ export function CustomersClient({
                     </div>
                   </div>
                   <div className="cust-card-foot">
-                    <span>{copy.clients.visitCount(c.totalBookings)}</span>
-                    <span>{formatMoney(c.totalSpentMinor)} spent</span>
+                    <span>{t('visitCount', { count: c.totalBookings })}</span>
+                    <span>{t('spent', { amount: formatMoney(c.totalSpentMinor) })}</span>
                   </div>
                 </div>
               ))}
@@ -504,7 +506,7 @@ export function CustomersClient({
                   <td>
                     <div className="cust-name-cell">
                       <span className="avatar">{initials(c.name)}</span>
-                      <span style={{ fontWeight: 620 }}>{c.name ?? 'Unnamed'}</span>
+                      <span style={{ fontWeight: 620 }}>{c.name ?? t('unnamed')}</span>
                     </div>
                   </td>
                   <td>
@@ -533,7 +535,7 @@ export function CustomersClient({
                         <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
                       </>
                     ) : (
-                      <span className="muted">Never</span>
+                      <span className="muted">{t('never')}</span>
                     )}
                   </td>
                   <td>{c.totalBookings}</td>
@@ -544,7 +546,7 @@ export function CustomersClient({
                   <td>
                     <div className="cust-recency">
                       <span>{formatRecency(c.lastBookingAt)}</span>
-                      {recencyChip(c.segment)}
+                      {chipOf(c.segment)}
                     </div>
                   </td>
                 </tr>
@@ -587,6 +589,7 @@ function Kpi({ label, value, sub, icon }: { label: string; value: string; sub: s
 }
 
 function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; onClose: () => void; onSaved: () => void }) {
+  const t = useTranslations('customers');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -608,7 +611,7 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
       onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Could not add the ${singular}.`);
+      setError(err instanceof Error ? err.message : t('couldNotAdd', { noun: singular }));
       setBusy(false);
     }
   };
@@ -616,13 +619,13 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Add {singular}</h3>
+        <h3>{t('addNoun', { noun: singular })}</h3>
         <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>
-          Someone already on file with this number is updated, never duplicated.
+          {t('addHint')}
         </p>
         <PhoneField
           id="add-client-phone"
-          label="WhatsApp number"
+          label={t('whatsappNumber')}
           required
           autoFocus
           value={phone}
@@ -634,17 +637,17 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
         />
         <div className="field">
           <label>
-            <span>Name (optional)</span>
+            <span>{t('nameOptional')}</span>
           </label>
-          <input type="text" value={name} placeholder="e.g. Priya Sharma" onChange={(e) => setName(e.target.value)} />
+          <input type="text" value={name} placeholder={t('namePlaceholder')} onChange={(e) => setName(e.target.value)} />
         </div>
         {error && <div className="field-error" style={{ marginTop: 12 }}>{error}</div>}
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('cancel')}
           </button>
           <button type="button" className="btn" onClick={save} disabled={busy}>
-            {busy ? 'Adding…' : `Add ${singular}`}
+            {busy ? t('adding') : t('addNoun', { noun: singular })}
           </button>
         </div>
       </div>

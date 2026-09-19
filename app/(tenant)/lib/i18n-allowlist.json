@@ -333,49 +333,6 @@
     "web/app/(tenant)/components/home/ReceptionHome.tsx": [
       "sub: \"${…} · ${…} min\""
     ],
-    "web/app/(tenant)/customers/CustomersClient.tsx": [
-      "Add",
-      "Add",
-      "Cancel",
-      "Export",
-      "Last booking",
-      "Name (optional)",
-      "Never",
-      "Phone / WhatsApp",
-      "Someone already on file with this number is updated, never duplicated.",
-      "label=\"Customer\"",
-      "label=\"Last seen\"",
-      "label=\"New this month\"",
-      "label=\"Repeat rate\"",
-      "label=\"Returning ${…}\"",
-      "label=\"Total ${…}\"",
-      "label=\"Total spent\"",
-      "label=\"WhatsApp number\"",
-      "placeholder=\"Search ${…} by name or phone…\"",
-      "placeholder=\"e.g. Priya Sharma\"",
-      "setError(\"Could not add the ${…}.\")",
-      "spent",
-      "sub=\"All time\"",
-      "sub=\"Booked more than once\"",
-      "sub=\"First seen this month\"",
-      "sub=\"Returning ÷ total ${…}\"",
-      "subtitle=\"View and manage your ${…}. See their booking history and spend.\"",
-      "{Add ${…}}",
-      "{Adding…}",
-      "{All ${…}}",
-      "{Filter}",
-      "{Loading…}",
-      "{No ${…} match your search.}",
-      "{Unnamed}",
-      "{Unnamed}"
-    ],
-    "web/app/(tenant)/customers/page.tsx": [
-      "Ask your developer to start it, or run",
-      "Cannot reach the server.",
-      "label=\"Customers\"",
-      "npm run dev",
-      "title=\"Customers\""
-    ],
     "web/app/(tenant)/layout.tsx": [
       "description: \"Manage bookings, staff, services, and offers.\"",
       "title: \"Growza\""
@@ -504,21 +461,12 @@
       "{Offer}"
     ],
     "web/app/(tenant)/offers/[id]/edit/page.tsx": [
-      "Ask your developer to start it, or run",
-      "Cannot reach the server.",
-      "npm run dev",
       "title=\"Edit combo\""
     ],
     "web/app/(tenant)/offers/new/page.tsx": [
-      "Ask your developer to start it, or run",
-      "Cannot reach the server.",
-      "npm run dev",
       "title=\"Create a new combo\""
     ],
     "web/app/(tenant)/offers/page.tsx": [
-      "Ask your developer to start it, or run",
-      "Cannot reach the server.",
-      "npm run dev",
       "title=\"Offers & Combos\"",
       "title=\"Offers & Combos\""
     ],
@@ -1175,9 +1123,6 @@
       "{online}"
     ],
     "web/app/(tenant)/try-whatsapp/page.tsx": [
-      "Ask your developer to start it, or run",
-      "Cannot reach the server.",
-      "npm run dev",
       "subtitle=\"A stand-in for real WhatsApp — same booking engine, same flow your customers get.\"",
       "title=\"Try WhatsApp booking\"",
       "title=\"Try WhatsApp booking\""

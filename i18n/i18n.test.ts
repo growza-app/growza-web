@@ -140,10 +140,17 @@ describe('the groups handed to the browser', () => {
   });
 });
 
-describe('status words while two homes exist', () => {
-  // Reports, Staff and the CSV export still read `copy.status`; the Bookings screens read
-  // the message file. Until those move, the English must be the same in both.
-  it('reads the same in copy.ts and messages/en.json', () => {
+describe('words that live in copy.ts and messages/en.json while their other readers move', () => {
+  // Reports, Staff and the CSV export still read `copy.status`, and Home's English
+  // still reads `copy.clients`; the migrated screens read the message file. Until the
+  // rest move, the English must be the same in both.
+  it('status words', () => {
     expect(en.status).toEqual({ ...copy.status });
+  });
+
+  it('client segment names, title and hint', () => {
+    expect(en.customers.segments).toEqual(copy.clients.segments);
+    expect(en.customers.segmentsTitle).toBe(copy.clients.segmentsTitle);
+    expect(en.customers.segmentsHint).toBe(copy.clients.segmentsHint);
   });
 });

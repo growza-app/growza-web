@@ -709,9 +709,7 @@ export const copy = {
      * explaining a footnote. What has to survive is the number, because
      * without it the four bands look like they should add up to the total.
      */
-    neverVisitedShort: (n: number, pct: number) => `${n} (${pct}%) never been in`,
     showingAll: 'Showing everyone',
-    clearFilter: 'Show everyone',
     /*
      * Jira GRW-207 — one number, one noun.
      *
@@ -720,8 +718,6 @@ export const copy = {
      * It counts times the client has been in, so "visits" is the true word and
      * the other three sites now use this.
      */
-    visitCount: (n: number) => `${n} ${n === 1 ? 'visit' : 'visits'}`,
-    visitsColumn: 'Visits',
     visitsCsvHeader: 'Total visits',
     segments: {
       active: { label: 'Coming in', range: '0–30 days' },
@@ -729,7 +725,6 @@ export const copy = {
       at_risk: { label: 'Slipping away', range: '46–90 days' },
       inactive: { label: 'Gone quiet', range: '90+ days' },
     },
-    sortBy: (col: string) => `Sort by ${col}`,
   },
 
   clientCard: {

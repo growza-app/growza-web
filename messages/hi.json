@@ -89,5 +89,71 @@
     "thisClient": "यह ग्राहक",
     "thisClientTitle": "यह ग्राहक",
     "everyBookingFor": "{name} की सारी बुकिंग"
+  },
+  "nouns": {
+    "customers": "ग्राहक",
+    "customer": "ग्राहक",
+    "customersTitle": "ग्राहक"
+  },
+  "customers": {
+    "subtitle": "अपने {noun} देखें और संभालें। उनकी बुकिंग का इतिहास और खर्च देखें।",
+    "addNoun": "{noun} जोड़ें",
+    "adding": "जोड़ रहे हैं…",
+    "cancel": "रद्द करें",
+    "export": "एक्सपोर्ट",
+    "filter": "फ़िल्टर",
+    "kpiTotal": "कुल {noun}",
+    "kpiTotalSub": "अब तक",
+    "kpiNew": "इस महीने नए",
+    "kpiNewSub": "इस महीने पहली बार आए",
+    "kpiReturning": "दोबारा आए {noun}",
+    "kpiReturningSub": "एक से ज़्यादा बार बुकिंग की",
+    "kpiRepeat": "दोबारा आने की दर",
+    "kpiRepeatSub": "दोबारा आए ÷ कुल {noun}",
+    "segmentsTitle": "आपके ग्राहक कैसे चल रहे हैं",
+    "segmentsHint": "सिर्फ़ वही देखने के लिए एक पर टैप करें",
+    "neverVisited": "{count} ({pct}%) अभी तक आए ही नहीं, इसलिए ये इनमें से किसी में नहीं हैं",
+    "neverVisitedShort": "{count} ({pct}%) कभी नहीं आए",
+    "clearFilter": "सब दिखाएँ",
+    "visitsColumn": "विज़िट",
+    "visitCount": "{count, plural, one {# विज़िट} other {# विज़िट}}",
+    "sortBy": "{column} के हिसाब से क्रम",
+    "segments": {
+      "active": {
+        "label": "आ रहे हैं",
+        "range": "0–30 दिन"
+      },
+      "due": {
+        "label": "आने का समय",
+        "range": "31–45 दिन"
+      },
+      "at_risk": {
+        "label": "दूर हो रहे हैं",
+        "range": "46–90 दिन"
+      },
+      "inactive": {
+        "label": "आना बंद कर दिया",
+        "range": "90+ दिन"
+      }
+    },
+    "statusNever": "कभी नहीं आए",
+    "statusLapsed": "आने का समय या दूर हो रहे",
+    "searchPlaceholder": "{noun} को नाम या फ़ोन से खोजें…",
+    "allNoun": "सभी {noun}",
+    "noMatch": "आपकी खोज से कोई {noun} नहीं मिला।",
+    "loading": "लोड हो रहा है…",
+    "colCustomer": "ग्राहक",
+    "colPhone": "फ़ोन / WhatsApp",
+    "colLastBooking": "आख़िरी बुकिंग",
+    "colTotalSpent": "कुल खर्च",
+    "colLastSeen": "आख़िरी बार आए",
+    "unnamed": "बिना नाम",
+    "never": "कभी नहीं",
+    "spent": "{amount} खर्च",
+    "addHint": "इस नंबर वाला कोई पहले से हो तो उसकी जानकारी बदल जाती है, दोबारा नहीं जुड़ता।",
+    "whatsappNumber": "WhatsApp नंबर",
+    "nameOptional": "नाम (ज़रूरी नहीं)",
+    "namePlaceholder": "जैसे प्रिया शर्मा",
+    "couldNotAdd": "{noun} नहीं जोड़ सके।"
   }
 }
