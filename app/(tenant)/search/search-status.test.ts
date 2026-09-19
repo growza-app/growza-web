@@ -23,10 +23,10 @@ describe('a search result says what became of the booking', () => {
   });
 
   it('uses the same four words as the Bookings screen', () => {
-    expect(statusChip({ status: 'confirmed' }).text).toBe('Confirmed');
-    expect(statusChip({ status: 'completed' }).text).toBe('Completed');
-    expect(statusChip({ status: 'no_show' }).text).toBe("Didn't come");
-    expect(statusChip({ status: 'cancelled' }).text).toBe('Cancelled');
+    expect(statusChip({ status: 'confirmed' }).key).toBe('confirmed');
+    expect(statusChip({ status: 'completed' }).key).toBe('done');
+    expect(statusChip({ status: 'no_show' }).key).toBe('didNotCome');
+    expect(statusChip({ status: 'cancelled' }).key).toBe('cancelled');
   });
 });
 

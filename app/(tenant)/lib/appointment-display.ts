@@ -1,16 +1,18 @@
-import { copy } from './copy';
 import type { Appointment } from './api';
+
+/** The `status` message group's keys — the label is looked up where the chip is shown. */
+export type StatusKey = 'done' | 'didNotCome' | 'cancelled' | 'reminded' | 'walkIn' | 'confirmed';
 
 /** Shared with the dashboard's "today" list so a booking's status reads identically everywhere it appears. */
 export function statusChip(appt: Pick<Appointment, 'status'> & Partial<Pick<Appointment, 'reminderSent' | 'createdVia'>>) {
-  if (appt.status === 'completed') return { cls: 'chip-completed', text: copy.status.done };
-  if (appt.status === 'no_show') return { cls: 'chip-no_show', text: copy.status.didNotCome };
-  if (appt.status === 'cancelled') return { cls: 'chip-cancelled', text: copy.status.cancelled };
+  if (appt.status === 'completed') return { cls: 'chip-completed', key: 'done' as StatusKey };
+  if (appt.status === 'no_show') return { cls: 'chip-no_show', key: 'didNotCome' as StatusKey };
+  if (appt.status === 'cancelled') return { cls: 'chip-cancelled', key: 'cancelled' as StatusKey };
   // A confirmed booking whose reminder already went out shows that instead —
   // a derived display state, never a DB status (07-product-surfaces.md §1.2).
-  if (appt.reminderSent) return { cls: 'chip-reminder', text: copy.status.reminded };
-  if (appt.createdVia === 'dashboard') return { cls: 'chip-new', text: copy.status.walkIn };
-  return { cls: 'chip-confirmed', text: copy.status.confirmed };
+  if (appt.reminderSent) return { cls: 'chip-reminder', key: 'reminded' as StatusKey };
+  if (appt.createdVia === 'dashboard') return { cls: 'chip-new', key: 'walkIn' as StatusKey };
+  return { cls: 'chip-confirmed', key: 'confirmed' as StatusKey };
 }
 
 export function initials(name: string | null): string {

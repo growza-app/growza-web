@@ -22,7 +22,7 @@ describe('the tiles filter the list', () => {
   });
 
   it('the Bookings tile is "all", pressed when no status is chosen', () => {
-    expect(list).toMatch(/label="Bookings"[\s\S]*?active=\{statusFilter === ''\}/);
+    expect(list).toMatch(/label=\{t\('kpiBookings'\)\}[\s\S]*?active=\{statusFilter === ''\}/);
   });
 
   it('a pressed tile says so to a screen reader', () => {

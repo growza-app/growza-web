@@ -3,6 +3,8 @@ import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import type { VisitMode } from '../../components/NewVisitSheet';
 import { NewBookingClient } from './NewBookingClient';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
+import { loadErrorKind } from '../../lib/load-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,12 +26,10 @@ export default async function NewBookingPage({
   let me;
   try {
     me = await api.me();
-  } catch {
+  } catch (error) {
     return (
       <div className="page-body">
-        <div className="banner">
-          <strong>Cannot reach the server.</strong> Ask your developer to start it, or run <code>npm run dev</code>.
-        </div>
+        <LoadErrorBanner kind={loadErrorKind(error)} />
       </div>
     );
   }

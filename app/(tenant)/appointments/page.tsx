@@ -2,6 +2,7 @@ import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api, type Appointment } from '../lib/api';
 import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
+import { getTranslations } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
@@ -187,6 +188,7 @@ export default async function AppointmentsPage({
   // A multi-day range is never "today", even when it starts today — the
   // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
   const isToday = !isRange && date === todayISO && !customerId;
+  const t = await getTranslations('bookings');
   // Whose bookings these are, for the banner. Taken from the rows rather than
   // the URL so it is the name actually on the bookings, not one a link claimed.
   const customerName = customerId ? (appointments[0]?.customerName ?? null) : null;
@@ -194,11 +196,11 @@ export default async function AppointmentsPage({
   // and labelling it as one would be a screen describing itself falsely. When
   // a client is named, the labels say so instead.
   const dayHint = wholeHistory
-    ? `Every booking for ${customerName ?? 'this client'}`
+    ? t('everyBookingFor', { name: customerName ?? t('thisClient') })
     : formatDateWithWeekday(new Date(`${date}T12:00:00`), timezone);
   // Short form for the KPI/schedule labels when a non-today date is picked, e.g. "21 Aug" — or "21 Aug – 24 Aug" for a range.
   const dayShort = wholeHistory
-    ? (customerName ?? 'This client')
+    ? (customerName ?? t('thisClientTitle'))
     : isRange
       ? `${formatDateShort(new Date(`${date}T12:00:00`))} – ${formatDateShort(new Date(`${toDate}T12:00:00`))}`
       : formatDateShort(new Date(`${date}T12:00:00`));
@@ -209,7 +211,7 @@ export default async function AppointmentsPage({
           the global /search page right above it read as the same control. */}
       <PageHeader
         title={bookingsWord}
-        subtitle="All your appointments in one place."
+        subtitle={t('subtitle')}
         mobileSubtitle
       />
 
@@ -221,13 +223,14 @@ export default async function AppointmentsPage({
         {customerId && (
           <div className="bk-client-banner">
             <span>
-              {wholeHistory ? 'Showing every booking for ' : 'Showing bookings for '}
-              <strong>{customerName ?? 'this client'}</strong>
-              {appointments.length === 0 &&
-                (wholeHistory ? ' — they have none yet' : ' — none in these dates')}
+              {t.rich(wholeHistory ? 'clientShowingAll' : 'clientShowing', {
+                name: customerName ?? t('thisClient'),
+                b: (chunks) => <strong>{chunks}</strong>,
+              })}
+              {appointments.length === 0 && t(wholeHistory ? 'clientNoneYet' : 'clientNoneInDates')}
             </span>
             <a className="btn btn-ghost btn-sm" href="/appointments">
-              Show all bookings
+              {t('showAll')}
             </a>
           </div>
         )}
@@ -251,7 +254,7 @@ export default async function AppointmentsPage({
           toDate={fieldTo}
           customerId={customerId}
           dayHint={dayHint}
-          emptyMessage={copy.bookings.none}
+          emptyMessage={t('none')}
           initialStatus={status}
           initialQuery={query}
           initialSort={sort}

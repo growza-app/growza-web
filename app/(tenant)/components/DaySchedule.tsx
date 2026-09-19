@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { formatTime, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
 import {
@@ -82,6 +83,7 @@ export function DaySchedule({
   /** GRW-219 — `me.capabilities.reschedule`, threaded from the page that fetched it. */
   canMove?: boolean;
 }) {
+  const ts = useTranslations('status');
   // Seeded from the server value, then switched to the real device clock
   // after mount and ticked every minute so the "now" line stays honest.
   const [now, setNow] = useState(() => new Date(nowISO));
@@ -140,7 +142,7 @@ export function DaySchedule({
         <div className="sched-name">{clientNameLabel(booking)}</div>
         <div className="sched-meta">{metaLine(booking)}</div>
       </div>
-      <span className="status-note">{statusChip(booking).text}</span>
+      <span className="status-note">{ts(statusChip(booking).key)}</span>
     </div>
   );
 
@@ -155,7 +157,7 @@ export function DaySchedule({
         </div>
         <div className="sched-actions">
           {callButton(booking, strong)}
-          <span className={`chip ${chip.cls}`}>{chip.text}</span>
+          <span className={`chip ${chip.cls}`}>{ts(chip.key)}</span>
         </div>
       </div>
     );
@@ -207,7 +209,7 @@ export function DaySchedule({
                   <span className="ln">
                     {b.customerName ?? 'Unknown'} <span className="muted">· {summarizeServices(b.serviceNames)}</span>
                   </span>
-                  {settled ? <span className="status-note">{statusChip(b).text}</span> : callButton(b, false)}
+                  {settled ? <span className="status-note">{ts(statusChip(b).key)}</span> : callButton(b, false)}
                 </div>
               );
             })}

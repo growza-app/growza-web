@@ -46,34 +46,6 @@
       "{Sign in}",
       "{Signing in…}"
     ],
-    "web/app/(tenant)/appointments/BookingsList.tsx": [
-      "Busiest staff",
-      "Details",
-      "Top service",
-      "aria-label=\"Call ${…}\"",
-      "label=\"Bookings\"",
-      "sub=\"Today\"",
-      "sub=\"Today\"",
-      "sub=\"Today\"",
-      "sub=\"Today\"",
-      "{${…} schedule}",
-      "{My day}",
-      "{Staff busy}"
-    ],
-    "web/app/(tenant)/appointments/new/page.tsx": [
-      "Ask your developer to start it, or run",
-      "Cannot reach the server.",
-      "npm run dev"
-    ],
-    "web/app/(tenant)/appointments/page.tsx": [
-      "Show all bookings",
-      "subtitle=\"All your appointments in one place.\"",
-      "{Showing bookings for}",
-      "{Showing every booking for}",
-      "{this client}",
-      "{— none in these dates}",
-      "{— they have none yet}"
-    ],
     "web/app/(tenant)/attendance/AttendanceRegister.tsx": [
       "All",
       "All branches",

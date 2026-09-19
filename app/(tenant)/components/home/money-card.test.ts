@@ -97,8 +97,8 @@ describe('Bookings, when Home sends a branch', () => {
   });
 
   it('says which branch, offers the way out, and keeps it through the date form', () => {
-    expect(list).toMatch(/copy\.bookings\.branchOnly\(branch\.name\)/);
-    expect(list).toMatch(/copy\.bookings\.branchClear/);
+    expect(list).toMatch(/t\('branchOnly', \{ name: branch\.name \}\)/);
+    expect(list).toMatch(/t\('branchClear'\)/);
     expect(list).toMatch(/name="location" value=\{branch\.id\}/);
   });
 

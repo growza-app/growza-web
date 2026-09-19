@@ -360,58 +360,6 @@ export const copy = {
     role: 'Role',
   },
 
-  bookings: {
-    // The old table's column headers and its "Which day?" / "Show" filter
-    // strings lived here. GRW-47 replaced that table with cards and a
-    // combined filter bar whose every control applies on selection, so none
-    // of them had a caller left — removed rather than kept as dead copy the
-    // next reader has to check for.
-    none: 'No bookings that day.',
-
-    // Filter bar. Plain words over precise ones: an owner scanning this reads
-    // "Oldest first" without stopping, where "Earliest first" made them think
-    // about what it was earliest *of*. Same reason "Staff" beats "Provider"
-    // and "Search name, phone or booking ID" beats naming every field.
-    search: 'Search',
-    searchHint: 'Search name, phone or booking ID',
-    from: 'From',
-    to: 'To',
-    staff: 'Staff',
-    // Not "Show": the submit button next to it already says that, and two
-    // adjacent controls carrying the same word is worse than one slightly
-    // less casual one. "Status" is a plain word and already the table's own
-    // column header for this same field.
-    statusLabel: 'Status',
-    allStatuses: 'All bookings',
-    /** Jira GRW-310 — Home's "Not marked done" card, opened. */
-    unmarkedOnly: (n: number) => `Showing ${n} finished and not marked`,
-    unmarkedClear: 'Show all',
-    branchOnly: (name: string) => `Showing ${name} only`,
-    branchClear: 'All branches',
-    /*
-     * Jira GRW-216 — "your", every time. On a revenue share this is the
-     * stylist's pay, and the words have to make unmistakable that it is their
-     * own chair and nobody else's.
-     */
-    yourEarnings: 'Your earnings',
-    earningsToday: (n: number) => `Today \u00b7 ${n} ${n === 1 ? 'visit' : 'visits'}`,
-    earningsMonth: (n: number) => `This month \u00b7 ${n} ${n === 1 ? 'visit' : 'visits'}`,
-    sort: 'Order',
-    oldestFirst: 'Oldest first',
-    newestFirst: 'Newest first',
-
-    // Schedule
-    scheduleToday: "Today's schedule",
-    bookingCount: (n: number) => `${n} ${n === 1 ? 'booking' : 'bookings'}`,
-    sameTime: (n: number) => `${n} bookings at the same time`,
-    viewTimeline: 'Timeline',
-    viewList: 'List',
-
-    // Empty state when a filter matches nothing
-    noneFound: 'No bookings found',
-    noneFoundHint: 'Try another name, staff member or date.',
-  },
-
   /**
    * Reports (GRW-48). Every tab's subtitle is written as the question the tab
    * answers, which is the plainest statement of what it is for — an owner who
@@ -829,15 +777,4 @@ export const copy = {
     noPhone: 'no number saved',
   },
 
-  errors: {
-    /*
-     * Jira GRW-220 — said instead of "No bookings that day."
-     *
-     * The distinction is the whole point: an owner who is told their busy
-     * Saturday is empty will go looking for what went wrong in the salon. An
-     * owner told the list could not be loaded will refresh the page.
-     */
-    bookingsUnavailable: 'Could not load your bookings.',
-    bookingsUnavailableHelp: 'The list below is not empty — it could not be fetched. Refresh to try again.',
-  },
 } as const;

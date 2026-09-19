@@ -25,6 +25,7 @@ function bookingHref(id: string, startAt: string, timezone: string): string {
 /** Same field matches a name, any part of a phone number, or a booking reference — the backend decides which. */
 export function SearchClient({ timezone }: { timezone: string }) {
   const t = useTranslations('search');
+  const ts = useTranslations('status');
   const [q, setQ] = useState('');
   const [results, setResults] = useState<SearchResult>(EMPTY);
   const [loading, setLoading] = useState(false);
@@ -169,7 +170,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
                       not-yet-marked and a done booking all read as a service the client
                       had, beside a visit count that only counts the done ones. */}
                   <div className="res-side">
-                    <span className={`chip ${statusChip(b).cls}`}>{statusChip(b).text}</span>
+                    <span className={`chip ${statusChip(b).cls}`}>{ts(statusChip(b).key)}</span>
                     <span className="ref">{bookingRef(b.id)}</span>
                   </div>
                 </a>

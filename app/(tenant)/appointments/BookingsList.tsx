@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
-import { copy } from '../lib/copy';
+import { useTranslations } from 'next-intl';
 import { countsAsNotMarked } from '../lib/live-state';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
@@ -227,6 +227,9 @@ export function BookingsList({
   // The server's clock at render. Every redraw (LiveRefresh forces one a minute) brings a fresh
   // `nowISO`, so nothing here needs a timer of its own.
   const now = useMemo(() => new Date(nowISO), [nowISO]);
+  const t = useTranslations('bookings');
+  const ts = useTranslations('status');
+  const te = useTranslations('errors');
   const [page, setPage] = useState(1);
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
   const [open, setOpen] = useState<BookingGroup | null>(null);
@@ -367,14 +370,15 @@ export function BookingsList({
   // "today" only when the screen is showing one day. Over a From/To range the
   // figure covers every day in it, and the old label said otherwise.
   const oneDay = date === toDate;
+  const range = oneDay ? 'today' : 'range';
   const metricLabel =
     metric === 'staff'
-      ? `Busiest staff ${oneDay ? 'today' : 'in this range'}`
+      ? t('metricStaff', { range })
       : metric === 'service'
-        ? `${viewerIsStaff ? 'Your top service' : 'Top service'} ${oneDay ? 'today' : 'in this range'}`
+        ? t(viewerIsStaff ? 'metricServiceOwn' : 'metricService', { range })
         : viewerIsStaff
-          ? `Your ${oneDay ? 'day' : 'time'} booked`
-          : `Staff busy ${oneDay ? 'today' : 'in this range'}`;
+          ? t('metricMyTime', { range })
+          : t('metricBusy', { range });
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
@@ -430,7 +434,7 @@ export function BookingsList({
       <a
         className="call"
         href={`tel:${dialable(b.customerPhone)}`}
-        aria-label={`Call ${b.customerName ?? 'customer'}`}
+        aria-label={t('callName', { name: b.customerName ?? t('customer') })}
         onClick={(e) => e.stopPropagation()}
       >
         <IconPhone />
@@ -445,7 +449,7 @@ export function BookingsList({
         }}
       >
         <IconCalendar />
-        Details
+        {t('details')}
       </button>
     );
 
@@ -470,7 +474,7 @@ export function BookingsList({
             <span className="bk-card-time">
               {clock} <span>{meridiem}</span> · {formatDuration(b.totalMin)}
             </span>
-            <span className={`chip ${chip.cls}`}>{chip.text}</span>
+            <span className={`chip ${chip.cls}`}>{ts(chip.key)}</span>
           </div>
           <div className="bk-card-name-row">
             {/*
@@ -512,7 +516,7 @@ export function BookingsList({
           </div>
         </div>
         <div className="bk-card-right">
-          <span className={`chip ${chip.cls}`}>{chip.text}</span>
+          <span className={`chip ${chip.cls}`}>{ts(chip.key)}</span>
           {actionFor(b)}
         </div>
       </div>
@@ -535,18 +539,18 @@ export function BookingsList({
         */}
       {earnings && (
         <div className="bk-earnings">
-          <div className="bk-earnings-head">{copy.bookings.yourEarnings}</div>
+          <div className="bk-earnings-head">{t('yourEarnings')}</div>
           <div className="bk-earnings-figures">
             <div className="bk-earnings-slice">
               <div className="bk-earnings-amount">{formatMoney(earnings.today.revenueMinor)}</div>
               <div className="bk-earnings-label">
-                {copy.bookings.earningsToday(earnings.today.bookings)}
+                {t('earningsToday', { count: earnings.today.bookings })}
               </div>
             </div>
             <div className="bk-earnings-slice">
               <div className="bk-earnings-amount">{formatMoney(earnings.thisMonth.revenueMinor)}</div>
               <div className="bk-earnings-label">
-                {copy.bookings.earningsMonth(earnings.thisMonth.bookings)}
+                {t('earningsMonth', { count: earnings.thisMonth.bookings })}
               </div>
             </div>
           </div>
@@ -564,9 +568,9 @@ export function BookingsList({
       {unmarkedOnly && (
         <div className="bk-unmarked-chip" role="status">
           <IconClock />
-          <span>{copy.bookings.unmarkedOnly(filtered.length)}</span>
+          <span>{t('unmarkedOnly', { count: filtered.length })}</span>
           <button type="button" onClick={() => { setUnmarkedOnly(false); setPage(1); }}>
-            {copy.bookings.unmarkedClear}
+            {t('unmarkedClear')}
           </button>
         </div>
       )}
@@ -574,7 +578,7 @@ export function BookingsList({
       {branch && (
         <div className="bk-unmarked-chip bk-branch-chip" role="status">
           <IconStaff />
-          <span>{copy.bookings.branchOnly(branch.name)}</span>
+          <span>{t('branchOnly', { name: branch.name })}</span>
           <button
             type="button"
             onClick={() => {
@@ -588,7 +592,7 @@ export function BookingsList({
               }
             }}
           >
-            {copy.bookings.branchClear}
+            {t('branchClear')}
           </button>
         </div>
       )}
@@ -599,17 +603,17 @@ export function BookingsList({
           tone="green"
           icon={<IconCalendar />}
           value={inView.length}
-          label="Bookings"
-          sub={isToday ? 'Today' : dayLabel}
+          label={t('kpiBookings')}
+          sub={isToday ? t('today') : dayLabel}
           active={statusFilter === ''}
           onPress={() => {
             setStatusFilter('');
             setPage(1);
           }}
         />
-        <Kpi tone="amber" icon={<IconClock />} value={countIn('confirmed')} label={copy.status.confirmed} sub={isToday ? 'Today' : dayLabel} {...statusTile('confirmed')} />
-        <Kpi tone="purple" icon={<IconCheck />} value={countIn('completed')} label={copy.status.done} sub={isToday ? 'Today' : dayLabel} {...statusTile('completed')} />
-        <Kpi tone="red" icon={<IconUserPlus />} value={countIn('no_show')} label={copy.status.didNotCome} sub={isToday ? 'Today' : dayLabel} {...statusTile('no_show')} />
+        <Kpi tone="amber" icon={<IconClock />} value={countIn('confirmed')} label={ts('confirmed')} sub={isToday ? t('today') : dayLabel} {...statusTile('confirmed')} />
+        <Kpi tone="purple" icon={<IconCheck />} value={countIn('completed')} label={ts('done')} sub={isToday ? t('today') : dayLabel} {...statusTile('completed')} />
+        <Kpi tone="red" icon={<IconUserPlus />} value={countIn('no_show')} label={ts('didNotCome')} sub={isToday ? t('today') : dayLabel} {...statusTile('no_show')} />
 
         {/* "At a glance" — the KPI row's 5th column on desktop (Bookings.dc.html,
             GRW-47), and its own full-width row below the 2x2 grid on mobile
@@ -626,11 +630,11 @@ export function BookingsList({
               value={metric}
               onChange={(e) => setMetric(e.target.value as typeof metric)}
             >
-              <option value="busy">{viewerIsStaff ? 'My day' : 'Staff busy'}</option>
+              <option value="busy">{viewerIsStaff ? t('optMyDay') : t('optStaffBusy')}</option>
               {/* "Busiest staff" over a one-person roster can only ever name
                   the reader. Offered to owners and managers only. */}
-              {!viewerIsStaff && <option value="staff">Busiest staff</option>}
-              <option value="service">Top service</option>
+              {!viewerIsStaff && <option value="staff">{t('optBusiestStaff')}</option>}
+              <option value="service">{t('optTopService')}</option>
             </select>
           </div>
           <div className="bk-metric-main">
@@ -673,7 +677,7 @@ export function BookingsList({
           {sort !== 'asc' && <input type="hidden" name="sort" value={sort} />}
 
           <div className="bk-field bk-field-search desktop-only">
-            <label htmlFor="booking-search">{copy.bookings.search}</label>
+            <label htmlFor="booking-search">{t('search')}</label>
             <div className="bk-search-inline">
               <IconSearch />
               <input
@@ -684,7 +688,7 @@ export function BookingsList({
                   setQuery(e.target.value);
                   setPage(1);
                 }}
-                placeholder={copy.bookings.searchHint}
+                placeholder={t('searchHint')}
               />
             </div>
           </div>
@@ -703,14 +707,14 @@ export function BookingsList({
                   setQuery(e.target.value);
                   setPage(1);
                 }}
-                placeholder={copy.bookings.searchHint}
-                aria-label={copy.bookings.search}
+                placeholder={t('searchHint')}
+                aria-label={t('search')}
               />
             </div>
           </div>
 
           <div className="bk-field">
-            <label htmlFor="date">{copy.bookings.from}</label>
+            <label htmlFor="date">{t('from')}</label>
             <input
               id="date"
               name="date"
@@ -721,7 +725,7 @@ export function BookingsList({
             <span className="field-hint">{dayHint}</span>
           </div>
           <div className="bk-field">
-            <label htmlFor="to">{copy.bookings.to}</label>
+            <label htmlFor="to">{t('to')}</label>
             <input
               id="to"
               name="to"
@@ -732,7 +736,7 @@ export function BookingsList({
           </div>
           {!viewerIsStaff && (
           <div className="bk-field bk-field-staff desktop-only">
-            <label htmlFor="bk-staff-select">{copy.bookings.staff}</label>
+            <label htmlFor="bk-staff-select">{t('staff')}</label>
             <select
               id="bk-staff-select"
               value={staffFilter}
@@ -757,7 +761,7 @@ export function BookingsList({
           <div className="bk-field bk-field-status">
             <label htmlFor="bk-status">
               <IconFilter />
-              {copy.bookings.statusLabel}
+              {t('statusLabel')}
             </label>
             <select
               id="bk-status"
@@ -767,18 +771,18 @@ export function BookingsList({
                 setPage(1);
               }}
             >
-              <option value="">{copy.bookings.allStatuses}</option>
-              <option value="confirmed">{copy.status.confirmed}</option>
-              <option value="completed">{copy.status.done}</option>
-              <option value="no_show">{copy.status.didNotCome}</option>
-              <option value="cancelled">{copy.status.cancelled}</option>
+              <option value="">{t('allStatuses')}</option>
+              <option value="confirmed">{ts('confirmed')}</option>
+              <option value="completed">{ts('done')}</option>
+              <option value="no_show">{ts('didNotCome')}</option>
+              <option value="cancelled">{ts('cancelled')}</option>
             </select>
           </div>
 
           <div className="bk-field bk-field-sort">
             <label htmlFor="bk-sort">
               <IconSort />
-              {copy.bookings.sort}
+              {t('sort')}
             </label>
             <select
               id="bk-sort"
@@ -788,8 +792,8 @@ export function BookingsList({
                 setPage(1);
               }}
             >
-              <option value="asc">{copy.bookings.oldestFirst}</option>
-              <option value="desc">{copy.bookings.newestFirst}</option>
+              <option value="asc">{t('oldestFirst')}</option>
+              <option value="desc">{t('newestFirst')}</option>
             </select>
           </div>
 
@@ -814,7 +818,7 @@ export function BookingsList({
              * needs to know the number above is not their business.
              */
             <div className="banner">
-              <strong>{copy.errors.bookingsUnavailable}</strong> {copy.errors.bookingsUnavailableHelp}
+              <strong>{te('bookingsUnavailable')}</strong> {te('bookingsUnavailableHelp')}
             </div>
           ) : (
             <div className="empty">{emptyMessage}</div>
@@ -842,8 +846,8 @@ export function BookingsList({
 
       <div className="bk-sched-head">
         <h3>
-          {isToday ? copy.bookings.scheduleToday : `${dayLabel} schedule`}
-          <span className="bk-sched-count">{copy.bookings.bookingCount(filtered.length)}</span>
+          {isToday ? t('scheduleToday') : t('scheduleOn', { day: dayLabel })}
+          <span className="bk-sched-count">{t('bookingCount', { count: filtered.length })}</span>
         </h3>
         {/* Segmented Timeline | List, both always visible with the active one
             highlighted (per the mock) — the old single pill toggled blind, so
@@ -855,7 +859,7 @@ export function BookingsList({
             onClick={() => setView('timeline')}
           >
             <IconClock />
-            {copy.bookings.viewTimeline}
+            {t('viewTimeline')}
           </button>
           <button
             type="button"
@@ -863,7 +867,7 @@ export function BookingsList({
             onClick={() => setView('list')}
           >
             <IconMenu />
-            {copy.bookings.viewList}
+            {t('viewList')}
           </button>
         </div>
       </div>
@@ -871,8 +875,8 @@ export function BookingsList({
       <div className="bk-scroll">
       {noMatches ? (
         <div className="bk-no-matches">
-          <div className="bk-no-matches-title">{copy.bookings.noneFound}</div>
-          <div className="bk-no-matches-sub">{copy.bookings.noneFoundHint}</div>
+          <div className="bk-no-matches-title">{t('noneFound')}</div>
+          <div className="bk-no-matches-sub">{t('noneFoundHint')}</div>
         </div>
       ) : view === 'timeline' ? (
         <div className="bk-timeline">
@@ -901,7 +905,7 @@ export function BookingsList({
                   {multi && (
                     <div className="bk-multi-badge">
                       <IconStaff />
-                      {copy.bookings.sameTime(slot.items.length)}
+                      {t('sameTime', { count: slot.items.length })}
                     </div>
                   )}
                   <div className="bk-tl-cards">{slot.items.map((b) => cardInner(b))}</div>

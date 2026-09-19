@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { createTranslator } from 'next-intl';
+import { parse, TYPE, type MessageFormatElement } from '@formatjs/icu-messageformat-parser';
+import { copy } from '../app/(tenant)/lib/copy';
 import en from '../messages/en.json';
 import { flatten, pickNamespaces, withFallback, type Messages } from './messages';
 import { CLIENT_MESSAGES } from './client-messages';
@@ -17,9 +19,28 @@ const DIR = 'web/messages';
 const load = (file: string) => JSON.parse(readFileSync(`${DIR}/${file}`, 'utf8')) as Messages;
 const languages = readdirSync(DIR).filter((f) => f.endsWith('.json') && f !== 'en.json');
 
-/** The `{name}` arguments and `<tag>` wrappers a message uses — what a translator must keep. */
-const placeholders = (text: string) =>
-  [...text.matchAll(/\{\s*(\w+)\s*[,}]|<(\w+)>/g)].map((m) => m[1] ?? `<${m[2]}>`).sort();
+/**
+ * The arguments and `<tag>` wrappers a message uses — what a translator must keep.
+ * Read with the real ICU parser: a regex mistakes the text inside a `select`
+ * branch (`{today}`) for an argument, and cannot see through a translated one.
+ */
+function placeholders(text: string): string[] {
+  const found = new Set<string>();
+  const walk = (els: MessageFormatElement[]) => {
+    for (const el of els) {
+      if (el.type === TYPE.literal || el.type === TYPE.pound) continue;
+      if (el.type === TYPE.tag) {
+        found.add(`<${el.value}>`);
+        walk(el.children);
+      } else {
+        found.add(el.value);
+        if (el.type === TYPE.plural || el.type === TYPE.select) for (const opt of Object.values(el.options)) walk(opt.value);
+      }
+    }
+  };
+  walk(parse(text));
+  return [...found].sort();
+}
 
 describe('the message files', () => {
   it('finds the languages at all', () => {
@@ -116,5 +137,13 @@ describe('the groups handed to the browser', () => {
   it('lists only groups that exist', () => {
     const known = Object.keys(en);
     expect((CLIENT_MESSAGES as readonly string[]).filter((g) => !known.includes(g))).toEqual([]);
+  });
+});
+
+describe('status words while two homes exist', () => {
+  // Reports, Staff and the CSV export still read `copy.status`; the Bookings screens read
+  // the message file. Until those move, the English must be the same in both.
+  it('reads the same in copy.ts and messages/en.json', () => {
+    expect(en.status).toEqual({ ...copy.status });
   });
 });
