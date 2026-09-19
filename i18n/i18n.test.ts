@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { createTranslator } from 'next-intl';
 import en from '../messages/en.json';
 import { flatten, pickNamespaces, withFallback, type Messages } from './messages';
+import { CLIENT_MESSAGES } from './client-messages';
 
 /**
  * Jira GRW-319 — every language has every key, and a pending translation shows
@@ -82,5 +83,38 @@ describe('ICU plurals', () => {
 
   it('is right in Hindi for 0, 1 and 2', () => {
     expect([0, 1, 2].map((n) => visits('hi', n))).toEqual(['0 विज़िट', '1 विज़िट', '2 विज़िट']);
+  });
+});
+
+describe('the groups handed to the browser', () => {
+  /** Every source file under web/app, so a new screen is covered without touching this test. */
+  const sources = (dir: string): string[] =>
+    readdirSync(dir).flatMap((e) => {
+      const full = `${dir}/${e}`;
+      if (e === 'node_modules' || e === '.next') return [];
+      return statSync(full).isDirectory() ? sources(full) : /\.(tsx|ts)$/.test(e) && !/\.test\./.test(e) ? [full] : [];
+    });
+
+  it('finds the screens at all', () => {
+    expect(sources('web/app').length).toBeGreaterThan(100);
+  });
+
+  it('registers every group a component reads with useTranslations', () => {
+    // `useTranslations` may run in a client component, or in a shared one a client
+    // component imports — so every group it reads must be registered, not only
+    // those in files marked 'use client'.
+    const missing: string[] = [];
+    for (const file of sources('web/app')) {
+      for (const m of readFileSync(file, 'utf8').matchAll(/useTranslations\(\s*'([\w.]+)'\s*\)/g)) {
+        const group = m[1]!.split('.')[0]!;
+        if (!(CLIENT_MESSAGES as readonly string[]).includes(group)) missing.push(`${file}  useTranslations('${m[1]}')`);
+      }
+    }
+    expect(missing, `\nThese read a message group the browser is never given (add it to web/i18n/client-messages.ts):\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
+  it('lists only groups that exist', () => {
+    const known = Object.keys(en);
+    expect((CLIENT_MESSAGES as readonly string[]).filter((g) => !known.includes(g))).toEqual([]);
   });
 });

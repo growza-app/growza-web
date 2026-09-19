@@ -73,7 +73,7 @@ describe('the Search screen has no search button in its header', () => {
   const pageHeader = readFileSync(resolve(__dirname, '../components/PageHeader.tsx'), 'utf8');
 
   it('asks the header to leave it out', () => {
-    expect(client).toMatch(/<PageHeader title=\{copy\.search\.title\} hideSearch \/>/);
+    expect(client).toMatch(/<PageHeader title=\{t\('title'\)\} hideSearch \/>/);
   });
 
   it('and the header honours it, only on request — every other screen keeps its search button', () => {

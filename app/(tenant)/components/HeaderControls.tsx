@@ -1,7 +1,7 @@
 import { NotificationBell } from './NotificationBell';
 import { AccountMenu } from './AccountMenu';
 import { IconSearch } from './icons';
-import { copy } from '../lib/copy';
+import { useTranslations } from 'next-intl';
 
 /**
  * Jira GRW-30 — search, notifications and account, in that order, on every screen.
@@ -40,6 +40,7 @@ import { copy } from '../lib/copy';
  * beside it is the thing to read, so search is the icon.
  */
 export function HeaderControls({ wide = false, hideSearch = false }: { wide?: boolean; hideSearch?: boolean }) {
+  const t = useTranslations('search');
   return (
     <>
       {/* Jira GRW-307 — not on the Search screen, where it would only reload the page you are on. */}
@@ -47,10 +48,10 @@ export function HeaderControls({ wide = false, hideSearch = false }: { wide?: bo
         <a
           className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`}
           href="/search"
-          aria-label={copy.search.title}
+          aria-label={t('title')}
         >
           <IconSearch />
-          {wide && <span>{copy.search.prompt}</span>}
+          {wide && <span>{t('prompt')}</span>}
         </a>
       )}
       <NotificationBell />

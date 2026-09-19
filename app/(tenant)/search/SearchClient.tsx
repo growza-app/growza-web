@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { formatDate } from '../lib/format';
 import { PageHeader } from '../components/PageHeader';
 import { api, formatTime, type SearchResult } from '../lib/api';
-import { copy } from '../lib/copy';
 import { initials, statusChip } from '../lib/appointment-display';
 import { bookingRef, dialable } from '../components/BookingSheet';
 import { ClientProfileCard } from '../components/ClientProfileCard';
@@ -88,10 +87,10 @@ export function SearchClient({ timezone }: { timezone: string }) {
         beside a screen that is one big search box, and it read as broken. Every
         other screen still has it.
       */}
-      <PageHeader title={copy.search.title} hideSearch />
+      <PageHeader title={t('title')} hideSearch />
       <div className="page-body">
         <div className="srch-bar-row">
-          <a className="icon-btn" href="/" aria-label="Back">
+          <a className="icon-btn" href="/" aria-label={t('back')}>
             <IconArrowLeft />
           </a>
           <div className="search-bar" style={{ flex: 1 }}>
@@ -101,14 +100,14 @@ export function SearchClient({ timezone }: { timezone: string }) {
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder={copy.search.placeholder}
-              aria-label={copy.search.placeholder}
+              placeholder={t('placeholder')}
+              aria-label={t('placeholder')}
             />
             {q && (
               <button
                 type="button"
                 onClick={() => setQ('')}
-                aria-label="Clear"
+                aria-label={t('clear')}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0, display: 'grid' }}
               >
                 <IconClose />
@@ -117,12 +116,12 @@ export function SearchClient({ timezone }: { timezone: string }) {
           </div>
         </div>
 
-        {term.length < 2 && <div className="empty">{copy.search.hint}</div>}
-        {nothing && <div className="empty">{copy.search.nothing}</div>}
+        {term.length < 2 && <div className="empty">{t('hint')}</div>}
+        {nothing && <div className="empty">{t('nothing')}</div>}
 
         {results.customers.length > 0 && (
           <>
-            <div className="sec-label">{copy.search.customers}</div>
+            <div className="sec-label">{t('customers')}</div>
             <div className="card">
               {results.customers.map((c) => (
                 <div className="res-row" key={c.id}>
@@ -131,7 +130,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
                   <button type="button" className="res-main" onClick={() => setOpenClientId(c.id)}>
                     <div className="avatar">{initials(c.name)}</div>
                     <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>{c.name ?? 'Unknown'}</div>
+                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>{c.name ?? t('unknown')}</div>
                       <div className="muted" style={{ fontSize: 13 }}>
                         {c.phone ? `${c.phone} · ` : ''}
                         {t('visits', { count: c.visitCount })}
@@ -140,7 +139,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
                   </button>
                   {/* GRW-199 — no number, no call button. */}
                   {c.phone && (
-                    <a className="call" href={`tel:${dialable(c.phone)}`} aria-label={`Call ${c.name ?? 'customer'}`}>
+                    <a className="call" href={`tel:${dialable(c.phone)}`} aria-label={t('call', { name: c.name ?? t('customer') })}>
                       <IconPhone />
                     </a>
                   )}
@@ -152,7 +151,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
 
         {results.bookings.length > 0 && (
           <>
-            <div className="sec-label">{copy.search.bookings}</div>
+            <div className="sec-label">{t('bookings')}</div>
             <div className="card">
               {results.bookings.map((b) => (
                 <a className="res-row res-link" key={b.id} href={bookingHref(b.id, b.startAt, timezone)}>
@@ -162,7 +161,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
                       · {formatTime(b.startAt, timezone)}
                     </div>
                     <div className="muted" style={{ fontSize: 13 }}>
-                      {b.customerName ?? 'Unknown'} · {b.serviceName}
+                      {b.customerName ?? t('unknown')} · {b.serviceName}
                       {b.providerName ? ` · ${b.providerName}` : ''}
                     </div>
                   </div>

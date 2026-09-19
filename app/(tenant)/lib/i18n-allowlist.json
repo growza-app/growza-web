@@ -411,14 +411,6 @@
     "web/app/(tenant)/more/page.tsx": [
       "label: \"Attendance\""
     ],
-    "web/app/(tenant)/notifications/NotificationsClient.tsx": [
-      "Clear all",
-      "Loading…",
-      "Mark all read",
-      "Nothing yet — new bookings will show up here.",
-      "Try again",
-      "title=\"Notifications\""
-    ],
     "web/app/(tenant)/offers/ComboBuilder.tsx": [
       "% OFF",
       "% off",
@@ -723,13 +715,6 @@
     ],
     "web/app/(tenant)/reports/page.tsx": [
       "Reports are not available for your role. Ask the owner if you need them."
-    ],
-    "web/app/(tenant)/search/SearchClient.tsx": [
-      "aria-label=\"Back\"",
-      "aria-label=\"Call ${…}\"",
-      "aria-label=\"Clear\"",
-      "{Unknown}",
-      "{Unknown}"
     ],
     "web/app/(tenant)/services/AddServicesChooser.tsx": [
       ", with durations and prices pre-filled — edit or drop anything before it saves.",

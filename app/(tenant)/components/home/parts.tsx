@@ -1,8 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
-import { copy } from '../../lib/copy';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import type { HomeCopy } from '../../lib/home-copy';
 import { liveState, minutesBetween, type LiveState } from '../../lib/live-state';
@@ -81,6 +81,7 @@ export function HomeHeader({
   /** Owner only — the Day summary is the business's takings. */
   onDaySummary?: () => void;
 }) {
+  const s = useTranslations('search');
   return (
     <header className="hm-head">
       <MenuButton />
@@ -98,9 +99,9 @@ export function HomeHeader({
         <div className="hm-head-sub">{sub}</div>
       </div>
       <div className="hm-head-controls">
-        <a className="hdr-search hdr-search-wide" href="/search" aria-label={copy.search.title}>
+        <a className="hdr-search hdr-search-wide" href="/search" aria-label={s('title')}>
           <IconSearch />
-          <span>{copy.search.prompt}</span>
+          <span>{s('prompt')}</span>
         </a>
         {onDaySummary ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>

@@ -3,9 +3,29 @@
     "busy": "The app is busy right now.",
     "busyHelp": "Please wait a moment, then try again.",
     "down": "Cannot reach the server.",
-    "downHelp": "Ask your developer to start it, or run <code>npm run dev</code>."
+    "downHelp": "Ask your developer to start it, or run <code>npm run dev</code>.",
+    "tryAgain": "Try again"
   },
   "search": {
+    "title": "Search",
+    "prompt": "Search anything...",
+    "placeholder": "Name, phone, or booking ID",
+    "customers": "CUSTOMERS",
+    "bookings": "BOOKINGS",
+    "nothing": "Nothing found.",
+    "hint": "Search by a customer name, any part of their phone number, or a booking ID.",
+    "back": "Back",
+    "clear": "Clear",
+    "call": "Call {name}",
+    "customer": "customer",
+    "unknown": "Unknown",
     "visits": "{count, plural, one {# visit} other {# visits}}"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "clearAll": "Clear all",
+    "loading": "Loading…",
+    "empty": "Nothing yet — new bookings will show up here."
   }
 }

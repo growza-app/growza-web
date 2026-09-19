@@ -37,6 +37,7 @@ import {
  */
 export function NotificationsClient() {
   const t = useTranslations('errors');
+  const n = useTranslations('notifications');
   const router = useRouter();
   const [events, setEvents] = useState<ActivityEvent[] | null>(null);
   const [error, setError] = useState<LoadErrorKind | null>(null);
@@ -88,7 +89,7 @@ export function NotificationsClient() {
 
   return (
     <>
-      <PageHeader title="Notifications" onBack={() => router.back()} />
+      <PageHeader title={n('title')} onBack={() => router.back()} />
       <div className="page-body">
         {error ? (
           <div className="banner">
@@ -96,13 +97,13 @@ export function NotificationsClient() {
             {error === 'busy' ? <> {t('busyHelp')}</> : null}
             <div style={{ marginTop: 10 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setRetryCount((n) => n + 1)}>
-                Try again
+                {t('tryAgain')}
               </button>
             </div>
           </div>
         ) : !events ? (
           <div className="card">
-            <div className="notif-empty">Loading…</div>
+            <div className="notif-empty">{n('loading')}</div>
           </div>
         ) : (
           <div className="card">
@@ -111,19 +112,19 @@ export function NotificationsClient() {
                 <div className="notif-dropdown-actions">
                   {unreadCount > 0 && (
                     <button type="button" className="notif-mark-read" onClick={markAllRead}>
-                      Mark all read
+                      {n('markAllRead')}
                     </button>
                   )}
                   {visibleEvents.length > 0 && (
                     <button type="button" className="notif-clear-all" onClick={clearAll}>
-                      Clear all
+                      {n('clearAll')}
                     </button>
                   )}
                 </div>
               </div>
             ) : null}
             {visibleEvents.length === 0 ? (
-              <div className="notif-empty">Nothing yet — new bookings will show up here.</div>
+              <div className="notif-empty">{n('empty')}</div>
             ) : (
               visibleEvents.map((e) => {
                 const meta = TOPIC_META[e.topic];

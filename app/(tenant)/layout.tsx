@@ -25,6 +25,7 @@ import { serverLang } from './lib/lang';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { pickNamespaces, type Messages } from '../../i18n/messages';
+import { CLIENT_MESSAGES } from '../../i18n/client-messages';
 
 /**
  * Jira GRW-222 — the Home redesign's typeface, and the Devanagari one Hindi needs.
@@ -109,9 +110,6 @@ export const viewport: Viewport = {
   // No maximumScale: pinch-zoom is how a low-vision owner reads the small print (WCAG 1.4.4, Jira GRW-306).
   themeColor: '#0f3d2e',
 };
-
-/** Jira GRW-319 — message groups that client components read (`useTranslations`). Add a group here when a client component starts using it. */
-const CLIENT_MESSAGES = ['errors', 'search'] as const;
 
 export const dynamic = 'force-dynamic';
 

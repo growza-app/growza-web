@@ -139,18 +139,6 @@ export const copy = {
     done: 'Done',
   },
 
-  search: {
-    title: 'Search',
-    /* The pill in Home's header. An invitation, not an instruction — the
-       instruction is `placeholder`, on the field you land on. GRW-30. */
-    prompt: 'Search anything...',
-    placeholder: 'Name, phone, or booking ID',
-    customers: 'CUSTOMERS',
-    bookings: 'BOOKINGS',
-    nothing: 'Nothing found.',
-    hint: 'Search by a customer name, any part of their phone number, or a booking ID.',
-  },
-
   kpi: {
     bookingsToday: 'Bookings today',
     missedThisWeek: 'No-shows this week',
