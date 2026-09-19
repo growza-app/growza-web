@@ -308,24 +308,6 @@ export const copy = {
     done: 'Done',
   },
 
-  freeTimes: {
-    title: 'Free times',
-    subtitle: 'Times customers can book right now. Already-booked times and breaks are removed automatically.',
-    // Same screen, reframed: reached via the mobile "+" button, this is
-    // someone's entry point to actually creating a booking, not a glance
-    // at the schedule — the heading should say so.
-    newBookingTitle: 'New booking',
-    newBookingSubtitle: 'Pick a service and a time to book someone in.',
-    pickService: 'Which service?',
-    pickDay: 'Which day?',
-    show: 'Show free times',
-    countLabel: (n: number) => `${n} ${n === 1 ? 'time' : 'times'} free`,
-    none: 'No free times left — the day is full, closed, or too soon to book.',
-    morning: 'Morning',
-    afternoon: 'Afternoon',
-    evening: 'Evening',
-  },
-
   services: {
     subtitle: 'What you offer, how long each takes, and what you charge.',
     name: 'Service',

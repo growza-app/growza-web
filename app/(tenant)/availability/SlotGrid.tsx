@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, BookingConflictError, type AvailabilityResponse } from '../lib/api';
-import { copy } from '../lib/copy';
+import { useTranslations } from 'next-intl';
 import { PhoneField } from '../components/PhoneField';
 import { fromStoredPhone, toStoredPhone, validateNationalPhone } from '../lib/phone';
 
@@ -53,6 +53,9 @@ function loadRememberedCustomer(): RememberedCustomer | null {
  */
 export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Props) {
   const router = useRouter();
+  const t = useTranslations('freeTimes');
+  const sectionLabel = (name: string) =>
+    name === 'Morning' ? t('morning') : name === 'Afternoon' ? t('afternoon') : name === 'Evening' ? t('evening') : name;
   const [modal, setModal] = useState<ModalState>({ step: 'closed' });
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -136,7 +139,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
       setModal({ step: 'success', slot });
       router.refresh(); // the booked slot should vanish from the free-times list
     } catch (error) {
-      const message = error instanceof BookingConflictError ? error.message : 'Something went wrong. Please try again.';
+      const message = error instanceof BookingConflictError ? error.message : t('wentWrong');
       setModal({ step: 'conflict', slot, message });
     }
   };
@@ -170,17 +173,17 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
       {selectedSlots.length > 0 && (
         <div className="slot-actions">
           <div className="slot-actions-count">
-            {selectedSlots.length} {selectedSlots.length === 1 ? 'time' : 'times'} selected
+            {t('selected', { count: selectedSlots.length })}
             <button type="button" className="link-btn" onClick={() => setSelected([])}>
-              Clear
+              {t('clear')}
             </button>
           </div>
           <div className="slot-actions-buttons">
             <button type="button" className="btn" onClick={sendOnWhatsApp}>
-              Send {selectedSlots.length} {selectedSlots.length === 1 ? 'time' : 'times'} on WhatsApp
+              {t('sendOnWhatsApp', { count: selectedSlots.length })}
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => openBooking(selectedSlots[0]!)}>
-              Book {selectedSlots[0]!.local}
+              {t('bookAt', { time: selectedSlots[0]!.local })}
             </button>
           </div>
         </div>
@@ -198,7 +201,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
 
                 <PhoneField
                   id="phone"
-                  label="Phone number"
+                  label={t('phoneNumber')}
                   required
                   value={phone}
                   onChange={(v) => {
@@ -209,11 +212,11 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
                   disabled={modal.step === 'submitting'}
                 />
                 <div className="field">
-                  <label htmlFor="name">Name (optional)</label>
+                  <label htmlFor="name">{t('nameOptional')}</label>
                   <input
                     id="name"
                     type="text"
-                    placeholder="Customer's name"
+                    placeholder={t('namePlaceholder')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={modal.step === 'submitting'}
@@ -221,19 +224,19 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
                 </div>
                 {rememberedCustomer && (
                   <p className="muted" style={{ fontSize: 13, marginTop: -4 }}>
-                    Booking another service for this customer.{' '}
+                    {t('bookingAnother')}{' '}
                     <button type="button" className="link-btn" onClick={forgetCustomer}>
-                      Not them? Clear
+                      {t('notThem')}
                     </button>
                   </p>
                 )}
 
                 <div className="modal-actions">
                   <button className="btn btn-ghost" onClick={close} disabled={modal.step === 'submitting'}>
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button className="btn" onClick={submit} disabled={modal.step === 'submitting' || phone.length === 0}>
-                    {modal.step === 'submitting' ? 'Booking…' : 'Confirm booking'}
+                    {modal.step === 'submitting' ? t('booking') : t('confirmBooking')}
                   </button>
                 </div>
               </>
@@ -241,13 +244,12 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
 
             {modal.step === 'success' && (
               <>
-                <h3>Booked ✓</h3>
+                <h3>{t('booked')}</h3>
                 <p className="muted">
-                  {serviceName} at {modal.slot.local} with {providerName(modal.slot.assignedProviderId)}.
+                  {t('bookedLine', { service: serviceName, time: modal.slot.local, provider: providerName(modal.slot.assignedProviderId) })}
                 </p>
                 <p className="muted" style={{ fontSize: 13.5 }}>
-                  Want to book another service for the same customer? Pick a different service above, then choose a
-                  time — their phone number will already be filled in.
+                  {t('bookAnotherHint')}
                 </p>
                 <div className="modal-actions">
                   <button
@@ -257,10 +259,10 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
                       close();
                     }}
                   >
-                    Different customer
+                    {t('differentCustomer')}
                   </button>
                   <button className="btn" onClick={close}>
-                    Done
+                    {t('done')}
                   </button>
                 </div>
               </>
@@ -268,7 +270,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
 
             {modal.step === 'conflict' && (
               <>
-                <h3>Couldn&apos;t book that</h3>
+                <h3>{t('couldntBook')}</h3>
                 <p className="muted">{modal.message}</p>
                 <div className="modal-actions">
                   <button
@@ -278,7 +280,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
                       router.refresh();
                     }}
                   >
-                    Show free times again
+                    {t('showAgain')}
                   </button>
                 </div>
               </>
@@ -288,11 +290,4 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
       )}
     </>
   );
-}
-
-function sectionLabel(s: string): string {
-  if (s === 'Morning') return copy.freeTimes.morning;
-  if (s === 'Afternoon') return copy.freeTimes.afternoon;
-  if (s === 'Evening') return copy.freeTimes.evening;
-  return s;
 }

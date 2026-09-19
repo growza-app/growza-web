@@ -1,7 +1,7 @@
 import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
-import { copy } from '../lib/copy';
+import { getTranslations } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
@@ -18,13 +18,14 @@ export default async function AvailabilityPage({
   const params = await searchParams;
   const isBookingIntent = params.intent === 'book';
 
+  const t = await getTranslations('freeTimes');
   let me, services, providers;
   try {
     [me, services, providers] = await Promise.all([api.me(), api.services(), api.providers()]);
   } catch (error) {
     return (
       <>
-        <PageHeader title={isBookingIntent ? copy.freeTimes.newBookingTitle : copy.freeTimes.title} />
+        <PageHeader title={isBookingIntent ? t('newBookingTitle') : t('title')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
@@ -52,8 +53,8 @@ export default async function AvailabilityPage({
   return (
     <>
       <PageHeader
-        title={isBookingIntent ? copy.freeTimes.newBookingTitle : copy.freeTimes.title}
-        subtitle={isBookingIntent ? copy.freeTimes.newBookingSubtitle : copy.freeTimes.subtitle}
+        title={isBookingIntent ? t('newBookingTitle') : t('title')}
+        subtitle={isBookingIntent ? t('newBookingSubtitle') : t('subtitle')}
       />
 
       <div className="page-body">
@@ -61,29 +62,29 @@ export default async function AvailabilityPage({
           <form method="get" className="filters filters-inline">
             {isBookingIntent && <input type="hidden" name="intent" value="book" />}
             <div className="field">
-              <label htmlFor="serviceId">{copy.freeTimes.pickService}</label>
+              <label htmlFor="serviceId">{t('pickService')}</label>
               <select id="serviceId" name="serviceId" defaultValue={serviceId}>
                 {services.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} — {copy.services.minutes(s.durationMin)}
+                    {s.name} — {t('minutes', { count: s.durationMin })}
                   </option>
                 ))}
               </select>
             </div>
             {branch ? (
               <div className="field">
-                <label htmlFor="branch">{copy.newVisit.whichBranch}</label>
+                <label htmlFor="branch">{t('whichBranch')}</label>
                 <select id="branch" name="branch" defaultValue={branch}>
                   {branches.map((b, i) => (
                     <option key={b.id} value={b.id}>
-                      {i === 0 ? `${b.name} (Main)` : b.name}
+                      {i === 0 ? t('mainBranch', { name: b.name }) : b.name}
                     </option>
                   ))}
                 </select>
               </div>
             ) : null}
             <div className="field">
-              <label htmlFor="date">{copy.freeTimes.pickDay}</label>
+              <label htmlFor="date">{t('pickDay')}</label>
               <select id="date" name="date" defaultValue={date}>
                 {dates.map((d) => (
                   <option key={d} value={d}>
@@ -93,7 +94,7 @@ export default async function AvailabilityPage({
               </select>
             </div>
             <button type="submit" className="btn">
-              {copy.freeTimes.show}
+              {t('show')}
             </button>
           </form>
         </div>
@@ -103,12 +104,12 @@ export default async function AvailabilityPage({
             <div className="card-head">
               <span>{availability.service.name}</span>
               <span className="muted" style={{ fontWeight: 550, fontSize: 14 }}>
-                {copy.freeTimes.countLabel(availability.slotCount)}
+                {t('countLabel', { count: availability.slotCount })}
               </span>
             </div>
             <div className="card-body">
               {availability.slotCount === 0 ? (
-                <div className="empty">{copy.freeTimes.none}</div>
+                <div className="empty">{t('none')}</div>
               ) : (
                 <SlotGrid
                   sections={availability.sections}

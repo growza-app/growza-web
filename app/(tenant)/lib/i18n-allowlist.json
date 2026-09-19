@@ -133,36 +133,6 @@
       "title=\"Attendance\"",
       "title=\"Attendance\""
     ],
-    "web/app/(tenant)/availability/SlotGrid.tsx": [
-      "Book",
-      "Booked ✓",
-      "Booking another service for this customer.",
-      "Cancel",
-      "Clear",
-      "Couldn&apos;t book that",
-      "Different customer",
-      "Done",
-      "Name (optional)",
-      "Not them? Clear",
-      "Send",
-      "Show free times again",
-      "Want to book another service for the same customer? Pick a different service above, then choose a time — their phone number will already be filled in.",
-      "at",
-      "label=\"Phone number\"",
-      "on WhatsApp",
-      "placeholder=\"Customer's name\"",
-      "selected",
-      "with",
-      "{Booking…}",
-      "{Confirm booking}",
-      "{times}",
-      "{times}",
-      "{time}",
-      "{time}"
-    ],
-    "web/app/(tenant)/availability/page.tsx": [
-      "{${…} (Main)}"
-    ],
     "web/app/(tenant)/components/AccountMenu.tsx": [
       "At least 8 characters.",
       "Cancel",
