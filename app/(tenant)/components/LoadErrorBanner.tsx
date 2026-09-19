@@ -1,18 +1,15 @@
-import { copy } from '../lib/copy';
-import { loadErrorTitle, type LoadErrorKind } from '../lib/load-error';
+import { useTranslations } from 'next-intl';
+import { type LoadErrorKind } from '../lib/load-error';
 
 /**
  * The words under a failed load: a "try again in a moment" for a busy server,
- * the developer hint for a genuinely unreachable one. No `'use client'` — it
- * has no state, so server pages and the Reports client both render it.
+ * the developer hint for a genuinely unreachable one. No `'use client'` — it has
+ * no state, so server pages and the Reports client both render it. The text
+ * comes from `messages/<lang>.json` (Jira GRW-319), so it follows the language.
  */
 export function LoadErrorHelp({ kind }: { kind: LoadErrorKind }) {
-  if (kind === 'busy') return <>{copy.errors.busyHelp}</>;
-  return (
-    <>
-      {copy.errors.apiDownHelp} <code>npm run dev</code>.
-    </>
-  );
+  const t = useTranslations('errors');
+  return kind === 'busy' ? <>{t('busyHelp')}</> : <>{t.rich('downHelp', { code: (chunks) => <code>{chunks}</code> })}</>;
 }
 
 /**
@@ -30,9 +27,10 @@ export function LoadErrorHelp({ kind }: { kind: LoadErrorKind }) {
  * hand across a component boundary, and the type now refuses anything else.
  */
 export function LoadErrorBanner({ kind }: { kind: LoadErrorKind }) {
+  const t = useTranslations('errors');
   return (
     <div className="banner">
-      <strong>{loadErrorTitle(kind)}</strong> <LoadErrorHelp kind={kind} />
+      <strong>{kind === 'busy' ? t('busy') : t('down')}</strong> <LoadErrorHelp kind={kind} />
     </div>
   );
 }

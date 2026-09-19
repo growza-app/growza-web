@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 import { networkInterfaces } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -71,4 +72,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Jira GRW-319 — message files per language; see i18n/request.ts.
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
+
+export default withNextIntl(nextConfig);

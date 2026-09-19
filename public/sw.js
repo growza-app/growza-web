@@ -10,7 +10,7 @@
 // it to show — so that case falls back to a small honest offline notice
 // instead of the browser's default dinosaur/error page.
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `booking-dashboard-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -40,6 +40,11 @@ self.addEventListener('fetch', (event) => {
   // where a future deploy reverse-proxies the API under this same origin.
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return; // live data — always network, never cached
+  // Jira GRW-319 — Next's client-side navigation and router.refresh() fetch the
+  // page's RSC payload in the CURRENT language. The stale-while-revalidate branch
+  // below would hand back the cached copy first, so after a language switch the
+  // owner would see the previous language. Always the network.
+  if (request.headers.get('RSC') || url.searchParams.has('_rsc')) return;
 
   // Page navigations: try the network first (freshest content), fall back
   // to a cached copy of that exact page, then to the offline notice.

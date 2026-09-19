@@ -295,9 +295,6 @@
     "web/app/(tenant)/components/InfoTip.tsx": [
       "aria-label=\"What does ${…} count?\""
     ],
-    "web/app/(tenant)/components/LoadErrorBanner.tsx": [
-      "npm run dev"
-    ],
     "web/app/(tenant)/components/MenuButton.tsx": [
       "aria-label=\"Menu\""
     ],

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api, type ActivityEvent } from '../lib/api';
-import { loadErrorMessage } from '../lib/load-error';
+import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import {
   TOPIC_META,
@@ -35,9 +36,10 @@ import {
  * `page.tsx` stays a thin server shell and this is everything interactive.
  */
 export function NotificationsClient() {
+  const t = useTranslations('errors');
   const router = useRouter();
   const [events, setEvents] = useState<ActivityEvent[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LoadErrorKind | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [lastSeenId, setLastSeenId] = useState(0);
   const [clearedBeforeId, setClearedBeforeId] = useState(0);
@@ -61,7 +63,7 @@ export function NotificationsClient() {
         if (!cancelled) setEvents(rows);
       })
       .catch((err) => {
-        if (!cancelled) setError(loadErrorMessage(err));
+        if (!cancelled) setError(loadErrorKind(err));
       });
     return () => {
       cancelled = true;
@@ -90,7 +92,8 @@ export function NotificationsClient() {
       <div className="page-body">
         {error ? (
           <div className="banner">
-            <strong>{error}</strong>
+            <strong>{t(error)}</strong>
+            {error === 'busy' ? <> {t('busyHelp')}</> : null}
             <div style={{ marginTop: 10 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setRetryCount((n) => n + 1)}>
                 Try again

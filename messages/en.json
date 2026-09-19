@@ -1,0 +1,11 @@
+{
+  "errors": {
+    "busy": "The app is busy right now.",
+    "busyHelp": "Please wait a moment, then try again.",
+    "down": "Cannot reach the server.",
+    "downHelp": "Ask your developer to start it, or run <code>npm run dev</code>."
+  },
+  "search": {
+    "visits": "{count, plural, one {# visit} other {# visits}}"
+  }
+}

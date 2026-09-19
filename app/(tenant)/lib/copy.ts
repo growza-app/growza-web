@@ -149,7 +149,6 @@ export const copy = {
     bookings: 'BOOKINGS',
     nothing: 'Nothing found.',
     hint: 'Search by a customer name, any part of their phone number, or a booking ID.',
-    visits: (n: number) => `${n} ${n === 1 ? 'visit' : 'visits'}`,
   },
 
   kpi: {
@@ -843,17 +842,6 @@ export const copy = {
   },
 
   errors: {
-    apiDown: 'Cannot reach the server.',
-    apiDownHelp: 'Ask your developer to start it, or run',
-    /*
-     * The API answered, and the answer was "too many requests" (429). The
-     * server is up — telling the owner it is unreachable sent them looking for
-     * a dead server. Plain words, no developer hint: nothing here is theirs to
-     * fix, only to wait out. English only, like `apiDown` above (which has no
-     * Hindi twin either — `lib/lang.ts` covers Home and the nav, not errors).
-     */
-    busy: 'The app is busy right now.',
-    busyHelp: 'Please wait a moment, then try again.',
     /*
      * Jira GRW-220 — said instead of "No bookings that day."
      *

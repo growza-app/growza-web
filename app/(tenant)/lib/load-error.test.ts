@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { copy } from './copy';
-import { loadErrorKind, loadErrorMessage, loadErrorTitle } from './load-error';
+import en from '../../../messages/en.json';
+import { loadErrorKind } from './load-error';
 
 /**
  * A 429 is the API saying "one moment", not "I am gone". Every page used to
@@ -46,36 +46,29 @@ describe('loadErrorKind', () => {
   });
 });
 
-describe('loadErrorTitle / loadErrorMessage', () => {
-  it('says the app is busy for a 429, without the server-is-dead wording', () => {
-    const err = apiError(429, 'rate_limited');
-    expect(loadErrorTitle(loadErrorKind(err))).toBe(copy.errors.busy);
-    expect(loadErrorMessage(err)).toBe(`${copy.errors.busy} ${copy.errors.busyHelp}`);
+describe('the busy wording', () => {
+  it('gives an owner no developer jargon when the server is only busy', () => {
+    const shown = `${en.errors.busy} ${en.errors.busyHelp}`;
+    expect(shown).not.toMatch(/npm|developer|server|unreachable|cannot reach/i);
+    expect(shown).toMatch(/busy/i);
+    expect(shown).toMatch(/try again/i);
   });
 
-  it('keeps the existing apiDown message for a network failure or a 5xx', () => {
-    for (const err of [new TypeError('fetch failed'), apiError(500), apiError(503)]) {
-      expect(loadErrorTitle(loadErrorKind(err))).toBe(copy.errors.apiDown);
-      expect(loadErrorMessage(err)).toBe(copy.errors.apiDown);
-    }
+  it('keeps the developer hint for a genuinely unreachable server', () => {
+    expect(en.errors.downHelp).toMatch(/npm run dev/);
   });
+});
 
-  it('reads a real fetch failure — an AggregateError cause and all — as down', () => {
-    // What Node's fetch throws when the API is not listening. Its `cause` is
-    // the shape that crashed React's dev serialiser when a page passed the
-    // error itself down as a prop (see LoadErrorBanner); the kind it maps to
-    // is what a page may safely pass.
+describe('a real fetch failure', () => {
+  it('reads an AggregateError cause and all as down, and hands back a plain string', () => {
+    // What Node's fetch throws when the API is not listening. Its `cause` is the
+    // shape that crashed React's dev serialiser when a page passed the error
+    // itself down as a prop (see LoadErrorBanner); the kind it maps to is what a
+    // page may safely pass.
     const refused = Object.assign(new TypeError('fetch failed'), {
       cause: Object.assign(new AggregateError([new Error('connect ECONNREFUSED ::1:3011')]), { code: 'ECONNREFUSED' }),
     });
     expect(loadErrorKind(refused)).toBe('down');
     expect(typeof loadErrorKind(refused)).toBe('string');
-  });
-
-  it('gives an owner no developer jargon when the server is only busy', () => {
-    const shown = `${copy.errors.busy} ${copy.errors.busyHelp}`;
-    expect(shown).not.toMatch(/npm|developer|server|unreachable|cannot reach/i);
-    expect(shown).toMatch(/busy/i);
-    expect(shown).toMatch(/try again/i);
   });
 });

@@ -1,5 +1,3 @@
-import { copy } from './copy';
-
 /**
  * Why a page could not load, in the only two ways the owner needs told apart.
  *
@@ -9,7 +7,7 @@ import { copy } from './copy';
  *   or a status this screen does not single out. This is the message every
  *   page showed for ALL errors before, so its behaviour is unchanged.
  *
- * Every page that used to print `copy.errors.apiDown` from a bare `catch` goes
+ * Every page that used to print "cannot reach the server" from a bare `catch` goes
  * through here, so a 429 cannot be reported as "cannot reach the server" by
  * one screen while another gets it right.
  */
@@ -28,17 +26,4 @@ export function loadErrorKind(error: unknown): LoadErrorKind {
     if (status === 429 || code === 'rate_limited') return 'busy';
   }
   return 'down';
-}
-
-/** The headline for a failed load. `down` keeps its old, headline-only wording. */
-export function loadErrorTitle(kind: LoadErrorKind): string {
-  return kind === 'busy' ? copy.errors.busy : copy.errors.apiDown;
-}
-
-/**
- * One line for a place that shows a single string — the notifications page.
- * A busy answer gets its "try again" with it; `down` stays exactly as it was.
- */
-export function loadErrorMessage(error: unknown): string {
-  return loadErrorKind(error) === 'busy' ? `${copy.errors.busy} ${copy.errors.busyHelp}` : copy.errors.apiDown;
 }

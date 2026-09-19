@@ -21,6 +21,9 @@ import { redirect } from 'next/navigation';
 import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
 import { AccountStatusScreen } from './components/AccountStatusScreen';
 import { serverLang } from './lib/lang';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
+import { pickNamespaces, type Messages } from '../../i18n/messages';
 
 /**
  * Jira GRW-222 — the Home redesign's typeface, and the Devanagari one Hindi needs.
@@ -106,6 +109,9 @@ export const viewport: Viewport = {
   themeColor: '#0f3d2e',
 };
 
+/** Jira GRW-319 — message groups that client components read (`useTranslations`). Add a group here when a client component starts using it. */
+const CLIENT_MESSAGES = ['errors', 'search'] as const;
+
 export const dynamic = 'force-dynamic';
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -148,6 +154,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   /** Jira GRW-310 — what LiveRefresh treats as "unchanged" until it sees a different one. */
   let liveVersionAtRender: string | null = null;
   const lang = await serverLang();
+  const messages = await getMessages();
 
   try {
     // Jira GRW-310 — read alongside `/me`, before the page's own data, so LiveRefresh compares
@@ -221,6 +228,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             the screen and it must not scroll away with the content or sit
             below the billing banner. */}
         {impersonation ? <ImpersonationBanner businessName={impersonation.businessName} role={impersonation.role} /> : null}
+        {/* Jira GRW-319 — only the groups client components read; the rest stays on the server. */}
+        <NextIntlClientProvider locale={lang} messages={pickNamespaces(messages as Messages, CLIENT_MESSAGES)}>
         <SessionProvider
           session={{
             initial: (tenantName ?? 'S').charAt(0).toUpperCase(),
@@ -276,6 +285,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </MobileNavProvider>
         </LabelsProvider>
         </SessionProvider>
+        </NextIntlClientProvider>
         <InstallBanner app="salon" />
       </body>
     </html>
