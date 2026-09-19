@@ -47,8 +47,27 @@ export function ViewportHeight() {
       return h;
     };
 
+    /*
+     * A floor, and it is load-bearing rather than defensive.
+     *
+     * `--app-h` is read as `min(100dvh, var(--app-h))`, so a value of 0 does not
+     * degrade the layout — it collapses `.shell`, `.sidebar` and `.content` to
+     * zero height behind `overflow: hidden`, i.e. a blank app. Browsers really
+     * do report `innerHeight === 0` for a moment: a bfcache restore, a page laid
+     * out while its tab is hidden, mid-rotation on some Android builds. Because
+     * this is an inline style it would then persist until the next resize, and a
+     * zero on the very first `sync()` has nothing to re-fire it.
+     *
+     * So an implausible height is ignored rather than published, which leaves
+     * the CSS on its `100dvh` fallback — the behaviour this whole file is a
+     * narrowing of. 200px is below every device in the matrix (the shortest is
+     * 320) and far above the transient zeros.
+     */
+    const MIN_PLAUSIBLE_PX = 200;
+
     const sync = () => {
-      root.style.setProperty('--app-h', `${window.innerHeight}px`);
+      const h = window.innerHeight;
+      if (h >= MIN_PLAUSIBLE_PX) root.style.setProperty('--app-h', `${h}px`);
       if (!debug) return;
       const vv = window.visualViewport;
       const shell = document.querySelector('.shell')?.getBoundingClientRect();

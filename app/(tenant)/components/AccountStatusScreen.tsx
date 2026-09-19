@@ -15,7 +15,13 @@ export function AccountStatusScreen({
   support,
 }: {
   message: string;
-  /** Absent until SUPPORT_PHONE is configured. Never invented. */
+  /**
+   * The support line to ring. Present on every refusal now: the API falls back
+   * to a real number when `SUPPORT_PHONE` is unset, rather than leaving a
+   * locked-out owner a screen that says "contact support" with nothing to ring.
+   * Still optional here, because the API is free to send no contacts and this
+   * screen must render without them.
+   */
   support?: { phone?: string };
 }) {
   return (
