@@ -2,6 +2,8 @@ import { screenTitle } from '../lib/page-title';
 import { redirect } from 'next/navigation';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { AttendanceRegister } from './AttendanceRegister';
 
@@ -35,14 +37,12 @@ export default async function AttendancePage({
   let me, register;
   try {
     [me, register] = await Promise.all([api.me(), api.attendance(params.date ?? todayFallback())]);
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title="Attendance" />
         <div className="page-body">
-          <div className="banner">
-            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );

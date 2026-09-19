@@ -1,6 +1,7 @@
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
-import { copy } from '../../lib/copy';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
+import { loadErrorKind } from '../../lib/load-error';
 import { PageHeader } from '../../components/PageHeader';
 import { AttendanceMonth } from './AttendanceMonth';
 import { monthBounds, monthOf } from './month';
@@ -31,14 +32,12 @@ export default async function AttendanceMonthPage({
     const tz = me.tenant?.timezone ?? 'Asia/Kolkata';
     const { from, to } = monthBounds(monthOf(month, tz), tz);
     register = await api.attendance(from, to, providerId);
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title="Attendance" />
         <div className="page-body">
-          <div className="banner">
-            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, type ActivityEvent } from '../lib/api';
-import { copy } from '../lib/copy';
+import { loadErrorMessage } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import {
   TOPIC_META,
@@ -60,8 +60,8 @@ export function NotificationsClient() {
       .then((rows) => {
         if (!cancelled) setEvents(rows);
       })
-      .catch(() => {
-        if (!cancelled) setError(copy.errors.apiDown);
+      .catch((err) => {
+        if (!cancelled) setError(loadErrorMessage(err));
       });
     return () => {
       cancelled = true;
