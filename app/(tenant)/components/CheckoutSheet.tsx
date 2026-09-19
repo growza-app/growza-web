@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   api,
   formatMoney,
@@ -79,6 +80,8 @@ function ServiceRow({
   disabled: boolean;
 }) {
   const providerWord = useLabel('provider', 'Staff member');
+  const t = useTranslations('checkout');
+  const serviceWord = useLabel('service', 'Service');
   return (
     <div className="checkout-service-row">
       <div className="checkout-service-avatar">{name.slice(0, 1).toUpperCase()}</div>
@@ -121,7 +124,7 @@ function ServiceRow({
         <button
           type="button"
           className="checkout-icon-btn checkout-icon-btn-danger"
-          aria-label="Remove this service"
+          aria-label={t('removeThis', { service: serviceWord.toLowerCase() })}
           onClick={onRemove}
           disabled={disabled}
         >
@@ -166,6 +169,8 @@ function ComboRow({
   disabled: boolean;
 }) {
   const providerWord = useLabel('provider', 'Staff member');
+  const t = useTranslations('checkout');
+  const comboWord = useLabel('combo', t('combo'));
   const who = [...new Set(legs.map((l) => providerName(l.providerId)).filter(Boolean))].join(', ');
   return (
     <>
@@ -173,7 +178,7 @@ function ComboRow({
         <div className="checkout-service-avatar">{title.slice(0, 1).toUpperCase()}</div>
         <div className="checkout-service-info">
           <div className="checkout-service-name">{title}</div>
-          <div className="checkout-service-sub">Combo · {legs.map((l) => l.name).join(' + ')}{who ? ` · ${who}` : ''}</div>
+          <div className="checkout-service-sub">{comboWord} · {legs.map((l) => l.name).join(' + ')}{who ? ` · ${who}` : ''}</div>
         </div>
         <div className="checkout-amount-field">
           <span>₹</span>
@@ -258,6 +263,11 @@ export function CheckoutSheet({
   onSaved?: () => void;
 }) {
   const router = useRouter();
+  const t = useTranslations('checkout');
+  const serviceWord = useLabel('service', 'Service').toLowerCase();
+  const servicesWord = useLabel('services', 'Services');
+  const comboWord = useLabel('combo', t('combo'));
+  const combosWord = useLabel('combos', t('combos'));
   /*
    * Jira GRW-314 — the visit as lines. Pre-filled from what was booked (a combo's own price, a service's
    * list price) and its own stylist, so the common case — paid exactly what was quoted — needs no typing.
@@ -386,13 +396,15 @@ export function CheckoutSheet({
               */}
               {savingMinor > 0 && (
                 <div className="checkout-total-saving">
-                  {keptCombos.length === 1 ? `${keptCombos[0]!.title} — ${formatMoney(String(keptCombos[0]!.list))} list, saves ${formatMoney(String(savingMinor))}` : `Combos — saves ${formatMoney(String(savingMinor))}`}
+                  {keptCombos.length === 1
+                    ? t('comboSaving', { title: keptCombos[0]!.title, list: formatMoney(String(keptCombos[0]!.list)), saving: formatMoney(String(savingMinor)) })
+                    : t('combosSaving', { combos: combosWord, saving: formatMoney(String(savingMinor)) })}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="checkout-section-label">Services</div>
+          <div className="checkout-section-label">{servicesWord}</div>
 
           {kept.map((l) =>
             l.kind === 'combo' ? (
@@ -464,19 +476,19 @@ export function CheckoutSheet({
 
           {!hasAnyService && (
             <div className="muted" style={{ padding: '10px 0', fontSize: 13 }}>
-              Nothing left to save. Add a service or a combo, or put one back.
+              {t('empty', { service: serviceWord, combo: comboWord.toLowerCase() })}
             </div>
           )}
 
           {/* Jira GRW-314 — what was taken off, one tap from coming back whole, with its amount and stylist. */}
           {takenOff.length > 0 && (
-            <div className="checkout-removed" role="group" aria-label="Taken off">
-              <div className="checkout-section-label">Taken off</div>
+            <div className="checkout-removed" role="group" aria-label={t('takenOff')}>
+              <div className="checkout-section-label">{t('takenOff')}</div>
               {takenOff.map((l) => (
                 <div className="checkout-removed-row" key={l.key}>
                   <span>{l.kind === 'combo' ? l.title : l.leg.name}</span>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => takeOff(l.key, false)} disabled={busy}>
-                    Put back
+                    {t('putBack')}
                   </button>
                 </div>
               ))}
@@ -484,10 +496,10 @@ export function CheckoutSheet({
           )}
 
           <div className="checkout-add-row">
-            <select value={pick} onChange={(e) => setPick(e.target.value)} disabled={busy} aria-label="Add a service or a combo">
-              <option value="">Select a service or combo</option>
+            <select value={pick} onChange={(e) => setPick(e.target.value)} disabled={busy} aria-label={t('addAria', { service: serviceWord, combo: comboWord.toLowerCase() })}>
+              <option value="">{t('pick', { service: serviceWord, combo: comboWord.toLowerCase() })}</option>
               {combos.length > 0 && (
-                <optgroup label="Combos">
+                <optgroup label={combosWord}>
                   {combos.map((o) => (
                     <option key={o.id} value={`offer:${o.id}`}>
                       {o.title} — {formatMoney(o.comboPriceMinor!)}
@@ -495,7 +507,7 @@ export function CheckoutSheet({
                   ))}
                 </optgroup>
               )}
-              <optgroup label="Services">
+              <optgroup label={servicesWord}>
                 {services.map((s) => (
                   <option key={s.id} value={`svc:${s.id}`}>
                     {s.name}

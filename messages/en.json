@@ -155,5 +155,17 @@
     "nameOptional": "Name (optional)",
     "namePlaceholder": "e.g. Priya Sharma",
     "couldNotAdd": "Could not add the {noun}."
+  },
+  "checkout": {
+    "combo": "Combo",
+    "combos": "Combos",
+    "takenOff": "Taken off",
+    "putBack": "Put back",
+    "pick": "Select a {service} or {combo}",
+    "addAria": "Add a {service} or a {combo}",
+    "empty": "Nothing left to save. Add a {service} or a {combo}, or put one back.",
+    "removeThis": "Remove this {service}",
+    "comboSaving": "{title} — {list} list, saves {saving}",
+    "combosSaving": "{combos} — saves {saving}"
   }
 }
