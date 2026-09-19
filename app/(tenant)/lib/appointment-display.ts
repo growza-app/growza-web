@@ -195,10 +195,33 @@ export function clientNameLabel(booking: { customerName?: string | null }): stri
 export function bookingBill(legs: Appointment[]): { totalMinor: number; savingsMinor: number } {
   const live = legs.filter((a) => a.status !== 'cancelled');
   const counted = live.length > 0 ? live : legs;
-  const subtotal = counted.reduce((sum, a) => sum + Number(a.paidAmountMinor ?? a.priceMinor ?? 0), 0);
-  const comboLegs = counted.filter((a) => a.offerTitle);
-  const comboPrice = comboLegs.find((a) => a.comboPriceMinor)?.comboPriceMinor;
-  const allUnpaid = comboLegs.length > 0 && comboLegs.every((a) => a.paidAmountMinor == null);
-  const savingsMinor = comboPrice && allUnpaid ? Math.max(0, comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0) - Number(comboPrice)) : 0;
-  return { totalMinor: subtotal - savingsMinor, savingsMinor };
+  const listOf = (a: Appointment) => Number(a.priceMinor ?? 0);
+  const isCombo = (a: Appointment) => Boolean(a.offerTitle && a.comboPriceMinor);
+  /*
+   * Paid services count at what was paid; an unpaid one outside a combo at its own price. An unpaid service
+   * INSIDE a combo takes its share of the combo's price: the price is apportioned over the combo's services
+   * by list price (the rule the till and the reports use), and the unpaid ones carry their part of it. So a
+   * combo with one service paid and one still to pay comes to what was paid plus the rest of the price, not
+   * the unpaid service at its full list price. Each combo is worked out on its own.
+   */
+  const combos = new Map<string, { price: number; all: number; unpaid: number }>();
+  let totalMinor = 0;
+  for (const a of counted) {
+    if (isCombo(a)) {
+      const key = `${a.offerTitle}:${a.comboPriceMinor}`;
+      const g = combos.get(key) ?? { price: Number(a.comboPriceMinor), all: 0, unpaid: 0 };
+      g.all += listOf(a);
+      if (a.paidAmountMinor == null) g.unpaid += listOf(a);
+      combos.set(key, g);
+    }
+    if (a.paidAmountMinor != null) totalMinor += Number(a.paidAmountMinor);
+    else if (!isCombo(a)) totalMinor += listOf(a);
+  }
+  let savingsMinor = 0;
+  for (const g of combos.values()) {
+    const share = g.all > 0 ? Math.round((g.price * g.unpaid) / g.all) : 0;
+    totalMinor += share;
+    savingsMinor += Math.max(0, g.unpaid - share);
+  }
+  return { totalMinor, savingsMinor };
 }

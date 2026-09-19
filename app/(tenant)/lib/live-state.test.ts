@@ -164,3 +164,36 @@ describe('a booking with a service cancelled at the till', () => {
     expect(bookingBill([leg('a', 'cancelled', null, '30000'), leg('b', 'cancelled', null, '80000')]).totalMinor).toBe(110000);
   });
 });
+
+describe('a combo that is only partly paid', () => {
+  const leg = (id: string, paid: string | null, price: string, title = 'Weekly glow', comboPrice = '88000', status = 'completed') =>
+    ({ id, bookingGroupId: 'g', status, serviceName: id, priceMinor: price, paidAmountMinor: paid, startAt: '2026-09-19T05:00:00.000Z', endAt: '2026-09-19T05:30:00.000Z', offerTitle: title, comboPriceMinor: comboPrice }) as never;
+
+  it('comes to what was paid plus the unpaid service\'s share of the combo price, not its full list price', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    // Haircut paid its ₹240 share; Facial (₹800 listed) is still to pay: 800/1100 of ₹880 is ₹640.
+    expect(bookingBill([leg('hair', '24000', '30000'), leg('facial', null, '80000', 'Weekly glow', '88000', 'confirmed')])).toEqual({ totalMinor: 88000, savingsMinor: 16000 });
+  });
+
+  it('two different combos in one booking are each worked out on their own', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    const bill = bookingBill([
+      leg('a', null, '30000', 'Weekly glow', '88000', 'confirmed'),
+      leg('b', null, '80000', 'Weekly glow', '88000', 'confirmed'),
+      leg('c', null, '30000', 'Party prep', '50000', 'confirmed'),
+      leg('d', null, '40000', 'Party prep', '50000', 'confirmed'),
+    ]);
+    expect(bill).toEqual({ totalMinor: 88000 + 50000, savingsMinor: 22000 + 20000 });
+  });
+
+  it('a combo priced above its services\' list price is charged at its price, with nothing saved', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    expect(bookingBill([leg('a', null, '30000', 'Deluxe', '90000', 'confirmed'), leg('b', null, '30000', 'Deluxe', '90000', 'confirmed')])).toEqual({ totalMinor: 90000, savingsMinor: 0 });
+  });
+
+  it('a plain service beside a partly paid combo stays at its own price', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    const plain = { id: 'colour', bookingGroupId: 'g', status: 'confirmed', serviceName: 'colour', priceMinor: '150000', paidAmountMinor: null, startAt: '2026-09-19T05:00:00.000Z', endAt: '2026-09-19T06:30:00.000Z', offerTitle: null, comboPriceMinor: null } as never;
+    expect(bookingBill([leg('hair', '24000', '30000'), leg('facial', null, '80000', 'Weekly glow', '88000', 'confirmed'), plain]).totalMinor).toBe(88000 + 150000);
+  });
+});

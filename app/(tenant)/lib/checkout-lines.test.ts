@@ -42,6 +42,15 @@ describe('splitting a price across its services', () => {
   it('one part takes it all', () => {
     expect(splitByList(500, [123])).toEqual([500]);
   });
+
+  it('never gives a part less than nothing, however many parts and however small the total', () => {
+    const parts = splitByList(4, Array(7).fill(1));
+    expect(parts.every((p) => p >= 0)).toBe(true);
+    expect(parts.reduce((a, b) => a + b, 0)).toBe(4);
+    const skew = splitByList(1, [5, 5, 1]);
+    expect(skew.every((p) => p >= 0)).toBe(true);
+    expect(skew.reduce((a, b) => a + b, 0)).toBe(1);
+  });
 });
 
 describe('the visit as lines', () => {

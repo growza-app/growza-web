@@ -26,7 +26,8 @@ export function minorToRupees(minor: string | null): string {
 
 /**
  * Splits a total across parts in proportion to what each costs on its own. The remainder lands on the last
- * part, so the parts add up to the total exactly. With nothing to weigh by, the parts are equal.
+ * part, so the parts add up to the total exactly. With nothing to weigh by, the parts are equal. No part is
+ * ever negative: rounding up early parts cannot take more than is left (many parts and a tiny total).
  */
 export function splitByList(totalMinor: number, listMinors: number[]): number[] {
   const n = listMinors.length;
@@ -34,7 +35,8 @@ export function splitByList(totalMinor: number, listMinors: number[]): number[] 
   let allocated = 0;
   return listMinors.map((list, i) => {
     if (i === n - 1) return totalMinor - allocated;
-    const share = listTotal > 0 ? Math.round((list / listTotal) * totalMinor) : Math.floor(totalMinor / n);
+    const wanted = listTotal > 0 ? Math.round((list / listTotal) * totalMinor) : Math.floor(totalMinor / n);
+    const share = Math.max(0, Math.min(wanted, totalMinor - allocated));
     allocated += share;
     return share;
   });
