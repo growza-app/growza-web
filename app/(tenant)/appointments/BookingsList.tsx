@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, typ
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
 import { copy } from '../lib/copy';
 import { countsAsNotMarked } from '../lib/live-state';
-import { clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
+import { bookingBill, clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
@@ -23,14 +23,9 @@ import {
   IconWallet,
 } from '../components/icons';
 
-/** What the salon actually took for a booking: services paid, minus any combo discount. */
+/** What the salon actually took for a booking (see `bookingBill`). */
 function bookingTotalMinor(b: BookingGroup): number {
-  const subtotal = b.appointments.reduce((sum, a) => sum + Number(a.paidAmountMinor ?? a.priceMinor ?? 0), 0);
-  const comboLegs = b.appointments.filter((a) => a.offerTitle);
-  const comboList = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
-  const comboPrice = comboLegs.find((a) => a.comboPriceMinor)?.comboPriceMinor;
-  const savings = comboPrice ? Math.max(0, comboList - Number(comboPrice)) : 0;
-  return subtotal - savings;
+  return bookingBill(b.appointments).totalMinor;
 }
 
 /**

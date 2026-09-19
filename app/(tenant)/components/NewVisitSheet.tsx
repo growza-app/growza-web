@@ -978,6 +978,7 @@ export function NewVisitSheet({
         appointment={first!}
         services={services}
         providers={providers}
+        offers={offers ?? []}
         groupMembers={rest}
         timezone={timezone}
         onBack={() => {

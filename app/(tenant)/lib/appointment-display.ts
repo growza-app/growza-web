@@ -114,6 +114,10 @@ export interface BookingGroup {
 function groupStatus(legs: Appointment[]): Appointment['status'] {
   const statuses = new Set(legs.map((a) => a.status));
   if (statuses.has('confirmed')) return 'confirmed';
+  // Jira GRW-314 — a visit with a completed service IS a completed visit, whatever else was taken off it
+  // (the analytics reads it the same way). A combo or a service cancelled at the till leaves a cancelled
+  // leg beside the ones that were done, and this called the whole booking cancelled.
+  if (statuses.has('completed')) return 'completed';
   if (statuses.has('no_show')) return 'no_show';
   if (statuses.has('cancelled')) return 'cancelled';
   return 'completed';
@@ -177,4 +181,24 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
 export function clientNameLabel(booking: { customerName?: string | null }): string | null {
   if (!('customerName' in booking)) return null;
   return booking.customerName ?? 'Unknown';
+}
+
+
+/**
+ * Jira GRW-314 — what a booking came to, and what its combo took off.
+ *
+ * Services cancelled at the till are not part of the bill. And a combo's discount is only still to be
+ * taken off for services nobody has been paid for: once a service is paid, its amount already IS its share
+ * of the combo price, so taking the discount off again counted it twice (a finished combo read ₹1,860 when
+ * ₹2,380 was paid, and one read −₹140). A booking that is wholly cancelled still shows what it was.
+ */
+export function bookingBill(legs: Appointment[]): { totalMinor: number; savingsMinor: number } {
+  const live = legs.filter((a) => a.status !== 'cancelled');
+  const counted = live.length > 0 ? live : legs;
+  const subtotal = counted.reduce((sum, a) => sum + Number(a.paidAmountMinor ?? a.priceMinor ?? 0), 0);
+  const comboLegs = counted.filter((a) => a.offerTitle);
+  const comboPrice = comboLegs.find((a) => a.comboPriceMinor)?.comboPriceMinor;
+  const allUnpaid = comboLegs.length > 0 && comboLegs.every((a) => a.paidAmountMinor == null);
+  const savingsMinor = comboPrice && allUnpaid ? Math.max(0, comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0) - Number(comboPrice)) : 0;
+  return { totalMinor: subtotal - savingsMinor, savingsMinor };
 }

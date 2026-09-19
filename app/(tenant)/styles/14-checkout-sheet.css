@@ -363,3 +363,59 @@
     padding-right: 13px;
   }
 }
+
+/* ---------- services taken off, and the way back (Jira GRW-314) ---------- */
+.checkout-removed {
+  margin-top: var(--sp-3, 12px);
+}
+
+.checkout-removed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border, #e3e8e4);
+  color: var(--muted, #5f6a65);
+  font-size: 14px;
+}
+
+/* The name is struck through, the way back is not: it has to read as something to press. */
+.checkout-removed-row > span {
+  text-decoration: line-through;
+}
+
+.checkout-removed-row button {
+  min-height: 44px;
+  color: var(--accent-deep, #1f5a3f);
+  font-weight: 700;
+}
+
+.checkout-removed-note {
+  padding: 8px 0 0;
+  color: var(--muted, #5f6a65);
+  font-size: 13px;
+}
+
+/* ---------- a combo as one row (Jira GRW-314) ---------- */
+.checkout-combo-legs {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0 12px 46px;
+  border-bottom: 1px solid var(--border, #e3e8e4);
+}
+
+.checkout-combo-legs label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--muted, #5f6a65);
+}
+
+.checkout-combo-legs select {
+  min-height: 44px;
+  font-size: 16px;
+}

@@ -509,6 +509,8 @@ export interface CheckoutExtraServiceInput {
   paidAmountMinor: number;
   /** Who actually performed it — defaults to the original appointment's provider if omitted. */
   schedulableId?: string;
+  /** Jira GRW-314 — set on every service of a combo added at the till: saved as that combo's legs. */
+  offerId?: string;
 }
 
 /** An existing sibling leg of a combo booking, completed alongside the primary one. */

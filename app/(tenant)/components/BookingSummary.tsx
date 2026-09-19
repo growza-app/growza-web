@@ -2,7 +2,7 @@
 
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
-import { clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
+import { bookingBill, clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { IconCheck, IconPhone } from './icons';
 import { useLabel } from './LabelsProvider';
@@ -24,20 +24,12 @@ export function BookingSummary({
   onClose: () => void;
 }) {
   const providerWord = useLabel('provider', 'Staff member');
-  // What the customer actually paid; falls back to the list price for anything
-  // completed before checkout recorded an amount.
-  const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
-  const subtotal = booking.appointments.reduce((sum, a) => sum + Number(paidOf(a)), 0);
+  // Jira GRW-314 — what the customer actually paid, less anything cancelled at the till, with the
+  // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
+  const { totalMinor: totalPaid, savingsMinor: savings } = bookingBill(booking.appointments);
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
-
-  // Combo discount: the offer's set price for its services vs those services'
-  // list prices. Only the combo legs (offerTitle set) count; add-on services
-  // stay at their own price.
-  const comboLegs = booking.appointments.filter((a) => a.offerTitle);
-  const comboListTotal = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
-  const comboPriceMinor = comboLegs.find((a) => a.comboPriceMinor)?.comboPriceMinor;
-  const savings = comboPriceMinor ? Math.max(0, comboListTotal - Number(comboPriceMinor)) : 0;
-  const totalPaid = subtotal - savings;
+  const subtotal = totalPaid + savings;
+  const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
   const dateLine = formatDateWithWeekday(booking.startAt, timezone);
 
   return (
@@ -84,7 +76,8 @@ export function BookingSummary({
               <div className="summary-service">{a.serviceName}</div>
               <div className="summary-stylist">{a.providerName ?? `No ${providerWord.toLowerCase()}`}</div>
             </div>
-            <span className="summary-price">{formatMoney(paidOf(a))}</span>
+            {/* Jira GRW-314 — a service cancelled at the till is listed, but is not on the bill. */}
+            <span className="summary-price">{a.status === 'cancelled' ? 'Cancelled' : formatMoney(paidOf(a))}</span>
           </div>
         ))}
 

@@ -110,3 +110,57 @@ describe('initials', () => {
     expect(initials(null)).toBe('?');
   });
 });
+
+/**
+ * Jira GRW-314 — what a booking came to, and what it is called, once a service has been cancelled at the till.
+ */
+describe('a booking with a service cancelled at the till', () => {
+  const leg = (id: string, status: string, paid: string | null, price: string, combo = false) =>
+    ({
+      id,
+      bookingGroupId: 'g1',
+      status,
+      serviceName: id,
+      priceMinor: price,
+      paidAmountMinor: paid,
+      startAt: '2026-09-19T05:00:00.000Z',
+      endAt: '2026-09-19T05:30:00.000Z',
+      offerTitle: combo ? 'Weekly glow' : null,
+      comboPriceMinor: combo ? '88000' : null,
+    }) as never;
+
+  it('is a completed visit when any service was done, not a cancelled one', async () => {
+    const { groupBookings } = await import('./appointment-display');
+    const [g] = groupBookings([leg('a', 'cancelled', null, '30000'), leg('b', 'completed', '150000', '150000')]);
+    expect(g!.status).toBe('completed');
+  });
+
+  it('is still confirmed while anything is unsettled, and cancelled only when everything is', async () => {
+    const { groupBookings } = await import('./appointment-display');
+    expect(groupBookings([leg('a', 'confirmed', null, '30000'), leg('b', 'completed', '100', '100')])[0]!.status).toBe('confirmed');
+    expect(groupBookings([leg('a', 'cancelled', null, '30000'), leg('b', 'cancelled', null, '100')])[0]!.status).toBe('cancelled');
+  });
+
+  it('counts what was paid and leaves the cancelled service out', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    const bill = bookingBill([leg('a', 'cancelled', null, '30000'), leg('b', 'cancelled', null, '80000'), leg('c', 'completed', '150000', '150000')]);
+    expect(bill.totalMinor).toBe(150000);
+  });
+
+  it('does not take a combo\'s discount off twice: a paid combo\'s services already add up to its price', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    const paid = bookingBill([leg('hair', 'completed', '24000', '30000', true), leg('facial', 'completed', '64000', '80000', true), leg('colour', 'completed', '150000', '150000')]);
+    expect(paid).toEqual({ totalMinor: 238000, savingsMinor: 0 });
+  });
+
+  it('still takes it off while the combo is unpaid: list prices less the combo price', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    const unpaid = bookingBill([leg('hair', 'confirmed', null, '30000', true), leg('facial', 'confirmed', null, '80000', true)]);
+    expect(unpaid).toEqual({ totalMinor: 88000, savingsMinor: 22000 });
+  });
+
+  it('a booking that was wholly cancelled still shows what it was', async () => {
+    const { bookingBill } = await import('./appointment-display');
+    expect(bookingBill([leg('a', 'cancelled', null, '30000'), leg('b', 'cancelled', null, '80000')]).totalMinor).toBe(110000);
+  });
+});
