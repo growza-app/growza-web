@@ -32,7 +32,7 @@ export interface HomeOverview {
   week: { span: 'week' | 'month'; revenueMinor: number; days: Array<{ date: string; weekday: string; revenueMinor: number; future: boolean }> };
   attention: { notMarkedDone: number; cancelledToday: number };
   /** Every active branch, primary first. More than one is what "multi-branch" means. */
-  branches: Array<{ id: string; name: string; isPrimary: boolean; bookingsToday: number; revenueTodayMinor: number }>;
+  branches: Array<{ id: string; name: string; isPrimary: boolean; bookingsToday: number; revenueTodayMinor: number; revenueMinor: number }>;
   hoursToday: { opensAt: string | null; closesAt: string | null; afterClose: boolean };
 }
 

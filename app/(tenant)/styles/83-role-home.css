@@ -2687,29 +2687,6 @@
   .hm-toolbar {
     gap: var(--sp-2);
   }
-
-  /* The period switch, in the money card. It takes the eyebrow's line, and carries
-     the eyebrow's words as its accessible name (see MoneyHero). */
-  .hm-hero-top {
-    flex-wrap: wrap;
-    row-gap: var(--sp-2);
-  }
-  .hm-hero-top:has(.hm-seg-hero) .hm-eyebrow {
-    display: none;
-  }
-  .hm-seg-hero {
-    background: rgba(255, 255, 255, 0.12);
-  }
-  .hm-seg-hero button {
-    min-height: 38px;
-    padding: 0 var(--sp-3);
-    color: #d5efe0;
-    font-size: 13px;
-  }
-  .hm-seg-hero button.is-on {
-    background: #fff;
-    color: var(--hm-ink);
-  }
 }
 
 /* A 320px phone gives the business name ~116px between the menu button and search;

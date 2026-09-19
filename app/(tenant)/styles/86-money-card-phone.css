@@ -60,24 +60,27 @@
     flex: none;
   }
 
+  /* One line where it fits. Where it does not (three long amounts on a 320px phone), it wraps to a
+     second row rather than cutting an amount short — a clipped rupee figure is worse than a taller card. */
   .hm-line {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 0 12px;
     min-height: 32px;
     padding-top: 2px;
     border-top: 1px solid rgba(255, 255, 255, 0.14);
     color: #e8f5ed;
     font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
   }
   .hm-line-item {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     min-width: 0;
+    max-width: 100%;
     flex: 0 1 auto;
+    white-space: nowrap;
   }
   .hm-line-item i {
     flex: none;
@@ -136,5 +139,91 @@
   .hm-line-more:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 2px;
+  }
+}
+
+/* ---------- the period switch beside the branch picker (Jira GRW-313) ----------
+ *
+ * Today / Week / Month sits on the toolbar row, left; the branch picker and the Day summary icon
+ * are right. The card loses the row the switch took, and its own top row too: the ⋯ button goes
+ * to the card's corner, beside the amount.
+ *
+ * The row is tight (tabs ~170px + picker ~124px + icon 44px against 358px at 390px wide), so:
+ * tabs are compact, "All branches" reads "All" under 400px, and a picked branch's name gets an
+ * ellipsis. A salon with one branch has no picker, and its tabs fill the row.
+ */
+.hm-branch-short {
+  display: none;
+}
+.hm-branch-name,
+.hm-branch-full {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 860px) {
+  .hm-toolbar {
+    flex-wrap: nowrap;
+  }
+  .hm-toolbar-multi .hm-seg {
+    flex: 0 0 auto;
+  }
+  .hm-toolbar-multi .hm-seg button {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  /* Only where there is a picker to hold. With one branch this box is empty on a phone, and giving it
+     a share of the row would leave the tabs half as wide as they should be. */
+  .hm-toolbar-multi .hm-toolbar-end {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+  .hm-toolbar-end .hm-branch {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .hm-toolbar-multi .hm-branch-btn {
+    max-width: 100%;
+  }
+
+  .hm-page .hm-hero:not(.hm-hero-small) .hm-hero-top {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    min-height: 0;
+    z-index: 2;
+  }
+  .hm-hero .hm-hero-top .hm-eyebrow {
+    display: none;
+  }
+  .hm-hero .hm-hero-top .hm-menu {
+    top: calc(100% + 6px);
+    right: 0;
+  }
+  /* Room for the ⋯ button beside the change chip — on the chip only, so the rule above the stats
+     still runs the full width of the card. */
+  .hm-hero .hm-hero-chip {
+    margin-right: 34px;
+  }
+}
+@media (max-width: 400px) {
+  .hm-branch-full {
+    display: none;
+  }
+  .hm-branch-short {
+    display: inline;
+  }
+}
+/* Under 400px "vs last month" can run into a seven-figure amount; the arrow and percent say enough. */
+@media (max-width: 400px) {
+  .hm-chip-words {
+    display: none;
+  }
+}
+@media (max-width: 340px) {
+  .hm-toolbar-multi .hm-seg button {
+    padding: 0 7px;
+    font-size: 12.5px;
   }
 }

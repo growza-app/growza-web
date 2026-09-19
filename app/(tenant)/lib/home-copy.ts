@@ -66,6 +66,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     today: S('Today', 'आज'),
     week: S('Week', 'हफ़्ता'),
     month: S('Month', 'महीना'),
+    showMoneyFor: S('Show money for', 'पैसा दिखाएँ'),
+    allBranchesShort: S('All', 'सभी'),
     allBranches: S('All branches', 'सभी ब्रांच'),
     branch: S('Branch', 'ब्रांच'),
 

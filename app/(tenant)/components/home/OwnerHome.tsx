@@ -283,10 +283,11 @@ export function OwnerHome(p: OwnerHomeProps) {
           </button>
         ) : null}
 
-        <div className="hm-toolbar">
+        <div className={`hm-toolbar ${multiBranch ? 'hm-toolbar-multi' : ''}`}>
+          {/* Jira GRW-313 — the period switch is on this row at every width now: on a phone it sat
+              inside the money card, which made the card a row taller. */}
           <Segmented
-            className="hm-desktop"
-            label={t.today}
+            label={t.showMoneyFor}
             value={period}
             options={[
               { value: 'today', label: t.today },
@@ -318,8 +319,25 @@ export function OwnerHome(p: OwnerHomeProps) {
             ) : null}
             {multiBranch ? (
               <div className="hm-branch" ref={branchRef}>
-                <button type="button" className="hm-branch-btn" aria-haspopup="menu" aria-expanded={branchMenu} onClick={() => setBranchMenu((o) => !o)}>
-                  {selected?.name ?? t.allBranches}
+                <button
+                  type="button"
+                  className="hm-branch-btn"
+                  aria-haspopup="menu"
+                  aria-expanded={branchMenu}
+                  aria-label={selected?.name ?? t.allBranches}
+                  title={selected?.name ?? t.allBranches}
+                  onClick={() => setBranchMenu((o) => !o)}
+                >
+                  {/* "All branches" gives way to "All" on a narrow phone, where the period switch
+                      takes the row's room; a picked branch's name shortens with an ellipsis. */}
+                  {selected ? (
+                    <span className="hm-branch-name">{selected.name}</span>
+                  ) : (
+                    <>
+                      <span className="hm-branch-full">{t.allBranches}</span>
+                      <span className="hm-branch-short" aria-hidden="true">{t.allBranchesShort}</span>
+                    </>
+                  )}
                   <IconChevronDown />
                 </button>
                 {branchMenu ? (
@@ -359,11 +377,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                 data={data}
                 loading={loading}
                 onDaySummary={() => setSummaryOpen(true)}
-                period={period}
-                onPeriod={(v) => {
-                  setPeriod(v);
-                  load(v, branch);
-                }}
                 unmarkedHref={unmarkedHref}
                 branchId={branch}
                 onPickBranch={(id) => {

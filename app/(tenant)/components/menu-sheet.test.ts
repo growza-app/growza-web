@@ -127,10 +127,12 @@ describe('Home on a phone', () => {
     expect(parts).not.toMatch(/hdr-search hdr-search-wide hm-desktop/);
   });
 
-  it('Today / Week / Month is in the money card on a phone, and on the toolbar from 861px', () => {
-    expect(hero).toMatch(/className="hm-seg-hero hm-mobile"/);
-    expect(owner).toMatch(/className="hm-desktop"/);
-    expect(owner).toMatch(/onPeriod=\{/);
+  it('Today / Week / Month is on the toolbar row at every width, beside the branch picker, not in the card', () => {
+    // Jira GRW-313 — it sat in the money card on a phone (GRW-306); it is on the row of the branch
+    // picker now, so the card is a row shorter.
+    expect(hero).not.toMatch(/Segmented|hm-seg-hero/);
+    expect(owner).toMatch(/<div className=\{`hm-toolbar \$\{multiBranch \? 'hm-toolbar-multi' : ''\}`\}>/);
+    expect(owner).not.toMatch(/<Segmented\s+className="hm-desktop"/);
   });
 
   it('Day summary is an icon beside the branch picker, and still has a name', () => {

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { HomeOverview, HomePeriod, PaymentModeSlice } from '../../lib/api';
+import type { HomeOverview, PaymentModeSlice } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
 import { IconChevronRight, IconClock, IconDaySummary, IconDots } from '../icons';
-import { rupees, Segmented } from './parts';
+import { rupees } from './parts';
 
 /**
  * Jira GRW-222 — the money card.
@@ -85,7 +85,7 @@ export function PaymentLine({ t, slices, total, onMore }: { t: HomeCopy; slices:
 }
 
 /**
- * Jira GRW-312 — where the money was earned, on one line, for a business with
+ * Jira GRW-312 — where the money was earned, over the period picked, on one line, for a business with
  * branches. Two branches fit; more show the two earning most and a "+N" that
  * opens the branch list. A tap on a name picks that branch, as the list does.
  */
@@ -100,7 +100,7 @@ function BranchLine({
   onPick: (id: string) => void;
   onMore: () => void;
 }) {
-  const ranked = branches.map((b, i) => ({ b, colour: BRANCH_DOT[i % BRANCH_DOT.length]! })).sort((x, y) => y.b.revenueTodayMinor - x.b.revenueTodayMinor);
+  const ranked = branches.map((b, i) => ({ b, colour: BRANCH_DOT[i % BRANCH_DOT.length]! })).sort((x, y) => y.b.revenueMinor - x.b.revenueMinor);
   const shown = branches.length > 2 ? ranked.slice(0, 2) : ranked;
   const more = branches.length - shown.length;
   return (
@@ -108,7 +108,7 @@ function BranchLine({
       {shown.map(({ b, colour }) => (
         <button key={b.id} type="button" className="hm-line-item hm-line-pick" onClick={() => onPick(b.id)}>
           <i style={{ background: colour }} />
-          <span className="hm-line-name">{b.name}</span> <b>{rupees(b.revenueTodayMinor)}</b>
+          <span className="hm-line-name">{b.name}</span> <b>{rupees(b.revenueMinor)}</b>
         </button>
       ))}
       {more > 0 ? (
@@ -152,8 +152,6 @@ export function MoneyHero({
   data,
   loading,
   onDaySummary,
-  period,
-  onPeriod,
   unmarkedHref,
   branchId = null,
   onPickBranch,
@@ -163,9 +161,6 @@ export function MoneyHero({
   data: HomeOverview;
   loading: boolean;
   onDaySummary?: () => void;
-  /** Jira GRW-306 — the period switch, drawn in the card on a phone. */
-  period?: HomePeriod;
-  onPeriod?: (p: HomePeriod) => void;
   /**
    * Jira GRW-312 — where the "not marked done" pill goes. It carries the picked
    * branch, so Bookings opens on the same bookings the count was made from.
@@ -193,34 +188,17 @@ export function MoneyHero({
   const deltaChip = (className: string, hideWords: boolean) =>
     money.deltaPct !== null && money.revenueMinor > 0 ? (
       <span className={`${className} ${money.deltaPct >= 0 ? 'up' : 'down'}`}>
-        {money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(money.deltaPct)}% <span className={hideWords ? 'hm-desktop-inline' : ''}>{vs}</span>
+        {money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(money.deltaPct)}% <span className={hideWords ? 'hm-desktop-inline' : 'hm-chip-words'}>{vs}</span>
       </span>
     ) : null;
   const notMarked = data.attention.notMarkedDone;
   const branches = data.branches;
-  const showBranchLine = branches.length > 1 && branchId === null && money.period === 'today' && Boolean(onPickBranch && onMoreBranches);
+  const showBranchLine = branches.length > 1 && branchId === null && Boolean(onPickBranch && onMoreBranches);
 
   return (
     <section className={`hm-hero ${loading ? 'is-loading' : ''}`} aria-busy={loading}>
       <div className="hm-hero-top">
         <span className="hm-eyebrow">{eyebrow}</span>
-        {/* Jira GRW-306 — on a phone the period switch lives here, in the card it
-            changes (it scopes the money and nothing else on Home), instead of a
-            row of its own above it. The eyebrow gives the line to the switch, and
-            its words ("Money today") become the switch's accessible name. */}
-        {period && onPeriod ? (
-          <Segmented
-            className="hm-seg-hero hm-mobile"
-            label={eyebrow}
-            value={period}
-            options={[
-              { value: 'today', label: t.today },
-              { value: 'week', label: t.week },
-              { value: 'month', label: t.month },
-            ]}
-            onChange={onPeriod}
-          />
-        ) : null}
         {/* BR-08 — no badge when there is nothing to compare with, and none
             until something has come in: "↓ 100%" at 9 am is not news, it is
             the time of day. */}

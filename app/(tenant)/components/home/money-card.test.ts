@@ -70,8 +70,11 @@ describe('the card', () => {
     expect(code('OwnerHome.tsx')).toMatch(/href: unmarkedHref/);
   });
 
-  it('the branch line is for All branches on the Today tab only, because its amounts are today\'s', () => {
-    expect(hero).toMatch(/branches\.length > 1 && branchId === null && money\.period === 'today'/);
+  it('the branch line is for All branches on every tab, its amounts being the period\'s (GRW-313)', () => {
+    expect(hero).toMatch(/branches\.length > 1 && branchId === null && Boolean\(onPickBranch && onMoreBranches\)/);
+    expect(hero).not.toMatch(/money\.period === 'today' && Boolean/);
+    expect(hero).toMatch(/y\.b\.revenueMinor - x\.b\.revenueMinor/);
+    expect(hero).toMatch(/<b>\{rupees\(b\.revenueMinor\)\}<\/b>/);
   });
 
   it('does not reuse the booking rows\' hm-pill class', () => {
@@ -101,5 +104,49 @@ describe('Bookings, when Home sends a branch', () => {
 
   it('shows no "busy" figure for one branch while the capacity is the whole business\'s', () => {
     expect(list).toMatch(/capacityMin > 0 && !branch \? Math\.round/);
+  });
+});
+
+describe('the period switch beside the branch picker (Jira GRW-313)', () => {
+  const owner = code('OwnerHome.tsx');
+  const css = code('../../styles/86-money-card-phone.css');
+
+  it('is named for what it does, not "Today"', () => {
+    expect(owner).toMatch(/label=\{t\.showMoneyFor\}/);
+    expect(homeCopy('en').showMoneyFor).toBe('Show money for');
+  });
+
+  it('the picker reads "All" on a narrow phone, and is still named "All branches"', () => {
+    expect(owner).toMatch(/aria-label=\{selected\?\.name \?\? t\.allBranches\}/);
+    expect(owner).toMatch(/<span className="hm-branch-short" aria-hidden="true">\{t\.allBranchesShort\}<\/span>/);
+    expect(css).toMatch(/@media \(max-width: 400px\)\s*\{\s*\.hm-branch-full\s*\{\s*display:\s*none;/);
+    expect(homeCopy('en').allBranchesShort).toBe('All');
+  });
+
+  it('a picked branch\'s name shortens with an ellipsis instead of pushing the row wide', () => {
+    expect(css).toMatch(/\.hm-branch-name,\s*\.hm-branch-full\s*\{[^}]*text-overflow:\s*ellipsis;/);
+    expect(css).toMatch(/\.hm-toolbar-multi \.hm-toolbar-end\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*0;/);
+  });
+
+  it('with several branches the tabs are compact; with one they are left to fill the row', () => {
+    expect(css).toMatch(/\.hm-toolbar-multi \.hm-seg\s*\{\s*flex:\s*0 0 auto;/);
+    expect(css).not.toMatch(/\.hm-seg\s*\{[^}]*flex:\s*0 0 auto[^}]*\}\s*\.hm-seg button/); // the one-branch rule is 83-role-home's own `flex: 1`
+  });
+
+  it('one branch: no rule gives the empty toolbar-end a share of the row, so the tabs fill it', () => {
+    // `.hm-toolbar .hm-seg { flex: 1 }` (83-role-home.css) does the filling; an unscoped grow on the empty
+    // box beside it would halve the tabs.
+    expect(css).not.toMatch(/(^|\})\s*\.hm-toolbar-end\s*\{[^}]*flex:\s*1 1 0/);
+    expect(code('../../styles/83-role-home.css')).toMatch(/\.hm-toolbar \.hm-seg\s*\{\s*flex:\s*1;/);
+  });
+
+  it('the change chip drops its words under 400px, so a seven-figure amount never runs into it', () => {
+    expect(css).toMatch(/@media \(max-width: 400px\)\s*\{\s*\.hm-chip-words\s*\{\s*display:\s*none;/);
+  });
+
+  it('the card\'s top row leaves the flow, so the ⋯ sits in the corner and the eyebrow is gone', () => {
+    expect(css).toMatch(/\.hm-hero-top\s*\{\s*position:\s*absolute;/);
+    expect(css).toMatch(/\.hm-hero \.hm-hero-top \.hm-eyebrow\s*\{\s*display:\s*none;/);
+    expect(css).toMatch(/\.hm-hero \.hm-hero-chip\s*\{\s*margin-right:\s*34px;/);
   });
 });
