@@ -26,6 +26,34 @@ export function billingCopy(lang: Lang) {
     paidBy: S('How it is paid', 'भुगतान कैसे होता है'),
     paidOnline: S('Pay online when the bill arrives, with Pay now.', 'बिल आने पर "अभी भुगतान करें" से ऑनलाइन भुगतान करें।'),
     paidOffline: S('Pay Growza by bank transfer or UPI; we record it for you.', 'बैंक ट्रांसफ़र या UPI से Growza को भुगतान करें; हम उसे दर्ज करते हैं।'),
+    /*
+     * Jira GRW-241 — UPI AutoPay, in the plainest words available.
+     *
+     * "Mandate" is the banking word and it is not used anywhere an owner can
+     * see it: the screen says automatic payment, and the amount, and the fact
+     * that it is approved in their own UPI app. Same rule as "Minutes" over
+     * "Takes" — take the plainer word even when the design says otherwise.
+     */
+    paidAutopay: S('Paid automatically from your UPI each month.', 'हर महीने आपके UPI से अपने आप भुगतान हो जाता है।'),
+    autopay: S('Automatic payment', 'अपने आप भुगतान'),
+    autopayOffExplain: S(
+      'Approve once in your UPI app and every month’s bill is paid on its own. You can stop it any time from your UPI app.',
+      'अपने UPI ऐप में एक बार मंज़ूरी दें और हर महीने का बिल अपने आप भर जाएगा। आप इसे कभी भी अपने UPI ऐप से बंद कर सकते हैं।',
+    ),
+    autopaySetUp: S('Set up automatic payment', 'अपने आप भुगतान चालू करें'),
+    autopayAgain: S('Turn automatic payment back on', 'अपने आप भुगतान फिर चालू करें'),
+    // `cancelled` is not "never set up": the owner stopped it, usually in their
+    // own UPI app, and being told "set it up" as though nothing happened reads
+    // as the product not noticing.
+    autopayStopped: S('Automatic payment is off. You stopped it, so bills come to you to pay.', 'अपने आप भुगतान बंद है। आपने इसे बंद किया था, इसलिए बिल आपको भरना होगा।'),
+    autopayPaused: S('Automatic payment is paused.', 'अपने आप भुगतान रुका हुआ है।'),
+    autopayFailed: S('The last automatic payment did not go through. Pay this bill, then turn it back on.', 'पिछला अपने आप भुगतान नहीं हो पाया। यह बिल भरें, फिर इसे दोबारा चालू करें।'),
+    autopayWaiting: S('Waiting for you to approve it in your UPI app.', 'आपके UPI ऐप में मंज़ूरी का इंतज़ार है।'),
+    autopayFinish: S('Finish approving', 'मंज़ूरी पूरी करें'),
+    autopayOn: (amount: string) => S(`On — ${amount} a month`, `चालू — ${amount} प्रति माह`),
+    autopayOnSince: (d: string) => S(`Approved ${d}`, `${d} को मंज़ूर`),
+    autopayOpening: S('Opening…', 'खुल रहा है…'),
+    autopayError: S('We could not start automatic payment just now. Please try again shortly.', 'अभी अपने आप भुगतान चालू नहीं हो सका। कृपया थोड़ी देर बाद कोशिश करें।'),
     change: (from: string, amount: string, now: string) =>
       S(`From ${from} your bill is ${amount} a month (now ${now}).`, `${from} से आपका बिल ${amount} प्रति माह होगा (अभी ${now})।`),
     due: S('You have a bill to pay.', 'आपका एक बिल भुगतान के लिए बाकी है।'),

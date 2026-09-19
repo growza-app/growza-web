@@ -569,6 +569,31 @@
   .bill-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
 
+/* ---------- Jira GRW-241 — automatic payment ---------- */
+.bill-autopay-on { margin: 0 0 4px; font-size: 15px; }
+/* One control, whether it is a <button> that asks for a page or an <a> that
+   returns to an unfinished one — they do the same thing to an owner, so they
+   must not look like two different offers. */
+.bill-autopay-button {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  /* 44px is the tap target this product holds itself to on a phone, and this
+     button lives on a screen an owner reaches from their phone far more often
+     than from a laptop. */
+  min-height: 44px;
+}
+.bill-autopay-button:disabled { opacity: 0.6; cursor: default; }
+
 /* ---------- Jira GRW-254 — all bills and one bill ---------- */
 .bill-card-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .bill-link { font-size: 13px; font-weight: 600; color: var(--accent-deep, var(--accent)); text-decoration: none; }

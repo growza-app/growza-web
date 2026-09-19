@@ -638,11 +638,29 @@ export interface OwnerBilling {
     branches: Array<{ id: string; name: string; included: boolean; amountMinor: number }>;
     discount: null | { amountMinor: number; reason: string | null; endsAt: string | null };
     nextBill: { date: string; amountMinor: number };
-    paidBy: 'online_link' | 'offline';
+    /** Jira GRW-241 — `autopay` outranks `online_link`: a live mandate is not asked to pay a link. */
+    paidBy: 'autopay' | 'online_link' | 'offline';
+    /** The standing permission, or null when there has never been one — which is not the same as `cancelled`. */
+    autopay: null | {
+      status: 'pending' | 'active' | 'paused' | 'cancelled' | 'failed';
+      amountMinor: number | null;
+      approvedAt: string | null;
+      /** Present only while `pending`: the page where the owner finishes approving. */
+      approvalUrl: string | null;
+    };
     pendingChange: null | { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number };
   };
   invoices: Array<{ id: string; invoiceNumber: string; periodStart: string; periodEnd: string; amountMinor: number; paymentStatus: string; unpaid: boolean }>;
   due: null | { invoiceNumber: string };
+}
+
+/** Jira GRW-241 — what starting UPI AutoPay hands back: a page to approve on, never a permission already given. */
+export interface AutopayStart {
+  approvalUrl: string;
+  amountMinor: number;
+  currency: string;
+  /** True when this is the page from an earlier, unfinished attempt rather than a new mandate. */
+  resumed: boolean;
 }
 
 /** Jira GRW-254 — the owner's bills: plan amounts only, no tax fields. */

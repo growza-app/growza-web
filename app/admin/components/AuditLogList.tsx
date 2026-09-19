@@ -83,6 +83,11 @@ export const KNOWN_ACTIONS = [
   'impersonation.end',
   // GRW-167 — the worker's own escalation, distinct from an admin's decision.
   'subscription.dunning_escalate',
+  // Jira GRW-241 — who asked for a UPI AutoPay mandate and for how much, and
+  // what the provider then said happened to it. Two actions because the second
+  // has no human actor: it arrives on a webhook.
+  'subscription.mandate_requested',
+  'subscription.mandate_state_change',
 ] as const;
 
 interface AuditLogRow {

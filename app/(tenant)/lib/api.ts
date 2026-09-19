@@ -103,7 +103,7 @@ import type {
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry } from './home-types';
 import type { BranchSettings } from './branch-types';
-import type { BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
+import type { AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import type {
   ClientProfile,
   ReportBookings,
@@ -342,6 +342,8 @@ export const api = {
    * here that could name somebody else's invoice.
    */
   paymentLink: () => post<PaymentLink>('/api/v1/billing/payment-link', {}),
+  /** Jira GRW-241 — asks for the mandate approval page. Returning one means nothing has been approved yet. */
+  startAutopay: () => post<AutopayStart>('/api/v1/billing/autopay', {}),
   // Jira GRW-243 — Settings › Billing.
   billing: () => get<OwnerBilling>('/api/v1/billing'),
   // Jira GRW-254 — every bill, and one opened.

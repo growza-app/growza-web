@@ -2,6 +2,7 @@ import type { OwnerBilling } from '../../lib/api-types';
 import { billingCopy } from '../../lib/billing-copy';
 import type { Lang } from '../../lib/lang';
 import { PayNowButton } from '../../components/PayNowButton';
+import { AutoPayCard } from './AutoPayCard';
 
 /**
  * Jira GRW-243 — the bill, laid out: plan and branches on the left, the next bill
@@ -71,7 +72,8 @@ export function BillingSummary({ billing, lang, canPayOnline }: { billing: Owner
                 <span>{money(sub.nextBill.amountMinor)}</span>
               </div>
               <p className="bill-paid-by">
-                <strong>{t.paidBy}:</strong> {sub.paidBy === 'online_link' ? t.paidOnline : t.paidOffline}
+                <strong>{t.paidBy}:</strong>{' '}
+                {sub.paidBy === 'autopay' ? t.paidAutopay : sub.paidBy === 'online_link' ? t.paidOnline : t.paidOffline}
               </p>
             </>
           )}
@@ -94,6 +96,9 @@ export function BillingSummary({ billing, lang, canPayOnline }: { billing: Owner
               </div>
             </section>
           ) : null}
+
+          {/* Jira GRW-241 — under the next bill, because that is the number it collects. */}
+          {sub ? <AutoPayCard autopay={sub.autopay} paidBy={sub.paidBy} currency={currency} lang={lang} /> : null}
 
           <section className="card bill-card" aria-labelledby="bill-history">
             <h3 id="bill-history" className="bill-card-title bill-card-title-row">
