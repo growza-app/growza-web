@@ -100,7 +100,7 @@ describe('the account menu holds everything about you', () => {
   it('language switches between English and Hindi and remembers it', () => {
     expect(menu).toMatch(/chooseLang\('en'\)/);
     expect(menu).toMatch(/chooseLang\('hi'\)/);
-    expect(menu).toMatch(/rememberLang\(next\)/);
+    expect(menu).toMatch(/saveLang\(next\)/);
   });
 
   it('it is a modal: focus in, Tab kept inside, Escape closes, focus back on the avatar', () => {

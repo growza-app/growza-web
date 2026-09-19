@@ -7,6 +7,7 @@ import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { MobileNavProvider } from './components/MobileNavProvider';
 import { PwaRegister } from './components/PwaRegister';
+import { LanguageSync } from './components/LanguageSync';
 import { ViewportHeight } from './components/ViewportHeight';
 import { InstallBanner } from '../shared/install/InstallBanner';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
@@ -152,6 +153,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let branches: Array<{ id: string; name: string }> = [];
   /** Jira GRW-310 — what LiveRefresh treats as "unchanged" until it sees a different one. */
   let liveVersionAtRender: string | null = null;
+  /** Jira GRW-329 — the language on the person's account; the cookie is a cache of it. */
+  let storedLang: string | null = null;
   const lang = await serverLang();
   const messages = await getMessages();
 
@@ -162,6 +165,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     const [me, version] = await Promise.all([api.me(), api.liveVersion().catch(() => null)]);
     liveVersionAtRender = version;
     labels = me.labels;
+    storedLang = me.member?.lang ?? null;
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
@@ -222,6 +226,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <InstallPromptCapture />
         <PwaRegister />
         <ViewportHeight />
+        <LanguageSync stored={storedLang} rendered={lang} />
         <LiveRefresh initialVersion={liveVersionAtRender} />
         <SessionRefresh />
         {/* Above the shell, not inside it: this is the most important thing on

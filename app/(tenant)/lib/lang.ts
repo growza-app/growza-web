@@ -30,7 +30,37 @@ export async function serverLang(): Promise<Lang> {
   }
 }
 
-/** Client components: remember a choice for a year, then re-render the server tree. */
+/**
+ * Client components: remember a choice locally.
+ *
+ * Jira GRW-329 — this is now a CACHE of the person's stored preference, not the
+ * record of it. `saveLang` below is what makes it last; this on its own is
+ * per-device and mortal, which is how a stylist who chose Hindi ended up back
+ * in English a year later, and on every new phone in between.
+ */
 export function rememberLang(lang: Lang): void {
   document.cookie = `${LANG_COOKIE}=${lang}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+}
+
+/**
+ * Jira GRW-329 — keep the choice on the person's account, not just this browser.
+ *
+ * The cookie is written FIRST and unconditionally, so the language changes
+ * immediately and still changes when the network is down — the person asked for
+ * a different language, and the one thing they must not get is nothing
+ * happening. The account write is what makes it survive a new phone, a
+ * reinstall, cleared data and a shared tablet; if it fails, this device is
+ * still correct and the next sign-in re-asserts whatever the server does hold.
+ */
+export async function saveLang(lang: Lang): Promise<void> {
+  rememberLang(lang);
+  try {
+    await fetch('/api/v1/me/language', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang }),
+    });
+  } catch {
+    // Deliberately silent: the switch has already taken effect on this device.
+  }
 }

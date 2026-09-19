@@ -46,6 +46,8 @@ export interface Me {
     locationClosesAt?: string | null;
     /** Jira GRW-251 — false: closed today; null: not known. */
     locationOpenToday?: boolean | null;
+    /** Jira GRW-329 — the language on this person's account. Null means never chosen, which reads as English. */
+    lang?: string | null;
   } | null;
   /**
    * Jira GRW-63 · GRW-197 — the Reports tabs THIS caller may open.

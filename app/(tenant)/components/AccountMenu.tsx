@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboard
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 import { homeCopy } from '../lib/home-copy';
-import { rememberLang, type Lang } from '../lib/lang';
+import { saveLang, type Lang } from '../lib/lang';
 import { useLabels } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { SignOutButton } from './SignOutButton';
@@ -100,7 +100,10 @@ export function AccountMenu() {
 
   const chooseLang = (next: Lang) => {
     if (next === lang) return;
-    rememberLang(next);
+    // Jira GRW-329 — kept on the account, so it survives this browser. Not
+    // awaited: the cookie inside `saveLang` is written synchronously before the
+    // request, so the refresh below already renders in the new language.
+    void saveLang(next);
     router.refresh();
   };
 
