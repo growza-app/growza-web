@@ -8,11 +8,25 @@ import {
   formatTime,
   BookingConflictError,
   type Appointment,
+  type Offer,
   type PaymentMode,
   type Provider,
   type Service,
 } from '../lib/api';
 import { summarizeServices } from '../lib/appointment-display';
+import {
+  amountsAreValid,
+  buildCheckoutRequest,
+  buildLines,
+  comboSavingMinor,
+  hasAnythingOnTheBill,
+  isValidAmount,
+  minorToRupees,
+  totalMinor as billTotalMinor,
+  type AddedCombo,
+  type AddedService,
+  type Line,
+} from '../lib/checkout-lines';
 import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
 import { useLabel } from './LabelsProvider';
 
@@ -29,63 +43,6 @@ import { useLabel } from './LabelsProvider';
  */
 function dialable(phone: string | null | undefined): string {
   return (phone ?? '').replace(/[^0-9]/g, '');
-}
-
-interface ExtraRow {
-  serviceId: string;
-  /** Raw rupee-string input value — parsed to minor units only on submit. */
-  paidAmountMinor: string;
-  schedulableId: string;
-}
-
-/** Rupees, as typed by staff, to minor currency units — the inverse of `formatMoney`'s `/100`. */
-function toMinor(rupees: string): number {
-  return Math.round(Number(rupees) * 100);
-}
-
-function isValidAmount(rupees: string): boolean {
-  return rupees.trim() !== '' && Number.isFinite(toMinor(rupees)) && toMinor(rupees) >= 0;
-}
-
-/** `service.priceMinor` ("50000") to a plain rupee string for the input ("500") — the price auto-fills, staff only type when it's different. */
-function minorToRupees(minor: string | null): string {
-  if (!minor) return '';
-  return String(Number(minor) / 100);
-}
-
-/**
- * A combo booking's legs (offerTitle set) share one discounted
- * comboPriceMinor rather than each having its own price — this splits it
- * proportionally by each leg's own list price, so the per-row defaults sum
- * exactly to the combo price (any rounding remainder lands on the last
- * leg). A non-combo leg booked alongside a combo (e.g. a walk-in add-on)
- * keeps its own list price, untouched. Mirrors the subtotal-minus-savings
- * total already shown in BookingsList.tsx / BookingSummary.tsx — this just
- * distributes that same discount across editable per-row amounts instead
- * of collapsing it into one total.
- */
-function splitComboDefaults(legs: Appointment[]): Map<string, number> {
-  const defaults = new Map<string, number>();
-  const comboLegs = legs.filter((a) => a.offerTitle && a.comboPriceMinor);
-  if (comboLegs.length > 0) {
-    const comboPriceMinor = Number(comboLegs[0]!.comboPriceMinor);
-    const comboListTotal = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
-    let allocated = 0;
-    comboLegs.forEach((leg, i) => {
-      const share =
-        i === comboLegs.length - 1
-          ? comboPriceMinor - allocated
-          : comboListTotal > 0
-            ? Math.round((Number(leg.priceMinor ?? 0) / comboListTotal) * comboPriceMinor)
-            : 0;
-      if (i < comboLegs.length - 1) allocated += share;
-      defaults.set(leg.id, share);
-    });
-  }
-  for (const leg of legs) {
-    if (!defaults.has(leg.id)) defaults.set(leg.id, Number(leg.priceMinor ?? 0));
-  }
-  return defaults;
 }
 
 export const PAYMENT_MODES: Array<{ value: PaymentMode; label: string }> = [
@@ -180,24 +137,91 @@ function ServiceRow({
 }
 
 /**
+ * Jira GRW-314 — a combo, as ONE row: its name and price, its services underneath. Taken off as a whole
+ * (and put back as a whole), never a service at a time; the pencil opens who did each of its services.
+ */
+function ComboRow({
+  title,
+  legs,
+  amount,
+  onAmountChange,
+  providers,
+  providerName,
+  onLegProvider,
+  editing,
+  onToggleEdit,
+  onRemove,
+  disabled,
+}: {
+  title: string;
+  legs: Array<{ name: string; providerId: string }>;
+  amount: string;
+  onAmountChange: (value: string) => void;
+  providers: Provider[];
+  providerName: (id: string) => string;
+  onLegProvider: (index: number, providerId: string) => void;
+  editing: boolean;
+  onToggleEdit: () => void;
+  onRemove: () => void;
+  disabled: boolean;
+}) {
+  const providerWord = useLabel('provider', 'Staff member');
+  const who = [...new Set(legs.map((l) => providerName(l.providerId)).filter(Boolean))].join(', ');
+  return (
+    <>
+      <div className="checkout-service-row checkout-combo-row">
+        <div className="checkout-service-avatar">{title.slice(0, 1).toUpperCase()}</div>
+        <div className="checkout-service-info">
+          <div className="checkout-service-name">{title}</div>
+          <div className="checkout-service-sub">Combo · {legs.map((l) => l.name).join(' + ')}{who ? ` · ${who}` : ''}</div>
+        </div>
+        <div className="checkout-amount-field">
+          <span>₹</span>
+          <input type="number" inputMode="decimal" min={0} value={amount} onChange={(e) => onAmountChange(e.target.value)} disabled={disabled} aria-label={`${title} price`} />
+        </div>
+        <button type="button" className="checkout-icon-btn" aria-label={`Change ${providerWord.toLowerCase()}`} aria-expanded={editing} onClick={onToggleEdit} disabled={disabled}>
+          <IconEdit />
+        </button>
+        <button type="button" className="checkout-icon-btn checkout-icon-btn-danger" aria-label={`Remove ${title}`} onClick={onRemove} disabled={disabled}>
+          <IconTrash />
+        </button>
+      </div>
+      {editing ? (
+        <div className="checkout-combo-legs">
+          {legs.map((l, i) => (
+            <label key={i}>
+              <span>{l.name}</span>
+              <select className="checkout-provider-select" value={l.providerId} onChange={(e) => onLegProvider(i, e.target.value)} disabled={disabled}>
+                {providers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+let addedCounter = 0;
+const nextKey = (prefix: string) => `${prefix}-${(addedCounter += 1)}`;
+
+/**
  * Records what a checkout actually looked like: the amount paid for the
  * booked service, plus any extra services the customer took at the desk —
  * each becomes its own completed appointment, tied to this visit. No
  * receipt/payment collection here (parked until a payment provider is
  * integrated) — this is purely recording what happened, for accurate revenue.
  */
-interface MemberRow {
-  appointmentId: string;
-  serviceName: string;
-  /** Raw rupee-string input value — parsed to minor units only on submit. */
-  paidAmountMinor: string;
-  schedulableId: string;
-}
 
 export function CheckoutSheet({
   appointment,
   services,
   providers,
+  offers = [],
   groupMembers = [],
   timezone,
   onClose,
@@ -207,6 +231,8 @@ export function CheckoutSheet({
   appointment: Appointment;
   services: Service[];
   providers: Provider[];
+  /** Jira GRW-314 — the salon's offers; the running combos among them can be added at this screen. */
+  offers?: Offer[];
   /** The combo's other still-booked legs — completed together, each its own service row. */
   groupMembers?: Appointment[];
   timezone: string;
@@ -232,92 +258,83 @@ export function CheckoutSheet({
   onSaved?: () => void;
 }) {
   const router = useRouter();
-  // Pre-filled from the booked service's list price (or its share of the
-  // combo price, if this booking is a combo — see splitComboDefaults) and
-  // its own provider — the common case (paid exactly what was quoted, same
-  // stylist) needs zero typing. Staff only change what's actually different.
-  const comboDefaultsMinor = splitComboDefaults([appointment, ...groupMembers]);
   /*
-   * What the combo takes off the list price, for the line under the total.
-   *
-   * Derived from the same legs `splitComboDefaults` uses, so the two can never
-   * disagree about which bookings are part of the combo.
+   * Jira GRW-314 — the visit as lines. Pre-filled from what was booked (a combo's own price, a service's
+   * list price) and its own stylist, so the common case — paid exactly what was quoted — needs no typing.
+   * A combo is one line whatever number of services it holds.
    */
-  const comboLegs = [appointment, ...groupMembers].filter((a) => a.offerTitle && a.comboPriceMinor);
-  const comboTitle = comboLegs[0]?.offerTitle ?? null;
-  const comboListTotal = comboLegs.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0);
-  const comboSaving = comboLegs.length > 0 ? comboListTotal - Number(comboLegs[0]!.comboPriceMinor) : 0;
-  const [amount, setAmount] = useState(() => minorToRupees(String(comboDefaultsMinor.get(appointment.id))));
-  const [providerId, setProviderId] = useState(appointment.providerId ?? '');
-  // The customer changed their mind at the desk and never got the originally
-  // booked service at all — it gets cancelled (not completed) on save,
-  // rather than assumed to have happened.
-  const [originalRemoved, setOriginalRemoved] = useState(false);
-  // The combo's other booked services — pre-filled the same combo-aware way,
-  // so completing the whole booking is zero-typing in the common case.
-  const [members, setMembers] = useState<MemberRow[]>(() =>
-    groupMembers.map((m) => ({
-      appointmentId: m.id,
-      serviceName: m.serviceName,
-      paidAmountMinor: minorToRupees(String(comboDefaultsMinor.get(m.id))),
-      schedulableId: m.providerId ?? '',
-    })),
-  );
-  const [extras, setExtras] = useState<ExtraRow[]>([]);
-  const [newServiceId, setNewServiceId] = useState('');
-  const [editingRow, setEditingRow] = useState<'original' | `member-${number}` | number | null>(null);
+  const [lines, setLines] = useState<Line[]>(() => buildLines([appointment, ...groupMembers]));
+  const [addedServices, setAddedServices] = useState<AddedService[]>([]);
+  const [addedCombos, setAddedCombos] = useState<AddedCombo[]>([]);
+  const [pick, setPick] = useState('');
+  const [editingRow, setEditingRow] = useState<string | null>(null);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const providerName = (id: string) => providers.find((p) => p.id === id)?.displayName ?? '';
+  const originalProviderId =
+    lines.flatMap((l) => (l.kind === 'leg' ? [l.leg] : l.legs)).find((l) => l.id === appointment.id)?.providerId ?? appointment.providerId ?? '';
 
-  const addExtra = () => {
-    if (!newServiceId) return;
-    const svc = services.find((s) => s.id === newServiceId);
-    setExtras((xs) => [
-      ...xs,
-      { serviceId: newServiceId, paidAmountMinor: minorToRupees(svc?.priceMinor ?? null), schedulableId: providerId },
-    ]);
-    setNewServiceId('');
+  const updateLine = (key: string, patch: Partial<Line>) =>
+    setLines((ls) => ls.map((l) => (l.key === key ? ({ ...l, ...patch } as Line) : l)));
+  const setLegProvider = (key: string, legIndex: number, providerId: string) =>
+    setLines((ls) =>
+      ls.map((l) => {
+        if (l.key !== key) return l;
+        return l.kind === 'leg' ? { ...l, leg: { ...l.leg, providerId } } : { ...l, legs: l.legs.map((g, i) => (i === legIndex ? { ...g, providerId } : g)) };
+      }),
+    );
+  const takeOff = (key: string, removed: boolean) => {
+    updateLine(key, { removed });
+    if (removed && editingRow === key) setEditingRow(null);
   };
-  const removeExtra = (i: number) => setExtras((xs) => xs.filter((_, idx) => idx !== i));
-  const updateExtra = (i: number, patch: Partial<ExtraRow>) =>
-    setExtras((xs) => xs.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
-  const updateMember = (i: number, patch: Partial<MemberRow>) =>
-    setMembers((ms) => ms.map((m, idx) => (idx === i ? { ...m, ...patch } : m)));
 
-  const hasAnyService = !originalRemoved || members.length > 0 || extras.length > 0;
-  const valid =
-    hasAnyService &&
-    (originalRemoved || isValidAmount(amount)) &&
-    members.every((m) => isValidAmount(m.paidAmountMinor)) &&
-    extras.every((x) => x.serviceId && isValidAmount(x.paidAmountMinor));
-  const totalMinor =
-    (!originalRemoved && isValidAmount(amount) ? toMinor(amount) : 0) +
-    members.reduce((sum, m) => sum + (isValidAmount(m.paidAmountMinor) ? toMinor(m.paidAmountMinor) : 0), 0) +
-    extras.reduce((sum, x) => sum + (isValidAmount(x.paidAmountMinor) ? toMinor(x.paidAmountMinor) : 0), 0);
+  // What can be added here: any service, and any combo that is running with all its services on hand.
+  const combos = offers.filter((o) => o.active && o.comboPriceMinor && o.serviceIds.length > 0 && o.serviceIds.every((id) => services.some((s) => s.id === id)));
+  const add = () => {
+    if (!pick) return;
+    if (pick.startsWith('offer:')) {
+      const offer = combos.find((o) => o.id === pick.slice(6));
+      if (!offer) return;
+      const legs = offer.serviceIds.map((id) => {
+        const svc = services.find((s) => s.id === id)!;
+        return { serviceId: id, name: svc.name, listMinor: Number(svc.priceMinor ?? 0), providerId: originalProviderId };
+      });
+      setAddedCombos((cs) => [
+        ...cs,
+        { key: nextKey('combo'), offerId: offer.id, title: offer.title, comboPriceMinor: Number(offer.comboPriceMinor), legs, amount: minorToRupees(offer.comboPriceMinor) },
+      ]);
+    } else {
+      const svc = services.find((s) => s.id === pick.slice(4));
+      if (!svc) return;
+      setAddedServices((xs) => [...xs, { key: nextKey('svc'), serviceId: svc.id, name: svc.name, amount: minorToRupees(svc.priceMinor ?? null), providerId: originalProviderId }]);
+    }
+    setPick('');
+  };
+
+  const kept = lines.filter((l) => !l.removed);
+  const takenOff = lines.filter((l) => l.removed);
+  const hasAnyService = hasAnythingOnTheBill(lines, addedServices, addedCombos);
+  const valid = hasAnyService && amountsAreValid(lines, addedServices, addedCombos);
+  const totalMinor = billTotalMinor(lines, addedServices, addedCombos);
+
+  // What the combos on the bill save, for the line under the total.
+  const keptCombos = [
+    ...kept.flatMap((l) => (l.kind === 'combo' ? [{ title: l.title, list: l.legs.reduce((n, g) => n + g.listMinor, 0), saving: comboSavingMinor(l.legs, l.comboPriceMinor) }] : [])),
+    ...addedCombos.map((c) => ({ title: c.title, list: c.legs.reduce((n, g) => n + g.listMinor, 0), saving: comboSavingMinor(c.legs, c.comboPriceMinor) })),
+  ];
+  const savingMinor = keptCombos.reduce((n, c) => n + c.saving, 0);
+
+  // Jira GRW-314 — what is still on the bill: a combo is named once, and a service taken off is not named.
+  const billNames = [...kept.map((l) => (l.kind === 'combo' ? l.title : l.leg.name)), ...addedCombos.map((c) => c.title)];
 
   const submit = async () => {
     if (!valid) return;
     setBusy(true);
     setError(null);
     try {
-      await api.checkout(appointment.id, {
-        paidAmountMinor: originalRemoved ? undefined : toMinor(amount),
-        schedulableId: originalRemoved ? undefined : providerId || undefined,
-        paymentMode,
-        groupMembers: members.map((m) => ({
-          appointmentId: m.appointmentId,
-          paidAmountMinor: toMinor(m.paidAmountMinor),
-          schedulableId: m.schedulableId || undefined,
-        })),
-        extraServices: extras.map((x) => ({
-          serviceId: x.serviceId,
-          paidAmountMinor: toMinor(x.paidAmountMinor),
-          schedulableId: x.schedulableId || undefined,
-        })),
-      });
+      await api.checkout(appointment.id, buildCheckoutRequest({ originalId: appointment.id, lines, addedServices, addedCombos, paymentMode }));
       router.refresh();
       (onSaved ?? onClose)();
     } catch (err) {
@@ -341,21 +358,15 @@ export function CheckoutSheet({
                   only a name, and a `tel:` link built from an empty string is a
                   control that looks live and does nothing. */}
               {dialable(appointment.customerPhone) && (
-                <a
-                  className="checkout-call-btn"
-                  href={`tel:${dialable(appointment.customerPhone)}`}
-                  aria-label="Call"
-                >
+                <a className="checkout-call-btn" href={`tel:${dialable(appointment.customerPhone)}`} aria-label="Call">
                   <IconPhone />
                 </a>
               )}
             </div>
             <div className="checkout-header-sub">
-              {groupMembers.length > 0
-                ? // A combo: summarize the services being completed (each is listed
-                  // in full, with its own stylist and amount, in the rows below).
-                  `${summarizeServices([appointment.serviceName, ...groupMembers.map((m) => m.serviceName)])} · ${formatTime(appointment.startAt, timezone)}`
-                : `${appointment.serviceName}${providerName(providerId) ? ` · ${providerName(providerId)}` : ''} · ${formatTime(appointment.startAt, timezone)}`}
+              {billNames.length > 1
+                ? `${summarizeServices(billNames)} · ${formatTime(appointment.startAt, timezone)}`
+                : `${billNames[0] ?? 'No service left'}${kept[0]?.kind === 'leg' && providerName(kept[0].leg.providerId) ? ` · ${providerName(kept[0].leg.providerId)}` : ''} · ${formatTime(appointment.startAt, timezone)}`}
             </div>
           </div>
         </div>
@@ -369,18 +380,13 @@ export function CheckoutSheet({
               <div className="checkout-total-label">Total amount</div>
               <div className="checkout-total-value">{formatMoney(String(totalMinor))}</div>
               {/*
-                GRW-199 — say what the combo took off.
-
-                `splitComboDefaults` already spreads the combo price across the
-                rows, so the discount was applied and never mentioned: the rows
-                showed ₹676.92 and ₹423.08, which look like nothing in the price
-                list and read as a mistake. The saving is the reason the customer
-                chose the combo, and the till is where they ask about it.
+                GRW-199 — say what the combo took off. The saving is the reason the customer chose the
+                combo, and the till is where they ask about it. (GRW-314: one combo names itself; more
+                than one is added up.)
               */}
-              {comboSaving > 0 && (
+              {savingMinor > 0 && (
                 <div className="checkout-total-saving">
-                  {comboTitle ? `${comboTitle} — ` : 'Combo — '}
-                  {formatMoney(String(comboListTotal))} list, saves {formatMoney(String(comboSaving))}
+                  {keptCombos.length === 1 ? `${keptCombos[0]!.title} — ${formatMoney(String(keptCombos[0]!.list))} list, saves ${formatMoney(String(savingMinor))}` : `Combos — saves ${formatMoney(String(savingMinor))}`}
                 </div>
               )}
             </div>
@@ -388,74 +394,116 @@ export function CheckoutSheet({
 
           <div className="checkout-section-label">Services</div>
 
-          {!originalRemoved && (
-            <ServiceRow
-              name={appointment.serviceName}
-              amount={amount}
-              onAmountChange={setAmount}
-              providerId={providerId}
-              providerName={providerName(providerId)}
-              providers={providers}
-              onProviderChange={setProviderId}
-              editing={editingRow === 'original'}
-              onToggleEdit={() => setEditingRow(editingRow === 'original' ? null : 'original')}
-              onRemove={() => {
-                setOriginalRemoved(true);
-                if (editingRow === 'original') setEditingRow(null);
-              }}
-              disabled={busy}
-            />
+          {kept.map((l) =>
+            l.kind === 'combo' ? (
+              <ComboRow
+                key={l.key}
+                title={l.title}
+                legs={l.legs}
+                amount={l.amount}
+                onAmountChange={(value) => updateLine(l.key, { amount: value })}
+                providers={providers}
+                providerName={providerName}
+                onLegProvider={(i, id) => setLegProvider(l.key, i, id)}
+                editing={editingRow === l.key}
+                onToggleEdit={() => setEditingRow(editingRow === l.key ? null : l.key)}
+                onRemove={() => takeOff(l.key, true)}
+                disabled={busy}
+              />
+            ) : (
+              <ServiceRow
+                key={l.key}
+                name={l.leg.name}
+                amount={l.amount}
+                onAmountChange={(value) => updateLine(l.key, { amount: value })}
+                providerId={l.leg.providerId}
+                providerName={providerName(l.leg.providerId)}
+                providers={providers}
+                onProviderChange={(id) => setLegProvider(l.key, 0, id)}
+                editing={editingRow === l.key}
+                onToggleEdit={() => setEditingRow(editingRow === l.key ? null : l.key)}
+                onRemove={() => takeOff(l.key, true)}
+                disabled={busy}
+              />
+            ),
           )}
 
-          {members.map((m, i) => (
-            <ServiceRow
-              key={m.appointmentId}
-              name={m.serviceName}
-              amount={m.paidAmountMinor}
-              onAmountChange={(value) => updateMember(i, { paidAmountMinor: value })}
-              providerId={m.schedulableId}
-              providerName={providerName(m.schedulableId)}
+          {addedCombos.map((c) => (
+            <ComboRow
+              key={c.key}
+              title={c.title}
+              legs={c.legs}
+              amount={c.amount}
+              onAmountChange={(value) => setAddedCombos((cs) => cs.map((x) => (x.key === c.key ? { ...x, amount: value } : x)))}
               providers={providers}
-              onProviderChange={(id) => updateMember(i, { schedulableId: id })}
-              editing={editingRow === `member-${i}`}
-              onToggleEdit={() => setEditingRow(editingRow === `member-${i}` ? null : `member-${i}`)}
+              providerName={providerName}
+              onLegProvider={(i, id) => setAddedCombos((cs) => cs.map((x) => (x.key === c.key ? { ...x, legs: x.legs.map((g, gi) => (gi === i ? { ...g, providerId: id } : g)) } : x)))}
+              editing={editingRow === c.key}
+              onToggleEdit={() => setEditingRow(editingRow === c.key ? null : c.key)}
+              onRemove={() => setAddedCombos((cs) => cs.filter((x) => x.key !== c.key))}
               disabled={busy}
             />
           ))}
 
-          {extras.map((x, i) => (
+          {addedServices.map((x) => (
             <ServiceRow
-              key={i}
-              name={services.find((s) => s.id === x.serviceId)?.name ?? 'Service'}
-              amount={x.paidAmountMinor}
-              onAmountChange={(value) => updateExtra(i, { paidAmountMinor: value })}
-              providerId={x.schedulableId}
-              providerName={providerName(x.schedulableId)}
+              key={x.key}
+              name={x.name}
+              amount={x.amount}
+              onAmountChange={(value) => setAddedServices((xs) => xs.map((y) => (y.key === x.key ? { ...y, amount: value } : y)))}
+              providerId={x.providerId}
+              providerName={providerName(x.providerId)}
               providers={providers}
-              onProviderChange={(id) => updateExtra(i, { schedulableId: id })}
-              editing={editingRow === i}
-              onToggleEdit={() => setEditingRow(editingRow === i ? null : i)}
-              onRemove={() => removeExtra(i)}
+              onProviderChange={(id) => setAddedServices((xs) => xs.map((y) => (y.key === x.key ? { ...y, providerId: id } : y)))}
+              editing={editingRow === x.key}
+              onToggleEdit={() => setEditingRow(editingRow === x.key ? null : x.key)}
+              onRemove={() => setAddedServices((xs) => xs.filter((y) => y.key !== x.key))}
               disabled={busy}
             />
           ))}
 
           {!hasAnyService && (
             <div className="muted" style={{ padding: '10px 0', fontSize: 13 }}>
-              Add at least one service before saving.
+              Nothing left to save. Add a service or a combo, or put one back.
+            </div>
+          )}
+
+          {/* Jira GRW-314 — what was taken off, one tap from coming back whole, with its amount and stylist. */}
+          {takenOff.length > 0 && (
+            <div className="checkout-removed" role="group" aria-label="Taken off">
+              <div className="checkout-section-label">Taken off</div>
+              {takenOff.map((l) => (
+                <div className="checkout-removed-row" key={l.key}>
+                  <span>{l.kind === 'combo' ? l.title : l.leg.name}</span>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => takeOff(l.key, false)} disabled={busy}>
+                    Put back
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
           <div className="checkout-add-row">
-            <select value={newServiceId} onChange={(e) => setNewServiceId(e.target.value)} disabled={busy}>
-              <option value="">Select a service</option>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
+            <select value={pick} onChange={(e) => setPick(e.target.value)} disabled={busy} aria-label="Add a service or a combo">
+              <option value="">Select a service or combo</option>
+              {combos.length > 0 && (
+                <optgroup label="Combos">
+                  {combos.map((o) => (
+                    <option key={o.id} value={`offer:${o.id}`}>
+                      {o.title} — {formatMoney(o.comboPriceMinor!)}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="Services">
+                {services.map((s) => (
+                  <option key={s.id} value={`svc:${s.id}`}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
-            <button type="button" className="btn" onClick={addExtra} disabled={busy || !newServiceId}>
+            <button type="button" className="btn" onClick={add} disabled={busy || !pick}>
               Add
             </button>
           </div>

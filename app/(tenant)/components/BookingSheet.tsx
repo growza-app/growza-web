@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatTime, type Appointment, type AppointmentStatus, type Provider, type Service } from '../lib/api';
+import { api, formatTime, type Appointment, type AppointmentStatus, type Offer, type Provider, type Service } from '../lib/api';
 import { copy } from '../lib/copy';
 import { formatDuration, summarizeServices } from '../lib/appointment-display';
 import { CheckoutSheet } from './CheckoutSheet';
@@ -89,6 +89,8 @@ export function BookingSheet({
   const [moving, setMoving] = useState(false);
   const [services, setServices] = useState<Service[] | null>(null);
   const [providers, setProviders] = useState<Provider[] | null>(null);
+  // Jira GRW-314 — the combos that can be added at the till; a failed read just means none are offered.
+  const [offers, setOffers] = useState<Offer[]>([]);
 
   const digits = dialable(appointment.customerPhone);
   const name = appointment.customerName ?? 'this customer';
@@ -98,7 +100,9 @@ export function BookingSheet({
     setBusy(true);
     setError(null);
     try {
-      await api.updateAppointmentStatus(appointment.id, status);
+      // Jira GRW-318 — a cancel or a no-show is about the VISIT: a combo's other services go with the one
+      // that was tapped, instead of being left confirmed beside it.
+      await api.updateAppointmentStatus(appointment.id, status, status === 'cancelled' || status === 'no_show');
       router.refresh();
       onClose();
     } catch {
@@ -111,9 +115,10 @@ export function BookingSheet({
     setBusy(true);
     setError(null);
     try {
-      const [svcs, provs] = await Promise.all([services ?? api.services(), providers ?? api.providers()]);
+      const [svcs, provs, offs] = await Promise.all([services ?? api.services(), providers ?? api.providers(), api.offers().catch(() => [] as Offer[])]);
       setServices(svcs);
       setProviders(provs);
+      setOffers(offs);
       setCheckingOut(true);
     } catch {
       setError('Could not load services. Check the connection and try again.');
@@ -143,6 +148,7 @@ export function BookingSheet({
         appointment={appointment}
         services={services}
         providers={providers}
+        offers={offers}
         groupMembers={groupMembers}
         timezone={timezone}
         onClose={() => {

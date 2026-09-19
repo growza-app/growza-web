@@ -583,8 +583,9 @@ export const api = {
   chatStart: (phone: string, name?: string) => post<ChatState>('/api/v1/chat/start', { phone, name }),
   chatTap: (phone: string, optionId: string, nonce: string) =>
     post<ChatState>('/api/v1/chat/tap', { phone, optionId, nonce }),
-  updateAppointmentStatus: (id: string, status: AppointmentStatus) =>
-    patch<{ id: string; status: AppointmentStatus }>(`/api/v1/appointments/${id}/status`, { status }),
+  /** Jira GRW-318 — `wholeBooking` applies a cancel or a no-show to every still-confirmed service of the visit. */
+  updateAppointmentStatus: (id: string, status: AppointmentStatus, wholeBooking = false) =>
+    patch<{ id: string; status: AppointmentStatus }>(`/api/v1/appointments/${id}/status`, wholeBooking ? { status, wholeBooking: true } : { status }),
   checkout: (
     appointmentId: string,
     args: {
@@ -595,6 +596,8 @@ export const api = {
       extraServices?: CheckoutExtraServiceInput[];
       /** The OTHER already-booked legs of this combo to complete in the same visit — existing appointments, not new ones. */
       groupMembers?: CheckoutGroupMemberInput[];
+      /** Jira GRW-314 — the combo's other legs the customer never had: cancelled, chair released. */
+      cancelMemberIds?: string[];
     },
   ) => post<CheckoutResponse>(`/api/v1/appointments/${appointmentId}/checkout`, args),
   /**
