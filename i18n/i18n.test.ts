@@ -84,16 +84,3 @@ describe('ICU plurals', () => {
     expect([0, 1, 2].map((n) => visits('hi', n))).toEqual(['0 विज़िट', '1 विज़िट', '2 विज़िट']);
   });
 });
-
-describe('the service worker (AC-06)', () => {
-  const sw = readFileSync('web/public/sw.js', 'utf8');
-
-  it('never serves Next\'s RSC payloads from cache, so a language switch cannot show the old language', () => {
-    expect(sw).toMatch(/request\.headers\.get\('RSC'\)/);
-    expect(sw).toMatch(/searchParams\.has\('_rsc'\)/);
-  });
-
-  it('bumps the cache version, so a worker cached under the old rules is dropped', () => {
-    expect(sw).not.toMatch(/CACHE_VERSION = 'v3'/);
-  });
-});

@@ -1,16 +1,28 @@
 // Service worker for the admin dashboard PWA.
 //
-// This app is a live operational tool (bookings, availability, offers) —
-// caching API responses would risk a stylist acting on a stale "free slot"
-// and double-booking a customer, so /api/* requests always go straight to
-// the network, untouched. What IS worth caching: the app shell (so the
-// dashboard opens instantly and looks right even on a flaky connection) and
-// pages already visited (so a repeat visit works offline). A page that has
-// never been opened before still can't work offline — there's no data for
-// it to show — so that case falls back to a small honest offline notice
-// instead of the browser's default dinosaur/error page.
+// Jira GRW-324 — this worker stores NO logged-in page.
+//
+// This app is a live operational tool (bookings, availability, offers): stale
+// data is the risk, not slowness. And every page it serves is personal — it
+// changes with the signed-in person and with their language — so a copy saved
+// by URL is wrong by construction: after sign-out it is the previous user's
+// client names and phone numbers, after a language switch it is the old
+// language. The first version cached every page it served and served the copy
+// when the network failed; nothing ever purged it.
+//
+// So it caches only what is the same for everyone and safe to keep:
+//   - hashed build assets (/_next/static/) — cache-first, they never change
+//   - the install icons and manifests    — stale-while-revalidate
+// and everything else — pages, Next's RSC payloads, /api/*, /uploads/* — goes
+// straight to the network, untouched. If a PAGE load fails because the device
+// is offline, a small honest offline notice replaces the browser's error page.
+//
+// Only an OK, non-redirected response is ever stored, and every write is held
+// open with event.waitUntil so the worker cannot be stopped mid-write.
 
-const CACHE_VERSION = 'v4';
+// v5 — bumping this is what deletes the logged-in pages the earlier versions
+// left on people's devices: `activate` removes every cache but the current one.
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `booking-dashboard-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -20,6 +32,8 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// skipWaiting + claim on purpose: a worker that waits for every tab to close
+// would leave the old caches on an installed app that is never closed.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
@@ -29,66 +43,63 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/** Hashed build output: the same for everyone, and a URL never changes its content. */
+const isBuildAsset = (pathname) => pathname.startsWith('/_next/static/');
+
+/** What installing the app needs: the same for everyone, and small. */
+const isInstallAsset = (pathname) =>
+  pathname.startsWith('/icons/') || pathname === '/manifest.json' || pathname === '/admin-manifest.json';
+
+/**
+ * Keeps a copy of `response` and hands it back. A 502 from the proxy during a
+ * deploy, a 404, or a redirect is returned to the page but never stored — one
+ * bad response must not stick to a URL until somebody bumps the version.
+ */
+function store(event, request, response) {
+  if (!response.ok || response.redirected) return response;
+  const copy = response.clone();
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.put(request, copy))
+      .catch(() => {}),
+  );
+  return response;
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  // The API is served from its own origin (a different port in dev, its own
-  // subdomain in production) — cross-origin requests are never intercepted,
-  // which already covers it. The explicit /api/ check catches the case
-  // where a future deploy reverse-proxies the API under this same origin.
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/')) return; // live data — always network, never cached
-  // Jira GRW-319 — Next's client-side navigation and router.refresh() fetch the
-  // page's RSC payload in the CURRENT language. The stale-while-revalidate branch
-  // below would hand back the cached copy first, so after a language switch the
-  // owner would see the previous language. Always the network.
-  if (request.headers.get('RSC') || url.searchParams.has('_rsc')) return;
 
-  // Page navigations: try the network first (freshest content), fall back
-  // to a cached copy of that exact page, then to the offline notice.
+  // A page load: always the network. Only a failed load — the device is offline —
+  // gets the offline notice; nothing about the page was ever kept.
   if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(async () => (await caches.match(OFFLINE_URL)) ?? Response.error()));
+    return;
+  }
+
+  if (isBuildAsset(url.pathname)) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(async () => (await caches.match(request)) ?? (await caches.match(OFFLINE_URL))),
+      caches.match(request).then((cached) => cached ?? fetch(request).then((response) => store(event, request, response))),
     );
     return;
   }
 
-  // Static, content-hashed build assets (Next's /_next/static/*): cache-first
-  // is safe because the filename itself changes whenever the content does.
-  if (url.pathname.startsWith('/_next/static/')) {
+  if (isInstallAsset(url.pathname)) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ??
-          fetch(request).then((response) => {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-            return response;
-          }),
-      ),
+      caches.match(request).then((cached) => {
+        const network = fetch(request)
+          .then((response) => store(event, request, response))
+          .catch(() => cached ?? Response.error());
+        if (cached) event.waitUntil(network); // the refresh must not be cut short
+        return cached ?? network;
+      }),
     );
-    return;
   }
 
-  // Everything else same-origin (icons, manifest, etc.): stale-while-revalidate.
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => cached);
-      return cached ?? network;
-    }),
-  );
+  // Anything else — RSC payloads, /api/*, /uploads/* — is not handled here, so
+  // the browser goes to the network as if there were no worker.
 });
