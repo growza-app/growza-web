@@ -192,5 +192,17 @@
     "couldntBook": "यह बुक नहीं हो सका",
     "showAgain": "खाली समय फिर दिखाएँ",
     "wentWrong": "कुछ गड़बड़ हो गई। कृपया दोबारा कोशिश करें।"
+  },
+  "checkout": {
+    "combo": "कॉम्बो",
+    "combos": "कॉम्बो",
+    "takenOff": "हटाया गया",
+    "putBack": "वापस जोड़ें",
+    "pick": "{service} या {combo} चुनें",
+    "addAria": "{service} या {combo} जोड़ें",
+    "empty": "सेव करने के लिए कुछ नहीं बचा। {service} या {combo} जोड़ें, या हटाई हुई चीज़ वापस जोड़ें।",
+    "removeThis": "यह {service} हटाएँ",
+    "comboSaving": "{title} — {list} लिस्ट, {saving} की बचत",
+    "combosSaving": "{combos} — {saving} की बचत"
   }
 }

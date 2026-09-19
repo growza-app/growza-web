@@ -18,7 +18,7 @@ describe('a combo is one row', () => {
   it('drawn once, with its services underneath, not as a row per service', () => {
     expect(sheet).toMatch(/l\.kind === 'combo' \? \(\s*<ComboRow/);
     expect(sheet).toMatch(/legs\.map\(\(l\) => l\.name\)\.join\(' \+ '\)/);
-    expect(sheet).toMatch(/Combo · \{legs\.map/);
+    expect(sheet).toMatch(/\{comboWord\} · \{legs\.map/);
     expect(sheet).not.toMatch(/checkout-combo-chip/);
   });
 
@@ -36,7 +36,7 @@ describe('a combo is one row', () => {
 
 describe('the way back', () => {
   it('a "Taken off" list names each line, a combo by its name, with Put back for the whole of it', () => {
-    expect(sheet).toMatch(/aria-label="Taken off"/);
+    expect(sheet).toMatch(/aria-label=\{t\('takenOff'\)\}/);
     expect(sheet).toMatch(/l\.kind === 'combo' \? l\.title : l\.leg\.name/);
     expect(sheet).toMatch(/onClick=\{\(\) => takeOff\(l\.key, false\)\}/);
   });
@@ -47,7 +47,7 @@ describe('the way back', () => {
   });
 
   it('an empty bill says how to get out of it, and Save stays off', () => {
-    expect(sheet).toMatch(/Nothing left to save\. Add a service or a combo, or put one back\./);
+    expect(sheet).toMatch(/t\('empty',/);
     expect(sheet).toMatch(/const valid = hasAnyService && amountsAreValid/);
   });
 });
@@ -55,8 +55,8 @@ describe('the way back', () => {
 describe('adding a combo', () => {
   it('the list offers the combos that are running and whole, above the services', () => {
     expect(sheet).toMatch(/o\.active && o\.comboPriceMinor && o\.serviceIds\.length > 0 && o\.serviceIds\.every/);
-    expect(sheet).toMatch(/<optgroup label="Combos">/);
-    expect(sheet).toMatch(/<optgroup label="Services">/);
+    expect(sheet).toMatch(/<optgroup label=\{combosWord\}>/);
+    expect(sheet).toMatch(/<optgroup label={servicesWord}>/);
   });
 
   it('a chosen combo becomes one added row, whole, at its price, with every service in it', () => {
