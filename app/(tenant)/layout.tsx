@@ -7,6 +7,7 @@ import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { MobileNavProvider } from './components/MobileNavProvider';
 import { PwaRegister } from './components/PwaRegister';
+import { ViewportHeight } from './components/ViewportHeight';
 import { InstallBanner } from '../shared/install/InstallBanner';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
 import { BrowserGate } from './components/BrowserGate';
@@ -222,6 +223,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <BrowserGate />
         <InstallPromptCapture />
         <PwaRegister />
+        <ViewportHeight />
         <LiveRefresh initialVersion={liveVersionAtRender} />
         <SessionRefresh />
         {/* Above the shell, not inside it: this is the most important thing on

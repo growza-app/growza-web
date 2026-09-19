@@ -321,6 +321,7 @@
 .shell-impersonating {
   height: calc(100vh - var(--impersonation-banner-h));
   height: calc(100dvh - var(--impersonation-banner-h));
+  height: calc(min(100dvh, var(--app-h, 100dvh)) - var(--impersonation-banner-h));
 }
 
 /* ---------- GRW-145 — "Pay now" in the billing banner ----------
