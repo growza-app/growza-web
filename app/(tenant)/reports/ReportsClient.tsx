@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { copy } from '../lib/copy';
+import type { LoadErrorKind } from '../lib/load-error';
+import { LoadErrorHelp } from '../components/LoadErrorBanner';
 import type {
   ReportFilterOptions,
   ReportFilters,
@@ -61,6 +63,7 @@ export function ReportsClient({
   rangeLabel,
   labels,
   payload,
+  loadError = 'down',
   branches = [],
   branch = null,
 }: {
@@ -81,6 +84,8 @@ export function ReportsClient({
   rangeLabel: string;
   labels: Record<string, string>;
   payload: TabPayload;
+  /** Why `payload` is null, when it is — a busy server is told apart from an unreachable one. */
+  loadError?: LoadErrorKind;
   /** Jira GRW-238 — a multi-branch owner's branches, main first; empty otherwise. */
   branches?: Array<{ id: string; name: string }>;
   branch?: string | null;
@@ -134,7 +139,7 @@ export function ReportsClient({
         <section className="rp-card rp-card-quiet">
           <div>
             <h2>{copy.reports.loadFailed}</h2>
-            <p className="rp-card-sub">{copy.errors.apiDownHelp} <code>npm run dev</code>.</p>
+            <p className="rp-card-sub"><LoadErrorHelp kind={loadError} /></p>
           </div>
         </section>
       ) : payload.tab === 'overview' ? (

@@ -1,7 +1,8 @@
 import { rootTitle } from './lib/page-title';
 import { DateTime } from 'luxon';
 import { api, type Appointment, type AttendanceRegister, type CustomerStats, type HomeOverview, type Me, type ProviderDay } from './lib/api';
-import { copy } from './lib/copy';
+import { LoadErrorBanner } from './components/LoadErrorBanner';
+import { loadErrorKind } from './lib/load-error';
 import { serverLang, type Lang } from './lib/lang';
 import { canSeeRevenue, homeKind, type MemberRole } from './lib/nav-policy';
 import { OwnerHome } from './components/home/OwnerHome';
@@ -56,12 +57,10 @@ export default async function DashboardPage() {
   let me: Me;
   try {
     me = await api.me();
-  } catch {
+  } catch (error) {
     return (
       <div className="page-body">
-        <div className="banner">
-          <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-        </div>
+        <LoadErrorBanner kind={loadErrorKind(error)} />
       </div>
     );
   }

@@ -1,6 +1,8 @@
 import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { StaffClient } from './StaffClient';
 
@@ -23,14 +25,12 @@ export default async function ProvidersPage() {
       // Jira GRW-234 — the branches a new person can be placed at (owner only; anybody else gets no picker).
       api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name }))).catch(() => []),
     ]);
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title={copy.nav.staff} />
         <div className="page-body">
-          <div className="banner">
-            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );

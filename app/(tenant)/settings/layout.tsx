@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { SettingsShell } from './SettingsShell';
 import { SettingsBranchPicker } from './SettingsBranchPicker';
@@ -11,14 +13,12 @@ export default async function SettingsLayout({ children }: { children: ReactNode
   let settings;
   try {
     settings = await api.settings();
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title={copy.nav.settings} />
         <div className="page-body">
-          <div className="banner">
-            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );

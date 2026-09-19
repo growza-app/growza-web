@@ -2,6 +2,8 @@ import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { SlotGrid } from './SlotGrid';
 
@@ -19,14 +21,12 @@ export default async function AvailabilityPage({
   let me, services, providers;
   try {
     [me, services, providers] = await Promise.all([api.me(), api.services(), api.providers()]);
-  } catch {
+  } catch (error) {
     return (
       <>
         <PageHeader title={isBookingIntent ? copy.freeTimes.newBookingTitle : copy.freeTimes.title} />
         <div className="page-body">
-          <div className="banner">
-            <strong>{copy.errors.apiDown}</strong> {copy.errors.apiDownHelp} <code>npm run dev</code>.
-          </div>
+          <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
       </>
     );
