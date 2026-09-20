@@ -29,6 +29,16 @@
   flex: 0 0 100%;
 }
 
+/* Free times has three fields, not two. At 1/3 of a phone each is under 100px:
+   English labels overlap and Hindi ones wrap a word per line. A floor on the
+   width lets a third field drop to its own row instead of squeezing the rest.
+   Phones only: the desktop toolbar (32-customers.css) is one row on purpose. */
+@media (max-width: 860px) {
+  .filters-inline .field {
+    flex: 1 1 120px;
+  }
+}
+
 .field-hint {
   display: block;
   margin-top: 5px;

@@ -93,7 +93,7 @@ export default async function AvailabilityPage({
                 ))}
               </select>
             </div>
-            <button type="submit" className="btn">
+            <button type="submit" className="btn filters-show">
               {t('show')}
             </button>
           </form>
