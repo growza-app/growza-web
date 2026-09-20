@@ -54,7 +54,7 @@ export function Donut({
 
   return (
     <div className="rp-donut">
-      <svg viewBox="0 0 136 136" width={136} height={136} role="img">
+      <svg viewBox="0 0 136 136" width={136} height={136} role="img" aria-label={segments.map((s) => `${s.label} ${share(s.value, total)}`).join(', ')}>
         {segments.map((segment, i) => {
           const dash = (segment.value / total) * circumference;
           const node = (

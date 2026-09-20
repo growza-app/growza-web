@@ -359,7 +359,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
         </div>
       </div>
 
-      {error && <div className="banner" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && <div className="banner" role="alert" style={{ marginBottom: 16 }}>{error}</div>}
 
       <div className="wizard-rail">
         <div className="wizard-steps">
@@ -417,7 +417,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                       className={fieldErrors.title ? 'field-invalid' : undefined}
                       style={{ width: '100%' }}
                     />
-                    {fieldErrors.title && <div className="field-error">{fieldErrors.title}</div>}
+                    {fieldErrors.title && <div role="alert" className="field-error">{fieldErrors.title}</div>}
                   </div>
                   <div className="field">
                     <label>
@@ -463,7 +463,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                     </button>
                   )}
                 </div>
-                {fieldErrors.services && <div className="field-error">{fieldErrors.services}</div>}
+                {fieldErrors.services && <div role="alert" className="field-error">{fieldErrors.services}</div>}
                 {search.trim() !== '' && (
                   <div className="picker-results">
                     {filteredServices.length === 0 ? (

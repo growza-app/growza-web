@@ -116,7 +116,7 @@ export function OverviewTab({
           {empty ? (
             <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
           ) : (
-            <LineChart labels={labels} series={[{ color: 'var(--rp-brand)', values: data.revenueTrend.map((p) => p.value), format: money }]} fill />
+            <LineChart label={copy.reports.revenueTrend} labels={labels} series={[{ color: 'var(--rp-brand)', values: data.revenueTrend.map((p) => p.value), format: money }]} fill />
           )}
         </section>
 
@@ -132,6 +132,7 @@ export function OverviewTab({
             <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
           ) : (
             <LineChart
+              label={copy.reports.bookingTrend}
               labels={labels}
               series={[{ color: 'var(--rp-blue)', values: data.bookingTrend.map((p) => p.value), format: (v) => `${v} bookings` }]}
               fill

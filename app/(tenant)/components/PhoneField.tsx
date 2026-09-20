@@ -87,7 +87,7 @@ export function PhoneField({
       </div>
 
       {error ? (
-        <div className="field-error" id={`${id}-error`}>
+        <div role="alert" className="field-error" id={`${id}-error`}>
           {error}
         </div>
       ) : hint ? (

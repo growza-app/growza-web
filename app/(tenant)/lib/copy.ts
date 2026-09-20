@@ -66,6 +66,9 @@ export const copy = {
       'Create offers and combos to sell more of what you already do. Add them to a booking at the desk today — customers will be able to book them on WhatsApp too, once WhatsApp goes live for you.',
   },
 
+  /** Jira GRW-340 — the phone's branch tabs, on the screens that are not translated yet (Attendance). */
+  branchTabs: { all: 'All', label: 'Branch' },
+
   nav: {
     dashboard: 'Home',
     calendar: 'Calendar',
@@ -200,6 +203,17 @@ export const copy = {
    */
   newVisit: {
     title: 'Walk-in',
+    // Jira GRW-341 — the "Book again" card: the client's last visit, offered back with the next free times.
+    bookAgain: 'Book again',
+    bookAgainLastVisit: (day: string) => `Last visit ${day}`,
+    bookAgainWithStaff: (name: string) => `with ${name}`,
+    bookAgainAnyone: 'anyone free',
+    bookAgainUse: 'Use these',
+    bookAgainTimes: 'Next free times',
+    bookAgainFinding: 'Finding free times…',
+    bookAgainNoTimes: 'No free times this week',
+    bookAgainOtherTime: 'Choose another time',
+    bookAgainTomorrow: 'Tomorrow',
     // Home's "Record payment": the walk-in steps, ending in the till instead of a started visit.
     paymentTitle: 'Record payment',
     // Jira GRW-290 — Record payment ends on the services screen, no separate till.

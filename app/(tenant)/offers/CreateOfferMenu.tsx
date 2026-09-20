@@ -126,7 +126,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
               if (titleError && e.target.value.trim()) setTitleError(null);
             }}
           />
-          {titleError && <div className="field-error">{titleError}</div>}
+          {titleError && <div role="alert" className="field-error">{titleError}</div>}
         </div>
         <div className="field">
           <label>
@@ -143,7 +143,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
-        {error && <div className="field-error" style={{ marginTop: 12 }}>{error}</div>}
+        {error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
             Cancel

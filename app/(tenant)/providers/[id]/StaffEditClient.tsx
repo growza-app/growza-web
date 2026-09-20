@@ -301,7 +301,7 @@ export function StaffEditClient({
       </div>
 
       <div className="page-body">
-        {error && <div className="field-error edit-banner">{error}</div>}
+        {error && <div role="alert" className="field-error edit-banner">{error}</div>}
 
         <div className="edit-layout">
           <div className="edit-main">
@@ -325,7 +325,7 @@ export function StaffEditClient({
                     }}
                     onBlur={() => setFieldErrors((f) => ({ ...f, name: validateRequired(displayName, 'Name') ?? undefined }))}
                   />
-                  {fieldErrors.name && <div className="field-error">{fieldErrors.name}</div>}
+                  {fieldErrors.name && <div role="alert" className="field-error">{fieldErrors.name}</div>}
                 </label>
                 {branches.length > 1 ? (
                   <label className="field">

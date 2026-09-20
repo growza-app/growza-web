@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { adminFetch } from '../lib/api';
 import { oklch } from '../tokens';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-88 · GRW-202 — an administrator changes their own password.
@@ -16,6 +17,8 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: busy ? undefined : onClose });
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -56,6 +59,8 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
       />
       <div
         role="dialog"
+        aria-modal="true"
+        ref={dialogRef}
         aria-label="Change your password"
         style={{
           position: 'fixed',

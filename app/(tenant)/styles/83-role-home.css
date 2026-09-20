@@ -10,15 +10,15 @@
  */
 
 :root {
-  --hm-ink: #14311f;
+  --hm-ink: var(--text); /* was #14311f: a green-tinted ink on Home beside --text everywhere else */
   /* Jira GRW-306 — were #6b7770 (4.1:1 on the page) and #8a938c (3.2:1 on white),
      both under WCAG 1.4.3's 4.5:1 for the small text they colour. */
   --hm-muted: #5f6a65;
-  --hm-faint: #66716b;
+  --hm-faint: #5f6a65;
   --hm-line: #e6ebe7;
   --hm-line-soft: #f0f2f0;
   --hm-green: #16a34a;
-  --hm-green-deep: #16794a;
+  --hm-green-deep: var(--accent-deep); /* was its own #16794a: a second deep green beside --accent-deep */
   --hm-green-soft: #e7f6ee;
   --hm-hero-a: #1c5535;
   --hm-hero-b: #12301e;
@@ -393,6 +393,10 @@
   color: #fff;
   font-weight: 700;
 }
+/* The phone form of the same switch — see `Segmented`. Hidden from 861px up, where the tabs show. */
+.hm-seg-select {
+  display: none;
+}
 .hm-branch {
   position: relative;
 }
@@ -530,12 +534,26 @@
   .hm-area-branches { order: 4; }
   .hm-area-clients { order: 5; }
   .hm-area-bookings { order: 6; }
+  /* A phone gets the period as a dropdown, styled as the branch picker beside it. */
   .hm-toolbar .hm-seg {
-    flex: 1;
+    display: none;
   }
-  .hm-toolbar .hm-seg button {
-    flex: 1;
-    padding: 0 var(--sp-2);
+  .hm-toolbar .hm-seg-select {
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 34px 0 var(--sp-3);
+    border: 1px solid var(--hm-line);
+    border-radius: 12px;
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6f66' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 15px 15px;
+    color: var(--hm-ink);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
   }
 }
 
@@ -939,7 +957,7 @@
 }
 .hm-tone-amber { background: #fdf6ec; border-color: #f6e6cd; }
 .hm-tone-amber .hm-att-icon { background: #f9e8ca; color: #c07d18; }
-.hm-tone-amber strong { color: #a86a12; }
+.hm-tone-amber strong { color: #8a5a0f; }
 .hm-tone-rose { background: #fdf1f1; border-color: #f7d9d9; }
 .hm-tone-rose .hm-att-icon { background: #f9dede; color: #d64545; }
 .hm-tone-rose strong { color: #c53434; }
@@ -1187,7 +1205,7 @@
   font-weight: 800;
   flex-shrink: 0;
 }
-.hm-branch-tile.hm-tone-green { background: #e7f6ee; color: #16794a; }
+.hm-branch-tile.hm-tone-green { background: #e7f6ee; color: var(--accent-deep); }
 .hm-branch-tile.hm-tone-blue { background: #f2f7ff; color: #2563eb; }
 .hm-branch-tile.hm-tone-amber { background: #fdf6ec; color: #c07d18; }
 .hm-branch-tile.hm-tone-violet { background: #f4f2fd; color: #6d4fc4; }
@@ -1201,8 +1219,8 @@
   font-size: 11px;
   font-weight: 700;
 }
-.hm-pace-busy { color: #16794a; background: #e7f6ee; border-color: #cdeedb; }
-.hm-pace-slow { color: #a86a12; background: #fdf6ec; border-color: #f6e6cd; }
+.hm-pace-busy { color: var(--accent-deep); background: #e7f6ee; border-color: #cdeedb; }
+.hm-pace-slow { color: #8a5a0f; background: #fdf6ec; border-color: #f6e6cd; }
 .hm-row-button.is-picked button {
   margin: 0 -10px;
   width: calc(100% + 20px);
@@ -1271,10 +1289,10 @@
   font-weight: 700;
   white-space: nowrap;
 }
-.hm-pill-green { background: #e7f6ee; color: #16794a; }
+.hm-pill-green { background: #e7f6ee; color: var(--accent-deep); }
 .hm-pill-blue { background: #e6effe; color: #2563eb; }
 .hm-pill-grey { background: #eef1ee; color: #6b7570; }
-.hm-pill-amber { background: #fbf0dc; color: #a86a12; }
+.hm-pill-amber { background: #fbf0dc; color: #8a5a0f; }
 .hm-pill-rose { background: #fdecec; color: #c53434; }
 @media (max-width: 400px) {
   .hm-row-time {
@@ -1598,7 +1616,7 @@
 }
 .brand-location {
   font-size: 11.5px;
-  color: #7fa38e;
+  color: #a7c4b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1641,7 +1659,7 @@
 }
 .nav-who-text span {
   font-size: 11px;
-  color: #7fa38e;
+  color: #a7c4b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1694,7 +1712,7 @@
     stroke-width: 2;
   }
   .bn-centre-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--hm-green-deep);
     white-space: nowrap;
@@ -1876,11 +1894,11 @@
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 700;
-  color: #c07d18;
+  color: #8a5a0f;
   white-space: nowrap;
 }
 .hm-wait-rose {
-  color: #d64545;
+  color: #b93232;
 }
 .hm-give {
   flex-shrink: 0;

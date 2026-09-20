@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -30,6 +30,7 @@ import {
 } from '../lib/checkout-lines';
 import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
 import { useLabel } from './LabelsProvider';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Digits only — `tel:` chokes on spaces and punctuation. Duplicated from
@@ -280,6 +281,8 @@ export function CheckoutSheet({
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: busy ? undefined : onClose });
   const [error, setError] = useState<string | null>(null);
 
   const providerName = (id: string) => providers.find((p) => p.id === id)?.displayName ?? '';
@@ -355,13 +358,13 @@ export function CheckoutSheet({
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
-      <div className="modal modal-fit checkout-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal modal-fit checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title" ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <div className="checkout-header">
           <div className="checkout-header-icon">
             <IconCheck />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h3>Mark as done</h3>
+            <h3 id="checkout-title">Mark as done</h3>
             <div className="checkout-header-name">
               {appointment.customerName ?? 'Unknown'}
               {/* No number, no call button — GRW-199. A walk-in may have given

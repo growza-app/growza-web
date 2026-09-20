@@ -145,15 +145,27 @@ export function CardError({ t, onRetry }: { t: HomeCopy; onRetry?: () => void })
   );
 }
 
+/** Tabs from 861px up; on a phone the same choice is a dropdown (CSS swaps them at 860px), so the toolbar row
+ *  keeps its room for the branch picker and the Day summary icon. One `value`, one `onChange` — both controls
+ *  read and write the same state. */
 export function Segmented<T extends string>({ value, options, onChange, label, className = '' }: { value: T; options: Array<{ value: T; label: string }>; onChange: (v: T) => void; label: string; className?: string }) {
   return (
-    <div className={`hm-seg ${className}`} role="radiogroup" aria-label={label}>
-      {options.map((o) => (
-        <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={value === o.value ? 'is-on' : ''} onClick={() => onChange(o.value)}>
-          {o.label}
-        </button>
-      ))}
-    </div>
+    <>
+      <div className={`hm-seg ${className}`} role="radiogroup" aria-label={label}>
+        {options.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={value === o.value ? 'is-on' : ''} onClick={() => onChange(o.value)}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <select className="hm-seg-select" aria-label={label} value={value} onChange={(e) => onChange(e.target.value as T)}>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </>
   );
 }
 

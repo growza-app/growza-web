@@ -165,13 +165,6 @@
   .hm-toolbar {
     flex-wrap: nowrap;
   }
-  .hm-toolbar-multi .hm-seg {
-    flex: 0 0 auto;
-  }
-  .hm-toolbar-multi .hm-seg button {
-    padding: 0 10px;
-    font-size: 13px;
-  }
   /* Only where there is a picker to hold. With one branch this box is empty on a phone, and giving it
      a share of the row would leave the tabs half as wide as they should be. */
   .hm-toolbar-multi .hm-toolbar-end {
@@ -219,11 +212,5 @@
 @media (max-width: 400px) {
   .hm-chip-words {
     display: none;
-  }
-}
-@media (max-width: 340px) {
-  .hm-toolbar-multi .hm-seg button {
-    padding: 0 7px;
-    font-size: 12.5px;
   }
 }

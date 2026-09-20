@@ -136,7 +136,7 @@
 .sched-open {
   background: transparent;
   border: none;
-  color: #b7c4bd;
+  color: var(--muted);
   cursor: pointer;
   padding: 0;
   display: grid;

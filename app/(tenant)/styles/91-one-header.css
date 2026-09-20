@@ -1,0 +1,37 @@
+/*
+ * Jira GRW-342 — one header on a phone.
+ *
+ * Home's header was a big green business name straight on the page; every other screen's was a small black title on a
+ * white bar with a rule under it — the same 22px/800 vs 18px/680 difference on every screen you moved between. The
+ * "one header" work (GRW-196 · GRW-30) unified the controls and left Home's look alone. This makes the look one, too:
+ * Home's is the design, so the others take it.
+ *
+ * Phone only. From 861px the bar, its rule and the 25px title stay: on a laptop the sidebar and the page are two
+ * surfaces and the bar is what divides them.
+ */
+@media (max-width: 860px) {
+  .topbar {
+    background: transparent;
+    border-bottom: 0;
+  }
+  .topbar h1,
+  .rp-title-row h1 {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .topbar-with-sub p {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--muted);
+    /* One line, like Home's date: a subtitle that wraps costs the screen a row before any content. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar > :first-child {
+    min-width: 0;
+  }
+}

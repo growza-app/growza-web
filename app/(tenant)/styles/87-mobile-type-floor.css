@@ -1,0 +1,36 @@
+/*
+ * Jira GRW-339 — no label on a phone is smaller than 12px.
+ *
+ * These were 9.5–11.5px, each set where its own component was written. On a phone the same rule is set once, here,
+ * rather than nudging eleven files a half-pixel at a time — and this is the one place to look when a small label
+ * turns up. The bottom bar's own labels (74-mobile-chrome-2026.css, 83-role-home.css) and the Bookings tile label
+ * (32-customers.css) are raised at their rule; they are not repeated here.
+ *
+ * A laptop keeps its sizes: the fit-to-screen Home is sized to its type, and this is a phone rule.
+ */
+/* `!important` on purpose: a floor has to hold against a component's own size in ANY media block above it (the hero's
+   stats are set at 860, 400 and 360px; the Bookings tiles at 420px), and it is the one place that should. */
+@media (max-width: 860px) {
+  .hm-tile-pill,
+  .rp-tip-btn,
+  .settings-group-title,
+  .settings-row-soon,
+  .att-daynav-sub,
+  .att-caret,
+  .att-tile-head,
+  .rp-kpi-nodelta,
+  .hm-tile-label,
+  .hm-seg-range,
+  .hm-hero-stats span,
+  .bk-kpi-label,
+  .bk-kpi-sub,
+  .notif-item-sub,
+  .bp-badge,
+  .wk-day,
+  .wk-days-label,
+  .ra-money,
+  small,
+  .rp-segment-range {
+    font-size: 12px !important;
+  }
+}

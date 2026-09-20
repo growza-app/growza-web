@@ -1,9 +1,11 @@
 'use client';
 
+import { useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
+import { useUnreadNotifications } from './useUnreadNotifications';
 import {
   IconBell,
   IconCalendarPlus,
@@ -50,6 +52,8 @@ export function BottomNav({
 }) {
   const pathname = usePathname();
   const t = homeCopy(lang, labels);
+  const navRef = useRef<HTMLElement>(null);
+  const unread = useUnreadNotifications(navRef);
   const stylist = role === 'staff';
 
   // Jira GRW-300 — "More" moved into the hamburger drawer (Sidebar, doubling
@@ -77,9 +81,24 @@ export function BottomNav({
 
   const tab = (item: (typeof visible)[number]) => {
     const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+    // Jira GRW-338 — the Notifications tab carries the count, the way the desktop bell does; past 9 it reads "9+".
+    const count = item.href === '/notifications' ? unread : 0;
     return (
-      <a key={item.href} href={item.href} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}>
-        {item.icon}
+      <a
+        key={item.href}
+        href={item.href}
+        className={active ? 'active' : ''}
+        aria-current={active ? 'page' : undefined}
+        aria-label={count > 0 ? `${item.label}, ${t.unreadCount(count)}` : undefined}
+      >
+        {count > 0 ? (
+          <span className="bn-icon">
+            {item.icon}
+            <span className="bn-badge" aria-hidden="true">{count > 9 ? '9+' : count}</span>
+          </span>
+        ) : (
+          item.icon
+        )}
         {item.label}
         <span className="bn-mark" />
       </a>
@@ -87,7 +106,7 @@ export function BottomNav({
   };
 
   return (
-    <nav className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label="Main">
+    <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label="Main">
       {centre ? (
         <>
           {visible.slice(0, half).map(tab)}

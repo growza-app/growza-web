@@ -7,6 +7,7 @@ import { api, formatMoney, type ClientProfile, type ClientProfileRow } from '../
 import { copy } from '../lib/copy';
 import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone } from './icons';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * One client's whole story, in a card that opens over the list.
@@ -66,16 +67,9 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
     };
   }, [clientId]);
 
-  // Escape closes, like every other overlay in the app. Focus moves into the
-  // panel so a keyboard user is not left behind on the row they came from.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    panel.current?.focus();
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  // Escape closes, Tab stays inside, and focus goes back to the row it came from (Jira GRW-342). It lands on the
+  // panel itself, which announces its name, rather than on the first field of an edit form.
+  useDialog(panel, { onClose, initialFocus: 'container' });
 
   /** Resolve a row to the words an owner reads. Money and dates go through the shared formatters. */
   function render(row: ClientProfileRow): string {

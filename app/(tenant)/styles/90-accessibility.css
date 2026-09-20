@@ -1,0 +1,192 @@
+/*
+ * Jira GRW-342 — the accessibility floor, in one place.
+ *
+ * WCAG 2.1 AA, checked on a phone with axe-core, a keyboard, and a measuring script. Each block says what it
+ * fixes, so when a screen looks different from what its own stylesheet says, this is where to look.
+ */
+
+/* ---- 2.4.7 Focus visible — one ring, everywhere -------------------------------------------------------------
+   Before, a control got a ring only if its own stylesheet remembered to draw one: search fields on Bookings,
+   Clients, Offers and Attendance had none, so a keyboard user could not tell where they were.
+   The baseline is deliberately weak (specificity 0,1,0) so a control's own ring still wins; text fields are
+   forced, and drawn INSIDE the box so an overflow:hidden wrapper cannot clip it. */
+:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent-deep) !important;
+  outline-offset: -2px !important;
+}
+/* A bare field sits inside a bar that already draws the ring (`:focus-within`); a second one inside it is noise. */
+input.search-input-bare:focus-visible {
+  outline: 0 !important;
+}
+/* Dark surfaces: the deep green would vanish into them. */
+.sidebar :focus-visible,
+.hm-hero :focus-visible {
+  outline-color: #fff;
+}
+
+/* ---- 2.3.3 / vestibular — respect "reduce motion" ---------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- 2.5.5 Target size — 44px on a phone --------------------------------------------------------------------
+   Measured on every screen at 393px: 30+ controls were 15–43px. The visible size mostly stays; the tappable box
+   grows. Fields are also 16px, because iOS Safari zooms the whole page in on a field set smaller. */
+@media (max-width: 860px) {
+  .btn,
+  .btn-ghost,
+  .page-tab,
+  .tab,
+  .rp-control,
+  .att-filter,
+  .att-markall,
+  .att-daynav-today,
+  .sbp-btn,
+  .staff-icon-btn,
+  .topbar-back,
+  a.settings-row,
+  button.settings-row,
+  .search-input,
+  select {
+    min-height: 44px;
+  }
+  .rp-tabs button,
+  .wk-split,
+  .bp-logo-btn,
+  .notif-mark-read,
+  .notif-clear-all,
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='hidden']) {
+    min-height: 44px;
+  }
+  .att-daynav button,
+  .hm-hero-menu,
+  .topbar-back,
+  .staff-icon-btn,
+  .btn,
+  .bottom-nav > a,
+  .bn-centre {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* Text links that sit on their own line: the line becomes the target. */
+  .hm-link,
+  .settings-back-link,
+  .bill-link,
+  .notif-mark-read,
+  .notif-clear-all {
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .settings-back-link,
+  .bill-link {
+    min-height: 44px;
+  }
+  .hm-link {
+    min-height: 44px;
+  }
+  /* Native checkboxes and radios are 13px. Bigger, one colour, and the label around them is the tap target. */
+  input[type='radio'],
+  input[type='checkbox']:not(.switch input) {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    accent-color: var(--accent-deep);
+  }
+  label:has(> input[type='radio']),
+  label:not(.switch):has(> input[type='checkbox']) {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 44px;
+  }
+
+  /* A 15px "i" inside a line of text: the button is the 44px target, the circle you see is drawn inside it, and the
+     negative margin hands the surrounding line back its 15px. */
+  .rp-tip-btn {
+    position: relative;
+    isolation: isolate;
+    width: 44px;
+    height: 44px;
+    margin: -14.5px;
+    border: 0;
+    background: transparent;
+  }
+  .rp-tip-btn::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: -1;
+    width: 18px;
+    height: 18px;
+    transform: translate(-50%, -50%);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+  }
+  .rp-tip-btn:hover::before,
+  .rp-tip-btn[aria-expanded='true']::before {
+    border-color: var(--accent-deep);
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='hidden']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ==========================================================================================================
+   Consistency — one typeface, one control radius, one "selected" colour.
+   Measured across twelve screens at 393px, then unified here so a screen cannot drift back on its own.
+   ========================================================================================================== */
+
+/* 15 controls rendered in Arial: a <button> or field that does not say `font: inherit` gets the browser's own
+   font. The client-segment cards on Clients and Reports were among them. */
+:where(button, input, select, textarea) {
+  font-family: inherit;
+}
+
+/* One radius for a control (--radius-sm, 12px). These carried 9, 11 and 13px of their own. */
+.page-tab,
+.cust-segment,
+.att-filter,
+.att-markall,
+.rp-control,
+.sbp-btn,
+.rp-segment,
+.hm-toolbar-summary {
+  border-radius: var(--radius-sm);
+}
+
+/* One "selected / primary" fill: the deep green every other selected chip, tab and button already uses. Reports
+   and the Bookings staff chips used the sidebar's forest green (#0f3d2e) instead. */
+.rp-tabs button.active,
+.rp-control-primary,
+.cpc-btn-primary {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+}
+
+/* `.search-input-bare` means "no box of its own — the bar around me is the box". A broad
+   `input[type='search']` rule (0,1,1) outranked it (0,1,0), so Clients, Offers, Bookings and Attendance drew a
+   white field nested inside a grey one. */
+.search-input.search-input-bare {
+  border: 0;
+  background: transparent;
+}

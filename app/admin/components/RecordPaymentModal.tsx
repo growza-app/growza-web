@@ -5,6 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Recording a payment that arrived outside the payment provider (GRW-144) —
@@ -133,17 +134,10 @@ export function RecordPaymentModal({
     setError(null);
   }, [open, subscription]);
 
-  // Escape closes it, as every dialog should. Not while a request is in
-  // flight: the POST would still land, and closing would tell the admin
-  // nothing happened.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !saving) onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, saving, onClose]);
+  // Escape closes it, focus stays inside, and goes back to the button that opened it (Jira GRW-342). Not while a
+  // request is in flight: the POST would still land, and closing would tell the admin nothing happened.
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: saving ? undefined : onClose, active: open });
 
   if (!open) return null;
 
@@ -224,6 +218,7 @@ export function RecordPaymentModal({
     >
       <div
         role="dialog"
+        ref={dialogRef}
         aria-modal="true"
         aria-labelledby={`${ids}-title`}
         onClick={(e) => e.stopPropagation()}

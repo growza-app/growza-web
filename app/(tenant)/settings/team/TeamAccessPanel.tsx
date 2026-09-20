@@ -271,7 +271,7 @@ export function TeamAccessPanel({
             {busy ? 'Creating…' : 'Create invite'}
           </button>
         </div>
-        {error && <div className="field-error">{error}</div>}
+        {error && <div role="alert" className="field-error">{error}</div>}
 
         {created && (
           <div className="banner banner-info" style={{ marginTop: 16 }}>

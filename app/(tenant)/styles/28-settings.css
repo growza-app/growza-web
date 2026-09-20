@@ -130,9 +130,14 @@
    cost as much vertical space as the rows that actually work. */
 .settings-row-disabled {
   cursor: default;
-  opacity: 0.55;
+  /* Jira GRW-342 — was `opacity: 0.55`, which put every word at 2.1–3.8:1. Muted, not faded. */
+  color: var(--muted);
   padding-top: 5px;
   padding-bottom: 5px;
+}
+
+.settings-row-disabled *:not(svg) {
+  color: var(--muted);
 }
 
 .settings-row-disabled:hover {

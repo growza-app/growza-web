@@ -262,6 +262,7 @@ export default async function AppointmentsPage({
           openAppointmentId={openAppointmentId}
           initialUnmarked={params.unmarked === '1'}
           initialBranch={initialBranch}
+          branches={(me.member?.role ?? 'owner') === 'owner' && (me.branches?.length ?? 0) > 1 ? me.branches! : []}
           viewerIsStaff={me.member?.role === 'staff'}
           canReschedule={me.capabilities.reschedule}
           loadFailed={appointmentsResult.failed}

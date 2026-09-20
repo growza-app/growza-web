@@ -102,7 +102,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
           </div>
         ))}
 
-        {error && <div className="field-error">{error}</div>}
+        {error && <div role="alert" className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={save}>
             {busy ? 'Saving…' : 'Save changes'}

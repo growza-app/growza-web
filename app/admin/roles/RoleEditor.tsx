@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * GRW-135 — creating and editing a platform role.
@@ -64,6 +65,8 @@ export function RoleEditor({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: saving ? undefined : onClose });
   const [error, setError] = useState<string | null>(null);
   const ids = useId();
   const openedFor = useRef<string | null>(null);
@@ -153,6 +156,7 @@ export function RoleEditor({
       <div
         role="dialog"
         aria-modal="true"
+        ref={dialogRef}
         aria-labelledby={`${ids}-title`}
         onClick={(e) => e.stopPropagation()}
         style={{

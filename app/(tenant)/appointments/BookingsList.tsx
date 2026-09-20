@@ -9,6 +9,10 @@ import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
+import { BranchTabs } from '../components/BranchTabs';
+import { StaffTable } from './StaffTable';
+import { staffRows } from '../lib/staff-summary';
+import { readBranchChoice, writeBranchChoice } from '../lib/branch-choice';
 import {
   IconCalendar,
   IconCheck,
@@ -142,6 +146,7 @@ export function BookingsList({
   initialSort,
   initialUnmarked,
   initialBranch,
+  branches = [],
   openAppointmentId,
   viewerIsStaff,
   earnings,
@@ -212,6 +217,8 @@ export function BookingsList({
   initialUnmarked: boolean;
   /** Jira GRW-312 — the branch Home was showing when it sent the owner here; null is every branch. */
   initialBranch: { id: string; name: string } | null;
+  /** Jira GRW-340 — an owner's open branches when there are two or more; empty draws no tabs. */
+  branches?: Array<{ id: string; name: string }>;
   /** Jira GRW-216 — null when the owner has not shown this stylist their takings, or the viewer is not one. */
   earnings?: MyEarnings | null;
   /**
@@ -245,6 +252,33 @@ export function BookingsList({
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [unmarkedOnly, setUnmarkedOnly] = useState(initialUnmarked);
   const [branch, setBranch] = useState(initialBranch);
+
+  /**
+   * Jira GRW-340 — choose a branch from the phone's tabs (or the chip's "All branches"). The day is already loaded
+   * for every branch and narrowed here, so nothing is fetched. Remembered for the session, and written to the
+   * address so a reload keeps it.
+   */
+  const pickBranch = (id: string | null) => {
+    const next = id ? (branches.find((b) => b.id === id) ?? null) : null;
+    setBranch(next);
+    setPage(1);
+    writeBranchChoice(next?.id ?? null);
+    const url = new URL(window.location.href);
+    if (next) url.searchParams.set('location', next.id);
+    else url.searchParams.delete('location');
+    window.history.replaceState(null, '', url);
+  };
+
+  // An address that names a branch wins (Home's links do). Otherwise open on the one the owner was last looking at.
+  useEffect(() => {
+    if (initialBranch) {
+      writeBranchChoice(initialBranch.id);
+      return;
+    }
+    const remembered = readBranchChoice(branches);
+    if (remembered) setBranch(branches.find((b) => b.id === remembered) ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Earliest-first by default: on today's schedule that's the running order of
   // the day, which is what the page is for. Latest-first earns its keep on a
   // From/To range, where the most recent day is usually the interesting end.
@@ -298,7 +332,11 @@ export function BookingsList({
   const filtering = q !== '' || staffFilter !== 'Everyone' || statusFilter !== '' || unmarkedOnly || branch !== null;
   const noMatches = filtering && filtered.length === 0;
 
+  // The desktop Staff dropdown's options.
   const staffChipNames = useMemo(() => ['Everyone', ...providers.map((p) => p.displayName)], [providers]);
+
+  // Jira GRW-343 — each person's day for the phone's staff table. Not narrowed by the staff pick itself (it is what picks).
+  const staffTable = staffRows(bookings, providers.map((p) => p.displayName), now, isToday);
 
 
   /*
@@ -575,22 +613,23 @@ export function BookingsList({
         </div>
       )}
 
+      {branches.length > 1 ? (
+        <BranchTabs
+          branches={branches}
+          value={branch?.id ?? null}
+          onChange={pickBranch}
+          allLabel={t('branchTabsAll')}
+          label={t('branchTabsLabel')}
+        />
+      ) : null}
+
       {branch && (
         <div className="bk-unmarked-chip bk-branch-chip" role="status">
           <IconStaff />
           <span>{t('branchOnly', { name: branch.name })}</span>
           <button
             type="button"
-            onClick={() => {
-              setBranch(null);
-              setPage(1);
-              // The address said this branch; leaving it there would bring it back on a reload.
-              const url = new URL(window.location.href);
-              if (url.searchParams.has('location')) {
-                url.searchParams.delete('location');
-                window.history.replaceState(null, '', url);
-              }
-            }}
+            onClick={() => pickBranch(null)}
           >
             {t('branchClear')}
           </button>
@@ -627,6 +666,7 @@ export function BookingsList({
             </span>
             <select
               className="bk-metric-select"
+              aria-label={t('metricPicker')}
               value={metric}
               onChange={(e) => setMetric(e.target.value as typeof metric)}
             >
@@ -717,6 +757,7 @@ export function BookingsList({
             <label htmlFor="date">{t('from')}</label>
             <input
               id="date"
+              aria-label={t('from')}
               name="date"
               type="date"
               defaultValue={date}
@@ -728,6 +769,7 @@ export function BookingsList({
             <label htmlFor="to">{t('to')}</label>
             <input
               id="to"
+              aria-label={t('to')}
               name="to"
               type="date"
               defaultValue={toDate}
@@ -765,6 +807,7 @@ export function BookingsList({
             </label>
             <select
               id="bk-status"
+              aria-label={t('statusLabel')}
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
@@ -786,6 +829,7 @@ export function BookingsList({
             </label>
             <select
               id="bk-sort"
+              aria-label={t('sort')}
               value={sort}
               onChange={(e) => {
                 setSort(e.target.value as typeof sort);
@@ -827,28 +871,36 @@ export function BookingsList({
       ) : (
         <>
       {!viewerIsStaff && (
-      <div className="bk-staff-chips">
-        {staffChipNames.map((name) => (
-          <button
-            key={name}
-            type="button"
-            className={`bk-staff-chip ${staffFilter === name ? 'is-active' : ''}`}
-            onClick={() => {
-              setStaffFilter(name);
-              setPage(1);
-            }}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
+        <StaffTable
+          everyone={staffTable.everyone}
+          staff={staffTable.staff}
+          active={staffFilter}
+          onPick={(name) => {
+            setStaffFilter(name);
+            setPage(1);
+          }}
+          timezone={timezone}
+          upcoming={isToday}
+          labels={{
+            caption: t('staffTableCaption'),
+            staff: t('staff'),
+            bookings: t('kpiBookings'),
+            booked: t('staffColBooked'),
+            next: t('staffColNext'),
+            first: t('staffColFirst'),
+            everyone: t('staffEveryone'),
+            nothing: t('staffNothing'),
+            close: t('staffSheetClose'),
+            count: (n) => t('bookingCount', { count: n }),
+          }}
+        />
       )}
 
       <div className="bk-sched-head">
-        <h3>
+        <h2>
           {isToday ? t('scheduleToday') : t('scheduleOn', { day: dayLabel })}
           <span className="bk-sched-count">{t('bookingCount', { count: filtered.length })}</span>
-        </h3>
+        </h2>
         {/* Segmented Timeline | List, both always visible with the active one
             highlighted (per the mock) — the old single pill toggled blind, so
             you couldn't see which view you'd land in until after tapping. */}

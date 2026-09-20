@@ -68,6 +68,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     month: S('Month', 'महीना'),
     showMoneyFor: S('Show money for', 'पैसा दिखाएँ'),
     allBranchesShort: S('All', 'सभी'),
+    /** Jira GRW-338 — the Notifications tab's name when something is waiting: "Notifications, 3 unread". */
+    unreadCount: (n: number) => (hi ? `${n} नई` : `${n} unread`),
     allBranches: S('All branches', 'सभी ब्रांच'),
     branch: S('Branch', 'ब्रांच'),
 

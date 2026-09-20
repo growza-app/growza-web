@@ -168,7 +168,7 @@ export function ServiceForm({
                 if (fieldErrors.name) setFieldErrors((f) => ({ ...f, name: undefined }));
               }}
             />
-            {fieldErrors.name && <div className="field-error">{fieldErrors.name}</div>}
+            {fieldErrors.name && <div role="alert" className="field-error">{fieldErrors.name}</div>}
           </div>
 
           <div className="field">
@@ -199,7 +199,7 @@ export function ServiceForm({
                 if (fieldErrors.duration) setFieldErrors((f) => ({ ...f, duration: undefined }));
               }}
             />
-            {fieldErrors.duration && <div className="field-error">{fieldErrors.duration}</div>}
+            {fieldErrors.duration && <div role="alert" className="field-error">{fieldErrors.duration}</div>}
           </div>
 
           <div className="field">
@@ -216,7 +216,7 @@ export function ServiceForm({
                 if (fieldErrors.buffer) setFieldErrors((f) => ({ ...f, buffer: undefined }));
               }}
             />
-            {fieldErrors.buffer && <div className="field-error">{fieldErrors.buffer}</div>}
+            {fieldErrors.buffer && <div role="alert" className="field-error">{fieldErrors.buffer}</div>}
             <div className="field-hint">Held after the booking so the next customer isn&apos;t booked into it.</div>
           </div>
 
@@ -235,13 +235,13 @@ export function ServiceForm({
                 if (fieldErrors.price) setFieldErrors((f) => ({ ...f, price: undefined }));
               }}
             />
-            {fieldErrors.price && <div className="field-error">{fieldErrors.price}</div>}
+            {fieldErrors.price && <div role="alert" className="field-error">{fieldErrors.price}</div>}
             {service && (
               <div className="field-hint">Applies to new bookings — already-booked customers keep the price they were quoted.</div>
             )}
           </div>
 
-          {error && <div className="field-error" style={{ marginTop: 12 }}>{error}</div>}
+          {error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
         </div>
 
         <div className="modal-actions">

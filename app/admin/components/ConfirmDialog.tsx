@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode, useRef } from 'react';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * GRW-96's confirmation primitive. Names the target, states the consequence,
@@ -71,6 +72,8 @@ export function ConfirmDialog({
   // silently disabled, no visible reason why. Track that it was tried so a
   // real message can render instead of a click that appears to go nowhere.
   const [triedWithoutReason, setTriedWithoutReason] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: loading ? undefined : onCancel });
   // Jira GRW-288 (AC-05) — "Reason *" was a `<label>` pointing at nothing, so
   // the one field every confirm dialog makes mandatory (Impersonate owner,
   // Deactivate, Suspend…) had no name for a screen reader.
@@ -121,6 +124,7 @@ export function ConfirmDialog({
         // Jira GRW-236 — announced as a dialog, named by its title; it was an unnamed div to a screen reader.
         role="dialog"
         aria-modal="true"
+        ref={dialogRef}
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
         style={{

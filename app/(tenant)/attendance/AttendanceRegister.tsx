@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type AttendanceRegister as Register, type AttendanceRow } from '../lib/api';
+import { copy } from '../lib/copy';
+import { BranchTabs } from '../components/BranchTabs';
+import { readBranchChoice, writeBranchChoice } from '../lib/branch-choice';
 
 /**
  * Jira GRW-63 · GRW-170 — the attendance register, built to Attendance.dc.html.
@@ -156,11 +159,20 @@ export function AttendanceRegister({
     }
   }
 
-  /** Jira GRW-249 — switch branches without leaving the day the desk was on. */
+  /** Jira GRW-249 — switch branches without leaving the day the desk was on. Jira GRW-340 — and remember it. */
   function pickBranch(id: string | null) {
     setOpenMenu(null);
+    writeBranchChoice(id);
     void load(date, id);
   }
+
+  // Jira GRW-340 — open on the branch the owner was last looking at, if it is still open. Read after mount: the
+  // server render cannot see the browser's storage.
+  useEffect(() => {
+    const remembered = readBranchChoice(branches);
+    if (remembered) void load(initial.date, remembered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Write one row and take the server's answer back.
@@ -348,7 +360,10 @@ export function AttendanceRegister({
             for a receptionist (their own branch is fixed) or a single-branch
             business. */}
         {branches.length > 1 && (
-          <div className="att-menu-anchor">
+          <BranchTabs branches={branches} value={branch} onChange={pickBranch} allLabel={copy.branchTabs.all} label={copy.branchTabs.label} />
+        )}
+        {branches.length > 1 && (
+          <div className="att-menu-anchor att-branch-menu">
             <button
               type="button"
               className={`att-filter ${branch ? 'att-filter-on' : ''}`}
@@ -426,7 +441,7 @@ export function AttendanceRegister({
         </button>
       </div>
 
-      {error && <div className="banner banner-error att-error">{error}</div>}
+      {error && <div role="alert" className="banner banner-error att-error">{error}</div>}
 
       <div className="att-list">
         {filtered.length === 0 ? (

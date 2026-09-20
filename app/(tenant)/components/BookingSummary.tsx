@@ -1,11 +1,14 @@
 'use client';
 
+import { useRef } from 'react';
+
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
 import { bookingBill, clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { IconCheck, IconPhone } from './icons';
 import { useLabel } from './LabelsProvider';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 const PAYMENT_LABELS: Record<string, string> = { cash: 'Cash', card: 'Card', upi: 'UPI', other: 'Other' };
 
@@ -23,6 +26,8 @@ export function BookingSummary({
   timezone: string;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose });
   const providerWord = useLabel('provider', 'Staff member');
   // Jira GRW-314 — what the customer actually paid, less anything cancelled at the till, with the
   // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
@@ -35,7 +40,7 @@ export function BookingSummary({
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-label={`${booking.customerName ?? 'Booking'} summary`}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={`${booking.customerName ?? 'Booking'} summary`} ref={dialogRef}>
         <div className="sheet-grab" />
 
         <div className="summary-head">

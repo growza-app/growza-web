@@ -106,30 +106,31 @@ export function RemindersForm({
             }}
           >
             <label className="switch">
-              <input type="checkbox" checked={row.enabled} onChange={() => updateRow(i, { enabled: !row.enabled })} />
+              <input type="checkbox" aria-label={row.label} checked={row.enabled} onChange={() => updateRow(i, { enabled: !row.enabled })} />
               <span className="switch-track">
                 <span className="switch-thumb" />
               </span>
             </label>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 620, fontSize: 14.5 }}>{row.label}</div>
+              <div id={`rem-title-${row.key}`} style={{ fontWeight: 620, fontSize: 14.5 }}>{row.label}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <input
                   type="number"
                   min={1}
+                  aria-labelledby={`rem-title-${row.key} rem-hint-${row.key}`}
                   style={{ width: 70, minWidth: 70 }}
                   value={row.hours}
                   disabled={!row.enabled}
                   onChange={(e) => updateRow(i, { hours: Number(e.target.value) })}
                 />
-                <span className="field-hint" style={{ margin: 0 }}>
+                <span id={`rem-hint-${row.key}`} className="field-hint" style={{ margin: 0 }}>
                   hours before the booking
                 </span>
               </div>
             </div>
           </div>
         ))}
-        {error && <div className="field-error">{error}</div>}
+        {error && <div role="alert" className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={save}>
             {busy ? 'Saving…' : 'Save changes'}

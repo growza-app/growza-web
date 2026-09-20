@@ -22,7 +22,7 @@ function newAttemptKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   api,
@@ -43,9 +43,12 @@ import { copy } from '../lib/copy';
 import { useLabel } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { PhoneField } from './PhoneField';
+import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
+import type { FreeTime } from '../lib/book-again';
 import { toStoredPhone, validateNationalPhone } from '../lib/phone';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-199 · GRW-219 — the walk-in sheet: client first, then the booking.
@@ -213,6 +216,11 @@ export function NewVisitSheet({
   const providerNoun = useLabel('provider', 'Staff member');
 
   const [stage, setStage] = useState<Stage>({ step: 'client' });
+
+  // Jira GRW-342 — the pop-up form is a dialog: focus in, Tab kept inside, Escape closes (not mid-save). The routed
+  // page is a page, and is left alone. Up here, before any early return, so the hook order never changes.
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useDialog(sheetRef, { onClose: stage.step === 'saving' ? undefined : onClose, active: presentation !== 'page' });
 
   /*
    * Jira GRW-204 — one token for this attempt, generated once and reused.
@@ -433,14 +441,16 @@ export function NewVisitSheet({
     return q ? combos.filter((o) => o.title.toLowerCase().includes(q)) : [];
   }, [combos, serviceTerm]);
 
+  const toItem = (s: Service): PickedItem => ({
+    serviceId: s.id,
+    name: s.name,
+    durationMin: s.durationMin,
+    priceMinor: s.priceMinor,
+    ...(forPayment ? { paidRupees: String(Number(s.priceMinor ?? 0) / 100) } : {}),
+  });
+
   const addService = (s: Service) => {
-    const item: PickedItem = {
-      serviceId: s.id,
-      name: s.name,
-      durationMin: s.durationMin,
-      priceMinor: s.priceMinor,
-      ...(forPayment ? { paidRupees: String(Number(s.priceMinor ?? 0) / 100) } : {}),
-    };
+    const item = toItem(s);
     // Jira GRW-292 — beside the combo, not instead of it.
     if (comboActive) {
       setExtras((prev) => [...prev, item]);
@@ -498,6 +508,36 @@ export function NewVisitSheet({
     setComboPriceMinor(null);
     setComboTitle(null);
     setComboAmountText('');
+  };
+
+  /**
+   * Jira GRW-341 — "Book again": fill in what the client had last time. A combo comes back as the combo, at its
+   * offer price; anything else as plain services. The stylist is set only when they are still here — otherwise
+   * it stays "whoever is free", as for any new booking.
+   */
+  const applyPlan = (plan: BookAgainPlan) => {
+    if (plan.offer) {
+      applyCombo(plan.offer);
+    } else {
+      setPicked(plan.services.map(toItem));
+      setExtras([]);
+      setOfferId(null);
+      setComboPriceMinor(null);
+      setComboTitle(null);
+      setComboAmountText('');
+    }
+    setSchedulableId(plan.providerId);
+    setNoStylist(false);
+  };
+
+  /** A time chosen on the Book again card, waiting for the time step to load its own list of slots. */
+  const pendingSlot = useRef<string | null>(null);
+
+  const bookAgainAt = (client: PickedClient, plan: BookAgainPlan, time: FreeTime) => {
+    applyPlan(plan);
+    setDay(time.day);
+    pendingSlot.current = time.utc;
+    setStage({ step: 'when', client });
   };
 
   const removeExtraAt = (index: number) => {
@@ -581,7 +621,13 @@ export function NewVisitSheet({
     void api
       .availability([...picked, ...extras].map((p) => p.serviceId), day, schedulableId ?? 'any', branchId)
       .then((r) => {
-        if (!cancelled) setSlots(r);
+        if (cancelled) return;
+        setSlots(r);
+        // Jira GRW-341 — a time picked on the Book again card. This effect clears the choice when it starts, so it
+        // is put back here, once, and only if that time is still on the list.
+        const wanted = pendingSlot.current;
+        pendingSlot.current = null;
+        if (wanted && r.sections.some((sec) => sec.slots.some((sl) => sl.utc === wanted))) setSlotUtc(wanted);
       })
       .catch(() => {
         if (!cancelled) setSlots(null);
@@ -1011,6 +1057,7 @@ export function NewVisitSheet({
         : clientName(stage.client);
 
   const asPage = presentation === 'page';
+  const sheetTitle = forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title;
 
   return (
     <>
@@ -1018,13 +1065,16 @@ export function NewVisitSheet({
       <div
         className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
         role={asPage ? undefined : 'dialog'}
+        aria-modal={asPage ? undefined : true}
+        ref={sheetRef}
         aria-label={asPage ? undefined : forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title}
       >
         {!asPage && <div className="sheet-grab" />}
 
         <div className="sheet-head">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sheet-title">{forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title}</div>
+            {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
+            {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
             <div className="sheet-sub">{headSub}</div>
           </div>
           <button type="button" className="wi-close" aria-label={copy.newVisit.close} onClick={onClose} disabled={busy}>
@@ -1187,7 +1237,7 @@ export function NewVisitSheet({
                   if (nameError) setNameError(false);
                 }}
               />
-              {nameError && <div className="field-error">{copy.newVisit.nameMissing}</div>}
+              {nameError && <div role="alert" className="field-error">{copy.newVisit.nameMissing}</div>}
             </div>
 
             {/*
@@ -1247,7 +1297,26 @@ export function NewVisitSheet({
         {/* ---------- Stage 2: what are they having ---------- */}
         {(stage.step === 'details' || stage.step === 'saving' || stage.step === 'error') && (
           <div className="wi-body">
-            {stage.step === 'error' && <div className="wi-error">{stage.message}</div>}
+            {stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
+
+            {/* Jira GRW-341 — a returning client: last time's visit, and the next free times. */}
+            {stage.step === 'details' && stage.client.kind === 'existing' && picked.length === 0 && extras.length === 0 && services && providers && offers ? (
+              <BookAgainCard
+                clientId={stage.client.id}
+                services={services}
+                providers={branchProviders}
+                offers={combos}
+                branchId={branchId}
+                days={days.map((d) => d.iso)}
+                timezone={timezone}
+                later={later}
+                onUse={(plan, moveOn) => {
+                  applyPlan(plan);
+                  if (moveOn) setStage({ step: 'when', client: stage.client });
+                }}
+                onPickTime={(plan, time) => bookAgainAt(stage.client, plan, time)}
+              />
+            ) : null}
 
             {/* Chosen list first — it is the answer being assembled. */}
             {(picked.length > 0 || extras.length > 0) && (
@@ -1673,7 +1742,7 @@ export function NewVisitSheet({
         {/* ---------- Stage 2b (`later` only): when ---------- */}
         {stage.step === 'when' && (
           <div className="wi-body">
-            {slotError && <div className="wi-error">{slotError}</div>}
+            {slotError && <div role="alert" className="wi-error">{slotError}</div>}
             <h2 className="wi-section-label">{copy.newVisit.whichDay}</h2>
             <div className="wi-chips" role="group" aria-label={copy.newVisit.whichDay}>
               {days.map((d) => (
@@ -1827,7 +1896,7 @@ export function NewVisitSheet({
             {!later && (
               <>
                 {tillClosedUnpaid && <div className="wi-overlap" role="status">{copy.newVisit.notPaidYet}</div>}
-                {checkoutError && <div className="wi-error">{checkoutError}</div>}
+                {checkoutError && <div role="alert" className="wi-error">{checkoutError}</div>}
                 <button
                   type="button"
                   className="sheet-item wi-take-payment"

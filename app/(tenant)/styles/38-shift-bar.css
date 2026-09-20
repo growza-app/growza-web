@@ -23,7 +23,7 @@
 
 .staff-shift-off {
   font-size: 13px;
-  color: #a0aaa3;
+  color: var(--muted);
 }
 
 /* Where the day is already sold. Zero-booking shifts render an empty track,

@@ -54,4 +54,4 @@
 }
 
 .rp-legend-value { font-weight: 700; white-space: nowrap; margin-left: auto; }
-.rp-legend-pct { color: #9aa39d; min-width: 34px; text-align: right; white-space: nowrap; }
+.rp-legend-pct { color: var(--muted); min-width: 34px; text-align: right; white-space: nowrap; }

@@ -465,7 +465,7 @@ export function CataloguePicker({
           </div>
         </div>
 
-        {loadError && <div className="field-error">{loadError}</div>}
+        {loadError && <div role="alert" className="field-error">{loadError}</div>}
         {!catalog && !loadError && <div className="empty">Loading the catalogue…</div>}
 
         {catalog && (

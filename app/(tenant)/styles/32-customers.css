@@ -432,8 +432,9 @@
   display: flex;
   flex-direction: column;
   gap: 9px;
-  background: linear-gradient(135deg, #0b3d2d, #104a37);
-  border: 1px solid #163f2f;
+  /* Jira GRW-342 — the same dark green as Home's money card (was its own #0b3d2d → #104a37). */
+  background: linear-gradient(140deg, var(--hm-hero-a), var(--hm-hero-b));
+  border: 0;
   border-radius: var(--radius);
   padding: var(--sp-3) var(--sp-3) 12px;
   color: #fff;
@@ -646,7 +647,7 @@
   margin-bottom: var(--sp-3);
 }
 
-.bk-sched-head h3 {
+.bk-sched-head h2 {
   margin: 0;
   font-size: 17px;
   font-weight: 680;
@@ -1102,15 +1103,14 @@
    used to live in this list (the metric card, booking-ref/phone/price/
    staff-avatar, the schedule count, the same-time badge) is desktop-visible
    too as of GRW-47 — see their own default rules below instead. */
-.bk-search-row,
-.bk-staff-chips {
+.bk-search-row {
   display: none;
 }
 
 /*
  * GRW-46: Bookings, mobile redesign. Desktop is untouched — every rule here
  * lives inside this mobile-only query, and the three elements it turns on
- * (.bk-metric-card, .bk-search-row, .bk-staff-chips) default to display:none
+ * (.bk-metric-card, .bk-search-row; the staff table has its own sheet, 93-staff-table.css) default to display:none
  * above, declared before this query so the mobile override always wins on
  * source order regardless of specificity (the same gotcha documented
  * elsewhere in this file: a later declaration wins at equal specificity).
@@ -1156,7 +1156,7 @@
   /* Quarter of a phone's width is not enough for "Completed" on one line —
      let it wrap instead of ellipsing to "Comple…", which reads as broken. */
   .bk-kpi-label {
-    font-size: 10.5px;
+    font-size: 12px;
     line-height: 1.25;
     white-space: normal;
     overflow: visible;
@@ -1422,33 +1422,6 @@
     color: var(--text);
   }
 
-  .bk-staff-chips {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    overflow-x: auto;
-  }
-
-  .bk-staff-chip {
-    flex: none;
-    height: 34px;
-    padding: 0 15px;
-    border-radius: 99px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-
-  .bk-staff-chip.is-active {
-    background: var(--sidebar);
-    border-color: var(--sidebar);
-    color: #fff;
-  }
-
   .bk-no-matches {
     margin-top: 14px;
     background: var(--surface);
@@ -1474,7 +1447,7 @@
      tucked beside it — .bk-sched-head is already space-between, so pushing
      the count out of the <h3> flow with margin-left:auto isn't possible;
      making the h3 itself the flex row does it. */
-  .bk-sched-head h3 {
+  .bk-sched-head h2 {
     display: flex;
     align-items: baseline;
     justify-content: space-between;

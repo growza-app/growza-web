@@ -41,7 +41,48 @@
   font-weight: 640;
 }
 
+/* Jira GRW-342 — on the routed New booking page this is the page's <h1>; browsers give an h1 a margin. */
+h1.sheet-title {
+  margin: 0;
+}
+
 .sheet-sub {
   font-size: 12.5px;
   color: var(--muted);
+}
+
+/*
+ * Jira GRW-343 — a sheet that slides up from the bottom edge (and its backdrop fades in). Opt-in: add `sheet-rise` to
+ * a `.sheet` and `sheet-backdrop-fade` to its backdrop. "Reduce motion" (90-accessibility.css) shortens both to nothing.
+ */
+@keyframes sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sheet-backdrop-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.sheet-rise {
+  animation: sheet-rise 0.26s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+.sheet-backdrop-fade {
+  animation: sheet-backdrop-fade 0.2s ease-out both;
+}
+.bk-visits-sheet {
+  padding-bottom: max(22px, env(safe-area-inset-bottom));
+}
+.bk-visits-sheet .bk-staff-nothing {
+  margin: 0;
+  padding: 18px;
+  color: var(--muted);
+  font-size: 14px;
 }

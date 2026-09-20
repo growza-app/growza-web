@@ -30,7 +30,10 @@ export function LineChart({
   showAxis = true,
   fill = false,
   zeroBased = false,
+  label,
 }: {
+  /** What this chart shows. Falls back to its series names, then to the dates it spans. */
+  label?: string;
   labels: string[];
   series: LineSeries[];
   height?: number;
@@ -46,6 +49,10 @@ export function LineChart({
   const padBottom = showAxis ? 26 : 10;
   const padX = 6;
   const points = labels.length;
+  // Jira GRW-342 — a chart is an image to a screen reader, so it needs a name: what it shows, then the span it covers.
+  const named = label ?? series.map((s) => s.name).filter(Boolean).join(', ');
+  const dates = points > 1 ? `${labels[0]} – ${labels[points - 1]}` : (labels[0] ?? '');
+  const chartName = [named, dates].filter(Boolean).join(', ');
 
   const all = series.flatMap((s) => s.values);
   if (points === 0 || all.length === 0) return null;
@@ -76,7 +83,7 @@ export function LineChart({
         setHover(Math.max(0, Math.min(points - 1, Math.round(ratio * (points - 1)))));
       }}
     >
-      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img">
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img" aria-label={chartName}>
         <defs>
           {series.map((s, i) => (
             <linearGradient key={i} id={`${gradientId}-${i}`} x1="0" y1="0" x2="0" y2="1">

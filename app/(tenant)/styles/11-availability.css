@@ -137,7 +137,7 @@ select:focus-visible {
   padding: 9px 20px;
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
   font: inherit;
   font-weight: 620;
@@ -148,7 +148,7 @@ select:focus-visible {
 }
 
 .btn:hover {
-  background: var(--accent-deep);
+  background: var(--accent-ink);
 }
 
 /* An <svg> icon with no explicit width/height falls back to the browser's

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Shared confirmation modal, on the app's existing `.modal` shell.
@@ -33,15 +34,14 @@ export function ConfirmDialog({
   onCancel: () => void;
 }) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Jira GRW-342 — Escape, Tab kept inside, focus back on the button that opened it. Declared first so the
+  // confirm button below is what ends up focused.
+  useDialog(dialogRef, { onClose: busy ? undefined : onCancel });
 
   useEffect(() => {
     confirmRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) onCancel();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [busy, onCancel]);
+  }, []);
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onCancel}>
@@ -50,6 +50,7 @@ export function ConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         aria-label={title}
+        ref={dialogRef}
         onClick={(e) => e.stopPropagation()}
       >
         <h3>{title}</h3>

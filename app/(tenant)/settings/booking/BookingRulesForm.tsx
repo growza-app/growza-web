@@ -90,10 +90,10 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
         <div className="rules-columns">
         <div className="rules-col">
         <div className="field">
-          <label>
+          <label htmlFor="rule-slot">
             <span>Slot length</span>
           </label>
-          <input
+          <input id="rule-slot"
             type="number"
             min={5}
             max={240}
@@ -127,26 +127,26 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
         </div>
         <div className="rules-col">
         <div className="field">
-          <label>
+          <label htmlFor="rule-notice">
             <span>Minimum notice</span>
           </label>
-          <input type="number" min={0} max={2880} step={5} value={minNoticeMin} onChange={(e) => setMinNoticeMin(Number(e.target.value))} />
+          <input id="rule-notice" type="number" min={0} max={2880} step={5} value={minNoticeMin} onChange={(e) => setMinNoticeMin(Number(e.target.value))} />
           <span className="field-hint">Customers must book at least {minNoticeMin || 0} minutes ahead.</span>
         </div>
 
         <div className="field" style={{ marginTop: 14 }}>
-          <label>
+          <label htmlFor="rule-horizon">
             <span>Booking horizon</span>
           </label>
-          <input type="number" min={1} max={365} value={bookingHorizonDays} onChange={(e) => setBookingHorizonDays(Number(e.target.value))} />
+          <input id="rule-horizon" type="number" min={1} max={365} value={bookingHorizonDays} onChange={(e) => setBookingHorizonDays(Number(e.target.value))} />
           <span className="field-hint">Customers can book up to {bookingHorizonDays || 0} days ahead.</span>
         </div>
 
         <div className="field" style={{ marginTop: 14 }}>
-          <label>
+          <label htmlFor="rule-cutoff">
             <span>Cancellation cutoff</span>
           </label>
-          <input
+          <input id="rule-cutoff"
             type="number"
             min={0}
             max={2880}
@@ -215,6 +215,7 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
             <label className="switch" style={{ marginTop: 2 }}>
               <input
                 type="checkbox"
+                aria-labelledby="rule-staff-sees-label"
                 checked={staffSeesClientContact}
                 onChange={() => setStaffSeesClientContact((v) => !v)}
               />
@@ -223,7 +224,7 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
               </span>
             </label>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 620, fontSize: 14.5 }}>Staff can see client name and number</div>
+              <div id="rule-staff-sees-label" style={{ fontWeight: 620, fontSize: 14.5 }}>Staff can see client name and number</div>
               <span className="field-hint" style={{ margin: '4px 0 0' }}>
                 {staffSeesClientContact
                   ? 'Your team sees who each booking is for, and can call them.'
@@ -234,7 +235,7 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
         </div>
         )}
 
-        {error && <div className="field-error">{error}</div>}
+        {error && <div role="alert" className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={save}>
             {busy ? 'Saving…' : 'Save changes'}

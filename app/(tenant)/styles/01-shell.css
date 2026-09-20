@@ -47,7 +47,7 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
   display: grid;
   place-items: center;

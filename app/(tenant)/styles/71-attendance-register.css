@@ -95,7 +95,7 @@
 .att-daynav-today {
   width: auto !important;
   padding: 0 14px;
-  background: var(--accent) !important;
+  background: var(--accent-deep) !important;
   color: #fff !important;
   font-size: 13px !important;
 }
@@ -227,7 +227,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
   border: none;
   border-radius: 11px;
@@ -443,7 +443,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.att-hours-muted { color: #9aa5a0; }
+.att-hours-muted { color: var(--muted); }
 .att-hours-live { color: var(--accent-deep); }
 .att-hours-done { color: var(--text); }
 
@@ -822,7 +822,7 @@
 /* A day they were never rostered for. Nothing to chase; recedes entirely. */
 .am-c-off {
   background: #f6f8f7;
-  color: #b2bcb7;
+  color: var(--muted);
 }
 
 .am-legend {

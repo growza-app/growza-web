@@ -5,6 +5,7 @@ import type { HomeOverview, PaymentModeSlice } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
 import { IconChevronRight, IconClock, IconDaySummary, IconDots } from '../icons';
 import { rupees } from './parts';
+import { useDialog } from '../../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-222 — the money card.
@@ -173,6 +174,8 @@ export function MoneyHero({
 }) {
   const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Jira GRW-342 — a popover: focus moves in, Escape closes and returns to the ⋯ button, Tab past the end closes it.
+  useDialog(menuRef, { onClose: () => setMenu(false), active: menu, trapTab: false });
   // Nothing to pick in this menu any more, so a tap anywhere else closes it.
   useEffect(() => {
     if (!menu) return;

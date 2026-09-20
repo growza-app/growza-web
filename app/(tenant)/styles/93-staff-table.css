@@ -1,0 +1,225 @@
+/*
+ * Jira GRW-343 — the phone's staff table (see StaffTable). Hidden from 861px up, where Bookings keeps its Staff
+ * dropdown. The row is the tap target; the list scrolls inside its own box with the column heads kept in view.
+ */
+.bk-staff-table-wrap {
+  display: none;
+}
+@media (max-width: 860px) {
+  .bk-staff-table-wrap {
+    display: block;
+    max-height: min(44vh, 340px);
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    scrollbar-width: none; /* a touch scroll region; a classic scrollbar would take 15px from the columns */
+  }
+  .bk-staff-table-wrap::-webkit-scrollbar {
+    display: none;
+  }
+  .bk-staff-table {
+    width: 100%;
+    min-width: 0; /* a global `table { min-width: 560px }` would push two columns off the screen */
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .bk-staff-table th,
+  .bk-staff-table td {
+    padding: 0 var(--sp-1);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bk-staff-table th:first-child,
+  .bk-staff-table td:first-child {
+    width: 31%;
+    padding-left: var(--sp-3);
+    text-align: left;
+  }
+  .bk-staff-table td:last-child,
+  .bk-staff-table thead th:last-child {
+    padding-right: var(--sp-3);
+  }
+
+  .bk-staff-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 36px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .bk-staff-table tbody tr {
+    cursor: pointer;
+  }
+  .bk-staff-table tbody th,
+  .bk-staff-table tbody td {
+    height: 44px;
+    border-bottom: 1px solid var(--hm-line-soft, var(--border));
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .bk-staff-table tbody tr:last-child th,
+  .bk-staff-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  /* The name is the button, stripped back so the row reads as a row. */
+  .bk-staff-table tbody th {
+    padding: 0;
+  }
+  .bk-staff-table tbody th button {
+    display: block;
+    width: 100%;
+    height: 44px;
+    padding: 0 0 0 var(--sp-3);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .bk-staff-table tbody th button:focus-visible {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: -2px;
+  }
+
+  /* Everyone: the day's totals, set apart from the people under it. */
+  .bk-staff-table tr.is-total th,
+  .bk-staff-table tr.is-total td {
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+  }
+
+  /* Nobody on: still tappable, but quieter. */
+  .bk-staff-table tr.is-idle td {
+    color: var(--muted);
+  }
+
+  .bk-staff-visits {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* ---- the sheet's list (also used by the sheet itself, which is portalled out of the table) ---- */
+  .bk-staff-visits li {
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr);
+    align-items: start;
+    gap: var(--sp-2);
+    min-height: 44px;
+    padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-3);
+    border-top: 1px solid var(--hm-line-soft, var(--border));
+  }
+  .bk-staff-visits li:first-child {
+    border-top: 0;
+  }
+  .bk-visit-time {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .bk-visit-who {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .bk-visit-who strong {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .bk-visit-service {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .bk-visit-service.is-lead {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .bk-staff-nothing {
+    margin: 0;
+    padding: var(--sp-3);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  /* Already done: still listed, quieter. */
+  .bk-staff-visits li.is-completed .bk-visit-who strong,
+  .bk-staff-visits li.is-completed .bk-visit-service.is-lead {
+    color: var(--muted);
+  }
+
+  /* The number is a button: it opens the sheet of that person's clients. A chip, so it reads as tappable; the
+     button around it is the 44px target. */
+  .bk-staff-table tbody td .bk-count-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    margin: 0 -6px 0 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  /* Nobody booked: a plain 0, on the same centre line as the chips above and below it. */
+  .bk-count-none {
+    display: inline-grid;
+    place-items: center;
+    min-width: 44px;
+    margin-right: -6px;
+  }
+  .bk-count-chip {
+    display: inline-grid;
+    place-items: center;
+    min-width: 32px;
+    height: 30px;
+    padding: 0 var(--sp-2);
+    border: 1px solid var(--accent-deep);
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-weight: 700;
+  }
+  .bk-staff-table tbody td .bk-count-btn:active .bk-count-chip {
+    background: var(--accent-deep);
+    color: #fff;
+  }
+  .bk-staff-table tbody td .bk-count-btn:focus-visible {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: -2px;
+  }
+
+  /* The picked row: the same soft green and deep-green ink as every other selected thing. */
+  .bk-staff-table tr.is-active th,
+  .bk-staff-table tr.is-active td {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+  .bk-staff-table tr.is-active th {
+    box-shadow: inset 3px 0 0 var(--accent-deep);
+  }
+}

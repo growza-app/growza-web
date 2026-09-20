@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatTime, type Appointment, type AppointmentStatus, type Offer, type Provider, type Service } from '../lib/api';
 import { copy } from '../lib/copy';
@@ -8,6 +8,7 @@ import { formatDuration, summarizeServices } from '../lib/appointment-display';
 import { CheckoutSheet } from './CheckoutSheet';
 import { MoveBookingSheet } from './MoveBookingSheet';
 import { IconCheck, IconClose, IconMoveTime, IconPhone, IconWhatsApp } from './icons';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Digits only — `tel:` and `wa.me` both choke on spaces and punctuation.
@@ -82,6 +83,8 @@ export function BookingSheet({
    */
   canMove?: boolean;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose });
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -162,7 +165,7 @@ export function BookingSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-label={name}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={name} ref={dialogRef}>
         <div className="sheet-grab" />
 
         <div className="sheet-head">

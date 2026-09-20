@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, api, type BranchClosePreview } from '../../lib/api';
+import { useDialog } from '../../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-246 — the owner closes a branch, or makes it the main one.
@@ -28,6 +29,8 @@ export function BranchActionDialog({
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<BranchClosePreview | null>(null);
   const reasonRef = useRef<HTMLTextAreaElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: busy ? undefined : onCancel });
 
   useEffect(() => {
     reasonRef.current?.focus();
@@ -61,7 +64,7 @@ export function BranchActionDialog({
   const title = action === 'close' ? `Close ${branch.name}?` : `Make ${branch.name} your main branch?`;
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onCancel}>
-      <div className="modal modal-fit confirm-modal" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div className="modal modal-fit confirm-modal" role="dialog" aria-modal="true" aria-label={title} ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <h3>{title}</h3>
         <div className="modal-body">
           <p className="confirm-body">

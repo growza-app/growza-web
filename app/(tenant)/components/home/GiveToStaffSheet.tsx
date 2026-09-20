@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApiError, api, type Provider, type QueueEntry, type Service } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
 import { IconClose } from '../icons';
 import { Avatar } from './parts';
+import { useDialog } from '../../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-222 — "Give to staff": the one tap that starts a queued walk-in.
@@ -34,6 +35,8 @@ export function GiveToStaffSheet({
   busy: Map<string, { client: string; min: number }>;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose });
   const router = useRouter();
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +99,7 @@ export function GiveToStaffSheet({
 
   return (
     <div className="hm-overlay" role="presentation" onClick={onClose}>
-      <div className="hm-sheet hm-sheet-narrow" role="dialog" aria-modal="true" aria-labelledby="hm-give-title" onClick={(e) => e.stopPropagation()}>
+      <div className="hm-sheet hm-sheet-narrow" role="dialog" aria-modal="true" aria-labelledby="hm-give-title" ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <div className="hm-sheet-head">
           <div>
             <h2 id="hm-give-title">{t.giveTitle(entry.customerName)}</h2>

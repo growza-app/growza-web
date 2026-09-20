@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { api, type DaySummary } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
 import { IconClose } from '../icons';
 import { Avatar, CardError, rupees } from './parts';
 import { PaymentBar } from './MoneyHero';
+import { useDialog } from '../../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-222 — the end-of-day readout: what came in, how, and who did it.
@@ -18,6 +19,7 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
   const [data, setData] = useState<DaySummary | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let live = true;
@@ -31,15 +33,12 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
     };
   }, [locationId, attempt]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  // Jira GRW-342 — Escape, focus in, Tab kept inside, focus back on the button that opened it.
+  useDialog(dialogRef, { onClose });
 
   return (
     <div className="hm-overlay" role="presentation" onClick={onClose}>
-      <div className="hm-sheet" role="dialog" aria-modal="true" aria-labelledby="hm-sheet-title" onClick={(e) => e.stopPropagation()}>
+      <div className="hm-sheet" role="dialog" aria-modal="true" aria-labelledby="hm-sheet-title" ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <div className="hm-sheet-head">
           <div>
             <h2 id="hm-sheet-title">{t.todaysSummary}</h2>

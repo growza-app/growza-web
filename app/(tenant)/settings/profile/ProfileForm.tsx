@@ -258,7 +258,7 @@ export function ProfileForm({
               aria-describedby={nameError ? 'bp-name-error' : undefined}
             />
             {nameError ? (
-              <div className="field-error" id="bp-name-error">
+              <div role="alert" className="field-error" id="bp-name-error">
                 {NAME_EMPTY}
               </div>
             ) : null}

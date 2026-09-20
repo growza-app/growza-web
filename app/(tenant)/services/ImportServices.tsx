@@ -167,7 +167,7 @@ export function ImportServices({
           />
         )}
 
-        {step !== 'review' && error && <div className="field-error" style={{ marginTop: 12 }}>{error}</div>}
+        {step !== 'review' && error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
         {step === 'pick' && (
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>

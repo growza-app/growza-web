@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ProviderOverviewRow } from '../lib/api';
 import { IconAppointments, IconCalendar, IconClock, IconEdit, IconServices, IconTrash } from '../components/icons';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * The Staff roster — one row per person, grouped by whether they're on shift
@@ -377,6 +378,8 @@ export function StaffActionSheet({
   actions: RosterActions;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose });
   const run = (fn: () => void) => () => {
     onClose();
     fn();
@@ -385,7 +388,7 @@ export function StaffActionSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-label={`Actions for ${p.displayName}`}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={`Actions for ${p.displayName}`} ref={dialogRef}>
         <div className="sheet-grab" />
         <div className="sheet-head">
           <div className={`staff-avatar ${avatarTone(p.displayName)}`}>{initials(p.displayName)}</div>

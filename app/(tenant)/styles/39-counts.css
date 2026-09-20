@@ -16,7 +16,7 @@
 }
 
 .staff-count-num.is-zero {
-  color: #a9b3ac;
+  color: var(--muted);
 }
 
 .staff-count-label {

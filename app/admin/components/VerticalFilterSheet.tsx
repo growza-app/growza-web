@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Icon, TypeIcon } from '../icons';
 import { oklch } from '../tokens';
 import { TextInput } from './primitives';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 const ALL = 'All';
 
@@ -39,6 +40,8 @@ export function VerticalFilterSheet({
   useEffect(() => {
     if (open) setSearch('');
   }, [open]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose, active: open });
 
   if (!open) return null;
 
@@ -51,6 +54,7 @@ export function VerticalFilterSheet({
     >
       <div
         role="dialog"
+        ref={dialogRef}
         aria-modal="true"
         aria-label="Filter by vertical"
         onClick={(e) => e.stopPropagation()}

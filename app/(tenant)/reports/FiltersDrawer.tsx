@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { copy } from '../lib/copy';
 import { countFilters, type ReportFilterOptions, type ReportFilters } from '../lib/api';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * The Filters drawer (GRW-60).
@@ -36,28 +37,14 @@ export function FiltersDrawer({
 }) {
   const [draft, setDraft] = useState<ReportFilters>(filters);
   const panel = useRef<HTMLDivElement>(null);
-  const opener = useRef<Element | null>(null);
 
   // Reopening shows what is actually applied, not what was abandoned last time.
   useEffect(() => {
     if (open) setDraft(filters);
   }, [open, filters]);
 
-  // Escape closes, and focus goes back to the button that opened it — the same
-  // contract every other overlay in the product honours.
-  useEffect(() => {
-    if (!open) return;
-    opener.current = document.activeElement;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    panel.current?.querySelector<HTMLElement>('button')?.focus();
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      (opener.current as HTMLElement | null)?.focus?.();
-    };
-  }, [open, onClose]);
+  // Escape closes, Tab stays inside, and focus goes back to the button that opened it (Jira GRW-342).
+  useDialog(panel, { onClose, active: open });
 
   if (!open) return null;
 

@@ -4,6 +4,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, type Appointment, type CustomerStats, type HomeOverview, type HomePeriod } from '../../lib/api';
 import { groupBookings } from '../../lib/appointment-display';
 import { branchPace } from '../../lib/branch-pace';
+import { readBranchChoice, writeBranchChoice } from '../../lib/branch-choice';
+import { BranchTabs } from '../BranchTabs';
 import { homeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
 import { canSee, type MemberRole } from '../../lib/nav-policy';
@@ -178,6 +180,27 @@ export function OwnerHome(p: OwnerHomeProps) {
       .finally(() => setLoading(false));
   };
 
+  /**
+   * Jira GRW-340 — choose a branch from anywhere on this screen (the laptop dropdown, the "Your branches" card, a
+   * phone's tabs). It is remembered for the session, so Bookings and Attendance open on the same branch.
+   */
+  const pickBranch = (next: string | null) => {
+    setBranch(next);
+    writeBranchChoice(next);
+    load(period, next);
+  };
+
+  // Open on the branch the owner was last looking at, if it is still open. Read after mount: the server render
+  // cannot see the browser's storage, and starting on "All" there keeps the two renders identical.
+  useEffect(() => {
+    const remembered = readBranchChoice(p.initial?.branches ?? []);
+    if (remembered) {
+      setBranch(remembered);
+      load('today', remembered);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const branches = data?.branches ?? [];
   const multiBranch = branches.length > 1;
   const selected = branches.find((b) => b.id === branch) ?? null;
@@ -349,9 +372,8 @@ export function OwnerHome(p: OwnerHomeProps) {
                         role="menuitemradio"
                         aria-checked={branch === b.id}
                         onClick={() => {
-                          setBranch(b.id);
                           setBranchMenu(false);
-                          load(period, b.id);
+                          pickBranch(b.id);
                         }}
                       >
                         {b.name}
@@ -370,6 +392,9 @@ export function OwnerHome(p: OwnerHomeProps) {
             <IconDaySummary />
           </button>
         </div>
+
+        {/* Jira GRW-340 — on a phone the branch is a row of tabs, not the dropdown above (CSS swaps them at 860px). */}
+        {multiBranch ? <BranchTabs branches={branches} value={branch} onChange={pickBranch} allLabel={t.allBranchesShort} label={t.branch} /> : null}
 
         <div className={`hm-owner-grid ${multiBranch ? 'hm-multi' : ''}`}>
           <div className="hm-area-hero">{data ? <MoneyHero
@@ -409,9 +434,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                         aria-pressed={picked}
                         onClick={() => {
                           // Tapping the branch already picked goes back to all of them.
-                          const next = picked ? null : b.id;
-                          setBranch(next);
-                          load(period, next);
+                          pickBranch(picked ? null : b.id);
                         }}
                       >
                         <span className={`hm-branch-tile hm-tone-${BRANCH_TONES[i % BRANCH_TONES.length]}`}>{branchInitials(b.name)}</span>

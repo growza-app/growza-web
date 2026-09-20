@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { api, ApiError, type ProviderOverviewRow, type Service } from '../lib/api';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone, validateNationalPhone } from '../lib/phone';
 import { IconCheck, IconClose, IconPlus } from '../components/icons';
 import { WeekdayHoursEditor, type WeekdayRow } from '../components/WeekdayHoursEditor';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-22 — adding somebody, in three steps, with the first one enough.
@@ -86,6 +87,8 @@ export function StaffWizard({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose });
   const [step, setStep] = useState<Step>('who');
 
   const [displayName, setDisplayName] = useState('');
@@ -201,7 +204,7 @@ export function StaffWizard({
   return (
     <>
       <div className="drawer-scrim" onClick={onClose} />
-      <div className="wiz" role="dialog" aria-label={`Add ${staffWord.toLowerCase()}`}>
+      <div className="wiz" role="dialog" aria-modal="true" aria-label={`Add ${staffWord.toLowerCase()}`} ref={dialogRef}>
         <div className="wiz-head">
           <div>
             <h2>Add {staffWord.toLowerCase()}</h2>
@@ -247,7 +250,7 @@ export function StaffWizard({
                     if (nameInvalid) setNameInvalid(false);
                   }}
                 />
-                {nameInvalid && <div className="field-error">A name is required.</div>}
+                {nameInvalid && <div role="alert" className="field-error">A name is required.</div>}
               </div>
 
               <PhoneField
@@ -442,7 +445,7 @@ export function StaffWizard({
         </div>
 
         <div className="wiz-actions">
-          {error && <div className="field-error wiz-error">{error}</div>}
+          {error && <div role="alert" className="field-error wiz-error">{error}</div>}
           <div className="wiz-actions-row">
             {index > 0 && (
               <button type="button" className="btn btn-ghost" onClick={() => setStep(STEPS[index - 1]!.key)}>

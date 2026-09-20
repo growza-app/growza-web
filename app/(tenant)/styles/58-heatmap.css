@@ -19,7 +19,7 @@
 
 .rp-heat-hour {
   font-size: 10px;
-  color: #9aa39d;
+  color: var(--muted);
   text-align: center;
   font-weight: 600;
 }

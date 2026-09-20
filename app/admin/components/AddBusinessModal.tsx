@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, useRef } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
 import { ERROR_COLOR, Field, PrimaryButton, SecondaryButton, Select, TextInput } from './primitives';
 import { BranchFields, emptyBranch, type Branch } from './BranchFields';
 import { DIAL_CODES, validate } from '../lib/enrol-validation';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-138 · GRW-175 — Add a business.
@@ -88,6 +89,8 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   const [reason, setReason] = useState('');
 
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: saving ? undefined : onClose });
   const [formError, setFormError] = useState<string | null>(null);
   /** Field name -> message. Populated on submit, and cleared per field as it is edited. */
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -210,6 +213,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
     >
       <div
         role="dialog"
+        ref={dialogRef}
         aria-modal="true"
         aria-labelledby={`${ids}-title`}
         onClick={(e) => e.stopPropagation()}
@@ -426,6 +430,8 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
  */
 export function OwnerCredentialNotice({ created, onClose }: { created: CreatedBusiness; onClose: () => void }) {
   const ids = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose });
   return (
     <div
       className="admin-dialog-backdrop"
@@ -442,6 +448,7 @@ export function OwnerCredentialNotice({ created, onClose }: { created: CreatedBu
     >
       <div
         role="dialog"
+        ref={dialogRef}
         aria-modal="true"
         aria-labelledby={`${ids}-title`}
         style={{ width: 'min(520px, 100%)', background: 'white', borderRadius: 18, padding: 24, boxShadow: '0 24px 60px oklch(0.2 0.04 155 / 0.35)' }}

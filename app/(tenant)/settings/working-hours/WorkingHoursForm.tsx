@@ -81,7 +81,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
             : "Your business's default open hours. Staff can follow these automatically from their own profile, or set their own instead."}
         </p>
         <WeekdayHoursEditor rows={rows} onChange={update} />
-        {error && <div className="field-error">{error}</div>}
+        {error && <div role="alert" className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={save}>
             {busy ? 'Saving…' : 'Save changes'}
@@ -140,7 +140,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
             ? 'Someone on a 10:00 shift is late from 10:01.'
             : `Someone on a 10:00 shift is late from ${graceLabel}.`}
         </p>
-        {graceError && <div className="field-error">{graceError}</div>}
+        {graceError && <div role="alert" className="field-error">{graceError}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={saveGrace}>
             {busy ? 'Saving…' : 'Save changes'}

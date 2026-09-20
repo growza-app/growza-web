@@ -128,16 +128,17 @@ describe('the period switch beside the branch picker (Jira GRW-313)', () => {
     expect(css).toMatch(/\.hm-toolbar-multi \.hm-toolbar-end\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*0;/);
   });
 
-  it('with several branches the tabs are compact; with one they are left to fill the row', () => {
-    expect(css).toMatch(/\.hm-toolbar-multi \.hm-seg\s*\{\s*flex:\s*0 0 auto;/);
-    expect(css).not.toMatch(/\.hm-seg\s*\{[^}]*flex:\s*0 0 auto[^}]*\}\s*\.hm-seg button/); // the one-branch rule is 83-role-home's own `flex: 1`
+  it('on a phone the period is a dropdown, not tabs — the row keeps its room for the branch picker', () => {
+    const home = code('../../styles/83-role-home.css');
+    const parts = code('parts.tsx');
+    expect(parts).toMatch(/<select className="hm-seg-select" aria-label=\{label\}/);
+    expect(home).toMatch(/\.hm-seg-select\s*\{\s*display:\s*none;/); // laptop: tabs only
+    expect(home).toMatch(/\.hm-toolbar \.hm-seg\s*\{\s*display:\s*none;/); // phone: dropdown only
+    expect(home).toMatch(/\.hm-toolbar \.hm-seg-select\s*\{\s*display:\s*block;/);
   });
 
-  it('one branch: no rule gives the empty toolbar-end a share of the row, so the tabs fill it', () => {
-    // `.hm-toolbar .hm-seg { flex: 1 }` (83-role-home.css) does the filling; an unscoped grow on the empty
-    // box beside it would halve the tabs.
+  it('one branch: no rule gives the empty toolbar-end a share of the row, so the dropdown keeps its own width', () => {
     expect(css).not.toMatch(/(^|\})\s*\.hm-toolbar-end\s*\{[^}]*flex:\s*1 1 0/);
-    expect(code('../../styles/83-role-home.css')).toMatch(/\.hm-toolbar \.hm-seg\s*\{\s*flex:\s*1;/);
   });
 
   it('the change chip drops its words under 400px, so a seven-figure amount never runs into it', () => {

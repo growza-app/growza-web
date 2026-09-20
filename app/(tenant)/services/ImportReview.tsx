@@ -124,7 +124,7 @@ export function ImportReview({
           );
         })}
       </div>
-      {error && <div className="field-error" style={{ marginTop: 12 }}>{error}</div>}
+      {error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
       <div className="modal-actions">
         <button type="button" className="btn btn-ghost" disabled={busy} onClick={onBack}>
           {backLabel}

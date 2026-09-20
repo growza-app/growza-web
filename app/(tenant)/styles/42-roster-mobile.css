@@ -113,7 +113,7 @@
   }
 
   .staff-card-count.is-zero {
-    color: #a9b3ac;
+    color: var(--muted);
   }
 
   /*

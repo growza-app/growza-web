@@ -48,7 +48,7 @@
 }
 
 .call-strong {
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
 }
 

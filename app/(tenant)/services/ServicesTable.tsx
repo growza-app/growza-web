@@ -214,7 +214,7 @@ export function ServicesTable({
       </div>
 
       <div className="card">
-        {error && <div className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
+        {error && <div role="alert" className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
         {filtered.length === 0 ? (
           <div className="empty">No services match here.</div>
         ) : (

@@ -495,7 +495,7 @@
 }
 
 .pagination-btn-active {
-  background: var(--accent);
+  background: var(--accent-deep);
   border-color: var(--accent);
   color: #fff;
 }

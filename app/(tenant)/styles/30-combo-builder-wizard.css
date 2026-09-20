@@ -144,7 +144,7 @@
 }
 
 .wizard-step-active .wizard-step-num {
-  background: var(--accent);
+  background: var(--accent-deep);
   border-color: var(--accent);
   color: #fff;
 }
@@ -353,7 +353,7 @@
 }
 
 .price-mode-toggle button.active {
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
 }
 
@@ -407,7 +407,7 @@
 }
 
 .weekday-chip.active {
-  background: var(--accent);
+  background: var(--accent-deep);
   border-color: var(--accent);
   color: #fff;
 }

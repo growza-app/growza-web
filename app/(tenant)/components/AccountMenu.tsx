@@ -220,7 +220,7 @@ export function AccountMenu() {
                       }}
                     />
                     <p className="acct-hint">At least 8 characters.</p>
-                    {error && <div className="field-error">{error}</div>}
+                    {error && <div role="alert" className="field-error">{error}</div>}
                     <div className="acct-form-actions">
                       <button
                         type="button"

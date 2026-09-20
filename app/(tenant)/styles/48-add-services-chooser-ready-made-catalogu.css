@@ -76,7 +76,7 @@
 }
 
 .chooser-icon.is-primary {
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
 }
 

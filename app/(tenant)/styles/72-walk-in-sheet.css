@@ -205,7 +205,7 @@ input.wi-search-input-plain {
   margin: 6px 0 0;
   width: 100%;
   justify-content: center;
-  background: var(--accent);
+  background: var(--accent-deep);
   color: #fff;
   border-radius: var(--radius-sm);
   font-weight: 620;

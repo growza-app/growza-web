@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   api,
@@ -13,6 +13,7 @@ import { copy } from '../lib/copy';
 import { zonedDateTimeToUtc } from '../lib/zoned-time';
 import { useLabel } from './LabelsProvider';
 import { IconClose } from './icons';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-219 — moving a booking to another time.
@@ -80,6 +81,8 @@ export function MoveBookingSheet({
   const [providers, setProviders] = useState<Provider[]>([]);
   const [dayBookings, setDayBookings] = useState<Appointment[]>([]);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: busy ? undefined : onClose });
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -237,7 +240,7 @@ export function MoveBookingSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />
-      <div className="sheet move-sheet" role="dialog" aria-label={copy.move.title}>
+      <div className="sheet move-sheet" role="dialog" aria-modal="true" aria-label={copy.move.title} ref={dialogRef}>
         <div className="sheet-grab" />
 
         <div className="sheet-head">
@@ -253,7 +256,7 @@ export function MoveBookingSheet({
         </div>
 
         <div className="wi-body">
-          {error && <div className="wi-error">{error}</div>}
+          {error && <div role="alert" className="wi-error">{error}</div>}
 
           <div className="wi-section-label">{copy.move.whichDay}</div>
           <div className="wi-chips mv-days">

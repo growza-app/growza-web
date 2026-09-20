@@ -1,0 +1,48 @@
+/*
+ * Jira GRW-342 — one vertical rhythm on a phone.
+ *
+ * The gap between one block and the next on a screen, measured at 393px: Bookings 12 / 0 / 18, Clients 8 / 18,
+ * Staff 12 / 16 / 12, Services 16 / 12, Attendance 20 / 20 / 16 / 14 — each set by whichever rule the block happened
+ * to be written with (`.card + .card` said 18). On Bookings the dark "Staff busy" card, which sits inside the KPI
+ * block, touched the filter card under it. Home already spaces its cards 16px apart, and the page padding is 16px:
+ * one unit, so that is the rhythm.
+ *
+ * `!important`, as with the type floor: this has to beat a block's own margin whichever screen it came from.
+ */
+@media (max-width: 860px) {
+  .page-body {
+    padding-top: var(--sp-4) !important; /* Offers carried 12px of its own */
+  }
+  /* Home spaces its own cards with a grid `gap`; adding margins on top of that made it 32px. */
+  .page-body:not(.hm-page) > * {
+    margin-bottom: 0 !important;
+  }
+  .page-body:not(.hm-page) > * + *:not(.sr-only):not(.fab):not([class*='backdrop']):not([class*='overlay']) {
+    margin-top: var(--sp-4) !important;
+  }
+
+  /* Cards carry 16px inside, as Home's do (these two carried 12px). */
+  .bk-filter-card,
+  .cust-segments {
+    padding: var(--sp-4);
+  }
+
+  /* The header is transparent, so content scrolling up used to be cut off flat against its last line. A short fade
+     from the page colour lets it slide away instead. It sits on the padding at rest, so nothing shows until you scroll. */
+  .topbar,
+  .hm-head {
+    position: relative;
+    z-index: 3;
+  }
+  .topbar::after,
+  .hm-head::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: var(--sp-3);
+    background: linear-gradient(var(--page-bg), transparent);
+    pointer-events: none;
+  }
+}

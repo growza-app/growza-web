@@ -60,7 +60,7 @@
 
 .range-bar-label {
   font-size: 10.5px;
-  color: #7c9a8b;
+  color: var(--muted);
 }
 
 .range-bar-label-current {
@@ -135,7 +135,7 @@
   color: #17427f;
 }
 .tile-blue .k {
-  color: #5a7fb0;
+  color: var(--muted);
 }
 
 .tile-green {
@@ -145,7 +145,7 @@
   color: #14663c;
 }
 .tile-green .k {
-  color: #4a8a67;
+  color: var(--muted);
 }
 
 .tile-amber {
@@ -155,5 +155,5 @@
   color: #8a5a10;
 }
 .tile-amber .k {
-  color: #a67c2e;
+  color: var(--muted);
 }

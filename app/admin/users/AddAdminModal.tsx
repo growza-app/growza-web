@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * GRW-133 — adding a platform administrator. GRW-165 — with a password.
@@ -45,6 +46,8 @@ export function AddAdminModal({
   const [roleId, setRoleId] = useState('');
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: saving ? undefined : onClose });
   const [error, setError] = useState<string | null>(null);
   const ids = useId();
   const wasOpen = useRef(false);
@@ -133,6 +136,7 @@ export function AddAdminModal({
     >
       <div
         role="dialog"
+        ref={dialogRef}
         aria-modal="true"
         aria-labelledby={`${ids}-title`}
         onClick={(e) => e.stopPropagation()}

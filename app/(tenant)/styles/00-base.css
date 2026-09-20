@@ -13,7 +13,10 @@
   --muted: #5f6a65;
   --accent: #16a34a;
   --accent-soft: #dcf5e6;
-  --accent-deep: #15803d;
+  /* Jira GRW-342 — was #15803d: 4.38:1 on the page background and 4.35:1 on --accent-soft, both under 4.5:1.
+     One deep green for text, fills and focus rings; --accent-ink is its pressed/hover shade. */
+  --accent-deep: #166534;
+  --accent-ink: #14532d;
   --blue: #1d4ed8;
   --blue-soft: #dfe7fd;
   --amber: #b45309;
@@ -24,7 +27,7 @@
   --purple-soft: #ede9fe;
   --purple-deep: #6d28d9;
   --radius: 14px;
-  --radius-sm: 10px;
+  --radius-sm: 12px; /* Jira GRW-342 — was 10px; buttons and fields were 9, 10, 11, 12, 13 and 14px depending on the screen. */
 
   /* ---------- spacing scale (single source of truth) ----------
      4-based tokens. Use these instead of arbitrary px so every screen shares

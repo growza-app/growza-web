@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ComponentType, type CSSProperties } f
 import { DateTime } from 'luxon';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
 import { IconBell, IconCalendarPlus, IconClose, IconMoveTime, IconReceipt } from './icons';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 const POLL_MS = 15_000;
 const TOAST_MS = 6_000;
@@ -29,13 +30,31 @@ export function readClearedBeforeId(): number {
   return Number(window.localStorage.getItem(CLEARED_KEY) ?? 0);
 }
 
+/**
+ * Fired on this tab whenever the read cursor moves. A `storage` event only reaches OTHER tabs, and the
+ * phone's Notifications badge (BottomNav) lives in the layout above the page that clears it.
+ */
+export const NOTIF_READ_EVENT = 'wa-booking:notif-read';
+
+function announceReadChange(): void {
+  window.dispatchEvent(new Event(NOTIF_READ_EVENT));
+}
+
 export function writeLastSeenId(id: number): void {
   window.localStorage.setItem(STORAGE_KEY, String(id));
+  announceReadChange();
 }
 
 export function writeClearedBeforeId(id: number): void {
   window.localStorage.setItem(CLEARED_KEY, String(id));
   window.localStorage.setItem(STORAGE_KEY, String(id));
+  announceReadChange();
+}
+
+/** What the bell, the Notifications page and the phone tab all show as the count: newer than both cursors. */
+export function countUnread(events: ReadonlyArray<{ id: string | number }>, lastSeenId: number, clearedBeforeId: number): number {
+  const floor = Math.max(lastSeenId, clearedBeforeId);
+  return events.filter((e) => Number(e.id) > floor).length;
 }
 
 export const TOPIC_META: Record<ActivityEvent['topic'], { label: string; icon: ComponentType; cls: string }> = {
@@ -114,6 +133,9 @@ export function NotificationBell() {
   // title elsewhere). Measured fresh on each open instead of guessed in CSS.
   const [mobileTop, setMobileTop] = useState<number | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Jira GRW-342 — a popover: focus moves in, Escape closes and returns to the bell, Tab past the end closes it.
+  useDialog(dropdownRef, { onClose: () => setOpen(false), active: open, trapTab: false });
   const maxKnownId = useRef(0);
   const hasLoadedOnce = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -158,7 +180,7 @@ export function NotificationBell() {
   }, []);
 
   const visibleEvents = events.filter((e) => Number(e.id) > clearedBeforeId);
-  const unreadCount = visibleEvents.filter((e) => Number(e.id) > lastSeenId).length;
+  const unreadCount = countUnread(events, lastSeenId, clearedBeforeId);
 
   const markAllRead = () => {
     const newest = events.length > 0 ? Number(events[0]!.id) : lastSeenId;
@@ -214,7 +236,7 @@ export function NotificationBell() {
       {open && (
         <>
           <div className="notif-scrim" onClick={() => setOpen(false)} />
-          <div className="notif-dropdown" role="dialog" aria-label="Notifications">
+          <div className="notif-dropdown" role="dialog" aria-label="Notifications" ref={dropdownRef}>
             <div className="notif-dropdown-head">
               <span>Notifications</span>
               <div className="notif-dropdown-actions">

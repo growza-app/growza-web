@@ -8,6 +8,7 @@ import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import {
   TOPIC_META,
+  countUnread,
   eventLine,
   readClearedBeforeId,
   readLastSeenId,
@@ -72,7 +73,7 @@ export function NotificationsClient() {
   }, [retryCount]);
 
   const visibleEvents = (events ?? []).filter((e) => Number(e.id) > clearedBeforeId);
-  const unreadCount = visibleEvents.filter((e) => Number(e.id) > lastSeenId).length;
+  const unreadCount = countUnread(events ?? [], lastSeenId, clearedBeforeId);
 
   const markAllRead = () => {
     const newest = events && events.length > 0 ? Number(events[0]!.id) : lastSeenId;

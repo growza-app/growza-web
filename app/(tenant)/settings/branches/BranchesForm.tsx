@@ -149,7 +149,7 @@ function BranchCard({ initial }: { initial: BranchSettings }) {
             aria-describedby={nameError ? id('name-error') : undefined}
           />
           {nameError ? (
-            <div className="field-error" id={id('name-error')}>
+            <div role="alert" className="field-error" id={id('name-error')}>
               {nameError}
             </div>
           ) : null}

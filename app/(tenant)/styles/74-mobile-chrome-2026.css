@@ -50,6 +50,22 @@
       0 10px 30px rgba(9, 20, 15, 0.14);
   }
 
+  /* Jira GRW-339 — labels are 12px now, and on the narrowest phones "Bookings" ran into "New booking". The bar's own
+     inset is the room to give: Apple's 21px each side goes to 8px under 400px, which is where a Fold, an SE and a
+     360px Android live. */
+  @media (max-width: 400px) {
+    .bottom-nav {
+      margin-inline: 8px;
+      padding-inline: 4px;
+    }
+    /* Five equal cells are narrower than "Notifications" and "New booking" at 12px, and "Home" has room to spare.
+       Size each cell to its word and share what is left evenly, so the gaps between words are the same. */
+    .bottom-nav > a,
+    .bottom-nav > .bn-centre {
+      flex: 1 1 auto;
+    }
+  }
+
   /* The material, where the device can afford it. */
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .bottom-nav {
@@ -76,8 +92,9 @@
   .bottom-nav a {
     gap: 3px;
     border-radius: 18px;
-    /* 11pt, Apple's tab label size. */
-    font-size: 11px;
+    /* 12px, the floor for any label on a phone (Jira GRW-339). Apple's tab label is 11pt; a shop owner reading
+       across a counter needs more. */
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.1px;
     /* The tap target is the whole cell, not the glyph. */
