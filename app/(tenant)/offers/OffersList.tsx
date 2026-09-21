@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { formatDate } from '../lib/format';
 import { useRouter } from 'next/navigation';
@@ -8,26 +9,26 @@ import { api, formatMoney, type Offer, type Service } from '../lib/api';
 import { useFitRows } from '../lib/use-fit-rows';
 import { Pagination } from '../components/Pagination';
 import { IconFilter, IconSearch } from '../components/icons';
+import { weekdayNames } from '../lib/weekday-names';
 
 /** First paint only — the client immediately measures how many rows the screen actually fits. */
 const INITIAL_PAGE_SIZE = 4;
-const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 type Tab = 'all' | 'offers' | 'combos';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 
 /** Same rules the builder's own Step 2 summarizes — reused here so the list row and the wizard never describe an offer's visibility differently. */
-function visibilitySummary(offer: Offer): string {
+function visibilitySummary(offer: Offer, t: ReturnType<typeof useTranslations<'offers.list'>>, locale: string): string {
   if (offer.visibleWeekdays && offer.visibleWeekdays.length > 0) {
-    return `Only on: ${offer.visibleWeekdays.map((d) => WEEKDAY_NAMES[d]).join(', ')}`;
+    return t('onlyOn', { days: offer.visibleWeekdays.map((d) => weekdayNames(locale).short[d]).join(', ') });
   }
   if (offer.visibleFrom || offer.visibleUntil) {
-    const from = offer.visibleFrom ? formatDate(offer.visibleFrom) : 'now';
-    const until = offer.visibleUntil ? formatDate(offer.visibleUntil) : 'no end date';
-    return `${from} → ${until}`;
+    const from = offer.visibleFrom ? formatDate(offer.visibleFrom) : t('now');
+    const until = offer.visibleUntil ? formatDate(offer.visibleUntil) : t('noEnd');
+    return t('window', { from, until });
   }
-  return 'Always visible';
+  return t('always');
 }
 
 /**
@@ -38,6 +39,9 @@ function visibilitySummary(offer: Offer): string {
  * actions that don't need the wizard: edit link, toggling active, deleting.
  */
 export function OffersList({ offers, services }: { offers: Offer[]; services: Service[] }) {
+  const t = useTranslations('offers.list');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -134,7 +138,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
 
   const removeOffer = async (offer: Offer) => {
     setOpenMenuId(null);
-    if (!window.confirm(`Delete "${offer.title}"? This can't be undone.`)) return;
+    if (!window.confirm(t('deleteConfirm', { title: offer.title }))) return;
     setBusyId(offer.id);
     try {
       await api.deleteOffer(offer.id);
@@ -148,14 +152,14 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
     <div className="card offers-card">
       <div className="offers-toolbar">
         <div className="tabs">
-          {(['all', 'offers', 'combos'] as Tab[]).map((t) => (
+          {(['all', 'offers', 'combos'] as Tab[]).map((tb) => (
             <button
-              key={t}
+              key={tb}
               type="button"
-              className={`tab ${tab === t ? 'tab-active' : ''}`}
-              onClick={() => updateFilter(() => setTab(t))}
+              className={`tab ${tab === tb ? 'tab-active' : ''}`}
+              onClick={() => updateFilter(() => setTab(tb))}
             >
-              {t === 'all' ? 'All' : t === 'offers' ? 'Offers' : 'Combos'} ({tabCounts[t]})
+              {t('tabWithCount', { label: t(`tabs.${tb}`), count: tabCounts[tb] })}
             </button>
           ))}
         </div>
@@ -164,7 +168,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
           <input
             type="text"
             className="search-input search-input-bare"
-            placeholder="Search offers & combos…"
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(e) => updateFilter(() => setSearch(e.target.value))}
           />
@@ -174,10 +178,10 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
             type="button"
             className={`btn btn-ghost filter-btn ${status !== 'all' ? 'filter-btn-on' : ''}`}
             onClick={() => setFilterOpen((v) => !v)}
-            aria-label="Filter"
+            aria-label={t('filter')}
           >
             <span className="filter-btn-text">
-              {status === 'all' ? 'Filter' : status === 'active' ? 'Active only' : 'Inactive only'} ⌄
+              {status === 'all' ? t('filter') : status === 'active' ? t('activeOnly') : t('inactiveOnly')} ⌄
             </span>
             <span className="filter-btn-icon">
               <IconFilter />
@@ -195,7 +199,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                     setFilterOpen(false);
                   }}
                 >
-                  {s === 'all' ? 'All statuses' : s === 'active' ? 'Active only' : 'Inactive only'}
+                  {s === 'all' ? t('allStatuses') : s === 'active' ? t('activeOnly') : t('inactiveOnly')}
                 </button>
               ))}
             </div>
@@ -204,7 +208,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
       </div>
 
       {filtered.length === 0 ? (
-        <div className="empty">{offers.length === 0 ? 'No offers yet — create one above.' : 'No offers match your search.'}</div>
+        <div className="empty">{offers.length === 0 ? t('emptyNone') : t('emptySearch')}</div>
       ) : (
         <>
           <div className="card-body offers-list" ref={listRef}>
@@ -229,7 +233,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                     <div className="offer-main">
                       <div className="offer-title-row">
                         <span className="offer-title">{offer.title}</span>
-                        <span className={`chip ${isCombo ? 'chip-combo' : 'chip-offer'}`}>{isCombo ? 'Combo' : 'Offer'}</span>
+                        <span className={`chip ${isCombo ? 'chip-combo' : 'chip-offer'}`}>{isCombo ? t('combo') : t('offer')}</span>
                       </div>
                       {offer.serviceIds.length > 0 && <div className="muted offer-subtitle">{serviceNames(offer.serviceIds)}</div>}
                       {offer.description && <div className="muted offer-subtitle offer-desc">{offer.description}</div>}
@@ -238,9 +242,9 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                           <span className="offer-price">{formatMoney(offer.comboPriceMinor)}</span>
                           {savingsMinor > 0 && (
                             <>
-                              <span className="chip chip-discount">{savingsPct}% OFF</span>
+                              <span className="chip chip-discount">{t('pctOff', { pct: savingsPct })}</span>
                               <span className="offer-strike">{formatMoney(String(originalMinor))}</span>
-                              <span className="muted offer-savings">Save {formatMoney(String(savingsMinor))}</span>
+                              <span className="muted offer-savings">{t('save', { amount: formatMoney(String(savingsMinor)) })}</span>
                             </>
                           )}
                         </div>
@@ -250,7 +254,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
 
                   <div className="offer-row-foot">
                     <div className="offer-info-col">
-                      <div className="offer-info-item">📅 {visibilitySummary(offer)}</div>
+                      <div className="offer-info-item">📅 {visibilitySummary(offer, t, locale)}</div>
                     </div>
 
                     {/* A sibling of the stats rather than inside them: on desktop
@@ -261,7 +265,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                       className="switch offer-toggle"
                       onClick={(e) => e.stopPropagation()}
                       onDoubleClick={(e) => e.stopPropagation()}
-                      title={offer.active ? 'Turn off' : 'Turn on'}
+                      title={offer.active ? t('turnOff') : t('turnOn')}
                     >
                       <input
                         type="checkbox"
@@ -273,18 +277,18 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                         <span className="switch-thumb" />
                       </span>
                       <span className={offer.active ? 'switch-label-on' : 'switch-label-off'}>
-                        {offer.active ? 'Active' : 'Inactive'}
+                        {offer.active ? t('active') : t('inactive')}
                       </span>
                     </label>
 
                     <div className="offer-stats-col">
                       <div className="offer-stat">
                         <span className="offer-stat-value">{offer.bookingsCount}</span>
-                        <span className="offer-stat-label">Bookings</span>
+                        <span className="offer-stat-label">{t('bookings')}</span>
                       </div>
                       <div className="offer-stat">
                         <span className="offer-stat-value">{formatMoney(offer.revenueMinor)}</span>
-                        <span className="offer-stat-label">Revenue</span>
+                        <span className="offer-stat-label">{t('revenue')}</span>
                       </div>
                     </div>
 
@@ -294,17 +298,17 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                         className="kebab-btn"
                         disabled={busyId === offer.id}
                         onClick={() => setOpenMenuId(openMenuId === offer.id ? null : offer.id)}
-                        aria-label="Offer actions"
+                        aria-label={t('actionsAria')}
                       >
                         ⋮
                       </button>
                       {openMenuId === offer.id && (
                         <div className="dropdown-panel dropdown-panel-sm dropdown-panel-right" onMouseLeave={() => setOpenMenuId(null)}>
                           <Link href={`/offers/${offer.id}/edit`} className="dropdown-item dropdown-item-plain">
-                            Edit
+                            {t('edit')}
                           </Link>
                           <button type="button" className="dropdown-item dropdown-item-plain dropdown-item-danger" onClick={() => removeOffer(offer)}>
-                            Delete
+                            {t('delete')}
                           </button>
                         </div>
                       )}
@@ -324,7 +328,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
             hasNext={hasNext}
             onPrev={goPrev}
             onNext={goNext}
-            noun="offers"
+            noun={tn('offers')}
           />
         </>
       )}

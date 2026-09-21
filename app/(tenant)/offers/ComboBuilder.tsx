@@ -1,9 +1,11 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatMoney, type Offer, type OfferInput, type Service } from '../lib/api';
 import { servicePhotoUrl } from '../lib/service-photos';
+import { weekdayNames } from '../lib/weekday-names';
 
 /**
  * Build → Rules → Preview wizard for creating/editing a combo offer. One
@@ -11,17 +13,11 @@ import { servicePhotoUrl } from '../lib/service-photos';
  * edit) — the API payload shape is identical either way.
  */
 
-const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-function formatDuration(totalMin: number): string {
-  if (totalMin < 60) return `${totalMin} min`;
-  const hours = totalMin / 60;
-  return `~${hours % 1 === 0 ? hours : hours.toFixed(1)} hrs`;
-}
+/** Each step is named in `offers.builder.steps`; `nav` is the label on the button that leads to the NEXT step. */
 const STEPS = [
-  { key: 1, title: 'Build', sub: 'Add services & pricing', navLabel: 'Rules & availability' },
-  { key: 2, title: 'Rules', sub: 'Set visibility & limits', navLabel: 'Preview' },
-  { key: 3, title: 'Preview', sub: 'See how customers see it', navLabel: null },
+  { key: 1, name: 'build', hasNav: true },
+  { key: 2, name: 'rules', hasNav: true },
+  { key: 3, name: 'preview', hasNav: false },
 ] as const;
 
 const TITLE_MAX = 60;
@@ -65,12 +61,19 @@ function PreviewCard({
   /** Only the Step 3 preview shows the 🟢/⚪ visible-right-now indicator — the sidebar preview stays neutral since it's always on screen, not something the admin is checking "right now" for. */
   showLiveIndicator?: { isVisibleNow: boolean };
 }) {
+  const t = useTranslations('offers.builder');
+  const tm = useTranslations('services');
   const totalMin = services.reduce((sum, s) => sum + s.durationMin, 0);
+  const formatDuration = (min: number): string => {
+    if (min < 60) return tm('minutes', { count: min });
+    const hours = min / 60;
+    return t('card.hours', { hours: hours % 1 === 0 ? hours : hours.toFixed(1) });
+  };
   return (
     <div className="preview-card">
       <div className="preview-body">
-        <span className="preview-badge">COMBO</span>
-        <div className="preview-title">{title || 'Untitled combo'}</div>
+        <span className="preview-badge">{t('card.badge')}</span>
+        <div className="preview-title">{title || t('untitled')}</div>
         <div className="preview-services">{services.map((s) => s.name).join(' + ')}</div>
         {description && <div className="preview-tagline">{description}</div>}
 
@@ -94,11 +97,11 @@ function PreviewCard({
         <div className="preview-price-row">
           {comboPriceMinor != null && <span className="preview-price-original">{formatMoney(String(originalPriceMinor))}</span>}
           <span className="preview-price-combo">{formatMoney(String(comboPriceMinor ?? originalPriceMinor))}</span>
-          {savingsPct != null && savingsPct > 0 && <span className="chip chip-confirmed">{savingsPct}% OFF</span>}
+          {savingsPct != null && savingsPct > 0 && <span className="chip chip-confirmed">{t('card.pctOff', { pct: savingsPct })}</span>}
         </div>
         {savingsMinor != null && savingsMinor > 0 && (
           <div className="savings-banner" style={{ marginTop: 10 }}>
-            You save {formatMoney(String(savingsMinor))}
+            {t('card.youSave', { amount: formatMoney(String(savingsMinor)) })}
           </div>
         )}
 
@@ -110,11 +113,11 @@ function PreviewCard({
           </div>
           {totalMin > 0 && (
             <div className="preview-fact">
-              <span>⏱️</span>Takes {formatDuration(totalMin)}
+              <span>⏱️</span>{t('card.takes', { duration: formatDuration(totalMin) })}
             </div>
           )}
           <div className="preview-fact">
-            <span>👤</span>By any available staff
+            <span>👤</span>{t('card.byAnyStaff')}
           </div>
         </div>
       </div>
@@ -123,6 +126,11 @@ function PreviewCard({
 }
 
 export function ComboBuilder({ services, initialOffer }: { services: Service[]; initialOffer?: Offer }) {
+  const t = useTranslations('offers.builder');
+  const tl = useTranslations('offers.list');
+  const tm = useTranslations('services');
+  const locale = useLocale();
+  const dayNames = weekdayNames(locale).short;
   const router = useRouter();
   const mode = initialOffer ? 'edit' : 'create';
 
@@ -236,15 +244,15 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
   };
 
   const visibilitySummary = (): string => {
-    if (visibilityMode === 'always') return 'Always visible to customers';
+    if (visibilityMode === 'always') return t('summary.always');
     if (visibilityMode === 'weekdays') {
-      if (visibleWeekdays.length === 0) return 'Pick at least one day';
-      return `Only on: ${visibleWeekdays.map((d) => WEEKDAY_NAMES[d]).join(', ')}`;
+      if (visibleWeekdays.length === 0) return t('summary.pickDay');
+      return tl('onlyOn', { days: visibleWeekdays.map((d) => dayNames[d]).join(', ') });
     }
-    if (!visibleFromInput && !visibleUntilInput) return 'Pick a start and/or end date';
-    const from = visibleFromInput ? new Date(visibleFromInput).toLocaleString('en-IN') : 'now';
-    const until = visibleUntilInput ? new Date(visibleUntilInput).toLocaleString('en-IN') : 'no end date';
-    return `From ${from} to ${until}`;
+    if (!visibleFromInput && !visibleUntilInput) return t('summary.pickWindow');
+    const from = visibleFromInput ? new Date(visibleFromInput).toLocaleString(`${locale}-IN`) : tl('now');
+    const until = visibleUntilInput ? new Date(visibleUntilInput).toLocaleString(`${locale}-IN`) : tl('noEnd');
+    return t('summary.range', { from, until });
   };
 
   /** Step tabs: only lets you jump back to an already-visited step — never ahead. */
@@ -255,8 +263,8 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
   /** Mandatory-field checks for the Build step — each error renders inline next to its own field, not as a top banner. */
   const validateBuildStep = (): boolean => {
     const errs: typeof fieldErrors = {};
-    if (!title.trim()) errs.title = 'Combo name is required';
-    if (selectedIds.length === 0) errs.services = 'Add at least one service';
+    if (!title.trim()) errs.title = t('errors.nameRequired');
+    if (selectedIds.length === 0) errs.services = t('errors.addOne');
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -296,7 +304,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
       router.push('/offers');
       router.refresh();
     } catch {
-      setError('Could not save — check the server is running.');
+      setError(t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -309,7 +317,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
    */
   const deleteCombo = async () => {
     if (!initialOffer) return;
-    if (!window.confirm(`Delete "${initialOffer.title}"? This can't be undone.`)) return;
+    if (!window.confirm(tl('deleteConfirm', { title: initialOffer.title }))) return;
     setBusy(true);
     setError(null);
     try {
@@ -317,7 +325,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
       router.push('/offers');
       router.refresh();
     } catch {
-      setError('Could not delete — check the server is running.');
+      setError(t('errors.deleteFailed'));
       setBusy(false);
     }
   };
@@ -327,33 +335,33 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
       <div className="wizard-head">
         <div className="wizard-title">
           <button className="btn btn-ghost" onClick={() => router.push('/offers')}>
-            ← Back
+            {t('back')}
           </button>
           <div>
-            <h1>{mode === 'create' ? 'Create a new combo' : `Edit ${initialOffer!.title}`}</h1>
-            <p className="wizard-subtitle">Build a combo of services and give your customers a special price.</p>
+            <h1>{mode === 'create' ? t('createTitle') : t('editTitle', { title: initialOffer!.title })}</h1>
+            <p className="wizard-subtitle">{t('subtitle')}</p>
           </div>
         </div>
         <div className="wizard-actions">
           {mode === 'edit' && (
             <button className="btn btn-danger" disabled={busy} onClick={deleteCombo}>
-              Delete
+              {t('delete')}
             </button>
           )}
           <button className="btn btn-ghost" disabled={busy} onClick={() => save(false)}>
-            <span className="wizard-nav-label-full">Save as draft</span>
-            <span className="wizard-nav-label-short">Draft</span>
+            <span className="wizard-nav-label-full">{t('saveDraft')}</span>
+            <span className="wizard-nav-label-short">{t('draftShort')}</span>
           </button>
           {step < 3 ? (
             <button className="btn" onClick={goNext}>
               <span className="wizard-nav-label-full">
-                Next: {STEPS[step - 1]!.navLabel} →
+                {t('nextFull', { label: t(`steps.${STEPS[step - 1]!.name}.nav` as 'steps.build.nav') })}
               </span>
-              <span className="wizard-nav-label-short">Next →</span>
+              <span className="wizard-nav-label-short">{t('nextShort')}</span>
             </button>
           ) : (
             <button className="btn" disabled={busy || !title.trim()} onClick={() => save(true)}>
-              {busy ? 'Saving…' : 'Publish combo'}
+              {busy ? t('saving') : t('publish')}
             </button>
           )}
         </div>
@@ -372,8 +380,8 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
             >
               <span className="wizard-step-num">{s.key}</span>
               <span>
-                <div className="wizard-step-title">{s.title}</div>
-                <div className="wizard-step-sub">{s.sub}</div>
+                <div className="wizard-step-title">{t(`steps.${s.name}.title`)}</div>
+                <div className="wizard-step-sub">{t(`steps.${s.name}.sub`)}</div>
               </span>
             </button>
           ))}
@@ -382,11 +390,11 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
         <div className="wizard-tip wizard-tip-rail">
           <span>💡</span>
           <div>
-            <strong>Tip</strong>
+            <strong>{t('tip')}</strong>
             {/* GRW-165 — future tense, deliberately. Nothing sends or receives a
                 WhatsApp message yet, and a builder that says otherwise is
                 selling the owner a feature they have not got. */}
-            <div>Customers will be able to book this combo from your WhatsApp offers menu, once WhatsApp goes live for you.</div>
+            <div>{t('tipBody')}</div>
           </div>
         </div>
       </div>
@@ -396,11 +404,11 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
           <div className="card-body" style={{ paddingTop: 18 }}>
             {step === 1 && (
               <>
-                <div className="wizard-section-title">1. Combo details</div>
+                <div className="wizard-section-title">{t('comboDetails')}</div>
                 <div className="grid-2">
                   <div className="field">
                     <label>
-                      <span>Combo name *</span>
+                      <span>{t('comboName')}</span>
                       <span className="field-counter">
                         {title.length}/{TITLE_MAX}
                       </span>
@@ -413,7 +421,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                         setTitle(e.target.value);
                         if (fieldErrors.title && e.target.value.trim()) setFieldErrors((er) => ({ ...er, title: undefined }));
                       }}
-                      placeholder="e.g. Weekend Glow Package"
+                      placeholder={t('namePlaceholder')}
                       className={fieldErrors.title ? 'field-invalid' : undefined}
                       style={{ width: '100%' }}
                     />
@@ -421,7 +429,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                   </div>
                   <div className="field">
                     <label>
-                      <span>Tagline (optional)</span>
+                      <span>{t('tagline')}</span>
                       <span className="field-counter">
                         {description.length}/{TAGLINE_MAX}
                       </span>
@@ -431,24 +439,24 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                       value={description}
                       maxLength={TAGLINE_MAX}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="e.g. Pamper yourself this weekend"
+                      placeholder={t('taglinePlaceholder')}
                       style={{ width: '100%' }}
                     />
                   </div>
                 </div>
 
                 <div className="wizard-section-title" style={{ marginTop: 22 }}>
-                  2. Add services *
+                  {t('addServices')}
                 </div>
                 <p className="muted" style={{ marginTop: -8, marginBottom: 12, fontSize: 13.5 }}>
-                  Search and add the services you want to include in this combo.
+                  {t('addServicesHint')}
                 </p>
                 <div className="picker-search" style={{ marginTop: 8 }}>
                   <input
                     type="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder={`Search ${services.length} services…`}
+                    placeholder={t('searchServices', { count: services.length })}
                     className={fieldErrors.services ? 'field-invalid' : undefined}
                     style={{ width: '100%', paddingRight: search ? 36 : undefined }}
                   />
@@ -457,7 +465,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                       type="button"
                       className="search-clear-btn"
                       onClick={() => setSearch('')}
-                      aria-label="Clear search"
+                      aria-label={t('clearSearch')}
                     >
                       ✕
                     </button>
@@ -468,7 +476,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                   <div className="picker-results">
                     {filteredServices.length === 0 ? (
                       <div className="picker-row" style={{ cursor: 'default' }}>
-                        <span className="muted">No matching services</span>
+                        <span className="muted">{t('noMatch')}</span>
                       </div>
                     ) : (
                       filteredServices.slice(0, 20).map((s) => (
@@ -477,7 +485,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                           <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
                           <div style={{ flex: 1 }}>
                             <div className="picker-row-name">{s.name}</div>
-                            <div className="picker-row-meta">{s.durationMin} min</div>
+                            <div className="picker-row-meta">{tm('minutes', { count: s.durationMin })}</div>
                           </div>
                           <span className="picker-row-price">{formatMoney(s.priceMinor)}</span>
                         </div>
@@ -488,18 +496,18 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
 
                 <div className="picked-list">
                   {selectedServices.length === 0 ? (
-                    <div className="empty">Search above and tap a service to add it.</div>
+                    <div className="empty">{t('pickHint')}</div>
                   ) : (
                     selectedServices.map((s, i) => (
                       <div key={s.id} className="picked-row">
                         <div className="picked-row-order">
-                          <button disabled={i === 0} onClick={() => moveService(i, -1)} aria-label="Move up">
+                          <button disabled={i === 0} onClick={() => moveService(i, -1)} aria-label={t('moveUp')}>
                             ▲
                           </button>
                           <button
                             disabled={i === selectedServices.length - 1}
                             onClick={() => moveService(i, 1)}
-                            aria-label="Move down"
+                            aria-label={t('moveDown')}
                           >
                             ▼
                           </button>
@@ -508,7 +516,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                         <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
                         <div className="picked-row-main">
                           <div className="picker-row-name">{s.name}</div>
-                          <div className="picker-row-meta">{s.durationMin} min</div>
+                          <div className="picker-row-meta">{tm('minutes', { count: s.durationMin })}</div>
                         </div>
                         <span className="picked-row-price">{formatMoney(s.priceMinor)}</span>
                         <button className="btn-ghost" style={{ padding: '4px 8px' }} onClick={() => removeService(s.id)}>
@@ -520,21 +528,21 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                 </div>
 
                 <div className="wizard-section-title" style={{ marginTop: 22 }}>
-                  3. Pricing
+                  {t('pricing')}
                 </div>
                 <div className="price-panel">
                   <div className="price-panel-cell">
-                    <label>Original price</label>
+                    <label>{t('original')}</label>
                     <div className="price-panel-value">{formatMoney(String(originalPriceMinor))}</div>
                   </div>
                   <div className="price-panel-cell">
-                    <label>Combo price</label>
+                    <label>{t('comboPrice')}</label>
                     <div className="price-mode-toggle">
                       <button className={priceMode === 'flat' ? 'active' : ''} onClick={() => switchPriceMode('flat')}>
-                        Flat ₹
+                        {t('flat')}
                       </button>
                       <button className={priceMode === 'percent' ? 'active' : ''} onClick={() => switchPriceMode('percent')}>
-                        % off
+                        {t('percent')}
                       </button>
                     </div>
                     {priceMode === 'flat' ? (
@@ -559,7 +567,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                     )}
                   </div>
                   <div className="price-panel-cell">
-                    <label>You save</label>
+                    <label>{t('youSave')}</label>
                     <div className="price-panel-value" style={{ color: 'var(--accent-deep)' }}>
                       {savingsMinor != null && savingsMinor >= 0
                         ? `${formatMoney(String(savingsMinor))} (${savingsPct}%)`
@@ -569,7 +577,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                 </div>
                 {comboPriceMinor != null && (
                   <div className="savings-banner">
-                    Customers pay {formatMoney(String(comboPriceMinor))} instead of {formatMoney(String(originalPriceMinor))}
+                    {t('customersPay', { combo: formatMoney(String(comboPriceMinor)), original: formatMoney(String(originalPriceMinor)) })}
                   </div>
                 )}
               </>
@@ -578,31 +586,25 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
             {step === 2 && (
               <>
                 <p className="muted" style={{ marginTop: 0 }}>
-                  Control which days this combo is offered — useful for weekend specials or a one-day flash deal.
+                  {t('rulesIntro')}
                 </p>
-                {(
-                  [
-                    { key: 'always' as const, title: 'Always visible', sub: 'Shown to customers every day' },
-                    { key: 'weekdays' as const, title: 'Only on selected weekdays', sub: 'e.g. weekends only' },
-                    { key: 'window' as const, title: 'Only within a date window', sub: 'e.g. this Saturday, or the next 24 hours' },
-                  ] as const
-                ).map((opt) => (
-                  <div key={opt.key}>
+                {(['always', 'weekdays', 'window'] as const).map((opt) => (
+                  <div key={opt}>
                     <label className="rules-option">
                       <input
                         type="radio"
                         name="visibility"
-                        checked={visibilityMode === opt.key}
-                        onChange={() => setVisibilityMode(opt.key)}
+                        checked={visibilityMode === opt}
+                        onChange={() => setVisibilityMode(opt)}
                       />
                       <div className="rules-option-body">
-                        <div className="rules-option-title">{opt.title}</div>
-                        <div className="rules-option-sub">{opt.sub}</div>
+                        <div className="rules-option-title">{t(`visibility.${opt}.title`)}</div>
+                        <div className="rules-option-sub">{t(`visibility.${opt}.sub`)}</div>
                       </div>
                     </label>
-                    {opt.key === 'weekdays' && visibilityMode === 'weekdays' && (
+                    {opt === 'weekdays' && visibilityMode === 'weekdays' && (
                       <div className="weekday-picker">
-                        {WEEKDAY_NAMES.map((name, i) => (
+                        {dayNames.map((name, i) => (
                           <button
                             key={name}
                             className={`weekday-chip ${visibleWeekdays.includes(i) ? 'active' : ''}`}
@@ -613,10 +615,10 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                         ))}
                       </div>
                     )}
-                    {opt.key === 'window' && visibilityMode === 'window' && (
+                    {opt === 'window' && visibilityMode === 'window' && (
                       <div className="date-window">
                         <div className="field">
-                          <label>From (optional)</label>
+                          <label>{t('from')}</label>
                           <input
                             type="datetime-local"
                             value={visibleFromInput}
@@ -624,7 +626,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                           />
                         </div>
                         <div className="field">
-                          <label>Until (optional)</label>
+                          <label>{t('until')}</label>
                           <input
                             type="datetime-local"
                             value={visibleUntilInput}
@@ -641,21 +643,19 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
             {step === 3 && (
               <>
                 <p className="muted" style={{ marginTop: 0 }}>
-                  Check the summary on the right, then publish — or go back if anything needs changing. WhatsApp itself
-                  shows this as plain text (no photos or styling — see the details in Try WhatsApp), so this preview is
-                  a dashboard-side summary, not a screenshot of the real chat.
+                  {t('previewIntro')}
                 </p>
                 {selectedServices.length === 0 ? (
-                  <div className="empty">Add services in the Build step before publishing.</div>
+                  <div className="empty">{t('previewEmpty')}</div>
                 ) : (
                   <div className="preview-facts" style={{ borderTop: 'none', paddingTop: 0, marginTop: 4 }}>
                     <div className="preview-fact">
                       <span>🎁</span>
-                      {title || 'Untitled combo'}
+                      {title || t('untitled')}
                     </div>
                     <div className="preview-fact">
                       <span>🧾</span>
-                      {selectedServices.length} service{selectedServices.length === 1 ? '' : 's'} ·{' '}
+                      {t('servicesCount', { count: selectedServices.length })} ·{' '}
                       {formatMoney(String(comboPriceMinor ?? originalPriceMinor))}
                     </div>
                     <div className="preview-fact">
@@ -672,7 +672,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
             {step > 1 && (
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={goBack}>
-                  ← Back
+                  {t('back')}
                 </button>
               </div>
             )}
@@ -682,18 +682,18 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
         <div className="wizard-sidebar">
         <div className="card">
           <div className="card-head">
-            <span>Preview</span>
+            <span>{t('sidebarPreview')}</span>
             <div className="device-toggle">
               <button
                 className={previewDevice === 'mobile' ? 'active' : ''}
-                aria-label="Preview as mobile"
+                aria-label={t('mobileAria')}
                 onClick={() => setPreviewDevice('mobile')}
               >
                 📱
               </button>
               <button
                 className={previewDevice === 'desktop' ? 'active' : ''}
-                aria-label="Preview as desktop"
+                aria-label={t('desktopAria')}
                 onClick={() => setPreviewDevice('desktop')}
               >
                 🖥️
@@ -702,7 +702,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
           </div>
           <div className="card-body">
             {selectedServices.length === 0 ? (
-              <div className="empty">Add services to see the preview.</div>
+              <div className="empty">{t('sidebarEmpty')}</div>
             ) : (
               <div className={`device-frame device-frame-${previewDevice}`}>
                 <PreviewCard
@@ -715,7 +715,7 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                   savingsPct={savingsPct}
                   visibilitySummary={visibilitySummary()}
                 />
-                <div className="preview-caption">📲 Will be bookable from WhatsApp</div>
+                <div className="preview-caption">{t('caption')}</div>
               </div>
             )}
           </div>

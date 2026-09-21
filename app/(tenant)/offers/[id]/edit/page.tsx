@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { screenTitle } from '../../../lib/page-title';
 import { notFound } from 'next/navigation';
 import { api, ApiError } from '../../../lib/api';
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function EditComboPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const t = await getTranslations('offers');
 
   let services, offer;
   try {
@@ -18,7 +20,7 @@ export default async function EditComboPage({ params }: { params: Promise<{ id: 
     if (err instanceof ApiError && err.status === 404) notFound();
     return (
       <>
-        <PageHeader title="Edit combo" />
+        <PageHeader title={t('editComboTitle')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(err)} />
         </div>

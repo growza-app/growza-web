@@ -55,13 +55,7 @@ export const copy = {
     tryIsADemo: 'This is a practice run, just for you. Your customers cannot book on WhatsApp yet.',
   },
 
-  offers: {
-    /** Jira GRW-158 · GRW-165 — the same page, said honestly in each state. */
-    subtitleLive:
-      "Create offers and combos that customers see on your dashboard and in WhatsApp's Offers menu. Customers can book combos directly from WhatsApp.",
-    subtitleCrmOnly:
-      'Create offers and combos to sell more of what you already do. Add them to a booking at the desk today — customers will be able to book them on WhatsApp too, once WhatsApp goes live for you.',
-  },
+  // The Offers page subtitles live in messages (offers.subtitleLive / offers.subtitleCrmOnly).
 
   /** Jira GRW-340 — the phone's branch tabs, on the screens that are not translated yet (Attendance). */
   branchTabs: { all: 'All', label: 'Branch' },

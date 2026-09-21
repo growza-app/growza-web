@@ -3,13 +3,14 @@ import { api } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { OffersList } from './OffersList';
 import { CreateOfferMenu } from './CreateOfferMenu';
-import { copy } from '../lib/copy';
+import { getTranslations } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 
 export const dynamic = 'force-dynamic';
 
 export default async function OffersPage() {
+  const t = await getTranslations('offers');
   let offers, services;
   /**
    * Jira GRW-158 · GRW-165 — this page's whole subtitle was a claim about
@@ -27,7 +28,7 @@ export default async function OffersPage() {
   } catch (error) {
     return (
       <>
-        <PageHeader title="Offers & Combos" />
+        <PageHeader title={t('title')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
@@ -38,8 +39,8 @@ export default async function OffersPage() {
   return (
     <>
       <PageHeader
-        title="Offers & Combos"
-        subtitle={whatsappLive ? copy.offers.subtitleLive : copy.offers.subtitleCrmOnly}
+        title={t('title')}
+        subtitle={whatsappLive ? t('subtitleLive') : t('subtitleCrmOnly')}
         actions={<CreateOfferMenu />}
       />
       <div className="page-body page-fit">

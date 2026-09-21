@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
@@ -17,6 +18,7 @@ const OFFER_DESCRIPTION_MAX = 120;
  * through the wizard.
  */
 export function CreateOfferMenu() {
+  const t = useTranslations('offers.menu');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -35,7 +37,7 @@ export function CreateOfferMenu() {
     <div className="create-offer-menu" ref={menuRef}>
       <button type="button" className="btn" onClick={() => setOpen((v) => !v)}>
         {/* GRW-30 — a real icon, for the same reason as Clients'. */}
-        <IconPlus /> Create offer
+        <IconPlus /> {t('create')}
       </button>
       {open && (
         <div className="dropdown-panel">
@@ -49,8 +51,8 @@ export function CreateOfferMenu() {
           >
             <span className="dropdown-item-icon dropdown-item-icon-offer">🏷️</span>
             <span>
-              <span className="dropdown-item-title">Offer</span>
-              <span className="dropdown-item-desc">Discounts, special price or free service</span>
+              <span className="dropdown-item-title">{t('offerTitle')}</span>
+              <span className="dropdown-item-desc">{t('offerDesc')}</span>
             </span>
           </button>
           <button
@@ -63,8 +65,8 @@ export function CreateOfferMenu() {
           >
             <span className="dropdown-item-icon dropdown-item-icon-combo">🎁</span>
             <span>
-              <span className="dropdown-item-title">Combo</span>
-              <span className="dropdown-item-desc">Bundle services at a special price</span>
+              <span className="dropdown-item-title">{t('comboTitle')}</span>
+              <span className="dropdown-item-desc">{t('comboDesc')}</span>
             </span>
           </button>
         </div>
@@ -75,6 +77,7 @@ export function CreateOfferMenu() {
 }
 
 function CreateOfferModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('offers.modal');
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -84,7 +87,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
 
   const save = async () => {
     if (!title.trim()) {
-      setTitleError('Offer title is required');
+      setTitleError(t('titleRequired'));
       return;
     }
     setBusy(true);
@@ -94,7 +97,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
       router.refresh();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create the offer.');
+      setError(err instanceof Error ? err.message : t('createFailed'));
     } finally {
       setBusy(false);
     }
@@ -103,13 +106,13 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>New offer</h3>
+        <h3>{t('title')}</h3>
         <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>
-          Informational only — wording customers see, no linked services or price. For a bookable bundle, use Combo instead.
+          {t('note')}
         </p>
         <div className="field">
           <label>
-            <span>Offer title *</span>
+            <span>{t('titleLabel')}</span>
             <span className="field-counter">
               {title.length}/{OFFER_TITLE_MAX}
             </span>
@@ -119,7 +122,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
             value={title}
             maxLength={OFFER_TITLE_MAX}
             autoFocus
-            placeholder="e.g. 20% off Women's Hair Color"
+            placeholder={t('titlePlaceholder')}
             className={titleError ? 'field-invalid' : undefined}
             onChange={(e) => {
               setTitle(e.target.value);
@@ -130,7 +133,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="field">
           <label>
-            <span>Description (optional)</span>
+            <span>{t('descLabel')}</span>
             <span className="field-counter">
               {description.length}/{OFFER_DESCRIPTION_MAX}
             </span>
@@ -139,17 +142,17 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
             type="text"
             value={description}
             maxLength={OFFER_DESCRIPTION_MAX}
-            placeholder="e.g. This week only — mention this offer when you arrive."
+            placeholder={t('descPlaceholder')}
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
         {error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {t('cancel')}
           </button>
           <button type="button" className="btn" onClick={save} disabled={busy}>
-            {busy ? 'Creating…' : 'Create offer'}
+            {busy ? t('creating') : t('create')}
           </button>
         </div>
       </div>

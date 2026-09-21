@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
@@ -8,13 +9,14 @@ import { loadErrorKind } from '../../lib/load-error';
 export const dynamic = 'force-dynamic';
 
 export default async function NewComboPage() {
+  const t = await getTranslations('offers');
   let services;
   try {
     services = await api.services();
   } catch (error) {
     return (
       <>
-        <PageHeader title="Create a new combo" />
+        <PageHeader title={t('newComboTitle')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
