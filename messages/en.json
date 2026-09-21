@@ -401,5 +401,39 @@
       "startBeforeEnd": "Start time must be before end time",
       "saveFailed": "Could not save — check the server is running."
     }
+  },
+  "settingsBooking": {
+    "title": "Booking settings",
+    "slotLength": "Slot length",
+    "slotHint": "Bookable times are shown every {count, plural, one {# minute} other {# minutes}}.",
+    "slotPattern": "Slot pattern",
+    "fixedGrid": "Fixed grid",
+    "fixedGridSub": "Times always land on the slot length above — e.g. 9:00, 9:30, 10:00.",
+    "gapPacked": "Gap-packed",
+    "gapPackedSub": "Times fill the gaps between existing bookings as tightly as possible.",
+    "minNotice": "Minimum notice",
+    "noticeHint": "Customers must book at least {count, plural, one {# minute} other {# minutes}} ahead.",
+    "horizon": "Booking horizon",
+    "horizonHint": "Customers can book up to {count, plural, one {# day} other {# days}} ahead.",
+    "cutoff": "Cancellation cutoff",
+    "cutoffHint": "Customers can't cancel within {count, plural, one {# minute} other {# minutes}} of the start time.",
+    "closedBusiness": "Days you are closed",
+    "closedBranchNamed": "Days {name} is closed",
+    "closedBranchUnnamed": "Days this branch is closed",
+    "add": "Add",
+    "removeAria": "Open again on {day}",
+    "allBranchesChip": "{day} · all branches",
+    "allBranchesTitle": "Closed at every branch — change it under All branches",
+    "noClosed": "No closed days. Add a holiday and nobody can book that day.",
+    "closedNote": "Nobody can book on these days. Bookings already made are not cancelled.",
+    "staffSees": "Staff can see client name and number",
+    "staffSeesOn": "Your team sees who each booking is for, and can call them.",
+    "staffSeesOff": "Your team sees the booking, the service and the time — but not who it is for. You and your managers still see everything.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "errors": {
+      "saveFailed": "Could not save — check the server is running."
+    }
   }
 }
