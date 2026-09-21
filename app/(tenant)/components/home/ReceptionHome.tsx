@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { formatTime, type Appointment, type Provider, type QueueEntry } from '../../lib/api';
 import { clientNameLabel, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
@@ -42,17 +43,18 @@ export interface ReceptionHomeProps {
 
 type Tab = 'waiting' | 'later' | 'done';
 
-function hereNowStatus(t: HomeCopy, g: BookingGroup, now: Date, timezone: string) {
+function hereNowStatus(t: HomeCopy, g: BookingGroup, now: Date, timezone: string, minutesLabel: (n: number) => string) {
   const over = longerThanBooked(g, now);
   return {
     tone: over ? 'amber' : 'green',
     label: over ? t.longerThanBooked : t.status.inService,
-    sub: over ? `${t.started(formatTime(g.startAt, timezone))} · ${minutesBetween(g.startAt, now)} min` : t.started(formatTime(g.startAt, timezone)),
+    sub: over ? `${t.started(formatTime(g.startAt, timezone))} · ${minutesLabel(minutesBetween(g.startAt, now))}` : t.started(formatTime(g.startAt, timezone)),
   };
 }
 
 export function ReceptionHome(p: ReceptionHomeProps) {
   const t = homeCopy(p.lang, p.labels);
+  const tr = useTranslations('chrome.reception');
   const now = useMemo(() => new Date(p.nowISO), [p.nowISO]);
   /**
    * Record payment only now — Jira GRW-297 moved "Walk-in now" and "New
@@ -145,7 +147,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
               <ul className="hm-rows">
                 {hereNow.map((g) => {
                   const name = clientNameLabel(g);
-                  const st = hereNowStatus(t, g, now, p.timezone);
+                  const st = hereNowStatus(t, g, now, p.timezone, (n) => tr('minutes', { count: n }));
                   return (
                     <li key={g.key} className="hm-row">
                       <Avatar name={name} id={avatarKey(g)} />

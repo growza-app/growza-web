@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
@@ -50,6 +51,7 @@ export function BottomNav({
   /** Absent means no centre action (a stylist, or a screen where it would sit on a pinned Save). */
   onCentre?: () => void;
 }) {
+  const tc = useTranslations('chrome');
   const pathname = usePathname();
   const t = homeCopy(lang, labels);
   const navRef = useRef<HTMLElement>(null);
@@ -106,7 +108,7 @@ export function BottomNav({
   };
 
   return (
-    <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label="Main">
+    <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label={tc('main')}>
       {centre ? (
         <>
           {visible.slice(0, half).map(tab)}

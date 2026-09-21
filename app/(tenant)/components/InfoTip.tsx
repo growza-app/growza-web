@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 /**
@@ -24,6 +25,7 @@ const EDGE = 8;
 const GAP = 6;
 
 export function InfoTip({ label, children }: { label: string; children: string }) {
+  const tc = useTranslations('chrome');
   const [open, setOpen] = useState(false);
   const [place, setPlace] = useState<{ top: number; left: number; width: number } | null>(null);
   const id = useId();
@@ -100,7 +102,7 @@ export function InfoTip({ label, children }: { label: string; children: string }
         ref={btn}
         type="button"
         className="rp-tip-btn"
-        aria-label={`What does ${label} count?`}
+        aria-label={tc('infoTip', { label })}
         aria-expanded={open}
         aria-describedby={open ? id : undefined}
         onClick={(e) => {

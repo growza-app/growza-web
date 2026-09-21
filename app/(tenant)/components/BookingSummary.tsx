@@ -1,6 +1,8 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useRef } from 'react';
+import { pickNoun } from '../lib/nouns';
 
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
@@ -10,7 +12,7 @@ import { IconCheck, IconPhone } from './icons';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
 
-const PAYMENT_LABELS: Record<string, string> = { cash: 'Cash', card: 'Card', upi: 'UPI', other: 'Other' };
+const PAYMENT_MODE_KEYS = ['cash', 'card', 'upi', 'other'] as const;
 
 /**
  * A finished booking is a receipt, not a to-do — so tapping one shows what
@@ -26,9 +28,13 @@ export function BookingSummary({
   timezone: string;
   onClose: () => void;
 }) {
+  const t = useTranslations('chrome.summary');
+  const tc = useTranslations('chrome');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
-  const providerWord = useLabel('provider', 'Staff member');
+  const providerWord = pickNoun(locale, useLabel('provider', 'Staff member'), tn('staff'));
   // Jira GRW-314 — what the customer actually paid, less anything cancelled at the till, with the
   // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
   const { totalMinor: totalPaid, savingsMinor: savings } = bookingBill(booking.appointments);
@@ -40,7 +46,7 @@ export function BookingSummary({
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={`${booking.customerName ?? 'Booking'} summary`} ref={dialogRef}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={t('aria', { name: booking.customerName ?? t('fallbackName') })} ref={dialogRef}>
         <div className="sheet-grab" />
 
         <div className="summary-head">
@@ -55,7 +61,7 @@ export function BookingSummary({
               <a
                 className="call"
                 href={`tel:${dialable(booking.customerPhone ?? '')}`}
-                aria-label="Call"
+                aria-label={tc('call')}
                 hidden={!booking.customerPhone}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -63,7 +69,7 @@ export function BookingSummary({
               </a>
             </div>
             <div className="summary-sub">
-              Finished · {dateLine} · {formatTime(booking.startAt, timezone)} · {formatDuration(booking.totalMin)}
+              {t('finished')} · {dateLine} · {formatTime(booking.startAt, timezone)} · {formatDuration(booking.totalMin)}
             </div>
             {booking.offerTitle && (
               <div className="summary-combo">
@@ -73,16 +79,16 @@ export function BookingSummary({
           </div>
         </div>
 
-        <div className="summary-section-label">Services</div>
+        <div className="summary-section-label">{t('services')}</div>
         {booking.appointments.map((a) => (
           <div className="summary-row" key={a.id}>
             <span className="summary-avatar">{a.serviceName.slice(0, 1).toUpperCase()}</span>
             <div className="summary-info">
               <div className="summary-service">{a.serviceName}</div>
-              <div className="summary-stylist">{a.providerName ?? `No ${providerWord.toLowerCase()}`}</div>
+              <div className="summary-stylist">{a.providerName ?? t('noStaff', { label: providerWord.toLowerCase() })}</div>
             </div>
             {/* Jira GRW-314 — a service cancelled at the till is listed, but is not on the bill. */}
-            <span className="summary-price">{a.status === 'cancelled' ? 'Cancelled' : formatMoney(paidOf(a))}</span>
+            <span className="summary-price">{a.status === 'cancelled' ? t('cancelled') : formatMoney(paidOf(a))}</span>
           </div>
         ))}
 
@@ -90,30 +96,30 @@ export function BookingSummary({
           {savings > 0 && (
             <>
               <div className="summary-line">
-                <span>Subtotal</span>
+                <span>{t('subtotal')}</span>
                 <span>{formatMoney(String(subtotal))}</span>
               </div>
               <div className="summary-line">
-                <span>🎁 {booking.offerTitle} combo</span>
+                <span>🎁 {t('combo', { title: booking.offerTitle ?? '' })}</span>
                 <span className="summary-discount">− {formatMoney(String(savings))}</span>
               </div>
             </>
           )}
           <div className="summary-line summary-line-total">
-            <span>Total paid</span>
+            <span>{t('total')}</span>
             <span className="summary-total-value">{formatMoney(String(totalPaid))}</span>
           </div>
           {paymentMode && (
             <div className="summary-line">
-              <span>Paid by</span>
-              <span>{PAYMENT_LABELS[paymentMode] ?? paymentMode}</span>
+              <span>{t('paidBy')}</span>
+              <span>{(PAYMENT_MODE_KEYS as readonly string[]).includes(paymentMode) ? tc(`pay.${paymentMode as (typeof PAYMENT_MODE_KEYS)[number]}`) : paymentMode}</span>
             </div>
           )}
         </div>
 
         <div className="modal-actions" style={{ marginTop: 18 }}>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Close
+            {tc('close')}
           </button>
         </div>
       </div>

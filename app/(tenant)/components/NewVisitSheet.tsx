@@ -22,6 +22,7 @@ function newAttemptKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -213,6 +214,8 @@ export function NewVisitSheet({
   const [mode, setMode] = useState<VisitMode>(forPayment ? 'now' : initialMode);
   const later = mode === 'later';
   const checkPhone = usePhoneProblem();
+  const tcr = useTranslations('chrome');
+  const tw = useTranslations('staffWizard');
   const router = useRouter();
   const clientNoun = useLabel('customer', 'Client');
   const providerNoun = useLabel('provider', 'Staff member');
@@ -1561,7 +1564,7 @@ export function NewVisitSheet({
                       }}
                       disabled={busy || linesLocked}
                     >
-                      {i === 0 ? `${b.name} (Main)` : b.name}
+                      {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
                     </button>
                   ))}
                 </div>
@@ -1703,7 +1706,7 @@ export function NewVisitSheet({
                         onClick={() => setPaymentMode(m.value)}
                         disabled={busy}
                       >
-                        {m.label}
+                        {tcr(`pay.${m.value}`)}
                       </button>
                     ))}
                   </div>
@@ -1846,7 +1849,7 @@ export function NewVisitSheet({
                 <div className="wi-done-title">
                   {copy.newVisit.paid(
                     formatMoney(String(stage.totalMinor)),
-                    PAYMENT_MODES.find((m) => m.value === stage.mode)?.label ?? stage.mode,
+                    (PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode),
                   )}
                 </div>
                 <div className="wi-done-sub">

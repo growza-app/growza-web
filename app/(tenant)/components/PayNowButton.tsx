@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
 
@@ -15,6 +16,7 @@ import { api, ApiError } from '../lib/api';
  * what settles the invoice. Nothing here should ever be read as "they paid".
  */
 export function PayNowButton({ restricted }: { restricted: boolean }) {
+  const t = useTranslations('chrome.payNow');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,10 +41,10 @@ export function PayNowButton({ restricted }: { restricted: boolean }) {
        */
       const message =
         err instanceof ApiError && err.status === 409
-          ? 'This looks settled already — refresh to see the latest.'
+          ? t('settled')
           : err instanceof ApiError
             ? err.message
-            : 'We could not start the payment just now. Please try again shortly.';
+            : t('failed');
       setError(message);
       setBusy(false);
     }
@@ -56,7 +58,7 @@ export function PayNowButton({ restricted }: { restricted: boolean }) {
         onClick={onClick}
         disabled={busy}
       >
-        {busy ? 'Opening…' : 'Pay now'}
+        {busy ? t('opening') : t('pay')}
       </button>
       {error ? (
         <span className="billing-banner-error" role="alert">

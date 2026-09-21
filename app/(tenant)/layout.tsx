@@ -79,12 +79,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: { template: `%s · ${business}`, default: business },
+    // i18n-ok: the page's meta description (search / install prompt), not read on a screen by an owner
     description: 'Manage bookings, staff, services, and offers.',
     manifest: '/manifest.json',
     icons: { icon: '/icon.png', apple: '/icons/apple-touch-icon.png' },
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',
+      // i18n-ok: brand name
       title: 'Growza',
     },
   };

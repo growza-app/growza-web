@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { api, type ActivityEvent } from '../lib/api';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
@@ -39,6 +39,8 @@ import {
 export function NotificationsClient() {
   const t = useTranslations('errors');
   const n = useTranslations('notifications');
+  const nf = useTranslations('notifications.feed');
+  const locale = useLocale();
   const router = useRouter();
   const [events, setEvents] = useState<ActivityEvent[] | null>(null);
   const [error, setError] = useState<LoadErrorKind | null>(null);
@@ -130,7 +132,7 @@ export function NotificationsClient() {
               visibleEvents.map((e) => {
                 const meta = TOPIC_META[e.topic];
                 const Icon = meta.icon;
-                const line = eventLine(e, timezone);
+                const line = eventLine(e, timezone, nf, locale);
                 const unread = Number(e.id) > lastSeenId;
                 return (
                   <div key={e.id} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>
@@ -140,7 +142,7 @@ export function NotificationsClient() {
                     <div className="notif-item-body">
                       <div className="notif-item-title">{line.title}</div>
                       <div className="notif-item-sub">
-                        {line.subtitle} · {timeAgo(e.createdAt, new Date())}
+                        {line.subtitle} · {timeAgo(e.createdAt, new Date(), nf)}
                       </div>
                     </div>
                     {unread && <span className="notif-dot" />}

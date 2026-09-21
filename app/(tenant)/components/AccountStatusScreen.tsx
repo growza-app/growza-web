@@ -10,7 +10,9 @@
  * in `platform/tenant-status.ts`, so the screen and the API cannot word the same
  * situation differently — the mistake commit `895e9ac` is this repo's record of.
  */
-export function AccountStatusScreen({
+import { getTranslations } from 'next-intl/server';
+
+export async function AccountStatusScreen({
   message,
   support,
 }: {
@@ -24,13 +26,14 @@ export function AccountStatusScreen({
    */
   support?: { phone?: string };
 }) {
+  const t = await getTranslations('chrome.status');
   return (
     <main className="account-status">
       <div className="account-status-card">
         <span className="account-status-mark" aria-hidden>
           !
         </span>
-        <h1>Growza</h1>
+        <h1>{/* i18n-ok: brand name */}Growza</h1>
         <p role="alert">{message}</p>
 
         {/* The buttons are the ACTION; the sentence above is the information.
@@ -40,7 +43,7 @@ export function AccountStatusScreen({
         {support?.phone ? (
           <div className="account-status-contacts">
             <a className="account-status-contact" href={`tel:${support.phone.replace(/\s+/g, '')}`}>
-              Call support
+              {t('callSupport')}
             </a>
           </div>
         ) : null}

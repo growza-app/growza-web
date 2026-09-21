@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { HeaderControls } from './HeaderControls';
 import { MenuButton } from './MenuButton';
-import { IconArrowLeft } from './icons';
+import { BackButton } from './BackButton';
 
 /**
  * Jira GRW-30 — the one header. Title and subtitle left; the page's primary
@@ -60,9 +60,7 @@ export function PageHeader({
         <div className="topbar-title">
           {onBack ? (
             <div className="topbar-title-row">
-              <button type="button" className="staff-icon-btn topbar-back" aria-label="Back" onClick={onBack}>
-                <IconArrowLeft />
-              </button>
+              <BackButton onBack={onBack} />
               <h1>{title}</h1>
             </div>
           ) : (

@@ -28,7 +28,25 @@
     "markAllRead": "Mark all read",
     "clearAll": "Clear all",
     "loading": "Loading…",
-    "empty": "Nothing yet — new bookings will show up here."
+    "empty": "Nothing yet — new bookings will show up here.",
+    "feed": {
+      "topics": {
+        "newBooking": "New booking",
+        "cancelled": "Cancelled",
+        "rescheduled": "Rescheduled",
+        "billing": "Billing"
+      },
+      "title": "{topic} — {services}",
+      "customer": "Customer",
+      "justNow": "just now",
+      "minutesAgo": "{count}m ago",
+      "hoursAgo": "{count}h ago",
+      "daysAgo": "{count}d ago",
+      "billUp": "Bill going up",
+      "billDown": "Bill going down",
+      "billSub": "From {day}: {next} a month (now {current}), for {count, plural, one {# branch} other {# branches}}."
+    },
+    "bellUnread": "Notifications, {count} unread"
   },
   "status": {
     "confirmed": "Confirmed",
@@ -219,7 +237,18 @@
     "empty": "Nothing left to save. Add a {service} or a {combo}, or put one back.",
     "removeThis": "Remove this {service}",
     "comboSaving": "{title} — {list} list, saves {saving}",
-    "combosSaving": "{combos} — saves {saving}"
+    "combosSaving": "{combos} — saves {saving}",
+    "markDone": "Mark as done",
+    "paymentMethod": "Payment method",
+    "totalAmount": "Total amount",
+    "add": "Add",
+    "saving": "Saving…",
+    "saveClose": "Save and close",
+    "saveFailed": "That did not save. Check the connection and try again.",
+    "noProviderSet": "No {label} set",
+    "changeProvider": "Change {label}",
+    "removeItem": "Remove {title}",
+    "priceOf": "{title} price"
   },
   "settingsHub": {
     "subtitle": "How your business and bookings work.",
@@ -1167,5 +1196,84 @@
       "footOther": "Marked from the daily register.",
       "tzFoot": "Times in local time · {tz}"
     }
+  },
+  "chrome": {
+    "unknown": "Unknown",
+    "close": "Close",
+    "closeMenu": "Close menu",
+    "menu": "Menu",
+    "main": "Main",
+    "back": "Back",
+    "call": "Call",
+    "infoTip": "What does {label} count?",
+    "pay": {
+      "cash": "Cash",
+      "card": "Card",
+      "upi": "UPI",
+      "other": "Other"
+    },
+    "account": {
+      "menuAndAccount": "Menu and account",
+      "closeAccountMenu": "Close account menu",
+      "roles": {
+        "owner": {
+          "name": "Owner",
+          "sub": "Full access to everything"
+        },
+        "manager": {
+          "name": "Manager",
+          "sub": "Full access to everything"
+        },
+        "receptionist": {
+          "name": "Receptionist",
+          "sub": "Bookings, clients, payments and attendance"
+        },
+        "staff": {
+          "name": "Stylist",
+          "sub": "Your own day, and your own attendance"
+        }
+      },
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "atLeast8": "At least 8 characters.",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "changed": "Password changed. Use the new one next time you sign in.",
+      "changeFailed": "Could not change your password."
+    },
+    "summary": {
+      "aria": "{name} summary",
+      "fallbackName": "Booking",
+      "finished": "Finished",
+      "services": "Services",
+      "noStaff": "No {label}",
+      "cancelled": "Cancelled",
+      "subtotal": "Subtotal",
+      "combo": "{title} combo",
+      "total": "Total paid",
+      "paidBy": "Paid by"
+    },
+    "daySchedule": {
+      "seeAll": "See all {count} bookings"
+    },
+    "sheet": {
+      "loadServicesFailed": "Could not load services. Check the connection and try again.",
+      "saveFailed": "That did not save. Check the connection and try again."
+    },
+    "payNow": {
+      "pay": "Pay now",
+      "opening": "Opening…",
+      "settled": "This looks settled already — refresh to see the latest.",
+      "failed": "We could not start the payment just now. Please try again shortly."
+    },
+    "status": {
+      "callSupport": "Call support"
+    },
+    "reception": {
+      "minutes": "{count} min"
+    },
+    "callName": "Call {name}",
+    "customerLower": "customer"
   }
 }

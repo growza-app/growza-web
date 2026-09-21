@@ -93,7 +93,7 @@ describe('the account menu holds everything about you', () => {
     expect(menu).toMatch(/acct-role/);
     expect(menu).toMatch(/session\.phone/);
     expect(menu).toMatch(/className="acct-lang"/);
-    expect(menu).toMatch(/Change password/);
+    expect(menu).toMatch(/t\('changePassword'\)/);
     expect(menu).toMatch(/<SignOutButton className="acct-item acct-signout">/);
   });
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react';
 import { DateTime } from 'luxon';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
@@ -57,22 +58,26 @@ export function countUnread(events: ReadonlyArray<{ id: string | number }>, last
   return events.filter((e) => Number(e.id) > floor).length;
 }
 
-export const TOPIC_META: Record<ActivityEvent['topic'], { label: string; icon: ComponentType; cls: string }> = {
-  'appointment.confirmed': { label: 'New booking', icon: IconCalendarPlus, cls: 'notif-new' },
-  'appointment.cancelled': { label: 'Cancelled', icon: IconClose, cls: 'notif-cancel' },
-  'appointment.rescheduled': { label: 'Rescheduled', icon: IconMoveTime, cls: 'notif-reschedule' },
+/** The words are `notifications.feed.topics.<key>`; only the icon and class live here. */
+export const TOPIC_META: Record<ActivityEvent['topic'], { key: 'newBooking' | 'cancelled' | 'rescheduled' | 'billing'; icon: ComponentType; cls: string }> = {
+  'appointment.confirmed': { key: 'newBooking', icon: IconCalendarPlus, cls: 'notif-new' },
+  'appointment.cancelled': { key: 'cancelled', icon: IconClose, cls: 'notif-cancel' },
+  'appointment.rescheduled': { key: 'rescheduled', icon: IconMoveTime, cls: 'notif-reschedule' },
   // Jira GRW-301 — replaces the old top-of-page BillChangeBanner, which had
   // no dismiss and no read state; this is a normal feed entry now.
-  'billing.change_pending': { label: 'Billing', icon: IconReceipt, cls: 'notif-billing' },
+  'billing.change_pending': { key: 'billing', icon: IconReceipt, cls: 'notif-billing' },
 };
 
-export function timeAgo(iso: string, now: Date): string {
+/** The `notifications.feed` messages, as a translator — these are plain helpers and cannot call hooks. */
+export type FeedT = ReturnType<typeof useTranslations<'notifications.feed'>>;
+
+export function timeAgo(iso: string, now: Date, t: FeedT): string {
   const diffMin = Math.round((now.getTime() - new Date(iso).getTime()) / 60000);
-  if (diffMin < 1) return 'just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 1) return t('justNow');
+  if (diffMin < 60) return t('minutesAgo', { count: diffMin });
   const diffH = Math.round(diffMin / 60);
-  if (diffH < 24) return `${diffH}h ago`;
-  return `${Math.round(diffH / 24)}d ago`;
+  if (diffH < 24) return t('hoursAgo', { count: diffH });
+  return t('daysAgo', { count: Math.round(diffH / 24) });
 }
 
 /**
@@ -80,34 +85,42 @@ export function timeAgo(iso: string, now: Date): string {
  * permanent banner, now one feed entry: "Bill going down · from 1 Oct:
  * ₹798/month (now ₹998), for 2 branches."
  */
-function billingLine(billing: NonNullable<ActivityEvent['billing']>): { title: string; subtitle: string } {
+function billingLine(billing: NonNullable<ActivityEvent['billing']>, t: FeedT, locale: string): { title: string; subtitle: string } {
   const [y, m, d] = billing.effectiveFrom.split('-').map(Number);
-  const day = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const day = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(`${locale}-IN`, { day: 'numeric', month: 'short', timeZone: 'UTC' });
   const up = billing.nextMonthlyMinor > billing.currentMonthlyMinor;
   return {
-    title: up ? 'Bill going up' : 'Bill going down',
-    subtitle: `From ${day}: ${formatMoney(String(billing.nextMonthlyMinor), billing.currency)} a month (now ${formatMoney(String(billing.currentMonthlyMinor), billing.currency)}), for ${billing.openBranches} ${billing.openBranches === 1 ? 'branch' : 'branches'}.`,
+    title: up ? t('billUp') : t('billDown'),
+    subtitle: t('billSub', {
+      day,
+      next: formatMoney(String(billing.nextMonthlyMinor), billing.currency),
+      current: formatMoney(String(billing.currentMonthlyMinor), billing.currency),
+      count: billing.openBranches,
+    }),
   };
 }
 
-export function eventLine(e: ActivityEvent, timezone: string): { title: string; subtitle: string } {
-  if (e.topic === 'billing.change_pending' && e.billing) return billingLine(e.billing);
+export function eventLine(e: ActivityEvent, timezone: string, t: FeedT, locale: string): { title: string; subtitle: string } {
+  if (e.topic === 'billing.change_pending' && e.billing) return billingLine(e.billing, t, locale);
   const services = (e.serviceNames ?? []).join(' + ');
-  const local = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).toFormat('ccc, h:mm a') : '';
+  const local = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('ccc, h:mm a') : '';
+  const customer = e.customerName ?? t('customer');
   return {
-    title: `${TOPIC_META[e.topic].label} — ${services}`,
-    subtitle: local ? `${e.customerName ?? 'Customer'} · ${local}` : (e.customerName ?? 'Customer'),
+    title: t('title', { topic: t(`topics.${TOPIC_META[e.topic].key}`), services }),
+    subtitle: local ? `${customer} · ${local}` : customer,
   };
 }
 
 function Toast({ event, timezone }: { event: ActivityEvent; timezone: string }) {
+  const t = useTranslations('notifications.feed');
+  const locale = useLocale();
   const Icon = TOPIC_META[event.topic].icon;
   return (
     <div className="notif-toast" role="status">
       <span className={`notif-icon ${TOPIC_META[event.topic].cls}`}>
         <Icon />
       </span>
-      <span className="notif-toast-text">{eventLine(event, timezone).title}</span>
+      <span className="notif-toast-text">{eventLine(event, timezone, t, locale).title}</span>
     </div>
   );
 }
@@ -120,6 +133,9 @@ function Toast({ event, timezone }: { event: ActivityEvent; timezone: string }) 
  * a page passing data down, so it can be dropped into any header.
  */
 export function NotificationBell() {
+  const t = useTranslations('notifications');
+  const tf = useTranslations('notifications.feed');
+  const locale = useLocale();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [open, setOpen] = useState(false);
   const [lastSeenId, setLastSeenId] = useState(0);
@@ -226,7 +242,7 @@ export function NotificationBell() {
       <button
         type="button"
         className="icon-btn notif-bell"
-        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+        aria-label={unreadCount > 0 ? t('bellUnread', { count: unreadCount }) : t('title')}
         onClick={toggleOpen}
       >
         <IconBell />
@@ -236,30 +252,30 @@ export function NotificationBell() {
       {open && (
         <>
           <div className="notif-scrim" onClick={() => setOpen(false)} />
-          <div className="notif-dropdown" role="dialog" aria-label="Notifications" ref={dropdownRef}>
+          <div className="notif-dropdown" role="dialog" aria-label={t('title')} ref={dropdownRef}>
             <div className="notif-dropdown-head">
-              <span>Notifications</span>
+              <span>{t('title')}</span>
               <div className="notif-dropdown-actions">
                 {unreadCount > 0 && (
                   <button type="button" className="notif-mark-read" onClick={markAllRead}>
-                    Mark all read
+                    {t('markAllRead')}
                   </button>
                 )}
                 {visibleEvents.length > 0 && (
                   <button type="button" className="notif-clear-all" onClick={clearAll}>
-                    Clear all
+                    {t('clearAll')}
                   </button>
                 )}
               </div>
             </div>
             {visibleEvents.length === 0 ? (
-              <div className="notif-empty">Nothing yet — new bookings will show up here.</div>
+              <div className="notif-empty">{t('empty')}</div>
             ) : (
               <div className="notif-list">
                 {visibleEvents.map((e) => {
                   const meta = TOPIC_META[e.topic];
                   const Icon = meta.icon;
-                  const line = eventLine(e, timezone);
+                  const line = eventLine(e, timezone, tf, locale);
                   const unread = Number(e.id) > lastSeenId;
                   return (
                     <div key={e.id} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>
@@ -269,7 +285,7 @@ export function NotificationBell() {
                       <div className="notif-item-body">
                         <div className="notif-item-title">{line.title}</div>
                         <div className="notif-item-sub">
-                          {line.subtitle} · {timeAgo(e.createdAt, new Date())}
+                          {line.subtitle} · {timeAgo(e.createdAt, new Date(), tf)}
                         </div>
                       </div>
                       {unread && <span className="notif-dot" />}

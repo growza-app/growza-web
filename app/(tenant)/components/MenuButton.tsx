@@ -1,6 +1,7 @@
 'use client';
 
 import { useMobileNav } from './MobileNavProvider';
+import { useTranslations } from 'next-intl';
 import { IconMenu } from './icons';
 
 /**
@@ -15,9 +16,10 @@ import { IconMenu } from './icons';
  * always on screen). The drawer it opens is `Sidebar`, `id="site-menu"`.
  */
 export function MenuButton() {
+  const tc = useTranslations('chrome');
   const { open, toggle } = useMobileNav();
   return (
-    <button type="button" className="menu-btn" aria-label="Menu" aria-expanded={open} aria-controls="site-menu" onClick={toggle}>
+    <button type="button" className="menu-btn" aria-label={tc('menu')} aria-expanded={open} aria-controls="site-menu" onClick={toggle}>
       <IconMenu />
     </button>
   );

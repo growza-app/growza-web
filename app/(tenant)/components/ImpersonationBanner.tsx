@@ -38,9 +38,11 @@ export function ImpersonationBanner({ businessName, role }: { businessName: stri
             Add walk-in and the rest, and they will all be refused. Hiding every
             write control across the whole product is a much larger change than
             this story; saying so up front is the honest version of it. */}
+        {/* i18n-ok: shown to platform-admin support staff only (impersonation), not to owners */}
         Viewing <strong>{businessName}</strong> as {role} — read-only support session
       </span>
       <button type="button" className="impersonation-banner-exit" onClick={exit} disabled={leaving}>
+        {/* i18n-ok: support staff only */}
         {leaving ? 'Leaving…' : 'Exit'}
       </button>
     </div>

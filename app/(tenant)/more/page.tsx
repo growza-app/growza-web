@@ -1,5 +1,6 @@
 import { screenTitle } from '../lib/page-title';
 import type { ReactNode } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
@@ -16,6 +17,7 @@ export const dynamic = 'force-dynamic';
  * rather than being hidden behind a breakpoint.
  */
 export default async function MorePage() {
+  const ta = await getTranslations('attendance');
   let labels: Record<string, string> = {};
   // Jira GRW-66 · GRW-157 — this menu is filtered by the same policy the
   // sidebar and the tab bar use. Three copies of the list is how a stylist
@@ -42,7 +44,7 @@ export default async function MorePage() {
     // GRW-170 — the register lives here on a phone. The bottom bar is five
     // fixed slots and a sixth would break it, so Attendance rides the menu
     // rather than displacing a tab everybody uses.
-    { href: '/attendance', label: 'Attendance', icon: <IconStaff /> },
+    { href: '/attendance', label: ta('title'), icon: <IconStaff /> },
     { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
     { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },

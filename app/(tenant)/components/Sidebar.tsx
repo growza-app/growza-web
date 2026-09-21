@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
@@ -67,6 +68,7 @@ export function Sidebar({
   /** Jira GRW-222 — who is signed in, at the foot of the sidebar. */
   phone?: string | null;
 }) {
+  const tc = useTranslations('chrome');
   const pathname = usePathname();
   const t = homeCopy(lang ?? 'en', labels);
   const { open, close } = useMobileNav();
@@ -149,7 +151,7 @@ export function Sidebar({
         data-open={open}
         role={open ? 'dialog' : undefined}
         aria-modal={open ? true : undefined}
-        aria-label={open ? 'Menu' : undefined}
+        aria-label={open ? tc('menu') : undefined}
         onKeyDown={keepFocusInside}
       >
         <div className="brand">
@@ -158,11 +160,11 @@ export function Sidebar({
             <div className="brand-name">{tenantName}</div>
             {branchCount > 1 ? <div className="brand-location">{t.branchCount(branchCount)}</div> : locationName ? <div className="brand-location">{locationName}</div> : null}
           </div>
-          <button type="button" className="sidebar-close" aria-label="Close menu" onClick={close}>
+          <button type="button" className="sidebar-close" aria-label={tc('closeMenu')} onClick={close}>
             <IconClose />
           </button>
         </div>
-        <nav className="nav" aria-label="Main">
+        <nav className="nav" aria-label={tc('main')}>
           {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
               API is what refuses (GRW-156); this is about not wasting their time
               on eight links that 403. */}

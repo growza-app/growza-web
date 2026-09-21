@@ -46,141 +46,15 @@
       "{Sign in}",
       "{Signing in…}"
     ],
-    "web/app/(tenant)/components/AccountMenu.tsx": [
-      "At least 8 characters.",
-      "Cancel",
-      "Change password",
-      "Current password",
-      "English",
-      "New password",
-      "Password changed. Use the new one next time you sign in.",
-      "aria-label=\"Close account menu\"",
-      "aria-label=\"Menu and account\"",
-      "aria-label=\"Menu and account\"",
-      "setError(\"Could not change your password.\")",
-      "sub: \"Bookings, clients, payments and attendance\"",
-      "sub: \"Full access to everything\"",
-      "sub: \"Full access to everything\"",
-      "sub: \"Your own day, and your own attendance\"",
-      "{Change password}",
-      "{Saving…}"
-    ],
-    "web/app/(tenant)/components/AccountStatusScreen.tsx": [
-      "Call support",
-      "Growza"
-    ],
-    "web/app/(tenant)/components/BookingSheet.tsx": [
-      "setError(\"Could not load services. Check the connection and try again.\")",
-      "setError(\"That did not save. Check the connection and try again.\")",
-      "{Unknown}"
-    ],
-    "web/app/(tenant)/components/BookingSummary.tsx": [
-      "Close",
-      "Finished ·",
-      "Paid by",
-      "Services",
-      "Subtotal",
-      "Total paid",
-      "aria-label=\"${…} summary\"",
-      "aria-label=\"Call\"",
-      "combo",
-      "{Cancelled}",
-      "{No ${…}}"
-    ],
-    "web/app/(tenant)/components/BottomNav.tsx": [
-      "aria-label=\"Main\""
-    ],
     "web/app/(tenant)/components/BrowserGate.tsx": [
       "+ · Chrome",
       "+ · Edge",
       "+ · Firefox",
       "Safari"
     ],
-    "web/app/(tenant)/components/CheckoutSheet.tsx": [
-      "Add",
-      "Back",
-      "Cancel",
-      "Mark as done",
-      "Payment method",
-      "Total amount",
-      "aria-label=\"${…} price\"",
-      "aria-label=\"Call\"",
-      "aria-label=\"Change ${…}\"",
-      "aria-label=\"Change ${…}\"",
-      "aria-label=\"Remove ${…}\"",
-      "label: \"Card\"",
-      "label: \"Cash\"",
-      "label: \"Other\"",
-      "label: \"UPI\"",
-      "setError(\"That did not save. Check the connection and try again.\")",
-      "{No ${…} set}",
-      "{Save and close}",
-      "{Saving…}",
-      "{Unknown}"
-    ],
-    "web/app/(tenant)/components/DaySchedule.tsx": [
-      "See all",
-      "aria-label=\"Call ${…}\"",
-      "bookings",
-      "{Unknown}"
-    ],
     "web/app/(tenant)/components/ImpersonationBanner.tsx": [
-      "Viewing",
       "as",
-      "{Exit}",
-      "{Leaving…}",
       "— read-only support session"
-    ],
-    "web/app/(tenant)/components/InfoTip.tsx": [
-      "aria-label=\"What does ${…} count?\""
-    ],
-    "web/app/(tenant)/components/MenuButton.tsx": [
-      "aria-label=\"Menu\""
-    ],
-    "web/app/(tenant)/components/MoveBookingSheet.tsx": [
-      "{Unknown}"
-    ],
-    "web/app/(tenant)/components/NewVisitSheet.tsx": [
-      "{${…} (Main)}"
-    ],
-    "web/app/(tenant)/components/NotificationBell.tsx": [
-      "Clear all",
-      "Mark all read",
-      "Nothing yet — new bookings will show up here.",
-      "Notifications",
-      "aria-label=\"Notifications\"",
-      "aria-label=\"Notifications\"",
-      "aria-label=\"Notifications, ${…} unread\"",
-      "label: \"Billing\"",
-      "label: \"Cancelled\"",
-      "label: \"New booking\"",
-      "label: \"Rescheduled\"",
-      "subtitle: \"Customer\"",
-      "subtitle: \"From ${…}: ${…} a month (now ${…}), for ${…} ${…}.\"",
-      "title: \"Bill going down\"",
-      "title: \"Bill going up\""
-    ],
-    "web/app/(tenant)/components/PageHeader.tsx": [
-      "aria-label=\"Back\""
-    ],
-    "web/app/(tenant)/components/PayNowButton.tsx": [
-      "{Opening…}",
-      "{Pay now}"
-    ],
-    "web/app/(tenant)/components/Sidebar.tsx": [
-      "aria-label=\"Close menu\"",
-      "aria-label=\"Main\"",
-      "aria-label=\"Menu\""
-    ],
-    "web/app/(tenant)/components/home/ReceptionHome.tsx": [
-      "sub: \"${…} · ${…} min\""
-    ],
-    "web/app/(tenant)/layout.tsx": [
-      "description: \"Manage bookings, staff, services, and offers.\"",
-      "title: \"Growza\""
-    ],
-    "web/app/(tenant)/more/page.tsx": [
-      "label: \"Attendance\""
     ],
     "web/app/(tenant)/reports/CustomersTab.tsx": [
       "title=\"${…} · no completed visits\"",

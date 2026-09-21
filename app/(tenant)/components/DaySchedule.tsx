@@ -84,6 +84,7 @@ export function DaySchedule({
   canMove?: boolean;
 }) {
   const ts = useTranslations('status');
+  const tc = useTranslations('chrome');
   // Seeded from the server value, then switched to the real device clock
   // after mount and ticked every minute so the "now" line stays honest.
   const [now, setNow] = useState(() => new Date(nowISO));
@@ -124,7 +125,7 @@ export function DaySchedule({
       <a
         className={`call ${strong ? 'call-strong' : ''}`}
         href={`tel:${dialable(booking.customerPhone)}`}
-        aria-label={`Call ${booking.customerName ?? 'customer'}`}
+        aria-label={tc('callName', { name: booking.customerName ?? tc('customerLower') })}
         onClick={(e) => e.stopPropagation()}
       >
         <IconPhone />
@@ -207,7 +208,7 @@ export function DaySchedule({
                     <span className="ld" />
                   </span>
                   <span className="ln">
-                    {b.customerName ?? 'Unknown'} <span className="muted">· {summarizeServices(b.serviceNames)}</span>
+                    {b.customerName ?? tc('unknown')} <span className="muted">· {summarizeServices(b.serviceNames)}</span>
                   </span>
                   {settled ? <span className="status-note">{ts(statusChip(b).key)}</span> : callButton(b, false)}
                 </div>
@@ -219,7 +220,7 @@ export function DaySchedule({
 
       {hiddenCount > 0 && (
         <a className="sched-more" href="/appointments">
-          See all {bookings.length} bookings
+          {tc('daySchedule.seeAll', { count: bookings.length })}
           <IconChevronRight />
         </a>
       )}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -55,6 +56,7 @@ export function MoveBookingSheet({
   onClose: () => void;
   onMoved: () => void;
 }) {
+  const tc = useTranslations('chrome');
   const router = useRouter();
   const providerNoun = useLabel('provider', 'Staff member');
 
@@ -247,7 +249,7 @@ export function MoveBookingSheet({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="sheet-title">{copy.move.title}</div>
             <div className="sheet-sub">
-              {appointment.customerName ?? 'Unknown'} · {formatTime(appointment.startAt, timezone)}
+              {appointment.customerName ?? tc('unknown')} · {formatTime(appointment.startAt, timezone)}
             </div>
           </div>
           <button type="button" className="wi-close" aria-label={copy.newVisit.close} onClick={onClose} disabled={busy}>

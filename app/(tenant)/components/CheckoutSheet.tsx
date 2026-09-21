@@ -2,7 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { pickNoun } from '../lib/nouns';
 import {
   api,
   formatMoney,
@@ -47,12 +48,8 @@ function dialable(phone: string | null | undefined): string {
   return (phone ?? '').replace(/[^0-9]/g, '');
 }
 
-export const PAYMENT_MODES: Array<{ value: PaymentMode; label: string }> = [
-  { value: 'cash', label: 'Cash' },
-  { value: 'card', label: 'Card' },
-  { value: 'upi', label: 'UPI' },
-  { value: 'other', label: 'Other' },
-];
+/** The words are `chrome.pay.<value>`; `value` is what the API stores. */
+export const PAYMENT_MODES: Array<{ value: PaymentMode }> = [{ value: 'cash' }, { value: 'card' }, { value: 'upi' }, { value: 'other' }];
 
 /** One line in the services list — the original booking or an added extra, same look either way. */
 function ServiceRow({
@@ -80,7 +77,8 @@ function ServiceRow({
   onRemove?: () => void;
   disabled: boolean;
 }) {
-  const providerWord = useLabel('provider', 'Staff member');
+  const locale = useLocale();
+  const providerWord = pickNoun(locale, useLabel('provider', 'Staff member'), useTranslations('nouns')('staff'));
   const t = useTranslations('checkout');
   const serviceWord = useLabel('service', 'Service');
   return (
@@ -104,7 +102,7 @@ function ServiceRow({
             ))}
           </select>
         ) : (
-          <div className="checkout-service-sub">{providerName || `No ${providerWord.toLowerCase()} set`}</div>
+          <div className="checkout-service-sub">{providerName || t('noProviderSet', { label: providerWord.toLowerCase() })}</div>
         )}
       </div>
       <div className="checkout-amount-field">
@@ -118,7 +116,7 @@ function ServiceRow({
           disabled={disabled}
         />
       </div>
-      <button type="button" className="checkout-icon-btn" aria-label={`Change ${providerWord.toLowerCase()}`} onClick={onToggleEdit} disabled={disabled}>
+      <button type="button" className="checkout-icon-btn" aria-label={t('changeProvider', { label: providerWord.toLowerCase() })} onClick={onToggleEdit} disabled={disabled}>
         <IconEdit />
       </button>
       {onRemove ? (
@@ -169,7 +167,8 @@ function ComboRow({
   onRemove: () => void;
   disabled: boolean;
 }) {
-  const providerWord = useLabel('provider', 'Staff member');
+  const locale = useLocale();
+  const providerWord = pickNoun(locale, useLabel('provider', 'Staff member'), useTranslations('nouns')('staff'));
   const t = useTranslations('checkout');
   const comboWord = useLabel('combo', t('combo'));
   const who = [...new Set(legs.map((l) => providerName(l.providerId)).filter(Boolean))].join(', ');
@@ -183,12 +182,12 @@ function ComboRow({
         </div>
         <div className="checkout-amount-field">
           <span>₹</span>
-          <input type="number" inputMode="decimal" min={0} value={amount} onChange={(e) => onAmountChange(e.target.value)} disabled={disabled} aria-label={`${title} price`} />
+          <input type="number" inputMode="decimal" min={0} value={amount} onChange={(e) => onAmountChange(e.target.value)} disabled={disabled} aria-label={t('priceOf', { title })} />
         </div>
-        <button type="button" className="checkout-icon-btn" aria-label={`Change ${providerWord.toLowerCase()}`} aria-expanded={editing} onClick={onToggleEdit} disabled={disabled}>
+        <button type="button" className="checkout-icon-btn" aria-label={t('changeProvider', { label: providerWord.toLowerCase() })} aria-expanded={editing} onClick={onToggleEdit} disabled={disabled}>
           <IconEdit />
         </button>
-        <button type="button" className="checkout-icon-btn checkout-icon-btn-danger" aria-label={`Remove ${title}`} onClick={onRemove} disabled={disabled}>
+        <button type="button" className="checkout-icon-btn checkout-icon-btn-danger" aria-label={t('removeItem', { title })} onClick={onRemove} disabled={disabled}>
           <IconTrash />
         </button>
       </div>
@@ -265,6 +264,8 @@ export function CheckoutSheet({
 }) {
   const router = useRouter();
   const t = useTranslations('checkout');
+  const tc = useTranslations('chrome');
+  const tcm = useTranslations('common');
   const serviceWord = useLabel('service', 'Service').toLowerCase();
   const servicesWord = useLabel('services', 'Services');
   const comboWord = useLabel('combo', t('combo'));
@@ -351,7 +352,7 @@ export function CheckoutSheet({
       router.refresh();
       (onSaved ?? onClose)();
     } catch (err) {
-      setError(err instanceof BookingConflictError ? err.message : 'That did not save. Check the connection and try again.');
+      setError(err instanceof BookingConflictError ? err.message : t('saveFailed'));
       setBusy(false);
     }
   };
@@ -364,14 +365,14 @@ export function CheckoutSheet({
             <IconCheck />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h3 id="checkout-title">Mark as done</h3>
+            <h3 id="checkout-title">{t('markDone')}</h3>
             <div className="checkout-header-name">
-              {appointment.customerName ?? 'Unknown'}
+              {appointment.customerName ?? tc('unknown')}
               {/* No number, no call button — GRW-199. A walk-in may have given
                   only a name, and a `tel:` link built from an empty string is a
                   control that looks live and does nothing. */}
               {dialable(appointment.customerPhone) && (
-                <a className="checkout-call-btn" href={`tel:${dialable(appointment.customerPhone)}`} aria-label="Call">
+                <a className="checkout-call-btn" href={`tel:${dialable(appointment.customerPhone)}`} aria-label={tc('call')}>
                   <IconPhone />
                 </a>
               )}
@@ -390,7 +391,7 @@ export function CheckoutSheet({
               <IconWallet />
             </div>
             <div>
-              <div className="checkout-total-label">Total amount</div>
+              <div className="checkout-total-label">{t('totalAmount')}</div>
               <div className="checkout-total-value">{formatMoney(String(totalMinor))}</div>
               {/*
                 GRW-199 — say what the combo took off. The saving is the reason the customer chose the
@@ -519,11 +520,11 @@ export function CheckoutSheet({
               </optgroup>
             </select>
             <button type="button" className="btn" onClick={add} disabled={busy || !pick}>
-              Add
+              {t('add')}
             </button>
           </div>
 
-          <div className="checkout-section-label">Payment method</div>
+          <div className="checkout-section-label">{t('paymentMethod')}</div>
           <div className="payment-mode-row">
             {PAYMENT_MODES.map((m) => (
               <button
@@ -533,7 +534,7 @@ export function CheckoutSheet({
                 onClick={() => setPaymentMode(m.value)}
                 disabled={busy}
               >
-                {m.label}
+                {tc(`pay.${m.value}`)}
               </button>
             ))}
           </div>
@@ -544,14 +545,14 @@ export function CheckoutSheet({
         <div className="modal-actions">
           {onBack && (
             <button className="btn btn-ghost checkout-back" onClick={onBack} disabled={busy}>
-              Back
+              {tc('back')}
             </button>
           )}
           <button className="btn btn-ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {tcm('cancel')}
           </button>
           <button className="btn" onClick={submit} disabled={busy || !valid}>
-            {busy ? 'Saving…' : 'Save and close'}
+            {busy ? t('saving') : t('saveClose')}
           </button>
         </div>
       </div>

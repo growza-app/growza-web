@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatTime, type Appointment, type AppointmentStatus, type Offer, type Provider, type Service } from '../lib/api';
@@ -83,6 +84,8 @@ export function BookingSheet({
    */
   canMove?: boolean;
 }) {
+  const tc = useTranslations('chrome');
+  const tsh = useTranslations('chrome.sheet');
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
   const router = useRouter();
@@ -109,7 +112,7 @@ export function BookingSheet({
       router.refresh();
       onClose();
     } catch {
-      setError('That did not save. Check the connection and try again.');
+      setError(tsh('saveFailed'));
       setBusy(false);
     }
   };
@@ -124,7 +127,7 @@ export function BookingSheet({
       setOffers(offs);
       setCheckingOut(true);
     } catch {
-      setError('Could not load services. Check the connection and try again.');
+      setError(tsh('loadServicesFailed'));
     } finally {
       setBusy(false);
     }
@@ -170,7 +173,7 @@ export function BookingSheet({
 
         <div className="sheet-head">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sheet-title">{appointment.customerName ?? 'Unknown'}</div>
+            <div className="sheet-title">{appointment.customerName ?? tc('unknown')}</div>
             <div className="sheet-sub">
               {comboServiceNames && comboServiceNames.length > 1
                 ? `${summarizeServices(comboServiceNames)}${comboTotalMin ? ` · ${formatDuration(comboTotalMin)}` : ''}`

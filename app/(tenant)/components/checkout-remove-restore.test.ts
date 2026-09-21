@@ -23,13 +23,13 @@ describe('a combo is one row', () => {
   });
 
   it('is taken off whole: one button, named for the combo, on a 44px target', () => {
-    expect(sheet).toMatch(/aria-label=\{`Remove \$\{title\}`\}/);
+    expect(sheet).toMatch(/aria-label=\{t\('removeItem', \{ title \}\)\}/);
     expect(sheet).toMatch(/onRemove=\{\(\) => takeOff\(l\.key, true\)\}/);
     expect(css).toMatch(/\.checkout-combo-legs select\s*\{[^}]*min-height:\s*44px;/);
   });
 
   it('has its price as one input; the pencil opens who did each service', () => {
-    expect(sheet).toMatch(/aria-label=\{`\$\{title\} price`\}/);
+    expect(sheet).toMatch(/aria-label=\{t\('priceOf', \{ title \}\)\}/);
     expect(sheet).toMatch(/className="checkout-combo-legs"/);
   });
 });

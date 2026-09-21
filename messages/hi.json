@@ -28,7 +28,25 @@
     "markAllRead": "सब पढ़ा हुआ करें",
     "clearAll": "सब हटाएँ",
     "loading": "लोड हो रहा है…",
-    "empty": "अभी कुछ नहीं — नई बुकिंग यहाँ दिखेंगी।"
+    "empty": "अभी कुछ नहीं — नई बुकिंग यहाँ दिखेंगी।",
+    "feed": {
+      "topics": {
+        "newBooking": "नई बुकिंग",
+        "cancelled": "रद्द",
+        "rescheduled": "समय बदला",
+        "billing": "बिलिंग"
+      },
+      "title": "{topic} — {services}",
+      "customer": "ग्राहक",
+      "justNow": "अभी अभी",
+      "minutesAgo": "{count} मि पहले",
+      "hoursAgo": "{count} घं पहले",
+      "daysAgo": "{count} दिन पहले",
+      "billUp": "बिल बढ़ने वाला है",
+      "billDown": "बिल घटने वाला है",
+      "billSub": "{day} से: {next} प्रति माह (अभी {current}), {count, plural, one {# ब्रांच} other {# ब्रांच}} के लिए।"
+    },
+    "bellUnread": "सूचनाएं, {count} नई"
   },
   "status": {
     "confirmed": "पक्की",
@@ -219,7 +237,18 @@
     "empty": "सेव करने के लिए कुछ नहीं बचा। {service} या {combo} जोड़ें, या हटाई हुई चीज़ वापस जोड़ें।",
     "removeThis": "यह {service} हटाएँ",
     "comboSaving": "{title} — {list} लिस्ट, {saving} की बचत",
-    "combosSaving": "{combos} — {saving} की बचत"
+    "combosSaving": "{combos} — {saving} की बचत",
+    "markDone": "पूरा हुआ चिह्नित करें",
+    "paymentMethod": "भुगतान का तरीका",
+    "totalAmount": "कुल रकम",
+    "add": "जोड़ें",
+    "saving": "सेव हो रहा है…",
+    "saveClose": "सेव करें और बंद करें",
+    "saveFailed": "वह सेव नहीं हुआ। कनेक्शन जाँचकर फिर कोशिश करें।",
+    "noProviderSet": "कोई {label} तय नहीं",
+    "changeProvider": "{label} बदलें",
+    "removeItem": "{title} हटाएँ",
+    "priceOf": "{title} की कीमत"
   },
   "settingsHub": {
     "subtitle": "आपका बिज़नेस और बुकिंग कैसे काम करते हैं।",
@@ -1167,5 +1196,84 @@
       "footOther": "रोज़ के रजिस्टर से दर्ज।",
       "tzFoot": "समय स्थानीय समय में · {tz}"
     }
+  },
+  "chrome": {
+    "unknown": "अनजान",
+    "close": "बंद करें",
+    "closeMenu": "मेन्यू बंद करें",
+    "menu": "मेन्यू",
+    "main": "मुख्य",
+    "back": "वापस",
+    "call": "कॉल करें",
+    "infoTip": "{label} में क्या गिना जाता है?",
+    "pay": {
+      "cash": "नकद",
+      "card": "कार्ड",
+      "upi": "UPI",
+      "other": "दूसरा"
+    },
+    "account": {
+      "menuAndAccount": "मेन्यू और अकाउंट",
+      "closeAccountMenu": "अकाउंट मेन्यू बंद करें",
+      "roles": {
+        "owner": {
+          "name": "मालिक",
+          "sub": "सब कुछ पर पूरा अधिकार"
+        },
+        "manager": {
+          "name": "मैनेजर",
+          "sub": "सब कुछ पर पूरा अधिकार"
+        },
+        "receptionist": {
+          "name": "रिसेप्शनिस्ट",
+          "sub": "बुकिंग, ग्राहक, पेमेंट और हाज़िरी"
+        },
+        "staff": {
+          "name": "स्टाइलिस्ट",
+          "sub": "आपका अपना दिन और अपनी हाज़िरी"
+        }
+      },
+      "changePassword": "पासवर्ड बदलें",
+      "currentPassword": "मौजूदा पासवर्ड",
+      "newPassword": "नया पासवर्ड",
+      "atLeast8": "कम से कम 8 अक्षर।",
+      "saving": "सेव हो रहा है…",
+      "cancel": "रद्द करें",
+      "changed": "पासवर्ड बदल गया। अगली बार साइन इन करते समय नया वाला इस्तेमाल करें।",
+      "changeFailed": "आपका पासवर्ड नहीं बदला जा सका।"
+    },
+    "summary": {
+      "aria": "{name} का सारांश",
+      "fallbackName": "बुकिंग",
+      "finished": "पूरी हुई",
+      "services": "सेवाएँ",
+      "noStaff": "कोई {label} नहीं",
+      "cancelled": "रद्द",
+      "subtotal": "उप-योग",
+      "combo": "{title} कॉम्बो",
+      "total": "कुल भुगतान",
+      "paidBy": "भुगतान का तरीका"
+    },
+    "daySchedule": {
+      "seeAll": "सभी {count} बुकिंग देखें"
+    },
+    "sheet": {
+      "loadServicesFailed": "सेवाएँ लोड नहीं हो सकीं। कनेक्शन जाँचकर फिर कोशिश करें।",
+      "saveFailed": "वह सेव नहीं हुआ। कनेक्शन जाँचकर फिर कोशिश करें।"
+    },
+    "payNow": {
+      "pay": "अभी भुगतान करें",
+      "opening": "खुल रहा है…",
+      "settled": "यह पहले से चुका हुआ लगता है — ताज़ा देखने के लिए रीफ़्रेश करें।",
+      "failed": "अभी भुगतान शुरू नहीं हो सका। कृपया थोड़ी देर में फिर कोशिश करें।"
+    },
+    "status": {
+      "callSupport": "सपोर्ट को कॉल करें"
+    },
+    "reception": {
+      "minutes": "{count} मिनट"
+    },
+    "callName": "{name} को कॉल करें",
+    "customerLower": "ग्राहक"
   }
 }

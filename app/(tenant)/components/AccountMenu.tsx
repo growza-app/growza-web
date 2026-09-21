@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
@@ -32,12 +33,9 @@ import { IconClose, IconLogout } from './icons';
  * focus goes back to the avatar.
  */
 
-const ROLE_LABEL: Record<string, { name: string; sub: string }> = {
-  owner: { name: 'Owner', sub: 'Full access to everything' },
-  manager: { name: 'Manager', sub: 'Full access to everything' },
-  receptionist: { name: 'Receptionist', sub: 'Bookings, clients, payments and attendance' },
-  staff: { name: 'Stylist', sub: 'Your own day, and your own attendance' },
-};
+/** Each role's name and one-line description are `chrome.account.roles.<role>`. */
+const ROLES = ['owner', 'manager', 'receptionist', 'staff'] as const;
+type Role = (typeof ROLES)[number];
 
 export function AccountMenu() {
   /**
@@ -50,6 +48,7 @@ export function AccountMenu() {
    * "clicking the name icon does nothing", on a page with no icon to click.
    * And re-fetching `/me` duplicated a request the layout had already made.
    */
+  const t = useTranslations('chrome.account');
   const session = useSession();
   const labels = useLabels();
   const router = useRouter();
@@ -93,10 +92,10 @@ export function AccountMenu() {
     setDone(false);
   };
 
-  const label = ROLE_LABEL[session?.role ?? 'owner'] ?? ROLE_LABEL.owner!;
+  const role: Role = (ROLES as readonly string[]).includes(session?.role ?? '') ? (session!.role as Role) : 'owner';
 
   const lang: Lang = session?.lang ?? 'en';
-  const t = homeCopy(lang, labels);
+  const home = homeCopy(lang, labels);
 
   const chooseLang = (next: Lang) => {
     if (next === lang) return;
@@ -134,7 +133,7 @@ export function AccountMenu() {
     } catch (err) {
       // The API's own sentence, which distinguishes a wrong current password
       // from one the pool refused — two different things for the person to do.
-      setError(err instanceof Error ? err.message : 'Could not change your password.');
+      setError(err instanceof Error ? err.message : t('changeFailed'));
     } finally {
       setBusy(false);
     }
@@ -149,7 +148,7 @@ export function AccountMenu() {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? dialogId : undefined}
-        aria-label="Menu and account"
+        aria-label={t('menuAndAccount')}
         onClick={() => (open ? close() : setOpen(true))}
       >
         {session?.initial ?? 'S'}
@@ -158,13 +157,13 @@ export function AccountMenu() {
       {open && (
         <>
           <div className="acct-scrim" onClick={close} aria-hidden="true" />
-          <div ref={dialogRef} id={dialogId} className="acct-menu" role="dialog" aria-modal="true" aria-label="Menu and account" tabIndex={-1} onKeyDown={keepFocusInside}>
+          <div ref={dialogRef} id={dialogId} className="acct-menu" role="dialog" aria-modal="true" aria-label={t('menuAndAccount')} tabIndex={-1} onKeyDown={keepFocusInside}>
             <div className="acct-head">
-              <button type="button" className="acct-close acct-phone-only" aria-label="Close account menu" onClick={close}>
+              <button type="button" className="acct-close acct-phone-only" aria-label={t('closeAccountMenu')} onClick={close}>
                 <IconClose />
               </button>
-              <div className="acct-role">{label.name}</div>
-              <div className="acct-sub">{label.sub}</div>
+              <div className="acct-role">{t(`roles.${role}.name`)}</div>
+              <div className="acct-sub">{t(`roles.${role}.sub`)}</div>
               {/* The number, because it is what they sign in with (GRW-198) —
                   not an email, which this product never uses as a credential. */}
               {session?.phone && <div className="acct-phone">{session.phone}</div>}
@@ -173,8 +172,9 @@ export function AccountMenu() {
 
             {!changing ? (
               <div className="acct-actions">
-                <div className="acct-lang" role="group" aria-label={t.langToggleLabel}>
+                <div className="acct-lang" role="group" aria-label={home.langToggleLabel}>
                   <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => chooseLang('en')}>
+                    {/* i18n-ok: a language is named in its own language */}
                     English
                   </button>
                   <button type="button" lang="hi" aria-pressed={lang === 'hi'} onClick={() => chooseLang('hi')}>
@@ -182,20 +182,20 @@ export function AccountMenu() {
                   </button>
                 </div>
                 <button type="button" className="acct-item" onClick={() => setChanging(true)}>
-                  Change password
+                  {t('changePassword')}
                 </button>
                 <SignOutButton className="acct-item acct-signout">
                   <IconLogout />
-                  {t.nav.signOut}
+                  {home.nav.signOut}
                 </SignOutButton>
               </div>
             ) : (
               <div className="acct-form">
                 {done ? (
-                  <p className="acct-done">Password changed. Use the new one next time you sign in.</p>
+                  <p className="acct-done">{t('changed')}</p>
                 ) : (
                   <>
-                    <label htmlFor="acct-current">Current password</label>
+                    <label htmlFor="acct-current">{t('currentPassword')}</label>
                     <input
                       id="acct-current"
                       type="password"
@@ -207,7 +207,7 @@ export function AccountMenu() {
                         setError(null);
                       }}
                     />
-                    <label htmlFor="acct-new">New password</label>
+                    <label htmlFor="acct-new">{t('newPassword')}</label>
                     <input
                       id="acct-new"
                       type="password"
@@ -219,7 +219,7 @@ export function AccountMenu() {
                         setError(null);
                       }}
                     />
-                    <p className="acct-hint">At least 8 characters.</p>
+                    <p className="acct-hint">{t('atLeast8')}</p>
                     {error && <div role="alert" className="field-error">{error}</div>}
                     <div className="acct-form-actions">
                       <button
@@ -228,10 +228,10 @@ export function AccountMenu() {
                         disabled={busy || current.length === 0 || next.length < 8}
                         onClick={() => void submit()}
                       >
-                        {busy ? 'Saving…' : 'Change password'}
+                        {busy ? t('saving') : t('changePassword')}
                       </button>
                       <button type="button" className="btn-ghost" disabled={busy} onClick={() => setChanging(false)}>
-                        Cancel
+                        {t('cancel')}
                       </button>
                     </div>
                   </>
