@@ -795,24 +795,6 @@
     "web/app/(tenant)/settings/branches/page.tsx": [
       "Could not load your branches — check the server is running."
     ],
-    "web/app/(tenant)/settings/report-access/ReportAccessForm.tsx": [
-      "Saved",
-      "Who can see Reports",
-      "You and your managers always see every report. Choose what anyone else gets. Tick nothing and Reports stays hidden from them entirely.",
-      "label: \"Bookings\"",
-      "label: \"Clients\"",
-      "label: \"Overview\"",
-      "label: \"Receptionist\"",
-      "label: \"Revenue\"",
-      "label: \"Services\"",
-      "label: \"Staff performance\"",
-      "label: \"Stylists\"",
-      "shows money",
-      "sub: \"Runs the front desk\"",
-      "sub: \"See only their own day elsewhere\"",
-      "{Save changes}",
-      "{Saving…}"
-    ],
     "web/app/(tenant)/settings/team/TeamAccessPanel.tsx": [
       ". It is shown only now — we do not keep a copy.",
       "Cancel",

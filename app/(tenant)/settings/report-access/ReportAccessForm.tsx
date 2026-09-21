@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
 
@@ -18,23 +19,20 @@ import { api, type SettingsSummary } from '../../lib/api';
  * every report, so a control for them could not do anything, and a control
  * that cannot do anything is worse than no control.
  */
-const ROLES = [
-  { key: 'receptionist', label: 'Receptionist', sub: 'Runs the front desk' },
-  { key: 'staff', label: 'Stylists', sub: 'See only their own day elsewhere' },
-] as const;
+/** Each role and tab is named in `settingsReports.roles` / `.tabs`; the key is also what the API stores. */
+const ROLES = ['receptionist', 'staff'] as const;
 
 const TABS = [
-  { key: 'overview', label: 'Overview', money: true },
-  { key: 'revenue', label: 'Revenue', money: true },
-  { key: 'customers', label: 'Clients', money: false },
-  { key: 'staff', label: 'Staff performance', money: false },
-  { key: 'bookings', label: 'Bookings', money: false },
-  { key: 'services', label: 'Services', money: false },
+  { key: 'overview', money: true },
+  { key: 'revenue', money: true },
+  { key: 'customers', money: false },
+  { key: 'staff', money: false },
+  { key: 'bookings', money: false },
+  { key: 'services', money: false },
 ] as const;
 
-const SAVE_ERROR = 'Could not save — check the server is running.';
-
 export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
+  const t = useTranslations('settingsReports');
   const [granted, setGranted] = useState<Record<string, string[]>>(() => ({ ...initial.reportAccess }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +60,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
       setGranted({ ...fresh.reportAccess });
       setSaved(true);
     } catch {
-      setError(SAVE_ERROR);
+      setError(t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -70,32 +68,31 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
 
   return (
     <div className="card">
-      <div className="card-head">Who can see Reports</div>
+      <div className="card-head">{t('title')}</div>
       <div className="card-body">
         <p className="field-hint" style={{ marginTop: 0, marginBottom: 16 }}>
-          You and your managers always see every report. Choose what anyone else gets. Tick nothing
-          and Reports stays hidden from them entirely.
+          {t('hint')}
         </p>
 
         {ROLES.map((role) => (
-          <div key={role.key} className="ra-role">
+          <div key={role} className="ra-role">
             <div className="ra-role-head">
-              <span className="ra-role-name">{role.label}</span>
-              <span className="ra-role-sub">{role.sub}</span>
+              <span className="ra-role-name">{t(`roles.${role}.label`)}</span>
+              <span className="ra-role-sub">{t(`roles.${role}.sub`)}</span>
             </div>
             <div className="ra-tabs">
               {TABS.map((tab) => (
-                <label key={tab.key} className={`ra-tab ${has(role.key, tab.key) ? 'is-on' : ''}`}>
+                <label key={tab.key} className={`ra-tab ${has(role, tab.key) ? 'is-on' : ''}`}>
                   <input
                     type="checkbox"
-                    checked={has(role.key, tab.key)}
+                    checked={has(role, tab.key)}
                     disabled={busy}
-                    onChange={() => toggle(role.key, tab.key)}
+                    onChange={() => toggle(role, tab.key)}
                   />
-                  <span>{tab.label}</span>
+                  <span>{t(`tabs.${tab.key}`)}</span>
                   {/* Named, not hidden: an owner ticking "Overview" should know
                       it carries the day's takings before they tick it. */}
-                  {tab.money && <span className="ra-money">shows money</span>}
+                  {tab.money && <span className="ra-money">{t('showsMoney')}</span>}
                 </label>
               ))}
             </div>
@@ -105,11 +102,11 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
         {error && <div role="alert" className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={save}>
-            {busy ? 'Saving…' : 'Save changes'}
+            {busy ? t('saving') : t('save')}
           </button>
           {saved && !busy && (
             <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              Saved
+              {t('saved')}
             </span>
           )}
         </div>

@@ -453,5 +453,34 @@
     "errors": {
       "saveFailed": "Could not save — check the server is running."
     }
+  },
+  "settingsReports": {
+    "title": "Who can see Reports",
+    "hint": "You and your managers always see every report. Choose what anyone else gets. Tick nothing and Reports stays hidden from them entirely.",
+    "roles": {
+      "receptionist": {
+        "label": "Receptionist",
+        "sub": "Runs the front desk"
+      },
+      "staff": {
+        "label": "Stylists",
+        "sub": "See only their own day elsewhere"
+      }
+    },
+    "tabs": {
+      "overview": "Overview",
+      "revenue": "Revenue",
+      "customers": "Clients",
+      "staff": "Staff performance",
+      "bookings": "Bookings",
+      "services": "Services"
+    },
+    "showsMoney": "shows money",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "errors": {
+      "saveFailed": "Could not save — check the server is running."
+    }
   }
 }
