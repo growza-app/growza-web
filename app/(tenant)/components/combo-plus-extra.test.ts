@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { copy } from '../lib/copy';
+import en from '../../../messages/en.json';
 
 /**
  * Jira GRW-292 — adding a service beside a combo used to dissolve the whole
@@ -62,7 +62,7 @@ describe('Walk-in now / For later book a combo and its extras together', () => {
   it('there is no restriction left to block submit', () => {
     expect(sheet).not.toMatch(/comboBlocksSubmit/);
     expect(sheet).not.toMatch(/comboBlocksExtra/);
-    expect(copy.newVisit).not.toHaveProperty('comboBlocksExtra');
+    expect(en.newVisit).not.toHaveProperty('comboBlocksExtra');
   });
 
   it('For later merges the extras into the same booking request', () => {

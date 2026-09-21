@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { copy } from '../lib/copy';
+import en from '../../../messages/en.json';
 import { splitComboRupees, type PickedItem } from './NewVisitSheet';
 
 /**
@@ -26,7 +26,7 @@ describe('the combo row replaces the per-service rows', () => {
 
   it('shows what it would have cost, what it saves, then what it costs', () => {
     expect(sheet).toMatch(/wi-combo-list">\{formatMoney\(String\(comboListMinor\)\)\}/);
-    expect(sheet).toMatch(/wi-combo-save">\{copy\.newVisit\.comboSaves\(formatMoney\(String\(comboSavingMinor\)\)\)\}/);
+    expect(sheet).toMatch(/wi-combo-save">\{nv\.comboSaves\(formatMoney\(String\(comboSavingMinor\)\)\)\}/);
   });
 
   it('one remove button clears the whole combo, not one service at a time', () => {
@@ -63,7 +63,7 @@ describe('what the combo saves', () => {
   });
 
   it('is worded the same way the till already says it', () => {
-    expect(copy.newVisit.comboSaves('₹300')).toBe('Saves ₹300');
+    expect(en.newVisit.comboSaves.replace('{amount}', '₹300')).toBe('Saves ₹300');
   });
 });
 

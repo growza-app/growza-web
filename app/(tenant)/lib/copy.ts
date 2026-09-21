@@ -92,15 +92,7 @@ export const copy = {
     rangeMonth: 'Month',
   },
 
-  booking: {
-    call: (name: string) => `Call ${name}`,
-    message: 'Send a message',
-    markFinished: 'Mark as done',
-    markMissed: "Customer didn't come",
-    reschedule: 'Move to another time',
-    cancel: 'Cancel this booking',
-    reference: 'Booking ID',
-  },
+  // booking: moved to messages/*.json (lib/use-copy.ts).
 
   /**
    * Jira GRW-219 — moving a booking.
@@ -109,28 +101,7 @@ export const copy = {
    * was written, with no call site anywhere. These are the words the screen it
    * finally opens needs.
    */
-  move: {
-    title: 'Move this booking',
-    whichDay: 'Which day?',
-    whichTime: 'What time?',
-    loadingTimes: 'Finding free times…',
-    noTimes: 'Nothing free that day.',
-    anotherTime: 'Another time',
-    anotherTimeHint: 'Any time you like — even one that is already taken.',
-    withWhom: (noun: string) => `Same ${noun}?`,
-    keepStylist: 'Keep as is',
-    back: 'Back',
-    confirm: 'Move it',
-    confirmAnyway: 'Move anyway',
-    saving: 'Moving…',
-    /** Named BEFORE the save, which is the whole difference from the walk-in sheet. */
-    clash: (who: string) => `${who} already has someone at that time.`,
-    clashUnknown: 'That time is already taken.',
-    moved: (when: string) => `Moved to ${when}`,
-    movedOverlap: 'Recorded — two bookings now share that time.',
-    failed: 'That did not save. Check the connection and try again.',
-    done: 'Done',
-  },
+  // move: moved to messages/*.json (lib/use-copy.ts).
 
   kpi: {
     bookingsToday: 'Bookings today',
@@ -191,126 +162,7 @@ export const copy = {
    * front of them. "Start now" rather than "Confirm booking", because nothing
    * is being reserved — the visit is beginning.
    */
-  newVisit: {
-    title: 'Walk-in',
-    // Jira GRW-341 — the "Book again" card: the client's last visit, offered back with the next free times.
-    bookAgain: 'Book again',
-    bookAgainLastVisit: (day: string) => `Last visit ${day}`,
-    bookAgainWithStaff: (name: string) => `with ${name}`,
-    bookAgainAnyone: 'anyone free',
-    bookAgainUse: 'Use these',
-    bookAgainTimes: 'Next free times',
-    bookAgainFinding: 'Finding free times…',
-    bookAgainNoTimes: 'No free times this week',
-    bookAgainOtherTime: 'Choose another time',
-    bookAgainTomorrow: 'Tomorrow',
-    // Home's "Record payment": the walk-in steps, ending in the till instead of a started visit.
-    paymentTitle: 'Record payment',
-    // Jira GRW-290 — Record payment ends on the services screen, no separate till.
-    markDone: 'Mark done',
-    howPaid: 'How did they pay?',
-    amountFor: (service: string) => `Amount for ${service}`,
-    paid: (amount: string, mode: string) => `Paid ${amount} · ${mode}`,
-    paymentNotSaved: 'The visit is saved, but the payment did not save. Tap Mark done to try again.',
-    combo: 'Combo',
-    // Jira GRW-291 — the combo's discount, said in one line: what it saves off the list price.
-    // Matches CheckoutSheet's own "X list, saves Y" phrasing for the same discount.
-    comboSaves: (amount: string) => `Saves ${amount}`,
-    close: 'Close',
-    clear: 'Clear',
-    whoIsThis: (client: string) => `Search for the ${client}, or add them.`,
-    searchPlaceholder: 'Name or phone number',
-    noName: 'No name',
-    noNumber: 'no number',
-    noMatch: 'Nobody on file matches that.',
-    visits: (n: number) => (n === 1 ? '1 visit' : `${n} visits`),
-    // Jira GRW-297 — browsable before a search term is typed.
-    recentCustomers: 'Previous customers',
-    loadingCustomers: 'Loading…',
-    noCustomersYet: 'No customers yet.',
-    addNew: 'Add someone new',
-    nameRequired: 'Name',
-    namePlaceholder: 'First name is enough',
-    nameMissing: 'A name is needed, even a first name.',
-    phoneOptional: 'Phone (optional)',
-    phonePlaceholder: '+91 98765 43210',
-    phoneWhy: 'Leave it blank if they would rather not say.',
-    useThisPerson: 'Continue',
-    whichService: 'What are they having?',
-    // Jira GRW-290 — "Loading…" only while loading. An empty catalogue said it forever.
-    searchServices: (n: number) => (n ? `Search ${n} services or combos…` : 'Search services…'),
-    loadingServices: 'Loading services…',
-    noServicesYet: 'No services yet. Add them under Services first.',
-    noServiceMatch: 'No service matches that.',
-    combos: 'Combos & offers',
-    comboServices: (n: number) => `${n} services`,
-    picked: 'Chosen',
-    removeService: 'Remove',
-    addMore: 'Add another service',
-    total: 'Total',
-    comboPrice: 'Combo price',
-    withWhom: (provider: string) => `Which ${provider}?`,
-    // Jira GRW-235 — a multi-branch business's booking sheet.
-    whichBranch: 'Which branch?',
-    whoeverIsFree: 'Whoever is free',
-    // Jira GRW-293 — Record payment only: a visit can be paid for without
-    // choosing anyone. "No stylist" over "Unassigned" — the front desk is
-    // choosing an option, not reading a report's label back at themselves.
-    noStylist: 'No stylist',
-    freeCount: (n: number) => (n === 0 ? 'nobody free' : n === 1 ? '1 free' : `${n} free`),
-    chairFree: 'free now',
-    chairBusy: (name: string, until: string) => `with ${name} · till ${until}`,
-    someone: 'someone',
-    // Plain, and it names the person — "Override" would not tell the
-    // receptionist whose booking they are about to end.
-    reclaimOffer: (name: string, minAgo: number) => `${name} hasn't turned up (${minAgo} min) — use this chair`,
-    reclaimOn: (name: string) => `${name} will be marked as a no-show`,
-    startsNow: (minutes: number) => `Starts now · ${minutes} min in total`,
-    back: 'Back',
-    start: 'Start now',
-    saving: 'Recording…',
-    saveFailed: 'That did not save. Check the connection and try again.',
-    /*
-     * When we genuinely do not know.
-     *
-     * A lost RESPONSE looks identical to a lost request from the browser, but
-     * the visit may well be recorded. Telling the receptionist to try again
-     * would duplicate the client and the visit, so this sends them to Bookings
-     * to look instead.
-     */
-    saveUnknown: 'The connection dropped. Check Bookings before recording this again — it may already be there.',
-    recorded: 'Recorded',
-    overlap: (provider: string) => `${provider} is also with someone else right now.`,
-    takePayment: 'Take payment now',
-    // Jira GRW-222 — the walk-in queue. "Queue", the word the front desk uses.
-    addToQueue: 'Add to waiting queue',
-    queued: 'Added to the queue',
-    // Jira GRW-284 — the number the desk says out loud.
-    token: (n: number) => `Token ${n}`,
-    // --- book-for-later only ---
-    laterTitle: 'Book for later',
-    modeLabel: 'When is this visit?',
-    modeNow: 'Walk-in now',
-    modeLater: 'For later',
-    whichDay: 'Which day?',
-    today: 'Today',
-    whichTime: 'Which time?',
-    loadingTimes: 'Finding free times…',
-    noTimes: 'No free times that day. Try another day, or a different stylist.',
-    phoneRequired: 'Phone number',
-    phoneWhyLater: 'Needed so we can send them a reminder.',
-    phoneMissing: 'A phone number is needed so they can be reminded.',
-    next: 'Next',
-    bookIt: 'Book it',
-    booking: 'Booking…',
-    booked: 'Booked',
-    slotTaken: 'That time was just taken. Pick another.',
-    openingTill: 'Opening…',
-    tillFailed: 'Could not open the till here. The visit is saved — take the payment from Bookings.',
-    // Jira GRW-289 — Record payment's till closed without saving.
-    notPaidYet: 'The visit is saved, but it is not paid yet. Take the payment now, or later from Bookings.',
-    done: 'Done',
-  },
+  // newVisit: moved to messages/*.json (lib/use-copy.ts).
 
   services: {
     subtitle: 'What you offer, how long each takes, and what you charge.',
@@ -706,49 +558,6 @@ export const copy = {
     },
   },
 
-  clientCard: {
-    /*
-     * Jira GRW-218 — the plainest words available. "Edit" and "Save", not
-     * "Update record" or "Amend details": the person using this is at a counter
-     * with somebody waiting.
-     */
-    edit: 'Edit',
-    save: 'Save',
-    saving: 'Saving…',
-    cancel: 'Cancel',
-    namePlaceholder: 'Name',
-    phonePlaceholder: '10-digit mobile',
-    saveFailed: 'Could not save. Try again.',
-    kicker: 'Client',
-    totalSpent: 'Total spent',
-    totalVisits: 'Visits',
-    insight: 'What we know',
-    rows: {
-      visits: 'Visits',
-      spent: 'Total spent',
-      avgSpend: 'Average spend',
-      lastVisit: 'Last in',
-      favourite: 'Usual service',
-      topProvider: 'Usually sees',
-      interval: 'Comes every',
-      cancelRate: 'Calls off',
-      since: 'Client since',
-      nextVisit: 'Due back',
-    },
-    recent: 'Last few visits',
-    // "0 days ago" is not something anyone says.
-    daysAgo: (n: number) => (n === 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`),
-    days: (n: number) => (n === 1 ? '1 day' : `${n} days`),
-    dueIn: (n: number) => (n === 1 ? 'tomorrow' : `in about ${n} days`),
-    dueNow: 'due now',
-    overdue: (n: number) => (n === 1 ? '1 day late' : `${n} days late`),
-    notEnough: 'not enough visits yet',
-    neverIn: 'never been in',
-    call: 'Call',
-    viewBookings: 'See bookings',
-    close: 'Close',
-    loadFailed: 'Could not load this client.',
-    noPhone: 'no number saved',
-  },
+  // clientCard: moved to messages/*.json (lib/use-copy.ts).
 
 } as const;

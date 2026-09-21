@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { copy } from '../lib/copy';
+import en from '../../../messages/en.json';
 
 /**
  * Jira GRW-289 — two Record payment defects at the till, read from source.
@@ -23,7 +23,7 @@ describe('a till that cannot open says so in our words, not the browser’s', ()
 
   it('shows the API’s own sentence only for an answered, explained refusal; otherwise tillFailed', () => {
     expect(openCheckout).toMatch(
-      /error instanceof ApiError && error\.status < 500 && error\.code \? error\.message : copy\.newVisit\.tillFailed/,
+      /error instanceof ApiError && error\.status < 500 && error\.code \? error\.message : nv\.tillFailed/,
     );
   });
 });
@@ -38,7 +38,7 @@ describe('closing the till without saving does not pass for paid', () => {
 
   it('Record payment: Cancel, close or backdrop returns to the done screen with the unpaid notice', () => {
     expect(sheet).toMatch(/if \(forPayment\) setTillClosedUnpaid\(true\);\s*else onClose\(\);/);
-    expect(sheet).toMatch(/tillClosedUnpaid && <div[^>]*>\{copy\.newVisit\.notPaidYet\}<\/div>/);
+    expect(sheet).toMatch(/tillClosedUnpaid && <div[^>]*>\{nv\.notPaidYet\}<\/div>/);
   });
 
   it('a save still closes everything', () => {
@@ -50,8 +50,8 @@ describe('closing the till without saving does not pass for paid', () => {
   });
 
   it('the notice is plain: saved, not paid, and where to pay', () => {
-    expect(copy.newVisit.notPaidYet).toMatch(/saved/);
-    expect(copy.newVisit.notPaidYet).toMatch(/not paid/);
-    expect(copy.newVisit.notPaidYet).toMatch(/Bookings/);
+    expect(en.newVisit.notPaidYet).toMatch(/saved/);
+    expect(en.newVisit.notPaidYet).toMatch(/not paid/);
+    expect(en.newVisit.notPaidYet).toMatch(/Bookings/);
   });
 });

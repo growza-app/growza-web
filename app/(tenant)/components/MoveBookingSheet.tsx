@@ -1,5 +1,6 @@
 'use client';
 
+import { useMoveCopy, useNewVisitCopy } from '../lib/use-copy';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,7 +11,6 @@ import {
   type AvailabilityResponse,
   type Provider,
 } from '../lib/api';
-import { copy } from '../lib/copy';
 import { zonedDateTimeToUtc } from '../lib/zoned-time';
 import { useLabel } from './LabelsProvider';
 import { IconClose } from './icons';
@@ -56,6 +56,8 @@ export function MoveBookingSheet({
   onClose: () => void;
   onMoved: () => void;
 }) {
+  const mv = useMoveCopy();
+  const nv = useNewVisitCopy();
   const tc = useTranslations('chrome');
   const router = useRouter();
   const providerNoun = useLabel('provider', 'Staff member');
@@ -106,7 +108,7 @@ export function MoveBookingSheet({
       const d = new Date();
       d.setHours(12, 0, 0, 0);
       d.setDate(d.getDate() + i);
-      return { iso: iso.format(d), label: i === 0 ? copy.newVisit.today : label.format(d) };
+      return { iso: iso.format(d), label: i === 0 ? nv.today : label.format(d) };
     });
   }, [timezone]);
 
@@ -219,7 +221,7 @@ export function MoveBookingSheet({
     );
     if (!hit) return null;
     const who = providers.find((p) => p.id === targetProviderId)?.displayName;
-    return who ? copy.move.clash(who) : copy.move.clashUnknown;
+    return who ? mv.clash(who) : mv.clashUnknown;
   }, [chosenStart, targetProviderId, spanMin, dayBookings, legs, providers]);
 
   const save = async () => {
@@ -234,7 +236,7 @@ export function MoveBookingSheet({
       router.refresh();
       onMoved();
     } catch (e) {
-      setError(e instanceof Error && e.message ? e.message : copy.move.failed);
+      setError(e instanceof Error && e.message ? e.message : mv.failed);
       setBusy(false);
     }
   };
@@ -242,17 +244,17 @@ export function MoveBookingSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />
-      <div className="sheet move-sheet" role="dialog" aria-modal="true" aria-label={copy.move.title} ref={dialogRef}>
+      <div className="sheet move-sheet" role="dialog" aria-modal="true" aria-label={mv.title} ref={dialogRef}>
         <div className="sheet-grab" />
 
         <div className="sheet-head">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sheet-title">{copy.move.title}</div>
+            <div className="sheet-title">{mv.title}</div>
             <div className="sheet-sub">
               {appointment.customerName ?? tc('unknown')} · {formatTime(appointment.startAt, timezone)}
             </div>
           </div>
-          <button type="button" className="wi-close" aria-label={copy.newVisit.close} onClick={onClose} disabled={busy}>
+          <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
             <IconClose />
           </button>
         </div>
@@ -260,7 +262,7 @@ export function MoveBookingSheet({
         <div className="wi-body">
           {error && <div role="alert" className="wi-error">{error}</div>}
 
-          <div className="wi-section-label">{copy.move.whichDay}</div>
+          <div className="wi-section-label">{mv.whichDay}</div>
           <div className="wi-chips mv-days">
             {days.map((d) => (
               <button
@@ -275,11 +277,11 @@ export function MoveBookingSheet({
             ))}
           </div>
 
-          <div className="wi-section-label">{copy.move.whichTime}</div>
+          <div className="wi-section-label">{mv.whichTime}</div>
           {loadingSlots ? (
-            <div className="empty">{copy.move.loadingTimes}</div>
+            <div className="empty">{mv.loadingTimes}</div>
           ) : !slots || slots.slotCount === 0 ? (
-            <div className="empty">{copy.move.noTimes}</div>
+            <div className="empty">{mv.noTimes}</div>
           ) : (
             <div className="wi-slot-grid">
               {slots.sections.flatMap((sec) =>
@@ -305,24 +307,24 @@ export function MoveBookingSheet({
             The escape hatch, and the reason this sheet is not just the free-times
             screen in a drawer. See the note at the top of the file.
           */}
-          <div className="wi-section-label">{copy.move.anotherTime}</div>
+          <div className="wi-section-label">{mv.anotherTime}</div>
           <div className="mv-any-time">
             <input
               type="time"
               value={customTime}
               disabled={busy}
-              aria-label={copy.move.anotherTime}
+              aria-label={mv.anotherTime}
               onChange={(e) => {
                 setCustomTime(e.target.value);
                 setSlotUtc(null);
               }}
             />
-            <span className="mv-any-hint">{copy.move.anotherTimeHint}</span>
+            <span className="mv-any-hint">{mv.anotherTimeHint}</span>
           </div>
 
           {providers.length > 0 && (
             <>
-              <div className="wi-section-label">{copy.move.withWhom(providerNoun.toLowerCase())}</div>
+              <div className="wi-section-label">{mv.withWhom(providerNoun.toLowerCase())}</div>
               <div className="wi-chips">
                 <button
                   type="button"
@@ -330,7 +332,7 @@ export function MoveBookingSheet({
                   disabled={busy}
                   onClick={() => setProviderId(null)}
                 >
-                  {copy.move.keepStylist}
+                  {mv.keepStylist}
                 </button>
                 {providers.map((p) => (
                   <button
@@ -351,10 +353,10 @@ export function MoveBookingSheet({
 
           <div className="modal-actions wi-actions">
             <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-              {copy.move.back}
+              {mv.back}
             </button>
             <button type="button" className="btn" disabled={busy || !chosenStart} onClick={() => void save()}>
-              {busy ? copy.move.saving : clash ? copy.move.confirmAnyway : copy.move.confirm}
+              {busy ? mv.saving : clash ? mv.confirmAnyway : mv.confirm}
             </button>
           </div>
         </div>

@@ -22,6 +22,7 @@ function newAttemptKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+import { useNewVisitCopy } from '../lib/use-copy';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -40,7 +41,6 @@ import {
   type Provider,
   type Service,
 } from '../lib/api';
-import { copy } from '../lib/copy';
 import { useLabel } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { PhoneField } from './PhoneField';
@@ -202,6 +202,8 @@ export function NewVisitSheet({
    */
   presentation?: 'sheet' | 'page';
 }) {
+  const tmin = useTranslations('services');
+  const nv = useNewVisitCopy();
   /*
    * The mode is a control, not only a prop.
    *
@@ -601,7 +603,7 @@ export function NewVisitSheet({
       const d = new Date();
       d.setHours(12, 0, 0, 0);
       d.setDate(d.getDate() + i);
-      return { iso: fmt.format(d), label: i === 0 ? copy.newVisit.today : label.format(d) };
+      return { iso: fmt.format(d), label: i === 0 ? nv.today : label.format(d) };
     });
   }, [timezone]);
 
@@ -729,7 +731,7 @@ export function NewVisitSheet({
        * receptionist to Bookings, where the whole visit is visible and
        * settleable.
        */
-      if (rows.length !== result.legIds.length) throw new Error(copy.newVisit.tillFailed);
+      if (rows.length !== result.legIds.length) throw new Error(nv.tillFailed);
       setCheckoutRows(rows);
     } catch (error) {
       /*
@@ -744,7 +746,7 @@ export function NewVisitSheet({
        * so it lands here too.
        */
       setCheckoutError(
-        error instanceof ApiError && error.status < 500 && error.code ? error.message : copy.newVisit.tillFailed,
+        error instanceof ApiError && error.status < 500 && error.code ? error.message : nv.tillFailed,
       );
     } finally {
       setLoadingCheckout(false);
@@ -788,7 +790,7 @@ export function NewVisitSheet({
     const amounts = picked.map((item) => rupeesToMinor(item.paidRupees) ?? 0);
     const [first, ...rest] = visit.legIds;
     if (!first || visit.legIds.length !== amounts.length) {
-      setStage({ step: 'error', client, message: copy.newVisit.paymentNotSaved });
+      setStage({ step: 'error', client, message: nv.paymentNotSaved });
       return;
     }
     /*
@@ -820,7 +822,7 @@ export function NewVisitSheet({
         setStage({
           step: 'error',
           client,
-          message: error instanceof ApiError && error.status < 500 ? error.message : copy.newVisit.paymentNotSaved,
+          message: error instanceof ApiError && error.status < 500 ? error.message : nv.paymentNotSaved,
         });
         return;
       }
@@ -852,7 +854,7 @@ export function NewVisitSheet({
       router.refresh();
       setStage({ step: 'queued', client, tokenNo: entry.tokenNo });
     } catch (error) {
-      setStage({ step: 'error', client, message: error instanceof ApiError ? error.message : copy.newVisit.saveUnknown });
+      setStage({ step: 'error', client, message: error instanceof ApiError ? error.message : nv.saveUnknown });
     }
   };
 
@@ -1002,13 +1004,13 @@ export function NewVisitSheet({
         setSlots(null);
         setStage({ step: 'when', client });
         setCheckoutError(null);
-        setSlotError(copy.newVisit.slotTaken);
+        setSlotError(nv.slotTaken);
         return;
       }
       setStage({
         step: 'error',
         client,
-        message: error instanceof ApiError ? error.message : copy.newVisit.saveUnknown,
+        message: error instanceof ApiError ? error.message : nv.saveUnknown,
       });
     }
   };
@@ -1056,13 +1058,13 @@ export function NewVisitSheet({
   const linesLocked = forPayment && savedVisit !== null;
   const headSub =
     stage.step === 'client'
-      ? copy.newVisit.whoIsThis(clientNoun.toLowerCase())
+      ? nv.whoIsThis(clientNoun.toLowerCase())
       : stage.step === 'newClient'
-        ? copy.newVisit.addNew
+        ? nv.addNew
         : clientName(stage.client);
 
   const asPage = presentation === 'page';
-  const sheetTitle = forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title;
+  const sheetTitle = forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title;
 
   return (
     <>
@@ -1072,7 +1074,7 @@ export function NewVisitSheet({
         role={asPage ? undefined : 'dialog'}
         aria-modal={asPage ? undefined : true}
         ref={sheetRef}
-        aria-label={asPage ? undefined : forPayment ? copy.newVisit.paymentTitle : later ? copy.newVisit.laterTitle : copy.newVisit.title}
+        aria-label={asPage ? undefined : forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title}
       >
         {!asPage && <div className="sheet-grab" />}
 
@@ -1082,7 +1084,7 @@ export function NewVisitSheet({
             {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
             <div className="sheet-sub">{headSub}</div>
           </div>
-          <button type="button" className="wi-close" aria-label={copy.newVisit.close} onClick={onClose} disabled={busy}>
+          <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
             <IconClose />
           </button>
         </div>
@@ -1096,7 +1098,7 @@ export function NewVisitSheet({
           <div
             className="wi-segmented"
             role="tablist"
-            aria-label={copy.newVisit.modeLabel}
+            aria-label={nv.modeLabel}
             onKeyDown={(e) => {
               // WAI-ARIA Tabs pattern — a screen-reader user is told "use
               // arrow keys" the moment AT announces role="tab", so the
@@ -1118,7 +1120,7 @@ export function NewVisitSheet({
               className={!later ? 'is-on' : ''}
               onClick={() => setMode('now')}
             >
-              {copy.newVisit.modeNow}
+              {nv.modeNow}
             </button>
             <button
               type="button"
@@ -1128,7 +1130,7 @@ export function NewVisitSheet({
               className={later ? 'is-on' : ''}
               onClick={() => setMode('later')}
             >
-              {copy.newVisit.modeLater}
+              {nv.modeLater}
             </button>
           </div>
         )}
@@ -1143,14 +1145,14 @@ export function NewVisitSheet({
               <input
                 type="search"
                 className="wi-search-input"
-                placeholder={copy.newVisit.searchPlaceholder}
-                aria-label={copy.newVisit.searchPlaceholder}
+                placeholder={nv.searchPlaceholder}
+                aria-label={nv.searchPlaceholder}
                 value={term}
                 autoFocus
                 onChange={(e) => setTerm(e.target.value)}
               />
               {term !== '' && (
-                <button type="button" className="search-clear-btn" onClick={() => setTerm('')} aria-label={copy.newVisit.clear}>
+                <button type="button" className="search-clear-btn" onClick={() => setTerm('')} aria-label={nv.clear}>
                   ✕
                 </button>
               )}
@@ -1168,13 +1170,13 @@ export function NewVisitSheet({
                     }
                   >
                     <span>
-                      <span className="picker-row-name">{c.name?.trim() || copy.newVisit.noName}</span>
-                      <span className="picker-row-meta"> · {c.waPhone ?? copy.newVisit.noNumber}</span>
+                      <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
+                      <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
                     </span>
-                    <span className="picker-row-meta">{copy.newVisit.visits(c.totalBookings)}</span>
+                    <span className="picker-row-meta">{nv.visits(c.totalBookings)}</span>
                   </button>
                 ))}
-                {!searching && results.length === 0 && <div className="empty">{copy.newVisit.noMatch}</div>}
+                {!searching && results.length === 0 && <div className="empty">{nv.noMatch}</div>}
               </div>
             ) : (
               /*
@@ -1183,7 +1185,7 @@ export function NewVisitSheet({
                * duplicate this onClick either way), just a different source list.
                */
               <>
-                <h2 className="wi-section-label">{copy.newVisit.recentCustomers}</h2>
+                <h2 className="wi-section-label">{nv.recentCustomers}</h2>
                 <div className="picker-results">
                   {(recent ?? []).map((c) => (
                     <button
@@ -1195,14 +1197,14 @@ export function NewVisitSheet({
                       }
                     >
                       <span>
-                        <span className="picker-row-name">{c.name?.trim() || copy.newVisit.noName}</span>
-                        <span className="picker-row-meta"> · {c.waPhone ?? copy.newVisit.noNumber}</span>
+                        <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
+                        <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
                       </span>
-                      <span className="picker-row-meta">{copy.newVisit.visits(c.totalBookings)}</span>
+                      <span className="picker-row-meta">{nv.visits(c.totalBookings)}</span>
                     </button>
                   ))}
-                  {recent === null && <div className="empty">{copy.newVisit.loadingCustomers}</div>}
-                  {recent !== null && recent.length === 0 && <div className="empty">{copy.newVisit.noCustomersYet}</div>}
+                  {recent === null && <div className="empty">{nv.loadingCustomers}</div>}
+                  {recent !== null && recent.length === 0 && <div className="empty">{nv.noCustomersYet}</div>}
                 </div>
               </>
             )}
@@ -1220,7 +1222,7 @@ export function NewVisitSheet({
               }}
             >
               <IconUserPlus />
-              {copy.newVisit.addNew}
+              {nv.addNew}
             </button>
           </div>
         )}
@@ -1229,20 +1231,20 @@ export function NewVisitSheet({
         {stage.step === 'newClient' && (
           <div className="wi-body" id="wi-client-panel">
             <div className="field">
-              <label htmlFor="wi-name">{copy.newVisit.nameRequired}</label>
+              <label htmlFor="wi-name">{nv.nameRequired}</label>
               <input
                 id="wi-name"
                 type="text"
                 autoFocus
                 className={nameError ? 'field-invalid' : undefined}
                 value={newName}
-                placeholder={copy.newVisit.namePlaceholder}
+                placeholder={nv.namePlaceholder}
                 onChange={(e) => {
                   setNewName(e.target.value);
                   if (nameError) setNameError(false);
                 }}
               />
-              {nameError && <div role="alert" className="field-error">{copy.newVisit.nameMissing}</div>}
+              {nameError && <div role="alert" className="field-error">{nv.nameMissing}</div>}
             </div>
 
             {/*
@@ -1254,7 +1256,7 @@ export function NewVisitSheet({
             */}
             <PhoneField
               id="wi-phone"
-              label={copy.newVisit.phoneRequired}
+              label={nv.phoneRequired}
               required={later}
               value={newPhone}
               onChange={(v) => {
@@ -1262,12 +1264,12 @@ export function NewVisitSheet({
                 if (phoneError) setPhoneError(null);
               }}
               error={phoneError}
-              hint={later ? copy.newVisit.phoneWhyLater : copy.newVisit.phoneWhy}
+              hint={later ? nv.phoneWhyLater : nv.phoneWhy}
             />
 
             <div className="modal-actions wi-actions">
               <button type="button" className="btn btn-ghost" onClick={() => setStage({ step: 'client' })}>
-                {copy.newVisit.back}
+                {nv.back}
               </button>
               <button
                 type="button"
@@ -1293,7 +1295,7 @@ export function NewVisitSheet({
                   });
                 }}
               >
-                {copy.newVisit.useThisPerson}
+                {nv.useThisPerson}
               </button>
             </div>
           </div>
@@ -1326,7 +1328,7 @@ export function NewVisitSheet({
             {/* Chosen list first — it is the answer being assembled. */}
             {(picked.length > 0 || extras.length > 0) && (
               <>
-                <h2 className="wi-section-label">{copy.newVisit.picked}</h2>
+                <h2 className="wi-section-label">{nv.picked}</h2>
                 <div className="wi-picked">
                   {comboActive ? (
                     /*
@@ -1339,18 +1341,18 @@ export function NewVisitSheet({
                     <div className="wi-picked-row wi-picked-combo">
                       <span className="wi-picked-name">
                         {comboTitle}
-                        <span className="wi-combo-tag">{copy.newVisit.combo}</span>
+                        <span className="wi-combo-tag">{nv.combo}</span>
                       </span>
                       <span className="wi-combo-figures">
                         <span className="wi-combo-list">{formatMoney(String(comboListMinor))}</span>
-                        <span className="wi-combo-save">{copy.newVisit.comboSaves(formatMoney(String(comboSavingMinor)))}</span>
+                        <span className="wi-combo-save">{nv.comboSaves(formatMoney(String(comboSavingMinor)))}</span>
                         {forPayment ? (
                           <label className="wi-amount">
                             <span aria-hidden>₹</span>
                             <input
                               type="text"
                               inputMode="decimal"
-                              aria-label={copy.newVisit.amountFor(comboTitle ?? copy.newVisit.combo)}
+                              aria-label={nv.amountFor(comboTitle ?? nv.combo)}
                               aria-invalid={rupeesToMinor(comboAmountText) === null}
                               value={comboAmountText}
                               onChange={(e) => setComboAmount(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -1364,7 +1366,7 @@ export function NewVisitSheet({
                       <button
                         type="button"
                         className="wi-remove"
-                        aria-label={`${copy.newVisit.removeService} ${comboTitle ?? copy.newVisit.combo}`}
+                        aria-label={`${nv.removeService} ${comboTitle ?? nv.combo}`}
                         onClick={removeCombo}
                         disabled={busy || linesLocked}
                       >
@@ -1390,7 +1392,7 @@ export function NewVisitSheet({
                           <input
                             type="text"
                             inputMode="decimal"
-                            aria-label={copy.newVisit.amountFor(item.name)}
+                            aria-label={nv.amountFor(item.name)}
                             aria-invalid={rupeesToMinor(item.paidRupees) === null}
                             value={item.paidRupees ?? ''}
                             onChange={(e) => setExtraAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
@@ -1398,12 +1400,12 @@ export function NewVisitSheet({
                           />
                         </label>
                       ) : (
-                        <span className="picker-row-meta">{copy.services.minutes(item.durationMin)}</span>
+                        <span className="picker-row-meta">{tmin('minutes', { count: item.durationMin })}</span>
                       )}
                       <button
                         type="button"
                         className="wi-remove"
-                        aria-label={`${copy.newVisit.removeService} ${item.name}`}
+                        aria-label={`${nv.removeService} ${item.name}`}
                         onClick={() => removeExtraAt(i)}
                         disabled={busy || linesLocked}
                       >
@@ -1418,7 +1420,7 @@ export function NewVisitSheet({
                    */}
                   {comboActive && extras.length > 0 && (
                     <div className="wi-picked-total">
-                      <span>{copy.newVisit.total}</span>
+                      <span>{nv.total}</span>
                       <strong>{formatMoney(String(comboWithExtrasTotalMinor))}</strong>
                     </div>
                   )}
@@ -1433,7 +1435,7 @@ export function NewVisitSheet({
                               <input
                                 type="text"
                                 inputMode="decimal"
-                                aria-label={copy.newVisit.amountFor(item.name)}
+                                aria-label={nv.amountFor(item.name)}
                                 aria-invalid={rupeesToMinor(item.paidRupees) === null}
                                 value={item.paidRupees ?? ''}
                                 onChange={(e) => setAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
@@ -1441,12 +1443,12 @@ export function NewVisitSheet({
                               />
                             </label>
                           ) : (
-                            <span className="picker-row-meta">{copy.services.minutes(item.durationMin)}</span>
+                            <span className="picker-row-meta">{tmin('minutes', { count: item.durationMin })}</span>
                           )}
                           <button
                             type="button"
                             className="wi-remove"
-                            aria-label={`${copy.newVisit.removeService} ${item.name}`}
+                            aria-label={`${nv.removeService} ${item.name}`}
                             onClick={() => removeAt(i)}
                             disabled={busy || linesLocked}
                           >
@@ -1455,7 +1457,7 @@ export function NewVisitSheet({
                         </div>
                       ))}
                       <div className="wi-picked-total">
-                        <span>{copy.newVisit.total}</span>
+                        <span>{nv.total}</span>
                         <strong>{formatMoney(forPayment ? String(paidTotalMinor) : totalMinor(picked, comboPriceMinor))}</strong>
                       </div>
                     </>
@@ -1465,14 +1467,14 @@ export function NewVisitSheet({
             )}
 
             <h2 className="wi-section-label">
-              {picked.length > 0 ? copy.newVisit.addMore : copy.newVisit.whichService}
+              {picked.length > 0 ? nv.addMore : nv.whichService}
             </h2>
             <div className="picker-search">
               <input
                 type="search"
                 className="wi-search-input wi-search-input-plain"
-                placeholder={services === null ? copy.newVisit.loadingServices : copy.newVisit.searchServices(services.length)}
-                aria-label={picked.length > 0 ? copy.newVisit.addMore : copy.newVisit.whichService}
+                placeholder={services === null ? nv.loadingServices : nv.searchServices(services.length)}
+                aria-label={picked.length > 0 ? nv.addMore : nv.whichService}
                 value={serviceTerm}
                 onChange={(e) => setServiceTerm(e.target.value)}
                 disabled={busy || linesLocked}
@@ -1488,10 +1490,10 @@ export function NewVisitSheet({
                   disabled={busy || linesLocked}
                 >
                   <span className="picker-row-name">
-                    {o.title} <span className="wi-combo-tag">{copy.newVisit.combo}</span>
+                    {o.title} <span className="wi-combo-tag">{nv.combo}</span>
                   </span>
                   <span className="picker-row-meta">
-                    {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : copy.newVisit.comboServices(o.serviceIds.length)}
+                    {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}
                   </span>
                 </button>
               ))}
@@ -1505,17 +1507,17 @@ export function NewVisitSheet({
                 >
                   <span className="picker-row-name">{s.name}</span>
                   <span className="picker-row-meta">
-                    {copy.services.minutes(s.durationMin)} · {formatMoney(s.priceMinor)}
+                    {tmin('minutes', { count: s.durationMin })} · {formatMoney(s.priceMinor)}
                   </span>
                 </button>
               ))}
               {services === null ? (
-                <div className="empty">{copy.newVisit.loadingServices}</div>
+                <div className="empty">{nv.loadingServices}</div>
               ) : services.length === 0 ? (
-                <div className="empty">{copy.newVisit.noServicesYet}</div>
+                <div className="empty">{nv.noServicesYet}</div>
               ) : (
                 filteredServices.length === 0 &&
-                matchingCombos.length === 0 && <div className="empty">{copy.newVisit.noServiceMatch}</div>
+                matchingCombos.length === 0 && <div className="empty">{nv.noServiceMatch}</div>
               )}
             </div>
 
@@ -1523,7 +1525,7 @@ export function NewVisitSheet({
                 combo is priced as a unit, so half of one is not a thing. */}
             {combos.length > 0 && serviceTerm.trim() === '' && (
               <>
-                <h2 className="wi-section-label">{copy.newVisit.combos}</h2>
+                <h2 className="wi-section-label">{nv.combos}</h2>
                 <div className="wi-chips">
                   {combos.map((o) => (
                     <button
@@ -1537,7 +1539,7 @@ export function NewVisitSheet({
                       <span className="wi-chip-meta">
                         {o.comboPriceMinor
                           ? formatMoney(o.comboPriceMinor)
-                          : copy.newVisit.comboServices(o.serviceIds.length)}
+                          : nv.comboServices(o.serviceIds.length)}
                       </span>
                     </button>
                   ))}
@@ -1547,8 +1549,8 @@ export function NewVisitSheet({
 
             {branches.length > 1 ? (
               <>
-                <h2 className="wi-section-label">{copy.newVisit.whichBranch}</h2>
-                <div className="wi-chips" role="radiogroup" aria-label={copy.newVisit.whichBranch}>
+                <h2 className="wi-section-label">{nv.whichBranch}</h2>
+                <div className="wi-chips" role="radiogroup" aria-label={nv.whichBranch}>
                   {branches.map((b, i) => (
                     <button
                       key={b.id}
@@ -1571,7 +1573,7 @@ export function NewVisitSheet({
               </>
             ) : null}
 
-            <h2 className="wi-section-label">{copy.newVisit.withWhom(providerNoun.toLowerCase())}</h2>
+            <h2 className="wi-section-label">{nv.withWhom(providerNoun.toLowerCase())}</h2>
             {/*
               GRW-198 — chairs, not a list of names.
               The receptionist's question is "who can take this person", and a
@@ -1581,7 +1583,7 @@ export function NewVisitSheet({
               rather than in a banner afterwards. Only for a walk-in — "later"
               is about a day that has not happened.
             */}
-            <div className="wi-chair-list" role="group" aria-label={copy.newVisit.withWhom(providerNoun.toLowerCase())}>
+            <div className="wi-chair-list" role="group" aria-label={nv.withWhom(providerNoun.toLowerCase())}>
               {/*
                 Jira GRW-293 (epic GRW-283) — "No stylist", Record payment
                 only. `noStylist` and `schedulableId === null` used to mean
@@ -1602,7 +1604,7 @@ export function NewVisitSheet({
                   }}
                   disabled={busy || linesLocked}
                 >
-                  <span className="wi-chair-name">{copy.newVisit.noStylist}</span>
+                  <span className="wi-chair-name">{nv.noStylist}</span>
                 </button>
               )}
 
@@ -1617,9 +1619,9 @@ export function NewVisitSheet({
                 }}
                 disabled={busy || linesLocked}
               >
-                <span className="wi-chair-name">{copy.newVisit.whoeverIsFree}</span>
+                <span className="wi-chair-name">{nv.whoeverIsFree}</span>
                 {!later && freeCount !== null && (
-                  <span className="wi-chair-state">{copy.newVisit.freeCount(freeCount)}</span>
+                  <span className="wi-chair-state">{nv.freeCount(freeCount)}</span>
                 )}
               </button>
 
@@ -1643,9 +1645,9 @@ export function NewVisitSheet({
                       {chair && (
                         <span className={`wi-chair-state ${chair.free ? 'is-free' : 'is-busy'}`}>
                           {chair.free
-                            ? copy.newVisit.chairFree
-                            : copy.newVisit.chairBusy(
-                                chair.occupant?.customerName ?? copy.newVisit.someone,
+                            ? nv.chairFree
+                            : nv.chairBusy(
+                                chair.occupant?.customerName ?? nv.someone,
                                 formatTime(chair.occupant!.freesAt, timezone),
                               )}
                         </span>
@@ -1669,9 +1671,9 @@ export function NewVisitSheet({
                         disabled={busy || linesLocked}
                       >
                         {reclaim === chair.occupant.appointmentId
-                          ? copy.newVisit.reclaimOn(chair.occupant.customerName ?? copy.newVisit.someone)
-                          : copy.newVisit.reclaimOffer(
-                              chair.occupant.customerName ?? copy.newVisit.someone,
+                          ? nv.reclaimOn(chair.occupant.customerName ?? nv.someone)
+                          : nv.reclaimOffer(
+                              chair.occupant.customerName ?? nv.someone,
                               chair.occupant.startedMinAgo,
                             )}
                       </button>
@@ -1682,7 +1684,7 @@ export function NewVisitSheet({
             </div>
 
             {picked.length > 0 && !later && !forPayment && (
-              <div className="wi-summary">{copy.newVisit.startsNow(totalMinutes([...picked, ...extras]))}</div>
+              <div className="wi-summary">{nv.startsNow(totalMinutes([...picked, ...extras]))}</div>
             )}
 
             <div className={`modal-actions wi-actions ${forPayment ? 'wi-pay-actions' : ''}`}>
@@ -1693,8 +1695,8 @@ export function NewVisitSheet({
                 goes with Mark done has to be on screen with Mark done.
               */}
               {forPayment && (
-                <div className="wi-pay-modes" role="radiogroup" aria-label={copy.newVisit.howPaid}>
-                  <span className="wi-pay-modes-label">{copy.newVisit.howPaid}</span>
+                <div className="wi-pay-modes" role="radiogroup" aria-label={nv.howPaid}>
+                  <span className="wi-pay-modes-label">{nv.howPaid}</span>
                   <div className="wi-chips">
                     {PAYMENT_MODES.map((m) => (
                       <button
@@ -1718,7 +1720,7 @@ export function NewVisitSheet({
                 onClick={() => setStage({ step: 'client' })}
                 disabled={busy || linesLocked}
               >
-                {copy.newVisit.back}
+                {nv.back}
               </button>
               {!later && !reclaim && !forPayment && (
                 <button
@@ -1727,7 +1729,7 @@ export function NewVisitSheet({
                   onClick={() => void queueIt(stage.client)}
                   disabled={busy || linesLocked}
                 >
-                  {copy.newVisit.addToQueue}
+                  {nv.addToQueue}
                 </button>
               )}
               <button
@@ -1738,7 +1740,7 @@ export function NewVisitSheet({
                 }
                 disabled={busy || picked.length === 0 || (forPayment && !amountsValid)}
               >
-                {busy ? copy.newVisit.saving : later ? copy.newVisit.next : forPayment ? copy.newVisit.markDone : copy.newVisit.start}
+                {busy ? nv.saving : later ? nv.next : forPayment ? nv.markDone : nv.start}
               </button>
             </div>
           </div>
@@ -1748,8 +1750,8 @@ export function NewVisitSheet({
         {stage.step === 'when' && (
           <div className="wi-body">
             {slotError && <div role="alert" className="wi-error">{slotError}</div>}
-            <h2 className="wi-section-label">{copy.newVisit.whichDay}</h2>
-            <div className="wi-chips" role="group" aria-label={copy.newVisit.whichDay}>
+            <h2 className="wi-section-label">{nv.whichDay}</h2>
+            <div className="wi-chips" role="group" aria-label={nv.whichDay}>
               {days.map((d) => (
                 <button
                   key={d.iso}
@@ -1763,12 +1765,12 @@ export function NewVisitSheet({
               ))}
             </div>
 
-            <h2 className="wi-section-label">{copy.newVisit.whichTime}</h2>
+            <h2 className="wi-section-label">{nv.whichTime}</h2>
             {loadingSlots ? (
-              <div className="empty">{copy.newVisit.loadingTimes}</div>
+              <div className="empty">{nv.loadingTimes}</div>
             ) : !slots || slots.slotCount === 0 ? (
               <div className="empty" id="wi-no-times">
-                {copy.newVisit.noTimes}
+                {nv.noTimes}
               </div>
             ) : (
               /*
@@ -1778,7 +1780,7 @@ export function NewVisitSheet({
                * columns that do not line up. Equal columns are easier to scan
                * and the whole point of this screen is scanning.
                */
-              <div className="wi-slot-grid" role="group" aria-label={copy.newVisit.whichTime}>
+              <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
                 {slots.sections.flatMap((sec) =>
                   sec.slots.map((slot) => (
                     <button
@@ -1797,7 +1799,7 @@ export function NewVisitSheet({
 
             {slotUtc && (
               <div className="wi-summary">
-                {picked.map((p) => p.name).join(' + ')} · {copy.services.minutes(totalMinutes(picked))}
+                {picked.map((p) => p.name).join(' + ')} · {tmin('minutes', { count: totalMinutes(picked) })}
               </div>
             )}
 
@@ -1807,7 +1809,7 @@ export function NewVisitSheet({
                 className="btn btn-ghost"
                 onClick={() => setStage({ step: 'details', client: stage.client })}
               >
-                {copy.newVisit.back}
+                {nv.back}
               </button>
               <button
                 type="button"
@@ -1816,7 +1818,7 @@ export function NewVisitSheet({
                 disabled={!slotUtc}
                 aria-describedby={!slots || slots.slotCount === 0 ? 'wi-no-times' : undefined}
               >
-                {copy.newVisit.bookIt}
+                {nv.bookIt}
               </button>
             </div>
           </div>
@@ -1828,14 +1830,14 @@ export function NewVisitSheet({
             <div className="wi-done">
               <IconCheck />
               <div>
-                <div className="wi-done-title">{stage.tokenNo ? copy.newVisit.token(stage.tokenNo) : copy.newVisit.queued}</div>
+                <div className="wi-done-title">{stage.tokenNo ? nv.token(stage.tokenNo) : nv.queued}</div>
                 <div className="wi-done-sub">
                   {[clientName(stage.client), picked.map((p) => p.name).join(' + ')].filter(Boolean).join(' · ')}
                 </div>
               </div>
             </div>
             <button type="button" className="sheet-item" onClick={onClose}>
-              {copy.newVisit.done}
+              {nv.done}
             </button>
           </div>
         )}
@@ -1847,7 +1849,7 @@ export function NewVisitSheet({
               <IconCheck />
               <div>
                 <div className="wi-done-title">
-                  {copy.newVisit.paid(
+                  {nv.paid(
                     formatMoney(String(stage.totalMinor)),
                     (PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode),
                   )}
@@ -1858,7 +1860,7 @@ export function NewVisitSheet({
               </div>
             </div>
             <button type="button" className="sheet-item" onClick={onClose}>
-              {copy.newVisit.done}
+              {nv.done}
             </button>
           </div>
         )}
@@ -1869,7 +1871,7 @@ export function NewVisitSheet({
             <div className="wi-done">
               <IconCheck />
               <div>
-                <div className="wi-done-title">{later ? copy.newVisit.booked : copy.newVisit.recorded}</div>
+                <div className="wi-done-title">{later ? nv.booked : nv.recorded}</div>
                 <div className="wi-done-sub">
                   {picked.map((p) => p.name).join(' + ')} ·{' '}
                   {providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? providerNoun}
@@ -1886,7 +1888,7 @@ export function NewVisitSheet({
             */}
             {stage.result.overlapping && (
               <div className="wi-overlap">
-                {copy.newVisit.overlap(
+                {nv.overlap(
                   providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? providerNoun,
                 )}
               </div>
@@ -1900,7 +1902,7 @@ export function NewVisitSheet({
             */}
             {!later && (
               <>
-                {tillClosedUnpaid && <div className="wi-overlap" role="status">{copy.newVisit.notPaidYet}</div>}
+                {tillClosedUnpaid && <div className="wi-overlap" role="status">{nv.notPaidYet}</div>}
                 {checkoutError && <div role="alert" className="wi-error">{checkoutError}</div>}
                 <button
                   type="button"
@@ -1908,12 +1910,12 @@ export function NewVisitSheet({
                   disabled={loadingCheckout}
                   onClick={() => void openCheckout(stage.result)}
                 >
-                  {loadingCheckout ? copy.newVisit.openingTill : copy.newVisit.takePayment}
+                  {loadingCheckout ? nv.openingTill : nv.takePayment}
                 </button>
               </>
             )}
             <button type="button" className="sheet-item" onClick={onClose}>
-              {copy.newVisit.done}
+              {nv.done}
             </button>
           </div>
         )}

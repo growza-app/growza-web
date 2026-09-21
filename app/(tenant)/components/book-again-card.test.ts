@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { copy } from '../lib/copy';
+import en from '../../../messages/en.json';
 
 /**
  * Jira GRW-341 — "Book again" on the details step.
@@ -33,7 +33,7 @@ describe('the Book again card', () => {
   });
 
   it('never claims "no free times" when the lookup itself failed', () => {
-    expect(card).toMatch(/times === 'failed' \? copy\.newVisit\.noTimes : copy\.newVisit\.bookAgainNoTimes/);
+    expect(card).toMatch(/times === 'failed' \? nv\.noTimes : nv\.bookAgainNoTimes/);
   });
 
   it('shows only for an existing client whose list is still empty — a filled-in list is not overwritten', () => {
@@ -59,9 +59,9 @@ describe('the Book again card', () => {
     expect(css).not.toMatch(/font-size:\s*(?:[0-9]|1[01])(?:\.\d+)?px/);
   });
 
-  it('has its words in copy.ts', () => {
-    expect(copy.newVisit.bookAgain).toBe('Book again');
-    expect(copy.newVisit.bookAgainLastVisit('11 Sept')).toBe('Last visit 11 Sept');
-    expect(copy.newVisit.bookAgainWithStaff('Ravi')).toBe('with Ravi');
+  it('has its words in the message file', () => {
+    expect(en.newVisit.bookAgain).toBe('Book again');
+    expect(en.newVisit.bookAgainLastVisit.replace('{day}', '11 Sept')).toBe('Last visit 11 Sept');
+    expect(en.newVisit.bookAgainWithStaff.replace('{name}', 'Ravi')).toBe('with Ravi');
   });
 });

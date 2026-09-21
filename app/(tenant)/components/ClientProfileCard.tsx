@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { api, formatMoney, type ClientProfile, type ClientProfileRow } from '../lib/api';
-import { copy } from '../lib/copy';
+import { useClientCardCopy } from '../lib/use-copy';
 import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -47,7 +47,7 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const c = copy.clientCard;
+  const c = useClientCardCopy();
   const router = useRouter();
 
   useEffect(() => {

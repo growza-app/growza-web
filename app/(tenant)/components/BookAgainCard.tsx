@@ -1,10 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useNewVisitCopy } from '../lib/use-copy';
 import { useEffect, useMemo, useState } from 'react';
 import { api, formatMoney } from '../lib/api';
 import type { AvailabilityResponse, Offer, Provider, Service } from '../lib/api-types';
 import { lastVisitOf, nextFreeTimes, type FreeTime } from '../lib/book-again';
-import { copy } from '../lib/copy';
 
 /** Jira GRW-341 — what "Book again" would fill in. */
 export interface BookAgainPlan {
@@ -57,6 +58,8 @@ export function BookAgainCard({
   onUse: (plan: BookAgainPlan, moveOn: boolean) => void;
   onPickTime: (plan: BookAgainPlan, time: FreeTime) => void;
 }) {
+  const tmin = useTranslations('services');
+  const nv = useNewVisitCopy();
   const [last, setLast] = useState<{ plan: BookAgainPlan; startAt: string } | null>(null);
   const [times, setTimes] = useState<FreeTime[] | 'loading' | 'failed'>('loading');
 
@@ -115,7 +118,7 @@ export function BookAgainCard({
   const dayName = useMemo(() => {
     const weekday = new Intl.DateTimeFormat('en-IN', { weekday: 'short', timeZone: timezone });
     return (day: string) =>
-      day === days[0] ? copy.newVisit.today : day === days[1] ? copy.newVisit.bookAgainTomorrow : weekday.format(new Date(`${day}T12:00:00Z`));
+      day === days[0] ? nv.today : day === days[1] ? nv.bookAgainTomorrow : weekday.format(new Date(`${day}T12:00:00Z`));
   }, [timezone, days]);
 
   if (!last) return null;
@@ -128,14 +131,14 @@ export function BookAgainCard({
   const staff = plan.providerId ? providers.find((p) => p.id === plan.providerId)?.displayName : null;
 
   return (
-    <section className="wi-again" aria-label={copy.newVisit.bookAgain}>
+    <section className="wi-again" aria-label={nv.bookAgain}>
       <div className="wi-again-top">
-        <h2 className="wi-again-title">{copy.newVisit.bookAgain}</h2>
-        <span className="wi-again-when">{copy.newVisit.bookAgainLastVisit(dayLabel(last.startAt))}</span>
+        <h2 className="wi-again-title">{nv.bookAgain}</h2>
+        <span className="wi-again-when">{nv.bookAgainLastVisit(dayLabel(last.startAt))}</span>
       </div>
       <div className="wi-again-what">{names}</div>
       <div className="wi-again-meta">
-        {[staff ? copy.newVisit.bookAgainWithStaff(staff) : copy.newVisit.bookAgainAnyone, copy.services.minutes(minutes), price ? formatMoney(price) : null]
+        {[staff ? nv.bookAgainWithStaff(staff) : nv.bookAgainAnyone, tmin('minutes', { count: minutes }), price ? formatMoney(price) : null]
           .filter(Boolean)
           .join(' · ')}
       </div>
@@ -144,15 +147,15 @@ export function BookAgainCard({
         <>
           {/* All on one day: say the day once, so the three times fit on one row of a small phone. */}
           <div className="wi-again-label">
-            {copy.newVisit.bookAgainTimes}
+            {nv.bookAgainTimes}
             {sameDay ? ` · ${dayName(times[0]!.day)}` : ''}
           </div>
           {times === 'loading' ? (
-            <div className="wi-again-note">{copy.newVisit.bookAgainFinding}</div>
+            <div className="wi-again-note">{nv.bookAgainFinding}</div>
           ) : times === 'failed' || times.length === 0 ? (
-            <div className="wi-again-note">{times === 'failed' ? copy.newVisit.noTimes : copy.newVisit.bookAgainNoTimes}</div>
+            <div className="wi-again-note">{times === 'failed' ? nv.noTimes : nv.bookAgainNoTimes}</div>
           ) : (
-            <div className="wi-again-times" role="group" aria-label={copy.newVisit.bookAgainTimes}>
+            <div className="wi-again-times" role="group" aria-label={nv.bookAgainTimes}>
               {times.map((t) => (
                 <button key={t.utc} type="button" className="wi-again-time" onClick={() => onPickTime(plan, t)}>
                   {sameDay ? t.local : `${dayName(t.day)} · ${t.local}`}
@@ -161,12 +164,12 @@ export function BookAgainCard({
             </div>
           )}
           <button type="button" className="wi-again-link" onClick={() => onUse(plan, true)}>
-            {copy.newVisit.bookAgainOtherTime}
+            {nv.bookAgainOtherTime}
           </button>
         </>
       ) : (
         <button type="button" className="btn wi-again-use" onClick={() => onUse(plan, false)}>
-          {copy.newVisit.bookAgainUse}
+          {nv.bookAgainUse}
         </button>
       )}
     </section>

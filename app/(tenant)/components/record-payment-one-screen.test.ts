@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { copy } from '../lib/copy';
+import en from '../../../messages/en.json';
 import { rupeesToMinor, splitComboRupees, type PickedItem } from './NewVisitSheet';
 
 /**
@@ -58,7 +58,7 @@ describe('FR-05 — one Mark done, no till', () => {
   });
 
   it('the button says Mark done and is disabled while an amount is unusable', () => {
-    expect(copy.newVisit.markDone).toBe('Mark done');
+    expect(en.newVisit.markDone).toBe('Mark done');
     // Jira GRW-297 — no longer also gated on comboBlocksSubmit; see combo-plus-extra.test.ts.
     expect(sheet).toMatch(/disabled=\{busy \|\| picked\.length === 0 \|\| \(forPayment && !amountsValid\)\}/);
   });
@@ -75,15 +75,15 @@ describe('AC-02 — a failed payment is retried against the same visit', () => {
   });
 
   it('otherwise says the visit is saved and the payment is not, in our words for a network failure', () => {
-    expect(payFor).toMatch(/error instanceof ApiError && error\.status < 500 \? error\.message : copy\.newVisit\.paymentNotSaved/);
-    expect(copy.newVisit.paymentNotSaved).toMatch(/saved/);
+    expect(payFor).toMatch(/error instanceof ApiError && error\.status < 500 \? error\.message : nv\.paymentNotSaved/);
+    expect(en.newVisit.paymentNotSaved).toMatch(/saved/);
   });
 });
 
 describe('AC-04 — an empty catalogue is not "Loading"', () => {
   it('says loading only while the list is null, and says there are none when it is empty', () => {
-    expect(copy.newVisit.searchServices(0)).not.toMatch(/Loading/);
-    expect(sheet).toMatch(/services === null \? copy\.newVisit\.loadingServices/);
-    expect(sheet).toMatch(/services\.length === 0 \? \(\s*<div className="empty">\{copy\.newVisit\.noServicesYet\}/);
+    expect(en.newVisit.searchServices).not.toMatch(/Loading/);
+    expect(sheet).toMatch(/services === null \? nv\.loadingServices/);
+    expect(sheet).toMatch(/services\.length === 0 \? \(\s*<div className="empty">\{nv\.noServicesYet\}/);
   });
 });

@@ -1,10 +1,10 @@
 'use client';
 
+import { useBookingCopy } from '../lib/use-copy';
 import { useTranslations } from 'next-intl';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatTime, type Appointment, type AppointmentStatus, type Offer, type Provider, type Service } from '../lib/api';
-import { copy } from '../lib/copy';
 import { formatDuration, summarizeServices } from '../lib/appointment-display';
 import { CheckoutSheet } from './CheckoutSheet';
 import { MoveBookingSheet } from './MoveBookingSheet';
@@ -84,6 +84,7 @@ export function BookingSheet({
    */
   canMove?: boolean;
 }) {
+  const bk = useBookingCopy();
   const tc = useTranslations('chrome');
   const tsh = useTranslations('chrome.sheet');
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -200,13 +201,13 @@ export function BookingSheet({
           <>
             <a className="sheet-item" href={`tel:${digits}`}>
               <IconPhone />
-              {copy.booking.call(appointment.customerName?.split(' ')[0] ?? 'customer')}
+              {bk.call(appointment.customerName?.split(' ')[0] ?? 'customer')}
               <span className="trail">{appointment.customerPhone}</span>
             </a>
 
             <a className="sheet-item" href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
               <IconWhatsApp />
-              {copy.booking.message}
+              {bk.message}
             </a>
           </>
         )}
@@ -215,7 +216,7 @@ export function BookingSheet({
           <>
             <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
               <IconCheck />
-              {copy.booking.markFinished}
+              {bk.markFinished}
             </button>
             <button
               type="button"
@@ -224,10 +225,10 @@ export function BookingSheet({
               onClick={() => setStatus('no_show')}
             >
               <IconClose />
-              {copy.booking.markMissed}
+              {bk.markMissed}
             </button>
             {/*
-              GRW-219 — the words `copy.booking.reschedule` has carried since
+              GRW-219 — the words `bk.reschedule` has carried since
               this sheet was written, finally attached to something. Above
               Cancel deliberately: moving is what a client usually wants when
               they ring, and the destructive action stays furthest from the
@@ -236,7 +237,7 @@ export function BookingSheet({
             {canMove && (
               <button type="button" className="sheet-item" disabled={busy} onClick={() => setMoving(true)}>
                 <IconMoveTime />
-                {copy.booking.reschedule}
+                {bk.reschedule}
               </button>
             )}
             <button
@@ -246,7 +247,7 @@ export function BookingSheet({
               onClick={() => setStatus('cancelled')}
             >
               <IconClose />
-              {copy.booking.cancel}
+              {bk.cancel}
             </button>
           </>
         )}

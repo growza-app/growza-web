@@ -20,7 +20,7 @@ describe('the walk-in sheet says only what its controls do', () => {
   });
 
   it('chairs, days and times are labelled groups of toggle buttons, not a radiogroup with no arrow keys', () => {
-    for (const label of ['copy.newVisit.withWhom(providerNoun.toLowerCase())', 'copy.newVisit.whichDay', 'copy.newVisit.whichTime']) {
+    for (const label of ['nv.withWhom(providerNoun.toLowerCase())', 'nv.whichDay', 'nv.whichTime']) {
       expect(sheet).toContain(`role="group" aria-label={${label}}`);
     }
     expect(sheet).toMatch(/aria-pressed=\{noStylist\}/);

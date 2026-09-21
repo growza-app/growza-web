@@ -10,7 +10,7 @@
  * missing from this list, so the mistake is caught in the pull request, not on an
  * owner's phone.
  */
-export const CLIENT_MESSAGES = ['attendance', 'bookings', 'branchScope', 'checkout', 'chrome', 'common', 'customers', 'errors', 'freeTimes', 'notifications', 'nouns', 'offers', 'phone', 'search', 'services', 'settingsBooking', 'settingsBranches', 'settingsHours', 'settingsHub', 'settingsProfile', 'settingsReminders', 'settingsReports', 'settingsTeam', 'staff', 'staffEdit', 'staffWizard', 'status', 'tryWhatsApp', 'weekdayHours'] as const;
+export const CLIENT_MESSAGES = ['attendance', 'bookings', 'branchScope', 'bookingSheet', 'checkout', 'chrome', 'clientCard', 'common', 'customers', 'errors', 'freeTimes', 'moveBooking', 'newVisit', 'notifications', 'nouns', 'offers', 'phone', 'search', 'services', 'settingsBooking', 'settingsBranches', 'settingsHours', 'settingsHub', 'settingsProfile', 'settingsReminders', 'settingsReports', 'settingsTeam', 'staff', 'staffEdit', 'staffWizard', 'status', 'tryWhatsApp', 'weekdayHours'] as const;
 
 /**
  * The sign-in pages `(auth)` have their own provider with only these groups:

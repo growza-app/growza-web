@@ -1,0 +1,188 @@
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+import { pickNoun } from './nouns';
+
+/**
+  * Jira GRW-362 — the New booking flow's words, in the owner's language.
+  *
+  * Each hook returns the same shape `copy.newVisit`, `copy.move`, `copy.booking` and
+  * `copy.clientCard` had, so a screen reads `nv.title` / `nv.visits(3)` exactly as before;
+  * the words come from the message files. Vertical nouns passed in (`client`, `provider`) are
+  * swapped for a generic word in other languages until vertical labels are translated (Story 5).
+  */
+
+export function useNewVisitCopy() {
+  const t = useTranslations('newVisit');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  return useMemo(() => ({
+    title: t('title'),
+    bookAgain: t('bookAgain'),
+    bookAgainLastVisit: (day: string) => t('bookAgainLastVisit', { day }),
+    bookAgainWithStaff: (name: string) => t('bookAgainWithStaff', { name }),
+    bookAgainAnyone: t('bookAgainAnyone'),
+    bookAgainUse: t('bookAgainUse'),
+    bookAgainTimes: t('bookAgainTimes'),
+    bookAgainFinding: t('bookAgainFinding'),
+    bookAgainNoTimes: t('bookAgainNoTimes'),
+    bookAgainOtherTime: t('bookAgainOtherTime'),
+    bookAgainTomorrow: t('bookAgainTomorrow'),
+    paymentTitle: t('paymentTitle'),
+    markDone: t('markDone'),
+    howPaid: t('howPaid'),
+    amountFor: (service: string) => t('amountFor', { service }),
+    paid: (amount: string, mode: string) => t('paid', { amount, mode }),
+    paymentNotSaved: t('paymentNotSaved'),
+    combo: t('combo'),
+    comboSaves: (amount: string) => t('comboSaves', { amount }),
+    close: t('close'),
+    clear: t('clear'),
+    whoIsThis: (client: string) => t('whoIsThis', { client: pickNoun(locale, client, tn('customer')) }),
+    searchPlaceholder: t('searchPlaceholder'),
+    noName: t('noName'),
+    noNumber: t('noNumber'),
+    noMatch: t('noMatch'),
+    visits: (n: number) => t('visits', { n }),
+    recentCustomers: t('recentCustomers'),
+    loadingCustomers: t('loadingCustomers'),
+    noCustomersYet: t('noCustomersYet'),
+    addNew: t('addNew'),
+    nameRequired: t('nameRequired'),
+    namePlaceholder: t('namePlaceholder'),
+    nameMissing: t('nameMissing'),
+    phoneOptional: t('phoneOptional'),
+    phonePlaceholder: t('phonePlaceholder'),
+    phoneWhy: t('phoneWhy'),
+    useThisPerson: t('useThisPerson'),
+    whichService: t('whichService'),
+    searchServices: (n: number) => t('searchServices', { n }),
+    loadingServices: t('loadingServices'),
+    noServicesYet: t('noServicesYet'),
+    noServiceMatch: t('noServiceMatch'),
+    combos: t('combos'),
+    comboServices: (n: number) => t('comboServices', { n }),
+    picked: t('picked'),
+    removeService: t('removeService'),
+    addMore: t('addMore'),
+    total: t('total'),
+    comboPrice: t('comboPrice'),
+    withWhom: (provider: string) => t('withWhom', { provider: pickNoun(locale, provider, tn('staff')) }),
+    whichBranch: t('whichBranch'),
+    whoeverIsFree: t('whoeverIsFree'),
+    noStylist: t('noStylist'),
+    freeCount: (n: number) => t('freeCount', { n }),
+    chairFree: t('chairFree'),
+    chairBusy: (name: string, until: string) => t('chairBusy', { name, until }),
+    someone: t('someone'),
+    reclaimOffer: (name: string, minAgo: number) => t('reclaimOffer', { name, minAgo }),
+    reclaimOn: (name: string) => t('reclaimOn', { name }),
+    startsNow: (minutes: number) => t('startsNow', { minutes }),
+    back: t('back'),
+    start: t('start'),
+    saving: t('saving'),
+    saveFailed: t('saveFailed'),
+    saveUnknown: t('saveUnknown'),
+    recorded: t('recorded'),
+    overlap: (provider: string) => t('overlap', { provider }),
+    takePayment: t('takePayment'),
+    addToQueue: t('addToQueue'),
+    queued: t('queued'),
+    token: (n: number) => t('token', { n }),
+    laterTitle: t('laterTitle'),
+    modeLabel: t('modeLabel'),
+    modeNow: t('modeNow'),
+    modeLater: t('modeLater'),
+    whichDay: t('whichDay'),
+    today: t('today'),
+    whichTime: t('whichTime'),
+    loadingTimes: t('loadingTimes'),
+    noTimes: t('noTimes'),
+    phoneRequired: t('phoneRequired'),
+    phoneWhyLater: t('phoneWhyLater'),
+    phoneMissing: t('phoneMissing'),
+    next: t('next'),
+    bookIt: t('bookIt'),
+    booking: t('booking'),
+    booked: t('booked'),
+    slotTaken: t('slotTaken'),
+    openingTill: t('openingTill'),
+    tillFailed: t('tillFailed'),
+    notPaidYet: t('notPaidYet'),
+    done: t('done'),
+  }), [t, tn, locale]);
+}
+
+export function useMoveCopy() {
+  const t = useTranslations('moveBooking');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  return useMemo(() => ({
+    title: t('title'),
+    whichDay: t('whichDay'),
+    whichTime: t('whichTime'),
+    loadingTimes: t('loadingTimes'),
+    noTimes: t('noTimes'),
+    anotherTime: t('anotherTime'),
+    anotherTimeHint: t('anotherTimeHint'),
+    withWhom: (noun: string) => t('withWhom', { noun: pickNoun(locale, noun, tn('staff')) }),
+    keepStylist: t('keepStylist'),
+    back: t('back'),
+    confirm: t('confirm'),
+    confirmAnyway: t('confirmAnyway'),
+    saving: t('saving'),
+    clash: (who: string) => t('clash', { who }),
+    clashUnknown: t('clashUnknown'),
+    moved: (when: string) => t('moved', { when }),
+    movedOverlap: t('movedOverlap'),
+    failed: t('failed'),
+    done: t('done'),
+  }), [t, tn, locale]);
+}
+
+export function useBookingCopy() {
+  const t = useTranslations('bookingSheet');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  return useMemo(() => ({
+    call: (name: string) => t('call', { name }),
+    message: t('message'),
+    markFinished: t('markFinished'),
+    markMissed: t('markMissed'),
+    reschedule: t('reschedule'),
+    cancel: t('cancel'),
+    reference: t('reference'),
+  }), [t, tn, locale]);
+}
+
+export function useClientCardCopy() {
+  const t = useTranslations('clientCard');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  return useMemo(() => ({
+    edit: t('edit'),
+    save: t('save'),
+    saving: t('saving'),
+    cancel: t('cancel'),
+    namePlaceholder: t('namePlaceholder'),
+    phonePlaceholder: t('phonePlaceholder'),
+    saveFailed: t('saveFailed'),
+    kicker: t('kicker'),
+    totalSpent: t('totalSpent'),
+    totalVisits: t('totalVisits'),
+    insight: t('insight'),
+    rows: {visits: t('rows.visits'), spent: t('rows.spent'), avgSpend: t('rows.avgSpend'), lastVisit: t('rows.lastVisit'), favourite: t('rows.favourite'), topProvider: t('rows.topProvider'), interval: t('rows.interval'), cancelRate: t('rows.cancelRate'), since: t('rows.since'), nextVisit: t('rows.nextVisit') },
+    recent: t('recent'),
+    daysAgo: (n: number) => t('daysAgo', { n }),
+    days: (n: number) => t('days', { n }),
+    dueIn: (n: number) => t('dueIn', { n }),
+    dueNow: t('dueNow'),
+    overdue: (n: number) => t('overdue', { n }),
+    notEnough: t('notEnough'),
+    neverIn: t('neverIn'),
+    call: t('call'),
+    viewBookings: t('viewBookings'),
+    close: t('close'),
+    loadFailed: t('loadFailed'),
+    noPhone: t('noPhone'),
+  }), [t, tn, locale]);
+}
