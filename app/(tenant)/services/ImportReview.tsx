@@ -1,9 +1,10 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, formatMoney } from '../lib/api';
 import { useLabel } from '../components/LabelsProvider';
+import { pickNoun } from '../lib/nouns';
 import { problem, toImportItems, type Draft } from './import-drafts';
 
 /**
@@ -32,7 +33,8 @@ export function ImportReview({
   const tp = useTranslations('services');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const serviceWord = useLabel('service', tp('cols.name'));
+  // The vertical's word in English; the generic one in other languages until vertical labels are translated (GRW-315 Story 5).
+  const serviceWord = pickNoun(useLocale(), useLabel('service', tp('cols.name')), tp('cols.name'));
 
   const update = (i: number, patch: Partial<Draft>) =>
     setDrafts((prev) => prev.map((d, idx) => (idx === i ? { ...d, ...patch } : d)));
