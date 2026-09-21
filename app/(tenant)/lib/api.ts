@@ -58,6 +58,7 @@ export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
+import { localiseApiMessage } from './api-messages';
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
@@ -171,8 +172,11 @@ async function extractError(
   // reading `error` alone showed an owner the words "capability_denied".
   // Every other endpoint sends a human message in `error` and no `detail`,
   // so this changes nothing for them.
+  const said = body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
   return {
-    message: body?.detail ?? body?.error ?? `${path} failed: ${res.status}`,
+    // Jira GRW-365 — in the browser, a sentence we have in Hindi shows in Hindi when the page is; the server side
+    // (which cannot see the visitor's language here) and every unknown sentence keep the API's own words.
+    message: typeof document === 'undefined' ? said : localiseApiMessage(said, document.documentElement.lang),
     code: body?.error,
     ...(body?.support ? { support: body.support } : {}),
   };
