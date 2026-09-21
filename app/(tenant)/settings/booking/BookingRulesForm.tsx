@@ -82,7 +82,7 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
 
   return (
     <>
-    <BranchScopeNote settings={initial} branchName={branchName} keys={BRANCH_KEYS} what="booking rules" />
+    <BranchScopeNote settings={initial} branchName={branchName} keys={BRANCH_KEYS} topic="bookingRules" />
     <div className="card">
       <div className="card-head">Booking settings</div>
       <div className="card-body">

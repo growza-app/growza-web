@@ -33,7 +33,7 @@ export default async function TeamSettingsPage({ searchParams }: { searchParams:
   return (
     <>
       {/* Jira GRW-230 — invites are for the whole business; Jira GRW-237 — a receptionist's branch is chosen on the invite. */}
-      {branch && settings ? <BranchScopeNote settings={settings} branchName={null} sameForAll what="team access" /> : null}
+      {branch && settings ? <BranchScopeNote settings={settings} branchName={null} sameForAll topic="teamAccess" /> : null}
       <TeamAccessPanel
         initial={initial.invites}
         providers={providers}

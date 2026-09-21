@@ -1,4 +1,5 @@
 import { screenTitle } from '../../lib/page-title';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { api } from '../../lib/api';
 import { loadScopedSettings, scopeKey } from '../scope';
 import { RemindersForm } from './RemindersForm';
@@ -16,8 +17,8 @@ export default async function NotificationsSettingsPage({ searchParams }: { sear
    * genuinely does not send.
    */
   // Jira GRW-230 — the picked branch's reminders, or the business's.
-  const [{ settings, branchName }, me] = await Promise.all([loadScopedSettings(searchParams), api.me().catch(() => null)]);
-  if (!settings) return <div className="banner">Could not load settings — check the server is running.</div>;
+  const [{ settings, branchName, loadError }, me] = await Promise.all([loadScopedSettings(searchParams), api.me().catch(() => null)]);
+  if (!settings) return <LoadErrorBanner kind={loadError ?? 'down'} />;
   return <RemindersForm key={scopeKey(settings)} initial={settings} branchName={branchName} whatsappLive={me?.whatsapp?.booking ?? false} />;
 }
 

@@ -293,5 +293,83 @@
       "defaults": "बिज़नेस की डिफ़ॉल्ट सेटिंग",
       "thisOnly": "सिर्फ़ यह ब्रांच"
     }
+  },
+  "common": {
+    "optional": "वैकल्पिक"
+  },
+  "branchScope": {
+    "topics": {
+      "hours": "काम के घंटे",
+      "bookingRules": "बुकिंग के नियम",
+      "teamAccess": "टीम की पहुंच",
+      "reportAccess": "रिपोर्ट कौन देख सकता है",
+      "reminders": "रिमाइंडर",
+      "phoneAndDescription": "फ़ोन और विवरण"
+    },
+    "sameForAll": "<b>सभी ब्रांच के लिए एक जैसा।</b> यहां {what} में किए गए बदलाव सभी {count} ब्रांच पर लागू होते हैं।",
+    "allBranches": "<b>सभी ब्रांच।</b> ये {what} बिज़नेस की डिफ़ॉल्ट सेटिंग हैं। जिस ब्रांच के अपने {what} हैं, वह उन्हें रखती है।",
+    "usesBusiness": "<b>{branch}</b> बिज़नेस के {what} इस्तेमाल करती है। यहां कुछ भी बदलें तो {branch} के अपने {what} बन जाएंगे।",
+    "hasOwn": "<b>{branch}</b> के अपने {what} हैं।",
+    "resetting": "रीसेट हो रहा है…",
+    "resetFailed": "रीसेट नहीं हो सका — फिर कोशिश करें",
+    "useBusiness": "बिज़नेस की सेटिंग इस्तेमाल करें"
+  },
+  "settingsProfile": {
+    "title": "बिज़नेस प्रोफ़ाइल",
+    "branchTitleNamed": "{name} की प्रोफ़ाइल",
+    "branchTitleUnnamed": "ब्रांच की प्रोफ़ाइल",
+    "sub": "आपके ग्राहक बुकिंग करते समय आपके बारे में यह देखते हैं।",
+    "subBranch": "इस ब्रांच के ग्राहक बुकिंग करते समय यह देखते हैं।",
+    "cards": {
+      "thisBranch": "यह ब्रांच",
+      "yourBusiness": "आपका बिज़नेस",
+      "whereYouAre": "आप कहाँ हैं",
+      "contact": "संपर्क",
+      "addresses": "पते"
+    },
+    "fields": {
+      "branchName": "ब्रांच का नाम",
+      "city": "शहर",
+      "address": "पता",
+      "aboutBranch": "इस ब्रांच के बारे में",
+      "aboutBusiness": "आपके बिज़नेस के बारे में",
+      "businessName": "बिज़नेस का नाम",
+      "timezone": "टाइमज़ोन",
+      "businessPhone": "बिज़नेस का फ़ोन"
+    },
+    "placeholders": {
+      "address": "दुकान नंबर, गली, इलाका",
+      "description": "जैसे: बाल, त्वचा और ब्राइडल मेकअप का यूनिसेक्स सैलून",
+      "branchName": "जैसे: एमजी रोड"
+    },
+    "logo": {
+      "title": "बिज़नेस लोगो",
+      "hint": "चौकोर लोगो सबसे अच्छा रहता है। JPG, PNG या WEBP, 5 MB तक।",
+      "uploading": "अपलोड हो रहा है…",
+      "change": "लोगो बदलें",
+      "upload": "लोगो अपलोड करें"
+    },
+    "addressesHint": "आपकी {count} ब्रांच हैं। पता, फ़ोन और विवरण बदलने के लिए ऊपर से एक ब्रांच चुनें।",
+    "errors": {
+      "saveFailed": "सेव नहीं हो सका — जांचें कि सर्वर चल रहा है।",
+      "nameEmpty": "बिज़नेस का नाम खाली नहीं हो सकता",
+      "branchNameEmpty": "ब्रांच का नाम खाली नहीं हो सकता",
+      "logoFailed": "लोगो अपलोड नहीं हो सका — जांचें कि सर्वर चल रहा है।"
+    },
+    "bar": {
+      "saved": "सेव हो गया",
+      "unsaved": "कुछ बदलाव सेव नहीं हुए हैं",
+      "allSaved": "सारे बदलाव सेव हैं",
+      "saving": "सेव हो रहा है…",
+      "save": "बदलाव सेव करें"
+    },
+    "timezones": {
+      "india": "भारत (Asia/Kolkata)",
+      "uae": "यूएई (Asia/Dubai)",
+      "pakistan": "पाकिस्तान (Asia/Karachi)",
+      "bangladesh": "बांग्लादेश (Asia/Dhaka)",
+      "sriLanka": "श्रीलंका (Asia/Colombo)",
+      "nepal": "नेपाल (Asia/Kathmandu)"
+    }
   }
 }

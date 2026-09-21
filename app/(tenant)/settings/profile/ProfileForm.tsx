@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { PhoneField } from '../../components/PhoneField';
 import { IconCheck, IconChevronRight, IconMapPin, IconPhone, IconShop } from '../../components/icons';
@@ -22,20 +23,19 @@ import { BranchScopeNote } from '../BranchScopeNote';
  *   something has changed, so "did that save?" always has an answer on screen.
  */
 
+/** Each zone's name lives in `settingsProfile.timezones`; the value sent to the API is the IANA name. */
 const TIMEZONES = [
-  { value: 'Asia/Kolkata', label: 'India (Asia/Kolkata)' },
-  { value: 'Asia/Dubai', label: 'UAE (Asia/Dubai)' },
-  { value: 'Asia/Karachi', label: 'Pakistan (Asia/Karachi)' },
-  { value: 'Asia/Dhaka', label: 'Bangladesh (Asia/Dhaka)' },
-  { value: 'Asia/Colombo', label: 'Sri Lanka (Asia/Colombo)' },
-  { value: 'Asia/Kathmandu', label: 'Nepal (Asia/Kathmandu)' },
-];
+  { value: 'Asia/Kolkata', key: 'india' },
+  { value: 'Asia/Dubai', key: 'uae' },
+  { value: 'Asia/Karachi', key: 'pakistan' },
+  { value: 'Asia/Dhaka', key: 'bangladesh' },
+  { value: 'Asia/Colombo', key: 'sriLanka' },
+  { value: 'Asia/Kathmandu', key: 'nepal' },
+] as const;
 
 const NAME_MAX = 50;
 const ADDRESS_MAX = 100;
 const DESCRIPTION_MAX = 200;
-const SAVE_ERROR = 'Could not save — check the server is running.';
-const NAME_EMPTY = 'Business name cannot be empty';
 
 type Fields = {
   name: string;
@@ -70,6 +70,8 @@ export function ProfileForm({
   /** Jira GRW-230 — set when a branch is picked: this is that branch's profile. */
   branchName?: string | null;
 }) {
+  const t = useTranslations('settingsProfile');
+  const tCommon = useTranslations('common');
   const branchId = initial.scope.locationId;
   const [settings, setSettings] = useState(initial);
   const [savedFields, setSavedFields] = useState<Fields>(() => fieldsOf(initial));
@@ -93,7 +95,7 @@ export function ProfileForm({
     if (branchId) {
       // Jira GRW-230 — a branch's name, address, phone and "about". The business's name and logo are not a branch's.
       if (!f.locationName.trim()) {
-        setError('Branch name cannot be empty');
+        setError(t('errors.branchNameEmpty'));
         return;
       }
       setBusy(true);
@@ -107,7 +109,7 @@ export function ProfileForm({
         setF(fieldsOf(updated));
         setSaved(true);
       } catch (e) {
-        setError(e instanceof Error && /already has this name/.test(e.message) ? e.message : SAVE_ERROR);
+        setError(e instanceof Error && /already has this name/.test(e.message) ? e.message : t('errors.saveFailed'));
       } finally {
         setBusy(false);
       }
@@ -135,7 +137,7 @@ export function ProfileForm({
       setF(next);
       setSaved(true);
     } catch {
-      setError(SAVE_ERROR);
+      setError(t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -148,7 +150,7 @@ export function ProfileForm({
     try {
       setSettings(await api.uploadBusinessLogo(file));
     } catch {
-      setError('Could not upload logo — check the server is running.');
+      setError(t('errors.logoFailed'));
     } finally {
       setLogoBusy(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -164,10 +166,10 @@ export function ProfileForm({
       }}
     >
       <div className="bp-intro">
-        <h2 className="bp-title">{branchId ? `${branchName ?? 'Branch'} profile` : 'Business profile'}</h2>
-        <p className="bp-sub">{branchId ? 'What customers of this branch see when they book.' : 'What your customers see when they book with you.'}</p>
+        <h2 className="bp-title">{branchId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : t('title')}</h2>
+        <p className="bp-sub">{branchId ? t('subBranch') : t('sub')}</p>
       </div>
-      <BranchScopeNote settings={settings} branchName={branchName} keys={['business_phone', 'business_description']} what="phone and description" />
+      <BranchScopeNote settings={settings} branchName={branchName} keys={['business_phone', 'business_description']} topic="phoneAndDescription" />
 
       <div className="bp-columns">
       <div className="bp-col">
@@ -177,34 +179,34 @@ export function ProfileForm({
             <span className="bp-card-icon">
               <IconMapPin />
             </span>
-            <div className="bp-card-title">This branch</div>
+            <div className="bp-card-title">{t('cards.thisBranch')}</div>
           </div>
           <div className="bp-grid">
             <div className="field">
               <label htmlFor="bp-location">
-                <span>Branch name</span>
+                <span>{t('fields.branchName')}</span>
               </label>
               <input id="bp-location" type="text" value={f.locationName} maxLength={50} onChange={(e) => set('locationName', e.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="bp-city">
-                <span>City</span>
+                <span>{t('fields.city')}</span>
               </label>
               <input id="bp-city" type="text" value={f.addressCity} onChange={(e) => set('addressCity', e.target.value)} />
             </div>
             <div className="field bp-span">
               <label htmlFor="bp-address">
-                <span>Address</span>
+                <span>{t('fields.address')}</span>
                 <span className="field-counter">
                   {f.addressLine1.length}/{ADDRESS_MAX}
                 </span>
               </label>
-              <input id="bp-address" type="text" value={f.addressLine1} maxLength={ADDRESS_MAX} onChange={(e) => set('addressLine1', e.target.value)} placeholder="Shop number, street, area" />
+              <input id="bp-address" type="text" value={f.addressLine1} maxLength={ADDRESS_MAX} onChange={(e) => set('addressLine1', e.target.value)} placeholder={t('placeholders.address')} />
             </div>
             <div className="field bp-span">
               <label htmlFor="bp-description">
                 <span>
-                  About this branch <span className="field-optional">optional</span>
+                  {t('fields.aboutBranch')} <span className="field-optional">{tCommon('optional')}</span>
                 </span>
                 <span className="field-counter">
                   {f.description.length}/{DESCRIPTION_MAX}
@@ -222,11 +224,11 @@ export function ProfileForm({
             {settings.tenant.logoUrl ? <img src={settings.tenant.logoUrl} alt="" /> : settings.tenant.name.charAt(0).toUpperCase()}
           </div>
           <div className="bp-logo-text">
-            <div className="bp-card-title">Business logo</div>
-            <div className="field-hint">Square works best. JPG, PNG or WEBP, up to 5 MB.</div>
+            <div className="bp-card-title">{t('logo.title')}</div>
+            <div className="field-hint">{t('logo.hint')}</div>
           </div>
           <button type="button" className="bp-logo-btn" disabled={logoBusy} onClick={() => fileInputRef.current?.click()}>
-            {logoBusy ? 'Uploading…' : settings.tenant.logoUrl ? 'Change logo' : 'Upload logo'}
+            {logoBusy ? t('logo.uploading') : settings.tenant.logoUrl ? t('logo.change') : t('logo.upload')}
           </button>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => onLogoChosen(e.target.files?.[0])} />
         </div>
@@ -237,12 +239,12 @@ export function ProfileForm({
           <span className="bp-card-icon">
             <IconShop />
           </span>
-          <div className="bp-card-title">Your business</div>
+          <div className="bp-card-title">{t('cards.yourBusiness')}</div>
         </div>
         <div className="bp-grid">
           <div className="field">
             <label htmlFor="bp-name">
-              <span>Business name</span>
+              <span>{t('fields.businessName')}</span>
               <span className="field-counter">
                 {f.name.length}/{NAME_MAX}
               </span>
@@ -259,18 +261,18 @@ export function ProfileForm({
             />
             {nameError ? (
               <div role="alert" className="field-error" id="bp-name-error">
-                {NAME_EMPTY}
+                {t('errors.nameEmpty')}
               </div>
             ) : null}
           </div>
           <div className="field">
             <label htmlFor="bp-timezone">
-              <span>Timezone</span>
+              <span>{t('fields.timezone')}</span>
             </label>
             <select id="bp-timezone" value={f.timezone} onChange={(e) => set('timezone', e.target.value)}>
               {TIMEZONES.map((tz) => (
                 <option key={tz.value} value={tz.value}>
-                  {tz.label}
+                  {t(`timezones.${tz.key}`)}
                 </option>
               ))}
             </select>
@@ -278,7 +280,7 @@ export function ProfileForm({
           <div className="field bp-span">
             <label htmlFor="bp-description">
               <span>
-                About your business <span className="field-optional">optional</span>
+                {t('fields.aboutBusiness')} <span className="field-optional">{tCommon('optional')}</span>
               </span>
               <span className="field-counter">
                 {f.description.length}/{DESCRIPTION_MAX}
@@ -290,7 +292,7 @@ export function ProfileForm({
               maxLength={DESCRIPTION_MAX}
               onChange={(e) => set('description', e.target.value)}
               rows={3}
-              placeholder="e.g. Unisex salon for hair, skin and bridal makeup"
+              placeholder={t('placeholders.description')}
             />
           </div>
         </div>
@@ -306,8 +308,8 @@ export function ProfileForm({
             <IconMapPin />
           </span>
           <span className="bp-link-body">
-            <span className="bp-card-title">Addresses</span>
-            <span className="field-hint">You have {branchCount} branches. Pick one at the top to change its address, phone and description.</span>
+            <span className="bp-card-title">{t('cards.addresses')}</span>
+            <span className="field-hint">{t('addressesHint', { count: branchCount })}</span>
           </span>
           <span className="bp-link-chev">
             <IconChevronRight />
@@ -319,29 +321,29 @@ export function ProfileForm({
             <span className="bp-card-icon">
               <IconMapPin />
             </span>
-            <div className="bp-card-title">Where you are</div>
+            <div className="bp-card-title">{t('cards.whereYouAre')}</div>
           </div>
           <div className="bp-grid">
             <div className="field">
               <label htmlFor="bp-location">
-                <span>Branch name</span>
+                <span>{t('fields.branchName')}</span>
               </label>
-              <input id="bp-location" type="text" value={f.locationName} onChange={(e) => set('locationName', e.target.value)} placeholder="e.g. MG Road" />
+              <input id="bp-location" type="text" value={f.locationName} onChange={(e) => set('locationName', e.target.value)} placeholder={t('placeholders.branchName')} />
             </div>
             <div className="field">
               <label htmlFor="bp-city">
-                <span>City</span>
+                <span>{t('fields.city')}</span>
               </label>
               <input id="bp-city" type="text" value={f.addressCity} onChange={(e) => set('addressCity', e.target.value)} />
             </div>
             <div className="field bp-span">
               <label htmlFor="bp-address">
-                <span>Address</span>
+                <span>{t('fields.address')}</span>
                 <span className="field-counter">
                   {f.addressLine1.length}/{ADDRESS_MAX}
                 </span>
               </label>
-              <input id="bp-address" type="text" value={f.addressLine1} maxLength={ADDRESS_MAX} onChange={(e) => set('addressLine1', e.target.value)} placeholder="Shop number, street, area" />
+              <input id="bp-address" type="text" value={f.addressLine1} maxLength={ADDRESS_MAX} onChange={(e) => set('addressLine1', e.target.value)} placeholder={t('placeholders.address')} />
             </div>
           </div>
         </section>
@@ -352,12 +354,12 @@ export function ProfileForm({
           <span className="bp-card-icon">
             <IconPhone />
           </span>
-          <div className="bp-card-title">Contact</div>
+          <div className="bp-card-title">{t('cards.contact')}</div>
         </div>
         <div className="bp-grid">
           {/* GRW-199 — the same field as everywhere else. Optional: a salon
               may not publish a number, and this one is display, not identity. */}
-          <PhoneField id="business-phone" label="Business phone" value={f.phone} onChange={(v) => set('phone', v)} />
+          <PhoneField id="business-phone" label={t('fields.businessPhone')} optionalLabel={tCommon('optional')} value={f.phone} onChange={(v) => set('phone', v)} />
         </div>
       </section>
 
@@ -370,16 +372,16 @@ export function ProfileForm({
             error
           ) : saved && !dirty ? (
             <>
-              <IconCheck /> Saved
+              <IconCheck /> {t('bar.saved')}
             </>
           ) : dirty ? (
-            'You have unsaved changes'
+            t('bar.unsaved')
           ) : (
-            'All changes saved'
+            t('bar.allSaved')
           )}
         </span>
         <button type="submit" className="btn bp-save" disabled={busy || !dirty}>
-          {busy ? 'Saving…' : 'Save changes'}
+          {busy ? t('bar.saving') : t('bar.save')}
         </button>
       </div>
     </form>

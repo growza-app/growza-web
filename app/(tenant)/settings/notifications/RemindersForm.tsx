@@ -77,7 +77,7 @@ export function RemindersForm({
 
   return (
     <>
-    <BranchScopeNote settings={initial} branchName={branchName} keys={['reminder_rules']} what="reminders" />
+    <BranchScopeNote settings={initial} branchName={branchName} keys={['reminder_rules']} topic="reminders" />
     <div className="card">
       <div className="card-head">{initial.scope.locationId ? `${branchName ?? 'Branch'} reminders` : 'Notifications'}</div>
       <div className="card-body">

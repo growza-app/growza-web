@@ -1,7 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { api, type SettingsSummary } from '../lib/api';
 
 /**
@@ -19,16 +20,19 @@ export function BranchScopeNote({
   branchName,
   keys,
   sameForAll = false,
-  what,
+  topic,
 }: {
   settings: SettingsSummary;
   branchName: string | null;
   /** The branch-setting keys this tab edits. */
   keys?: string[];
   sameForAll?: boolean;
-  /** "hours", "reminders" — how the note names what is on the tab. */
-  what: string;
+  /** What is on the tab — a key of `branchScope.topics`, so the note names it in the owner's language. */
+  topic: 'hours' | 'bookingRules' | 'teamAccess' | 'reportAccess' | 'reminders' | 'phoneAndDescription';
 }) {
+  const t = useTranslations('branchScope');
+  const what = t(`topics.${topic}`);
+  const bold = { b: (chunks: ReactNode) => <strong>{chunks}</strong> };
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -40,35 +44,27 @@ export function BranchScopeNote({
   if (sameForAll) {
     return (
       <div className="bsn bsn-all" role="note">
-        <span>
-          <strong>Same for every branch.</strong> Changes to {what} here apply to all {settings.branchCount} branches.
-        </span>
+        <span>{t.rich('sameForAll', { ...bold, what, count: settings.branchCount })}</span>
       </div>
     );
   }
   if (!branchId) {
     return (
       <div className="bsn" role="note">
-        <span>
-          <strong>All branches.</strong> These {what} are the business default. A branch with its own {what} keeps them.
-        </span>
+        <span>{t.rich('allBranches', { ...bold, what })}</span>
       </div>
     );
   }
   if (own.length === 0) {
     return (
       <div className="bsn" role="note">
-        <span>
-          <strong>{branchName}</strong> uses the business’s {what}. Change anything here to give {branchName} its own.
-        </span>
+        <span>{t.rich('usesBusiness', { ...bold, what, branch: branchName ?? '' })}</span>
       </div>
     );
   }
   return (
     <div className="bsn bsn-own" role="note">
-      <span>
-        <strong>{branchName}</strong> has its own {what}.
-      </span>
+      <span>{t.rich('hasOwn', { ...bold, what, branch: branchName ?? '' })}</span>
       <button
         type="button"
         className="bsn-reset"
@@ -86,7 +82,7 @@ export function BranchScopeNote({
           }
         }}
       >
-        {busy ? 'Resetting…' : failed ? 'Could not reset — try again' : 'Use business settings'}
+        {busy ? t('resetting') : failed ? t('resetFailed') : t('useBusiness')}
       </button>
     </div>
   );

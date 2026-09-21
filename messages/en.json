@@ -293,5 +293,83 @@
       "defaults": "Business defaults",
       "thisOnly": "This branch only"
     }
+  },
+  "common": {
+    "optional": "optional"
+  },
+  "branchScope": {
+    "topics": {
+      "hours": "hours",
+      "bookingRules": "booking rules",
+      "teamAccess": "team access",
+      "reportAccess": "who sees Reports",
+      "reminders": "reminders",
+      "phoneAndDescription": "phone and description"
+    },
+    "sameForAll": "<b>Same for every branch.</b> Changes to {what} here apply to all {count} branches.",
+    "allBranches": "<b>All branches.</b> These {what} are the business default. A branch with its own {what} keeps them.",
+    "usesBusiness": "<b>{branch}</b> uses the business’s {what}. Change anything here to give {branch} its own.",
+    "hasOwn": "<b>{branch}</b> has its own {what}.",
+    "resetting": "Resetting…",
+    "resetFailed": "Could not reset — try again",
+    "useBusiness": "Use business settings"
+  },
+  "settingsProfile": {
+    "title": "Business profile",
+    "branchTitleNamed": "{name} profile",
+    "branchTitleUnnamed": "Branch profile",
+    "sub": "What your customers see when they book with you.",
+    "subBranch": "What customers of this branch see when they book.",
+    "cards": {
+      "thisBranch": "This branch",
+      "yourBusiness": "Your business",
+      "whereYouAre": "Where you are",
+      "contact": "Contact",
+      "addresses": "Addresses"
+    },
+    "fields": {
+      "branchName": "Branch name",
+      "city": "City",
+      "address": "Address",
+      "aboutBranch": "About this branch",
+      "aboutBusiness": "About your business",
+      "businessName": "Business name",
+      "timezone": "Timezone",
+      "businessPhone": "Business phone"
+    },
+    "placeholders": {
+      "address": "Shop number, street, area",
+      "description": "e.g. Unisex salon for hair, skin and bridal makeup",
+      "branchName": "e.g. MG Road"
+    },
+    "logo": {
+      "title": "Business logo",
+      "hint": "Square works best. JPG, PNG or WEBP, up to 5 MB.",
+      "uploading": "Uploading…",
+      "change": "Change logo",
+      "upload": "Upload logo"
+    },
+    "addressesHint": "You have {count} branches. Pick one at the top to change its address, phone and description.",
+    "errors": {
+      "saveFailed": "Could not save — check the server is running.",
+      "nameEmpty": "Business name cannot be empty",
+      "branchNameEmpty": "Branch name cannot be empty",
+      "logoFailed": "Could not upload logo — check the server is running."
+    },
+    "bar": {
+      "saved": "Saved",
+      "unsaved": "You have unsaved changes",
+      "allSaved": "All changes saved",
+      "saving": "Saving…",
+      "save": "Save changes"
+    },
+    "timezones": {
+      "india": "India (Asia/Kolkata)",
+      "uae": "UAE (Asia/Dubai)",
+      "pakistan": "Pakistan (Asia/Karachi)",
+      "bangladesh": "Bangladesh (Asia/Dhaka)",
+      "sriLanka": "Sri Lanka (Asia/Colombo)",
+      "nepal": "Nepal (Asia/Kathmandu)"
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { api, type SettingsSummary } from '../lib/api';
+import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 
 /**
  * Jira GRW-230 — the settings a tab loads: the picked branch's (`?branch=`),
@@ -7,11 +8,17 @@ import { api, type SettingsSummary } from '../lib/api';
  */
 export async function loadScopedSettings(
   searchParams: Promise<{ branch?: string }>,
-): Promise<{ settings: SettingsSummary | null; branchName: string | null }> {
+): Promise<{ settings: SettingsSummary | null; branchName: string | null; loadError: LoadErrorKind | null }> {
   const { branch } = await searchParams;
-  const settings = (branch ? await api.settings(branch).catch(() => null) : null) ?? (await api.settings().catch(() => null));
+  // Jira GRW-352 — keep WHY it failed: a busy API (429) and a down one need different words.
+  const failure: { kind: LoadErrorKind | null } = { kind: null };
+  const failed = (error: unknown) => {
+    failure.kind = loadErrorKind(error);
+    return null;
+  };
+  const settings = (branch ? await api.settings(branch).catch(failed) : null) ?? (await api.settings().catch(failed));
   const branchName = settings?.scope.locationId ? (settings.location?.name ?? null) : null;
-  return { settings, branchName };
+  return { settings, branchName, loadError: settings ? null : (failure.kind ?? 'down') };
 }
 
 /** Remount a form when its branch, or the branch's own keys, change (after "Use business settings"). */

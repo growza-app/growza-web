@@ -271,9 +271,6 @@
       "{Opening…}",
       "{Pay now}"
     ],
-    "web/app/(tenant)/components/PhoneField.tsx": [
-      "optional"
-    ],
     "web/app/(tenant)/components/Sidebar.tsx": [
       "aria-label=\"Close menu\"",
       "aria-label=\"Main\"",
@@ -767,23 +764,6 @@
       "{Upload}",
       "{· +${…} cleanup}"
     ],
-    "web/app/(tenant)/settings/BranchScopeNote.tsx": [
-      ". Change anything here to give",
-      "All branches.",
-      "Changes to",
-      "Same for every branch.",
-      "These",
-      "are the business default. A branch with its own",
-      "branches.",
-      "has its own",
-      "here apply to all",
-      "its own.",
-      "keeps them.",
-      "uses the business’s",
-      "{Could not reset — try again}",
-      "{Resetting…}",
-      "{Use business settings}"
-    ],
     "web/app/(tenant)/settings/booking/BookingRulesForm.tsx": [
       "Add",
       "Bookable times are shown every",
@@ -808,7 +788,6 @@
       "minutes of the start time.",
       "minutes.",
       "title=\"Closed at every branch — change it under All branches\"",
-      "what=\"booking rules\"",
       "{Days ${…} is closed}",
       "{Days you are closed}",
       "{No closed days. Add a holiday and nobody can book that day.}",
@@ -818,9 +797,6 @@
       "{Your team sees the booking, the service and the time — but not who it is for. You and your managers still see everything.}",
       "{Your team sees who each booking is for, and can call them.}",
       "· all branches"
-    ],
-    "web/app/(tenant)/settings/booking/page.tsx": [
-      "Could not load settings — check the server is running."
     ],
     "web/app/(tenant)/settings/branches/BranchActionDialog.tsx": [
       "). Nothing to approve.",
@@ -866,68 +842,12 @@
       "hours before the booking",
       "label: \"First reminder\"",
       "label: \"Second reminder\"",
-      "what=\"reminders\"",
       "{${…} reminders}",
       "{Notifications}",
       "{Save changes}",
       "{Saved — these start sending when WhatsApp goes live}",
       "{Saved}",
       "{Saving…}"
-    ],
-    "web/app/(tenant)/settings/notifications/page.tsx": [
-      "Could not load settings — check the server is running."
-    ],
-    "web/app/(tenant)/settings/profile/ProfileForm.tsx": [
-      "About this branch",
-      "About your business",
-      "Address",
-      "Address",
-      "Addresses",
-      "Branch name",
-      "Branch name",
-      "Business logo",
-      "Business name",
-      "City",
-      "City",
-      "Contact",
-      "Saved",
-      "Square works best. JPG, PNG or WEBP, up to 5 MB.",
-      "This branch",
-      "Timezone",
-      "Where you are",
-      "You have",
-      "Your business",
-      "branches. Pick one at the top to change its address, phone and description.",
-      "label: \"Bangladesh (Asia/Dhaka)\"",
-      "label: \"India (Asia/Kolkata)\"",
-      "label: \"Nepal (Asia/Kathmandu)\"",
-      "label: \"Pakistan (Asia/Karachi)\"",
-      "label: \"Sri Lanka (Asia/Colombo)\"",
-      "label: \"UAE (Asia/Dubai)\"",
-      "label=\"Business phone\"",
-      "optional",
-      "optional",
-      "placeholder=\"Shop number, street, area\"",
-      "placeholder=\"Shop number, street, area\"",
-      "placeholder=\"e.g. MG Road\"",
-      "placeholder=\"e.g. Unisex salon for hair, skin and bridal makeup\"",
-      "setError(\"Branch name cannot be empty\")",
-      "setError(\"Could not upload logo — check the server is running.\")",
-      "what=\"phone and description\"",
-      "{${…} profile}",
-      "{All changes saved}",
-      "{Business profile}",
-      "{Change logo}",
-      "{Save changes}",
-      "{Saving…}",
-      "{Upload logo}",
-      "{Uploading…}",
-      "{What customers of this branch see when they book.}",
-      "{What your customers see when they book with you.}",
-      "{You have unsaved changes}"
-    ],
-    "web/app/(tenant)/settings/profile/page.tsx": [
-      "Could not load settings — check the server is running."
     ],
     "web/app/(tenant)/settings/report-access/ReportAccessForm.tsx": [
       "Saved",
@@ -946,10 +866,6 @@
       "sub: \"See only their own day elsewhere\"",
       "{Save changes}",
       "{Saving…}"
-    ],
-    "web/app/(tenant)/settings/report-access/page.tsx": [
-      "Could not load settings — check the server is running.",
-      "what=\"who sees Reports\""
     ],
     "web/app/(tenant)/settings/team/TeamAccessPanel.tsx": [
       ". It is shown only now — we do not keep a copy.",
@@ -985,8 +901,7 @@
       "{Works at ${…}}"
     ],
     "web/app/(tenant)/settings/team/page.tsx": [
-      "Could not load invites — check the server is running.",
-      "what=\"team access\""
+      "Could not load invites — check the server is running."
     ],
     "web/app/(tenant)/settings/working-hours/WorkingHoursForm.tsx": [
       "Allow arriving late by",
@@ -996,7 +911,6 @@
       "Saved",
       "minutes",
       "setError(\"Start time must be before end time\")",
-      "what=\"hours\"",
       "{${…} hours}",
       "{Save changes}",
       "{Save changes}",
@@ -1007,9 +921,6 @@
       "{When ${…} is open. Staff at ${…} who follow the salon's hours follow these.}",
       "{Working hours}",
       "{Your business's default open hours. Staff can follow these automatically from their own profile, or set their own instead.}"
-    ],
-    "web/app/(tenant)/settings/working-hours/page.tsx": [
-      "Could not load settings — check the server is running."
     ],
     "web/app/(tenant)/try-whatsapp/ChatWindow.tsx": [
       "Start a new conversation",

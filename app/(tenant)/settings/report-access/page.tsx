@@ -1,18 +1,24 @@
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
+import { loadErrorKind } from '../../lib/load-error';
 import { BranchScopeNote } from '../BranchScopeNote';
 import { ReportAccessForm } from './ReportAccessForm';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ReportAccessSettingsPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
-  const settings = await api.settings().catch(() => null);
-  if (!settings) return <div className="banner">Could not load settings — check the server is running.</div>;
+  let settings;
+  try {
+    settings = await api.settings();
+  } catch (error) {
+    return <LoadErrorBanner kind={loadErrorKind(error)} />;
+  }
   // Jira GRW-230 Phase 1 — report access is the same for every branch.
   const { branch } = await searchParams;
   return (
     <>
-      {branch ? <BranchScopeNote settings={settings} branchName={null} sameForAll what="who sees Reports" /> : null}
+      {branch ? <BranchScopeNote settings={settings} branchName={null} sameForAll topic="reportAccess" /> : null}
       <ReportAccessForm initial={settings} />
     </>
   );

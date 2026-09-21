@@ -29,6 +29,7 @@ export function PhoneField({
   hint,
   error,
   required = false,
+  optionalLabel = 'optional', // i18n-ok: default for callers outside a translated screen; the sign-in page has no provider
   autoFocus = false,
   disabled = false,
 }: {
@@ -40,6 +41,8 @@ export function PhoneField({
   hint?: string;
   error?: string | null;
   required?: boolean;
+  /** The word shown beside an optional field. Translated screens pass `t('common.optional')`. */
+  optionalLabel?: string;
   autoFocus?: boolean;
   disabled?: boolean;
 }) {
@@ -47,7 +50,7 @@ export function PhoneField({
     <div className="field">
       <label htmlFor={id}>
         {label}
-        {!required && <span className="field-optional">optional</span>}
+        {!required && <span className="field-optional">{optionalLabel}</span>}
       </label>
 
       <div className={`phone-field ${error ? 'phone-field-invalid' : ''} ${disabled ? 'phone-field-off' : ''}`}>

@@ -71,7 +71,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
 
   return (
     <>
-    <BranchScopeNote settings={initial} branchName={branchName} keys={['working_hours', 'attendance_late_grace_min']} what="hours" />
+    <BranchScopeNote settings={initial} branchName={branchName} keys={['working_hours', 'attendance_late_grace_min']} topic="hours" />
     <div className="card">
       <div className="card-head">{branchId ? `${branchName ?? 'Branch'} hours` : 'Working hours'}</div>
       <div className="card-body">
