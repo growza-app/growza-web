@@ -13,7 +13,7 @@ function said(locale: 'en' | 'hi', pick: () => string[]) {
     createElement(NextIntlClientProvider, { locale, messages: locale === 'en' ? en : hi, children: createElement(Probe) }),
   ).replace(/<\/?p>/g, '').replace(/&#x27;/g, "'");
 }
-const flow = () => {
+const useFlow = () => {
   const nv = useNewVisitCopy();
   const mv = useMoveCopy();
   const cc = useClientCardCopy();
@@ -26,7 +26,7 @@ const flow = () => {
 
 describe('the New booking flow words', () => {
   it('keeps the English exactly', () => {
-    expect(said('en', flow).split('|')).toEqual([
+    expect(said('en', useFlow).split('|')).toEqual([
       'Walk-in', '1 visit', '3 visits', 'nobody free', '4 free', 'Search services…', 'Search 52 services or combos…',
       'Starts now · 45 min in total', 'Token 7', "Priya hasn't turned up (12 min) — use this chair", 'Search for the client, or add them.', 'Which stylist?',
       'Moved to Mon 10:00', 'Same stylist?', 'Last in', 'today', 'yesterday', '5 days ago', 'tomorrow', 'in about 9 days', '2 days late',
@@ -34,7 +34,7 @@ describe('the New booking flow words', () => {
   });
 
   it('reads in Hindi, and swaps the vertical noun for a generic one', () => {
-    const out = said('hi', flow).split('|');
+    const out = said('hi', useFlow).split('|');
     expect(out[0]).toBe('वॉक-इन');
     expect(out[3]).toBe('कोई खाली नहीं');
     expect(out[6]).toBe('52 सेवाओं या कॉम्बो में खोजें…');
