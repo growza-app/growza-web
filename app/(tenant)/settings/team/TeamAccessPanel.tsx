@@ -13,7 +13,8 @@ import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider, t
  * `+91` and those ten.
  */
 import { PhoneField } from '../../components/PhoneField';
-import { toStoredPhone, validateNationalPhone } from '../../lib/phone';
+import { toStoredPhone } from '../../lib/phone';
+import { usePhoneProblem } from '../../lib/use-phone-problem';
 
 /**
  * Jira GRW-63 · GRW-67 — send an invite, see what is outstanding, take one back.
@@ -38,6 +39,7 @@ export function TeamAccessPanel({
   initialMembers?: TeamMember[];
   branches?: Array<{ id: string; name: string }>;
 }) {
+  const checkPhone = usePhoneProblem();
   const t = useTranslations('settingsTeam');
   const expiryLabel = (iso: string) => (daysLeft(iso) <= 0 ? t('expiresToday') : t('expiresIn', { days: daysLeft(iso) }));
   const [invites, setInvites] = useState<PendingInvite[]>(initial);
@@ -93,7 +95,7 @@ export function TeamAccessPanel({
      * The API stores E.164 (BR-04) and will not complete a bare number for us;
      * `toStoredPhone` below is what always prepends the dial code.
      */
-    const complaint = validateNationalPhone(phone);
+    const complaint = checkPhone(phone);
     if (complaint) {
       setPhoneError(complaint);
       return;

@@ -45,7 +45,8 @@ import { useSession } from './SessionProvider';
 import { PhoneField } from './PhoneField';
 import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
 import type { FreeTime } from '../lib/book-again';
-import { toStoredPhone, validateNationalPhone } from '../lib/phone';
+import { toStoredPhone } from '../lib/phone';
+import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -211,6 +212,7 @@ export function NewVisitSheet({
   const forPayment = purpose === 'payment';
   const [mode, setMode] = useState<VisitMode>(forPayment ? 'now' : initialMode);
   const later = mode === 'later';
+  const checkPhone = usePhoneProblem();
   const router = useRouter();
   const clientNoun = useLabel('customer', 'Client');
   const providerNoun = useLabel('provider', 'Staff member');
@@ -1277,7 +1279,7 @@ export function NewVisitSheet({
                    * give a real one. A half-typed number saved as-is is the
                    * shape that produced `+91786545789` in the live data.
                    */
-                  const phoneProblem = validateNationalPhone(newPhone, { required: later });
+                  const phoneProblem = checkPhone(newPhone, { required: later });
                   if (phoneProblem) {
                     setPhoneError(phoneProblem);
                     return;

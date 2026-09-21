@@ -1,9 +1,12 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, useRef } from 'react';
 import { api, ApiError, type ProviderOverviewRow, type Service } from '../lib/api';
 import { PhoneField } from '../components/PhoneField';
-import { toStoredPhone, validateNationalPhone } from '../lib/phone';
+import { toStoredPhone } from '../lib/phone';
+import { usePhoneProblem } from '../lib/use-phone-problem';
+import { pickNoun } from '../lib/nouns';
 import { IconCheck, IconClose, IconPlus } from '../components/icons';
 import { WeekdayHoursEditor, type WeekdayRow } from '../components/WeekdayHoursEditor';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -58,13 +61,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 
 type Step = 'who' | 'hours' | 'services';
 
-const STEPS: { key: Step; label: string }[] = [
-  { key: 'who', label: 'Who' },
-  { key: 'hours', label: 'Hours' },
-  { key: 'services', label: 'Services' },
-];
-
-const SAVE_ERROR = 'Could not save — check the server is running.';
+const STEPS: { key: Step }[] = [{ key: 'who' }, { key: 'hours' }, { key: 'services' }];
 
 export function StaffWizard({
   staffWord,
@@ -87,6 +84,11 @@ export function StaffWizard({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const t = useTranslations('staffWizard');
+  const tCommon = useTranslations('common');
+  const tn = useTranslations('nouns');
+  const checkPhone = usePhoneProblem();
+  const staffLower = pickNoun(useLocale(), staffWord.toLowerCase(), tn('staff'));
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
   const [step, setStep] = useState<Step>('who');
@@ -124,13 +126,13 @@ export function StaffWizard({
   const roles = useMemo(() => {
     const seen = new Set<string>();
     for (const p of roster) {
-      const t = p.title?.trim();
-      if (t && !seen.has(t)) seen.add(t);
+      const role = p.title?.trim();
+      if (role && !seen.has(role)) seen.add(role);
     }
     return [...seen];
   }, [roster]);
 
-  const phoneProblem = validateNationalPhone(phone);
+  const phoneProblem = checkPhone(phone);
   const canSave = displayName.trim().length > 0 && phoneProblem === null;
 
   const updateHourRow = (weekday: number, patch: Partial<WeekdayRow>) => {
@@ -191,7 +193,7 @@ export function StaffWizard({
       // A plan seat cap is not something retrying fixes, and "check the server
       // is running" sends the owner to look in the wrong place. The API says
       // which plan and how many people; pass it straight through.
-      setError(err instanceof ApiError && err.status === 403 ? err.message : SAVE_ERROR);
+      setError(err instanceof ApiError && err.status === 403 ? err.message : t('saveFailed'));
       setBusy(false);
     }
   };
@@ -204,18 +206,18 @@ export function StaffWizard({
   return (
     <>
       <div className="drawer-scrim" onClick={onClose} />
-      <div className="wiz" role="dialog" aria-modal="true" aria-label={`Add ${staffWord.toLowerCase()}`} ref={dialogRef}>
+      <div className="wiz" role="dialog" aria-modal="true" aria-label={t('title', { label: staffLower })} ref={dialogRef}>
         <div className="wiz-head">
           <div>
-            <h2>Add {staffWord.toLowerCase()}</h2>
+            <h2>{t('title', { label: staffLower })}</h2>
             {/*
               The reassurance the design puts here, in words rather than as a
               disabled button somebody has to discover is enabled. Two steps of
               a three-step form being optional is not guessable.
             */}
-            <p className="wiz-sub">Name and number are enough — the rest has sensible defaults.</p>
+            <p className="wiz-sub">{t('sub')}</p>
           </div>
-          <button type="button" className="wiz-close" onClick={onClose} aria-label="Close">
+          <button type="button" className="wiz-close" onClick={onClose} aria-label={t('close')}>
             <IconClose />
           </button>
         </div>
@@ -227,7 +229,7 @@ export function StaffWizard({
             <li key={s.key} className={`wiz-step ${i === index ? 'is-on' : ''} ${i < index ? 'is-done' : ''}`}>
               <button type="button" onClick={() => setStep(s.key)} aria-current={i === index ? 'step' : undefined}>
                 <span className="wiz-step-num">{i < index ? <IconCheck /> : i + 1}</span>
-                <span className="wiz-step-label">{s.label}</span>
+                <span className="wiz-step-label">{t(`steps.${s.key}`)}</span>
               </button>
             </li>
           ))}
@@ -237,25 +239,26 @@ export function StaffWizard({
           {step === 'who' && (
             <>
               <div className="field">
-                <label htmlFor="wiz-name">Full name</label>
+                <label htmlFor="wiz-name">{t('fullName')}</label>
                 <input
                   id="wiz-name"
                   type="text"
                   autoFocus
                   value={displayName}
-                  placeholder="Priya Sharma"
+                  placeholder={t('namePlaceholder')}
                   aria-invalid={nameInvalid ? true : undefined}
                   onChange={(e) => {
                     setDisplayName(e.target.value);
                     if (nameInvalid) setNameInvalid(false);
                   }}
                 />
-                {nameInvalid && <div role="alert" className="field-error">A name is required.</div>}
+                {nameInvalid && <div role="alert" className="field-error">{t('nameRequired')}</div>}
               </div>
 
               <PhoneField
                 id="wiz-phone"
-                label="Mobile"
+                label={t('mobile')}
+                optionalLabel={tCommon('optional')}
                 required
                 value={phone}
                 error={phoneInvalid ? phoneProblem : null}
@@ -265,7 +268,7 @@ export function StaffWizard({
                 }}
               />
 
-              <div className="wiz-section-label">Role</div>
+              <div className="wiz-section-label">{t('role')}</div>
               <div className="wiz-chips">
                 {roles.map((r) => (
                   <button
@@ -283,11 +286,11 @@ export function StaffWizard({
                     className="wiz-new-role"
                     autoFocus
                     value={newRole}
-                    placeholder="Colourist"
+                    placeholder={t('rolePlaceholder')}
                     onChange={(e) => setNewRole(e.target.value)}
                     onBlur={() => {
-                      const t = newRole.trim();
-                      if (t) setTitle(t);
+                      const role = newRole.trim();
+                      if (role) setTitle(role);
                       setNewRole('');
                       setAddingRole(false);
                     }}
@@ -301,7 +304,7 @@ export function StaffWizard({
                   />
                 ) : (
                   <button type="button" className="wiz-chip wiz-chip-new" onClick={() => setAddingRole(true)}>
-                    <IconPlus /> New role
+                    <IconPlus /> {t('newRole')}
                   </button>
                 )}
                 {/* A role typed here exists only as this person's title, so it
@@ -318,8 +321,8 @@ export function StaffWizard({
               {/* Jira GRW-234 — where this person works. Their bookings, hours and figures follow it. */}
               {branches.length > 1 ? (
                 <>
-                  <div className="wiz-section-label">Branch</div>
-                  <div className="wiz-chips" role="radiogroup" aria-label="Branch">
+                  <div className="wiz-section-label">{t('branch')}</div>
+                  <div className="wiz-chips" role="radiogroup" aria-label={t('branch')}>
                     {branches.map((b, i) => (
                       <button
                         key={b.id}
@@ -329,7 +332,7 @@ export function StaffWizard({
                         className={`wiz-chip ${branchId === b.id ? 'is-on' : ''}`}
                         onClick={() => setBranchId(b.id)}
                       >
-                        {i === 0 ? `${b.name} (Main)` : b.name}
+                        {i === 0 ? t('mainSuffix', { name: b.name }) : b.name}
                       </button>
                     ))}
                   </div>
@@ -350,11 +353,11 @@ export function StaffWizard({
                   }}
                 />
                 <span>
-                  <strong>Same hours as the salon</strong>
+                  <strong>{t('sameHours')}</strong>
                   <span className="wiz-toggle-sub">
                     {/* Why this is a standing intent and not a copy, in one
                         sentence an owner can act on. */}
-                    They follow the salon automatically, including when you change it later.
+                    {t('sameHoursSub')}
                   </span>
                 </span>
               </label>
@@ -378,17 +381,13 @@ export function StaffWizard({
               */}
               {!followsSalon && openDays === 0 && (
                 <div className="field-hint wiz-warn">
-                  Nobody can book {displayName.trim() || 'them'} with no working days. Turn a day on, or switch the salon
-                  hours back on above.
+                  {t('warnNoDays', { name: displayName.trim() || t('them') })}
                 </div>
               )}
 
               {followsSalon && salonHasNoHours && (
                 <div className="field-hint wiz-warn">
-                  This business has no opening hours set yet, so nobody can book{' '}
-                  {displayName.trim() || 'them'} until it does. Saving is fine — they will pick the hours up
-                  automatically. Set them in <strong>Settings → Working hours</strong>, or turn the switch off above and
-                  give {displayName.trim() || 'them'} their own days.
+                  {t.rich('warnNoSalonHours', { name: displayName.trim() || t('them'), b: (chunks) => <strong>{chunks}</strong> })}
                 </div>
               )}
             </>
@@ -397,7 +396,7 @@ export function StaffWizard({
           {step === 'services' && (
             <>
               <div className="wiz-section-label">
-                What they can do
+                {t('whatTheyCanDo')}
                 <button
                   type="button"
                   className="wiz-link"
@@ -405,11 +404,11 @@ export function StaffWizard({
                     setSkills(skills.size === services.length ? new Set() : new Set(services.map((s) => s.id)))
                   }
                 >
-                  {skills.size === services.length ? 'Clear all' : 'Select all'}
+                  {skills.size === services.length ? t('clearAll') : t('selectAll')}
                 </button>
               </div>
               {services.length === 0 ? (
-                <div className="field-hint">No services set up yet — add some first and they will pick them all up.</div>
+                <div className="field-hint">{t('noServices')}</div>
               ) : (
                 <div className="skill-picker">
                   {services.map((s) => {
@@ -437,7 +436,7 @@ export function StaffWizard({
               )}
               {skills.size === 0 && (
                 <div className="field-hint wiz-warn">
-                  With nothing ticked they will not appear in any booking flow. That is allowed — you can set it later.
+                  {t('noneTicked')}
                 </div>
               )}
             </>
@@ -449,13 +448,13 @@ export function StaffWizard({
           <div className="wiz-actions-row">
             {index > 0 && (
               <button type="button" className="btn btn-ghost" onClick={() => setStep(STEPS[index - 1]!.key)}>
-                Back
+                {t('back')}
               </button>
             )}
             <span className="wiz-spacer" />
             {index < STEPS.length - 1 && (
               <button type="button" className="btn btn-ghost" onClick={() => setStep(STEPS[index + 1]!.key)}>
-                Next
+                {t('next')}
               </button>
             )}
             {/*
@@ -464,7 +463,7 @@ export function StaffWizard({
               complete answer.
             */}
             <button type="button" className="btn" disabled={busy || !canSave} onClick={save}>
-              {busy ? 'Saving…' : 'Save & close'}
+              {busy ? t('saving') : t('saveClose')}
             </button>
           </div>
         </div>

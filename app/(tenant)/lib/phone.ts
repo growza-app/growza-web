@@ -80,14 +80,40 @@ export function toNationalDigits(raw: string): string {
   return digits.slice(0, NATIONAL_DIGITS);
 }
 
-/** Null when the ten digits are usable; otherwise what to show under the field. */
-export function validateNationalPhone(raw: string, { required = true } = {}): string | null {
+/** Why ten digits are not usable yet — a key of the `phone` messages, so a screen can say it in the owner's language. */
+export type PhoneProblem =
+  | { code: 'required' }
+  | { code: 'moreDigits'; count: number }
+  | { code: 'tooMany'; count: number }
+  | { code: 'badStart' };
+
+/** Null when the ten digits are usable; otherwise why not. */
+export function nationalPhoneProblem(raw: string, { required = true } = {}): PhoneProblem | null {
   const digits = digitsOnly(raw);
-  if (digits.length === 0) return required ? 'Enter a mobile number' : null;
-  if (digits.length < NATIONAL_DIGITS) return `${NATIONAL_DIGITS - digits.length} more digit${NATIONAL_DIGITS - digits.length === 1 ? '' : 's'} to go`;
-  if (digits.length > NATIONAL_DIGITS) return `A mobile number is ${NATIONAL_DIGITS} digits`;
-  if (!VALID_FIRST_DIGIT.test(digits)) return 'An Indian mobile number starts with 6, 7, 8 or 9';
+  if (digits.length === 0) return required ? { code: 'required' } : null;
+  if (digits.length < NATIONAL_DIGITS) return { code: 'moreDigits', count: NATIONAL_DIGITS - digits.length };
+  if (digits.length > NATIONAL_DIGITS) return { code: 'tooMany', count: NATIONAL_DIGITS };
+  if (!VALID_FIRST_DIGIT.test(digits)) return { code: 'badStart' };
   return null;
+}
+
+/**
+ * The same check, in English — for callers outside a translated screen. Screens
+ * inside the dashboard use `usePhoneProblem()` (lib/use-phone-problem.ts).
+ */
+export function validateNationalPhone(raw: string, opts: { required?: boolean } = {}): string | null {
+  const p = nationalPhoneProblem(raw, opts);
+  if (!p) return null;
+  switch (p.code) {
+    case 'required':
+      return 'Enter a mobile number';
+    case 'moreDigits':
+      return `${p.count} more digit${p.count === 1 ? '' : 's'} to go`;
+    case 'tooMany':
+      return `A mobile number is ${p.count} digits`;
+    case 'badStart':
+      return 'An Indian mobile number starts with 6, 7, 8 or 9';
+  }
 }
 
 /**

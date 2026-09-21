@@ -32,7 +32,8 @@ import { useTranslations } from 'next-intl';
 import { copy } from '../lib/copy';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { PhoneField } from '../components/PhoneField';
-import { toStoredPhone, validateNationalPhone } from '../lib/phone';
+import { toStoredPhone } from '../lib/phone';
+import { usePhoneProblem } from '../lib/use-phone-problem';
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -589,6 +590,7 @@ function Kpi({ label, value, sub, icon }: { label: string; value: string; sub: s
 }
 
 function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; onClose: () => void; onSaved: () => void }) {
+  const checkPhone = usePhoneProblem();
   const t = useTranslations('customers');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -599,7 +601,7 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
   const save = async () => {
     // GRW-199 — ten digits, or nothing. This used to accept any non-empty
     // string, which is how "abc" and half-typed numbers reached `wa_phone`.
-    const phoneProblem = validateNationalPhone(phone);
+    const phoneProblem = checkPhone(phone);
     if (phoneProblem) {
       setPhoneError(phoneProblem);
       return;

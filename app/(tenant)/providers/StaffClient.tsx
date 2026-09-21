@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, type ProviderOverviewRow, type ProvidersOverview, type Service } from '../lib/api';
@@ -7,6 +8,7 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { toWeekdayRows } from '../components/WeekdayHoursEditor';
+import { pickNoun } from '../lib/nouns';
 import { IconPlus, IconSearch } from '../components/icons';
 import { StaffWizard } from './StaffWizard';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
@@ -31,6 +33,12 @@ export function StaffClient({
   branches?: Array<{ id: string; name: string }>;
 }) {
   const router = useRouter();
+  const t = useTranslations('staff');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  // The vertical's word in English; a generic one in other languages until vertical labels are translated (GRW-315 Story 5).
+  const staffTitle = pickNoun(locale, staffWord, tn('staffTitle'));
+  const staffLower = pickNoun(locale, staffWord.toLowerCase(), tn('staff'));
   const [overview, setOverview] = useState(initialOverview);
 
   /**
@@ -84,7 +92,7 @@ export function StaffClient({
       await api.updateProviderProfile(p.id, { active: true });
       await refresh();
     } catch (e) {
-      setError(e instanceof ApiError && e.status === 403 ? e.message : 'Could not bring them back. Please try again.');
+      setError(e instanceof ApiError && e.status === 403 ? e.message : t('errors.bringBack'));
     } finally {
       setBusyId(null);
     }
@@ -182,11 +190,11 @@ export function StaffClient({
     busyId,
   };
 
-  const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: activeCount },
-    { key: 'working', label: 'Working', count: workingTodayCount },
-    { key: 'off', label: 'Off', count: offTodayCount },
-    { key: 'inactive', label: 'Inactive', count: inactiveCount },
+  const tabs: { key: Tab; count: number }[] = [
+    { key: 'all', count: activeCount },
+    { key: 'working', count: workingTodayCount },
+    { key: 'off', count: offTodayCount },
+    { key: 'inactive', count: inactiveCount },
   ];
 
   /*
@@ -217,25 +225,21 @@ export function StaffClient({
         where there is no client component at all.
       */}
       <PageHeader
-        title={staffWord}
+        title={staffTitle}
         actions={
           <button type="button" className="btn" onClick={() => setCreating(true)} disabled={seatsLeft === 0}>
-            <IconPlus /> Add {staffWord.toLowerCase()}
+            <IconPlus /> {t('addLabel', { label: staffLower })}
           </button>
         }
       />
       <div className="page-body">
       <div className="staff-summary">
-        <span>
-          <strong>{workingTodayCount}</strong> working today
-        </span>
+        <span>{t.rich('summaryWorking', { count: workingTodayCount, b: (chunks) => <strong>{chunks}</strong> })}</span>
         <span className="staff-summary-dot" />
-        <span>
-          <strong>{activeCount}</strong> {activeCount === 1 ? 'person' : 'people'}
-        </span>
+        <span>{t.rich('summaryPeople', { count: activeCount, b: (chunks) => <strong>{chunks}</strong> })}</span>
         <span className="staff-summary-dot" />
         <span className={seatsLeft === 0 ? 'staff-summary-warn' : ''}>
-          {seatsLeft === 0 ? 'No seats left on your plan' : `${seatsLeft} seat${seatsLeft === 1 ? '' : 's'} left on your plan`}
+          {seatsLeft === 0 ? t('seatsNone') : t('seatsLeft', { count: seatsLeft })}
         </span>
       </div>
 
@@ -258,38 +262,38 @@ export function StaffClient({
           <IconSearch />
           <input
             type="search"
-            placeholder={`Search ${staffWord.toLowerCase()}...`}
+            placeholder={t('searchPlaceholder', { label: staffLower })}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            aria-label={`Search ${staffWord.toLowerCase()}`}
+            aria-label={t('searchAria', { label: staffLower })}
           />
         </div>
       </div>
 
       <div className="page-tabs" role="tablist">
-        {tabs.map((t) => (
+        {tabs.map((tb) => (
           <button
-            key={t.key}
+            key={tb.key}
             type="button"
             role="tab"
-            aria-selected={tab === t.key}
-            className={`page-tab ${tab === t.key ? 'active' : ''}`}
-            onClick={() => changeTab(t.key)}
+            aria-selected={tab === tb.key}
+            className={`page-tab ${tab === tb.key ? 'active' : ''}`}
+            onClick={() => changeTab(tb.key)}
           >
-            {t.label} <span className="page-tab-count">{t.count}</span>
+            {t(`tabs.${tb.key}`)} <span className="page-tab-count">{tb.count}</span>
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="empty">No {staffWord.toLowerCase()} match here.</div>
+        <div className="empty">{t('empty', { label: staffLower })}</div>
       ) : (
         <>
           <StaffGroup
-            title="Working today"
+            title={t('groups.workingToday')}
             tone="on"
             people={working}
             off={false}
@@ -298,7 +302,7 @@ export function StaffClient({
             onOpenSheet={setSheetFor}
           />
           <StaffGroup
-            title="Off today"
+            title={t('groups.offToday')}
             tone="off"
             people={off}
             off
@@ -307,7 +311,7 @@ export function StaffClient({
             onOpenSheet={setSheetFor}
           />
           <StaffGroup
-            title="Inactive"
+            title={t('groups.inactive')}
             tone="off"
             people={inactive}
             off
@@ -319,7 +323,7 @@ export function StaffClient({
             page={clamped}
             total={filtered.length}
             pageSize={PAGE_SIZE}
-            noun={staffWord.toLowerCase()}
+            noun={staffLower}
             onChange={setPage}
           />
         </>
@@ -327,23 +331,17 @@ export function StaffClient({
 
       {confirmAvail && (
         <ConfirmDialog
-          title={confirmAvail.available ? `Mark ${confirmAvail.p.displayName} available today?` : `Mark ${confirmAvail.p.displayName} off today?`}
-          body={
-            confirmAvail.available
-              ? `Their remaining hours today become bookable again on WhatsApp.`
-              : `Their remaining slots today stop being bookable on WhatsApp. This is for today only — their weekly schedule is unchanged.`
-          }
+          title={confirmAvail.available ? t('avail.titleOn', { name: confirmAvail.p.displayName }) : t('avail.titleOff', { name: confirmAvail.p.displayName })}
+          body={confirmAvail.available ? t('avail.bodyOn') : t('avail.bodyOff')}
           detail={
             // The number that actually decides this. Existing bookings are NOT
             // cancelled by blocking the day, so say so rather than leave the
             // owner guessing whether they just dropped four clients.
             !confirmAvail.available && confirmAvail.p.todayBookings > 0
-              ? confirmAvail.p.todayBookings === 1
-                ? '1 booking already on the books today stays put — you will need to move or cancel it yourself.'
-                : `${confirmAvail.p.todayBookings} bookings already on the books today stay put — you will need to move or cancel them yourself.`
+              ? t('avail.detail', { count: confirmAvail.p.todayBookings })
               : undefined
           }
-          confirmLabel={confirmAvail.available ? 'Mark available' : 'Mark off today'}
+          confirmLabel={confirmAvail.available ? t('avail.confirmOn') : t('avail.confirmOff')}
           busy={busyId === confirmAvail.p.id}
           onConfirm={() => doSetAvailableToday(confirmAvail.p, confirmAvail.available)}
           onCancel={() => setConfirmAvail(null)}
@@ -352,10 +350,10 @@ export function StaffClient({
 
       {confirmRemove && (
         <ConfirmDialog
-          title={`Remove ${confirmRemove.displayName} from the team?`}
-          body="They stop appearing in booking flows and on the roster."
-          detail="Their booking history is kept, and you can restore them any time from the Inactive tab."
-          confirmLabel="Remove"
+          title={t('remove.title', { name: confirmRemove.displayName })}
+          body={t('remove.body')}
+          detail={t('remove.detail')}
+          confirmLabel={t('remove.confirm')}
           tone="danger"
           busy={busyId === confirmRemove.id}
           onConfirm={() => doRemove(confirmRemove)}

@@ -5,6 +5,7 @@ import {
   fromStoredPhone,
   toNationalDigits,
   toStoredPhone,
+  nationalPhoneProblem,
   validateNationalPhone,
 } from './phone';
 
@@ -126,5 +127,18 @@ describe('display', () => {
 
   it('shows a malformed row verbatim rather than pretending', () => {
     expect(displayPhone('+91786545789')).toBe('+91786545789');
+  });
+});
+
+/** Jira GRW-357 — the same rules as codes, so a screen can say them in the owner's language. */
+describe('nationalPhoneProblem', () => {
+  it('names each reason', () => {
+    expect(nationalPhoneProblem('')).toEqual({ code: 'required' });
+    expect(nationalPhoneProblem('', { required: false })).toBeNull();
+    expect(nationalPhoneProblem('98765')).toEqual({ code: 'moreDigits', count: 5 });
+    expect(nationalPhoneProblem('786545789')).toEqual({ code: 'moreDigits', count: 1 });
+    expect(nationalPhoneProblem('98765432101')).toEqual({ code: 'tooMany', count: 10 });
+    expect(nationalPhoneProblem('1234567890')).toEqual({ code: 'badStart' });
+    expect(nationalPhoneProblem('9876543210')).toBeNull();
   });
 });

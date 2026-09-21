@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { api, BookingConflictError, type AvailabilityResponse } from '../lib/api';
 import { useTranslations } from 'next-intl';
 import { PhoneField } from '../components/PhoneField';
-import { fromStoredPhone, toStoredPhone, validateNationalPhone } from '../lib/phone';
+import { fromStoredPhone, toStoredPhone } from '../lib/phone';
+import { usePhoneProblem } from '../lib/use-phone-problem';
 
 type Slot = AvailabilityResponse['sections'][number]['slots'][number];
 
@@ -52,6 +53,7 @@ function loadRememberedCustomer(): RememberedCustomer | null {
  * for the phone-number form and the pending/success/conflict outcome.
  */
 export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Props) {
+  const checkPhone = usePhoneProblem();
   const router = useRouter();
   const t = useTranslations('freeTimes');
   const sectionLabel = (name: string) =>
@@ -118,7 +120,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
     if (modal.step !== 'form') return;
     // GRW-199 — one shape for every number in the app. A half-typed one saved
     // as-is is how `+91786545789` got into the live customer table.
-    const phoneProblem = validateNationalPhone(phone);
+    const phoneProblem = checkPhone(phone);
     if (phoneProblem) {
       setPhoneError(phoneProblem);
       return;

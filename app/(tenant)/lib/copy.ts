@@ -340,13 +340,6 @@ export const copy = {
    * own pay. "Show their own earnings" says what happens; "revenue visibility"
    * would make the owner guess.
    */
-  staffEdit: {
-    seesOwnRevenue: 'Show their own earnings',
-    revenueOnHint:
-      'They can see the money their own bookings brought in \u2014 today and this month. Never anybody else\u2019s, and never the salon\u2019s total.',
-    revenueOffHint:
-      'They see their schedule only, no money. Turn this on for anyone paid a share of what their chair takes.',
-  },
   staff: {
     subtitle: (used: number, allowed: number) => `${used} of ${allowed} people on your plan.`,
     name: 'Name',

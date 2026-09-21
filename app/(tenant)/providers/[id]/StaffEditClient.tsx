@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { PhoneField } from '../../components/PhoneField';
 import { useRouter } from 'next/navigation';
@@ -17,13 +18,11 @@ import {
 import { toWeekdayRows, WeekdayHoursEditor, type WeekdayRow } from '../../components/WeekdayHoursEditor';
 import { IconArrowLeft, IconCheck } from '../../components/icons';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { copy } from '../../lib/copy';
-import { validateRequired } from '../../lib/validate';
-import { fromStoredPhone, toStoredPhone, validateNationalPhone } from '../../lib/phone';
+import { pickNoun } from '../../lib/nouns';
+import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
+import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { avatarTone, initials } from '../StaffRoster';
 import { useLabel } from '../../components/LabelsProvider';
-
-const SAVE_ERROR = 'Could not save — check the server is running.';
 
 function rowsEqual(a: WeekdayRow[], b: WeekdayRow[]): boolean {
   return (
@@ -59,7 +58,17 @@ export function StaffEditClient({
   /** Jira GRW-234 — a multi-branch business's branches, main first. Empty: no field. */
   branches?: Array<{ id: string; name: string }>;
 }) {
-  const providerWord = useLabel('provider', 'Staff member');
+  const t = useTranslations('staffEdit');
+  const ts = useTranslations('staff');
+  const tStatus = useTranslations('status');
+  const tCommon = useTranslations('common');
+  const tw = useTranslations('staffWizard');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  const checkPhone = usePhoneProblem();
+  // The vertical's word in English; the generic one in other languages until vertical labels are translated (GRW-315 Story 5).
+  const providerWord = pickNoun(locale, useLabel('provider', t('staffMember')), t('staffMember'));
+  const staffTitle = pickNoun(locale, staffWord, tn('staffTitle'));
   const router = useRouter();
   const [detail, setDetail] = useState(initialDetail);
 
@@ -147,8 +156,8 @@ export function StaffEditClient({
 
   const validateAll = () => {
     const next = {
-      name: validateRequired(displayName, 'Name') ?? undefined,
-      phone: validateNationalPhone(phone) ?? undefined,
+      name: displayName.trim() ? undefined : t('errors.nameRequired'),
+      phone: checkPhone(phone) ?? undefined,
     };
     setFieldErrors(next);
     return next;
@@ -162,7 +171,7 @@ export function StaffEditClient({
     }
     const openRows = hourRows.filter((r) => r.open);
     if (!usesOrgHours && openRows.some((r) => r.startTime >= r.endTime)) {
-      return setError('Start time must be before end time');
+      return setError(t('errors.startBeforeEnd'));
     }
 
     setBusy(true);
@@ -203,7 +212,7 @@ export function StaffEditClient({
       setSaved(true);
       router.refresh();
     } catch {
-      setError(SAVE_ERROR);
+      setError(t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -245,7 +254,7 @@ export function StaffEditClient({
        * fixed on the Add-staff panel — it sends an owner who has run out of
        * seats to go and look at their server.
        */
-      setError(e instanceof ApiError && e.status === 403 ? e.message : SAVE_ERROR);
+      setError(e instanceof ApiError && e.status === 403 ? e.message : t('errors.saveFailed'));
     } finally {
       setBusy(false);
       setConfirmRemove(false);
@@ -262,13 +271,13 @@ export function StaffEditClient({
     <>
       <div className="edit-header">
         <div className="edit-header-left">
-          <Link href="/providers" className="staff-icon-btn" aria-label={`Back to ${staffWord}`}>
+          <Link href="/providers" className="staff-icon-btn" aria-label={t('backTo', { label: staffTitle })}>
             <IconArrowLeft />
           </Link>
           <div className={`staff-avatar ${avatarTone(detail.displayName)} edit-header-avatar`}>{initials(detail.displayName)}</div>
           <div>
             <div className="edit-crumb">
-              <Link href="/providers">{staffWord}</Link> · Edit
+              <Link href="/providers">{staffTitle}</Link> · {t('crumbEdit')}
             </div>
             <h1 className="edit-title">{detail.displayName}</h1>
           </div>
@@ -276,14 +285,14 @@ export function StaffEditClient({
         <div className="edit-header-actions">
           <div className="edit-header-toggle">
             <span className="staff-toggle-label">
-              {unavailableToday ? 'Off today' : 'Available'}
+              {unavailableToday ? ts('row.offToday') : ts('row.available')}
             </span>
-            <label className="switch switch-lg" title="Available today">
+            <label className="switch switch-lg" title={t('availableTodayTitle')}>
               <input
                 type="checkbox"
                 checked={!unavailableToday}
                 disabled={busy}
-                aria-label={`${detail.displayName} available today`}
+                aria-label={ts('row.availableToday', { name: detail.displayName })}
                 onChange={(e) => setAvailableToday(e.target.checked)}
               />
               <span className="switch-track">
@@ -292,10 +301,10 @@ export function StaffEditClient({
             </label>
           </div>
           <button type="button" className="btn btn-ghost" onClick={() => router.push('/providers')} disabled={busy}>
-            Cancel
+            {t('cancel')}
           </button>
           <button type="button" className="btn" onClick={save} disabled={busy || !dirty}>
-            {busy ? 'Saving…' : saved && !dirty ? 'Saved' : 'Save changes'}
+            {busy ? t('saving') : saved && !dirty ? t('saved') : t('saveChanges')}
           </button>
         </div>
       </div>
@@ -306,10 +315,10 @@ export function StaffEditClient({
         <div className="edit-layout">
           <div className="edit-main">
             <section className="card edit-card">
-              <div className="edit-card-title">Details</div>
+              <div className="edit-card-title">{t('details')}</div>
               <div className="edit-grid">
                 <label className="field">
-                  <span className="field-label">Full name</span>
+                  <span className="field-label">{t('fullName')}</span>
                   <input
                     type="text"
                     value={displayName}
@@ -323,27 +332,27 @@ export function StaffEditClient({
                       // shouting the moment the user starts fixing it.
                       if (fieldErrors.name) setFieldErrors((f) => ({ ...f, name: undefined }));
                     }}
-                    onBlur={() => setFieldErrors((f) => ({ ...f, name: validateRequired(displayName, 'Name') ?? undefined }))}
+                    onBlur={() => setFieldErrors((f) => ({ ...f, name: displayName.trim() ? undefined : t('errors.nameRequired') }))}
                   />
                   {fieldErrors.name && <div role="alert" className="field-error">{fieldErrors.name}</div>}
                 </label>
                 {branches.length > 1 ? (
                   <label className="field">
-                    <span className="field-label">Branch</span>
+                    <span className="field-label">{t('branch')}</span>
                     <select value={locationId} onChange={(e) => (setLocationId(e.target.value), setSaved(false))}>
                       {branches.map((b, i) => (
                         <option key={b.id} value={b.id}>
-                          {i === 0 ? `${b.name} (Main)` : b.name}
+                          {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
                         </option>
                       ))}
                     </select>
                     {usesOrgHours && locationId !== detail.locationId ? (
-                      <span className="field-hint">They follow the salon&apos;s hours, so they will take this branch&apos;s hours.</span>
+                      <span className="field-hint">{t('branchHoursHint')}</span>
                     ) : null}
                   </label>
                 ) : null}
                 <label className="field">
-                  <span className="field-label">Role</span>
+                  <span className="field-label">{t('role')}</span>
                   <input type="text" value={title} placeholder={providerWord} onChange={(e) => (setTitle(e.target.value), setSaved(false))} />
                 </label>
                 {/* GRW-199 — the shared field. The validate-on-blur dance is
@@ -351,7 +360,8 @@ export function StaffEditClient({
                     the length can be wrong and that is checked on save. */}
                 <PhoneField
                   id="staff-edit-phone"
-                  label="Mobile"
+                  label={t('mobile')}
+                  optionalLabel={tCommon('optional')}
                   required
                   value={phone}
                   error={fieldErrors.phone ?? null}
@@ -366,7 +376,7 @@ export function StaffEditClient({
 
             <section className="card edit-card">
               <div className="edit-card-head">
-                <div className="edit-card-title">Earnings</div>
+                <div className="edit-card-title">{t('earnings')}</div>
                 <label className="switch">
                   <input
                     type="checkbox"
@@ -378,29 +388,29 @@ export function StaffEditClient({
                     <span className="switch-thumb" />
                   </span>
                   <span className={seesOwnRevenue ? 'switch-label-on' : 'switch-label-off'}>
-                    {copy.staffEdit.seesOwnRevenue}
+                    {t('seesOwnRevenue')}
                   </span>
                 </label>
               </div>
               <div className="field-hint">
-                {seesOwnRevenue ? copy.staffEdit.revenueOnHint : copy.staffEdit.revenueOffHint}
+                {seesOwnRevenue ? t('revenueOnHint') : t('revenueOffHint')}
               </div>
             </section>
 
             <section className="card edit-card">
               <div className="edit-card-head">
-                <div className="edit-card-title">Working hours</div>
+                <div className="edit-card-title">{t('workingHours')}</div>
                 <label className="switch">
                   <input type="checkbox" checked={usesOrgHours} disabled={busy} onChange={(e) => toggleOrgHours(e.target.checked)} />
                   <span className="switch-track">
                     <span className="switch-thumb" />
                   </span>
-                  <span className={usesOrgHours ? 'switch-label-on' : 'switch-label-off'}>Same as the business</span>
+                  <span className={usesOrgHours ? 'switch-label-on' : 'switch-label-off'}>{t('sameAsBusiness')}</span>
                 </label>
               </div>
               {usesOrgHours && (
                 <div className="field-hint">
-                  Following the business&apos;s default hours (Settings → Working hours). Turn this off to set custom hours.
+                  {t('followingHint')}
                 </div>
               )}
               <div className="edit-hours">
@@ -408,16 +418,16 @@ export function StaffEditClient({
               </div>
               {hiddenDayCount > 0 && (
                 <button type="button" className="link-btn" onClick={() => setShowAllDays(true)}>
-                  Show all 7 days ({hiddenDayCount} day{hiddenDayCount === 1 ? '' : 's'} off)
+                  {t('showAllDays', { count: hiddenDayCount })}
                 </button>
               )}
             </section>
 
             <section className="card edit-card">
               <div className="edit-card-head">
-                <div className="edit-card-title">Services this person can take</div>
+                <div className="edit-card-title">{t('servicesTitle')}</div>
                 <span className="muted edit-count">
-                  {selectedServiceIds.size} of {services.length} selected
+                  {t('selectedOf', { selected: selectedServiceIds.size, total: services.length })}
                 </span>
               </div>
               <div className="edit-chips">
@@ -441,37 +451,37 @@ export function StaffEditClient({
 
           <aside className="edit-side">
             <section className="card edit-card">
-              <div className="edit-side-title">Last 30 days</div>
+              <div className="edit-side-title">{t('last30')}</div>
               {stats ? (
                 <div className="edit-stats">
                   <div className="edit-stat">
-                    <span>Bookings</span>
+                    <span>{t('bookings')}</span>
                     <strong>{stats.bookings}</strong>
                   </div>
                   <div className="edit-stat">
-                    <span>Repeat clients</span>
+                    <span>{t('repeatClients')}</span>
                     <strong>{stats.repeatPct === null ? '—' : `${stats.repeatPct}%`}</strong>
                   </div>
                   <div className="edit-stat">
-                    <span>{copy.status.didNotCome}</span>
+                    <span>{tStatus('didNotCome')}</span>
                     <strong>{stats.noShows}</strong>
                   </div>
                   <div className="edit-stat">
-                    <span>Hours booked</span>
+                    <span>{t('hoursBooked')}</span>
                     <strong>
                       {hours(stats.bookedMinutes)} / {hours(stats.scheduledMinutes)}
                     </strong>
                   </div>
                 </div>
               ) : (
-                <div className="field-hint">Not available.</div>
+                <div className="field-hint">{t('notAvailable')}</div>
               )}
             </section>
 
             <section className="card edit-card">
-              <div className="edit-side-title">Upcoming today</div>
+              <div className="edit-side-title">{t('upcoming')}</div>
               {upcoming.length === 0 ? (
-                <div className="field-hint">Nothing left on the books today.</div>
+                <div className="field-hint">{t('nothingLeft')}</div>
               ) : (
                 <div className="edit-upcoming">
                   {upcoming.map((e, i) => (
@@ -484,15 +494,15 @@ export function StaffEditClient({
                   ))}
                 </div>
               )}
-              <div className="field-hint">Changing hours will not move existing bookings.</div>
+              <div className="field-hint">{t('hoursNote')}</div>
             </section>
 
             <section className="card edit-card edit-danger">
-              <div className="edit-side-title">Danger zone</div>
+              <div className="edit-side-title">{t('danger')}</div>
               <button type="button" className="btn btn-ghost edit-danger-btn" disabled={busy} onClick={() => setActiveAndSave(!active)}>
-                {active ? 'Mark inactive' : 'Restore to team'}
+                {active ? t('markInactive') : ts('row.restoreToTeam')}
               </button>
-              <div className="field-hint">Inactive staff keep their history and stop appearing in booking slots.</div>
+              <div className="field-hint">{t('dangerHint')}</div>
             </section>
           </aside>
         </div>
@@ -500,10 +510,10 @@ export function StaffEditClient({
 
       {confirmRemove && (
         <ConfirmDialog
-          title={`Remove ${detail.displayName} from the team?`}
-          body="They stop appearing in booking flows and on the roster."
-          detail="Their booking history is kept, and you can restore them any time from the Inactive tab."
-          confirmLabel="Remove"
+          title={ts('remove.title', { name: detail.displayName })}
+          body={ts('remove.body')}
+          detail={ts('remove.detail')}
+          confirmLabel={ts('remove.confirm')}
           tone="danger"
           busy={busy}
           onConfirm={() => applyActive(false)}
@@ -514,7 +524,7 @@ export function StaffEditClient({
       {/* Mobile only: Save can never scroll out of reach. */}
       <div className="edit-savebar">
         <button type="button" className="btn edit-savebar-btn" onClick={save} disabled={busy || !dirty}>
-          {busy ? 'Saving…' : saved && !dirty ? 'Saved' : 'Save changes'}
+          {busy ? t('saving') : saved && !dirty ? t('saved') : t('saveChanges')}
         </button>
       </div>
     </>

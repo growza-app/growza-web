@@ -1,9 +1,11 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import type { ProviderOverviewRow } from '../lib/api';
 import { IconAppointments, IconCalendar, IconClock, IconEdit, IconServices, IconTrash } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { weekdayNames } from '../lib/weekday-names';
 
 /**
  * The Staff roster — one row per person, grouped by whether they're on shift
@@ -14,8 +16,6 @@ import { useDialog } from '../../shared/a11y/useDialog';
  * Web renders rows, mobile renders cards from the same data (same pattern as
  * Bookings). Both share every handler — there is no mobile-only code path.
  */
-
-const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** Four tints so a wall of avatars stays scannable; stable per person via name hash, never random. */
 const AVATAR_TONES = ['tone-green', 'tone-purple', 'tone-peach', 'tone-blue'] as const;
@@ -60,12 +60,15 @@ export function isWorkingToday(p: ProviderOverviewRow): boolean {
   return Boolean(p.workingHoursTodayStart) && !p.unavailableToday;
 }
 
+/** The `staff` messages, as a translator — plain helpers here cannot call hooks. */
+type StaffT = ReturnType<typeof useTranslations<'staff'>>;
+
 /** "Back tomorrow, 9:00 AM" / "Back Friday, 9:00 AM" — the one thing worth knowing about someone who's off. */
-export function backOnLabel(p: ProviderOverviewRow): string | null {
+export function backOnLabel(p: ProviderOverviewRow, t: StaffT, locale: string): string | null {
   if (!p.nextWorkingDay) return null;
   const { dayOffset, weekday, startTime } = p.nextWorkingDay;
-  const when = dayOffset === 1 ? 'tomorrow' : WEEKDAY_NAMES[weekday] ?? '';
-  return `Back ${when}, ${formatTime12h(startTime)}`;
+  const when = dayOffset === 1 ? t('shift.tomorrow') : (weekdayNames(locale).full[weekday] ?? '');
+  return t('shift.backOn', { when, time: formatTime12h(startTime) });
 }
 
 
@@ -84,10 +87,10 @@ export function backOnLabel(p: ProviderOverviewRow): string | null {
  * no way to know that "No hours set" is the difference between a quiet week and
  * a stylist the booking engine will never once offer.
  */
-function shiftOffLabel(p: ProviderOverviewRow): string {
-  if (p.unavailableToday) return 'Unavailable today';
-  if (!p.hasWorkingHours) return 'Not bookable — add hours';
-  return backOnLabel(p) ?? 'No hours today';
+function shiftOffLabel(p: ProviderOverviewRow, t: StaffT, locale: string): string {
+  if (p.unavailableToday) return t('shift.unavailableToday');
+  if (!p.hasWorkingHours) return t('shift.notBookable');
+  return backOnLabel(p, t, locale) ?? t('shift.noHoursToday');
 }
 
 /**
@@ -152,6 +155,7 @@ function Switch({
  * delete someone's booking history.
  */
 function RowMenu({ p, actions }: { p: ProviderOverviewRow; actions: RosterActions }) {
+  const t = useTranslations('staff.row');
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -179,7 +183,7 @@ function RowMenu({ p, actions }: { p: ProviderOverviewRow; actions: RosterAction
       <button
         type="button"
         className={`staff-icon-btn ${open ? 'is-open' : ''}`}
-        aria-label={`More actions for ${p.displayName}`}
+        aria-label={t('moreActions', { name: p.displayName })}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
@@ -188,13 +192,13 @@ function RowMenu({ p, actions }: { p: ProviderOverviewRow; actions: RosterAction
       {open && (
         <div className="staff-menu" role="menu">
           <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onEdit(p))}>
-            <IconEdit /> Edit details
+            <IconEdit /> {t('editDetails')}
           </button>
           <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onEdit(p))}>
-            <IconClock /> Working hours
+            <IconClock /> {t('workingHours')}
           </button>
           <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onEdit(p))}>
-            <IconServices /> Services &amp; skills
+            <IconServices /> {t('servicesSkills')}
           </button>
           <div className="staff-menu-divider" />
           {p.active ? (
@@ -204,11 +208,11 @@ function RowMenu({ p, actions }: { p: ProviderOverviewRow; actions: RosterAction
               role="menuitem"
               onClick={run(() => actions.onSetActive(p, false))}
             >
-              <IconTrash /> Remove from team
+              <IconTrash /> {t('removeFromTeam')}
             </button>
           ) : (
             <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onSetActive(p, true))}>
-              <IconAppointments /> Restore to team
+              <IconAppointments /> {t('restoreToTeam')}
             </button>
           )}
         </div>
@@ -229,6 +233,8 @@ function StaffRow({
   topPerformerId: string | null;
   actions: RosterActions;
 }) {
+  const t = useTranslations('staff');
+  const locale = useLocale();
   const busy = actions.busyId === p.id;
   const segments = shiftSegments(p);
   const freeAllDay = !off && p.todayBookings === 0;
@@ -243,21 +249,21 @@ function StaffRow({
           <button type="button" className="staff-name-btn" onClick={() => actions.onEdit(p)}>
             {p.displayName}
           </button>
-          {isTop && <span className="staff-badge staff-badge-top">TOP</span>}
+          {isTop && <span className="staff-badge staff-badge-top">{t('row.top')}</span>}
         </div>
         <div className="staff-identity-role">{p.title ?? '—'}{p.branchLabel ? ` · ${p.branchLabel}` : ''}</div>
       </div>
 
       <div className="staff-shift">
         {off ? (
-          <span className="staff-shift-off">{shiftOffLabel(p)}</span>
+          <span className="staff-shift-off">{shiftOffLabel(p, t, locale)}</span>
         ) : (
           <>
             <div className="staff-shift-head">
               <span className="staff-shift-time">
                 {formatTime12h(p.workingHoursTodayStart!)} – {formatTime12h(p.workingHoursTodayEnd!)}
               </span>
-              {freeAllDay && <span className="staff-badge staff-badge-free">Free all day</span>}
+              {freeAllDay && <span className="staff-badge staff-badge-free">{t('row.freeAllDay')}</span>}
             </div>
             <div className="staff-shift-bar" aria-hidden="true">
               {segments.map((s, i) => (
@@ -270,25 +276,25 @@ function StaffRow({
 
       <div className="staff-count">
         <span className={`staff-count-num ${p.todayBookings === 0 ? 'is-zero' : ''}`}>{p.todayBookings}</span>
-        <span className="staff-count-label">bookings today</span>
+        <span className="staff-count-label">{t('row.bookingsToday')}</span>
       </div>
 
       <div className="staff-row-actions">
         {p.active ? (
           <>
-            <span className="staff-toggle-label">{p.unavailableToday ? 'Off today' : 'Available'}</span>
+            <span className="staff-toggle-label">{p.unavailableToday ? t('row.offToday') : t('row.available')}</span>
             <Switch
               on={!p.unavailableToday}
               disabled={busy}
-              label={`${p.displayName} available today`}
+              label={t('row.availableToday', { name: p.displayName })}
               onChange={(next) => actions.onToggleAvailable(p, next)}
             />
           </>
         ) : (
-          <span className="staff-toggle-label">Inactive</span>
+          <span className="staff-toggle-label">{t('row.inactive')}</span>
         )}
         <button type="button" className="row-edit-btn" onClick={() => actions.onEdit(p)}>
-          <IconEdit /> Edit
+          <IconEdit /> {t('row.edit')}
         </button>
         <RowMenu p={p} actions={actions} />
       </div>
@@ -310,6 +316,8 @@ function StaffCard({
   actions: RosterActions;
   onOpenSheet: (p: ProviderOverviewRow) => void;
 }) {
+  const t = useTranslations('staff');
+  const locale = useLocale();
   const busy = actions.busyId === p.id;
   const segments = shiftSegments(p);
   const freeAllDay = !off && p.todayBookings === 0;
@@ -333,11 +341,11 @@ function StaffCard({
         <div className="staff-card-identity">
           <div className="staff-identity-name">
             <span className="staff-card-name">{p.displayName}</span>
-            {isTop && <span className="staff-badge staff-badge-top">TOP</span>}
-            {freeAllDay && <span className="staff-badge staff-badge-free">FREE</span>}
+            {isTop && <span className="staff-badge staff-badge-top">{t('row.top')}</span>}
+            {freeAllDay && <span className="staff-badge staff-badge-free">{t('row.free')}</span>}
           </div>
           <div className="staff-identity-role">
-            {off ? `${shiftOffLabel(p)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}` : `${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''} · ${hours}`}
+            {off ? `${shiftOffLabel(p, t, locale)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}` : `${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''} · ${hours}`}
           </div>
         </div>
         {p.active ? (
@@ -345,12 +353,12 @@ function StaffCard({
             <Switch
               on={!p.unavailableToday}
               disabled={busy}
-              label={`${p.displayName} available today`}
+              label={t('row.availableToday', { name: p.displayName })}
               onChange={(next) => actions.onToggleAvailable(p, next)}
             />
           </span>
         ) : (
-          <span className="staff-toggle-label">Inactive</span>
+          <span className="staff-toggle-label">{t('row.inactive')}</span>
         )}
       </div>
 
@@ -361,7 +369,7 @@ function StaffCard({
               <span key={i} className="staff-shift-seg" style={{ left: `${s.left}%`, width: `${s.width}%` }} />
             ))}
           </div>
-          <span className={`staff-card-count ${p.todayBookings === 0 ? 'is-zero' : ''}`}>{p.todayBookings} today</span>
+          <span className={`staff-card-count ${p.todayBookings === 0 ? 'is-zero' : ''}`}>{t('row.todayShort', { count: p.todayBookings })}</span>
         </div>
       )}
     </div>
@@ -378,6 +386,7 @@ export function StaffActionSheet({
   actions: RosterActions;
   onClose: () => void;
 }) {
+  const t = useTranslations('staff.row');
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
   const run = (fn: () => void) => () => {
@@ -388,14 +397,14 @@ export function StaffActionSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={`Actions for ${p.displayName}`} ref={dialogRef}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={t('actionsFor', { name: p.displayName })} ref={dialogRef}>
         <div className="sheet-grab" />
         <div className="sheet-head">
           <div className={`staff-avatar ${avatarTone(p.displayName)}`}>{initials(p.displayName)}</div>
           <div>
             <div className="sheet-title">{p.displayName}</div>
             <div className="sheet-sub">
-              {p.title ?? '—'}{p.branchLabel ? ` · ${p.branchLabel}` : ''} · {p.todayBookings} booking{p.todayBookings === 1 ? '' : 's'} today
+              {p.title ?? '—'}{p.branchLabel ? ` · ${p.branchLabel}` : ''} · {t('bookingsCount', { count: p.todayBookings })}
             </div>
           </div>
         </div>
@@ -404,12 +413,12 @@ export function StaffActionSheet({
             down, and two identical glyphs in one sheet is a scanning tax. */}
         {p.active && (
           <div className="sheet-item staff-sheet-toggle">
-            <IconCalendar /> Available today
+            <IconCalendar /> {t('availableTodayLabel')}
             <span className="trail" onClick={(e) => e.stopPropagation()}>
               <Switch
                 on={!p.unavailableToday}
                 disabled={actions.busyId === p.id}
-                label={`${p.displayName} available today`}
+                label={t('availableToday', { name: p.displayName })}
                 onChange={(next) => actions.onToggleAvailable(p, next)}
               />
             </span>
@@ -417,23 +426,23 @@ export function StaffActionSheet({
         )}
 
         <button type="button" className="sheet-item" onClick={run(() => actions.onEdit(p))}>
-          <IconEdit /> Edit details
+          <IconEdit /> {t('editDetails')}
         </button>
         <button type="button" className="sheet-item" onClick={run(() => actions.onEdit(p))}>
-          <IconClock /> Working hours
+          <IconClock /> {t('workingHours')}
         </button>
         <button type="button" className="sheet-item" onClick={run(() => actions.onEdit(p))}>
-          <IconServices /> Services &amp; skills
+          <IconServices /> {t('servicesSkills')}
         </button>
 
         <div className="staff-menu-divider" />
         {p.active ? (
           <button type="button" className="sheet-item sheet-danger" onClick={run(() => actions.onSetActive(p, false))}>
-            <IconTrash /> Remove from team
+            <IconTrash /> {t('removeFromTeam')}
           </button>
         ) : (
           <button type="button" className="sheet-item" onClick={run(() => actions.onSetActive(p, true))}>
-            <IconAppointments /> Restore to team
+            <IconAppointments /> {t('restoreToTeam')}
           </button>
         )}
       </div>

@@ -106,7 +106,9 @@
     "customersTitle": "Customers",
     "services": "services",
     "service": "service",
-    "servicesTitle": "Services"
+    "servicesTitle": "Services",
+    "staff": "staff",
+    "staffTitle": "Staff"
   },
   "customers": {
     "subtitle": "View and manage your {noun}. See their booking history and spend.",
@@ -767,5 +769,154 @@
       "deleteConfirm": "Delete category"
     },
     "retireConfirm": "Retire"
+  },
+  "staff": {
+    "addLabel": "Add {label}",
+    "summaryWorking": "<b>{count}</b> working today",
+    "summaryPeople": "<b>{count}</b> {count, plural, one {person} other {people}}",
+    "seatsNone": "No seats left on your plan",
+    "seatsLeft": "{count, plural, one {# seat} other {# seats}} left on your plan",
+    "searchPlaceholder": "Search {label}...",
+    "searchAria": "Search {label}",
+    "empty": "No {label} match here.",
+    "tabs": {
+      "all": "All",
+      "working": "Working",
+      "off": "Off",
+      "inactive": "Inactive"
+    },
+    "groups": {
+      "workingToday": "Working today",
+      "offToday": "Off today",
+      "inactive": "Inactive"
+    },
+    "errors": {
+      "bringBack": "Could not bring them back. Please try again."
+    },
+    "avail": {
+      "titleOn": "Mark {name} available today?",
+      "titleOff": "Mark {name} off today?",
+      "bodyOn": "Their remaining hours today become bookable again on WhatsApp.",
+      "bodyOff": "Their remaining slots today stop being bookable on WhatsApp. This is for today only — their weekly schedule is unchanged.",
+      "detail": "{count, plural, one {1 booking already on the books today stays put — you will need to move or cancel it yourself.} other {# bookings already on the books today stay put — you will need to move or cancel them yourself.}}",
+      "confirmOn": "Mark available",
+      "confirmOff": "Mark off today"
+    },
+    "remove": {
+      "title": "Remove {name} from the team?",
+      "body": "They stop appearing in booking flows and on the roster.",
+      "detail": "Their booking history is kept, and you can restore them any time from the Inactive tab.",
+      "confirm": "Remove"
+    },
+    "row": {
+      "top": "TOP",
+      "free": "FREE",
+      "freeAllDay": "Free all day",
+      "bookingsToday": "bookings today",
+      "todayShort": "{count} today",
+      "availableToday": "{name} available today",
+      "moreActions": "More actions for {name}",
+      "actionsFor": "Actions for {name}",
+      "available": "Available",
+      "offToday": "Off today",
+      "inactive": "Inactive",
+      "availableTodayLabel": "Available today",
+      "edit": "Edit",
+      "editDetails": "Edit details",
+      "workingHours": "Working hours",
+      "servicesSkills": "Services & skills",
+      "removeFromTeam": "Remove from team",
+      "restoreToTeam": "Restore to team",
+      "bookingsCount": "{count, plural, one {# booking} other {# bookings}} today"
+    },
+    "shift": {
+      "unavailableToday": "Unavailable today",
+      "notBookable": "Not bookable — add hours",
+      "noHoursToday": "No hours today",
+      "backOn": "Back {when}, {time}",
+      "tomorrow": "tomorrow"
+    }
+  },
+  "staffWizard": {
+    "title": "Add {label}",
+    "sub": "Name and number are enough — the rest has sensible defaults.",
+    "close": "Close",
+    "steps": {
+      "who": "Who",
+      "hours": "Hours",
+      "services": "Services"
+    },
+    "fullName": "Full name",
+    "namePlaceholder": "Priya Sharma",
+    "nameRequired": "A name is required.",
+    "mobile": "Mobile",
+    "role": "Role",
+    "rolePlaceholder": "Colourist",
+    "newRole": "New role",
+    "branch": "Branch",
+    "mainSuffix": "{name} (Main)",
+    "sameHours": "Same hours as the salon",
+    "sameHoursSub": "They follow the salon automatically, including when you change it later.",
+    "warnNoDays": "Nobody can book {name} with no working days. Turn a day on, or switch the salon hours back on above.",
+    "warnNoSalonHours": "This business has no opening hours set yet, so nobody can book {name} until it does. Saving is fine — they will pick the hours up automatically. Set them in <b>Settings → Working hours</b>, or turn the switch off above and give {name} their own days.",
+    "them": "them",
+    "whatTheyCanDo": "What they can do",
+    "clearAll": "Clear all",
+    "selectAll": "Select all",
+    "noServices": "No services set up yet — add some first and they will pick them all up.",
+    "noneTicked": "With nothing ticked they will not appear in any booking flow. That is allowed — you can set it later.",
+    "back": "Back",
+    "next": "Next",
+    "saving": "Saving…",
+    "saveClose": "Save & close",
+    "saveFailed": "Could not save — check the server is running."
+  },
+  "staffEdit": {
+    "backTo": "Back to {label}",
+    "crumbEdit": "Edit",
+    "availableTodayTitle": "Available today",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveChanges": "Save changes",
+    "details": "Details",
+    "fullName": "Full name",
+    "branch": "Branch",
+    "branchHoursHint": "They follow the salon's hours, so they will take this branch's hours.",
+    "role": "Role",
+    "mobile": "Mobile",
+    "earnings": "Earnings",
+    "seesOwnRevenue": "Show their own earnings",
+    "revenueOnHint": "They can see the money their own bookings brought in — today and this month. Never anybody else’s, and never the salon’s total.",
+    "revenueOffHint": "They see their schedule only, no money. Turn this on for anyone paid a share of what their chair takes.",
+    "workingHours": "Working hours",
+    "sameAsBusiness": "Same as the business",
+    "followingHint": "Following the business's default hours (Settings → Working hours). Turn this off to set custom hours.",
+    "showAllDays": "Show all 7 days ({count, plural, one {# day} other {# days}} off)",
+    "servicesTitle": "Services this person can take",
+    "selectedOf": "{selected} of {total} selected",
+    "last30": "Last 30 days",
+    "bookings": "Bookings",
+    "repeatClients": "Repeat clients",
+    "hoursBooked": "Hours booked",
+    "notAvailable": "Not available.",
+    "upcoming": "Upcoming today",
+    "nothingLeft": "Nothing left on the books today.",
+    "hoursNote": "Changing hours will not move existing bookings.",
+    "danger": "Danger zone",
+    "markInactive": "Mark inactive",
+    "dangerHint": "Inactive staff keep their history and stop appearing in booking slots.",
+    "staffMember": "Staff member",
+    "errors": {
+      "nameRequired": "Name is required",
+      "startBeforeEnd": "Start time must be before end time",
+      "saveFailed": "Could not save — check the server is running."
+    }
+  },
+  "phone": {
+    "required": "Enter a mobile number",
+    "moreDigits": "{count, plural, one {# more digit to go} other {# more digits to go}}",
+    "tooMany": "A mobile number is {count} digits",
+    "badStart": "An Indian mobile number starts with 6, 7, 8 or 9"
   }
 }
