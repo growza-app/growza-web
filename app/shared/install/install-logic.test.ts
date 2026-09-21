@@ -179,3 +179,18 @@ describe('boundaries — nothing where it could only be wrong', () => {
     expect(installModeFor(env({ userAgent: UA.macChrome, maxTouchPoints: 0 }))).toBeNull();
   });
 });
+
+describe('the install banner in Hindi (Jira GRW-364)', () => {
+  it('speaks Hindi for the salon app in every mode, and keeps the install button only where it can install', () => {
+    for (const mode of ['prompt', 'ios', 'android-menu', 'in-app-android', 'in-app-ios'] as const) {
+      const c = installBannerCopy('salon', mode, 'hi');
+      expect(c.title).toBe('ऐप इंस्टॉल करें');
+      expect(c.cancel).toBe('रद्द करें');
+      expect(c.steps.length).toBeGreaterThan(1);
+      expect(c.install === null).toBe(installBannerCopy('salon', mode).install === null);
+    }
+  });
+  it('leaves the admin app in English', () => {
+    expect(installBannerCopy('admin', 'prompt', 'hi').title).toBe('Install app');
+  });
+});

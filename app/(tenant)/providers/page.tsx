@@ -1,5 +1,6 @@
 import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api } from '../lib/api';
+import { getTranslations } from 'next-intl/server';
 import { copy } from '../lib/copy';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
@@ -9,6 +10,7 @@ import { StaffClient } from './StaffClient';
 export const dynamic = 'force-dynamic';
 
 export default async function ProvidersPage() {
+  const tn = await getTranslations('nouns');
   let me, overview, services, settings, branches;
   try {
     [me, overview, services, settings, branches] = await Promise.all([
@@ -28,7 +30,7 @@ export default async function ProvidersPage() {
   } catch (error) {
     return (
       <>
-        <PageHeader title={copy.nav.staff} />
+        <PageHeader title={tn('staffTitle')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>

@@ -2,7 +2,8 @@ import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { api, type Appointment } from '../lib/api';
 import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { pickNoun } from '../lib/nouns';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
@@ -72,7 +73,7 @@ export default async function AppointmentsPage({
     console.error('[bookings] could not load the page shell', error);
     return (
       <>
-        <PageHeader title={copy.nav.appointments} />
+        <PageHeader title={(await getTranslations('nouns'))('bookingsTitle')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
@@ -189,6 +190,8 @@ export default async function AppointmentsPage({
   // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
   const isToday = !isRange && date === todayISO && !customerId;
   const t = await getTranslations('bookings');
+  const tn = await getTranslations('nouns');
+  const pageTitle = pickNoun(await getLocale(), bookingsWord, tn('bookingsTitle'));
   // Whose bookings these are, for the banner. Taken from the rows rather than
   // the URL so it is the name actually on the bookings, not one a link claimed.
   const customerName = customerId ? (appointments[0]?.customerName ?? null) : null;
@@ -210,7 +213,7 @@ export default async function AppointmentsPage({
           in the filter card now (GRW-47), and a second magnifier pointing at
           the global /search page right above it read as the same control. */}
       <PageHeader
-        title={bookingsWord}
+        title={pageTitle}
         subtitle={t('subtitle')}
         mobileSubtitle
       />

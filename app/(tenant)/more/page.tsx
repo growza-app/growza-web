@@ -1,6 +1,8 @@
 import { screenTitle } from '../lib/page-title';
 import type { ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
+import { homeCopy } from '../lib/home-copy';
+import { serverLang } from '../lib/lang';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
@@ -18,6 +20,7 @@ export const dynamic = 'force-dynamic';
  */
 export default async function MorePage() {
   const ta = await getTranslations('attendance');
+  const tn = await getTranslations('nouns');
   let labels: Record<string, string> = {};
   // Jira GRW-66 · GRW-157 — this menu is filtered by the same policy the
   // sidebar and the tab bar use. Three copies of the list is how a stylist
@@ -40,19 +43,23 @@ export default async function MorePage() {
 
   // Jira GRW-222 — Offers left the tab bar for the raised centre action, so it
   // is listed here now. Calendar has no page yet — listing it would be a dead link.
+  // The same words the sidebar and the tab bar use, in the owner's language, so the three cannot disagree.
+  const lang = await serverLang();
+  const nav = homeCopy(lang, labels);
+
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
     // GRW-170 — the register lives here on a phone. The bottom bar is five
     // fixed slots and a sixth would break it, so Attendance rides the menu
     // rather than displacing a tab everybody uses.
     { href: '/attendance', label: ta('title'), icon: <IconStaff /> },
-    { href: '/offers', label: copy.nav.offers, icon: <IconOffers /> },
-    { href: '/providers', label: labels.providers ?? copy.nav.staff, icon: <IconStaff /> },
-    { href: '/services', label: labels.services ?? copy.nav.services, icon: <IconServices /> },
+    { href: '/offers', label: nav.nav.offers, icon: <IconOffers /> },
+    { href: '/providers', label: nav.nav.staff, icon: <IconStaff /> },
+    { href: '/services', label: nav.nav.services, icon: <IconServices /> },
     // The design's mobile tab bar puts Reports in Offers' slot. The tab bar's
     // composition is its own product decision, so Reports arrives here instead
     // and the four frequent destinations keep their places (GRW-48 decision 2).
-    { href: '/reports', label: copy.reports.navLabel, icon: <IconReports /> },
-    { href: '/availability', label: copy.nav.availability, icon: <IconAnalytics /> },
+    { href: '/reports', label: nav.nav.reports, icon: <IconReports /> },
+    { href: '/availability', label: nav.nav.freeTimes, icon: <IconAnalytics /> },
     // GRW-165 — marked a preview while WhatsApp is not live, exactly as the
     // sidebar marks it. Three navs that disagree about what is real is the
     // failure this list was consolidated to prevent. Jira GRW-266 · GRW-271 — and left
@@ -61,18 +68,18 @@ export default async function MorePage() {
       ? [
           {
             href: '/try-whatsapp',
-            label: whatsappLive ? copy.nav.tryWhatsApp : copy.whatsapp.navLabelDemo,
+            label: whatsappLive && lang === 'en' ? copy.nav.tryWhatsApp : nav.nav.whatsapp,
             icon: <IconChat />,
-            pill: whatsappLive ? null : copy.whatsapp.previewPill,
+            pill: whatsappLive ? null : nav.nav.demo,
           },
         ]
       : []),
-    { href: '/settings', label: copy.nav.settings, icon: <IconSettings /> },
+    { href: '/settings', label: nav.nav.settings, icon: <IconSettings /> },
   ];
 
   return (
     <>
-      <PageHeader title={copy.nav.more} />
+      <PageHeader title={tn('moreTitle')} />
       <div className="page-body">
         <div className="menu-list">
           {visibleItems(items, role).map((item) => (
@@ -91,7 +98,7 @@ export default async function MorePage() {
               it rendered empty for them, and this is the row it was missing. */}
           <SignOutButton className="menu-row menu-row-action">
             <IconLogout />
-            {copy.nav.signOut}
+            {nav.nav.signOut}
           </SignOutButton>
         </div>
       </div>

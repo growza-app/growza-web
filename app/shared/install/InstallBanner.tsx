@@ -139,7 +139,8 @@ export function InstallBanner({ app }: { app: InstallApp }) {
 
   if (!mode) return null;
 
-  const copy = installBannerCopy(app, mode);
+  // The page's own language (both layouts set <html lang>), so the banner needs no provider — admin has none.
+  const copy = installBannerCopy(app, mode, document.documentElement.lang === 'hi' ? 'hi' : 'en');
 
   const cancel = () => {
     write(storageKeys(app).dismissedAt, String(Date.now()));

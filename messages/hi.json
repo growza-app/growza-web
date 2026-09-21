@@ -127,7 +127,10 @@
     "servicesTitle": "सेवाएँ",
     "staff": "स्टाफ़",
     "staffTitle": "स्टाफ़",
-    "offers": "ऑफ़र"
+    "offers": "ऑफ़र",
+    "settingsTitle": "सेटिंग",
+    "moreTitle": "और",
+    "bookingsTitle": "बुकिंग"
   },
   "customers": {
     "subtitle": "अपने {noun} देखें और संभालें। उनकी बुकिंग का इतिहास और खर्च देखें।",

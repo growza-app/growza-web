@@ -127,7 +127,10 @@
     "servicesTitle": "Services",
     "staff": "staff",
     "staffTitle": "Staff",
-    "offers": "offers"
+    "offers": "offers",
+    "settingsTitle": "Settings",
+    "moreTitle": "More",
+    "bookingsTitle": "Bookings"
   },
   "customers": {
     "subtitle": "View and manage your {noun}. See their booking history and spend.",
