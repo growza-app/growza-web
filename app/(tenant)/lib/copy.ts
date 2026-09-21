@@ -51,8 +51,7 @@ export const copy = {
     navLabelDemo: 'WhatsApp',
     comingSoonPill: 'Coming soon',
     // The Notifications screen's "WhatsApp is coming soon" notice lives in messages (settingsReminders.notLive*).
-    /** The Try WhatsApp page, so nobody mistakes the demo for a live channel. */
-    tryIsADemo: 'This is a practice run, just for you. Your customers cannot book on WhatsApp yet.',
+    // The Try WhatsApp page's "practice run" notice lives in messages (tryWhatsApp.tryIsADemo).
   },
 
   // The Offers page subtitles live in messages (offers.subtitleLive / offers.subtitleCrmOnly).

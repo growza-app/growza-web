@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, BookingConflictError, type ChatOption, type ChatState } from '../lib/api';
 
@@ -19,6 +20,7 @@ interface Bubble {
 const DEFAULT_PHONE = '+91 98765 43210';
 
 export function ChatWindow({ tenantName }: { tenantName: string }) {
+  const t = useTranslations('tryWhatsApp.chat');
   const [phone, setPhone] = useState(DEFAULT_PHONE);
   const [name, setName] = useState('Anjali Verma');
   const [state, setState] = useState<ChatState | null>(null);
@@ -42,7 +44,7 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
       setState(next);
       setBubbles([{ from: 'bot', text: next.body }]);
     } catch {
-      setError('Could not reach the server.');
+      setError(t('unreachable'));
     } finally {
       setBusy(false);
     }
@@ -64,16 +66,16 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
         // The conversation is gone (expired from inactivity, or never
         // started) — those old options are dead, so land back on a fresh
         // menu instead of leaving them tappable-but-broken.
-        setBubbles((prev) => [...prev, { from: 'bot', text: "Let's start over — that chat timed out." }]);
+        setBubbles((prev) => [...prev, { from: 'bot', text: t('timedOut') }]);
         try {
           const fresh = await api.chatStart(phone.trim(), name.trim() || undefined);
           setState(fresh);
           setBubbles((prev) => [...prev, { from: 'bot', text: fresh.body }]);
         } catch {
-          setError('Could not reach the server.');
+          setError(t('unreachable'));
         }
       } else {
-        setError('Something went wrong.');
+        setError(t('wentWrong'));
       }
     } finally {
       setBusy(false);
@@ -93,13 +95,13 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
           <div className="wa-avatar">{tenantName.charAt(0).toUpperCase()}</div>
           <div>
             <div className="wa-title">{tenantName}</div>
-            <div className="wa-subtitle">{state ? 'online' : 'WhatsApp Business'}</div>
+            <div className="wa-subtitle">{state ? t('online') : t('business')}</div>
           </div>
         </div>
 
         <div className="wa-body">
           {!state && (
-            <div className="wa-system">Type a phone number below and tap Start to simulate an incoming chat.</div>
+            <div className="wa-system">{t('intro')}</div>
           )}
           {bubbles.map((b, i) => (
             <div key={i} className={`wa-bubble wa-bubble-${b.from}`}>
@@ -120,7 +122,7 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
           )}
           {state && (state.status === 'completed' || state.status === 'handoff') && (
             <button className="wa-option wa-option-restart" onClick={reset}>
-              Start a new conversation
+              {t('newConversation')}
             </button>
           )}
           <div ref={bottomRef} />
@@ -130,13 +132,13 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
           <div className="wa-composer">
             <input
               className="wa-input"
-              placeholder="Phone number"
+              placeholder={t('phone')}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
-            <input className="wa-input" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="wa-input" placeholder={t('name')} value={name} onChange={(e) => setName(e.target.value)} />
             <button className="btn" disabled={busy || !phone.trim()} onClick={start}>
-              {busy ? 'Starting…' : 'Start chat'}
+              {busy ? t('starting') : t('start')}
             </button>
           </div>
         )}

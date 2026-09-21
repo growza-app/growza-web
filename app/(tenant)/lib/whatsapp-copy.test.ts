@@ -5,6 +5,7 @@ import { copy } from './copy';
 /** Jira GRW-354 — these two moved from copy.ts to the message file so Hindi can have them; the wording rules did not move. */
 const reminders = en.settingsReminders;
 const offers = en.offers;
+const tryIsADemo = en.tryWhatsApp.tryIsADemo;
 
 /**
  * Jira GRW-158 · GRW-165 — the dashboard does not promise what it cannot send.
@@ -25,7 +26,7 @@ const offers = en.offers;
  * likelier regression: somebody tidying the copy back to the confident version
  * because it reads better.
  */
-const CRM_ONLY = [reminders.notLive, copy.whatsapp.tryIsADemo, offers.subtitleCrmOnly];
+const CRM_ONLY = [reminders.notLive, tryIsADemo, offers.subtitleCrmOnly];
 
 /** Present-tense claims that WhatsApp is working right now. */
 const ASSERTS_IT_WORKS = [
@@ -56,7 +57,7 @@ describe('while WhatsApp is off, no copy claims it works', () => {
   });
 
   it('says plainly that customers cannot use the simulator', () => {
-    expect(copy.whatsapp.tryIsADemo).toMatch(/cannot|can't/i);
+    expect(tryIsADemo).toMatch(/cannot|can't/i);
   });
 
   it('keeps the live wording available for the day it is switched on', () => {

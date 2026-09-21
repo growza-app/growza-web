@@ -1,8 +1,10 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { PhoneField } from '../../(tenant)/components/PhoneField';
 import { toStoredPhone } from '../../(tenant)/lib/phone';
+import { rememberLang, type Lang } from '../../(tenant)/lib/lang';
 
 /**
  * Jira GRW-66 · GRW-160 — where a salon owner signs in.
@@ -18,6 +20,15 @@ import { toStoredPhone } from '../../(tenant)/lib/phone';
  * token in `sessionStorage` because every admin page is a client component.
  */
 export default function LoginPage() {
+  const t = useTranslations('auth.login');
+  const ta = useTranslations('auth');
+  const locale = useLocale();
+  /** A visitor on a new device has no language cookie yet, so the sign-in card lets them pick one. */
+  const chooseLang = (lang: Lang) => {
+    if (lang === locale) return;
+    rememberLang(lang);
+    window.location.reload();
+  };
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -69,7 +80,7 @@ export default function LoginPage() {
         const body = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
         // BR-04 — the API's own words. It answers generically on purpose
         // (GRW-159 FR-02) and rewording it here is how a leak gets put back.
-        setError(body?.detail ?? body?.error ?? 'Sign-in failed. Please try again.');
+        setError(body?.detail ?? body?.error ?? t('errors.failed'));
         setPassword('');
         setLoading(false);
         return;
@@ -89,7 +100,7 @@ export default function LoginPage() {
        */
       window.location.replace('/');
     } catch {
-      setError('Could not reach the server. Please check your connection and try again.');
+      setError(t('errors.unreachable'));
       setPassword('');
       setLoading(false);
     }
@@ -105,11 +116,11 @@ export default function LoginPage() {
     event.preventDefault();
     if (loading || temporary === null) return;
     if (newPassword.length < 8) {
-      setError('Choose a password of at least 8 characters.');
+      setError(t('errors.min8'));
       return;
     }
     if (newPassword !== confirm) {
-      setError('The two passwords do not match.');
+      setError(t('errors.mismatch'));
       return;
     }
     setLoading(true);
@@ -122,7 +133,7 @@ export default function LoginPage() {
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
-        setError(body?.detail ?? 'Could not set your password. Please try again.');
+        setError(body?.detail ?? t('errors.firstFailed'));
         // A refused one-time password cannot be retried from here; start again.
         if (body?.error === 'invalid_credentials') setTemporary(null);
         setLoading(false);
@@ -130,7 +141,7 @@ export default function LoginPage() {
       }
       window.location.replace('/');
     } catch {
-      setError('Could not reach the server. Please check your connection and try again.');
+      setError(t('errors.unreachable'));
       setLoading(false);
     }
   }
@@ -140,12 +151,12 @@ export default function LoginPage() {
       <main className="login-page">
         <form className="login-card" onSubmit={onChoosePassword}>
           <div className="login-head">
-            <h1>Choose your password</h1>
-            <p>You signed in with a one-time password. Pick your own to finish — at least 8 characters.</p>
+            <h1>{t('choose.title')}</h1>
+            <p>{t('choose.intro')}</p>
           </div>
 
           <div className="field">
-            <label htmlFor="login-new-password">New password</label>
+            <label htmlFor="login-new-password">{t('choose.newPassword')}</label>
             <input
               id="login-new-password"
               type="password"
@@ -160,7 +171,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="login-confirm-password">Type it again</label>
+            <label htmlFor="login-confirm-password">{t('choose.again')}</label>
             <input
               id="login-confirm-password"
               type="password"
@@ -181,7 +192,7 @@ export default function LoginPage() {
           ) : null}
 
           <button className="btn login-submit" type="submit" disabled={loading || !newPassword || !confirm}>
-            {loading ? 'Saving…' : 'Save and sign in'}
+            {loading ? t('choose.saving') : t('choose.save')}
           </button>
 
           <button
@@ -194,7 +205,7 @@ export default function LoginPage() {
               setError(null);
             }}
           >
-            Use a different number
+            {t('choose.differentNumber')}
           </button>
         </form>
       </main>
@@ -205,8 +216,8 @@ export default function LoginPage() {
     <main className="login-page">
       <form className="login-card" onSubmit={onSubmit}>
         <div className="login-head">
-          <h1>Sign in</h1>
-          <p>Manage your bookings, staff and services.</p>
+          <h1>{t('title')}</h1>
+          <p>{t('tagline')}</p>
         </div>
 
         {/* GRW-199 — the same field as everywhere else. Signing in with a
@@ -214,7 +225,7 @@ export default function LoginPage() {
             duplicate-client problem: the account is found by exact match. */}
         <PhoneField
           id="login-phone"
-          label="Phone number"
+          label={t('phone')}
           required
           value={phone}
           onChange={setPhone}
@@ -222,7 +233,7 @@ export default function LoginPage() {
         />
 
         <div className="field">
-          <label htmlFor="login-password">Password</label>
+          <label htmlFor="login-password">{t('password')}</label>
           <input
             id="login-password"
             name="password"
@@ -243,10 +254,21 @@ export default function LoginPage() {
         ) : null}
 
         <button className="btn login-submit" type="submit" disabled={!ready || loading}>
-          {loading ? 'Signing in…' : 'Sign in'}
+          {loading ? t('signingIn') : t('submit')}
         </button>
 
-        <p className="login-foot">Forgotten your password? Ask whoever set up your account.</p>
+        <p className="login-foot">{t('forgot')}</p>
+
+        <div className="login-foot login-lang" role="group" aria-label={ta('language')}>
+          <button type="button" lang="en" aria-pressed={locale === 'en'} onClick={() => chooseLang('en')}>
+            {/* i18n-ok: a language is named in its own language */}
+            English
+          </button>
+          {' · '}
+          <button type="button" lang="hi" aria-pressed={locale === 'hi'} onClick={() => chooseLang('hi')}>
+            हिन्दी
+          </button>
+        </div>
       </form>
     </main>
   );

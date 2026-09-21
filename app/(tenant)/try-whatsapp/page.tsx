@@ -2,7 +2,7 @@ import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { ChatWindow } from './ChatWindow';
-import { copy } from '../lib/copy';
+import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
@@ -11,13 +11,14 @@ export const dynamic = 'force-dynamic';
 
 /** A local stand-in for the real WhatsApp channel (FND-04, pending Meta approval) — proves the booking flow customers will actually use. */
 export default async function TryWhatsAppPage() {
+  const t = await getTranslations('tryWhatsApp');
   let me;
   try {
     me = await api.me();
   } catch (error) {
     return (
       <>
-        <PageHeader title="Try WhatsApp booking" />
+        <PageHeader title={t('title')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
@@ -49,12 +50,8 @@ export default async function TryWhatsAppPage() {
         * than none, because it looks like due diligence was done.
         */}
       <PageHeader
-        title="Try WhatsApp booking"
-        subtitle={
-          me.whatsapp?.booking
-            ? 'A stand-in for real WhatsApp — same booking engine, same flow your customers get.'
-            : copy.whatsapp.tryIsADemo
-        }
+        title={t('title')}
+        subtitle={me.whatsapp?.booking ? t('subtitleLive') : t('tryIsADemo')}
       />
       <div className="page-body">
         <ChatWindow tenantName={me.tenant?.name ?? 'Your business'} />

@@ -1,51 +1,5 @@
 {
   "files": {
-    "web/app/(auth)/join/[token]/JoinForm.tsx": [
-      ". It is the same screen they used the first time.",
-      ". You will sign in with that number.",
-      "Already have a Growza account for this number? Enter that password above.",
-      "Already joined, or already have an account?",
-      "At least 8 characters.",
-      "Checking your invite…",
-      "Choose a password",
-      "Could not check your invite",
-      "Join",
-      "Set a password for",
-      "Settings &rarr; Team access",
-      "Sign in",
-      "They can send you a new link from",
-      "This link no longer works",
-      "Try again",
-      "setError(\"Could not join. Please try again.\")",
-      "{Join team}",
-      "{Joining…}"
-    ],
-    "web/app/(auth)/layout.tsx": [
-      "title: \"Growza\"",
-      "title: \"Sign in\""
-    ],
-    "web/app/(auth)/login/page.tsx": [
-      "Choose your password",
-      "Forgotten your password? Ask whoever set up your account.",
-      "Manage your bookings, staff and services.",
-      "New password",
-      "Password",
-      "Sign in",
-      "Type it again",
-      "Use a different number",
-      "You signed in with a one-time password. Pick your own to finish — at least 8 characters.",
-      "label=\"Phone number\"",
-      "setError(\"Choose a password of at least 8 characters.\")",
-      "setError(\"Could not reach the server. Please check your connection and try again.\")",
-      "setError(\"Could not reach the server. Please check your connection and try again.\")",
-      "setError(\"Could not set your password. Please try again.\")",
-      "setError(\"Sign-in failed. Please try again.\")",
-      "setError(\"The two passwords do not match.\")",
-      "{Save and sign in}",
-      "{Saving…}",
-      "{Sign in}",
-      "{Signing in…}"
-    ],
     "web/app/(tenant)/components/BrowserGate.tsx": [
       "+ · Chrome",
       "+ · Edge",
@@ -69,25 +23,6 @@
     ],
     "web/app/(tenant)/reports/page.tsx": [
       "Reports are not available for your role. Ask the owner if you need them."
-    ],
-    "web/app/(tenant)/try-whatsapp/ChatWindow.tsx": [
-      "Start a new conversation",
-      "Type a phone number below and tap Start to simulate an incoming chat.",
-      "placeholder=\"Name\"",
-      "placeholder=\"Phone number\"",
-      "setError(\"Could not reach the server.\")",
-      "setError(\"Could not reach the server.\")",
-      "setError(\"Something went wrong.\")",
-      "text: \"Let's start over — that chat timed out.\"",
-      "{Start chat}",
-      "{Starting…}",
-      "{WhatsApp Business}",
-      "{online}"
-    ],
-    "web/app/(tenant)/try-whatsapp/page.tsx": [
-      "subtitle=\"A stand-in for real WhatsApp — same booking engine, same flow your customers get.\"",
-      "title=\"Try WhatsApp booking\"",
-      "title=\"Try WhatsApp booking\""
     ]
   }
 }

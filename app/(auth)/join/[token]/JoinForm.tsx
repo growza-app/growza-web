@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 /**
@@ -16,10 +17,8 @@ interface Preview {
   phone: string;
 }
 
-const UNREACHABLE = 'Could not reach the server. Please check your connection and try again.';
-const NOT_VALID = 'Invite links stop working after 7 days, or if they have already been used. Ask whoever invited you for a new one.';
-
 export function JoinForm({ token }: { token: string }) {
+  const t = useTranslations('auth.join');
   const [preview, setPreview] = useState<Preview | null>(null);
   const [checking, setChecking] = useState(true);
   const [invalid, setInvalid] = useState(false);
@@ -36,7 +35,7 @@ export function JoinForm({ token }: { token: string }) {
         if (!res.ok) setInvalid(true);
         else setPreview((await res.json()) as Preview);
       } catch {
-        if (!cancelled) setError(UNREACHABLE);
+        if (!cancelled) setError(t('unreachable'));
       } finally {
         if (!cancelled) setChecking(false);
       }
@@ -83,7 +82,7 @@ export function JoinForm({ token }: { token: string }) {
           // arrive here and both keep the form: the invite is still unclaimed
           // in either case, so taking the form away would strand somebody who
           // only needs to try a different number or the right password.
-          setError(body?.detail ?? 'Could not join. Please try again.');
+          setError(body?.detail ?? t('couldNotJoin'));
           setPassword('');
         }
         setLoading(false);
@@ -99,7 +98,7 @@ export function JoinForm({ token }: { token: string }) {
        */
       window.location.replace('/');
     } catch {
-      setError(UNREACHABLE);
+      setError(t('unreachable'));
       setPassword('');
       setLoading(false);
     }
@@ -110,7 +109,7 @@ export function JoinForm({ token }: { token: string }) {
       <main className="login-page">
         <div className="login-card">
           <div className="login-head">
-            <h1>Checking your invite…</h1>
+            <h1>{t('checking')}</h1>
           </div>
         </div>
       </main>
@@ -127,11 +126,11 @@ export function JoinForm({ token }: { token: string }) {
       <main className="login-page">
         <div className="login-card">
           <div className="login-head">
-            <h1>Could not check your invite</h1>
+            <h1>{t('couldNotCheck')}</h1>
             <p>{error}</p>
           </div>
           <button className="btn login-submit" type="button" onClick={() => window.location.reload()}>
-            Try again
+            {t('tryAgain')}
           </button>
         </div>
       </main>
@@ -143,7 +142,7 @@ export function JoinForm({ token }: { token: string }) {
       <main className="login-page">
         <div className="login-card">
           <div className="login-head">
-            <h1>This link no longer works</h1>
+            <h1>{t('invalidTitle')}</h1>
             {/*
               AC-03 asks for "a way to ask the owner to resend, not a dead end",
               and the honest way is to say who to ask — NOT a button that does it.
@@ -153,11 +152,10 @@ export function JoinForm({ token }: { token: string }) {
               There is also nothing to address it to — a token that no longer
               resolves names no business.
             */}
-            <p>{NOT_VALID}</p>
+            <p>{t('notValid')}</p>
           </div>
           <p className="login-foot" style={{ marginTop: 0 }}>
-            They can send you a new link from <strong>Settings &rarr; Team access</strong>. It is the same
-            screen they used the first time.
+            {t.rich('askOwner', { b: (chunks) => <strong>{chunks}</strong> })}
           </p>
           {/*
             Sign-in is the SECONDARY path, not the offered action. It is right
@@ -166,7 +164,7 @@ export function JoinForm({ token }: { token: string }) {
             useless for everybody else, which is why it is no longer the button.
           */}
           <p className="login-foot">
-            Already joined, or already have an account? <a href="/login">Sign in</a>.
+            {t.rich('alreadyJoined', { signin: (chunks) => <a href="/login">{chunks}</a> })}
           </p>
         </div>
       </main>
@@ -177,14 +175,14 @@ export function JoinForm({ token }: { token: string }) {
     <main className="login-page">
       <form className="login-card" onSubmit={onSubmit}>
         <div className="login-head">
-          <h1>Join {preview.businessName}</h1>
+          <h1>{t('title', { business: preview.businessName })}</h1>
           {/* Their own number, shown back to them: it is how they know the
               invite was meant for them and not forwarded from someone else. */}
-          <p>Set a password for {preview.phone}. You will sign in with that number.</p>
+          <p>{t('setPassword', { phone: preview.phone })}</p>
         </div>
 
         <div className="field">
-          <label htmlFor="join-password">Choose a password</label>
+          <label htmlFor="join-password">{t('choosePassword')}</label>
           <input
             id="join-password"
             name="password"
@@ -194,7 +192,7 @@ export function JoinForm({ token }: { token: string }) {
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
           />
-          <p className="field-hint">At least 8 characters.</p>
+          <p className="field-hint">{t('atLeast8')}</p>
         </div>
 
         {error ? (
@@ -204,7 +202,7 @@ export function JoinForm({ token }: { token: string }) {
         ) : null}
 
         <button className="btn login-submit" type="submit" disabled={!ready || loading}>
-          {loading ? 'Joining…' : 'Join team'}
+          {loading ? t('joining') : t('joinTeam')}
         </button>
 
         {/*
@@ -215,7 +213,7 @@ export function JoinForm({ token }: { token: string }) {
         */}
         {!error && (
           <p className="login-foot">
-            Already have a Growza account for this number? Enter that password above.
+            {t('haveAccount')}
           </p>
         )}
       </form>

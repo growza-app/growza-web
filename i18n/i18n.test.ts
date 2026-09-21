@@ -5,7 +5,7 @@ import { parse, TYPE, type MessageFormatElement } from '@formatjs/icu-messagefor
 import { copy } from '../app/(tenant)/lib/copy';
 import en from '../messages/en.json';
 import { flatten, pickNamespaces, withFallback, type Messages } from './messages';
-import { CLIENT_MESSAGES } from './client-messages';
+import { AUTH_MESSAGES, CLIENT_MESSAGES } from './client-messages';
 
 /**
  * Jira GRW-319 — every language has every key, and a pending translation shows
@@ -128,7 +128,9 @@ describe('the groups handed to the browser', () => {
     for (const file of sources('web/app')) {
       for (const m of readFileSync(file, 'utf8').matchAll(/useTranslations\(\s*'([\w.]+)'\s*\)/g)) {
         const group = m[1]!.split('.')[0]!;
-        if (!(CLIENT_MESSAGES as readonly string[]).includes(group)) missing.push(`${file}  useTranslations('${m[1]}')`);
+        // The sign-in pages have their own, smaller provider (AUTH_MESSAGES); everything else uses the dashboard's.
+        const given: readonly string[] = file.includes('/(auth)/') ? AUTH_MESSAGES : CLIENT_MESSAGES;
+        if (!given.includes(group)) missing.push(`${file}  useTranslations('${m[1]}')`);
       }
     }
     expect(missing, `\nThese read a message group the browser is never given (add it to web/i18n/client-messages.ts):\n  ${missing.join('\n  ')}`).toEqual([]);
@@ -137,6 +139,7 @@ describe('the groups handed to the browser', () => {
   it('lists only groups that exist', () => {
     const known = Object.keys(en);
     expect((CLIENT_MESSAGES as readonly string[]).filter((g) => !known.includes(g))).toEqual([]);
+    expect((AUTH_MESSAGES as readonly string[]).filter((g) => !known.includes(g))).toEqual([]);
   });
 });
 

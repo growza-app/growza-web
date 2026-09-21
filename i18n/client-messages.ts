@@ -10,4 +10,11 @@
  * missing from this list, so the mistake is caught in the pull request, not on an
  * owner's phone.
  */
-export const CLIENT_MESSAGES = ['attendance', 'bookings', 'branchScope', 'checkout', 'chrome', 'common', 'customers', 'errors', 'freeTimes', 'notifications', 'nouns', 'offers', 'phone', 'search', 'services', 'settingsBooking', 'settingsBranches', 'settingsHours', 'settingsHub', 'settingsProfile', 'settingsReminders', 'settingsReports', 'settingsTeam', 'staff', 'staffEdit', 'staffWizard', 'status', 'weekdayHours'] as const;
+export const CLIENT_MESSAGES = ['attendance', 'bookings', 'branchScope', 'checkout', 'chrome', 'common', 'customers', 'errors', 'freeTimes', 'notifications', 'nouns', 'offers', 'phone', 'search', 'services', 'settingsBooking', 'settingsBranches', 'settingsHours', 'settingsHub', 'settingsProfile', 'settingsReminders', 'settingsReports', 'settingsTeam', 'staff', 'staffEdit', 'staffWizard', 'status', 'tryWhatsApp', 'weekdayHours'] as const;
+
+/**
+ * The sign-in pages `(auth)` have their own provider with only these groups:
+ * they are a separate root layout (no `api.me()`), and a visitor who has not
+ * signed in yet should download the sign-in words, not the dashboard's.
+ */
+export const AUTH_MESSAGES = ['auth', 'common', 'phone'] as const;

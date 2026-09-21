@@ -1275,5 +1275,70 @@
     },
     "callName": "Call {name}",
     "customerLower": "customer"
+  },
+  "auth": {
+    "metaTitle": "Sign in",
+    "language": "Language",
+    "login": {
+      "title": "Sign in",
+      "tagline": "Manage your bookings, staff and services.",
+      "phone": "Phone number",
+      "password": "Password",
+      "submit": "Sign in",
+      "signingIn": "Signing in…",
+      "forgot": "Forgotten your password? Ask whoever set up your account.",
+      "choose": {
+        "title": "Choose your password",
+        "intro": "You signed in with a one-time password. Pick your own to finish — at least 8 characters.",
+        "newPassword": "New password",
+        "again": "Type it again",
+        "saving": "Saving…",
+        "save": "Save and sign in",
+        "differentNumber": "Use a different number"
+      },
+      "errors": {
+        "failed": "Sign-in failed. Please try again.",
+        "unreachable": "Could not reach the server. Please check your connection and try again.",
+        "min8": "Choose a password of at least 8 characters.",
+        "mismatch": "The two passwords do not match.",
+        "firstFailed": "Could not set your password. Please try again."
+      }
+    },
+    "join": {
+      "checking": "Checking your invite…",
+      "couldNotCheck": "Could not check your invite",
+      "tryAgain": "Try again",
+      "invalidTitle": "This link no longer works",
+      "notValid": "Invite links stop working after 7 days, or if they have already been used. Ask whoever invited you for a new one.",
+      "askOwner": "They can send you a new link from <b>Settings → Team access</b>. It is the same screen they used the first time.",
+      "alreadyJoined": "Already joined, or already have an account? <signin>Sign in</signin>.",
+      "title": "Join {business}",
+      "setPassword": "Set a password for {phone}. You will sign in with that number.",
+      "choosePassword": "Choose a password",
+      "atLeast8": "At least 8 characters.",
+      "joining": "Joining…",
+      "joinTeam": "Join team",
+      "haveAccount": "Already have a Growza account for this number? Enter that password above.",
+      "couldNotJoin": "Could not join. Please try again.",
+      "unreachable": "Could not reach the server. Please check your connection and try again."
+    }
+  },
+  "tryWhatsApp": {
+    "title": "Try WhatsApp booking",
+    "subtitleLive": "A stand-in for real WhatsApp — same booking engine, same flow your customers get.",
+    "tryIsADemo": "This is a practice run, just for you. Your customers cannot book on WhatsApp yet.",
+    "chat": {
+      "business": "WhatsApp Business",
+      "online": "online",
+      "intro": "Type a phone number below and tap Start to simulate an incoming chat.",
+      "phone": "Phone number",
+      "name": "Name",
+      "starting": "Starting…",
+      "start": "Start chat",
+      "newConversation": "Start a new conversation",
+      "timedOut": "Let's start over — that chat timed out.",
+      "unreachable": "Could not reach the server.",
+      "wentWrong": "Something went wrong."
+    }
   }
 }
