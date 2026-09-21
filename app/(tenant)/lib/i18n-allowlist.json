@@ -276,14 +276,6 @@
       "aria-label=\"Main\"",
       "aria-label=\"Menu\""
     ],
-    "web/app/(tenant)/components/WeekdayHoursEditor.tsx": [
-      "Closed",
-      "Group matching days again",
-      "Set one day differently",
-      "aria-label=\"${…} end time\"",
-      "aria-label=\"${…} open\"",
-      "aria-label=\"${…} start time\""
-    ],
     "web/app/(tenant)/components/home/ReceptionHome.tsx": [
       "sub: \"${…} · ${…} min\""
     ],
@@ -902,25 +894,6 @@
     ],
     "web/app/(tenant)/settings/team/page.tsx": [
       "Could not load invites — check the server is running."
-    ],
-    "web/app/(tenant)/settings/working-hours/WorkingHoursForm.tsx": [
-      "Allow arriving late by",
-      "Attendance",
-      "Lateness is measured against each person&apos;s own shift start, not one time for the whole business. This is how long after it somebody can arrive before the register marks them late.",
-      "Saved",
-      "Saved",
-      "minutes",
-      "setError(\"Start time must be before end time\")",
-      "{${…} hours}",
-      "{Save changes}",
-      "{Save changes}",
-      "{Saving…}",
-      "{Saving…}",
-      "{Someone on a 10:00 shift is late from ${…}.}",
-      "{Someone on a 10:00 shift is late from 10:01.}",
-      "{When ${…} is open. Staff at ${…} who follow the salon's hours follow these.}",
-      "{Working hours}",
-      "{Your business's default open hours. Staff can follow these automatically from their own profile, or set their own instead.}"
     ],
     "web/app/(tenant)/try-whatsapp/ChatWindow.tsx": [
       "Start a new conversation",

@@ -371,5 +371,35 @@
       "sriLanka": "Sri Lanka (Asia/Colombo)",
       "nepal": "Nepal (Asia/Kathmandu)"
     }
+  },
+  "weekdayHours": {
+    "closed": "Closed",
+    "splitOne": "Set one day differently",
+    "regroup": "Group matching days again",
+    "range": "{from} to {to}",
+    "openAria": "{days} open",
+    "startAria": "{days} start time",
+    "endAria": "{days} end time"
+  },
+  "settingsHours": {
+    "title": "Working hours",
+    "branchTitleNamed": "{name} hours",
+    "branchTitleUnnamed": "Branch hours",
+    "hintBusiness": "Your business's default open hours. Staff can follow these automatically from their own profile, or set their own instead.",
+    "hintBranchNamed": "When {name} is open. Staff at {name} who follow the salon's hours follow these.",
+    "hintBranchUnnamed": "When this branch is open. Staff at this branch who follow the salon's hours follow these.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "attendance": "Attendance",
+    "attendanceHint": "Lateness is measured against each person's own shift start, not one time for the whole business. This is how long after it somebody can arrive before the register marks them late.",
+    "graceLabel": "Allow arriving late by",
+    "minutes": "minutes",
+    "lateFrom": "Someone on a 10:00 shift is late from {time}.",
+    "errors": {
+      "graceRange": "Enter a whole number of minutes between 0 and 120",
+      "startBeforeEnd": "Start time must be before end time",
+      "saveFailed": "Could not save — check the server is running."
+    }
   }
 }

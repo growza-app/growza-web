@@ -156,13 +156,14 @@ describe('the rules the design is explicit about', () => {
     // AND the word. Remove the colour from either and both still read.
     expect(source).toMatch(/IconClock/);
     expect(source).toMatch(/IconBan/);
-    expect(source).toMatch(/>Closed</);
+    expect(source).toMatch(/t\('closed'\)/);
   });
 
   it('shows all seven positions on every row, so a lone "S" is never ambiguous', () => {
     expect(source).toMatch(/WEEKDAY_INITIALS\.map/);
-    // Seven letters, in weekday order, index === weekday.
-    expect(source).toMatch(/\['S', 'M', 'T', 'W', 'T', 'F', 'S'\]/);
+    // Seven letters, in weekday order, index === weekday — the language's own narrow day names
+    // (English: S M T W T F S, asserted in lib/weekday-names.test.ts).
+    expect(source).toMatch(/WEEKDAY_INITIALS = names\.narrow/);
   });
 
   it('patches every day of a group, not just the one that was clicked', () => {

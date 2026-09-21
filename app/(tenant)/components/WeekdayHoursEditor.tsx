@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+import { weekdayNames, type WeekdayNames } from '../lib/weekday-names';
 import { IconBan, IconClock } from './icons';
-
-const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-/** Index IS the weekday, so the strip's positions and the data agree by construction. */
-const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export interface WeekdayRow {
   weekday: number;
@@ -103,6 +100,12 @@ export function WeekdayHoursEditor({
    */
   const [split, setSplit] = useState<ReadonlySet<number>>(() => new Set());
 
+  const t = useTranslations('weekdayHours');
+  const names = weekdayNames(useLocale());
+  /** Index IS the weekday, so the strip's positions and the data agree by construction. */
+  const WEEKDAY_INITIALS = names.narrow;
+  const labelFor = useMemo(() => weekdayLabeller(names, (from, to) => t('range', { from, to })), [names, t]);
+
   const groups = groupByValue(rows, split);
 
   const patchGroup = (days: readonly number[], patch: Partial<WeekdayRow>) => {
@@ -124,7 +127,7 @@ export function WeekdayHoursEditor({
                 type="checkbox"
                 checked={first.open}
                 disabled={disabled}
-                aria-label={`${labelFor(days)} open`}
+                aria-label={t('openAria', { days: labelFor(days) })}
                 onChange={() => patchGroup(days, { open: !first.open })}
               />
               <span className="switch-track">
@@ -158,7 +161,7 @@ export function WeekdayHoursEditor({
                   type="time"
                   disabled={disabled}
                   value={first.startTime}
-                  aria-label={`${labelFor(days)} start time`}
+                  aria-label={t('startAria', { days: labelFor(days) })}
                   onChange={(e) => patchGroup(days, { startTime: e.target.value })}
                 />
                 <span className="wk-dash" aria-hidden="true">
@@ -168,7 +171,7 @@ export function WeekdayHoursEditor({
                   type="time"
                   disabled={disabled}
                   value={first.endTime}
-                  aria-label={`${labelFor(days)} end time`}
+                  aria-label={t('endAria', { days: labelFor(days) })}
                   onChange={(e) => patchGroup(days, { endTime: e.target.value })}
                 />
               </div>
@@ -177,7 +180,7 @@ export function WeekdayHoursEditor({
                 <span className="wk-glyph" aria-hidden="true">
                   <IconBan />
                 </span>
-                <span>Closed</span>
+                <span>{t('closed')}</span>
               </div>
             )}
 
@@ -189,7 +192,7 @@ export function WeekdayHoursEditor({
                 className="wk-split"
                 onClick={() => setSplit((prev) => new Set([...prev, ...days]))}
               >
-                Set one day differently
+                {t('splitOne')}
               </button>
             )}
           </div>
@@ -198,7 +201,7 @@ export function WeekdayHoursEditor({
 
       {split.size > 0 && !disabled && (
         <button type="button" className="link-btn wk-regroup" onClick={() => setSplit(new Set())}>
-          Group matching days again
+          {t('regroup')}
         </button>
       )}
     </>
@@ -212,11 +215,13 @@ export function WeekdayHoursEditor({
  * case in this product and "Monday, Tuesday, Wednesday, Thursday, Friday,
  * Saturday" is a sentence nobody reads to the end of.
  */
-function labelFor(days: readonly number[]): string {
-  if (days.length === 1) return WEEKDAY_FULL[days[0]!]!;
-  const isRun = days.every((d, i) => i === 0 || d === days[i - 1]! + 1);
-  if (isRun) return `${WEEKDAY_FULL[days[0]!]} to ${WEEKDAY_FULL[days[days.length - 1]!]}`;
-  return days.map((d) => WEEKDAY_NAMES[d]).join(', ');
+function weekdayLabeller(names: WeekdayNames, range: (from: string, to: string) => string) {
+  return (days: readonly number[]): string => {
+    if (days.length === 1) return names.full[days[0]!]!;
+    const isRun = days.every((d, i) => i === 0 || d === days[i - 1]! + 1);
+    if (isRun) return range(names.full[days[0]!]!, names.full[days[days.length - 1]!]!);
+    return days.map((d) => names.short[d]).join(', ');
+  };
 }
 
 /**

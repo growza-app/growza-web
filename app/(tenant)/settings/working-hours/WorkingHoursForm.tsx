@@ -1,13 +1,13 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
 import { toWeekdayRows, WeekdayHoursEditor } from '../../components/WeekdayHoursEditor';
 import { BranchScopeNote } from '../BranchScopeNote';
 
-const SAVE_ERROR = 'Could not save — check the server is running.';
-
 export function WorkingHoursForm({ initial, branchName = null }: { initial: SettingsSummary; branchName?: string | null }) {
+  const t = useTranslations('settingsHours');
   // Jira GRW-230 — null: the business's hours; a branch id: that branch's own.
   const branchId = initial.scope.locationId;
   const [rows, setRows] = useState(() => toWeekdayRows(initial.workingHours));
@@ -27,7 +27,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
 
   const saveGrace = async () => {
     if (!Number.isInteger(graceNum) || graceNum < 0 || graceNum > 120) {
-      setGraceError('Enter a whole number of minutes between 0 and 120');
+      setGraceError(t('errors.graceRange'));
       return;
     }
     setBusy(true);
@@ -37,7 +37,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
       await api.updateBookingRules({ attendanceLateGraceMin: graceNum }, branchId);
       setGraceSaved(true);
     } catch {
-      setGraceError(SAVE_ERROR);
+      setGraceError(t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -50,7 +50,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
   const save = async () => {
     const open = rows.filter((r) => r.open);
     if (open.some((r) => r.startTime >= r.endTime)) {
-      setError('Start time must be before end time');
+      setError(t('errors.startBeforeEnd'));
       return;
     }
     setBusy(true);
@@ -63,7 +63,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
       );
       setSaved(true);
     } catch {
-      setError(SAVE_ERROR);
+      setError(t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -73,22 +73,20 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
     <>
     <BranchScopeNote settings={initial} branchName={branchName} keys={['working_hours', 'attendance_late_grace_min']} topic="hours" />
     <div className="card">
-      <div className="card-head">{branchId ? `${branchName ?? 'Branch'} hours` : 'Working hours'}</div>
+      <div className="card-head">{branchId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : t('title')}</div>
       <div className="card-body">
         <p className="field-hint settings-card-hint" style={{ marginTop: 0, marginBottom: 14 }}>
-          {branchId
-            ? `When ${branchName ?? 'this branch'} is open. Staff at ${branchName ?? 'this branch'} who follow the salon's hours follow these.`
-            : "Your business's default open hours. Staff can follow these automatically from their own profile, or set their own instead."}
+          {branchId ? (branchName ? t('hintBranchNamed', { name: branchName }) : t('hintBranchUnnamed')) : t('hintBusiness')}
         </p>
         <WeekdayHoursEditor rows={rows} onChange={update} />
         {error && <div role="alert" className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={save}>
-            {busy ? 'Saving…' : 'Save changes'}
+            {busy ? t('saving') : t('save')}
           </button>
           {saved && !busy && (
             <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              Saved
+              {t('saved')}
             </span>
           )}
         </div>
@@ -105,15 +103,13 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
       numbers already go — `staffSeesClientContact` set that precedent.
     */}
     <div className="card" style={{ marginTop: 16 }}>
-      <div className="card-head">Attendance</div>
+      <div className="card-head">{t('attendance')}</div>
       <div className="card-body">
         <p className="field-hint settings-card-hint" style={{ marginTop: 0, marginBottom: 14 }}>
-          Lateness is measured against each person&apos;s own shift start, not one time for
-          the whole business. This is how long after it somebody can arrive before the
-          register marks them late.
+          {t('attendanceHint')}
         </p>
         <label className="field-label" htmlFor="late-grace">
-          Allow arriving late by
+          {t('graceLabel')}
         </label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
           <input
@@ -131,23 +127,21 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
               setGraceSaved(false);
             }}
           />
-          <span className="field-hint" style={{ margin: 0 }}>minutes</span>
+          <span className="field-hint" style={{ margin: 0 }}>{t('minutes')}</span>
         </div>
         {/* Spelled out, because "5 minutes" alone leaves the reader to guess
             whether the boundary minute itself counts. */}
         <p className="field-hint" style={{ marginTop: 8 }}>
-          {graceNum === 0
-            ? 'Someone on a 10:00 shift is late from 10:01.'
-            : `Someone on a 10:00 shift is late from ${graceLabel}.`}
+          {t('lateFrom', { time: graceLabel })}
         </p>
         {graceError && <div role="alert" className="field-error">{graceError}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={saveGrace}>
-            {busy ? 'Saving…' : 'Save changes'}
+            {busy ? t('saving') : t('save')}
           </button>
           {graceSaved && !busy && (
             <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              Saved
+              {t('saved')}
             </span>
           )}
         </div>
