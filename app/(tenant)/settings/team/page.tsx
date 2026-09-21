@@ -1,5 +1,7 @@
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
+import { loadErrorKind } from '../../lib/load-error';
 import { BranchScopeNote } from '../BranchScopeNote';
 import { TeamAccessPanel } from './TeamAccessPanel';
 
@@ -22,20 +24,21 @@ export default async function TeamSettingsPage({ searchParams }: { searchParams:
    * rather than taking the screen down with it.
    */
   const [initial, providers, settings, members, me, { branch }] = await Promise.all([
-    api.teamInvites().catch(() => null),
+    // Kept as a result, not swallowed: a busy API (429) and a down one are told apart in the banner below.
+    api.teamInvites().then((ok) => ({ ok }), (error: unknown) => ({ error })),
     api.providers().catch(() => []),
     api.settings().catch(() => null),
     api.teamMembers().catch(() => null),
     api.me().catch(() => null),
     searchParams,
   ]);
-  if (!initial) return <div className="banner">Could not load invites — check the server is running.</div>;
+  if ('error' in initial) return <LoadErrorBanner kind={loadErrorKind(initial.error)} />;
   return (
     <>
       {/* Jira GRW-230 — invites are for the whole business; Jira GRW-237 — a receptionist's branch is chosen on the invite. */}
       {branch && settings ? <BranchScopeNote settings={settings} branchName={null} sameForAll topic="teamAccess" /> : null}
       <TeamAccessPanel
-        initial={initial.invites}
+        initial={initial.ok.invites}
         providers={providers}
         initialMembers={members?.members ?? []}
         branches={me?.branches ?? []}

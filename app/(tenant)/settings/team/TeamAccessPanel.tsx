@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider, type TeamMember } from '../../lib/api';
 /*
@@ -22,12 +23,8 @@ import { toStoredPhone, validateNationalPhone } from '../../lib/phone';
  * new link gets its own block that stays put until the owner dismisses it,
  * rather than a toast that can be missed by looking away.
  */
-const LOAD_ERROR = 'Could not reach the server. Try again in a moment.';
-
-function expiryLabel(iso: string): string {
-  const days = Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000);
-  if (days <= 0) return 'Expires today';
-  return `Expires in ${days} day${days === 1 ? '' : 's'}`;
+function daysLeft(iso: string): number {
+  return Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000);
 }
 
 export function TeamAccessPanel({
@@ -41,6 +38,8 @@ export function TeamAccessPanel({
   initialMembers?: TeamMember[];
   branches?: Array<{ id: string; name: string }>;
 }) {
+  const t = useTranslations('settingsTeam');
+  const expiryLabel = (iso: string) => (daysLeft(iso) <= 0 ? t('expiresToday') : t('expiresIn', { days: daysLeft(iso) }));
   const [invites, setInvites] = useState<PendingInvite[]>(initial);
   /**
    * Jira GRW-237 — each branch has its own receptionist. Asked only when there
@@ -106,11 +105,11 @@ export function TeamAccessPanel({
      * sign in to somebody else's day.
      */
     if (role === 'staff' && !providerId) {
-      setError('Choose which stylist this login is for.');
+      setError(t('errors.chooseStylistFirst'));
       return;
     }
     if (role === 'receptionist' && multiBranch && !locationId) {
-      setError('Choose which branch this receptionist works at.');
+      setError(t('errors.chooseBranchFirst'));
       return;
     }
     const e164 = toStoredPhone(phone)!;
@@ -138,7 +137,7 @@ export function TeamAccessPanel({
     } catch (e) {
       // The server's own words when it has any — "That number is already on
       // this team" tells an owner what to do; a generic failure does not.
-      setError(e instanceof ApiError ? e.message : LOAD_ERROR);
+      setError(e instanceof ApiError ? e.message : t('errors.loadError'));
     } finally {
       setBusy(false);
     }
@@ -151,7 +150,7 @@ export function TeamAccessPanel({
       if (created?.id === id) setCreated(null);
       await refresh();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : LOAD_ERROR);
+      setError(e instanceof ApiError ? e.message : t('errors.loadError'));
     }
   };
 
@@ -164,7 +163,7 @@ export function TeamAccessPanel({
       await api.setTeamMemberBranch(userId, next);
       setMembers((all) => all.map((m) => (m.userId === userId ? { ...m, locationId: next, locationName: branchName(next) } : m)));
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : LOAD_ERROR);
+      setError(e instanceof ApiError ? e.message : t('errors.loadError'));
     } finally {
       setSavingMember(null);
     }
@@ -175,10 +174,10 @@ export function TeamAccessPanel({
 
   return (
     <div className="card">
-      <div className="card-head">Team access</div>
+      <div className="card-head">{t('title')}</div>
       <div className="card-body">
         <p className="field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
-          Invite someone to sign in to this business. They choose their own password.
+          {t('intro')}
         </p>
 
         <div className="team-invite-grid">
@@ -188,7 +187,7 @@ export function TeamAccessPanel({
           <div className="team-invite-phone">
             <PhoneField
               id="invite-phone"
-              label="Mobile number"
+              label={t('mobile')}
               required
               value={phone}
               disabled={busy}
@@ -200,15 +199,15 @@ export function TeamAccessPanel({
             />
           </div>
           <div className="team-role-field">
-            <label htmlFor="invite-role">Role</label>
+            <label htmlFor="invite-role">{t('role')}</label>
             <select
               id="invite-role"
               value={role}
               disabled={busy}
               onChange={(e) => setRole(e.target.value as typeof role)}
             >
-              <option value="staff">Stylist — their own bookings only</option>
-              <option value="receptionist">Receptionist — bookings, clients, payments, attendance</option>
+              <option value="staff">{t('roleStaff')}</option>
+              <option value="receptionist">{t('roleReceptionist')}</option>
             </select>
           </div>
           {/* Only for a stylist. A receptionist runs the whole diary, so a
@@ -216,10 +215,10 @@ export function TeamAccessPanel({
               drops the field anyway. */}
           {role === 'staff' && (
             <div className="team-role-field">
-              <label htmlFor="invite-provider">Whose calendar</label>
+              <label htmlFor="invite-provider">{t('whoseCalendar')}</label>
               {providers.length === 0 ? (
                 <p className="field-hint" style={{ margin: 0 }}>
-                  No staff on the roster yet — add someone under Staff first, then invite them here.
+                  {t('noStaff')}
                 </p>
               ) : (
                 <select
@@ -231,7 +230,7 @@ export function TeamAccessPanel({
                     setError(null);
                   }}
                 >
-                  <option value="">Choose a stylist…</option>
+                  <option value="">{t('chooseStylist')}</option>
                   {providers.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.displayName}
@@ -244,7 +243,7 @@ export function TeamAccessPanel({
           )}
           {role === 'receptionist' && multiBranch && (
             <div className="team-role-field">
-              <label htmlFor="invite-branch">Which branch</label>
+              <label htmlFor="invite-branch">{t('whichBranch')}</label>
               <select
                 id="invite-branch"
                 value={locationId}
@@ -254,7 +253,7 @@ export function TeamAccessPanel({
                   setError(null);
                 }}
               >
-                <option value="">Choose a branch…</option>
+                <option value="">{t('chooseBranch')}</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
@@ -268,19 +267,19 @@ export function TeamAccessPanel({
             disabled={busy || !phone.trim() || (role === 'staff' && !providerId) || (role === 'receptionist' && multiBranch && !locationId)}
             onClick={() => void send()}
           >
-            {busy ? 'Creating…' : 'Create invite'}
+            {busy ? t('creating') : t('createInvite')}
           </button>
         </div>
         {error && <div role="alert" className="field-error">{error}</div>}
 
         {created && (
           <div className="banner banner-info" style={{ marginTop: 16 }}>
-            <strong>{created.resent ? 'New link created' : 'Invite ready'}</strong>
+            <strong>{created.resent ? t('newLink') : t('ready')}</strong>
             <div style={{ marginTop: 4 }}>
               {/* Said plainly, because it is the one thing that cannot be
                   undone by coming back to this screen later. */}
-              Send this link to {created.phone}. It is shown only now — we do not keep a copy.
-              {created.resent && ' Their previous link has stopped working.'}
+              {t('sendTo', { phone: created.phone })}
+              {created.resent && ` ${t('resentNote')}`}
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <input readOnly value={linkFor(created.token)} style={{ flex: '1 1 240px', minWidth: 0 }} onFocus={(e) => e.target.select()} />
@@ -295,17 +294,17 @@ export function TeamAccessPanel({
                   setCopied(true);
                 }}
               >
-                {copied ? 'Copied' : 'Copy link'}
+                {copied ? t('copied') : t('copyLink')}
               </button>
             </div>
           </div>
         )}
 
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontWeight: 620, fontSize: 14.5, marginBottom: 8 }}>Waiting to join</div>
+          <div style={{ fontWeight: 620, fontSize: 14.5, marginBottom: 8 }}>{t('waiting')}</div>
           {invites.length === 0 ? (
             <p className="field-hint" style={{ margin: 0 }}>
-              No invites waiting. Anyone you invite shows here until they join.
+              {t('noInvites')}
             </p>
           ) : (
             invites.map((invite, i) => (
@@ -332,7 +331,7 @@ export function TeamAccessPanel({
                     prominent: it sits beside every pending row, and a filled
                     green button there reads as the thing to press. */}
                 <button type="button" className="btn btn-ghost btn-danger" onClick={() => void revoke(invite.id)}>
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             ))
@@ -343,7 +342,7 @@ export function TeamAccessPanel({
             branch: one branch has nothing to choose, and the screen stays as it was. */}
         {multiBranch && members.some((m) => m.role === 'receptionist') && (
           <div style={{ marginTop: 20 }}>
-            <div style={{ fontWeight: 620, fontSize: 14.5, marginBottom: 8 }}>Receptionists</div>
+            <div style={{ fontWeight: 620, fontSize: 14.5, marginBottom: 8 }}>{t('receptionists')}</div>
             {members
               .filter((m) => m.role === 'receptionist')
               .map((m, i) => (
@@ -360,19 +359,19 @@ export function TeamAccessPanel({
                   }}
                 >
                   <div style={{ flex: '1 1 160px', minWidth: 0 }}>
-                    <div style={{ fontWeight: 620, fontSize: 14.5 }}>{m.phone ?? 'Receptionist'}</div>
+                    <div style={{ fontWeight: 620, fontSize: 14.5 }}>{m.phone ?? t('receptionist')}</div>
                     <div className="field-hint" style={{ margin: 0 }}>
-                      {m.locationId ? `Works at ${m.locationName ?? branchName(m.locationId)}` : 'Every branch — choose one'}
+                      {m.locationId ? t('worksAt', { branch: m.locationName ?? branchName(m.locationId) ?? '' }) : t('everyBranch')}
                     </div>
                   </div>
                   <select
-                    aria-label={`Branch for ${m.phone ?? 'receptionist'}`}
+                    aria-label={m.phone ? t('branchFor', { phone: m.phone }) : t('branchForUnnamed')}
                     value={m.locationId ?? ''}
                     disabled={savingMember === m.userId}
                     onChange={(e) => void moveMember(m.userId, e.target.value)}
                     style={{ flex: '0 1 260px', minWidth: 0 }}
                   >
-                    {!m.locationId && <option value="">Choose a branch…</option>}
+                    {!m.locationId && <option value="">{t('chooseBranch')}</option>}
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name}

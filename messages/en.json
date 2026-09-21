@@ -518,5 +518,42 @@
       "cancel": "Cancel",
       "working": "Working…"
     }
+  },
+  "settingsTeam": {
+    "title": "Team access",
+    "intro": "Invite someone to sign in to this business. They choose their own password.",
+    "mobile": "Mobile number",
+    "role": "Role",
+    "roleStaff": "Stylist — their own bookings only",
+    "roleReceptionist": "Receptionist — bookings, clients, payments, attendance",
+    "whoseCalendar": "Whose calendar",
+    "noStaff": "No staff on the roster yet — add someone under Staff first, then invite them here.",
+    "chooseStylist": "Choose a stylist…",
+    "whichBranch": "Which branch",
+    "chooseBranch": "Choose a branch…",
+    "creating": "Creating…",
+    "createInvite": "Create invite",
+    "errors": {
+      "chooseStylistFirst": "Choose which stylist this login is for.",
+      "chooseBranchFirst": "Choose which branch this receptionist works at.",
+      "loadError": "Could not reach the server. Try again in a moment."
+    },
+    "newLink": "New link created",
+    "ready": "Invite ready",
+    "sendTo": "Send this link to {phone}. It is shown only now — we do not keep a copy.",
+    "resentNote": "Their previous link has stopped working.",
+    "copied": "Copied",
+    "copyLink": "Copy link",
+    "waiting": "Waiting to join",
+    "noInvites": "No invites waiting. Anyone you invite shows here until they join.",
+    "expiresToday": "Expires today",
+    "expiresIn": "Expires in {days, plural, one {# day} other {# days}}",
+    "cancel": "Cancel",
+    "receptionists": "Receptionists",
+    "receptionist": "Receptionist",
+    "worksAt": "Works at {branch}",
+    "everyBranch": "Every branch — choose one",
+    "branchFor": "Branch for {phone}",
+    "branchForUnnamed": "Branch for receptionist"
   }
 }

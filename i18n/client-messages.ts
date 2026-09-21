@@ -10,4 +10,4 @@
  * missing from this list, so the mistake is caught in the pull request, not on an
  * owner's phone.
  */
-export const CLIENT_MESSAGES = ['bookings', 'branchScope', 'checkout', 'common', 'customers', 'errors', 'freeTimes', 'notifications', 'search', 'settingsBooking', 'settingsBranches', 'settingsHours', 'settingsHub', 'settingsProfile', 'settingsReminders', 'settingsReports', 'status', 'weekdayHours'] as const;
+export const CLIENT_MESSAGES = ['bookings', 'branchScope', 'checkout', 'common', 'customers', 'errors', 'freeTimes', 'notifications', 'search', 'settingsBooking', 'settingsBranches', 'settingsHours', 'settingsHub', 'settingsProfile', 'settingsReminders', 'settingsReports', 'settingsTeam', 'status', 'weekdayHours'] as const;
