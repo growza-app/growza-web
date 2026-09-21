@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { screenTitle } from '../lib/page-title';
 import { Suspense } from 'react';
 
@@ -70,6 +71,7 @@ export default async function ReportsPage({
     branch?: string;
   }>;
 }) {
+  const t = await getTranslations('reports');
   const params = await searchParams;
   const tab = (params.tab && TABS.has(params.tab) ? params.tab : 'overview') as ReportTabKey;
   const from = params.from && ISO_DATE.test(params.from) ? params.from : undefined;
@@ -135,7 +137,7 @@ export default async function ReportsPage({
   if (!firstAllowed) {
     return (
       <div className="page-body">
-        <div className="banner">Reports are not available for your role. Ask the owner if you need them.</div>
+        <div className="banner">{t('notAvailable')}</div>
       </div>
     );
   }

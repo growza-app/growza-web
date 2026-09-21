@@ -1,5 +1,6 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
 import type { ReactNode } from 'react';
 
 import { copy } from '../lib/copy';
@@ -45,6 +46,7 @@ export function Kpi({
   sparkFormat?: (value: number) => string;
   lowerIsBetter?: boolean;
 }) {
+  const rp = useReportsCopy();
   const delta = metric.deltaPct;
   const good = delta === null ? true : lowerIsBetter ? delta <= 0 : delta >= 0;
   const tone = good ? 'var(--rp-green-ink)' : 'var(--rp-red)';
@@ -62,7 +64,7 @@ export function Kpi({
       <div className="rp-kpi-foot">
         {compare ? (
           delta === null ? (
-            <span className="rp-kpi-nodelta">{copy.reports.noPrior}</span>
+            <span className="rp-kpi-nodelta">{rp.noPrior}</span>
           ) : (
             <span className="rp-kpi-delta" style={{ color: tone }}>
               <span className="rp-kpi-delta-icon">{delta >= 0 ? <IconTrendUp /> : <IconTrendDown />}</span>

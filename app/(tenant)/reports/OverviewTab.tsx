@@ -1,5 +1,8 @@
 'use client';
 
+import { rangeName } from './shared';
+import { useTranslations } from 'next-intl';
+import { useReportsCopy } from '../lib/use-reports-copy';
 import { copy } from '../lib/copy';
 import { InfoTip } from '../components/InfoTip';
 import { formatMoney, type ReportOverview } from '../lib/api';
@@ -39,6 +42,8 @@ export function OverviewTab({
   onTab: (tab: string) => void;
   onClient: (id: string) => void;
 }) {
+  const rp = useReportsCopy();
+  const t = useTranslations('reports');
   const labels = data.range.buckets.map((b) => b.label);
   const { kpis, sparklines } = data;
   const empty = data.kpis.bookings.value === 0 && data.kpis.revenueMinor.value === 0;
@@ -56,8 +61,8 @@ export function OverviewTab({
         <Kpi
           icon={<IconRupee />}
           iconTone="var(--rp-green-ink)"
-          label={copy.reports.kpi.revenue}
-          explain={copy.reports.explain.overviewRevenue}
+          label={rp.kpi.revenue}
+          explain={rp.explain.overviewRevenue}
           value={money(kpis.revenueMinor.value)}
           metric={kpis.revenueMinor}
           compare={data.compare}
@@ -68,8 +73,8 @@ export function OverviewTab({
         <Kpi
           icon={<IconReports />}
           iconTone="var(--rp-blue)"
-          label={copy.reports.kpi.bookings}
-          explain={copy.reports.explain.overviewBookings}
+          label={rp.kpi.bookings}
+          explain={rp.explain.overviewBookings}
           value={String(kpis.bookings.value)}
           metric={kpis.bookings}
           compare={data.compare}
@@ -79,8 +84,8 @@ export function OverviewTab({
         <Kpi
           icon={<IconUserPlus />}
           iconTone="var(--rp-purple)"
-          label={copy.reports.kpi.newCustomers}
-          explain={copy.reports.explain.overviewNewClients}
+          label={rp.kpi.newCustomers}
+          explain={rp.explain.overviewNewClients}
           value={String(kpis.newCustomers.value)}
           metric={kpis.newCustomers}
           compare={data.compare}
@@ -90,8 +95,8 @@ export function OverviewTab({
         <Kpi
           icon={<IconRepeat />}
           iconTone="var(--rp-brand)"
-          label={copy.reports.kpi.repeatRate}
-          explain={copy.reports.explain.overviewRepeat}
+          label={rp.kpi.repeatRate}
+          explain={rp.explain.overviewRepeat}
           value={`${kpis.repeatRatePct.value}%`}
           metric={kpis.repeatRatePct}
           compare={data.compare}
@@ -108,31 +113,31 @@ export function OverviewTab({
         <section className="rp-card">
           <div className="rp-card-head">
             <div>
-              <h2>{copy.reports.revenueTrend}</h2>
-              <p>{data.range.label}</p>
+              <h2>{rp.revenueTrend}</h2>
+              <p>{rangeName(data.range, rp.ranges)}</p>
             </div>
             <div className="rp-card-figure">{money(kpis.revenueMinor.value)}</div>
           </div>
           {empty ? (
-            <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
+            <p className="rp-empty">{rp.noDataHint(rangeName(data.range, rp.ranges))}</p>
           ) : (
-            <LineChart label={copy.reports.revenueTrend} labels={labels} series={[{ color: 'var(--rp-brand)', values: data.revenueTrend.map((p) => p.value), format: money }]} fill />
+            <LineChart label={rp.revenueTrend} labels={labels} series={[{ color: 'var(--rp-brand)', values: data.revenueTrend.map((p) => p.value), format: money }]} fill />
           )}
         </section>
 
         <section className="rp-card">
           <div className="rp-card-head">
             <div>
-              <h2>{copy.reports.bookingTrend}</h2>
-              <p>{data.range.label}</p>
+              <h2>{rp.bookingTrend}</h2>
+              <p>{rangeName(data.range, rp.ranges)}</p>
             </div>
             <div className="rp-card-figure">{kpis.bookings.value}</div>
           </div>
           {empty ? (
-            <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
+            <p className="rp-empty">{rp.noDataHint(rangeName(data.range, rp.ranges))}</p>
           ) : (
             <LineChart
-              label={copy.reports.bookingTrend}
+              label={rp.bookingTrend}
               labels={labels}
               series={[{ color: 'var(--rp-blue)', values: data.bookingTrend.map((p) => p.value), format: (v) => `${v} bookings` }]}
               fill
@@ -143,8 +148,8 @@ export function OverviewTab({
 
       <div className="rp-grid-health">
         <section className="rp-card">
-          <h2>{copy.reports.segmentsTitle}</h2>
-          <p className="rp-card-sub">{copy.reports.segmentsHint(data.totalCustomers)}</p>
+          <h2>{rp.segmentsTitle}</h2>
+          <p className="rp-card-sub">{rp.segmentsHint(data.totalCustomers)}</p>
           <div className="rp-segments">
             {data.segments.map((segment) => (
               <button
@@ -156,7 +161,7 @@ export function OverviewTab({
               >
                 <span className="rp-segment-label">
                   <span className="rp-segment-dot" />
-                  {copy.reports.segments[segment.key]}
+                  {rp.segments[segment.key]}
                 </span>
                 <span className="rp-segment-count">{segment.count}</span>
                 <span className="rp-segment-range">{segment.rangeLabel}</span>
@@ -166,19 +171,19 @@ export function OverviewTab({
           {/* Stated rather than left as an unexplained gap: these customers are
               in the total above and in none of the four buckets, so without
               this line the numbers look like they do not add up. */}
-          {data.neverVisited > 0 && <p className="rp-card-foot">{copy.reports.neverVisited(data.neverVisited)}</p>}
+          {data.neverVisited > 0 && <p className="rp-card-foot">{rp.neverVisited(data.neverVisited)}</p>}
         </section>
 
         <section className="rp-card">
-          <h2>{copy.reports.topServices}</h2>
-          <p className="rp-card-sub">{data.range.label}</p>
+          <h2>{rp.topServices}</h2>
+          <p className="rp-card-sub">{rangeName(data.range, rp.ranges)}</p>
           <BarList
-            emptyText={copy.reports.noDataHint(data.range.label)}
+            emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             items={data.topServices.map((s) => ({
               label: s.label,
               value: s.value,
               display: money(s.value),
-              note: s.retired ? 'retired' : undefined,
+              note: s.retired ? t('retiredNote') : undefined,
             }))}
           />
         </section>
@@ -193,17 +198,17 @@ export function OverviewTab({
         <div className="rp-card-head">
           <div>
             <h2>
-              {copy.reports.opportunities}
-              <InfoTip label={copy.reports.opportunities}>{copy.reports.explain.opportunities}</InfoTip>
+              {rp.opportunities}
+              <InfoTip label={rp.opportunities}>{rp.explain.opportunities}</InfoTip>
             </h2>
-            <p>{copy.reports.opportunitiesHint}</p>
+            <p>{rp.opportunitiesHint}</p>
           </div>
           <span className="rp-card-icon rp-amber-ink">
             <IconFlame />
           </span>
         </div>
         {data.opportunities.length === 0 ? (
-          <p className="rp-empty">{copy.reports.notEnoughVisits}</p>
+          <p className="rp-empty">{rp.notEnoughVisits}</p>
         ) : (
           <div className="rp-opps">
             {data.opportunities.map((o) => {
@@ -219,7 +224,7 @@ export function OverviewTab({
                   <span className="rp-opp-main">
                     <span className="rp-opp-name">{o.name}</span>
                     <span className="rp-opp-meta">
-                      {o.intervalDays ? copy.reports.usuallyEvery(o.intervalDays) : ''}
+                      {o.intervalDays ? rp.usuallyEvery(o.intervalDays) : ''}
                     </span>
                   </span>
                   <span className="rp-opp-right">
@@ -227,15 +232,15 @@ export function OverviewTab({
                         list is ordered by. It showed lifetime spend before —
                         the number that made a ₹462 client look like a reason
                         to pick up the phone. */}
-                    <span className="rp-opp-spend">{copy.reports.perVisit(money(o.avgTicketMinor))}</span>
+                    <span className="rp-opp-spend">{rp.perVisit(money(o.avgTicketMinor))}</span>
                     <span className="rp-opp-status" style={{ color: late ? 'var(--rp-red)' : 'var(--rp-amber)' }}>
                       {o.daysOverdue === null
                         ? ''
                         : o.daysOverdue > 0
-                          ? copy.reports.overdueBy(o.daysOverdue)
+                          ? rp.overdueBy(o.daysOverdue)
                           : o.daysOverdue === 0
-                            ? copy.reports.dueNow
-                            : copy.reports.dueIn(-o.daysOverdue)}
+                            ? rp.dueNow
+                            : rp.dueIn(-o.daysOverdue)}
                     </span>
                   </span>
                   <span className="rp-opp-chev">
@@ -254,8 +259,8 @@ export function OverviewTab({
             <IconAlert />
           </span>
           <div>
-            <h2>{copy.reports.noData}</h2>
-            <p className="rp-card-sub">{copy.reports.noDataHint(data.range.label)}</p>
+            <h2>{rp.noData}</h2>
+            <p className="rp-card-sub">{rp.noDataHint(rangeName(data.range, rp.ranges))}</p>
           </div>
         </section>
       )}

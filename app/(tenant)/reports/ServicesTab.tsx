@@ -1,9 +1,10 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
 import { copy } from '../lib/copy';
 import type { ReportServices } from '../lib/api';
 import { BarList, ReportTable, type Cell } from './charts';
-import { Card, countBars, money, moneyBars } from './shared';
+import { Card, countBars, money, moneyBars, rangeName } from './shared';
 
 /**
  * Services — popular and profitable, shown as the two different questions
@@ -11,7 +12,8 @@ import { Card, countBars, money, moneyBars } from './shared';
  * booked nine times are both good, in ways an owner has to weigh separately.
  */
 export function ServicesTab({ data }: { data: ReportServices }) {
-  const c = copy.reports.servicesTab;
+  const rp = useReportsCopy();
+  const c = rp.servicesTab;
   const empty = data.rows.length === 0;
 
   const rows = data.rows.map((r) => {
@@ -40,21 +42,21 @@ export function ServicesTab({ data }: { data: ReportServices }) {
     <div className="rp-stack">
       <div className="rp-grid-2">
         <Card title={c.mostBooked} hint={c.pairHint}>
-          <BarList items={countBars(data.mostBooked)} emptyText={copy.reports.noDataHint(data.range.label)} />
+          <BarList items={countBars(data.mostBooked, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
-        <Card title={c.topRevenue} hint={data.range.label}>
-          <BarList items={moneyBars(data.topRevenue)} emptyText={copy.reports.noDataHint(data.range.label)} />
+        <Card title={c.topRevenue} hint={rangeName(data.range, rp.ranges)}>
+          <BarList items={moneyBars(data.topRevenue, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
       </div>
 
       <Card title={c.table} hint={c.tableHint}>
         {empty ? (
-          <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
+          <p className="rp-empty">{rp.noDataHint(rangeName(data.range, rp.ranges))}</p>
         ) : (
           <ReportTable
             columns={[c.colService, c.colBookings, c.colRevenue, c.colAvg, c.colMinutes, c.colRepeat, c.colCancel]}
             rows={rows}
-            emptyText={copy.reports.noDataHint(data.range.label)}
+            emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
           />
         )}
       </Card>

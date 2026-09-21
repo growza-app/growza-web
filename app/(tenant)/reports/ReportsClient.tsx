@@ -1,5 +1,6 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -90,6 +91,7 @@ export function ReportsClient({
   branches?: Array<{ id: string; name: string }>;
   branch?: string | null;
 }) {
+  const rp = useReportsCopy();
   const router = useRouter();
   const params = useSearchParams();
   // Which client's card is open. A row opens it over the report rather than
@@ -138,7 +140,7 @@ export function ReportsClient({
       {payload === null ? (
         <section className="rp-card rp-card-quiet">
           <div>
-            <h2>{copy.reports.loadFailed}</h2>
+            <h2>{rp.loadFailed}</h2>
             <p className="rp-card-sub"><LoadErrorHelp kind={loadError} /></p>
           </div>
         </section>

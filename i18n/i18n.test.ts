@@ -160,6 +160,23 @@ describe('words that live in copy.ts and messages/en.json while their other read
     expect(en.services.cols.price).toBe(copy.services.price);
   });
 
+  it('Reports: every plain sentence in copy.reports is the same in the message file', () => {
+    // The CSV export still reads copy.reports (a file is not translated per viewer); the screens read the
+    // messages. Function-valued entries become ICU messages and are covered by use-reports-copy's own test.
+    const differing: string[] = [];
+    const walk = (source: Record<string, unknown>, messages: Record<string, unknown>, path: string) => {
+      for (const [key, value] of Object.entries(source)) {
+        if (typeof value === 'string') {
+          if (messages[key] !== value) differing.push(`${path}${key}`);
+        } else if (value && typeof value === 'object') {
+          walk(value as Record<string, unknown>, (messages[key] ?? {}) as Record<string, unknown>, `${path}${key}.`);
+        }
+      }
+    };
+    walk(copy.reports as unknown as Record<string, unknown>, en.reports as unknown as Record<string, unknown>, '');
+    expect(differing).toEqual([]);
+  });
+
   it('client segment names, title and hint', () => {
     expect(en.customers.segments).toEqual(copy.clients.segments);
     expect(en.customers.segmentsTitle).toBe(copy.clients.segmentsTitle);

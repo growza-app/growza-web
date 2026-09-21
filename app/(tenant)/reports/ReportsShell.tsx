@@ -1,5 +1,7 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 
@@ -92,6 +94,8 @@ export function ReportsShell({
   branch?: string | null;
   children: ReactNode;
 }) {
+  const rp = useReportsCopy();
+  const st = useTranslations('status');
   const router = useRouter();
   const params = useSearchParams();
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -141,7 +145,7 @@ export function ReportsShell({
   const nameOf = (group: keyof ReportFilters, id: string) => {
     if (group === 'providerIds') return filterOptions.providers.find((p) => p.id === id)?.name ?? id;
     if (group === 'serviceIds') return filterOptions.services.find((s) => s.id === id)?.name ?? id;
-    return copy.status[id === 'no_show' ? 'didNotCome' : id === 'completed' ? 'done' : (id as 'confirmed' | 'cancelled')];
+    return st(id === 'no_show' ? 'didNotCome' : id === 'completed' ? 'done' : (id as 'confirmed' | 'cancelled'));
   };
 
   // Two of these are domain nouns, not UI chrome, so they come from the
@@ -149,9 +153,9 @@ export function ReportsShell({
   // here while the sidebar renders "Patients" from config is the drift
   // ctx.labels exists to prevent (01 §4, epic BR-06).
   const tabLabel = (key: ReportTabKey) =>
-    key === 'customers' ? labels.customers ?? copy.reports.tabs.customers
-    : key === 'staff' ? labels.providers ?? copy.reports.tabs.staff
-    : copy.reports.tabs[key];
+    key === 'customers' ? labels.customers ?? rp.tabs.customers
+    : key === 'staff' ? labels.providers ?? rp.tabs.staff
+    : rp.tabs[key];
 
   // A fragment, not a wrapper: `.content` is a three-row grid (header /
   // scroller / footer), so the header and the scrolling body have to be its
@@ -164,8 +168,8 @@ export function ReportsShell({
           <div className="topbar-lead">
             <MenuButton />
             <div className="topbar-title">
-              <h1>{copy.reports.title}</h1>
-              <p>{copy.reports.subtitles[tab]}</p>
+              <h1>{rp.title}</h1>
+              <p>{rp.subtitles[tab]}</p>
             </div>
           </div>
           {/*
@@ -188,7 +192,7 @@ export function ReportsShell({
               <span className="rp-control-icon rp-brand-ink">
                 <IconCalendar />
               </span>
-              <span>{rangeLabel ?? copy.reports.ranges[range]}</span>
+              <span>{rangeLabel ?? rp.ranges[range]}</span>
               <span className="rp-control-icon rp-muted">
                 <IconChevronDown />
               </span>
@@ -198,7 +202,7 @@ export function ReportsShell({
                 <button
                   type="button"
                   className="rp-range-scrim"
-                  aria-label="Close"
+                  aria-label={rp.filterDrawer.close}
                   onClick={() => setRangeOpen(false)}
                 />
                 <div className="rp-range-menu">
@@ -212,7 +216,7 @@ export function ReportsShell({
                         go({ range: key });
                       }}
                     >
-                      {copy.reports.ranges[key]}
+                      {rp.ranges[key]}
                     </button>
                   ))}
                 </div>
@@ -224,17 +228,17 @@ export function ReportsShell({
           {branches.length > 1 ? (
             <div className="rp-range">
               <button type="button" className={`rp-control ${branch ? 'rp-control-on' : ''}`} aria-haspopup="menu" aria-expanded={branchOpen} onClick={() => setBranchOpen((open) => !open)}>
-                <span>{branches.find((b) => b.id === branch)?.name ?? copy.reports.allBranches}</span>
+                <span>{branches.find((b) => b.id === branch)?.name ?? rp.allBranches}</span>
                 <span className="rp-control-icon rp-muted">
                   <IconChevronDown />
                 </span>
               </button>
               {branchOpen && (
                 <>
-                  <button type="button" className="rp-range-scrim" aria-label="Close" onClick={() => setBranchOpen(false)} />
+                  <button type="button" className="rp-range-scrim" aria-label={rp.filterDrawer.close} onClick={() => setBranchOpen(false)} />
                   <div className="rp-range-menu" role="menu">
                     <button type="button" role="menuitemradio" aria-checked={branch === null} className={branch === null ? 'active' : ''} onClick={() => pickBranch(null)}>
-                      {copy.reports.allBranches}
+                      {rp.allBranches}
                     </button>
                     {branches.map((b) => (
                       <button key={b.id} type="button" role="menuitemradio" aria-checked={branch === b.id} className={branch === b.id ? 'active' : ''} onClick={() => pickBranch(b.id)}>
@@ -255,7 +259,7 @@ export function ReportsShell({
             <span className="rp-control-icon">
               <IconRepeat />
             </span>
-            <span>{copy.reports.compare}</span>
+            <span>{rp.compare}</span>
           </button>
 
           <div className="rp-controls-spacer" />
@@ -267,13 +271,13 @@ export function ReportsShell({
             type="button"
             className={`rp-control${activeFilters > 0 ? ' is-on' : ''}`}
             disabled={!filterable}
-            title={filterable ? undefined : copy.reports.filtersNotHere}
+            title={filterable ? undefined : rp.filtersNotHere}
             onClick={() => setFiltersOpen(true)}
           >
             <span className={`rp-control-icon${filterable ? '' : ' rp-muted'}`}>
               <IconFilter />
             </span>
-            <span>{copy.reports.filters}</span>
+            <span>{rp.filters}</span>
             {filterable && activeFilters > 0 && <span className="rp-control-count">{activeFilters}</span>}
           </button>
           <button
@@ -281,12 +285,12 @@ export function ReportsShell({
             className="rp-control rp-control-primary"
             onClick={onExport}
             disabled={!canExport}
-            title={canExport ? undefined : copy.reports.exportNothing}
+            title={canExport ? undefined : rp.exportNothing}
           >
             <span className="rp-control-icon">
               <IconDownload />
             </span>
-            <span>{copy.reports.export}</span>
+            <span>{rp.export}</span>
           </button>
         </div>
 
@@ -310,7 +314,7 @@ export function ReportsShell({
             (FR-04). */}
         {filterable && activeFilters > 0 && (
           <div className="rp-applied">
-            <span className="rp-applied-label">{copy.reports.applied}</span>
+            <span className="rp-applied-label">{rp.applied}</span>
             {(['providerIds', 'serviceIds', 'statuses'] as const).flatMap((group) =>
               filters[group].map((value) => (
                 <button
@@ -318,7 +322,7 @@ export function ReportsShell({
                   type="button"
                   className="rp-applied-chip"
                   onClick={() => removeFilter(group, value)}
-                  aria-label={copy.reports.remove(nameOf(group, value))}
+                  aria-label={rp.remove(nameOf(group, value))}
                 >
                   {nameOf(group, value)}
                   <span aria-hidden="true">✕</span>
@@ -330,7 +334,7 @@ export function ReportsShell({
               className="rp-applied-clear"
               onClick={() => applyFilters({ providerIds: [], serviceIds: [], statuses: [] })}
             >
-              {copy.reports.clearFilters}
+              {rp.clearFilters}
             </button>
           </div>
         )}
@@ -340,20 +344,20 @@ export function ReportsShell({
             narrowed. */}
         {!filterable && activeFilters > 0 && (
           <div className="rp-applied rp-applied-inert">
-            <span>{copy.reports.filtersOnOtherTabs(activeFilters)}</span>
+            <span>{rp.filtersOnOtherTabs(activeFilters)}</span>
           </div>
         )}
 
         {droppedFilters > 0 && (
           <div className="rp-applied rp-applied-inert">
-            <span>{copy.reports.droppedFilters(droppedFilters)}</span>
+            <span>{rp.droppedFilters(droppedFilters)}</span>
           </div>
         )}
 
         {/* Jira GRW-238 — said, not implied: a client belongs to the business, so client groups are not split by branch. */}
         {branch && (tab === 'overview' || tab === 'customers') ? (
           <div className="rp-applied rp-applied-inert">
-            <span>{copy.reports.branchClientsNote(branches.find((b) => b.id === branch)?.name ?? '')}</span>
+            <span>{rp.branchClientsNote(branches.find((b) => b.id === branch)?.name ?? '')}</span>
           </div>
         ) : null}
 

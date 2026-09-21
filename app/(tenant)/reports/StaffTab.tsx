@@ -1,9 +1,10 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
 import { copy } from '../lib/copy';
 import type { ReportStaff } from '../lib/api';
 import { BarList, ReportTable, type Cell } from './charts';
-import { Card, money, moneyBars, utilisationColour } from './shared';
+import { Card, money, moneyBars, utilisationColour, rangeName } from './shared';
 
 /**
  * Staff — revenue and how full each day actually was.
@@ -17,7 +18,8 @@ import { Card, money, moneyBars, utilisationColour } from './shared';
  * says it works for mechanics and trainers too.
  */
 export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerLabel: string }) {
-  const c = copy.reports.staffTab;
+  const rp = useReportsCopy();
+  const c = rp.staffTab;
 
   const rows = data.rows.map((r) => {
     const cells: Cell[] = [
@@ -46,12 +48,12 @@ export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerL
   return (
     <div className="rp-stack">
       <div className="rp-grid-2">
-        <Card title={c.byRevenue} hint={data.range.label}>
-          <BarList items={moneyBars(data.byRevenue)} emptyText={copy.reports.noDataHint(data.range.label)} />
+        <Card title={c.byRevenue} hint={rangeName(data.range, rp.ranges)}>
+          <BarList items={moneyBars(data.byRevenue, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
         <Card title={c.utilisation} hint={c.utilisationHint}>
           <BarList
-            emptyText={copy.reports.noDataHint(data.range.label)}
+            emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             items={data.byUtilisation.map((u) => ({
               label: u.label,
               value: u.value,
@@ -66,7 +68,7 @@ export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerL
         <ReportTable
           columns={[c.colName, c.colBookings, c.colCompleted, c.colRevenue, c.colAvg, c.colUtilisation, c.colNoShow]}
           rows={rows}
-          emptyText={copy.reports.noDataHint(data.range.label)}
+          emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
         />
       </Card>
     </div>

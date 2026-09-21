@@ -1,11 +1,13 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
+import { useTranslations } from 'next-intl';
 import { copy } from '../lib/copy';
 import type { ReportBookings } from '../lib/api';
 import { IconAppointments, IconBan, IconUserCheck } from '../components/icons';
 import { BarList, Donut, Heatmap, LineChart } from './charts';
 import { Kpi } from './Kpi';
-import { Card, countBars, hoursAndMinutes } from './shared';
+import { Card, countBars, hoursAndMinutes, rangeName } from './shared';
 import { linearTrend } from './trend';
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -24,16 +26,18 @@ const STATUS_COLOUR: Record<string, string> = {
  * shipped once already (conventions §3).
  */
 export function BookingsTab({ data }: { data: ReportBookings }) {
-  const c = copy.reports.bookingsTab;
+  const rp = useReportsCopy();
+  const st = useTranslations('status');
+  const c = rp.bookingsTab;
   const labels = data.range.buckets.map((b) => b.label);
   const { kpis } = data;
   // Straight from copy.status — the same four words the Bookings screen's
   // chips and filters use. Never re-typed here (conventions §3).
   const statusWord = (key: string) =>
-    key === 'completed' ? copy.status.done
-    : key === 'cancelled' ? copy.status.cancelled
-    : key === 'no_show' ? copy.status.didNotCome
-    : copy.status.confirmed;
+    key === 'completed' ? st('done')
+    : key === 'cancelled' ? st('cancelled')
+    : key === 'no_show' ? st('didNotCome')
+    : st('confirmed');
 
   // The card is headed with a question, so it answers it. A fitted straight
   // line is the direction the zigzag is actually going, and the sentence
@@ -57,11 +61,11 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
           three that stay are the ones an owner acts on — and two of them are
           better when they fall, so their arrows read the other way round. */}
       <div className="rp-kpi-grid rp-kpi-grid-3">
-        <Kpi icon={<IconAppointments />} iconTone="var(--rp-blue)" label={c.total} explain={copy.reports.explain.bookingsTotal}
+        <Kpi icon={<IconAppointments />} iconTone="var(--rp-blue)" label={c.total} explain={rp.explain.bookingsTotal}
              value={String(kpis.total.value)} metric={kpis.total} compare={data.compare} />
-        <Kpi icon={<IconUserCheck />} iconTone="var(--rp-purple)" label={copy.status.didNotCome} explain={copy.reports.explain.bookingsNoShow}
+        <Kpi icon={<IconUserCheck />} iconTone="var(--rp-purple)" label={st('didNotCome')} explain={rp.explain.bookingsNoShow}
              value={String(kpis.noShow.value)} metric={kpis.noShow} compare={data.compare} lowerIsBetter />
-        <Kpi icon={<IconBan />} iconTone="var(--rp-red)" label={copy.status.cancelled} explain={copy.reports.explain.bookingsCancelled}
+        <Kpi icon={<IconBan />} iconTone="var(--rp-red)" label={st('cancelled')} explain={rp.explain.bookingsCancelled}
              value={String(kpis.cancelled.value)} metric={kpis.cancelled} compare={data.compare} lowerIsBetter />
       </div>
 
@@ -84,7 +88,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
         figure={kpis.total.value}
       >
         {kpis.total.value === 0 ? (
-          <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
+          <p className="rp-empty">{rp.noDataHint(rangeName(data.range, rp.ranges))}</p>
         ) : (
           <>
             <LineChart
@@ -110,7 +114,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
           <Donut
             centreLabel={c.total}
             centreValue={String(data.byStatus.reduce((sum, s) => sum + s.value, 0))}
-            emptyText={copy.reports.noDataHint(data.range.label)}
+            emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             segments={data.byStatus.map((s) => ({
               label: statusWord(s.label),
               value: s.value,
@@ -123,7 +127,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
         {/* Two sources, because two is what the booking path records. The
             design draws four; the other two would be invented (GRW-54 AC-02). */}
         <Card title={c.source} hint={c.sourceHint}>
-          <BarList items={countBars(data.bySource)} emptyText={copy.reports.noDataHint(data.range.label)} />
+          <BarList items={countBars(data.bySource, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
       </div>
 
@@ -132,7 +136,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
         hint={c.peakHint}
         foot={
           data.peakPeriods.outsideOpeningHoursMinutes > 0
-            ? copy.reports.peakOutside(hoursAndMinutes(data.peakPeriods.outsideOpeningHoursMinutes))
+            ? rp.peakOutside(hoursAndMinutes(data.peakPeriods.outsideOpeningHoursMinutes))
             : undefined
         }
       >

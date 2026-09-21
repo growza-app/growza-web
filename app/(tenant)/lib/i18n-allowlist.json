@@ -9,20 +9,6 @@
     "web/app/(tenant)/components/ImpersonationBanner.tsx": [
       "as",
       "— read-only support session"
-    ],
-    "web/app/(tenant)/reports/CustomersTab.tsx": [
-      "title=\"${…} · no completed visits\"",
-      "{${…} days}"
-    ],
-    "web/app/(tenant)/reports/OverviewTab.tsx": [
-      "note: \"retired\""
-    ],
-    "web/app/(tenant)/reports/ReportsShell.tsx": [
-      "aria-label=\"Close\"",
-      "aria-label=\"Close\""
-    ],
-    "web/app/(tenant)/reports/page.tsx": [
-      "Reports are not available for your role. Ask the owner if you need them."
     ]
   }
 }

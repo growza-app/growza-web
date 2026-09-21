@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useReportsCopy } from '../lib/use-reports-copy';
 import { copy } from '../lib/copy';
 import type { ReportCustomers } from '../lib/api';
 import {
@@ -48,7 +50,9 @@ export function CustomersTab({
   onSegment: (segment: string) => void;
   onClient: (id: string) => void;
 }) {
-  const c = copy.reports.customersTab;
+  const rp = useReportsCopy();
+  const t = useTranslations('reports');
+  const c = rp.customersTab;
   const { kpis } = data;
 
   const rows = data.topCustomers.map((r) => {
@@ -93,13 +97,13 @@ export function CustomersTab({
         <div className="rp-cs-figures">
           {[
             { label: c.total, value: String(kpis.total.value), metric: kpis.total, compare: false,
-              explain: copy.reports.explain.clientsTotal },
+              explain: rp.explain.clientsTotal },
             { label: c.newClients, value: String(kpis.newCustomers.value), metric: kpis.newCustomers, compare: data.compare,
-              explain: copy.reports.explain.clientsNew },
+              explain: rp.explain.clientsNew },
             { label: c.repeatRate, value: `${data.repeatRatePct.value}%`, metric: data.repeatRatePct, compare: data.compare,
-              explain: copy.reports.explain.overviewRepeat },
+              explain: rp.explain.overviewRepeat },
             { label: c.overdue, value: String(kpis.overdue.value), metric: kpis.overdue, compare: false,
-              explain: copy.reports.explain.clientsOverdue },
+              explain: rp.explain.clientsOverdue },
           ].map((f) => (
             <div className="rp-cs-figure" key={f.label}>
               <span>
@@ -120,14 +124,14 @@ export function CustomersTab({
             both "who these clients are", and a heading each was two lines
             spent saying so twice. */}
         <h3 className="rp-cs-heading">
-          {copy.reports.segmentsTitle}
-          <em>{copy.reports.segmentsTapHint}</em>
+          {rp.segmentsTitle}
+          <em>{rp.segmentsTapHint}</em>
         </h3>
 
         <div className="rp-cs-block">
           <div className="rp-cs-bands">
             {data.segments.map((seg) => {
-              const words = copy.reports.segments[seg.key];
+              const words = rp.segments[seg.key];
               const on = status === seg.key;
               return (
                 <button
@@ -158,7 +162,7 @@ export function CustomersTab({
                 type="button"
                 className="rp-cs-band rp-cs-band-muted"
                 style={{ ['--seg' as string]: 'var(--muted)' }}
-                title={`${c.neverBand} · no completed visits`}
+                title={t('noCompletedVisits', { band: c.neverBand })}
                 onClick={() => onSegment('never')}
               >
                 <span className="rp-cs-band-name">
@@ -200,20 +204,20 @@ export function CustomersTab({
           columns={[c.colClient, c.colVisits, c.colSpend, c.colAvg, c.colLast, c.colFavourite, c.colInterval]}
           rows={rows}
           onRowClick={onClient}
-          emptyText={copy.reports.noData}
+          emptyText={rp.noData}
         />
       </Card>
 
       <div className="rp-grid-2">
         <Card title={c.spend} hint={c.spendHint}>
-          <BarList items={countBars(data.spend)} emptyText={copy.reports.noData} />
+          <BarList items={countBars(data.spend, rp.servicesTab.retired)} emptyText={rp.noData} />
         </Card>
         <Card title={c.frequency} hint={c.frequencyHint}>
-          <BarList items={countBars(data.frequency)} emptyText={copy.reports.noData} />
+          <BarList items={countBars(data.frequency, rp.servicesTab.retired)} emptyText={rp.noData} />
           <div className="rp-figure-pair">
             <div>
               <span>{c.avgInterval}</span>
-              <strong>{data.avgIntervalDays === null ? '—' : `${data.avgIntervalDays} days`}</strong>
+              <strong>{data.avgIntervalDays === null ? '—' : t('daysCount', { days: data.avgIntervalDays })}</strong>
             </div>
             <div>
               <span>{c.avgVisits}</span>

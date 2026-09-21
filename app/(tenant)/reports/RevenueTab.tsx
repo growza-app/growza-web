@@ -1,11 +1,12 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
 import { copy } from '../lib/copy';
 import type { ReportRevenue } from '../lib/api';
 import { IconCoins, IconRupee, IconUserPlus } from '../components/icons';
 import { BarList, Donut, LineChart } from './charts';
 import { Kpi } from './Kpi';
-import { Card, money, moneyBars } from './shared';
+import { Card, money, moneyBars, rangeName } from './shared';
 
 const SEGMENT_COLOURS = ['var(--rp-brand)', 'var(--rp-blue)', '#c3cbc6'];
 const PAYMENT_COLOURS: Record<string, string> = {
@@ -25,7 +26,8 @@ const PAYMENT_COLOURS: Record<string, string> = {
  * defect this tab is most likely to ship.
  */
 export function RevenueTab({ data }: { data: ReportRevenue }) {
-  const c = copy.reports.money;
+  const rp = useReportsCopy();
+  const c = rp.money;
   const labels = data.range.buckets.map((b) => b.label);
   const { kpis } = data;
   const empty = kpis.completedRevenueMinor.value === 0;
@@ -42,7 +44,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           icon={<IconRupee />}
           iconTone="var(--rp-green-ink)"
           label={c.earned}
-          explain={copy.reports.explain.revenueCompleted}
+          explain={rp.explain.revenueCompleted}
           value={money(kpis.completedRevenueMinor.value)}
           metric={kpis.completedRevenueMinor}
           compare={data.compare}
@@ -51,7 +53,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           icon={<IconCoins />}
           iconTone="var(--rp-amber)"
           label={c.perVisit}
-          explain={copy.reports.explain.revenueAvgBooking}
+          explain={rp.explain.revenueAvgBooking}
           value={money(kpis.avgBookingValueMinor.value)}
           metric={kpis.avgBookingValueMinor}
           compare={data.compare}
@@ -60,7 +62,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           icon={<IconUserPlus />}
           iconTone="var(--rp-purple)"
           label={c.perClient}
-          explain={copy.reports.explain.revenuePerClient}
+          explain={rp.explain.revenuePerClient}
           value={money(kpis.revenuePerCustomerMinor.value)}
           metric={kpis.revenuePerCustomerMinor}
           compare={data.compare}
@@ -69,12 +71,12 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
 
       <Card
         title={c.trend}
-        hint={`${c.trendHint} · ${data.range.label}`}
+        hint={`${c.trendHint} · ${rangeName(data.range, rp.ranges)}`}
         figure={money(kpis.completedRevenueMinor.value)}
         foot={c.bookedNote(money(kpis.totalRevenueMinor.value))}
       >
         {empty ? (
-          <p className="rp-empty">{copy.reports.noDataHint(data.range.label)}</p>
+          <p className="rp-empty">{rp.noDataHint(rangeName(data.range, rp.ranges))}</p>
         ) : (
           <LineChart
             labels={labels}
@@ -87,13 +89,13 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
 
       <div className={data.showProviders ? 'rp-grid-2' : ''}>
         <Card title={c.byService}>
-          <BarList items={moneyBars(data.byService)} emptyText={copy.reports.noDataHint(data.range.label)} />
+          <BarList items={moneyBars(data.byService, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
         {/* Absent, not empty, where ranking providers is a product smell — a
             clinic does not have a doctor leaderboard (07 §3.2). */}
         {data.showProviders && (
           <Card title={c.byStaff}>
-            <BarList items={moneyBars(data.byProvider)} emptyText={copy.reports.noDataHint(data.range.label)} />
+            <BarList items={moneyBars(data.byProvider, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
           </Card>
         )}
       </div>
@@ -103,7 +105,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           <Donut
             centreLabel={c.earned}
             centreValue={money(kpis.completedRevenueMinor.value)}
-            emptyText={copy.reports.noDataHint(data.range.label)}
+            emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             segments={data.bySegment.map((s, i) => ({
               label: s.label,
               value: s.value,
@@ -121,7 +123,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           foot={data.byPaymentMethod.some((p) => p.label === 'Not recorded') ? c.notRecordedHint : undefined}
         >
           <BarList
-            emptyText={copy.reports.noDataHint(data.range.label)}
+            emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             items={data.byPaymentMethod.map((p) => ({
               label: p.label,
               value: p.value,

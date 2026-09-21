@@ -1,5 +1,7 @@
 'use client';
 
+import { useReportsCopy } from '../lib/use-reports-copy';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import { copy } from '../lib/copy';
@@ -35,6 +37,8 @@ export function FiltersDrawer({
   onClose: () => void;
   onApply: (next: ReportFilters) => void;
 }) {
+  const rp = useReportsCopy();
+  const st = useTranslations('status');
   const [draft, setDraft] = useState<ReportFilters>(filters);
   const panel = useRef<HTMLDivElement>(null);
 
@@ -54,7 +58,7 @@ export function FiltersDrawer({
       [group]: d[group].includes(value) ? d[group].filter((v) => v !== value) : [...d[group], value],
     }));
 
-  const c = copy.reports.filterDrawer;
+  const c = rp.filterDrawer;
   const staged = countFilters(draft);
 
   const group = (
@@ -113,7 +117,7 @@ export function FiltersDrawer({
               id: s,
               // One status vocabulary across the product: a chip here reads
               // exactly as the chip on a booking does (conventions §3).
-              name: copy.status[s === 'no_show' ? 'didNotCome' : s === 'completed' ? 'done' : s],
+              name: st(s === 'no_show' ? 'didNotCome' : s === 'completed' ? 'done' : s),
             })),
             '',
           )}
