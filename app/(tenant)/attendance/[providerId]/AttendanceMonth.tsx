@@ -1,10 +1,12 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { AttendanceRegister, AttendanceRow } from '../../lib/api';
-import { isFutureMonth, monthLabel, shiftMonth } from './month';
+import { intlLocale, isFutureMonth, monthLabel, shiftMonth } from './month';
+import { weekdayNames } from '../../lib/weekday-names';
 
 /**
  * Jira GRW-63 · GRW-201 — one person's month, as a calendar.
@@ -19,19 +21,17 @@ import { isFutureMonth, monthLabel, shiftMonth } from './month';
  * About one man in twelve cannot reliably separate the green from the red.
  */
 
+/** Words and the one-letter marks are `attendance.status` / `attendance.statusShort`; only the tone lives here. */
 const STATUS = {
-  present: { label: 'Present', short: 'P', tone: 'present' },
-  late: { label: 'Came late', short: 'L', tone: 'late' },
-  half_day: { label: 'Half day', short: '½', tone: 'half_day' },
-  leave: { label: 'On leave', short: 'V', tone: 'leave' },
-  absent: { label: 'Absent', short: 'A', tone: 'absent' },
+  present: { tone: 'present' },
+  late: { tone: 'late' },
+  half_day: { tone: 'half_day' },
+  leave: { tone: 'leave' },
+  absent: { tone: 'absent' },
 } as const;
 
 type StatusKey = keyof typeof STATUS;
 const ORDER: StatusKey[] = ['present', 'late', 'half_day', 'leave', 'absent'];
-
-/** Sunday-first, matching `working_hours.weekday` (0=Sun) and the weekday editor. */
-const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function toLocalTime(iso: string | null, timezone: string): string {
   if (!iso) return '';
@@ -44,8 +44,6 @@ function workedMinutes(row: AttendanceRow): number | null {
   if (!row.inAt || !row.outAt) return null;
   return Math.max(0, Math.round((Date.parse(row.outAt) - Date.parse(row.inAt)) / 60_000));
 }
-
-const hhmm = (mins: number) => `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`;
 
 /**
  * The class that colours a cell.
@@ -71,6 +69,13 @@ export function AttendanceMonth({
   readOnly: boolean;
   backHref: string | null;
 }) {
+  const t = useTranslations('attendance.month');
+  const ta = useTranslations('attendance');
+  const ts = useTranslations('attendance.status');
+  const tss = useTranslations('attendance.statusShort');
+  const locale = useLocale();
+  const dow = weekdayNames(locale).short; // Sunday-first, matching `working_hours.weekday` (0=Sun) and the weekday editor
+  const hhmm = (mins: number) => ta('hoursFormat', { hours: Math.floor(mins / 60), minutes: String(mins % 60).padStart(2, '0') });
   const router = useRouter();
   const rows = register.rows;
   const person = rows[0];
@@ -115,27 +120,27 @@ export function AttendanceMonth({
         <div>
           {backHref && (
             <Link href={backHref} className="am-back">
-              ‹ All staff
+              {t('back')}
             </Link>
           )}
-          <h2 className="att-title">{person?.displayName ?? 'Attendance'}</h2>
+          <h2 className="att-title">{person?.displayName ?? ta('title')}</h2>
           <p className="att-sub">
             {person?.title ? `${person.title} · ` : ''}
-            {readOnly ? 'Your attendance record.' : 'Their attendance, month by month.'}
+            {readOnly ? t('own') : t('theirs')}
           </p>
         </div>
 
         <div className="att-daynav">
-          <button type="button" aria-label="Previous month" onClick={() => go(shiftMonth(month, -1))}>
+          <button type="button" aria-label={t('prevMonth')} onClick={() => go(shiftMonth(month, -1))}>
             ‹
           </button>
           <div className="att-daynav-label">
-            <div className="att-daynav-date">{monthLabel(month)}</div>
+            <div className="att-daynav-date">{monthLabel(month, locale)}</div>
             <div className="att-daynav-sub">
-              {summary.rostered} rostered · {summary.unrecorded} not recorded
+              {t('rosteredCount', { rostered: summary.rostered, unrecorded: summary.unrecorded })}
             </div>
           </div>
-          <button type="button" aria-label="Next month" disabled={atCurrentMonth} onClick={() => go(shiftMonth(month, 1))}>
+          <button type="button" aria-label={t('nextMonth')} disabled={atCurrentMonth} onClick={() => go(shiftMonth(month, 1))}>
             ›
           </button>
         </div>
@@ -146,7 +151,7 @@ export function AttendanceMonth({
           <div key={key} className="att-tile">
             <div className="att-tile-head">
               <span className={`att-dot att-swatch-${STATUS[key].tone}`} />
-              <span>{STATUS[key].label}</span>
+              <span>{ts(key)}</span>
             </div>
             <div className="att-tile-count">{summary.counts[key]}</div>
           </div>
@@ -154,7 +159,7 @@ export function AttendanceMonth({
         <div className="att-tile">
           <div className="att-tile-head">
             <span className="att-dot att-swatch-hours" />
-            <span>Hours worked</span>
+            <span>{t('hoursWorked')}</span>
           </div>
           <div className="att-tile-count">{summary.worked > 0 ? hhmm(summary.worked) : '—'}</div>
         </div>
@@ -162,7 +167,7 @@ export function AttendanceMonth({
 
       <div className="am-cal-card">
         <div className="am-grid am-dow-row" aria-hidden="true">
-          {DOW.map((d) => (
+          {dow.map((d) => (
             <div key={d} className="am-dow-head">
               {d}
             </div>
@@ -174,11 +179,12 @@ export function AttendanceMonth({
             <div key={`blank-${i}`} className="am-cell am-c-blank" />
           ))}
           {rows.map((row) => {
-            const conf = row.status ? STATUS[row.status as StatusKey] : null;
             const day = Number(row.onDate.slice(8));
-            const label = conf
-              ? `${day} ${monthLabel(month)}: ${conf.label}`
-              : `${day} ${monthLabel(month)}: ${row.rostered ? 'not recorded' : 'not rostered'}`;
+            const label = t('cellAria', {
+              day,
+              month: monthLabel(month, locale),
+              status: row.status ? ts(row.status as StatusKey) : row.rostered ? t('notRecordedLower') : t('notRosteredLower'),
+            });
             return (
               <button
                 key={row.onDate}
@@ -193,7 +199,7 @@ export function AttendanceMonth({
                     cannot reliably tell the green from the red, and a screen
                     that says "the green ones" to everybody else is telling them
                     nothing. */}
-                <span className="am-cell-mark">{conf ? conf.short : row.rostered ? '·' : ''}</span>
+                <span className="am-cell-mark">{row.status ? tss(row.status as StatusKey) : row.rostered ? '·' : ''}</span>
               </button>
             );
           })}
@@ -203,16 +209,16 @@ export function AttendanceMonth({
           {ORDER.map((key) => (
             <span key={key} className="am-legend-item">
               <span className={`am-swatch am-c-${STATUS[key].tone}`} />
-              {STATUS[key].label}
+              {ts(key)}
             </span>
           ))}
           <span className="am-legend-item">
             <span className="am-swatch am-c-unmarked" />
-            Not recorded
+            {t('notRecorded')}
           </span>
           <span className="am-legend-item">
             <span className="am-swatch am-c-off" />
-            Day off
+            {t('dayOff')}
           </span>
         </div>
       </div>
@@ -224,41 +230,43 @@ export function AttendanceMonth({
         <div className="card am-detail">
           <div className="am-detail-head">
             <strong>
-              {new Date(`${chosen.onDate}T12:00:00`).toLocaleDateString('en-GB', {
+              {new Date(`${chosen.onDate}T12:00:00`).toLocaleDateString(intlLocale(locale), {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
               })}
             </strong>
             <button type="button" className="btn-ghost" onClick={() => setSelected(null)}>
-              Close
+              {t('close')}
             </button>
           </div>
           <div className="am-detail-body">
             <span className={`att-chip att-chip-${chosen.status ? STATUS[chosen.status as StatusKey].tone : 'off'}`}>
-              {chosen.status ? STATUS[chosen.status as StatusKey].label : chosen.rostered ? 'Not recorded' : 'Not rostered'}
+              {chosen.status ? ts(chosen.status as StatusKey) : chosen.rostered ? t('notRecorded') : t('notRostered')}
             </span>
             {chosen.inAt && (
               <span className="att-clock">
                 {toLocalTime(chosen.inAt, register.timezone)}
                 {' → '}
-                {chosen.outAt ? toLocalTime(chosen.outAt, register.timezone) : 'still in'}
+                {chosen.outAt ? toLocalTime(chosen.outAt, register.timezone) : t('stillIn')}
               </span>
             )}
             {chosenMins !== null && <span className="am-hours">{hhmm(chosenMins)}</span>}
-            {chosen.shiftStart && <span className="am-detail-shift">shift from {chosen.shiftStart}</span>}
+            {chosen.shiftStart && <span className="am-detail-shift">{t('shiftFrom', { time: chosen.shiftStart })}</span>}
           </div>
           {chosen.note && <p className="am-note">{chosen.note}</p>}
           {chosen.markedByName && (
             <p className="att-meta">
-              Marked by {chosen.markedByName}
               {chosen.markedAt
-                ? ` · ${new Intl.DateTimeFormat('en-GB', {
-                    timeZone: register.timezone,
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }).format(new Date(chosen.markedAt))}`
-                : ''}
+                ? t('markedByAt', {
+                    name: chosen.markedByName,
+                    when: new Intl.DateTimeFormat(intlLocale(locale), {
+                      timeZone: register.timezone,
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    }).format(new Date(chosen.markedAt)),
+                  })
+                : t('markedBy', { name: chosen.markedByName })}
             </p>
           )}
         </div>
@@ -266,11 +274,9 @@ export function AttendanceMonth({
 
       <div className="att-foot">
         <span>
-          {readOnly
-            ? 'Your record. Ask the salon to correct anything that looks wrong.'
-            : 'Marked from the daily register.'}
+          {readOnly ? t('footOwn') : t('footOther')}
         </span>
-        <span>Times in local time · {register.timezone.replace('_', ' ')}</span>
+        <span>{t('tzFoot', { tz: register.timezone.replace('_', ' ') })}</span>
       </div>
     </div>
   );

@@ -1,8 +1,10 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type AttendanceRegister as Register, type AttendanceRow } from '../lib/api';
-import { copy } from '../lib/copy';
+import { pickNoun } from '../lib/nouns';
+import { intlLocale } from './[providerId]/month';
 import { BranchTabs } from '../components/BranchTabs';
 import { readBranchChoice, writeBranchChoice } from '../lib/branch-choice';
 
@@ -29,12 +31,13 @@ import { readBranchChoice, writeBranchChoice } from '../lib/branch-choice';
  *    eight-person cast.
  */
 
+/** The words for each status are `attendance.status.<key>`; only the colours live here. */
 const STATUS = {
-  present: { label: 'Present', dot: 'var(--att-green)', tone: 'present' },
-  late: { label: 'Came late', dot: 'var(--att-amber)', tone: 'late' },
-  half_day: { label: 'Half day', dot: 'var(--att-blue)', tone: 'half_day' },
-  leave: { label: 'On leave', dot: 'var(--att-purple)', tone: 'leave' },
-  absent: { label: 'Absent', dot: 'var(--att-red)', tone: 'absent' },
+  present: { dot: 'var(--att-green)', tone: 'present' },
+  late: { dot: 'var(--att-amber)', tone: 'late' },
+  half_day: { dot: 'var(--att-blue)', tone: 'half_day' },
+  leave: { dot: 'var(--att-purple)', tone: 'leave' },
+  absent: { dot: 'var(--att-red)', tone: 'absent' },
 } as const;
 
 type StatusKey = keyof typeof STATUS;
@@ -87,13 +90,12 @@ function addDays(dateISO: string, delta: number): string {
   return new Intl.DateTimeFormat('en-CA').format(d);
 }
 
-/** "8h 05m", or the state that is not a duration yet. */
-function hoursCell(row: AttendanceRow, inTime: string, outTime: string): { label: string; tone: string } {
-  if (row.status && AWAY.has(row.status as StatusKey)) return { label: '—', tone: 'muted' };
-  if (!inTime) return { label: '—', tone: 'muted' };
-  if (!outTime) return { label: 'In progress', tone: 'live' };
-  const mins = Math.max(0, minutesOf(outTime) - minutesOf(inTime));
-  return { label: `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`, tone: 'done' };
+/** The hours cell: a dash, "in progress", or a duration in minutes — the screen words it. */
+function hoursCell(row: AttendanceRow, inTime: string, outTime: string): { kind: 'dash' | 'progress' | 'done'; mins: number; tone: string } {
+  if (row.status && AWAY.has(row.status as StatusKey)) return { kind: 'dash', mins: 0, tone: 'muted' };
+  if (!inTime) return { kind: 'dash', mins: 0, tone: 'muted' };
+  if (!outTime) return { kind: 'progress', mins: 0, tone: 'live' };
+  return { kind: 'done', mins: Math.max(0, minutesOf(outTime) - minutesOf(inTime)), tone: 'done' };
 }
 
 /** Local edits, so a row reads back what was typed while its save is in flight. */
@@ -109,6 +111,13 @@ export function AttendanceRegister({
   staffWord: string;
   branches?: Array<{ id: string; name: string }>;
 }) {
+  const t = useTranslations('attendance.register');
+  const ts2 = useTranslations('attendance');
+  const ts = useTranslations('attendance.status');
+  const tb = useTranslations('bookings');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  const staffLower = pickNoun(locale, staffWord.toLowerCase(), tn('staff'));
   const [register, setRegister] = useState(initial);
   const [date, setDate] = useState(initial.date);
   /** Jira GRW-249 — the branch picked on the register; null is every branch. */
@@ -153,7 +162,7 @@ export function AttendanceRegister({
       setDrafts({});
       setOpenMenu(null);
     } catch {
-      setError('Could not load that day.');
+      setError(t('errors.loadDay'));
     } finally {
       setBusy(false);
     }
@@ -202,9 +211,9 @@ export function AttendanceRegister({
         const { [row.providerId]: _gone, ...rest } = d;
         return rest;
       });
-      if (liveRef.current) liveRef.current.textContent = `${row.displayName} saved.`;
+      if (liveRef.current) liveRef.current.textContent = t('saved', { name: row.displayName });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save that.');
+      setError(err instanceof Error ? err.message : t('errors.save'));
       // The draft stays, so the desk can see and fix what was rejected.
     } finally {
       setBusy(false);
@@ -263,9 +272,9 @@ export function AttendanceRegister({
         });
       }
       await load(date);
-      if (liveRef.current) liveRef.current.textContent = `${unmarked.length} marked present.`;
+      if (liveRef.current) liveRef.current.textContent = t('markedPresent', { count: unmarked.length });
     } catch {
-      setError('Could not mark everyone. Some rows may have saved.');
+      setError(t('errors.markAll'));
       setBusy(false);
     }
   }
@@ -288,26 +297,26 @@ export function AttendanceRegister({
   const marked = rows.filter((r) => r.status !== null).length;
   const isToday = date === register.today;
   const dayObj = new Date(`${date}T12:00:00`);
-  const dateLabel = dayObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-  const dateSub = isToday ? 'Today' : date === addDays(register.today, -1) ? 'Yesterday' : String(dayObj.getFullYear());
-  const filterLabel = filter === 'all' ? `All ${staffWord.toLowerCase()}` : STATUS[filter].label;
+  const dateLabel = dayObj.toLocaleDateString(intlLocale(locale), { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateSub = isToday ? t('today') : date === addDays(register.today, -1) ? t('yesterday') : String(dayObj.getFullYear());
+  const filterLabel = filter === 'all' ? t('allStaff', { label: staffLower }) : ts(filter);
   /** Jira GRW-249 — the picked branch's name, for the toolbar button and the empty state. */
-  const branchName = branch ? (branches.find((b) => b.id === branch)?.name ?? 'this branch') : null;
-  const branchLabel = branchName ?? 'All branches';
+  const branchName = branch ? (branches.find((b) => b.id === branch)?.name ?? t('thisBranch')) : null;
+  const branchLabel = branchName ?? t('allBranches');
   const canMarkAll = rows.some((r) => r.rostered && !r.status);
 
   return (
     <div className="page-body att">
       <div className="att-head">
         <div>
-          <h2 className="att-title">Staff attendance</h2>
-          <p className="att-sub">Mark in-time, out-time and daily status for your team.</p>
+          <h2 className="att-title">{t('heading')}</h2>
+          <p className="att-sub">{t('sub')}</p>
         </div>
 
         {/* Day stepper rather than a bare date field: the register is worked
             one day at a time, and yesterday is one tap rather than a calendar. */}
         <div className="att-daynav">
-          <button type="button" aria-label="Previous day" disabled={busy} onClick={() => load(addDays(date, -1))}>
+          <button type="button" aria-label={t('prevDay')} disabled={busy} onClick={() => load(addDays(date, -1))}>
             ‹
           </button>
           <div className="att-daynav-label">
@@ -319,14 +328,14 @@ export function AttendanceRegister({
               would walk the desk into a wall. */}
           <button
             type="button"
-            aria-label="Next day"
+            aria-label={t('nextDay')}
             disabled={busy || isToday}
             onClick={() => load(addDays(date, 1))}
           >
             ›
           </button>
           <button type="button" className="att-daynav-today" disabled={busy || isToday} onClick={() => load(register.today)}>
-            Today
+            {t('today')}
           </button>
         </div>
       </div>
@@ -336,7 +345,7 @@ export function AttendanceRegister({
           <div key={key} className="att-tile">
             <div className="att-tile-head">
               <span className="att-dot" style={{ background: STATUS[key].dot }} />
-              <span>{STATUS[key].label}</span>
+              <span>{ts(key)}</span>
             </div>
             <div className="att-tile-count">{counts[key]}</div>
           </div>
@@ -349,8 +358,8 @@ export function AttendanceRegister({
           <input
             type="search"
             value={search}
-            placeholder={`Search ${staffWord.toLowerCase()} by name or role`}
-            aria-label={`Search ${staffWord.toLowerCase()}`}
+            placeholder={t('searchPlaceholder', { label: staffLower })}
+            aria-label={t('searchAria', { label: staffLower })}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
@@ -360,7 +369,7 @@ export function AttendanceRegister({
             for a receptionist (their own branch is fixed) or a single-branch
             business. */}
         {branches.length > 1 && (
-          <BranchTabs branches={branches} value={branch} onChange={pickBranch} allLabel={copy.branchTabs.all} label={copy.branchTabs.label} />
+          <BranchTabs branches={branches} value={branch} onChange={pickBranch} allLabel={tb('branchTabsAll')} label={tb('branchTabsLabel')} />
         )}
         {branches.length > 1 && (
           <div className="att-menu-anchor att-branch-menu">
@@ -371,7 +380,7 @@ export function AttendanceRegister({
               aria-expanded={openMenu === 'branch'}
               onClick={() => setOpenMenu((m) => (m === 'branch' ? null : 'branch'))}
             >
-              <span className="att-filter-key">Branch:</span> {branchLabel}
+              <span className="att-filter-key">{t('branchKey')}</span> {branchLabel}
               <span className="att-caret" aria-hidden="true">▾</span>
             </button>
             {openMenu === 'branch' && (
@@ -383,7 +392,7 @@ export function AttendanceRegister({
                   className={branch === null ? 'is-on' : ''}
                   onClick={() => pickBranch(null)}
                 >
-                  All branches
+                  {t('allBranches')}
                 </button>
                 {branches.map((b) => (
                   <button
@@ -410,14 +419,14 @@ export function AttendanceRegister({
             aria-expanded={openMenu === 'filter'}
             onClick={() => setOpenMenu((m) => (m === 'filter' ? null : 'filter'))}
           >
-            <span className="att-filter-key">Status:</span> {filterLabel}
+            <span className="att-filter-key">{t('statusKey')}</span> {filterLabel}
             <span className="att-caret" aria-hidden="true">▾</span>
           </button>
           {openMenu === 'filter' && (
             <div className="att-menu" role="listbox">
               <button type="button" role="option" aria-selected={filter === 'all'} className={filter === 'all' ? 'is-on' : ''} onClick={() => { setFilter('all'); setOpenMenu(null); }}>
                 <span className="att-dot att-dot-any" />
-                All {staffWord.toLowerCase()}
+                {t('allStaff', { label: staffLower })}
               </button>
               {ORDER.map((key) => (
                 <button
@@ -429,7 +438,7 @@ export function AttendanceRegister({
                   onClick={() => { setFilter(key); setOpenMenu(null); }}
                 >
                   <span className="att-dot" style={{ background: STATUS[key].dot }} />
-                  {STATUS[key].label}
+                  {ts(key)}
                 </button>
               ))}
             </div>
@@ -437,7 +446,7 @@ export function AttendanceRegister({
         </div>
 
         <button type="button" className="att-markall" disabled={busy || !canMarkAll} onClick={() => void markAllPresent()}>
-          <span aria-hidden="true">✓</span> Mark all present
+          <span aria-hidden="true">✓</span> {t('markAll')}
         </button>
       </div>
 
@@ -451,16 +460,16 @@ export function AttendanceRegister({
                 ? // Jira GRW-249 — "nobody here" and "nobody at THIS BRANCH" are
                   // different facts; naming the branch says which one it is.
                   branchName
-                  ? `Nobody works at ${branchName} yet`
-                  : `No ${staffWord.toLowerCase()} yet`
-                : `No ${staffWord.toLowerCase()} match your filters`}
+                  ? t('emptyBranch', { branch: branchName })
+                  : t('emptyNone', { label: staffLower })
+                : t('emptyNoMatch', { label: staffLower })}
             </div>
             <div className="att-empty-sub">
               {rows.length === 0
                 ? branchName
-                  ? 'Move someone to this branch, or add them here, and they will appear.'
-                  : 'Add someone to the team and they will appear here.'
-                : 'Try clearing the search or status filter.'}
+                  ? t('emptyBranchSub')
+                  : t('emptyNoneSub')
+                : t('emptyNoMatchSub')}
             </div>
           </div>
         ) : (
@@ -491,13 +500,13 @@ export function AttendanceRegister({
                     {/* The design's "role" line. Their real title, and when
                         there is none, the fact that carries more for a
                         register: whether they were meant to be in at all. */}
-                    <span className="att-role">{row.title ?? (row.rostered ? `From ${row.shiftStart}` : 'Not rostered')}</span>
+                    <span className="att-role">{row.title ?? (row.rostered ? t('from', { time: row.shiftStart ?? '' }) : t('notRostered'))}</span>
                   </span>
                 </div>
 
                 <div className="att-controls">
                   <label className="att-field">
-                    <span className="att-field-label">In time</span>
+                    <span className="att-field-label">{t('inTime')}</span>
                     <span className="att-timeset">
                       <input
                         type="time"
@@ -505,14 +514,14 @@ export function AttendanceRegister({
                         disabled={busy || away}
                         onChange={(e) => timeChanged(row, 'inTime', e.target.value)}
                       />
-                      <button type="button" title="Set to now" disabled={busy || away} onClick={() => setNow(row, 'inTime')}>
-                        Now
+                      <button type="button" title={t('setNow')} disabled={busy || away} onClick={() => setNow(row, 'inTime')}>
+                        {t('now')}
                       </button>
                     </span>
                   </label>
 
                   <label className="att-field">
-                    <span className="att-field-label">Out time</span>
+                    <span className="att-field-label">{t('outTime')}</span>
                     <span className="att-timeset">
                       <input
                         type="time"
@@ -520,19 +529,21 @@ export function AttendanceRegister({
                         disabled={busy || away}
                         onChange={(e) => timeChanged(row, 'outTime', e.target.value)}
                       />
-                      <button type="button" title="Set to now" disabled={busy || away} onClick={() => setNow(row, 'outTime')}>
-                        Now
+                      <button type="button" title={t('setNow')} disabled={busy || away} onClick={() => setNow(row, 'outTime')}>
+                        {t('now')}
                       </button>
                     </span>
                   </label>
 
                   <div className="att-field att-field-hours">
-                    <span className="att-field-label">Hours</span>
-                    <span className={`att-hours att-hours-${hrs.tone}`}>{hrs.label}</span>
+                    <span className="att-field-label">{t('hours')}</span>
+                    <span className={`att-hours att-hours-${hrs.tone}`}>
+                      {hrs.kind === 'dash' ? '—' : hrs.kind === 'progress' ? t('inProgress') : ts2('hoursFormat', { hours: Math.floor(hrs.mins / 60), minutes: String(hrs.mins % 60).padStart(2, '0') })}
+                    </span>
                   </div>
 
                   <div className="att-field att-menu-anchor">
-                    <span className="att-field-label">Status</span>
+                    <span className="att-field-label">{t('statusLabel')}</span>
                     <button
                       type="button"
                       className={`att-pill ${conf ? `att-pill-${conf.tone}` : 'att-pill-none'}`}
@@ -542,7 +553,7 @@ export function AttendanceRegister({
                       onClick={() => setOpenMenu((m) => (m === row.providerId ? null : row.providerId))}
                     >
                       <span className="att-dot" style={conf ? { background: conf.dot } : undefined} />
-                      <span className="att-pill-text">{conf ? conf.label : 'Mark status'}</span>
+                      <span className="att-pill-text">{view.status ? ts(view.status) : t('markStatus')}</span>
                       <span className="att-caret" aria-hidden="true">▾</span>
                     </button>
                     {openMenu === row.providerId && (
@@ -560,7 +571,7 @@ export function AttendanceRegister({
                             }}
                           >
                             <span className="att-dot" style={{ background: STATUS[key].dot }} />
-                            {STATUS[key].label}
+                            {ts(key)}
                           </button>
                         ))}
                         {view.status && (
@@ -574,12 +585,12 @@ export function AttendanceRegister({
                                 await api.clearAttendance(row.providerId, date);
                                 await load(date);
                               } catch {
-                                setError('Could not undo that.');
+                                setError(t('errors.undo'));
                                 setBusy(false);
                               }
                             }}
                           >
-                            Clear entry
+                            {t('clearEntry')}
                           </button>
                         )}
                       </div>
@@ -593,8 +604,8 @@ export function AttendanceRegister({
                   <button
                     type="button"
                     className={`att-note-toggle ${row.note ? 'has-note' : ''}`}
-                    aria-label={row.note ? `Note: ${row.note}` : 'Add a note'}
-                    title={row.note ?? 'Add a note'}
+                    aria-label={row.note ? t('noteWith', { note: row.note }) : t('addNote')}
+                    title={row.note ?? t('addNote')}
                     disabled={busy}
                     onClick={() => setNoteFor((n) => (n === row.providerId ? null : row.providerId))}
                   >
@@ -610,9 +621,9 @@ export function AttendanceRegister({
                         maxLength={200}
                         autoFocus
                         defaultValue={row.note ?? ''}
-                        placeholder="Note — dentist, covering for Farah…"
+                        placeholder={t('notePlaceholder')}
                         disabled={busy || !view.status}
-                        aria-label={`Note for ${row.displayName}`}
+                        aria-label={t('noteAria', { name: row.displayName })}
                         onKeyDown={(e) => {
                           if (e.key === 'Escape') setNoteFor(null);
                           if (e.key !== 'Enter' || !view.status) return;
@@ -628,14 +639,14 @@ export function AttendanceRegister({
                               note: text || null,
                             })
                             .then(() => load(date))
-                            .catch(() => setError('Could not save that note.'));
+                            .catch(() => setError(t('errors.note')));
                         }}
                       />
                     ) : (
                       <span className="att-note-text">{row.note}</span>
                     )}
                     {noteFor === row.providerId && !view.status && (
-                      <span className="att-note-hint">Set a status first — a note needs a day to belong to.</span>
+                      <span className="att-note-hint">{t('noteNeedsStatus')}</span>
                     )}
                   </div>
                 )}
@@ -647,9 +658,9 @@ export function AttendanceRegister({
 
       <div className="att-foot">
         <span>
-          {marked} of {rows.length} {staffWord.toLowerCase()} marked
+          {t('marked', { marked, total: rows.length, label: staffLower })}
         </span>
-        <span>Times shown in local time · {register.timezone.replace('_', ' ')}</span>
+        <span>{t('tzFoot', { tz: register.timezone.replace('_', ' ') })}</span>
       </div>
 
       {/* Saves happen on change with no Save button, so the only other signal

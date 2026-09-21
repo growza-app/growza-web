@@ -35,9 +35,14 @@ export function shiftMonth(month: string, delta: number): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-export function monthLabel(month: string): string {
+/** The Intl locale for a dashboard language: English keeps `en-GB` ("September 2026"), other languages use their India variant. */
+export function intlLocale(locale: string): string {
+  return locale === 'en' ? 'en-GB' : `${locale}-IN`;
+}
+
+export function monthLabel(month: string, locale = 'en'): string {
   const [y, m] = month.split('-').map(Number);
-  return new Date(Date.UTC(y!, m! - 1, 1)).toLocaleDateString('en-GB', {
+  return new Date(Date.UTC(y!, m! - 1, 1)).toLocaleDateString(intlLocale(locale), {
     month: 'long',
     year: 'numeric',
     timeZone: 'UTC',

@@ -1,5 +1,6 @@
 import { screenTitle } from '../lib/page-title';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
@@ -23,6 +24,7 @@ export default async function AttendancePage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const params = await searchParams;
+  const t = await getTranslations('attendance');
 
   /**
    * Jira GRW-63 · GRW-200 — a stylist has no register to fill in, only a
@@ -40,7 +42,7 @@ export default async function AttendancePage({
   } catch (error) {
     return (
       <>
-        <PageHeader title="Attendance" />
+        <PageHeader title={t('title')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
@@ -53,7 +55,7 @@ export default async function AttendancePage({
       {/* The mock draws its own page title and strapline INSIDE the body, under
           a header bar this shell already provides. Kept there (att-head), so
           the design's heading is not printed twice. */}
-      <PageHeader title="Attendance" />
+      <PageHeader title={t('title')} />
       <AttendanceRegister
         initial={register}
         staffWord={me.labels.providers ?? copy.nav.staff}

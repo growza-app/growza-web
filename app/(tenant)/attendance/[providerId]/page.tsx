@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
@@ -25,6 +26,7 @@ export default async function AttendanceMonthPage({
 }) {
   const { providerId } = await params;
   const { month } = await searchParams;
+  const t = await getTranslations('attendance');
 
   let me, register;
   try {
@@ -35,7 +37,7 @@ export default async function AttendanceMonthPage({
   } catch (error) {
     return (
       <>
-        <PageHeader title="Attendance" />
+        <PageHeader title={t('title')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
@@ -47,7 +49,7 @@ export default async function AttendanceMonthPage({
 
   return (
     <>
-      <PageHeader title="Attendance" />
+      <PageHeader title={t('title')} />
       <AttendanceMonth
         register={register}
         month={monthOf(month, register.timezone)}
