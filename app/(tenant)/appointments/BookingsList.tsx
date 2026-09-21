@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { countsAsNotMarked } from '../lib/live-state';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
@@ -231,6 +231,7 @@ export function BookingsList({
    */
   capacityMin: number | null;
 }) {
+  const locale = useLocale();
   // The server's clock at render. Every redraw (LiveRefresh forces one a minute) brings a fresh
   // `nowISO`, so nothing here needs a timer of its own.
   const now = useMemo(() => new Date(nowISO), [nowISO]);
@@ -939,7 +940,7 @@ export function BookingsList({
             return (
               <Fragment key={slot.startAt}>
                 {startsNewDay && (
-                  <div className="bk-day-head">{formatDateWithWeekday(slot.startAt, timezone)}</div>
+                  <div className="bk-day-head">{formatDateWithWeekday(slot.startAt, timezone, { locale })}</div>
                 )}
               <div className="bk-tl-row">
                 <div className="bk-tl-time">
@@ -972,7 +973,7 @@ export function BookingsList({
           {rows.map((b, i) => (
             <Fragment key={b.key}>
               {multiDay && dayKeyOf(b.startAt) !== (rows[i - 1] && dayKeyOf(rows[i - 1]!.startAt)) && (
-                <div className="bk-day-head">{formatDateWithWeekday(b.startAt, timezone)}</div>
+                <div className="bk-day-head">{formatDateWithWeekday(b.startAt, timezone, { locale })}</div>
               )}
               {cardInner(b)}
             </Fragment>

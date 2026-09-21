@@ -1,7 +1,7 @@
 import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, getLocale } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
@@ -15,6 +15,7 @@ export default async function AvailabilityPage({
 }: {
   searchParams: Promise<{ serviceId?: string; date?: string; intent?: string; branch?: string }>;
 }) {
+  const locale = await getLocale();
   const params = await searchParams;
   const isBookingIntent = params.intent === 'book';
 
@@ -88,7 +89,7 @@ export default async function AvailabilityPage({
               <select id="date" name="date" defaultValue={date}>
                 {dates.map((d) => (
                   <option key={d} value={d}>
-                    {formatDateWithWeekday(new Date(`${d}T12:00:00Z`), timezone, { withYear: false })}
+                    {formatDateWithWeekday(new Date(`${d}T12:00:00Z`), timezone, { withYear: false, locale })}
                   </option>
                 ))}
               </select>

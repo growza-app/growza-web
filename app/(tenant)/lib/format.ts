@@ -16,10 +16,19 @@
  * the types they format; these are the ones that had no home.
  */
 
+/**
+ * The Intl locale for a dashboard language. English keeps `en-IN` ("26 Aug 2026"); another
+ * language uses its India variant, so month and weekday names come from its own calendar data.
+ * Jira GRW-364.
+ */
+export function intlLocale(locale: string = 'en'): string {
+  return `${locale}-IN`;
+}
+
 /** `26 Aug 2026` */
-export function formatDate(iso: string | Date, timeZone?: string): string {
+export function formatDate(iso: string | Date, timeZone?: string, locale: string = 'en'): string {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone }).format(d);
+  return new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', year: 'numeric', timeZone }).format(d);
 }
 
 /**
@@ -27,9 +36,9 @@ export function formatDate(iso: string | Date, timeZone?: string): string {
  * meaning (a schedule header, a booking date). No comma: the spec renders it
  * as one unit, and the comma made it read as two separate facts.
  */
-export function formatDateWithWeekday(iso: string | Date, timeZone?: string, { withYear = true } = {}): string {
+export function formatDateWithWeekday(iso: string | Date, timeZone?: string, { withYear = true, locale = 'en' }: { withYear?: boolean; locale?: string } = {}): string {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  return new Intl.DateTimeFormat('en-IN', {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -44,9 +53,9 @@ export function formatDateWithWeekday(iso: string | Date, timeZone?: string, { w
 }
 
 /** `26 Aug` — no year, for a label already scoped to the current year (a day's schedule heading). */
-export function formatDateShort(iso: string | Date, timeZone?: string): string {
+export function formatDateShort(iso: string | Date, timeZone?: string, locale: string = 'en'): string {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone }).format(d);
+  return new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone }).format(d);
 }
 
 /**

@@ -24,8 +24,8 @@ function visibilitySummary(offer: Offer, t: ReturnType<typeof useTranslations<'o
     return t('onlyOn', { days: offer.visibleWeekdays.map((d) => weekdayNames(locale).short[d]).join(', ') });
   }
   if (offer.visibleFrom || offer.visibleUntil) {
-    const from = offer.visibleFrom ? formatDate(offer.visibleFrom) : t('now');
-    const until = offer.visibleUntil ? formatDate(offer.visibleUntil) : t('noEnd');
+    const from = offer.visibleFrom ? formatDate(offer.visibleFrom, undefined, locale) : t('now');
+    const until = offer.visibleUntil ? formatDate(offer.visibleUntil, undefined, locale) : t('noEnd');
     return t('window', { from, until });
   }
   return t('always');

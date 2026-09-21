@@ -41,7 +41,7 @@ export function BookingSummary({
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
   const subtotal = totalPaid + savings;
   const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
-  const dateLine = formatDateWithWeekday(booking.startAt, timezone);
+  const dateLine = formatDateWithWeekday(booking.startAt, timezone, { locale });
 
   return (
     <>

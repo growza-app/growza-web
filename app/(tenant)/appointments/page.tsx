@@ -191,7 +191,8 @@ export default async function AppointmentsPage({
   const isToday = !isRange && date === todayISO && !customerId;
   const t = await getTranslations('bookings');
   const tn = await getTranslations('nouns');
-  const pageTitle = pickNoun(await getLocale(), bookingsWord, tn('bookingsTitle'));
+  const locale = await getLocale();
+  const pageTitle = pickNoun(locale, bookingsWord, tn('bookingsTitle'));
   // Whose bookings these are, for the banner. Taken from the rows rather than
   // the URL so it is the name actually on the bookings, not one a link claimed.
   const customerName = customerId ? (appointments[0]?.customerName ?? null) : null;
@@ -200,13 +201,13 @@ export default async function AppointmentsPage({
   // a client is named, the labels say so instead.
   const dayHint = wholeHistory
     ? t('everyBookingFor', { name: customerName ?? t('thisClient') })
-    : formatDateWithWeekday(new Date(`${date}T12:00:00`), timezone);
+    : formatDateWithWeekday(new Date(`${date}T12:00:00`), timezone, { locale });
   // Short form for the KPI/schedule labels when a non-today date is picked, e.g. "21 Aug" — or "21 Aug – 24 Aug" for a range.
   const dayShort = wholeHistory
     ? (customerName ?? t('thisClientTitle'))
     : isRange
-      ? `${formatDateShort(new Date(`${date}T12:00:00`))} – ${formatDateShort(new Date(`${toDate}T12:00:00`))}`
-      : formatDateShort(new Date(`${date}T12:00:00`));
+      ? `${formatDateShort(new Date(`${date}T12:00:00`), undefined, locale)} – ${formatDateShort(new Date(`${toDate}T12:00:00`), undefined, locale)}`
+      : formatDateShort(new Date(`${date}T12:00:00`), undefined, locale);
   return (
     <>
       {/* No search action in the header: this page has its own search field

@@ -28,7 +28,7 @@ import {
   IconUserPlus,
   IconWhatsApp,
 } from '../components/icons';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { copy } from '../lib/copy';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { PhoneField } from '../components/PhoneField';
@@ -110,6 +110,7 @@ export function CustomersClient({
   /** "Clients" for a salon, "Patients" for a clinic — from the vertical config. */
   label: string;
 }) {
+  const locale = useLocale();
   const t = useTranslations('customers');
   const lower = label.toLowerCase();
   const singular = lower.replace(/s$/, '');
@@ -262,7 +263,7 @@ export function CustomersClient({
     const rows = page.rows.map((c) => [
       c.name ?? '',
       formatPhone(c.waPhone),
-      c.lastBookingAt ? formatDate(c.lastBookingAt) : '',
+      c.lastBookingAt ? formatDate(c.lastBookingAt, undefined, locale) : '',
       c.lastServiceName ?? '',
       String(c.totalBookings),
       formatMoney(c.totalSpentMinor),
@@ -488,7 +489,7 @@ export function CustomersClient({
                       )}
                       {c.lastBookingAt && (
                         <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                          📅 {formatDate(c.lastBookingAt)} · {c.lastServiceName}
+                          📅 {formatDate(c.lastBookingAt, undefined, locale)} · {c.lastServiceName}
                         </div>
                       )}
                     </div>
@@ -532,7 +533,7 @@ export function CustomersClient({
                   <td>
                     {c.lastBookingAt ? (
                       <>
-                        <div>{formatDate(c.lastBookingAt)}</div>
+                        <div>{formatDate(c.lastBookingAt, undefined, locale)}</div>
                         <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
                       </>
                     ) : (

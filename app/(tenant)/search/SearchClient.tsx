@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { formatDate } from '../lib/format';
 import { PageHeader } from '../components/PageHeader';
 import { api, formatTime, type SearchResult } from '../lib/api';
@@ -24,6 +24,7 @@ function bookingHref(id: string, startAt: string, timezone: string): string {
 
 /** Same field matches a name, any part of a phone number, or a booking reference — the backend decides which. */
 export function SearchClient({ timezone }: { timezone: string }) {
+  const locale = useLocale();
   const t = useTranslations('search');
   const ts = useTranslations('status');
   const [q, setQ] = useState('');
@@ -158,7 +159,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
                 <a className="res-row res-link" key={b.id} href={bookingHref(b.id, b.startAt, timezone)}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 620, fontSize: 14 }}>
-                      {formatDate(b.startAt, timezone)}{' '}
+                      {formatDate(b.startAt, timezone, locale)}{' '}
                       · {formatTime(b.startAt, timezone)}
                     </div>
                     <div className="muted" style={{ fontSize: 13 }}>
