@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
+
 /**
  * The one pagination control every list uses. Two product rules are baked in:
  *
@@ -66,20 +69,22 @@ type CursorProps = {
 };
 
 export function Pagination(props: NumberedProps | CursorProps) {
+  const t = useTranslations('common.pagination');
+  const bold = { b: (chunks: ReactNode) => <strong>{chunks}</strong> };
   if (props.mode === 'cursor') {
     const { from, to, total, hasPrev, hasNext, onPrev, onNext, noun } = props;
     // A single screenful holds everything — no navigation needed, no footer.
     if (!hasPrev && !hasNext) return null;
     return (
-      <nav className="pagination" aria-label="Pagination">
+      <nav className="pagination" aria-label={t('aria')}>
         <span className="pagination-summary">
-          Showing <strong>{from}–{to}</strong> of <strong>{total}</strong> {noun}
+          {t.rich('summary', { ...bold, from, to, total, noun })}
         </span>
         <div className="pagination-controls">
-          <button type="button" className="pagination-btn" disabled={!hasPrev} onClick={onPrev} aria-label="Previous page">
+          <button type="button" className="pagination-btn" disabled={!hasPrev} onClick={onPrev} aria-label={t('prev')}>
             ‹
           </button>
-          <button type="button" className="pagination-btn" disabled={!hasNext} onClick={onNext} aria-label="Next page">
+          <button type="button" className="pagination-btn" disabled={!hasNext} onClick={onNext} aria-label={t('next')}>
             ›
           </button>
         </div>
@@ -97,9 +102,9 @@ export function Pagination(props: NumberedProps | CursorProps) {
   const numbers = pageWindow(current, pageCount);
 
   return (
-    <nav className="pagination" aria-label="Pagination">
+    <nav className="pagination" aria-label={t('aria')}>
       <span className="pagination-summary">
-        Showing <strong>{from}–{to}</strong> of <strong>{total}</strong> {noun}
+        {t.rich('summary', { ...bold, from, to, total, noun })}
       </span>
       <div className="pagination-controls">
         <button
@@ -107,7 +112,7 @@ export function Pagination(props: NumberedProps | CursorProps) {
           className="pagination-btn"
           disabled={current <= 1}
           onClick={() => onChange(current - 1)}
-          aria-label="Previous page"
+          aria-label={t('prev')}
         >
           ‹
         </button>
@@ -127,7 +132,7 @@ export function Pagination(props: NumberedProps | CursorProps) {
         </div>
 
         <span className="pagination-indicator">
-          Page {current} of {pageCount}
+          {t('page', { current, count: pageCount })}
         </span>
 
         <button
@@ -135,7 +140,7 @@ export function Pagination(props: NumberedProps | CursorProps) {
           className="pagination-btn"
           disabled={current >= pageCount}
           onClick={() => onChange(current + 1)}
-          aria-label="Next page"
+          aria-label={t('next')}
         >
           ›
         </button>

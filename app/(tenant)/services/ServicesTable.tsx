@@ -1,9 +1,10 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatMoney, type ServiceAdmin, type ServiceCategory } from '../lib/api';
-import { copy } from '../lib/copy';
+import { pickNoun } from '../lib/nouns';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -38,6 +39,12 @@ export function ServicesTable({
   serviceLabel: string;
 }) {
   const router = useRouter();
+  const t = useTranslations('services');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  // The vertical's word in English; a generic one in other languages until vertical labels are translated (GRW-315 Story 5).
+  const title = pickNoun(locale, serviceLabel, tn('servicesTitle'));
+  const lower = pickNoun(locale, serviceLabel.toLowerCase(), tn('services'));
   const [services, setServices] = useState(initial);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +67,7 @@ export function ServicesTable({
     if (!file) return;
     setError(null);
     if (file.size > MAX_PHOTO_BYTES) {
-      setError(`${service.name}: photo must be under 5MB.`);
+      setError(t('errors.photoTooBig', { name: service.name }));
       return;
     }
     setBusyId(service.id);
@@ -69,7 +76,7 @@ export function ServicesTable({
       setServices((prev) => prev.map((s) => (s.id === service.id ? { ...s, imageUrl: updated.imageUrl } : s)));
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.');
+      setError(err instanceof Error ? err.message : t('errors.uploadFailed'));
     } finally {
       setBusyId(null);
     }
@@ -83,7 +90,7 @@ export function ServicesTable({
       setServices((prev) => prev.map((s) => (s.id === service.id ? { ...s, imageUrl: updated.imageUrl } : s)));
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Remove failed.');
+      setError(err instanceof Error ? err.message : t('errors.removeFailed'));
     } finally {
       setBusyId(null);
     }
@@ -112,7 +119,7 @@ export function ServicesTable({
     try {
       replace(await api.updateService(service.id, { active }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save.');
+      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
     } finally {
       setBusyId(null);
       setConfirmRetire(null);
@@ -164,11 +171,11 @@ export function ServicesTable({
         is the header's slot; this row searches and exports.
       */}
       <PageHeader
-        title={serviceLabel}
-        subtitle={copy.services.subtitle}
+        title={title}
+        subtitle={t('subtitle')}
         actions={
           <button type="button" className="btn" onClick={() => setChoosing(true)}>
-            <IconPlus /> Add {serviceLabel.toLowerCase()}
+            <IconPlus /> {t('addLabel', { label: lower })}
           </button>
         }
       />
@@ -178,14 +185,14 @@ export function ServicesTable({
           <IconSearch />
           <input
             type="search"
-            placeholder={`Search ${services.length} services...`}
+            placeholder={t('searchPlaceholder', { count: services.length })}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search services"
+            aria-label={t('searchAria')}
           />
         </div>
         <button type="button" className="btn btn-ghost" onClick={exportCsv}>
-          Export
+          {t('export')}
         </button>
       </div>
 
@@ -197,7 +204,7 @@ export function ServicesTable({
           className={`page-tab ${categoryId === 'all' ? 'active' : ''}`}
           onClick={() => setCategoryId('all')}
         >
-          All <span className="page-tab-count">{services.length}</span>
+          {t('all')} <span className="page-tab-count">{services.length}</span>
         </button>
         {categories.map((c) => (
           <button
@@ -216,26 +223,26 @@ export function ServicesTable({
       <div className="card">
         {error && <div role="alert" className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
         {filtered.length === 0 ? (
-          <div className="empty">No services match here.</div>
+          <div className="empty">{t('empty')}</div>
         ) : (
           <PaginatedTable
-            noun="services"
+            noun={tn('services')}
             cards={filtered.map((s) => (
               <div className={`svc-card ${s.active ? '' : 'is-retired'}`} key={s.id} data-row>
                 <div className="svc-card-head">
                   {s.imageUrl ? (
                     <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={40} height={40} />
                   ) : (
-                    <span className="svc-photo-empty">ADD</span>
+                    <span className="svc-photo-empty">{t('photoAdd')}</span>
                   )}
                   <div className="svc-card-text">
                     <div className="svc-card-name">
                       {s.name}
-                      {!s.active && <span className="chip chip-completed">Retired</span>}
+                      {!s.active && <span className="chip chip-completed">{t('retired')}</span>}
                     </div>
                     <div className="svc-card-meta">
-                      {s.categoryName ?? '—'} · {copy.services.minutes(s.durationMin)}
-                      {s.bufferAfterMin > 0 && ` · +${copy.services.minutes(s.bufferAfterMin)} cleanup`}
+                      {s.categoryName ?? '—'} · {t('minutes', { count: s.durationMin })}
+                      {s.bufferAfterMin > 0 && ` · ${t('cleanupPlus', { duration: t('minutes', { count: s.bufferAfterMin }) })}`}
                     </div>
                   </div>
                   <div className="svc-card-price">{formatMoney(s.priceMinor, s.currency)}</div>
@@ -244,7 +251,7 @@ export function ServicesTable({
                   {/* `.svc-card-edit`, not `.row-edit-btn`: a card's footer
                       button is full-bleed, not a 38px inline control. */}
                   <button type="button" className="btn btn-ghost svc-card-edit" onClick={() => setEditing(s)}>
-                    <IconEdit /> Edit
+                    <IconEdit /> {t('edit')}
                   </button>
                   <button
                     type="button"
@@ -252,7 +259,7 @@ export function ServicesTable({
                     disabled={busyId === s.id}
                     onClick={() => inputRefs.current[s.id]?.click()}
                   >
-                    {busyId === s.id ? '…' : s.imageUrl ? 'Change photo' : 'Add photo'}
+                    {busyId === s.id ? '…' : s.imageUrl ? t('changePhoto') : t('addPhoto')}
                   </button>
                   {s.active ? (
                     <button
@@ -261,7 +268,7 @@ export function ServicesTable({
                       disabled={busyId === s.id}
                       onClick={() => askRetire(s)}
                     >
-                      Retire
+                      {t('retire')}
                     </button>
                   ) : (
                     <button
@@ -270,7 +277,7 @@ export function ServicesTable({
                       disabled={busyId === s.id}
                       onClick={() => setActive(s, true)}
                     >
-                      Restore
+                      {t('restore')}
                     </button>
                   )}
                 </div>
@@ -278,13 +285,13 @@ export function ServicesTable({
             ))}
             head={
               <tr>
-                <th>Photo</th>
-                <th>{copy.services.name}</th>
-                <th>{copy.services.type}</th>
-                <th>{copy.services.duration}</th>
-                <th>{copy.services.cleanupTime}</th>
-                <th>{copy.services.price}</th>
-                <th>Actions</th>
+                <th>{t('cols.photo')}</th>
+                <th>{t('cols.name')}</th>
+                <th>{t('cols.type')}</th>
+                <th>{t('cols.duration')}</th>
+                <th>{t('cols.cleanupTime')}</th>
+                <th>{t('cols.price')}</th>
+                <th>{t('cols.actions')}</th>
               </tr>
             }
           >
@@ -297,7 +304,7 @@ export function ServicesTable({
                     {s.imageUrl ? (
                       <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
                     ) : (
-                      <span className="svc-photo-empty">ADD</span>
+                      <span className="svc-photo-empty">{t('photoAdd')}</span>
                     )}
                     <input
                       ref={(el) => {
@@ -314,36 +321,36 @@ export function ServicesTable({
                       disabled={busyId === s.id}
                       onClick={() => inputRefs.current[s.id]?.click()}
                     >
-                      {busyId === s.id ? '…' : s.imageUrl ? 'Change' : 'Upload'}
+                      {busyId === s.id ? '…' : s.imageUrl ? t('change') : t('upload')}
                     </button>
                     {s.imageUrl && (
                       <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => onRemovePhoto(s)}>
-                        Remove
+                        {t('remove')}
                       </button>
                     )}
                   </div>
                 </td>
                 <td style={{ fontWeight: 620 }}>
                   {s.name}
-                  {!s.active && <span className="chip chip-completed" style={{ marginLeft: 8 }}>Retired</span>}
+                  {!s.active && <span className="chip chip-completed" style={{ marginLeft: 8 }}>{t('retired')}</span>}
                 </td>
                 <td className="muted">{s.categoryName ?? '—'}</td>
-                <td>{copy.services.minutes(s.durationMin)}</td>
+                <td>{t('minutes', { count: s.durationMin })}</td>
                 {/* "Cleanup time" instead of "buffer" — same data, words an owner uses. */}
-                <td className="muted">{s.bufferAfterMin > 0 ? copy.services.minutes(s.bufferAfterMin) : copy.services.noCleanup}</td>
+                <td className="muted">{s.bufferAfterMin > 0 ? t('minutes', { count: s.bufferAfterMin }) : t('noCleanup')}</td>
                 <td>{formatMoney(s.priceMinor, s.currency)}</td>
                 <td>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <button type="button" className="row-edit-btn" onClick={() => setEditing(s)}>
-                      <IconEdit /> Edit
+                      <IconEdit /> {t('edit')}
                     </button>
                     {s.active ? (
                       <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askRetire(s)}>
-                        Retire
+                        {t('retire')}
                       </button>
                     ) : (
                       <button type="button" className="btn btn-ghost" disabled={busyId === s.id} onClick={() => setActive(s, true)}>
-                        Restore
+                        {t('restore')}
                       </button>
                     )}
                   </div>
@@ -374,7 +381,7 @@ export function ServicesTable({
         <AddServicesChooser
           tenantName={tenantName}
           serviceCount={services.length}
-          serviceLabel={serviceLabel}
+          serviceLabel={lower}
           onClose={() => setChoosing(false)}
           onPick={(route: AddServicesRoute) => {
             setChoosing(false);
@@ -415,14 +422,14 @@ export function ServicesTable({
 
       {confirmRetire && (
         <ConfirmDialog
-          title={`Retire ${confirmRetire.service.name}?`}
-          body="It stops being bookable straight away."
+          title={t('retireTitle', { name: confirmRetire.service.name })}
+          body={t('retireBody')}
           detail={
             confirmRetire.bookings > 0
-              ? `${confirmRetire.bookings} past booking${confirmRetire.bookings === 1 ? '' : 's'} keep${confirmRetire.bookings === 1 ? 's' : ''} this service and its price — nothing in your history changes. Already-booked future appointments are not cancelled. You can restore it any time.`
-              : 'You can restore it any time.'
+              ? t('retireDetail', { count: confirmRetire.bookings })
+              : t('retireDetailNone')
           }
-          confirmLabel="Retire"
+          confirmLabel={t('retire')}
           tone="danger"
           busy={busyId === confirmRetire.service.id}
           onConfirm={() => setActive(confirmRetire.service, false)}

@@ -109,20 +109,20 @@ describe('rowProblem', () => {
   });
 
   it('needs a name', () => {
-    expect(rowProblem(row({ name: '   ' }))).toBe('Needs a name');
+    expect(rowProblem(row({ name: '   ' }))).toBe('needsName');
   });
 
   it('needs a positive duration', () => {
-    expect(rowProblem(row({ minutes: '' }))).toBe('Needs minutes');
-    expect(rowProblem(row({ minutes: '0' }))).toBe('Needs minutes');
-    expect(rowProblem(row({ minutes: '-5' }))).toBe('Needs minutes');
-    expect(rowProblem(row({ minutes: 'abc' }))).toBe('Needs minutes');
+    expect(rowProblem(row({ minutes: '' }))).toBe('needsMinutes');
+    expect(rowProblem(row({ minutes: '0' }))).toBe('needsMinutes');
+    expect(rowProblem(row({ minutes: '-5' }))).toBe('needsMinutes');
+    expect(rowProblem(row({ minutes: 'abc' }))).toBe('needsMinutes');
   });
 
   it('allows an empty price but not a nonsense one', () => {
     expect(rowProblem(row({ price: '' }))).toBeNull();
-    expect(rowProblem(row({ price: 'abc' }))).toBe('Price is not a number');
-    expect(rowProblem(row({ price: '-1' }))).toBe('Price is not a number');
+    expect(rowProblem(row({ price: 'abc' }))).toBe('priceNotNumber');
+    expect(rowProblem(row({ price: '-1' }))).toBe('priceNotNumber');
   });
 });
 
@@ -167,14 +167,14 @@ describe('buildMatcher', () => {
   it('reports a half-typed pattern instead of throwing, and keeps showing everything', () => {
     for (const bad of ['[', '(', '*', 'a{2,1}', '\\']) {
       const m = buildMatcher(bad, true);
-      expect(m.error).toBe('Not a valid pattern yet');
+      expect(m.error).toBe('invalid');
       expect(rows.every(m.test)).toBe(true);
     }
   });
 
   it('refuses an absurdly long pattern rather than running it', () => {
     const m = buildMatcher('a'.repeat(201), true);
-    expect(m.error).toBe('That pattern is too long');
+    expect(m.error).toBe('tooLong');
     expect(rows.every(m.test)).toBe(true);
   });
 

@@ -1,9 +1,9 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, formatMoney } from '../lib/api';
 import { useLabel } from '../components/LabelsProvider';
-import { copy } from '../lib/copy';
 import { problem, toImportItems, type Draft } from './import-drafts';
 
 /**
@@ -17,7 +17,7 @@ export function ImportReview({
   setDrafts,
   onBack,
   onImported,
-  backLabel = 'Back',
+  backLabel,
   lookup,
 }: {
   drafts: Draft[];
@@ -28,9 +28,11 @@ export function ImportReview({
   /** Re-checks a hand-edited name against the existing catalogue. */
   lookup: (name: string) => Draft['existing'];
 }) {
+  const t = useTranslations('services.review');
+  const tp = useTranslations('services');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const serviceWord = useLabel('service', copy.services.name);
+  const serviceWord = useLabel('service', tp('cols.name'));
 
   const update = (i: number, patch: Partial<Draft>) =>
     setDrafts((prev) => prev.map((d, idx) => (idx === i ? { ...d, ...patch } : d)));
@@ -47,7 +49,7 @@ export function ImportReview({
       await api.importServices(toImportItems(drafts));
       onImported();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed — nothing was saved.');
+      setError(err instanceof Error ? err.message : t('importFailed'));
     } finally {
       setBusy(false);
     }
@@ -56,8 +58,9 @@ export function ImportReview({
   return (
     <>
       <p className="confirm-body">
-        {toCreate} to add{toReprice > 0 && `, ${toReprice} already in your list`}
-        {blocked > 0 && ` · ${blocked} need${blocked === 1 ? 's' : ''} fixing`}
+        {t('toAdd', { count: toCreate })}
+        {toReprice > 0 && t('alreadyInList', { count: toReprice })}
+        {blocked > 0 && t('needFix', { count: blocked })}
       </p>
       <div className="import-review">
         {/* Plain words over the design's own. The board says "Takes", but an owner
@@ -66,9 +69,9 @@ export function ImportReview({
             step upstream uses the same word for the same reason. */}
         <div className="import-row import-head" aria-hidden="true">
           <span className="ih-pad">{serviceWord}</span>
-          <span className="ih-pad">{copy.services.duration}</span>
-          <span>{copy.services.price}</span>
-          <span>{copy.services.status}</span>
+          <span className="ih-pad">{tp('cols.duration')}</span>
+          <span>{tp('cols.price')}</span>
+          <span>{tp('cols.status')}</span>
           <span />
         </div>
         {drafts.map((d, i) => {
@@ -78,7 +81,7 @@ export function ImportReview({
               <input
                 type="text"
                 value={d.name}
-                aria-label={`Row ${i + 1} name`}
+                aria-label={t('rowName', { n: i + 1 })}
                 onChange={(e) => update(i, { name: e.target.value, existing: lookup(e.target.value) })}
               />
               {/* A duplicate row is a re-price and nothing else — the import sends
@@ -88,8 +91,8 @@ export function ImportReview({
                 type="text"
                 value={d.existing ? String(d.existing.durationMin) : d.durationMin}
                 readOnly={!!d.existing}
-                title={d.existing ? 'Only the price changes for a service you already have' : undefined}
-                aria-label={`Row ${i + 1} minutes`}
+                title={d.existing ? t('repriceOnly') : undefined}
+                aria-label={t('rowMinutes', { n: i + 1 })}
                 onChange={(e) => update(i, { durationMin: e.target.value })}
               />
               {/* The rupee sits outside the box, so the owner types a bare
@@ -101,24 +104,23 @@ export function ImportReview({
                 <input
                   type="text"
                   value={d.price}
-                  aria-label={`Row ${i + 1} price in rupees`}
+                  aria-label={t('rowPrice', { n: i + 1 })}
                   onChange={(e) => update(i, { price: e.target.value })}
                 />
               </span>
               <span className="import-note">
                 {d.existing ? (
                   <span className="chip chip-reminder">
-                    {d.existing.active ? 'Already have it' : 'Retired — will come back'} —{' '}
-                    {formatMoney(d.existing.priceMinor, d.existing.currency)} → re-price
+                    {t(d.existing.active ? 'haveIt' : 'retiredBack', { price: formatMoney(d.existing.priceMinor, d.existing.currency) })}
                   </span>
                 ) : issue ? (
-                  <span className="import-issue">{issue}</span>
+                  <span className="import-issue">{tp(`problems.${issue}`)}</span>
                 ) : (
-                  <span className="muted">New</span>
+                  <span className="muted">{t('new')}</span>
                 )}
               </span>
               <button type="button" className="btn btn-ghost" onClick={() => update(i, { skip: !d.skip })}>
-                {d.skip ? 'Include' : 'Skip'}
+                {d.skip ? t('include') : t('skip')}
               </button>
             </div>
           );
@@ -127,10 +129,10 @@ export function ImportReview({
       {error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
       <div className="modal-actions">
         <button type="button" className="btn btn-ghost" disabled={busy} onClick={onBack}>
-          {backLabel}
+          {backLabel ?? t('back')}
         </button>
         <button type="button" className="btn" disabled={busy || blocked > 0 || active.length === 0} onClick={apply}>
-          {busy ? 'Importing…' : blocked > 0 ? `Fix ${blocked} row${blocked === 1 ? '' : 's'} first` : `Import ${active.length}`}
+          {busy ? t('importing') : blocked > 0 ? t('fixFirst', { count: blocked }) : t('importN', { count: active.length })}
         </button>
       </div>
     </>

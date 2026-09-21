@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
 
@@ -15,8 +16,8 @@ export function ConfirmDialog({
   title,
   body,
   detail,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   tone = 'default',
   busy = false,
   onConfirm,
@@ -33,6 +34,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations('common');
   const confirmRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   // Jira GRW-342 — Escape, Tab kept inside, focus back on the button that opened it. Declared first so the
@@ -60,7 +62,7 @@ export function ConfirmDialog({
         </div>
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
-            {cancelLabel}
+            {cancelLabel ?? t('cancel')}
           </button>
           <button
             ref={confirmRef}
@@ -69,7 +71,7 @@ export function ConfirmDialog({
             disabled={busy}
             onClick={onConfirm}
           >
-            {busy ? 'Working…' : confirmLabel}
+            {busy ? t('working') : (confirmLabel ?? t('confirm'))}
           </button>
         </div>
       </div>

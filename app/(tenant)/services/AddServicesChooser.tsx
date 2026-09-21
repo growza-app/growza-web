@@ -1,16 +1,20 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { api, type SeedCatalog } from '../lib/api';
+import { pickNoun } from '../lib/nouns';
 
 export type AddServicesRoute = 'catalogue' | 'sheet' | 'manual';
 
-/** "Hair, skin, nails, spa and bridal" — read off the catalogue, never written down here. */
-function categoryPhrase(catalog: SeedCatalog): string {
+/**
+ * "hair, skin, nails, spa and bridal" — read off the catalogue, never written down here.
+ * The list joiner comes from the language (`en-GB` keeps English's "a, b and c" with no serial comma).
+ */
+function categoryPhrase(catalog: SeedCatalog, locale: string): string | null {
   const names = catalog.categories.map((c) => c.name.toLowerCase());
-  if (names.length === 0) return 'durations and prices pre-filled';
-  if (names.length === 1) return names[0]!;
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  if (names.length === 0) return null;
+  return new Intl.ListFormat(locale === 'en' ? 'en-GB' : locale, { style: 'long', type: 'conjunction' }).format(names);
 }
 
 /**
@@ -29,10 +33,17 @@ export function AddServicesChooser({
 }: {
   tenantName: string | null;
   serviceCount: number;
+  /** The plural noun, already lower-case and in the owner's language. */
   serviceLabel: string;
   onPick: (route: AddServicesRoute) => void;
   onClose: () => void;
 }) {
+  const t = useTranslations('services');
+  const tc = useTranslations('services.chooser');
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  const singular = pickNoun(locale, serviceLabel.replace(/s$/, ''), tn('service'));
+  const phrase = (c: SeedCatalog) => categoryPhrase(c, locale);
   const [catalog, setCatalog] = useState<SeedCatalog | null>(null);
 
   useEffect(() => {
@@ -53,13 +64,14 @@ export function AddServicesChooser({
       <div className="modal chooser-modal" onClick={(e) => e.stopPropagation()}>
         <div className="chooser-head">
           <div>
-            <h3>Add {serviceLabel.toLowerCase()}</h3>
+            <h3>{t('addLabel', { label: serviceLabel })}</h3>
             <span className="muted">
-              {tenantName ? `${tenantName} currently lists ` : 'You currently list '}
-              {serviceCount} {serviceLabel.toLowerCase()}.
+              {tenantName
+                ? tc('listsNamed', { tenant: tenantName, count: serviceCount, label: serviceLabel })
+                : tc('lists', { count: serviceCount, label: serviceLabel })}
             </span>
           </div>
-          <button type="button" className="icon-btn" aria-label="Close" onClick={onClose}>
+          <button type="button" className="icon-btn" aria-label={tc('close')} onClick={onClose}>
             ✕
           </button>
         </div>
@@ -70,12 +82,11 @@ export function AddServicesChooser({
               <span className="chooser-icon is-primary">✦</span>
               <span className="chooser-body">
                 <span className="chooser-title">
-                  {catalog.label} · {catalog.total} services
-                  <span className="chip chip-fastest">FASTEST</span>
+                  {tc('catalogueTitle', { label: catalog.label, count: catalog.total })}
+                  <span className="chip chip-fastest">{tc('fastest')}</span>
                 </span>
                 <span className="muted">
-                  {categoryPhrase(catalog)}, with durations and prices pre-filled — edit or drop anything before it
-                  saves.
+                  {phrase(catalog) ? tc('catalogueDescWith', { phrase: phrase(catalog)! }) : tc('catalogueDescPlain')}
                 </span>
               </span>
               <span className="chooser-chevron">›</span>
@@ -85,10 +96,8 @@ export function AddServicesChooser({
           <button type="button" className="chooser-route" onClick={() => onPick('sheet')}>
             <span className="chooser-icon">⇪</span>
             <span className="chooser-body">
-              <span className="chooser-title">Upload a spreadsheet</span>
-              <span className="muted">
-                CSV or Excel, any column order — you map the columns once and we check every row before it saves.
-              </span>
+              <span className="chooser-title">{tc('uploadTitle')}</span>
+              <span className="muted">{tc('uploadSub')}</span>
             </span>
             <span className="chooser-chevron">›</span>
           </button>
@@ -99,24 +108,21 @@ export function AddServicesChooser({
             <span className="chooser-icon">▤</span>
             <span className="chooser-body">
               <span className="chooser-title">
-                Send a photo of your price list
-                <span className="chip chip-beta">NOT YET</span>
+                {tc('photoTitle')}
+                <span className="chip chip-beta">{tc('notYet')}</span>
               </span>
-              <span className="muted">
-                Photo, PDF, or a menu forwarded on WhatsApp. We read the names and prices; you confirm every row before
-                it saves.
-              </span>
+              <span className="muted">{tc('photoSub')}</span>
             </span>
           </div>
 
           <div className="chooser-or">
             <span />
-            <span className="muted">or</span>
+            <span className="muted">{tc('or')}</span>
             <span />
           </div>
 
           <button type="button" className="chooser-route is-plain" onClick={() => onPick('manual')}>
-            <span className="chooser-title">Add one {serviceLabel.toLowerCase().replace(/s$/, '')} manually</span>
+            <span className="chooser-title">{tc('manual', { singular })}</span>
             <span className="chooser-chevron">›</span>
           </button>
         </div>

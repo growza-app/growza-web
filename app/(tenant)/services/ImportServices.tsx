@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { api, type ServiceAdmin } from '../lib/api';
 import { type Draft } from './import-drafts';
@@ -7,15 +8,16 @@ import { ImportReview } from './ImportReview';
 
 type Field = 'name' | 'categoryName' | 'durationMin' | 'bufferAfterMin' | 'priceMinor';
 
-const FIELDS: { key: Field; label: string; required: boolean; hints: string[] }[] = [
-  { key: 'name', label: 'Service name', required: true, hints: ['service', 'name', 'treatment', 'item'] },
-  { key: 'categoryName', label: 'Type', required: false, hints: ['type', 'category', 'group', 'section'] },
+/** `labelKey` names the field in `services.import.fields`; `hints` are column-header words to recognise in the owner's file, in English as the files usually are. */
+const FIELDS: { key: Field; labelKey: 'name' | 'type' | 'minutes' | 'cleanup' | 'price'; required: boolean; hints: string[] }[] = [
+  { key: 'name', labelKey: 'name', required: true, hints: ['service', 'name', 'treatment', 'item'] },
+  { key: 'categoryName', labelKey: 'type', required: false, hints: ['type', 'category', 'group', 'section'] },
   // "Labour hrs" is the design's own example of a column that should map to
   // duration without the owner reformatting their file. The board calls this
   // "Takes"; we say "Minutes", which names the unit and needs no decoding.
-  { key: 'durationMin', label: 'Minutes', required: true, hints: ['duration', 'mins', 'minutes', 'time', 'takes', 'labour', 'hrs'] },
-  { key: 'bufferAfterMin', label: 'Cleanup after (minutes)', required: false, hints: ['cleanup', 'buffer', 'gap', 'turnaround'] },
-  { key: 'priceMinor', label: 'Price', required: false, hints: ['price', 'rate', 'cost', 'amount', 'charge', 'fee'] },
+  { key: 'durationMin', labelKey: 'minutes', required: true, hints: ['duration', 'mins', 'minutes', 'time', 'takes', 'labour', 'hrs'] },
+  { key: 'bufferAfterMin', labelKey: 'cleanup', required: false, hints: ['cleanup', 'buffer', 'gap', 'turnaround'] },
+  { key: 'priceMinor', labelKey: 'price', required: false, hints: ['price', 'rate', 'cost', 'amount', 'charge', 'fee'] },
 ];
 
 /** Best-guess mapping so a conventionally-named sheet needs no work at all. */
@@ -48,6 +50,7 @@ export function ImportServices({
   onClose: () => void;
   onImported: () => void;
 }) {
+  const t = useTranslations('services.import');
   const [step, setStep] = useState<'pick' | 'map' | 'review'>('pick');
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
@@ -70,7 +73,7 @@ export function ImportServices({
       setMap(suggest(sheet.headers));
       setStep('map');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not read that file.');
+      setError(err instanceof Error ? err.message : t('readFailed'));
     } finally {
       setBusy(false);
     }
@@ -99,14 +102,11 @@ export function ImportServices({
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal import-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Import your price list</h3>
+        <h3>{t('title')}</h3>
 
         {step === 'pick' && (
           <>
-            <p className="confirm-body">
-              Upload the spreadsheet you already have — an Excel file (.xlsx) or a CSV. You&apos;ll check every row before
-              anything is saved.
-            </p>
+            <p className="confirm-body">{t('pickBody')}</p>
             <input
               ref={fileRef}
               type="file"
@@ -115,31 +115,28 @@ export function ImportServices({
               onChange={(e) => pick(e.target.files?.[0])}
             />
             <button type="button" className="btn" disabled={busy} onClick={() => fileRef.current?.click()}>
-              {busy ? 'Reading…' : 'Choose file'}
+              {busy ? t('reading') : t('chooseFile')}
             </button>
           </>
         )}
 
         {step === 'map' && (
           <>
-            <p className="confirm-body">
-              We found <strong>{rows.length}</strong> rows. Confirm which column is which — your file doesn&apos;t need
-              renaming.
-            </p>
+            <p className="confirm-body">{t.rich('mapBody', { count: rows.length, b: (chunks) => <strong>{chunks}</strong> })}</p>
             <div className="import-map">
               {FIELDS.map((f) => (
                 <label key={f.key} className="field">
                   <span className="field-label">
-                    {f.label} {f.required && '*'}
+                    {t(`fields.${f.labelKey}`)} {f.required && '*'}
                   </span>
                   <select
                     value={map[f.key] ?? -1}
                     onChange={(e) => setMap((m) => ({ ...m, [f.key]: Number(e.target.value) }))}
                   >
-                    <option value={-1}>— not in my file —</option>
+                    <option value={-1}>{t('notInFile')}</option>
                     {headers.map((h, i) => (
                       <option key={i} value={i}>
-                        {h || `Column ${i + 1}`}
+                        {h || t('column', { n: i + 1 })}
                       </option>
                     ))}
                   </select>
@@ -148,10 +145,10 @@ export function ImportServices({
             </div>
             <div className="modal-actions">
               <button type="button" className="btn btn-ghost" onClick={() => setStep('pick')}>
-                Back
+                {t('back')}
               </button>
               <button type="button" className="btn" disabled={map.name < 0 || map.durationMin < 0} onClick={buildDrafts}>
-                Check {rows.length} rows
+                {t('check', { count: rows.length })}
               </button>
             </div>
           </>
@@ -171,7 +168,7 @@ export function ImportServices({
         {step === 'pick' && (
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         )}

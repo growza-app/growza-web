@@ -152,17 +152,21 @@ export function fromEditRow(
 }
 
 /** Why this row cannot be saved yet, or null when it is fine. */
-export function rowProblem(r: EditRow): string | null {
-  if (!r.name.trim()) return 'Needs a name';
+/** A key of `services.problems` — the screen says it in the owner's language. */
+export type RowProblem = 'needsName' | 'needsMinutes' | 'priceNotNumber';
+
+export function rowProblem(r: EditRow): RowProblem | null {
+  if (!r.name.trim()) return 'needsName';
   const m = Number(r.minutes);
-  if (!r.minutes.trim() || !Number.isFinite(m) || m <= 0) return 'Needs minutes';
-  if (r.price.trim() && (!Number.isFinite(Number(r.price)) || Number(r.price) < 0)) return 'Price is not a number';
+  if (!r.minutes.trim() || !Number.isFinite(m) || m <= 0) return 'needsMinutes';
+  if (r.price.trim() && (!Number.isFinite(Number(r.price)) || Number(r.price) < 0)) return 'priceNotNumber';
   return null;
 }
 
 export interface Matcher {
   test: (r: EditRow) => boolean;
-  error: string | null;
+  /** A key of `services.patternErrors`. */
+  error: 'tooLong' | 'invalid' | null;
 }
 
 /**
@@ -175,7 +179,7 @@ export interface Matcher {
 export function buildMatcher(query: string, regex: boolean): Matcher {
   const q = query.trim();
   if (!q) return { test: () => true, error: null };
-  if (q.length > MAX_PATTERN) return { test: () => true, error: 'That pattern is too long' };
+  if (q.length > MAX_PATTERN) return { test: () => true, error: 'tooLong' };
 
   if (!regex) {
     const needle = q.toLowerCase();
@@ -192,6 +196,6 @@ export function buildMatcher(query: string, regex: boolean): Matcher {
     return { test: (r) => re.test(r.name) || re.test(r.category), error: null };
   } catch {
     // Show everything rather than nothing while a pattern is half-typed.
-    return { test: () => true, error: 'Not a valid pattern yet' };
+    return { test: () => true, error: 'invalid' };
   }
 }

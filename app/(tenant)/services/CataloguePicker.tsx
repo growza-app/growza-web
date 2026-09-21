@@ -1,8 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, formatMoney, type SeedCatalog, type ServiceAdmin } from '../lib/api';
-import { copy } from '../lib/copy';
 import { byNameIndex, type Draft } from './import-drafts';
 import { ImportReview } from './ImportReview';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -55,6 +55,8 @@ export function CataloguePicker({
   onClose: () => void;
   onImported: () => void;
 }) {
+  const t = useTranslations('services.catalogue');
+  const tp = useTranslations('services');
   const [catalog, setCatalog] = useState<SeedCatalog | null>(null);
   const [services, setServices] = useState<WorkingService[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export function CataloguePicker({
         setCatalog(c);
         setServices(c.services.map((s) => ({ ...s, edited: false })));
       })
-      .catch((err) => live && setLoadError(err instanceof Error ? err.message : 'Could not load the catalogue.'));
+      .catch((err) => live && setLoadError(err instanceof Error ? err.message : t('loadFailed')));
     return () => {
       live = false;
     };
@@ -113,7 +115,7 @@ export function CataloguePicker({
   const openAllEditor = () => {
     setRows(services.map((s, i) => toRow(s, `all-${i}`)));
     setSearch('');
-    setEditing({ scope: 'all', original: null, name: 'All services' });
+    setEditing({ scope: 'all', original: null, name: t('allServices') });
   };
 
   /**
@@ -207,13 +209,10 @@ export function CataloguePicker({
   /* Raised from either screen, so it is built once and dropped into both. */
   const deleteConfirm = confirmDelete ? (
     <ConfirmDialog
-      title={`Delete ${confirmDelete}?`}
-      body={(() => {
-        const n = services.filter((s) => s.category === confirmDelete).length;
-        return `Its ${n} service${n === 1 ? '' : 's'} go with it.`;
-      })()}
-      detail="Nothing has been written yet — this only changes what you are about to import. Leaving this screen and opening the catalogue again brings all of them back."
-      confirmLabel="Delete category"
+      title={t('deleteTitle', { name: confirmDelete })}
+      body={t('deleteBody', { count: services.filter((s) => s.category === confirmDelete).length })}
+      detail={t('deleteDetail')}
+      confirmLabel={t('deleteConfirm')}
       tone="danger"
       onConfirm={() => deleteCategory(confirmDelete)}
       onCancel={() => setConfirmDelete(null)}
@@ -230,9 +229,9 @@ export function CataloguePicker({
     editing?.scope === 'all'
       ? null
       : !editing?.name.trim()
-        ? 'Give this category a name'
+        ? t('giveName')
         : nameTaken
-          ? 'You already have a category with that name'
+          ? t('nameTaken')
           : null;
 
   /* ---------- review ---------- */
@@ -258,13 +257,13 @@ export function CataloguePicker({
     return (
       <div className="modal-backdrop" onClick={onClose}>
         <div className="modal import-modal" onClick={(e) => e.stopPropagation()}>
-          <h3>Review before saving</h3>
-          <p className="confirm-body">{catalog?.label} · step 2 of 2</p>
+          <h3>{t('reviewTitle')}</h3>
+          <p className="confirm-body">{t('step2', { label: catalog?.label ?? '' })}</p>
           <ImportReview
             drafts={drafts}
             setDrafts={(fn) => setDrafts((prev) => (prev ? fn(prev) : prev))}
             onBack={() => setDrafts(null)}
-            backLabel="Back to categories"
+            backLabel={t('backToCategories')}
             onImported={onImported}
             lookup={(name) => byName.get(name.trim().toLowerCase()) ?? null}
           />
@@ -280,22 +279,22 @@ export function CataloguePicker({
           <div className="modal modal-fit import-modal" onClick={(e) => e.stopPropagation()}>
             <div className="cat-head">
               <button type="button" className="btn btn-ghost" onClick={() => setEditing(null)}>
-                ← Back
+                {t('back')}
               </button>
               <div className="cat-head-name">
                 <input
                   type="text"
                   className="cat-name-input"
                   value={editing.name}
-                  aria-label="Category name"
-                  placeholder="Name this category — Threading, Makeup…"
+                  aria-label={t('categoryNameAria')}
+                  placeholder={t('categoryNamePlaceholder')}
                   onChange={(e) => setEditing((p) => (p ? { ...p, name: e.target.value } : p))}
                 />
                 <span className="muted">
                   {editorNameProblem ? (
                     <span className="import-issue">{editorNameProblem}</span>
                   ) : (
-                    'Add, remove, or set your own prices'
+                    t('editorHint')
                   )}
                 </span>
               </div>
@@ -308,24 +307,24 @@ export function CataloguePicker({
                 <input
                   type="search"
                   value={search}
-                  aria-label="Search services"
-                  placeholder={useRegex ? 'Pattern — e.g. ^Hair|Spa$' : 'Search by name or category'}
+                  aria-label={t('searchAria')}
+                  placeholder={useRegex ? t('searchPlaceholderRegex') : t('searchPlaceholder')}
                   onChange={(e) => setSearch(e.target.value)}
                 />
                 <button
                   type="button"
                   className={`cat-regex-toggle ${useRegex ? 'is-on' : ''}`}
                   aria-pressed={useRegex}
-                  title="Match with a regular expression instead of plain text"
+                  title={t('regexTitle')}
                   onClick={() => setUseRegex((v) => !v)}
                 >
                   .*
                 </button>
                 <span className="muted cat-search-count">
                   {matcher.error ? (
-                    <span className="import-issue">{matcher.error}</span>
+                    <span className="import-issue">{tp(`patternErrors.${matcher.error}`)}</span>
                   ) : (
-                    `${visibleRows.length} of ${rows.length}`
+                    t('shownOf', { shown: visibleRows.length, total: rows.length })
                   )}
                 </span>
               </div>
@@ -336,11 +335,11 @@ export function CataloguePicker({
                 className={`import-row cat-edit-row ${editing.scope === 'all' ? 'cat-edit-row-all' : ''} import-head`}
                 aria-hidden="true"
               >
-                <span className="ih-pad">{copy.services.name}</span>
-                {editing.scope === 'all' && <span>Category</span>}
-                <span className="ih-pad">{copy.services.duration}</span>
-                <span>{copy.services.price}</span>
-                <span>{copy.services.status}</span>
+                <span className="ih-pad">{tp('cols.name')}</span>
+                {editing.scope === 'all' && <span>{t('category')}</span>}
+                <span className="ih-pad">{tp('cols.duration')}</span>
+                <span>{tp('cols.price')}</span>
+                <span>{tp('cols.status')}</span>
                 <span />
               </div>
               {visibleRows.map((r) => {
@@ -353,8 +352,8 @@ export function CataloguePicker({
                     <input
                       type="text"
                       value={r.name}
-                      aria-label="Service name"
-                      placeholder="Service name"
+                      aria-label={t('serviceNameAria')}
+                      placeholder={t('serviceNamePlaceholder')}
                       onChange={(e) => updateRow(r.key, { name: e.target.value })}
                     />
                     {/* A pick-list, not free text: moving a service into a category
@@ -362,7 +361,7 @@ export function CataloguePicker({
                     {editing.scope === 'all' && (
                       <select
                         value={r.category}
-                        aria-label="Category"
+                        aria-label={t('categoryAria')}
                         onChange={(e) => updateRow(r.key, { category: e.target.value })}
                       >
                         {categories.map((c) => (
@@ -375,7 +374,7 @@ export function CataloguePicker({
                     <input
                       type="text"
                       value={r.minutes}
-                      aria-label="Minutes"
+                      aria-label={t('minutesAria')}
                       onChange={(e) => updateRow(r.key, { minutes: e.target.value })}
                     />
                     <span className="import-money">
@@ -385,21 +384,21 @@ export function CataloguePicker({
                       <input
                         type="text"
                         value={r.price}
-                        aria-label="Price in rupees"
+                        aria-label={t('priceAria')}
                         onChange={(e) => updateRow(r.key, { price: e.target.value })}
                       />
                     </span>
                     <span className="import-note">
                       {issue ? (
-                        <span className="import-issue">{issue}</span>
+                        <span className="import-issue">{tp(`problems.${issue}`)}</span>
                       ) : r.alreadyHave ? (
-                        <span className="muted">Already have it</span>
+                        <span className="muted">{t('alreadyHaveIt')}</span>
                       ) : (
-                        <span className="muted">New</span>
+                        <span className="muted">{t('new')}</span>
                       )}
                     </span>
                     <button type="button" className="btn btn-ghost btn-danger" onClick={() => removeRow(r.key)}>
-                      Remove
+                      {t('remove')}
                     </button>
                   </div>
                 );
@@ -407,14 +406,15 @@ export function CataloguePicker({
             </div>
 
             <button type="button" className="btn btn-ghost cat-add-row" onClick={addRow}>
-              + Add a service to {editing.scope === 'all' ? 'the catalogue' : editing.name.trim() || 'this category'}
+              {t('addServiceTo', { target: editing.scope === 'all' ? t('theCatalogue') : editing.name.trim() || t('thisCategory') })}
             </button>
 
             <div className="modal-actions cat-actions">
               <span className="muted">
-                {rows.length}{' '}
-                {editing.scope === 'all' ? 'in the catalogue' : `in ${editing.name.trim() || 'this category'}`} · nothing
-                is written until you import
+                {t('footer', {
+                  count: rows.length,
+                  where: editing.scope === 'all' ? t('inCatalogue') : t('inCategory', { name: editing.name.trim() || t('thisCategory') }),
+                })}
               </span>
               <div className="cat-actions-buttons">
                 {/* Only an existing category can be deleted — abandoning one you are
@@ -425,13 +425,12 @@ export function CataloguePicker({
                     className="btn btn-ghost btn-danger"
                     onClick={() => setConfirmDelete(editing.original)}
                   >
-                    Delete category
+                    {t('deleteCategory')}
                   </button>
                 )}
                 {hiddenBlocked > 0 && (
                   <button type="button" className="linkish" onClick={() => setSearch('')}>
-                    {hiddenBlocked} row{hiddenBlocked === 1 ? '' : 's'} needing a fix {hiddenBlocked === 1 ? 'is' : 'are'}{' '}
-                    hidden — clear the search
+                    {t('hiddenBlocked', { count: hiddenBlocked })}
                   </button>
                 )}
                 <button
@@ -440,7 +439,7 @@ export function CataloguePicker({
                   disabled={editorBlocked > 0 || editorNameProblem !== null}
                   onClick={saveEditor}
                 >
-                  {editorBlocked > 0 ? `Fix ${editorBlocked} row${editorBlocked === 1 ? '' : 's'} first` : 'Save'}
+                  {editorBlocked > 0 ? t('fixFirst', { count: editorBlocked }) : t('save')}
                 </button>
               </div>
             </div>
@@ -457,16 +456,16 @@ export function CataloguePicker({
       <div className="modal modal-fit import-modal" onClick={(e) => e.stopPropagation()}>
         <div className="cat-head">
           <button type="button" className="btn btn-ghost" onClick={onBack}>
-            ← Back
+            {t('back')}
           </button>
           <div>
-            <h3>{catalog?.label ?? 'Ready-made catalogue'}</h3>
-            <span className="muted">Step 1 of 2 · pick what you offer</span>
+            <h3>{catalog?.label ?? t('readyMade')}</h3>
+            <span className="muted">{t('step1')}</span>
           </div>
         </div>
 
         {loadError && <div role="alert" className="field-error">{loadError}</div>}
-        {!catalog && !loadError && <div className="empty">Loading the catalogue…</div>}
+        {!catalog && !loadError && <div className="empty">{t('loading')}</div>}
 
         {catalog && (
           <>
@@ -475,10 +474,10 @@ export function CataloguePicker({
                   every category first. */}
               <div className="cat-toolbar">
                 <button type="button" className="btn cat-edit-btn" onClick={addCategory}>
-                  + Add a category
+                  {t('addCategory')}
                 </button>
                 <button type="button" className="btn cat-edit-btn" onClick={openAllEditor}>
-                  Review all services
+                  {t('reviewAll')}
                 </button>
                 {/* "Check", not a second "Review" — this one moves to the next
                     step, and two buttons reading Review would be a coin toss. */}
@@ -488,13 +487,13 @@ export function CataloguePicker({
                   disabled={fresh.length === 0}
                   onClick={review}
                 >
-                  Next: check {fresh.length} →
+                  {t('next', { count: fresh.length })}
                 </button>
               </div>
 
               <div className="cat-list-head">
                 <span>
-                  {categories.length} categories · {services.length} services
+                  {t('stats', { categories: categories.length, services: services.length })}
                 </span>
               </div>
 
@@ -513,12 +512,12 @@ export function CataloguePicker({
                             range — the half an owner actually needs — fell off. */}
                         <span className="muted cat-samples">{c.sample.join(', ')}…</span>
                         <span className="muted cat-stats">
-                          {c.count} services{range}
+                          {t('catStats', { count: c.count, range })}
                         </span>
                       </div>
                       <div className="cat-row-actions">
                         <button type="button" className="btn cat-edit-btn" onClick={() => openEditor(c.name)}>
-                          View / edit
+                          {t('viewEdit')}
                         </button>
                         {/* Spelled out rather than a bin icon: an unlabelled glyph is
                             one more thing to work out, and this row is destructive. */}
@@ -527,7 +526,7 @@ export function CataloguePicker({
                           className="btn btn-ghost btn-danger cat-delete-btn"
                           onClick={() => setConfirmDelete(c.name)}
                         >
-                          Delete
+                          {t('delete')}
                         </button>
                       </div>
                     </div>
@@ -537,15 +536,13 @@ export function CataloguePicker({
 
               <div className="cat-scale">
                 <div>
-                  <strong>Adjust all prices</strong>
-                  <div className="muted">
-                    Shift the presets to your rates. A price you type yourself is left alone.
-                  </div>
+                  <strong>{t('adjust')}</strong>
+                  <div className="muted">{t('adjustHint')}</div>
                 </div>
                 <div className="cat-stepper">
                   <button
                     type="button"
-                    aria-label="Lower all prices"
+                    aria-label={t('lowerAria')}
                     disabled={scalePct <= SCALE_MIN}
                     onClick={() => setScalePct((p) => Math.max(SCALE_MIN, p - SCALE_STEP))}
                   >
@@ -554,7 +551,7 @@ export function CataloguePicker({
                   <span>{scalePct > 0 ? `+${scalePct}%` : `${scalePct}%`}</span>
                   <button
                     type="button"
-                    aria-label="Raise all prices"
+                    aria-label={t('raiseAria')}
                     disabled={scalePct >= SCALE_MAX}
                     onClick={() => setScalePct((p) => Math.min(SCALE_MAX, p + SCALE_STEP))}
                   >
@@ -565,8 +562,8 @@ export function CataloguePicker({
 
               {/* Count only — the action it used to sit beside is now at the top. */}
               <div className="cat-footnote muted">
-                {fresh.length} to add
-                {skipped > 0 && ` · ${skipped} already in your list will be skipped`}
+                {t('toAdd', { count: fresh.length })}
+                {skipped > 0 && t('skippedNote', { count: skipped })}
               </div>
             </>
           )}

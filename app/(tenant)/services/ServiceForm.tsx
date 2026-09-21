@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { servicePhotoUrl } from '../lib/service-photos';
@@ -37,6 +38,8 @@ export function ServiceForm({
   onClose: () => void;
   onSaved: (saved: ServiceAdmin) => void;
 }) {
+  const t = useTranslations('services.form');
+  const tp = useTranslations('services');
   const [name, setName] = useState(service?.name ?? '');
   const [categoryId, setCategoryId] = useState(service?.categoryId ?? '');
   const [durationMin, setDurationMin] = useState(String(service?.durationMin ?? 30));
@@ -56,19 +59,19 @@ export function ServiceForm({
 
   const validate = () => {
     const next: typeof fieldErrors = {};
-    if (!name.trim()) next.name = 'Name is required';
-    else if (name.trim().length > 80) next.name = 'Name must be 80 characters or fewer';
+    if (!name.trim()) next.name = t('errors.nameRequired');
+    else if (name.trim().length > 80) next.name = t('errors.nameLong');
 
     const d = Number(durationMin);
-    if (!durationMin.trim() || !Number.isFinite(d) || d <= 0) next.duration = 'Must be more than 0 minutes';
-    else if (d > 12 * 60) next.duration = 'Must be 12 hours or less';
+    if (!durationMin.trim() || !Number.isFinite(d) || d <= 0) next.duration = t('errors.durationPositive');
+    else if (d > 12 * 60) next.duration = t('errors.durationMax');
 
     const b = Number(bufferAfterMin);
-    if (bufferAfterMin.trim() && (!Number.isFinite(b) || b < 0)) next.buffer = 'Cannot be less than 0 minutes';
+    if (bufferAfterMin.trim() && (!Number.isFinite(b) || b < 0)) next.buffer = t('errors.bufferNegative');
 
     if (price.trim()) {
       const p = Number(price);
-      if (!Number.isFinite(p) || p < 0) next.price = 'Price cannot be negative';
+      if (!Number.isFinite(p) || p < 0) next.price = t('errors.priceNegative');
     }
     setFieldErrors(next);
     return Object.keys(next).length === 0;
@@ -93,7 +96,7 @@ export function ServiceForm({
       }
       onSaved(saved);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save.');
+      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -102,7 +105,7 @@ export function ServiceForm({
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal modal-fit" onClick={(e) => e.stopPropagation()}>
-        <h3>{service ? `Edit ${service.name}` : 'Add a service'}</h3>
+        <h3>{service ? t('titleEdit', { name: service.name }) : t('titleAdd')}</h3>
 
         <div className="modal-body">
           <div className="svc-photo-field">
@@ -111,7 +114,7 @@ export function ServiceForm({
             ) : imageUrl ? (
               <img className="svc-photo-preview" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
             ) : (
-              <span className="svc-photo-empty svc-photo-empty-lg">ADD</span>
+              <span className="svc-photo-empty svc-photo-empty-lg">{tp('photoAdd')}</span>
             )}
             <input
               ref={photoRef}
@@ -122,7 +125,7 @@ export function ServiceForm({
                 const f = e.target.files?.[0];
                 if (!f) return;
                 if (f.size > 5 * 1024 * 1024) {
-                  setError('Photo must be under 5MB.');
+                  setError(t('errors.photoTooBig'));
                   return;
                 }
                 setError(null);
@@ -131,9 +134,9 @@ export function ServiceForm({
             />
             <div>
               <button type="button" className="btn btn-ghost" onClick={() => photoRef.current?.click()}>
-                {photo || imageUrl ? 'Change photo' : 'Add a photo'}
+                {photo || imageUrl ? t('changePhoto') : t('addPhoto')}
               </button>
-              <div className="field-hint">Optional. Customers see it when booking on WhatsApp.</div>
+              <div className="field-hint">{t('photoHint')}</div>
             </div>
             {(photo || imageUrl) && (
               <button
@@ -148,20 +151,20 @@ export function ServiceForm({
                   if (photoRef.current) photoRef.current.value = '';
                 }}
               >
-                Remove
+                {t('remove')}
               </button>
             )}
           </div>
 
           <div className="field">
             <label>
-              <span>Name *</span>
+              <span>{t('name')}</span>
             </label>
             <input
               type="text"
               value={name}
               autoFocus
-              placeholder="e.g. Haircut"
+              placeholder={t('namePlaceholder')}
               className={fieldErrors.name ? 'field-invalid' : undefined}
               onChange={(e) => {
                 setName(e.target.value);
@@ -173,10 +176,10 @@ export function ServiceForm({
 
           <div className="field">
             <label>
-              <span>Type</span>
+              <span>{t('type')}</span>
             </label>
             <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              <option value="">No type</option>
+              <option value="">{t('noType')}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -187,7 +190,7 @@ export function ServiceForm({
 
           <div className="field">
             <label>
-              <span>How long it takes (minutes) *</span>
+              <span>{t('duration')}</span>
             </label>
             <input
               type="text"
@@ -204,7 +207,7 @@ export function ServiceForm({
 
           <div className="field">
             <label>
-              <span>Cleanup time after (minutes)</span>
+              <span>{t('cleanup')}</span>
             </label>
             <input
               type="text"
@@ -217,18 +220,18 @@ export function ServiceForm({
               }}
             />
             {fieldErrors.buffer && <div role="alert" className="field-error">{fieldErrors.buffer}</div>}
-            <div className="field-hint">Held after the booking so the next customer isn&apos;t booked into it.</div>
+            <div className="field-hint">{t('cleanupHint')}</div>
           </div>
 
           <div className="field">
             <label>
-              <span>Price (₹)</span>
+              <span>{t('price')}</span>
             </label>
             <input
               type="text"
               inputMode="decimal"
               value={price}
-              placeholder="Leave blank if it varies"
+              placeholder={t('pricePlaceholder')}
               className={fieldErrors.price ? 'field-invalid' : undefined}
               onChange={(e) => {
                 setPrice(e.target.value);
@@ -237,7 +240,7 @@ export function ServiceForm({
             />
             {fieldErrors.price && <div role="alert" className="field-error">{fieldErrors.price}</div>}
             {service && (
-              <div className="field-hint">Applies to new bookings — already-booked customers keep the price they were quoted.</div>
+              <div className="field-hint">{t('priceHint')}</div>
             )}
           </div>
 
@@ -246,10 +249,10 @@ export function ServiceForm({
 
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-            Cancel
+            {t('cancel')}
           </button>
           <button type="button" className="btn" disabled={busy} onClick={submit}>
-            {busy ? 'Saving…' : service ? 'Save changes' : 'Add service'}
+            {busy ? t('saving') : service ? t('saveChanges') : t('addService')}
           </button>
         </div>
       </div>

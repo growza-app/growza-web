@@ -18,17 +18,20 @@ export interface Draft {
   skip: boolean;
 }
 
+/** Why a row cannot be saved yet — a key of `services.problems`, so the screen says it in the owner's language. */
+export type DraftProblem = 'priceNotNumber' | 'needsName' | 'needsDuration' | 'tooLong';
+
 /** Why this row cannot be saved yet, or null when it is fine. */
-export function problem(d: Draft): string | null {
+export function problem(d: Draft): DraftProblem | null {
   // A price that is not a number must be caught on every row, duplicate or not:
   // `Number('abc')` is NaN, `JSON.stringify` turns NaN into null, and the import
   // would quietly erase the price it was meant to update.
-  if (d.price.trim() && (!Number.isFinite(Number(d.price)) || Number(d.price) < 0)) return 'Price is not a number';
+  if (d.price.trim() && (!Number.isFinite(Number(d.price)) || Number(d.price) < 0)) return 'priceNotNumber';
   if (d.existing) return null; // re-pricing needs nothing else
-  if (!d.name.trim()) return 'Needs a name';
+  if (!d.name.trim()) return 'needsName';
   const dur = Number(d.durationMin);
-  if (!d.durationMin.trim() || !Number.isFinite(dur) || dur <= 0) return 'Needs how long it takes';
-  if (dur > 12 * 60) return 'Longer than 12 hours';
+  if (!d.durationMin.trim() || !Number.isFinite(dur) || dur <= 0) return 'needsDuration';
+  if (dur > 12 * 60) return 'tooLong';
   return null;
 }
 

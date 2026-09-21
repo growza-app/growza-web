@@ -41,10 +41,10 @@ describe('problem', () => {
   });
 
   it('needs a name and a sensible duration', () => {
-    expect(problem(draft({ name: '  ' }))).toBe('Needs a name');
-    expect(problem(draft({ durationMin: '' }))).toBe('Needs how long it takes');
-    expect(problem(draft({ durationMin: '0' }))).toBe('Needs how long it takes');
-    expect(problem(draft({ durationMin: '721' }))).toBe('Longer than 12 hours');
+    expect(problem(draft({ name: '  ' }))).toBe('needsName');
+    expect(problem(draft({ durationMin: '' }))).toBe('needsDuration');
+    expect(problem(draft({ durationMin: '0' }))).toBe('needsDuration');
+    expect(problem(draft({ durationMin: '721' }))).toBe('tooLong');
   });
 
   /**
@@ -54,8 +54,8 @@ describe('problem', () => {
    * was meant to update.
    */
   it('validates the price on a duplicate row too', () => {
-    expect(problem(draft({ existing: existing(), price: 'abc' }))).toBe('Price is not a number');
-    expect(problem(draft({ existing: existing(), price: '-5' }))).toBe('Price is not a number');
+    expect(problem(draft({ existing: existing(), price: 'abc' }))).toBe('priceNotNumber');
+    expect(problem(draft({ existing: existing(), price: '-5' }))).toBe('priceNotNumber');
   });
 
   it('still asks nothing else of a duplicate — it is only a re-price', () => {
