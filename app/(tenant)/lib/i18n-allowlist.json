@@ -795,18 +795,6 @@
     "web/app/(tenant)/settings/branches/page.tsx": [
       "Could not load your branches — check the server is running."
     ],
-    "web/app/(tenant)/settings/notifications/RemindersForm.tsx": [
-      "Send an automatic WhatsApp reminder before a booking.",
-      "hours before the booking",
-      "label: \"First reminder\"",
-      "label: \"Second reminder\"",
-      "{${…} reminders}",
-      "{Notifications}",
-      "{Save changes}",
-      "{Saved — these start sending when WhatsApp goes live}",
-      "{Saved}",
-      "{Saving…}"
-    ],
     "web/app/(tenant)/settings/report-access/ReportAccessForm.tsx": [
       "Saved",
       "Who can see Reports",

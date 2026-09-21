@@ -50,10 +50,7 @@ export const copy = {
      */
     navLabelDemo: 'WhatsApp',
     comingSoonPill: 'Coming soon',
-    /** The Notifications screen. The one place an owner could otherwise set something up and believe it was working. */
-    remindersNotLiveTitle: 'WhatsApp is coming soon',
-    remindersNotLive:
-      'Reminders are not going out yet — WhatsApp is still being set up for you. Choose your times now and they will start sending the day it goes live. Nothing to redo.',
+    // The Notifications screen's "WhatsApp is coming soon" notice lives in messages (settingsReminders.notLive*).
     /** The Try WhatsApp page, so nobody mistakes the demo for a live channel. */
     tryIsADemo: 'This is a practice run, just for you. Your customers cannot book on WhatsApp yet.',
   },

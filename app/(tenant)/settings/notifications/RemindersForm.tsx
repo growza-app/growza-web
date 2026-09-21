@@ -1,24 +1,23 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
-import { copy } from '../../lib/copy';
 import { BranchScopeNote } from '../BranchScopeNote';
-
-const SAVE_ERROR = 'Could not save — check the server is running.';
 
 interface ReminderRow {
   key: string;
   template: string;
-  label: string;
+  /** Names the reminder in `settingsReminders` — `first` / `second`. */
+  nameKey: 'first' | 'second';
   enabled: boolean;
   hours: number;
 }
 
 const REMINDER_DEFS = [
-  { key: 'reminder_-24h', template: 'reminder_24h', label: 'First reminder', defaultHours: 24 },
-  { key: 'reminder_-2h', template: 'reminder_2h', label: 'Second reminder', defaultHours: 2 },
-];
+  { key: 'reminder_-24h', template: 'reminder_24h', nameKey: 'first', defaultHours: 24 },
+  { key: 'reminder_-2h', template: 'reminder_2h', nameKey: 'second', defaultHours: 2 },
+] as const;
 
 export function RemindersForm({
   initial,
@@ -38,13 +37,14 @@ export function RemindersForm({
    */
   whatsappLive?: boolean;
 }) {
+  const t = useTranslations('settingsReminders');
   const [rows, setRows] = useState<ReminderRow[]>(() =>
     REMINDER_DEFS.map((def) => {
       const existing = initial.reminderRules.find((r) => r.ruleKey === def.key);
       return {
         key: def.key,
         template: def.template,
-        label: def.label,
+        nameKey: def.nameKey,
         enabled: !!existing,
         hours: existing ? Math.round(Math.abs(existing.offsetMin) / 60) : def.defaultHours,
       };
@@ -69,7 +69,7 @@ export function RemindersForm({
       await api.updateReminders(reminderRules, initial.scope.locationId);
       setSaved(true);
     } catch {
-      setError(SAVE_ERROR);
+      setError(t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -79,19 +79,19 @@ export function RemindersForm({
     <>
     <BranchScopeNote settings={initial} branchName={branchName} keys={['reminder_rules']} topic="reminders" />
     <div className="card">
-      <div className="card-head">{initial.scope.locationId ? `${branchName ?? 'Branch'} reminders` : 'Notifications'}</div>
+      <div className="card-head">{initial.scope.locationId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : t('title')}</div>
       <div className="card-body">
         {whatsappLive ? (
           <p className="field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
-            Send an automatic WhatsApp reminder before a booking.
+            {t('liveHint')}
           </p>
         ) : (
           /* Above the switches, not below them — an owner who has already
              toggled a reminder and pressed Save has been misled, and a note
              underneath arrives too late to stop that. */
           <div className="banner banner-info" style={{ marginTop: 0, marginBottom: 16 }}>
-            <strong>{copy.whatsapp.remindersNotLiveTitle}</strong>
-            <div style={{ marginTop: 4 }}>{copy.whatsapp.remindersNotLive}</div>
+            <strong>{t('notLiveTitle')}</strong>
+            <div style={{ marginTop: 4 }}>{t('notLive')}</div>
           </div>
         )}
         {rows.map((row, i) => (
@@ -106,13 +106,13 @@ export function RemindersForm({
             }}
           >
             <label className="switch">
-              <input type="checkbox" aria-label={row.label} checked={row.enabled} onChange={() => updateRow(i, { enabled: !row.enabled })} />
+              <input type="checkbox" aria-label={t(row.nameKey)} checked={row.enabled} onChange={() => updateRow(i, { enabled: !row.enabled })} />
               <span className="switch-track">
                 <span className="switch-thumb" />
               </span>
             </label>
             <div style={{ flex: 1 }}>
-              <div id={`rem-title-${row.key}`} style={{ fontWeight: 620, fontSize: 14.5 }}>{row.label}</div>
+              <div id={`rem-title-${row.key}`} style={{ fontWeight: 620, fontSize: 14.5 }}>{t(row.nameKey)}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <input
                   type="number"
@@ -124,7 +124,7 @@ export function RemindersForm({
                   onChange={(e) => updateRow(i, { hours: Number(e.target.value) })}
                 />
                 <span id={`rem-hint-${row.key}`} className="field-hint" style={{ margin: 0 }}>
-                  hours before the booking
+                  {t('hoursBefore')}
                 </span>
               </div>
             </div>
@@ -133,13 +133,13 @@ export function RemindersForm({
         {error && <div role="alert" className="field-error">{error}</div>}
         <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <button className="btn" disabled={busy} onClick={save}>
-            {busy ? 'Saving…' : 'Save changes'}
+            {busy ? t('saving') : t('save')}
           </button>
           {saved && !busy && (
             <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
               {/* "Saved" alone would read as "done, it's working now". It is
                   saved; it is not sending. Say both. */}
-              {whatsappLive ? 'Saved' : 'Saved — these start sending when WhatsApp goes live'}
+              {whatsappLive ? t('saved') : t('savedNotLive')}
             </span>
           )}
         </div>

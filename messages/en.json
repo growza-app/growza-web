@@ -435,5 +435,23 @@
     "errors": {
       "saveFailed": "Could not save — check the server is running."
     }
+  },
+  "settingsReminders": {
+    "title": "Notifications",
+    "branchTitleNamed": "{name} reminders",
+    "branchTitleUnnamed": "Branch reminders",
+    "liveHint": "Send an automatic WhatsApp reminder before a booking.",
+    "notLiveTitle": "WhatsApp is coming soon",
+    "notLive": "Reminders are not going out yet — WhatsApp is still being set up for you. Choose your times now and they will start sending the day it goes live. Nothing to redo.",
+    "first": "First reminder",
+    "second": "Second reminder",
+    "hoursBefore": "hours before the booking",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "savedNotLive": "Saved — these start sending when WhatsApp goes live",
+    "errors": {
+      "saveFailed": "Could not save — check the server is running."
+    }
   }
 }

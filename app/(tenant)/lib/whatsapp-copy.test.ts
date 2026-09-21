@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import en from '../../../messages/en.json';
 import { copy } from './copy';
+
+/** Jira GRW-354 — these two moved from copy.ts to the message file so Hindi can have them; the wording rules did not move. */
+const reminders = en.settingsReminders;
 
 /**
  * Jira GRW-158 · GRW-165 — the dashboard does not promise what it cannot send.
@@ -20,7 +24,7 @@ import { copy } from './copy';
  * likelier regression: somebody tidying the copy back to the confident version
  * because it reads better.
  */
-const CRM_ONLY = [copy.whatsapp.remindersNotLive, copy.whatsapp.tryIsADemo, copy.offers.subtitleCrmOnly];
+const CRM_ONLY = [reminders.notLive, copy.whatsapp.tryIsADemo, copy.offers.subtitleCrmOnly];
 
 /** Present-tense claims that WhatsApp is working right now. */
 const ASSERTS_IT_WORKS = [
@@ -38,8 +42,8 @@ describe('while WhatsApp is off, no copy claims it works', () => {
   it('tells the owner it is coming, not that something is broken', () => {
     // BR-02 — coming soon, not hidden and not an error. The owner is being
     // sold this; the product should sound like the sales conversation.
-    expect(copy.whatsapp.remindersNotLiveTitle).toMatch(/coming soon/i);
-    expect(copy.whatsapp.remindersNotLive).toMatch(/will start sending|start sending/i);
+    expect(reminders.notLiveTitle).toMatch(/coming soon/i);
+    expect(reminders.notLive).toMatch(/will start sending|start sending/i);
   });
 
   it('promises that setting reminders up now is not wasted work (BR-03)', () => {
@@ -47,7 +51,7 @@ describe('while WhatsApp is off, no copy claims it works', () => {
     // them in month one has them working the day the switch is flipped. If
     // that ever stops being true, this sentence becomes a lie and the test
     // should be deleted along with the promise.
-    expect(copy.whatsapp.remindersNotLive.toLowerCase()).toContain('nothing to redo');
+    expect(reminders.notLive.toLowerCase()).toContain('nothing to redo');
   });
 
   it('says plainly that customers cannot use the simulator', () => {
