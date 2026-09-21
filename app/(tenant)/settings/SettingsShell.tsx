@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { withBranch } from './SettingsBranchPicker';
 import type { ReactNode } from 'react';
@@ -18,6 +19,7 @@ import { SettingsNavList } from './SettingsNavList';
 export function SettingsShell({ settings, children }: { settings: SettingsSummary; children: ReactNode }) {
   const pathname = usePathname();
   const isHub = pathname === '/settings';
+  const t = useTranslations('settingsHub');
   const branch = useSearchParams().get('branch');
 
   return (
@@ -28,7 +30,7 @@ export function SettingsShell({ settings, children }: { settings: SettingsSummar
       <div className={`settings-content-pane ${isHub ? 'settings-content-pane-hidden-mobile' : ''}`}>
         <a className="settings-back-link" href={withBranch('/settings', branch)}>
           <IconArrowLeft />
-          Back to Settings
+          {t('back')}
         </a>
         {children}
       </div>

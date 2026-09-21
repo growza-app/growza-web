@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { IconChevronDown, IconMapPin } from '../components/icons';
@@ -13,6 +14,7 @@ import { IconChevronDown, IconMapPin } from '../components/icons';
  * business with more than one active branch.
  */
 export function SettingsBranchPicker({ branches }: { branches: Array<{ id: string; name: string }> }) {
+  const t = useTranslations('settingsHub.branchPicker');
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -41,19 +43,19 @@ export function SettingsBranchPicker({ branches }: { branches: Array<{ id: strin
     <div className="sbp" ref={ref}>
       <button type="button" className={`sbp-btn ${picked ? 'is-branch' : ''}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <IconMapPin />
-        <span className="sbp-label">{picked ? picked.name : 'All branches'}</span>
+        <span className="sbp-label">{picked ? picked.name : t('all')}</span>
         <IconChevronDown />
       </button>
       {open ? (
         <div className="sbp-menu" role="menu">
           <button type="button" role="menuitemradio" aria-checked={!picked} onClick={() => go(null)}>
-            <strong>All branches</strong>
-            <span>Business defaults</span>
+            <strong>{t('all')}</strong>
+            <span>{t('defaults')}</span>
           </button>
           {branches.map((b) => (
             <button key={b.id} type="button" role="menuitemradio" aria-checked={picked?.id === b.id} onClick={() => go(b.id)}>
               <strong>{b.name}</strong>
-              <span>This branch only</span>
+              <span>{t('thisOnly')}</span>
             </button>
           ))}
         </div>

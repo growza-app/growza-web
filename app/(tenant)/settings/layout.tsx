@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
@@ -24,13 +25,14 @@ export default async function SettingsLayout({ children }: { children: ReactNode
     );
   }
 
+  const t = await getTranslations('settingsHub');
   const branches = settings.branchCount > 1 ? ((await api.branchSettings().catch(() => null))?.branches ?? []) : [];
 
   return (
     <>
       <PageHeader
         title={copy.nav.settings}
-        subtitle="How your business and bookings work."
+        subtitle={t('subtitle')}
         // Jira GRW-230 — a business with branches picks whose settings these are.
         actions={branches.length > 1 ? <SettingsBranchPicker branches={branches} /> : undefined}
       />

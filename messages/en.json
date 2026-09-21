@@ -214,5 +214,84 @@
     "removeThis": "Remove this {service}",
     "comboSaving": "{title} — {list} list, saves {saving}",
     "combosSaving": "{combos} — saves {saving}"
+  },
+  "settingsHub": {
+    "subtitle": "How your business and bookings work.",
+    "emptyPane": "Pick a section from the list to get started.",
+    "back": "Back to Settings",
+    "comingSoon": "Coming soon",
+    "groups": {
+      "business": "Business",
+      "booking": "Booking",
+      "preferences": "Preferences",
+      "account": "Account"
+    },
+    "rows": {
+      "profile": {
+        "label": "Business profile",
+        "sub": "Name, address, contact details"
+      },
+      "branches": {
+        "label": "Branches",
+        "sub": "Name and address of each branch"
+      },
+      "workingHours": {
+        "label": "Working hours",
+        "sub": "Manage open hours and days"
+      },
+      "bookingSettings": {
+        "label": "Booking settings",
+        "sub": "Slot length, notice, horizon"
+      },
+      "payments": {
+        "label": "Payments",
+        "sub": "Manage UPI and payouts"
+      },
+      "cancellationPolicy": {
+        "label": "Cancellation policy",
+        "sub": "Set rules for cancellations"
+      },
+      "whatsapp": {
+        "label": "WhatsApp settings",
+        "sub": "Auto replies and notifications"
+      },
+      "notifications": {
+        "label": "Notifications",
+        "sub": "Manage alerts and reminders"
+      },
+      "appearance": {
+        "label": "Appearance",
+        "sub": "Theme, language"
+      },
+      "privacy": {
+        "label": "Privacy",
+        "sub": "Data and privacy settings"
+      },
+      "reportAccess": {
+        "label": "Report access",
+        "sub": "Who else can see Reports"
+      },
+      "teamAccess": {
+        "label": "Team access",
+        "sub": "Invite people who can sign in"
+      },
+      "billing": {
+        "label": "Billing",
+        "sub": "Plan, branches and bills"
+      },
+      "account": {
+        "label": "Account",
+        "sub": "Manage your account"
+      },
+      "logOut": {
+        "label": "Log out",
+        "sub": "Sign out from this device"
+      }
+    },
+    "branchPicker": {
+      "all": "All branches",
+      "defaults": "Business defaults",
+      "thisOnly": "This branch only"
+    }
   }
 }

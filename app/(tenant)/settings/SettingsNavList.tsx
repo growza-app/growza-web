@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import type { SettingsSummary } from '../lib/api';
 import { withBranch } from './SettingsBranchPicker';
@@ -35,12 +36,13 @@ function HeaderCard({ settings }: { settings: SettingsSummary }) {
 export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
   // Jira GRW-230 — moving between tabs keeps the branch that is picked.
   const branch = useSearchParams().get('branch');
+  const t = useTranslations('settingsHub');
   return (
     <>
       <HeaderCard settings={settings} />
       {SETTINGS_GROUPS.map((group) => (
-        <div className="settings-group" key={group.title}>
-          <div className="settings-group-title">{group.title}</div>
+        <div className="settings-group" key={group.key}>
+          <div className="settings-group-title">{t(`groups.${group.key}`)}</div>
           <div className="menu-list">
             {group.rows.filter((row) => !row.multiBranchOnly || settings.branchCount > 1).map((row) => {
               const Icon = row.icon;
@@ -48,39 +50,39 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
               // and would otherwise render as disabled with "Coming soon".
               if (row.action === 'logout') {
                 return (
-                  <SignOutButton key={row.label} className="settings-row settings-row-action">
+                  <SignOutButton key={row.key} className="settings-row settings-row-action">
                     <span className="settings-row-icon">
                       <Icon />
                     </span>
                     <div className="settings-row-body">
-                      <div className="settings-row-title">{row.label}</div>
-                      <div className="settings-row-sub">{row.sub}</div>
+                      <div className="settings-row-title">{t(`rows.${row.key}.label`)}</div>
+                      <div className="settings-row-sub">{t(`rows.${row.key}.sub`)}</div>
                     </div>
                   </SignOutButton>
                 );
               }
               if (!row.href) {
                 return (
-                  <div className="settings-row settings-row-disabled" key={row.label}>
+                  <div className="settings-row settings-row-disabled" key={row.key}>
                     <span className="settings-row-icon">
                       <Icon />
                     </span>
                     <div className="settings-row-body">
-                      <div className="settings-row-title">{row.label}</div>
-                      <div className="settings-row-sub">{row.sub}</div>
+                      <div className="settings-row-title">{t(`rows.${row.key}.label`)}</div>
+                      <div className="settings-row-sub">{t(`rows.${row.key}.sub`)}</div>
                     </div>
-                    <span className="settings-row-soon">Coming soon</span>
+                    <span className="settings-row-soon">{t('comingSoon')}</span>
                   </div>
                 );
               }
               return (
-                <a className="settings-row" href={withBranch(row.href, branch)} key={row.label}>
+                <a className="settings-row" href={withBranch(row.href, branch)} key={row.key}>
                   <span className="settings-row-icon">
                     <Icon />
                   </span>
                   <div className="settings-row-body">
-                    <div className="settings-row-title">{row.label}</div>
-                    <div className="settings-row-sub">{row.sub}</div>
+                    <div className="settings-row-title">{t(`rows.${row.key}.label`)}</div>
+                    <div className="settings-row-sub">{t(`rows.${row.key}.sub`)}</div>
                   </div>
                   <span className="settings-row-chev">
                     <IconChevronRight />

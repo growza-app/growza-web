@@ -784,18 +784,6 @@
       "{Resetting…}",
       "{Use business settings}"
     ],
-    "web/app/(tenant)/settings/SettingsBranchPicker.tsx": [
-      "All branches",
-      "Business defaults",
-      "This branch only",
-      "{All branches}"
-    ],
-    "web/app/(tenant)/settings/SettingsNavList.tsx": [
-      "Coming soon"
-    ],
-    "web/app/(tenant)/settings/SettingsShell.tsx": [
-      "Back to Settings"
-    ],
     "web/app/(tenant)/settings/booking/BookingRulesForm.tsx": [
       "Add",
       "Bookable times are shown every",
@@ -873,45 +861,6 @@
     "web/app/(tenant)/settings/branches/page.tsx": [
       "Could not load your branches — check the server is running."
     ],
-    "web/app/(tenant)/settings/layout.tsx": [
-      "subtitle=\"How your business and bookings work.\""
-    ],
-    "web/app/(tenant)/settings/nav-data.tsx": [
-      "label: \"Account\"",
-      "label: \"Appearance\"",
-      "label: \"Billing\"",
-      "label: \"Booking settings\"",
-      "label: \"Branches\"",
-      "label: \"Business profile\"",
-      "label: \"Cancellation policy\"",
-      "label: \"Log out\"",
-      "label: \"Notifications\"",
-      "label: \"Payments\"",
-      "label: \"Privacy\"",
-      "label: \"Report access\"",
-      "label: \"Team access\"",
-      "label: \"WhatsApp settings\"",
-      "label: \"Working hours\"",
-      "sub: \"Auto replies and notifications\"",
-      "sub: \"Data and privacy settings\"",
-      "sub: \"Invite people who can sign in\"",
-      "sub: \"Manage UPI and payouts\"",
-      "sub: \"Manage alerts and reminders\"",
-      "sub: \"Manage open hours and days\"",
-      "sub: \"Manage your account\"",
-      "sub: \"Name and address of each branch\"",
-      "sub: \"Name, address, contact details\"",
-      "sub: \"Plan, branches and bills\"",
-      "sub: \"Set rules for cancellations\"",
-      "sub: \"Sign out from this device\"",
-      "sub: \"Slot length, notice, horizon\"",
-      "sub: \"Theme, language\"",
-      "sub: \"Who else can see Reports\"",
-      "title: \"Account\"",
-      "title: \"Booking\"",
-      "title: \"Business\"",
-      "title: \"Preferences\""
-    ],
     "web/app/(tenant)/settings/notifications/RemindersForm.tsx": [
       "Send an automatic WhatsApp reminder before a booking.",
       "hours before the booking",
@@ -927,9 +876,6 @@
     ],
     "web/app/(tenant)/settings/notifications/page.tsx": [
       "Could not load settings — check the server is running."
-    ],
-    "web/app/(tenant)/settings/page.tsx": [
-      "Pick a section from the list to get started."
     ],
     "web/app/(tenant)/settings/profile/ProfileForm.tsx": [
       "About this branch",

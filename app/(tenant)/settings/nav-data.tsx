@@ -16,6 +16,24 @@ import {
   IconWhatsApp,
 } from '../components/icons';
 
+export type SettingsGroupKey = 'business' | 'booking' | 'preferences' | 'account';
+export type SettingsRowKey =
+  | 'profile'
+  | 'branches'
+  | 'workingHours'
+  | 'bookingSettings'
+  | 'payments'
+  | 'cancellationPolicy'
+  | 'whatsapp'
+  | 'notifications'
+  | 'appearance'
+  | 'privacy'
+  | 'reportAccess'
+  | 'teamAccess'
+  | 'billing'
+  | 'account'
+  | 'logOut';
+
 export interface SettingsRow {
   /** Present = a real, working page. Absent = shown but disabled — nothing exists to link to yet. */
   href?: string;
@@ -35,13 +53,14 @@ export interface SettingsRow {
    * screen with a single card would be the same form twice.
    */
   multiBranchOnly?: boolean;
-  label: string;
-  sub: string;
+  /** Names the row in `settingsHub.rows` — the words live in the message files, not here. */
+  key: SettingsRowKey;
   icon: ComponentType;
 }
 
 export interface SettingsGroup {
-  title: string;
+  /** Names the group in `settingsHub.groups`. */
+  key: SettingsGroupKey;
   rows: SettingsRow[];
 }
 
@@ -60,39 +79,39 @@ export interface SettingsGroup {
  */
 export const SETTINGS_GROUPS: SettingsGroup[] = [
   {
-    title: 'Business',
+    key: 'business',
     rows: [
-      { href: '/settings/profile', label: 'Business profile', sub: 'Name, address, contact details', icon: IconShop },
-      { href: '/settings/branches', label: 'Branches', sub: 'Name and address of each branch', icon: IconMapPin, multiBranchOnly: true },
-      { href: '/settings/working-hours', label: 'Working hours', sub: 'Manage open hours and days', icon: IconClock },
+      { href: '/settings/profile', key: 'profile', icon: IconShop },
+      { href: '/settings/branches', key: 'branches', icon: IconMapPin, multiBranchOnly: true },
+      { href: '/settings/working-hours', key: 'workingHours', icon: IconClock },
     ],
   },
   {
-    title: 'Booking',
+    key: 'booking',
     rows: [
-      { href: '/settings/booking', label: 'Booking settings', sub: 'Slot length, notice, horizon', icon: IconCalendarPlus },
-      { label: 'Payments', sub: 'Manage UPI and payouts', icon: IconWallet },
-      { href: '/settings/booking', label: 'Cancellation policy', sub: 'Set rules for cancellations', icon: IconShield },
-      { label: 'WhatsApp settings', sub: 'Auto replies and notifications', icon: IconWhatsApp },
+      { href: '/settings/booking', key: 'bookingSettings', icon: IconCalendarPlus },
+      { key: 'payments', icon: IconWallet },
+      { href: '/settings/booking', key: 'cancellationPolicy', icon: IconShield },
+      { key: 'whatsapp', icon: IconWhatsApp },
     ],
   },
   {
-    title: 'Preferences',
+    key: 'preferences',
     rows: [
-      { href: '/settings/notifications', label: 'Notifications', sub: 'Manage alerts and reminders', icon: IconBell },
-      { label: 'Appearance', sub: 'Theme, language', icon: IconPalette },
-      { label: 'Privacy', sub: 'Data and privacy settings', icon: IconLock },
+      { href: '/settings/notifications', key: 'notifications', icon: IconBell },
+      { key: 'appearance', icon: IconPalette },
+      { key: 'privacy', icon: IconLock },
     ],
   },
   {
-    title: 'Account',
+    key: 'account',
     rows: [
-      { href: '/settings/report-access', label: 'Report access', sub: 'Who else can see Reports', icon: IconReports },
-      { href: '/settings/team', label: 'Team access', sub: 'Invite people who can sign in', icon: IconUserPlus },
+      { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
+      { href: '/settings/team', key: 'teamAccess', icon: IconUserPlus },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
-      { href: '/settings/billing', label: 'Billing', sub: 'Plan, branches and bills', icon: IconWallet },
-      { label: 'Account', sub: 'Manage your account', icon: IconUser },
-      { label: 'Log out', sub: 'Sign out from this device', icon: IconLogout, action: 'logout' },
+      { href: '/settings/billing', key: 'billing', icon: IconWallet },
+      { key: 'account', icon: IconUser },
+      { key: 'logOut', icon: IconLogout, action: 'logout' },
     ],
   },
 ];
