@@ -1,12 +1,18 @@
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
+import { loadErrorKind } from '../../lib/load-error';
 import { BranchesForm } from './BranchesForm';
 
 export const dynamic = 'force-dynamic';
 
 export default async function BranchesPage() {
-  const data = await api.branchSettings().catch(() => null);
-  if (!data) return <div className="banner">Could not load your branches — check the server is running.</div>;
+  let data;
+  try {
+    data = await api.branchSettings();
+  } catch (error) {
+    return <LoadErrorBanner kind={loadErrorKind(error)} />;
+  }
   return <BranchesForm initial={data.branches} />;
 }
 

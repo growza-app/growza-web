@@ -756,45 +756,6 @@
       "{Upload}",
       "{· +${…} cleanup}"
     ],
-    "web/app/(tenant)/settings/branches/BranchActionDialog.tsx": [
-      "). Nothing to approve.",
-      "Cancel",
-      "Why?",
-      "Your bill goes down from",
-      "a month (now",
-      "placeholder=\"For example: lease ended\"",
-      "placeholder=\"For example: the new flagship\"",
-      "setError(\"Could not save — check the server is running.\")",
-      "setError(\"Say why.\")",
-      "{Close branch}",
-      "{It disappears from your branches, the booking sheet and Home. Its past bookings stay in Reports. To open it again later, ask Growza support.}",
-      "{It moves to the top of your branches, and Business profile edits its address and phone. Nothing else about your other branches changes.}",
-      "{Make main}",
-      "{Working…}"
-    ],
-    "web/app/(tenant)/settings/branches/BranchesForm.tsx": [
-      "Address",
-      "Branch name",
-      "Branches",
-      "City",
-      "Close branch",
-      "Main",
-      "Make main",
-      "Saved",
-      "To add a branch, or open a closed one again, contact Growza support.",
-      "Your",
-      "branches. Opening hours are the same for all of them — change them in Working hours.",
-      "placeholder=\"Shop number, street, area\"",
-      "setError(\"Could not save — check the server is running.\")",
-      "{${…} staff}",
-      "{1 staff member}",
-      "{Save branch}",
-      "{Saving…}",
-      "{Unsaved changes}"
-    ],
-    "web/app/(tenant)/settings/branches/page.tsx": [
-      "Could not load your branches — check the server is running."
-    ],
     "web/app/(tenant)/settings/team/TeamAccessPanel.tsx": [
       ". It is shown only now — we do not keep a copy.",
       "Cancel",

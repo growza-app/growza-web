@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, api, type BranchClosePreview } from '../../lib/api';
 import { useDialog } from '../../../shared/a11y/useDialog';
@@ -24,6 +25,8 @@ export function BranchActionDialog({
   onDone: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations('settingsBranches');
+  const locale = `${useLocale()}-IN`;
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,15 +41,15 @@ export function BranchActionDialog({
   }, [action, branch.id]);
 
   const money = (currency: string, minor: number) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
   const day = (iso: string) => {
     const [y, m, d] = iso.split('-').map(Number);
-    return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+    return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
   };
 
   const submit = async () => {
     if (!reason.trim()) {
-      setError('Say why.');
+      setError(t('dialog.sayWhy'));
       return;
     }
     setBusy(true);
@@ -56,31 +59,32 @@ export function BranchActionDialog({
       else await api.makeMainBranch(branch.id, reason.trim());
       onDone();
     } catch (e) {
-      setError(e instanceof ApiError || e instanceof Error ? e.message : 'Could not save — check the server is running.');
+      setError(e instanceof ApiError || e instanceof Error ? e.message : t('errors.saveFailed'));
       setBusy(false);
     }
   };
 
-  const title = action === 'close' ? `Close ${branch.name}?` : `Make ${branch.name} your main branch?`;
+  const title = action === 'close' ? t('dialog.closeTitle', { name: branch.name }) : t('dialog.makeMainTitle', { name: branch.name });
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onCancel}>
       <div className="modal modal-fit confirm-modal" role="dialog" aria-modal="true" aria-label={title} ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <h3>{title}</h3>
         <div className="modal-body">
           <p className="confirm-body">
-            {action === 'close'
-              ? `It disappears from your branches, the booking sheet and Home. Its past bookings stay in Reports. To open it again later, ask Growza support.`
-              : `It moves to the top of your branches, and Business profile edits its address and phone. Nothing else about your other branches changes.`}
+            {action === 'close' ? t('dialog.closeBody') : t('dialog.makeMainBody')}
           </p>
           {action === 'close' && preview?.subscription && preview.differenceMinor !== 0 ? (
             <p className="confirm-detail" data-testid="branch-close-bill">
-              Your bill goes down from {day(preview.effectiveFrom)}: {money(preview.currency, preview.monthlyAfterMinor)} a month (now{' '}
-              {money(preview.currency, preview.monthlyBeforeMinor)}). Nothing to approve.
+              {t('dialog.billDown', {
+                date: day(preview.effectiveFrom),
+                after: money(preview.currency, preview.monthlyAfterMinor),
+                before: money(preview.currency, preview.monthlyBeforeMinor),
+              })}
             </p>
           ) : null}
           <div className="field" style={{ marginTop: 12 }}>
             <label htmlFor={`branch-${action}-reason`}>
-              <span>Why?</span>
+              <span>{t('dialog.why')}</span>
             </label>
             <textarea
               id={`branch-${action}-reason`}
@@ -92,7 +96,7 @@ export function BranchActionDialog({
                 setReason(e.target.value);
                 setError(null);
               }}
-              placeholder={action === 'close' ? 'For example: lease ended' : 'For example: the new flagship'}
+              placeholder={action === 'close' ? t('dialog.whyClosePlaceholder') : t('dialog.whyMakeMainPlaceholder')}
             />
           </div>
           {error ? (
@@ -103,10 +107,10 @@ export function BranchActionDialog({
         </div>
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
-            Cancel
+            {t('dialog.cancel')}
           </button>
           <button type="button" className={`btn ${action === 'close' ? 'btn-danger-solid' : ''}`} disabled={busy} onClick={() => void submit()}>
-            {busy ? 'Working…' : action === 'close' ? 'Close branch' : 'Make main'}
+            {busy ? t('dialog.working') : action === 'close' ? t('closeBranch') : t('makeMain')}
           </button>
         </div>
       </div>

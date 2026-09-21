@@ -482,5 +482,41 @@
     "errors": {
       "saveFailed": "Could not save — check the server is running."
     }
+  },
+  "settingsBranches": {
+    "title": "Branches",
+    "intro": "Your {count} branches. Opening hours are the same for all of them — change them in Working hours.",
+    "foot": "To add a branch, or open a closed one again, contact Growza support.",
+    "main": "Main",
+    "staff": "{count, plural, one {# staff member} other {# staff}}",
+    "makeMain": "Make main",
+    "closeBranch": "Close branch",
+    "fields": {
+      "branchName": "Branch name",
+      "city": "City",
+      "address": "Address"
+    },
+    "addressPlaceholder": "Shop number, street, area",
+    "nameEmpty": "Branch name cannot be empty",
+    "unsaved": "Unsaved changes",
+    "saved": "Saved",
+    "saving": "Saving…",
+    "saveBranch": "Save branch",
+    "errors": {
+      "saveFailed": "Could not save — check the server is running."
+    },
+    "dialog": {
+      "closeTitle": "Close {name}?",
+      "makeMainTitle": "Make {name} your main branch?",
+      "closeBody": "It disappears from your branches, the booking sheet and Home. Its past bookings stay in Reports. To open it again later, ask Growza support.",
+      "makeMainBody": "It moves to the top of your branches, and Business profile edits its address and phone. Nothing else about your other branches changes.",
+      "billDown": "Your bill goes down from {date}: {after} a month (now {before}). Nothing to approve.",
+      "why": "Why?",
+      "whyClosePlaceholder": "For example: lease ended",
+      "whyMakeMainPlaceholder": "For example: the new flagship",
+      "sayWhy": "Say why.",
+      "cancel": "Cancel",
+      "working": "Working…"
+    }
   }
 }
