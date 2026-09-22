@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_PAGE_SIZE } from '../../../../src/platform/paging.js';
+import { MAX_PAGE_SIZE } from '@growza/shared';
 import {
   DEFAULT_PAGE_SIZE,
   INITIAL_PAGING,

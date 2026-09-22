@@ -18,7 +18,7 @@ import {
   type TableColumn,
   type TableLayout,
 } from './table-layout';
-import { ADMIN_ROUTES, ADMIN_TABLE_FOLDS, ADMIN_VIEWPORT_SIZES } from '../../../../test/devices/matrix';
+import { ADMIN_ROUTES, ADMIN_TABLE_FOLDS, ADMIN_VIEWPORT_SIZES } from '../../../../e2e/matrix';
 
 /**
  * Jira GRW-288 — every column of every admin list table is visible, without a

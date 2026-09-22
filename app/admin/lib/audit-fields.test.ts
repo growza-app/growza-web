@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fieldLabel, renderDiffField } from './audit-fields';
 import { KNOWN_ACTIONS } from '../components/AuditLogList';
-import { AUDIT_ACTIONS } from '../../../../src/platform/ports/audit';
+import { AUDIT_ACTIONS } from '@growza/shared';
 
 describe('renderDiffField', () => {
   // The exact case the story calls out: minor units misread as major ones.

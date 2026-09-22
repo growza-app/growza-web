@@ -22,6 +22,7 @@ web/node_modules
 coverage
 uploads
 dist
+shared/dist
 *.log
 *.tsbuildinfo
 

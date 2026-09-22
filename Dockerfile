@@ -17,6 +17,8 @@ FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY web/package.json web/package.json
+# Jira GRW-370 — @growza/shared is a workspace the dashboard imports.
+COPY shared/package.json shared/package.json
 RUN npm ci
 
 # ---- build: next build -> .next/standalone ----
@@ -27,6 +29,7 @@ WORKDIR /app
 # Copying a directory that does not exist fails the build at cache-key time.
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
+COPY shared ./shared
 COPY web ./web
 
 # API_URL is BAKED IN HERE, not read at runtime.
@@ -42,7 +45,8 @@ COPY web ./web
 # with a new environment variable will not do it.
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV API_URL=http://api:3001
-RUN npm run build --workspace=@whatsapp-booking/web
+# Builds shared/dist first, then the dashboard (see package.json `build:web`).
+RUN npm run build:web
 
 # ---- runtime: the standalone server and nothing else ----
 FROM node:22-slim AS runtime
