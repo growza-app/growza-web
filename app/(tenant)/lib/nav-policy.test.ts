@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { canSee, canSeeRevenue, homeKind, visibleItems } from './nav-policy';
 // GRW-171 — the API's allowlist as a VALUE. Previously regexed out of the
 // source file, which broke the moment that file moved into src/api/security/.
-// Jira GRW-370 — read from @growza/shared, the one place both sides may import.
-import { STAFF_ALLOWED } from '@growza/shared';
+// Jira GRW-370 — read from @growza-app/shared, the one place both sides may import.
+import { STAFF_ALLOWED } from '@growza-app/shared';
 
 /**
  * Jira GRW-66 · GRW-157 — the dashboard offers a stylist what they can use.

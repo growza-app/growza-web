@@ -17,7 +17,7 @@ FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY web/package.json web/package.json
-# Jira GRW-370 — @growza/shared is a workspace the dashboard imports.
+# Jira GRW-370 — @growza-app/shared is a workspace the dashboard imports.
 COPY shared/package.json shared/package.json
 RUN npm ci
 
