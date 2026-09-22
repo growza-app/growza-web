@@ -58,6 +58,7 @@ export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
+import type { CatalogSearchHit } from './service-search';
 import { localiseApiMessage } from './api-messages';
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
@@ -354,6 +355,12 @@ export const api = {
   bills: (page = 1) => get<OwnerBillPage>(`/api/v1/billing/invoices?page=${page}`),
   bill: (id: string) => get<OwnerBill>(`/api/v1/billing/invoices/${encodeURIComponent(id)}`),
   services: () => get<Service[]>('/api/v1/services'),
+  /**
+   * Jira GRW-367 — typo-tolerant service/combo search for the walk-in sheet.
+   * 503 means search is off or down; the caller falls back to its own filter.
+   */
+  searchCatalog: (q: string, signal?: AbortSignal) =>
+    get<{ hits: CatalogSearchHit[] }>(`/api/v1/catalog/search?q=${encodeURIComponent(q)}`, signal),
   providers: () => get<Provider[]>('/api/v1/providers'),
   /**
    * GRW-170 — the register for a day or a range, including everybody nobody

@@ -41,6 +41,7 @@ import {
   type Provider,
   type Service,
 } from '../lib/api';
+import { normaliseTerm, REMOTE_MIN_CHARS, resolveServiceSearch, type RemoteSearch } from '../lib/service-search';
 import { useLabel } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { PhoneField } from './PhoneField';
@@ -432,21 +433,43 @@ export function NewVisitSheet({
 
   const serviceById = useMemo(() => new Map((services ?? []).map((s) => [s.id, s])), [services]);
 
-  const filteredServices = useMemo(() => {
-    if (!services) return [];
-    const q = serviceTerm.trim().toLowerCase();
-    const pool = q ? services.filter((s) => s.name.toLowerCase().includes(q)) : services;
-    return pool.slice(0, q ? 20 : 6);
-  }, [services, serviceTerm]);
-
   /** Combos only — an offer with no fixed price is an announcement, not something to book. */
   const combos = useMemo(() => (offers ?? []).filter((o) => o.serviceIds.length > 0), [offers]);
 
-  /** Jira GRW-290 — the search bar finds combos too, not only the chips under an empty search. */
-  const matchingCombos = useMemo(() => {
-    const q = serviceTerm.trim().toLowerCase();
-    return q ? combos.filter((o) => o.title.toLowerCase().includes(q)) : [];
-  }, [combos, serviceTerm]);
+  /**
+   * Jira GRW-367 · GRW-288 — typo-tolerant search. Reception types "phacial";
+   * the server (OpenSearch) answers "Facial". Debounced, and a reply is only
+   * used for the term it answers, so a slow "fa" never overwrites "facial".
+   *
+   * Once the server says search is unavailable (503), this sheet stops asking
+   * and uses the substring filter below — search being off must never cost a
+   * request per keystroke, let alone an error on screen.
+   */
+  const [remoteSearch, setRemoteSearch] = useState<RemoteSearch | null>(null);
+  const searchOffRef = useRef(false);
+  useEffect(() => {
+    const q = normaliseTerm(serviceTerm);
+    if (searchOffRef.current || q.length < REMOTE_MIN_CHARS) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      api
+        .searchCatalog(q, controller.signal)
+        .then(({ hits }) => setRemoteSearch({ term: q, hits }))
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return;
+          if (error instanceof ApiError && error.status === 503) searchOffRef.current = true;
+        });
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [serviceTerm]);
+
+  const { services: filteredServices, combos: matchingCombos } = useMemo(
+    () => resolveServiceSearch({ services: services ?? [], combos, term: serviceTerm, remote: remoteSearch }),
+    [services, combos, serviceTerm, remoteSearch],
+  );
 
   const toItem = (s: Service): PickedItem => ({
     serviceId: s.id,

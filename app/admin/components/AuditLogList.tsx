@@ -88,6 +88,8 @@ export const KNOWN_ACTIONS = [
   // has no human actor: it arrives on a webhook.
   'subscription.mandate_requested',
   'subscription.mandate_state_change',
+  // Jira GRW-367 — an administrator rebuilt the catalogue search index.
+  'search.reindex',
 ] as const;
 
 interface AuditLogRow {
