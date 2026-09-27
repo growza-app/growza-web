@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+import { refreshAdminSession } from '../lib/refresh';
 import { readAdminSession } from '../lib/session';
 import { AdminShell } from './AdminShell';
 import { SessionRefresh } from './SessionRefresh';
@@ -34,11 +35,34 @@ export function SessionGate({ children }: { children: ReactNode }) {
       setReady(true);
       return;
     }
-    if (!readAdminSession()) {
-      router.replace(LOGIN_PATH);
+    if (readAdminSession()) {
+      setReady(true);
       return;
     }
-    setReady(true);
+
+    /**
+     * Jira GRW-417 — no readable session is not the same as no session.
+     *
+     * `readAdminSession()` returns null for an EXPIRED token as well as a
+     * missing one, and clears it on the way out. Until this, that meant an
+     * admin who reloaded the tab an hour after signing in — or came back to
+     * one their laptop had slept through — was sent to `/admin/login` while a
+     * perfectly good refresh cookie sat in the browser unused. That is the
+     * logout this ticket was opened about, and the background poller alone
+     * does not close it: it only ever runs in a tab that stayed awake.
+     *
+     * Nothing is rendered while this is in flight, which is the same blank the
+     * redirect case already showed.
+     */
+    let cancelled = false;
+    void refreshAdminSession().then((outcome) => {
+      if (cancelled) return;
+      if (outcome.status === 'renewed') setReady(true);
+      else router.replace(LOGIN_PATH);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [isLoginPage, pathname, router]);
 
   if (isLoginPage) return <>{children}</>;
