@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { readAdminSession } from '../lib/session';
 import { AdminShell } from './AdminShell';
+import { SessionRefresh } from './SessionRefresh';
 
 const LOGIN_PATH = '/admin/login';
 
@@ -44,5 +45,11 @@ export function SessionGate({ children }: { children: ReactNode }) {
   // Nothing rendered while the redirect resolves — avoids a flash of the
   // sidebar shell for a visitor about to be sent to /admin/login anyway.
   if (!ready) return null;
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <>
+      {/* Jira GRW-417 — only mounted once there is a session for it to renew. */}
+      <SessionRefresh />
+      <AdminShell>{children}</AdminShell>
+    </>
+  );
 }
