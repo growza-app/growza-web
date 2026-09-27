@@ -514,3 +514,44 @@
 .create-offer-menu > .btn {
   white-space: nowrap;
 }
+
+/* Jira GRW-381 — which branch runs an offer, on "All branches". */
+.offer-branch-chip {
+  padding: 2px 9px;
+  font-size: 12px;
+  background: var(--slate-soft);
+  color: #5b6660;
+}
+
+/* Jira GRW-381 — where a new offer runs, in the combo builder and the offer modal. */
+.offer-branch-field {
+  margin-top: 16px;
+}
+
+.offer-branch-field select {
+  width: 100%;
+}
+
+.offer-branch-field .offer-branch-all {
+  display: flex;
+  align-items: center;
+  /* Not the form's usual label row, which spreads a label and its counter apart. */
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 10px 0 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.offer-branch-field .offer-branch-all input {
+  width: auto;
+  margin: 0;
+}
+
+.offer-published .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}

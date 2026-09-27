@@ -104,9 +104,10 @@ export default async function DashboardPage() {
   }
 
   if (kind === 'reception') {
-    const [appointments, queue, providers] = await Promise.all([soft(api.appointments()), soft(api.walkInQueue()), soft(api.providers())]);
+    // Jira GRW-404 — the day's tokens are the desk's Home (a pinned desk is sent its own branch's only).
+    const [appointments, board, providers] = await Promise.all([soft(api.appointments()), soft(api.tokensToday()), soft(api.providers())]);
     // Jira GRW-237 — a receptionist with a branch sees that branch's name, not the main one's.
-    return <ReceptionHome {...common} locationName={me.member?.locationName ?? me.tenant?.locationName ?? null} appointments={appointments} queue={queue} providers={providers ?? []} />;
+    return <ReceptionHome {...common} locationName={me.member?.locationName ?? me.tenant?.locationName ?? null} appointments={appointments} board={board} providers={providers ?? []} />;
   }
 
   // Owner and manager. `canSeeRevenue` is asserted rather than assumed: this is
@@ -114,14 +115,24 @@ export default async function DashboardPage() {
   // branch by default should fail loudly here, not quietly show money.
   if (!canSeeRevenue(role)) throw new Error(`Home: role ${role} reached the owner's Home`);
 
-  const [overview, stats, register] = await Promise.all([
+  /*
+   * Jira GRW-351 — everything the whole business has; Home narrows it to the branch it shows, which it only learns
+   * in the browser (the pick is kept there).
+   *
+   * - The walk-in queue, for Right now.
+   * - Today's visits AND tomorrow's, always. After closing the list that matters is tomorrow's (FR-09), but whether
+   *   the branch Home shows has closed is decided by that branch's hours — and a branch may close before the
+   *   business does. Right now still needs today's after closing: a visit running over at closing time stays an
+   *   alert until it hands over to "Not marked done yet".
+   */
+  const [overview, stats, register, queue, appointments, tomorrowAppointments] = await Promise.all([
     soft(api.home('today')) as Promise<HomeOverview | null>,
     soft(api.customerStats()) as Promise<CustomerStats | null>,
     soft(api.attendance(today.toISODate()!)),
+    soft(api.walkInQueue()),
+    soft(api.appointments()) as Promise<Appointment[] | null>,
+    soft(api.appointments(today.plus({ days: 1 }).toISODate()!)) as Promise<Appointment[] | null>,
   ]);
-  // After closing, the list that matters is tomorrow's (FR-09).
-  const listIsTomorrow = overview?.hoursToday.afterClose ?? false;
-  const appointments: Appointment[] | null = await soft(api.appointments(listIsTomorrow ? today.plus({ days: 1 }).toISODate()! : undefined));
 
   return (
     <OwnerHome
@@ -133,9 +144,12 @@ export default async function DashboardPage() {
       whatsappDemo={me.whatsapp?.demo ?? false}
       initial={overview}
       appointments={appointments}
-      listIsTomorrow={listIsTomorrow}
+      tomorrowAppointments={tomorrowAppointments}
       customerStats={stats}
       staffNotMarkedIn={notMarkedIn(register)}
+      autopayRenewal={me.autopayRenewal ?? null}
+      canPayOnline={me.payments?.online ?? false}
+      queue={queue}
     />
   );
 }

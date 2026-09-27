@@ -11,7 +11,18 @@ import { AutoPayCard } from './AutoPayCard';
  * generator's own pricing (GRW-161). No GST on the owner's screens (owner
  * decision, 2026-09-14) — it stays on the invoice and in the admin portal.
  */
-export function BillingSummary({ billing, lang, canPayOnline }: { billing: OwnerBilling; lang: Lang; canPayOnline: boolean }) {
+export function BillingSummary({
+  billing,
+  lang,
+  canPayOnline,
+  onAccountText = null,
+}: {
+  billing: OwnerBilling;
+  lang: Lang;
+  canPayOnline: boolean;
+  /** Jira GRW-407 — "₹299 is on your account…", already in the owner's language; null when nothing is. */
+  onAccountText?: string | null;
+}) {
   const t = billingCopy(lang);
   const sub = billing.subscription;
   const currency = sub?.currency ?? 'INR';
@@ -73,7 +84,13 @@ export function BillingSummary({ billing, lang, canPayOnline }: { billing: Owner
               </div>
               <p className="bill-paid-by">
                 <strong>{t.paidBy}:</strong>{' '}
-                {sub.paidBy === 'autopay' ? t.paidAutopay : sub.paidBy === 'online_link' ? t.paidOnline : t.paidOffline}
+                {sub.paidBy === 'autopay'
+                  ? t.paidAutopay
+                  : sub.paidBy === 'autopay_halted'
+                    ? t.paidAutopayHalted
+                    : sub.paidBy === 'online_link'
+                      ? t.paidOnline
+                      : t.paidOffline}
               </p>
             </>
           )}
@@ -94,11 +111,27 @@ export function BillingSummary({ billing, lang, canPayOnline }: { billing: Owner
                 <span>{t.amount}</span>
                 <span>{money(sub.nextBill.amountMinor)}</span>
               </div>
+              {onAccountText ? (
+                <p className="bill-change" role="note" data-testid="on-account">
+                  {onAccountText}
+                </p>
+              ) : null}
             </section>
           ) : null}
 
           {/* Jira GRW-241 — under the next bill, because that is the number it collects. */}
-          {sub ? <AutoPayCard autopay={sub.autopay} paidBy={sub.paidBy} currency={currency} lang={lang} /> : null}
+          {sub ? (
+            <AutoPayCard
+              autopay={sub.autopay}
+              paidBy={sub.paidBy}
+              currency={currency}
+              lang={lang}
+              renewal={sub.autopayRenewal}
+              canPayOnline={canPayOnline}
+              /* Jira GRW-413 — a halted AutoPay asks for "this bill" only when there is one. */
+              billDue={billing.due !== null}
+            />
+          ) : null}
 
           <section className="card bill-card" aria-labelledby="bill-history">
             <h3 id="bill-history" className="bill-card-title bill-card-title-row">

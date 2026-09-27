@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
  * same person, and are not the same thing — a receptionist logs in and is never
  * booked, and a visiting stylist is booked and never logs in.
  */
-export default async function TeamSettingsPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+export default async function TeamSettingsPage() {
   /**
    * The roster comes with the invites (GRW-171): a `staff` invite has to name
    * WHICH stylist the person is, and the picker cannot offer a list it does
@@ -23,20 +23,19 @@ export default async function TeamSettingsPage({ searchParams }: { searchParams:
    * receptionist, who needs no provider — so it degrades to an empty list
    * rather than taking the screen down with it.
    */
-  const [initial, providers, settings, members, me, { branch }] = await Promise.all([
+  const [initial, providers, settings, members, me] = await Promise.all([
     // Kept as a result, not swallowed: a busy API (429) and a down one are told apart in the banner below.
     api.teamInvites().then((ok) => ({ ok }), (error: unknown) => ({ error })),
     api.providers().catch(() => []),
     api.settings().catch(() => null),
     api.teamMembers().catch(() => null),
     api.me().catch(() => null),
-    searchParams,
   ]);
   if ('error' in initial) return <LoadErrorBanner kind={loadErrorKind(initial.error)} />;
   return (
     <>
       {/* Jira GRW-230 — invites are for the whole business; Jira GRW-237 — a receptionist's branch is chosen on the invite. */}
-      {branch && settings ? <BranchScopeNote settings={settings} branchName={null} sameForAll topic="teamAccess" /> : null}
+      {settings ? <BranchScopeNote settings={settings} branchName={null} sameForAll topic="teamAccess" /> : null}
       <TeamAccessPanel
         initial={initial.ok.invites}
         providers={providers}

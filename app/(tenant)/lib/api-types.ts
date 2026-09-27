@@ -22,7 +22,23 @@ export interface Me {
    * not be resolved — the dashboard shows no banner rather than a false
    * reassurance or a false warning.
    */
-  billing: { status: string; message: string | null } | null;
+  billing: {
+    status: string;
+    message: string | null;
+    /**
+     * Jira GRW-413 — AutoPay has halted, and the two things that recover it are
+     * the owner's to do: re-approve it, or pay the open bill. The warning names
+     * them, because nothing Growza does will collect this money on its own.
+     * False when this deployment cannot take money online at all.
+     */
+    autopayHalted?: boolean;
+  } | null;
+  /**
+   * Jira GRW-242 — owner only: the next bill has outgrown the AutoPay amount
+   * they approved, and they are asked to approve the new one before the
+   * billing date. Null for every other role, and when nothing is asked.
+   */
+  autopayRenewal?: AutopayRenewal | null;
   labels: Record<string, string>;
   /**
    * Jira GRW-66 · GRW-157 — who is signed in.
@@ -111,6 +127,8 @@ export interface Service {
   currency: string;
   /** Null until a real photo is uploaded — see servicePhotoUrl() for the local-placeholder fallback. */
   imageUrl: string | null;
+  /** Jira GRW-378 · GRW-379 — the one branch this service is sold at. */
+  locationId: string;
 }
 
 /** A catalogue row as the Services screen edits it — Service plus the fields booking flows never need. */
@@ -206,6 +224,8 @@ export interface ProviderOverviewRow {
 export interface ProvidersOverview {
   providers: ProviderOverviewRow[];
   topPerformer: { id: string; displayName: string; bookingsCount: number } | null;
+  /** Jira GRW-395 — each branch's own top performer, by branch id; a branch with no bookings is absent. */
+  topByBranch?: Record<string, { id: string; displayName: string; bookingsCount: number }>;
 }
 
 export interface ProviderWorkingHourRow {
@@ -283,6 +303,8 @@ export interface Appointment {
   comboPriceMinor: string | null;
   /** Jira GRW-222 — the branch this visit is at. Optional so an older API does not break the list. */
   locationId?: string;
+  /** Jira GRW-405 — booked ahead, not a walk-in recorded as it happened. Optional for an older API. */
+  bookedAhead?: boolean;
 }
 
 export interface SettingsSummary {
@@ -407,6 +429,8 @@ export interface ChatState {
 
 export interface Offer {
   id: string;
+  /** Jira GRW-381 — the one branch this offer runs at. */
+  locationId?: string;
   title: string;
   description: string | null;
   active: boolean;
@@ -425,6 +449,10 @@ export interface Offer {
 }
 
 export interface OfferInput {
+  /** Jira GRW-381 — the branch it runs at (create only); absent is the branch of its services, else the main one. */
+  locationId?: string;
+  /** Jira GRW-381 — also publish a copy at every other branch whose menu has its services (create only). */
+  allBranches?: boolean;
   title: string;
   description?: string | null;
   active?: boolean;
@@ -435,11 +463,19 @@ export interface OfferInput {
   visibleUntil?: string | null;
 }
 
+/** Jira GRW-381 — a created offer, and with "all branches", where its copies went and which branches were skipped. */
+export interface CreatedOffer extends Offer {
+  published?: Array<{ locationId: string; name: string; offerId: string }>;
+  skipped?: Array<{ locationId: string; name: string; missing: string[] }>;
+}
+
 export interface Customer {
   id: string;
   name: string | null;
   /** GRW-199 — NULL for a client recorded at the desk who gave no number. */
   waPhone: string | null;
+  /** Jira GRW-392 — the branch this client belongs to. Optional so an older API does not break the list. */
+  locationId?: string;
   optIn: boolean;
   firstSeenAt: string | null;
   totalBookings: number;
@@ -479,11 +515,14 @@ export type AppointmentStatus = 'confirmed' | 'completed' | 'cancelled' | 'no_sh
 
 export interface SearchResult {
   // GRW-199 — a client may have no number; both shapes below carry that.
-  customers: Array<{ id: string; name: string | null; phone: string | null; visitCount: number }>;
+  // Jira GRW-393 — `branchName`: the same person can be a client of two branches.
+  customers: Array<{ id: string; name: string | null; phone: string | null; visitCount: number; locationId: string; branchName: string }>;
   bookings: Array<{
     id: string;
     startAt: string;
     status: AppointmentStatus;
+    locationId: string;
+    branchName: string;
     customerName: string | null;
     customerPhone: string | null;
     serviceName: string;
@@ -640,8 +679,12 @@ export interface OwnerBilling {
     branches: Array<{ id: string; name: string; included: boolean; amountMinor: number }>;
     discount: null | { amountMinor: number; reason: string | null; endsAt: string | null };
     nextBill: { date: string; amountMinor: number };
-    /** Jira GRW-241 — `autopay` outranks `online_link`: a live mandate is not asked to pay a link. */
-    paidBy: 'autopay' | 'online_link' | 'offline';
+    /**
+     * Jira GRW-241 — `autopay` outranks `online_link`: a live mandate is not asked to pay a link.
+     * Jira GRW-413 — `autopay_halted`: AutoPay exists and has stopped collecting, so the screen
+     * asks for a re-approval or a payment rather than saying the bill is collected on its own.
+     */
+    paidBy: 'autopay' | 'autopay_halted' | 'online_link' | 'offline';
     /** The standing permission, or null when there has never been one — which is not the same as `cancelled`. */
     autopay: null | {
       status: 'pending' | 'active' | 'paused' | 'cancelled' | 'failed';
@@ -650,10 +693,14 @@ export interface OwnerBilling {
       /** Present only while `pending`: the page where the owner finishes approving. */
       approvalUrl: string | null;
     };
+    /** Jira GRW-242 — the next bill is not what AutoPay takes: `up` is asked (with a date), `down` only offered. */
+    autopayRenewal: AutopayRenewal | null;
     pendingChange: null | { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number };
   };
   invoices: Array<{ id: string; invoiceNumber: string; periodStart: string; periodEnd: string; amountMinor: number; paymentStatus: string; unpaid: boolean }>;
   due: null | { invoiceNumber: string };
+  /** Jira GRW-407 — money received that no bill has taken yet; taken off the next one. */
+  onAccountMinor?: number;
 }
 
 /** Jira GRW-241 — what starting UPI AutoPay hands back: a page to approve on, never a permission already given. */
@@ -663,6 +710,27 @@ export interface AutopayStart {
   currency: string;
   /** True when this is the page from an earlier, unfinished attempt rather than a new mandate. */
   resumed: boolean;
+  /** Jira GRW-242 — true when this approves a NEW amount for AutoPay that is already on. */
+  renewal?: boolean;
+}
+
+/**
+ * Jira GRW-242 — the next bill is not what AutoPay takes. Money in minor units.
+ * `stage` is how close the billing date is: `early` (more than a week), `week`,
+ * `soon` (3 days or fewer), `last` (the last day).
+ */
+export interface AutopayRenewal {
+  direction: 'up' | 'down';
+  fromAmountMinor: number;
+  toAmountMinor: number;
+  currency: string;
+  dueDate: string;
+  daysLeft: number;
+  stage: 'early' | 'week' | 'soon' | 'last';
+  /** The bill just raised was only part-paid by AutoPay, because the new amount was not approved in time. */
+  missedLastBill: boolean;
+  /** The page to finish approving on, once they have started; otherwise null. */
+  approvalUrl: string | null;
 }
 
 /** Jira GRW-254 — the owner's bills: plan amounts only, no tax fields. */
@@ -691,4 +759,6 @@ export interface OwnerBill extends Omit<OwnerBillRow, never> {
   branchAddonMinor: number;
   branchAmountMinor: number;
   discountAmountMinor: number;
+  /** Jira GRW-407 — the payments put against this bill. */
+  payments?: Array<{ amountMinor: number; refundedMinor: number; via: 'autopay' | 'pay_now' | 'recorded'; paidOn: string | null; fromAccount: boolean }>;
 }

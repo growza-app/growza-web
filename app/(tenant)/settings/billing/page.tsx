@@ -3,6 +3,7 @@ import { api } from '../../lib/api';
 import { serverLang } from '../../lib/lang';
 import { billingCopy } from '../../lib/billing-copy';
 import { BillingSummary } from './BillingSummary';
+import { getTranslations } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,20 @@ export default async function BillingSettingsPage() {
   const lang = await serverLang();
   const [billing, me] = await Promise.all([api.billing().catch(() => null), api.me().catch(() => null)]);
   if (!billing) return <div className="banner">{billingCopy(lang).loadError}</div>;
-  return <BillingSummary billing={billing} lang={lang} canPayOnline={me?.payments?.online ?? false} />;
+  // Jira GRW-407 — money received that no bill has taken yet, said in the owner's language.
+  const tm = await getTranslations('billingMoney');
+  const onAccount = billing.onAccountMinor ?? 0;
+  const onAccountText =
+    onAccount > 0
+      ? tm('onAccount', {
+          amount: new Intl.NumberFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', {
+            style: 'currency',
+            currency: billing.subscription?.currency ?? 'INR',
+            maximumFractionDigits: onAccount % 100 === 0 ? 0 : 2,
+          }).format(onAccount / 100),
+        })
+      : null;
+  return <BillingSummary billing={billing} lang={lang} canPayOnline={me?.payments?.online ?? false} onAccountText={onAccountText} />;
 }
 
 // Jira GRW-192 — the tab says which screen this is.

@@ -28,8 +28,12 @@ describe('loadErrorKind', () => {
     expect(loadErrorKind(apiError(status))).toBe('down');
   });
 
-  it.each([400, 401, 403, 404])('keeps a %i as down — only 429 is singled out', (status) => {
+  it.each([400, 401, 404])('keeps a %i as down — only 429 and 403 are singled out', (status) => {
     expect(loadErrorKind(apiError(status))).toBe('down');
+  });
+
+  it('calls a 403 forbidden, not down: the server answered, and said this role may not see it (GRW-395 QA)', () => {
+    expect(loadErrorKind(apiError(403))).toBe('forbidden');
   });
 
   it('keeps a network failure as down', () => {

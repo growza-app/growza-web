@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { withBranch } from './SettingsBranchPicker';
+import { withBranch } from './branch-link';
 import type { ReactNode } from 'react';
 import type { SettingsSummary } from '../lib/api';
 import { IconArrowLeft } from '../components/icons';
@@ -23,7 +23,10 @@ export function SettingsShell({ settings, children }: { settings: SettingsSummar
   const branch = useSearchParams().get('branch');
 
   return (
-    <div className="settings-shell">
+    /* Jira GRW-229 — `settings-hub` marks the one route where the LIST is the screen, so the phone
+       rules in 85-settings-fit.css can tighten that screen without touching a form's own layout.
+       A class rather than a `:has()` chain: the shell already knows which route it is on. */
+    <div className={`settings-shell ${isHub ? 'settings-hub' : ''}`}>
       <div className={`settings-nav-pane ${isHub ? '' : 'settings-nav-pane-hidden-mobile'}`}>
         <SettingsNavList settings={settings} />
       </div>

@@ -2,9 +2,12 @@ import { api, type SettingsSummary } from '../lib/api';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 
 /**
- * Jira GRW-230 — the settings a tab loads: the picked branch's (`?branch=`),
- * or the business's. A branch id that no longer resolves (closed, or a stale
- * link) falls back to the business view rather than breaking the screen.
+ * The settings a branch tab loads.
+ *
+ * - One branch: the business's own settings, exactly as before branches existed.
+ * - Several: always ONE branch's (Jira GRW-396 — Settings has no "all branches"). The one in the address
+ *   (`?branch=`, put there from the header's picker by `BranchUrlSync`), else the main branch. A branch id that
+ *   no longer resolves (closed, or a stale link) shows the main branch rather than breaking the screen.
  */
 export async function loadScopedSettings(
   searchParams: Promise<{ branch?: string }>,
@@ -16,12 +19,26 @@ export async function loadScopedSettings(
     failure.kind = loadErrorKind(error);
     return null;
   };
-  const settings = (branch ? await api.settings(branch).catch(failed) : null) ?? (await api.settings().catch(failed));
-  const branchName = settings?.scope.locationId ? (settings.location?.name ?? null) : null;
-  return { settings, branchName, loadError: settings ? null : (failure.kind ?? 'down') };
+  const done = (settings: SettingsSummary | null) => ({
+    settings,
+    branchName: settings?.scope.locationId ? (settings.location?.name ?? null) : null,
+    loadError: settings ? null : (failure.kind ?? 'down'),
+  });
+
+  const asked = branch && branch !== 'all' ? await api.settings(branch).catch(failed) : null;
+  if (asked && asked.branchCount > 1) return done(asked);
+
+  const business = await api.settings().catch(failed);
+  if (!business || business.branchCount <= 1 || !business.location) return done(business);
+  // The business view names the main branch as its `location`.
+  return done(await api.settings(business.location.id).catch(failed));
 }
 
-/** Remount a form when its branch, or the branch's own keys, change (after "Use business settings"). */
+/**
+ * Remount a form when its branch changes. Not when the branch's own keys change: a save gives the branch its own
+ * values and refreshes the page so the note above says so, and a remount there threw away the form's "Saved"
+ * (GRW-396 QA). "Use business settings", the one change that alters what the form shows, reloads the page.
+ */
 export function scopeKey(settings: SettingsSummary): string {
-  return `${settings.scope.locationId ?? 'all'}:${settings.scope.ownKeys.join(',')}`;
+  return settings.scope.locationId ?? 'all';
 }

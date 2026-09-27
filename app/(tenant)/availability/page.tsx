@@ -1,5 +1,8 @@
 import { screenTitle } from '../lib/page-title';
-import { api } from '../lib/api';
+import { BranchUrlSync } from '../components/BranchUrlSync';
+import { api, ApiError } from '../lib/api';
+import { resolveBranchState } from '../lib/branch-context';
+import { redirect } from 'next/navigation';
 import { formatDateWithWeekday } from '../lib/format';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
@@ -22,7 +25,16 @@ export default async function AvailabilityPage({
   const t = await getTranslations('freeTimes');
   let me, services, providers;
   try {
-    [me, services, providers] = await Promise.all([api.me(), api.services(), api.providers()]);
+    me = await api.me();
+    // Jira GRW-379 — one branch's menu: a service is sold at one branch, and "any stylist" is that branch's.
+    // The owner's pick (below), or a front desk's own branch; a one-branch business has only the one.
+    const menu = resolveBranchState({
+      branches: me.branches ?? [],
+      role: me.member?.role ?? null,
+      memberLocationId: me.member?.locationId ?? null,
+      wanted: params.branch ?? null,
+    }).one;
+    [services, providers] = await Promise.all([api.services(menu ?? undefined), api.providers()]);
   } catch (error) {
     return (
       <>
@@ -36,14 +48,32 @@ export default async function AvailabilityPage({
 
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date());
-  const serviceId = params.serviceId ?? services[0]?.id;
+  // Jira GRW-392 (review) — the service must be on THIS branch's menu. Switching the branch submits the previous
+  // branch's service with it, and the API refuses a service another branch sells; the new branch's first one stands in.
+  const serviceId = services.some((s) => s.id === params.serviceId) ? params.serviceId : services[0]?.id;
   const date = params.date ?? todayISO;
 
   // Jira GRW-235 — a multi-branch business looks at one branch's free times; the main branch unless another is picked.
   // Owner only, like the booking sheet (product decision 2026-09-14).
   const branches = (me.member?.role ?? 'owner') === 'owner' ? (me.branches ?? []) : [];
   const branch = branches.length > 1 ? (branches.find((b) => b.id === params.branch) ?? branches[0]!).id : null;
-  const availability = serviceId ? await api.availability(serviceId, date, 'any', branch) : null;
+  // QA (Jira GRW-377) — a stylist reaching this address got a 500: the API refuses them free times (403) and
+  // this call sat outside the try above. A role the screen is not for lands on Home, as a Reports tab they
+  // cannot open lands on one they can — never on an error to interpret. Anything else is a load failure.
+  let availability;
+  try {
+    availability = serviceId ? await api.availability(serviceId, date, 'any', branch) : null;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 403) redirect('/');
+    return (
+      <>
+        <PageHeader title={isBookingIntent ? t('newBookingTitle') : t('title')} />
+        <div className="page-body">
+          <LoadErrorBanner kind={loadErrorKind(error)} />
+        </div>
+      </>
+    );
+  }
 
   const dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -53,6 +83,8 @@ export default async function AvailabilityPage({
 
   return (
     <>
+      {/* Jira GRW-377 — the branch chosen on any other screen is the branch this opens on. */}
+      <BranchUrlSync remember={false} />
       <PageHeader
         title={isBookingIntent ? t('newBookingTitle') : t('title')}
         subtitle={isBookingIntent ? t('newBookingSubtitle') : t('subtitle')}
@@ -72,18 +104,8 @@ export default async function AvailabilityPage({
                 ))}
               </select>
             </div>
-            {branch ? (
-              <div className="field">
-                <label htmlFor="branch">{t('whichBranch')}</label>
-                <select id="branch" name="branch" defaultValue={branch}>
-                  {branches.map((b, i) => (
-                    <option key={b.id} value={b.id}>
-                      {i === 0 ? t('mainBranch', { name: b.name }) : b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
+            {/* Jira GRW-395 — the branch is the header's; the form only carries it, so "Show" keeps it. */}
+            {branch ? <input type="hidden" name="branch" value={branch} /> : null}
             <div className="field">
               <label htmlFor="date">{t('pickDay')}</label>
               <select id="date" name="date" defaultValue={date}>

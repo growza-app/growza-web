@@ -16,9 +16,11 @@ import {
   IconWhatsApp,
 } from '../components/icons';
 
-export type SettingsGroupKey = 'business' | 'booking' | 'preferences' | 'account';
+export type SettingsGroupKey = 'branch' | 'business' | 'preferences' | 'account';
 export type SettingsRowKey =
   | 'profile'
+  | 'branchProfile'
+  | 'business'
   | 'branches'
   | 'workingHours'
   | 'bookingSettings'
@@ -53,6 +55,11 @@ export interface SettingsRow {
    * screen with a single card would be the same form twice.
    */
   multiBranchOnly?: boolean;
+  /**
+   * Jira GRW-396 — the row's words at a business with more than one branch, when they differ: there,
+   * "Business profile" is one branch's profile.
+   */
+  multiBranchKey?: SettingsRowKey;
   /** Names the row in `settingsHub.rows` — the words live in the message files, not here. */
   key: SettingsRowKey;
   icon: ComponentType;
@@ -72,6 +79,13 @@ export interface SettingsGroup {
  * WhatsApp auto-replies, theming, real auth/login) — shown so the map of
  * what's coming is honest, not hidden.
  *
+ * Jira GRW-396 — two groups an owner can tell apart at a glance:
+ * - `branch`: what can differ from branch to branch (its profile, hours,
+ *   booking rules, reminders). With several branches the group is titled
+ *   with the header's branch, and every row in it edits that branch.
+ * - `business`: what exists once (the name and logo, the branches, who signs
+ *   in, who sees what, the bill). The header shows no branch on these.
+ *
  * Deliberately NOT listed here: Services and Staff. Both already have their
  * own top-level entry in the sidebar/bottom-nav — repeating them inside
  * Settings just put the same destination on screen twice at once (visible
@@ -79,26 +93,31 @@ export interface SettingsGroup {
  */
 export const SETTINGS_GROUPS: SettingsGroup[] = [
   {
-    key: 'business',
+    key: 'branch',
     rows: [
-      { href: '/settings/profile', key: 'profile', icon: IconShop },
-      { href: '/settings/branches', key: 'branches', icon: IconMapPin, multiBranchOnly: true },
+      { href: '/settings/profile', key: 'profile', multiBranchKey: 'branchProfile', icon: IconShop },
       { href: '/settings/working-hours', key: 'workingHours', icon: IconClock },
+      { href: '/settings/booking', key: 'bookingSettings', icon: IconCalendarPlus },
+      { href: '/settings/booking', key: 'cancellationPolicy', icon: IconShield },
+      { href: '/settings/notifications', key: 'notifications', icon: IconBell },
     ],
   },
   {
-    key: 'booking',
+    key: 'business',
     rows: [
-      { href: '/settings/booking', key: 'bookingSettings', icon: IconCalendarPlus },
+      { href: '/settings/business', key: 'business', icon: IconShop, multiBranchOnly: true },
+      { href: '/settings/branches', key: 'branches', icon: IconMapPin, multiBranchOnly: true },
+      { href: '/settings/team', key: 'teamAccess', icon: IconUserPlus },
+      { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
+      // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
+      { href: '/settings/billing', key: 'billing', icon: IconWallet },
       { key: 'payments', icon: IconWallet },
-      { href: '/settings/booking', key: 'cancellationPolicy', icon: IconShield },
       { key: 'whatsapp', icon: IconWhatsApp },
     ],
   },
   {
     key: 'preferences',
     rows: [
-      { href: '/settings/notifications', key: 'notifications', icon: IconBell },
       { key: 'appearance', icon: IconPalette },
       { key: 'privacy', icon: IconLock },
     ],
@@ -106,10 +125,6 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     key: 'account',
     rows: [
-      { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
-      { href: '/settings/team', key: 'teamAccess', icon: IconUserPlus },
-      // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
-      { href: '/settings/billing', key: 'billing', icon: IconWallet },
       { key: 'account', icon: IconUser },
       { key: 'logOut', icon: IconLogout, action: 'logout' },
     ],

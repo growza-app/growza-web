@@ -36,6 +36,8 @@
 
 .rp-cell-avatar { display: flex; align-items: center; gap: 10px; }
 .rp-cell-avatar .rp-avatar { width: 30px; height: 30px; flex: 0 0 30px; font-size: 12px; }
+/* Jira GRW-363 — the no-stylist row is not a person: a neutral dash, not initials in a person's colour. */
+.rp-avatar.is-nobody { background: var(--border); color: var(--muted); }
 .rp-cell-name { font-weight: 700; font-size: 13.5px; }
 
 .rp-pill {

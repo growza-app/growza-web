@@ -1,5 +1,4 @@
 'use client';
-
 /**
  * A UUID for one attempt at recording a visit. Jira GRW-204.
  *
@@ -22,6 +21,7 @@ function newAttemptKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+import Link from 'next/link';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -39,10 +39,19 @@ import {
   type Offer,
   type PaymentMode,
   type Provider,
+  type QueueEntry,
   type Service,
 } from '../lib/api';
-import { normaliseTerm, REMOTE_MIN_CHARS, resolveServiceSearch, type RemoteSearch } from '../lib/service-search';
+import { matchItems, MIN_CHARS } from '../lib/service-match';
+import {
+  extraSuggestions,
+  normaliseTerm,
+  shouldAskServer,
+  SUGGEST_DEBOUNCE_MS,
+  type RemoteSuggestions,
+} from '../lib/service-suggest';
 import { useLabel } from './LabelsProvider';
+import { useBranch } from './BranchProvider';
 import { useSession } from './SessionProvider';
 import { PhoneField } from './PhoneField';
 import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
@@ -52,6 +61,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useNoProvider } from '../lib/use-no-provider';
 
 /**
  * Jira GRW-199 · GRW-219 — the walk-in sheet: client first, then the booking.
@@ -131,7 +141,8 @@ export function totalMinor(items: PickedItem[], comboPriceMinor: string | null):
 }
 
 type PickedClient =
-  | { kind: 'existing'; id: string; name: string | null; phone: string | null }
+  /** Jira GRW-392 — `locationId`: the branch this client belongs to, which is where their visit is. */
+  | { kind: 'existing'; id: string; name: string | null; phone: string | null; locationId?: string }
   | { kind: 'new'; name: string; phone: string };
 
 type Stage =
@@ -151,6 +162,8 @@ type Stage =
 interface WalkInDone {
   appointmentId: string;
   customerId: string;
+  /** Jira GRW-403 — the token this visit is: the one it was paid from, or the branch's next number. */
+  tokenNo?: number | null;
   /** Every leg, in running order — the whole visit is settled in one checkout. */
   legIds: string[];
   /** Jira GRW-293 — null for a visit recorded with no stylist. */
@@ -183,17 +196,34 @@ export type VisitMode = 'now' | 'later';
  */
 export type VisitPurpose = 'visit' | 'payment';
 
+/** Jira GRW-403 — who a token was issued for, as the client this sheet records a visit for. */
+function clientOfToken(token: QueueEntry): PickedClient {
+  return token.customerId
+    ? { kind: 'existing', id: token.customerId, name: token.customerName, phone: token.customerPhone, locationId: token.locationId }
+    : { kind: 'new', name: token.customerName, phone: token.customerPhone ?? '' };
+}
+
 export function NewVisitSheet({
   onClose,
   timezone,
   mode: initialMode = 'now',
   purpose = 'visit',
   presentation = 'sheet',
+  token,
 }: {
   onClose: () => void;
   timezone: string;
   mode?: VisitMode;
   purpose?: VisitPurpose;
+  /**
+   * Jira GRW-403 (epic GRW-283) — Record payment for a token that is still waiting.
+   *
+   * The client is the token's, so the sheet opens on the services step; whatever the token was issued with is
+   * already picked; the branch is the one they wait at. The stylist is who DID the work, or nobody ("No stylist",
+   * the default) — "Whoever is free" is not offered, because it reserves a chair and the work is already done.
+   * Mark done pays the token (`POST /counter-sales` with `queueEntryId`), which closes it: the board reads Paid.
+   */
+  token?: QueueEntry;
   /**
    * Jira GRW-297 — `'page'` renders the same stages, the same markup and
    * copy, without the backdrop and the fixed-position bottom-sheet frame:
@@ -205,6 +235,8 @@ export function NewVisitSheet({
 }) {
   const tmin = useTranslations('services');
   const nv = useNewVisitCopy();
+  // Jira GRW-363 — the same phrase the row this choice makes carries on Home and in Reports.
+  const noProviderWord = useNoProvider();
   /*
    * The mode is a control, not only a prop.
    *
@@ -222,8 +254,11 @@ export function NewVisitSheet({
   const router = useRouter();
   const clientNoun = useLabel('customer', 'Client');
   const providerNoun = useLabel('provider', 'Staff member');
+  const servicesNoun = useLabel('services', 'Services');
 
-  const [stage, setStage] = useState<Stage>({ step: 'client' });
+  const [stage, setStage] = useState<Stage>(() => (token && forPayment ? { step: 'details', client: clientOfToken(token) } : { step: 'client' }));
+  /** Jira GRW-403 — paying a waiting token: its client, its branch, its services. */
+  const paysToken = forPayment && token ? token : null;
 
   // Jira GRW-342 — the pop-up form is a dialog: focus in, Tab kept inside, Escape closes (not mid-save). The routed
   // page is a page, and is left alone. Up here, before any early return, so the hook order never changes.
@@ -304,7 +339,10 @@ export function NewVisitSheet({
    * Walk-in now / For later — those two modes must keep reserving a chair
    * exactly as before, so this can only ever be true when `forPayment` is.
    */
-  const [noStylist, setNoStylist] = useState(false);
+  // Jira GRW-403 — a token's visit has happened: nobody, unless the desk names who did it.
+  const [noStylist, setNoStylist] = useState(Boolean(token && forPayment));
+  // GRW-198 — the booking in the chosen chair whose client never turned up. Declared here: a branch change clears it.
+  const [reclaim, setReclaim] = useState<string | null>(null);
   // Jira GRW-290 — Record payment: how they paid, and the visit once it exists.
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
   /*
@@ -330,8 +368,76 @@ export function NewVisitSheet({
   const session = useSession();
   const isOwner = (session?.role ?? 'owner') === 'owner';
   const branches = isOwner ? (session?.branches ?? []) : [];
-  const [branchId, setBranchId] = useState<string | null>(branches.length > 1 ? branches[0]!.id : null);
-  const atBranch = branches.length > 1 && branchId ? { location: branchId } : {};
+  // Jira GRW-377 — opens on the branch the dashboard is looking at; the chips below change it for this visit only.
+  const branchContext = useBranch();
+  const [branchId, setBranchId] = useState<string | null>(
+    branches.length > 1 ? (branches.find((b) => b.id === branchContext.one)?.id ?? branches[0]!.id) : null,
+  );
+  // QA (Jira GRW-377) — on a full reload the sheet renders before the shared branch is `ready`, so the default
+  // above is the main branch. Take the remembered one when it arrives, unless the person already tapped a chip.
+  const branchTouched = useRef(false);
+  useEffect(() => {
+    if (!branchContext.ready || branchTouched.current || branches.length < 2) return;
+    const shared = branches.find((b) => b.id === branchContext.one);
+    if (shared) setBranchId(shared.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchContext.ready, branchContext.one]);
+  /*
+   * Jira GRW-379 — the branch whose menu this visit is booked from. A service is sold at ONE branch, so the
+   * list, the combos, the suggestions and the stylists all follow it: the owner's chip, or for anyone else the
+   * dashboard's own branch (a pinned receptionist's is theirs, and their session lists no other). Every write
+   * names it, so a queue entry or a visit lands where its services are sold.
+   */
+  /*
+   * Jira GRW-392 — each branch keeps its own clients, so a client picked from the list decides the branch: their
+   * visit is at the branch they are a client of. Only a new client leaves the choice to the chips below.
+   */
+  const pickedClientBranch =
+    paysToken?.locationId ??
+    ('client' in stage && stage.client.kind === 'existing' && stage.client.locationId ? stage.client.locationId : null);
+  const listBranch = pickedClientBranch ?? (branches.length > 1 ? branchId : branchContext.one);
+  /*
+   * Anyone who is not fixed to one branch (an owner, a manager) searches every branch's clients, and one person can
+   * be a client of two branches, so each row says whose client it is — the pick decides where the visit happens.
+   * Jira GRW-392 (review): this was owner-only, and a manager saw two identical rows and booked the wrong branch.
+   */
+  const openBranches = session?.branches ?? [];
+  const branchNameOf = (locationId: string | undefined) =>
+    openBranches.length > 1 && locationId ? openBranches.find((b) => b.id === locationId)?.name : undefined;
+  const clientBranchName = (locationId: string | undefined) => {
+    const name = branchNameOf(locationId);
+    return name ? <span className="picker-row-meta"> · {name}</span> : null;
+  };
+  /*
+   * A client of a branch that has since closed is served at an open one: carried over as that branch's client by
+   * name and number (the upsert finds or makes their record there), never booked at the closed branch.
+   */
+  const pickClient = (c: Customer) => {
+    const closed = Boolean(c.locationId) && openBranches.length > 0 && !openBranches.some((b) => b.id === c.locationId);
+    setStage({
+      step: 'details',
+      client: closed
+        ? { kind: 'new', name: c.name?.trim() || nv.noName, phone: c.waPhone ?? '' }
+        : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone, locationId: c.locationId },
+    });
+  };
+  const atBranch = listBranch ? { location: listBranch } : {};
+  // What was picked is on the menu of the branch it was picked at; another branch sells its own rows. The chosen
+  // stylist and reclaimed chair are that branch's too — however the branch changed (a chip, or picking a client of
+  // another branch after Back), none of it may ride along to the new one.
+  const [menuBranch, setMenuBranch] = useState(listBranch);
+  if (menuBranch !== listBranch) {
+    setMenuBranch(listBranch);
+    setSchedulableId(null);
+    setReclaim(null);
+    setPicked([]);
+    setExtras([]);
+    setOfferId(null);
+    setComboPriceMinor(null);
+    setComboTitle(null);
+    setComboAmountText('');
+    setServiceTerm('');
+  }
 
   /*
    * The REAL appointment rows for this visit, fetched before checkout opens.
@@ -362,10 +468,9 @@ export function NewVisitSheet({
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([api.services(), api.providers(), api.offers().catch(() => [] as Offer[])])
-      .then(([svc, prov, offs]) => {
+    void Promise.all([api.providers(), api.offers().catch(() => [] as Offer[])])
+      .then(([prov, offs]) => {
         if (cancelled) return;
-        setServices(svc);
         setProviders(prov);
         setOffers(offs.filter((o) => o.active));
       })
@@ -376,6 +481,25 @@ export function NewVisitSheet({
       cancelled = true;
     };
   }, []);
+
+  // Jira GRW-379 — the branch's own menu, read again whenever the branch changes. Not before the remembered
+  // branch has arrived (`ready`), or an Indiranagar desk would be shown MG Road's menu for a moment.
+  useEffect(() => {
+    if (!branchContext.ready) return;
+    let cancelled = false;
+    setServices(null);
+    void api
+      .services(listBranch ?? undefined)
+      .then((svc) => {
+        if (!cancelled) setServices(svc);
+      })
+      .catch(() => {
+        if (!cancelled) setServices([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [listBranch, branchContext.ready]);
 
   /*
    * Debounced client search — the shape SearchClient established.
@@ -433,43 +557,114 @@ export function NewVisitSheet({
 
   const serviceById = useMemo(() => new Map((services ?? []).map((s) => [s.id, s])), [services]);
 
-  /** Combos only — an offer with no fixed price is an announcement, not something to book. */
-  const combos = useMemo(() => (offers ?? []).filter((o) => o.serviceIds.length > 0), [offers]);
+  /**
+   * Jira GRW-375 — services closest in MEANING, when a provider is configured.
+   *
+   * Asked only once the typist pauses and has typed enough to mean something,
+   * and a 503 (the normal answer in production today) switches it off for the
+   * life of this sheet rather than costing a failed request per keystroke.
+   */
+  const [remote, setRemote] = useState<RemoteSuggestions | null>(null);
+  const suggestOffRef = useRef(false);
+  // Jira GRW-389 — each reply kept for the life of the sheet: typing "facial", then back to "faci", then
+  // "facial" again asks the server once, not twice. Searches can be paid calls.
+  const suggestCacheRef = useRef(new Map<string, RemoteSuggestions>());
 
   /**
-   * Jira GRW-367 · GRW-288 — typo-tolerant search. Reception types "phacial";
-   * the server (OpenSearch) answers "Facial". Debounced, and a reply is only
-   * used for the term it answers, so a slow "fa" never overwrites "facial".
-   *
-   * Once the server says search is unavailable (503), this sheet stops asking
-   * and uses the substring filter below — search being off must never cost a
-   * request per keystroke, let alone an error on screen.
+   * Jira GRW-375 — "phacial" finds Facial. The whole catalogue is already in
+   * this component, so the matching happens here: no request, no waiting, and
+   * it works on a bad connection at the desk. `service-match.ts` explains how.
    */
-  const [remoteSearch, setRemoteSearch] = useState<RemoteSearch | null>(null);
-  const searchOffRef = useRef(false);
+  const filteredServices = useMemo(() => {
+    if (!services) return [];
+    const q = serviceTerm.trim();
+    if (q.length < MIN_CHARS) return services.slice(0, 6);
+    return matchItems(
+      services.map((s) => ({ item: s, text: [s.name] })),
+      q,
+      20,
+    );
+  }, [services, serviceTerm]);
+
   useEffect(() => {
+    if (suggestOffRef.current || !shouldAskServer(serviceTerm)) return;
     const q = normaliseTerm(serviceTerm);
-    if (searchOffRef.current || q.length < REMOTE_MIN_CHARS) return;
-    const controller = new AbortController();
+    // Jira GRW-379 (GRW-390's web half) — suggestions are one branch's, so the cache is kept per branch too.
+    const key = `${listBranch ?? ''}|${q}`;
+    const cached = suggestCacheRef.current.get(key);
+    if (cached) {
+      setRemote(cached);
+      return;
+    }
+    // Only the WAIT is cancelled on the next keystroke, not a request already sent. A reply is tagged with its
+    // term and ignored once the box says something else, so letting it finish costs nothing — and it is how a
+    // slow "search is off" (503) still switches the sheet off; cancelling it cost one more request (QA).
     const timer = setTimeout(() => {
       api
-        .searchCatalog(q, controller.signal)
-        .then(({ hits }) => setRemoteSearch({ term: q, hits }))
+        .suggestCatalog(q, listBranch ?? undefined)
+        .then(({ hits, floors }) => {
+          const reply: RemoteSuggestions = { term: q, hits, floors };
+          suggestCacheRef.current.set(key, reply);
+          setRemote(reply);
+        })
         .catch((error: unknown) => {
-          if (controller.signal.aborted) return;
-          if (error instanceof ApiError && error.status === 503) searchOffRef.current = true;
+          if (error instanceof ApiError && error.status === 503) suggestOffRef.current = true;
         });
-    }, 200);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [serviceTerm]);
+    }, SUGGEST_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [serviceTerm, listBranch]);
 
-  const { services: filteredServices, combos: matchingCombos } = useMemo(
-    () => resolveServiceSearch({ services: services ?? [], combos, term: serviceTerm, remote: remoteSearch }),
-    [services, combos, serviceTerm, remoteSearch],
+  /**
+   * Meaning-based extras, shown as their own "Also try" row under the list rather than appended to it: QA found
+   * appended rows landing below the list's four-row fold, where nobody saw them.
+   */
+  const alsoTry = useMemo(
+    () => extraSuggestions(filteredServices, remote, serviceTerm, (id) => serviceById.get(id)),
+    [filteredServices, remote, serviceTerm, serviceById],
   );
+
+  /**
+   * Combos only — an offer with no fixed price is an announcement, not something to book.
+   *
+   * Jira GRW-379 — and only where every one of its services is on this branch's menu: the server refuses a
+   * combo whose services are sold elsewhere, or that is missing one, so it is never offered here.
+   */
+  const combos = useMemo(
+    () => (offers ?? []).filter((o) => o.serviceIds.length > 0 && o.serviceIds.every((id) => serviceById.has(id))),
+    [offers, serviceById],
+  );
+
+  /**
+   * Jira GRW-290 — the search bar finds combos too, not only the chips under an
+   * empty search. Jira GRW-375 — and by the services inside them, so "phacial"
+   * offers the bridal package that contains a Facial.
+   */
+  const matchingCombos = useMemo(() => {
+    const q = serviceTerm.trim();
+    if (q.length < MIN_CHARS) return [];
+    return matchItems(
+      combos.map((o) => ({ item: o, text: [o.title, ...o.serviceIds.map((id) => serviceById.get(id)?.name ?? '')] })),
+      q,
+    );
+  }, [combos, serviceTerm, serviceById]);
+
+  /*
+   * Jira GRW-403 — what the token was issued with, picked once the branch's menu (and its combos) have loaded. A
+   * token issued by name alone (GRW-284) picks nothing: services are chosen here, at payment.
+   */
+  const tokenPrefilled = useRef(false);
+  useEffect(() => {
+    if (!paysToken || tokenPrefilled.current || !services || offers === null) return;
+    tokenPrefilled.current = true;
+    const combo = paysToken.offerId ? combos.find((o) => o.id === paysToken.offerId) : undefined;
+    if (combo) {
+      applyCombo(combo);
+      return;
+    }
+    const items = paysToken.serviceIds.map((id) => serviceById.get(id)).filter((sv): sv is Service => Boolean(sv));
+    if (items.length > 0) setPicked(items.map(toItem));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paysToken, services, offers]);
 
   const toItem = (s: Service): PickedItem => ({
     serviceId: s.id,
@@ -649,7 +844,7 @@ export function NewVisitSheet({
     // now, so the slot search has to fit its duration too, same reasoning as
     // the chain comment above.
     void api
-      .availability([...picked, ...extras].map((p) => p.serviceId), day, schedulableId ?? 'any', branchId)
+      .availability([...picked, ...extras].map((p) => p.serviceId), day, schedulableId ?? 'any', listBranch)
       .then((r) => {
         if (cancelled) return;
         setSlots(r);
@@ -668,7 +863,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, day, picked, extras, schedulableId, branchId]);
+  }, [later, stage.step, day, picked, extras, schedulableId, listBranch]);
 
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
@@ -679,12 +874,11 @@ export function NewVisitSheet({
    * is acted on. Walk-ins only — "later" is a question about a different day.
    */
   const [chairs, setChairs] = useState<ChairNow[]>([]);
-  const [reclaim, setReclaim] = useState<string | null>(null);
 
   // Jira GRW-235 — only this branch's people, when there is a branch to choose.
   const branchProviders = useMemo(
-    () => (providers ?? []).filter((p) => !branchId || !p.locationId || p.locationId === branchId),
-    [providers, branchId],
+    () => (providers ?? []).filter((p) => !listBranch || !p.locationId || p.locationId === listBranch),
+    [providers, listBranch],
   );
   const branchChairs = chairs.filter((c) => branchProviders.some((p) => p.id === c.schedulableId));
   const freeCount = branchChairs.length > 0 ? branchChairs.filter((c) => c.free).length : null;
@@ -924,6 +1118,43 @@ export function NewVisitSheet({
        * under `forPayment` (the chip only renders there), so this is checked
        * before the `savedVisit` retry path, which is that pair's own concern.
        */
+      /*
+       * Jira GRW-403 — paying a waiting token. One call whoever did it: the counter sale records the visit (with
+       * that stylist, or with nobody) and closes the token, retry-safe on the same key. No `location`: the visit is
+       * at the branch the token was issued at, and the server says so.
+       */
+      if (paysToken) {
+        const lines = [...picked, ...extras].map((item) => ({
+          serviceId: item.serviceId,
+          paidAmountMinor: rupeesToMinor(item.paidRupees) ?? 0,
+        }));
+        const result = await api.recordCounterSale({
+          queueEntryId: paysToken.id,
+          services: lines,
+          ...(offerId ? { offerId } : {}),
+          ...(noStylist || !schedulableId ? { noStylist: true as const } : { schedulableId }),
+          paymentMode,
+          idempotencyKey: attemptKey,
+        });
+        router.refresh();
+        setStage({
+          step: 'paid',
+          client,
+          result: {
+            appointmentId: result.appointmentId,
+            customerId: result.customerId,
+            legIds: result.legs.map((l) => l.appointmentId),
+            schedulableId: result.schedulableId,
+            startAt: result.startAt,
+            overlapping: result.overlapping,
+            tokenNo: result.tokenNo ?? paysToken.tokenNo,
+          },
+          totalMinor: result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
+          mode: paymentMode,
+        });
+        return;
+      }
+
       if (forPayment && noStylist) {
         const services = [...picked, ...extras].map((item) => ({
           serviceId: item.serviceId,
@@ -951,6 +1182,7 @@ export function NewVisitSheet({
             schedulableId: null,
             startAt: result.startAt,
             overlapping: false,
+            tokenNo: result.tokenNo,
           },
           totalMinor: result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
           mode: paymentMode,
@@ -989,6 +1221,7 @@ export function NewVisitSheet({
         schedulableId: result.schedulableId,
         startAt: result.startAt,
         overlapping: result.overlapping,
+        tokenNo: result.tokenNo,
       };
       /*
        * Jira GRW-290 — Record payment settles on this screen: no till, no
@@ -1053,7 +1286,8 @@ export function NewVisitSheet({
       <CheckoutSheet
         appointment={first!}
         services={services}
-        providers={providers}
+        // Jira GRW-392 (review) — this visit's branch's people: another branch's stylist is refused at the till.
+        providers={branchProviders}
         offers={offers ?? []}
         groupMembers={rest}
         timezone={timezone}
@@ -1084,7 +1318,9 @@ export function NewVisitSheet({
       ? nv.whoIsThis(clientNoun.toLowerCase())
       : stage.step === 'newClient'
         ? nv.addNew
-        : clientName(stage.client);
+        : paysToken?.tokenNo
+          ? `${nv.token(paysToken.tokenNo)} · ${clientName(stage.client)}`
+          : clientName(stage.client);
 
   const asPage = presentation === 'page';
   const sheetTitle = forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title;
@@ -1188,13 +1424,12 @@ export function NewVisitSheet({
                     key={c.id}
                     type="button"
                     className="picker-row wi-row"
-                    onClick={() =>
-                      setStage({ step: 'details', client: { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone } })
-                    }
+                    onClick={() => pickClient(c)}
                   >
                     <span>
                       <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
                       <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
+                      {clientBranchName(c.locationId)}
                     </span>
                     <span className="picker-row-meta">{nv.visits(c.totalBookings)}</span>
                   </button>
@@ -1215,13 +1450,12 @@ export function NewVisitSheet({
                       key={c.id}
                       type="button"
                       className="picker-row wi-row"
-                      onClick={() =>
-                        setStage({ step: 'details', client: { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone } })
-                      }
+                      onClick={() => pickClient(c)}
                     >
                       <span>
                         <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
                         <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
+                        {clientBranchName(c.locationId)}
                       </span>
                       <span className="picker-row-meta">{nv.visits(c.totalBookings)}</span>
                     </button>
@@ -1329,6 +1563,45 @@ export function NewVisitSheet({
           <div className="wi-body">
             {stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
 
+            {/* Jira GRW-392 — a client already on file is served at their own branch: said, not asked. */}
+            {pickedClientBranch && branchNameOf(pickedClientBranch) ? (
+              <>
+                <h2 className="wi-section-label">{nv.whichBranch}</h2>
+                <div className="wi-chips">
+                  <span className="wi-chip wi-chip-on" aria-current="true">
+                    {branchNameOf(pickedClientBranch)}
+                  </span>
+                </div>
+              </>
+            ) : null}
+
+            {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-392 — and not asked
+                for a client already on file: they are a client of one branch, and that is where they are served. */}
+            {branches.length > 1 && !pickedClientBranch ? (
+              <>
+                <h2 className="wi-section-label">{nv.whichBranch}</h2>
+                <div className="wi-chips" role="radiogroup" aria-label={nv.whichBranch}>
+                  {branches.map((b, i) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={branchId === b.id}
+                      className={`wi-chip ${branchId === b.id ? 'wi-chip-on' : ''}`}
+                      onClick={() => {
+                        branchTouched.current = true;
+                        // Its menu, stylist and chair are cleared with it (the reset beside `listBranch`).
+                        setBranchId(b.id);
+                      }}
+                      disabled={busy || linesLocked}
+                    >
+                      {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
             {/* Jira GRW-341 — a returning client: last time's visit, and the next free times. */}
             {stage.step === 'details' && stage.client.kind === 'existing' && picked.length === 0 && extras.length === 0 && services && providers && offers ? (
               <BookAgainCard
@@ -1336,7 +1609,7 @@ export function NewVisitSheet({
                 services={services}
                 providers={branchProviders}
                 offers={combos}
-                branchId={branchId}
+                branchId={listBranch}
                 days={days.map((d) => d.iso)}
                 timezone={timezone}
                 later={later}
@@ -1537,12 +1810,35 @@ export function NewVisitSheet({
               {services === null ? (
                 <div className="empty">{nv.loadingServices}</div>
               ) : services.length === 0 ? (
-                <div className="empty">{nv.noServicesYet}</div>
+                // Jira GRW-384 (AC-03) — a branch opened with an empty menu says so, and the owner is shown where
+                // to add or copy one; anyone else is told plainly why nothing is listed.
+                branchNameOf(listBranch ?? undefined) ? (
+                  <div className="empty">
+                    {nv.noServicesAtBranch(branchNameOf(listBranch ?? undefined)!, servicesNoun.toLowerCase())}{' '}
+                    {isOwner ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
+                  </div>
+                ) : (
+                  <div className="empty">{nv.noServicesYet}</div>
+                )
               ) : (
                 filteredServices.length === 0 &&
-                matchingCombos.length === 0 && <div className="empty">{nv.noServiceMatch}</div>
+                matchingCombos.length === 0 &&
+                alsoTry.length === 0 && <div className="empty">{nv.noServiceMatch}</div>
               )}
             </div>
+
+            {alsoTry.length > 0 && (
+              <div className="wi-also-try">
+                <span className="wi-also-try-label">{nv.alsoTry}</span>
+                <div className="wi-chips">
+                  {alsoTry.map((s) => (
+                    <button key={s.id} type="button" className="wi-chip" onClick={() => addService(s)} disabled={busy || linesLocked}>
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Combos replace the whole list rather than appending to it — a
                 combo is priced as a unit, so half of one is not a thing. */}
@@ -1569,32 +1865,6 @@ export function NewVisitSheet({
                 </div>
               </>
             )}
-
-            {branches.length > 1 ? (
-              <>
-                <h2 className="wi-section-label">{nv.whichBranch}</h2>
-                <div className="wi-chips" role="radiogroup" aria-label={nv.whichBranch}>
-                  {branches.map((b, i) => (
-                    <button
-                      key={b.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={branchId === b.id}
-                      className={`wi-chip ${branchId === b.id ? 'wi-chip-on' : ''}`}
-                      onClick={() => {
-                        setBranchId(b.id);
-                        // A stylist from the other branch cannot take this visit.
-                        setSchedulableId(null);
-                        setReclaim(null);
-                      }}
-                      disabled={busy || linesLocked}
-                    >
-                      {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : null}
 
             <h2 className="wi-section-label">{nv.withWhom(providerNoun.toLowerCase())}</h2>
             {/*
@@ -1627,10 +1897,12 @@ export function NewVisitSheet({
                   }}
                   disabled={busy || linesLocked}
                 >
-                  <span className="wi-chair-name">{nv.noStylist}</span>
+                  <span className="wi-chair-name">{noProviderWord}</span>
                 </button>
               )}
 
+              {/* Jira GRW-403 — not for a token: the work is done, so it is somebody named, or nobody. */}
+              {!paysToken && (
               <button
                 type="button"
                 aria-pressed={schedulableId === null && !noStylist}
@@ -1647,6 +1919,7 @@ export function NewVisitSheet({
                   <span className="wi-chair-state">{nv.freeCount(freeCount)}</span>
                 )}
               </button>
+              )}
 
               {branchProviders.map((p) => {
                 const chair = later ? null : chairs.find((c) => c.schedulableId === p.id);
@@ -1737,14 +2010,17 @@ export function NewVisitSheet({
                   </div>
                 </div>
               )}
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => setStage({ step: 'client' })}
-                disabled={busy || linesLocked}
-              >
-                {nv.back}
-              </button>
+              {/* Jira GRW-403 — a token's client is the token's: there is no client step to go back to. */}
+              {!paysToken && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setStage({ step: 'client' })}
+                  disabled={busy || linesLocked}
+                >
+                  {nv.back}
+                </button>
+              )}
               {!later && !reclaim && !forPayment && (
                 <button
                   type="button"
@@ -1878,7 +2154,14 @@ export function NewVisitSheet({
                   )}
                 </div>
                 <div className="wi-done-sub">
-                  {[clientName(stage.client), picked.map((p) => p.name).join(' + ')].filter(Boolean).join(' · ')}
+                  {[
+                    // Jira GRW-403 — the token this payment closed, or the one it was given.
+                    stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
+                    clientName(stage.client),
+                    picked.map((p) => p.name).join(' + '),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </div>
               </div>
             </div>
@@ -1896,6 +2179,8 @@ export function NewVisitSheet({
               <div>
                 <div className="wi-done-title">{later ? nv.booked : nv.recorded}</div>
                 <div className="wi-done-sub">
+                  {/* Jira GRW-403 — a walk-in gets the branch's next token; an advance booking gets one on arrival. */}
+                  {stage.result.tokenNo ? `${nv.token(stage.result.tokenNo)} · ` : ''}
                   {picked.map((p) => p.name).join(' + ')} ·{' '}
                   {providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? providerNoun}
                 </div>

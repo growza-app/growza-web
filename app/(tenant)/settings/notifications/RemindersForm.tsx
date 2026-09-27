@@ -1,9 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
-import { BranchScopeNote } from '../BranchScopeNote';
 
 interface ReminderRow {
   key: string;
@@ -38,6 +38,7 @@ export function RemindersForm({
   whatsappLive?: boolean;
 }) {
   const t = useTranslations('settingsReminders');
+  const router = useRouter();
   const [rows, setRows] = useState<ReminderRow[]>(() =>
     REMINDER_DEFS.map((def) => {
       const existing = initial.reminderRules.find((r) => r.ruleKey === def.key);
@@ -68,6 +69,8 @@ export function RemindersForm({
         .map((r) => ({ ruleKey: r.key, offsetMin: -(r.hours * 60), template: r.template }));
       await api.updateReminders(reminderRules, initial.scope.locationId);
       setSaved(true);
+      // Jira GRW-396 — the note above the form says whether this branch now has its own reminders.
+      router.refresh();
     } catch {
       setError(t('errors.saveFailed'));
     } finally {
@@ -77,7 +80,6 @@ export function RemindersForm({
 
   return (
     <>
-    <BranchScopeNote settings={initial} branchName={branchName} keys={['reminder_rules']} topic="reminders" />
     <div className="card">
       <div className="card-head">{initial.scope.locationId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : t('title')}</div>
       <div className="card-body">

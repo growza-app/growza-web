@@ -1,7 +1,6 @@
 'use client';
 
 import { useReportsCopy } from '../lib/use-reports-copy';
-import { copy } from '../lib/copy';
 import type { ReportServices } from '../lib/api';
 import { BarList, ReportTable, type Cell } from './charts';
 import { Card, countBars, money, moneyBars, rangeName } from './shared';

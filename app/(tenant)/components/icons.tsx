@@ -89,14 +89,6 @@ export const IconClose = () => (
   </svg>
 );
 
-export const IconDots = () => (
-  <svg {...base}>
-    <circle cx="5" cy="12" r="1.4" />
-    <circle cx="12" cy="12" r="1.4" />
-    <circle cx="19" cy="12" r="1.4" />
-  </svg>
-);
-
 export const IconChevronRight = () => (
   <svg {...base}>
     <path d="m9 6 6 6-6 6" />

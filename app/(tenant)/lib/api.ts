@@ -58,7 +58,6 @@ export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
-import type { CatalogSearchHit } from './service-search';
 import { localiseApiMessage } from './api-messages';
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
@@ -82,6 +81,7 @@ import type {
   CustomerStatusFilter,
   HoldResponse,
   Me,
+  CreatedOffer,
   Offer,
   OfferInput,
   PaymentMode,
@@ -103,7 +103,7 @@ import type {
   SortDirection,
   TodayStats,
 } from './api-types';
-import type { DaySummary, HomeOverview, HomePeriod, QueueEntry } from './home-types';
+import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 import type { AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import type {
@@ -354,13 +354,19 @@ export const api = {
   // Jira GRW-254 — every bill, and one opened.
   bills: (page = 1) => get<OwnerBillPage>(`/api/v1/billing/invoices?page=${page}`),
   bill: (id: string) => get<OwnerBill>(`/api/v1/billing/invoices/${encodeURIComponent(id)}`),
-  services: () => get<Service[]>('/api/v1/services'),
+  /** Jira GRW-379 — `location`: one branch's menu. Absent: every branch's, which a one-branch business has one of. */
+  services: (location?: string) => get<Service[]>(`/api/v1/services${location ? `?location=${encodeURIComponent(location)}` : ''}`),
   /**
-   * Jira GRW-367 — typo-tolerant service/combo search for the walk-in sheet.
-   * 503 means search is off or down; the caller falls back to its own filter.
+   * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
+   * embeddings are not configured (prod today) or the provider is away; the
+   * caller keeps using the browser's own spelling-tolerant matching.
    */
-  searchCatalog: (q: string, signal?: AbortSignal) =>
-    get<{ hits: CatalogSearchHit[] }>(`/api/v1/catalog/search?q=${encodeURIComponent(q)}`, signal),
+  suggestCatalog: (q: string, location?: string, signal?: AbortSignal) =>
+    get<{ hits: Array<{ serviceId: string; score: number }>; floors?: { rescue: number; withMatches: number } }>(
+      // Jira GRW-379 — the branch the list is for, so a suggestion is never a service sold elsewhere.
+      `/api/v1/catalog/suggest?q=${encodeURIComponent(q)}${location ? `&location=${encodeURIComponent(location)}` : ''}`,
+      signal,
+    ),
   providers: () => get<Provider[]>('/api/v1/providers'),
   /**
    * GRW-170 — the register for a day or a range, including everybody nobody
@@ -417,6 +423,10 @@ export const api = {
       ...(serviceIds?.length ? { serviceIds } : {}),
     }),
   queueEntryLeft: (entryId: string) => post<{ status: 'left' }>(`/api/v1/walk-in-queue/${entryId}/left`, {}),
+  /** Jira GRW-403 — today's tokens with their state. `location`: one branch (owner); a front desk's is their own. */
+  tokensToday: (location?: string | null) => get<TokenBoard>(`/api/v1/tokens/today${atBranch(location)}`),
+  /** Jira GRW-405 — a booked client has arrived: today's token for that booking (the same one again on a repeat). */
+  markArrived: (appointmentId: string) => post<{ id: string; tokenNo: number | null; created: boolean }>('/api/v1/tokens', { appointmentId }),
   daySummary: (location?: string | null) =>
     get<DaySummary>(`/api/v1/home/day-summary${location ? `?location=${encodeURIComponent(location)}` : ''}`),
   /**
@@ -425,7 +435,9 @@ export const api = {
    * ad-blocker pattern, same reasoning as rangeSummary below.
    */
   reportsOverview: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportOverview>('overview', r, c, f, t, undefined, b),
-  reportFilterOptions: () => get<ReportFilterOptions>('/api/v1/reports/filters'),
+  // Jira GRW-393 — the drawer offers the report's own branch.
+  reportFilterOptions: (branch?: string | null) =>
+    get<ReportFilterOptions>(`/api/v1/reports/filters${branch ? `?location=${encodeURIComponent(branch)}` : ''}`),
   reportsRevenue: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportRevenue>('revenue', r, c, f, t, x, b),
   reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportBookings>('bookings', r, c, f, t, x, b),
   reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportServices>('services', r, c, f, t, x, b),
@@ -452,6 +464,9 @@ export const api = {
   settings: (location?: string | null) => get<SettingsSummary>(`/api/v1/settings${atBranch(location)}`),
   resetBranchSettings: (location: string, keys: string[]) =>
     post<SettingsSummary>(`/api/v1/settings/branch-reset${atBranch(location)}`, { keys }),
+  /** Jira GRW-396 — this branch's saved values for these keys become every branch's. */
+  applyBranchSettingsToAll: (location: string, keys: string[]) =>
+    post<SettingsSummary>(`/api/v1/settings/apply-to-all${atBranch(location)}`, { keys }),
   updateProfile: (body: {
     name?: string;
     timezone?: string;
@@ -479,6 +494,9 @@ export const api = {
     attendanceLateGraceMin?: number;
     reportAccess?: Record<string, string[]>;
     closedDates?: string[];
+    /** Jira GRW-397 — every branch's closed days, a day at a time (business only). */
+    closedDatesAdd?: string[];
+    closedDatesRemove?: string[];
   }, location?: string | null) => patch<SettingsSummary>(`/api/v1/settings/booking${atBranch(location)}`, body),
   updateReminders: (reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>, location?: string | null) =>
     patch<SettingsSummary>(`/api/v1/settings/reminders${atBranch(location)}`, { reminderRules }),
@@ -508,13 +526,23 @@ export const api = {
    */
   updateCustomer: (id: string, body: { name?: string | null; phone?: string | null }) =>
     patch<{ id: string; name: string | null; waPhone: string | null }>(`/api/v1/customers/${id}`, body),
-  allServices: () => get<ServiceAdmin[]>('/api/v1/services/all'),
-  serviceCategories: () => get<ServiceCategory[]>('/api/v1/service-categories'),
-  createService: (body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', body),
+  /** Jira GRW-378 — one branch's catalogue; the Services screen always names the branch it shows. */
+  allServices: (location: string) => get<ServiceAdmin[]>(`/api/v1/services/all?location=${encodeURIComponent(location)}`),
+  serviceCategories: (location?: string | null) =>
+    get<ServiceCategory[]>(`/api/v1/service-categories${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  createService: (location: string, body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', { ...body, locationId: location }),
+  /** Jira GRW-378 — copy all (no ids) or some of another branch's services here; names already here are skipped. */
+  copyServicesFromBranch: (from: string, to: string, serviceIds?: string[]) =>
+    post<{ added: number; skipped: string[] }>('/api/v1/services/copy-from-branch', {
+      fromLocationId: from,
+      toLocationId: to,
+      ...(serviceIds ? { serviceIds } : {}),
+    }),
   updateService: (id: string, body: Partial<ServiceInput>) => patch<ServiceAdmin>(`/api/v1/services/${id}`, body),
-  seedCatalog: () => get<SeedCatalog>('/api/v1/services/seed-catalog'),
+  seedCatalog: (location: string) => get<SeedCatalog>(`/api/v1/services/seed-catalog?location=${encodeURIComponent(location)}`),
   parseServiceSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/services/import/parse', 'file', file),
-  importServices: (items: ServiceImportItem[]) => post<{ created: number; repriced: number }>('/api/v1/services/import', { items }),
+  importServices: (location: string, items: ServiceImportItem[]) =>
+    post<{ created: number; repriced: number }>('/api/v1/services/import', { items, locationId: location }),
   serviceUsage: (id: string) => get<{ bookings: number; providers: number; offers: number }>(`/api/v1/services/${id}/usage`),
   providersOverview: () => get<ProvidersOverview>('/api/v1/providers/overview'),
   providerDetail: (id: string) => get<ProviderDetail>(`/api/v1/providers/${id}`),
@@ -560,8 +588,11 @@ export const api = {
       seesOwnRevenue?: boolean;
       /** Jira GRW-234 — move to another branch; absent leaves it where it is. */
       locationId?: string;
+      /** Jira GRW-386 — on a move: their services matched by name at the new branch, or none. */
+      skillsOnMove?: 'match' | 'none';
     },
-  ) => patch<ProviderDetail>(`/api/v1/providers/${id}`, body),
+    // Jira GRW-386 — on a move, the services the new branch has no match for.
+  ) => patch<ProviderDetail & { unmatchedSkills?: string[] }>(`/api/v1/providers/${id}`, body),
   updateProviderWorkingHours: (id: string, workingHours: ProviderWorkingHourRow[]) =>
     patch<{ workingHours: ProviderWorkingHourRow[] }>(`/api/v1/providers/${id}/working-hours`, { workingHours }),
   setProviderAvailabilityToday: (id: string, unavailableToday: boolean) =>
@@ -593,7 +624,8 @@ export const api = {
     customerPhone?: string;
     customerName?: string;
   }) => post<ConfirmResponse>('/api/v1/appointments', args),
-  chatStart: (phone: string, name?: string) => post<ChatState>('/api/v1/chat/start', { phone, name }),
+  /** Jira GRW-385 — `branch`: a branch's booking link, opened in the demo; the chat starts there without asking. */
+  chatStart: (phone: string, name?: string, branch?: string) => post<ChatState>('/api/v1/chat/start', { phone, name, ...(branch ? { branch } : {}) }),
   chatTap: (phone: string, optionId: string, nonce: string) =>
     post<ChatState>('/api/v1/chat/tap', { phone, optionId, nonce }),
   /** Jira GRW-318 — `wholeBooking` applies a cancel or a no-show to every still-confirmed service of the visit. */
@@ -636,9 +668,10 @@ export const api = {
       remindersScheduled: number;
     }>(`/api/v1/appointments/${appointmentId}/reschedule`, args),
   search: (q: string) => get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}`),
-  offers: () => get<Offer[]>('/api/v1/offers/all'),
+  // Jira GRW-395 — one branch's combos (and the announcements); none is every branch.
+  offers: (location?: string | null) => get<Offer[]>(`/api/v1/offers/all${atBranch(location)}`),
   offer: (id: string) => get<Offer>(`/api/v1/offers/${id}`),
-  createOffer: (input: OfferInput) => post<Offer>('/api/v1/offers', input),
+  createOffer: (input: OfferInput) => post<CreatedOffer>('/api/v1/offers', input),
   updateOffer: (id: string, input: Partial<OfferInput>) => patch<Offer>(`/api/v1/offers/${id}`, input),
   deleteOffer: (id: string) => del<void>(`/api/v1/offers/${id}`),
   customers: (
@@ -649,9 +682,12 @@ export const api = {
       direction?: SortDirection;
       limit?: number;
       offset?: number;
+      /** Jira GRW-392 — one branch's clients; absent is every branch's (a receptionist always gets their own). */
+      location?: string | null;
     } = {},
   ) => {
     const params = new URLSearchParams();
+    if (args.location) params.set('location', args.location);
     if (args.search) params.set('search', args.search);
     if (args.status && args.status !== 'all') params.set('status', args.status);
     if (args.sort && args.sort !== 'recent') params.set('sort', args.sort);
@@ -661,8 +697,10 @@ export const api = {
     const qs = params.toString();
     return get<CustomerPage>(`/api/v1/customers${qs ? `?${qs}` : ''}`);
   },
-  customerStats: () => get<CustomerStats>('/api/v1/customers/stats'),
-  createCustomer: (input: { phone: string; name?: string }) =>
+  customerStats: (location?: string | null) =>
+    get<CustomerStats>(`/api/v1/customers/stats${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /** Jira GRW-392 — `locationId`: the branch whose client this is; absent is the main branch (or the desk's own). */
+  createCustomer: (input: { phone: string; name?: string; locationId?: string }) =>
     post<{ id: string; waPhone: string | null; name: string | null }>('/api/v1/customers', input),
   /**
    * Jira GRW-199 — record a walk-in. Not `confirmAppointment`: there is no
@@ -700,6 +738,8 @@ export const api = {
   }) =>
     post<{
       appointmentId: string;
+      /** Jira GRW-403 — the token this walk-in was given (the branch's next number). */
+      tokenNo: number | null;
       bookingGroupId: string | null;
       customerId: string;
       schedulableId: string;
@@ -714,20 +754,25 @@ export const api = {
    * called from the sheet — Walk-in now and For later keep `createWalkIn` /
    * `createBooking` untouched, always with a chair.
    */
-  recordCounterSale: (input: {
-    queueEntryId?: string;
-    customerId?: string;
-    customerName?: string;
-    customerPhone?: string;
-    services: { serviceId: string; paidAmountMinor: number }[];
-    offerId?: string;
-    noStylist: true;
-    paymentMode?: PaymentMode;
-    idempotencyKey?: string;
-    location?: string;
-  }) =>
+  recordCounterSale: (
+    input: {
+      /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
+      queueEntryId?: string;
+      customerId?: string;
+      customerName?: string;
+      customerPhone?: string;
+      services: { serviceId: string; paidAmountMinor: number }[];
+      offerId?: string;
+      paymentMode?: PaymentMode;
+      idempotencyKey?: string;
+      location?: string;
+      // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
+    } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
+  ) =>
     post<{
       appointmentId: string;
+      /** Jira GRW-403 — the token paid, or the one this sale was given. */
+      tokenNo: number | null;
       bookingGroupId: string | null;
       customerId: string;
       schedulableId: string | null;

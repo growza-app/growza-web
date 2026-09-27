@@ -198,4 +198,35 @@ describe('the download says what the screen says', () => {
     const line = reportToCsv(commaName, 'Staff').split('\n').find((l) => l.includes('Cut'))!;
     expect(line.startsWith('"Cut, Colour & Blow-dry",')).toBe(true);
   });
+
+  /**
+   * Jira GRW-363 — the screen calls the no-stylist row "No stylist" (the vertical's noun), and the
+   * file used to write the API's "Unassigned". One row, two names. The file now says what the
+   * screen says; a person's name is still written as typed.
+   */
+  it('names the no-stylist row as the screen does, with the business’s own noun', () => {
+    const noStylist = { ...staffRow, id: '', name: 'Unassigned', utilisationPct: null, key: 'unassigned' as const };
+    const withNobody = staffWith([staffRow, noStylist]);
+
+    const salon = reportToCsv(withNobody, 'Staff', 'Stylist');
+    expect(salon).toContain('\nNo stylist,92,89,');
+    expect(salon).toContain('\nPriya,92,89,');
+    expect(salon).not.toContain('Unassigned');
+
+    expect(reportToCsv(withNobody, 'Doctors', 'Doctor')).toContain('\nNo doctor,');
+
+    const money = {
+      ...revenue,
+      data: {
+        ...(revenue as { data: object }).data,
+        byProvider: [
+          { label: 'Priya', value: 60_000 },
+          { label: 'Unassigned', value: 20_000, key: 'unassigned' },
+        ],
+      },
+    } as unknown as TabPayload;
+    const file = reportToCsv(money, 'Staff', 'Stylist');
+    expect(file).toContain('\nNo stylist,200.00');
+    expect(file).not.toContain('Unassigned');
+  });
 });

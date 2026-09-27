@@ -8,6 +8,7 @@ import {
   api,
   formatMoney,
   formatTime,
+  ApiError,
   BookingConflictError,
   type Appointment,
   type Offer,
@@ -304,15 +305,20 @@ export function CheckoutSheet({
     if (removed && editingRow === key) setEditingRow(null);
   };
 
-  // What can be added here: any service, and any combo that is running with all its services on hand.
-  const combos = offers.filter((o) => o.active && o.comboPriceMinor && o.serviceIds.length > 0 && o.serviceIds.every((id) => services.some((s) => s.id === id)));
+  /*
+   * Jira GRW-380 — what can be added here: the visit's own branch's menu at that branch's prices, and any combo
+   * running with all its services on it. The Booking sheet hands in every branch's services, and the till listed
+   * them all: another branch's Haircut, at its price, could be picked (the server refuses it, after the pick).
+   */
+  const menu = services.filter((s) => !appointment.locationId || !s.locationId || s.locationId === appointment.locationId);
+  const combos = offers.filter((o) => o.active && o.comboPriceMinor && o.serviceIds.length > 0 && o.serviceIds.every((id) => menu.some((s) => s.id === id)));
   const add = () => {
     if (!pick) return;
     if (pick.startsWith('offer:')) {
       const offer = combos.find((o) => o.id === pick.slice(6));
       if (!offer) return;
       const legs = offer.serviceIds.map((id) => {
-        const svc = services.find((s) => s.id === id)!;
+        const svc = menu.find((s) => s.id === id)!;
         return { serviceId: id, name: svc.name, listMinor: Number(svc.priceMinor ?? 0), providerId: originalProviderId };
       });
       setAddedCombos((cs) => [
@@ -320,7 +326,7 @@ export function CheckoutSheet({
         { key: nextKey('combo'), offerId: offer.id, title: offer.title, comboPriceMinor: Number(offer.comboPriceMinor), legs, amount: minorToRupees(offer.comboPriceMinor) },
       ]);
     } else {
-      const svc = services.find((s) => s.id === pick.slice(4));
+      const svc = menu.find((s) => s.id === pick.slice(4));
       if (!svc) return;
       setAddedServices((xs) => [...xs, { key: nextKey('svc'), serviceId: svc.id, name: svc.name, amount: minorToRupees(svc.priceMinor ?? null), providerId: originalProviderId }]);
     }
@@ -352,7 +358,10 @@ export function CheckoutSheet({
       router.refresh();
       (onSaved ?? onClose)();
     } catch (err) {
-      setError(err instanceof BookingConflictError ? err.message : t('saveFailed'));
+      // Jira GRW-392 (review) — a refusal the server explains (a stylist from another branch, say) is shown as it
+      // is: "check the connection" for a 400 sent the owner looking for a network fault that was not there.
+      const explained = err instanceof BookingConflictError || (err instanceof ApiError && err.status >= 400 && err.status < 500);
+      setError(explained ? (err as Error).message : t('saveFailed'));
       setBusy(false);
     }
   };
@@ -512,7 +521,7 @@ export function CheckoutSheet({
                 </optgroup>
               )}
               <optgroup label={servicesWord}>
-                {services.map((s) => (
+                {menu.map((s) => (
                   <option key={s.id} value={`svc:${s.id}`}>
                     {s.name}
                   </option>

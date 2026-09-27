@@ -1,4 +1,5 @@
 import { copy } from '../lib/copy';
+import { nounInSentence } from '../lib/nouns';
 import type { TabPayload } from './ReportsClient';
 
 /**
@@ -76,7 +77,20 @@ function statusWord(key: string): string {
         : copy.status.confirmed;
 }
 
-export function reportToCsv(payload: TabPayload, providerLabel: string): string {
+/**
+ * Jira GRW-363 — the no-stylist row gets the name the screen gives it ("No stylist", "No doctor"),
+ * not the API's "Unassigned", so the owner never sees two names for one row. Every other row is
+ * written as the API sent it: the English the screen shows, or what the owner typed.
+ */
+function rowName(row: { key?: string; label: string }, providerNoun: string): string {
+  return row.key === 'unassigned' ? c.noProvider(nounInSentence(providerNoun)) : row.label;
+}
+
+/**
+ * @param providerLabel the vertical's plural noun, a column heading ("Staff", "Doctors").
+ * @param providerNoun  its singular, for the no-stylist row ("Stylist" → "No stylist").
+ */
+export function reportToCsv(payload: TabPayload, providerLabel: string, providerNoun = 'Staff member'): string {
   if (!payload) return '';
 
   if (payload.tab === 'revenue') {
@@ -95,7 +109,7 @@ export function reportToCsv(payload: TabPayload, providerLabel: string): string 
       section(t.trend, [DATE, t.earned], d.trend.map((p) => [p.label, money(p.value)])),
       section(t.byService, [c.servicesTab.colService, t.earned], d.byService.map((r) => [r.label, money(r.value)])),
       d.showProviders
-        ? section(t.byStaff, [providerLabel, t.earned], d.byProvider.map((r) => [r.label, money(r.value)]))
+        ? section(t.byStaff, [providerLabel, t.earned], d.byProvider.map((r) => [rowName(r, providerNoun), money(r.value)]))
         : '',
       section(t.bySegment, [t.bySegment, t.earned], d.bySegment.map((r) => [r.label, money(r.value)])),
       section(t.byPayment, [t.byPayment, t.earned], d.byPaymentMethod.map((r) => [r.label, money(r.value)])),
@@ -147,7 +161,7 @@ export function reportToCsv(payload: TabPayload, providerLabel: string): string 
       t.table,
       [t.colName, t.colBookings, t.colCompleted, t.colRevenue, t.colAvg, t.colUtilisation, t.colNoShow],
       d.rows.map((r) => [
-        r.name,
+        rowName({ key: r.key, label: r.name }, providerNoun),
         r.bookings,
         r.completed,
         money(r.revenueMinor),

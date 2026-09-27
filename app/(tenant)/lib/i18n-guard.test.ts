@@ -84,6 +84,10 @@ describe('scanSource', () => {
     ]);
   });
 
+  it('flags the name a KPI tile gives its line (Jira GRW-363)', () => {
+    expect(flagged('const A = () => <Kpi sparkName="Came back" />;')).toEqual(['sparkName="Came back"']);
+  });
+
   it('flags a template with words in it, and the branches of a ternary', () => {
     expect(flagged('const A = ({ n }) => <a aria-label={`Call ${n}`} title={n ? "Open" : undefined} />;')).toEqual([
       'aria-label="Call ${…}"',

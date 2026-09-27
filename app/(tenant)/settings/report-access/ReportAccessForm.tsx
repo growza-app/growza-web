@@ -70,6 +70,14 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
     <div className="card">
       <div className="card-head">{t('title')}</div>
       <div className="card-body">
+        {/*
+          * NOT `settings-card-hint` (Jira GRW-229 review): that class is dropped on a window 859px
+          * tall or less, and this sentence is the only place that says managers are exempt and what
+          * ticking nothing does. The card below lists Receptionist and Stylists and nothing else, so
+          * hiding it would take a permissions screen's safety copy off a 1470×760 laptop — the very
+          * window the card is written against. The 48px it costs comes out of `.ra-role`'s own
+          * padding instead; see 85-settings-fit.css.
+          */}
         <p className="field-hint" style={{ marginTop: 0, marginBottom: 16 }}>
           {t('hint')}
         </p>

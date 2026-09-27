@@ -6,7 +6,10 @@ import type { HomeCopy } from '../../lib/home-copy';
 import { IconClose } from '../icons';
 import { Avatar, CardError, rupees } from './parts';
 import { PaymentBar } from './MoneyHero';
+import { TokenFigures } from './TokenFigures';
+import { useTranslations } from 'next-intl';
 import { useDialog } from '../../../shared/a11y/useDialog';
+import { useNoProvider } from '../../lib/use-no-provider';
 
 /**
  * Jira GRW-222 — the end-of-day readout: what came in, how, and who did it.
@@ -20,6 +23,7 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const tt = useTranslations('tokens');
 
   useEffect(() => {
     let live = true;
@@ -78,6 +82,18 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
               <PaymentBar t={t} slices={data.byPaymentMode} total={data.revenueMinor} variant="list" />
             </section>
 
+            {/* Jira GRW-406 — the counter's day: tokens given, served, paid, and who left without service. */}
+            {data.tokens ? (
+              <section className="hm-card hm-sheet-wide">
+                <div className="hm-card-head">
+                  <h2>
+                    {tt('figuresToday')} <small>{tt('figuresSub')}</small>
+                  </h2>
+                </div>
+                <TokenFigures figures={data.tokens} />
+              </section>
+            ) : null}
+
             <section className="hm-card hm-sheet-wide hm-ds-clients">
               <div className="hm-card-head">
                 <h2>
@@ -91,7 +107,9 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
                   { k: 'back', n: data.clients.cameBack, label: t.cameBackToday, tone: 'violet' },
                   { k: 'rebooked', n: data.clients.rebooked, label: t.bookedNext, tone: 'green' },
                   { k: 'noshow', n: data.clients.noShows, label: t.didntCome, tone: 'amber' },
-                  { k: 'left', n: data.clients.walkedOut, label: t.walkedOut, tone: 'rose' },
+                  // Jira GRW-406 — "Left without service" is the tokens block's now, counted from the token state; two
+                  // tiles with one label and two numbers would be one too many. Kept for an older API.
+                  ...(data.tokens ? [] : [{ k: 'left', n: data.clients.walkedOut, label: t.walkedOut, tone: 'rose' }]),
                 ].map((x) => (
                   <span key={x.k} className={`hm-ds-stat hm-tone-${x.tone}`}>
                     <strong>{x.n}</strong>
@@ -152,29 +170,7 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
               </p>
             </section>
 
-            <section className="hm-card hm-sheet-wide">
-              <div className="hm-card-head">
-                <h2>
-                  {t.staffToday} <small>{t.staffTodaySub}</small>
-                </h2>
-              </div>
-              {data.staff.length === 0 ? (
-                <p className="hm-empty">{t.nobodyWorked}</p>
-              ) : (
-                <ul className="hm-rows">
-                  {data.staff.map((s) => (
-                    <li key={s.id} className="hm-row">
-                      <Avatar name={s.name} id={s.id} size={34} />
-                      <span className="hm-row-main">
-                        <span className="hm-row-name">{s.name}</span>
-                      </span>
-                      <span className="hm-row-meta">{t.staffBookings(s.bookings)}</span>
-                      <span className="hm-row-money">{rupees(s.revenueMinor)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            <StaffToday t={t} staff={data.staff} />
           </div>
         )}
 
@@ -183,5 +179,44 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Who worked today, with their bookings and money. Its own component (Jira GRW-363) so the rows
+ * render in a test without the sheet's fetch.
+ */
+export function StaffToday({ t, staff }: { t: HomeCopy; staff: DaySummary['staff'] }) {
+  const noProvider = useNoProvider();
+  return (
+    <section className="hm-card hm-sheet-wide">
+      <div className="hm-card-head">
+        <h2>
+          {t.staffToday} <small>{t.staffTodaySub}</small>
+        </h2>
+      </div>
+      {staff.length === 0 ? (
+        <p className="hm-empty">{t.nobodyWorked}</p>
+      ) : (
+        <ul className="hm-rows">
+          {staff.map((s) => {
+            // Jira GRW-363 — the no-stylist row in the words of the Record payment choice that made
+            // it, with a neutral mark for an avatar; a person as typed.
+            const nobody = s.key === 'unassigned';
+            const name = nobody ? noProvider : s.name;
+            return (
+              <li key={s.id} className="hm-row">
+                <Avatar name={name} id={s.id} size={34} nobody={nobody} />
+                <span className="hm-row-main">
+                  <span className="hm-row-name">{name}</span>
+                </span>
+                <span className="hm-row-meta">{t.staffBookings(s.bookings)}</span>
+                <span className="hm-row-money">{rupees(s.revenueMinor)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

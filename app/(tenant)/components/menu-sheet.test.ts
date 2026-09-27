@@ -127,15 +127,15 @@ describe('Home on a phone', () => {
     expect(parts).not.toMatch(/hdr-search hdr-search-wide hm-desktop/);
   });
 
-  it('Today / Week / Month is on the toolbar row at every width, beside the branch picker, not in the card', () => {
-    // Jira GRW-313 — it sat in the money card on a phone (GRW-306); it is on the row of the branch
-    // picker now, so the card is a row shorter.
+  it('Today / Week / Month is on the toolbar row at every width, not in the card', () => {
+    // Jira GRW-313 — it sat in the money card on a phone (GRW-306); it is on the toolbar row now, so the card
+    // is a row shorter. The branch picker that shared the row is the header's (Jira GRW-395).
     expect(hero).not.toMatch(/Segmented|hm-seg-hero/);
-    expect(owner).toMatch(/<div className=\{`hm-toolbar \$\{multiBranch \? 'hm-toolbar-multi' : ''\}`\}>/);
+    expect(owner).toMatch(/<div className="hm-toolbar">/);
     expect(owner).not.toMatch(/<Segmented\s+className="hm-desktop"/);
   });
 
-  it('Day summary is an icon beside the branch picker, and still has a name', () => {
+  it('Day summary is an icon on the toolbar row, and still has a name', () => {
     expect(owner).toMatch(/className="hm-toolbar-summary" aria-label=\{t\.daySummary\}/);
   });
 
@@ -150,11 +150,13 @@ describe('Home on a phone', () => {
     expect(code('../styles/83-role-home.css')).toMatch(/\.hm-head \.hdr-search-wide\s*\{[^}]*width:\s*44px;[^}]*justify-content:\s*center;/);
   });
 
-  it('the branch list closes on a tap anywhere else, and on Escape', () => {
-    expect(owner).toMatch(/addEventListener\('pointerdown', onPointer\)/);
-    expect(owner).toMatch(/!branchRef\.current\?\.contains\(e\.target as Node\)/);
-    expect(owner).toMatch(/e\.key !== 'Escape'/);
-    expect(owner).toMatch(/<div className="hm-branch" ref=\{branchRef\}>/);
+  it("the branch list closes on a tap anywhere else, and on Escape (the header's picker since Jira GRW-395)", () => {
+    const picker = code('HeaderBranchPicker.tsx');
+    expect(picker).toMatch(/addEventListener\('pointerdown', onPointer\)/);
+    // Either of the header's two pickers (laptop pill, phone line) is "inside": they share one open state.
+    expect(picker).toMatch(/e\.target\.closest\('\.hbp'\)/);
+    expect(picker).toMatch(/e\.key !== 'Escape'/);
+    expect(owner).not.toMatch(/className="hm-branch"/);
   });
 
   it('the greeting stays an h1 for a screen reader — visually hidden, not display:none', () => {

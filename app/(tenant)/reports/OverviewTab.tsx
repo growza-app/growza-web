@@ -3,7 +3,6 @@
 import { rangeName } from './shared';
 import { useTranslations } from 'next-intl';
 import { useReportsCopy } from '../lib/use-reports-copy';
-import { copy } from '../lib/copy';
 import { InfoTip } from '../components/InfoTip';
 import { formatMoney, type ReportOverview } from '../lib/api';
 import {
@@ -44,6 +43,8 @@ export function OverviewTab({
 }) {
   const rp = useReportsCopy();
   const t = useTranslations('reports');
+  // Jira GRW-363 — a band's days in the owner's language, the same words the Clients page uses.
+  const bands = useTranslations('customers');
   const labels = data.range.buckets.map((b) => b.label);
   const { kpis, sparklines } = data;
   const empty = data.kpis.bookings.value === 0 && data.kpis.revenueMinor.value === 0;
@@ -105,7 +106,7 @@ export function OverviewTab({
           // Named, because this line counts returning clients while the figure
           // above it is a share — they move together but are not the same
           // number, and an unlabelled line would be read as the percentage.
-          sparkName="Came back"
+          sparkName={t('rows.returning')}
         />
       </div>
 
@@ -139,7 +140,7 @@ export function OverviewTab({
             <LineChart
               label={rp.bookingTrend}
               labels={labels}
-              series={[{ color: 'var(--rp-blue)', values: data.bookingTrend.map((p) => p.value), format: (v) => `${v} bookings` }]}
+              series={[{ color: 'var(--rp-blue)', values: data.bookingTrend.map((p) => p.value), format: rp.bookingsCount }]}
               fill
             />
           )}
@@ -164,7 +165,7 @@ export function OverviewTab({
                   {rp.segments[segment.key]}
                 </span>
                 <span className="rp-segment-count">{segment.count}</span>
-                <span className="rp-segment-range">{segment.rangeLabel}</span>
+                <span className="rp-segment-range">{bands(`segments.${segment.key}.range`)}</span>
               </button>
             ))}
           </div>

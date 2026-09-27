@@ -73,6 +73,8 @@ export const KNOWN_ACTIONS = [
   // change.
   'platform_user.password_reset',
   'payment.record_offline',
+  // Jira GRW-242 (third review) — an event named another subscription for a payment already placed; it was left where it was.
+  'payment.attribution_conflict',
   'feature_flag.update',
   'feature_flag.override_set',
   'feature_flag.override_remove',
@@ -88,8 +90,15 @@ export const KNOWN_ACTIONS = [
   // has no human actor: it arrives on a webhook.
   'subscription.mandate_requested',
   'subscription.mandate_state_change',
-  // Jira GRW-367 — an administrator rebuilt the catalogue search index.
-  'search.reindex',
+  // Jira GRW-242 — the bill outgrew AutoPay: asked, reminded, approved, missed,
+  // part-paid, withdrawn, and a mandate cancelled with the provider (BR-06).
+  'subscription.mandate_reapproval_requested',
+  'subscription.mandate_reapproval_reminded',
+  'subscription.mandate_reapproved',
+  'subscription.mandate_reapproval_expired',
+  'subscription.mandate_reapproval_withdrawn',
+  'subscription.mandate_shortfall',
+  'subscription.mandate_cancelled',
 ] as const;
 
 interface AuditLogRow {

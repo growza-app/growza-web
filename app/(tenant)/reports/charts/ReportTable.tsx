@@ -10,7 +10,8 @@ import type { ReactNode } from 'react';
  */
 export type Cell =
   | { kind: 'text'; text: string; bold?: boolean; tone?: string; align?: 'left' | 'center' | 'right' }
-  | { kind: 'avatar'; text: string; initial: string }
+  /** `nobody` — Jira GRW-363: the no-stylist row, a neutral mark instead of a person's coloured initials. */
+  | { kind: 'avatar'; text: string; initial: string; nobody?: boolean }
   | { kind: 'pill'; text: string; tone?: string }
   | { kind: 'bar'; pct: number };
 
@@ -24,7 +25,7 @@ function renderCell(cell: Cell): ReactNode {
     case 'avatar':
       return (
         <span className="rp-cell-avatar">
-          <span className="rp-avatar">{cell.initial}</span>
+          <span className={cell.nobody ? 'rp-avatar is-nobody' : 'rp-avatar'}>{cell.initial}</span>
           <span className="rp-cell-name">{cell.text}</span>
         </span>
       );

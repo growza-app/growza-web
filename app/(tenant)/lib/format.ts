@@ -52,6 +52,16 @@ export function formatDateWithWeekday(iso: string | Date, timeZone?: string, { w
     .replace(',', '');
 }
 
+/**
+ * `Mon` / `सोम` — a weekday by number, 0 = Sunday as `Date.getDay()` counts. For a label
+ * that is a day of the week and not a date (the Reports busy-hours grid). Jira GRW-363.
+ */
+export function weekdayShort(day: number, locale: string = 'en'): string {
+  // 4 Jan 1970 was a Sunday; noon UTC keeps it the same day in every Indian zone.
+  const date = new Date(Date.UTC(1970, 0, 4 + day, 12));
+  return new Intl.DateTimeFormat(intlLocale(locale), { weekday: 'short', timeZone: 'UTC' }).format(date);
+}
+
 /** `26 Aug` — no year, for a label already scoped to the current year (a day's schedule heading). */
 export function formatDateShort(iso: string | Date, timeZone?: string, locale: string = 'en'): string {
   const d = typeof iso === 'string' ? new Date(iso) : iso;

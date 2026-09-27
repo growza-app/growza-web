@@ -1,14 +1,16 @@
 'use client';
 
 import { useReportsCopy } from '../lib/use-reports-copy';
-import { useTranslations } from 'next-intl';
-import { copy } from '../lib/copy';
+import { useLocale, useTranslations } from 'next-intl';
 import type { ReportBookings } from '../lib/api';
 import { IconAppointments, IconBan, IconUserCheck } from '../components/icons';
 import { BarList, Donut, Heatmap, LineChart } from './charts';
 import { Kpi } from './Kpi';
-import { Card, countBars, hoursAndMinutes, rangeName } from './shared';
+import { weekdayShort } from '../lib/format';
+import { Card, countBars, rangeName } from './shared';
 import { linearTrend } from './trend';
+import { TokenFigures } from '../components/home/TokenFigures';
+import { useRowName } from './use-row-name';
 
 const STATUS_COLOUR: Record<string, string> = {
   completed: 'var(--rp-brand)',
@@ -28,7 +30,13 @@ const STATUS_COLOUR: Record<string, string> = {
 export function BookingsTab({ data }: { data: ReportBookings }) {
   const rp = useReportsCopy();
   const st = useTranslations('status');
+  const tt = useTranslations('tokens');
+  const locale = useLocale();
+  const nameOf = useRowName();
   const c = rp.bookingsTab;
+  // Jira GRW-363 — the grid's rows named in the owner's language; the API's English only
+  // when it predates `dayNumbers`.
+  const days = data.peakPeriods.dayNumbers?.map((n) => weekdayShort(n, locale)) ?? data.peakPeriods.days;
   const labels = data.range.buckets.map((b) => b.label);
   const { kpis } = data;
   // Straight from copy.status — the same four words the Bookings screen's
@@ -94,7 +102,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
             <LineChart
               labels={labels}
               series={[
-                { color: 'var(--rp-blue)', values: data.trend.map((p) => p.value), format: (v) => `${v} bookings` },
+                { color: 'var(--rp-blue)', values: data.trend.map((p) => p.value), format: rp.bookingsCount },
                 ...(trend
                   ? [{ color: 'var(--rp-slate, #7d8a84)', values: trend.line, dashed: true }]
                   : []),
@@ -105,6 +113,13 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
           </>
         )}
       </Card>
+
+      {/* Jira GRW-406 — the counter's tokens over the same days: given, served, paid, left without service. */}
+      {data.tokens ? (
+        <Card title={tt('figuresReport')} hint={tt('figuresReportHint')} figure={data.tokens.issued}>
+          <TokenFigures figures={data.tokens} />
+        </Card>
+      ) : null}
 
       <div className="rp-grid-2">
         {/* The slices cover every booking including the ones called off, so
@@ -127,7 +142,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
         {/* Two sources, because two is what the booking path records. The
             design draws four; the other two would be invented (GRW-54 AC-02). */}
         <Card title={c.source} hint={c.sourceHint}>
-          <BarList items={countBars(data.bySource, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
+          <BarList items={countBars(data.bySource, rp.servicesTab.retired, nameOf)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
       </div>
 
@@ -136,15 +151,15 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
         hint={c.peakHint}
         foot={
           data.peakPeriods.outsideOpeningHoursMinutes > 0
-            ? rp.peakOutside(hoursAndMinutes(data.peakPeriods.outsideOpeningHoursMinutes))
+            ? rp.peakOutside(rp.duration(data.peakPeriods.outsideOpeningHoursMinutes))
             : undefined
         }
       >
         <Heatmap
-          days={data.peakPeriods.days}
+          days={days}
           hours={data.peakPeriods.hours}
           grid={data.peakPeriods.grid}
-          describe={(day, hour, value) => `${day} ${hour} · ${Math.round(value * 100)}% of your busiest hour`}
+          describe={(day, hour, value) => c.peakCell(day, hour, Math.round(value * 100))}
           quietWord={c.peakQuiet}
           busyWord={c.peakBusy}
         />

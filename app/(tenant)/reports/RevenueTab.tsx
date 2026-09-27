@@ -1,20 +1,21 @@
 'use client';
 
 import { useReportsCopy } from '../lib/use-reports-copy';
-import { copy } from '../lib/copy';
 import type { ReportRevenue } from '../lib/api';
 import { IconCoins, IconRupee, IconUserPlus } from '../components/icons';
 import { BarList, Donut, LineChart } from './charts';
 import { Kpi } from './Kpi';
 import { Card, money, moneyBars, rangeName } from './shared';
+import { useRowName } from './use-row-name';
 
 const SEGMENT_COLOURS = ['var(--rp-brand)', 'var(--rp-blue)', '#c3cbc6'];
+/** Keyed by the payment code (Jira GRW-363), not the English word the CSV writes. */
 const PAYMENT_COLOURS: Record<string, string> = {
-  UPI: 'var(--rp-brand)',
-  Card: 'var(--rp-blue)',
-  Cash: 'var(--rp-amber)',
-  Other: 'var(--rp-purple)',
-  'Not recorded': '#c3cbc6',
+  upi: 'var(--rp-brand)',
+  card: 'var(--rp-blue)',
+  cash: 'var(--rp-amber)',
+  other: 'var(--rp-purple)',
+  not_recorded: '#c3cbc6',
 };
 
 /**
@@ -27,6 +28,7 @@ const PAYMENT_COLOURS: Record<string, string> = {
  */
 export function RevenueTab({ data }: { data: ReportRevenue }) {
   const rp = useReportsCopy();
+  const nameOf = useRowName();
   const c = rp.money;
   const labels = data.range.buckets.map((b) => b.label);
   const { kpis } = data;
@@ -89,13 +91,13 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
 
       <div className={data.showProviders ? 'rp-grid-2' : ''}>
         <Card title={c.byService}>
-          <BarList items={moneyBars(data.byService, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
+          <BarList items={moneyBars(data.byService, rp.servicesTab.retired, nameOf)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
         {/* Absent, not empty, where ranking providers is a product smell — a
             clinic does not have a doctor leaderboard (07 §3.2). */}
         {data.showProviders && (
           <Card title={c.byStaff}>
-            <BarList items={moneyBars(data.byProvider, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
+            <BarList items={moneyBars(data.byProvider, rp.servicesTab.retired, nameOf)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
           </Card>
         )}
       </div>
@@ -107,7 +109,7 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
             centreValue={money(kpis.completedRevenueMinor.value)}
             emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             segments={data.bySegment.map((s, i) => ({
-              label: s.label,
+              label: nameOf(s),
               value: s.value,
               display: money(s.value),
               color: SEGMENT_COLOURS[i] ?? '#c3cbc6',
@@ -120,15 +122,15 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           // Stated rather than hidden: the one-tap "done" path records no
           // amount, so "Not recorded" is a real slice and pretending every
           // visit was accounted for would misread the split.
-          foot={data.byPaymentMethod.some((p) => p.label === 'Not recorded') ? c.notRecordedHint : undefined}
+          foot={data.byPaymentMethod.some((p) => p.key === 'not_recorded') ? c.notRecordedHint : undefined}
         >
           <BarList
             emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             items={data.byPaymentMethod.map((p) => ({
-              label: p.label,
+              label: nameOf(p),
               value: p.value,
               display: money(p.value),
-              color: PAYMENT_COLOURS[p.label] ?? '#c3cbc6',
+              color: PAYMENT_COLOURS[p.key ?? ''] ?? '#c3cbc6',
             }))}
           />
         </Card>

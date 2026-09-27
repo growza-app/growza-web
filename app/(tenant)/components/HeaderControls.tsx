@@ -1,3 +1,4 @@
+import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { NotificationBell } from './NotificationBell';
 import { AccountMenu } from './AccountMenu';
 import { IconSearch } from './icons';
@@ -43,6 +44,8 @@ export function HeaderControls({ wide = false, hideSearch = false }: { wide?: bo
   const t = useTranslations('search');
   return (
     <>
+      {/* Jira GRW-395 — the branch the whole app is showing, first: every figure beside it depends on it. */}
+      <HeaderBranchPicker />
       {/* Jira GRW-307 — not on the Search screen, where it would only reload the page you are on. */}
       {hideSearch ? null : (
         <a

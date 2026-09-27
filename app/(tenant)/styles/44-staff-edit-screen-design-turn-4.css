@@ -137,6 +137,18 @@
   min-width: 0;
 }
 
+/* Jira GRW-386 — "their services at <branch>" on a move: the whole row, and a radio its own size (the rule
+   above stretched it across the column and squeezed its label into a strip). */
+.edit-grid .edit-move-skills {
+  grid-column: 1 / -1;
+}
+
+.edit-grid .edit-move-skills input[type='radio'] {
+  width: auto;
+  flex: none;
+  margin-top: 3px;
+}
+
 /* The shared WeekdayHoursEditor puts its switch before the day name; the
    design leads with the day. Reordering here keeps one shared component
    instead of forking it for this screen. */

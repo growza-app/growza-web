@@ -2,6 +2,8 @@
   "errors": {
     "busy": "ऐप अभी व्यस्त है।",
     "busyHelp": "कृपया थोड़ी देर रुकें, फिर दोबारा कोशिश करें।",
+    "forbidden": "यह स्क्रीन आपकी भूमिका के लिए नहीं है।",
+    "forbiddenHelp": "ज़रूरत हो तो मालिक से पूछें।",
     "down": "सर्वर तक नहीं पहुँच पा रहे।",
     "downHelp": "अपने डेवलपर से इसे चालू करने को कहें, या <code>npm run dev</code> चलाएँ।",
     "tryAgain": "दोबारा कोशिश करें",
@@ -68,10 +70,6 @@
     "allStatuses": "सभी बुकिंग",
     "unmarkedOnly": "{count} बुकिंग पूरी हुईं पर चिह्नित नहीं (सिर्फ़ यही दिख रही हैं)",
     "unmarkedClear": "सब दिखाएँ",
-    "branchOnly": "सिर्फ़ {name} दिख रहा है",
-    "branchClear": "सभी ब्रांच",
-    "branchTabsAll": "सभी",
-    "branchTabsLabel": "ब्रांच",
     "staffTableCaption": "दिन में हर व्यक्ति की बुकिंग। सिर्फ़ उनका शेड्यूल देखने के लिए पंक्ति चुनें।",
     "staffColBooked": "बुक समय",
     "staffColNext": "अगला",
@@ -130,7 +128,9 @@
     "offers": "ऑफ़र",
     "settingsTitle": "सेटिंग",
     "moreTitle": "और",
-    "bookingsTitle": "बुकिंग"
+    "bookingsTitle": "बुकिंग",
+    "booking": "बुकिंग",
+    "bookings": "बुकिंग"
   },
   "customers": {
     "subtitle": "अपने {noun} देखें और संभालें। उनकी बुकिंग का इतिहास और खर्च देखें।",
@@ -191,7 +191,8 @@
     "whatsappNumber": "WhatsApp नंबर",
     "nameOptional": "नाम (ज़रूरी नहीं)",
     "namePlaceholder": "जैसे प्रिया शर्मा",
-    "couldNotAdd": "{noun} नहीं जोड़ सके।"
+    "couldNotAdd": "{noun} नहीं जोड़ सके।",
+    "whichBranch": "कौन सी शाखा"
   },
   "freeTimes": {
     "title": "खाली समय",
@@ -200,8 +201,6 @@
     "newBookingSubtitle": "किसी को बुक करने के लिए सर्विस और समय चुनें।",
     "pickService": "कौन सी सर्विस?",
     "pickDay": "कौन सा दिन?",
-    "whichBranch": "कौन सी ब्रांच?",
-    "mainBranch": "{name} (मुख्य)",
     "show": "खाली समय दिखाएँ",
     "minutes": "{count} मिनट",
     "countLabel": "{count, plural, one {# समय खाली} other {# समय खाली}}",
@@ -259,8 +258,10 @@
     "back": "सेटिंग्स पर वापस",
     "comingSoon": "जल्द आ रहा है",
     "groups": {
+      "branchNamed": "{name} ब्रांच",
       "business": "बिज़नेस",
-      "booking": "बुकिंग",
+      "wholeBusiness": "पूरा बिज़नेस",
+      "teamAndBilling": "टीम और बिलिंग",
       "preferences": "पसंद",
       "account": "अकाउंट"
     },
@@ -268,6 +269,14 @@
       "profile": {
         "label": "बिज़नेस प्रोफ़ाइल",
         "sub": "नाम, पता, संपर्क की जानकारी"
+      },
+      "branchProfile": {
+        "label": "ब्रांच प्रोफ़ाइल",
+        "sub": "नाम, पता, फ़ोन"
+      },
+      "business": {
+        "label": "बिज़नेस का नाम और लोगो",
+        "sub": "नाम, लोगो, टाइम ज़ोन"
       },
       "branches": {
         "label": "ब्रांच",
@@ -306,8 +315,8 @@
         "sub": "डेटा और प्राइवेसी सेटिंग्स"
       },
       "reportAccess": {
-        "label": "रिपोर्ट देखने की अनुमति",
-        "sub": "रिपोर्ट और कौन देख सकता है"
+        "label": "कौन क्या देखता है",
+        "sub": "रिपोर्ट और ग्राहकों के नंबर"
       },
       "teamAccess": {
         "label": "टीम की पहुंच",
@@ -325,11 +334,6 @@
         "label": "लॉग आउट",
         "sub": "इस डिवाइस से साइन आउट करें"
       }
-    },
-    "branchPicker": {
-      "all": "सभी ब्रांच",
-      "defaults": "बिज़नेस की डिफ़ॉल्ट सेटिंग",
-      "thisOnly": "सिर्फ़ यह ब्रांच"
     }
   },
   "common": {
@@ -344,7 +348,8 @@
       "next": "अगला पेज",
       "summary": "{total} {noun} में से <b>{from}–{to}</b> दिखा रहे हैं",
       "page": "पेज {current} / {count}"
-    }
+    },
+    "noProvider": "कोई {provider} नहीं"
   },
   "branchScope": {
     "topics": {
@@ -352,19 +357,25 @@
       "bookingRules": "बुकिंग के नियम",
       "teamAccess": "टीम की पहुंच",
       "reportAccess": "रिपोर्ट कौन देख सकता है",
-      "reminders": "रिमाइंडर",
-      "phoneAndDescription": "फ़ोन और विवरण"
+      "reminders": "रिमाइंडर"
     },
     "sameForAll": "<b>सभी ब्रांच के लिए एक जैसा।</b> यहां {what} में किए गए बदलाव सभी {count} ब्रांच पर लागू होते हैं।",
-    "allBranches": "<b>सभी ब्रांच।</b> ये {what} बिज़नेस की डिफ़ॉल्ट सेटिंग हैं। जिस ब्रांच के अपने {what} हैं, वह उन्हें रखती है।",
     "usesBusiness": "<b>{branch}</b> बिज़नेस के {what} इस्तेमाल करती है। यहां कुछ भी बदलें तो {branch} के अपने {what} बन जाएंगे।",
     "hasOwn": "<b>{branch}</b> के अपने {what} हैं।",
     "resetting": "रीसेट हो रहा है…",
     "resetFailed": "रीसेट नहीं हो सका — फिर कोशिश करें",
-    "useBusiness": "बिज़नेस की सेटिंग इस्तेमाल करें"
+    "useBusiness": "बिज़नेस की सेटिंग इस्तेमाल करें",
+    "applyAll": "सभी ब्रांच पर लागू करें",
+    "applyConfirm": "सभी {count} ब्रांच को <b>{branch}</b> के सेव किए गए {what} दें? जो बदलाव अभी सेव नहीं हुए, वे शामिल नहीं होंगे।",
+    "apply": "लागू करें",
+    "cancel": "रद्द करें",
+    "applying": "लागू हो रहा है…",
+    "applyFailed": "लागू नहीं हो सका — फिर कोशिश करें",
+    "applied": "<b>सभी {count} ब्रांच</b> में अब यही {what} हैं।"
   },
   "settingsProfile": {
     "title": "बिज़नेस प्रोफ़ाइल",
+    "titleBusinessOnly": "बिज़नेस का नाम और लोगो",
     "branchTitleNamed": "{name} की प्रोफ़ाइल",
     "branchTitleUnnamed": "ब्रांच की प्रोफ़ाइल",
     "sub": "आपके ग्राहक बुकिंग करते समय आपके बारे में यह देखते हैं।",
@@ -398,7 +409,7 @@
       "change": "लोगो बदलें",
       "upload": "लोगो अपलोड करें"
     },
-    "addressesHint": "आपकी {count} ब्रांच हैं। पता, फ़ोन और विवरण बदलने के लिए ऊपर से एक ब्रांच चुनें।",
+    "addressesHint": "आपकी {count} ब्रांच हैं। हर ब्रांच का पता, फ़ोन और विवरण उसकी ब्रांच प्रोफ़ाइल में है।",
     "errors": {
       "saveFailed": "सेव नहीं हो सका — जांचें कि सर्वर चल रहा है।",
       "nameEmpty": "बिज़नेस का नाम खाली नहीं हो सकता",
@@ -419,7 +430,8 @@
       "bangladesh": "बांग्लादेश (Asia/Dhaka)",
       "sriLanka": "श्रीलंका (Asia/Colombo)",
       "nepal": "नेपाल (Asia/Kathmandu)"
-    }
+    },
+    "subBusinessOnly": "नाम और लोगो जो हर ब्रांच में एक जैसा है।"
   },
   "weekdayHours": {
     "closed": "बंद",
@@ -472,18 +484,17 @@
     "add": "जोड़ें",
     "removeAria": "{day} को फिर से खोलें",
     "allBranchesChip": "{day} · सभी ब्रांच",
-    "allBranchesTitle": "हर ब्रांच में बंद — इसे “सभी ब्रांच” में बदलें",
+    "allBranchesTitle": "हर ब्रांच में बंद",
     "noClosed": "कोई बंद दिन नहीं है। छुट्टी जोड़ें तो उस दिन कोई बुकिंग नहीं कर पाएगा।",
     "closedNote": "इन दिनों कोई बुकिंग नहीं कर सकता। पहले से हुई बुकिंग रद्द नहीं होतीं।",
-    "staffSees": "स्टाफ़ ग्राहक का नाम और नंबर देख सकता है",
-    "staffSeesOn": "आपकी टीम देखती है कि हर बुकिंग किसकी है, और उन्हें कॉल कर सकती है।",
-    "staffSeesOff": "आपकी टीम को बुकिंग, सर्विस और समय दिखता है — पर यह नहीं कि बुकिंग किसकी है। आप और आपके मैनेजर सब कुछ देखते हैं।",
     "save": "बदलाव सेव करें",
     "saving": "सेव हो रहा है…",
     "saved": "सेव हो गया",
     "errors": {
       "saveFailed": "सेव नहीं हो सका — जांचें कि सर्वर चल रहा है।"
-    }
+    },
+    "everyBranch": "हर ब्रांच बंद करें",
+    "removeAllAria": "{day} को हर ब्रांच फिर से खोलें"
   },
   "settingsReminders": {
     "title": "सूचनाएं",
@@ -530,7 +541,11 @@
     "saved": "सेव हो गया",
     "errors": {
       "saveFailed": "सेव नहीं हो सका — जांचें कि सर्वर चल रहा है।"
-    }
+    },
+    "contactTitle": "ग्राहकों के फ़ोन नंबर",
+    "staffSees": "स्टाफ़ ग्राहक का नाम और नंबर देख सकता है",
+    "staffSeesOn": "आपकी टीम देखती है कि हर बुकिंग किसकी है, और उन्हें कॉल कर सकती है।",
+    "staffSeesOff": "आपकी टीम को बुकिंग, सर्विस और समय दिखता है — पर यह नहीं कि बुकिंग किसकी है। आप और आपके मैनेजर सब कुछ देखते हैं।"
   },
   "settingsBranches": {
     "title": "ब्रांच",
@@ -566,7 +581,15 @@
       "sayWhy": "कारण बताएं।",
       "cancel": "रद्द करें",
       "working": "हो रहा है…"
-    }
+    },
+    "bookingLink": "बुकिंग लिंक",
+    "bookingLinkAria": "{name} का बुकिंग लिंक",
+    "copy": "कॉपी करें",
+    "copied": "कॉपी हो गया",
+    "bookingLinkNoNumber": "लिंक पाने के लिए बिज़नेस नाम और लोगो में ऐसा मोबाइल नंबर बिज़नेस फ़ोन के रूप में जोड़ें जो WhatsApp पर हो।",
+    "bookingLinkHint": "इसे इस ब्रांच के QR कोड या Instagram पर लगाएँ: जो भी इसे खोलेगा, उससे ब्रांच नहीं पूछी जाएगी, बुकिंग यहीं होगी।",
+    "tryIt": "आज़माएँ",
+    "bookingLinkNumber": "यह WhatsApp पर {number} खोलता है, जो बिज़नेस नाम और लोगो में दिया बिज़नेस फ़ोन है। यह नंबर WhatsApp पर होना चाहिए।"
   },
   "settingsTeam": {
     "title": "टीम की पहुंच",
@@ -692,7 +715,9 @@
       "notYet": "अभी नहीं",
       "photoSub": "फ़ोटो, PDF, या WhatsApp पर आया मेन्यू। हम नाम और कीमतें पढ़ते हैं; सेव होने से पहले हर पंक्ति आप पक्की करते हैं।",
       "or": "या",
-      "manual": "एक {singular} हाथ से जोड़ें"
+      "manual": "एक {singular} हाथ से जोड़ें",
+      "copyTitle": "दूसरी ब्रांच से कॉपी करें",
+      "copySub": "उस ब्रांच की सेवाओं से शुरू करें, फिर जो अलग है वह बदलें"
     },
     "import": {
       "fields": {
@@ -801,7 +826,25 @@
       "deleteDetail": "अभी कुछ भी सेव नहीं हुआ है — इससे सिर्फ़ यह बदलता है कि आप क्या इंपोर्ट करने वाले हैं। इस स्क्रीन से बाहर जाकर कैटलॉग फिर खोलने पर सब वापस आ जाता है।",
       "deleteConfirm": "श्रेणी हटाएँ"
     },
-    "retireConfirm": "बंद करें"
+    "retireConfirm": "बंद करें",
+    "emptyBranch": "इस ब्रांच में अभी कोई सेवा नहीं है।",
+    "emptyAll": "अभी कोई सेवा नहीं है।",
+    "copyFromBranch": "दूसरी ब्रांच से कॉपी करें",
+    "copy": {
+      "title": "दूसरी ब्रांच से कॉपी करें",
+      "from": "कहाँ से कॉपी करें",
+      "loading": "लोड हो रहा है…",
+      "loadFailed": "उस ब्रांच की सेवाएँ लोड नहीं हो सकीं।",
+      "failed": "कॉपी नहीं हो सका। कुछ नहीं बदला।",
+      "sourceEmpty": "उस ब्रांच में कॉपी करने के लिए कोई सेवा नहीं है।",
+      "all": "सभी ({count})",
+      "alreadyHere": "पहले से यहाँ है",
+      "independent": "कॉपी अलग रहती हैं: यहाँ कीमत बदलने से दूसरी ब्रांच में नहीं बदलती।",
+      "copy": "{count, plural, one {# सेवा कॉपी करें} other {# सेवाएँ कॉपी करें}}",
+      "added": "{count, plural, =0 {कुछ नया नहीं जुड़ा।} one {# सेवा जुड़ी।} other {# सेवाएँ जुड़ीं।}}",
+      "skipped": "{count, plural, one {# पहले से यहाँ थी, छोड़ी: {names}} other {# पहले से यहाँ थीं, छोड़ीं: {names}}}",
+      "done": "हो गया"
+    }
   },
   "staff": {
     "addLabel": "{label} जोड़ें",
@@ -916,6 +959,13 @@
     "fullName": "पूरा नाम",
     "branch": "ब्रांच",
     "branchHoursHint": "वे बिज़नेस के घंटे अपनाते हैं, इसलिए उन्हें इस ब्रांच के घंटे मिलेंगे।",
+    "moveSkillsTitle": "{branch} में उनकी सर्विस",
+    "moveSkillsMatch": "नाम से मिलाएँ",
+    "moveSkillsMatchSub": "अभी वे जो सर्विस करते हैं, हर एक {branch} की उसी नाम वाली सर्विस बन जाएगी।",
+    "moveSkillsNone": "कोई सर्विस नहीं",
+    "moveSkillsNoneSub": "ब्रांच बदलने के बाद उनकी सर्विस चुनें।",
+    "moveSkillsLater": "{branch} में उनकी सर्विस सेव करने पर तय होंगी। उसके बाद बदलें।",
+    "moveUnmatched": "{branch} में इन नामों की कोई सर्विस नहीं है: {names}। नीचे चुनें कि वे क्या कर सकते हैं।",
     "role": "भूमिका",
     "mobile": "मोबाइल",
     "earnings": "कमाई",
@@ -1108,6 +1158,17 @@
         "saveFailed": "सेव नहीं हो सका — जांचें कि सर्वर चल रहा है।",
         "deleteFailed": "हटाया नहीं जा सका — जांचें कि सर्वर चल रहा है।"
       }
+    },
+    "branch": {
+      "which": "कौन सी ब्रांच?",
+      "allBranches": "बाकी सभी ब्रांच में भी लगाएँ",
+      "oneBranchHint": "यह सिर्फ़ इसी ब्रांच में चलेगा। दूसरी ब्रांच का अपना हो सकता है।",
+      "allBranchesHint": "हर ब्रांच को अपनी कॉपी मिलती है, उसके अपने मेन्यू से। जिस ब्रांच के मेन्यू में इनमें से कोई न हो, उसे छोड़ दिया जाता है।",
+      "resultTitle": "{title} लग गया",
+      "resultPublished": "इन ब्रांच में चल रहा है: {branches}।",
+      "resultSkipped": "{branch} में नहीं: वहाँ के मेन्यू में {missing} नहीं है।",
+      "done": "हो गया",
+      "tag": "{branch}"
     }
   },
   "attendance": {
@@ -1136,8 +1197,6 @@
       "yesterday": "कल",
       "searchPlaceholder": "{label} को नाम या भूमिका से खोजें",
       "searchAria": "{label} खोजें",
-      "branchKey": "ब्रांच:",
-      "allBranches": "सभी ब्रांच",
       "statusKey": "स्थिति:",
       "allStaff": "सभी {label}",
       "markAll": "सबको उपस्थित करें",
@@ -1277,7 +1336,13 @@
       "minutes": "{count} मिनट"
     },
     "callName": "{name} को कॉल करें",
-    "customerLower": "ग्राहक"
+    "customerLower": "ग्राहक",
+    "branchPicker": {
+      "label": "ब्रांच",
+      "all": "सभी ब्रांच",
+      "allHint": "सभी ब्रांच एक साथ",
+      "thisBranch": "यह ब्रांच"
+    }
   },
   "auth": {
     "metaTitle": "साइन इन",
@@ -1388,6 +1453,7 @@
     "loadingServices": "सेवाएँ लोड हो रही हैं…",
     "noServicesYet": "अभी कोई सेवा नहीं। पहले सेवाएँ में जोड़ें।",
     "noServiceMatch": "इससे मिलती कोई सेवा नहीं।",
+    "alsoTry": "यह भी देखें",
     "combos": "कॉम्बो और ऑफ़र",
     "comboServices": "{n, plural, one {# सेवा} other {# सेवाएँ}}",
     "picked": "चुनी हुई",
@@ -1398,7 +1464,6 @@
     "withWhom": "कौन सा {provider}?",
     "whichBranch": "कौन सी ब्रांच?",
     "whoeverIsFree": "जो भी खाली हो",
-    "noStylist": "कोई स्टाइलिस्ट नहीं",
     "freeCount": "{n, plural, =0 {कोई खाली नहीं} other {# खाली}}",
     "chairFree": "अभी खाली",
     "chairBusy": "{name} के साथ · {until} तक",
@@ -1437,7 +1502,9 @@
     "openingTill": "खुल रहा है…",
     "tillFailed": "यहाँ काउंटर नहीं खुल सका। विज़िट सेव है — भुगतान बुकिंग से लें।",
     "notPaidYet": "विज़िट सेव है, पर भुगतान अभी नहीं हुआ। अभी भुगतान लें, या बाद में बुकिंग से।",
-    "done": "हो गया"
+    "done": "हो गया",
+    "noServicesAtBranch": "{branch} में अभी कोई {services} नहीं है, इसलिए वहाँ कुछ बुक नहीं हो सकता।",
+    "addOrCopyServices": "{services} जोड़ें या कॉपी करें"
   },
   "moveBooking": {
     "title": "यह बुकिंग बदलें",
@@ -1508,7 +1575,6 @@
     }
   },
   "reports": {
-    "allBranches": "सभी ब्रांच",
     "title": "रिपोर्ट",
     "navLabel": "रिपोर्ट",
     "tabs": {
@@ -1632,7 +1698,8 @@
       "peakQuiet": "कोई नहीं",
       "peakBusy": "सबसे व्यस्त",
       "trendDetail": "लगभग {from} प्रति {unit} से लगभग {to} तक",
-      "trendSteady": "हर समय लगभग {about} प्रति {unit}"
+      "trendSteady": "हर समय लगभग {about} प्रति {unit}",
+      "peakCell": "{day} {hour} · सबसे व्यस्त घंटे का {pct}%"
     },
     "servicesTab": {
       "mostBooked": "सबसे ज़्यादा बुक",
@@ -1703,9 +1770,9 @@
       "colInterval": "हर कितने दिन",
       "neverIn": "कभी नहीं आए",
       "repeatRate": "लौटकर आए",
-      "daysAgo": "{n, plural, one {# दिन पहले} other {# दिन पहले}}"
+      "daysAgo": "{n, plural, one {# दिन पहले} other {# दिन पहले}}",
+      "comesEvery": "~{days} दिन"
     },
-    "branchClientsNote": "पैसा और बुकिंग {branch} के हैं। ग्राहकों के समूह हर ब्रांच को गिनते हैं।",
     "filtersOnOtherTabs": "{n, plural, one {1 फ़िल्टर लगा है, पर यह इस टैब को नहीं बदलता} other {# फ़िल्टर लगे हैं, पर ये इस टैब को नहीं बदलते}}",
     "remove": "{name} हटाएँ",
     "droppedFilters": "{n, plural, one {एक फ़िल्टर हटा दिया गया — वह ऐसी चीज़ पर था जो अब नहीं है} other {# फ़िल्टर हटा दिए गए — वे ऐसी चीज़ों पर थे जो अब नहीं हैं}}",
@@ -1725,6 +1792,104 @@
     "noCompletedVisits": "{band} · कोई पूरी विज़िट नहीं",
     "daysCount": "{days, plural, one {# दिन} other {# दिन}}",
     "retiredNote": "बंद",
-    "notAvailable": "आपकी भूमिका के लिए रिपोर्ट उपलब्ध नहीं हैं। ज़रूरत हो तो मालिक से पूछें।"
+    "notAvailable": "आपकी भूमिका के लिए रिपोर्ट उपलब्ध नहीं हैं। ज़रूरत हो तो मालिक से पूछें।",
+    "rows": {
+      "everything_else": "बाकी सब",
+      "returning": "लौटकर आए",
+      "new": "पहली बार आए",
+      "one_off": "सिर्फ़ एक बार आए",
+      "not_recorded": "दर्ज नहीं",
+      "whatsapp": "WhatsApp",
+      "spend_10k_plus": "₹10,000+",
+      "spend_5k_10k": "₹5,000–10,000",
+      "spend_1k_5k": "₹1,000–5,000",
+      "spend_under_1k": "₹1,000 से कम",
+      "visits_10_plus": "10+ विज़िट",
+      "visits_5_to_9": "5–9 विज़िट",
+      "visits_2_to_4": "2–4 विज़िट",
+      "visits_once": "बस एक बार",
+      "visits_never": "कभी नहीं आए"
+    },
+    "bookingsCount": "{n, plural, one {# {one}} other {# {other}}}",
+    "duration": {
+      "hm": "{h, plural, one {# घंटा} other {# घंटे}} {m} मिनट",
+      "h": "{h, plural, one {# घंटा} other {# घंटे}}",
+      "m": "{m} मिनट"
+    }
+  },
+  "autopayRenewal": {
+    "ask": "{date} से आपका बिल {amount} प्रति माह होगा। कृपया अपने UPI ऐप में {amount} मंज़ूर करें, ताकि बिल अपने आप भरता रहे।",
+    "soon": "सिर्फ़ {days, plural, one {# दिन} other {# दिन}} बचे हैं। {date} से पहले {amount} मंज़ूर करें, नहीं तो अपने आप भुगतान में सिर्फ़ {old} ही भरे जाएँगे।",
+    "last": "{amount} मंज़ूर करने का आख़िरी दिन। मंज़ूर न करने पर {date} को अपने आप भुगतान में सिर्फ़ {old} ही भरे जाएँगे।",
+    "missed": "इस महीने के {amount} के बिल में से अपने आप भुगतान से सिर्फ़ {old} भरे गए। बाकी राशि बिल पेज से भरें, और {amount} मंज़ूर करें ताकि अगले महीने पूरा बिल भर जाए।",
+    "missedHere": "इस महीने के {amount} के बिल में से अपने आप भुगतान से सिर्फ़ {old} भरे गए। बाकी राशि इस पेज के ऊपर “अभी भुगतान करें” से भरें, और {amount} मंज़ूर करें ताकि अगले महीने पूरा बिल भर जाए।",
+    "waiting": "आपने मंज़ूरी शुरू की थी। इसे अपने UPI ऐप में पूरा करें।",
+    "approve": "{amount} मंज़ूर करें",
+    "finish": "UPI में मंज़ूरी पूरी करें",
+    "opening": "खुल रहा है…",
+    "failed": "अभी आपका UPI ऐप नहीं खुल सका। कृपया थोड़ी देर में फिर कोशिश करें।",
+    "openBilling": "बिल पेज खोलें",
+    "lower": "आपका बिल घटकर {amount} प्रति माह हो गया है, पर अपने आप भुगतान में अब भी {old} कटते हैं। ज़्यादा कटी राशि आपके अगले बिल में से घटा दी जाती है।",
+    "lowerAction": "अपने आप भुगतान {amount} करें",
+    "halted": "आपका अपने आप भुगतान बंद हो गया है। इसे दोबारा मंज़ूर करें, या यह बिल अभी भरें।",
+    "haltedNoBill": "आपका अपने आप भुगतान बंद हो गया है। इसे दोबारा मंज़ूर करें, ताकि अगले महीने का बिल अपने आप भर जाए।",
+    "haltedApprove": "अपने आप भुगतान दोबारा मंज़ूर करें"
+  },
+  "billingMoney": {
+    "onAccount": "{amount} आपके खाते में जमा है। यह राशि आपके अगले बिल में से घटा दी जाएगी।",
+    "paidHeading": "भुगतान",
+    "nothingPaid": "इस बिल पर अभी कोई भुगतान नहीं हुआ है।",
+    "paidLine": "{amount} · {how} · {date}",
+    "viaAutopay": "अपने आप भुगतान",
+    "viaPayNow": "‘अभी भुगतान’ से",
+    "viaRecorded": "Growza द्वारा दर्ज",
+    "fromAccount": "आपके खाते में जमा राशि से",
+    "refundedLine": "{amount} · {how} · {date} — वापस कर दिया गया",
+    "refundedPart": "{amount} वापस कर दिए गए"
+  },
+  "tokens": {
+    "board": "आज के टोकन",
+    "waiting": "इंतज़ार में",
+    "withProvider": "{provider} के पास",
+    "paid": "भुगतान हो गया",
+    "waitingTab": "इंतज़ार ({count})",
+    "withTab": "{provider} के पास ({count})",
+    "paidTab": "भुगतान हुआ ({count})",
+    "nobodyWaiting": "कोई इंतज़ार में नहीं।",
+    "nobodyWith": "अभी कोई {provider} के पास नहीं है।",
+    "nobodyPaid": "अभी तक किसी ने भुगतान नहीं किया।",
+    "servicesAtPayment": "सेवाएँ भुगतान के समय चुनी जाएँगी",
+    "noProvider": "कोई {provider} नहीं",
+    "giveTo": "{provider} को दें",
+    "recordPayment": "पेमेंट दर्ज करें",
+    "paidAmount": "{amount} · {mode}",
+    "newToken": "नया टोकन",
+    "newBooking": "नई बुकिंग",
+    "newTokenSub": "बस नाम लिखें। क्या करवाया, यह भुगतान के समय चुनें।",
+    "atBranch": "{branch} पर",
+    "giveToken": "टोकन दें",
+    "giving": "दे रहे हैं…",
+    "tokenIssued": "टोकन {n}",
+    "tellThem": "{name} को उनका नंबर बताएँ।",
+    "anotherToken": "एक और टोकन",
+    "bookedToday": "आज की बुकिंग",
+    "bookedTodaySub": "अभी बोर्ड पर नहीं",
+    "nothingBooked": "आज और कोई बुकिंग नहीं।",
+    "arrived": "आ गए",
+    "arriving": "सेव हो रहा है…",
+    "arrivedFor": "आ गए — {name}",
+    "bookedAt": "{time} की बुकिंग",
+    "figuresToday": "आज के टोकन",
+    "figuresSub": "काउंटर पर जिसे भी नंबर दिया गया",
+    "figuresReport": "टोकन",
+    "figuresReportHint": "इस समय में काउंटर पर जिसे भी नंबर दिया गया। टोकन पर सिर्फ़ ब्रांच का फ़िल्टर लगता है।",
+    "issued": "टोकन दिए",
+    "served": "सेवा दी",
+    "paidCount": "भुगतान हुआ",
+    "left": "बिना सेवा चले गए",
+    "noName": "बिना नाम",
+    "giveFor": "{provider} को दें — टोकन {n}, {name}",
+    "payFor": "पेमेंट दर्ज करें — टोकन {n}, {name}",
+    "cancelledCount": "रद्द हुए"
   }
 }

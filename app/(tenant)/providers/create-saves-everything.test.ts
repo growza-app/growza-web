@@ -81,10 +81,10 @@ describe('creating a staff member', () => {
      * `uses_org_hours` false, so the stylist would stop following the salon
      * the moment the owner changed it — GRW-183's standing intent, destroyed
      * by a client being helpful. Same for services: omitted means "every active
-     * one", resolved server-side at insert.
+     * one" of the stylist's branch (Jira GRW-393), resolved server-side at insert.
      */
     expect(saveBody).toMatch(/followsSalon\s*\n?\s*\?\s*\{\}/);
-    expect(saveBody).toMatch(/skills\.size === services\.length \? \{\} :/);
+    expect(saveBody).toMatch(/skills\.size === menu\.length \? \{\} :/);
   });
 
   it('has no follow-up PATCH of any kind', () => {

@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';
-import { formatDateOnly, formatTimestampDate } from '../../lib/format';
+import { formatDateOnly, formatMoneyMinor, formatTimestampDate } from '../../lib/format';
 import { billingStatusLabel } from '../../lib/billing-status';
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from '../../components/primitives';
 import { InvoiceBreakdown } from '../../components/InvoiceBreakdown';
@@ -41,7 +41,20 @@ interface InvoiceDetail {
   periodStart: string;
   periodEnd: string;
   issuedAt: string;
+  /** Jira GRW-407 — the payments put against this invoice, and how much of each. */
+  paymentsApplied?: Array<{
+    paymentId: string;
+    externalPaymentId: string;
+    via: 'autopay' | 'pay_now' | 'recorded';
+    amountMinor: number;
+    refundedMinor?: number;
+    carried: boolean;
+    paidAt: string | null;
+    status: string;
+  }>;
 }
+
+const VIA: Record<'autopay' | 'pay_now' | 'recorded', string> = { autopay: 'AutoPay', pay_now: 'Pay now', recorded: 'Recorded by support' };
 
 export default function InvoiceDetailPage() {
   const params = useParams<{ id: string }>();
@@ -145,6 +158,24 @@ export default function InvoiceDetailPage() {
           These are the figures stored when the invoice was issued. A later plan price change, discount edit or tax-rate
           change does not alter them.
         </p>
+      </Card>
+
+      <Card>
+        <SectionTitle title="Payments applied to this invoice" />
+        {(invoice.paymentsApplied ?? []).length === 0 ? (
+          <div style={{ fontSize: 13, color: oklch.textFaint }}>Nothing has been paid against this invoice yet.</div>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13.5 }} data-testid="invoice-payments">
+            {(invoice.paymentsApplied ?? []).map((p) => (
+              <li key={p.paymentId}>
+                <strong>{formatMoneyMinor(p.amountMinor)}</strong> by {VIA[p.via]}
+                {p.carried ? ' (money from the account)' : ''}
+                {(p.refundedMinor ?? 0) > 0 ? ` — ${formatMoneyMinor(p.refundedMinor!)} refunded` : ''} · {p.paidAt ? formatTimestampDate(p.paidAt) : '—'} ·{' '}
+                <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: 12 }}>{p.externalPaymentId}</code> · {p.status}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
     </div>
   );

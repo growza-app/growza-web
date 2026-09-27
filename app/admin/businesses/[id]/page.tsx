@@ -10,7 +10,7 @@ import { formatDateOnly, formatDateTime } from '../../lib/format';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, Select, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
 import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
 import { BillingTab } from '../../components/BillingTab';
@@ -740,6 +740,12 @@ function BranchesTab({
   const [name, setName] = useState('');
   const [line1, setLine1] = useState('');
   const [city, setCity] = useState('');
+  /**
+   * Jira GRW-384 — how the new branch's menu starts: a copy of an open branch's (the main one first), the
+   * vertical's ready-made catalogue, or empty. "copy:<branch id>", "catalogue" or "empty".
+   */
+  const openBranches = locations.filter((l) => l.active).sort((a, b) => Number(b.isMain) - Number(a.isMain));
+  const [menu, setMenu] = useState<string>(() => (openBranches[0] ? `copy:${openBranches[0].id}` : 'catalogue'));
   const [closing, setClosing] = useState<{ id: string; name: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -755,7 +761,12 @@ function BranchesTab({
     setError(null);
     adminFetch(`/businesses/${businessId}/branches`, {
       method: 'POST',
-      body: JSON.stringify({ name: name.trim(), address: { line1: line1.trim(), city: city.trim() }, reason }),
+      body: JSON.stringify({
+        name: name.trim(),
+        address: { line1: line1.trim(), city: city.trim() },
+        reason,
+        ...(menu.startsWith('copy:') ? { menu: 'copy', copyFrom: menu.slice(5) } : { menu }),
+      }),
     })
       .then(() => {
         setAdding(false);
@@ -860,6 +871,22 @@ function BranchesTab({
             City (optional)
           </label>
           <TextInput id="add-branch-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Bengaluru" />
+          <label htmlFor="add-branch-menu" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+            Its menu
+          </label>
+          <Select
+            id="add-branch-menu"
+            value={menu}
+            onChange={(e) => setMenu(e.target.value)}
+            options={[
+              ...openBranches.map((b) => ({ value: `copy:${b.id}`, label: `Copy ${b.name}’s services and prices` })),
+              { value: 'catalogue', label: 'The ready-made catalogue for this kind of business' },
+              { value: 'empty', label: 'Empty — the owner adds services later' },
+            ]}
+          />
+          <span style={{ fontSize: 12.5, color: oklch.textMuted }}>
+            A copy is the branch&rsquo;s own: prices can be changed there without touching the branch it came from.
+          </span>
         </div>
         {/* Jira GRW-240 — the bill with this branch, before confirming. */}
         <BranchBillPreview businessId={businessId} change="add" open={adding} />

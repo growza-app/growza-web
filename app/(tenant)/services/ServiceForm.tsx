@@ -29,9 +29,13 @@ function fromMinor(minor: string | null): string {
 export function ServiceForm({
   service,
   categories,
+  branchId,
   onClose,
   onSaved,
 }: {
+  /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
+  branchId: string;
+
   /** Null to create. */
   service: ServiceAdmin | null;
   categories: ServiceCategory[];
@@ -89,7 +93,7 @@ export function ServiceForm({
       priceMinor: toMinor(price),
     };
     try {
-      let saved = service ? await api.updateService(service.id, payload) : await api.createService(payload);
+      let saved = service ? await api.updateService(service.id, payload) : await api.createService(branchId, payload);
       if (photo) {
         const withPhoto = await api.uploadServicePhoto(saved.id, photo);
         saved = { ...saved, imageUrl: withPhoto.imageUrl };

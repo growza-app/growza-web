@@ -575,7 +575,11 @@ export function Select({
   options,
   invalid,
   ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & { options: string[]; invalid?: boolean }) {
+}: React.SelectHTMLAttributes<HTMLSelectElement> & {
+  /** A plain string is its own label; `{ value, label }` when the two differ (Jira GRW-384). */
+  options: Array<string | { value: string; label: string }>;
+  invalid?: boolean;
+}) {
   return (
     <select
       {...props}
@@ -589,11 +593,14 @@ export function Select({
         ...props.style,
       }}
     >
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
+      {options.map((o) => {
+        const { value, label } = typeof o === 'string' ? { value: o, label: o } : o;
+        return (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        );
+      })}
     </select>
   );
 }

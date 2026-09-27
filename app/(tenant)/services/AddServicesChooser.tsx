@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { api, type SeedCatalog } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 
-export type AddServicesRoute = 'catalogue' | 'sheet' | 'manual';
+export type AddServicesRoute = 'catalogue' | 'sheet' | 'manual' | 'copy';
 
 /**
  * "hair, skin, nails, spa and bridal" — read off the catalogue, never written down here.
@@ -28,9 +28,16 @@ export function AddServicesChooser({
   tenantName,
   serviceCount,
   serviceLabel,
+  branchId,
+  canCopy,
   onPick,
   onClose,
 }: {
+  /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
+  branchId: string;
+  /** Another branch exists to copy from (Jira GRW-378). */
+  canCopy: boolean;
+
   tenantName: string | null;
   serviceCount: number;
   /** The plural noun, already lower-case and in the owner's language. */
@@ -49,7 +56,7 @@ export function AddServicesChooser({
   useEffect(() => {
     let live = true;
     api
-      .seedCatalog()
+      .seedCatalog(branchId)
       .then((c) => live && setCatalog(c))
       .catch(() => {
         /* The catalogue row simply does not offer itself if the vertical has none. */
@@ -57,7 +64,7 @@ export function AddServicesChooser({
     return () => {
       live = false;
     };
-  }, []);
+  }, [branchId]);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -88,6 +95,17 @@ export function AddServicesChooser({
                 <span className="muted">
                   {phrase(catalog) ? tc('catalogueDescWith', { phrase: phrase(catalog)! }) : tc('catalogueDescPlain')}
                 </span>
+              </span>
+              <span className="chooser-chevron">›</span>
+            </button>
+          )}
+
+          {canCopy && (
+            <button type="button" className="chooser-route" onClick={() => onPick('copy')}>
+              <span className="chooser-icon">⧉</span>
+              <span className="chooser-body">
+                <span className="chooser-title">{tc('copyTitle')}</span>
+                <span className="muted">{tc('copySub')}</span>
               </span>
               <span className="chooser-chevron">›</span>
             </button>

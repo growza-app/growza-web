@@ -12,8 +12,11 @@ import { copy } from './copy';
  * Domain nouns stay with the vertical: in English the provider and booking
  * words come from `ctx.labels`, so a clinic reads "Doctor" and "Visits". The
  * vertical configs carry no Hindi labels yet, so Hindi uses the design's
- * generic words (स्टाफ, बुकिंग, ग्राहक) for every vertical — better a correct
+ * generic words (स्टाफ़, बुकिंग, ग्राहक) for every vertical — better a correct
  * general word than an English noun in the middle of a Hindi sentence.
+ *
+ * Jira GRW-363 — स्टाफ़, with the nukta, as `nouns.staff` and every other screen spell it. Home
+ * wrote स्टाफ, so the day summary's heading and its "कोई स्टाफ़ नहीं" row disagreed on one page.
  */
 
 type Labels = Record<string, string>;
@@ -67,11 +70,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     week: S('Week', 'हफ़्ता'),
     month: S('Month', 'महीना'),
     showMoneyFor: S('Show money for', 'पैसा दिखाएँ'),
-    allBranchesShort: S('All', 'सभी'),
     /** Jira GRW-338 — the Notifications tab's name when something is waiting: "Notifications, 3 unread". */
     unreadCount: (n: number) => (hi ? `${n} नई` : `${n} unread`),
     allBranches: S('All branches', 'सभी ब्रांच'),
-    branch: S('Branch', 'ब्रांच'),
 
     moneyToday: S('Money today', 'आज का पैसा'),
     moneyWeek: S('Money this week', 'इस हफ़्ते का पैसा'),
@@ -105,16 +106,33 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     cancelledToday: S('Booking cancelled', 'बुकिंग रद्द हुई'),
     cancelledTodayShort: S('Cancelled today', 'आज रद्द हुए'),
     todayWord: S('Today', 'आज'),
-    staffNotMarkedIn: S('Staff not marked in', 'स्टाफ की हाज़िरी बाकी'),
+    staffNotMarkedIn: S('Staff not marked in', 'स्टाफ़ की हाज़िरी बाकी'),
     attendanceWord: S('Attendance', 'हाज़िरी'),
 
     quickLinks: S('Quick links', 'शॉर्टकट'),
+    /** The money card's branch line (Jira GRW-312); the "Your branches" card it was named after is gone (Jira GRW-348). */
     yourBranches: S('Your branches', 'आपकी ब्रांच'),
-    branchMeta: (bookings: number, money: string) => `${bookings} ${bookingWord(bookings)} · ${money}`,
-    mainBranch: S('Main', 'मुख्य'),
-    branchBusy: S('Busy', 'व्यस्त'),
-    branchSlow: S('Slow', 'धीमा'),
     branchCount: (n: number) => S(`${n} branches`, `${n} ब्रांच`),
+
+    /*
+     * Jira GRW-351 — the laptop's "Right now" card. "In the chair" is the vertical's own place ("In the room" for a
+     * clinic, "In the bay" for a garage); Hindi has no per-vertical words yet, so it says "being served".
+     */
+    rightNow: S('Right now', 'अभी का हाल'),
+    rightNowAlerts: S('Needs you now', 'अभी ध्यान दें'),
+    inTheChair: S(`In the ${(labels.resource ?? 'chair').toLowerCase()}`, 'सेवा चल रही है'),
+    nextUp: S('Next up', `अगली ${bookingWord(1)}`),
+    firstTomorrow: S('First tomorrow', `कल की पहली ${bookingWord(1)}`),
+    walkInsWaiting: S('Walk-ins waiting', `इंतज़ार में ${clientsWord}`),
+    longestWait: (min: number) => S(`longest ${min} min`, `सबसे ज़्यादा ${min} मिनट`),
+    overBooked: (min: number) => S(`${min} min longer than booked`, `समय से ${min} मिनट ज़्यादा`),
+    moreAlerts: (n: number) => S(`+${n} more`, `+${n} और`),
+    /** Jira GRW-351 — all the alerts in one line, when the card has no room to list any: "3 things need you". */
+    alertCount: (n: number) => S(`${n} ${n === 1 ? 'thing needs' : 'things need'} you`, `${n} ${n === 1 ? 'बात' : 'बातों'} पर ध्यान दें`),
+    seeAll: S('See all', 'सब देखें'),
+    nothingNeedsYou: S('Nothing needs you right now', 'अभी आपको कुछ नहीं करना है'),
+    /** BR-12 — the queue could not be read, so the card cannot say that nobody is waiting. */
+    queueUnread: S('Could not check who is waiting.', 'इंतज़ार कौन कर रहा है, यह नहीं देख पाए।'),
 
     clientsDoingTitle: hi ? 'आपके ग्राहक कैसे हैं' : copy.clients.segmentsTitle,
     clientsDoingHint: hi ? 'किसी एक पर टैप करें' : copy.clients.segmentsHint,
@@ -146,7 +164,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     moneyTaken: S('Money today', 'आज मिला पैसा'),
     done: S('done', 'पूरे हुए'),
     notDone: S('still to do', 'बाकी हैं'),
-    staffToday: S('Staff today', 'आज का स्टाफ'),
+    staffToday: S('Staff today', 'आज का स्टाफ़'),
     staffTodaySub: S('Work and money for each person', 'हर व्यक्ति का काम और पैसा'),
     staffBookings: (n: number) => `${n} ${bookingWord(n)}`,
     nobodyWorked: S('No work done yet today.', 'आज अभी कोई काम नहीं हुआ।'),
@@ -204,7 +222,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     waitingQueue: S('Waiting queue', 'इंतज़ार की लाइन'),
     waitingMin: (min: number) => S(`Waiting ${min} min`, `${min} मिनट इंतज़ार`),
     waitingOver10: S('Waiting over 10 min', '10 मिनट से ज़्यादा इंतज़ार'),
-    giveToStaff: S('Give to staff', 'स्टाफ को दें'),
+    giveToStaff: S('Give to staff', 'स्टाफ़ को दें'),
     giveTitle: (name: string) => S(`Give ${name} to…`, `${name} को किसे दें…`),
     free: S('Free', 'खाली'),
     busyWith: (client: string, min: number) => S(`Busy · ${client} · ${min} min`, `व्यस्त · ${client} · ${min} मिनट`),
@@ -250,7 +268,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       bookings: hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
-      staff: hi ? 'स्टाफ' : (labels.providers ?? copy.nav.staff),
+      staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),
       services: hi ? 'सेवाएँ' : (labels.services ?? copy.nav.services),
       offers: S(copy.nav.offers, 'ऑफर'),
       attendance: S('Attendance', 'हाज़िरी'),
@@ -269,7 +287,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       owner: S('Owner', 'मालिक'),
       manager: S('Manager', 'मैनेजर'),
       receptionist: S('Front desk', 'रिसेप्शन'),
-      staff: hi ? 'स्टाफ' : (labels.provider ?? 'Stylist'),
+      staff: hi ? 'स्टाफ़' : (labels.provider ?? 'Stylist'),
     } as Record<string, string>,
   };
 }

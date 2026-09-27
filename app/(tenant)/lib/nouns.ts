@@ -11,3 +11,15 @@
 export function pickNoun(locale: string, vertical: string, generic: string): string {
   return locale === 'en' ? vertical : generic;
 }
+
+/**
+ * Jira GRW-363 — a vertical's noun as it reads inside a sentence: "Stylist" → "No stylist".
+ *
+ * Only the first letter is lowered, and only when the rest is already lower case, so a label that
+ * is not plain Title case keeps its own spelling: "MUA" stays "No MUA", "Hair Stylist" stays as
+ * written. `toLowerCase()` on the whole label turned an acronym into a word nobody uses.
+ */
+export function nounInSentence(label: string): string {
+  const rest = label.slice(1);
+  return rest === rest.toLowerCase() ? label.charAt(0).toLowerCase() + rest : label;
+}

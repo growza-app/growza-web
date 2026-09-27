@@ -7,6 +7,7 @@ import { formatDateOnly, formatMoneyMinor, formatTimestampDate } from '../lib/fo
 import { billingStatusLabel } from '../lib/billing-status';
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from './primitives';
 import { InvoiceBreakdown } from './InvoiceBreakdown';
+import { AutopayPanel } from './AutopayPanel';
 import { oklch } from '../tokens';
 
 /**
@@ -48,6 +49,11 @@ interface PaymentRow {
   paidAt: string | null;
   failureReason: string | null;
   createdAt: string;
+  /** Jira GRW-407 — the bills it paid, and what of it is held on the salon's account. */
+  appliedTo?: Array<{ invoiceId: string; invoiceNumber: string; amountMinor: number; refundedMinor?: number; carried: boolean }>;
+  onAccountMinor?: number;
+  /** Money no bill has taken that nothing will move — for a person to decide. */
+  heldMinor?: number;
 }
 
 export function BillingTab({ businessId }: { businessId: string; businessName?: string }) {
@@ -112,6 +118,8 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Jira GRW-242 — the mandate, and any new amount the owner has been asked to approve. */}
+      <AutopayPanel businessId={businessId} />
       <Card>
         <SectionTitle title={`Invoices (${invoices.length})`} />
         {invoices.length === 0 ? (
@@ -202,6 +210,23 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
                     {p.paymentProvider} · {formatTimestampDate(p.paidAt ?? p.createdAt)}
                   </div>
                   {p.failureReason ? <div style={{ fontSize: 11.5, color: oklch.danger, fontWeight: 600, marginTop: 2 }}>{p.failureReason}</div> : null}
+                  {(p.appliedTo?.length ?? 0) > 0 || (p.onAccountMinor ?? 0) > 0 ? (
+                    <div style={{ fontSize: 12, color: oklch.textMuted, fontWeight: 600, marginTop: 3 }} data-testid="payment-applied">
+                      {[
+                        ...(p.appliedTo ?? []).map((a) =>
+                          a.amountMinor === 0
+                            ? `${a.invoiceNumber} ${formatMoneyMinor(a.refundedMinor ?? 0)} refunded`
+                            : `Paid ${a.invoiceNumber} ${formatMoneyMinor(a.amountMinor)}${a.carried ? ' (from account)' : ''}${(a.refundedMinor ?? 0) > 0 ? ` (${formatMoneyMinor(a.refundedMinor!)} refunded)` : ''}`,
+                        ),
+                        ...((p.onAccountMinor ?? 0) > 0 ? [`${formatMoneyMinor(p.onAccountMinor!)} on account — taken off the next bill`] : []),
+                      ].join(' · ')}
+                    </div>
+                  ) : null}
+                  {(p.heldMinor ?? 0) > 0 ? (
+                    <div style={{ fontSize: 12, color: oklch.danger, fontWeight: 700, marginTop: 3 }} data-testid="payment-held">
+                      {formatMoneyMinor(p.heldMinor!)} held — needs a person (no bill will take it on its own)
+                    </div>
+                  ) : null}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
                   {p.refundedAmountMinor > 0 ? (

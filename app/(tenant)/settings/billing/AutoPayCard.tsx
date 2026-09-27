@@ -5,6 +5,10 @@ import { api, ApiError } from '../../lib/api';
 import type { OwnerBilling } from '../../lib/api-types';
 import { billingCopy } from '../../lib/billing-copy';
 import type { Lang } from '../../lib/lang';
+import { AutopayRenewalNotice } from '../../components/AutopayRenewalNotice';
+import { AutopayHaltedNotice } from '../../components/AutopayHaltedNotice';
+// Jira GRW-413 — one predicate for "the provider stopped it", shared with the API and the admin portal.
+import { isMandateHalted } from '@growza-app/shared';
 
 /**
  * Jira GRW-241 — automatic payment, on the Billing screen.
@@ -23,11 +27,20 @@ export function AutoPayCard({
   paidBy,
   currency,
   lang,
+  renewal = null,
+  canPayOnline = false,
+  billDue = false,
 }: {
   autopay: NonNullable<OwnerBilling['subscription']>['autopay'];
   paidBy: NonNullable<OwnerBilling['subscription']>['paidBy'];
   currency: string;
   lang: Lang;
+  /** Jira GRW-242 — the next bill is not what AutoPay takes: approve the new amount (or, lower, change it). */
+  renewal?: NonNullable<OwnerBilling['subscription']>['autopayRenewal'];
+  /** Jira GRW-402 — whether an approval page can be made at all. */
+  canPayOnline?: boolean;
+  /** Jira GRW-413 — whether a bill is open, so a halted AutoPay is asked to "pay this bill" only when there is one. */
+  billDue?: boolean;
 }) {
   const t = billingCopy(lang);
   const [busy, setBusy] = useState(false);
@@ -85,6 +98,8 @@ export function AutoPayCard({
             <strong>{t.autopayOn(autopay?.amountMinor != null ? money(autopay.amountMinor) : '—')}</strong>
           </p>
           {autopay?.approvedAt ? <p className="field-hint">{t.autopayOnSince(day(autopay.approvedAt))}</p> : null}
+          {/* Jira GRW-242 — under the amount it would replace. */}
+          {renewal ? <AutopayRenewalNotice renewal={renewal} lang={lang} place="billing" canApprove={canPayOnline} /> : null}
         </>
       ) : status === 'pending' ? (
         <>
@@ -96,16 +111,22 @@ export function AutoPayCard({
             </a>
           ) : null}
         </>
+      ) : isMandateHalted(status) ? (
+        /*
+         * Jira GRW-413 — halted, which is its own case and not "AutoPay is off".
+         *
+         * It used to render the generic off-card: one sentence saying the last
+         * payment did not go through, and one button to turn AutoPay back on. So
+         * the owner of a halted mandate was told to pay a bill with no way to pay
+         * it from here, while dunning walked them towards suspension asking the
+         * provider for a retry it always refused. Both actions, together, with
+         * the sentence that names them.
+         */
+        <AutopayHaltedNotice billDue={billDue} canPayOnline={canPayOnline} />
       ) : (
         <>
           <p className="field-hint">
-            {status === 'cancelled'
-              ? t.autopayStopped
-              : status === 'paused'
-                ? t.autopayPaused
-                : status === 'failed'
-                  ? t.autopayFailed
-                  : t.autopayOffExplain}
+            {status === 'cancelled' ? t.autopayStopped : status === 'paused' ? t.autopayPaused : t.autopayOffExplain}
           </p>
           <button type="button" className="bill-autopay-button" onClick={start} disabled={busy}>
             {busy ? t.autopayOpening : status ? t.autopayAgain : t.autopaySetUp}
