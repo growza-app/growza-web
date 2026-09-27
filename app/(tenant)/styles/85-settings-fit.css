@@ -17,10 +17,21 @@
     grid-template-columns: 276px minmax(0, 960px);
     gap: 18px;
   }
-  /* Worded times need ~118px each at 20px ("10:00 AM"); the 640px column clipped them. */
-  .wk-times input[type='time'] {
-    min-width: 118px;
-  }
+  /*
+   * Jira GRW-414 — the `min-width: 118px` that used to sit here is GONE.
+   *
+   * GRW-228 added it so worded times were not truncated in this column, and it
+   * bought that by making the row unable to shrink: two 118px fields plus the
+   * clock, the dash and the gaps need 513px, the column gives 276px at 861×500,
+   * and `.card { overflow: hidden }` cut the difference off rather than let it
+   * scroll. It traded a truncated time for an unreachable one.
+   *
+   * Nothing replaces it, because nothing needs to: the rows now stack when
+   * their container drops below 650px (78-collapsed-week-hours.css), so this
+   * column gets the phone shape and the fields get the full width instead of a
+   * floor fighting for it. Measured after: 0px clipped at every matrix width,
+   * and no field below the room its text needs.
+   */
 }
 
 @media (min-width: 861px) and (min-height: 680px) {
