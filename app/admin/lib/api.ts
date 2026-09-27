@@ -1,12 +1,20 @@
+import { refreshAdminSession } from './refresh';
 import { clearAdminSession, readAdminSession } from './session';
 
 /**
  * The admin plane's fetch wrapper (GRW-99) — same-origin `/api/admin/v1/...`
  * through Next's rewrite (next.config.ts), same shape as the tenant portal's
  * own `lib/api.ts`. The one thing that differs: every call carries the
- * session's Bearer token, and a 401 clears it and sends the admin back to
- * `/admin/login` rather than surfacing as a generic error — an expired or
- * revoked session is not something a retry fixes.
+ * session's Bearer token.
+ *
+ * A 401 used to clear the session and navigate to `/admin/login` immediately,
+ * on the reasoning that "an expired or revoked session is not something a
+ * retry fixes". Jira GRW-417 made half of that false: an expired session IS
+ * now fixable, from the refresh cookie, without the admin typing anything. So
+ * a 401 tries that first and replays the request once, and only a session
+ * that genuinely cannot be renewed ends in a sign-out. The difference is
+ * whatever the admin was in the middle of — before this, a token expiring
+ * during a half-filled Add Business form took the form with it.
  */
 export class AdminApiError extends Error {
   constructor(
@@ -38,26 +46,66 @@ async function extractError(res: Response, path: string): Promise<{ message: str
   };
 }
 
-export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+/**
+ * One attempt, carrying whatever session is in storage at the moment it runs
+ * — which is why the token is read here and not by the caller: the retry below
+ * must pick up the token the refresh just wrote, not the expired one.
+ *
+ * `init` is replayed as given. Every caller in this plane passes a JSON string
+ * body or none, so there is no stream here to be consumed by the first attempt.
+ */
+async function send(path: string, init?: RequestInit): Promise<Response> {
   const session = readAdminSession();
   const headers = new Headers(init?.headers);
   if (session) headers.set('Authorization', `Bearer ${session.token}`);
   if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
 
-  const res = await fetch(`/api/admin/v1${path}`, { ...init, headers, cache: 'no-store' });
+  return fetch(`/api/admin/v1${path}`, { ...init, headers, cache: 'no-store' });
+}
 
-  if (res.status === 401) {
-    clearAdminSession();
-    if (typeof window !== 'undefined') window.location.href = '/admin/login';
-    // The redirect above is navigating away; this throw just ends the
-    // current call cleanly rather than letting a caller act on no data.
-    throw new AdminApiError(401, 'Session expired — signing out.');
-  }
-
+async function unwrap<T>(res: Response, path: string): Promise<T> {
   if (!res.ok) {
     const { message, code, field } = await extractError(res, path);
     throw new AdminApiError(res.status, message, code, field);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await send(path, init);
+  if (res.status !== 401) return unwrap<T>(res, path);
+
+  // Jira GRW-417 — renew, then replay. Once: a second 401 with a token the
+  // server has just minted is not an expiry problem, and retrying further
+  // would only turn one refused request into a loop.
+  const outcome = await refreshAdminSession();
+  if (outcome.status === 'renewed') {
+    const retried = await send(path, init);
+    if (retried.status !== 401) return unwrap<T>(retried, path);
+  }
+
+  /**
+   * An outage or the throttle is NOT a sign-out.
+   *
+   * The refresh route is careful never to end a session over a blip, and
+   * throwing this away here would undo that from the other end: the session
+   * stays exactly as it was, the screen shows its ordinary error state, and
+   * the next attempt — this admin retrying, or the background poller — can
+   * still renew it. Signing somebody out of a half-finished form because
+   * Cognito was briefly unreachable is the complaint this ticket started as.
+   */
+  if (outcome.status === 'unavailable') {
+    throw new AdminApiError(
+      503,
+      'Could not reach the sign-in service to renew your session. Nothing was lost — please try that again.',
+      'session_refresh_unavailable',
+    );
+  }
+
+  clearAdminSession();
+  if (typeof window !== 'undefined') window.location.href = '/admin/login';
+  // The redirect above is navigating away; this throw just ends the
+  // current call cleanly rather than letting a caller act on no data.
+  throw new AdminApiError(401, 'Session expired — signing out.');
 }
