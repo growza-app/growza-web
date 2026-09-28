@@ -34,6 +34,7 @@ import { ClientProfileCard } from '../components/ClientProfileCard';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
+import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -220,6 +221,15 @@ export function CustomersClient({
       primed.current = true;
       return;
     }
+    /*
+     * Jira GRW-422 — a term too short to be worth asking about is skipped, but an
+     * EMPTY box is not short, it is "everyone", and must still be fetched (BR-01).
+     * Before this, one keystroke fired a request and so did clearing the box.
+     */
+    if (!worthSearching(search)) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     let cancelled = false;
     // Debounced so typing a phone number doesn't fire a request per digit.
@@ -232,7 +242,7 @@ export function CustomersClient({
         .finally(() => {
           if (!cancelled) setLoading(false);
         });
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
