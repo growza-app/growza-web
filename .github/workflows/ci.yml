@@ -57,3 +57,9 @@ jobs:
           NEXT_TELEMETRY_DISABLED: '1'
           API_URL: http://api:3001
         run: npm run build
+
+      # These 78 files have never run anywhere: vitest belonged to the monorepo
+      # root and did not come across with the split. Free minutes on a public
+      # repo is exactly what they were waiting for.
+      - name: Tests
+        run: npm test
