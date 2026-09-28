@@ -44,8 +44,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm install --no-audit --no-fund
 
+      # `npx tsc` without typescript installed silently fetches an unrelated
+      # 2016 package called `tsc` and fails with "This is not the tsc command
+      # you are looking for". Run the project's own compiler from node_modules.
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npx --no-install tsc --noEmit
 
       # The same build the image runs, so a break shows up here rather than in
       # a container that will not start.
