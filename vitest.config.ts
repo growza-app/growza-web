@@ -27,6 +27,32 @@ export default defineConfig({
        */
       'app/admin/lib/list-tables-fit.test.ts',
       'app/(tenant)/settings/settings-fit.test.ts',
+      /*
+       * These nine read the dashboard's own files through MONOREPO paths —
+       * 'web/app/...', 'web/messages', 'web/public/sw.js' — or scan growza's
+       * `src/` and `test/devices/`. They were written to run from the root of
+       * growza, where the dashboard sits at `web/`. Here it IS the root, so
+       * every one of those paths is wrong by a directory.
+       *
+       * Excluded rather than edited, deliberately: the files themselves must
+       * stay byte-identical to growza's copies or the drift GRW-419 just fixed
+       * starts again. This config file exists only in this repo, so the
+       * exclusion lives somewhere it cannot cause divergence. growza still runs
+       * all nine, so no coverage is lost today.
+       *
+       * The real fix is to make the paths root-aware so one file works in both
+       * repos — and it has to happen before GRW-373 deletes growza/web, or the
+       * coverage goes with it.
+       */
+      'app/(tenant)/components/booking-sheet-actions.test.ts',
+      'app/(tenant)/components/device-spec-locators.test.ts',
+      'app/(tenant)/lib/api-messages.test.ts',
+      'app/(tenant)/lib/i18n-guard.test.ts',
+      'app/(tenant)/lib/service-worker.test.ts',
+      'app/(tenant)/lib/title-coverage.test.ts',
+      'app/(tenant)/lib/ui-actions.test.ts',
+      'app/(tenant)/providers/create-saves-everything.test.ts',
+      'i18n/i18n.test.ts',
     ],
     environment: 'node',
   },
