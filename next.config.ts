@@ -32,13 +32,20 @@ const nextConfig: NextConfig = {
    * workspace — 08 §4 puts api, worker and web on ONE box, so image size is
    * that box's disk, not somebody else's problem.
    *
-   * `outputFileTracingRoot` has to be the REPO root, not web/: this is an npm
-   * workspace, so `next` and `react` are hoisted to the root node_modules and
-   * tracing from web/ alone would emit a server whose dependencies are all
-   * missing — and it fails at container start, not at build.
+   * `outputFileTracingRoot` is THIS directory, because in this repo the
+   * dashboard IS the root: `app/` sits beside `package.json` and there is no
+   * workspace above it.
+   *
+   * Jira GRW-420 — it used to be `'..'`, which was right in the growza
+   * monorepo (where this file lived at `web/`, and `next` and `react` are
+   * hoisted to the root `node_modules` a level up) and points outside the
+   * repository here. Tracing from a parent that is not part of the project is
+   * how a standalone server ends up missing the dependencies it traced, and
+   * that fails at container start rather than at build — the expensive way
+   * round.
    */
   output: 'standalone',
-  outputFileTracingRoot: path.join(path.dirname(fileURLToPath(import.meta.url)), '..'),
+  outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
   env: {
     API_URL: API_ORIGIN,
   },
