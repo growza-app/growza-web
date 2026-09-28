@@ -53,7 +53,8 @@ export function GiveToStaffSheet({
     if (!needsServices) return;
     let cancelled = false;
     void api
-      .services()
+      // Jira GRW-379 — what is sold at the branch they are waiting at.
+      .services(entry.locationId)
       .then((all) => {
         if (!cancelled) setServices(all);
       })
@@ -63,10 +64,13 @@ export function GiveToStaffSheet({
     return () => {
       cancelled = true;
     };
-  }, [needsServices]);
+  }, [needsServices, entry.locationId]);
 
-  // Free first, then busy, each keeping the roster's own order.
-  const ordered = [...providers].sort((a, b) => Number(busy.has(a.id)) - Number(busy.has(b.id)));
+  // Free first, then busy, each keeping the roster's own order. Jira GRW-379 — only the branch they wait at:
+  // anyone else is refused (GRW-244), so they are not offered.
+  const ordered = providers
+    .filter((p) => !entry.locationId || !p.locationId || p.locationId === entry.locationId)
+    .sort((a, b) => Number(busy.has(a.id)) - Number(busy.has(b.id)));
 
   const give = async (providerId: string) => {
     if (needsServices && picked.length === 0) {

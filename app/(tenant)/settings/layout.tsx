@@ -4,8 +4,8 @@ import { api } from '../lib/api';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
+import { BranchUrlSync } from '../components/BranchUrlSync';
 import { SettingsShell } from './SettingsShell';
-import { SettingsBranchPicker } from './SettingsBranchPicker';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,16 +26,12 @@ export default async function SettingsLayout({ children }: { children: ReactNode
     );
   }
 
-  const branches = settings.branchCount > 1 ? ((await api.branchSettings().catch(() => null))?.branches ?? []) : [];
-
   return (
     <>
-      <PageHeader
-        title={title}
-        subtitle={t('subtitle')}
-        // Jira GRW-230 — a business with branches picks whose settings these are.
-        actions={branches.length > 1 ? <SettingsBranchPicker branches={branches} /> : undefined}
-      />
+      {/* Jira GRW-396 — whose settings these are is the header's branch, as on every other screen: this puts
+          it into the address, where each tab reads it (`scope.ts`). Settings' own picker is gone. */}
+      <BranchUrlSync />
+      <PageHeader title={title} subtitle={t('subtitle')} />
       {/* Jira GRW-228 — `settings-page`: on a laptop the shell fills the page and
           the list and the form scroll on their own, so the page itself never does. */}
       <div className="page-body settings-page">

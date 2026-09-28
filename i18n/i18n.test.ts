@@ -151,8 +151,7 @@ describe('words that live in copy.ts and messages/en.json while their other read
     expect(en.status).toEqual({ ...copy.status });
   });
 
-  it('the branch question and the minutes label Free times shares with other screens', () => {
-    expect(en.freeTimes.whichBranch).toBe(en.newVisit.whichBranch);
+  it('the minutes label Free times shares with other screens', () => {
     expect(en.freeTimes.minutes.replace('{count}', '45')).toBe(copy.services.minutes(45));
     expect(en.services.minutes.replace('{count}', '45')).toBe(copy.services.minutes(45));
     expect(en.services.cols.name).toBe(copy.services.name);

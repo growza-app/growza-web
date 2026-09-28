@@ -23,7 +23,8 @@ function bookingHref(id: string, startAt: string, timezone: string): string {
 }
 
 /** Same field matches a name, any part of a phone number, or a booking reference — the backend decides which. */
-export function SearchClient({ timezone }: { timezone: string }) {
+/** `showBranch` — Jira GRW-393: at a business with several branches, each row says whose client or visit it is. */
+export function SearchClient({ timezone, showBranch = false }: { timezone: string; showBranch?: boolean }) {
   const locale = useLocale();
   const t = useTranslations('search');
   const ts = useTranslations('status');
@@ -132,7 +133,10 @@ export function SearchClient({ timezone }: { timezone: string }) {
                   <button type="button" className="res-main" onClick={() => setOpenClientId(c.id)}>
                     <div className="avatar">{initials(c.name)}</div>
                     <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>{c.name ?? t('unknown')}</div>
+                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>
+                        {c.name ?? t('unknown')}
+                        {showBranch ? <span className="chip cust-branch-chip">{c.branchName}</span> : null}
+                      </div>
                       <div className="muted" style={{ fontSize: 13 }}>
                         {c.phone ? `${c.phone} · ` : ''}
                         {t('visits', { count: c.visitCount })}
@@ -165,6 +169,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
                     <div className="muted" style={{ fontSize: 13 }}>
                       {b.customerName ?? t('unknown')} · {b.serviceName}
                       {b.providerName ? ` · ${b.providerName}` : ''}
+                      {showBranch ? ` · ${b.branchName}` : ''}
                     </div>
                   </div>
                   {/* Jira GRW-307 — what became of the booking. Without it a cancelled, a

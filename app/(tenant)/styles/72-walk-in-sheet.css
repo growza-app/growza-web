@@ -90,6 +90,22 @@ input.wi-search-input-plain {
   max-height: 176px;
 }
 
+/* Jira GRW-375 (QA) — meaning-based extras ("nails" → Manicure) sit under the list in their own row, so they are
+   always in view: appended to the list they fell below its four-row fold and nobody saw them. */
+.wi-also-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.wi-also-try-label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
 .wi-section-label {
   font-size: 13px;
   font-weight: 650;

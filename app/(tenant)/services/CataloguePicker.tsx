@@ -46,10 +46,14 @@ function money(minor: number | null): string {
  */
 export function CataloguePicker({
   existing,
+  branchId,
   onBack,
   onClose,
   onImported,
 }: {
+  /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
+  branchId: string;
+
   existing: ServiceAdmin[];
   onBack: () => void;
   onClose: () => void;
@@ -77,7 +81,7 @@ export function CataloguePicker({
   useEffect(() => {
     let live = true;
     api
-      .seedCatalog()
+      .seedCatalog(branchId)
       .then((c) => {
         if (!live) return;
         setCatalog(c);
@@ -266,6 +270,7 @@ export function CataloguePicker({
             backLabel={t('backToCategories')}
             onImported={onImported}
             lookup={(name) => byName.get(name.trim().toLowerCase()) ?? null}
+            branchId={branchId}
           />
         </div>
       </div>

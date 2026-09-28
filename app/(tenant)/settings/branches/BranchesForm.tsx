@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { bookingLinkUrl, whatsappDigits } from '@growza-app/shared';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -24,7 +26,16 @@ const ADDRESS_MAX = 100;
 type Draft = { name: string; addressLine1: string; addressCity: string };
 const draftOf = (b: BranchSettings): Draft => ({ name: b.name, addressLine1: b.addressLine1, addressCity: b.addressCity });
 
-export function BranchesForm({ initial }: { initial: BranchSettings[] }) {
+export function BranchesForm({
+  initial,
+  whatsappNumber = null,
+  demo = false,
+}: {
+  initial: BranchSettings[];
+  /** Jira GRW-385 — the number a booking link opens WhatsApp at: the business's phone. */
+  whatsappNumber?: string | null;
+  demo?: boolean;
+}) {
   const t = useTranslations('settingsBranches');
   return (
     <div className="bp-form">
@@ -34,7 +45,7 @@ export function BranchesForm({ initial }: { initial: BranchSettings[] }) {
       </div>
       <div className="bp-branches">
         {initial.map((b) => (
-          <BranchCard key={b.id} initial={b} />
+          <BranchCard key={b.id} initial={b} whatsappNumber={whatsappNumber} demo={demo} />
         ))}
       </div>
       {/* Jira GRW-246 — the owner closes a branch or makes one main here; adding or reopening one raises the bill, so it goes through support. */}
@@ -43,7 +54,7 @@ export function BranchesForm({ initial }: { initial: BranchSettings[] }) {
   );
 }
 
-function BranchCard({ initial }: { initial: BranchSettings }) {
+function BranchCard({ initial, whatsappNumber, demo }: { initial: BranchSettings; whatsappNumber: string | null; demo: boolean }) {
   const t = useTranslations('settingsBranches');
   const router = useRouter();
   const [branch, setBranch] = useState(initial);
@@ -172,6 +183,8 @@ function BranchCard({ initial }: { initial: BranchSettings }) {
         </div>
       </div>
 
+      <BookingLink branch={branch} whatsappNumber={whatsappNumber} demo={demo} />
+
       <div className="bp-card-actions" role="status" aria-live="polite">
         <span className={`bp-save-state ${error ? 'is-error' : ''}`}>
           {error ? (
@@ -189,5 +202,46 @@ function BranchCard({ initial }: { initial: BranchSettings }) {
         </button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Jira GRW-385 — the branch's own booking link: for its QR on the counter and its Instagram bio. It opens
+ * WhatsApp at the business's number with a message naming the branch, so the chat starts there instead of asking.
+ */
+function BookingLink({ branch, whatsappNumber, demo }: { branch: BranchSettings; whatsappNumber: string | null; demo: boolean }) {
+  const t = useTranslations('settingsBranches');
+  const [copied, setCopied] = useState(false);
+  const url = bookingLinkUrl(whatsappNumber, branch.name, branch.id);
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+  return (
+    <div className="field bp-link">
+      <span className="field-label">{t('bookingLink')}</span>
+      {url ? (
+        <div className="bp-link-row">
+          <input type="text" readOnly value={url} aria-label={t('bookingLinkAria', { name: branch.name })} onFocus={(e) => e.target.select()} />
+          <button type="button" className="btn btn-ghost" onClick={() => void copy()}>
+            {copied ? t('copied') : t('copy')}
+          </button>
+        </div>
+      ) : (
+        <span className="field-hint">{t('bookingLinkNoNumber')}</span>
+      )}
+      {/* Jira GRW-399 — the number it opens, so an owner whose customers message another number sees it. */}
+      {url ? <span className="field-hint">{t('bookingLinkNumber', { number: `+${whatsappDigits(whatsappNumber)}` })}</span> : null}
+      <span className="field-hint">
+        {t('bookingLinkHint')}{' '}
+        {demo ? <Link href={`/try-whatsapp?branch=${branch.id}`}>{t('tryIt')}</Link> : null}
+      </span>
+    </div>
   );
 }

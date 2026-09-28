@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { HeaderControls } from './HeaderControls';
+import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { MenuButton } from './MenuButton';
 import { BackButton } from './BackButton';
 
@@ -67,6 +68,8 @@ export function PageHeader({
             <h1>{title}</h1>
           )}
           {subtitle && <p>{subtitle}</p>}
+          {/* Jira GRW-395 — the branch, on a phone: a line under the title (the laptop's pill is in the controls). */}
+          <HeaderBranchPicker variant="line" />
         </div>
       </div>
       {/* One group, not loose children: .topbar is space-between, so bare

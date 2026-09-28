@@ -6,7 +6,6 @@ import { PhoneField } from '../../components/PhoneField';
 import { IconCheck, IconChevronRight, IconMapPin, IconPhone, IconShop } from '../../components/icons';
 import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
 import { api, type SettingsSummary } from '../../lib/api';
-import { BranchScopeNote } from '../BranchScopeNote';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -90,6 +89,11 @@ export function ProfileForm({
   };
   const dirty = (Object.keys(f) as Array<keyof Fields>).some((k) => f[k] !== savedFields[k]);
   const multiBranch = branchCount > 1;
+  /**
+   * Jira GRW-396 — Settings › Business name and logo at a business with several branches: only what the
+   * business has once. Its phone and "about" are each branch's now, on the branch's profile.
+   */
+  const businessOnly = !branchId && multiBranch;
 
   const save = async () => {
     if (branchId) {
@@ -126,11 +130,11 @@ export function ProfileForm({
       // Jira GRW-227 — a multi-branch business edits branches on Settings ›
       // Branches; this screen sends no branch fields at all for it.
       const { locationName, addressLine1, addressCity, ...business } = f;
-      const updated = await api.updateProfile({
-        ...business,
-        phone: toStoredPhone(f.phone) ?? '',
-        ...(multiBranch ? {} : { locationName, addressLine1, addressCity }),
-      });
+      const updated = await api.updateProfile(
+        businessOnly
+          ? { name: f.name, timezone: f.timezone }
+          : { ...business, phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
+      );
       setSettings(updated);
       const next = fieldsOf(updated);
       setSavedFields(next);
@@ -166,10 +170,11 @@ export function ProfileForm({
       }}
     >
       <div className="bp-intro">
-        <h2 className="bp-title">{branchId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : t('title')}</h2>
-        <p className="bp-sub">{branchId ? t('subBranch') : t('sub')}</p>
+        <h2 className="bp-title">
+          {branchId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : businessOnly ? t('titleBusinessOnly') : t('title')}
+        </h2>
+        <p className="bp-sub">{branchId ? t('subBranch') : businessOnly ? t('subBusinessOnly') : t('sub')}</p>
       </div>
-      <BranchScopeNote settings={settings} branchName={branchName} keys={['business_phone', 'business_description']} topic="phoneAndDescription" />
 
       <div className="bp-columns">
       <div className="bp-col">
@@ -277,24 +282,26 @@ export function ProfileForm({
               ))}
             </select>
           </div>
-          <div className="field bp-span">
-            <label htmlFor="bp-description">
-              <span>
-                {t('fields.aboutBusiness')} <span className="field-optional">{tCommon('optional')}</span>
-              </span>
-              <span className="field-counter">
-                {f.description.length}/{DESCRIPTION_MAX}
-              </span>
-            </label>
-            <textarea
-              id="bp-description"
-              value={f.description}
-              maxLength={DESCRIPTION_MAX}
-              onChange={(e) => set('description', e.target.value)}
-              rows={3}
-              placeholder={t('placeholders.description')}
-            />
-          </div>
+          {businessOnly ? null : (
+            <div className="field bp-span">
+              <label htmlFor="bp-description">
+                <span>
+                  {t('fields.aboutBusiness')} <span className="field-optional">{tCommon('optional')}</span>
+                </span>
+                <span className="field-counter">
+                  {f.description.length}/{DESCRIPTION_MAX}
+                </span>
+              </label>
+              <textarea
+                id="bp-description"
+                value={f.description}
+                maxLength={DESCRIPTION_MAX}
+                onChange={(e) => set('description', e.target.value)}
+                rows={3}
+                placeholder={t('placeholders.description')}
+              />
+            </div>
+          )}
         </div>
       </section>
       </>
@@ -349,6 +356,7 @@ export function ProfileForm({
         </section>
       ) : null}
 
+      {businessOnly ? null : (
       <section className="card bp-card">
         <div className="bp-card-head">
           <span className="bp-card-icon">
@@ -362,6 +370,7 @@ export function ProfileForm({
           <PhoneField id="business-phone" label={t('fields.businessPhone')} optionalLabel={tCommon('optional')} value={f.phone} onChange={(v) => set('phone', v)} />
         </div>
       </section>
+      )}
 
       </div>
       </div>

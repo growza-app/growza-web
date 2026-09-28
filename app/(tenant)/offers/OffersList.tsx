@@ -10,6 +10,7 @@ import { useFitRows } from '../lib/use-fit-rows';
 import { Pagination } from '../components/Pagination';
 import { IconFilter, IconSearch } from '../components/icons';
 import { weekdayNames } from '../lib/weekday-names';
+import { useBranch } from '../components/BranchProvider';
 
 /** First paint only — the client immediately measures how many rows the screen actually fits. */
 const INITIAL_PAGE_SIZE = 4;
@@ -43,6 +44,13 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   const tn = useTranslations('nouns');
   const locale = useLocale();
   const router = useRouter();
+  // Jira GRW-381 — on "All branches" each offer says which branch runs it: the same combo at two branches is two offers.
+  const branchContext = useBranch();
+  const branchTag = (locationId: string | undefined) => {
+    if (!branchContext.multi || branchContext.choice || !locationId) return null;
+    const name = branchContext.branches.find((b) => b.id === locationId)?.name;
+    return name ? <span className="chip offer-branch-chip">{name}</span> : null;
+  };
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -234,6 +242,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                       <div className="offer-title-row">
                         <span className="offer-title">{offer.title}</span>
                         <span className={`chip ${isCombo ? 'chip-combo' : 'chip-offer'}`}>{isCombo ? t('combo') : t('offer')}</span>
+                        {branchTag(offer.locationId)}
                       </div>
                       {offer.serviceIds.length > 0 && <div className="muted offer-subtitle">{serviceNames(offer.serviceIds)}</div>}
                       {offer.description && <div className="muted offer-subtitle offer-desc">{offer.description}</div>}

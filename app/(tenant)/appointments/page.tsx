@@ -35,6 +35,8 @@ export default async function AppointmentsPage({
     unmarked?: string;
     /** Jira GRW-312 — a branch, from Home: the bookings it counted are that branch's. */
     location?: string;
+    /** Jira GRW-377 — the same, under the name Reports and Availability use, so one link shape opens any screen. */
+    branch?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -88,7 +90,7 @@ export default async function AppointmentsPage({
 
   // Jira GRW-312 — only a branch this business really has. A stale or edited id, or a login with
   // no branches to choose between, is ignored rather than filtering the day down to nothing.
-  const locationParam = params.location?.trim();
+  const locationParam = (params.location ?? params.branch)?.trim();
   const initialBranch =
     locationParam && /^[0-9a-f-]{36}$/i.test(locationParam) ? ((me.branches ?? []).find((b) => b.id === locationParam) ?? null) : null;
 

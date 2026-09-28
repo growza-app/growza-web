@@ -1,12 +1,14 @@
 'use client';
 
 import { useReportsCopy } from '../lib/use-reports-copy';
-import { useTranslations } from 'next-intl';
+import { BranchUrlSync } from '../components/BranchUrlSync';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { pickNoun } from '../lib/nouns';
 import { useState, type ReactNode } from 'react';
 
-import { copy } from '../lib/copy';
 import { HeaderControls } from '../components/HeaderControls';
+import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { MenuButton } from '../components/MenuButton';
 import {
   countFilters,
@@ -61,8 +63,6 @@ export function ReportsShell({
   canExport,
   labels,
   rangeLabel,
-  branches = [],
-  branch = null,
   children,
 }: {
   tab: ReportTabKey;
@@ -89,24 +89,14 @@ export function ReportsShell({
   canExport: boolean;
   /** The vertical's own nouns — "Stylists" for a salon, "Doctors" for a clinic. */
   labels: Record<string, string>;
-  /** Jira GRW-238 — a multi-branch owner's branches, main first; empty hides the control. */
-  branches?: Array<{ id: string; name: string }>;
-  branch?: string | null;
   children: ReactNode;
 }) {
   const rp = useReportsCopy();
   const st = useTranslations('status');
+  const locale = useLocale();
   const router = useRouter();
   const params = useSearchParams();
   const [rangeOpen, setRangeOpen] = useState(false);
-  const [branchOpen, setBranchOpen] = useState(false);
-  const pickBranch = (id: string | null) => {
-    setBranchOpen(false);
-    const query = new URLSearchParams(params.toString());
-    if (id) query.set('branch', id);
-    else query.delete('branch');
-    router.push(`/reports?${query.toString()}`);
-  };
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const go = (next: Record<string, string>) => {
@@ -152,9 +142,12 @@ export function ReportsShell({
   // vertical's label pack exactly as the sidebar's do. Hardcoding "Clients"
   // here while the sidebar renders "Patients" from config is the drift
   // ctx.labels exists to prevent (01 §4, epic BR-06).
+  //
+  // Jira GRW-363 — in another language the vertical's English noun ("Staff", "Clients") gives
+  // way to the tab's own word until the verticals carry one per language (GRW-315 story 5).
   const tabLabel = (key: ReportTabKey) =>
-    key === 'customers' ? labels.customers ?? rp.tabs.customers
-    : key === 'staff' ? labels.providers ?? rp.tabs.staff
+    key === 'customers' ? pickNoun(locale, labels.customers ?? rp.tabs.customers, rp.tabs.customers)
+    : key === 'staff' ? pickNoun(locale, labels.providers ?? rp.tabs.staff, rp.tabs.staff)
     : rp.tabs[key];
 
   // A fragment, not a wrapper: `.content` is a three-row grid (header /
@@ -163,6 +156,8 @@ export function ReportsShell({
   // and nothing would scroll (GRW-5's shell grid).
   return (
     <>
+      {/* Jira GRW-377 — the branch chosen on any other screen is the branch Reports opens on. */}
+      <BranchUrlSync />
       <header className="rp-header">
         <div className="rp-title-row">
           <div className="topbar-lead">
@@ -170,6 +165,8 @@ export function ReportsShell({
             <div className="topbar-title">
               <h1>{rp.title}</h1>
               <p>{rp.subtitles[tab]}</p>
+              {/* Jira GRW-395 — Reports draws its own header, and on a phone had no branch at all (QA). */}
+              <HeaderBranchPicker variant="line" />
             </div>
           </div>
           {/*
@@ -224,32 +221,6 @@ export function ReportsShell({
             )}
           </div>
 
-          {/* Jira GRW-238 — Reports for one branch. Every tab's period figures narrow to it; client recency stays the business's. */}
-          {branches.length > 1 ? (
-            <div className="rp-range">
-              <button type="button" className={`rp-control ${branch ? 'rp-control-on' : ''}`} aria-haspopup="menu" aria-expanded={branchOpen} onClick={() => setBranchOpen((open) => !open)}>
-                <span>{branches.find((b) => b.id === branch)?.name ?? rp.allBranches}</span>
-                <span className="rp-control-icon rp-muted">
-                  <IconChevronDown />
-                </span>
-              </button>
-              {branchOpen && (
-                <>
-                  <button type="button" className="rp-range-scrim" aria-label={rp.filterDrawer.close} onClick={() => setBranchOpen(false)} />
-                  <div className="rp-range-menu" role="menu">
-                    <button type="button" role="menuitemradio" aria-checked={branch === null} className={branch === null ? 'active' : ''} onClick={() => pickBranch(null)}>
-                      {rp.allBranches}
-                    </button>
-                    {branches.map((b) => (
-                      <button key={b.id} type="button" role="menuitemradio" aria-checked={branch === b.id} className={branch === b.id ? 'active' : ''} onClick={() => pickBranch(b.id)}>
-                        {b.name}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          ) : null}
 
           <button
             type="button"
@@ -353,13 +324,6 @@ export function ReportsShell({
             <span>{rp.droppedFilters(droppedFilters)}</span>
           </div>
         )}
-
-        {/* Jira GRW-238 — said, not implied: a client belongs to the business, so client groups are not split by branch. */}
-        {branch && (tab === 'overview' || tab === 'customers') ? (
-          <div className="rp-applied rp-applied-inert">
-            <span>{rp.branchClientsNote(branches.find((b) => b.id === branch)?.name ?? '')}</span>
-          </div>
-        ) : null}
 
         {children}
       </div>

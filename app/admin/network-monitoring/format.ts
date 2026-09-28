@@ -8,6 +8,8 @@
  * value.
  */
 
+import type { DunningSkipReason } from '@growza-app/shared';
+
 export type Tone = 'good' | 'warn' | 'bad' | 'neutral';
 
 export interface WorkerFacts {
@@ -90,22 +92,54 @@ export function lastDrainedTile(w: WorkerFacts): { value: string; bad: boolean; 
 /**
  * GRW-167's lesson, applied to `dunning_attempt`: say what the row MEANS.
  *
- * `not_made` is the one that matters. It means the provider could not be
- * reached — so nothing was declined, nobody's card was refused, and no retry
- * should have been consumed from their budget. An admin who reads it as
- * "failed" goes looking for a customer problem that does not exist.
- *
- * `in_flight` (migration 0032) had no entry and rendered as its raw value. It
- * is a charge that was requested and whose result has not come back — and it
- * DOES use up a retry, because it may well have charged the customer.
+ * **Jira GRW-413 — four of these five can no longer be written.** Dunning asks
+ * the payment provider for nothing, so nothing charges, declines, fails to reach
+ * it or waits on an answer; every new row is `skipped`, and which KIND of skipped
+ * is `SKIP_REASON_WORDS` below. The four are kept because the rows are still in
+ * the table and an admin reading a 90-day window will see them — a label that
+ * disappeared would render as a raw code on historic data.
  */
 export const OUTCOME_WORDS: Record<string, string> = {
-  charged: 'Charged',
-  declined: 'Declined',
-  not_made: 'Not made — provider unreachable',
-  skipped: 'Skipped',
-  in_flight: 'Waiting for the result',
+  charged: 'Charged (before Sep 2026)',
+  declined: 'Declined (before Sep 2026)',
+  not_made: 'Not made — provider unreachable (before Sep 2026)',
+  skipped: 'Not collected',
+  in_flight: 'Waiting for the result (before Sep 2026)',
 };
+
+/**
+ * Jira GRW-413 — WHY billing collected nothing, in the words an admin needs.
+ *
+ * Keyed on `DunningSkipReason` itself, so a reason added to the shared list
+ * cannot ship without a word for it — the compiler refuses. A row with no code
+ * (anything written before migration 0093) falls back to its outcome word, which
+ * is what the screen already did.
+ *
+ * `bad` marks the one an admin should act on: a halted AutoPay recovers only if
+ * the owner re-approves it or pays by link, and nothing chases them but the
+ * dashboard.
+ */
+export const SKIP_REASON_WORDS: Record<DunningSkipReason, { label: string; bad?: boolean }> = {
+  autopay_halted: { label: 'AutoPay halted — owner asked to re-approve or pay by link', bad: true },
+  autopay_live: { label: 'AutoPay is live — the provider debits it on its own cycle' },
+  autopay_not_active: { label: 'AutoPay paused or stopped by the owner — payment expected by link' },
+  no_autopay: { label: 'No AutoPay set up — payment expected by link' },
+  first_debit_not_due: { label: 'AutoPay approved; its first debit is still ahead' },
+  online_payments_off: { label: 'Online payments off for this business — paying offline' },
+};
+
+/** The row's own words: the reason when it has one, else the outcome it was recorded as. */
+export function attemptWords(outcome: string, skipReason: string | null): { label: string; bad?: boolean } {
+  if (skipReason !== null) {
+    // A code the migration's CHECK cannot produce today, but a later one could
+    // while forgetting this map: it shows as itself, which is ugly and
+    // unmistakably a gap (the rule `billingStatusLabel` already records). Never
+    // the outcome word, which would hide the new reason among the old ones.
+    return SKIP_REASON_WORDS[skipReason as DunningSkipReason] ?? { label: skipReason };
+  }
+  // No code: a row written before migration 0093. It reads as what it was.
+  return { label: OUTCOME_WORDS[outcome] ?? outcome, bad: outcome === 'not_made' };
+}
 
 /** The panels the screen draws — one skeleton each while loading. */
 export const PANEL_COUNT = 4;

@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * A plain queue rather than `vi.fn().mockRejectedValue`: the spy attaches its own
- * handler to the promise it records, and that copy is reported as an unhandled
- * rejection, failing a test whose result is right.
+ * What `api.settings(branch?)` answers, by the branch asked for ('' = the business view). A plain map rather
+ * than `vi.fn().mockRejectedValue`: the spy attaches its own handler to the promise it records, and that copy
+ * is reported as an unhandled rejection, failing a test whose result is right.
  */
-let outcomes: Array<{ ok: unknown } | { fail: unknown }> = [];
+let answers: Record<string, { ok: unknown } | { fail: unknown }> = {};
+const asked: string[] = [];
 vi.mock('../lib/api', () => ({
   api: {
-    settings: () => {
-      const next = outcomes.length > 1 ? outcomes.shift()! : outcomes[0]!;
+    settings: (branch?: string) => {
+      asked.push(branch ?? '');
+      const next = answers[branch ?? ''] ?? { fail: new Error('not found') };
       return 'fail' in next ? Promise.reject(next.fail) : Promise.resolve(next.ok);
     },
   },
@@ -17,54 +19,91 @@ vi.mock('../lib/api', () => ({
 
 const { loadScopedSettings } = await import('./scope');
 
-const summary = (locationId: string | null) => ({ scope: { locationId, ownKeys: [] }, location: { name: 'MG Road' } });
+const MAIN = 'b-main';
+const summary = (locationId: string | null, branchCount: number, name = 'MG Road') => ({
+  scope: { locationId, ownKeys: [] },
+  location: { id: locationId ?? MAIN, name },
+  branchCount,
+});
 const rateLimited = Object.assign(new Error('Too many requests'), { status: 429 });
 const down = new TypeError('fetch failed');
 
-/** Jira GRW-352 — a Settings page has to say WHY it could not load. */
 describe('loadScopedSettings', () => {
   beforeEach(() => {
-    outcomes = [];
+    answers = {};
+    asked.length = 0;
   });
 
-  it('returns the settings and no error when the API answers', async () => {
-    outcomes = [{ ok: summary(null) }];
+  it('a one-branch business gets the business’s own settings', async () => {
+    answers = { '': { ok: summary(null, 1) } };
     const r = await loadScopedSettings(Promise.resolve({}));
-    expect(r.settings).not.toBeNull();
+    expect(r.settings?.scope.locationId).toBeNull();
+    expect(r.branchName).toBeNull();
     expect(r.loadError).toBeNull();
   });
 
+  /** Jira GRW-396 — Settings has no "all branches": with several, it is always one branch's. */
+  it('several branches and none named: the main branch, never the business view', async () => {
+    answers = { '': { ok: summary(null, 3) }, [MAIN]: { ok: summary(MAIN, 3) } };
+    const r = await loadScopedSettings(Promise.resolve({}));
+    expect(r.settings?.scope.locationId).toBe(MAIN);
+    expect(r.branchName).toBe('MG Road');
+  });
+
+  it('"all" in the address is read as no branch named: the main branch', async () => {
+    answers = { '': { ok: summary(null, 3) }, [MAIN]: { ok: summary(MAIN, 3) } };
+    const r = await loadScopedSettings(Promise.resolve({ branch: 'all' }));
+    expect(r.settings?.scope.locationId).toBe(MAIN);
+    expect(asked).not.toContain('all');
+  });
+
+  it('the named branch, in one call', async () => {
+    answers = { b2: { ok: summary('b2', 3, 'Indiranagar') } };
+    const r = await loadScopedSettings(Promise.resolve({ branch: 'b2' }));
+    expect(r.settings?.scope.locationId).toBe('b2');
+    expect(r.branchName).toBe('Indiranagar');
+    expect(asked).toEqual(['b2']);
+  });
+
+  it('a branch that no longer resolves shows the main branch', async () => {
+    answers = { '': { ok: summary(null, 2) }, [MAIN]: { ok: summary(MAIN, 2) } };
+    const r = await loadScopedSettings(Promise.resolve({ branch: 'gone' }));
+    expect(r.settings?.scope.locationId).toBe(MAIN);
+    expect(r.loadError).toBeNull();
+  });
+
+  it('a stale branch at a business now down to one branch shows the business view', async () => {
+    answers = { b1: { ok: summary('b1', 1) }, '': { ok: summary(null, 1) } };
+    const r = await loadScopedSettings(Promise.resolve({ branch: 'b1' }));
+    expect(r.settings?.scope.locationId).toBeNull();
+  });
+
+  /** Jira GRW-352 — a Settings page has to say WHY it could not load. */
   it('reports a busy API (429) as busy, not down', async () => {
-    outcomes = [{ fail: rateLimited }];
+    answers = { '': { fail: rateLimited } };
     const r = await loadScopedSettings(Promise.resolve({}));
     expect(r.settings).toBeNull();
     expect(r.loadError).toBe('busy');
   });
 
   it('reports an unreachable API as down', async () => {
-    outcomes = [{ fail: down }];
+    answers = { '': { fail: down } };
     const r = await loadScopedSettings(Promise.resolve({}));
     expect(r.settings).toBeNull();
     expect(r.loadError).toBe('down');
   });
 
-  it('falls back to the business view when the picked branch no longer resolves', async () => {
-    outcomes = [{ fail: new Error('not found') }, { ok: summary(null) }];
-    const r = await loadScopedSettings(Promise.resolve({ branch: 'gone' }));
-    expect(r.settings).not.toBeNull();
-    expect(r.loadError).toBeNull();
-  });
-
   it('reports the LAST failure when the branch and the fallback both fail', async () => {
-    outcomes = [{ fail: down }, { fail: rateLimited }];
+    answers = { b1: { fail: down }, '': { fail: rateLimited } };
     const r = await loadScopedSettings(Promise.resolve({ branch: 'b1' }));
     expect(r.settings).toBeNull();
     expect(r.loadError).toBe('busy');
   });
 
-  it('names the branch when one is picked', async () => {
-    outcomes = [{ ok: summary('b1') }];
-    const r = await loadScopedSettings(Promise.resolve({ branch: 'b1' }));
-    expect(r.branchName).toBe('MG Road');
+  it('a busy API on the main branch is reported, not replaced by the business view', async () => {
+    answers = { '': { ok: summary(null, 2) }, [MAIN]: { fail: rateLimited } };
+    const r = await loadScopedSettings(Promise.resolve({}));
+    expect(r.settings).toBeNull();
+    expect(r.loadError).toBe('busy');
   });
 });

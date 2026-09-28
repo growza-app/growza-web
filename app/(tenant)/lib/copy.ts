@@ -215,11 +215,14 @@ export const copy = {
    * every other tab carries only what is its own.
    */
   reports: {
-    // Jira GRW-238 — the Reports branch control.
-    allBranches: 'All branches',
-    branchClientsNote: (branch: string) => `Money and bookings are for ${branch}. Client groups count every branch.`,
     title: 'Reports',
     navLabel: 'Reports',
+    /**
+     * Jira GRW-363 — the row for visits recorded with no stylist, named with the vertical's own
+     * noun ("No stylist", "No doctor"). The CSV writes this, so the file and the screen
+     * (`common.noProvider`, via `useNoProvider`) give the row one name; a test keeps the two the same.
+     */
+    noProvider: (noun: string) => `No ${noun}`,
 
     tabs: {
       overview: 'Overview',

@@ -5,8 +5,10 @@ import type { ReactNode } from 'react';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import type { HomeCopy } from '../../lib/home-copy';
+import { NOBODY_INITIAL } from '../../lib/use-no-provider';
 import { liveState, minutesBetween, type LiveState } from '../../lib/live-state';
 import { AccountMenu } from '../AccountMenu';
+import { HeaderBranchPicker } from '../HeaderBranchPicker';
 import { MenuButton } from '../MenuButton';
 import { NotificationBell } from '../NotificationBell';
 import { IconChevronRight, IconDaySummary, IconMapPin, IconSearch } from '../icons';
@@ -27,11 +29,14 @@ export function rupees(minor: number): string {
 /**
  * A stable tint per person, from their id — never a fixed map of names.
  * The design's colours were per mock person; a real salon's roster is not.
+ *
+ * Jira GRW-351 — every initial is 4.5:1 or better on its tint (WCAG 1.4.3; the
+ * initials are 12–13px). Amber was #b76e12 (3.64:1) and blue #2563eb (4.48:1).
  */
 const TINTS = [
   { bg: '#e7f6ee', fg: '#16794a' },
-  { bg: '#e8effd', fg: '#2563eb' },
-  { bg: '#fdf3e3', fg: '#b76e12' },
+  { bg: '#e8effd', fg: '#1d4ed8' },
+  { bg: '#fdf3e3', fg: '#8a5a0f' },
   { bg: '#efebfb', fg: '#6d4fc4' },
   { bg: '#fdeceb', fg: '#c53b3b' },
 ];
@@ -41,11 +46,15 @@ export function tintFor(key: string) {
   return TINTS[h % TINTS.length]!;
 }
 
-export function Avatar({ name, id, size = 38 }: { name: string | null; id: string; size?: number }) {
-  const t = tintFor(id);
+/**
+ * `nobody` — Jira GRW-363: a row that is not a person (the no-stylist row) gets a neutral dash, not
+ * initials made from its phrase ("NS", "कस") in a colour that makes it look like someone.
+ */
+export function Avatar({ name, id, size = 38, nobody = false }: { name: string | null; id: string; size?: number; nobody?: boolean }) {
+  const t = nobody ? { bg: 'var(--border)', fg: 'var(--muted)' } : tintFor(id);
   return (
     <span className="hm-avatar" style={{ width: size, height: size, background: t.bg, color: t.fg }} aria-hidden>
-      {initials(name)}
+      {nobody ? NOBODY_INITIAL : initials(name)}
     </span>
   );
 }
@@ -93,12 +102,16 @@ export function HomeHeader({
           {/* Two spans (Jira GRW-253 QA): on a narrow phone a long branch name no longer
               pushes the date out entirely — each keeps part of the line. */}
           {locationName ? <span className="hm-head-branch-name">{locationName}</span> : null}
+          {/* Jira GRW-395 — an owner with branches picks one here on a phone ("📍 MG Road ▾ · Fri, 25 Sep"). */}
+          {locationName ? null : <HeaderBranchPicker variant="line" />}
           <span className="hm-head-branch-date">{locationName ? `· ${dateLabel}` : dateLabel}</span>
         </div>
         <h1 className="hm-head-title">{title}</h1>
         <div className="hm-head-sub">{sub}</div>
       </div>
       <div className="hm-head-controls">
+        {/* Jira GRW-395 — the one branch picker; Home's own dropdown and tabs are gone. */}
+        <HeaderBranchPicker />
         <a className="hdr-search hdr-search-wide" href="/search" aria-label={s('title')}>
           <IconSearch />
           <span>{s('prompt')}</span>
@@ -220,7 +233,19 @@ export function QuickTiles({ items }: { items: Array<{ href?: string; onClick?: 
 const SEGMENT_KEYS = ['active', 'due', 'at_risk', 'inactive'] as const;
 
 /** How your clients are doing — the same bands and counts the Clients screen shows. */
-export function SegmentCards({ t, stats }: { t: HomeCopy; stats: CustomerStats | null }) {
+export function SegmentCards({
+  t,
+  stats,
+  branch,
+}: {
+  t: HomeCopy;
+  stats: CustomerStats | null;
+  /**
+   * Jira GRW-392 (review) — the branch these figures are for (null: every branch). The Clients screen a card opens
+   * is told the same branch, so the card and the list agree; unnamed, it would open on the remembered one.
+   */
+  branch?: string | null;
+}) {
   if (!stats) return <CardError t={t} />;
   // Counts AND shares straight from `/customers/stats`, so this card and the
   // Clients screen's bands cannot round the same numbers two different ways.
@@ -234,7 +259,7 @@ export function SegmentCards({ t, stats }: { t: HomeCopy; stats: CustomerStats |
           const n = bands.get(key)?.count ?? 0;
           const seg = t.segments[key];
           return (
-            <a key={key} className={`hm-seg-card hm-seg-${key}`} href={`/customers?status=${key}`}>
+            <a key={key} className={`hm-seg-card hm-seg-${key}`} href={`/customers?status=${key}&branch=${encodeURIComponent(branch ?? 'all')}`}>
               <span className="hm-seg-top">
                 <span className="hm-seg-name">
                   <i />

@@ -150,11 +150,15 @@ export function BookingSheet({
     // The combo's OTHER still-booked services — completed in the same checkout
     // so one "Mark as done" finishes the whole booking, not just this leg.
     const groupMembers = (comboLegs ?? []).filter((a) => a.id !== appointment.id && a.status === 'confirmed');
+    // Jira GRW-392 (review) — the visit's branch's people, plus whoever is already on one of its lines (a stylist
+    // who has since moved branch still did the work). Another branch's stylist would be refused at Mark done.
+    const onVisit = new Set([appointment.providerId, ...groupMembers.map((a) => a.providerId)].filter(Boolean));
+    const tillProviders = providers.filter((p) => !appointment.locationId || !p.locationId || p.locationId === appointment.locationId || onVisit.has(p.id));
     return (
       <CheckoutSheet
         appointment={appointment}
         services={services}
-        providers={providers}
+        providers={tillProviders}
         offers={offers}
         groupMembers={groupMembers}
         timezone={timezone}

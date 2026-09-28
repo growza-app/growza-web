@@ -42,7 +42,8 @@ describe('the staff table', () => {
 
   it('the last column is "Next" today and "First" on any other day', () => {
     expect(table).toMatch(/upcoming \? labels\.next : labels\.first/);
-    expect(list).toMatch(/staffRows\(bookings, providers\.map\(\(p\) => p\.displayName\), now, isToday\)/);
+    // Jira GRW-395 — the picked branch's stylists only.
+    expect(list).toMatch(/staffRows\(bookings, branchProviders\.map\(\(p\) => p\.displayName\), now, isToday\)/);
   });
 
   it('is phone-only, and beats the global `table { min-width: 560px }` that pushed two columns off screen', () => {

@@ -9,10 +9,9 @@ import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { BranchTabs } from '../components/BranchTabs';
 import { StaffTable } from './StaffTable';
 import { staffRows } from '../lib/staff-summary';
-import { readBranchChoice, writeBranchChoice } from '../lib/branch-choice';
+import { useBranch } from '../components/BranchProvider';
 import {
   IconCalendar,
   IconCheck,
@@ -253,33 +252,38 @@ export function BookingsList({
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [unmarkedOnly, setUnmarkedOnly] = useState(initialUnmarked);
   const [branch, setBranch] = useState(initialBranch);
+  const branchContext = useBranch();
 
-  /**
-   * Jira GRW-340 — choose a branch from the phone's tabs (or the chip's "All branches"). The day is already loaded
-   * for every branch and narrowed here, so nothing is fetched. Remembered for the session, and written to the
-   * address so a reload keeps it.
+  /*
+   * Jira GRW-395 — the list shows the header's branch, and follows it when it changes. The day is already loaded
+   * for every branch and narrowed here, so nothing is fetched; the address keeps it (`?location=`) so a reload
+   * does too. An address that names a branch wins on arrival (Home's links do), through the shared context
+   * (Jira GRW-377), once the browser's memory can be read (`ready`).
    */
-  const pickBranch = (id: string | null) => {
-    const next = id ? (branches.find((b) => b.id === id) ?? null) : null;
+  const arrived = useRef(false);
+  useEffect(() => {
+    if (!branchContext.ready) return;
+    if (!arrived.current) {
+      arrived.current = true;
+      if (initialBranch && initialBranch.id !== branchContext.choice) {
+        branchContext.setBranch(initialBranch.id);
+        return;
+      }
+    }
+    const next = branches.find((b) => b.id === branchContext.choice) ?? null;
+    if ((next?.id ?? null) === (branch?.id ?? null)) return;
     setBranch(next);
     setPage(1);
-    writeBranchChoice(next?.id ?? null);
+    // A stylist picked at the last branch is not one of this branch's.
+    if (next && staffFilter !== 'Everyone' && !providers.some((p) => p.displayName === staffFilter && (!p.locationId || p.locationId === next.id))) {
+      setStaffFilter('Everyone');
+    }
     const url = new URL(window.location.href);
     if (next) url.searchParams.set('location', next.id);
     else url.searchParams.delete('location');
     window.history.replaceState(null, '', url);
-  };
-
-  // An address that names a branch wins (Home's links do). Otherwise open on the one the owner was last looking at.
-  useEffect(() => {
-    if (initialBranch) {
-      writeBranchChoice(initialBranch.id);
-      return;
-    }
-    const remembered = readBranchChoice(branches);
-    if (remembered) setBranch(branches.find((b) => b.id === remembered) ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [branchContext.ready, branchContext.choice]);
   // Earliest-first by default: on today's schedule that's the running order of
   // the day, which is what the page is for. Latest-first earns its keep on a
   // From/To range, where the most recent day is usually the interesting end.
@@ -334,10 +338,15 @@ export function BookingsList({
   const noMatches = filtering && filtered.length === 0;
 
   // The desktop Staff dropdown's options.
-  const staffChipNames = useMemo(() => ['Everyone', ...providers.map((p) => p.displayName)], [providers]);
+  // Jira GRW-395 — the header's branch narrows the stylists too: its own chips, its own per-stylist table.
+  const branchProviders = useMemo(
+    () => (branch ? providers.filter((p) => !p.locationId || p.locationId === branch.id) : providers),
+    [providers, branch],
+  );
+  const staffChipNames = useMemo(() => ['Everyone', ...branchProviders.map((p) => p.displayName)], [branchProviders]);
 
   // Jira GRW-343 — each person's day for the phone's staff table. Not narrowed by the staff pick itself (it is what picks).
-  const staffTable = staffRows(bookings, providers.map((p) => p.displayName), now, isToday);
+  const staffTable = staffRows(bookings, branchProviders.map((p) => p.displayName), now, isToday);
 
 
   /*
@@ -610,29 +619,6 @@ export function BookingsList({
           <span>{t('unmarkedOnly', { count: filtered.length })}</span>
           <button type="button" onClick={() => { setUnmarkedOnly(false); setPage(1); }}>
             {t('unmarkedClear')}
-          </button>
-        </div>
-      )}
-
-      {branches.length > 1 ? (
-        <BranchTabs
-          branches={branches}
-          value={branch?.id ?? null}
-          onChange={pickBranch}
-          allLabel={t('branchTabsAll')}
-          label={t('branchTabsLabel')}
-        />
-      ) : null}
-
-      {branch && (
-        <div className="bk-unmarked-chip bk-branch-chip" role="status">
-          <IconStaff />
-          <span>{t('branchOnly', { name: branch.name })}</span>
-          <button
-            type="button"
-            onClick={() => pickBranch(null)}
-          >
-            {t('branchClear')}
           </button>
         </div>
       )}

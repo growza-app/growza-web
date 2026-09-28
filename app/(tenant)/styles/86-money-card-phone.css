@@ -14,9 +14,6 @@
   }
 
   /* The change chip moves from the top row to beside the amount, where it is read. */
-  .hm-hero .hm-hero-top .hm-hero-menu {
-    margin-left: auto;
-  }
   .hm-page .hm-hero:not(.hm-hero-small) .hm-hero-body {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
@@ -72,6 +69,16 @@
     border-top: 1px solid rgba(255, 255, 255, 0.14);
     color: #e8f5ed;
     font-size: 13px;
+  }
+  /* Jira GRW-394 — the branch line stays ONE row: two names, their amounts and "+N" did not fit a 375px phone,
+     so "+N" dropped to a second 44px row of its own and left a gap in the card. A long branch NAME is cut
+     with "…" instead; the amounts never are (`.hm-line b` does not shrink). The payment line still wraps. */
+  .hm-line-branches {
+    flex-wrap: nowrap;
+  }
+  .hm-line-branches .hm-line-item {
+    flex: 0 1 auto;
+    overflow: hidden;
   }
   .hm-line-item {
     display: inline-flex;
@@ -142,42 +149,15 @@
   }
 }
 
-/* ---------- the period switch beside the branch picker (Jira GRW-313) ----------
+/* ---------- the period switch on the toolbar row (Jira GRW-313) ----------
  *
- * Today / Week / Month sits on the toolbar row, left; the branch picker and the Day summary icon
- * are right. The card loses the row the switch took, and its own top row too: the ⋯ button goes
- * to the card's corner, beside the amount.
- *
- * The row is tight (tabs ~170px + picker ~124px + icon 44px against 358px at 390px wide), so:
- * tabs are compact, "All branches" reads "All" under 400px, and a picked branch's name gets an
- * ellipsis. A salon with one branch has no picker, and its tabs fill the row.
+ * Today / Week / Month sits on the toolbar row, left; the Day summary icon is right (the branch
+ * picker that shared the row is the header's since Jira GRW-395). The card loses the row the
+ * switch took, and its own top row too: the ⋯ button goes to the card's corner, beside the amount.
  */
-.hm-branch-short {
-  display: none;
-}
-.hm-branch-name,
-.hm-branch-full {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 @media (max-width: 860px) {
   .hm-toolbar {
     flex-wrap: nowrap;
-  }
-  /* Only where there is a picker to hold. With one branch this box is empty on a phone, and giving it
-     a share of the row would leave the tabs half as wide as they should be. */
-  .hm-toolbar-multi .hm-toolbar-end {
-    flex: 1 1 0;
-    min-width: 0;
-    justify-content: flex-end;
-  }
-  .hm-toolbar-end .hm-branch {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .hm-toolbar-multi .hm-branch-btn {
-    max-width: 100%;
   }
 
   .hm-page .hm-hero:not(.hm-hero-small) .hm-hero-top {
@@ -198,14 +178,6 @@
      still runs the full width of the card. */
   .hm-hero .hm-hero-chip {
     margin-right: 34px;
-  }
-}
-@media (max-width: 400px) {
-  .hm-branch-full {
-    display: none;
-  }
-  .hm-branch-short {
-    display: inline;
   }
 }
 /* Under 400px "vs last month" can run into a seven-figure amount; the arrow and percent say enough. */

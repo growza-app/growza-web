@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
+import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
 import { IconPlus } from '../components/icons';
 
 const OFFER_TITLE_MAX = 60;
@@ -84,6 +85,11 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
   const [titleError, setTitleError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Jira GRW-381 — the branch it runs at (the header's until changed here), or every branch.
+  const defaultBranch = useDefaultOfferBranch();
+  const [pickedBranch, setPickedBranch] = useState<string | null>(null);
+  const atBranch = pickedBranch ?? defaultBranch;
+  const [allBranches, setAllBranches] = useState(false);
 
   const save = async () => {
     if (!title.trim()) {
@@ -93,7 +99,13 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      await api.createOffer({ title: title.trim(), description: description.trim() || null, active: true });
+      await api.createOffer({
+        title: title.trim(),
+        description: description.trim() || null,
+        active: true,
+        ...(atBranch ? { locationId: atBranch } : {}),
+        ...(allBranches ? { allBranches: true } : {}),
+      });
       router.refresh();
       onClose();
     } catch (err) {
@@ -146,6 +158,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
+        <OfferBranchField value={atBranch} onChange={setPickedBranch} allBranches={allBranches} onAllBranches={setAllBranches} disabled={busy} />
         {error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>

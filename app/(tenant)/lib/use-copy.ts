@@ -58,7 +58,12 @@ export function useNewVisitCopy() {
     searchServices: (n: number) => t('searchServices', { n }),
     loadingServices: t('loadingServices'),
     noServicesYet: t('noServicesYet'),
+    // Jira GRW-384 — a branch opened with no menu. GRW-399: the vertical's word for what it sells, not "services".
+    noServicesAtBranch: (branch: string, services: string) =>
+      t('noServicesAtBranch', { branch, services: pickNoun(locale, services, tn('services')) }),
+    addOrCopyServices: (services: string) => t('addOrCopyServices', { services: pickNoun(locale, services, tn('services')) }),
     noServiceMatch: t('noServiceMatch'),
+    alsoTry: t('alsoTry'),
     combos: t('combos'),
     comboServices: (n: number) => t('comboServices', { n }),
     picked: t('picked'),
@@ -69,7 +74,6 @@ export function useNewVisitCopy() {
     withWhom: (provider: string) => t('withWhom', { provider: pickNoun(locale, provider, tn('staff')) }),
     whichBranch: t('whichBranch'),
     whoeverIsFree: t('whoeverIsFree'),
-    noStylist: t('noStylist'),
     freeCount: (n: number) => t('freeCount', { n }),
     chairFree: t('chairFree'),
     chairBusy: (name: string, until: string) => t('chairBusy', { name, until }),

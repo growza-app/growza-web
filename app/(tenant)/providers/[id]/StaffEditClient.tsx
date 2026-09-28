@@ -74,7 +74,9 @@ export function StaffEditClient({
 
   const [displayName, setDisplayName] = useState(detail.displayName);
   const [title, setTitle] = useState(detail.title ?? '');
-  const [phone, setPhone] = useState(detail.phone ?? '');
+  // GRW-199 — the field holds ten NATIONAL digits; the stored value is E.164. Loading the stored value as it
+  // is put "+91…" beside the "+91" prefix, and no save got past "A mobile number is 10 digits" (GRW-395 QA).
+  const [phone, setPhone] = useState(() => fromStoredPhone(detail.phone));
   const [locationId, setLocationId] = useState(detail.locationId ?? '');
   const [active, setActive] = useState(detail.active);
   const [unavailableToday, setUnavailableToday] = useState(detail.unavailableToday);
@@ -88,6 +90,12 @@ export function StaffEditClient({
    * wage. A setting keyed on the role would have to be right for both.
    */
   const [seesOwnRevenue, setSeesOwnRevenue] = useState(detail.seesOwnRevenue);
+  /*
+   * Jira GRW-386 — a move to another branch: their services there are matched by name (Haircut → that branch's
+   * Haircut) or start empty, and after the save the ones with no match are listed, to be set by hand.
+   */
+  const [skillsOnMove, setSkillsOnMove] = useState<'match' | 'none'>('match');
+  const [unmatchedSkills, setUnmatchedSkills] = useState<{ branch: string; names: string[] } | null>(null);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,10 +123,19 @@ export function StaffEditClient({
   const aboutDirty =
     displayName !== detail.displayName ||
     title !== (detail.title ?? '') ||
-    phone !== (detail.phone ?? '') ||
+    phone !== fromStoredPhone(detail.phone) ||
     locationId !== (detail.locationId ?? '') ||
     active !== detail.active;
   const skillsDirty = !setsEqual(selectedServiceIds, new Set(detail.serviceIds));
+  const moving = branches.length > 1 && Boolean(locationId) && locationId !== detail.locationId;
+  const movingTo = branches.find((b) => b.id === locationId)?.name ?? '';
+  /*
+   * Jira GRW-393 (FR-06) · GRW-388 — their saved branch's menu, and only it: every skill is a service of the
+   * stylist's own branch (the release's migration 0087 moved the older ones there, and a move carries them). The
+   * SAVED branch, not the field: while a move is pending the chips are locked, and the new branch's menu is
+   * offered once the move is saved.
+   */
+  const menu = services.filter((s) => !detail.locationId || s.locationId === detail.locationId);
   const orgHoursDirty = usesOrgHours !== detail.usesOrgHours;
   const revenueDirty = seesOwnRevenue !== detail.seesOwnRevenue;
   const availabilityDirty = unavailableToday !== detail.unavailableToday;
@@ -179,12 +196,13 @@ export function StaffEditClient({
     setSaved(false);
     try {
       const calls: Array<Promise<unknown>> = [];
+      let profile: Promise<{ unmatchedSkills?: string[] }> | null = null;
       // Jira GRW-216 — `revenueDirty` belongs here too. Without it, flipping
       // only the earnings switch marked the form dirty, enabled Save, sent
       // nothing, and silently reverted on reload.
       if (aboutDirty || orgHoursDirty || revenueDirty) {
         calls.push(
-          api.updateProviderProfile(detail.id, {
+          (profile = api.updateProviderProfile(detail.id, {
             displayName: displayName.trim(),
             // Stored E.164, so the separators a human typed are stripped once
             // here rather than leaving "+91 98765 43210" in the column.
@@ -193,11 +211,16 @@ export function StaffEditClient({
                   active,
             usesOrgHours,
             seesOwnRevenue,
-            ...(branches.length > 1 && locationId && locationId !== detail.locationId ? { locationId } : {}),
-          }),
+            ...(moving ? { locationId, skillsOnMove } : {}),
+          })),
         );
       }
-      if (skillsDirty) calls.push(api.updateProviderServices(detail.id, [...selectedServiceIds]));
+      /*
+       * Jira GRW-386 — never alongside a move. The two used to race: the move could land first and the skills,
+       * picked from the old branch's menu, were then refused, leaving a half-saved card. A move sets their
+       * services itself (matched or none); they are changed after it, from the new branch's menu.
+       */
+      if (skillsDirty && !moving) calls.push(api.updateProviderServices(detail.id, [...selectedServiceIds]));
       if (availabilityDirty) calls.push(api.setProviderAvailabilityToday(detail.id, unavailableToday));
       if (hoursDirty && !usesOrgHours) {
         calls.push(
@@ -208,6 +231,9 @@ export function StaffEditClient({
         );
       }
       await Promise.all(calls);
+      const moved = moving ? await profile : null;
+      setUnmatchedSkills(moved?.unmatchedSkills?.length ? { branch: movingTo, names: moved.unmatchedSkills } : null);
+      setSkillsOnMove('match');
       resetFrom(await api.providerDetail(detail.id));
       setSaved(true);
       router.refresh();
@@ -351,6 +377,25 @@ export function StaffEditClient({
                     ) : null}
                   </label>
                 ) : null}
+                {moving ? (
+                  <div className="field edit-move-skills" role="radiogroup" aria-label={t('moveSkillsTitle', { branch: movingTo })}>
+                    <span className="field-label">{t('moveSkillsTitle', { branch: movingTo })}</span>
+                    <label className="rules-option">
+                      <input type="radio" name="skills-on-move" checked={skillsOnMove === 'match'} onChange={() => setSkillsOnMove('match')} />
+                      <div className="rules-option-body">
+                        <div className="rules-option-title">{t('moveSkillsMatch')}</div>
+                        <div className="rules-option-sub">{t('moveSkillsMatchSub', { branch: movingTo })}</div>
+                      </div>
+                    </label>
+                    <label className="rules-option">
+                      <input type="radio" name="skills-on-move" checked={skillsOnMove === 'none'} onChange={() => setSkillsOnMove('none')} />
+                      <div className="rules-option-body">
+                        <div className="rules-option-title">{t('moveSkillsNone')}</div>
+                        <div className="rules-option-sub">{t('moveSkillsNoneSub')}</div>
+                      </div>
+                    </label>
+                  </div>
+                ) : null}
                 <label className="field">
                   <span className="field-label">{t('role')}</span>
                   <input type="text" value={title} placeholder={providerWord} onChange={(e) => (setTitle(e.target.value), setSaved(false))} />
@@ -427,11 +472,17 @@ export function StaffEditClient({
               <div className="edit-card-head">
                 <div className="edit-card-title">{t('servicesTitle')}</div>
                 <span className="muted edit-count">
-                  {t('selectedOf', { selected: selectedServiceIds.size, total: services.length })}
+                  {t('selectedOf', { selected: selectedServiceIds.size, total: menu.length })}
                 </span>
               </div>
+              {moving ? <div className="field-hint">{t('moveSkillsLater', { branch: movingTo })}</div> : null}
+              {unmatchedSkills ? (
+                <div className="field-hint" role="status">
+                  {t('moveUnmatched', { branch: unmatchedSkills.branch, names: unmatchedSkills.names.join(', ') })}
+                </div>
+              ) : null}
               <div className="edit-chips">
-                {services.map((s) => {
+                {menu.map((s) => {
                   const on = selectedServiceIds.has(s.id);
                   return (
                     <button
@@ -439,6 +490,7 @@ export function StaffEditClient({
                       type="button"
                       className={`edit-chip ${on ? 'is-on' : ''}`}
                       aria-pressed={on}
+                      disabled={moving}
                       onClick={() => toggleService(s.id)}
                     >
                       {s.name} {on && <IconCheck />}

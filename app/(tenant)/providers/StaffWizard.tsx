@@ -1,7 +1,8 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState, useRef } from 'react';
+import { useBranch } from '../components/BranchProvider';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { api, ApiError, type ProviderOverviewRow, type Service } from '../lib/api';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
@@ -98,7 +99,18 @@ export function StaffWizard({
   const [title, setTitle] = useState('');
   const [newRole, setNewRole] = useState('');
   const [addingRole, setAddingRole] = useState(false);
-  const [branchId, setBranchId] = useState<string | null>(branches[0]?.id ?? null);
+  // Jira GRW-377 — a new stylist starts at the branch the dashboard is looking at, not always the main one.
+  const branchContext = useBranch();
+  const [branchId, setBranchId] = useState<string | null>(branches.find((b) => b.id === branchContext.one)?.id ?? branches[0]?.id ?? null);
+  // QA (Jira GRW-377) — the same guard as the walk-in sheet: if this ever renders before the shared branch is
+  // `ready`, take it when it arrives, unless the owner already chose one here.
+  const branchTouched = useRef(false);
+  useEffect(() => {
+    if (!branchContext.ready || branchTouched.current) return;
+    const shared = branches.find((b) => b.id === branchContext.one);
+    if (shared) setBranchId(shared.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchContext.ready, branchContext.one]);
 
   /*
    * Step 2 opens on the salon's hours, and `followsSalon` says whether the
@@ -115,7 +127,15 @@ export function StaffWizard({
    * ticked is the only honest way to render a default that generous — an empty
    * picker beside "Save & close" would say the opposite of what happens.
    */
-  const [skills, setSkills] = useState<Set<string>>(() => new Set(services.map((s) => s.id)));
+  // Jira GRW-393 (FR-06) — the chosen branch's menu: the API refuses a new stylist another branch's services.
+  const menu = useMemo(() => services.filter((s) => !branchId || s.locationId === branchId), [services, branchId]);
+  const [skills, setSkills] = useState<Set<string>>(() => new Set(menu.map((s) => s.id)));
+  // Choosing another branch starts its menu over, all ticked, as the first one was. Keyed on WHICH services, not
+  // on the list itself: coming back to the tab refreshes the page's data, hands a new list of the same services,
+  // and re-ticked every skill the owner had unticked (GRW-395 QA).
+  const menuKey = menu.map((s) => s.id).join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setSkills(new Set(menu.map((s) => s.id))), [menuKey]);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,7 +205,7 @@ export function StaffWizard({
         ...(followsSalon
           ? {}
           : { workingHours: hourRows.filter((r) => r.open).map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime })) }),
-        ...(skills.size === services.length ? {} : { serviceIds: [...skills] }),
+        ...(skills.size === menu.length ? {} : { serviceIds: [...skills] }),
       });
       onCreated();
       onClose();
@@ -318,8 +338,9 @@ export function StaffWizard({
                 )}
               </div>
 
-              {/* Jira GRW-234 — where this person works. Their bookings, hours and figures follow it. */}
-              {branches.length > 1 ? (
+              {/* Jira GRW-234 — where this person works. Their bookings, hours and figures follow it.
+                  Jira GRW-395 — asked only on "All": with a branch in the header, they are added to it. */}
+              {branches.length > 1 && branchContext.choice === null ? (
                 <>
                   <div className="wiz-section-label">{t('branch')}</div>
                   <div className="wiz-chips" role="radiogroup" aria-label={t('branch')}>
@@ -330,7 +351,10 @@ export function StaffWizard({
                         role="radio"
                         aria-checked={branchId === b.id}
                         className={`wiz-chip ${branchId === b.id ? 'is-on' : ''}`}
-                        onClick={() => setBranchId(b.id)}
+                        onClick={() => {
+                          branchTouched.current = true;
+                          setBranchId(b.id);
+                        }}
                       >
                         {i === 0 ? t('mainSuffix', { name: b.name }) : b.name}
                       </button>
@@ -401,17 +425,17 @@ export function StaffWizard({
                   type="button"
                   className="wiz-link"
                   onClick={() =>
-                    setSkills(skills.size === services.length ? new Set() : new Set(services.map((s) => s.id)))
+                    setSkills(skills.size === menu.length ? new Set() : new Set(menu.map((s) => s.id)))
                   }
                 >
-                  {skills.size === services.length ? t('clearAll') : t('selectAll')}
+                  {skills.size === menu.length ? t('clearAll') : t('selectAll')}
                 </button>
               </div>
-              {services.length === 0 ? (
+              {menu.length === 0 ? (
                 <div className="field-hint">{t('noServices')}</div>
               ) : (
                 <div className="skill-picker">
-                  {services.map((s) => {
+                  {menu.map((s) => {
                     const on = skills.has(s.id);
                     return (
                       <button

@@ -1,9 +1,7 @@
 'use client';
 
-import { useReportsCopy } from '../lib/use-reports-copy';
 import type { ReactNode } from 'react';
 
-import { copy } from '../lib/copy';
 import { formatMoney, type ReportNamedValue } from '../lib/api';
 
 /** Money, through the one renderer (conventions §4). */
@@ -14,14 +12,6 @@ export function money(minor: number | null): string {
 /** A percentage, or an em dash where there is nothing to take a percentage of. */
 export function pct(value: number | null): string {
   return value === null ? '—' : `${value}%`;
-}
-
-/** "3h 20m" — an owner reads hours, not 200 minutes. */
-export function hoursAndMinutes(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  if (h === 0) return `${m}m`;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
 export function Card({
@@ -53,21 +43,29 @@ export function Card({
   );
 }
 
+/**
+ * How a bar is named. Jira GRW-363 — the tabs pass `useRowName()`, so a row the report
+ * named ("Everything else", "Unassigned") reads in the owner's language; the default is
+ * the label as sent, which is right for a service or a person.
+ */
+type RowNamer = (item: ReportNamedValue) => string;
+const asSent: RowNamer = (item) => item.label;
+
 /** Bars of money: the value shown is the real figure, the bar only its share. */
-export function moneyBars(items: ReportNamedValue[], retiredLabel: string) {
+export function moneyBars(items: ReportNamedValue[], retiredLabel: string, nameOf: RowNamer = asSent) {
   return items.map((item) => ({
-    label: item.label,
+    label: nameOf(item),
     value: item.value,
     display: money(item.value),
     note: item.retired ? retiredLabel : undefined,
   }));
 }
 
-export function countBars(items: ReportNamedValue[], retiredLabel: string, suffix = '') {
+export function countBars(items: ReportNamedValue[], retiredLabel: string, nameOf: RowNamer = asSent) {
   return items.map((item) => ({
-    label: item.label,
+    label: nameOf(item),
     value: item.value,
-    display: `${item.value}${suffix}`,
+    display: String(item.value),
     note: item.retired ? retiredLabel : undefined,
   }));
 }

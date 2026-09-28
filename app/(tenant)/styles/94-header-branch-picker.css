@@ -1,0 +1,109 @@
+/* ---------- The header's branch picker (Jira GRW-395) ----------
+ *
+ * One picker for the whole app. On a laptop it is a pill among the header's
+ * controls (`.hbp-pill`, the look Settings' own picker had — `.sbp`). On a phone
+ * the header row is already full (menu, title, "Add", search, the avatar: a
+ * pill beside them pushed "Add" over the title), so it is a line under the title
+ * instead (`.hbp-line`) — the place Home already said where you are. Both are in
+ * the markup; the width picks one.
+ */
+.hbp-line {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+}
+.hbp-line .sbp-btn,
+.hbp-line .sbp-btn.is-branch {
+  position: relative;
+  max-width: 100%;
+  min-height: 26px;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+/* A 26px line, a 44px target: the tap area reaches past the text without moving anything. */
+.hbp-line .sbp-btn::after {
+  content: '';
+  position: absolute;
+  inset: -9px -6px;
+}
+.hbp-line .sbp-btn > svg,
+.hbp-line .sbp-btn > svg:first-child {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+}
+.hbp-line .sbp-menu {
+  left: 0;
+  right: auto;
+}
+/* A phone held sideways (568×320): the list scrolls inside itself rather than running off the screen. */
+.hbp .sbp-menu {
+  max-height: calc(100dvh - 96px);
+  overflow-y: auto;
+}
+/* The line's tap area reaches 9px up; on a screen with Back beside the title, Back stays on top of it — a tap on
+   Back's bottom edge opened the branch list (GRW-395 QA). */
+.topbar-title-row {
+  position: relative;
+  z-index: 1;
+}
+/* 320–340px: the title column (menu button, title, branch line) had ~68px beside "Add", search and the avatar,
+   under its own 96px minimum, and the line ran under "Add" — a tap on "+" opened the branch list (GRW-395 QA).
+   With a branch line to show, the title column keeps 136px beside the menu button, and the controls wrap onto
+   their own row when that does not leave them room. `.topbar` only: Reports' title row does not wrap, and there
+   the avatar went off the screen instead. */
+@media (max-width: 340px) {
+  .topbar .topbar-lead:has(.hbp-line) {
+    min-width: 190px;
+  }
+}
+/* 861–1180px: the pill joined the page action, search, bell and avatar, and the title column got what was left —
+   Offers' at 861 was cut to "Offers …" with its subtitle over 16 lines (GRW-395 QA). A title column narrower than
+   240px goes to its own row and the controls to one under it, the rule the phone header already follows. Basis
+   0, so the decision sees the 240px and not the subtitle's full sentence. */
+@media (min-width: 861px) {
+  .topbar:has(.hbp-pill) {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .topbar:has(.hbp-pill) .topbar-title {
+    flex: 1 1 0;
+    min-width: 240px;
+  }
+  .topbar:has(.hbp-pill) .topbar-actions {
+    margin-left: auto;
+  }
+}
+
+/* A fixed branch (a receptionist's, a stylist's) is a statement, not a control. */
+.hbp-fixed {
+  cursor: default;
+}
+
+/* Which of the two this width shows. LAST, after `.hbp-line`'s own `display`: the two are equally specific, so
+   the later rule wins — placed first, the laptop showed the pill and the phone's line together (GRW-395 QA). */
+@media (max-width: 860px) {
+  .hbp-pill {
+    display: none;
+  }
+}
+@media (min-width: 861px) {
+  .hbp-line {
+    display: none;
+  }
+}
+
+/* Home's phone line: "📍 MG Road ▾ · Fri, 25 Sep". The branch keeps up to 70% of the line and the date gives
+   way first, the rule the branch name already had there (Jira GRW-253 QA). */
+.hm-head-branch .hbp-line {
+  flex-shrink: 0;
+  max-width: 70%;
+}
+.hm-head-branch .hbp-line + .hm-head-branch-date::before {
+  content: '· ';
+}

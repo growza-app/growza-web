@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { api, type Appointment, type CustomerStats, type HomeOverview, type HomePeriod } from '../../lib/api';
+import { api, type Appointment, type AutopayRenewal, type CustomerStats, type HomeOverview, type HomePeriod, type QueueEntry } from '../../lib/api';
 import { groupBookings } from '../../lib/appointment-display';
-import { branchPace } from '../../lib/branch-pace';
-import { readBranchChoice, writeBranchChoice } from '../../lib/branch-choice';
-import { BranchTabs } from '../BranchTabs';
+import { atBranch } from '../../lib/right-now';
+import { useBranch } from '../BranchProvider';
 import { homeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
 import { canSee, type MemberRole } from '../../lib/nav-policy';
@@ -14,7 +13,6 @@ import {
   IconBan,
   IconCalendarPlus,
   IconChat,
-  IconChevronDown,
   IconChevronRight,
   IconClipboardCheck,
   IconClock,
@@ -27,9 +25,12 @@ import {
   IconStaff,
 } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
+import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
-import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards, rupees } from './parts';
+import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards } from './parts';
+import { RightNow } from './RightNow';
+import { useMinuteClock } from './useMinuteClock';
 
 /**
  * Jira GRW-222 — the owner's Home.
@@ -41,10 +42,18 @@ import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Se
  *
  * "Multi-branch" is not a setting stored anywhere: the admin's "More than one
  * branch" toggle decides how many `location` rows enrolment writes, and the
- * rows are the truth. So the picker, the "All branches" roll-up and the
- * "Your branches" card appear when the business has more than one active
- * branch, and a single-branch salon sees none of them — not a disabled picker
- * with one entry in it.
+ * rows are the truth. So the picker and the "All branches" roll-up appear when
+ * the business has more than one active branch, and a single-branch salon sees
+ * neither — not a disabled picker with one entry in it.
+ *
+ * ## One laptop layout, with or without branches (Jira GRW-348 · GRW-351)
+ *
+ * The "Your branches" card is gone: the header's picker switches branches
+ * (Jira GRW-395) and the money card's branch line names them. So a business
+ * with branches lays out exactly as a single-branch one does — money and Needs
+ * your attention on top, Bookings today and Right now beneath (1.5fr / 1fr, the
+ * same split), How your clients are doing at the bottom. The grid names its
+ * areas (83-role-home.css), so a new card is a new area, not a new layout.
  */
 
 const HOME_BOOKINGS_SHOWN = 6;
@@ -57,7 +66,7 @@ const HOME_BOOKINGS_SHOWN = 6;
  * short window) Home scrolls as a normal page.
  *
  * The money row keeps its own (compact) height and Bookings today gets the rest
- * of the page, in whole rows — side by side when the business has one branch.
+ * of the page, in whole rows, one column wide (Right now has the other).
  */
 const FIT_QUERY = '(min-width: 1101px) and (min-height: 680px)';
 
@@ -66,14 +75,14 @@ const FIT_QUERY = '(min-width: 1101px) and (min-height: 680px)';
  *
  * The box's height is decided by CSS (row 2 of the owner grid takes whatever
  * the money row leaves), so counting rows is a measurement, not a guess: whole
- * rows that fit, times the columns the list is laid out in.
+ * rows that fit.
  *
  * Jira GRW-225 — the measurement must never feed itself. The box sits in a
  * `minmax(0, 1fr)` row and clips, so the rows rendered from this count cannot
  * make the box taller; before, the first paint's six rows set the row's
  * min-content and every later measurement read six back.
  */
-function useFitBookings(multiBranch: boolean) {
+function useFitBookings() {
   const listRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<{ fit: boolean; count: number }>({ fit: false, count: HOME_BOOKINGS_SHOWN });
   useLayoutEffect(() => {
@@ -84,10 +93,9 @@ function useFitBookings(multiBranch: boolean) {
         setState({ fit: false, count: HOME_BOOKINGS_SHOWN });
         return;
       }
-      const cols = multiBranch ? 1 : 2;
       const rowH = el?.querySelector<HTMLElement>('.hm-row')?.offsetHeight || 47;
       const rows = el ? Math.max(1, Math.floor(el.clientHeight / rowH)) : 1;
-      setState((prev) => (prev.fit && prev.count === rows * cols ? prev : { fit: true, count: rows * cols }));
+      setState((prev) => (prev.fit && prev.count === rows ? prev : { fit: true, count: rows }));
     };
     measure();
     mq.addEventListener('change', measure);
@@ -97,7 +105,7 @@ function useFitBookings(multiBranch: boolean) {
       mq.removeEventListener('change', measure);
       ro?.disconnect();
     };
-  }, [multiBranch]);
+  }, []);
   return { listRef, ...state };
 }
 
@@ -116,49 +124,45 @@ export interface OwnerHomeProps {
   /** Jira GRW-266 · GRW-271 — false in production: no Try WhatsApp tile. */
   whatsappDemo: boolean;
   initial: HomeOverview | null;
-  /** Today's visits — or tomorrow's once the business has closed for the day. */
+  /** Today's visits (the whole business's; Home narrows them to the branch it shows). */
   appointments: Appointment[] | null;
-  listIsTomorrow: boolean;
+  /**
+   * Tomorrow's. Bookings shows them once the branch Home is showing has closed for the day — which only the browser
+   * knows, since the picked branch is kept there and a branch may close before the business does (Jira GRW-351).
+   */
+  tomorrowAppointments: Appointment[] | null;
   customerStats: CustomerStats | null;
   /** Null when the register could not be read; the card is then left out rather than shown as 0. */
   staffNotMarkedIn: number | null;
+  /** Jira GRW-242 — owner only: approve the new AutoPay amount before the billing date. */
+  autopayRenewal?: AutopayRenewal | null;
+  /** Jira GRW-402 — whether Approve can open a page at all (usable payment keys, online payments on). */
+  canPayOnline?: boolean;
+  /**
+   * Jira GRW-351 — today's walk-in queue, the whole business's (Home narrows it to the branch it shows). Null when
+   * it could not be read: Right now then leaves its Walk-ins row out rather than showing 0.
+   */
+  queue: QueueEntry[] | null;
 }
 
 export function OwnerHome(p: OwnerHomeProps) {
   const t = homeCopy(p.lang, p.labels);
-  const now = useMemo(() => new Date(p.nowISO), [p.nowISO]);
+  // Jira GRW-351 — moves on once a minute, so an alert appears at its tenth minute without waiting for a reload.
+  const now = useMinuteClock(p.nowISO);
   const [period, setPeriod] = useState<HomePeriod>('today');
-  const [branch, setBranch] = useState<string | null>(null);
+  const branchContext = useBranch();
+  /*
+   * Jira GRW-351 — the branch Home shows is the header's choice, as soon as the browser has read it: not a copy made
+   * when the overview arrives. A copy checked against `p.initial.branches` was never made at all when the overview
+   * failed to load, so the lists showed every branch under a header naming one. One-branch businesses show "all",
+   * which is the same thing.
+   */
+  const branch = branchContext.ready && branchContext.multi ? branchContext.choice : null;
   const [data, setData] = useState<HomeOverview | null>(p.initial);
+  // Jira GRW-392 (review) — each branch keeps its own clients, so the client cards follow the branch Home shows.
+  const [clientStats, setClientStats] = useState<CustomerStats | null>(p.customerStats);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(p.initial === null);
-  const [branchMenu, setBranchMenu] = useState(false);
-  const branchRef = useRef<HTMLDivElement>(null);
-
-  /*
-   * Jira GRW-309 — the branch list closes when you tap anywhere else, or press Escape
-   * (and hands focus back to its button). It only closed by choosing a branch or
-   * pressing the button again, so it sat open over the money card while you tapped
-   * elsewhere. `pointerdown`, not `click`: it closes before the tap lands, so the
-   * thing you tapped still gets it.
-   */
-  useEffect(() => {
-    if (!branchMenu) return;
-    const onPointer = (e: PointerEvent) => {
-      if (!branchRef.current?.contains(e.target as Node)) setBranchMenu(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setBranchMenu(false);
-      branchRef.current?.querySelector<HTMLElement>('.hm-branch-btn')?.focus();
-    };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [branchMenu]);
   const [summaryOpen, setSummaryOpen] = useState(false);
   /**
    * Record payment only now — Jira GRW-297 moved "New booking" off this
@@ -168,8 +172,16 @@ export function OwnerHome(p: OwnerHomeProps) {
   const [visitSheet, setVisitSheet] = useState<'payment' | null>(null);
   const mayBook = p.role !== 'staff';
 
+  const loadClientStats = (nextBranch: string | null) => {
+    api
+      .customerStats(nextBranch)
+      .then(setClientStats)
+      .catch(() => setClientStats(null));
+  };
+
   const load = (nextPeriod: HomePeriod, nextBranch: string | null) => {
     setLoading(true);
+    setFailed(false);
     api
       .home(nextPeriod, nextBranch)
       .then((d) => {
@@ -181,48 +193,69 @@ export function OwnerHome(p: OwnerHomeProps) {
   };
 
   /**
-   * Jira GRW-340 — choose a branch from anywhere on this screen (the laptop dropdown, the "Your branches" card, a
-   * phone's tabs). It is remembered for the session, so Bookings and Attendance open on the same branch.
+   * Jira GRW-340 — choose a branch from anywhere on this screen (the header's picker, the money card's branch line).
+   * It is remembered for the session, so Bookings and Attendance open on the same branch.
    */
-  const pickBranch = (next: string | null) => {
-    setBranch(next);
-    writeBranchChoice(next);
-    load(period, next);
-  };
+  const pickBranch = (next: string | null) => branchContext.setBranch(next);
 
-  // Open on the branch the owner was last looking at, if it is still open. Read after mount: the server render
-  // cannot see the browser's storage, and starting on "All" there keeps the two renders identical.
+  /*
+   * Jira GRW-395 — Home shows the header's branch, and follows it whenever it changes: from the header or the
+   * money card. Read after mount: the server render cannot see the browser's
+   * storage, and starting on "All" there keeps the two renders identical. The figures are re-read for the branch;
+   * the lists below are narrowed in the browser at once.
+   */
+  const loadedFor = useRef<string | null>(null);
   useEffect(() => {
-    const remembered = readBranchChoice(p.initial?.branches ?? []);
-    if (remembered) {
-      setBranch(remembered);
-      load('today', remembered);
-    }
+    if (!branchContext.ready) return;
+    if (branch === loadedFor.current) return;
+    loadedFor.current = branch;
+    load(period, branch);
+    loadClientStats(branch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [branchContext.ready, branchContext.choice]);
+
+  /** The overview Home holds is for the branch it shows (not one left from before a switch). */
+  const dataIsForBranch = data !== null && (data.locationId ?? null) === branch;
+
+  /*
+   * Jira GRW-351 — no flash of every branch before the remembered one. The server draws "all" (it cannot see the
+   * browser's storage), so for a business with branches the cards stay hidden until the browser knows the branch and,
+   * if one is picked, its figures have arrived (or failed: then the card says so). Only the first time: a later
+   * switch keeps the cards and dims the money card while it loads, as before.
+   */
+  const waitingForBranch = branchContext.multi && (!branchContext.ready || (!dataIsForBranch && data !== null && !failed));
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!waitingForBranch) setSettled(true);
+  }, [waitingForBranch]);
+  const hideUntilBranch = waitingForBranch && !settled;
 
   const branches = data?.branches ?? [];
-  const multiBranch = branches.length > 1;
-  const selected = branches.find((b) => b.id === branch) ?? null;
-  const hours = data?.hoursToday ?? p.initial?.hoursToday ?? null;
+  const multiBranch = branchContext.multi || branches.length > 1;
+  const selected = branchContext.branches.find((b) => b.id === branch) ?? branches.find((b) => b.id === branch) ?? null;
+  // The hours of the branch Home shows (the API reads the branch's own), else the business's.
+  const hours = (dataIsForBranch ? data.hoursToday : null) ?? p.initial?.hoursToday ?? null;
   const afterClose = hours?.afterClose ?? false;
+  // After closing, the list that matters is tomorrow's (FR-09) — for the branch picked, by the branch's own hours.
+  const listIsTomorrow = afterClose;
 
   const locationLine = multiBranch ? (selected?.name ?? t.allBranches) : p.primaryLocationName;
 
-  // Two columns when there is no branches card beside the list (see .hm-bookings-wide).
-  const fit = useFitBookings((data?.branches ?? []).length > 1);
+  const fit = useFitBookings();
   const bookingsShown = fit.count;
 
+  const todayGroups = useMemo(() => visibleGroups(p.appointments, branch), [p.appointments, branch]);
+  const tomorrowGroups = useMemo(() => visibleGroups(p.tomorrowAppointments, branch), [p.tomorrowAppointments, branch]);
+  const queue = useMemo(() => (p.queue ? atBranch(p.queue, branch) : null), [p.queue, branch]);
+  const listGroups = listIsTomorrow ? tomorrowGroups : todayGroups;
+
   const groups = useMemo(() => {
-    // Cancelled visits are counted in Needs attention and listed on Bookings;
-    // on Home they would push the day's real work out of a six-row window.
-    const list = (p.appointments ?? []).filter((a) => a.status !== 'cancelled' && (!branch || !a.locationId || a.locationId === branch));
-    const all = groupBookings(list);
+    const all = listGroups ?? [];
     // Anchor the window on now: one visit already under way, then what is next.
     const firstLive = all.findIndex((g) => new Date(g.endAt).getTime() > now.getTime());
-    const from = p.listIsTomorrow || firstLive < 0 ? 0 : Math.max(0, firstLive - 1);
+    const from = listIsTomorrow || firstLive < 0 ? 0 : Math.max(0, firstLive - 1);
     return { shown: all.slice(from, from + bookingsShown), total: all.length };
-  }, [p.appointments, p.listIsTomorrow, branch, now, bookingsShown]);
+  }, [listGroups, listIsTomorrow, now, bookingsShown]);
 
   const closeTime = hours?.closesAt ? formatClock(hours.closesAt) : null;
 
@@ -293,6 +326,7 @@ export function OwnerHome(p: OwnerHomeProps) {
       />
 
       <div className="page-body hm-page hm-fit">
+        {p.autopayRenewal ? <AutopayRenewalNotice renewal={p.autopayRenewal} lang={p.lang} place="home" canApprove={p.canPayOnline ?? false} /> : null}
         {afterClose && closeTime ? (
           <button type="button" className="hm-closed hm-desktop" onClick={() => setSummaryOpen(true)}>
             <span className="hm-closed-icon">
@@ -306,7 +340,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           </button>
         ) : null}
 
-        <div className={`hm-toolbar ${multiBranch ? 'hm-toolbar-multi' : ''}`}>
+        <div className="hm-toolbar">
           {/* Jira GRW-313 — the period switch is on this row at every width now: on a phone it sat
               inside the money card, which made the card a row taller. */}
           <Segmented
@@ -322,6 +356,15 @@ export function OwnerHome(p: OwnerHomeProps) {
               load(v, branch);
             }}
           />
+          {/* Jira GRW-351 — on the one-screen laptop Home the "Day closed" banner is this chip instead: a banner row
+              cost Right now the room for its rows (83-role-home.css). */}
+          {afterClose && closeTime ? (
+            <button type="button" className="hm-closed-chip" onClick={() => setSummaryOpen(true)}>
+              <IconDaySummary />
+              <span>{t.dayClosed(closeTime)}</span>
+              <IconChevronRight />
+            </button>
+          ) : null}
           <div className="hm-toolbar-end">
             {mayBook ? (
               /* One booking button, not "Walk-in" + "New appointment": New
@@ -340,49 +383,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                 </a>
               </div>
             ) : null}
-            {multiBranch ? (
-              <div className="hm-branch" ref={branchRef}>
-                <button
-                  type="button"
-                  className="hm-branch-btn"
-                  aria-haspopup="menu"
-                  aria-expanded={branchMenu}
-                  aria-label={selected?.name ?? t.allBranches}
-                  title={selected?.name ?? t.allBranches}
-                  onClick={() => setBranchMenu((o) => !o)}
-                >
-                  {/* "All branches" gives way to "All" on a narrow phone, where the period switch
-                      takes the row's room; a picked branch's name shortens with an ellipsis. */}
-                  {selected ? (
-                    <span className="hm-branch-name">{selected.name}</span>
-                  ) : (
-                    <>
-                      <span className="hm-branch-full">{t.allBranches}</span>
-                      <span className="hm-branch-short" aria-hidden="true">{t.allBranchesShort}</span>
-                    </>
-                  )}
-                  <IconChevronDown />
-                </button>
-                {branchMenu ? (
-                  <div className="hm-menu hm-menu-right" role="menu">
-                    {[{ id: null as string | null, name: t.allBranches }, ...branches].map((b) => (
-                      <button
-                        key={b.id ?? 'all'}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={branch === b.id}
-                        onClick={() => {
-                          setBranchMenu(false);
-                          pickBranch(b.id);
-                        }}
-                      >
-                        {b.name}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
           </div>
           {/* Jira GRW-306 — the Day summary on a phone: an icon beside the branch picker,
               on the row the period switch used to take. The "Day closed" banner that
@@ -393,67 +393,32 @@ export function OwnerHome(p: OwnerHomeProps) {
           </button>
         </div>
 
-        {/* Jira GRW-340 — on a phone the branch is a row of tabs, not the dropdown above (CSS swaps them at 860px). */}
-        {multiBranch ? <BranchTabs branches={branches} value={branch} onChange={pickBranch} allLabel={t.allBranchesShort} label={t.branch} /> : null}
-
-        <div className={`hm-owner-grid ${multiBranch ? 'hm-multi' : ''}`}>
-          <div className="hm-area-hero">{data ? <MoneyHero
+        <div className={`hm-owner-grid ${hideUntilBranch ? 'is-settling' : ''}`} aria-busy={hideUntilBranch || undefined}>
+          {/* The figures are the branch's; while a switch loads, the last ones stay, dimmed. A failed read says so. */}
+          <div className="hm-area-hero">{data && (dataIsForBranch || !failed) ? <MoneyHero
                 t={t}
                 data={data}
-                loading={loading}
+                loading={loading || !dataIsForBranch}
                 onDaySummary={() => setSummaryOpen(true)}
                 unmarkedHref={unmarkedHref}
                 branchId={branch}
-                onPickBranch={(id) => {
-                  setBranch(id);
-                  load(period, id);
-                }}
-                onMoreBranches={() => setBranchMenu(true)}
+                onPickBranch={pickBranch}
+                onMoreBranches={() => branchContext.setPickerOpen(true)}
               /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/* The design gives "Needs your attention" to the laptop only; a phone's
-              Home is money, shortcuts, branches, clients and the day. */}
+              Home is money, shortcuts, clients and the day. */}
           <Card className="hm-area-attention hm-desktop" title={t.needsYourAttention}>
-            {failed && !data ? <CardError t={t} /> : <AttentionList items={attention} />}
+            {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
           </Card>
 
           <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
             <QuickTiles items={links} />
           </Card>
 
-          {multiBranch && data ? (
-            <Card className="hm-area-branches" title={t.yourBranches}>
-              <ul className="hm-rows">
-                {branches.map((b, i) => {
-                  const pace = branchPace(b.bookingsToday, branches.map((x) => x.bookingsToday));
-                  const picked = branch === b.id;
-                  return (
-                    <li key={b.id} className={`hm-row hm-row-button ${picked ? 'is-picked' : ''}`}>
-                      <button
-                        type="button"
-                        aria-pressed={picked}
-                        onClick={() => {
-                          // Tapping the branch already picked goes back to all of them.
-                          pickBranch(picked ? null : b.id);
-                        }}
-                      >
-                        <span className={`hm-branch-tile hm-tone-${BRANCH_TONES[i % BRANCH_TONES.length]}`}>{branchInitials(b.name)}</span>
-                        <span className="hm-row-main">
-                          <span className="hm-row-name">{b.isPrimary ? `${b.name} (${t.mainBranch})` : b.name}</span>
-                          <span className="hm-row-sub">{t.branchMeta(b.bookingsToday, rupees(b.revenueTodayMinor))}</span>
-                        </span>
-                        {pace ? <span className={`hm-pace hm-pace-${pace}`}>{pace === 'busy' ? t.branchBusy : t.branchSlow}</span> : null}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Card>
-          ) : null}
-
           <Card
-            className={`hm-area-bookings ${multiBranch ? '' : 'hm-bookings-wide'}`}
-            title={p.listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}
+            className="hm-area-bookings"
+            title={listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}
             action={
               <a className="hm-link" href="/appointments">
                 {t.viewAll} ({groups.total}) ›
@@ -461,16 +426,19 @@ export function OwnerHome(p: OwnerHomeProps) {
             }
           >
             <div className="hm-fit-list" ref={fit.listRef}>
-              {p.appointments === null ? (
+              {listGroups === null ? (
                 <CardError t={t} />
               ) : (
-                <BookingRows t={t} groups={groups.shown} timezone={p.timezone} now={now} empty={p.listIsTomorrow ? t.nothingTomorrow : t.nothingToday} />
+                <BookingRows t={t} groups={groups.shown} timezone={p.timezone} now={now} empty={listIsTomorrow ? t.nothingTomorrow : t.nothingToday} />
               )}
             </div>
           </Card>
 
+          {/* Jira GRW-351 — laptop only; row 2 mirrors row 1. Its data is Bookings today's, so the two agree. */}
+          <RightNow t={t} today={todayGroups} tomorrow={tomorrowGroups} queue={queue} now={now} afterClose={listIsTomorrow} timezone={p.timezone} />
+
           <Card className="hm-area-clients" title={t.clientsDoingTitle}>
-            <SegmentCards t={t} stats={p.customerStats} />
+            <SegmentCards t={t} stats={clientStats} branch={branch} />
           </Card>
         </div>
       </div>
@@ -488,13 +456,12 @@ export function OwnerHome(p: OwnerHomeProps) {
   );
 }
 
-const BRANCH_TONES = ['green', 'blue', 'amber', 'violet', 'rose'] as const;
-
-/** "MG Road" → "MG", "Koramangala" → "KO": the design's two-letter branch tile. */
-function branchInitials(name: string): string {
-  const words = name.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w));
-  const letters = words.length > 1 ? words[0]!.charAt(0) + words[1]!.charAt(0) : name.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2);
-  return letters.toUpperCase();
+/**
+ * A day's visits as Home lists them: the branch Home shows, grouped into sittings. Cancelled visits are counted in
+ * Needs attention and listed on Bookings; on Home they would push the day's real work out of a six-row window.
+ */
+function visibleGroups(list: Appointment[] | null, branch: string | null) {
+  return list ? groupBookings(atBranch(list, branch).filter((a) => a.status !== 'cancelled')) : null;
 }
 
 /** "20:00" → "8:00 pm". */

@@ -5,7 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { Card, SecondaryButton } from '../components/primitives';
 import { oklch } from '../tokens';
 import { Panel, PanelFailure, RangePicker, StatTile, Bars, Freshness, type Monitoring, type Range } from './parts';
-import { absoluteIst, lastDrainedTile, OUTCOME_WORDS, PANEL_COUNT, relative, workerStatus } from './format';
+import { absoluteIst, attemptWords, lastDrainedTile, PANEL_COUNT, relative, workerStatus } from './format';
 
 /**
  * Jira GRW-279 — is the platform's machinery running.
@@ -235,38 +235,55 @@ function WebhookSection({ data, onRetry, loading }: SectionProps) {
   );
 }
 
+/**
+ * Jira GRW-413 — "Billing chasing", not "Billing retries".
+ *
+ * Nothing retries anything: dunning asks the payment provider for nothing, and a
+ * halted AutoPay recovers only when the owner re-approves it or pays by link. The
+ * panel used to read "Billing retries — 12 in retry" over a single bar labelled
+ * "Skipped", which is the screen built to answer "is billing doing anything about
+ * the money" answering it wrongly. Each row is now WHY nothing was collected.
+ */
 function DunningSection({ data, onRetry, loading }: SectionProps) {
-  const title = 'Billing retries';
+  const title = 'Billing chasing';
   if (!data.dunning.ok) return <PanelFailure title={title} error={data.dunning.error} onRetry={onRetry} disabled={loading} />;
   const d = data.dunning.data;
   return (
     <Panel
       title={title}
-      status={d.inRetryNow > 0 ? { tone: 'warn', text: `${d.inRetryNow} in retry` } : { tone: 'good', text: 'None in retry' }}
+      status={
+        d.inDunningNow > 0
+          ? { tone: 'warn', text: `${d.inDunningNow} unpaid` }
+          : { tone: 'good', text: 'None unpaid' }
+      }
       windowed={RANGE_WORDS[data.range]}
     >
       {d.outcomes.length === 0 ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint }}>No retries attempted in {RANGE_WORDS[data.range]}.</div>
+        <div style={{ fontSize: 13, color: oklch.textFaint }}>Billing looked at nobody in {RANGE_WORDS[data.range]}.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {d.outcomes.map((row, i) => (
-            <div
-              key={row.outcome}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '8px 0',
-                fontSize: 13,
-                borderBottom: i === d.outcomes.length - 1 ? 'none' : `1px solid ${oklch.divider}`,
-              }}
-            >
-              <span style={{ color: oklch.textMuted }}>{OUTCOME_WORDS[row.outcome] ?? row.outcome}</span>
-              <span style={{ fontWeight: 800, color: row.outcome === 'not_made' ? 'oklch(0.55 0.13 65)' : oklch.textStrong }}>
-                {row.count.toLocaleString('en-IN')}
-              </span>
-            </div>
-          ))}
+          {d.outcomes.map((row, i) => {
+            const words = attemptWords(row.outcome, row.skipReason);
+            return (
+              <div
+                key={`${row.outcome}:${row.skipReason ?? ''}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '8px 0',
+                  fontSize: 13,
+                  borderBottom: i === d.outcomes.length - 1 ? 'none' : `1px solid ${oklch.divider}`,
+                }}
+              >
+                <span style={{ color: oklch.textMuted, minWidth: 0 }}>{words.label}</span>
+                <span style={{ fontWeight: 800, flex: 'none', color: words.bad ? 'oklch(0.55 0.13 65)' : oklch.textStrong }}>
+                  {row.count.toLocaleString('en-IN')}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </Panel>

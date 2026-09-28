@@ -1,8 +1,11 @@
 /**
- * Why a page could not load, in the only two ways the owner needs told apart.
+ * Why a page could not load, in the ways the reader needs told apart.
  *
  * - `busy` — the API answered HTTP 429 `rate_limited`. The server is fine; it
  *   is asking for a moment. Nothing for anyone to fix.
+ * - `forbidden` — the API answered 403: this person's role may not see it. A
+ *   receptionist who typed a Staff address read "Cannot reach the server… run
+ *   npm run dev" against a server that was up (GRW-395 QA).
  * - `down` — everything else: a network failure (no response at all), a 5xx,
  *   or a status this screen does not single out. This is the message every
  *   page showed for ALL errors before, so its behaviour is unchanged.
@@ -11,7 +14,7 @@
  * through here, so a 429 cannot be reported as "cannot reach the server" by
  * one screen while another gets it right.
  */
-export type LoadErrorKind = 'busy' | 'down';
+export type LoadErrorKind = 'busy' | 'forbidden' | 'down';
 
 /**
  * Duck-typed on `status` / `code` rather than `instanceof ApiError`. This is
@@ -24,6 +27,7 @@ export function loadErrorKind(error: unknown): LoadErrorKind {
   if (typeof error === 'object' && error !== null) {
     const { status, code } = error as { status?: unknown; code?: unknown };
     if (status === 429 || code === 'rate_limited') return 'busy';
+    if (status === 403) return 'forbidden';
   }
   return 'down';
 }

@@ -3,8 +3,9 @@
 import { useReportsCopy } from '../lib/use-reports-copy';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
+import { pickNoun } from '../lib/nouns';
 
-import { copy } from '../lib/copy';
 import type { LoadErrorKind } from '../lib/load-error';
 import { LoadErrorHelp } from '../components/LoadErrorBanner';
 import type {
@@ -65,8 +66,6 @@ export function ReportsClient({
   labels,
   payload,
   loadError = 'down',
-  branches = [],
-  branch = null,
 }: {
   tab: ReportTabKey;
   range: ReportRangeKey;
@@ -87,11 +86,9 @@ export function ReportsClient({
   payload: TabPayload;
   /** Why `payload` is null, when it is — a busy server is told apart from an unreachable one. */
   loadError?: LoadErrorKind;
-  /** Jira GRW-238 — a multi-branch owner's branches, main first; empty otherwise. */
-  branches?: Array<{ id: string; name: string }>;
-  branch?: string | null;
 }) {
   const rp = useReportsCopy();
+  const locale = useLocale();
   const router = useRouter();
   const params = useSearchParams();
   // Which client's card is open. A row opens it over the report rather than
@@ -115,7 +112,10 @@ export function ReportsClient({
    * rendering. Not a second fetch, so the file cannot disagree with the
    * screen however the tab changes later (AC-04).
    */
-  const csv = reportToCsv(payload, providerLabel);
+  const csv = reportToCsv(payload, providerLabel, labels.provider);
+  // Jira GRW-363 — the file keeps the vertical's English noun (it is not translated per viewer);
+  // the screen says it in the owner's language, as the Staff screens do.
+  const providerWord = pickNoun(locale, providerLabel, rp.tabs.staff);
   const onExport = () =>
     downloadCsv(csvFilename(tenantName, tab, rangeLabel), csv);
 
@@ -129,13 +129,11 @@ export function ReportsClient({
       filters={filters}
       filterOptions={filterOptions}
       droppedFilters={droppedFilters}
-      providerLabel={providerLabel}
+      providerLabel={providerWord}
       onExport={onExport}
       canExport={csv.trim().length > 0}
       labels={labels}
       rangeLabel={range === 'custom' ? payload?.data.range.label : undefined}
-      branches={branches}
-      branch={branch}
     >
       {payload === null ? (
         <section className="rp-card rp-card-quiet">
@@ -153,7 +151,7 @@ export function ReportsClient({
       ) : payload.tab === 'services' ? (
         <ServicesTab data={payload.data} />
       ) : payload.tab === 'staff' ? (
-        <StaffTab data={payload.data} providerLabel={providerLabel} />
+        <StaffTab data={payload.data} providerLabel={providerWord} />
       ) : payload.tab === 'customers' ? (
         <CustomersTab
           data={payload.data}

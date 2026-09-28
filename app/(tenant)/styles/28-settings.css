@@ -5,47 +5,8 @@
    scrolling on an ordinary phone screen, not just on a tall one. Disabled
    ("coming soon") rows drop their subtitle and shrink further still, since
    they're not the primary thing anyone's here to tap. */
-.settings-header-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  text-decoration: none;
-  color: var(--text);
-}
-
-.settings-header-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
-.settings-header-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.settings-header-name {
-  font-size: 14.5px;
-  font-weight: 650;
-}
-
-.settings-header-sub {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 1px;
-}
+/* `.settings-header-card` and its parts went with the card itself (Jira GRW-229) —
+   see the note at the top of settings/SettingsNavList.tsx for why. */
 
 .settings-group + .settings-group {
   margin-top: 9px;
@@ -242,12 +203,6 @@
     display: block !important;
   }
   .settings-back-link {
-    display: none;
-  }
-  /* Only the mobile hub screen opens with a business-summary card above the
-     grouped list — the desktop nav pane is narrow and persistent, and goes
-     straight into the section groups. */
-  .settings-header-card {
     display: none;
   }
 }

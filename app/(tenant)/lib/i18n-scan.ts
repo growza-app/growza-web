@@ -51,7 +51,9 @@ export interface ScanResult {
  * a closed list: a list misses the next prop somebody invents.
  */
 const TEXT_NAME = /(label|title|text|hint|placeholder|message|caption|subtitle|description|heading|body|detail|helper|tooltip)$/i;
-const TEXT_NAMES = new Set(['alt', 'sub', 'what', 'note']);
+// `sparkName` — Jira GRW-363: a KPI tile's line is named aloud to a screen reader and on hover,
+// and `sparkName="Came back"` got past a suffix list that stops at label/title/text.
+const TEXT_NAMES = new Set(['alt', 'sub', 'what', 'note', 'sparkName']);
 const isTextName = (name: string) => !name.startsWith('data-') && (TEXT_NAMES.has(name) || TEXT_NAME.test(name));
 
 /** Calls whose string argument reaches the owner. */

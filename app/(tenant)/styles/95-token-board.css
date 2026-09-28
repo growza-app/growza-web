@@ -1,0 +1,267 @@
+/*
+ * Jira GRW-404 (epic GRW-283) — the front desk's token board: Waiting · With stylist · Paid.
+ *
+ * ≥861px (tablet and laptop): the three columns side by side. ≤860px (phone): the three as tabs, one column at a
+ * time. One markup for both — `data-tab` on the board says which column a phone shows. Every class is `tb-`
+ * prefixed; the cards, pills and tabs are Home's own (`hm-card`, `hm-give`, `hm-seg-soft`).
+ *
+ * A row never pushes past its column: the name ellipsizes, the one fact beside it (waiting time, start time,
+ * amount) drops under the name when the column is too narrow for both, and the action pills wrap.
+ */
+
+/* ---------- New token · Record payment · New booking ---------- */
+@media (max-width: 860px) {
+  /* A phone: New token and Record payment side by side, half the height of the laptop row. New booking is the
+     centre button's (its page has For later), so it is not drawn here. */
+  .hm-desk .tb-actions-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+  .hm-desk .tb-actions-row .hm-action {
+    width: auto;
+    min-width: 0;
+    min-height: 52px;
+    padding: var(--sp-3);
+    justify-content: center;
+  }
+  .hm-desk .tb-actions-row .hm-action strong {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ---------- the board ---------- */
+.tb-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  scroll-margin-top: var(--sp-4);
+}
+.tb-tabs {
+  display: none;
+}
+.tb-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+  min-width: 0;
+}
+.hm-desk .tb-col {
+  min-width: 0;
+  padding: var(--sp-4);
+}
+.tb-col-head h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.tb-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--hm-green-soft);
+  color: var(--hm-green-deep);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .tb-tabs {
+    display: flex;
+  }
+  .tb-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tb-board[data-tab='waiting'] .tb-col:not([data-col='waiting']),
+  .tb-board[data-tab='with_stylist'] .tb-col:not([data-col='with_stylist']),
+  .tb-board[data-tab='paid'] .tb-col:not([data-col='paid']) {
+    display: none;
+  }
+  /* The tab already says which column this is, and how many. */
+  .tb-col-head {
+    display: none;
+  }
+  .hm-desk .tb-col {
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+  .tb-tabs button {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ---------- rows ---------- */
+.tb-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tb-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+  padding: 12px 0;
+  border-top: 1px solid var(--hm-line-soft);
+}
+.tb-rows > .tb-row:first-child {
+  border-top: 0;
+}
+.tb-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.tb-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: var(--sp-2);
+  min-width: 0;
+}
+.tb-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--hm-ink);
+}
+/* Beside its fact on one line; the fact drops under it when the column is narrow. Only inside `.tb-line` — in a
+   column (`.tb-main`) a flex-basis is a HEIGHT, and the Booked for today row grew a 7em gap under the name. */
+.tb-line > .tb-name {
+  flex: 1 1 7em;
+}
+.tb-meta {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #8a5a0f;
+}
+.tb-col[data-col='with_stylist'] .tb-meta {
+  color: var(--hm-muted);
+}
+.tb-col[data-col='paid'] .tb-meta {
+  color: var(--hm-green-deep);
+}
+.tb-sub {
+  font-size: 13px;
+  color: var(--hm-muted);
+  overflow-wrap: anywhere;
+}
+.tb-muted {
+  font-style: italic;
+}
+.tb-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  min-width: 0;
+}
+.tb-actions .hm-give {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+.tb-actions .tb-pay {
+  background: var(--hm-green-deep);
+  color: #fff;
+}
+
+/* ---------- booked for today ---------- */
+.tb-booked .hm-card-head h2 small {
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--hm-muted);
+}
+@media (max-width: 860px) {
+  /* "Not on the board yet" under the title, not wrapped into the View all link beside it. */
+  .tb-booked .hm-card-head h2 small {
+    display: block;
+    margin-top: 2px;
+  }
+}
+.tb-row-error {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b93232;
+}
+.tb-time {
+  min-width: 64px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hm-ink);
+  white-space: nowrap;
+}
+
+/* ---------- New token ---------- */
+.tb-new-form,
+.tb-issued {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+.tb-new-form .field input {
+  width: 100%;
+  min-width: 0;
+}
+.tb-new-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--hm-muted);
+}
+.tb-new-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.tb-issued {
+  align-items: center;
+  text-align: center;
+}
+.tb-issued > svg {
+  width: 36px;
+  height: 36px;
+  color: var(--hm-green);
+}
+.tb-issued-no {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--hm-ink);
+}
+.tb-issued .tb-new-actions {
+  align-self: stretch;
+  justify-content: center;
+}
+
+/* ---------- Jira GRW-406 — the six token figures (Day summary, Reports) ----------
+   Home's own stat tiles (`hm-ds-stat`): six to a row; three to a row on a phone, two even rows, never five and one.
+   Six since review round 2 — waiting and cancelled joined, so the tiles add up to the tokens given. */
+.tb-figures {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@media (max-width: 860px) {
+  .tb-figures {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
