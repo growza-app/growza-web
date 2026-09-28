@@ -47,8 +47,13 @@ export function CustomersTab({
   data: ReportCustomers;
   /** Which band the list is filtered to, so the chosen chip reads as chosen. */
   status: string;
-  onSegment: (segment: string) => void;
-  onClient: (id: string) => void;
+  /**
+   * Jira GRW-409 — absent for a viewer the Clients list refuses (a stylist granted this tab): the bands still
+   * count, and are not buttons into a screen that answers 403.
+   */
+  onSegment?: (segment: string) => void;
+  /** Jira GRW-409 — absent for a viewer the client card refuses; the rows are then just rows. */
+  onClient?: (id: string) => void;
 }) {
   const rp = useReportsCopy();
   const t = useTranslations('reports');
@@ -127,7 +132,7 @@ export function CustomersTab({
             spent saying so twice. */}
         <h3 className="rp-cs-heading">
           {rp.segmentsTitle}
-          <em>{rp.segmentsTapHint}</em>
+          {onSegment ? <em>{rp.segmentsTapHint}</em> : null}
         </h3>
 
         <div className="rp-cs-block">
@@ -143,7 +148,8 @@ export function CustomersTab({
                   style={{ ['--seg' as string]: SEGMENT_TONE[seg.key] }}
                   aria-pressed={on}
                   title={`${words} · ${bands(`segments.${seg.key}.range`)}`}
-                  onClick={() => onSegment(on ? 'all' : seg.key)}
+                  disabled={!onSegment}
+                  onClick={onSegment ? () => onSegment(on ? 'all' : seg.key) : undefined}
                 >
                   <span className="rp-cs-band-name">
                     <span className="rp-cs-dot" />
@@ -165,7 +171,8 @@ export function CustomersTab({
                 className="rp-cs-band rp-cs-band-muted"
                 style={{ ['--seg' as string]: 'var(--muted)' }}
                 title={t('noCompletedVisits', { band: c.neverBand })}
-                onClick={() => onSegment('never')}
+                disabled={!onSegment}
+                onClick={onSegment ? () => onSegment('never') : undefined}
               >
                 <span className="rp-cs-band-name">
                   <span className="rp-cs-dot" />

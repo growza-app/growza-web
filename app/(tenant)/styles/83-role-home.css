@@ -454,11 +454,23 @@
 @media (min-width: 1101px) {
   .hm-owner-grid {
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    /*
+     * Jira GRW-418 — `queue` sits between the money row and the day, full width.
+     *
+     * It is only in the DOM when somebody is actually on the board (OwnerHome decides), so on an ordinary
+     * day this row collapses to nothing and the laptop Home is the one screen GRW-222 promised. On a day
+     * with a client waiting the page scrolls, which is the trade this story chose: a salon owner who is
+     * their own front desk could otherwise not see them at all.
+     */
     grid-template-areas:
       'hero attention'
+      'queue queue'
       'bookings now'
       'clients clients';
     align-items: stretch;
+  }
+  .hm-area-queue {
+    grid-area: queue;
   }
   .hm-area-hero {
     grid-area: hero;
@@ -492,6 +504,8 @@
   /* The design's phone order: money, what needs you, shortcuts, clients, the day. */
   .hm-area-hero { order: 1; }
   .hm-area-attention { order: 2; }
+  /* Jira GRW-418 — above the shortcuts: somebody waiting in the salon outranks a link to Offers. */
+  .hm-area-queue { order: 2; }
   .hm-area-links { order: 3; }
   .hm-area-clients { order: 5; }
   .hm-area-bookings { order: 6; }

@@ -17,7 +17,7 @@ import { SessionRefresh } from './components/SessionRefresh';
 import { SessionProvider } from './components/SessionProvider';
 import { BranchProvider } from './components/BranchProvider';
 import { LabelsProvider } from './components/LabelsProvider';
-import type { MemberRole } from './lib/nav-policy';
+import { mayUse, type MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
@@ -177,10 +177,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
-    canPayOnline = me.payments?.online ?? false;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
+    // Jira GRW-409 — the banner's words are for everyone at the salon; "Pay now" only for a role the payment-link
+    // route serves. A receptionist tapping it got "forbidden" in the middle of a warning about the account.
+    canPayOnline = (me.payments?.online ?? false) && mayUse(role, 'billing.payNow');
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
     branches = me.branches ?? [];

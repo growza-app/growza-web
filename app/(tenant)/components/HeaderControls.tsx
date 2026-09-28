@@ -1,8 +1,7 @@
 import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { NotificationBell } from './NotificationBell';
 import { AccountMenu } from './AccountMenu';
-import { IconSearch } from './icons';
-import { useTranslations } from 'next-intl';
+import { HeaderSearch } from './HeaderSearch';
 
 /**
  * Jira GRW-30 — search, notifications and account, in that order, on every screen.
@@ -41,22 +40,13 @@ import { useTranslations } from 'next-intl';
  * beside it is the thing to read, so search is the icon.
  */
 export function HeaderControls({ wide = false, hideSearch = false }: { wide?: boolean; hideSearch?: boolean }) {
-  const t = useTranslations('search');
   return (
     <>
       {/* Jira GRW-395 — the branch the whole app is showing, first: every figure beside it depends on it. */}
       <HeaderBranchPicker />
-      {/* Jira GRW-307 — not on the Search screen, where it would only reload the page you are on. */}
-      {hideSearch ? null : (
-        <a
-          className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`}
-          href="/search"
-          aria-label={t('title')}
-        >
-          <IconSearch />
-          {wide && <span>{t('prompt')}</span>}
-        </a>
-      )}
+      {/* Jira GRW-307 — not on the Search screen, where it would only reload the page you are on.
+          Jira GRW-409 — and not for a role the search route refuses (HeaderSearch decides). */}
+      {hideSearch ? null : <HeaderSearch wide={wide} />}
       <NotificationBell />
       <AccountMenu />
     </>

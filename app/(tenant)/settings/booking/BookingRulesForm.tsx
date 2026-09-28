@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { changeOf, daysOf, fromSaved, withDay, withoutDay } from './day-edits';
+import { SettingsSaveBar } from '../SettingsSaveBar';
 
 /** "Mon, 20 Oct" for a stored "2026-10-20" — read as a calendar date, never shifted by the browser's timezone. */
 function dayLabel(iso: string, locale: string): string {
@@ -248,18 +249,16 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
         </div>
 
         {error && <div role="alert" className="field-error">{error}</div>}
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn" disabled={busy} onClick={save}>
-            {busy ? t('saving') : t('save')}
-          </button>
-          {saved && !busy && (
-            <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              {t('saved')}
-            </span>
-          )}
-        </div>
       </div>
     </div>
+    <SettingsSaveBar
+      busy={busy}
+      saved={saved}
+      onSave={save}
+      saveLabel={t('save')}
+      savingLabel={t('saving')}
+      savedLabel={t('saved')}
+    />
     </>
   );
 }

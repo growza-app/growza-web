@@ -196,10 +196,26 @@ describe('the laptop grid (Jira GRW-348 · GRW-351)', () => {
     expect(css).not.toMatch(/hm-area-branches|\.hm-multi|hm-bookings-wide/);
   });
 
-  it('is one layout with branches or without: money + attention, then bookings + Right now, then clients', () => {
+  /*
+   * Jira GRW-418 added the `queue` row between the money row and the day. It is full width and, on an
+   * ordinary day, not in the DOM at all — `OwnerHome` renders the board only while somebody is waiting or
+   * with a stylist — so the laptop Home is still the one screen GRW-222 promised.
+   */
+  it('is one layout with branches or without: money + attention, the queue when there is one, then bookings + Right now, then clients', () => {
     expect(owner).toMatch(/<div className=\{`hm-owner-grid \$\{hideUntilBranch \? 'is-settling' : ''\}`\}/);
-    expect(css).toMatch(/grid-template-areas:\s*'hero attention'\s*'bookings now'\s*'clients clients';/);
+    expect(css).toMatch(/grid-template-areas:\s*'hero attention'\s*'queue queue'\s*'bookings now'\s*'clients clients';/);
     expect(css).toMatch(/\.hm-area-now\s*\{\s*grid-area:\s*now;/);
+    expect(css).toMatch(/\.hm-area-queue\s*\{\s*grid-area:\s*queue;/);
+  });
+
+  /*
+   * Jira GRW-418 — the board is NOT hidden the way Right now is.
+   *
+   * `.hm-area-now` is laptop-only, which is how an owner on a phone could add a walk-in and be shown
+   * nothing at all about it. Whatever else changes here, the queue must not pick up that media query.
+   */
+  it('the queue board is shown at every width, unlike Right now', () => {
+    expect(css).not.toMatch(/@media \(max-width: 1100px\)\s*\{[^}]*\.hm-area-queue\s*\{\s*display:\s*none;/);
   });
 
   it('Right now is the laptop\'s alone: hidden up to 1100px', () => {

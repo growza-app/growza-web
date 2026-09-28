@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
@@ -11,7 +10,8 @@ import { AccountMenu } from '../AccountMenu';
 import { HeaderBranchPicker } from '../HeaderBranchPicker';
 import { MenuButton } from '../MenuButton';
 import { NotificationBell } from '../NotificationBell';
-import { IconChevronRight, IconDaySummary, IconMapPin, IconSearch } from '../icons';
+import { IconChevronRight, IconDaySummary, IconMapPin } from '../icons';
+import { HeaderSearch } from '../HeaderSearch';
 
 /**
  * Jira GRW-222 — the pieces all three Homes are built from.
@@ -90,7 +90,6 @@ export function HomeHeader({
   /** Owner only — the Day summary is the business's takings. */
   onDaySummary?: () => void;
 }) {
-  const s = useTranslations('search');
   return (
     <header className="hm-head">
       <MenuButton />
@@ -112,10 +111,8 @@ export function HomeHeader({
       <div className="hm-head-controls">
         {/* Jira GRW-395 — the one branch picker; Home's own dropdown and tabs are gone. */}
         <HeaderBranchPicker />
-        <a className="hdr-search hdr-search-wide" href="/search" aria-label={s('title')}>
-          <IconSearch />
-          <span>{s('prompt')}</span>
-        </a>
+        {/* Jira GRW-409 — the same gated search as every other header; a receptionist's or stylist's Home has none. */}
+        <HeaderSearch wide />
         {onDaySummary ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>
             <IconDaySummary />

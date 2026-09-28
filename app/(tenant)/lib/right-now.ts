@@ -140,6 +140,14 @@ export function rightNow<G extends Group, Q extends Waiting>(input: {
     nextIsTomorrow: afterClose,
     walkIns,
     queueUnread: input.queue === null,
-    calm: allAlerts.length === 0 && input.queue !== null,
+    /*
+     * Jira GRW-418 — somebody waiting is never "all clear", even before the ten-minute mark.
+     *
+     * `calm` used to mean "no ALERTS", and a walk-in is not one of those until it has waited
+     * `ALERT_AFTER_MIN`. So a client who had just been added produced a card reading "Nothing needs you
+     * right now" directly above "Walk-ins waiting 1" — the owner's own report, and two lines of the same
+     * card contradicting each other.
+     */
+    calm: allAlerts.length === 0 && input.queue !== null && input.queue.length === 0,
   };
 }

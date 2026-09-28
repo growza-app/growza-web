@@ -6,6 +6,7 @@ import { formatMoney, formatTime, type Provider, type QueueEntry, type TokenRow 
 import type { HomeCopy } from '../../lib/home-copy';
 import { minutesBetween } from '../../lib/live-state';
 import { NewVisitSheet } from '../NewVisitSheet';
+import { useMayUse } from '../SessionProvider';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
 import { VisitTill } from './VisitTill';
 import type { TokenWords } from './token-words';
@@ -81,6 +82,17 @@ function usePhoneLayout(): boolean {
   return phone;
 }
 
+/**
+ * Jira GRW-418 — is there anything on this board that still needs somebody?
+ *
+ * The owner's Home shows the board only when this is true, so that a salon which has finished for the day
+ * keeps the one-screen Home of GRW-222 rather than displaying a column of paid tokens nobody has to act on.
+ * Paid, left and cancelled are the day's history; waiting and with_stylist are work.
+ */
+export function hasLiveWork(tokens: readonly { state: TokenRow['state'] }[]): boolean {
+  return tokens.some((x) => x.state === 'waiting' || x.state === 'with_stylist');
+}
+
 export function TokenBoard({
   t,
   w,
@@ -107,6 +119,13 @@ export function TokenBoard({
   const [giving, setGiving] = useState<TokenRow | null>(null);
   const [paying, setPaying] = useState<TokenRow | null>(null);
   const [till, setTill] = useState<TokenRow | null>(null);
+  /**
+   * Jira GRW-409 — a row's buttons, each asked of the shared rule. A role the API would refuse is shown the token
+   * and what it is waiting for, and no button that can only answer 403.
+   */
+  const mayGive = useMayUse('queue.give');
+  const mayRecordPayment = useMayUse('visit.recordPayment');
+  const mayCheckout = useMayUse('booking.checkout');
   const boardRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<Column, HTMLButtonElement | null>>({ waiting: null, with_stylist: null, paid: null });
   /** Where focus should land once the board redraws after a sheet: the row, its column and its place in it. */
@@ -202,18 +221,24 @@ export function TokenBoard({
       </span>
       {col === 'waiting' ? (
         <span className="tb-actions">
-          <button type="button" className="hm-give" aria-label={w.giveFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setGiving, x)}>
-            {w.giveTo}
-          </button>
-          <button type="button" className="hm-give tb-pay" aria-label={w.payFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setPaying, x)}>
-            {w.recordPayment}
-          </button>
+          {mayGive ? (
+            <button type="button" className="hm-give" aria-label={w.giveFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setGiving, x)}>
+              {w.giveTo}
+            </button>
+          ) : null}
+          {mayRecordPayment ? (
+            <button type="button" className="hm-give tb-pay" aria-label={w.payFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setPaying, x)}>
+              {w.recordPayment}
+            </button>
+          ) : null}
         </span>
       ) : col === 'with_stylist' ? (
         <span className="tb-actions">
-          <button type="button" className="hm-give tb-pay" aria-label={w.payFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setTill, x)}>
-            {w.recordPayment}
-          </button>
+          {mayCheckout ? (
+            <button type="button" className="hm-give tb-pay" aria-label={w.payFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setTill, x)}>
+              {w.recordPayment}
+            </button>
+          ) : null}
         </span>
       ) : null}
     </li>

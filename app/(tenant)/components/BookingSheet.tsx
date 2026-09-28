@@ -10,6 +10,7 @@ import { CheckoutSheet } from './CheckoutSheet';
 import { MoveBookingSheet } from './MoveBookingSheet';
 import { IconCheck, IconClose, IconMoveTime, IconPhone, IconWhatsApp } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useMayUse } from './SessionProvider';
 
 /**
  * Digits only — `tel:` and `wa.me` both choke on spaces and punctuation.
@@ -39,7 +40,6 @@ export function BookingSheet({
   comboServiceNames,
   comboTotalMin,
   comboLegs,
-  canSettle = true,
   canMove = true,
 }: {
   appointment: Appointment;
@@ -52,35 +52,16 @@ export function BookingSheet({
   /** All legs of the combo, so "Mark as done" can complete every still-booked service in one go. */
   comboLegs?: Appointment[];
   /**
-   * Jira GRW-63 · GRW-195 — may this viewer settle the booking's outcome?
+   * Jira GRW-219 — is moving a booking switched on for this business?
    *
-   * False for a stylist, and it hides ALL THREE outcome actions — done, missed
-   * and cancelled. Settling a booking is the record of what happened in the
-   * salon, and it belongs to the owner.
+   * The CAPABILITY half only (`me.capabilities.reschedule`), so the control is
+   * absent when the API would refuse it rather than present and answering 403.
+   * The ROLE half is the sheet's own question now (Jira GRW-409, below): a
+   * caller used to pass `!viewerIsStaff && …`, and a caller that forgot to was
+   * a stylist with a Move button.
    *
-   * "Mark as done" is the checkout flow, and checkout sets
-   * `status = 'completed'`, so it is an outcome action wearing a till's
-   * clothing. Leaving it visible would have offered a stylist a button that
-   * did exactly what the other two were removed for.
-   *
-   * Hiding matters as much as the 403 behind it: a control that answers
-   * "forbidden" reads as the product being broken rather than as a boundary.
-   *
-   * Defaults to true, so the Home timeline (owner-only) is unaffected.
-   */
-  canSettle?: boolean;
-  /**
-   * Jira GRW-219 — may this viewer move the booking to another time?
-   *
-   * Two things at once, both of which have to be true. The ROLE: a stylist is
-   * not on `RECEPTIONIST_ALLOWED`, for GRW-195's reason — moving a booking
-   * changes the salon's day, and moving one onto a colleague's chair changes
-   * theirs. And the CAPABILITY: `me.capabilities.reschedule`, so the control
-   * is absent when the API would refuse it rather than present and answering
-   * 403, which reads as the product being broken rather than as a boundary.
-   *
-   * Defaults to true so a caller that has neither answer yet is not silently
-   * denied a feature — the route is the gate, this is the courtesy.
+   * Defaults to true so a caller that has no answer yet is not silently denied
+   * a feature — the route is the gate, this is the courtesy.
    */
   canMove?: boolean;
 }) {
@@ -98,6 +79,20 @@ export function BookingSheet({
   const [providers, setProviders] = useState<Provider[] | null>(null);
   // Jira GRW-314 — the combos that can be added at the till; a failed read just means none are offered.
   const [offers, setOffers] = useState<Offer[]>([]);
+  /**
+   * Jira GRW-63 · GRW-195 · GRW-409 — which outcome actions this viewer may use, asked of the shared rule.
+   *
+   * A stylist gets none of the three — done, missed, cancelled. Settling a booking is the record of what
+   * happened in the salon. "Mark as done" is the checkout flow, and checkout sets `status = 'completed'`, so it
+   * is an outcome action wearing a till's clothing: `booking.checkout` names that route, and a role without it
+   * is not offered the button that would have done exactly what the other two were removed for.
+   *
+   * Decided here, from the session, rather than passed in: `canSettle={!viewerIsStaff}` was a prop every
+   * caller had to remember, and a control that answers "forbidden" reads as the product being broken.
+   */
+  const mayCheckout = useMayUse('booking.checkout');
+  const maySetStatus = useMayUse('booking.setStatus');
+  const mayMove = useMayUse('booking.reschedule') && canMove;
 
   const digits = dialable(appointment.customerPhone);
   const name = appointment.customerName ?? 'this customer';
@@ -216,21 +211,25 @@ export function BookingSheet({
           </>
         )}
 
-        {!settled && canSettle && (
+        {!settled && (
           <>
-            <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
-              <IconCheck />
-              {bk.markFinished}
-            </button>
-            <button
-              type="button"
-              className="sheet-item sheet-neutral"
-              disabled={busy}
-              onClick={() => setStatus('no_show')}
-            >
-              <IconClose />
-              {bk.markMissed}
-            </button>
+            {mayCheckout && (
+              <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
+                <IconCheck />
+                {bk.markFinished}
+              </button>
+            )}
+            {maySetStatus && (
+              <button
+                type="button"
+                className="sheet-item sheet-neutral"
+                disabled={busy}
+                onClick={() => setStatus('no_show')}
+              >
+                <IconClose />
+                {bk.markMissed}
+              </button>
+            )}
             {/*
               GRW-219 — the words `bk.reschedule` has carried since
               this sheet was written, finally attached to something. Above
@@ -238,21 +237,23 @@ export function BookingSheet({
               they ring, and the destructive action stays furthest from the
               thumb.
             */}
-            {canMove && (
+            {mayMove && (
               <button type="button" className="sheet-item" disabled={busy} onClick={() => setMoving(true)}>
                 <IconMoveTime />
                 {bk.reschedule}
               </button>
             )}
-            <button
-              type="button"
-              className="sheet-item sheet-danger"
-              disabled={busy}
-              onClick={() => setStatus('cancelled')}
-            >
-              <IconClose />
-              {bk.cancel}
-            </button>
+            {maySetStatus && (
+              <button
+                type="button"
+                className="sheet-item sheet-danger"
+                disabled={busy}
+                onClick={() => setStatus('cancelled')}
+              >
+                <IconClose />
+                {bk.cancel}
+              </button>
+            )}
           </>
         )}
       </div>

@@ -181,19 +181,44 @@ describe('the device matrix renders the tabs this ticket is about', () => {
     }
   });
 
-  it('holds `/settings/working-hours` out only with Jira GRW-414 named beside it', () => {
-    /*
-     * The seventh tab is commented out, not forgotten. Adding it turns the sweep
-     * red at every width from 861 to 1101 on a clip that predates GRW-229 —
-     * GRW-228's time-input floor against `.card { overflow: hidden }` — and a red
-     * sweep on `develop` is worse than a green one with a named gap. GRW-414
-     * carries putting it back as an acceptance criterion; this test is what stops
-     * the line being deleted instead of restored.
-     */
-    expect(routes).not.toContain('/settings/working-hours');
-    const held = matrix.slice(matrix.indexOf('export const TENANT_ROUTES'));
-    expect(held).toMatch(/\/\/ '\/settings\/working-hours',/);
-    expect(held).toMatch(/GRW-414/);
+  /*
+   * Jira GRW-414 — this used to assert the opposite.
+   *
+   * The seventh tab was held out of the sweep by GRW-229, behind a test that
+   * checked the hold-out was commented rather than deleted. The clip it was
+   * waiting on is fixed, so the route is back and the assertion inverts: no
+   * Settings tab in the product is a Settings tab the sweep never opens (BR-02).
+   */
+  it('sweeps `/settings/working-hours` — no Settings tab is left unswept', () => {
+    expect(routes).toContain('/settings/working-hours');
+    const list = matrix.slice(matrix.indexOf('export const TENANT_ROUTES'));
+    expect(list, 'the hold-out is gone, not merely moved').not.toMatch(/\/\/ '\/settings\/working-hours'/);
+  });
+
+  /*
+   * The mechanism, not just the outcome.
+   *
+   * Both halves are load-bearing and neither is obvious to somebody tidying
+   * this file later: the 118px floor is what forced the row wider than its
+   * column, and a `@media` width is what made the row believe a 1024px window
+   * meant 1024px of room when the Settings column gives it 429px. Putting
+   * either back re-opens a clip the device sweep would take 36 failures to
+   * tell you about.
+   */
+  it('sizes the week rows from their own container, with no time-input floor', () => {
+    const week = read('../styles/78-collapsed-week-hours.css');
+
+    const weekRules = week.replace(/\/\*[\s\S]*?\*\//g, '');
+
+    expect(weekRules, 'the rows need a query container to measure').toMatch(/\.wk-week\s*{[^}]*container-type:\s*inline-size/);
+    // Every shape threshold asks the container, never the window.
+    expect(weekRules).toMatch(/@container \(max-width: 650px\)/);
+    expect(weekRules).toMatch(/@container \(max-width: 286px\)/);
+    expect(weekRules.match(/@media \(max-width: (640|400|360)px\)/g), 'the old viewport-keyed shapes are gone').toBeNull();
+
+    expect(rules, 'GRW-228’s min-width floor clipped the row; nothing replaces it').not.toMatch(
+      /\.wk-times input\[type='time'\]\s*{[^}]*min-width/,
+    );
   });
 
   it('straddles each height edge at a width above the 1101px two-column rule as well', () => {
@@ -214,5 +239,55 @@ describe('the device matrix straddles the heights Settings switches on', () => {
     // A band written as `max-height: 679px` is the far side of the 680 edge.
     const edges = new Set(used.map((h) => (matrixHeights.includes(h) ? h : h + 1)));
     for (const edge of edges) expect(matrixHeights).toContain(edge);
+  });
+});
+
+/**
+ * Jira GRW-416 — Save where the thumb is, on the two Settings forms that have one Save to pin.
+ *
+ * GRW-229's scope promised "Save pinned" on phones and only the scrolling half was built. The pinning
+ * itself is a browser matter and is verified there (402×874, 390×844, 344×882, 320×568, English and
+ * Hindi); what this file pins is the three decisions a later edit would undo without noticing, each of
+ * which cost a round of measuring to find.
+ */
+describe('the phone save bar (Jira GRW-416)', () => {
+  const bar = read('./SettingsSaveBar.tsx');
+  const booking = read('./booking/BookingRulesForm.tsx');
+  const reportAccess = read('./report-access/ReportAccessForm.tsx');
+
+  it('is one component, not a class each form re-implements (BR-01)', () => {
+    for (const [name, form] of [['booking', booking], ['report-access', reportAccess]] as const) {
+      expect(form, `${name} uses the shared bar`).toMatch(/<SettingsSaveBar\b/);
+      // The inline row both forms used to carry, which is how they drifted from Business profile's bar.
+      expect(form, `${name} has no hand-rolled save row left`).not.toMatch(/marginTop: 16,\s*display: 'flex'/);
+    }
+    expect(bar).toMatch(/className="settings-savebar"/);
+  });
+
+  /*
+   * The one that actually broke. `.card { overflow: hidden }` (05-cards.css) kills `position: sticky`
+   * on anything inside it, so a bar rendered in the card-body sat 1231px down a 874px screen — present,
+   * styled, and permanently off-screen. Business profile's bar is a sibling of its cards for the same
+   * reason.
+   */
+  it('renders OUTSIDE the card, or sticky cannot work', () => {
+    for (const [name, form] of [['booking', booking], ['report-access', reportAccess]] as const) {
+      const bodyClose = form.lastIndexOf('</div>\n    </div>');
+      const barAt = form.indexOf('<SettingsSaveBar');
+      expect(barAt, `${name} renders the bar`).toBeGreaterThan(-1);
+      expect(barAt, `${name} puts the bar after the card closes`).toBeGreaterThan(bodyClose);
+    }
+  });
+
+  it('pins on phones only, and leaves the desktop row exactly as it was (AC-04)', () => {
+    // The sticky half lives in a phone block; nothing outside one may position the bar.
+    const phoneBlock = css.match(/@media \(max-width: 860px\) \{[\s\S]*?\n\}/g)?.join('\n') ?? '';
+    expect(phoneBlock).toMatch(/\.settings-savebar\s*\{[^}]*position:\s*sticky/);
+    // Anchored to the scroller's own edge: `.page-body.settings-page` is the scroller on a Settings tab,
+    // so `.bp-savebar`'s negative offset would park this bar below the only box that can show it.
+    expect(phoneBlock).toMatch(/\.settings-savebar\s*\{[^}]*bottom:\s*0/);
+    expect(rules).not.toMatch(/\.settings-savebar\s*\{[^}]*bottom:\s*-/);
+    // 44px is WCAG 2.5.5's floor; `.btn` sets exactly that, so the bar's own rule has to outrank it.
+    expect(phoneBlock).toMatch(/\.settings-savebar \.settings-savebar-btn\s*\{[^}]*min-height:\s*4[6-9]px/);
   });
 });

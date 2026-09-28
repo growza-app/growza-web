@@ -1,13 +1,26 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { api, type Appointment, type AutopayRenewal, type CustomerStats, type HomeOverview, type HomePeriod, type QueueEntry } from '../../lib/api';
-import { groupBookings } from '../../lib/appointment-display';
+import {
+  api,
+  type Appointment,
+  type AutopayRenewal,
+  type CustomerStats,
+  type HomeOverview,
+  type HomePeriod,
+  type Provider,
+  type QueueEntry,
+  type TokenBoard as TokenBoardData,
+} from '../../lib/api';
+import { clientNameLabel, groupBookings, summarizeServices } from '../../lib/appointment-display';
+import { liveState, minutesBetween } from '../../lib/live-state';
+import { hasLiveWork, TokenBoard } from './TokenBoard';
+import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
 import { useBranch } from '../BranchProvider';
 import { homeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
-import { canSee, type MemberRole } from '../../lib/nav-policy';
+import { canSee, mayUse, type MemberRole } from '../../lib/nav-policy';
 import {
   IconAnalytics,
   IconBan,
@@ -143,10 +156,20 @@ export interface OwnerHomeProps {
    * it could not be read: Right now then leaves its Walk-ins row out rather than showing 0.
    */
   queue: QueueEntry[] | null;
+  /**
+   * Jira GRW-418 — the day's tokens, so an owner who is their own front desk can see and work the queue.
+   *
+   * Null when it could not be read, and then the board is left out entirely rather than drawn empty: an
+   * owner reading "nobody waiting" off a failed request is the mistake BR-12 already forbids for `queue`.
+   */
+  board: TokenBoardData | null;
+  providers: Provider[];
 }
 
 export function OwnerHome(p: OwnerHomeProps) {
   const t = homeCopy(p.lang, p.labels);
+  // Jira GRW-418 — the board's own words, the same ones the desk's Home gives it.
+  const w = useTokenWords();
   // Jira GRW-351 — moves on once a minute, so an alert appears at its tenth minute without waiting for a reload.
   const now = useMinuteClock(p.nowISO);
   const [period, setPeriod] = useState<HomePeriod>('today');
@@ -170,7 +193,9 @@ export function OwnerHome(p: OwnerHomeProps) {
    * unchanged and still opens here.
    */
   const [visitSheet, setVisitSheet] = useState<'payment' | null>(null);
-  const mayBook = p.role !== 'staff';
+  // Jira GRW-409 — the shared rule, not `role !== 'staff'`: each button is drawn for a role that may make its calls.
+  const mayBook = mayUse(p.role, 'visit.new');
+  const mayRecordPayment = mayUse(p.role, 'visit.recordPayment');
 
   const loadClientStats = (nextBranch: string | null) => {
     api
@@ -256,6 +281,34 @@ export function OwnerHome(p: OwnerHomeProps) {
     const from = listIsTomorrow || firstLive < 0 ? 0 : Math.max(0, firstLive - 1);
     return { shown: all.slice(from, from + bookingsShown), total: all.length };
   }, [listGroups, listIsTomorrow, now, bookingsShown]);
+
+  /*
+   * Jira GRW-418 — the queue, for an owner who is also the desk.
+   *
+   * Shown only when somebody is actually on the board. An empty board would cost the laptop Home its
+   * one-screen fit (GRW-222) every day to say "nobody is waiting", which `Right now` already says in a
+   * line; a board with a client on it is the one moment that is worth more than the tidiness.
+   */
+  const boardTokens = useMemo(
+    () => (p.board?.tokens ?? []).filter((x) => !branch || x.locationId === branch),
+    [p.board, branch],
+  );
+  // LIVE work only — see `hasLiveWork`. A board of paid tokens needs nobody and costs the one-screen fit.
+  const showBoard = p.board !== null && hasLiveWork(boardTokens);
+
+  /** providerId → who is in their chair, for the give sheet's free/busy pills. Same derivation the desk's Home makes. */
+  const busy = useMemo(() => {
+    const m = new Map<string, { client: string; min: number }>();
+    for (const g of todayGroups ?? []) {
+      if (liveState(g, now) !== 'in_service') continue;
+      for (const a of g.appointments) {
+        if (a.providerId && !m.has(a.providerId)) {
+          m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames), min: minutesBetween(g.startAt, now) });
+        }
+      }
+    }
+    return m;
+  }, [todayGroups, now]);
 
   const closeTime = hours?.closesAt ? formatClock(hours.closesAt) : null;
 
@@ -366,21 +419,25 @@ export function OwnerHome(p: OwnerHomeProps) {
             </button>
           ) : null}
           <div className="hm-toolbar-end">
-            {mayBook ? (
+            {mayBook || mayRecordPayment ? (
               /* One booking button, not "Walk-in" + "New appointment": New
                  booking's own page (GRW-297) has a toggle that chooses
                  now-or-later. "Record payment" is the walk-in steps ending
                  in the till, for a visit that has just finished — still an
                  overlay, unchanged. */
               <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
-                <button type="button" className="hm-action" onClick={() => setVisitSheet('payment')}>
-                  <IconReceipt />
-                  <strong>{t.recordPayment}</strong>
-                </button>
-                <a href="/appointments/new" className="hm-action hm-action-dark">
-                  <IconCalendarPlus />
-                  <strong>{t.nav.newBooking}</strong>
-                </a>
+                {mayRecordPayment ? (
+                  <button type="button" className="hm-action" onClick={() => setVisitSheet('payment')}>
+                    <IconReceipt />
+                    <strong>{t.recordPayment}</strong>
+                  </button>
+                ) : null}
+                {mayBook ? (
+                  <a href="/appointments/new" className="hm-action hm-action-dark">
+                    <IconCalendarPlus />
+                    <strong>{t.nav.newBooking}</strong>
+                  </a>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -411,6 +468,21 @@ export function OwnerHome(p: OwnerHomeProps) {
           <Card className="hm-area-attention hm-desktop" title={t.needsYourAttention}>
             {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
           </Card>
+
+          {/*
+            Jira GRW-418 — who is waiting, and the desk's own controls for dealing with them.
+
+            Every width, unlike `Right now` (which 83-role-home.css hides below 1101px): a salon owner
+            standing at their own counter is holding a phone, and that was exactly the person who could
+            not see a walk-in they had just added.
+          */}
+          {showBoard && (
+            /* No heading and no `id` here: the board brings its own column titles and owns `#hm-queue`,
+               which "N waiting over 10 minutes" in Needs your attention already links to. */
+            <section className="hm-area-queue">
+              <TokenBoard t={t} w={w} tokens={boardTokens} providers={p.providers} busy={busy} timezone={p.timezone} nowISO={p.nowISO} />
+            </section>
+          )}
 
           <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
             <QuickTiles items={links} />

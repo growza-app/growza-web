@@ -53,6 +53,7 @@ import {
 import { useLabel } from './LabelsProvider';
 import { useBranch } from './BranchProvider';
 import { useSession } from './SessionProvider';
+import { canSee, type MemberRole } from '../lib/nav-policy';
 import { PhoneField } from './PhoneField';
 import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
 import type { FreeTime } from '../lib/book-again';
@@ -1815,7 +1816,8 @@ export function NewVisitSheet({
                 branchNameOf(listBranch ?? undefined) ? (
                   <div className="empty">
                     {nv.noServicesAtBranch(branchNameOf(listBranch ?? undefined)!, servicesNoun.toLowerCase())}{' '}
-                    {isOwner ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
+                    {/* Jira GRW-409 — a link to the Services screen for whoever the nav offers it to (the shared rule), not `isOwner`. */}
+                    {canSee('/services', session?.role as MemberRole | null | undefined) ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
                   </div>
                 ) : (
                   <div className="empty">{nv.noServicesYet}</div>

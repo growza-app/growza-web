@@ -9,6 +9,7 @@ import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { SlotGrid } from './SlotGrid';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,8 @@ export default async function AvailabilityPage({
 }: {
   searchParams: Promise<{ serviceId?: string; date?: string; intent?: string; branch?: string }>;
 }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/availability');
   const locale = await getLocale();
   const params = await searchParams;
   const isBookingIntent = params.intent === 'book';

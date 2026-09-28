@@ -5,6 +5,7 @@ import type { VisitMode } from '../../components/NewVisitSheet';
 import { NewBookingClient } from './NewBookingClient';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
+import { mayUse } from '../../lib/nav-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,8 @@ export default async function NewBookingPage({
    * render the form for them either, matching `mayBook` on the bar that
    * used to be the only door to this flow.
    */
-  if (me.member?.role === 'staff') {
+  // Jira GRW-409 — asked of the shared rule the centre button asks, so the page and the button cannot disagree.
+  if (!mayUse(me.member?.role, 'visit.new')) {
     redirect('/appointments');
   }
 

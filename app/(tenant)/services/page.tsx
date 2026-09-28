@@ -4,10 +4,13 @@ import { copy } from '../lib/copy';
 import { resolveBranchState } from '../lib/branch-context';
 import { BranchUrlSync } from '../components/BranchUrlSync';
 import { ServicesTable } from './ServicesTable';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ServicesPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/services');
   const params = await searchParams;
   const me = await api.me();
 

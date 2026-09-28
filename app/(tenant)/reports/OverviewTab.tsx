@@ -39,7 +39,8 @@ export function OverviewTab({
 }: {
   data: ReportOverview;
   onTab: (tab: string) => void;
-  onClient: (id: string) => void;
+  /** Jira GRW-409 — absent for a viewer the client card refuses: the list still reads, and opens nothing. */
+  onClient?: (id: string) => void;
 }) {
   const rp = useReportsCopy();
   const t = useTranslations('reports');
@@ -219,7 +220,8 @@ export function OverviewTab({
                   key={o.customerId}
                   type="button"
                   className="rp-opp"
-                  onClick={() => onClient(o.customerId)}
+                  disabled={!onClient}
+                  onClick={onClient ? () => onClient(o.customerId) : undefined}
                 >
                   <span className="rp-avatar">{o.initial}</span>
                   <span className="rp-opp-main">
@@ -244,9 +246,11 @@ export function OverviewTab({
                             : rp.dueIn(-o.daysOverdue)}
                     </span>
                   </span>
-                  <span className="rp-opp-chev">
-                    <IconArrowRight />
-                  </span>
+                  {onClient ? (
+                    <span className="rp-opp-chev">
+                      <IconArrowRight />
+                    </span>
+                  ) : null}
                 </button>
               );
             })}

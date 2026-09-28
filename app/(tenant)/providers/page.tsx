@@ -6,10 +6,13 @@ import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { StaffClient } from './StaffClient';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProvidersPage() {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/providers');
   const tn = await getTranslations('nouns');
   let me, overview, services, settings, branches;
   try {

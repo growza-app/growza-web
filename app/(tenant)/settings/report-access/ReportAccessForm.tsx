@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
+import { SettingsSaveBar } from '../SettingsSaveBar';
 
 /**
  * Jira GRW-63 · GRW-197 — who else may open Reports, and which tabs.
@@ -67,6 +68,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
   };
 
   return (
+    <>
     <div className="card">
       <div className="card-head">{t('title')}</div>
       <div className="card-body">
@@ -108,17 +110,16 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
         ))}
 
         {error && <div role="alert" className="field-error">{error}</div>}
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn" disabled={busy} onClick={save}>
-            {busy ? t('saving') : t('save')}
-          </button>
-          {saved && !busy && (
-            <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              {t('saved')}
-            </span>
-          )}
-        </div>
       </div>
     </div>
+    <SettingsSaveBar
+      busy={busy}
+      saved={saved}
+      onSave={save}
+      saveLabel={t('save')}
+      savingLabel={t('saving')}
+      savedLabel={t('saved')}
+    />
+    </>
   );
 }

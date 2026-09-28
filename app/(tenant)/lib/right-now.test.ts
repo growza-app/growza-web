@@ -218,11 +218,26 @@ describe('AC-04 — a queue that could not be read', () => {
 });
 
 describe('AC-05 — calm', () => {
-  it('nothing over time and nobody waiting long is no alert at all', () => {
-    const s = card([appt(iso('10:00'), iso('10:45'))], [waiting('w1', iso('10:15'))], at('10:20'));
+  it('nothing over time and nobody waiting at all is no alert, and calm', () => {
+    const s = card([appt(iso('10:00'), iso('10:45'))], [], at('10:20'));
     expect(s.alerts).toEqual([]);
     expect(s.moreAlerts).toBe(0);
     expect(s.calm).toBe(true);
+    expect(s.queueUnread).toBe(false);
+  });
+
+  /*
+   * Jira GRW-418 — this case used to expect `calm: true`, and that was the owner's bug.
+   *
+   * A walk-in is not an ALERT until it has waited `ALERT_AFTER_MIN`, so a client added five minutes ago
+   * produced a card reading "Nothing needs you right now" directly above "Walk-ins waiting 1". Somebody
+   * standing in the salon is never all clear, whatever the alert threshold says.
+   */
+  it('somebody waiting is not calm, even before they are an alert', () => {
+    const s = card([appt(iso('10:00'), iso('10:45'))], [waiting('w1', iso('10:15'))], at('10:20'));
+    expect(s.alerts, 'five minutes is still under the alert threshold').toEqual([]);
+    expect(s.calm).toBe(false);
+    expect(s.walkIns).toEqual({ count: 1, longestMin: 5 });
     expect(s.queueUnread).toBe(false);
   });
 });
