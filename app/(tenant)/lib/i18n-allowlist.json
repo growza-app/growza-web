@@ -1,14 +1,14 @@
 {
   "files": {
-    "web/app/(tenant)/components/BrowserGate.tsx": [
-      "+ · Chrome",
-      "+ · Edge",
-      "+ · Firefox",
+    "app/(tenant)/components/BrowserGate.tsx": [
+      "+ \u00b7 Chrome",
+      "+ \u00b7 Edge",
+      "+ \u00b7 Firefox",
       "Safari"
     ],
-    "web/app/(tenant)/components/ImpersonationBanner.tsx": [
+    "app/(tenant)/components/ImpersonationBanner.tsx": [
       "as",
-      "— read-only support session"
+      "\u2014 read-only support session"
     ]
   }
 }

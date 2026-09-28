@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { fromDashboard } from '../lib/dashboard-root';
 
 /**
  * Jira GRW-63 · GRW-171 · GRW-183 · GRW-22 — Add staff must SAVE what it asked for,
@@ -41,7 +42,7 @@ import { describe, expect, it } from 'vitest';
  * documentation alone.
  */
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-const source = readFileSync(path.join(repoRoot, 'web/app/(tenant)/providers/StaffWizard.tsx'), 'utf-8')
+const source = readFileSync(fromDashboard('app/(tenant)/providers/StaffWizard.tsx'), 'utf-8')
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/\/\/.*$/gm, '');
 

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { fromDashboard } from '../lib/dashboard-root';
 
 /**
  * Jira GRW-63 · GRW-195 — a stylist is offered no button that would 403.
@@ -21,7 +22,7 @@ import { describe, expect, it } from 'vitest';
  * caller had to remember to pass.
  */
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-const source = readFileSync(path.join(repoRoot, 'web/app/(tenant)/components/BookingSheet.tsx'), 'utf-8')
+const source = readFileSync(fromDashboard('app/(tenant)/components/BookingSheet.tsx'), 'utf-8')
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/\/\/.*$/gm, '');
 
@@ -73,7 +74,7 @@ describe('BookingSheet outcome actions', () => {
 });
 
 describe('the Bookings list', () => {
-  const list = readFileSync(path.join(repoRoot, 'web/app/(tenant)/appointments/BookingsList.tsx'), 'utf-8')
+  const list = readFileSync(fromDashboard('app/(tenant)/appointments/BookingsList.tsx'), 'utf-8')
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*$/gm, '');
 
