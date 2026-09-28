@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { fromDashboard } from './dashboard-root';
 import {
   canSee,
   mayUse,
@@ -39,7 +40,7 @@ import {
  *    owner-only screen cannot ship reachable by its address.
  */
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-const tenantDir = path.join(repoRoot, 'web/app/(tenant)');
+const tenantDir = fromDashboard('app/(tenant)');
 const read = (rel: string) => readFileSync(path.join(tenantDir, rel), 'utf8');
 
 const ACTIONS = Object.keys(UI_ACTIONS) as UiAction[];

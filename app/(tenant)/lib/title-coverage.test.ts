@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fromDashboard } from './dashboard-root';
 
 /**
  * Jira GRW-192 — every screen names itself, and a new one cannot forget to.
@@ -17,7 +18,7 @@ import { join } from 'node:path';
  * A list of routes goes stale; a directory cannot.
  */
 
-const ROUTES_DIR = 'web/app/(tenant)';
+const ROUTES_DIR = fromDashboard('app/(tenant)');
 
 function findPages(dir: string): string[] {
   const out: string[] = [];

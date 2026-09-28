@@ -6,6 +6,7 @@ import { copy } from '../app/(tenant)/lib/copy';
 import en from '../messages/en.json';
 import { flatten, pickNamespaces, withFallback, type Messages } from './messages';
 import { AUTH_MESSAGES, CLIENT_MESSAGES } from './client-messages';
+import { fromDashboard } from '../app/(tenant)/lib/dashboard-root';
 
 /**
  * Jira GRW-319 — every language has every key, and a pending translation shows
@@ -15,7 +16,7 @@ import { AUTH_MESSAGES, CLIENT_MESSAGES } from './client-messages';
  * without touching this file.
  */
 
-const DIR = 'web/messages';
+const DIR = fromDashboard('messages');
 const load = (file: string) => JSON.parse(readFileSync(`${DIR}/${file}`, 'utf8')) as Messages;
 const languages = readdirSync(DIR).filter((f) => f.endsWith('.json') && f !== 'en.json');
 

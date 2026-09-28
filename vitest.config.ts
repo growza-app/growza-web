@@ -40,19 +40,20 @@ export default defineConfig({
        * exclusion lives somewhere it cannot cause divergence. growza still runs
        * all nine, so no coverage is lost today.
        *
-       * The real fix is to make the paths root-aware so one file works in both
-       * repos — and it has to happen before GRW-373 deletes growza/web, or the
-       * coverage goes with it.
+       * Seven of the nine are GONE from this list as of Jira GRW-373: a
+       * `dashboard-root.ts` helper made them compute the dashboard's location
+       * from their own, so the same file now serves both repos. These two
+       * cannot follow yet:
+       *
+       *   device-spec-locators  reads test/devices/*.spec.ts — portable once
+       *                         GRW-374 moves the device specs here
+       *   api-messages          reads the API's src/. It asserts the dashboard
+       *                         and the API agree, so after growza/web is
+       *                         deleted it has a home in NEITHER repo. That is
+       *                         a decision, not a path fix.
        */
-      'app/(tenant)/components/booking-sheet-actions.test.ts',
       'app/(tenant)/components/device-spec-locators.test.ts',
       'app/(tenant)/lib/api-messages.test.ts',
-      'app/(tenant)/lib/i18n-guard.test.ts',
-      'app/(tenant)/lib/service-worker.test.ts',
-      'app/(tenant)/lib/title-coverage.test.ts',
-      'app/(tenant)/lib/ui-actions.test.ts',
-      'app/(tenant)/providers/create-saves-everything.test.ts',
-      'i18n/i18n.test.ts',
     ],
     environment: 'node',
   },
