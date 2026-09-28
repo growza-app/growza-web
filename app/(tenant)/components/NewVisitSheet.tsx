@@ -63,6 +63,7 @@ import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
+import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
 
 /**
  * Jira GRW-199 · GRW-219 — the walk-in sheet: client first, then the booking.
@@ -510,7 +511,7 @@ export function NewVisitSheet({
    * The picker would have returned nothing for exactly the role it is for.
    */
   useEffect(() => {
-    if (term.trim().length < 2) {
+    if (term.trim().length < SEARCH_MIN_CHARS) {
       setResults([]);
       setSearching(false);
       return;
@@ -529,7 +530,7 @@ export function NewVisitSheet({
         .finally(() => {
           if (!cancelled) setSearching(false);
         });
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
@@ -1418,7 +1419,7 @@ export function NewVisitSheet({
               )}
             </div>
 
-            {term.trim().length >= 2 ? (
+            {term.trim().length >= SEARCH_MIN_CHARS ? (
               <div className="picker-results">
                 {results.map((c) => (
                   <button
