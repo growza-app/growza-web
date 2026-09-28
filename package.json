@@ -11,12 +11,15 @@
   },
   "dependencies": {
     "@growza-app/shared": "1.0.0",
+    "luxon": "^3.7.2",
     "next": "^16.3.1",
     "next-intl": "^4.14.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@formatjs/icu-messageformat-parser": "^2.11.2",
+    "@types/luxon": "^3.7.4",
     "@types/node": "^22.10.5",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
