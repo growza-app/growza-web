@@ -21,6 +21,7 @@ import type {
   ReportTabKey,
 } from '../lib/api';
 import { ClientProfileCard } from '../components/ClientProfileCard';
+import { useMayUse } from '../components/SessionProvider';
 import { csvFilename, downloadCsv, reportToCsv } from './export';
 import { BookingsTab } from './BookingsTab';
 import { CustomersTab } from './CustomersTab';
@@ -94,6 +95,13 @@ export function ReportsClient({
   // Which client's card is open. A row opens it over the report rather than
   // navigating, so the owner keeps their place in the list they were reading.
   const [openClientId, setOpenClientId] = useState<string | null>(null);
+  /**
+   * Jira GRW-409 — a salon may open Reports tabs to a stylist (GRW-197), and neither the client card
+   * (`/reports/client/:id`, GRW-199: never grantable) nor the Clients list is theirs. Those rows and bands
+   * stay figures for them rather than buttons that answer 403.
+   */
+  const onClient = useMayUse('client.profile') ? setOpenClientId : undefined;
+  const mayListClients = useMayUse('clients.list');
 
   const goToTab = (next: string) => {
     const query = new URLSearchParams(params.toString());
@@ -143,7 +151,7 @@ export function ReportsClient({
           </div>
         </section>
       ) : payload.tab === 'overview' ? (
-        <OverviewTab data={payload.data} onTab={goToTab} onClient={setOpenClientId} />
+        <OverviewTab data={payload.data} onTab={goToTab} onClient={onClient} />
       ) : payload.tab === 'revenue' ? (
         <RevenueTab data={payload.data} />
       ) : payload.tab === 'bookings' ? (
@@ -156,8 +164,8 @@ export function ReportsClient({
         <CustomersTab
           data={payload.data}
           status={params.get('status') ?? 'all'}
-          onSegment={goToSegment}
-          onClient={setOpenClientId}
+          onSegment={mayListClients ? goToSegment : undefined}
+          onClient={onClient}
         />
       ) : null}
       {openClientId && <ClientProfileCard clientId={openClientId} onClose={() => setOpenClientId(null)} />}

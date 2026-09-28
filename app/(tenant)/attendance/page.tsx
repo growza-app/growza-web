@@ -7,6 +7,7 @@ import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { AttendanceRegister } from './AttendanceRegister';
+import { mayUse } from '../lib/nav-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,8 @@ export default async function AttendancePage({
    * empty marking screen; the API scopes that page to them regardless.
    */
   const viewer = await api.me().catch(() => null);
-  if (viewer?.member?.role === 'staff' && viewer.member.providerId) {
+  // Jira GRW-409 — "may not mark the register", asked of the shared rule rather than `role === 'staff'`.
+  if (viewer?.member && !mayUse(viewer.member.role, 'attendance.mark') && viewer.member.providerId) {
     redirect(`/attendance/${viewer.member.providerId}`);
   }
 

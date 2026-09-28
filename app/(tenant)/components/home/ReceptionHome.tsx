@@ -9,6 +9,7 @@ import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-sta
 import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconPlus, IconReceipt, IconScissors, IconSearch, IconUserPlus } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { useBranch } from '../BranchProvider';
+import { useMayUse } from '../SessionProvider';
 import { BookedToday, bookedNotOnBoard } from './BookedToday';
 import { NewTokenSheet } from './NewTokenSheet';
 import { TokenBoard } from './TokenBoard';
@@ -59,6 +60,11 @@ export function ReceptionHome(p: ReceptionHomeProps) {
   const inBranch = (locationId: string | undefined | null) => !branch.choice || !locationId || locationId === branch.choice;
   const tokens = useMemo(() => (p.board?.tokens ?? []).filter((x) => inBranch(x.locationId)), [p.board, branch.choice]); // eslint-disable-line react-hooks/exhaustive-deps
   const groups = useMemo(() => groupBookings((p.appointments ?? []).filter((a) => inBranch(a.locationId))), [p.appointments, branch.choice]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Jira GRW-409 — every action here is the desk's today; each is still asked of the shared rule, so a role that
+  // lands on this Home without them is shown no button that answers 403. New token writes a queue entry, so it
+  // rides on the same action as a walk-in.
+  const mayBook = useMayUse('visit.new');
+  const mayRecordPayment = useMayUse('visit.recordPayment');
 
   // Who is in each chair right now: an unpaid visit whose time has come (GRW-222's "until paid" rule).
   const busy = useMemo(() => {
@@ -97,18 +103,24 @@ export function ReceptionHome(p: ReceptionHomeProps) {
       <div className="page-body hm-page hm-desk">
         {/* New token first: the one tap every client at the counter starts with (AC-04). */}
         <div className="hm-primary-actions tb-actions-row">
-          <button type="button" className="hm-action hm-action-dark" onClick={() => setSheet('token')}>
-            <IconPlus />
-            <strong>{w.newToken}</strong>
-          </button>
-          <button type="button" className="hm-action" onClick={() => setSheet('payment')}>
-            <IconReceipt />
-            <strong>{w.recordPayment}</strong>
-          </button>
-          <a href="/appointments/new?mode=later" className="hm-action tb-new-booking hm-desktop">
-            <IconCalendarPlus />
-            <strong>{w.newBooking}</strong>
-          </a>
+          {mayBook ? (
+            <button type="button" className="hm-action hm-action-dark" onClick={() => setSheet('token')}>
+              <IconPlus />
+              <strong>{w.newToken}</strong>
+            </button>
+          ) : null}
+          {mayRecordPayment ? (
+            <button type="button" className="hm-action" onClick={() => setSheet('payment')}>
+              <IconReceipt />
+              <strong>{w.recordPayment}</strong>
+            </button>
+          ) : null}
+          {mayBook ? (
+            <a href="/appointments/new?mode=later" className="hm-action tb-new-booking hm-desktop">
+              <IconCalendarPlus />
+              <strong>{w.newBooking}</strong>
+            </a>
+          ) : null}
         </div>
 
         <section>
@@ -134,7 +146,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
             { href: '/customers?add=1', label: t.addCustomer, icon: <IconUserPlus />, tone: 'blue' },
             // Jira GRW-404 — Record payment moved up beside New token; Walk-in now (start a visit with a stylist straight
             // away) keeps a way in on a laptop, where the phone's centre button is not.
-            { href: '/appointments/new?mode=now', label: t.walkInShort, icon: <IconScissors />, tone: 'green' },
+            ...(mayBook ? [{ href: '/appointments/new?mode=now', label: t.walkInShort, icon: <IconScissors />, tone: 'green' as const }] : []),
             { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
             // `/customers` search, not `/search`: the global search route is not
             // on the receptionist's allowlist (GRW-199), the client list's is.

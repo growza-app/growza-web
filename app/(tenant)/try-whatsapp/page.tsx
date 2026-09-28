@@ -6,11 +6,14 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
 /** A local stand-in for the real WhatsApp channel (FND-04, pending Meta approval) — proves the booking flow customers will actually use. */
 export default async function TryWhatsAppPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/try-whatsapp');
   // Jira GRW-385 — opened from a branch's booking link in Settings › Branches: the chat starts at that branch.
   const { branch } = await searchParams;
   const t = await getTranslations('tryWhatsApp');

@@ -8,6 +8,7 @@ import { loadErrorKind } from '../lib/load-error';
 import { pickNoun } from '../lib/nouns';
 import { loadAtBranch } from '../lib/branch-load';
 import { BranchUrlSync } from '../components/BranchUrlSync';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,8 @@ export default async function CustomersPage({
 }: {
   searchParams: Promise<{ status?: string; sort?: string; dir?: string; branch?: string }>;
 }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/customers');
   const params = await searchParams;
   // Deep-linked from Home's "Needs attention" card (?status=at_risk&sort=spent)
   // and from every Reports segment card — validated against the real union

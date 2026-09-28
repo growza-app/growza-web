@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Lang } from '../lib/lang';
+import { mayUse, type UiAction } from '../lib/nav-policy';
 
 /**
  * Jira GRW-63 · GRW-203 — who is signed in, for any client component.
@@ -36,4 +37,15 @@ export function SessionProvider({ session, children }: { session: SessionInfo; c
 /** Null only outside the provider — every tenant screen renders inside it. */
 export function useSession(): SessionInfo | null {
   return useContext(SessionContext);
+}
+
+/**
+ * Jira GRW-409 · GRW-319 — may the person signed in use this control?
+ *
+ * `mayUse` from @growza-app/shared, which asks the API's own `mayReach` about
+ * every route the control calls. The one question a component asks before
+ * drawing a control a limited role might not have — not `role === 'owner'`.
+ */
+export function useMayUse(action: UiAction): boolean {
+  return mayUse(useSession()?.role, action);
 }

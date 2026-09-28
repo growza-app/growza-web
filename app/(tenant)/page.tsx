@@ -125,13 +125,23 @@ export default async function DashboardPage() {
    *   business does. Right now still needs today's after closing: a visit running over at closing time stays an
    *   alert until it hands over to "Not marked done yet".
    */
-  const [overview, stats, register, queue, appointments, tomorrowAppointments] = await Promise.all([
+  /*
+   * Jira GRW-418 — the board and the staff to give a token to, same two reads the desk's Home makes.
+   *
+   * An owner who is their own front desk had nowhere to see who was waiting: the board is the receptionist
+   * Home's, and `Right now` — the only place the queue reached an owner — is a count, and is hidden outright
+   * below 1101px. So the owner's Home loads what the desk's does and shows the same board when somebody is
+   * in fact waiting.
+   */
+  const [overview, stats, register, queue, appointments, tomorrowAppointments, board, providers] = await Promise.all([
     soft(api.home('today')) as Promise<HomeOverview | null>,
     soft(api.customerStats()) as Promise<CustomerStats | null>,
     soft(api.attendance(today.toISODate()!)),
     soft(api.walkInQueue()),
     soft(api.appointments()) as Promise<Appointment[] | null>,
     soft(api.appointments(today.plus({ days: 1 }).toISODate()!)) as Promise<Appointment[] | null>,
+    soft(api.tokensToday()),
+    soft(api.providers()),
   ]);
 
   return (
@@ -144,6 +154,8 @@ export default async function DashboardPage() {
       whatsappDemo={me.whatsapp?.demo ?? false}
       initial={overview}
       appointments={appointments}
+      board={board}
+      providers={providers ?? []}
       tomorrowAppointments={tomorrowAppointments}
       customerStats={stats}
       staffNotMarkedIn={notMarkedIn(register)}

@@ -6,10 +6,13 @@ import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { BranchUrlSync } from '../components/BranchUrlSync';
 import { SettingsShell } from './SettingsShell';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsLayout({ children }: { children: ReactNode }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/settings');
   const t = await getTranslations('settingsHub');
   const title = (await getTranslations('nouns'))('settingsTitle');
   let settings;

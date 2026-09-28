@@ -17,6 +17,9 @@
 
 .rp-opp:last-child { border-bottom: none; }
 .rp-opp:hover { background: #f7f9f7; }
+/* Jira GRW-409 — a client this viewer may not open (the card is not theirs): a row, not a link. */
+.rp-opp:disabled { cursor: default; }
+.rp-opp:disabled:hover { background: none; }
 
 .rp-opp-main { flex: 1; min-width: 0; }
 .rp-opp-name { display: block; font-weight: 700; font-size: 13.5px; }

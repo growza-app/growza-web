@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ApiError, api, formatTime } from '../../lib/api';
 import { clientNameLabel, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import type { HomeCopy } from '../../lib/home-copy';
+import { useMayUse } from '../SessionProvider';
 import { CardError } from './parts';
 import type { TokenWords } from './token-words';
 
@@ -39,6 +40,8 @@ export function BookedToday({
 }) {
   const router = useRouter();
   const [arriving, setArriving] = useState<string | null>(null);
+  /** Jira GRW-409 — Arrived writes a token; a role the API refuses that to is shown the booking, not the button. */
+  const mayArrive = useMayUse('token.arrive');
   const [error, setError] = useState<{ key: string; message: string } | null>(null);
   const listRef = useRef<HTMLElement>(null);
   const restore = useRef<number | null>(null);
@@ -103,15 +106,17 @@ export function BookedToday({
                   ) : null}
                 </span>
                 <span className="tb-actions">
-                  <button
-                    type="button"
-                    className="hm-give tb-pay"
-                    aria-label={w.arrivedFor(name)}
-                    disabled={arriving !== null}
-                    onClick={() => void arrive(g.key, i, g.appointments[0]!.id)}
-                  >
-                    {arriving === g.key ? w.arriving : w.arrived}
-                  </button>
+                  {mayArrive ? (
+                    <button
+                      type="button"
+                      className="hm-give tb-pay"
+                      aria-label={w.arrivedFor(name)}
+                      disabled={arriving !== null}
+                      onClick={() => void arrive(g.key, i, g.appointments[0]!.id)}
+                    >
+                      {arriving === g.key ? w.arriving : w.arrived}
+                    </button>
+                  ) : null}
                 </span>
               </li>
             );

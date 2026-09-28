@@ -8,6 +8,7 @@ import { useClientCardCopy } from '../lib/use-copy';
 import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useMayUse } from './SessionProvider';
 
 /**
  * One client's whole story, in a card that opens over the list.
@@ -36,11 +37,15 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
    * and this is not a send. It is the identity, which somebody at a counter
    * gets wrong daily and could not correct anywhere in the product until now.
    *
-   * No role gate: `/api/v1/customers` is absent from `STAFF_ALLOWED`, so a
-   * stylist cannot reach the Clients screen and never sees this card. Everybody
-   * who can open it may edit, which is exactly the owner's rule — the
-   * receptionist may correct and may not delete, and there is no delete here.
+   * The receptionist may correct and may not delete (the owner's rule), and
+   * there is no delete here.
+   *
+   * Jira GRW-409 — this said "no role gate: a stylist cannot reach the Clients
+   * screen and never sees this card". The card is also opened from Reports,
+   * which a salon may open to a stylist (GRW-197), so "Edit" is asked of the
+   * shared rule: drawn only for a role `PATCH /customers/:id` serves.
    */
+  const mayEdit = useMayUse('client.edit');
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [draftPhone, setDraftPhone] = useState('');
@@ -216,7 +221,7 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
                     <div className="cpc-phone">{profile ? formatPhone(profile.phone) : ' '}</div>
                   </div>
                 )}
-                {profile && !editing && (
+                {profile && !editing && mayEdit && (
                   <button type="button" className="cpc-edit-open" onClick={startEditing}>
                     {c.edit}
                   </button>

@@ -977,8 +977,7 @@ export function BookingsList({
           <BookingSummary booking={open} timezone={timezone} onClose={() => setOpen(null)} />
         ) : (
           <BookingSheet
-            canSettle={!viewerIsStaff}
-            canMove={!viewerIsStaff && canReschedule}
+            canMove={canReschedule}
             appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
             timezone={timezone}
             onClose={() => setOpen(null)}

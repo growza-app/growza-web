@@ -112,8 +112,19 @@ export function WeekdayHoursEditor({
     for (const weekday of days) onChange(weekday, patch);
   };
 
+  /**
+   * Jira GRW-414 — `.wk-week` is here to be the rows' QUERY CONTAINER, and for
+   * nothing else.
+   *
+   * The shape of a row depends on how much width the row has, which is not the
+   * same question as how wide the window is: this editor renders in a
+   * full-width card on Working hours, and in a 276px-narrower Settings column
+   * the moment the shell goes two-column at 861px. Keyed on the viewport, the
+   * rows read 1024px as roomy and clipped 84px of themselves off inside the
+   * card. The stylesheet asks this element instead.
+   */
   return (
-    <>
+    <div className="wk-week">
       {groups.map((g) => {
         const first = g.rows[0]!;
         const days = g.rows.map((r) => r.weekday);
@@ -204,7 +215,7 @@ export function WeekdayHoursEditor({
           {t('regroup')}
         </button>
       )}
-    </>
+    </div>
   );
 }
 

@@ -8,7 +8,7 @@ import hi from '../../../../messages/hi.json';
 import type { TokenRow } from '../../lib/home-types';
 import { homeCopy } from '../../lib/home-copy';
 import { LabelsProvider } from '../LabelsProvider';
-import { TokenBoard, afterSheet } from './TokenBoard';
+import { TokenBoard, afterSheet, hasLiveWork } from './TokenBoard';
 import { useTokenWords } from './token-words';
 import { BookedToday, bookedNotOnBoard } from './BookedToday';
 import type { BookingGroup } from '../../lib/appointment-display';
@@ -243,5 +243,38 @@ describe('Booked for today (Jira GRW-405)', () => {
       const [, name, shown] = html.match(/<button[^>]*aria-label="([^"]*)"[^>]*>([^<]*)<\/button>/) ?? [];
       expect(name, lang).toBe(`${shown} — Rekha`);
     }
+  });
+});
+
+/**
+ * Jira GRW-418 — when the owner's Home puts this board up.
+ *
+ * An owner who is their own front desk had nowhere to see a walk-in they had just added: the board was the
+ * receptionist Home's alone, and `Right now` — a count, not a name — is hidden below 1101px. Their Home now
+ * shows this same board, but only while there is something on it to act on, so a salon that has finished for
+ * the day keeps the one-screen Home of Jira GRW-222.
+ */
+describe('hasLiveWork — whether the owner’s Home shows the board', () => {
+  const tok = (state: TokenRow['state']) => ({ state });
+
+  it('is true while somebody is waiting', () => {
+    expect(hasLiveWork([tok('waiting')])).toBe(true);
+  });
+
+  it('is true while somebody is with a stylist', () => {
+    expect(hasLiveWork([tok('with_stylist')])).toBe(true);
+  });
+
+  it('is false for a day that is only history — paid, left, cancelled', () => {
+    expect(hasLiveWork([tok('paid'), tok('left'), tok('cancelled')])).toBe(false);
+  });
+
+  it('is false for an empty board', () => {
+    expect(hasLiveWork([])).toBe(false);
+  });
+
+  // The mix an evening actually looks like: one client still in the chair among a day of paid tokens.
+  it('is true when one live token hides among finished ones', () => {
+    expect(hasLiveWork([tok('paid'), tok('paid'), tok('with_stylist'), tok('left')])).toBe(true);
   });
 });

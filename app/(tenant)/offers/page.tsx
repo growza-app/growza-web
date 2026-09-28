@@ -8,10 +8,13 @@ import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { loadAtBranch } from '../lib/branch-load';
 import { BranchUrlSync } from '../components/BranchUrlSync';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function OffersPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/offers');
   const t = await getTranslations('offers');
   const params = await searchParams;
   let offers, services;

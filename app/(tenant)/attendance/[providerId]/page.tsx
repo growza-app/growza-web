@@ -6,6 +6,7 @@ import { loadErrorKind } from '../../lib/load-error';
 import { PageHeader } from '../../components/PageHeader';
 import { AttendanceMonth } from './AttendanceMonth';
 import { monthBounds, monthOf } from './month';
+import { mayUse } from '../../lib/nav-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,8 @@ export default async function AttendanceMonthPage({
     );
   }
 
-  const isOwnRecord = me.member?.role === 'staff';
+  // Jira GRW-409 — read-only for a role the register's writes refuse (a stylist, GRW-200), asked of the shared rule.
+  const isOwnRecord = !mayUse(me.member?.role, 'attendance.mark');
 
   return (
     <>
