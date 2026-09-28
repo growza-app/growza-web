@@ -1,0 +1,56 @@
+# Jira GRW-420 — this repository's first CI, and the reason it is public.
+#
+# The repo was made public so Actions minutes are free; until now it had no
+# `.github/` at all, so the saving was theoretical. This is the workflow that
+# collects it: the dashboard's typecheck and build move off the private repo's
+# metered minutes.
+#
+# It is also the PROOF for the rest of GRW-420. The .npmrc, the pinned version,
+# the flat Dockerfile and the corrected outputFileTracingRoot were all written
+# without being able to install anything locally — `@growza-app/shared` lives
+# on GitHub Packages and needs a token. This run is what says whether they are
+# right.
+#
+# If "Install" fails with a 401 or 404 on @growza-app/shared, the cause is not
+# this file: the package must grant this repository access, under
+# Packages → @growza-app/shared → Manage Actions access → add growza-web.
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+# `packages: read` is what lets GITHUB_TOKEN pull @growza-app/shared.
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # No `npm ci`: this repo has no lockfile yet — it was a workspace member
+      # and the lock lived in the monorepo. Commit one generated with the token
+      # in place and this becomes `npm ci`, which is what makes it reproducible.
+      - name: Install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # The same build the image runs, so a break shows up here rather than in
+      # a container that will not start.
+      - name: Build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          API_URL: http://api:3001
+        run: npm run build
