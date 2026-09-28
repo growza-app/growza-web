@@ -118,7 +118,7 @@ describe('the groups handed to the browser', () => {
     });
 
   it('finds the screens at all', () => {
-    expect(sources('web/app').length).toBeGreaterThan(100);
+    expect(sources(fromDashboard('app')).length).toBeGreaterThan(100);
   });
 
   it('registers every group a component reads with useTranslations', () => {
@@ -126,7 +126,7 @@ describe('the groups handed to the browser', () => {
     // component imports — so every group it reads must be registered, not only
     // those in files marked 'use client'.
     const missing: string[] = [];
-    for (const file of sources('web/app')) {
+    for (const file of sources(fromDashboard('app'))) {
       for (const m of readFileSync(file, 'utf8').matchAll(/useTranslations\(\s*'([\w.]+)'\s*\)/g)) {
         const group = m[1]!.split('.')[0]!;
         // The sign-in pages have their own, smaller provider (AUTH_MESSAGES); everything else uses the dashboard's.
