@@ -17,6 +17,16 @@
 # live, which is also why growza must have deployed GRW-372's script at least
 # once before the first run here (an older script does not know `--web`).
 #
+# One deploy at a time ON THE BOX, which `concurrency:` below cannot arrange:
+# it only queues runs inside this repository, and the api's deploy lives in
+# another one. `remote-deploy.sh` takes an exclusive lock on
+# /opt/growza/deploy.lock for everything it does, so a dashboard release that
+# arrives during an API release waits for it (the log says "waiting for the
+# other app's deploy to finish") and refuses after ten minutes rather than
+# half-deploying. Without it, an API deploy already in flight would carry the
+# dashboard tag it read earlier through `compose up` and quietly put this
+# release back to the previous one.
+#
 # The guards are the same three growza uses, for the same reason — GitHub Free
 # has no branch protection on a repository, so "nothing untested reaches prod"
 # is enforced here instead:
