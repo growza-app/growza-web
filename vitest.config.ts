@@ -15,7 +15,12 @@ import { defineConfig } from 'vitest/config';
  */
 export default defineConfig({
   test: {
-    include: ['app/**/*.test.ts', 'i18n/**/*.test.ts'],
+    /*
+     * `deploy/` is Jira GRW-372: this repository's own deploy workflow, which
+     * has no counterpart in growza's `web/` and so deliberately lives outside
+     * `app/` — like the Dockerfile, .npmrc and ci.yml.
+     */
+    include: ['app/**/*.test.ts', 'i18n/**/*.test.ts', 'deploy/**/*.test.ts'],
     exclude: [
       '**/node_modules/**',
       '**/.next/**',
