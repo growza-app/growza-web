@@ -1,0 +1,358 @@
+# Jira GRW-372 — the only way the dashboard reaches the prod box.
+#
+#   feat/* ──PR──▶ develop ──PR──▶ main ──CI green──▶ this workflow ──▶ EC2
+#
+# This replaces the DASHBOARD and nothing else. The API lives in growza and
+# deploys itself from there; the box records a commit for each:
+#
+#   /opt/growza/deployed-api-sha   ← set by growza's deploy
+#   /opt/growza/deployed-web-sha   ← set by this one
+#
+# So this run names its own commit and says `--api keep`, and the api container
+# is never stopped, never recreated and never migrated by a dashboard release.
+#
+# `/opt/growza/app` is a checkout of GROWZA, not of this repository — it holds
+# the compose file, the Caddyfile and `remote-deploy.sh`. This workflow does not
+# move it: the script that runs is the one belonging to the api commit that is
+# live, which is also why growza must have deployed GRW-372's script at least
+# once before the first run here (an older script does not know `--web`).
+#
+# The guards are the same three growza uses, for the same reason — GitHub Free
+# has no branch protection on a repository, so "nothing untested reaches prod"
+# is enforced here instead:
+#   1. this runs only after CI *succeeded* on a *push* to main,
+#   2. a manual run is refused anywhere but main, and a manual build of main's
+#      tip is refused unless CI passed on that exact commit,
+#   3. the AWS role trusts only tokens minted for this repository's
+#      refs/heads/main.
+#
+# No AWS keys live in GitHub. Repository VARIABLES (not secrets — none of these
+# is secret) wire it up, and they have to be set on THIS repository as well as
+# on growza:
+#   AWS_DEPLOY_ROLE_ARN  arn:aws:iam::<account>:role/growza-github-deploy
+#   PROD_INSTANCE_ID     i-0123456789abcdef0
+#   PROD_HOSTNAME        app.<your-domain>
+#   ARM_RUNNER           optional; defaults to ubuntu-24.04-arm
+# Until all three required ones exist, a merge to main is a green no-op rather
+# than a red run.
+#
+# Runbook: growza/docs/deploy-pipeline.md and docs/architecture/08-operations.md §4.2–4.3.
+
+name: Deploy dashboard (prod)
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: >-
+          Roll back / redeploy the dashboard: a full 40-character commit on main
+          whose growza-web image is already in ECR. Leave blank to build and
+          deploy the tip of main. The API is not touched either way.
+        required: false
+        default: ''
+
+# One deploy at a time per app. A different group from growza's `prod-deploy`
+# on purpose: a dashboard release and an API release touch different
+# containers, so neither has to wait for the other.
+concurrency:
+  group: prod-deploy-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+
+jobs:
+  # Jira GRW-336 AC-03 — a merge to main whose CI did not pass skips `gate`
+  # below, and a skipped job is grey and silent. This one fails on purpose, so
+  # the run shows red and says in one line what did not happen. It reports
+  # only: it deploys nothing and holds no permissions.
+  not-deployed:
+    name: Not deployed — CI on main did not pass
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion != 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    permissions: {}
+    steps:
+      - name: Say that the dashboard was not deployed
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          CI_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          msg="The dashboard was NOT deployed: CI on main ended '$CONCLUSION' for ${SHA:0:12}. Production is still serving the previous dashboard."
+          echo "::error title=Deploy skipped::$msg CI run: $CI_URL"
+          {
+            echo "### Not deployed: CI on main ended \`$CONCLUSION\` for \`${SHA:0:12}\`"
+            echo
+            echo "Production is still serving the previous dashboard. CI run: $CI_URL"
+            echo
+            echo "Fix forward with a new merge to main, or re-run that CI run; this workflow starts again when it passes."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+  gate:
+    name: Decide what to deploy
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      enabled: ${{ steps.pick.outputs.enabled }}
+      sha: ${{ steps.pick.outputs.sha }}
+      build: ${{ steps.pick.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_SHA: ${{ inputs.sha }}
+          ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          INSTANCE_ID: ${{ vars.PROD_INSTANCE_ID }}
+          PROD_HOSTNAME: ${{ vars.PROD_HOSTNAME }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$ROLE_ARN" || -z "$INSTANCE_ID" || -z "$PROD_HOSTNAME" ]]; then
+            msg="Prod is not configured: set the AWS_DEPLOY_ROLE_ARN, PROD_INSTANCE_ID and PROD_HOSTNAME repository variables on this repository."
+            if [[ "$EVENT" == workflow_dispatch ]]; then echo "::error::$msg"; exit 1; fi
+            echo "::notice::$msg Nothing was deployed."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          build=true
+
+          if [[ "$EVENT" == workflow_run ]]; then
+            sha="$RUN_SHA"
+          else
+            if [[ "$REF" != refs/heads/main ]]; then
+              echo "::error::Deploys run from main only (this run is on $REF)."
+              exit 1
+            fi
+
+            if [[ -n "$INPUT_SHA" ]]; then
+              sha="$INPUT_SHA"
+              build=false
+            else
+              sha="$(git rev-parse HEAD)"
+              passed=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$sha" \
+                         --event push --status success --json databaseId --jq 'length')
+              if [[ "$passed" == 0 ]]; then
+                echo "::error::CI has not passed on a push of $sha. Deploying it would skip the only gate prod has."
+                exit 1
+              fi
+            fi
+          fi
+
+          # The sha ends up inside a shell command on the box, so it is held to
+          # exactly what a commit id looks like before it goes anywhere.
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::'$sha' is not a full 40-character commit id."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$sha" HEAD; then
+            echo "::error::$sha is not on main."
+            exit 1
+          fi
+
+          {
+            echo "enabled=true"
+            echo "sha=$sha"
+            echo "build=$build"
+          } >> "$GITHUB_OUTPUT"
+          echo "### Deploy dashboard ${sha:0:12} · build $build" >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build growza-web (arm64)
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true' && needs.gate.outputs.build == 'true'
+    # t4g is Graviton. A native arm64 runner builds in minutes; set
+    # ARM_RUNNER=ubuntu-latest and QEMU below takes over — slower, same image.
+    runs-on: ${{ vars.ARM_RUNNER || 'ubuntu-24.04-arm' }}
+    permissions:
+      contents: read
+      id-token: write
+      # The image installs @growza-app/shared from GitHub Packages (GRW-420).
+      packages: read
+    env:
+      SHA: ${{ needs.gate.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Tags are IMMUTABLE in ECR (a sha always means one image), so a re-run
+      # of a deploy whose image already exists must skip rather than fail.
+      - id: exists
+        run: |
+          if aws ecr describe-images --repository-name growza-web \
+               --image-ids imageTag="$SHA" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "growza-web:$SHA already in ECR — not rebuilding."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.exists.outputs.skip != 'true' && runner.arch != 'ARM64'
+        uses: docker/setup-qemu-action@v3
+
+      - if: steps.exists.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - if: steps.exists.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/arm64
+          push: true
+          provenance: false
+          # The npm token for @growza-app/shared, as the build secret the
+          # Dockerfile mounts (`--mount=type=secret,id=npm_token`), so it never
+          # lands in an image layer.
+          secrets: |
+            npm_token=${{ secrets.GITHUB_TOKEN }}
+          tags: ${{ steps.ecr.outputs.registry }}/growza-web:${{ needs.gate.outputs.sha }}
+          cache-from: type=gha,scope=growza-web
+          cache-to: type=gha,mode=max,scope=growza-web
+
+  deploy:
+    name: Deploy the dashboard to EC2
+    needs: [gate, build]
+    if: >-
+      always() &&
+      needs.gate.result == 'success' &&
+      needs.gate.outputs.enabled == 'true' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SHA: ${{ needs.gate.outputs.sha }}
+      INSTANCE_ID: ${{ vars.PROD_INSTANCE_ID }}
+      PROD_HOSTNAME: ${{ vars.PROD_HOSTNAME }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # AC-02 — a missing image stops the run here, before the box is touched,
+      # and the dashboard that is serving carries on serving.
+      - name: The dashboard image exists for this commit
+        run: |
+          if ! aws ecr describe-images --repository-name growza-web --image-ids imageTag="$SHA" >/dev/null 2>&1; then
+            echo "::error::no image for $SHA in growza-web — a rollback can only target a commit that was deployed before."
+            exit 1
+          fi
+
+      - name: Run the dashboard deploy on the box
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+
+          # AWS-RunShellScript runs under /bin/sh, so the bootstrap is POSIX and
+          # hands straight to the bash script already on the box. No `git
+          # checkout` here: /opt/growza/app is growza's checkout and must stay
+          # on the api commit that is live (GRW-372).
+          params=$(jq -n --arg sha "$SHA" --arg reg "$REGISTRY" '{
+            commands: [
+              "set -eu",
+              "cd /opt/growza/app",
+              "exec ./scripts/deploy/remote-deploy.sh --api keep --web \($sha) --registry \($reg)"
+            ],
+            executionTimeout: ["1500"]
+          }')
+
+          cmd=$(aws ssm send-command \
+                  --instance-ids "$INSTANCE_ID" \
+                  --document-name AWS-RunShellScript \
+                  --comment "growza dashboard ${SHA:0:12}" \
+                  --timeout-seconds 600 \
+                  --parameters "$params" \
+                  --query Command.CommandId --output text)
+          echo "SSM command: $cmd"
+
+          status=Pending
+          for _ in $(seq 1 180); do
+            sleep 10
+            status=$(aws ssm get-command-invocation --command-id "$cmd" --instance-id "$INSTANCE_ID" \
+                       --query Status --output text 2>/dev/null || echo Pending)
+            case "$status" in Pending|InProgress|Delayed) continue ;; *) break ;; esac
+          done
+
+          echo "──── output from the box ────"
+          aws ssm get-command-invocation --command-id "$cmd" --instance-id "$INSTANCE_ID" \
+            --query '[StandardOutputContent, StandardErrorContent]' --output text || true
+
+          if [[ "$status" != Success ]]; then
+            echo "::error::the deploy on the box ended '$status' (SSM command $cmd). If it stopped at the pull, the previous dashboard is still serving; if it stopped after, roll back with this workflow and /opt/growza/previous-web-sha."
+            exit 1
+          fi
+
+      # AC-01 — the dashboard answers, and so does the api that was not touched.
+      - name: The site answers, and the api is untouched
+        run: |
+          check() { # url
+            code=000
+            for i in $(seq 1 36); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$1" || true)
+              if [[ "$code" == 200 ]]; then
+                echo "$1 → 200 after ~$((i * 5))s"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "::error::$1 did not answer 200 within 3 minutes (last: $code)."
+            return 1
+          }
+          check "https://$PROD_HOSTNAME/login"
+          check "https://$PROD_HOSTNAME/api/v1/ready"
+          echo "Live: dashboard \`${SHA:0:12}\` on https://$PROD_HOSTNAME" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Caddy and web logs
+        if: failure()
+        run: |
+          params='{"commands":["docker logs --tail 80 growza-caddy-1 2>&1 || true","echo ----","docker logs --tail 120 growza-web-1 2>&1 || true"]}'
+          cmd=$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+                  --parameters "$params" --query Command.CommandId --output text)
+          sleep 8
+          aws ssm get-command-invocation --command-id "$cmd" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text || true
