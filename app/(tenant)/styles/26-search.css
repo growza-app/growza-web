@@ -56,6 +56,36 @@
   min-height: 0;
 }
 
+/*
+ * Jira GRW-425 — one ring, not two.
+ *
+ * The bar draws the focus ring on behalf of the field inside it (`:focus-within` above).
+ * The accessibility floor forces a ring on EVERY input with `!important` (GRW-342,
+ * 90-accessibility.css), deliberately, because several search fields drew none — and that
+ * `!important` beats the `outline: none` directly above. So focusing this box drew the
+ * bar's ring and a second one hugging the input inside it, which reads as a stray
+ * rectangle in the search box. Clients and Offers opt out the same way via
+ * `.search-input-bare`; this bar owns its field, so it opts out here.
+ */
+.search-bar input:focus-visible {
+  outline: 0 !important;
+}
+
+/*
+ * Jira GRW-425 — one clear button, not two.
+ *
+ * Chrome and Edge draw their own round "x" inside `type="search"`; Firefox draws none,
+ * which is why this showed up as a blue × beside our grey one on some machines and not
+ * others. This bar has its own clear button, so the native one is a duplicate.
+ *
+ * Scoped to `.search-bar` on purpose. The other `type="search"` fields — Staff, Services,
+ * Attendance, the catalogue picker, the visit sheet — have NO clear button of their own,
+ * so there the native × is the only way to empty the field and must stay.
+ */
+.search-bar input[type='search']::-webkit-search-cancel-button {
+  display: none;
+}
+
 .search-bar svg {
   width: 18px;
   height: 18px;
