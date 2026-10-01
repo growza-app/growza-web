@@ -1,4 +1,4 @@
-/* ---------- Settings: every tab on one laptop screen (Jira GRW-228) ----------
+/* ---------- Settings: every tab on one laptop screen (Jira GRW-228 · GRW-229) ----------
  *
  * Measured at 1470×760 before this: EVERY settings tab scrolled, because the
  * settings list alone was 647px in a 667px page (Log out below the fold), and
@@ -9,7 +9,25 @@
  * On a laptop the shell now fills the page. The list and the form are each
  * their own scroll box, which is a safety net (4+ branches, a long invite
  * list), not the plan: at 13 inches every tab fits without either scrolling.
- * Below 680px tall the page scrolls as before. Phones are untouched.
+ *
+ * Jira GRW-229 finished three things GRW-228 left:
+ *
+ * 1. **The `min-height: 680px` floor is gone.** It was what let a shorter
+ *    window scroll the whole page — measured at 1366×640, every tab scrolled
+ *    `.page-body` by 206px and the settings list scrolled off the top with it,
+ *    which is the one thing AC-02 says must not happen. The shell now fills
+ *    the window at EVERY desktop height; the bands below only decide how much
+ *    air the rows and cards keep. Short windows are the case this was for, so
+ *    they are the case it now covers.
+ * 2. **1280×720 and 1366×680 still scrolled the CONTENT pane** — Booking
+ *    settings by 77px and 106px with Save off the bottom, Report access by
+ *    14px and 38px, Branches by 2px. Fixed at the source: the booking columns
+ *    were lopsided (294px beside 476px, so the taller one set the height), and
+ *    Report access's opening sentence is now a `settings-card-hint` like
+ *    Working hours', which short screens already drop.
+ * 3. **The phone hub** (402×874) overflowed by 214px, so "Log out" and half of
+ *    Account were below the fold on the screen whose whole job is the list.
+ *    See the `max-width: 860px` block at the end of this file.
  */
 @media (min-width: 861px) {
   .settings-shell {
@@ -17,13 +35,26 @@
     grid-template-columns: 276px minmax(0, 960px);
     gap: 18px;
   }
-  /* Worded times need ~118px each at 20px ("10:00 AM"); the 640px column clipped them. */
-  .wk-times input[type='time'] {
-    min-width: 118px;
-  }
+  /*
+   * Jira GRW-414 — the `min-width: 118px` that used to sit here is GONE.
+   *
+   * GRW-228 added it so worded times were not truncated in this column, and it
+   * bought that by making the row unable to shrink: two 118px fields plus the
+   * clock, the dash and the gaps need 513px, the column gives 276px at 861×500,
+   * and `.card { overflow: hidden }` cut the difference off rather than let it
+   * scroll. It traded a truncated time for an unreachable one.
+   *
+   * Nothing replaces it, because nothing needs to: the rows now stack when
+   * their container drops below 600px (78-collapsed-week-hours.css), so this
+   * column gets the phone shape and the fields get the full width instead of a
+   * floor fighting for it. Measured after: 0px clipped at every matrix width,
+   * and no field below the room its text needs.
+   */
 }
 
-@media (min-width: 861px) and (min-height: 680px) {
+/* No height floor (Jira GRW-229 AC-02): a 640px-tall window is exactly when the
+   list must stay put and only the form move. */
+@media (min-width: 861px) {
   .page-body.settings-page {
     display: flex;
     flex-direction: column;
@@ -70,6 +101,20 @@
     width: 24px;
     height: 24px;
   }
+  /*
+   * Jira GRW-229 — the chevron, not the icon, was setting the row's height.
+   * `.settings-row-chev` is an inline `<span>` around an 18px SVG, so it
+   * measured 25px (its line box) and made every list row 7px taller than the
+   * thing it is drawn around. Laid out as a box it is its own icon's height,
+   * and the list gives back ~7px a row — a hundred px over fifteen rows, which
+   * is most of what the bands below were fighting for. Desktop nav only: on a
+   * phone these rows are tap targets and their height is deliberate.
+   */
+  .settings-page .settings-nav-pane .settings-row-chev,
+  .settings-page .settings-nav-pane .settings-row-soon {
+    display: flex;
+    align-items: center;
+  }
 
   /* The profile's Save bar pins to the form column, which is now the scroller. */
   .settings-page .bp-savebar {
@@ -77,25 +122,62 @@
   }
 }
 
-/* ≈1280×720 — the last 10–12px: tighter list rows and card heads. */
-@media (min-width: 861px) and (min-height: 680px) and (max-height: 740px) {
+/* ≈1280×720 and below — the last 10–12px: tighter list rows and card heads. */
+@media (min-width: 861px) and (max-height: 740px) {
   .settings-page .settings-nav-pane .settings-row {
     padding-top: 4px;
     padding-bottom: 4px;
   }
+  /*
+   * Jira GRW-229 — with the chevron measured properly the row's height is its
+   * ICON: 24px of circle against a 17px line, so 4px of padding still made a
+   * 33px row and the list ran 601px in the 587px pane at 1366×680 (+14px, on
+   * every tab). 22px is the same circle a hair smaller.
+   */
+  .settings-page .settings-nav-pane .settings-row-icon {
+    width: 22px;
+    height: 22px;
+  }
   .settings-page .settings-group + .settings-group {
     margin-top: 5px;
   }
-  .settings-page .settings-content-pane .card-head {
-    padding-top: 13px;
-    padding-bottom: 13px;
-  }
+  /* A `card-head` rule stood here and had never applied: the `max-height: 859px`
+     block further down sets the same property at the same specificity, and the
+     later rule wins at every height this one matches. Removed with Jira GRW-229
+     rather than left looking load-bearing. */
   /* Direct children only: the profile and branch cards manage their own gaps. */
   .settings-page .settings-content-pane > .card + .card {
     margin-top: 12px;
   }
   .settings-page .bp-form .field textarea {
     min-height: 56px;
+  }
+}
+
+/*
+ * Jira GRW-229 AC-02 — a window under 680px tall.
+ *
+ * This is the band GRW-228 excluded, and excluding it is what made the whole
+ * page scroll: at 1366×640 every tab moved `.page-body` 206px, taking the
+ * settings list off the top of the screen with it. With the floor gone the
+ * shell fits the window here as well; what is left is the list, which at 593px
+ * did not fit a 547px pane. It does now, with room to spare, and only the form
+ * ever scrolls.
+ */
+@media (min-width: 861px) and (max-height: 679px) {
+  .settings-page .settings-nav-pane .settings-row {
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+  .settings-page .settings-nav-pane .settings-row-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .settings-page .settings-group + .settings-group {
+    margin-top: 4px;
+  }
+  .settings-page .settings-group-title {
+    margin-bottom: 2px;
   }
 }
 
@@ -143,7 +225,7 @@
 }
 
 /* Laptop fit: the profile's cards trim their padding so two columns fit 13". */
-@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
+@media (min-width: 861px) and (max-height: 859px) {
   .settings-page .bp-form {
     gap: 12px;
   }
@@ -251,7 +333,8 @@
 }
 
 /*
- * Short laptops (≈680–859px tall: 1366×680, 1280×720). Measured after the
+ * Short windows (up to 859px tall: 1366×680, 1280×720, and — since Jira
+ * GRW-229 took the 680px floor off — 1366×640 too). Measured after the
  * rules above, the settings list still ran 12–52px long and Working hours
  * 10–50px, so the page chrome gives up the room rather than the forms:
  *
@@ -260,7 +343,7 @@
  *   beside it on every desktop, so this was the same button twice;
  * - Working hours' two cards lose some air.
  */
-@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
+@media (min-width: 861px) and (max-height: 859px) {
   .topbar:has(+ .settings-page) {
     align-items: center;
     padding-top: 10px;
@@ -360,7 +443,8 @@
   cursor: pointer;
 }
 .sbp-menu button:hover,
-.sbp-menu button[aria-checked='true'] {
+.sbp-menu button[aria-checked='true'],
+.sbp-menu button[aria-current='true'] {
   background: var(--accent-soft);
 }
 .sbp-menu strong {
@@ -412,6 +496,37 @@
 .bp-form .bsn {
   margin-bottom: 0;
 }
+/* Jira GRW-396 — "Use business settings" and "Apply to all branches", and the question before applying. Two
+   buttons do not fit beside the sentence in a narrow pane (320px, or 861px beside the settings list): the buttons
+   go under it instead of off the edge (QA). */
+.bsn {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.bsn > span:first-child {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.bsn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  margin-left: auto;
+  gap: 8px;
+}
+.bsn-confirm {
+  border-color: #f6e6cd;
+  background: #fdf6ec;
+}
+.bsn-reset.bsn-apply {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+  color: #fff;
+}
+.bsn-reset:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
 @media (max-width: 860px) {
   .sbp-btn {
     max-width: 150px;
@@ -426,7 +541,7 @@
 
 /* Short laptops: the branch note is one slim line and the form's own subtitle
    goes, so adding "whose settings" costs a tab no scroll (GRW-228 still holds). */
-@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
+@media (min-width: 861px) and (max-height: 859px) {
   .settings-page .bsn {
     margin-bottom: 6px;
     padding: 5px 10px;
@@ -442,16 +557,66 @@
     display: none;
   }
 }
-@media (min-width: 861px) and (min-height: 680px) and (max-height: 859px) {
-  /* The neutral notes ("All branches…", "Indiranagar uses the business's…") repeat
-     what the header picker already shows; on a short laptop only the notes
-     that change what a Save does stay: "has its own" and "same for every branch". */
-  .settings-page .bsn:not(.bsn-own):not(.bsn-all) {
-    display: none;
-  }
+@media (min-width: 861px) and (max-height: 859px) {
   /* Working hours' explanatory sentences — the card titles say the same in fewer words. */
   .settings-page .settings-card-hint {
     display: none;
+  }
+
+  /*
+   * Report access, Jira GRW-229 — the 48px this tab was over, taken from its own
+   * spacing rather than from its opening sentence.
+   *
+   * That sentence ("You and your managers always see every report… tick nothing
+   * and Reports stays hidden from them entirely") is the only place on a
+   * permissions screen that says managers are exempt and what leaving a role
+   * unticked does, and the card under it lists Receptionist and Stylists and
+   * nothing else. It briefly carried `settings-card-hint` here, which would have
+   * taken it off a 1470×760 laptop — the window this ticket is written against.
+   * Two roles at 14px of padding, a 10px gap under each role's name and 7px
+   * around each chip is 48px of air; the words are worth more than the air.
+   */
+  .settings-page .ra-role {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .settings-page .ra-role-head {
+    margin-bottom: 6px;
+  }
+  /* A mouse target, not a phone one — 90-accessibility.css's 44px floor is `max-width: 860px`. */
+  .settings-page .ra-tab {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+}
+
+/*
+ * Jira GRW-229 — the last 19px of Booking settings at 1366×680, and the last
+ * 2px of Branches at 1280×720.
+ *
+ * Rebalancing the booking columns took that tab from 106px over to 19px; this
+ * is the remainder, taken from the two places on these screens that are pure
+ * air — a card's title bar, and the gap above and below each radio in the
+ * slot-pattern group. It sits AFTER the `max-height: 859px` blocks on purpose:
+ * both bands match a 720px window, they set the same card-head padding, and
+ * the one written later is the one that applies.
+ */
+@media (min-width: 861px) and (max-height: 740px) {
+  .settings-page .settings-content-pane .card-head {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  .settings-page .rules-option {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .settings-page .bsn {
+    margin-bottom: 4px;
+  }
+  /* Branches was the last tab still 2px over at 1280×720, with two branch cards
+     side by side — 3px under each card's title is what it was short of. */
+  .settings-page .bp-card-head {
+    margin-bottom: 7px;
   }
 }
 
@@ -474,12 +639,26 @@
 /* ---------- Jira GRW-248 — closed days on Booking rules ---------- */
 .closed-days-add {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
 }
-.closed-days-add input {
+.closed-days-add input[type='date'] {
   flex: 1 1 auto;
   min-width: 0;
+}
+/* Jira GRW-396 — "Close every branch": its own line under the date, so the date field keeps its width on a phone. */
+/* `.closed-days .closed-days-every`: it is a label inside `.field`, whose labels spread their two ends apart. */
+.closed-days .closed-days-every {
+  display: inline-flex;
+  flex-basis: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--muted);
+  cursor: pointer;
 }
 .closed-days-list {
   display: flex;
@@ -594,6 +773,58 @@
 }
 .bill-autopay-button:disabled { opacity: 0.6; cursor: default; }
 
+/* ---------- Jira GRW-242 — approve the new automatic payment amount ----------
+ * On the owner's Home (above the grid) and inside Billing's automatic payment
+ * card. Calm blue more than a week out; amber within a week; red within 3 days,
+ * on the last day, and once a bill was only part-paid. The words change at the
+ * same points (7, 3, 1 days) — colour is never the only signal. */
+.ar-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid oklch(0.88 0.04 250);
+  background: oklch(0.97 0.02 250);
+  color: oklch(0.36 0.08 255);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ar-notice-text { flex: 1 1 240px; min-width: 0; margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.ar-notice-hint { display: block; margin-top: 2px; font-size: 13px; font-weight: 500; }
+.ar-notice-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.ar-notice .bill-autopay-button { margin-top: 0; }
+.ar-notice-error { flex-basis: 100%; margin: 0; font-size: 13px; font-weight: 600; }
+.ar-link { font-weight: 700; color: inherit; text-decoration: underline; }
+.ar-notice.ar-week {
+  border-color: oklch(0.85 0.09 80);
+  background: oklch(0.97 0.05 85);
+  color: oklch(0.4 0.11 70);
+}
+.ar-notice.ar-soon,
+.ar-notice.ar-last,
+.ar-notice.ar-missed {
+  border-color: oklch(0.82 0.11 25);
+  background: oklch(0.96 0.04 25);
+  color: oklch(0.42 0.15 25);
+}
+.bill-card .ar-notice { margin-top: 12px; }
+/* Jira GRW-413 — the halted sentence inside the billing banner.
+   It IS the banner's sentence (it replaces the status one), so it inherits the
+   banner's colour and weight and adds no height: a second row cost the shell's
+   bottom nav at 568x320. Not a coloured box of its own either — `.ar-missed`'s
+   red inside the amber banner read as two warnings stacked — and no live region,
+   because the banner is already one and a nested one is announced twice. */
+.billing-banner-halted {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* Home fits one laptop screen (GRW-222): the notice is a fixed row above the
+   grid, and the grid — not the notice — gives up the height. */
+.hm-fit > .ar-notice { flex: none; }
+
 /* ---------- Jira GRW-254 — all bills and one bill ---------- */
 .bill-card-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .bill-link { font-size: 13px; font-weight: 600; color: var(--accent-deep, var(--accent)); text-decoration: none; }
@@ -603,7 +834,193 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
 .bill-doc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .bill-doc-meta { margin: 4px 0 0; font-size: 13px; line-height: 1.5; }
 .bill-doc-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+/* Jira GRW-407 — what paid this bill. */
+.bill-paid { margin-top: 14px; }
+.bill-paid .bill-line > span:first-child { white-space: normal; }
 @media print {
   .no-print, .sidebar, .bottom-nav, .app-header, .settings-nav, nav, header { display: none !important; }
   .bill-print, .bill-doc { box-shadow: none !important; border: 0 !important; }
+}
+
+/* Jira GRW-385 — a branch's booking link, on its card in Settings › Branches. */
+.bp-link {
+  margin-top: 14px;
+}
+
+.bp-link-row {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bp-link-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+}
+
+/* ---------- Jira GRW-229 AC-03 — the Settings hub on a phone ----------
+ *
+ * Measured on a 402×874 phone (iPhone 16 Pro / 17), two branches: the list ran
+ * 937px in a 723px page — 214px over, so "Log out" and most of Account were
+ * below the fold on the one screen whose whole job is to be a list of links.
+ *
+ * What the 723px has to hold, and what can give:
+ *
+ * - **Eleven tappable rows at 44px = 484px, which is fixed.** 90-accessibility
+ *   sets that floor (WCAG 2.5.5) and this is not the ticket that lowers it. So
+ *   the 239px around them is the entire budget, and every line below is spent
+ *   out of it rather than out of the rows.
+ * - **The business card at the top goes (62px).** It is the only thing here
+ *   that was on the screen twice: it links to Business profile, which is also
+ *   a row in the list under it, and the business it names is already in the
+ *   header beside the branch. Desktop never showed it at all.
+ * - **The five "Coming soon" rows pair up, two to a line (~75px).** They are
+ *   `<div>`s, not links — nothing taps them, so nothing needs 44px of them,
+ *   and half a line each is as much room as a preview deserves.
+ * - **The page's own padding (~56px).** `.page-body` carries 68px at the bottom
+ *   to clear the floating action button; Settings has no FAB on any route, so
+ *   that was 68px of nothing.
+ * - **20px of leading under the four group headings** — their line box, not
+ *   their type size, which 87-mobile-type-floor.css owns.
+ *
+ * That lands the list at 700px in 723px, and 393×852 and 344×882 now fit too.
+ * A shorter or narrower phone still scrolls the hub, and is meant to: 320×568
+ * has 363px of page for it, and eleven 44px rows and four headings do not go
+ * into that whatever this file does.
+ */
+@media (max-width: 860px) {
+  .page-body.settings-page:has(.settings-hub) {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+  .settings-hub .settings-group + .settings-group {
+    margin-top: 4px;
+  }
+  /*
+   * `line-height`, never `font-size`: 87-mobile-type-floor.css raises this
+   * heading to 12px on a phone and that floor is not this ticket's to move. Four
+   * headings at 1.15 rather than 1.55 is 20px, and the words are unchanged.
+   */
+  .settings-hub .settings-group-title {
+    margin-bottom: 1px;
+    line-height: 1.15;
+  }
+  /* The rows that go somewhere keep the full width — and their 44px. */
+  .settings-hub .menu-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .settings-hub .menu-list > *:not(.settings-row-disabled) {
+    grid-column: 1 / -1;
+  }
+  /*
+   * Jira GRW-229 review — a preview with no partner takes the whole line.
+   *
+   * Only the Account group has one ("Account", with Log out under it, which is a
+   * `<button>` and full width), and half a line of it left an empty white half
+   * beside it. `:has(.settings-row-disabled ~ .settings-row-disabled)` is the
+   * question "are there two of these in this list": where there are not, the one
+   * spans.
+   */
+  .settings-hub .menu-list:not(:has(.settings-row-disabled ~ .settings-row-disabled)) .settings-row-disabled {
+    grid-column: 1 / -1;
+  }
+  /*
+   * And where there ARE two, the pill goes under the label in BOTH of them.
+   *
+   * Left to itself it wrapped only when it had to, so at 402×874 "Appearance"
+   * pushed its pill down and "Privacy" beside it did not — two halves of one
+   * strip disagreeing about their own shape. Uniform costs nothing: the label
+   * gets the whole cell width instead of 62px of it, so it stops wrapping, and
+   * the pair is the same height either way.
+   */
+  .settings-hub .menu-list:has(.settings-row-disabled ~ .settings-row-disabled) .settings-row-soon {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+  /*
+   * A preview, half a line wide. Two of them side by side read as one strip, so
+   * there is no rule between them — that line separates destinations.
+   *
+   * `flex-wrap`, the dropped icon and `overflow-wrap` are all one thing: nothing
+   * in this cell may be wider than the cell. The first version of this rule had
+   * none of them, and the device sweep caught it — the "Coming soon" pill cannot
+   * shrink and neither could "WhatsApp settings" beside it, so `.menu-list` (which
+   * clips to its rounded corner) cut 8–96px off at every width from 412px down.
+   * Clipped is worse than scrolled: it is unreachable. Now the pill drops under
+   * the title when it will not fit beside it, the icon is gone because a preview
+   * does not need decorating, and a word with nowhere to break breaks rather than
+   * disappearing — which is the backstop for a Hindi label, not the plan.
+   */
+  .settings-hub .settings-row-disabled {
+    flex-wrap: wrap;
+    row-gap: 0;
+    border-top: 0;
+    padding: 2px 12px;
+  }
+  .settings-hub .settings-row-disabled .settings-row-icon {
+    display: none;
+  }
+  .settings-hub .settings-row-disabled .settings-row-body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .settings-hub .settings-row-disabled .settings-row-title {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ---------- Jira GRW-416 — Save where the thumb is ---------- */
+
+/*
+ * On a laptop this is exactly the row Booking settings and Report access already had — the same
+ * `margin-top: 16px; display: flex; gap: 12px` they each carried as an inline style — so AC-04's
+ * "desktop unchanged" is true by construction, not by testing.
+ */
+.settings-savebar {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-savebar-note {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/*
+ * The phone half. Same shape as `.bp-savebar` (84-business-profile.css), because BR-01 asks for one
+ * save-bar pattern in the product — but NOT its `bottom: -60px`.
+ *
+ * That value is measured against a page whose scroller is the document, where a sticky box stops at
+ * `.page-body`'s 84px of bottom padding and has to be pulled back down into it. On a Settings tab the
+ * scroller is `.page-body.settings-page` itself (overflow-y: auto — measured: 723px tall holding 1312px
+ * on Booking settings at 402×874), so a negative offset parks the bar 60px BELOW the only box that can
+ * show it, off-screen, which is exactly what it did on the first attempt here. Anchored to the
+ * scroller's own edge instead.
+ */
+@media (max-width: 860px) {
+  .settings-savebar {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: 0 -6px 20px rgba(16, 38, 26, 0.08);
+  }
+  /*
+   * 46px, over WCAG 2.5.5's 44 and matching Business profile's Save on a phone. Selector carries the
+   * bar as well as the button: `.btn` already sets a 44px floor at the same specificity, and whichever
+   * stylesheet happened to load last would otherwise decide the size.
+   */
+  .settings-savebar .settings-savebar-btn {
+    min-height: 46px;
+    padding: 0 22px;
+  }
 }

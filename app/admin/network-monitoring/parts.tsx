@@ -45,7 +45,8 @@ export interface Monitoring {
     processedTotal: number;
   }>;
   webhooks: PanelResult<{ received: number; failed: number; ignored: number; pendingNow: number; oldestPendingSeconds: number | null }>;
-  dunning: PanelResult<{ outcomes: Array<{ outcome: string; count: number }>; inRetryNow: number }>;
+  /** Jira GRW-413 — `skipReason` is why nothing was collected; every new row is `skipped`, so the outcome alone says nothing. */
+  dunning: PanelResult<{ outcomes: Array<{ outcome: string; skipReason: string | null; count: number }>; inDunningNow: number }>;
   limits: { available: false; epic: string };
 }
 

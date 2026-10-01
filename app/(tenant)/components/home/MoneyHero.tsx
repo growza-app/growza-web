@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { HomeOverview, PaymentModeSlice } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
-import { IconChevronRight, IconClock, IconDaySummary, IconDots } from '../icons';
+import { IconChevronRight, IconClock, IconDaySummary } from '../icons';
 import { rupees } from './parts';
 import { useDialog } from '../../../shared/a11y/useDialog';
 
@@ -49,7 +49,7 @@ export function PaymentBar({ t, slices, total, variant }: { t: HomeCopy; slices:
   );
 }
 
-/** The branch's dot on the money card, the same colours as its tile in "Your branches". */
+/** The branch's dot on the money card: one colour per branch, in the order the API lists them. */
 const BRANCH_DOT = ['#86efac', '#93c5fd', '#fcd34d', '#d8b4fe', '#fda4af'];
 
 /**
@@ -105,7 +105,7 @@ function BranchLine({
   const shown = branches.length > 2 ? ranked.slice(0, 2) : ranked;
   const more = branches.length - shown.length;
   return (
-    <div className="hm-line" role="group" aria-label={t.yourBranches}>
+    <div className="hm-line hm-line-branches" role="group" aria-label={t.yourBranches}>
       {shown.map(({ b, colour }) => (
         <button key={b.id} type="button" className="hm-line-item hm-line-pick" onClick={() => onPick(b.id)}>
           <i style={{ background: colour }} />
@@ -207,15 +207,11 @@ export function MoneyHero({
             the time of day. */}
         {deltaChip('hm-delta hm-delta-top', true)}
         {/*
-          Jira GRW-270 · GRW-275 — the ⋯ menu shows how the money came in, as a
-          list with the rupees and the share of each. It used to swap the card
-          between "All money" and "How they paid", so a phone only ever showed
-          one of the two; the split now sits under the amount on every screen,
-          and this is the same answer, one tap closer to the numbers.
+          Jira GRW-270 · GRW-275 — how the money came in, as a list with the
+          rupees and the share of each. Jira GRW-394 — opened only from the
+          payment line's "+N" now: the ⋯ button that also opened it repeated
+          the split the line under the amount already shows (owner, 2026-09-25).
         */}
-        <button type="button" className="hm-hero-menu hm-mobile-inline" aria-label={t.howPaid} aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
-          <IconDots />
-        </button>
         {menu ? (
           <div ref={menuRef} className="hm-menu hm-pay-menu" role="dialog" aria-label={t.howPaid}>
             <div className="hm-pay-menu-head">

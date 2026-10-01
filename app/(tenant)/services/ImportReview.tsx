@@ -20,7 +20,11 @@ export function ImportReview({
   onImported,
   backLabel,
   lookup,
+  branchId,
 }: {
+  /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
+  branchId: string;
+
   drafts: Draft[];
   setDrafts: (fn: (prev: Draft[]) => Draft[]) => void;
   onBack: () => void;
@@ -48,7 +52,7 @@ export function ImportReview({
     setBusy(true);
     setError(null);
     try {
-      await api.importServices(toImportItems(drafts));
+      await api.importServices(branchId, toImportItems(drafts));
       onImported();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('importFailed'));

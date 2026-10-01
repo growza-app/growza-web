@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PayNowButton } from './PayNowButton';
+import { AutopayHaltedLine } from './AutopayHaltedNotice';
 
 /**
  * GRW-122 — the owner's own billing warning, shown while a payment is in
@@ -20,7 +21,7 @@ export function BillingBanner({
   billing,
   canPayOnline,
 }: {
-  billing: { status: string; message: string | null } | null;
+  billing: { status: string; message: string | null; autopayHalted?: boolean } | null;
   /**
    * GRW-145/163 — whether to offer "Pay now" at all.
    *
@@ -63,7 +64,40 @@ export function BillingBanner({
       <span aria-hidden style={{ flex: 'none', fontSize: 15, lineHeight: 1.4 }}>
         {restricted ? '⚠' : 'ⓘ'}
       </span>
-      <span style={{ minWidth: 0, flex: 1 }}>{billing.message}</span>
+      {/*
+       * Jira GRW-413 — when AutoPay has HALTED, this sentence REPLACES the status
+       * one rather than being added under it.
+       *
+       * The status sentence ("this month is not paid yet, access continues for
+       * now") is true and the less useful of the two: nothing Growza runs will
+       * collect this money, because the provider recovers a halted mandate only
+       * when the customer re-authorises it. The halted sentence says that and
+       * names the two actions that work. In the owner's own language, and only
+       * when there is somewhere to act and a role that may act (the API sets this
+       * on the same gates as Pay now).
+       *
+       * Replacing rather than adding is also what keeps the banner to ONE ROW.
+       * It was a second row, and the device matrix showed what that costs: at
+       * 568x320 the shell's bottom nav is pushed off `/reports`. That viewport
+       * fails with the plain banner too — it is a pre-existing shell defect,
+       * measured and reported, not this card's — and a warning that grew by a
+       * row would have made it worse for every route.
+       *
+       * One row, not one LINE, and the difference matters (Jira GRW-229 measured
+       * it). The structure below guarantees the row: one `<span>`, one sentence,
+       * a ternary between them, so a second row cannot appear. It guarantees
+       * nothing about height, because the halted sentence is longer than the
+       * status one it replaces and carries a link, so it WRAPS — 60px over two
+       * lines at 1470x760 against 47px over one for the sentence it replaces,
+       * and 87px over three at 402x874 against 67px over two. Whatever sits
+       * under this banner loses that height. Do not read "one row" as "no taller
+       * than before"; measure it.
+       *
+       * `billDue` is true by the fact this banner is rendering at all: it appears
+       * only for a subscription the ladder has moved off ACTIVE, which is a bill
+       * that has not been paid.
+       */}
+      <span style={{ minWidth: 0, flex: 1 }}>{billing.autopayHalted ? <AutopayHaltedLine billDue={true} /> : billing.message}</span>
       {/* GRW-145 — the one thing an owner reading this warning can actually do
           about it. Absent when online payment is off for them, in which case
           the message itself already tells them how to pay. */}

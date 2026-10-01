@@ -84,6 +84,9 @@ describe('AC-04 — an empty catalogue is not "Loading"', () => {
   it('says loading only while the list is null, and says there are none when it is empty', () => {
     expect(en.newVisit.searchServices).not.toMatch(/Loading/);
     expect(sheet).toMatch(/services === null \? nv\.loadingServices/);
-    expect(sheet).toMatch(/services\.length === 0 \? \(\s*<div className="empty">\{nv\.noServicesYet\}/);
+    expect(sheet).toMatch(/services\.length === 0 \? \(/);
+    // Jira GRW-384 — empty says so: naming the branch when there are several, plainly when there is one.
+    expect(sheet).toMatch(/nv\.noServicesAtBranch\(/);
+    expect(sheet).toMatch(/<div className="empty">\{nv\.noServicesYet\}/);
   });
 });

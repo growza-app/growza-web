@@ -43,9 +43,13 @@ function suggest(headers: string[]): Record<Field, number> {
  */
 export function ImportServices({
   existing,
+  branchId,
   onClose,
   onImported,
 }: {
+  /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
+  branchId: string;
+
   existing: ServiceAdmin[];
   onClose: () => void;
   onImported: () => void;
@@ -161,6 +165,7 @@ export function ImportServices({
             onBack={() => setStep('map')}
             onImported={onImported}
             lookup={(name) => byName.get(name.trim().toLowerCase()) ?? null}
+            branchId={branchId}
           />
         )}
 

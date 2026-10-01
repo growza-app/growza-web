@@ -4,6 +4,7 @@ import { serverLang } from '../../../../lib/lang';
 import { billingCopy } from '../../../../lib/billing-copy';
 import { PayNowButton } from '../../../../components/PayNowButton';
 import { PrintButton } from './PrintButton';
+import { getTranslations } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,10 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
     return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { ...opts, timeZone: 'UTC' });
   };
   const full = { day: 'numeric', month: 'short', year: 'numeric' } as const;
+  // Jira GRW-407 — what paid this bill, in the owner's words.
+  const tm = await getTranslations('billingMoney');
+  const how = (p: NonNullable<typeof bill.payments>[number]) =>
+    `${p.via === 'autopay' ? tm('viaAutopay') : p.via === 'pay_now' ? tm('viaPayNow') : tm('viaRecorded')}${p.fromAccount ? ` (${tm('fromAccount')})` : ''}`;
 
   return (
     <div className="bill-page bill-print">
@@ -66,6 +71,25 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
         <div className="bill-line bill-line-total">
           <span>{t.amount}</span>
           <span>{money(bill.amountMinor)}</span>
+        </div>
+        <div className="bill-paid" data-testid="bill-payments">
+          <h3 className="bill-card-title">{tm('paidHeading')}</h3>
+          {(bill.payments ?? []).length === 0 ? (
+            <p className="field-hint">{tm('nothingPaid')}</p>
+          ) : (
+            <ul className="bill-invoices">
+              {(bill.payments ?? []).map((p, i) => (
+                <li key={i} className="bill-line">
+                  <span>
+                    {p.amountMinor === 0
+                      ? tm('refundedLine', { amount: money(p.refundedMinor), how: how(p), date: p.paidOn ? date(p.paidOn, full) : '—' })
+                      : tm('paidLine', { amount: money(p.amountMinor), how: how(p), date: p.paidOn ? date(p.paidOn, full) : '—' })}
+                    {p.amountMinor > 0 && p.refundedMinor > 0 ? ` (${tm('refundedPart', { amount: money(p.refundedMinor) })})` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="bill-doc-actions no-print">
           {bill.unpaid && (me?.payments?.online ?? false) ? <PayNowButton restricted={false} /> : null}

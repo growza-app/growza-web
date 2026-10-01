@@ -145,6 +145,8 @@ export function AccountMenu() {
         ref={triggerRef}
         type="button"
         className="avatar-lg acct-trigger"
+        // Jira GRW-412 — a name that does not change with the language, for the device specs (the label is translated).
+        data-testid="account-menu"
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? dialogId : undefined}

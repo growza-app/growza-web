@@ -7,6 +7,7 @@ import { api, ApiError, type ProviderOverviewRow, type ProvidersOverview, type S
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
+import { useBranch } from '../components/BranchProvider';
 import { toWeekdayRows } from '../components/WeekdayHoursEditor';
 import { pickNoun } from '../lib/nouns';
 import { IconPlus, IconSearch } from '../components/icons';
@@ -136,17 +137,27 @@ export function StaffClient({
     }
   };
 
-  const { topPerformer } = overview;
-  // Jira GRW-234 — with branches, each row says where the person works.
-  const providers = useMemo(
-    () => (branches.length > 1 ? overview.providers.map((p) => ({ ...p, branchLabel: p.locationName })) : overview.providers),
-    [overview.providers, branches.length],
-  );
+  /*
+   * Jira GRW-395 — the header's branch is this screen's: its team only, and on "All" everyone, each row saying
+   * where they work (GRW-234). Narrowed here rather than asked of the API, because the plan's seats are the
+   * whole business's: a branch view counting only its own people offered seats the business did not have.
+   */
+  const branchContext = useBranch();
+  const branchId = branches.length > 1 ? branchContext.choice : null;
+  const everyone = overview.providers;
+  const providers = useMemo(() => {
+    if (branches.length <= 1) return everyone;
+    const here = branchId ? everyone.filter((p) => p.locationId === branchId) : everyone;
+    return branchId ? here : here.map((p) => ({ ...p, branchLabel: p.locationName }));
+  }, [everyone, branches.length, branchId]);
   const activeCount = providers.filter((p) => p.active).length;
   const workingTodayCount = providers.filter((p) => p.active && isWorkingToday(p)).length;
   const offTodayCount = providers.filter((p) => p.active && !isWorkingToday(p)).length;
   const inactiveCount = providers.filter((p) => !p.active).length;
-  const seatsLeft = Math.max(0, maxProviders - activeCount);
+  const seatsLeft = Math.max(0, maxProviders - everyone.filter((p) => p.active).length);
+  // The branch's own best, not the business's: on a branch the badge went to nobody, the business's top person
+  // working elsewhere (GRW-395 QA).
+  const topPerformerId = (branchId ? overview.topByBranch?.[branchId] : overview.topPerformer)?.id ?? null;
 
   const tabbed = useMemo(() => {
     switch (tab) {
@@ -297,7 +308,7 @@ export function StaffClient({
             tone="on"
             people={working}
             off={false}
-            topPerformerId={topPerformer?.id ?? null}
+            topPerformerId={topPerformerId}
             actions={actions}
             onOpenSheet={setSheetFor}
           />
@@ -306,7 +317,7 @@ export function StaffClient({
             tone="off"
             people={off}
             off
-            topPerformerId={topPerformer?.id ?? null}
+            topPerformerId={topPerformerId}
             actions={actions}
             onOpenSheet={setSheetFor}
           />
@@ -315,7 +326,7 @@ export function StaffClient({
             tone="off"
             people={inactive}
             off
-            topPerformerId={topPerformer?.id ?? null}
+            topPerformerId={topPerformerId}
             actions={actions}
             onOpenSheet={setSheetFor}
           />

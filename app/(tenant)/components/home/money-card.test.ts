@@ -96,9 +96,10 @@ describe('Bookings, when Home sends a branch', () => {
     expect(list).toMatch(/groupBookings\(branch \? appointments\.filter\(\(a\) => a\.locationId === branch\.id\) : appointments\)/);
   });
 
-  it('says which branch, offers the way out, and keeps it through the date form', () => {
-    expect(list).toMatch(/t\('branchOnly', \{ name: branch\.name \}\)/);
-    expect(list).toMatch(/t\('branchClear'\)/);
+  it("follows the header's branch, and keeps it through the date form (Jira GRW-395)", () => {
+    // The branch is the header's now: no "Only X · Clear" chip of its own, which only repeated it.
+    expect(list).not.toMatch(/t\('branchOnly'/);
+    expect(list).toMatch(/\}, \[branchContext\.ready, branchContext\.choice\]\);/);
     expect(list).toMatch(/name="location" value=\{branch\.id\}/);
   });
 
@@ -107,7 +108,7 @@ describe('Bookings, when Home sends a branch', () => {
   });
 });
 
-describe('the period switch beside the branch picker (Jira GRW-313)', () => {
+describe('the period switch on the toolbar row (Jira GRW-313)', () => {
   const owner = code('OwnerHome.tsx');
   const css = code('../../styles/86-money-card-phone.css');
 
@@ -116,16 +117,19 @@ describe('the period switch beside the branch picker (Jira GRW-313)', () => {
     expect(homeCopy('en').showMoneyFor).toBe('Show money for');
   });
 
-  it('the picker reads "All" on a narrow phone, and is still named "All branches"', () => {
-    expect(owner).toMatch(/aria-label=\{selected\?\.name \?\? t\.allBranches\}/);
-    expect(owner).toMatch(/<span className="hm-branch-short" aria-hidden="true">\{t\.allBranchesShort\}<\/span>/);
-    expect(css).toMatch(/@media \(max-width: 400px\)\s*\{\s*\.hm-branch-full\s*\{\s*display:\s*none;/);
-    expect(homeCopy('en').allBranchesShort).toBe('All');
+  it("Home has no branch picker of its own: the header's picks for every screen (Jira GRW-395)", () => {
+    const parts = code('parts.tsx');
+    expect(owner).not.toMatch(/className="hm-branch"/);
+    expect(owner).not.toMatch(/<BranchTabs/);
+    expect(parts).toMatch(/<HeaderBranchPicker \/>/);
+    expect(parts).toMatch(/\{locationName \? null : <HeaderBranchPicker variant="line" \/>\}/);
+    // Home follows the header's choice whenever it moves, not only once when it arrives.
+    expect(owner).toMatch(/\}, \[branchContext\.ready, branchContext\.choice\]\);/);
   });
 
-  it('a picked branch\'s name shortens with an ellipsis instead of pushing the row wide', () => {
-    expect(css).toMatch(/\.hm-branch-name,\s*\.hm-branch-full\s*\{[^}]*text-overflow:\s*ellipsis;/);
-    expect(css).toMatch(/\.hm-toolbar-multi \.hm-toolbar-end\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*0;/);
+  it('on a phone the branch keeps its name beside the date: the date gives way first', () => {
+    const picker = code('../../styles/94-header-branch-picker.css');
+    expect(picker).toMatch(/\.hm-head-branch \.hbp-line\s*\{\s*flex-shrink:\s*0;\s*max-width:\s*70%;/);
   });
 
   it('on a phone the period is a dropdown, not tabs — the row keeps its room for the branch picker', () => {

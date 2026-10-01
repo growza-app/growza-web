@@ -12,6 +12,8 @@
  * being buried in the transport layer.
  */
 
+import type { ReportRowKey } from '@growza-app/shared';
+
 export type ReportRangeKey =
   | 'today'
   | 'last_7_days'
@@ -62,14 +64,25 @@ export interface ReportSegment {
   count: number;
 }
 
+/**
+ * Jira GRW-363 — the code on a row whose name the report chose ("Came back", "Cash", "Unassigned").
+ * The screen words it (`useRowName`); `label` is the English the CSV writes. One list, in
+ * @growza-app/shared, for the API that writes it and this screen.
+ */
+export type { ReportRowKey };
+
 export interface ReportNamedValue {
   label: string;
   value: number;
   retired?: boolean;
+  key?: ReportRowKey;
 }
 
 export interface ReportHeatmap {
+  /** English short names. The screen names the rows from `dayNumbers` instead. */
   days: string[];
+  /** Jira GRW-363 — each row's weekday, 0 = Sunday. Absent from an API older than this. */
+  dayNumbers?: number[];
   hours: string[];
   grid: number[][];
   basis: 'booked_minutes' | 'booking_count';
@@ -138,6 +151,8 @@ export interface ReportProviderRow {
   utilisationPct: number | null;
   noShowPct: number | null;
   retired: boolean;
+  /** Jira GRW-363 — the row for visits recorded with no stylist; its `name` is English. */
+  key?: 'unassigned';
 }
 
 export interface ReportTopCustomer {
@@ -182,6 +197,8 @@ export interface ReportBookings {
   byStatus: ReportNamedValue[];
   bySource: ReportNamedValue[];
   peakPeriods: ReportHeatmap;
+  /** Jira GRW-406 — tokens issued in the range. Optional so an older API does not break the tab. */
+  tokens?: { issued: number; waiting?: number; served: number; paid: number; left: number; cancelled: number };
 }
 
 export interface ReportServices {

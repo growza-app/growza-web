@@ -2,6 +2,8 @@
   "errors": {
     "busy": "The app is busy right now.",
     "busyHelp": "Please wait a moment, then try again.",
+    "forbidden": "This screen is not for your role.",
+    "forbiddenHelp": "Ask the owner if you need it.",
     "down": "Cannot reach the server.",
     "downHelp": "Ask your developer to start it, or run <code>npm run dev</code>.",
     "tryAgain": "Try again",
@@ -68,10 +70,6 @@
     "allStatuses": "All bookings",
     "unmarkedOnly": "Showing {count} finished and not marked",
     "unmarkedClear": "Show all",
-    "branchOnly": "Showing {name} only",
-    "branchClear": "All branches",
-    "branchTabsAll": "All",
-    "branchTabsLabel": "Branch",
     "staffTableCaption": "Each person's bookings for the day. Choose a row to see only their schedule.",
     "staffColBooked": "Booked",
     "staffColNext": "Next",
@@ -130,7 +128,9 @@
     "offers": "offers",
     "settingsTitle": "Settings",
     "moreTitle": "More",
-    "bookingsTitle": "Bookings"
+    "bookingsTitle": "Bookings",
+    "booking": "booking",
+    "bookings": "bookings"
   },
   "customers": {
     "subtitle": "View and manage your {noun}. See their booking history and spend.",
@@ -191,7 +191,8 @@
     "whatsappNumber": "WhatsApp number",
     "nameOptional": "Name (optional)",
     "namePlaceholder": "e.g. Priya Sharma",
-    "couldNotAdd": "Could not add the {noun}."
+    "couldNotAdd": "Could not add the {noun}.",
+    "whichBranch": "Which branch"
   },
   "freeTimes": {
     "title": "Free times",
@@ -200,8 +201,6 @@
     "newBookingSubtitle": "Pick a service and a time to book someone in.",
     "pickService": "Which service?",
     "pickDay": "Which day?",
-    "whichBranch": "Which branch?",
-    "mainBranch": "{name} (Main)",
     "show": "Show free times",
     "minutes": "{count} min",
     "countLabel": "{count, plural, one {# time free} other {# times free}}",
@@ -259,8 +258,10 @@
     "back": "Back to Settings",
     "comingSoon": "Coming soon",
     "groups": {
+      "branchNamed": "{name} branch",
       "business": "Business",
-      "booking": "Booking",
+      "wholeBusiness": "Whole business",
+      "teamAndBilling": "Team and billing",
       "preferences": "Preferences",
       "account": "Account"
     },
@@ -268,6 +269,14 @@
       "profile": {
         "label": "Business profile",
         "sub": "Name, address, contact details"
+      },
+      "branchProfile": {
+        "label": "Branch profile",
+        "sub": "Name, address, phone"
+      },
+      "business": {
+        "label": "Business name and logo",
+        "sub": "Name, logo, time zone"
       },
       "branches": {
         "label": "Branches",
@@ -306,8 +315,8 @@
         "sub": "Data and privacy settings"
       },
       "reportAccess": {
-        "label": "Report access",
-        "sub": "Who else can see Reports"
+        "label": "Who sees what",
+        "sub": "Reports and client numbers"
       },
       "teamAccess": {
         "label": "Team access",
@@ -325,11 +334,6 @@
         "label": "Log out",
         "sub": "Sign out from this device"
       }
-    },
-    "branchPicker": {
-      "all": "All branches",
-      "defaults": "Business defaults",
-      "thisOnly": "This branch only"
     }
   },
   "common": {
@@ -344,7 +348,8 @@
       "next": "Next page",
       "summary": "Showing <b>{from}–{to}</b> of <b>{total}</b> {noun}",
       "page": "Page {current} of {count}"
-    }
+    },
+    "noProvider": "No {provider}"
   },
   "branchScope": {
     "topics": {
@@ -352,19 +357,25 @@
       "bookingRules": "booking rules",
       "teamAccess": "team access",
       "reportAccess": "who sees Reports",
-      "reminders": "reminders",
-      "phoneAndDescription": "phone and description"
+      "reminders": "reminders"
     },
     "sameForAll": "<b>Same for every branch.</b> Changes to {what} here apply to all {count} branches.",
-    "allBranches": "<b>All branches.</b> These {what} are the business default. A branch with its own {what} keeps them.",
     "usesBusiness": "<b>{branch}</b> uses the business’s {what}. Change anything here to give {branch} its own.",
     "hasOwn": "<b>{branch}</b> has its own {what}.",
     "resetting": "Resetting…",
     "resetFailed": "Could not reset — try again",
-    "useBusiness": "Use business settings"
+    "useBusiness": "Use business settings",
+    "applyAll": "Apply to all branches",
+    "applyConfirm": "Give all {count} branches <b>{branch}</b>’s saved {what}? Changes not saved yet are left out.",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "applying": "Applying…",
+    "applyFailed": "Could not apply — try again",
+    "applied": "<b>All {count} branches</b> now have these {what}."
   },
   "settingsProfile": {
     "title": "Business profile",
+    "titleBusinessOnly": "Business name and logo",
     "branchTitleNamed": "{name} profile",
     "branchTitleUnnamed": "Branch profile",
     "sub": "What your customers see when they book with you.",
@@ -398,7 +409,7 @@
       "change": "Change logo",
       "upload": "Upload logo"
     },
-    "addressesHint": "You have {count} branches. Pick one at the top to change its address, phone and description.",
+    "addressesHint": "You have {count} branches. Each one’s address, phone and description are on its Branch profile.",
     "errors": {
       "saveFailed": "Could not save — check the server is running.",
       "nameEmpty": "Business name cannot be empty",
@@ -419,7 +430,8 @@
       "bangladesh": "Bangladesh (Asia/Dhaka)",
       "sriLanka": "Sri Lanka (Asia/Colombo)",
       "nepal": "Nepal (Asia/Kathmandu)"
-    }
+    },
+    "subBusinessOnly": "The name and logo every branch shares."
   },
   "weekdayHours": {
     "closed": "Closed",
@@ -472,18 +484,17 @@
     "add": "Add",
     "removeAria": "Open again on {day}",
     "allBranchesChip": "{day} · all branches",
-    "allBranchesTitle": "Closed at every branch — change it under All branches",
+    "allBranchesTitle": "Closed at every branch",
     "noClosed": "No closed days. Add a holiday and nobody can book that day.",
     "closedNote": "Nobody can book on these days. Bookings already made are not cancelled.",
-    "staffSees": "Staff can see client name and number",
-    "staffSeesOn": "Your team sees who each booking is for, and can call them.",
-    "staffSeesOff": "Your team sees the booking, the service and the time — but not who it is for. You and your managers still see everything.",
     "save": "Save changes",
     "saving": "Saving…",
     "saved": "Saved",
     "errors": {
       "saveFailed": "Could not save — check the server is running."
-    }
+    },
+    "everyBranch": "Close every branch",
+    "removeAllAria": "Open every branch again on {day}"
   },
   "settingsReminders": {
     "title": "Notifications",
@@ -530,7 +541,11 @@
     "saved": "Saved",
     "errors": {
       "saveFailed": "Could not save — check the server is running."
-    }
+    },
+    "contactTitle": "Client phone numbers",
+    "staffSees": "Staff can see client name and number",
+    "staffSeesOn": "Your team sees who each booking is for, and can call them.",
+    "staffSeesOff": "Your team sees the booking, the service and the time — but not who it is for. You and your managers still see everything."
   },
   "settingsBranches": {
     "title": "Branches",
@@ -566,7 +581,15 @@
       "sayWhy": "Say why.",
       "cancel": "Cancel",
       "working": "Working…"
-    }
+    },
+    "bookingLink": "Booking link",
+    "bookingLinkAria": "Booking link for {name}",
+    "copy": "Copy",
+    "copied": "Copied",
+    "bookingLinkNoNumber": "Add a mobile number that is on WhatsApp as the business phone in Business name and logo to get a link.",
+    "bookingLinkHint": "Put it on this branch’s QR code or Instagram: whoever opens it is booked here without being asked which branch.",
+    "tryIt": "Try it",
+    "bookingLinkNumber": "It opens WhatsApp at {number}, the business phone in Business name and logo. That number must be on WhatsApp."
   },
   "settingsTeam": {
     "title": "Team access",
@@ -692,7 +715,9 @@
       "notYet": "NOT YET",
       "photoSub": "Photo, PDF, or a menu forwarded on WhatsApp. We read the names and prices; you confirm every row before it saves.",
       "or": "or",
-      "manual": "Add one {singular} manually"
+      "manual": "Add one {singular} manually",
+      "copyTitle": "Copy from another branch",
+      "copySub": "Start with that branch’s services, then change what differs"
     },
     "import": {
       "fields": {
@@ -801,7 +826,25 @@
       "deleteDetail": "Nothing has been written yet — this only changes what you are about to import. Leaving this screen and opening the catalogue again brings all of them back.",
       "deleteConfirm": "Delete category"
     },
-    "retireConfirm": "Retire"
+    "retireConfirm": "Retire",
+    "emptyBranch": "No services at this branch yet.",
+    "emptyAll": "No services yet.",
+    "copyFromBranch": "Copy from another branch",
+    "copy": {
+      "title": "Copy from another branch",
+      "from": "Copy from",
+      "loading": "Loading…",
+      "loadFailed": "Could not load that branch’s services.",
+      "failed": "Could not copy. Nothing was changed.",
+      "sourceEmpty": "That branch has no services to copy.",
+      "all": "All ({count})",
+      "alreadyHere": "Already here",
+      "independent": "Copies are separate: changing a price here never changes the other branch.",
+      "copy": "{count, plural, one {Copy # service} other {Copy # services}}",
+      "added": "{count, plural, =0 {Nothing new was added.} one {# service added.} other {# services added.}}",
+      "skipped": "{count, plural, one {Skipped # already here: {names}} other {Skipped # already here: {names}}}",
+      "done": "Done"
+    }
   },
   "staff": {
     "addLabel": "Add {label}",
@@ -916,6 +959,13 @@
     "fullName": "Full name",
     "branch": "Branch",
     "branchHoursHint": "They follow the salon's hours, so they will take this branch's hours.",
+    "moveSkillsTitle": "Their services at {branch}",
+    "moveSkillsMatch": "Match by name",
+    "moveSkillsMatchSub": "Each service they do now becomes {branch}'s service with the same name.",
+    "moveSkillsNone": "Start with none",
+    "moveSkillsNoneSub": "Pick their services after the move.",
+    "moveSkillsLater": "Their services at {branch} are set when you save. Change them after that.",
+    "moveUnmatched": "{branch} has no service with the same name for: {names}. Tick what they can do below.",
     "role": "Role",
     "mobile": "Mobile",
     "earnings": "Earnings",
@@ -1108,6 +1158,17 @@
         "saveFailed": "Could not save — check the server is running.",
         "deleteFailed": "Could not delete — check the server is running."
       }
+    },
+    "branch": {
+      "which": "Which branch?",
+      "allBranches": "Also publish at every other branch",
+      "oneBranchHint": "It runs at this branch only. Another branch can have its own.",
+      "allBranchesHint": "Each branch gets its own copy, made from its own menu. A branch whose menu is missing one of them is skipped.",
+      "resultTitle": "{title} is published",
+      "resultPublished": "Running at: {branches}.",
+      "resultSkipped": "Not at {branch}: its menu has no {missing}.",
+      "done": "Done",
+      "tag": "{branch}"
     }
   },
   "attendance": {
@@ -1136,8 +1197,6 @@
       "yesterday": "Yesterday",
       "searchPlaceholder": "Search {label} by name or role",
       "searchAria": "Search {label}",
-      "branchKey": "Branch:",
-      "allBranches": "All branches",
       "statusKey": "Status:",
       "allStaff": "All {label}",
       "markAll": "Mark all present",
@@ -1277,7 +1336,13 @@
       "minutes": "{count} min"
     },
     "callName": "Call {name}",
-    "customerLower": "customer"
+    "customerLower": "customer",
+    "branchPicker": {
+      "label": "Branch",
+      "all": "All branches",
+      "allHint": "Every branch together",
+      "thisBranch": "This branch"
+    }
   },
   "auth": {
     "metaTitle": "Sign in",
@@ -1388,6 +1453,7 @@
     "loadingServices": "Loading services…",
     "noServicesYet": "No services yet. Add them under Services first.",
     "noServiceMatch": "No service matches that.",
+    "alsoTry": "Also try",
     "combos": "Combos & offers",
     "comboServices": "{n, plural, one {# service} other {# services}}",
     "picked": "Chosen",
@@ -1398,7 +1464,6 @@
     "withWhom": "Which {provider}?",
     "whichBranch": "Which branch?",
     "whoeverIsFree": "Whoever is free",
-    "noStylist": "No stylist",
     "freeCount": "{n, plural, =0 {nobody free} other {# free}}",
     "chairFree": "free now",
     "chairBusy": "with {name} · till {until}",
@@ -1437,7 +1502,9 @@
     "openingTill": "Opening…",
     "tillFailed": "Could not open the till here. The visit is saved — take the payment from Bookings.",
     "notPaidYet": "The visit is saved, but it is not paid yet. Take the payment now, or later from Bookings.",
-    "done": "Done"
+    "done": "Done",
+    "noServicesAtBranch": "{branch} has no {services} yet, so nothing can be booked there.",
+    "addOrCopyServices": "Add or copy {services}"
   },
   "moveBooking": {
     "title": "Move this booking",
@@ -1508,8 +1575,6 @@
     }
   },
   "reports": {
-    "allBranches": "All branches",
-    "branchClientsNote": "Money and bookings are for {branch}. Client groups count every branch.",
     "title": "Reports",
     "navLabel": "Reports",
     "tabs": {
@@ -1644,7 +1709,8 @@
       "peak": "Your busiest hours",
       "peakHint": "Which hours of the week fill up, averaged across the period",
       "peakQuiet": "Nobody in",
-      "peakBusy": "Busiest"
+      "peakBusy": "Busiest",
+      "peakCell": "{day} {hour} · {pct}% of your busiest hour"
     },
     "servicesTab": {
       "mostBooked": "Booked most often",
@@ -1715,7 +1781,8 @@
       "colInterval": "Comes every",
       "daysAgo": "{n, plural, one {# day ago} other {# days ago}}",
       "neverIn": "never been in",
-      "repeatRate": "Came back"
+      "repeatRate": "Came back",
+      "comesEvery": "~{days}d"
     },
     "units": {
       "day": "day",
@@ -1725,6 +1792,104 @@
     "noCompletedVisits": "{band} · no completed visits",
     "daysCount": "{days, plural, one {# day} other {# days}}",
     "retiredNote": "retired",
-    "notAvailable": "Reports are not available for your role. Ask the owner if you need them."
+    "notAvailable": "Reports are not available for your role. Ask the owner if you need them.",
+    "rows": {
+      "everything_else": "Everything else",
+      "returning": "Came back",
+      "new": "First visit",
+      "one_off": "One-off",
+      "not_recorded": "Not recorded",
+      "whatsapp": "WhatsApp",
+      "spend_10k_plus": "₹10,000+",
+      "spend_5k_10k": "₹5,000–10,000",
+      "spend_1k_5k": "₹1,000–5,000",
+      "spend_under_1k": "Under ₹1,000",
+      "visits_10_plus": "10+ visits",
+      "visits_5_to_9": "5–9 visits",
+      "visits_2_to_4": "2–4 visits",
+      "visits_once": "Just once",
+      "visits_never": "Never been in"
+    },
+    "bookingsCount": "{n, plural, one {# {one}} other {# {other}}}",
+    "duration": {
+      "hm": "{h}h {m}m",
+      "h": "{h}h",
+      "m": "{m}m"
+    }
+  },
+  "autopayRenewal": {
+    "ask": "Your bill goes up to {amount} a month from {date}. Please approve {amount} in your UPI app, so it keeps being paid on its own.",
+    "soon": "Only {days, plural, one {# day} other {# days}} left. Approve {amount} before {date}, or automatic payment will pay only {old}.",
+    "last": "Last day to approve {amount}. If you don't, automatic payment will pay only {old} on {date}.",
+    "missed": "Automatic payment paid only {old} of this month's {amount} bill. Pay the rest on the Billing page, and approve {amount} so next month is paid in full.",
+    "missedHere": "Automatic payment paid only {old} of this month's {amount} bill. Pay the rest with Pay now at the top of this page, and approve {amount} so next month is paid in full.",
+    "waiting": "You started approving. Finish it in your UPI app.",
+    "approve": "Approve {amount}",
+    "finish": "Finish approving in UPI",
+    "opening": "Opening…",
+    "failed": "Could not open your UPI app just now. Please try again in a moment.",
+    "openBilling": "Open Billing",
+    "lower": "Your bill went down to {amount} a month, but automatic payment still takes {old}. The extra is taken off your next bill.",
+    "lowerAction": "Change automatic payment to {amount}",
+    "halted": "Your automatic payment stopped. Re-approve it, or pay this bill now.",
+    "haltedNoBill": "Your automatic payment stopped. Re-approve it so next month’s bill is paid on its own.",
+    "haltedApprove": "Re-approve automatic payment"
+  },
+  "billingMoney": {
+    "onAccount": "{amount} is on your account. It will be taken off your next bill.",
+    "paidHeading": "Paid",
+    "nothingPaid": "Nothing paid on this bill yet.",
+    "paidLine": "{amount} · {how} · {date}",
+    "viaAutopay": "automatic payment",
+    "viaPayNow": "Pay now",
+    "viaRecorded": "recorded by Growza",
+    "fromAccount": "from money on your account",
+    "refundedLine": "{amount} · {how} · {date} — refunded",
+    "refundedPart": "{amount} refunded"
+  },
+  "tokens": {
+    "board": "Today's tokens",
+    "waiting": "Waiting",
+    "withProvider": "With {provider}",
+    "paid": "Paid",
+    "waitingTab": "Waiting ({count})",
+    "withTab": "With {provider} ({count})",
+    "paidTab": "Paid ({count})",
+    "nobodyWaiting": "Nobody is waiting.",
+    "nobodyWith": "Nobody is with a {provider} right now.",
+    "nobodyPaid": "Nobody has paid yet.",
+    "servicesAtPayment": "Services picked at payment",
+    "noProvider": "No {provider}",
+    "giveTo": "Give to {provider}",
+    "recordPayment": "Record payment",
+    "paidAmount": "{amount} · {mode}",
+    "newToken": "New token",
+    "newBooking": "New booking",
+    "newTokenSub": "Just a name. What they have is picked when they pay.",
+    "atBranch": "At {branch}",
+    "giveToken": "Give token",
+    "giving": "Giving…",
+    "tokenIssued": "Token {n}",
+    "tellThem": "Tell {name} their number.",
+    "anotherToken": "Another token",
+    "bookedToday": "Booked for today",
+    "bookedTodaySub": "Not on the board yet",
+    "nothingBooked": "No other bookings today.",
+    "arrived": "Arrived",
+    "arriving": "Saving…",
+    "arrivedFor": "Arrived — {name}",
+    "bookedAt": "Booked {time}",
+    "figuresToday": "Tokens today",
+    "figuresSub": "Everybody given a number at the counter",
+    "figuresReport": "Tokens",
+    "figuresReportHint": "Everybody given a number at the counter in this period. Only the branch filter applies to tokens.",
+    "issued": "Tokens given",
+    "served": "Served",
+    "paidCount": "Paid",
+    "left": "Left without service",
+    "noName": "No name",
+    "giveFor": "Give to {provider} — token {n}, {name}",
+    "payFor": "Record payment — token {n}, {name}",
+    "cancelledCount": "Cancelled"
   }
 }

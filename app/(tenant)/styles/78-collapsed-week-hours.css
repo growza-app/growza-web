@@ -9,6 +9,49 @@
  * only across. With three rows of different content, ragged columns are what
  * made the old seven-row version hard to scan even before the repetition.
  */
+/*
+ * Jira GRW-414 — the rows ask how much room THEY have, not how wide the window is.
+ *
+ * Every threshold below used to be a `@media` width, and every one of them was
+ * answering the wrong question. This editor renders at three different widths
+ * on the same 1024px screen: full-card on Working hours, and inside the
+ * Settings form column once the shell goes two-column at 861px, where the card
+ * is 429px. Read as "1024px, so there is plenty of room", the rows laid
+ * themselves out one line wide and the card clipped 84px of them off
+ * (`overflow: hidden`, 05-cards.css) — 236px at 861×500, where the column is
+ * only 276px.
+ *
+ * Measured on the merge base, container width against what the row did:
+ *
+ *   566px  (viewport 640)  stacked — the phone shape
+ *   567px  (viewport 641)  ONE LINE, and the times truncated: 63px of room for
+ *                          text needing 74px. Invisible to the device sweep,
+ *                          which measures element rects while `input[type=time]`
+ *                          draws its text in shadow DOM (the GRW-208 lesson).
+ *   586px  (viewport 660)  one line, still truncated — 73px of 74px
+ *   606px  (viewport 680)  one line, and it finally fits
+ *   236/389/461px          the two-column Settings column at 861 / 1024 / 1101
+ *
+ * So the shape flips at 650px of CONTAINER: everything that was stacked before
+ * still stacks, the band that was quietly cutting "09:00 AM" now stacks too,
+ * and the narrow Settings column gets the phone shape it always needed.
+ *
+ * Why 650 and not 600, which is where the measurements above alone would put
+ * it: the type is 20px once the window passes 861px, and at 20px "09:00 AM"
+ * needs 93px of room. A 605px container one-lines with 82px, a 620px one with
+ * 90px — both cut. The deleted `min-width: 118px` in 85-settings-fit.css used
+ * to cover that band by force, so this threshold is what replaces it. 651px up
+ * leaves at least 105px per field, measured.
+ *
+ * The cost, stated: three widths that one-lined before now stack — 680, 720
+ * and 1280 — of which two were truncating or within 7px of it anyway. Rows get
+ * taller, so the Settings pane scrolls sooner, which BR-01 of Jira GRW-414
+ * chooses on purpose: a row that cannot shrink scrolls, it is never hidden.
+ */
+.wk-week {
+  container-type: inline-size;
+}
+
 .wk-row {
   display: grid;
   /*
@@ -242,12 +285,17 @@
 }
 
 /*
- * Below ~400px there is no slack left to claim, so the type gives way instead
- * of the content. 17px is still above iOS Safari's 16px threshold, under which
- * focusing an input zooms the whole page — which is the thing the 20px choice
- * was protecting, and it survives here.
+ * Below ~326px of row there is no slack left to claim, so the type gives way
+ * instead of the content. 17px is still above iOS Safari's 16px threshold,
+ * under which focusing an input zooms the whole page — which is the thing the
+ * 20px choice was protecting, and it survives here.
+ *
+ * 326px is where a 400px viewport put this row before Jira GRW-414, so no
+ * phone changes. What it also now catches is the 236px Settings column at
+ * 861×500: stacked and un-indented that column gives each field 89px of text
+ * room, and "09:00 AM" at 20px needs 93px. At 17px it needs 79px and fits.
  */
-@media (max-width: 400px) {
+@container (max-width: 326px) {
   .wk-times input[type='time'] {
     font-size: 17px;
   }
@@ -272,7 +320,7 @@
  * The split control keeps its words rather than becoming an icon: "Set one day
  * differently" is not a thing anybody guesses from a glyph.
  */
-@media (max-width: 640px) {
+@container (max-width: 650px) {
   .wk-row {
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
@@ -289,24 +337,56 @@
 }
 
 /*
- * At 360px and below the type has given all it can — 17px is the floor, since
- * under 16px focusing the field zooms the page on iOS — so the LAYOUT gives
- * instead. The times stop indenting under the switch and take the full card
- * width, which is worth about 56px, or 28px per field.
+ * At 286px of row and below the type has given all it can — 17px is the floor,
+ * since under 16px focusing the field zooms the page on iOS — so the LAYOUT
+ * gives instead. The times stop indenting under the switch and take the full
+ * card width, which is worth about 56px, or 28px per field.
  *
  * Measured, not guessed: each field needs ~93px to render "09:00 AM" at 17px,
  * and the indented row gave it 92.5px at 344px (Galaxy Z Fold closed) and
  * 80.5px at 320px (iPhone SE). Both clipped to "09:00 A". Un-indented they get
  * ~108px, which is the same margin the 375px row already has.
  *
+ * 286px is where a 360px viewport put this row before Jira GRW-414, so those
+ * phones are unchanged. It is also what rescues the 236px Settings column at
+ * 861×500: indented, that column leaves 71px per field, and un-indented 99px.
+ *
  * The switch keeps its own line with the day strip, so nothing about which row
  * the control belongs to becomes ambiguous.
  */
-@media (max-width: 360px) {
+@container (max-width: 286px) {
   .wk-row {
     grid-template-areas:
       'sw days'
       'times times'
       'split split';
+  }
+}
+
+/*
+ * Jira GRW-414 — under ~210px the two fields stop sharing a line.
+ *
+ * Found on the staff member screen, not Working hours: its hours column is
+ * 178px at 861×500, narrower than anything Settings has. Even un-indented at
+ * 17px that leaves 60px per field for text needing 79px, so both times
+ * rendered as "09:00 A". One field per line gives each about 154px.
+ *
+ * The dash goes with the wrap: "–" between two times reads as a range, and
+ * stacked it would sit under one of them meaning nothing. It is `aria-hidden`
+ * decoration either way — each field keeps its own "opens at" / "closes at"
+ * label, so nothing that is announced changes.
+ */
+@container (max-width: 210px) {
+  .wk-times {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .wk-times input[type='time'] {
+    flex: 1 0 calc(100% - 23px);
+  }
+
+  .wk-dash {
+    display: none;
   }
 }

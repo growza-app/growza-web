@@ -180,6 +180,11 @@
 
 .rp-cs-band:hover { background: var(--page-bg); }
 
+/* Jira GRW-409 — a band for a viewer the Clients list refuses: a figure, not a button. Same look, no hover, and
+   the browser's greyed-out disabled text undone — nothing here is unavailable, it simply goes nowhere. */
+.rp-cs-band:disabled { cursor: default; color: inherit; }
+.rp-cs-band:disabled:hover { background: var(--surface); }
+
 .rp-cs-band.is-on {
   background: var(--accent-soft);
   border-color: #bfe0cc;

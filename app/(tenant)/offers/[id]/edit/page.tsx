@@ -6,10 +6,13 @@ import { PageHeader } from '../../../components/PageHeader';
 import { ComboBuilder } from '../../ComboBuilder';
 import { LoadErrorBanner } from '../../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../../lib/load-error';
+import { guardScreen } from '../../../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function EditComboPage({ params }: { params: Promise<{ id: string }> }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/offers');
   const { id } = await params;
   const t = await getTranslations('offers');
 

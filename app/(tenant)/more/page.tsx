@@ -30,12 +30,18 @@ export default async function MorePage() {
   let whatsappLive = false;
   /** Jira GRW-266 · GRW-271 — off in production, and off when the API cannot say. */
   let whatsappDemo = false;
+  /**
+   * Jira GRW-409 — the Reports tabs this salon opened to this role (GRW-197). The sidebar passed them and this
+   * menu did not, so a receptionist granted a tab was offered Reports in one menu and not in the other.
+   */
+  let reportTabs: string[] | undefined;
   try {
     const me = await api.me();
     labels = me.labels;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
+    reportTabs = me.reportTabs;
   } catch {
     // Falls back to the plain-language defaults below, and to the owner nav —
     // a degraded API must not hide the product from the person who owns it.
@@ -82,7 +88,7 @@ export default async function MorePage() {
       <PageHeader title={tn('moreTitle')} />
       <div className="page-body">
         <div className="menu-list">
-          {visibleItems(items, role).map((item) => (
+          {visibleItems(items, role, reportTabs).map((item) => (
             <a className="menu-row" key={item.href} href={item.href}>
               {item.icon}
               {item.label}

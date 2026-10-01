@@ -3,7 +3,6 @@
 import { useReportsCopy } from '../lib/use-reports-copy';
 import type { ReactNode } from 'react';
 
-import { copy } from '../lib/copy';
 import type { ReportMetric, ReportPoint } from '../lib/api';
 import { IconTrendDown, IconTrendUp } from '../components/icons';
 import { InfoTip } from '../components/InfoTip';

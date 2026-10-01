@@ -1,5 +1,8 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
+
+import { useLabel } from '../components/LabelsProvider';
+import { nounInSentence, pickNoun } from './nouns';
 
 /**
  * Jira GRW-363 — the Reports screen's words, in the owner's language.
@@ -11,10 +14,14 @@ import { useMemo } from 'react';
  */
 export function useReportsCopy() {
   const t = useTranslations('reports');
+  const nouns = useTranslations('nouns');
+  const locale = useLocale();
+  // Jira GRW-363 — what a count is of, in the vertical's words ("5 visits" for a clinic), or the
+  // generic word in another language, as Home counts them.
+  const booking = pickNoun(locale, nounInSentence(useLabel('appointment', 'Booking')), nouns('booking'));
+  const bookings = pickNoun(locale, nounInSentence(useLabel('appointments', 'Bookings')), nouns('bookings'));
   return useMemo(
     () => ({
-      allBranches: t('allBranches'),
-      branchClientsNote: (branch: string) => t('branchClientsNote', { branch }),
       title: t('title'),
       navLabel: t('navLabel'),
       tabs: {
@@ -113,6 +120,15 @@ export function useReportsCopy() {
       noData: t('noData'),
       noDataHint: (range: string) => t('noDataHint', { range: range.toLowerCase() }),
       notEnoughVisits: t('notEnoughVisits'),
+      /** Jira GRW-363 — "5 bookings" ("5 visits" for a clinic), the figure a bookings chart names when you point at it. */
+      bookingsCount: (n: number) => t('bookingsCount', { n, one: booking, other: bookings }),
+      /** Jira GRW-363 — "3h 20m" / "3 घंटे 20 मिनट": an owner reads hours, not 200 minutes. */
+      duration: (minutes: number) => {
+        const h = Math.floor(minutes / 60);
+        const m = Math.round(minutes % 60);
+        if (h === 0) return t('duration.m', { m });
+        return m === 0 ? t('duration.h', { h }) : t('duration.hm', { h, m });
+      },
       loadFailed: t('loadFailed'),
       retry: t('retry'),
       comingSoonTab: t('comingSoonTab'),
@@ -150,6 +166,7 @@ export function useReportsCopy() {
         peakHint: t('bookingsTab.peakHint'),
         peakQuiet: t('bookingsTab.peakQuiet'),
         peakBusy: t('bookingsTab.peakBusy'),
+        peakCell: (day: string, hour: string, pct: number) => t('bookingsTab.peakCell', { day, hour, pct }),
       },
       servicesTab: {
         mostBooked: t('servicesTab.mostBooked'),
@@ -220,9 +237,10 @@ export function useReportsCopy() {
         colInterval: t('customersTab.colInterval'),
         daysAgo: (n: number) => t('customersTab.daysAgo', { n }),
         neverIn: t('customersTab.neverIn'),
+        comesEvery: (days: number) => t('customersTab.comesEvery', { days }),
         repeatRate: t('customersTab.repeatRate'),
       },
     }),
-    [t],
+    [t, booking, bookings],
   );
 }

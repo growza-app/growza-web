@@ -117,7 +117,10 @@ export function MoveBookingSheet({
     void api
       .providers()
       .then((r) => {
-        if (!cancelled) setProviders(r);
+        // Jira GRW-379 — the visit's own branch: another branch sells its own copy of the service, at its own
+        // price, so a move there is refused. Cancel and book there instead.
+        const here = appointment.locationId;
+        if (!cancelled) setProviders(r.filter((p) => !here || !p.locationId || p.locationId === here));
       })
       .catch(() => {
         // The chip row disappears and the booking keeps its stylist, which is
@@ -127,7 +130,7 @@ export function MoveBookingSheet({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [appointment.locationId]);
 
   /*
    * Free times for the WHOLE visit, so a combo is only offered slots it fits

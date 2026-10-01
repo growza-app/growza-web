@@ -6,14 +6,19 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { pickNoun } from '../lib/nouns';
+import { loadAtBranch } from '../lib/branch-load';
+import { BranchUrlSync } from '../components/BranchUrlSync';
+import { guardScreen } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ status?: string; sort?: string; dir?: string; branch?: string }>;
 }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/customers');
   const params = await searchParams;
   // Deep-linked from Home's "Needs attention" card (?status=at_risk&sort=spent)
   // and from every Reports segment card — validated against the real union
@@ -36,13 +41,17 @@ export default async function CustomersPage({
   const nouns = await getTranslations('nouns');
   const locale = await getLocale();
 
-  let stats, first, me;
+  let stats, first, me, branch;
   try {
-    [stats, first, me] = await Promise.all([
-      api.customerStats(),
-      api.customers({ status, sort, direction, limit: 20, offset: 0 }),
-      api.me(),
-    ]);
+    // Jira GRW-392 — each branch keeps its own clients: the branch in the address, the shared one BranchUrlSync puts
+    // there, or every branch (null) for an owner on "All". A receptionist's is always their own. Jira GRW-397 —
+    // loaded alongside `/me`, not after it.
+    const loaded = await loadAtBranch(params.branch, api.me(), (location) =>
+      Promise.all([api.customerStats(location), api.customers({ status, sort, direction, limit: 20, offset: 0, location })]),
+    );
+    me = loaded.me!;
+    branch = loaded.branch!;
+    [stats, first] = loaded.data;
   } catch (error) {
     return (
       <>
@@ -58,14 +67,20 @@ export default async function CustomersPage({
   // config, never hardcoded (CLAUDE.md: every dashboard-visible noun comes
   // from ctx.labels).
   return (
-    <CustomersClient
+    <>
+      <BranchUrlSync />
+      <CustomersClient
+      key={branch.choice ?? 'all'}
+      branchId={branch.choice}
+      branches={branch.multi && !branch.pinned ? branch.branches : []}
       initialStats={stats}
       initialPage={first}
       initialStatus={status}
       initialSort={sort}
       initialDirection={direction}
       label={pickNoun(locale, me.labels.customers ?? 'Customers', nouns('customersTitle'))}
-    />
+      />
+    </>
   );
 }
 

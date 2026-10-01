@@ -1,51 +1,56 @@
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import type { SettingsSummary } from '../lib/api';
-import { withBranch } from './SettingsBranchPicker';
+import { withBranch } from './branch-link';
 import { IconChevronRight } from '../components/icons';
-import { SETTINGS_GROUPS } from './nav-data';
+import { SETTINGS_GROUPS, type SettingsGroupKey } from './nav-data';
 import { SignOutButton } from '../components/SignOutButton';
+import { useBranch } from '../components/BranchProvider';
 
-/** The mobile hub's top card — desktop hides it via CSS (`.settings-header-card` under the 861px breakpoint) since the persistent left pane there has no room for it and goes straight into the section groups. */
-function HeaderCard({ settings }: { settings: SettingsSummary }) {
-  const locationLine = settings.location ? [settings.location.name, settings.location.addressCity].filter(Boolean).join(', ') : null;
-  return (
-    <a className="settings-header-card" href="/settings/profile">
-      {settings.tenant.logoUrl ? (
-         
-        <img
-          src={settings.tenant.logoUrl}
-          alt=""
-          className="settings-header-avatar"
-          style={{ objectFit: 'cover' }}
-        />
-      ) : (
-        <div className="settings-header-avatar">{settings.tenant.name.charAt(0).toUpperCase()}</div>
-      )}
-      <div className="settings-header-body">
-        <div className="settings-header-name">{settings.tenant.name}</div>
-        {locationLine && <div className="settings-header-sub">{locationLine}</div>}
-      </div>
-      <span className="settings-row-chev">
-        <IconChevronRight />
-      </span>
-    </a>
-  );
-}
+/*
+ * Jira GRW-229 — the business card that used to open this list is gone.
+ *
+ * It was a phone-only card (desktop hid it at 861px: the left pane is 276px wide
+ * and goes straight into the groups) showing the business name, its logo and how
+ * many branches, linking to Business profile. Two things ended it:
+ *
+ * - it cost 62px of a 723px screen, and eleven tappable rows at 44px already take
+ *   484px of that, so the hub could not fit with it. Even stripped to a 24px
+ *   avatar on one line it left 402×874 16px over — measured, not assumed;
+ * - where it went is a row in the list directly beneath it ("Business name and
+ *   logo" with several branches, "Business profile" with one), so the only thing
+ *   lost with the card is the NAME, not a destination.
+ *
+ * That the name is now nowhere on the phone hub is a real cost and was weighed
+ * rather than waved away: the header there reads "Settings · <branch>", and the
+ * business name survives on a phone only inside the account menu. If it belongs
+ * on this screen the header is where it belongs, which is a different ticket
+ * from "make the tabs fit". `settingsHub.headerBranches` went with it.
+ */
 
 export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
   // Jira GRW-230 — moving between tabs keeps the branch that is picked.
   const branch = useSearchParams().get('branch');
   const t = useTranslations('settingsHub');
+  const multi = settings.branchCount > 1;
+  // Jira GRW-396 — the branch the branch tabs are showing: the address's, else the main one — the same rule
+  // the tabs themselves load by (`scope.ts`), so the title and the form never name different branches.
+  const { branches } = useBranch();
+  const shown = multi ? (branches.find((b) => b.id === branch) ?? branches[0] ?? null) : null;
+  const groupTitle = (key: SettingsGroupKey): string => {
+    if (key === 'branch') return shown ? t('groups.branchNamed', { name: shown.name }) : t('groups.business');
+    if (key === 'business') return multi ? t('groups.wholeBusiness') : t('groups.teamAndBilling');
+    return t(`groups.${key}`);
+  };
   return (
     <>
-      <HeaderCard settings={settings} />
       {SETTINGS_GROUPS.map((group) => (
         <div className="settings-group" key={group.key}>
-          <div className="settings-group-title">{t(`groups.${group.key}`)}</div>
+          <div className="settings-group-title">{groupTitle(group.key)}</div>
           <div className="menu-list">
-            {group.rows.filter((row) => !row.multiBranchOnly || settings.branchCount > 1).map((row) => {
+            {group.rows.filter((row) => !row.multiBranchOnly || multi).map((row) => {
               const Icon = row.icon;
+              const key = multi && row.multiBranchKey ? row.multiBranchKey : row.key;
               // Before the href check: a row with an action has no href either,
               // and would otherwise render as disabled with "Coming soon".
               if (row.action === 'logout') {
@@ -55,8 +60,8 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
                       <Icon />
                     </span>
                     <div className="settings-row-body">
-                      <div className="settings-row-title">{t(`rows.${row.key}.label`)}</div>
-                      <div className="settings-row-sub">{t(`rows.${row.key}.sub`)}</div>
+                      <div className="settings-row-title">{t(`rows.${key}.label`)}</div>
+                      <div className="settings-row-sub">{t(`rows.${key}.sub`)}</div>
                     </div>
                   </SignOutButton>
                 );
@@ -68,8 +73,8 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
                       <Icon />
                     </span>
                     <div className="settings-row-body">
-                      <div className="settings-row-title">{t(`rows.${row.key}.label`)}</div>
-                      <div className="settings-row-sub">{t(`rows.${row.key}.sub`)}</div>
+                      <div className="settings-row-title">{t(`rows.${key}.label`)}</div>
+                      <div className="settings-row-sub">{t(`rows.${key}.sub`)}</div>
                     </div>
                     <span className="settings-row-soon">{t('comingSoon')}</span>
                   </div>
@@ -81,8 +86,8 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
                     <Icon />
                   </span>
                   <div className="settings-row-body">
-                    <div className="settings-row-title">{t(`rows.${row.key}.label`)}</div>
-                    <div className="settings-row-sub">{t(`rows.${row.key}.sub`)}</div>
+                    <div className="settings-row-title">{t(`rows.${key}.label`)}</div>
+                    <div className="settings-row-sub">{t(`rows.${key}.sub`)}</div>
                   </div>
                   <span className="settings-row-chev">
                     <IconChevronRight />

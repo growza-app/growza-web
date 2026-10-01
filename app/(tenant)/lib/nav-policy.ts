@@ -10,7 +10,9 @@ export {
   canSeeRevenue,
   homeHref,
   homeKind,
+  mayUse,
   visibleItems,
   type HomeKind,
   type MemberRole,
+  type UiAction,
 } from '@growza-app/shared';

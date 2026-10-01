@@ -32,6 +32,9 @@ describe('the dashboard offers it only when /me says it exists', () => {
       'app/(tenant)/components/Sidebar.tsx',
       'app/(tenant)/components/home/OwnerHome.tsx',
       'app/(tenant)/more/page.tsx',
+      // Jira GRW-409 — the screen naming its own route to close itself to a role the nav does not offer it. Not a
+      // link: a link from this page to this page would take a salon nowhere it is not already.
+      'app/(tenant)/try-whatsapp/page.tsx',
     ]);
     const hits = execSync(`git ls-files 'app/*.tsx' | xargs grep -l "'/try-whatsapp'" || true`, { cwd: webRoot, encoding: 'utf8' })
       .split('\n')

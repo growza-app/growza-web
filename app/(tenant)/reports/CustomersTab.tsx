@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { useReportsCopy } from '../lib/use-reports-copy';
-import { copy } from '../lib/copy';
 import type { ReportCustomers } from '../lib/api';
 import {
   IconAlert,
@@ -13,6 +12,7 @@ import {
 import { BarList, ReportTable, type Cell } from './charts';
 import { InfoTip } from '../components/InfoTip';
 import { Card, countBars, money } from './shared';
+import { useRowName } from './use-row-name';
 
 const SEGMENT_TONE: Record<string, string> = {
   active: 'var(--rp-brand)',
@@ -47,11 +47,18 @@ export function CustomersTab({
   data: ReportCustomers;
   /** Which band the list is filtered to, so the chosen chip reads as chosen. */
   status: string;
-  onSegment: (segment: string) => void;
-  onClient: (id: string) => void;
+  /**
+   * Jira GRW-409 — absent for a viewer the Clients list refuses (a stylist granted this tab): the bands still
+   * count, and are not buttons into a screen that answers 403.
+   */
+  onSegment?: (segment: string) => void;
+  /** Jira GRW-409 — absent for a viewer the client card refuses; the rows are then just rows. */
+  onClient?: (id: string) => void;
 }) {
   const rp = useReportsCopy();
   const t = useTranslations('reports');
+  const bands = useTranslations('customers');
+  const nameOf = useRowName();
   const c = rp.customersTab;
   const { kpis } = data;
 
@@ -75,7 +82,7 @@ export function CustomersTab({
       { kind: 'text', text: r.favouriteService ?? '—', tone: 'var(--muted)' },
       // Under three visits there is one gap at most, which is an anecdote
       // rather than a rhythm — so it shows nothing instead of guessing.
-      { kind: 'text', text: r.intervalDays === null ? '—' : `~${r.intervalDays}d`, tone: 'var(--muted)' },
+      { kind: 'text', text: r.intervalDays === null ? '—' : c.comesEvery(r.intervalDays), tone: 'var(--muted)' },
     ];
     return { id: r.id, cells };
   });
@@ -125,7 +132,7 @@ export function CustomersTab({
             spent saying so twice. */}
         <h3 className="rp-cs-heading">
           {rp.segmentsTitle}
-          <em>{rp.segmentsTapHint}</em>
+          {onSegment ? <em>{rp.segmentsTapHint}</em> : null}
         </h3>
 
         <div className="rp-cs-block">
@@ -140,8 +147,9 @@ export function CustomersTab({
                   className={`rp-cs-band ${on ? 'is-on' : ''}`}
                   style={{ ['--seg' as string]: SEGMENT_TONE[seg.key] }}
                   aria-pressed={on}
-                  title={`${words} · ${seg.rangeLabel}`}
-                  onClick={() => onSegment(on ? 'all' : seg.key)}
+                  title={`${words} · ${bands(`segments.${seg.key}.range`)}`}
+                  disabled={!onSegment}
+                  onClick={onSegment ? () => onSegment(on ? 'all' : seg.key) : undefined}
                 >
                   <span className="rp-cs-band-name">
                     <span className="rp-cs-dot" />
@@ -163,7 +171,8 @@ export function CustomersTab({
                 className="rp-cs-band rp-cs-band-muted"
                 style={{ ['--seg' as string]: 'var(--muted)' }}
                 title={t('noCompletedVisits', { band: c.neverBand })}
-                onClick={() => onSegment('never')}
+                disabled={!onSegment}
+                onClick={onSegment ? () => onSegment('never') : undefined}
               >
                 <span className="rp-cs-band-name">
                   <span className="rp-cs-dot" />
@@ -210,10 +219,10 @@ export function CustomersTab({
 
       <div className="rp-grid-2">
         <Card title={c.spend} hint={c.spendHint}>
-          <BarList items={countBars(data.spend, rp.servicesTab.retired)} emptyText={rp.noData} />
+          <BarList items={countBars(data.spend, rp.servicesTab.retired, nameOf)} emptyText={rp.noData} />
         </Card>
         <Card title={c.frequency} hint={c.frequencyHint}>
-          <BarList items={countBars(data.frequency, rp.servicesTab.retired)} emptyText={rp.noData} />
+          <BarList items={countBars(data.frequency, rp.servicesTab.retired, nameOf)} emptyText={rp.noData} />
           <div className="rp-figure-pair">
             <div>
               <span>{c.avgInterval}</span>

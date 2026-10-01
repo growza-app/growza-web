@@ -11,9 +11,11 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconEdit, IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
+import { matchItems, MIN_CHARS } from '../lib/service-match';
 import { ImportServices } from './ImportServices';
 import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser';
 import { CataloguePicker } from './CataloguePicker';
+import { CopyFromBranch } from './CopyFromBranch';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -31,9 +33,15 @@ export function ServicesTable({
   categories,
   tenantName,
   serviceLabel,
+  branchId,
+  branches,
 }: {
   services: ServiceAdmin[];
   categories: ServiceCategory[];
+  /** Jira GRW-378 — the branch on screen. Each branch has its own services; everything added here lands here. */
+  branchId: string;
+  /** The branches an owner may switch between and copy from; empty for a one-branch business or a pinned role. */
+  branches: ReadonlyArray<{ id: string; name: string }>;
   tenantName: string | null;
   /** ctx.labels — every customer-visible noun comes from the vertical, not a literal. */
   serviceLabel: string;
@@ -55,6 +63,12 @@ export function ServicesTable({
   const [importing, setImporting] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const canCopy = branches.length > 1;
+  const reload = async () => {
+    setServices(await api.allServices(branchId));
+    router.refresh();
+  };
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -133,11 +147,14 @@ export function ServicesTable({
   }, [services]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return services.filter(
-      (s) =>
-        (categoryId === 'all' || s.categoryId === categoryId) &&
-        (!q || s.name.toLowerCase().includes(q) || (s.categoryName ?? '').toLowerCase().includes(q)),
+    const inCategory = services.filter((s) => categoryId === 'all' || s.categoryId === categoryId);
+    const q = search.trim();
+    if (q.length < MIN_CHARS) return inCategory;
+    // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
+    // found by "phacial" at the desk is found by "phacial" here too.
+    return matchItems(
+      inCategory.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
+      q,
     );
   }, [services, search, categoryId]);
 
@@ -222,7 +239,21 @@ export function ServicesTable({
 
       <div className="card">
         {error && <div role="alert" className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
-        {filtered.length === 0 ? (
+        {services.length === 0 ? (
+          <div className="empty svc-branch-empty">
+            <p>{branches.length > 1 ? t('emptyBranch') : t('emptyAll')}</p>
+            <div className="svc-branch-empty-actions">
+              {canCopy && (
+                <button type="button" className="btn" onClick={() => setCopying(true)}>
+                  {t('copyFromBranch')}
+                </button>
+              )}
+              <button type="button" className={canCopy ? 'btn btn-ghost' : 'btn'} onClick={() => setChoosing(true)}>
+                <IconPlus /> {t('addLabel', { label: lower })}
+              </button>
+            </div>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="empty">{t('empty')}</div>
         ) : (
           <PaginatedTable
@@ -365,6 +396,7 @@ export function ServicesTable({
         <ServiceForm
           service={editing}
           categories={categories}
+          branchId={branchId}
           onClose={() => {
             setCreating(false);
             setEditing(null);
@@ -382,10 +414,13 @@ export function ServicesTable({
           tenantName={tenantName}
           serviceCount={services.length}
           serviceLabel={lower}
+          branchId={branchId}
+          canCopy={canCopy}
           onClose={() => setChoosing(false)}
           onPick={(route: AddServicesRoute) => {
             setChoosing(false);
-            if (route === 'catalogue') setPicking(true);
+            if (route === 'copy') setCopying(true);
+            else if (route === 'catalogue') setPicking(true);
             else if (route === 'sheet') setImporting(true);
             else setCreating(true);
           }}
@@ -395,6 +430,7 @@ export function ServicesTable({
       {picking && (
         <CataloguePicker
           existing={services}
+          branchId={branchId}
           onBack={() => {
             setPicking(false);
             setChoosing(true);
@@ -402,8 +438,7 @@ export function ServicesTable({
           onClose={() => setPicking(false)}
           onImported={async () => {
             setPicking(false);
-            setServices(await api.allServices());
-            router.refresh();
+            await reload();
           }}
         />
       )}
@@ -411,11 +446,24 @@ export function ServicesTable({
       {importing && (
         <ImportServices
           existing={services}
+          branchId={branchId}
           onClose={() => setImporting(false)}
           onImported={async () => {
             setImporting(false);
-            setServices(await api.allServices());
-            router.refresh();
+            await reload();
+          }}
+        />
+      )}
+
+      {copying && (
+        <CopyFromBranch
+          branchId={branchId}
+          branches={branches}
+          existing={services}
+          onClose={() => setCopying(false)}
+          onCopied={async () => {
+            setCopying(false);
+            await reload();
           }}
         />
       )}

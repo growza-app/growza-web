@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { fromDashboard } from './dashboard-root';
 
 /**
  * Jira GRW-324 — the service worker stores no logged-in page.
@@ -11,7 +12,7 @@ import { readFileSync } from 'node:fs';
  * the worker cached every page for a shared phone's next user.
  */
 
-const SOURCE = readFileSync('web/public/sw.js', 'utf8');
+const SOURCE = readFileSync(fromDashboard('public/sw.js'), 'utf8');
 const ORIGIN = 'https://app.test';
 
 type Listener = (event: never) => void;

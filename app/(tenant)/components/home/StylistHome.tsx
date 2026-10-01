@@ -53,7 +53,8 @@ function PersonCard({ t, group, timezone, now, mode }: { t: HomeCopy; group: Boo
       <Avatar name={name} id={group.key} size={46} />
       <span className="hm-row-main">
         <span className="hm-person-name">{name ?? services}</span>
-        <span className="hm-row-sub">{services}</span>
+        {/* Jira GRW-393 — with the client's name withheld the services ARE the title; not twice. */}
+        {name ? <span className="hm-row-sub">{services}</span> : null}
         <span className="hm-row-meta">
           {mode === 'current' ? t.startedFor(time, minutesBetween(group.startAt, now)) : t.inMin(time, minutesBetween(now, group.startAt))}
         </span>
@@ -171,7 +172,7 @@ export function StylistHome(p: StylistHomeProps) {
                     <span className={`hm-tl-dot hm-tl-dot-${st.dot}`} />
                     <span className="hm-row-main">
                       <span className="hm-row-name">{clientNameLabel(w.group) ?? summarizeServices(w.group.serviceNames)}</span>
-                      <span className="hm-row-sub">{summarizeServices(w.group.serviceNames)}</span>
+                      {clientNameLabel(w.group) ? <span className="hm-row-sub">{summarizeServices(w.group.serviceNames)}</span> : null}
                     </span>
                     <span className={`hm-pill hm-pill-${st.tone}`}>{st.label}</span>
                   </li>

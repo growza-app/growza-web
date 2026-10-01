@@ -154,9 +154,19 @@ export default async function ReportsPage({
    * through it would simply match no rows, and the owner would be looking at
    * an empty report with a chip claiming a filter that does not exist.
    */
+  /*
+   * Jira GRW-238 — one branch, or all of them. Owner only, like every other
+   * branch choice (product decision 2026-09-14), and only with more than one
+   * branch. A stale or foreign id falls back to all branches rather than
+   * erroring the page. Resolved before the drawer so it offers that
+   * branch's services and people only (Jira GRW-393).
+   */
+  const branches = (me.member?.role ?? 'owner') === 'owner' && (me.branches?.length ?? 0) > 1 ? me.branches! : [];
+  const branch = branches.find((b) => b.id === params.branch)?.id ?? null;
+
   let filterOptions: ReportFilterOptions = { providers: [], services: [] };
   try {
-    filterOptions = await api.reportFilterOptions();
+    filterOptions = await api.reportFilterOptions(branch);
   } catch {
     // The drawer degrades to unavailable rather than taking the page with it.
   }
@@ -175,15 +185,6 @@ export default async function ReportsPage({
   // params in the URL — so switching back restores the filter — but report
   // unnarrowed figures and say so rather than implying a filter is in force.
   const applied = isFilterableReportTab(resolvedTab) ? filters : undefined;
-
-  /*
-   * Jira GRW-238 — one branch, or all of them. Owner only, like every other
-   * branch choice (product decision 2026-09-14), and only with more than one
-   * branch. A stale or foreign id falls back to all branches rather than
-   * erroring the page.
-   */
-  const branches = (me.member?.role ?? 'owner') === 'owner' && (me.branches?.length ?? 0) > 1 ? me.branches! : [];
-  const branch = branches.find((b) => b.id === params.branch)?.id ?? null;
 
   let payload: TabPayload = null;
   let loadError: LoadErrorKind = 'down';
@@ -217,8 +218,6 @@ export default async function ReportsPage({
         labels={me.labels}
         payload={payload}
         loadError={loadError}
-        branches={branches}
-        branch={branch}
       />
     </Suspense>
   );

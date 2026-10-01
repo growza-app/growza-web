@@ -3,7 +3,10 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatMoney, type Offer, type OfferInput, type Service } from '../lib/api';
+import { api, formatMoney, type CreatedOffer, type Offer, type OfferInput, type Service } from '../lib/api';
+import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
+import { useBranch } from '../components/BranchProvider';
+import { matchItems, MIN_CHARS } from '../lib/service-match';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { weekdayNames } from '../lib/weekday-names';
 
@@ -125,7 +128,7 @@ function PreviewCard({
   );
 }
 
-export function ComboBuilder({ services, initialOffer }: { services: Service[]; initialOffer?: Offer }) {
+export function ComboBuilder({ services: allServices, initialOffer }: { services: Service[]; initialOffer?: Offer }) {
   const t = useTranslations('offers.builder');
   const tl = useTranslations('offers.list');
   const tm = useTranslations('services');
@@ -133,6 +136,22 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
   const dayNames = weekdayNames(locale).short;
   const router = useRouter();
   const mode = initialOffer ? 'edit' : 'create';
+  const tb = useTranslations('offers.branch');
+  /*
+   * Jira GRW-381 — a combo runs at ONE branch and is made of that branch's services. A new one opens on the
+   * header's branch (the main one on "All"), and may also be published to every other branch as its own copy; an
+   * existing one stays at its branch, and another branch changes its own copy.
+   */
+  const branchContext = useBranch();
+  const defaultBranch = useDefaultOfferBranch();
+  const [pickedBranch, setPickedBranch] = useState<string | null>(null);
+  const atBranch = initialOffer?.locationId ?? pickedBranch ?? defaultBranch;
+  const [allBranches, setAllBranches] = useState(false);
+  const [published, setPublished] = useState<CreatedOffer | null>(null);
+  const services = useMemo(
+    () => allServices.filter((s) => !atBranch || !s.locationId || s.locationId === atBranch),
+    [allServices, atBranch],
+  );
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   // Publishing needs a real look at Preview first — the step tabs only let
@@ -204,9 +223,15 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
     setPriceMode(next);
   };
 
-  const filteredServices = services.filter(
-    (s) => !selectedIds.includes(s.id) && s.name.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  // Jira GRW-375 — same matching as the walk-in sheet and the services table.
+  const unpicked = services.filter((s) => !selectedIds.includes(s.id));
+  const filteredServices =
+    search.trim().length < MIN_CHARS
+      ? unpicked
+      : matchItems(
+          unpicked.map((s) => ({ item: s, text: [s.name] })),
+          search,
+        );
 
   const addService = (id: string) => {
     setSelectedIds((ids) => [...ids, id]);
@@ -297,7 +322,16 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
         visibleUntil: visibilityMode === 'window' ? fromDatetimeLocal(visibleUntilInput) : null,
       };
       if (mode === 'create') {
-        await api.createOffer(payload as OfferInput);
+        const created = await api.createOffer({
+          ...(payload as OfferInput),
+          ...(atBranch ? { locationId: atBranch } : {}),
+          ...(allBranches ? { allBranches: true } : {}),
+        });
+        // Jira GRW-381 (FR-03) — "all branches" says where it went, and which branches were skipped and why.
+        if (allBranches) {
+          setPublished(created);
+          return;
+        }
       } else {
         await api.updateOffer(initialOffer!.id, payload);
       }
@@ -329,6 +363,34 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
       setBusy(false);
     }
   };
+
+  if (published) {
+    const here = branchContext.branches.find((b) => b.id === published.locationId)?.name ?? '';
+    const went = [{ name: here, locationId: published.locationId ?? '' }, ...(published.published ?? [])].filter((b) => b.name);
+    return (
+      <div className="card offer-published" role="status">
+        <div className="card-body">
+          <h2 className="wizard-section-title">{tb('resultTitle', { title: published.title })}</h2>
+          <p>{tb('resultPublished', { branches: went.map((b) => b.name).join(', ') })}</p>
+          {(published.skipped ?? []).map((s) => (
+            <p key={s.locationId} className="field-hint">
+              {tb('resultSkipped', { branch: s.name, missing: s.missing.join(', ') })}
+            </p>
+          ))}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              router.push('/offers');
+              router.refresh();
+            }}
+          >
+            {tb('done')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -444,6 +506,20 @@ export function ComboBuilder({ services, initialOffer }: { services: Service[]; 
                     />
                   </div>
                 </div>
+
+                {mode === 'create' ? (
+                  <OfferBranchField
+                    value={atBranch}
+                    onChange={(id) => {
+                      // Another branch's menu: what was picked here is not on it.
+                      setPickedBranch(id);
+                      setSelectedIds([]);
+                    }}
+                    allBranches={allBranches}
+                    onAllBranches={setAllBranches}
+                    disabled={busy}
+                  />
+                ) : null}
 
                 <div className="wizard-section-title" style={{ marginTop: 22 }}>
                   {t('addServices')}

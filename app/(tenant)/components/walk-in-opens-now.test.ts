@@ -25,7 +25,8 @@ describe('the centre button opens the visit sheet on Walk-in now', () => {
   });
 
   it('AC-03 — a stylist still gets no centre action', () => {
-    expect(chrome).toMatch(/const mayBook = role !== 'staff';/);
+    // Jira GRW-409 — asked of the shared rule, which a stylist fails (no POST /walk-ins or /bookings).
+    expect(chrome).toMatch(/const mayBook = mayUse\(role, 'visit\.new'\);/);
     expect(chrome).toMatch(/const onCentre =\s*\n?\s*mayBook && /);
   });
 

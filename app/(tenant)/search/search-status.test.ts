@@ -78,7 +78,7 @@ describe('the Search screen has no search button in its header', () => {
 
   it('and the header honours it, only on request — every other screen keeps its search button', () => {
     expect(pageHeader).toMatch(/<HeaderControls hideSearch=\{hideSearch\} \/>/);
-    expect(header).toMatch(/\{hideSearch \? null : \(/);
+    expect(header).toMatch(/\{hideSearch \? null : <HeaderSearch wide=\{wide\} \/>\}/);
     expect(header).toMatch(/hideSearch = false/);
   });
 });

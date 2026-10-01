@@ -1,52 +1,54 @@
-# Jira GRW-181 — the dashboard's own image.
+# Jira GRW-420 — the dashboard's image, built from THIS repo.
 #
-# The root Dockerfile builds api + worker and deliberately excludes web/ (its
-# .dockerignore drops everything under web/ except package.json), on the
-# assumption in its own header comment that the dashboard "deploys separately
-# to Vercel". That is not the shape docs/architecture/08-operations.md §4
-# describes: the test box is ONE machine running api, worker and web together
-# under Docker Compose. This file is the missing third deployable.
+# What was here before was a byte-for-byte copy of growza's `web/Dockerfile`,
+# which builds from the monorepo root: it does `COPY web/package.json` and
+# `COPY shared/package.json`, and neither path exists here — `app/` is the root
+# and there is no `shared/`. It could never have built, which is the clearest
+# evidence that nothing has ever been built from this repository.
 #
-# Built from the REPO ROOT, not from web/:
-#   docker build -f web/Dockerfile -t growza-web .
-# npm workspaces hoist next/react to the root node_modules, so a build context
-# of web/ alone cannot install or trace them.
+# The two structural differences from the monorepo's copy:
+#
+#   1. No workspace. `@growza-app/shared` is installed from GitHub Packages
+#      (see .npmrc) instead of being a sibling directory, so the install needs
+#      a token with `read:packages`. It is passed as a BUILD SECRET and never
+#      becomes a layer:
+#
+#        docker build --secret id=npm_token,env=NODE_AUTH_TOKEN -t growza-web .
+#
+#      In Actions that is `secrets.GITHUB_TOKEN`, provided the package grants
+#      this repository access (Packages → the package → Manage Actions access).
+#
+#   2. Flat paths. `next build` emits `.next/standalone/server.js` at the root
+#      here, not `web/server.js`, because `outputFileTracingRoot` is this
+#      directory rather than a workspace above it.
+#
+# Deliberately `npm install`, not `npm ci`: this repo has no package-lock.json
+# yet — it was a workspace member and the lock lived in the monorepo. Commit a
+# lockfile generated with the token in place and change this to `npm ci`, which
+# is what makes a build reproducible.
 
-# ---- deps: the whole workspace, because the build needs the hoisted tree ----
+# ---- deps ----
 FROM node:22-slim AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
-COPY web/package.json web/package.json
-# Jira GRW-370 — @growza-app/shared is a workspace the dashboard imports.
-COPY shared/package.json shared/package.json
-RUN npm ci
+COPY package.json .npmrc ./
+RUN --mount=type=secret,id=npm_token \
+    NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token 2>/dev/null || true)" npm install --no-audit --no-fund
 
-# ---- build: next build -> .next/standalone ----
+# ---- build ----
 FROM node:22-slim AS build
 WORKDIR /app
-# Only the ROOT node_modules: npm workspaces hoists everything, and with no
-# version conflicts to resolve `npm ci` creates no web/node_modules at all.
-# Copying a directory that does not exist fails the build at cache-key time.
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json ./
-COPY shared ./shared
-COPY web ./web
+COPY . .
 
-# API_URL is BAKED IN HERE, not read at runtime.
+# API_URL is BAKED IN, not read at runtime.
 #
 # next.config.ts uses it in `rewrites()` and in `env`, and Next compiles both
-# into the build (routes-manifest.json and inlined constants respectively).
-# Setting API_URL on the running container therefore changes nothing — verified
-# by doing exactly that and watching /api 500 while the same image, run under
-# the hostname below, proxied fine.
-#
-# `http://api:3001` is correct because docker-compose.prod.yml names the API
-# service `api`. If the API ever moves, this image must be REBUILT; a redeploy
-# with a new environment variable will not do it.
+# into the build. Setting API_URL on the running container changes nothing; if
+# the API moves, this image must be REBUILT. `http://api:3001` is the service
+# name docker-compose.prod.yml gives the API.
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV API_URL=http://api:3001
-# Builds shared/dist first, then the dashboard (see package.json `build:web`).
-RUN npm run build:web
+RUN npm run build
 
 # ---- runtime: the standalone server and nothing else ----
 FROM node:22-slim AS runtime
@@ -56,19 +58,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# Not root. The dashboard is the process facing the internet through Caddy, and
-# it has no reason to own its own filesystem.
+# Not root. This is the process facing the internet through Caddy, and it has
+# no reason to own its own filesystem.
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 
-# `standalone` already contains its traced node_modules and a server.js. The
-# static assets and public/ are NOT in it — Next expects them alongside, and
-# leaving them out is the classic "the page loads but every stylesheet 404s".
-COPY --from=build --chown=nextjs:nodejs /app/web/.next/standalone ./
-COPY --from=build --chown=nextjs:nodejs /app/web/.next/static ./web/.next/static
-COPY --from=build --chown=nextjs:nodejs /app/web/public ./web/public
+# `standalone` carries its traced node_modules and a server.js. The static
+# assets and public/ are NOT in it — Next expects them alongside, and leaving
+# them out is the classic "the page loads but every stylesheet 404s".
+COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=build --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 EXPOSE 3000
 
-# The traced server lands at the path it had in the workspace.
-CMD ["node", "web/server.js"]
+CMD ["node", "server.js"]

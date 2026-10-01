@@ -15,8 +15,9 @@ import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionRefresh } from './components/SessionRefresh';
 import { SessionProvider } from './components/SessionProvider';
+import { BranchProvider } from './components/BranchProvider';
 import { LabelsProvider } from './components/LabelsProvider';
-import type { MemberRole } from './lib/nav-policy';
+import { mayUse, type MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
@@ -120,7 +121,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let labels: Record<string, string> = {};
   let tenantName = 'Booking';
   let timezone = 'Asia/Kolkata';
-  let billing: { status: string; message: string | null } | null = null;
+  /** Jira GRW-413 — `autopayHalted` comes with it: the warning then names the two actions that recover the account. */
+  let billing: { status: string; message: string | null; autopayHalted?: boolean } | null = null;
   /** GRW-145/163 — whether the billing banner may offer "Pay now". */
   let canPayOnline = false;
   /**
@@ -151,8 +153,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let accountStatus: { reason: string; message: string; support?: { phone?: string } } | null = null;
   /** Jira GRW-222 — the primary branch's name for the sidebar, when there is one. */
   let locationName: string | null = null;
+  // Jira GRW-395 — where a member held to a branch works, at a business with several (null otherwise): the header says it.
+  let workBranchName: string | null = null;
   let branchCount = 1;
   let branches: Array<{ id: string; name: string }> = [];
+  /** Jira GRW-377 — the member's own branch; fixes a receptionist or stylist to it everywhere. */
+  let memberLocationId: string | null = null;
   /** Jira GRW-310 — what LiveRefresh treats as "unchanged" until it sees a different one. */
   let liveVersionAtRender: string | null = null;
   /** Jira GRW-329 — the language on the person's account; the cookie is a cache of it. */
@@ -171,16 +177,20 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     tenantName = me.tenant?.name ?? tenantName;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
-    canPayOnline = me.payments?.online ?? false;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
+    // Jira GRW-409 — the banner's words are for everyone at the salon; "Pay now" only for a role the payment-link
+    // route serves. A receptionist tapping it got "forbidden" in the middle of a warning about the account.
+    canPayOnline = (me.payments?.online ?? false) && mayUse(role, 'billing.payNow');
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
     branches = me.branches ?? [];
+    memberLocationId = me.member?.locationId ?? null;
     impersonation = me.impersonation ?? null;
     // Jira GRW-237 — a receptionist with a branch is named at that branch.
     locationName = me.member?.locationName ?? me.tenant?.locationName ?? null;
+    workBranchName = me.member?.locationName ?? null;
     // Jira GRW-225 — an owner of several branches watches all of them (multi-branch
     // is owner-only); naming the primary under the business read as "you are in
     // Koramangala" while Home showed every branch.
@@ -247,6 +257,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             lang,
           }}
         >
+        <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>
         <LabelsProvider labels={labels}>
         <MobileNavProvider>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
@@ -291,6 +302,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </div>
         </MobileNavProvider>
         </LabelsProvider>
+        </BranchProvider>
         </SessionProvider>
         </NextIntlClientProvider>
         <InstallBanner app="salon" />

@@ -6,6 +6,7 @@ import { copy } from '../app/(tenant)/lib/copy';
 import en from '../messages/en.json';
 import { flatten, pickNamespaces, withFallback, type Messages } from './messages';
 import { AUTH_MESSAGES, CLIENT_MESSAGES } from './client-messages';
+import { fromDashboard } from '../app/(tenant)/lib/dashboard-root';
 
 /**
  * Jira GRW-319 — every language has every key, and a pending translation shows
@@ -15,7 +16,7 @@ import { AUTH_MESSAGES, CLIENT_MESSAGES } from './client-messages';
  * without touching this file.
  */
 
-const DIR = 'web/messages';
+const DIR = fromDashboard('messages');
 const load = (file: string) => JSON.parse(readFileSync(`${DIR}/${file}`, 'utf8')) as Messages;
 const languages = readdirSync(DIR).filter((f) => f.endsWith('.json') && f !== 'en.json');
 
@@ -117,7 +118,7 @@ describe('the groups handed to the browser', () => {
     });
 
   it('finds the screens at all', () => {
-    expect(sources('web/app').length).toBeGreaterThan(100);
+    expect(sources(fromDashboard('app')).length).toBeGreaterThan(100);
   });
 
   it('registers every group a component reads with useTranslations', () => {
@@ -125,7 +126,7 @@ describe('the groups handed to the browser', () => {
     // component imports — so every group it reads must be registered, not only
     // those in files marked 'use client'.
     const missing: string[] = [];
-    for (const file of sources('web/app')) {
+    for (const file of sources(fromDashboard('app'))) {
       for (const m of readFileSync(file, 'utf8').matchAll(/useTranslations\(\s*'([\w.]+)'\s*\)/g)) {
         const group = m[1]!.split('.')[0]!;
         // The sign-in pages have their own, smaller provider (AUTH_MESSAGES); everything else uses the dashboard's.
@@ -151,8 +152,7 @@ describe('words that live in copy.ts and messages/en.json while their other read
     expect(en.status).toEqual({ ...copy.status });
   });
 
-  it('the branch question and the minutes label Free times shares with other screens', () => {
-    expect(en.freeTimes.whichBranch).toBe(en.newVisit.whichBranch);
+  it('the minutes label Free times shares with other screens', () => {
     expect(en.freeTimes.minutes.replace('{count}', '45')).toBe(copy.services.minutes(45));
     expect(en.services.minutes.replace('{count}', '45')).toBe(copy.services.minutes(45));
     expect(en.services.cols.name).toBe(copy.services.name);

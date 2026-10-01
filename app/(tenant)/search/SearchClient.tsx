@@ -9,6 +9,7 @@ import { initials, statusChip } from '../lib/appointment-display';
 import { bookingRef, dialable } from '../components/BookingSheet';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { IconArrowLeft, IconClose, IconPhone, IconSearch } from '../components/icons';
+import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
 
 const EMPTY: SearchResult = { customers: [], bookings: [] };
 
@@ -23,7 +24,8 @@ function bookingHref(id: string, startAt: string, timezone: string): string {
 }
 
 /** Same field matches a name, any part of a phone number, or a booking reference — the backend decides which. */
-export function SearchClient({ timezone }: { timezone: string }) {
+/** `showBranch` — Jira GRW-393: at a business with several branches, each row says whose client or visit it is. */
+export function SearchClient({ timezone, showBranch = false }: { timezone: string; showBranch?: boolean }) {
   const locale = useLocale();
   const t = useTranslations('search');
   const ts = useTranslations('status');
@@ -39,7 +41,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
 
   useEffect(() => {
     const term = q.trim();
-    if (term.length < 2) {
+    if (term.length < SEARCH_MIN_CHARS) {
       setResults(EMPTY);
       setLoading(false);
       return;
@@ -60,7 +62,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
         .finally(() => {
           if (!cancelled) setLoading(false);
         });
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
@@ -69,7 +71,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
   }, [q]);
 
   const term = q.trim();
-  const nothing = term.length >= 2 && !loading && results.customers.length === 0 && results.bookings.length === 0;
+  const nothing = term.length >= SEARCH_MIN_CHARS && !loading && results.customers.length === 0 && results.bookings.length === 0;
 
   return (
     <>
@@ -118,7 +120,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
           </div>
         </div>
 
-        {term.length < 2 && <div className="empty">{t('hint')}</div>}
+        {term.length < SEARCH_MIN_CHARS && <div className="empty">{t('hint')}</div>}
         {nothing && <div className="empty">{t('nothing')}</div>}
 
         {results.customers.length > 0 && (
@@ -132,7 +134,10 @@ export function SearchClient({ timezone }: { timezone: string }) {
                   <button type="button" className="res-main" onClick={() => setOpenClientId(c.id)}>
                     <div className="avatar">{initials(c.name)}</div>
                     <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>{c.name ?? t('unknown')}</div>
+                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>
+                        {c.name ?? t('unknown')}
+                        {showBranch ? <span className="chip cust-branch-chip">{c.branchName}</span> : null}
+                      </div>
                       <div className="muted" style={{ fontSize: 13 }}>
                         {c.phone ? `${c.phone} · ` : ''}
                         {t('visits', { count: c.visitCount })}
@@ -165,6 +170,7 @@ export function SearchClient({ timezone }: { timezone: string }) {
                     <div className="muted" style={{ fontSize: 13 }}>
                       {b.customerName ?? t('unknown')} · {b.serviceName}
                       {b.providerName ? ` · ${b.providerName}` : ''}
+                      {showBranch ? ` · ${b.branchName}` : ''}
                     </div>
                   </div>
                   {/* Jira GRW-307 — what became of the booking. Without it a cancelled, a

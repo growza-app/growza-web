@@ -9,7 +9,9 @@ import { type LoadErrorKind } from '../lib/load-error';
  */
 export function LoadErrorHelp({ kind }: { kind: LoadErrorKind }) {
   const t = useTranslations('errors');
-  return kind === 'busy' ? <>{t('busyHelp')}</> : <>{t.rich('downHelp', { code: (chunks) => <code>{chunks}</code> })}</>;
+  if (kind === 'busy') return <>{t('busyHelp')}</>;
+  if (kind === 'forbidden') return <>{t('forbiddenHelp')}</>;
+  return <>{t.rich('downHelp', { code: (chunks) => <code>{chunks}</code> })}</>;
 }
 
 /**
@@ -30,7 +32,7 @@ export function LoadErrorBanner({ kind }: { kind: LoadErrorKind }) {
   const t = useTranslations('errors');
   return (
     <div className="banner">
-      <strong>{kind === 'busy' ? t('busy') : t('down')}</strong> <LoadErrorHelp kind={kind} />
+      <strong>{t(kind)}</strong> <LoadErrorHelp kind={kind} />
     </div>
   );
 }

@@ -6,17 +6,24 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p ${PORT:-3000} -H ${HOST:-0.0.0.0}"
+    "start": "next start -p ${PORT:-3000} -H ${HOST:-0.0.0.0}",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@growza-app/shared": "*",
+    "@growza-app/shared": "1.0.0",
+    "luxon": "^3.7.2",
     "next": "^16.3.1",
     "next-intl": "^4.14.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@formatjs/icu-messageformat-parser": "^2.11.2",
+    "@types/luxon": "^3.7.4",
+    "@types/node": "^22.10.5",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4"
+    "@types/react-dom": "^19.2.4",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.7"
   }
 }

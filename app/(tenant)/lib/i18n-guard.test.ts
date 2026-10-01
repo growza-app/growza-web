@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { scanSource } from './i18n-scan';
 import { lowered, surplus, type Inventory } from './i18n-ratchet';
+import { DASHBOARD_ROOT, fromDashboard } from './dashboard-root';
 
 /**
  * Jira GRW-317 — owner-facing English cannot be added without the dictionary.
@@ -35,10 +36,10 @@ import { lowered, surplus, type Inventory } from './i18n-ratchet';
  * folder is covered without touching this file.
  */
 
-const APP = 'web/app';
+const APP = fromDashboard('app');
 const EXCLUDED = new Set(['admin']);
-const ALLOWLIST = 'web/app/(tenant)/lib/i18n-allowlist.json';
-const UPDATE_CMD = `I18N_UPDATE_ALLOWLIST=1 npx vitest run "web/app/(tenant)/lib/i18n-guard.test.ts"`;
+const ALLOWLIST = fromDashboard('app/(tenant)/lib/i18n-allowlist.json');
+const UPDATE_CMD = 'I18N_UPDATE_ALLOWLIST=1 npx vitest run i18n-guard.test.ts';
 /** Comfortably under the real count (~135), so a moved directory fails instead of passing on nothing. */
 const FILE_FLOOR = 120;
 
@@ -82,6 +83,10 @@ describe('scanSource', () => {
       'confirmLabel="Remove"',
       'body="Gone for good."',
     ]);
+  });
+
+  it('flags the name a KPI tile gives its line (Jira GRW-363)', () => {
+    expect(flagged('const A = () => <Kpi sparkName="Came back" />;')).toEqual(['sparkName="Came back"']);
   });
 
   it('flags a template with words in it, and the branches of a ternary', () => {
@@ -190,10 +195,20 @@ describe('the allowlist arithmetic', () => {
 describe('owner-facing text goes through the dictionary', () => {
   const dirs = readdirSync(APP).filter((e) => statSync(join(APP, e)).isDirectory() && !EXCLUDED.has(e) && e !== 'node_modules');
   const top = readdirSync(APP).filter((e) => statSync(join(APP, e)).isFile() && isSource(e)).map((e) => `${APP}/${e}`);
-  const files = [...top, ...dirs.flatMap((d) => findSource(`${APP}/${d}`))].sort();
+  /*
+   * Jira GRW-373 — the inventory is keyed RELATIVE to the dashboard root.
+   *
+   * These keys are compared against the committed allowlist, so they must mean
+   * the same thing wherever the dashboard lives: `app/(tenant)/...`, not
+   * `web/app/(tenant)/...` in growza and something else again in growza-web.
+   */
+  const files = [...top, ...dirs.flatMap((d) => findSource(`${APP}/${d}`))]
+    .map((f) => relative(DASHBOARD_ROOT, f).split('\\').join('/'))
+    .sort();
 
   // Each file is read and parsed once, and every test below reads from this.
-  const scans = new Map(files.map((f) => [f, scanSource(f, readFileSync(f, 'utf8'))]));
+  // `files` holds dashboard-relative keys; the read needs the root put back on.
+  const scans = new Map(files.map((f) => [f, scanSource(f, readFileSync(fromDashboard(f), 'utf8'))]));
 
   it('finds the screens at all, and never opens the admin portal', () => {
     // A guard that scans nothing passes forever. If a directory moves, this says so.

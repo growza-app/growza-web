@@ -35,6 +35,15 @@ export function billingCopy(lang: Lang) {
      * "Takes" — take the plainer word even when the design says otherwise.
      */
     paidAutopay: S('Paid automatically from your UPI each month.', 'हर महीने आपके UPI से अपने आप भुगतान हो जाता है।'),
+    /**
+     * Jira GRW-413 — AutoPay exists and has stopped collecting.
+     *
+     * Not `paidOnline`: a salon whose AutoPay halted used to read "pay online
+     * when the bill arrives, with Pay now" on the very screen that should have
+     * been asking them to re-approve it. What to DO is the card below; this line
+     * only has to stop claiming the bill is being collected.
+     */
+    paidAutopayHalted: S('Automatic payment has stopped — see below.', 'अपने आप भुगतान बंद हो गया है — नीचे देखें।'),
     autopay: S('Automatic payment', 'अपने आप भुगतान'),
     autopayOffExplain: S(
       'Approve once in your UPI app and every month’s bill is paid on its own. You can stop it any time from your UPI app.',
@@ -47,7 +56,13 @@ export function billingCopy(lang: Lang) {
     // as the product not noticing.
     autopayStopped: S('Automatic payment is off. You stopped it, so bills come to you to pay.', 'अपने आप भुगतान बंद है। आपने इसे बंद किया था, इसलिए बिल आपको भरना होगा।'),
     autopayPaused: S('Automatic payment is paused.', 'अपने आप भुगतान रुका हुआ है।'),
-    autopayFailed: S('The last automatic payment did not go through. Pay this bill, then turn it back on.', 'पिछला अपने आप भुगतान नहीं हो पाया। यह बिल भरें, फिर इसे दोबारा चालू करें।'),
+    /*
+     * Jira GRW-413 — a halted AutoPay's sentence is `autopayRenewal.halted` in
+     * `web/messages`, beside the rest of the AutoPay asks, because it comes with
+     * two buttons rather than being a line of card text. What used to be here
+     * ("the last automatic payment did not go through — pay this bill, then turn
+     * it back on") told the owner to pay a bill and offered no way to pay it.
+     */
     autopayWaiting: S('Waiting for you to approve it in your UPI app.', 'आपके UPI ऐप में मंज़ूरी का इंतज़ार है।'),
     autopayFinish: S('Finish approving', 'मंज़ूरी पूरी करें'),
     autopayOn: (amount: string) => S(`On — ${amount} a month`, `चालू — ${amount} प्रति माह`),

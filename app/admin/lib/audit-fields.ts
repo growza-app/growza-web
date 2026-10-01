@@ -43,6 +43,13 @@ const ENTITY_FIELD_KINDS: Record<string, Record<string, FieldKind>> = {
     // vocabulary.
     discountReason: 'text',
     discountEndsAt: 'date',
+    // Jira GRW-241 · GRW-242 — AutoPay amounts are minor units, never a bare number.
+    mandateAmountMinor: 'money',
+    fromAmountMinor: 'money',
+    toAmountMinor: 'money',
+    invoiceTotalMinor: 'money',
+    paidMinor: 'money',
+    shortfallMinor: 'money',
   },
 };
 

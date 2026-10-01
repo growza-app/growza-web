@@ -1,10 +1,11 @@
 'use client';
 
 import { useReportsCopy } from '../lib/use-reports-copy';
-import { copy } from '../lib/copy';
 import type { ReportStaff } from '../lib/api';
 import { BarList, ReportTable, type Cell } from './charts';
 import { Card, money, moneyBars, utilisationColour, rangeName } from './shared';
+import { useRowName } from './use-row-name';
+import { NOBODY_INITIAL } from '../lib/use-no-provider';
 
 /**
  * Staff — revenue and how full each day actually was.
@@ -19,11 +20,15 @@ import { Card, money, moneyBars, utilisationColour, rangeName } from './shared';
  */
 export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerLabel: string }) {
   const rp = useReportsCopy();
+  const nameOf = useRowName();
   const c = rp.staffTab;
 
   const rows = data.rows.map((r) => {
+    // Jira GRW-363 — the no-stylist row is named in the owner's language; a person as typed.
+    const name = nameOf({ key: r.key, label: r.name });
+    const nobody = r.key === 'unassigned';
     const cells: Cell[] = [
-      { kind: 'avatar', text: r.name, initial: r.name.charAt(0).toUpperCase() },
+      { kind: 'avatar', text: name, initial: nobody ? NOBODY_INITIAL : name.charAt(0).toUpperCase(), nobody },
       { kind: 'text', text: String(r.bookings), align: 'center' },
       { kind: 'text', text: String(r.completed), align: 'center' },
       { kind: 'text', text: money(r.revenueMinor), bold: true },
@@ -49,13 +54,13 @@ export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerL
     <div className="rp-stack">
       <div className="rp-grid-2">
         <Card title={c.byRevenue} hint={rangeName(data.range, rp.ranges)}>
-          <BarList items={moneyBars(data.byRevenue, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
+          <BarList items={moneyBars(data.byRevenue, rp.servicesTab.retired, nameOf)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
         <Card title={c.utilisation} hint={c.utilisationHint}>
           <BarList
             emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
             items={data.byUtilisation.map((u) => ({
-              label: u.label,
+              label: nameOf(u),
               value: u.value,
               display: `${u.value}%`,
               color: utilisationColour(u.value),

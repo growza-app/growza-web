@@ -1,18 +1,33 @@
 import { screenTitle } from '../lib/page-title';
+import { redirect } from 'next/navigation';
 import { api } from '../lib/api';
+import { mayUse } from '../lib/nav-policy';
 import { SearchClient } from './SearchClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SearchPage() {
   let timezone = 'Asia/Kolkata';
+  let showBranch = false;
+  let role: string | null = null;
   try {
-    timezone = (await api.me()).tenant?.timezone ?? timezone;
+    const me = await api.me();
+    timezone = me.tenant?.timezone ?? timezone;
+    // Jira GRW-393 — `/me` lists only the branches this person sees; several means rows need their branch.
+    showBranch = (me.branches?.length ?? 0) > 1;
+    role = me.member?.role ?? null;
   } catch {
     // The search field still works; only date formatting falls back.
   }
 
-  return <SearchClient timezone={timezone} />;
+  /**
+   * Jira GRW-409 — the header no longer offers this screen to a role `GET /api/v1/search` refuses; a bookmark
+   * must not bring them back to a box whose every search answers 403. The front desk finds people on the
+   * Clients list (GRW-199), so that is where they land; anybody else, Home.
+   */
+  if (!mayUse(role, 'search')) redirect(mayUse(role, 'clients.list') ? '/customers' : '/');
+
+  return <SearchClient timezone={timezone} showBranch={showBranch} />;
 }
 
 // Jira GRW-192 — the tab says which screen this is.

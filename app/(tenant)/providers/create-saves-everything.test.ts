@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { fromDashboard } from '../lib/dashboard-root';
 
 /**
  * Jira GRW-63 · GRW-171 · GRW-183 · GRW-22 — Add staff must SAVE what it asked for,
@@ -41,7 +42,7 @@ import { describe, expect, it } from 'vitest';
  * documentation alone.
  */
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-const source = readFileSync(path.join(repoRoot, 'web/app/(tenant)/providers/StaffWizard.tsx'), 'utf-8')
+const source = readFileSync(fromDashboard('app/(tenant)/providers/StaffWizard.tsx'), 'utf-8')
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/\/\/.*$/gm, '');
 
@@ -81,10 +82,10 @@ describe('creating a staff member', () => {
      * `uses_org_hours` false, so the stylist would stop following the salon
      * the moment the owner changed it — GRW-183's standing intent, destroyed
      * by a client being helpful. Same for services: omitted means "every active
-     * one", resolved server-side at insert.
+     * one" of the stylist's branch (Jira GRW-393), resolved server-side at insert.
      */
     expect(saveBody).toMatch(/followsSalon\s*\n?\s*\?\s*\{\}/);
-    expect(saveBody).toMatch(/skills\.size === services\.length \? \{\} :/);
+    expect(saveBody).toMatch(/skills\.size === menu\.length \? \{\} :/);
   });
 
   it('has no follow-up PATCH of any kind', () => {

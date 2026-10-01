@@ -397,34 +397,6 @@
 .hm-seg-select {
   display: none;
 }
-.hm-branch {
-  position: relative;
-}
-.hm-branch-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 44px;
-  max-width: 220px;
-  padding: 0 var(--sp-3);
-  border-radius: 12px;
-  border: 1px solid var(--hm-line);
-  background: var(--surface);
-  color: var(--hm-ink);
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hm-branch-btn svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  color: var(--hm-muted);
-}
 .hm-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -469,69 +441,72 @@
 .hm-area-hero {
   min-width: 0;
 }
+/*
+ * Jira GRW-348 · GRW-351 — ONE laptop layout, with branches or without: money
+ * 1.5 : Needs your attention 1 on top, and row 2 mirrors it — Bookings today
+ * 1.5 : Right now 1. The "Your branches" card (and the three-track grid it
+ * needed, Jira GRW-225) is gone; the header's picker switches branches.
+ *
+ * Named areas, so a new card is a new area here (and, if it adds a row, a
+ * track in the one-screen layout's `grid-template-rows` below), not a rewrite
+ * of every placement.
+ */
 @media (min-width: 1101px) {
   .hm-owner-grid {
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    /*
+     * Jira GRW-418 — `queue` sits between the money row and the day, full width.
+     *
+     * It is only in the DOM when somebody is actually on the board (OwnerHome decides), so on an ordinary
+     * day this row collapses to nothing and the laptop Home is the one screen GRW-222 promised. On a day
+     * with a client waiting the page scrolls, which is the trade this story chose: a salon owner who is
+     * their own front desk could otherwise not see them at all.
+     */
+    grid-template-areas:
+      'hero attention'
+      'queue queue'
+      'bookings now'
+      'clients clients';
     align-items: stretch;
   }
+  .hm-area-queue {
+    grid-area: queue;
+  }
   .hm-area-hero {
-    grid-column: 1;
+    grid-area: hero;
   }
   .hm-area-attention {
-    grid-column: 2;
+    grid-area: attention;
     display: flex;
     flex-direction: column;
   }
   .hm-area-attention .hm-attention {
     flex: 1;
   }
-  .hm-area-branches {
-    grid-column: 1;
-  }
   .hm-area-bookings {
-    grid-column: 2;
+    grid-area: bookings;
   }
-  .hm-area-bookings.hm-bookings-wide {
-    grid-column: 1 / -1;
-  }
-  .hm-bookings-wide .hm-rows {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: var(--sp-5);
+  .hm-area-now {
+    grid-area: now;
+    display: flex;
   }
   .hm-area-clients {
-    grid-column: 1 / -1;
+    grid-area: clients;
   }
 }
-/*
- * Jira GRW-225 — the design's two-branch rows: money 1.5 : attention 1 on top,
- * then Your branches and Bookings today HALF AND HALF underneath. One grid can
- * do both with three tracks (1.25 · 0.25 · 1): money spans the first two,
- * bookings the last two.
- */
-@media (min-width: 1101px) {
-  .hm-owner-grid.hm-multi {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.25fr) minmax(0, 1fr);
-  }
-  .hm-multi .hm-area-hero {
-    grid-column: 1 / 3;
-  }
-  .hm-multi .hm-area-attention {
-    grid-column: 3;
-  }
-  .hm-multi .hm-area-branches {
-    grid-column: 1;
-  }
-  .hm-multi .hm-area-bookings {
-    grid-column: 2 / 4;
+/* Right now is the laptop's (Jira GRW-351): a tablet and a phone Home are unchanged. */
+@media (max-width: 1100px) {
+  .hm-area-now {
+    display: none;
   }
 }
 @media (max-width: 860px) {
-  /* The design's phone order: money, what needs you, shortcuts, branches, clients, the day. */
+  /* The design's phone order: money, what needs you, shortcuts, clients, the day. */
   .hm-area-hero { order: 1; }
   .hm-area-attention { order: 2; }
+  /* Jira GRW-418 — above the shortcuts: somebody waiting in the salon outranks a link to Offers. */
+  .hm-area-queue { order: 2; }
   .hm-area-links { order: 3; }
-  .hm-area-branches { order: 4; }
   .hm-area-clients { order: 5; }
   .hm-area-bookings { order: 6; }
   /* A phone gets the period as a dropdown, styled as the branch picker beside it. */
@@ -601,30 +576,11 @@
 .hm-delta.down {
   color: #fecaca;
 }
-.hm-hero-menu {
-  width: 36px;
-  height: 36px;
-  margin-left: auto;
-  border: 0;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #bff0d0;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-}
-.hm-delta + .hm-hero-menu {
-  margin-left: 0;
-}
-.hm-hero-menu svg {
-  width: 18px;
-  height: 18px;
-}
 .hm-hero .hm-menu {
   right: var(--sp-4);
   top: 56px;
 }
-/* Jira GRW-270 · GRW-275 — the ⋯ menu is the payment split as a list. */
+/* Jira GRW-270 · GRW-275 — the payment split as a list, opened from the payment line's "+N" (GRW-394). */
 .hm-pay-menu {
   width: min(300px, calc(100vw - 48px));
   padding: 12px 14px 4px;
@@ -1192,43 +1148,6 @@
   color: #9aa39d;
   flex-shrink: 0;
 }
-.hm-branch-tile {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--hm-green-soft);
-  color: var(--hm-green-deep);
-  font-size: 12px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-.hm-branch-tile.hm-tone-green { background: #e7f6ee; color: var(--accent-deep); }
-.hm-branch-tile.hm-tone-blue { background: #f2f7ff; color: #2563eb; }
-.hm-branch-tile.hm-tone-amber { background: #fdf6ec; color: #c07d18; }
-.hm-branch-tile.hm-tone-violet { background: #f4f2fd; color: #6d4fc4; }
-.hm-branch-tile.hm-tone-rose { background: #fdf1f1; color: #d64545; }
-/* Jira GRW-225 — the design's per-branch pill, and which branch Home is showing. */
-.hm-pace {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border: 1px solid;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-}
-.hm-pace-busy { color: var(--accent-deep); background: #e7f6ee; border-color: #cdeedb; }
-.hm-pace-slow { color: #8a5a0f; background: #fdf6ec; border-color: #f6e6cd; }
-.hm-row-button.is-picked button {
-  margin: 0 -10px;
-  width: calc(100% + 20px);
-  padding-left: 10px;
-  padding-right: 10px;
-  border-radius: 12px;
-  background: #f0faf4;
-}
 .hm-row-time {
   width: 64px;
   flex-shrink: 0;
@@ -1290,8 +1209,9 @@
   white-space: nowrap;
 }
 .hm-pill-green { background: #e7f6ee; color: var(--accent-deep); }
-.hm-pill-blue { background: #e6effe; color: #2563eb; }
-.hm-pill-grey { background: #eef1ee; color: #6b7570; }
+/* Jira GRW-351 — blue was #2563eb (4.47:1) and grey #6b7570 (4.19:1), both under WCAG 1.4.3's 4.5:1 for 11.5px text. */
+.hm-pill-blue { background: #e6effe; color: #1d4ed8; }
+.hm-pill-grey { background: #eef1ee; color: var(--hm-muted); }
 .hm-pill-amber { background: #fbf0dc; color: #8a5a0f; }
 .hm-pill-rose { background: #fdecec; color: #c53434; }
 @media (max-width: 400px) {
@@ -1301,6 +1221,259 @@
   }
   .hm-row .hm-avatar {
     display: none;
+  }
+}
+
+/* ---------- Right now (Jira GRW-351) ----------
+ * Beside Bookings today on a laptop: alerts first, then three label / value rows.
+ * Every colour pair here is 4.5:1 or better (the alert inks on their tints are
+ * 6.3 and 6.1, the calm line 6.4, the muted labels and "+N more" 5.6 / 9.7).
+ * Where a line is too long, the NAME gives way ("…"); minutes and times never do
+ * (AC-02), and the whole line is the element's tooltip.
+ */
+/* Shown (display: flex) only from 1101px — see the owner grid above. */
+.hm-area-now {
+  flex-direction: column;
+  min-height: 0;
+}
+/* The first paint of a business with branches, until the remembered branch is applied: no flash of "all". */
+.hm-owner-grid.is-settling {
+  visibility: hidden;
+}
+.hm-now {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.hm-now-alerts,
+.hm-now-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.hm-now-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hm-now-alert,
+.hm-now-calm,
+.hm-now-unread {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.hm-now-alert svg,
+.hm-now-calm svg,
+.hm-now-unread svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.hm-now-alert-amber { background: #fbf0dc; color: #7a4f0c; }
+.hm-now-alert-rose { background: #fdecec; color: #a62b2b; }
+.hm-now-alert-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 800;
+}
+.hm-now-alert-sub {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+/* "3 things need you · See all ›" — the alerts in one line, when there is no room to list one. */
+button.hm-now-count {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.hm-now-count .hm-now-alert-sub {
+  margin-left: auto;
+  font-weight: 700;
+}
+.hm-now-count .hm-now-alert-sub svg {
+  width: 15px;
+  height: 15px;
+}
+/* "+2 more" opens every alert: a real button, 24px tall at least (WCAG 2.5.8). */
+.hm-now-more {
+  min-height: 24px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--hm-green-deep);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hm-now-more:hover,
+.hm-now-count:hover {
+  text-decoration: underline;
+}
+.hm-now-calm {
+  background: var(--hm-green-soft);
+  color: var(--hm-green-deep);
+  font-weight: 700;
+}
+/* BR-12 — the queue could not be read: said plainly, never the calm line. */
+.hm-now-unread {
+  background: #f4f6f4;
+  color: var(--hm-ink);
+  font-weight: 600;
+  white-space: normal;
+}
+.hm-now-sheet .hm-now-alerts {
+  margin-top: 0;
+}
+.hm-now-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 0;
+  border-top: 1px solid var(--hm-line-soft);
+  min-width: 0;
+}
+.hm-now-row:first-child {
+  border-top: 0;
+}
+.hm-now-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #f4f6f4;
+  color: #4a574f;
+  flex-shrink: 0;
+}
+.hm-now-icon svg {
+  width: 17px;
+  height: 17px;
+}
+.hm-now-label {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-muted);
+  white-space: nowrap;
+}
+/* The value keeps the row's right edge. */
+.hm-now-value {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--hm-ink);
+  white-space: nowrap;
+}
+.hm-now-value strong {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+.hm-now-value strong + strong {
+  font-size: 13.5px;
+}
+.hm-now-detail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-now-tail {
+  flex-shrink: 0;
+  color: var(--hm-muted);
+}
+/* A 13-inch laptop's page: the same rows, a little tighter, so alerts and three rows still fit. */
+@media (min-width: 1101px) and (min-height: 680px) and (max-height: 859px) {
+  .hm-fit .hm-now {
+    gap: 4px;
+  }
+  .hm-fit .hm-now-alert,
+  .hm-fit .hm-now-calm,
+  .hm-fit .hm-now-unread {
+    min-height: 32px;
+    padding: 4px 10px;
+  }
+  /* 36px: at 1280×720 the card has ~171px, and one alert, "+N more" and the three rows need exactly that. */
+  .hm-fit .hm-now-row {
+    min-height: 36px;
+    padding: 2px 0;
+  }
+  .hm-fit .hm-now-icon {
+    width: 26px;
+    height: 26px;
+  }
+  /* 20px, and no other target within 24px of it: WCAG 2.5.8's spacing exception. It is what lets one alert AND
+     "+N more" sit above the three rows at 1280×720. */
+  .hm-fit .hm-now-more {
+    min-height: 20px;
+  }
+  .hm-fit .hm-now-alerts {
+    gap: 2px;
+  }
+}
+
+/*
+ * Jira GRW-351 — after closing, the one-screen laptop Home shows "Day closed" as a chip on the toolbar row instead
+ * of a banner row above it. The banner took ~63px from row 2, and Right now (someone still in the chair, tomorrow's
+ * first visit, the walk-ins, and the alerts line) then overflowed by 38px at 1280×720. Everywhere else — a tablet, a
+ * short window that scrolls — the banner is unchanged.
+ */
+.hm-closed-chip {
+  display: none;
+}
+@media (min-width: 1101px) and (min-height: 680px) {
+  .hm-fit > .hm-closed {
+    display: none;
+  }
+  .hm-fit .hm-closed-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 11px;
+    border: 1px solid #cdeedb;
+    background: var(--hm-green-soft);
+    color: var(--hm-green-deep);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .hm-fit .hm-closed-chip span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hm-fit .hm-closed-chip svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
 }
 
@@ -2190,9 +2363,6 @@
     min-height: 34px;
     font-size: 13px;
   }
-  .hm-fit .hm-branch-btn {
-    min-height: 38px;
-  }
   .hm-fit .hm-card {
     padding: 14px 16px;
   }
@@ -2340,8 +2510,15 @@
   .hm-fit .hm-area-bookings .hm-row-sub {
     font-size: 12px;
   }
-  .hm-fit .hm-area-branches {
+  /* Row 2, right — Right now takes the same height as the list beside it, and scrolls inside itself (never
+     clips) on the rare day with more alerts than a short laptop has room for. */
+  .hm-fit .hm-area-now {
+    min-height: 0;
     overflow: hidden;
+  }
+  .hm-fit .hm-now {
+    flex: 1 1 auto;
+    overflow-y: auto;
   }
 
   /* Row 3 — the client bands, title and hint on one line as the design has it. */
@@ -2481,15 +2658,6 @@
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-top {
     min-height: 28px;
-  }
-  .hm-hero:not(.hm-hero-small) .hm-hero-menu {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-  }
-  .hm-hero:not(.hm-hero-small) .hm-hero-menu svg {
-    width: 15px;
-    height: 15px;
   }
   .hm-hero:not(.hm-hero-small) .hm-delta {
     padding: 2px 8px;
@@ -2661,10 +2829,6 @@
   .hm-seg button {
     min-height: 44px;
   }
-  .hm-hero-menu {
-    position: relative;
-  }
-  .hm-hero-menu::after,
   .hm-link::after {
     content: '';
     position: absolute;

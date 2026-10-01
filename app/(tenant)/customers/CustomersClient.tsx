@@ -34,6 +34,7 @@ import { ClientProfileCard } from '../components/ClientProfileCard';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
+import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -92,6 +93,8 @@ function SortableTh({
 }
 
 export function CustomersClient({
+  branchId,
+  branches,
   initialStats,
   initialPage,
   initialStatus,
@@ -99,6 +102,10 @@ export function CustomersClient({
   initialDirection,
   label,
 }: {
+  /** Jira GRW-392 — the branch whose clients these are; null is every branch (an owner on "All"). */
+  branchId: string | null;
+  /** The owner's branches, for the tabs and the branch on each row; empty for one branch or a pinned person. */
+  branches: ReadonlyArray<{ id: string; name: string }>;
   initialStats: CustomerStats;
   initialPage: CustomerPage;
   /** From the URL (?status=at_risk, e.g. the Home "Needs attention" deep link) — defaults to 'all'. */
@@ -116,6 +123,10 @@ export function CustomersClient({
   const singular = lower.replace(/s$/, '');
   const statusLabel = (s: Exclude<CustomerStatusFilter, 'all'>) =>
     s === 'never' ? t('statusNever') : s === 'lapsed' ? t('statusLapsed') : t(`segments.${s}.label`);
+  // Jira GRW-392 — on "All", each row says whose client it is: the same person at two branches is two rows.
+  const branchName = new Map(branches.map((b) => [b.id, b.name]));
+  const branchTag = (locationId: string | undefined) =>
+    !branchId && locationId && branchName.has(locationId) ? <span className="chip cust-branch-chip">{branchName.get(locationId)}</span> : null;
   const chipOf = (segment: Customer['segment']) => {
     const chip = recencyChip(segment);
     return chip ? <span className={`chip ${chip.cls}`}>{t(chip.key)}</span> : null;
@@ -210,27 +221,36 @@ export function CustomersClient({
       primed.current = true;
       return;
     }
+    /*
+     * Jira GRW-422 — a term too short to be worth asking about is skipped, but an
+     * EMPTY box is not short, it is "everyone", and must still be fetched (BR-01).
+     * Before this, one keystroke fired a request and so did clearing the box.
+     */
+    if (!worthSearching(search)) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     let cancelled = false;
     // Debounced so typing a phone number doesn't fire a request per digit.
     const timer = setTimeout(() => {
       api
-        .customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize })
+        .customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize, location: branchId })
         .then((r) => {
           if (!cancelled) setPage(r);
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
         });
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [search, status, sort, direction, pageIndex, pageSize]);
+  }, [search, status, sort, direction, pageIndex, pageSize, branchId]);
 
   const refresh = () => {
-    api.customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize }).then(setPage);
+    api.customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize, location: branchId }).then(setPage);
     // Stats are server-rendered once; a full refresh is the honest way to
     // re-derive them rather than incrementing a local copy that could drift.
     window.location.reload();
@@ -471,6 +491,7 @@ export function CustomersClient({
                       <div className="cust-card-name">
                         {c.name ?? t('unnamed')}
                         {chipOf(c.segment)}
+                        {branchTag(c.locationId)}
                       </div>
                       {/* Stops the row's own click: tapping the number should
                           open WhatsApp, not the card behind it.
@@ -509,6 +530,7 @@ export function CustomersClient({
                     <div className="cust-name-cell">
                       <span className="avatar">{initials(c.name)}</span>
                       <span style={{ fontWeight: 620 }}>{c.name ?? t('unnamed')}</span>
+                      {branchTag(c.locationId)}
                     </div>
                   </td>
                   <td>
@@ -558,7 +580,9 @@ export function CustomersClient({
         </div>
       </div>
 
-      {adding && <AddCustomerModal singular={singular} onClose={() => setAdding(false)} onSaved={refresh} />}
+      {adding && (
+        <AddCustomerModal singular={singular} branchId={branchId} branches={branches} onClose={() => setAdding(false)} onSaved={refresh} />
+      )}
       {/* The same card the Reports Clients tab opens. One component, so a
           name tapped in either place tells the same story. */}
       {openClientId && <ClientProfileCard clientId={openClientId} onClose={() => setOpenClientId(null)} />}
@@ -590,9 +614,23 @@ function Kpi({ label, value, sub, icon }: { label: string; value: string; sub: s
   );
 }
 
-function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; onClose: () => void; onSaved: () => void }) {
+function AddCustomerModal({
+  singular,
+  branchId,
+  branches,
+  onClose,
+  onSaved,
+}: {
+  singular: string;
+  branchId: string | null;
+  branches: ReadonlyArray<{ id: string; name: string }>;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const checkPhone = usePhoneProblem();
   const t = useTranslations('customers');
+  // Jira GRW-392 — a client is a client OF a branch: the one on screen, or on "All" the one picked here.
+  const [atBranch, setAtBranch] = useState<string | null>(branchId ?? branches[0]?.id ?? null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -610,7 +648,7 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
     setBusy(true);
     setError(null);
     try {
-      await api.createCustomer({ phone: toStoredPhone(phone)!, name: name.trim() || undefined });
+      await api.createCustomer({ phone: toStoredPhone(phone)!, name: name.trim() || undefined, ...(atBranch ? { locationId: atBranch } : {}) });
       onSaved();
       onClose();
     } catch (err) {
@@ -644,6 +682,20 @@ function AddCustomerModal({ singular, onClose, onSaved }: { singular: string; on
           </label>
           <input type="text" value={name} placeholder={t('namePlaceholder')} onChange={(e) => setName(e.target.value)} />
         </div>
+        {!branchId && branches.length > 1 && (
+          <div className="field">
+            <label htmlFor="add-client-branch">
+              <span>{t('whichBranch')}</span>
+            </label>
+            <select id="add-client-branch" value={atBranch ?? ''} onChange={(e) => setAtBranch(e.target.value)}>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         {error && <div role="alert" className="field-error" style={{ marginTop: 12 }}>{error}</div>}
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>

@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { absoluteIst, lastDrainedTile, OUTCOME_WORDS, PANEL_COUNT, workerStatus } from './format';
+import { DUNNING_SKIP_REASONS } from '@growza-app/shared';
+import { absoluteIst, attemptWords, lastDrainedTile, OUTCOME_WORDS, PANEL_COUNT, workerStatus } from './format';
 
 /**
  * Jira GRW-286 — the Network monitoring screen's states, as QA found them
@@ -106,5 +107,43 @@ describe('dunning outcomes all have words', () => {
     for (const outcome of ['charged', 'declined', 'not_made', 'skipped', 'in_flight']) {
       expect(OUTCOME_WORDS[outcome], outcome).toEqual(expect.any(String));
     }
+  });
+});
+
+/**
+ * Jira GRW-413 — the panel's whole value now. Every row a dunning pass writes is
+ * `skipped`, so a screen that renders the outcome alone says "Not collected" over
+ * and over and answers nothing.
+ */
+describe('why billing collected nothing, in words', () => {
+  it('has a distinct sentence for every reason the engine can write', () => {
+    const labels = DUNNING_SKIP_REASONS.map((reason) => attemptWords('skipped', reason).label);
+    for (const [i, reason] of DUNNING_SKIP_REASONS.entries()) {
+      expect(labels[i], reason).toEqual(expect.any(String));
+      // Not one word repeated: the six must be told apart at a glance.
+      expect(labels.filter((l) => l === labels[i]), reason).toHaveLength(1);
+    }
+  });
+
+  it('marks a halted AutoPay as the one to act on, and says nothing retries it', () => {
+    const halted = attemptWords('skipped', 'autopay_halted');
+    expect(halted.bad).toBe(true);
+    expect(halted.label).toMatch(/re-approve/i);
+    expect(halted.label.toLowerCase()).not.toMatch(/retry|retrying|try again/);
+  });
+
+  it('never claims a retry, in any of them (BR-01)', () => {
+    for (const reason of DUNNING_SKIP_REASONS) {
+      expect(attemptWords('skipped', reason).label.toLowerCase(), reason).not.toMatch(/\bretr(y|ies|ying)\b|try again/);
+    }
+  });
+
+  it('falls back to the outcome word for a row written before migration 0093', () => {
+    // Historic rows carry no reason. They must read as what they were, not as a
+    // blank and not as a guess.
+    expect(attemptWords('charged', null).label).toMatch(/Charged/);
+    expect(attemptWords('not_made', null)).toMatchObject({ bad: true });
+    // And an unknown code shows as itself — ugly, and unmistakably a gap.
+    expect(attemptWords('skipped', 'something_new').label).toBe('something_new');
   });
 });

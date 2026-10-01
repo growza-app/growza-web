@@ -2634,13 +2634,11 @@
   }
 }
 
-/* Jira GRW-312 — the branch Home sent the owner here from; cooler than the amber "not marked" chip beside it. */
-.bk-branch-chip {
-  border-color: #c9dcd1;
-  background: #eef6f1;
-  color: #24503a;
-}
-
-.bk-branch-chip svg {
-  color: #2f7d54;
+/* Jira GRW-392 — on "All branches", whose client a row is. Quieter than the recency chip beside it. */
+.cust-branch-chip {
+  margin-left: 6px;
+  padding: 2px 9px;
+  font-size: 12px;
+  background: var(--slate-soft);
+  color: #5b6660;
 }

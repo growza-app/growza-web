@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
+import { SettingsSaveBar } from '../SettingsSaveBar';
 
 /**
  * Jira GRW-63 · GRW-197 — who else may open Reports, and which tabs.
@@ -67,9 +68,18 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
   };
 
   return (
+    <>
     <div className="card">
       <div className="card-head">{t('title')}</div>
       <div className="card-body">
+        {/*
+          * NOT `settings-card-hint` (Jira GRW-229 review): that class is dropped on a window 859px
+          * tall or less, and this sentence is the only place that says managers are exempt and what
+          * ticking nothing does. The card below lists Receptionist and Stylists and nothing else, so
+          * hiding it would take a permissions screen's safety copy off a 1470×760 laptop — the very
+          * window the card is written against. The 48px it costs comes out of `.ra-role`'s own
+          * padding instead; see 85-settings-fit.css.
+          */}
         <p className="field-hint" style={{ marginTop: 0, marginBottom: 16 }}>
           {t('hint')}
         </p>
@@ -100,17 +110,16 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
         ))}
 
         {error && <div role="alert" className="field-error">{error}</div>}
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn" disabled={busy} onClick={save}>
-            {busy ? t('saving') : t('save')}
-          </button>
-          {saved && !busy && (
-            <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              {t('saved')}
-            </span>
-          )}
-        </div>
       </div>
     </div>
+    <SettingsSaveBar
+      busy={busy}
+      saved={saved}
+      onSave={save}
+      saveLabel={t('save')}
+      savingLabel={t('saving')}
+      savedLabel={t('saved')}
+    />
+    </>
   );
 }

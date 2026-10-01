@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { api } from '../../lib/api';
 import { copy } from '../../lib/copy';
 import { StaffEditClient } from './StaffEditClient';
+import { guardScreen } from '../../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,8 @@ export const dynamic = 'force-dynamic';
  * remaining bookings) before saving it.
  */
 export default async function StaffEditPage({ params }: { params: Promise<{ id: string }> }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
+  await guardScreen('/providers');
   const { id } = await params;
 
   let detail, services, day, stats, me, settings, branches;

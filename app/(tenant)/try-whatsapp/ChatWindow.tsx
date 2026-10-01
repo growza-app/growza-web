@@ -19,7 +19,7 @@ interface Bubble {
 
 const DEFAULT_PHONE = '+91 98765 43210';
 
-export function ChatWindow({ tenantName }: { tenantName: string }) {
+export function ChatWindow({ tenantName, branch }: { tenantName: string; /** Jira GRW-385 — a branch's link: start there. */ branch?: string }) {
   const t = useTranslations('tryWhatsApp.chat');
   const [phone, setPhone] = useState(DEFAULT_PHONE);
   const [name, setName] = useState('Anjali Verma');
@@ -40,7 +40,7 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
     setBusy(true);
     setError(null);
     try {
-      const next = await api.chatStart(phone.trim(), name.trim() || undefined);
+      const next = await api.chatStart(phone.trim(), name.trim() || undefined, branch);
       setState(next);
       setBubbles([{ from: 'bot', text: next.body }]);
     } catch {
@@ -68,7 +68,7 @@ export function ChatWindow({ tenantName }: { tenantName: string }) {
         // menu instead of leaving them tappable-but-broken.
         setBubbles((prev) => [...prev, { from: 'bot', text: t('timedOut') }]);
         try {
-          const fresh = await api.chatStart(phone.trim(), name.trim() || undefined);
+          const fresh = await api.chatStart(phone.trim(), name.trim() || undefined, branch);
           setState(fresh);
           setBubbles((prev) => [...prev, { from: 'bot', text: fresh.body }]);
         } catch {

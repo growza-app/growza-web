@@ -5,8 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type AttendanceRegister as Register, type AttendanceRow } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 import { intlLocale } from './[providerId]/month';
-import { BranchTabs } from '../components/BranchTabs';
-import { readBranchChoice, writeBranchChoice } from '../lib/branch-choice';
+import { useBranch } from '../components/BranchProvider';
 
 /**
  * Jira GRW-63 · GRW-170 — the attendance register, built to Attendance.dc.html.
@@ -114,7 +113,6 @@ export function AttendanceRegister({
   const t = useTranslations('attendance.register');
   const ts2 = useTranslations('attendance');
   const ts = useTranslations('attendance.status');
-  const tb = useTranslations('bookings');
   const tn = useTranslations('nouns');
   const locale = useLocale();
   const staffLower = pickNoun(locale, staffWord.toLowerCase(), tn('staff'));
@@ -122,6 +120,7 @@ export function AttendanceRegister({
   const [date, setDate] = useState(initial.date);
   /** Jira GRW-249 — the branch picked on the register; null is every branch. */
   const [branch, setBranch] = useState<string | null>(null);
+  const branchContext = useBranch();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | StatusKey>('all');
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -168,20 +167,18 @@ export function AttendanceRegister({
     }
   }
 
-  /** Jira GRW-249 — switch branches without leaving the day the desk was on. Jira GRW-340 — and remember it. */
-  function pickBranch(id: string | null) {
-    setOpenMenu(null);
-    writeBranchChoice(id);
-    void load(date, id);
-  }
-
-  // Jira GRW-340 — open on the branch the owner was last looking at, if it is still open. Read after mount: the
-  // server render cannot see the browser's storage.
+  /*
+   * Jira GRW-395 — the register is the header's branch, and follows it when it changes, without leaving the day
+   * the desk was on (GRW-249). Read once the browser can (`ready`, GRW-377). `branches` is empty for anyone but a
+   * multi-branch owner (BR-01): a receptionist's register is already their own branch's.
+   */
   useEffect(() => {
-    const remembered = readBranchChoice(branches);
-    if (remembered) void load(initial.date, remembered);
+    if (!branchContext.ready) return;
+    const wanted = branches.length > 1 ? branchContext.choice : null;
+    if (wanted === branch) return;
+    void load(date, wanted);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [branchContext.ready, branchContext.choice]);
 
   /**
    * Write one row and take the server's answer back.
@@ -302,7 +299,6 @@ export function AttendanceRegister({
   const filterLabel = filter === 'all' ? t('allStaff', { label: staffLower }) : ts(filter);
   /** Jira GRW-249 — the picked branch's name, for the toolbar button and the empty state. */
   const branchName = branch ? (branches.find((b) => b.id === branch)?.name ?? t('thisBranch')) : null;
-  const branchLabel = branchName ?? t('allBranches');
   const canMarkAll = rows.some((r) => r.rostered && !r.status);
 
   return (
@@ -364,52 +360,6 @@ export function AttendanceRegister({
           />
         </div>
 
-        {/* Jira GRW-249 — one branch's register. `branches` is already empty
-            for anyone but a multi-branch owner (BR-01), so this never shows
-            for a receptionist (their own branch is fixed) or a single-branch
-            business. */}
-        {branches.length > 1 && (
-          <BranchTabs branches={branches} value={branch} onChange={pickBranch} allLabel={tb('branchTabsAll')} label={tb('branchTabsLabel')} />
-        )}
-        {branches.length > 1 && (
-          <div className="att-menu-anchor att-branch-menu">
-            <button
-              type="button"
-              className={`att-filter ${branch ? 'att-filter-on' : ''}`}
-              aria-haspopup="listbox"
-              aria-expanded={openMenu === 'branch'}
-              onClick={() => setOpenMenu((m) => (m === 'branch' ? null : 'branch'))}
-            >
-              <span className="att-filter-key">{t('branchKey')}</span> {branchLabel}
-              <span className="att-caret" aria-hidden="true">▾</span>
-            </button>
-            {openMenu === 'branch' && (
-              <div className="att-menu" role="listbox">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={branch === null}
-                  className={branch === null ? 'is-on' : ''}
-                  onClick={() => pickBranch(null)}
-                >
-                  {t('allBranches')}
-                </button>
-                {branches.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    role="option"
-                    aria-selected={branch === b.id}
-                    className={branch === b.id ? 'is-on' : ''}
-                    onClick={() => pickBranch(b.id)}
-                  >
-                    {b.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="att-menu-anchor">
           <button

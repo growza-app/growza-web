@@ -182,7 +182,8 @@ describe('one vertical rhythm on a phone', () => {
     expect(spacing).toMatch(/\.topbar::after,\s*\.hm-head::after/);
   });
 
-  it('the branch tabs bring no margin of their own', () => {
-    expect(read(join(STYLES, '88-branch-tabs.css'))).toMatch(/\.branch-tabs\s*\{[^}]*margin:\s*0;/);
+  it("the phone's branch line is a 44px target without moving the title (Jira GRW-395)", () => {
+    const css = read(join(STYLES, '94-header-branch-picker.css'));
+    expect(css).toMatch(/\.hbp-line \.sbp-btn::after\s*\{\s*content:\s*'';\s*position:\s*absolute;\s*inset:\s*-9px -6px;/);
   });
 });

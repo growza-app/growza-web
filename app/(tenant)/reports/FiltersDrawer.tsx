@@ -4,7 +4,6 @@ import { useReportsCopy } from '../lib/use-reports-copy';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
-import { copy } from '../lib/copy';
 import { countFilters, type ReportFilterOptions, type ReportFilters } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
 
