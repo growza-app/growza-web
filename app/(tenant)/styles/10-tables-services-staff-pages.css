@@ -55,3 +55,139 @@ tr:last-child td {
     padding-right: 14px;
   }
 }
+
+/* ---------- categories sheet (Jira GRW-428) ---------- */
+
+/*
+ * An inset grouped list, on the shared `.modal-fit` shell.
+ *
+ * `svc-cat-` and not `cat-`: the ready-made catalogue picker already owns `.cat-row`, `.cat-list` and
+ * `.cat-row-actions` (48-add-services-chooser…css), and its own phone rule turns that actions group into a
+ * column. Borrowing those names put four stacked buttons in every row here, which is exactly the kind of
+ * accident a prefix exists to prevent.
+ *
+ * Phone first: a row is two lines — the name, then its controls — and only widens into one line when there is
+ * room. The separators sit on the ROWS, not the list, which is what makes six categories read as six things
+ * rather than as a table. Every control is 44px, because this is used one-handed at a reception desk, and the
+ * destructive one is last, where a thumb reaches it only on purpose.
+ */
+.svc-cat-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.svc-cat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.svc-cat-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.svc-cat-row + .svc-cat-row {
+  border-top: 1px solid var(--border);
+}
+
+.svc-cat-text {
+  min-width: 0;
+}
+
+.svc-cat-name {
+  font-size: 15px;
+  font-weight: 560;
+  /* A 60-character name on a 344px fold truncates rather than pushing its own controls off the row. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.svc-cat-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.svc-cat-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 44px, not `.icon-btn`'s 36 — GRW-342's floor for anything a thumb presses. */
+.svc-cat-actions .icon-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.svc-cat-actions .icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Delete at the far end of the row, away from the arrows a reorder taps twice in a row. */
+.svc-cat-delete {
+  margin-left: auto;
+  min-height: 44px;
+}
+
+/* The rename, in place: the field takes the line and its two buttons sit under it when there is no room. */
+.svc-cat-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.svc-cat-edit input {
+  flex: 1;
+  min-width: 140px;
+  min-height: 44px;
+  font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
+}
+
+.svc-cat-edit .btn,
+.svc-cat-add .btn {
+  min-height: 44px;
+}
+
+.svc-cat-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.svc-cat-add input {
+  flex: 1;
+  min-width: 150px;
+  min-height: 44px;
+  font-size: 16px;
+}
+
+/* Wide enough for the name and its controls on one line — a tablet, and the sheet on a desktop. */
+@media (min-width: 480px) {
+  .svc-cat-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+  }
+
+  .svc-cat-text {
+    flex: 1;
+  }
+}

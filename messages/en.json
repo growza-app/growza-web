@@ -844,6 +844,31 @@
       "added": "{count, plural, =0 {Nothing new was added.} one {# service added.} other {# services added.}}",
       "skipped": "{count, plural, one {Skipped # already here: {names}} other {Skipped # already here: {names}}}",
       "done": "Done"
+    },
+    "categories": {
+      "open": "Categories",
+      "title": "Categories",
+      "hint": "The groups your services are listed under at this branch.",
+      "none": "You have no categories yet. Add one below and you can file services under it.",
+      "add": "Add",
+      "addPlaceholder": "New category name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "done": "Done",
+      "delete": "Delete",
+      "empty": "No services yet",
+      "count": "{count, plural, one {# service} other {# services}}",
+      "countWithRetired": "{count, plural, one {# service} other {# services}} · {retired} retired",
+      "renameAria": "Rename {name}",
+      "moveUpAria": "Move {name} up",
+      "moveDownAria": "Move {name} down",
+      "deleteTitle": "Delete {name}?",
+      "deleteBody": "{count, plural, one {Its # service stays} other {Its # services stay}} in your list, with no category.",
+      "deleteBodyEmpty": "Nothing is filed under it.",
+      "deleteDetail": "Your bookings are not affected.",
+      "errors": {
+        "failed": "Could not save."
+      }
     }
   },
   "staff": {

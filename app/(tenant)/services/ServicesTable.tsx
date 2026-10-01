@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatMoney, type ServiceAdmin, type ServiceCategory } from '../lib/api';
+import { api, formatMoney, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { PaginatedTable } from '../components/PaginatedTable';
@@ -16,6 +16,7 @@ import { ImportServices } from './ImportServices';
 import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser';
 import { CataloguePicker } from './CataloguePicker';
 import { CopyFromBranch } from './CopyFromBranch';
+import { CategoriesSheet } from './CategoriesSheet';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -64,6 +65,15 @@ export function ServicesTable({
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [copying, setCopying] = useState(false);
+  /**
+   * Jira GRW-428 — the category sheet, and the admin list it needs.
+   *
+   * Not the `categories` prop: that is the picker's list, which leaves out a category with nothing in it, so a
+   * category created in the sheet would vanish from it. Fetched when the sheet opens rather than with the page,
+   * because most visits to this screen never open it.
+   */
+  const [managing, setManaging] = useState<ServiceCategoryAdmin[] | null>(null);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const canCopy = branches.length > 1;
   const reload = async () => {
     setServices(await api.allServices(branchId));
@@ -208,6 +218,25 @@ export function ServicesTable({
             aria-label={t('searchAria')}
           />
         </div>
+        {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service. */}
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={loadingCategories}
+          onClick={async () => {
+            setLoadingCategories(true);
+            setError(null);
+            try {
+              setManaging(await api.categoriesAtBranch(branchId));
+            } catch (err) {
+              setError(err instanceof Error ? err.message : t('categories.errors.failed'));
+            } finally {
+              setLoadingCategories(false);
+            }
+          }}
+        >
+          {loadingCategories ? '…' : t('categories.open')}
+        </button>
         <button type="button" className="btn btn-ghost" onClick={exportCsv}>
           {t('export')}
         </button>
@@ -391,6 +420,16 @@ export function ServicesTable({
           </PaginatedTable>
         )}
       </div>
+
+      {managing && (
+        <CategoriesSheet
+          branchId={branchId}
+          initial={managing}
+          onClose={() => setManaging(null)}
+          // A rename shows on every row of the list, and a delete frees services it lists: reload, don't patch.
+          onChanged={() => void reload()}
+        />
+      )}
 
       {(creating || editing) && (
         <ServiceForm

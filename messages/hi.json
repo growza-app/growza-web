@@ -844,6 +844,31 @@
       "added": "{count, plural, =0 {कुछ नया नहीं जुड़ा।} one {# सेवा जुड़ी।} other {# सेवाएँ जुड़ीं।}}",
       "skipped": "{count, plural, one {# पहले से यहाँ थी, छोड़ी: {names}} other {# पहले से यहाँ थीं, छोड़ीं: {names}}}",
       "done": "हो गया"
+    },
+    "categories": {
+      "open": "श्रेणियाँ",
+      "title": "श्रेणियाँ",
+      "hint": "इस शाखा में आपकी सेवाएँ इन समूहों के नीचे दिखती हैं।",
+      "none": "अभी कोई श्रेणी नहीं है। नीचे एक जोड़ें, फिर उसमें सेवाएँ रख सकते हैं।",
+      "add": "जोड़ें",
+      "addPlaceholder": "नई श्रेणी का नाम",
+      "save": "सेव करें",
+      "cancel": "रद्द करें",
+      "done": "हो गया",
+      "delete": "हटाएँ",
+      "empty": "अभी कोई सेवा नहीं",
+      "count": "{count, plural, one {# सेवा} other {# सेवाएँ}}",
+      "countWithRetired": "{count, plural, one {# सेवा} other {# सेवाएँ}} · {retired} हटाई गई",
+      "renameAria": "{name} का नाम बदलें",
+      "moveUpAria": "{name} को ऊपर करें",
+      "moveDownAria": "{name} को नीचे करें",
+      "deleteTitle": "{name} हटाएँ?",
+      "deleteBody": "{count, plural, one {इसकी # सेवा आपकी सूची में रहेगी} other {इसकी # सेवाएँ आपकी सूची में रहेंगी}}, बिना किसी श्रेणी के।",
+      "deleteBodyEmpty": "इसमें कोई सेवा नहीं है।",
+      "deleteDetail": "आपकी बुकिंग पर कोई असर नहीं पड़ता।",
+      "errors": {
+        "failed": "सेव नहीं हो सका।"
+      }
     }
   },
   "staff": {
