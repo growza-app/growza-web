@@ -1035,12 +1035,15 @@
       "actionsAria": "Offer actions",
       "edit": "Edit",
       "delete": "Delete",
-      "deleteConfirm": "Delete \"{title}\"? This can't be undone.",
       "onlyOn": "Only on: {days}",
       "window": "{from} → {until}",
       "now": "now",
       "noEnd": "no end date",
-      "always": "Always visible"
+      "always": "Always visible",
+      "deleteTitle": "Delete \"{title}\"?",
+      "deleteBody": "It comes off the menu straight away and can't be brought back.",
+      "deleteDetailCombo": "Anyone already in the queue for it keeps their place and their services — their visit just stops naming this combo.",
+      "deleteFailed": "Could not delete it. Please try again."
     },
     "menu": {
       "create": "Create offer",

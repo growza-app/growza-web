@@ -20,6 +20,7 @@ export function ConfirmDialog({
   cancelLabel,
   tone = 'default',
   busy = false,
+  error,
   onConfirm,
   onCancel,
 }: {
@@ -31,6 +32,16 @@ export function ConfirmDialog({
   cancelLabel?: string;
   tone?: 'default' | 'danger';
   busy?: boolean;
+  /**
+   * Jira GRW-435 — why it was refused, shown without closing the dialog.
+   *
+   * A destructive action can fail for a reason the owner can act on, and the owner is looking right here when it
+   * does. Offers had no surface for that at all: `removeOffer` was a `try/finally` with no `catch`, so the API's
+   * "Somebody is waiting for this right now" (GRW-434) was built, sent, parsed into `ApiError.message` and then
+   * dropped — the spinner stopped, the row stayed, and nothing was said. Closing the dialog to show the sentence
+   * somewhere else would be worse: the owner loses the thing they were deciding about.
+   */
+  error?: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -59,6 +70,12 @@ export function ConfirmDialog({
         <div className="modal-body">
           <p className="confirm-body">{body}</p>
           {detail && <p className="confirm-detail">{detail}</p>}
+          {/* `alert` so a refusal that appears after the dialog is already open is announced, not just painted. */}
+          {error && (
+            <p className="confirm-error" role="alert">
+              {error}
+            </p>
+          )}
         </div>
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
