@@ -503,6 +503,23 @@ export function ServicesTable({
           service={editing}
           categories={categories}
           branchId={branchId}
+          /*
+           * Jira GRW-440 — the sheet's own Retire and Delete. Handled here, not in the sheet, so they open the
+           * same confirmations the row's ··· menu opens (GRW-431): one dialog, asked the same way from both.
+           * The sheet closes first, because a confirmation stacked on top of it is two modals deep.
+           */
+          onRetire={(s) => {
+            setEditing(null);
+            void askRetire(s);
+          }}
+          onRestore={(s) => {
+            setEditing(null);
+            void setActive(s, true);
+          }}
+          onDelete={(s) => {
+            setEditing(null);
+            void askDelete(s);
+          }}
           onClose={() => {
             setCreating(false);
             setEditing(null);

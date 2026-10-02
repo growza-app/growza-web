@@ -1,0 +1,317 @@
+/*
+ * Jira GRW-440 — the service sheet as an iOS grouped form.
+ *
+ * Inset white groups on a grey sheet, 44px rows, values right-aligned, and every explanation as a footnote
+ * UNDER its group rather than crowding the field it belongs to. That is how iOS Settings reads, and it is why
+ * an owner gets to the bottom of it.
+ */
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 100%);
+  max-height: min(92vh, 860px);
+  padding: 0;
+  overflow: hidden;
+  background: var(--page-bg);
+}
+
+/* Cancel · title · Save, the way a sheet is dismissed and committed on iOS. */
+.sheet-head {
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.sheet-head-title {
+  font-size: 16.5px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+.sheet-head-cancel,
+.sheet-head-save {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--accent-deep);
+  cursor: pointer;
+  /* 44px targets, with the padding inside the button rather than around it. */
+  min-height: 44px;
+  padding: 0 4px;
+}
+
+.sheet-head-cancel {
+  justify-self: start;
+}
+
+.sheet-head-save {
+  justify-self: end;
+  font-weight: 600;
+}
+
+/* Disabled until something changed, so "Save" means something when it is tappable. */
+.sheet-head-save:disabled,
+.sheet-head-cancel:disabled {
+  color: var(--muted);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 16px 24px;
+}
+
+.sheet-label {
+  padding: 22px 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sheet-group {
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: 0 0 0 0.5px var(--border);
+}
+
+/* The footnote: what the group above it actually does. */
+.sheet-foot {
+  padding: 7px 4px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.sheet-foot-error {
+  color: #b91c1c;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 6px 14px;
+}
+
+.sheet-row + .sheet-row {
+  border-top: 0.5px solid var(--border);
+}
+
+.sheet-row-label {
+  flex: none;
+  font-size: 16px;
+}
+
+.sheet-row-value {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sheet-row-value input,
+.sheet-row-value select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--text);
+  text-align: right;
+  outline: none;
+  padding: 0;
+}
+
+.sheet-row-value select {
+  /* A select cannot be right-aligned reliably across browsers; the arrow stays on the right either way. */
+  text-align-last: right;
+}
+
+.sheet-row-value .field-invalid {
+  color: #b91c1c;
+}
+
+/* ── The steppers ─────────────────────────────────────────────────────────── */
+
+.sheet-stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--slate-soft);
+  border-radius: 9px;
+}
+
+.sheet-stepper-btn {
+  width: 44px;
+  height: 36px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  font-family: inherit;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* At an edge the button is plainly spent, rather than looking live and doing nothing. */
+.sheet-stepper-btn:disabled {
+  opacity: 0.35;
+  box-shadow: none;
+  cursor: default;
+}
+
+.sheet-stepper-value {
+  width: 86px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  outline: none;
+}
+
+/* ── Price ────────────────────────────────────────────────────────────────── */
+
+.sheet-row-price {
+  gap: 8px;
+}
+
+.sheet-price-symbol {
+  font-size: 22px;
+  color: var(--muted);
+}
+
+.sheet-row-price input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  outline: none;
+}
+
+/* ── The photo row, and the destructive group ─────────────────────────────── */
+
+.sheet-photo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+}
+
+.sheet-photo-img {
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.sheet-photo-empty {
+  border: 1px dashed var(--border);
+  background: var(--page-bg);
+}
+
+.sheet-photo-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sheet-photo-action {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.sheet-photo-why {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.sheet-photo-remove {
+  flex: none;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+.sheet-group-danger {
+  margin-top: 30px;
+}
+
+.sheet-danger-row {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.sheet-danger-row + .sheet-danger-row {
+  border-top: 0.5px solid var(--border);
+}
+
+/* Amber for the reversible one, red for the final one — the two are not the same thing. */
+.sheet-danger-warn {
+  color: var(--amber);
+}
+
+.sheet-danger-delete {
+  color: #b91c1c;
+}
+
+/* On a phone the sheet is the screen, rising from the bottom as iOS sheets do. */
+@media (max-width: 860px) {
+  .sheet {
+    width: 100%;
+    max-height: 92dvh;
+    margin-top: auto;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+}
