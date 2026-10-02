@@ -23,7 +23,6 @@ import {
   IconSort,
   IconStaff,
   IconUserPlus,
-  IconWallet,
 } from '../components/icons';
 
 /** What the salon actually took for a booking (see `bookingBill`). */
@@ -46,26 +45,6 @@ function staffHue(name: string): number {
 const railColorFor = (name: string) => `oklch(0.56 0.13 ${staffHue(name)})`;
 const staffBgFor = (name: string) => `oklch(0.95 0.045 ${staffHue(name)})`;
 
-/** Individual service names across every booking, not the booking count — a 3-service combo counts toward all three. */
-function topServiceName(bookings: BookingGroup[]): string | null {
-  const tally = new Map<string, number>();
-  for (const b of bookings) for (const s of b.serviceNames) tally.set(s, (tally.get(s) ?? 0) + 1);
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const [name, n] of tally) if (n > bestCount) [best, bestCount] = [name, n];
-  return best;
-}
-
-/** Every distinct provider a booking touched, not just the first leg — a combo split across two staff counts toward both. */
-function busiestStaffName(bookings: BookingGroup[]): string | null {
-  const tally = new Map<string, number>();
-  for (const b of bookings) for (const name of b.providerNames) tally.set(name, (tally.get(name) ?? 0) + 1);
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const [name, n] of tally) if (n > bestCount) [best, bestCount] = [name, n];
-  return best;
-}
-
 // `value` widened to string so the revenue tile can carry a formatted amount alongside the plain counts.
 function Kpi({
   tone,
@@ -82,7 +61,6 @@ function Kpi({
   value: number | string;
   label: string;
   sub: string;
-  /** e.g. "desktop-only" — the Revenue tile hides on mobile in favour of the "at a glance" metric card (GRW-46). */
   className?: string;
   /**
    * Jira GRW-308 — a tile that filters the list. `active` is whether it is the
@@ -149,7 +127,6 @@ export function BookingsList({
   openAppointmentId,
   viewerIsStaff,
   earnings,
-  capacityMin,
   canReschedule = true,
   loadFailed = false,
 }: {
@@ -220,15 +197,6 @@ export function BookingsList({
   branches?: Array<{ id: string; name: string }>;
   /** Jira GRW-216 — null when the owner has not shown this stylist their takings, or the viewer is not one. */
   earnings?: MyEarnings | null;
-  /**
-   * Jira GRW-63 · GRW-168 — minutes this roster is actually rostered for over
-   * the range on screen, from `working_hours` minus `time_block`.
-   *
-   * `null` means the API could not say — the range is wider than it will
-   * compute, or the call failed. Not 0: nobody rostered and "we don't know"
-   * are different answers, and only one of them should be shown as 0%.
-   */
-  capacityMin: number | null;
 }) {
   const locale = useLocale();
   // The server's clock at render. Every redraw (LiveRefresh forces one a minute) brings a fresh
@@ -288,10 +256,6 @@ export function BookingsList({
   // the day, which is what the page is for. Latest-first earns its keep on a
   // From/To range, where the most recent day is usually the interesting end.
   const [sort, setSort] = useState<'asc' | 'desc'>(initialSort);
-  // Which figure the "at a glance" card shows — the KPI row's 5th column on
-  // desktop (GRW-47), a full-width row below the 2x2 grid on mobile (GRW-46).
-  const [metric, setMetric] = useState<'busy' | 'staff' | 'service'>('busy');
-
   // Jira GRW-312 — a branch narrows the day itself, before the tiles are counted, so what Home
   // counted for that branch is what these tiles and this list show.
   const bookings = groupBookings(branch ? appointments.filter((a) => a.locationId === branch.id) : appointments);
@@ -315,9 +279,9 @@ export function BookingsList({
   }, [openAppointmentId, bookings]);
 
   // Mobile-only (GRW-46): search + staff chips narrow the SCHEDULE only — the
-  // KPI row above and the "at a glance" metric card both stay computed from
-  // the full day, matching how a real dashboard's headline counts shouldn't
-  // reshuffle just because the owner typed into a search box.
+  // KPI row above stays computed from the full day, matching how a real
+  // dashboard's headline counts shouldn't reshuffle just because the owner
+  // typed into a search box.
   const q = query.trim().toLowerCase();
   const matchesQuery = (b: BookingGroup) =>
     !q ||
@@ -364,9 +328,6 @@ export function BookingsList({
    * Confirmed is every confirmed booking in view. On today's schedule it used to be only those
    * starting in the next two hours, which a press could not deliver: the tile said 3 and the
    * list showed 7.
-   *
-   * The metric card below deliberately stays whole-day — its labels all say "today", so it
-   * reads as a day fact rather than a description of the list.
    */
   const countIn = (status: string) => inView.filter((b) => b.status === status).length;
   const statusTile = (status: string) => ({
@@ -376,57 +337,6 @@ export function BookingsList({
       setPage(1);
     },
   });
-
-  /**
-   * Mobile-only (GRW-46) "at a glance" card: booked minutes over rostered
-   * minutes.
-   *
-   * Both halves are now real, and it took two fixes to get there.
-   *
-   * GRW-190 — the two halves have to describe the same PEOPLE. They didn't:
-   * `bookings` was scoped to the signed-in stylist and the roster was the
-   * whole salon, so Bhavna's screen divided her 135 minutes by ten stylists'
-   * capacity and told her she was 3% busy on a day that was a quarter full.
-   *
-   * GRW-168 — and the same DAYS, on the real schedule. The denominator was
-   * `roster size × an assumed nine-hour day`, an assumption written into this
-   * component: wrong for every salon that doesn't open 9-to-6, wrong again for
-   * any stylist who overrides their own hours, and wrong by a whole multiple
-   * over a From/To range, where a week of bookings was divided by one day.
-   * `capacityMin` comes from `working_hours` minus `time_block` over exactly
-   * the range on screen, so a half-day Sunday, a lunch gap and a colleague
-   * marked off sick all count for what they are.
-   *
-   * Null capacity is NOT zero: it means the API declined to say (a range wider
-   * than a month, or a failed call), and the card shows no figure rather than
-   * an authoritative-looking 0%.
-   */
-  const bookedMin = bookings.reduce((sum, b) => sum + b.totalMin, 0);
-  // Jira GRW-312 — with one branch picked the minutes are that branch's and `capacityMin` is the whole
-  // business's: the mismatch GRW-190 fixed for a stylist. No figure until the capacity is per branch.
-  const staffBusyPct = capacityMin && capacityMin > 0 && !branch ? Math.round((bookedMin / capacityMin) * 100) : null;
-  const busiestStaff = busiestStaffName(bookings);
-  const topService = topServiceName(bookings);
-  const metricValue =
-    metric === 'staff'
-      ? (busiestStaff ?? '—')
-      : metric === 'service'
-        ? (topService ?? '—')
-        : staffBusyPct === null
-          ? '—'
-          : `${staffBusyPct}%`;
-  // "today" only when the screen is showing one day. Over a From/To range the
-  // figure covers every day in it, and the old label said otherwise.
-  const oneDay = date === toDate;
-  const range = oneDay ? 'today' : 'range';
-  const metricLabel =
-    metric === 'staff'
-      ? t('metricStaff', { range })
-      : metric === 'service'
-        ? t(viewerIsStaff ? 'metricServiceOwn' : 'metricService', { range })
-        : viewerIsStaff
-          ? t('metricMyTime', { range })
-          : t('metricBusy', { range });
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
@@ -640,40 +550,6 @@ export function BookingsList({
         <Kpi tone="amber" icon={<IconClock />} value={countIn('confirmed')} label={ts('confirmed')} sub={isToday ? t('today') : dayLabel} {...statusTile('confirmed')} />
         <Kpi tone="purple" icon={<IconCheck />} value={countIn('completed')} label={ts('done')} sub={isToday ? t('today') : dayLabel} {...statusTile('completed')} />
         <Kpi tone="red" icon={<IconUserPlus />} value={countIn('no_show')} label={ts('didNotCome')} sub={isToday ? t('today') : dayLabel} {...statusTile('no_show')} />
-
-        {/* "At a glance" — the KPI row's 5th column on desktop (Bookings.dc.html,
-            GRW-47), and its own full-width row below the 2x2 grid on mobile
-            (Bookings Mobile.dc.html, GRW-46) — one card, reflowed per viewport
-            in CSS only. Replaces the old static Revenue tile, exactly as the
-            mock does (Revenue itself isn't shown here any more). */}
-        <div className="bk-metric-card">
-          <div className="bk-metric-top">
-            <span className="bk-metric-icon">
-              <IconWallet />
-            </span>
-            <select
-              className="bk-metric-select"
-              aria-label={t('metricPicker')}
-              value={metric}
-              onChange={(e) => setMetric(e.target.value as typeof metric)}
-            >
-              <option value="busy">{viewerIsStaff ? t('optMyDay') : t('optStaffBusy')}</option>
-              {/* "Busiest staff" over a one-person roster can only ever name
-                  the reader. Offered to owners and managers only. */}
-              {!viewerIsStaff && <option value="staff">{t('optBusiestStaff')}</option>}
-              <option value="service">{t('optTopService')}</option>
-            </select>
-          </div>
-          <div className="bk-metric-main">
-            <div className="bk-metric-value">{metricValue}</div>
-            <div className="bk-metric-label">{metricLabel}</div>
-          </div>
-          {metric === 'busy' && staffBusyPct !== null && (
-            <div className="bk-metric-bar">
-              <div className="bk-metric-bar-fill" style={{ width: `${Math.min(100, Math.max(0, staffBusyPct))}%` }} />
-            </div>
-          )}
-        </div>
       </div>
       )}
 
