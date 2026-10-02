@@ -19,6 +19,7 @@ import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
 import { useBranch } from '../BranchProvider';
 import { homeCopy } from '../../lib/home-copy';
+import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
 import { canSee, mayUse, type MemberRole } from '../../lib/nav-policy';
 import {
@@ -311,7 +312,17 @@ export function OwnerHome(p: OwnerHomeProps) {
     return m;
   }, [todayGroups, now]);
 
-  const closeTime = hours?.closesAt ? formatClock(hours.closesAt) : null;
+  /*
+   * Jira GRW-450 — no closing time while more than one branch is in view.
+   *
+   * With no branch the API has no branch's hours to read and falls back to the business-level `working_hours`
+   * row. Branches set their own (`BRANCH_SETTING_KEYS`), so "Day closed at 8:00 pm" over three of them is a
+   * fact about none: one may have shut at 7, another may still be serving. The Day summary is reached from the
+   * header either way, so nothing becomes unreachable — only the claim goes.
+   */
+  const onAllBranches = multiBranch && branch === null;
+  const closesAt = closingTime(hours?.closesAt, onAllBranches);
+  const closeTime = closesAt ? formatClock(closesAt) : null;
 
   /*
    * Jira GRW-312 — the count above was made for the branch picked here, so the link takes

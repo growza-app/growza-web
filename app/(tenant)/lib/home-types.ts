@@ -67,8 +67,13 @@ export interface DaySummary {
   done: number;
   notDone: number;
   byPaymentMode: PaymentModeSlice[];
-  /** Jira GRW-363 — `key: 'unassigned'` marks the no-stylist row; its `name` is English, so Home words it. */
-  staff: Array<{ id: string; name: string; bookings: number; revenueMinor: number; key?: 'unassigned' }>;
+  /**
+   * Jira GRW-363 — `key: 'unassigned'` marks the no-stylist row; its `name` is English, so Home words it.
+   *
+   * Jira GRW-450 — `locationId` is the stylist's own branch, sent only on the all-branches summary, where the
+   * list mixes them. Absent on a branch's own summary and on the no-stylist row.
+   */
+  staff: Array<{ id: string; name: string; bookings: number; revenueMinor: number; key?: 'unassigned'; locationId?: string | null }>;
   /** Jira GRW-222 — who the day was for. */
   clients: {
     served: number;
@@ -85,6 +90,12 @@ export interface DaySummary {
   };
   /** Jira GRW-406 — today's tokens. Optional so an older API does not break the sheet. */
   tokens?: TokenFigures;
+  /**
+   * Jira GRW-450 — how each branch did, sent only when no branch was asked for and there is more than one.
+   *
+   * Absent is the normal case: a branch's own summary, and every one-branch business.
+   */
+  branches?: Array<{ id: string; name: string; bookings: number; revenueMinor: number; done: number }>;
 }
 
 /** Jira GRW-222 — one walk-in waiting to be seen, first come first served. */

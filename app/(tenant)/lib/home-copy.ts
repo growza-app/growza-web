@@ -164,6 +164,13 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     moneyTaken: S('Money today', 'आज मिला पैसा'),
     done: S('done', 'पूरे हुए'),
     notDone: S('still to do', 'बाकी हैं'),
+    /*
+     * Jira GRW-450 — the all-branches summary's own section. Plain words, as everywhere on this screen: the
+     * owner reading it at closing time wants "what did each shop do", not "branch performance breakdown".
+     */
+    eachBranch: S('Each branch today', 'आज हर ब्रांच'),
+    eachBranchSub: S('Tap a branch to see its full day', 'पूरा दिन देखने के लिए ब्रांच पर टैप करें'),
+    backToAll: S('All branches', 'सभी ब्रांच'),
     staffToday: S('Staff today', 'आज का स्टाफ़'),
     staffTodaySub: S('Work and money for each person', 'हर व्यक्ति का काम और पैसा'),
     staffBookings: (n: number) => `${n} ${bookingWord(n)}`,
