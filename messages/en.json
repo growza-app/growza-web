@@ -930,6 +930,13 @@
       "retireHint": "hide from booking",
       "restore": "Restore",
       "delete": "Delete…"
+    },
+    "heldByPackages": {
+      "title": "{name} is inside {count, plural, one {# package} other {# packages}}",
+      "body": "It can't be retired while a package sells it. Remove it from these first, then retire it.",
+      "contains": "{count, plural, one {# service} other {# services}}",
+      "editPackages": "Edit packages",
+      "cancel": "Cancel"
     }
   },
   "staff": {
