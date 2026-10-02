@@ -7,6 +7,7 @@ import hi from '../../../messages/hi.json';
 import type { ServiceAdmin, ServiceCategoryAdmin } from '../lib/api';
 import { CategoriesSheet } from './CategoriesSheet';
 import { CategoryServices } from './CategoryServices';
+import { CategoryDeleteCard } from './CategoryDeleteCard';
 
 /**
  * Jira GRW-428 — the category sheet, rendered from the real component in both languages.
@@ -123,38 +124,83 @@ describe('the categories sheet', () => {
 });
 
 describe('a category opened into its services', () => {
-  it('asks for a selection before it will do anything', () => {
+  it('is a plain list, with the way to remove things at the top', () => {
     const html = detail('en', [svc({}), svc({ id: 's2', name: 'Keratin' })]);
-    expect(html).toContain('0 of 2 selected');
-    expect(html).toContain('Pick what to take off the menu');
-    // The action cannot be pressed until something is ticked.
-    const action = html.indexOf('Pick what to take off the menu');
-    expect(html.slice(Math.max(0, action - 200), action)).toContain('disabled');
-    expect(html).toContain('Select all');
+    expect(html).toContain('Blow dry');
+    expect(html).toContain('Keratin');
+    expect(html).toContain('Delete');
+    // The ticking is behind that button, not on the list itself (owner's change, 2026-10-02).
+    expect(html).not.toContain('svc-pick-mark');
+    expect(html).not.toContain('selected');
   });
 
-  it('shows a retired service, dimmed and badged, so Select all still means the whole category', () => {
+  it('shows a retired service with its badge, because the owner is looking at the whole category', () => {
     const html = detail('en', [svc({}), svc({ id: 's2', name: 'Keratin', active: false })]);
     expect(html).toContain('Retired');
     expect(html).toContain('is-retired');
-    expect(html).toContain('0 of 2 selected');
   });
 
   it('says the duration and price of each service', () => {
-    expect(detail('en', [svc({ durationMin: 45, priceMinor: '90000' })])).toContain('45 min');
-    expect(detail('en', [svc({ durationMin: 45, priceMinor: '90000' })])).toContain('900');
+    const html = detail('en', [svc({ durationMin: 45, priceMinor: '90000' })]);
+    expect(html).toContain('45 min');
+    expect(html).toContain('900');
   });
 
-  /** An empty category has nothing to tick, so its one action is the delete itself. */
+  it('says so when nothing is filed under it', () => {
+    expect(detail('en', [])).toContain('Nothing is filed under this category yet');
+  });
+
+  it('reads in Hindi', () => {
+    const html = detail('hi', [svc({})]);
+    expect(html).toContain('श्रेणियाँ');
+    expect(html).toContain('हटाएँ');
+    expect(html).not.toContain('Delete');
+  });
+});
+
+describe('the delete card', () => {
+  const card = (locale: 'en' | 'hi', services: ServiceAdmin[]) =>
+    wrap(
+      locale,
+      createElement(CategoryDeleteCard, {
+        branchId: 'b1',
+        category: cat({ id: 'a', name: 'Hair', serviceCount: services.length, activeCount: services.filter((s) => s.active).length }),
+        services,
+        onClose: () => {},
+        onDone: () => {},
+      }),
+    );
+
+  it('asks for a selection before it will do anything', () => {
+    const html = card('en', [svc({}), svc({ id: 's2', name: 'Keratin' })]);
+    expect(html).toContain('Delete from Hair');
+    expect(html).toContain('Pick what to take off the menu');
+    const action = html.indexOf('Pick what to take off the menu');
+    expect(html.slice(Math.max(0, action - 200), action)).toContain('disabled');
+  });
+
+  /** The trap this wording exists to avoid: a "select all" that silently also deletes the category. */
+  it('says what Select all costs, before it is ticked', () => {
+    const html = card('en', [svc({})]);
+    expect(html).toContain('Select all');
+    expect(html).toContain('Takes everything out, and Hair with it');
+  });
+
   it('offers the delete outright when nothing is filed under it', () => {
-    const html = detail('en', []);
+    const html = card('en', []);
     expect(html).toContain('Nothing is filed under this category yet');
     expect(html).toContain('Delete category');
     expect(html).not.toContain('Select all');
   });
 
+  it('shows a retired service, dimmed and badged, so Select all still means the whole category', () => {
+    const html = card('en', [svc({}), svc({ id: 's2', name: 'Keratin', active: false })]);
+    expect(html).toContain('Retired');
+    expect(html).toContain('is-retired');
+  });
+
   it('reads in Hindi', () => {
-    const html = detail('hi', [svc({})]);
+    const html = card('hi', [svc({})]);
     expect(html).toContain('सभी चुनें');
     expect(html).toContain('चुनें कि मेन्यू से क्या हटाना है');
     for (const s of ['Select all', 'Pick what to take off the menu']) expect(html, s).not.toContain(s);

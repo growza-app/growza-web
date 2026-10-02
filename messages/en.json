@@ -883,7 +883,10 @@
       "minutes": "{count} min",
       "retireTitle": "{count, plural, one {Retire # service?} other {Retire # services?}}",
       "retireBody": "{count, plural, one {It stops being bookable} other {They stop being bookable}} straight away, and {count, plural, one {stays} other {stay}} in your list to restore.",
-      "deleteAllBody": "The category goes, and {count, plural, =0 {all {total} services stay in your list} one {# service is retired} other {# services are retired}} — nothing is deleted."
+      "deleteAllBody": "The category goes. {count, plural, =0 {Its {total} services stay in your list} one {Its # service is retired, not deleted, and stays in your list} other {Its # services are retired, not deleted, and stay in your list}}.",
+      "deleteCardTitle": "Delete from {name}",
+      "selectAllMeans": "Takes everything out, and {name} with it",
+      "working": "Working…"
     }
   },
   "staff": {

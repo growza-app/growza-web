@@ -257,9 +257,70 @@ tr:last-child td {
   white-space: nowrap;
 }
 
-.svc-cat-selectall {
+.svc-cat-head-delete {
   min-height: 44px;
   flex-shrink: 0;
+}
+
+/* A category's own list, read-only — the ticking lives in the delete card. */
+.svc-shown {
+  display: block;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.svc-cat-list > .svc-shown:first-child {
+  border-top: 0;
+}
+
+.svc-shown.is-retired {
+  opacity: 0.6;
+}
+
+/*
+ * "Select all" as the LAST row of the delete card, worded as a consequence. A tick that quietly also deletes
+ * the category would be a trap, so it sits with the things it affects and says what it means.
+ */
+.svc-pick-all {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.svc-cat-cancel {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+}
+
+/*
+ * The one confirmation, inside the card rather than on top of it: a fourth floating layer over page, sheet and
+ * card is one more than anybody can follow back out of.
+ */
+.svc-cat-confirm {
+  padding: 14px 0 2px;
+  border-top: 1px solid var(--border);
+}
+
+.svc-cat-confirm-body {
+  margin: 0;
+  font-size: 14px;
+}
+
+.svc-cat-confirm-detail {
+  margin: 4px 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.svc-cat-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.svc-cat-confirm-actions .btn {
+  min-height: 44px;
 }
 
 .svc-cat-count {
