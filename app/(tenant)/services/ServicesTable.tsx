@@ -3,10 +3,10 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatMoney, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
+import { api, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
-import { servicePhotoUrl } from '../lib/service-photos';
 import { PaginatedTable } from '../components/PaginatedTable';
+import { PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
@@ -107,6 +107,10 @@ export function ServicesTable({
    * "Haircut (copy)" at the same price, live on the booking page the moment it is created, is a second thing
    * the owner is selling without having decided to. It appears under Retired, one tap from a restore once
    * they have edited it.
+   *
+   * And the screen GOES to Retired, because `All` lists what is being sold: a copy that starts retired landed
+   * on a tab the owner was not looking at, so Duplicate changed nothing they could see and the second tap gave
+   * them "Haircut (copy) 2" to clean up. The copy is shown where it actually is.
    */
   const duplicate = async (service: ServiceAdmin) => {
     setError(null);
@@ -122,6 +126,8 @@ export function ServicesTable({
         active: false,
       });
       replace(created);
+      // The copy carries the original's name, so an active search still matches it; only the tab has to move.
+      setCategoryId(RETIRED_TAB);
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t('errors.duplicateFailed'));
     } finally {
@@ -258,6 +264,26 @@ export function ServicesTable({
       q,
     );
   }, [services, search, tab]);
+
+  /*
+   * Jira GRW-439 — the page is sliced HERE, and `PaginatedTable` is driven in controlled mode.
+   *
+   * It used to slice its own `children`, which worked while they were one `<tr>` per service. They are a
+   * single `<ServiceTableRows>` now — the grouping has to see the whole page to put a heading above each
+   * category — and `Children.toArray` counts that as one item: every service rendered on one page and the
+   * footer disappeared, because `Pagination` draws nothing for a single page.
+   *
+   * Slicing the services and grouping afterwards also keeps the page honest at ten SERVICES, which slicing
+   * rows would not: a page of ten rows is eight services and two headings.
+   */
+  const [wantedPage, setWantedPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const page = Math.min(wantedPage, pageCount);
+  const pageRows = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
+  // Back to the first page when the list under it changes: page 3 of a search that now matches four rows is empty.
+  useEffect(() => {
+    setWantedPage(1);
+  }, [tab, search]);
 
   const exportCsv = () => {
     const header = ['Name', 'Type', 'Minutes', 'Cleanup after (min)', 'Price', 'Status'];
@@ -445,7 +471,11 @@ export function ServicesTable({
         ) : (
           <PaginatedTable
             noun={tn('services')}
-            cards={<ServiceCards rows={filtered} actions={rowActions} t={t} order={categoryOrder} />}
+            page={page}
+            total={filtered.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setWantedPage}
+            cards={<ServiceCards rows={pageRows} actions={rowActions} t={t} order={categoryOrder} />}
             head={
               <tr>
                 <th>{t('cols.name')}</th>
@@ -455,7 +485,7 @@ export function ServicesTable({
               </tr>
             }
           >
-            <ServiceTableRows rows={filtered} actions={rowActions} t={t} order={categoryOrder} />
+            <ServiceTableRows rows={pageRows} actions={rowActions} t={t} order={categoryOrder} />
           </PaginatedTable>
         )}
       </div>
