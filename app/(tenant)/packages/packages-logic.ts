@@ -104,6 +104,38 @@ export function pricedMinor(
   return Math.round(partsTotal * (1 - pct / 100));
 }
 
+/**
+ * Jira GRW-446 — what the "% off" field should say for a price, as a whole percent.
+ *
+ * Never negative and never over 100. Switching a flat ₹5,000 package whose parts cost ₹3,750 over to "% off"
+ * used to put **−33** in a field whose own `min` is 0: a number the builder would then refuse to price from,
+ * with nothing said about why. A package at or above its parts is 0% off — which is the truth, and which the
+ * panel beside it already states.
+ *
+ * Empty string when there is nothing to divide by, because the field is then genuinely unanswered.
+ */
+export function percentOff(priceMinor: number | null, partsTotal: number): string {
+  if (priceMinor == null || partsTotal <= 0) return '';
+  const pct = Math.round((1 - priceMinor / partsTotal) * 100);
+  return String(Math.min(100, Math.max(0, pct)));
+}
+
+/**
+ * Jira GRW-446 — what the "% off" field holds once the owner leaves it.
+ *
+ * Clamped when they leave rather than as they type, for the reason the service sheet's steppers are: deleting
+ * a digit before typing the next one should not be fought. 150 becomes 100 and −5 becomes 0, because a field
+ * that quietly ignores what was typed — no saving, no error, Publish simply dead — is worse than one that
+ * corrects it. An empty field stays empty; it is unanswered, not wrong.
+ */
+export function clampPercentInput(raw: string): string {
+  const v = raw.trim();
+  if (v === '') return '';
+  const pct = Number(v);
+  if (!Number.isFinite(pct)) return '';
+  return String(Math.min(100, Math.max(0, Math.round(pct))));
+}
+
 /** Searching a package finds it by its name, its description, or any service inside it. */
 export function searchPackages(
   packages: readonly Offer[],

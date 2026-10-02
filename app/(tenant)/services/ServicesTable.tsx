@@ -21,7 +21,7 @@ import { ALL_TAB, RETIRED_TAB, hasRetired, servicesOnTab, tabAfterChange, tabCou
 import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
 import { HeldByPackagesDialog } from './HeldByPackagesDialog';
 import { packagesInRefusal, type HeldPackage } from './held-by-packages';
-import { copyName } from './services-groups';
+import { categoryTotals, copyName, orderedByCategory } from './services-groups';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -258,6 +258,8 @@ export function ServicesTable({
    * back.
    */
   const categoryIds = useMemo(() => categories.map((c) => c.id), [categories]);
+  /** Jira GRW-441 — the headings read in the owner's order, the same one the tabs above them read. */
+  const categoryOrder = useMemo(() => categories.map((c) => c.name), [categories]);
   const tab = tabAfterChange(services, categoryId, categoryIds);
   useEffect(() => {
     if (tab !== categoryId) setCategoryId(tab);
@@ -289,7 +291,14 @@ export function ServicesTable({
   const [wantedPage, setWantedPage] = useState(1);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(wantedPage, pageCount);
-  const pageRows = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
+  /*
+   * Jira GRW-446 — ordered by category BEFORE it is sliced, and the headings count the category rather than
+   * the page. Slicing the list as it arrived and grouping the slice put "Hair" on three different pages with a
+   * different count each time, beside a tab that said 18.
+   */
+  const ordered = useMemo(() => orderedByCategory(filtered, categoryOrder), [filtered, categoryOrder]);
+  const totals = useMemo(() => categoryTotals(filtered), [filtered]);
+  const pageRows = useMemo(() => ordered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [ordered, page]);
   // Back to the first page when the list under it changes: page 3 of a search that now matches four rows is empty.
   useEffect(() => {
     setWantedPage(1);
@@ -315,9 +324,6 @@ export function ServicesTable({
   };
 
   /** Everything a row can do, handed to both shapes so the table and the cards cannot drift apart. */
-  /** Jira GRW-441 — the headings read in the owner's order, the same one the tabs above them read. */
-  const categoryOrder = useMemo(() => categories.map((c) => c.name), [categories]);
-
   const rowActions: RowActions = {
     onEdit: setEditing,
     onPhoto: askPhoto,
@@ -485,7 +491,7 @@ export function ServicesTable({
             total={filtered.length}
             pageSize={PAGE_SIZE}
             onPageChange={setWantedPage}
-            cards={<ServiceCards rows={pageRows} actions={rowActions} t={t} order={categoryOrder} />}
+            cards={<ServiceCards rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />}
             head={
               <tr>
                 <th>{t('cols.name')}</th>
@@ -495,7 +501,7 @@ export function ServicesTable({
               </tr>
             }
           >
-            <ServiceTableRows rows={pageRows} actions={rowActions} t={t} order={categoryOrder} />
+            <ServiceTableRows rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />
           </PaginatedTable>
         )}
       </div>

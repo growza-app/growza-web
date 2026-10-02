@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { copyName, groupByCategory, timePhrase, worthGrouping } from './services-groups';
+import { categoryTotals, copyName, groupByCategory, orderedByCategory, timePhrase, worthGrouping } from './services-groups';
 
 const svc = (name: string, categoryName: string | null) => ({ name, categoryName });
 
@@ -129,5 +129,72 @@ describe('naming a copy', () => {
 
   it('a branch with nothing in it still names the copy', () => {
     expect(copyName('Haircut', [], suffix)).toBe('Haircut (copy)');
+  });
+});
+
+/*
+ * Jira GRW-446 — the list is paged, and a page is a slice of the ORDER, not of whatever the API returned.
+ * Grouping the slice instead put "Hair" on three pages with a different count on each.
+ */
+describe('reading order, before the page is cut', () => {
+  const rows = [
+    { id: 'a', categoryName: 'Nails' },
+    { id: 'b', categoryName: 'Hair' },
+    { id: 'c', categoryName: null },
+    { id: 'd', categoryName: 'Nails' },
+    { id: 'e', categoryName: 'Hair' },
+  ];
+
+  it('puts each category together, in the owner’s order, unfiled last', () => {
+    expect(orderedByCategory(rows, ['Hair', 'Nails']).map((r) => r.id)).toEqual(['b', 'e', 'a', 'd', 'c']);
+  });
+
+  it('follows a reorder — the same list, the other way round', () => {
+    expect(orderedByCategory(rows, ['Nails', 'Hair']).map((r) => r.id)).toEqual(['a', 'd', 'b', 'e', 'c']);
+  });
+
+  it('keeps every row exactly once', () => {
+    const out = orderedByCategory(rows, ['Hair']);
+    expect(out).toHaveLength(rows.length);
+    expect(new Set(out.map((r) => r.id)).size).toBe(rows.length);
+  });
+
+  it('a page cut from it holds one category, not a sample of three', () => {
+    expect(orderedByCategory(rows, ['Hair', 'Nails']).slice(0, 2).map((r) => r.categoryName)).toEqual(['Hair', 'Hair']);
+  });
+
+  it('does not mutate what it was given', () => {
+    const before = rows.map((r) => r.id);
+    orderedByCategory(rows, ['Nails']);
+    expect(rows.map((r) => r.id)).toEqual(before);
+  });
+});
+
+describe('what a heading counts', () => {
+  const rows = [
+    { categoryName: 'Hair' },
+    { categoryName: 'Hair' },
+    { categoryName: 'Skin' },
+    { categoryName: null },
+  ];
+
+  /** The category's own total, so a heading above a page of seven can still say eighteen. */
+  it('counts the whole list, not the page', () => {
+    const totals = categoryTotals(rows);
+    expect(totals.get('Hair')).toBe(2);
+    expect(totals.get('Skin')).toBe(1);
+  });
+
+  it('counts the unfiled ones under null, the key their heading uses', () => {
+    expect(categoryTotals(rows).get(null)).toBe(1);
+  });
+
+  it('an empty list counts nothing', () => {
+    expect(categoryTotals([]).size).toBe(0);
+  });
+
+  /** `totals.size > 1` is what decides whether headings are drawn at all, so it has to see every category. */
+  it('a one-category list is one entry, however it is paged', () => {
+    expect(categoryTotals([{ categoryName: 'Hair' }, { categoryName: 'Hair' }]).size).toBe(1);
   });
 });

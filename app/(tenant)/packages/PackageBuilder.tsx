@@ -19,7 +19,8 @@ import { useBranch } from '../components/BranchProvider';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { weekdayNames } from '../lib/weekday-names';
-import { pricedMinor, type PriceMode } from './packages-logic';
+import { clampPercentInput, percentOff, pricedMinor, type PriceMode } from './packages-logic';
+import { durationPhrase } from '../lib/duration-words';
 
 /**
  * Build → Rules → Preview wizard for creating/editing a combo offer. One
@@ -77,11 +78,17 @@ function PreviewCard({
   const t = useTranslations('packages.builder');
   const tm = useTranslations('services');
   const totalMin = services.reduce((sum, s) => sum + s.durationMin, 0);
-  const formatDuration = (min: number): string => {
-    if (min < 60) return tm('minutes', { count: min });
-    const hours = min / 60;
-    return t('card.hours', { hours: hours % 1 === 0 ? hours : hours.toFixed(1) });
-  };
+  /*
+   * Jira GRW-446 — "2 hrs 45 min", not "~2.8 hrs". Decimal hours came out of dividing by 60 and rounding to
+   * one place; two point eight of an hour is not a length of time anybody can put in a diary, and this is the
+   * line the customer reads.
+   */
+  const formatDuration = (min: number): string =>
+    durationPhrase(min, {
+      minutes: (count) => tm('minutes', { count }),
+      hours: (count) => tm('hours', { count }),
+      hoursMinutes: (hours, minutes) => tm('hoursMinutes', { hours, minutes }),
+    });
   return (
     <div className="preview-card">
       <div className="preview-body">
@@ -108,7 +115,15 @@ function PreviewCard({
         )}
 
         <div className="preview-price-row">
-          {comboPriceMinor != null && <span className="preview-price-original">{formatMoney(String(originalPriceMinor))}</span>}
+          {/*
+            Jira GRW-446 — struck through only when it is actually a saving. The guard used to be "there is a
+            price at all", so "Sum of parts" drew ₹3,750 crossed out beside ₹3,750, and a package priced ABOVE
+            its parts drew ₹3,750 crossed out beside ₹5,000 — a markup in the visual language of a discount, on
+            the panel that says "See how customers see it". The saved card had it right; this did not.
+          */}
+          {comboPriceMinor != null && comboPriceMinor < originalPriceMinor && (
+            <span className="preview-price-original">{formatMoney(String(originalPriceMinor))}</span>
+          )}
           <span className="preview-price-combo">{formatMoney(String(comboPriceMinor ?? originalPriceMinor))}</span>
           {savingsPct != null && savingsPct > 0 && <span className="chip chip-confirmed">{t('card.pctOff', { pct: savingsPct })}</span>}
         </div>
@@ -198,9 +213,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     initialOffer?.comboPriceMinor ? String(Number(initialOffer.comboPriceMinor) / 100) : '',
   );
   const [percentInput, setPercentInput] = useState(
-    initialOffer?.comboPriceMinor && initialOriginal > 0
-      ? String(Math.round((1 - Number(initialOffer.comboPriceMinor) / initialOriginal) * 100))
-      : '',
+    percentOff(initialOffer?.comboPriceMinor != null ? Number(initialOffer.comboPriceMinor) : null, initialOriginal),
   );
 
   const [visibilityMode, setVisibilityMode] = useState<VisibilityMode>(
@@ -233,7 +246,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     if (next === priceMode) return;
     // Carry the price across so switching mode never silently changes what the customer pays.
     if (next === 'percent' && comboPriceMinor != null && originalPriceMinor > 0) {
-      setPercentInput(String(Math.round((1 - comboPriceMinor / originalPriceMinor) * 100)));
+      setPercentInput(percentOff(comboPriceMinor, originalPriceMinor));
     } else if (next === 'flat' && comboPriceMinor != null) {
       setFlatInput(String(comboPriceMinor / 100));
     }
@@ -682,6 +695,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                         max="100"
                         value={percentInput}
                         onChange={(e) => setPercentInput(e.target.value)}
+                        onBlur={(e) => setPercentInput(clampPercentInput(e.target.value))}
                         placeholder="0"
                         style={{ width: '100%' }}
                       />

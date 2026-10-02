@@ -3,8 +3,10 @@
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategory } from '../lib/api';
+import { useDialog } from '../../shared/a11y/useDialog';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { CLEANUP, DURATION, canStep, clamp, isDirty, slotMinutes, step, type Bounds, type SheetValues } from './service-sheet';
+import { durationPhrase, type DurationWords } from '../lib/duration-words';
 
 /** Rupees in the form, paise in the database — converted at this boundary only. */
 function toMinor(rupees: string): number | null {
@@ -148,10 +150,13 @@ export function ServiceForm({
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState(service?.imageUrl ?? null);
   const photoRef = useRef<HTMLInputElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; price?: string }>({});
+  // Escape does nothing while a save is in flight, the same rule the other sheets follow.
+  useDialog(sheetRef, { onClose: busy ? undefined : onClose });
 
   const original: SheetValues = {
     name: service?.name ?? '',
@@ -206,11 +211,32 @@ export function ServiceForm({
     }
   };
 
-  const minutes = (count: number) => tp('minutes', { count });
+  /*
+   * Jira GRW-446 — the stepper and the footnote both say it the way a person does. "720 min" and "The slot
+   * shows as 730 min" were the two the QA pass found: nobody reads a twelve-hour day as a minute count.
+   */
+  const words: DurationWords = {
+    minutes: (count) => tp('minutes', { count }),
+    hours: (count) => tp('hours', { count }),
+    hoursMinutes: (hours, mins) => tp('hoursMinutes', { hours, minutes: mins }),
+  };
+  const minutes = (count: number) => durationPhrase(count, words);
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
-      <div className="modal sheet" onClick={(e) => e.stopPropagation()}>
+      {/*
+        Jira GRW-446 — a dialog that behaves like every other one in the product: Escape closes it, Tab stays
+        inside it, and focus comes back where it left. This was the screen's main editor and the one modal that
+        did none of that; a sheet that ignores Escape is a sheet people close by clicking somewhere risky.
+      */}
+      <div
+        className="modal sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={service ? t('titleEditShort') : t('titleAdd')}
+        ref={sheetRef}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="sheet-head">
           <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
             {t('cancel')}

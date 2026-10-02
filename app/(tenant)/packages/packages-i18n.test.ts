@@ -60,8 +60,9 @@ describe('the packages list', () => {
     const html = list('en');
     expect(html).toContain('Glow Up');
     expect(html).toContain('Haircut + Facial');
-    // 30 + 45, and ₹1,100 of parts sold for ₹900.
-    expect(html).toContain('75 min');
+    // 30 + 45, and ₹1,100 of parts sold for ₹900. Jira GRW-446 — said in hours once it passes one, because
+    // "75 min" is not how anybody reads an hour and a quarter.
+    expect(html).toContain('1 hr 15 min');
     expect(html).toContain('Save ');
   });
 

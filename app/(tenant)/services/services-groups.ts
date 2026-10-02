@@ -59,6 +59,35 @@ export function groupByCategory<T extends GroupableService>(
 }
 
 /**
+ * Jira GRW-446 — the rows in reading order: each category's services together, categories in the owner's
+ * order, the unfiled ones last.
+ *
+ * The list is paged, and a page is a slice of THIS, not of whatever order the services arrived in. Slicing
+ * first and grouping the slice is what the QA pass found: a branch with 52 services showed "Hair" on pages 1,
+ * 2 and 3 with a different count each time, and the order set in the Categories sheet was being applied to an
+ * arbitrary ten rows. A category the owner put first has to start on page one.
+ */
+export function orderedByCategory<T extends GroupableService>(
+  rows: readonly T[],
+  order: readonly string[] = [],
+): T[] {
+  return groupByCategory(rows, order).flatMap((group) => group.items);
+}
+
+/**
+ * How many services each category holds across the WHOLE list, keyed by name (null for the unfiled).
+ *
+ * The heading quotes this and not the number of rows on the page under it. "Hair 7" above seven of eighteen,
+ * beside a tab reading "Hair 18", is two answers to one question — the same disagreement GRW-441 fixed for the
+ * ORDER of the headings, in the counts beside them.
+ */
+export function categoryTotals<T extends GroupableService>(rows: readonly T[]): Map<string | null, number> {
+  const totals = new Map<string | null, number>();
+  for (const row of rows) totals.set(row.categoryName, (totals.get(row.categoryName) ?? 0) + 1);
+  return totals;
+}
+
+/**
  * Whether headings are worth drawing at all.
  *
  * One group is not an arrangement — on a category's own tab every row shares a heading, and repeating it

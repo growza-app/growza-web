@@ -243,3 +243,29 @@ describe('a word starting h or w is as vowel-blind as any other', () => {
     expect(matchItems(cand(CATALOGUE), 'pizza', 5)).toEqual([]);
   });
 });
+
+/*
+ * Jira GRW-446 — QA typed "zzzz" into the services search and got "Women's Hair Color". Every z becomes s and
+ * the doubles collapse, so the key is "s" — which is also the key of the "s" in "Women's".
+ */
+describe('nonsense finds nothing', () => {
+  const catalogue = ['Women’s Hair Color', 'Haircut', 'Facial', 'Manicure'].map((name) => ({ item: name, text: [name] }));
+  const find = (q: string) => matchItems(catalogue, q);
+
+  it('four of one letter match nothing', () => {
+    expect(find('zzzz')).toEqual([]);
+    expect(find('ssss')).toEqual([]);
+  });
+
+  it('other nonsense still matches nothing', () => {
+    expect(find('qqq')).toEqual([]);
+    expect(find('xyz')).toEqual([]);
+  });
+
+  /** And the spellings the sound rule exists for still work. */
+  it('a misspelling that sounds the same still finds it', () => {
+    expect(find('phacial')).toContain('Facial');
+    expect(find('menicure')).toContain('Manicure');
+    expect(find('hiarcut')).toContain('Haircut');
+  });
+});

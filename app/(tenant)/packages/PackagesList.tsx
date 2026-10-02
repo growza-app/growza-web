@@ -12,6 +12,7 @@ import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
 import { useBranch } from '../components/BranchProvider';
 import { partsMinutes, partsOf, partsTotalMinor, savingMinor, savingPct, searchPackages } from './packages-logic';
+import { durationPhrase } from '../lib/duration-words';
 
 /** First paint only — the client then measures how many rows this screen actually fits. */
 const INITIAL_PAGE_SIZE = 5;
@@ -219,7 +220,13 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                     items again, under their own column titles.
                   */}
                   <div className="pkg-foot">
-                    <div className="pkg-time">{t('minutes', { count: partsMinutes(parts) })}</div>
+                    <div className="pkg-time">
+                      {durationPhrase(partsMinutes(parts), {
+                        minutes: (count) => t('minutes', { count }),
+                        hours: (count) => t('hours', { count }),
+                        hoursMinutes: (hours, minutes) => t('hoursMinutes', { hours, minutes }),
+                      })}
+                    </div>
 
                     <div className="pkg-price">
                       <span className="pkg-price-now">{formatMoney(pkg.comboPriceMinor)}</span>

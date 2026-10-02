@@ -938,7 +938,9 @@
       "contains": "{count, plural, one {# सेवा} other {# सेवाएँ}}",
       "editPackages": "पैकेज बदलें",
       "cancel": "रद्द करें"
-    }
+    },
+    "hours": "{count} घंटे",
+    "hoursMinutes": "{hours} घंटे {minutes} मिनट"
   },
   "staff": {
     "addLabel": "{label} जोड़ें",
@@ -1195,7 +1197,9 @@
       "window": "{from} → {until}",
       "now": "अभी",
       "noEnd": "कोई आख़िरी तारीख़ नहीं",
-      "always": "हमेशा दिखता है"
+      "always": "हमेशा दिखता है",
+      "hours": "{count} घंटे",
+      "hoursMinutes": "{hours} घंटे {minutes} मिनट"
     },
     "builder": {
       "back": "← वापस",
@@ -1281,8 +1285,7 @@
         "pctOff": "{pct}% छूट",
         "youSave": "आप {amount} बचाते हैं",
         "takes": "{duration} लगते हैं",
-        "byAnyStaff": "कोई भी उपलब्ध स्टाफ़",
-        "hours": "~{hours} घंटे"
+        "byAnyStaff": "कोई भी उपलब्ध स्टाफ़"
       },
       "errors": {
         "nameRequired": "पैकेज का नाम ज़रूरी है",

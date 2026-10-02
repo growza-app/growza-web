@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { packagesInRefusal } from './held-by-packages';
+import { packagesInRefusal, serviceInRefusal } from './held-by-packages';
 
 const pkg = (over: Record<string, unknown> = {}) => ({
   id: 'o1',
@@ -64,5 +64,23 @@ describe('a half-formed package in an otherwise good list', () => {
 
   it('an empty title is half-formed — a row with no name is not worth showing', () => {
     expect(packagesInRefusal({ packages: [pkg({ title: '' })] })).toBeNull();
+  });
+});
+
+/*
+ * Jira GRW-446 — the bulk retire sends a list and only the server knows which of them was in the way, so the
+ * refusal names it separately from the sentence it builds.
+ */
+describe('the service a refusal is about', () => {
+  it('is read when the route named one', () => {
+    expect(serviceInRefusal({ service: 'Facial', packages: [pkg()] })).toBe('Facial');
+  });
+
+  it('is null when it did not, so nothing is guessed from the sentence', () => {
+    expect(serviceInRefusal({ packages: [pkg()] })).toBeNull();
+    expect(serviceInRefusal({ service: '' })).toBeNull();
+    expect(serviceInRefusal({ service: 42 })).toBeNull();
+    expect(serviceInRefusal(null)).toBeNull();
+    expect(serviceInRefusal('<html>502</html>')).toBeNull();
   });
 });
