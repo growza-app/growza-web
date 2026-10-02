@@ -53,7 +53,7 @@ import { canSee, type MemberRole } from '../lib/nav-policy';
 import { PhoneField } from './PhoneField';
 import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
 import type { FreeTime } from '../lib/book-again';
-import { toStoredPhone } from '../lib/phone';
+import { fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
@@ -286,6 +286,12 @@ export function NewVisitSheet({
   // Stage 1 — find them
   const [term, setTerm] = useState('');
   const [results, setResults] = useState<Customer[]>([]);
+  /**
+   * Jira GRW-454 — the same search, at the other branches. Offered only once something has been typed: it is a
+   * second question ("do they exist elsewhere?"), and putting those rows in the browsable list would be GRW-453's
+   * bug again, where most of what the picker offered belonged to a branch nobody had chosen.
+   */
+  const [elsewhere, setElsewhere] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
   /**
    * Jira GRW-297 — who to pick before anyone has typed anything.
@@ -388,16 +394,27 @@ export function NewVisitSheet({
    * names it, so a queue entry or a visit lands where its services are sold.
    */
   /*
-   * Jira GRW-392 — each branch keeps its own clients, so a client picked from the list decides the branch: their
-   * visit is at the branch they are a client of. Only a new client leaves the choice to the chips below.
+   * Jira GRW-453 — the branch is chosen FIRST, and nothing picked afterwards may change it.
+   *
+   * Jira GRW-392 made a client picked from the list decide the branch instead, because a client belongs to one
+   * branch and the database refuses a booking that pairs them with another (`appointment_client_same_branch_fk`).
+   * But the picker below offered every branch's clients, so at a branch selling one service, 19 of the 20 rows
+   * on offer silently moved the booking somewhere else — menu, stylists, times and the write all followed, and
+   * the only sign was the branch radio group turning into a single chip naming a branch nobody had asked for.
+   *
+   * Owner decision 2026-10-03: a client record is unique per branch (`customer_tenant_location_wa_phone`, and a
+   * number is optional, so the branch is part of telling two same-named clients apart), and the same person is
+   * shared across branches by having a record at each. So the branch leads: the picker shows that branch's own
+   * clients, and the client picked from it is already one of them. Nothing has to move.
+   *
+   * Paying a token is the one exception, and not really one: that visit already exists, at its own branch.
    */
-  const pickedClientBranch =
-    paysToken?.locationId ??
-    ('client' in stage && stage.client.kind === 'existing' && stage.client.locationId ? stage.client.locationId : null);
-  const listBranch = pickedClientBranch ?? (branches.length > 1 ? branchId : branchContext.one);
+  const tokenBranch = paysToken?.locationId ?? null;
+  const listBranch = tokenBranch ?? (branches.length > 1 ? branchId : branchContext.one);
+  /** Settled, so it is said rather than asked: a token's own branch, or the one the picked client was found at. */
+  const branchSettled = Boolean(tokenBranch) || ('client' in stage && stage.client.kind === 'existing');
   /*
-   * Anyone who is not fixed to one branch (an owner, a manager) searches every branch's clients, and one person can
-   * be a client of two branches, so each row says whose client it is — the pick decides where the visit happens.
+   * One person can be a client of two branches, so each row says whose client it is.
    * Jira GRW-392 (review): this was owner-only, and a manager saw two identical rows and booked the wrong branch.
    */
   const openBranches = session?.branches ?? [];
@@ -419,6 +436,22 @@ export function NewVisitSheet({
         ? { kind: 'new', name: c.name?.trim() || nv.noName, phone: c.waPhone ?? '' }
         : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone, locationId: c.locationId },
     });
+  };
+  /**
+   * Jira GRW-454 — "Add them to {branch}": a client of another branch, taken on here.
+   *
+   * It does not pick them — it cannot, because the booking must use a client of its own branch
+   * (`appointment_client_same_branch_fk`). It opens the add step with their name and number already in it, so
+   * the desk sees exactly what will be made here and can correct a spelling first. Saving upserts by number, so
+   * doing it twice finds the record rather than making a second one.
+   *
+   * Only the name and the number travel. Their visits, spend and history stay with the branch they made them
+   * at: a client record is unique per branch, and this is a different record of the same person.
+   */
+  const bringHere = (c: Customer) => {
+    setNewName(c.name?.trim() ?? '');
+    setNewPhone(fromStoredPhone(c.waPhone));
+    setStage({ step: 'newClient' });
   };
   const atBranch = listBranch ? { location: listBranch } : {};
   // What was picked is on the menu of the branch it was picked at; another branch sells its own rows. The chosen
@@ -510,6 +543,7 @@ export function NewVisitSheet({
   useEffect(() => {
     if (term.trim().length < SEARCH_MIN_CHARS) {
       setResults([]);
+      setElsewhere([]);
       setSearching(false);
       return;
     }
@@ -517,7 +551,9 @@ export function NewVisitSheet({
     setSearching(true);
     const timer = setTimeout(() => {
       void api
-        .customers({ search: term.trim(), limit: 8 })
+        // Jira GRW-453 — this branch's own clients. A name is not unique and a number is optional, so a search
+        // across the business would offer two indistinguishable rows for one booking that can only be at one.
+        .customers({ search: term.trim(), limit: 8, location: listBranch })
         .then((page) => {
           if (!cancelled) setResults(page.rows);
         })
@@ -527,22 +563,41 @@ export function NewVisitSheet({
         .finally(() => {
           if (!cancelled) setSearching(false);
         });
+      /*
+       * Jira GRW-454 — and the same search across the business, so the desk can say "they come to Indiranagar"
+       * and add them here without typing a name and a number that are already on file.
+       *
+       * Only when there is more than one branch to look at, which in this sheet means an owner: `branches` is
+       * already owner-only, and a branch's own desk is scoped to it server-side by design (GRW-393, where being
+       * told a client "belongs to another branch" was itself the leak). They reach the same place by typing.
+       */
+      if (branches.length > 1) {
+        void api
+          .customers({ search: term.trim(), limit: 8 })
+          .then((page) => {
+            if (!cancelled) setElsewhere(page.rows.filter((c) => c.locationId && c.locationId !== listBranch));
+          })
+          .catch(() => {
+            if (!cancelled) setElsewhere([]);
+          });
+      }
     }, SEARCH_DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [term]);
+  }, [term, listBranch, branches.length]);
 
   /**
    * Jira GRW-297 — the client-picker step's default list, most-recently-active
-   * first (the API's own `sort=recent` default). Fetched once: this is a small,
-   * cheap read and the list only needs to be roughly current, not live.
+   * first (the API's own `sort=recent` default). A small, cheap read, and the list only needs to be roughly
+   * current, not live — but it is read again when the branch changes (Jira GRW-453): it is that branch's list.
    */
   useEffect(() => {
     let cancelled = false;
+    setRecent(null);
     void api
-      .customers({ limit: 20 })
+      .customers({ limit: 20, location: listBranch })
       .then((page) => {
         if (!cancelled) setRecent(page.rows);
       })
@@ -552,7 +607,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [listBranch]);
 
   const serviceById = useMemo(() => new Map((services ?? []).map((s) => [s.id, s])), [services]);
 
@@ -1426,7 +1481,31 @@ export function NewVisitSheet({
                 ))}
                 {!searching && results.length === 0 && <div className="empty">{nv.noMatch}</div>}
               </div>
-            ) : (
+            ) : null}
+
+            {/*
+              Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows and
+              below them: these are not people who can be booked here yet, they are an offer to take them on.
+            */}
+            {term.trim().length >= SEARCH_MIN_CHARS && elsewhere.length > 0 ? (
+              <>
+                <h2 className="wi-section-label">{nv.atOtherBranches}</h2>
+                <div className="picker-results">
+                  {elsewhere.map((c) => (
+                    <button key={c.id} type="button" className="picker-row wi-row" onClick={() => bringHere(c)}>
+                      <span>
+                        <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
+                        <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
+                        {clientBranchName(c.locationId)}
+                      </span>
+                      <span className="picker-row-meta">{nv.bringToBranch(branchNameOf(listBranch ?? undefined) ?? '')}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {term.trim().length < SEARCH_MIN_CHARS ? (
               /*
                * Jira GRW-297 — browsable before a search term exists. Same row
                * markup as the search results above (kept as one JSX block would
@@ -1454,7 +1533,7 @@ export function NewVisitSheet({
                   {recent !== null && recent.length === 0 && <div className="empty">{nv.noCustomersYet}</div>}
                 </div>
               </>
-            )}
+            ) : null}
 
             <button
               type="button"
@@ -1553,21 +1632,23 @@ export function NewVisitSheet({
           <div className="wi-body">
             {stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
 
-            {/* Jira GRW-392 — a client already on file is served at their own branch: said, not asked. */}
-            {pickedClientBranch && branchNameOf(pickedClientBranch) ? (
+            {/* Jira GRW-453 — once the branch is settled it is said, not asked: the client was picked from this
+                branch's own list, and a token's visit is already at its branch. Changing it here would leave the
+                client belonging to one branch and the booking to another, which the database refuses. */}
+            {branchSettled && branchNameOf(listBranch ?? undefined) ? (
               <>
                 <h2 className="wi-section-label">{nv.whichBranch}</h2>
                 <div className="wi-chips">
                   <span className="wi-chip wi-chip-on" aria-current="true">
-                    {branchNameOf(pickedClientBranch)}
+                    {branchNameOf(listBranch ?? undefined)}
                   </span>
                 </div>
               </>
             ) : null}
 
-            {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-392 — and not asked
-                for a client already on file: they are a client of one branch, and that is where they are served. */}
-            {branches.length > 1 && !pickedClientBranch ? (
+            {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-453 — and only while
+                it is still open to change: for a new client, who becomes a client of whichever branch is chosen. */}
+            {branches.length > 1 && !branchSettled ? (
               <>
                 <h2 className="wi-section-label">{nv.whichBranch}</h2>
                 <div className="wi-chips" role="radiogroup" aria-label={nv.whichBranch}>
