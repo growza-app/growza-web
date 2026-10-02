@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Offer } from '../lib/api';
 import {
+  clampPercentInput,
   isPackage,
   partsMinutes,
   partsOf,
   partsTotalMinor,
+  percentOff,
   pricedMinor,
   savingMinor,
   savingPct,
@@ -176,5 +178,60 @@ describe('finding a package', () => {
 
   it('a search that matches nothing returns nothing, not everything', () => {
     expect(searchPackages(all, byId, 'zzzz')).toEqual([]);
+  });
+});
+
+/*
+ * Jira GRW-446 — switching a flat price over to "% off" used to put -33 in a field whose own minimum is 0,
+ * for a package priced above its parts, and then refuse to price from it without saying why.
+ */
+describe('the percentage a price represents', () => {
+  it('is the discount, rounded to a whole percent', () => {
+    expect(percentOff(300000, 375000)).toBe('20');
+    expect(percentOff(250000, 375000)).toBe('33');
+  });
+
+  it('is 0, never negative, for a package priced above its parts', () => {
+    expect(percentOff(500000, 375000)).toBe('0');
+  });
+
+  it('is 0 for a package priced at exactly its parts', () => {
+    expect(percentOff(375000, 375000)).toBe('0');
+  });
+
+  it('is 100 for a free package, and never more', () => {
+    expect(percentOff(0, 375000)).toBe('100');
+  });
+
+  it('is empty when there is nothing to divide by, because the field is then unanswered', () => {
+    expect(percentOff(300000, 0)).toBe('');
+    expect(percentOff(null, 375000)).toBe('');
+  });
+});
+
+describe('what the percent field holds once the owner leaves it', () => {
+  it('keeps a sensible number as it is', () => {
+    expect(clampPercentInput('20')).toBe('20');
+  });
+
+  it('pulls one that is too big back to 100 rather than ignoring it', () => {
+    expect(clampPercentInput('150')).toBe('100');
+  });
+
+  it('pulls a negative one up to 0', () => {
+    expect(clampPercentInput('-5')).toBe('0');
+  });
+
+  it('rounds a typed fraction', () => {
+    expect(clampPercentInput('12.6')).toBe('13');
+  });
+
+  it('leaves an empty field empty — unanswered is not wrong', () => {
+    expect(clampPercentInput('')).toBe('');
+    expect(clampPercentInput('   ')).toBe('');
+  });
+
+  it('clears something that is not a number at all', () => {
+    expect(clampPercentInput('abc')).toBe('');
   });
 });

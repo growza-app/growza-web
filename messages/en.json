@@ -938,7 +938,9 @@
       "contains": "{count, plural, one {# service} other {# services}}",
       "editPackages": "Edit packages",
       "cancel": "Cancel"
-    }
+    },
+    "hours": "{count, plural, one {# hr} other {# hrs}}",
+    "hoursMinutes": "{hours, plural, one {# hr} other {# hrs}} {minutes} min"
   },
   "staff": {
     "addLabel": "Add {label}",
@@ -1195,7 +1197,9 @@
       "window": "{from} → {until}",
       "now": "now",
       "noEnd": "no end date",
-      "always": "Always visible"
+      "always": "Always visible",
+      "hours": "{count, plural, one {# hr} other {# hrs}}",
+      "hoursMinutes": "{hours, plural, one {# hr} other {# hrs}} {minutes} min"
     },
     "builder": {
       "back": "← Back",
@@ -1281,8 +1285,7 @@
         "pctOff": "{pct}% OFF",
         "youSave": "You save {amount}",
         "takes": "Takes {duration}",
-        "byAnyStaff": "By any available staff",
-        "hours": "~{hours} hrs"
+        "byAnyStaff": "By any available staff"
       },
       "errors": {
         "nameRequired": "Package name is required",

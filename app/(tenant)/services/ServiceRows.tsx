@@ -6,6 +6,7 @@ import { formatMoney, type ServiceAdmin } from '../lib/api';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
+import { durationPhrase, type DurationWords } from '../lib/duration-words';
 
 /**
  * Jira GRW-439 — the rows of the services list, on a laptop and on a phone.
@@ -22,6 +23,15 @@ import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
 /** The owner's own order of category names, so the headings and the tabs cannot disagree (GRW-441). */
 export type CategoryOrder = readonly string[];
 
+/**
+ * Jira GRW-446 — how many services each category holds across the whole list, not this page.
+ *
+ * Both shapes take it for the same two reasons: the count in a heading is the category's, and whether to draw
+ * headings at all is a question about the LIST. A page that happens to hold one category is still a page of a
+ * grouped list and still needs to say which category it is looking at.
+ */
+export type CategoryTotals = ReadonlyMap<string | null, number>;
+
 export interface RowActions {
   onEdit: (s: ServiceAdmin) => void;
   onPhoto: (s: ServiceAdmin) => void;
@@ -36,11 +46,21 @@ export interface RowActions {
 
 type T = ReturnType<typeof useTranslations<'services'>>;
 
+/** The catalogue's own words for a length of time, handed to the shared arithmetic (GRW-446). */
+export function durationWords(t: T): DurationWords {
+  return {
+    minutes: (count) => t('minutes', { count }),
+    hours: (count) => t('hours', { count }),
+    hoursMinutes: (hours, minutes) => t('hoursMinutes', { hours, minutes }),
+  };
+}
+
 /** The one place the row's time phrase is built, so the card and the table cannot word it differently. */
 function time(s: ServiceAdmin, t: T): string {
   return timePhrase(
     s,
-    (count) => t('minutes', { count }),
+    // Jira GRW-446 — "2 hrs 45 min", not "165 min". Cleanup stays a bare count; it never reaches an hour.
+    (count) => durationPhrase(count, durationWords(t)),
     (count) => t('cleanupPlus', { count }),
   );
 }
@@ -137,9 +157,21 @@ function NameCell({ service, t }: { service: ServiceAdmin; t: T }) {
  * "Type" is gone as a column — the category is the heading above the rows now, which is the same information
  * said once instead of on every line.
  */
-export function ServiceTableRows({ rows, actions, t, order }: { rows: ServiceAdmin[]; actions: RowActions; t: T; order: CategoryOrder }) {
+export function ServiceTableRows({
+  rows,
+  actions,
+  t,
+  order,
+  totals,
+}: {
+  rows: ServiceAdmin[];
+  actions: RowActions;
+  t: T;
+  order: CategoryOrder;
+  totals?: CategoryTotals;
+}) {
   const groups = groupByCategory(rows, order);
-  const headings = worthGrouping(groups);
+  const headings = totals ? totals.size > 1 : worthGrouping(groups);
   const out: ReactNode[] = [];
 
   for (const group of groups) {
@@ -148,7 +180,7 @@ export function ServiceTableRows({ rows, actions, t, order }: { rows: ServiceAdm
         <tr key={`h-${group.name ?? 'none'}`} className="svc-group-row">
           <th scope="colgroup" colSpan={4} className="svc-group-head">
             {group.name ?? t('unfiled')}
-            <span className="svc-group-count">{group.items.length}</span>
+            <span className="svc-group-count">{totals?.get(group.name) ?? group.items.length}</span>
           </th>
         </tr>,
       );
@@ -246,9 +278,21 @@ function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: Row
 }
 
 /** The phone's list: one inset card per category, iOS-style, with the heading above it. */
-export function ServiceCards({ rows, actions, t, order }: { rows: ServiceAdmin[]; actions: RowActions; t: T; order: CategoryOrder }) {
+export function ServiceCards({
+  rows,
+  actions,
+  t,
+  order,
+  totals,
+}: {
+  rows: ServiceAdmin[];
+  actions: RowActions;
+  t: T;
+  order: CategoryOrder;
+  totals?: CategoryTotals;
+}) {
   const groups = groupByCategory(rows, order);
-  const headings = worthGrouping(groups);
+  const headings = totals ? totals.size > 1 : worthGrouping(groups);
 
   return (
     <>

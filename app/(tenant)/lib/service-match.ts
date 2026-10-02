@@ -92,8 +92,20 @@ export const soundKeyKeepingLead = (w: string): string => dropVowels(soundBase(w
  * keys" was tried and removed: it matched "waxing" to "Anti-Ageing" and "bridal"
  * to "beard". This stays exact; it just asks the question twice.
  */
-export const soundsLike = (a: string, b: string): boolean =>
-  soundKey(a) === soundKey(b) || soundKeyKeepingLead(a) === soundKeyKeepingLead(b);
+export const soundsLike = (a: string, b: string): boolean => {
+  /*
+   * Jira GRW-446 — a key of one letter is not a sound, it is what is left of one.
+   *
+   * QA typed "zzzz" into the services search and got "Women's Hair Color". Every z becomes s and the doubles
+   * collapse, so the key is "s" — which is also the key of the "s" in "Women's". Any four-letter nonsense of
+   * one repeated consonant matched any name with a one-letter word in it. Two characters is the floor, which
+   * is where "hear" → "hair" (`hr`) sits, so nothing the rule exists for is lost.
+   */
+  const ka = soundKey(a);
+  if (ka.length >= 2 && ka === soundKey(b)) return true;
+  const la = soundKeyKeepingLead(a);
+  return la.length >= 2 && la === soundKeyKeepingLead(b);
+};
 
 /**
  * Levenshtein distance, abandoned as soon as it passes `max`.

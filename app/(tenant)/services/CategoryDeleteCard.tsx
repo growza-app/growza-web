@@ -2,8 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { api, formatMoney, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
+import { api, BookingConflictError, formatMoney, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { HeldByPackagesDialog } from './HeldByPackagesDialog';
+import { packagesInRefusal, serviceInRefusal, type HeldPackage } from './held-by-packages';
 
 /**
  * Jira GRW-428 — the card that asks what to take out of a category.
@@ -48,6 +50,9 @@ export function CategoryDeleteCard({
   const [confirming, setConfirming] = useState(false);
   /** Jira GRW-431 — the ones the catalogue itself would not let go, and what is in the way of each. */
   const [blocked, setBlocked] = useState<Array<{ id: string; name: string; blockers: { offers: Array<{ title: string }>; questions: Array<{ label: string }>; waitingInQueue: number } }>>([]);
+  /** Jira GRW-446 — the packages that refused the retire, shown the way a single row shows them. */
+  const [heldBy, setHeldBy] = useState<HeldPackage[] | null>(null);
+  const [heldName, setHeldName] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
   useDialog(cardRef, { onClose: busy ? undefined : onClose });
 
@@ -92,7 +97,17 @@ export function CategoryDeleteCard({
       }
       onDone(takesCategory && mode === 'delete');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.failed'));
+      /*
+       * Jira GRW-446 — a retire a package blocks gets the same answer here as it does on a single row.
+       * This used to print the API's own sentence, which is built around the package's title server-side and so
+       * can never be translated — a Hindi owner read English, and it named one package with no way to open it.
+       */
+      const packages = err instanceof BookingConflictError ? packagesInRefusal(err.details) : null;
+      if (packages) {
+        setHeldName(serviceInRefusal(err instanceof BookingConflictError ? err.details : null) ?? '');
+        setHeldBy(packages);
+      }
+      else setError(err instanceof Error ? err.message : t('errors.failed'));
       setConfirming(false);
     } finally {
       setBusy(false);
@@ -106,6 +121,14 @@ export function CategoryDeleteCard({
       : allSelected
         ? t('deleteAllAction', { name: category.name, count: services.length })
         : t('deleteAction', { count: selected.size });
+
+  /*
+   * Jira GRW-446 — the refusal replaces this card rather than sitting inside it. It is a dialog of its own with
+   * links out to each package, and two modals deep is not somewhere to put the way forward.
+   */
+  if (heldBy) {
+    return <HeldByPackagesDialog serviceName={heldName} packages={heldBy} onClose={() => setHeldBy(null)} />;
+  }
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>

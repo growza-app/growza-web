@@ -33,6 +33,18 @@ function isPackage(value: unknown): value is HeldPackage {
  * "this refusal is about something else" and fall back to the plain message rather than opening a dialog with
  * nothing in it.
  */
+/**
+ * The service the refusal was about, when the route named one.
+ *
+ * Jira GRW-446 — the bulk retire does not know which of the services it sent was the one in the way; only the
+ * server does. It says so in `service`, and a refusal without it falls back to no name rather than guessing.
+ */
+export function serviceInRefusal(details: unknown): string | null {
+  if (typeof details !== 'object' || details === null) return null;
+  const name = (details as { service?: unknown }).service;
+  return typeof name === 'string' && name.length > 0 ? name : null;
+}
+
 export function packagesInRefusal(details: unknown): HeldPackage[] | null {
   if (typeof details !== 'object' || details === null) return null;
   const list = (details as { packages?: unknown }).packages;
