@@ -17,6 +17,7 @@ import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser'
 import { CataloguePicker } from './CataloguePicker';
 import { CopyFromBranch } from './CopyFromBranch';
 import { CategoriesSheet } from './CategoriesSheet';
+import { ALL_TAB, RETIRED_TAB, hasRetired, servicesOnTab, tabAfterChange, tabCounts } from './services-tabs';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -58,7 +59,8 @@ export function ServicesTable({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string | 'all'>('all');
+  /** Jira GRW-437 — `all`, `retired`, or a category id. */
+  const [categoryId, setCategoryId] = useState<string>(ALL_TAB);
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -182,14 +184,15 @@ export function ServicesTable({
     }
   };
 
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const s of services) if (s.categoryId) map.set(s.categoryId, (map.get(s.categoryId) ?? 0) + 1);
-    return map;
-  }, [services]);
+  // Jira GRW-437 — every count is the number of rows its own tab lists. It used to count retired services too,
+  // so retiring something changed no number on the screen.
+  const counts = useMemo(() => tabCounts(services), [services]);
+  const showRetiredTab = useMemo(() => hasRetired(services), [services]);
+  // Restoring the last retired service takes the Retired tab away from under the owner standing on it.
+  const tab = tabAfterChange(services, categoryId);
 
   const filtered = useMemo(() => {
-    const inCategory = services.filter((s) => categoryId === 'all' || s.categoryId === categoryId);
+    const inCategory = servicesOnTab(services, tab);
     const q = search.trim();
     if (q.length < MIN_CHARS) return inCategory;
     // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
@@ -198,7 +201,7 @@ export function ServicesTable({
       inCategory.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
       q,
     );
-  }, [services, search, categoryId]);
+  }, [services, search, tab]);
 
   const exportCsv = () => {
     const header = ['Name', 'Type', 'Minutes', 'Cleanup after (min)', 'Price', 'Status'];
@@ -244,7 +247,12 @@ export function ServicesTable({
           <IconSearch />
           <input
             type="search"
-            placeholder={t('searchPlaceholder', { count: services.length })}
+            /*
+             * Jira GRW-437 — the number the search will actually look through, which is the tab in view and not
+             * the whole branch. "Search 19 services…" sitting beside a tab reading "All 1" invites the owner to
+             * type a retired service's name into a box that cannot find it.
+             */
+            placeholder={t('searchPlaceholder', { count: servicesOnTab(services, tab).length })}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label={t('searchAria')}
@@ -278,24 +286,39 @@ export function ServicesTable({
         <button
           type="button"
           role="tab"
-          aria-selected={categoryId === 'all'}
-          className={`page-tab ${categoryId === 'all' ? 'active' : ''}`}
-          onClick={() => setCategoryId('all')}
+          aria-selected={tab === ALL_TAB}
+          className={`page-tab ${tab === ALL_TAB ? 'active' : ''}`}
+          onClick={() => setCategoryId(ALL_TAB)}
         >
-          {t('all')} <span className="page-tab-count">{services.length}</span>
+          {t('all')} <span className="page-tab-count">{counts.all}</span>
         </button>
         {categories.map((c) => (
           <button
             key={c.id}
             type="button"
             role="tab"
-            aria-selected={categoryId === c.id}
-            className={`page-tab ${categoryId === c.id ? 'active' : ''}`}
+            aria-selected={tab === c.id}
+            className={`page-tab ${tab === c.id ? 'active' : ''}`}
             onClick={() => setCategoryId(c.id)}
           >
-            {c.name} <span className="page-tab-count">{counts.get(c.id) ?? 0}</span>
+            {c.name} <span className="page-tab-count">{counts.byCategory.get(c.id) ?? 0}</span>
           </button>
         ))}
+        {/*
+         * Jira GRW-437 — last, and only when there is something in it. The owner's live menu reads left to
+         * right; what they have taken off it sits at the end, out of the way but one tap from a restore.
+         */}
+        {showRetiredTab && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === RETIRED_TAB}
+            className={`page-tab svc-tab-retired ${tab === RETIRED_TAB ? 'active' : ''}`}
+            onClick={() => setCategoryId(RETIRED_TAB)}
+          >
+            {t('retired')} <span className="page-tab-count">{counts.retired}</span>
+          </button>
+        )}
       </div>
 
       <div className="card">
@@ -315,7 +338,23 @@ export function ServicesTable({
             </div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="empty">{t('empty')}</div>
+          /*
+           * Jira GRW-437 — "No services match here" is right for a search that found nothing and alarming when
+           * the branch has a full catalogue that simply happens to be entirely retired: it reads as though the
+           * menu is gone. Say where everything went, and offer the one tap that gets there.
+           */
+          <div className="empty">
+            {tab === ALL_TAB && search.trim().length < MIN_CHARS && showRetiredTab ? (
+              <>
+                <p>{t('allRetired')}</p>
+                <button type="button" className="btn btn-ghost" onClick={() => setCategoryId(RETIRED_TAB)}>
+                  {t('retired')} ({counts.retired})
+                </button>
+              </>
+            ) : (
+              t('empty')
+            )}
+          </div>
         ) : (
           <PaginatedTable
             noun={tn('services')}
