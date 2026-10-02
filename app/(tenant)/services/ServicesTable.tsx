@@ -12,6 +12,8 @@ import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
+import { extraSuggestions } from '../lib/service-suggest';
+import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { ImportServices } from './ImportServices';
 import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser';
 import { CataloguePicker } from './CataloguePicker';
@@ -265,17 +267,36 @@ export function ServicesTable({
     if (tab !== categoryId) setCategoryId(tab);
   }, [tab, categoryId]);
 
+  /** The services the tab in view lists — what the search looks through, and the only things it may offer. */
+  const inTab = useMemo(() => servicesOnTab(services, tab), [services, tab]);
+
   const filtered = useMemo(() => {
-    const inCategory = servicesOnTab(services, tab);
     const q = search.trim();
-    if (q.length < MIN_CHARS) return inCategory;
+    if (q.length < MIN_CHARS) return inTab;
     // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
     // found by "phacial" at the desk is found by "phacial" here too.
     return matchItems(
-      inCategory.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
+      inTab.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
       q,
     );
-  }, [services, search, tab]);
+  }, [inTab, search]);
+
+  /**
+   * Jira GRW-449 — and the half of that search the screen never had: what the typed words MEAN.
+   *
+   * Only the walk-in sheet ever asked the server, so "nails" found Manicure at the front desk and nothing on
+   * the screen where the owner edits it.
+   *
+   * Resolved against `inTab` and not the whole branch, because a chip has to land somewhere: offering Manicure
+   * while the Hair tab is in view would set a search the tab then filters out, and the owner would be looking
+   * at "No services match here" having just been told there was a match.
+   */
+  const remote = useServiceSuggestions(search, branchId);
+  const byIdInTab = useMemo(() => new Map(inTab.map((s) => [s.id, s])), [inTab]);
+  const alsoTry = useMemo(
+    () => extraSuggestions(filtered, remote, search, (id) => byIdInTab.get(id)),
+    [filtered, remote, search, byIdInTab],
+  );
 
   /*
    * Jira GRW-439 — the page is sliced HERE, and `PaginatedTable` is driven in controlled mode.
@@ -365,7 +386,7 @@ export function ServicesTable({
              * the whole branch. "Search 19 services…" sitting beside a tab reading "All 1" invites the owner to
              * type a retired service's name into a box that cannot find it.
              */
-            placeholder={t('searchPlaceholder', { count: servicesOnTab(services, tab).length })}
+            placeholder={t('searchPlaceholder', { count: inTab.length })}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label={t('searchAria')}
@@ -433,6 +454,24 @@ export function ServicesTable({
           </button>
         )}
       </div>
+
+      {/*
+        Jira GRW-449 — services close in MEANING to what was typed, above the table rather than inside it.
+        Tapping one puts its name in the search box: the table then lists it with its own row actions, which a
+        chip cannot carry, and the counts, grouping and paging below stay exactly what the owner typed for.
+      */}
+      {alsoTry.length > 0 && (
+        <div className="also-try">
+          <span className="also-try-label">{t('alsoTry')}</span>
+          <div className="also-try-chips">
+            {alsoTry.map((s) => (
+              <button key={s.id} type="button" className="also-try-chip" onClick={() => setSearch(s.name)}>
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* One input for the screen (see `photoFor`): the ··· menu unmounts when it closes, so it cannot own this. */}
       <input
