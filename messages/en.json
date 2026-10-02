@@ -1162,8 +1162,8 @@
     "title": "Packages",
     "subtitleLive": "Several services sold together, at one price. Customers can book packages directly from WhatsApp.",
     "subtitleCrmOnly": "Several services sold together, at one price. Add one to a booking at the desk today — customers will be able to book packages on WhatsApp too, once WhatsApp goes live for you.",
-    "build": "Build package",
-    "newTitle": "Create a new package",
+    "build": "Make a package",
+    "newTitle": "Make a package",
     "editTitle": "Edit package",
     "list": {
       "searchPlaceholder": "Search {count} packages...",
@@ -1174,7 +1174,7 @@
       },
       "emptyNone": "No packages yet.",
       "emptySearch": "No packages match your search.",
-      "buildFirst": "Build one from your {count} services",
+      "buildFirst": "Make your first package",
       "minutes": "{count} min",
       "pctOff": "{pct}% OFF",
       "save": "Save {amount}",
@@ -1203,7 +1203,7 @@
     },
     "builder": {
       "back": "← Back",
-      "createTitle": "Create a new package",
+      "createTitle": "Make a package",
       "editTitle": "Edit {title}",
       "subtitle": "Build a package of services and give your customers a special price.",
       "delete": "Delete",
@@ -1212,7 +1212,7 @@
       "nextFull": "Next: {label} →",
       "nextShort": "Next →",
       "saving": "Saving…",
-      "publish": "Publish package",
+      "publish": "Save package",
       "steps": {
         "build": {
           "title": "Build",
