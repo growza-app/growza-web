@@ -1597,6 +1597,7 @@
     "startsNow": "Starts now · {minutes} min in total",
     "back": "Back",
     "start": "Start now",
+    "startAnyway": "Start now anyway",
     "saving": "Recording…",
     "saveFailed": "That did not save. Check the connection and try again.",
     "saveUnknown": "The connection dropped. Check Bookings before recording this again — it may already be there.",

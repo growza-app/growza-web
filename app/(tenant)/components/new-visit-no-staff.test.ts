@@ -50,7 +50,9 @@ describe('a branch with nobody on its team', () => {
   it('turns off "Start now", which has no answer, and leaves the queue alone', () => {
     // A token needs no chair, so "Add to waiting queue" stays live — it is the right answer at a branch
     // whose staff are not set up yet.
-    expect(code).toMatch(/disabled=\{busy \|\| picked\.length === 0 \|\| \(forPayment && !amountsValid\) \|\| \(!later && !forPayment && noStaffHere\)\}/);
+        // GRW-458 moved this button into the tray's role helper and wrapped the expression; the clause this
+    // story added is the last one, unchanged.
+    expect(code).toMatch(/busy \|\|\s*picked\.length === 0 \|\|\s*\(forPayment && !amountsValid\) \|\|\s*\(!later && !forPayment && noStaffHere\)/);
     const queueBtn = code.slice(code.indexOf('nv.addToQueue'));
     expect(queueBtn.slice(0, 400)).not.toMatch(/noStaffHere/);
   });

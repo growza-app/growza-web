@@ -92,6 +92,8 @@ export function useNewVisitCopy() {
     startsNow: (minutes: number) => t('startsNow', { minutes }),
     back: t('back'),
     start: t('start'),
+    // Jira GRW-458 — what the primary reads once the queue has taken its place, because no chair is free.
+    startAnyway: t('startAnyway'),
     saving: t('saving'),
     saveFailed: t('saveFailed'),
     saveUnknown: t('saveUnknown'),
