@@ -68,18 +68,35 @@ describe('the search bar row', () => {
   });
 });
 
-describe('the Search screen has no search button in its header', () => {
+/*
+ * Jira GRW-448 — the way to this screen is Home's pill, and nowhere else.
+ *
+ * The header used to carry a magnifier on all fourteen screens. It finds clients and bookings and nothing
+ * else, so beside a screen with its own search box it read as "search this screen": the owner tapped it on
+ * Packages and was asked for a name, a phone number or a booking ID. Home keeps it, as the wide pill it draws
+ * itself — the landing screen, where it is an invitation rather than a shortcut.
+ */
+describe('the search lives on Home and nowhere else', () => {
   const header = readFileSync(resolve(__dirname, '../components/HeaderControls.tsx'), 'utf8');
   const pageHeader = readFileSync(resolve(__dirname, '../components/PageHeader.tsx'), 'utf8');
+  const home = readFileSync(resolve(__dirname, '../components/home/parts.tsx'), 'utf8');
 
-  it('asks the header to leave it out', () => {
-    expect(client).toMatch(/<PageHeader title=\{t\('title'\)\} hideSearch \/>/);
+  it('the shared header carries the branch, the bell and the account — not a search', () => {
+    expect(header).toMatch(/<HeaderBranchPicker \/>/);
+    expect(header).toMatch(/<NotificationBell \/>/);
+    expect(header).toMatch(/<AccountMenu \/>/);
+    expect(header).not.toMatch(/HeaderSearch/);
   });
 
-  it('and the header honours it, only on request — every other screen keeps its search button', () => {
-    expect(pageHeader).toMatch(/<HeaderControls hideSearch=\{hideSearch\} \/>/);
-    expect(header).toMatch(/\{hideSearch \? null : <HeaderSearch wide=\{wide\} \/>\}/);
-    expect(header).toMatch(/hideSearch = false/);
+  /** No `hideSearch` anywhere: a screen cannot opt out of something it is not given. */
+  it('leaves no switch behind for a screen to opt out with', () => {
+    expect(pageHeader).not.toMatch(/hideSearch/);
+    expect(header).not.toMatch(/hideSearch/);
+    expect(client).not.toMatch(/hideSearch/);
+  });
+
+  it('Home still draws it, as the wide pill', () => {
+    expect(home).toMatch(/<HeaderSearch wide \/>/);
   });
 });
 

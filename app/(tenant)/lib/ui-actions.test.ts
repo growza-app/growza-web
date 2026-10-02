@@ -160,7 +160,6 @@ describe('2b — the controls, each behind its own action', () => {
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [
-    ['components/HeaderControls.tsx', /\{hideSearch \? null : <HeaderSearch wide=\{wide\} \/>\}/],
     ['components/home/parts.tsx', /<HeaderSearch wide \/>/],
     ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new'\);/],
     ['components/home/OwnerHome.tsx', /const mayBook = mayUse\(p\.role, 'visit\.new'\);[\s\S]*const mayRecordPayment = mayUse\(p\.role, 'visit\.recordPayment'\);/],
