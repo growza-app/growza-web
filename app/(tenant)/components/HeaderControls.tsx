@@ -1,7 +1,6 @@
 import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { NotificationBell } from './NotificationBell';
 import { AccountMenu } from './AccountMenu';
-import { HeaderSearch } from './HeaderSearch';
 
 /**
  * Jira GRW-30 — search, notifications and account, in that order, on every screen.
@@ -28,25 +27,22 @@ import { HeaderSearch } from './HeaderSearch';
  * that "should" each carry three controls carried seven of nine between them,
  * and nothing anywhere said so.
  *
- * ## Search is one control at two widths
+ * ## Search lives on Home, and nowhere else
  *
- * Home had a 302px "Search anything..." pill and, below 860px, a separate
- * 48px icon button — two elements, one shown and one hidden. Keeping that
- * would mean every screen inheriting a pair of controls to keep in step.
+ * Jira GRW-448 — it used to be here too, as an icon on all fourteen screens.
+ * It finds clients and bookings, and nothing else; beside a screen that has its
+ * own search box a bare magnifier reads as "search this screen", which is how
+ * the owner tapped it on Packages and was asked for a phone number.
  *
- * Here it is one `<a>` whose label collapses. `wide` asks for the pill, and
- * only Home passes it: Home is the landing screen with room to spare, and the
- * pill is an invitation rather than a shortcut. Everywhere else the title
- * beside it is the thing to read, so search is the icon.
+ * Home keeps it, as the wide "Find a client or booking" pill it draws itself
+ * (`home/parts.tsx`) — the landing screen, with room for an invitation rather
+ * than a shortcut. Every other screen's search is its own, about what is on it.
  */
-export function HeaderControls({ wide = false, hideSearch = false }: { wide?: boolean; hideSearch?: boolean }) {
+export function HeaderControls() {
   return (
     <>
       {/* Jira GRW-395 — the branch the whole app is showing, first: every figure beside it depends on it. */}
       <HeaderBranchPicker />
-      {/* Jira GRW-307 — not on the Search screen, where it would only reload the page you are on.
-          Jira GRW-409 — and not for a role the search route refuses (HeaderSearch decides). */}
-      {hideSearch ? null : <HeaderSearch wide={wide} />}
       <NotificationBell />
       <AccountMenu />
     </>

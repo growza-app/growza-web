@@ -34,14 +34,14 @@ describe('the package builder', () => {
    */
   it('says package, never combo', () => {
     const html = build('en');
-    for (const s of ['Create a new package', '1. Package details', 'Package name *', 'Original price', 'Flat ₹'])
+    for (const s of ['Make a package', '1. Package details', 'Package name *', 'Original price', 'Flat ₹'])
       expect(html, s).toContain(s);
     expect(html).not.toMatch(/combo/i);
   });
 
   it('reads in Hindi, and says पैकेज', () => {
     const html = build('hi');
-    for (const s of ['नया पैकेज बनाएँ', '1. पैकेज की जानकारी', 'पैकेज का नाम *']) expect(html, s).toContain(s);
+    for (const s of ['पैकेज बनाएँ', '1. पैकेज की जानकारी', 'पैकेज का नाम *']) expect(html, s).toContain(s);
     for (const s of ['Save as draft', 'Package details', 'Original price', 'Pricing']) expect(html, s).not.toContain(s);
     expect(html).not.toContain('कॉम्बो');
   });

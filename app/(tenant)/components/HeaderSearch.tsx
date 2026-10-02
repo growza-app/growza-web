@@ -16,6 +16,11 @@ import { useMayUse } from './SessionProvider';
  * One component for both shapes the header draws it in: the icon on every
  * screen and Home's wide pill. Two copies of the link are how one of them gets
  * gated and the other does not.
+ *
+ * Jira GRW-448 — it says what it finds. A magnifier in the header beside a screen that has its own search box
+ * reads as "search this screen", and the owner tapped it on Packages and was asked for a name, a phone number
+ * or a booking ID. It only ever finds clients and bookings, so that is what it is called now, in its label and
+ * on Home's pill: "Search anything" was never true — it cannot find a service, a package or an offer.
  */
 export function HeaderSearch({ wide = false }: { wide?: boolean }) {
   const t = useTranslations('search');

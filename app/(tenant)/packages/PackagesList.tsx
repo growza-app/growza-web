@@ -162,7 +162,7 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
           <p>{packages.length === 0 ? t('emptyNone') : t('emptySearch')}</p>
           {packages.length === 0 && (
             <Link className="btn" href="/packages/new">
-              {t('buildFirst', { count: services.length })}
+              {t('buildFirst')}
             </Link>
           )}
         </div>
