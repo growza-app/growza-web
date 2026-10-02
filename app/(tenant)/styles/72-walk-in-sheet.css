@@ -529,19 +529,32 @@ input.wi-search-input-plain {
    The border is the other half. `btn-ghost` is bare text, which is fine beside
    a filled button on the same line and is not fine alone on a line of its own,
    left-aligned under a list of headed sections: it reads as another heading.
-   QA tapped past it twice believing it was a label. */
-@media (max-width: 860px) {
-  .wi-actions {
-    flex-wrap: wrap;
-  }
-  .wi-actions .wi-queue-btn {
-    flex: 1 0 100%;
-    justify-content: center;
-    margin-top: 10px;
-    border: 1px solid var(--line, #e2e5e2);
-    border-radius: 12px;
-    background: #fff;
-  }
+   QA tapped past it twice believing it was a label.
+
+   Jira GRW-457 — at every width, and the pair spread to the two edges.
+
+   This was a phone rule, so a wide screen put all three on one line: the ghost
+   alternative landed to the RIGHT of "Start now", in the corner this app keeps
+   for the primary action, 193px of bare unbordered text outboard of the filled
+   button. And on a phone the pair sat flush right above a full-width button —
+   three widths and two alignments in one block, lining up with nothing.
+
+   One layout now: Back on the left edge, the primary on the right edge, the
+   alternative across the full width below. Every edge meets another one. The
+   `:has()` keeps it to the three-button case — Record payment and the Move
+   sheet draw no queue button and stay grouped at the right. */
+.wi-actions:has(.wi-queue-btn) {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.wi-actions .wi-queue-btn {
+  flex: 1 0 100%;
+  justify-content: center;
+  margin-top: 10px;
+  border: 1px solid var(--line, #e2e5e2);
+  border-radius: 12px;
+  background: #fff;
 }
 
 /* Jira GRW-290 — Record payment: what was paid for each line, typed in place. */

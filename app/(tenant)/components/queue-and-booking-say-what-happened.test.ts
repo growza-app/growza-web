@@ -87,8 +87,9 @@ describe('"Add to waiting queue" is a button, in the order Tab reaches it', () =
   });
 
   it('is bordered once it is alone on a line, so it does not read as a heading', () => {
-    const phone = css.slice(css.indexOf('@media (max-width: 860px)'));
-    const rule = phone.slice(phone.indexOf('.wi-actions .wi-queue-btn'));
+    // GRW-457 took this out of `@media (max-width: 860px)`: it is alone on its line at every width now,
+    // so the border belongs to the rule itself rather than to the phone.
+    const rule = css.slice(css.indexOf('.wi-actions .wi-queue-btn'));
     expect(rule.slice(0, 260)).toMatch(/border:\s*1px solid/);
     expect(rule.slice(0, 260)).toMatch(/flex:\s*1 0 100%/);
   });
