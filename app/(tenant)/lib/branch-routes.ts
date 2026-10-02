@@ -16,7 +16,7 @@ const ONE_BRANCH_ONLY = ['/services', '/availability', '/settings'];
  * Screens the server draws from `?branch=` (with `BranchUrlSync`). A new pick is written into their address so
  * they redraw; every other screen follows the shared choice in the browser.
  */
-const BRANCH_IN_ADDRESS = ['/customers', '/services', '/reports', '/availability', '/offers', '/settings'];
+const BRANCH_IN_ADDRESS = ['/customers', '/services', '/reports', '/availability', '/offers', '/packages', '/settings'];
 
 /**
  * Jira GRW-396 — the parts of Settings that exist once for the whole business: its name and logo, its

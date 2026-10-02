@@ -5,6 +5,8 @@ import { copy } from './copy';
 /** Jira GRW-354 — these two moved from copy.ts to the message file so Hindi can have them; the wording rules did not move. */
 const reminders = en.settingsReminders;
 const offers = en.offers;
+/** Jira GRW-438 — packages left Offers, and the claim about booking in chat went with them. */
+const packages = en.packages;
 const tryIsADemo = en.tryWhatsApp.tryIsADemo;
 
 /**
@@ -26,7 +28,7 @@ const tryIsADemo = en.tryWhatsApp.tryIsADemo;
  * likelier regression: somebody tidying the copy back to the confident version
  * because it reads better.
  */
-const CRM_ONLY = [reminders.notLive, tryIsADemo, offers.subtitleCrmOnly];
+const CRM_ONLY = [reminders.notLive, tryIsADemo, offers.subtitleCrmOnly, packages.subtitleCrmOnly];
 
 /** Present-tense claims that WhatsApp is working right now. */
 const ASSERTS_IT_WORKS = [
@@ -63,7 +65,15 @@ describe('while WhatsApp is off, no copy claims it works', () => {
   it('keeps the live wording available for the day it is switched on', () => {
     // The confident copy is not deleted, only conditional. Switching the flag
     // on has to restore the product's own voice, not leave it apologising.
-    expect(offers.subtitleLive).toMatch(/book combos directly from whatsapp/i);
+    //
+    // Jira GRW-438 — the sentence lives on Packages now. Offers is announcements, which customers READ in
+    // chat; a package is what they BOOK, so that is the screen the present-tense claim belongs to.
+    expect(packages.subtitleLive).toMatch(/book packages directly from whatsapp/i);
+    expect(offers.subtitleLive).toMatch(/whatsapp/i);
+  });
+
+  it('the two packages subtitles are genuinely different', () => {
+    expect(packages.subtitleCrmOnly).not.toBe(packages.subtitleLive);
   });
 
   it('the two offers subtitles are genuinely different', () => {
