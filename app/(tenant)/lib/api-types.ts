@@ -143,6 +143,18 @@ export interface ServiceCategory {
   serviceCount: number;
 }
 
+/**
+ * Jira GRW-428 — a category as the Services screen manages it, which is not quite as a picker sees it.
+ *
+ * `serviceCount` counts retired services too, because it is what a delete would set loose and so what the
+ * confirmation has to say out loud; `activeCount` is what is on the menu today. A category with both at zero is
+ * normal here and impossible in `ServiceCategory` — that list leaves empty categories out on purpose.
+ */
+export interface ServiceCategoryAdmin extends ServiceCategory {
+  sortOrder: number | null;
+  activeCount: number;
+}
+
 /** The ready-made catalogue for the tenant's pinned vertical (boards 3a/3b). */
 export interface SeedCatalogService {
   name: string;

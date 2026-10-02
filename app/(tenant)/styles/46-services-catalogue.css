@@ -50,14 +50,25 @@
   font-weight: 640;
 }
 
+/*
+ * Jira GRW-431 — a grid of two, not a flex row that wraps.
+ *
+ * The footer held three actions and wrapped tidily by luck. Delete made it four, and the fourth dropped onto a
+ * line of its own, left-aligned under Edit, looking like a mistake. Two columns is the same four buttons said
+ * on purpose: the pair you reach for first, then the pair that changes something.
+ */
 .svc-card-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 10px;
   padding-top: 9px;
   border-top: 1px dashed var(--border);
+}
+
+.svc-card-foot > button {
+  min-height: 44px;
+  justify-content: center;
 }
 
 /* Edit is the reason most owners open this row — it leads. */

@@ -97,6 +97,7 @@ import type {
   Service,
   ServiceAdmin,
   ServiceCategory,
+  ServiceCategoryAdmin,
   ServiceImportItem,
   ServiceInput,
   SettingsSummary,
@@ -530,6 +531,48 @@ export const api = {
   allServices: (location: string) => get<ServiceAdmin[]>(`/api/v1/services/all?location=${encodeURIComponent(location)}`),
   serviceCategories: (location?: string | null) =>
     get<ServiceCategory[]>(`/api/v1/service-categories${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /**
+   * Jira GRW-428 — the Services screen's own category list: one branch, empty categories included.
+   *
+   * `serviceCategories` above is the picker's list and leaves an empty category out, which would make a
+   * category the owner has just created disappear the moment the screen reloaded.
+   */
+  categoriesAtBranch: (location: string) =>
+    get<ServiceCategoryAdmin[]>(`/api/v1/service-categories/all?location=${encodeURIComponent(location)}`),
+  createCategory: (location: string, name: string) =>
+    post<ServiceCategoryAdmin>('/api/v1/service-categories', { name, locationId: location }),
+  renameCategory: (location: string, id: string, name: string) =>
+    patch<ServiceCategoryAdmin>(`/api/v1/service-categories/${id}?location=${encodeURIComponent(location)}`, { name }),
+  /** Answers how many services were left with no category — the number the confirmation promised. */
+  deleteCategory: (location: string, id: string) =>
+    del<{ released: number }>(`/api/v1/service-categories/${id}?location=${encodeURIComponent(location)}`),
+  /**
+   * Jira GRW-428 — retires several of one branch's services at once.
+   *
+   * Retire, not delete: a service is referenced by its bookings, its stylists' skills and any combo it is in.
+   * A list with a service of another branch in it refuses the whole call rather than retiring the rest.
+   */
+  retireServices: (location: string, serviceIds: string[]) =>
+    post<{ ok: true; retired: number }>('/api/v1/services/retire', { locationId: location, serviceIds }),
+  /**
+   * Jira GRW-431 — deletes several of one branch's services outright.
+   *
+   * Partial on purpose, unlike `retireServices`: a service inside a combo is the catalogue's own state, not a
+   * broken request, so the rest go and `blocked` names the ones that did not with what is in their way.
+   */
+  deleteServices: (location: string, serviceIds: string[]) =>
+    post<{
+      ok: true;
+      deleted: number;
+      bookingsKept: number;
+      blocked: Array<{ id: string; name: string; blockers: { offers: Array<{ id: string; title: string }>; questions: Array<{ id: string; label: string }>; waitingInQueue: number } }>;
+    }>('/api/v1/services/delete', { locationId: location, serviceIds }),
+  /** One service, gone for good. Its bookings keep the name and price they were taken at (Jira GRW-430). */
+  deleteService: (location: string, id: string) =>
+    del<{ ok: true; bookingsKept: number }>(`/api/v1/services/${id}?location=${encodeURIComponent(location)}`),
+  /** The whole branch's order, every time: a partial list is refused rather than half-applied. */
+  reorderCategories: (location: string, categoryIds: string[]) =>
+    post<ServiceCategoryAdmin[]>('/api/v1/service-categories/reorder', { locationId: location, categoryIds }),
   createService: (location: string, body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', { ...body, locationId: location }),
   /** Jira GRW-378 — copy all (no ids) or some of another branch's services here; names already here are skipped. */
   copyServicesFromBranch: (from: string, to: string, serviceIds?: string[]) =>
