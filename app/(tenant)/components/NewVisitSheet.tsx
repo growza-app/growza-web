@@ -916,6 +916,25 @@ export function NewVisitSheet({
   );
   const branchChairs = chairs.filter((c) => branchProviders.some((p) => p.id === c.schedulableId));
   const freeCount = branchChairs.length > 0 ? branchChairs.filter((c) => c.free).length : null;
+  /**
+   * Jira GRW-456 — a branch with nobody on its team yet.
+   *
+   * "Whoever is free" was still offered there, and still chosen by default, with nobody to be free: every save
+   * through it came back 400 "No staff member can perform that service", and the refusal did not say what to do
+   * instead. On a new branch — exactly where a desk is most likely to be taking its first payment — that was the
+   * whole screen's answer.
+   *
+   * `providers` is `null` until the roster has arrived, which is not the same as an empty one, so the sentence
+   * and the chip only change once there is a real answer.
+   */
+  const noStaffHere = providers !== null && branchProviders.length === 0;
+  /*
+   * Record payment can still be settled: it is a sale at the counter, which is what "No stylist" (GRW-293) is
+   * for. So that becomes the choice rather than a chip that can only be refused.
+   */
+  useEffect(() => {
+    if (forPayment && noStaffHere) setNoStylist(true);
+  }, [forPayment, noStaffHere]);
 
   useEffect(() => {
     if (later || stage.step !== 'details') return;
@@ -1973,8 +1992,9 @@ export function NewVisitSheet({
                 </button>
               )}
 
-              {/* Jira GRW-403 — not for a token: the work is done, so it is somebody named, or nobody. */}
-              {!paysToken && (
+              {/* Jira GRW-403 — not for a token: the work is done, so it is somebody named, or nobody.
+                  Jira GRW-456 — and not at a branch with nobody on it: "free" needs somebody to be free. */}
+              {!paysToken && !noStaffHere && (
               <button
                 type="button"
                 aria-pressed={schedulableId === null && !noStylist}
@@ -2051,6 +2071,25 @@ export function NewVisitSheet({
               })}
             </div>
 
+            {/*
+              Jira GRW-456 — a branch with nobody on it says so here, where the choice is, rather than leaving
+              the desk to read "No staff member can perform that service" after pressing the one button there
+              was. Record payment still has an answer — the sale is taken with no one against it — so it is told
+              that too; a walk-in has none, and its button is off below.
+            */}
+            {noStaffHere ? (
+              <div className="empty">
+                {branchNameOf(listBranch ?? undefined)
+                  ? nv.noStaffAtBranch(branchNameOf(listBranch ?? undefined)!, providerNoun.toLowerCase())
+                  : nv.noStaffYet(providerNoun.toLowerCase())}{' '}
+                {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
+                {/* Jira GRW-409 — the Staff screen for whoever the nav offers it to, by the shared rule. */}
+                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
+                  <Link href={`/providers?branch=${listBranch}`}>{nv.addStaff(providerNoun.toLowerCase())}</Link>
+                ) : null}
+              </div>
+            ) : null}
+
             {picked.length > 0 && !later && !forPayment && (
               <div className="wi-summary">{nv.startsNow(totalMinutes([...picked, ...extras]))}</div>
             )}
@@ -2099,7 +2138,8 @@ export function NewVisitSheet({
                 onClick={() =>
                   later ? setStage({ step: 'when', client: stage.client }) : void submit(stage.client)
                 }
-                disabled={busy || picked.length === 0 || (forPayment && !amountsValid)}
+                // Jira GRW-456 — a walk-in needs a chair, and there is none: the queue below still takes them.
+                disabled={busy || picked.length === 0 || (forPayment && !amountsValid) || (!later && !forPayment && noStaffHere)}
               >
                 {busy ? nv.saving : later ? nv.next : forPayment ? nv.markDone : nv.start}
               </button>
