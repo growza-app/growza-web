@@ -130,7 +130,8 @@
     "moreTitle": "More",
     "bookingsTitle": "Bookings",
     "booking": "booking",
-    "bookings": "bookings"
+    "bookings": "bookings",
+    "packages": "packages"
   },
   "customers": {
     "subtitle": "View and manage your {noun}. See their booking history and spend.",
@@ -1003,29 +1004,17 @@
     "badStart": "An Indian mobile number starts with 6, 7, 8 or 9"
   },
   "offers": {
-    "title": "Offers & Combos",
-    "newComboTitle": "Create a new combo",
-    "editComboTitle": "Edit combo",
-    "subtitleLive": "Create offers and combos that customers see on your dashboard and in WhatsApp's Offers menu. Customers can book combos directly from WhatsApp.",
-    "subtitleCrmOnly": "Create offers and combos to sell more of what you already do. Add them to a booking at the desk today — customers will be able to book them on WhatsApp too, once WhatsApp goes live for you.",
+    "title": "Offers",
+    "subtitleLive": "Announcements customers see on your dashboard and in WhatsApp's Offers menu.",
+    "subtitleCrmOnly": "Announcements to sell more of what you already do. Customers will see them on WhatsApp too, once WhatsApp goes live for you.",
     "list": {
-      "tabs": {
-        "all": "All",
-        "offers": "Offers",
-        "combos": "Combos"
-      },
-      "tabWithCount": "{label} ({count})",
-      "searchPlaceholder": "Search offers & combos…",
+      "searchPlaceholder": "Search offers...",
       "filter": "Filter",
       "activeOnly": "Active only",
       "inactiveOnly": "Inactive only",
       "allStatuses": "All statuses",
       "emptyNone": "No offers yet — create one above.",
       "emptySearch": "No offers match your search.",
-      "combo": "Combo",
-      "offer": "Offer",
-      "pctOff": "{pct}% OFF",
-      "save": "Save {amount}",
       "turnOff": "Turn off",
       "turnOn": "Turn on",
       "active": "Active",
@@ -1042,15 +1031,12 @@
       "always": "Always visible",
       "deleteTitle": "Delete \"{title}\"?",
       "deleteBody": "It comes off the menu straight away and can't be brought back.",
-      "deleteDetailCombo": "Anyone already in the queue for it keeps their place and their services — their visit just stops naming this combo.",
       "deleteFailed": "Could not delete it. Please try again."
     },
     "menu": {
       "create": "Create offer",
       "offerTitle": "Offer",
-      "offerDesc": "Discounts, special price or free service",
-      "comboTitle": "Combo",
-      "comboDesc": "Bundle services at a special price"
+      "offerDesc": "Discounts, special price or free service"
     },
     "modal": {
       "title": "New offer",
@@ -1065,18 +1051,70 @@
       "creating": "Creating…",
       "create": "Create offer"
     },
+    "branch": {
+      "which": "Which branch?",
+      "allBranches": "Also publish at every other branch",
+      "oneBranchHint": "It runs at this branch only. Another branch can have its own.",
+      "allBranchesHint": "Each branch gets its own copy, made from its own menu. A branch whose menu is missing one of them is skipped.",
+      "resultTitle": "{title} is published",
+      "resultPublished": "Running at: {branches}.",
+      "resultSkipped": "Not at {branch}: its menu has no {missing}.",
+      "done": "Done",
+      "tag": "{branch}"
+    }
+  },
+  "packages": {
+    "title": "Packages",
+    "subtitle": "Several services sold together, at one price.",
+    "build": "Build package",
+    "newTitle": "Create a new package",
+    "editTitle": "Edit package",
+    "list": {
+      "searchPlaceholder": "Search {count} packages...",
+      "cols": {
+        "package": "Package",
+        "time": "Time",
+        "price": "Price"
+      },
+      "emptyNone": "No packages yet.",
+      "emptySearch": "No packages match your search.",
+      "buildFirst": "Build one from your {count} services",
+      "minutes": "{count} min",
+      "pctOff": "{pct}% OFF",
+      "save": "Save {amount}",
+      "noSaving": "No saving shown",
+      "nothingInside": "No services in it yet",
+      "missingServices": "{count, plural, one {# service in this package no longer exists} other {# services in this package no longer exist}}",
+      "retired": "Retired",
+      "copyOf": "{title} (copy)",
+      "actionsAria": "Actions for {title}",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "retire": "Retire",
+      "restore": "Restore",
+      "delete": "Delete",
+      "deleteTitle": "Delete \"{title}\"?",
+      "deleteBody": "It comes off the menu straight away and can't be brought back.",
+      "deleteDetail": "Anyone already in the queue for it keeps their place and their services — their visit just stops naming this package.",
+      "deleteFailed": "Could not delete it. Please try again.",
+      "onlyOn": "Only on: {days}",
+      "window": "{from} → {until}",
+      "now": "now",
+      "noEnd": "no end date",
+      "always": "Always visible"
+    },
     "builder": {
       "back": "← Back",
-      "createTitle": "Create a new combo",
+      "createTitle": "Create a new package",
       "editTitle": "Edit {title}",
-      "subtitle": "Build a combo of services and give your customers a special price.",
+      "subtitle": "Build a package of services and give your customers a special price.",
       "delete": "Delete",
       "saveDraft": "Save as draft",
       "draftShort": "Draft",
       "nextFull": "Next: {label} →",
       "nextShort": "Next →",
       "saving": "Saving…",
-      "publish": "Publish combo",
+      "publish": "Publish package",
       "steps": {
         "build": {
           "title": "Build",
@@ -1094,14 +1132,12 @@
         }
       },
       "tip": "Tip",
-      "tipBody": "Customers will be able to book this combo from your WhatsApp offers menu, once WhatsApp goes live for you.",
-      "comboDetails": "1. Combo details",
-      "comboName": "Combo name *",
+      "tipBody": "Customers will be able to book this package from your WhatsApp offers menu, once WhatsApp goes live for you.",
       "namePlaceholder": "e.g. Weekend Glow Package",
       "tagline": "Tagline (optional)",
       "taglinePlaceholder": "e.g. Pamper yourself this weekend",
       "addServices": "2. Add services *",
-      "addServicesHint": "Search and add the services you want to include in this combo.",
+      "addServicesHint": "Search and add the services you want to include in this package.",
       "searchServices": "Search {count} services…",
       "clearSearch": "Clear search",
       "noMatch": "No matching services",
@@ -1110,12 +1146,11 @@
       "moveDown": "Move down",
       "pricing": "3. Pricing",
       "original": "Original price",
-      "comboPrice": "Combo price",
       "flat": "Flat ₹",
       "percent": "% off",
       "youSave": "You save",
-      "customersPay": "Customers pay {combo} instead of {original}",
-      "rulesIntro": "Control which days this combo is offered — useful for weekend specials or a one-day flash deal.",
+      "customersPay": "Customers pay {package} instead of {original}",
+      "rulesIntro": "Control which days this package is offered — useful for weekend specials or a one-day flash deal.",
       "visibility": {
         "always": {
           "title": "Always visible",
@@ -1134,7 +1169,7 @@
       "until": "Until (optional)",
       "previewIntro": "Check the summary on the right, then publish — or go back if anything needs changing. WhatsApp itself shows this as plain text (no photos or styling — see the details in Try WhatsApp), so this preview is a dashboard-side summary, not a screenshot of the real chat.",
       "previewEmpty": "Add services in the Build step before publishing.",
-      "untitled": "Untitled combo",
+      "untitled": "Untitled package",
       "servicesCount": "{count, plural, one {# service} other {# services}}",
       "summary": {
         "always": "Always visible to customers",
@@ -1148,7 +1183,7 @@
       "sidebarEmpty": "Add services to see the preview.",
       "caption": "📲 Will be bookable from WhatsApp",
       "card": {
-        "badge": "COMBO",
+        "badge": "PACKAGE",
         "pctOff": "{pct}% OFF",
         "youSave": "You save {amount}",
         "takes": "Takes {duration}",
@@ -1156,22 +1191,17 @@
         "hours": "~{hours} hrs"
       },
       "errors": {
-        "nameRequired": "Combo name is required",
+        "nameRequired": "Package name is required",
         "addOne": "Add at least one service",
         "saveFailed": "Could not save — check the server is running.",
         "deleteFailed": "Could not delete — check the server is running."
-      }
-    },
-    "branch": {
-      "which": "Which branch?",
-      "allBranches": "Also publish at every other branch",
-      "oneBranchHint": "It runs at this branch only. Another branch can have its own.",
-      "allBranchesHint": "Each branch gets its own copy, made from its own menu. A branch whose menu is missing one of them is skipped.",
-      "resultTitle": "{title} is published",
-      "resultPublished": "Running at: {branches}.",
-      "resultSkipped": "Not at {branch}: its menu has no {missing}.",
-      "done": "Done",
-      "tag": "{branch}"
+      },
+      "sumOfParts": "Sum of parts",
+      "sumOfPartsNote": "Charged at the sum of its parts — no discount.",
+      "noSavingShown": "No saving shown to customers.",
+      "packageDetails": "1. Package details",
+      "packageName": "Package name *",
+      "packagePrice": "Package price"
     }
   },
   "attendance": {
