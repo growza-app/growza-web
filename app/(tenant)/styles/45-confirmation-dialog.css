@@ -23,6 +23,20 @@
   line-height: 1.5;
 }
 
+/* Jira GRW-435 — the refusal. Red, not amber: the amber detail line above is the consequence of a delete that
+   WILL happen, and this is one that did not. Two warning-coloured blocks saying opposite things is why these are
+   different colours rather than two sizes of the same one. */
+.confirm-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.5;
+}
+
 .btn-danger-solid {
   background: #b91c1c;
   color: #fff;
