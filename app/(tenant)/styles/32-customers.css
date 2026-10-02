@@ -2581,6 +2581,22 @@
     padding: 9px 14px;
   }
 
+  /*
+   * ...but a DIALOG opened from the header is not a header control.
+   *
+   * Jira GRW-447 — "New offer" is rendered by the button that opens it, so its markup sits inside `.topbar`
+   * and every `.btn` in it was caught by the rule above. Cancel and Create offer collapsed to 44px squares
+   * with no words in them: the label was still in the DOM, still white-on-green, and nought pixels tall. The
+   * owner saw a blank green box and had to guess.
+   *
+   * `inherit`, not a number: `.btn` is `font: inherit` everywhere else, so this is the size it would have had
+   * if the header had never spoken for it.
+   */
+  .topbar .modal .btn {
+    font-size: inherit;
+    padding: 9px 20px;
+  }
+
   .cust-kpis {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
