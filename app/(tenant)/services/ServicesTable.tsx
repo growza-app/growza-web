@@ -9,7 +9,7 @@ import { servicePhotoUrl } from '../lib/service-photos';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
-import { IconEdit, IconPlus, IconSearch } from '../components/icons';
+import { IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
 import { ImportServices } from './ImportServices';
@@ -18,6 +18,8 @@ import { CataloguePicker } from './CataloguePicker';
 import { CopyFromBranch } from './CopyFromBranch';
 import { CategoriesSheet } from './CategoriesSheet';
 import { ALL_TAB, RETIRED_TAB, hasRetired, servicesOnTab, tabAfterChange, tabCounts } from './services-tabs';
+import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
+import { copyName } from './services-groups';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -84,11 +86,52 @@ export function ServicesTable({
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
   /** Jira GRW-431 — the other thing an owner can mean. Delete is final; retire above is not. */
   const [confirmDelete, setConfirmDelete] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  /**
+   * Jira GRW-439 — one file input for the screen, not one per row.
+   *
+   * The photo button moved into the ··· menu, and a menu that is only mounted while it is open cannot own the
+   * input it clicks: the input would unmount with the menu before the file dialog returned. So the input lives
+   * here, and `photoFor` remembers which service asked.
+   */
+  const photoInput = useRef<HTMLInputElement | null>(null);
+  const [photoFor, setPhotoFor] = useState<ServiceAdmin | null>(null);
 
   const replace = (saved: ServiceAdmin) => {
     setServices((prev) => (prev.some((s) => s.id === saved.id) ? prev.map((s) => (s.id === saved.id ? saved : s)) : [saved, ...prev]));
     router.refresh();
+  };
+
+  /**
+   * Jira GRW-439 — a copy starts retired.
+   *
+   * "Haircut (copy)" at the same price, live on the booking page the moment it is created, is a second thing
+   * the owner is selling without having decided to. It appears under Retired, one tap from a restore once
+   * they have edited it.
+   */
+  const duplicate = async (service: ServiceAdmin) => {
+    setError(null);
+    setBusyId(service.id);
+    try {
+      const created = await api.createService(branchId, {
+        name: copyName(service.name, services.map((s) => s.name), (name) => t('copySuffix', { name })),
+        categoryId: service.categoryId,
+        durationMin: service.durationMin,
+        bufferBeforeMin: service.bufferBeforeMin,
+        bufferAfterMin: service.bufferAfterMin,
+        priceMinor: service.priceMinor == null ? null : Number(service.priceMinor),
+        active: false,
+      });
+      replace(created);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t('errors.duplicateFailed'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const askPhoto = (service: ServiceAdmin) => {
+    setPhotoFor(service);
+    photoInput.current?.click();
   };
 
   const onPick = async (service: ServiceAdmin, file: File | undefined) => {
@@ -235,6 +278,18 @@ export function ServicesTable({
     URL.revokeObjectURL(url);
   };
 
+  /** Everything a row can do, handed to both shapes so the table and the cards cannot drift apart. */
+  const rowActions: RowActions = {
+    onEdit: setEditing,
+    onPhoto: askPhoto,
+    onRemovePhoto: (s) => void onRemovePhoto(s),
+    onDuplicate: (s) => void duplicate(s),
+    onRetire: (s) => void askRetire(s),
+    onRestore: (s) => void setActive(s, true),
+    onDelete: (s) => void askDelete(s),
+    busyId,
+  };
+
   return (
     <>
       {/*
@@ -334,7 +389,23 @@ export function ServicesTable({
         )}
       </div>
 
-      <div className="card">
+      {/* One input for the screen (see `photoFor`): the ··· menu unmounts when it closes, so it cannot own this. */}
+      <input
+        ref={photoInput}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const service = photoFor;
+          const file = e.target.files?.[0];
+          setPhotoFor(null);
+          // Cleared so picking the SAME file twice in a row still fires a change event.
+          e.target.value = '';
+          if (service) void onPick(service, file);
+        }}
+      />
+
+      <div className="card svc-shell">
         {error && <div role="alert" className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
         {services.length === 0 ? (
           <div className="empty svc-branch-empty">
@@ -371,143 +442,17 @@ export function ServicesTable({
         ) : (
           <PaginatedTable
             noun={tn('services')}
-            cards={filtered.map((s) => (
-              <div className={`svc-card ${s.active ? '' : 'is-retired'}`} key={s.id} data-row>
-                <div className="svc-card-head">
-                  {s.imageUrl ? (
-                    <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={40} height={40} />
-                  ) : (
-                    <span className="svc-photo-empty">{t('photoAdd')}</span>
-                  )}
-                  <div className="svc-card-text">
-                    <div className="svc-card-name">
-                      {s.name}
-                      {!s.active && <span className="chip chip-completed">{t('retired')}</span>}
-                    </div>
-                    <div className="svc-card-meta">
-                      {s.categoryName ?? '—'} · {t('minutes', { count: s.durationMin })}
-                      {s.bufferAfterMin > 0 && ` · ${t('cleanupPlus', { duration: t('minutes', { count: s.bufferAfterMin }) })}`}
-                    </div>
-                  </div>
-                  <div className="svc-card-price">{formatMoney(s.priceMinor, s.currency)}</div>
-                </div>
-                <div className="svc-card-foot">
-                  {/* `.svc-card-edit`, not `.row-edit-btn`: a card's footer
-                      button is full-bleed, not a 38px inline control. */}
-                  <button type="button" className="btn btn-ghost svc-card-edit" onClick={() => setEditing(s)}>
-                    <IconEdit /> {t('edit')}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    disabled={busyId === s.id}
-                    onClick={() => inputRefs.current[s.id]?.click()}
-                  >
-                    {busyId === s.id ? '…' : s.imageUrl ? t('changePhoto') : t('addPhoto')}
-                  </button>
-                  {s.active ? (
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-danger"
-                      disabled={busyId === s.id}
-                      onClick={() => askRetire(s)}
-                    >
-                      {t('retire')}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      disabled={busyId === s.id}
-                      onClick={() => setActive(s, true)}
-                    >
-                      {t('restore')}
-                    </button>
-                  )}
-                  {/* Jira GRW-431 — last, after the reversible one. Two different things, in the safe order. */}
-                  <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askDelete(s)}>
-                    {t('delete')}
-                  </button>
-                </div>
-              </div>
-            ))}
+            cards={<ServiceCards rows={filtered} actions={rowActions} t={t} />}
             head={
               <tr>
-                <th>{t('cols.photo')}</th>
                 <th>{t('cols.name')}</th>
-                <th>{t('cols.type')}</th>
-                <th>{t('cols.duration')}</th>
-                <th>{t('cols.cleanupTime')}</th>
+                <th>{t('cols.time')}</th>
                 <th>{t('cols.price')}</th>
                 <th>{t('cols.actions')}</th>
               </tr>
             }
           >
-            {filtered.map((s) => (
-              <tr key={s.id} data-row className={s.active ? undefined : 'is-retired'}>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {/* Says whether a photo EXISTS — previously every row looked
-                        identical whether one had been uploaded or not. */}
-                    {s.imageUrl ? (
-                      <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
-                    ) : (
-                      <span className="svc-photo-empty">{t('photoAdd')}</span>
-                    )}
-                    <input
-                      ref={(el) => {
-                        inputRefs.current[s.id] = el;
-                      }}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      style={{ display: 'none' }}
-                      onChange={(e) => onPick(s, e.target.files?.[0])}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      disabled={busyId === s.id}
-                      onClick={() => inputRefs.current[s.id]?.click()}
-                    >
-                      {busyId === s.id ? '…' : s.imageUrl ? t('change') : t('upload')}
-                    </button>
-                    {s.imageUrl && (
-                      <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => onRemovePhoto(s)}>
-                        {t('remove')}
-                      </button>
-                    )}
-                  </div>
-                </td>
-                <td style={{ fontWeight: 620 }}>
-                  {s.name}
-                  {!s.active && <span className="chip chip-completed" style={{ marginLeft: 8 }}>{t('retired')}</span>}
-                </td>
-                <td className="muted">{s.categoryName ?? '—'}</td>
-                <td>{t('minutes', { count: s.durationMin })}</td>
-                {/* "Cleanup time" instead of "buffer" — same data, words an owner uses. */}
-                <td className="muted">{s.bufferAfterMin > 0 ? t('minutes', { count: s.bufferAfterMin }) : t('noCleanup')}</td>
-                <td>{formatMoney(s.priceMinor, s.currency)}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <button type="button" className="row-edit-btn" onClick={() => setEditing(s)}>
-                      <IconEdit /> {t('edit')}
-                    </button>
-                    {s.active ? (
-                      <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askRetire(s)}>
-                        {t('retire')}
-                      </button>
-                    ) : (
-                      <button type="button" className="btn btn-ghost" disabled={busyId === s.id} onClick={() => setActive(s, true)}>
-                        {t('restore')}
-                      </button>
-                    )}
-                    <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askDelete(s)}>
-                      {t('delete')}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            <ServiceTableRows rows={filtered} actions={rowActions} t={t} />
           </PaginatedTable>
         )}
       </div>

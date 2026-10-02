@@ -1,0 +1,219 @@
+/*
+ * Jira GRW-439 — the services list, rebuilt on Apple structure.
+ *
+ * Four columns on a laptop with the category as a heading row; iOS inset grouped lists on a phone, where a
+ * row swipes left to reveal Retire and Delete. Written at 344px first and widened at the breakpoint.
+ */
+
+/* ── The thumbnail and the name, in both shapes ───────────────────────────── */
+
+.svc-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* `flex: 1` with `min-width: 0` is what lets the NAME take the room and the price column stay its own
+     width. Without it the right-hand column sized itself first and "Global Hair Colour" wrapped to three
+     lines beside a half-empty price. */
+  flex: 1;
+  min-width: 0;
+}
+
+.svc-thumb {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+
+/* A service with no photo shows an empty frame, not the word ADD: the row is for reading, and adding one is
+   on the ··· menu where every other change to the service lives. */
+.svc-thumb-empty {
+  border: 1px dashed var(--border);
+  background: var(--page-bg);
+}
+
+.svc-name-text {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.svc-name {
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  /* Two lines, then an ellipsis: a long service name should wrap once, not be cut after one word and not
+     push the row to five lines. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.svc-retired-chip {
+  flex: none;
+}
+
+.svc-price {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── The laptop's table ───────────────────────────────────────────────────── */
+
+.svc-group-head {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  background: var(--page-bg);
+  padding: 8px 16px;
+}
+
+.svc-group-count {
+  margin-left: 8px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.svc-row-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* A hairline between the reversible actions and the final one, so Delete is never the next item down. */
+.dropdown-sep {
+  display: block;
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--border);
+}
+
+.dropdown-item-hint {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dropdown-item:hover .dropdown-item-hint {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* ── The phone's grouped lists ────────────────────────────────────────────── */
+
+/*
+ * iOS inset groups sit ON the page, not inside a card. Below the breakpoint the screen's own card gives up
+ * its surface so each category reads as its own block; at 861px it is a table again and the card returns.
+ */
+@media (max-width: 860px) {
+  .svc-shell {
+    background: transparent;
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+  }
+}
+
+.svc-group + .svc-group {
+  margin-top: 18px;
+}
+
+.svc-group-label {
+  padding: 0 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.svc-group-card {
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: 0 0 0 0.5px var(--border);
+}
+
+/*
+ * The swipe row. The face slides over the actions sitting behind it, so nothing is clipped and no element is
+ * ever off-screen when the row is at rest — what the device matrix checks.
+ */
+.svc-swipe {
+  position: relative;
+  overflow: hidden;
+}
+
+.svc-swipe + .svc-swipe {
+  border-top: 0.5px solid var(--border);
+}
+
+.svc-swipe-face {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  min-height: 66px;
+  background: var(--surface);
+  transition: transform 180ms ease;
+  touch-action: pan-y;
+}
+
+.svc-card-right {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.svc-card-right .svc-time {
+  font-size: 13px;
+}
+
+.svc-swipe-actions {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+}
+
+.svc-swipe-actions button {
+  width: 76px;
+  border: 0;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.svc-swipe-retire {
+  background: var(--amber);
+}
+
+/* The same red as every other destructive control in the product. */
+.svc-swipe-delete {
+  background: #b91c1c;
+}
+
+.svc-swipe-hint {
+  margin: 10px 4px 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* A mouse cannot swipe, and the hint would be a lie. The ··· menu carries the same actions for everyone. */
+@media (hover: hover) and (pointer: fine) {
+  .svc-swipe-hint {
+    display: none;
+  }
+}

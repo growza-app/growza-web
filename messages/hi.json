@@ -631,18 +631,16 @@
   "services": {
     "subtitle": "आप क्या देते हैं, हर एक में कितना समय लगता है, और आप कितना लेते हैं।",
     "cols": {
-      "photo": "फ़ोटो",
       "name": "सेवा",
-      "type": "प्रकार",
-      "duration": "मिनट",
-      "cleanupTime": "बाद में सफ़ाई का समय",
       "price": "कीमत",
-      "status": "स्थिति",
-      "actions": "कार्रवाई"
+      "actions": "कार्रवाई",
+      "time": "समय",
+      "duration": "मिनट",
+      "status": "स्थिति"
     },
     "noCleanup": "कोई नहीं",
     "minutes": "{count} मिनट",
-    "cleanupPlus": "+{duration} सफ़ाई",
+    "cleanupPlus": "+{count} सफ़ाई",
     "addLabel": "{label} जोड़ें",
     "searchPlaceholder": "{count, plural, one {# सेवा} other {# सेवाओं}} में खोजें...",
     "searchAria": "सेवाएँ खोजें",
@@ -667,7 +665,8 @@
       "photoTooBig": "{name}: फ़ोटो 5MB से छोटी होनी चाहिए।",
       "uploadFailed": "अपलोड नहीं हो सका।",
       "removeFailed": "हटाया नहीं जा सका।",
-      "saveFailed": "सेव नहीं हो सका।"
+      "saveFailed": "सेव नहीं हो सका।",
+      "duplicateFailed": "कॉपी नहीं बन सकी। कृपया फिर कोशिश करें।"
     },
     "form": {
       "titleEdit": "{name} बदलें",
@@ -901,7 +900,22 @@
     "deleteBody": "यह हमेशा के लिए मिट जाएगी — इसे वापस नहीं लाया जा सकता।",
     "deleteDetail": "{count, plural, one {इसकी # पुरानी बुकिंग} other {इसकी # पुरानी बुकिंग}} उसी नाम और कीमत पर रहेंगी, इसलिए आपका इतिहास और रिपोर्ट नहीं बदलेंगे।",
     "deleteDetailNone": "इस पर कोई बुकिंग नहीं हुई है।",
-    "allRetired": "यहाँ मेन्यू में कुछ नहीं है — इस ब्रांच की सभी सेवाएँ बंद कर दी गई हैं।"
+    "allRetired": "यहाँ मेन्यू में कुछ नहीं है — इस ब्रांच की सभी सेवाएँ बंद कर दी गई हैं।",
+    "unfiled": "किसी श्रेणी में नहीं",
+    "swipeHint": "हटाने या मिटाने के लिए पंक्ति को बाईं ओर खिसकाएँ।",
+    "actionsAria": "{name} के विकल्प",
+    "copySuffix": "{name} (कॉपी)",
+    "menu": {
+      "edit": "सेवा बदलें",
+      "addPhoto": "फ़ोटो जोड़ें",
+      "changePhoto": "फ़ोटो बदलें",
+      "removePhoto": "फ़ोटो हटाएँ",
+      "duplicate": "कॉपी बनाएँ",
+      "retire": "मेन्यू से हटाएँ",
+      "retireHint": "बुकिंग में नहीं दिखेगी",
+      "restore": "वापस लाएँ",
+      "delete": "मिटाएँ…"
+    }
   },
   "staff": {
     "addLabel": "{label} जोड़ें",
