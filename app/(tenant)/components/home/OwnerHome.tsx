@@ -31,6 +31,7 @@ import {
   IconClock,
   IconDaySummary,
   IconOffers,
+  IconPackages,
   IconReceipt,
   IconReports,
   IconServices,
@@ -358,6 +359,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   const links = [
     { href: '/providers', label: t.nav.staff, icon: <IconStaff />, tone: 'rose' },
     { href: '/services', label: t.nav.services, icon: <IconServices />, tone: 'green' },
+    // Jira GRW-438 — a quick link of its own, asked for alongside the screen.
+    { href: '/packages', label: t.nav.packages, icon: <IconPackages />, tone: 'green' },
     { href: '/offers', label: t.nav.offers, icon: <IconOffers />, tone: 'violet' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
