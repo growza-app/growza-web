@@ -66,6 +66,11 @@ export function useNewVisitCopy() {
     noServicesAtBranch: (branch: string, services: string) =>
       t('noServicesAtBranch', { branch, services: pickNoun(locale, services, tn('services')) }),
     addOrCopyServices: (services: string) => t('addOrCopyServices', { services: pickNoun(locale, services, tn('services')) }),
+    // Jira GRW-456 — a branch with nobody on it, said where the stylist is chosen.
+    noStaffAtBranch: (branch: string, provider: string) => t('noStaffAtBranch', { branch, provider: pickNoun(locale, provider, tn('staff')) }),
+    noStaffYet: (provider: string) => t('noStaffYet', { provider: pickNoun(locale, provider, tn('staff')) }),
+    stillTakePayment: (nobody: string) => t('stillTakePayment', { nobody }),
+    addStaff: (provider: string) => t('addStaff', { provider: pickNoun(locale, provider, tn('staff')) }),
     noServiceMatch: t('noServiceMatch'),
     alsoTry: t('alsoTry'),
     combos: t('combos'),

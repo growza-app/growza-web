@@ -60,7 +60,11 @@ describe('FR-05 — one Mark done, no till', () => {
   it('the button says Mark done and is disabled while an amount is unusable', () => {
     expect(en.newVisit.markDone).toBe('Mark done');
     // Jira GRW-297 — no longer also gated on comboBlocksSubmit; see combo-plus-extra.test.ts.
-    expect(sheet).toMatch(/disabled=\{busy \|\| picked\.length === 0 \|\| \(forPayment && !amountsValid\)\}/);
+    // Jira GRW-456 added a fourth clause for a walk-in at a branch with no staff, which cannot start; Record
+    // payment is untouched by it (`!forPayment`) and still turns on `amountsValid` alone.
+        // GRW-458 wrapped the expression over several lines when it moved the button into the tray's role
+    // helper; the clauses are unchanged.
+    expect(sheet).toMatch(/busy \|\|\s*picked\.length === 0 \|\|\s*\(forPayment && !amountsValid\) \|\|\s*\(!later && !forPayment && noStaffHere\)/);
   });
 });
 

@@ -150,9 +150,9 @@ describe('one header, one ink, one dark card (Home and every other screen on a p
     expect(header).toMatch(/\.topbar-with-sub p\s*\{[^}]*white-space:\s*nowrap;/);
   });
 
-  it('Home has no ink of its own, and Bookings\' summary card is Home\'s money-card green', () => {
+  // Jira GRW-455 — Bookings' own dark summary card went with the metric card it was; Home's ink rule stands.
+  it('Home has no ink of its own', () => {
     expect(read(join(STYLES, '83-role-home.css'))).toMatch(/--hm-ink:\s*var\(--text\)/);
-    expect(read(join(STYLES, '32-customers.css'))).toMatch(/\.bk-metric-card\s*\{[^}]*linear-gradient\(140deg, var\(--hm-hero-a\), var\(--hm-hero-b\)\)/);
   });
 });
 

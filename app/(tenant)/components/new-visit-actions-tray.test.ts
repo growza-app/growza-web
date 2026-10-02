@@ -81,9 +81,10 @@ describe('“no chair is free” is an answer, not a blank', () => {
   it('is not concluded from a list that has not arrived', () => {
     // `freeCount` is null while the chairs load, which is not zero; an empty roster counts only once
     // `providers` is in. Either mistake would flip the tray on every open and flip it back.
-    expect(code).toMatch(
-      /const noChairFree = freeCount === 0 \|\| \(providers !== null && branchProviders\.length === 0\)/,
-    );
+    // GRW-456 landed `noStaffHere` with the same care about `providers`, so this reads it rather than
+    // saying it twice.
+    expect(code).toMatch(/const noChairFree = freeCount === 0 \|\| noStaffHere/);
+    expect(code).toMatch(/const noStaffHere = providers !== null && branchProviders\.length === 0/);
   });
 });
 
