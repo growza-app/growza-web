@@ -117,6 +117,37 @@
 .tb-rows > .tb-row:first-child {
   border-top: 0;
 }
+
+/* ---------- Jira GRW-452 — a column keeps its height ----------
+ *
+ * A list that grows is a page that grows, and Paid only ever grows: it is the day's history, with nothing on it
+ * to do, and before this it stretched the laptop Home further every time the desk settled a bill. Measured at
+ * 1440x900 on nine paid and six with a stylist: 1475px of page inside an 829px body, on a layout whose own class
+ * is `hm-fit`.
+ *
+ * So the cap goes on the LIST and not on the column: a column with one row, or none, still stands at its own
+ * height (nothing is padded out to a cap), and a column with twenty scrolls those twenty inside itself. No row is
+ * dropped or hidden behind a "show more" — Waiting and With stylist are work the desk has to reach, which is why
+ * capping the rows shown was the wrong answer. The heading's count is still the whole column, so a capped list
+ * cannot read as a list that has ended.
+ *
+ * Phone (<= 860px) is left alone: it shows one column per tab, which is already compact, and a phone page that
+ * scrolls is the ordinary answer there.
+ */
+@media (min-width: 861px) {
+  .tb-rows {
+    /* ~3.5 rows with action buttons, ~6 without, growing with the screen. The floor is two rows: below that a
+       column is a scrollbar with a row beside it. */
+    max-height: max(300px, 46dvh);
+    overflow-y: auto;
+    /* The board is three lists inside a page that may itself scroll; reaching the end of one stays in it. */
+    overscroll-behavior: contain;
+    /* Room for a scrollbar, so a classic one cannot sit on top of the waiting time at the row's right edge. */
+    padding-right: 4px;
+    scrollbar-width: thin;
+  }
+}
+
 .tb-main {
   display: flex;
   flex-direction: column;

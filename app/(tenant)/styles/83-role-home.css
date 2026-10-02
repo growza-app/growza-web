@@ -2425,6 +2425,16 @@ button.hm-now-count {
   .hm-fit .hm-card-head h2 {
     font-size: 15px;
   }
+  /*
+   * Jira GRW-452 — the board's columns scroll inside themselves (95-token-board.css), and here they do it from a
+   * lower cap: on the owner's Home the board is ONE row of four, not the page. Its own 46dvh would take a third
+   * of the screen off Bookings today and How your clients are doing, which the two rules above
+   * (`overflow-y: auto`, `flex: 1 0 auto`) would then push below the fold — the scroll GRW-436 accepted as a
+   * trade, taken on every busy day rather than the short screens it was meant for.
+   */
+  .hm-fit .tb-rows {
+    max-height: min(34dvh, 330px);
+  }
 
   .hm-fit .hm-area-attention {
     display: flex;

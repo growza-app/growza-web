@@ -278,3 +278,49 @@ describe('hasLiveWork — whether the owner’s Home shows the board', () => {
     expect(hasLiveWork([tok('paid'), tok('paid'), tok('with_stylist'), tok('left')])).toBe(true);
   });
 });
+
+/**
+ * Jira GRW-452 — a column keeps its height.
+ *
+ * The rule is CSS and the board is a client component with no layout in this environment, so the stylesheets are
+ * read, as `queue-and-booking-say-what-happened.test.ts` reads the sheet it guards. What a browser measures is in
+ * `test/devices/token-board.spec.ts` (growza): that the board's height does not move when tokens are added.
+ */
+describe('the board does not grow with the day', () => {
+  const board = readFileSync(new URL('../../styles/95-token-board.css', import.meta.url), 'utf8');
+  const home = readFileSync(new URL('../../styles/83-role-home.css', import.meta.url), 'utf8');
+  /** The `@media (min-width: 861px)` block that carries the cap. */
+  const laptop = board.slice(board.indexOf('@media (min-width: 861px)'));
+  const rule = laptop.slice(laptop.indexOf('.tb-rows {'), laptop.indexOf('}', laptop.indexOf('.tb-rows {')));
+
+  it('caps the list and scrolls it, from 861px', () => {
+    expect(board).toMatch(/@media \(min-width: 861px\)/);
+    expect(rule).toMatch(/max-height:/);
+    expect(rule).toMatch(/overflow-y:\s*auto/);
+  });
+
+  it('keeps a column’s scroll inside that column', () => {
+    expect(rule).toMatch(/overscroll-behavior:\s*contain/);
+  });
+
+  it('leaves room for a scrollbar, so it cannot sit on the waiting time', () => {
+    expect(rule).toMatch(/padding-right:/);
+  });
+
+  it('caps the LIST, never the column — one row must still stand at one row', () => {
+    // A `height` or a `min-height` on `.tb-col` would pad an empty column out to the cap.
+    const colRules = board.match(/\.tb-col[^{]*\{[^}]*\}/g) ?? [];
+    expect(colRules.length).toBeGreaterThan(0);
+    for (const r of colRules) expect(r).not.toMatch(/(^|[^-])(min-)?height:/);
+  });
+
+  it('leaves the phone alone — one column per tab is already compact', () => {
+    const phone = board.slice(board.indexOf('@media (max-width: 860px)'), board.indexOf('@media (min-width: 861px)'));
+    expect(phone).not.toMatch(/max-height/);
+  });
+
+  it('gives the owner’s one-screen Home a lower cap, because there the board is one row of four', () => {
+    const fit = home.slice(home.indexOf('@media (min-width: 1101px) and (min-height: 680px)'));
+    expect(fit).toMatch(/\.hm-fit \.tb-rows \{\s*max-height:/);
+  });
+});
