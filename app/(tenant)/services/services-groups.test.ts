@@ -19,13 +19,29 @@ describe('arranging the list under headings', () => {
     expect(groups[1]!.items.map((s) => s.name)).toEqual(['Facial', 'Clean-up']);
   });
 
-  /*
-   * The order is the API's, which is the order the owner arranged in the Categories sheet and the order
-   * customers meet when they book. Sorting alphabetically here would silently override that.
-   */
-  it('keeps the order the menu arrived in, not alphabetical order', () => {
+  it('with no order given, keeps the order the rows arrived in — never alphabetical', () => {
     const reversed = groupByCategory([svc('Facial', 'Skin'), svc('Haircut', 'Hair')]);
     expect(reversed.map((g) => g.name)).toEqual(['Skin', 'Hair']);
+  });
+
+  /*
+   * Jira GRW-441 — the headings read in the owner's own order, which is the order the tabs read and the order
+   * customers meet when they book. Caught in the browser: after a reorder the tabs said Nails · Hair · Bridal
+   * above headings that still said Hair · Bridal · Nails. Two answers to the same question on one screen.
+   */
+  it('follows the owner’s order when it is given', () => {
+    const groups = groupByCategory(rows, ['Skin', 'Hair']);
+    expect(groups.map((g) => g.name)).toEqual(['Skin', 'Hair', null]);
+  });
+
+  it('a category the order has not heard of is listed after the ones it has, not dropped', () => {
+    const groups = groupByCategory(rows, ['Skin']);
+    expect(groups.map((g) => g.name)).toEqual(['Skin', 'Hair', null]);
+    expect(groups.reduce((n, g) => n + g.items.length, 0)).toBe(rows.length);
+  });
+
+  it('the unfiled group stays last whatever the order says', () => {
+    expect(groupByCategory(rows, ['Skin', 'Hair']).at(-1)!.name).toBeNull();
   });
 
   it('puts the unfiled services last, under their own heading', () => {

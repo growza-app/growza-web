@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
 import { IconEdit, IconPlus } from '../components/icons';
 import { CategoryServices } from './CategoryServices';
+import { movedOrder, unsorted, worthOrdering } from './category-order';
 import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
@@ -18,8 +19,9 @@ import { useDialog } from '../../shared/a11y/useDialog';
  * to centre itself on a desktop, rather than a desktop dialog squeezed onto a phone. Every row here is one
  * tappable thing with its controls beside it, at 44px, because this is used one-handed at a reception desk.
  *
- * Reordering is ↑/↓ and not drag: a keyboard reaches it, a thumb does not have to be precise, and the whole
- * branch's order goes to the server in one call either way. Drag arrives with the grouped list (GRW-429).
+ * Jira GRW-441 — reordering is a drag OR the ↑/↓ buttons, and the buttons are not a fallback to apologise
+ * for: a keyboard reaches them, a thumb does not have to be precise with them, and HTML5 drag does not fire
+ * on touch at all. The whole branch's order goes to the server in one call whichever is used.
  */
 export function CategoriesSheet({
   branchId,
@@ -46,6 +48,8 @@ export function CategoriesSheet({
   const [error, setError] = useState<string | null>(null);
   /** The category opened into its own list of services; the sheet shows one or the other, never both. */
   const [openId, setOpenId] = useState<string | null>(null);
+  /** Jira GRW-441 — the row being dragged, by index. Null whenever nothing is in flight. */
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLInputElement>(null);
   useDialog(dialogRef, { onClose: busy ? undefined : onClose });
@@ -95,22 +99,38 @@ export function CategoriesSheet({
     );
   };
 
-  /** Moves one row and sends the WHOLE order: the server refuses a partial list rather than half-applying it. */
-  const move = async (index: number, by: -1 | 1) => {
-    const to = index + by;
-    if (to < 0 || to >= rows.length) return;
-    const next = [...rows];
-    [next[index], next[to]] = [next[to]!, next[index]!];
-    // Shown moved straight away, then confirmed — this is a two-tap-in-a-row control and must not feel laggy.
+  /**
+   * Moves one row and sends the WHOLE order: the server refuses a partial list rather than half-applying it.
+   *
+   * Jira GRW-441 — and puts the rows BACK if that write fails. They were shown moved straight away (this is a
+   * two-tap-in-a-row control and must not feel laggy), which meant a failed save left the screen showing an
+   * order the server did not have — the owner closed the sheet believing it was saved.
+   */
+  const moveTo = async (from: number, to: number) => {
+    const next = movedOrder(rows, from, to);
+    if (next.length !== rows.length || next.every((c, i) => c.id === rows[i]?.id)) return;
+    const before = rows;
     setRows(next);
-    await run(
-      () => api.reorderCategories(branchId, next.map((c) => c.id)),
-      (ordered) => setRows(ordered),
-    );
+    setBusy(true);
+    setError(null);
+    try {
+      setRows(await api.reorderCategories(branchId, next.map((c) => c.id)));
+      onChanged();
+    } catch (err) {
+      setRows(before);
+      setError(err instanceof Error && err.message ? err.message : t('reorderFailed'));
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const move = (index: number, by: -1 | 1) => moveTo(index, index + by);
 
   // Looked up by id rather than held as an object, so a count that changed behind the detail view is the one shown.
   const open = rows.find((c) => c.id === openId) ?? null;
+  /** Jira GRW-441 — a handle, two arrows and a sentence about order, above a list of one, change nothing. */
+  const orderable = worthOrdering(rows);
+  const loose = unsorted(services);
 
   return (
     <>
@@ -143,7 +163,8 @@ export function CategoriesSheet({
           ) : (
             <>
           <h3>{t('title')}</h3>
-          <p className="svc-cat-hint">{t('hint')}</p>
+          {/* Jira GRW-441 — say what the order is FOR. One category is not an order, so the sentence waits. */}
+          <p className="svc-cat-hint">{orderable ? t('orderHint') : t('hint')}</p>
 
           <div className="modal-body">
             {error && (
@@ -157,7 +178,18 @@ export function CategoriesSheet({
             ) : (
               <ul className="svc-cat-list">
                 {rows.map((row, i) => (
-                  <li className="svc-cat-row" key={row.id}>
+                  <li
+                    className={`svc-cat-row ${dragFrom === i ? 'is-dragging' : ''}`}
+                    key={row.id}
+                    onDragOver={(e) => {
+                      if (dragFrom !== null) e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragFrom !== null) void moveTo(dragFrom, i);
+                      setDragFrom(null);
+                    }}
+                  >
                     {editingId === row.id ? (
                       <div className="svc-cat-edit">
                         <input
@@ -183,6 +215,22 @@ export function CategoriesSheet({
                       </div>
                     ) : (
                       <>
+                        {/*
+                          The handle, not the whole row, is draggable: the row's own job is to open the
+                          category, and a row that both opens and drags does neither reliably.
+                        */}
+                        {orderable && (
+                          <span
+                            className="svc-cat-grip"
+                            draggable={!busy}
+                            aria-hidden="true"
+                            title={t('dragAria', { name: row.name })}
+                            onDragStart={() => setDragFrom(i)}
+                            onDragEnd={() => setDragFrom(null)}
+                          >
+                            ⠿
+                          </span>
+                        )}
                         {/* The row opens the category — removing services, and the category itself, happens in there. */}
                         <button type="button" className="svc-cat-text" disabled={busy} onClick={() => setOpenId(row.id)}>
                           <span className="svc-cat-name">{row.name}</span>
@@ -196,6 +244,8 @@ export function CategoriesSheet({
                           <span className="svc-cat-chevron" aria-hidden="true">›</span>
                         </button>
                         <div className="svc-cat-actions">
+                          {orderable && (
+                            <>
                           <button
                             type="button"
                             className="icon-btn"
@@ -214,6 +264,8 @@ export function CategoriesSheet({
                           >
                             ↓
                           </button>
+                            </>
+                          )}
                           <button
                             type="button"
                             className="icon-btn"
@@ -250,6 +302,29 @@ export function CategoriesSheet({
                 <IconPlus /> {t('add')}
               </button>
             </div>
+
+            {/* The thing an owner cannot otherwise find out: an empty category is invisible to customers. */}
+            <p className="svc-cat-foot">{t('emptyStayHidden')}</p>
+
+            {/*
+              Jira GRW-441 — Unsorted is NOT a category. It cannot be renamed, reordered or deleted; it is a
+              view of the services whose `category_id` is null, which are hidden from the booking page with
+              nothing on any screen saying so.
+            */}
+            {loose.length > 0 && (
+              <div className="svc-cat-unsorted">
+                <div className="svc-cat-unsorted-head">
+                  <span className="svc-cat-name">{t('unsorted')}</span>
+                  <span className="svc-cat-meta">{t('unsortedCount', { count: loose.length })}</span>
+                </div>
+                <ul className="svc-cat-unsorted-list">
+                  {loose.map((s) => (
+                    <li key={s.id}>{s.name}</li>
+                  ))}
+                </ul>
+                <p className="svc-cat-foot">{t('unsortedHint')}</p>
+              </div>
+            )}
           </div>
 
           <div className="modal-actions">

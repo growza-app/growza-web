@@ -902,7 +902,14 @@
       "blockedByOffer": "it is part of {offers}",
       "blockedByQuestion": "it still asks {questions}",
       "blockedByQueue": "somebody is waiting for it right now",
-      "blockedFoot": "The rest are gone. Sort these out and try again, or take them off the menu instead."
+      "blockedFoot": "The rest are gone. Sort these out and try again, or take them off the menu instead.",
+      "orderHint": "Drag to set the order customers see when they book on WhatsApp.",
+      "emptyStayHidden": "A category with nothing in it stays hidden from customers.",
+      "dragAria": "Drag {name} to reorder",
+      "unsorted": "Not in a category",
+      "unsortedCount": "{count, plural, one {# service} other {# services}} · hidden from customers",
+      "unsortedHint": "File these under a category to show them on your booking page.",
+      "reorderFailed": "That order was not saved. Please try again."
     },
     "delete": "Delete",
     "deleteTitle": "Delete {name}?",
