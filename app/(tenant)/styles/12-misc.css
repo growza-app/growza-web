@@ -47,3 +47,15 @@
   font-weight: 650;
   text-decoration: none;
 }
+
+/*
+ * ...unless that way out is a BUTTON.
+ *
+ * Jira GRW-447 — the rule above was written for a plain text link in an empty state. The Packages screen's
+ * "Build one from your 61 services" is a `<Link className="btn">`, which paints its own green background, so
+ * the green link colour landed on the label: green on green, a solid green slab with nothing written on it.
+ * `.btn` already says what colour its label is; this just stops the link colour from reaching it.
+ */
+.empty a.btn {
+  color: #fff;
+}
