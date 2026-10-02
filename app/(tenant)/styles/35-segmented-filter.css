@@ -45,3 +45,22 @@
 .page-tab.active .page-tab-count {
   color: var(--accent-deep);
 }
+
+/*
+ * Jira GRW-437 — the Retired tab on Services.
+ *
+ * Set apart from the category tabs beside it with a hairline and a lighter label: those are the menu the salon
+ * is selling, and this is the drawer of what has been taken off it. Deliberately not a colour — nothing here
+ * is wrong or urgent, it is just not today's menu. Active state is left to `.page-tab.active` so the selected
+ * tab looks the same wherever it sits.
+ */
+.page-tab.svc-tab-retired {
+  margin-left: 4px;
+  border-left: 1px solid var(--hm-line, #e3e9e5);
+  padding-left: 14px;
+  color: #7c8a82;
+}
+
+.page-tab.svc-tab-retired:not(.active) .page-tab-count {
+  color: #9aa7a0;
+}
