@@ -211,18 +211,28 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                     </span>
                   </div>
 
-                  <div className="pkg-time">{t('minutes', { count: partsMinutes(parts) })}</div>
+                  {/*
+                    Time and price share one wrapper so that on a phone they are a footer spanning the whole
+                    card. Without it they sit in the grid's two columns, and the price — the widest thing in
+                    the row — sets the name column's width, which wrapped "QA-svc2 KOR combo" one word per
+                    line at 375px. At 861px the wrapper turns into `display: contents` and they become grid
+                    items again, under their own column titles.
+                  */}
+                  <div className="pkg-foot">
+                    <div className="pkg-time">{t('minutes', { count: partsMinutes(parts) })}</div>
 
-                  <div className="pkg-price">
-                    <span className="pkg-price-now">{formatMoney(pkg.comboPriceMinor)}</span>
-                    {saved > 0 && (
-                      <span className="pkg-price-was">
-                        <span className="pkg-strike">{formatMoney(String(total))}</span>
-                        {' · '}
-                        {t('save', { amount: formatMoney(String(saved)) })}
-                      </span>
-                    )}
-                    {saved === 0 && <span className="pkg-price-was">{t('noSaving')}</span>}
+                    <div className="pkg-price">
+                      <span className="pkg-price-now">{formatMoney(pkg.comboPriceMinor)}</span>
+                      {saved > 0 ? (
+                        <span className="pkg-price-was">
+                          <span className="pkg-strike">{formatMoney(String(total))}</span>
+                          <span className="pkg-price-sep" aria-hidden="true" />
+                          {t('save', { amount: formatMoney(String(saved)) })}
+                        </span>
+                      ) : (
+                        <span className="pkg-price-was">{t('noSaving')}</span>
+                      )}
+                    </div>
                   </div>
 
                   <div

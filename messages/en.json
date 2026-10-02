@@ -1121,7 +1121,8 @@
   },
   "packages": {
     "title": "Packages",
-    "subtitle": "Several services sold together, at one price.",
+    "subtitleLive": "Several services sold together, at one price. Customers can book packages directly from WhatsApp.",
+    "subtitleCrmOnly": "Several services sold together, at one price. Add one to a booking at the desk today — customers will be able to book packages on WhatsApp too, once WhatsApp goes live for you.",
     "build": "Build package",
     "newTitle": "Create a new package",
     "editTitle": "Edit package",
@@ -1205,7 +1206,7 @@
       "flat": "Flat ₹",
       "percent": "% off",
       "youSave": "You save",
-      "customersPay": "Customers pay {package} instead of {original}",
+      "customersPay": "Customers pay {price} instead of {original}",
       "rulesIntro": "Control which days this package is offered — useful for weekend specials or a one-day flash deal.",
       "visibility": {
         "always": {

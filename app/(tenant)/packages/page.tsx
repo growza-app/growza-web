@@ -29,6 +29,11 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
   const params = await searchParams;
 
   let packages, services;
+  /**
+   * Jira GRW-158 · GRW-165 — the subtitle does not promise what nothing can send yet. A package IS the thing
+   * a customer books in chat, so the confident wording is kept and made conditional rather than deleted.
+   */
+  let whatsappLive = false;
   try {
     // Jira GRW-395 — the header's branch; on "All", every branch's. Loaded alongside the menu, not after it.
     const [loaded, sv] = await Promise.all([
@@ -37,6 +42,7 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
     ]);
     packages = loaded.data.filter(isPackage);
     services = sv;
+    whatsappLive = loaded.me?.whatsapp?.booking ?? false;
   } catch (error) {
     return (
       <>
@@ -53,7 +59,7 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
       <BranchUrlSync />
       <PageHeader
         title={t('title')}
-        subtitle={t('subtitle')}
+        subtitle={whatsappLive ? t('subtitleLive') : t('subtitleCrmOnly')}
         actions={
           <Link className="btn" href="/packages/new">
             <IconPlus /> {t('build')}

@@ -700,7 +700,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                 {comboPriceMinor != null &&
                   (savingsMinor != null && savingsMinor > 0 ? (
                     <div className="savings-banner">
-                      {t('customersPay', { combo: formatMoney(String(comboPriceMinor)), original: formatMoney(String(originalPriceMinor)) })}
+                      {t('customersPay', { price: formatMoney(String(comboPriceMinor)), original: formatMoney(String(originalPriceMinor)) })}
                     </div>
                   ) : (
                     /* Said plainly rather than left blank: "no saving" is a decision the owner should see they made. */

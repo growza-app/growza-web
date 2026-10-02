@@ -42,14 +42,23 @@
 
 .pkg-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
     'main actions'
-    'time price';
-  gap: 4px 12px;
-  align-items: center;
+    'foot foot';
+  gap: 8px 12px;
+  align-items: start;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
+}
+
+/* The phone's footer: how long it takes on the left, what it costs on the right. */
+.pkg-foot {
+  grid-area: foot;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-left: 52px;
 }
 
 .pkg-row:last-child {
@@ -127,18 +136,27 @@
 
 .pkg-time {
   grid-area: time;
+  flex: none;
   font-size: 13px;
   color: var(--muted);
-  padding-left: 52px;
 }
 
 .pkg-price {
   grid-area: price;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: baseline;
   gap: 8px;
   justify-content: flex-end;
   text-align: right;
+}
+
+/* A middle dot between the old price and the saving, drawn rather than typed — a bare "·" in the markup is a
+   string literal the i18n guard would have to excuse, and it is decoration, not words. */
+.pkg-price-sep::before {
+  content: '\00b7';
+  margin: 0 4px;
 }
 
 .pkg-price-now {
@@ -185,7 +203,7 @@
   .pkg-head,
   .pkg-row {
     display: grid;
-    grid-template-columns: 1fr 120px 200px 44px;
+    grid-template-columns: minmax(0, 1fr) 120px 200px 44px;
     grid-template-areas: 'main time price actions';
     gap: 16px;
     align-items: center;
@@ -205,6 +223,10 @@
 
   .pkg-head-price {
     text-align: right;
+  }
+
+  .pkg-foot {
+    display: contents;
   }
 
   .pkg-time {
