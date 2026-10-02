@@ -9,6 +9,7 @@ import { loadErrorKind } from '../lib/load-error';
 import { loadAtBranch } from '../lib/branch-load';
 import { BranchUrlSync } from '../components/BranchUrlSync';
 import { guardScreen } from '../lib/screen-guard';
+import { isPackage } from '../packages/packages-logic';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,21 +22,25 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
   /**
    * Jira GRW-158 · GRW-165 — this page's whole subtitle was a claim about
    * WhatsApp, and it was not true: nothing sends or receives a message yet.
-   * Fetched alongside rather than neutered, because "customers book combos
-   * straight from WhatsApp" IS the reason to build a combo, and it becomes
-   * true the day the switch is flipped.
+   * Fetched alongside rather than neutered, because reaching customers in chat
+   * IS the reason to write an announcement, and it becomes true the day the
+   * switch is flipped.
    */
   let whatsappLive = false;
   try {
-    // Jira GRW-395 — the header's branch: its combos and the announcements; on "All", every branch's. Jira GRW-397 —
+    // Jira GRW-395 — the header's branch's announcements; on "All", every branch's. Jira GRW-397 —
     // loaded alongside `/me`, not after it.
     const [loaded, sv] = await Promise.all([
       loadAtBranch(params.branch, api.me().catch(() => null), (branch) => api.offers(branch)),
       api.services(),
     ]);
     const me = loaded.me;
-    const o = loaded.data;
-    offers = o;
+    /*
+     * Jira GRW-438 — announcements only. A package is the same `offer` row carrying a price for its services,
+     * and it is listed on `/packages` now. Filtered rather than asked for separately: one endpoint serves both,
+     * and `isPackage` is the single place that says which is which.
+     */
+    offers = loaded.data.filter((o) => !isPackage(o));
     services = sv;
     whatsappLive = me?.whatsapp?.booking ?? false;
   } catch (error) {
