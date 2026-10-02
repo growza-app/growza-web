@@ -3,7 +3,17 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatMoney, type CreatedOffer, type Offer, type OfferInput, type Service } from '../lib/api';
+import {
+  api,
+  ApiError,
+  BookingConflictError,
+  formatMoney,
+  type CreatedOffer,
+  type Offer,
+  type OfferInput,
+  type Service,
+} from '../lib/api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
@@ -148,6 +158,9 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
   const atBranch = initialOffer?.locationId ?? pickedBranch ?? defaultBranch;
   const [allBranches, setAllBranches] = useState(false);
   const [published, setPublished] = useState<CreatedOffer | null>(null);
+  /** Jira GRW-435 — the delete confirmation, and why the last attempt was refused. */
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const services = useMemo(
     () => allServices.filter((s) => !atBranch || !s.locationId || s.locationId === atBranch),
     [allServices, atBranch],
@@ -349,17 +362,29 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
    * the builder itself, and the per-service ✕ buttons in the picked list
    * (which only remove one service each) are easy to mistake for it.
    */
+  /**
+   * Jira GRW-435 — asked in the app's own dialog, and refused in the API's own words.
+   *
+   * The generic `errors.deleteFailed` ("check the server is running") was actively misleading here: the usual
+   * reason a combo will not delete is that somebody is waiting for it right now (GRW-434), which is about the
+   * salon, not the server. The owner was sent to look at infrastructure over a client in a chair.
+   */
   const deleteCombo = async () => {
     if (!initialOffer) return;
-    if (!window.confirm(tl('deleteConfirm', { title: initialOffer.title }))) return;
     setBusy(true);
+    setDeleteError(null);
+    // A failed save left its own message on the wizard behind this dialog, and only `save()` ever cleared it —
+    // so a refused delete showed the owner two unrelated errors at once. The delete owns the screen now.
     setError(null);
     try {
       await api.deleteOffer(initialOffer.id);
+      setConfirmDelete(false);
       router.push('/offers');
       router.refresh();
-    } catch {
-      setError(t('errors.deleteFailed'));
+    } catch (err) {
+      // `send()` raises every 409 as BookingConflictError, not ApiError — see the note in OffersList.doRemove.
+      const refused = err instanceof BookingConflictError || (err instanceof ApiError && err.status < 500);
+      setDeleteError(refused && err instanceof Error && err.message ? err.message : t('errors.deleteFailed'));
       setBusy(false);
     }
   };
@@ -406,7 +431,14 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
         </div>
         <div className="wizard-actions">
           {mode === 'edit' && (
-            <button className="btn btn-danger" disabled={busy} onClick={deleteCombo}>
+            <button
+              className="btn btn-danger"
+              disabled={busy}
+              onClick={() => {
+                setDeleteError(null);
+                setConfirmDelete(true);
+              }}
+            >
               {t('delete')}
             </button>
           )}
@@ -798,6 +830,23 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
         </div>
         </div>
       </div>
+
+      {confirmDelete && initialOffer && (
+        <ConfirmDialog
+          title={tl('deleteTitle', { title: initialOffer.title })}
+          body={tl('deleteBody')}
+          detail={initialOffer.comboPriceMinor != null ? tl('deleteDetailCombo') : undefined}
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busy}
+          error={deleteError}
+          onConfirm={deleteCombo}
+          onCancel={() => {
+            setConfirmDelete(false);
+            setDeleteError(null);
+          }}
+        />
+      )}
     </div>
   );
 }

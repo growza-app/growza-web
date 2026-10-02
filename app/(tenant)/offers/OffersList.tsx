@@ -5,7 +5,8 @@ import { useMemo, useState, useCallback } from 'react';
 import { formatDate } from '../lib/format';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatMoney, type Offer, type Service } from '../lib/api';
+import { api, ApiError, BookingConflictError, formatMoney, type Offer, type Service } from '../lib/api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
 import { Pagination } from '../components/Pagination';
@@ -54,6 +55,9 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   };
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  /** Jira GRW-435 — the offer being confirmed, and why the last attempt was refused. */
+  const [confirmDelete, setConfirmDelete] = useState<Offer | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('all');
@@ -152,13 +156,39 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   const closeMenu = useCallback(() => setOpenMenuId(null), []);
   const menu = useAnchoredPanel(openMenuId !== null, closeMenu);
 
-  const removeOffer = async (offer: Offer) => {
+  const askToRemove = (offer: Offer) => {
     setOpenMenuId(null);
-    if (!window.confirm(t('deleteConfirm', { title: offer.title }))) return;
+    setDeleteError(null);
+    setConfirmDelete(offer);
+  };
+
+  /**
+   * Jira GRW-435 — this used to be a `window.confirm` followed by `try/finally` with no `catch`.
+   *
+   * The missing `catch` is the part that mattered. `DELETE /offers/:id` answers 409 with a sentence written for
+   * the owner — "Somebody is waiting for this right now" (GRW-434) — and the rejection was swallowed whole: the
+   * spinner stopped, the row stayed, and the owner was told nothing. A combo that cannot be deleted yet and a
+   * combo whose delete button is broken looked identical, which is why it was reported as the latter.
+   *
+   * So a refusal keeps the dialog open and shows what the API said. Only a failure we have no words for falls
+   * back to the generic message.
+   */
+  const doRemove = async (offer: Offer) => {
     setBusyId(offer.id);
+    setDeleteError(null);
     try {
       await api.deleteOffer(offer.id);
+      setConfirmDelete(null);
       router.refresh();
+    } catch (err) {
+      /*
+       * Both arms are needed, and the first is the one that matters here: `send()` turns EVERY 409 into a
+       * `BookingConflictError`, which extends `Error` and not `ApiError` — so "Somebody is waiting for this right
+       * now" arrives as neither an `ApiError` nor a 409 that any `.status` check can see. Same pair as
+       * CheckoutSheet. A 4xx is the API refusing on purpose, in prose meant for this person; anything else is not.
+       */
+      const refused = err instanceof BookingConflictError || (err instanceof ApiError && err.status < 500);
+      setDeleteError(refused && err instanceof Error && err.message ? err.message : t('deleteFailed'));
     } finally {
       setBusyId(null);
     }
@@ -334,7 +364,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                           <Link href={`/offers/${offer.id}/edit`} className="dropdown-item dropdown-item-plain">
                             {t('edit')}
                           </Link>
-                          <button type="button" className="dropdown-item dropdown-item-plain dropdown-item-danger" onClick={() => removeOffer(offer)}>
+                          <button type="button" className="dropdown-item dropdown-item-plain dropdown-item-danger" onClick={() => askToRemove(offer)}>
                             {t('delete')}
                           </button>
                         </div>
@@ -358,6 +388,28 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
             noun={tn('offers')}
           />
         </>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={t('deleteTitle', { title: confirmDelete.title })}
+          body={t('deleteBody')}
+          /*
+           * Named because the owner cannot see it from here. A walk-in that asked for this combo keeps its token
+           * and its client and simply stops pointing at a combo that is gone (migration 0096, GRW-434) — without
+           * saying so, "this can't be undone" reads as though today's queue is about to lose those visits.
+           */
+          detail={confirmDelete.comboPriceMinor != null ? t('deleteDetailCombo') : undefined}
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busyId === confirmDelete.id}
+          error={deleteError}
+          onConfirm={() => doRemove(confirmDelete)}
+          onCancel={() => {
+            setConfirmDelete(null);
+            setDeleteError(null);
+          }}
+        />
       )}
     </div>
   );
