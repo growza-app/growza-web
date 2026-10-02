@@ -8,6 +8,19 @@
   flex-wrap: wrap;
 }
 
+/*
+ * Jira GRW-431 — on a phone the search takes the whole row and the buttons share the next one.
+ *
+ * It wrapped before too, but wherever the arithmetic happened to fall: at 390px the search and the first button
+ * fitted, so the second one dropped alone to the left margin. Which button was orphaned depended on how many
+ * there were and how long their words are — in Hindi, a different one. This makes the wrap a decision.
+ */
+@media (max-width: 560px) {
+  .page-toolbar .staff-search-wrap {
+    flex: 1 0 100%;
+  }
+}
+
 .staff-search-wrap {
   position: relative;
   flex: 1;

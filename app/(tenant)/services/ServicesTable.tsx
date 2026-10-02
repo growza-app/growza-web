@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatMoney, type ServiceAdmin, type ServiceCategory } from '../lib/api';
+import { api, formatMoney, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { PaginatedTable } from '../components/PaginatedTable';
@@ -16,6 +16,7 @@ import { ImportServices } from './ImportServices';
 import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser';
 import { CataloguePicker } from './CataloguePicker';
 import { CopyFromBranch } from './CopyFromBranch';
+import { CategoriesSheet } from './CategoriesSheet';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -64,12 +65,23 @@ export function ServicesTable({
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [copying, setCopying] = useState(false);
+  /**
+   * Jira GRW-428 — the category sheet, and the admin list it needs.
+   *
+   * Not the `categories` prop: that is the picker's list, which leaves out a category with nothing in it, so a
+   * category created in the sheet would vanish from it. Fetched when the sheet opens rather than with the page,
+   * because most visits to this screen never open it.
+   */
+  const [managing, setManaging] = useState<ServiceCategoryAdmin[] | null>(null);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const canCopy = branches.length > 1;
   const reload = async () => {
     setServices(await api.allServices(branchId));
     router.refresh();
   };
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
+  /** Jira GRW-431 — the other thing an owner can mean. Delete is final; retire above is not. */
+  const [confirmDelete, setConfirmDelete] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const replace = (saved: ServiceAdmin) => {
@@ -117,6 +129,36 @@ export function ServicesTable({
    * worth keeping regardless. Asks first, with the booking count, so the owner
    * knows what they're pulling out of the booking flows.
    */
+  const askDelete = async (service: ServiceAdmin) => {
+    setBusyId(service.id);
+    try {
+      const usage = await api.serviceUsage(service.id).catch(() => ({ bookings: 0, providers: 0, offers: 0 }));
+      setConfirmDelete({ service, bookings: usage.bookings });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /**
+   * Jira GRW-431 — a real delete. Its bookings keep the name and price they were taken at (GRW-430), so the
+   * 409 this can answer is about the CATALOGUE — a combo it is in, a question it still asks — never history.
+   */
+  const remove = async (service: ServiceAdmin) => {
+    setBusyId(service.id);
+    setError(null);
+    try {
+      await api.deleteService(branchId, service.id);
+      setServices((prev) => prev.filter((x) => x.id !== service.id));
+      setConfirmDelete(null);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
+      setConfirmDelete(null);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const askRetire = async (service: ServiceAdmin) => {
     setBusyId(service.id);
     try {
@@ -208,6 +250,25 @@ export function ServicesTable({
             aria-label={t('searchAria')}
           />
         </div>
+        {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service. */}
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={loadingCategories}
+          onClick={async () => {
+            setLoadingCategories(true);
+            setError(null);
+            try {
+              setManaging(await api.categoriesAtBranch(branchId));
+            } catch (err) {
+              setError(err instanceof Error ? err.message : t('categories.errors.failed'));
+            } finally {
+              setLoadingCategories(false);
+            }
+          }}
+        >
+          {loadingCategories ? '…' : t('categories.open')}
+        </button>
         <button type="button" className="btn btn-ghost" onClick={exportCsv}>
           {t('export')}
         </button>
@@ -311,6 +372,10 @@ export function ServicesTable({
                       {t('restore')}
                     </button>
                   )}
+                  {/* Jira GRW-431 — last, after the reversible one. Two different things, in the safe order. */}
+                  <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askDelete(s)}>
+                    {t('delete')}
+                  </button>
                 </div>
               </div>
             ))}
@@ -384,6 +449,9 @@ export function ServicesTable({
                         {t('restore')}
                       </button>
                     )}
+                    <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askDelete(s)}>
+                      {t('delete')}
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -391,6 +459,17 @@ export function ServicesTable({
           </PaginatedTable>
         )}
       </div>
+
+      {managing && (
+        <CategoriesSheet
+          branchId={branchId}
+          initial={managing}
+          services={services}
+          onClose={() => setManaging(null)}
+          // A rename shows on every row of the list, and a delete frees services it lists: reload, don't patch.
+          onChanged={() => void reload()}
+        />
+      )}
 
       {(creating || editing) && (
         <ServiceForm
@@ -465,6 +544,23 @@ export function ServicesTable({
             setCopying(false);
             await reload();
           }}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={t('deleteTitle', { name: confirmDelete.service.name })}
+          body={t('deleteBody')}
+          detail={
+            confirmDelete.bookings > 0
+              ? t('deleteDetail', { count: confirmDelete.bookings })
+              : t('deleteDetailNone')
+          }
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busyId === confirmDelete.service.id}
+          onConfirm={() => void remove(confirmDelete.service)}
+          onCancel={() => setConfirmDelete(null)}
         />
       )}
 
