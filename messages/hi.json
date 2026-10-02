@@ -645,7 +645,7 @@
     "minutes": "{count} मिनट",
     "cleanupPlus": "+{duration} सफ़ाई",
     "addLabel": "{label} जोड़ें",
-    "searchPlaceholder": "{count} सेवाओं में खोजें...",
+    "searchPlaceholder": "{count, plural, one {# सेवा} other {# सेवाओं}} में खोजें...",
     "searchAria": "सेवाएँ खोजें",
     "export": "एक्सपोर्ट",
     "all": "सभी",
@@ -901,7 +901,8 @@
     "deleteTitle": "{name} मिटाएँ?",
     "deleteBody": "यह हमेशा के लिए मिट जाएगी — इसे वापस नहीं लाया जा सकता।",
     "deleteDetail": "{count, plural, one {इसकी # पुरानी बुकिंग} other {इसकी # पुरानी बुकिंग}} उसी नाम और कीमत पर रहेंगी, इसलिए आपका इतिहास और रिपोर्ट नहीं बदलेंगे।",
-    "deleteDetailNone": "इस पर कोई बुकिंग नहीं हुई है।"
+    "deleteDetailNone": "इस पर कोई बुकिंग नहीं हुई है।",
+    "allRetired": "यहाँ मेन्यू में कुछ नहीं है — इस ब्रांच की सभी सेवाएँ बंद कर दी गई हैं।"
   },
   "staff": {
     "addLabel": "{label} जोड़ें",

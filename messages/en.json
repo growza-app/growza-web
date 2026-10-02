@@ -645,7 +645,7 @@
     "minutes": "{count} min",
     "cleanupPlus": "+{duration} cleanup",
     "addLabel": "Add {label}",
-    "searchPlaceholder": "Search {count} services...",
+    "searchPlaceholder": "Search {count, plural, one {# service} other {# services}}...",
     "searchAria": "Search services",
     "export": "Export",
     "all": "All",
@@ -901,7 +901,8 @@
     "deleteTitle": "Delete {name}?",
     "deleteBody": "It is gone for good — this cannot be undone.",
     "deleteDetail": "{count, plural, one {Its # past booking keeps} other {Its # past bookings keep}} the name and price they were taken at, so your history and your reports do not change.",
-    "deleteDetailNone": "Nothing has been booked on it."
+    "deleteDetailNone": "Nothing has been booked on it.",
+    "allRetired": "Nothing is on the menu here — everything at this branch has been retired."
   },
   "staff": {
     "addLabel": "Add {label}",
