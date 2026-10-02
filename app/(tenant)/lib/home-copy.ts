@@ -237,6 +237,10 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     // Jira GRW-284 — a token issued by name alone.
     whatHaving: S('What are they having?', 'क्या करवा रहे हैं?'),
     pickServiceFirst: S('Pick what they are having first.', 'पहले सेवा चुनें।'),
+    // Jira GRW-451 — a branch with nothing on its menu. Without this the picker was simply blank, and every
+    // stylist tap answered "Pick what they are having first" with nothing there to pick.
+    loadingServicesHere: S('Loading…', 'लोड हो रहा है…'),
+    noServicesHere: S('This branch has no services yet. Add some on the Services screen, then give this token.', 'इस ब्रांच में अभी कोई सेवा नहीं है। पहले सेवा स्क्रीन पर सेवाएँ जोड़ें, फिर यह टोकन दें।'),
     stillBusy: (stylist: string) => S(`${stylist} still busy`, `${stylist} अभी व्यस्त`),
     longerThanBooked: S('Longer than booked', 'समय से ज़्यादा'),
     nobodyWaiting: S('Nobody is waiting.', 'कोई इंतज़ार में नहीं।'),
