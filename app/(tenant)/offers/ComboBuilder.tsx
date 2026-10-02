@@ -373,6 +373,9 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
     if (!initialOffer) return;
     setBusy(true);
     setDeleteError(null);
+    // A failed save left its own message on the wizard behind this dialog, and only `save()` ever cleared it —
+    // so a refused delete showed the owner two unrelated errors at once. The delete owns the screen now.
+    setError(null);
     try {
       await api.deleteOffer(initialOffer.id);
       setConfirmDelete(false);
