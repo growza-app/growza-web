@@ -17,6 +17,8 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
+import { extraSuggestions } from '../lib/service-suggest';
+import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { weekdayNames } from '../lib/weekday-names';
 import { clampPercentInput, percentOff, pricedMinor, type PriceMode } from './packages-logic';
@@ -262,6 +264,32 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
           unpicked.map((s) => ({ item: s, text: [s.name] })),
           search,
         );
+
+  /**
+   * Jira GRW-449 — and the other half of that search: what the typed words MEAN.
+   *
+   * The walk-in sheet has had this since GRW-375 and the builder had not, so "nails" found Manicure at the
+   * front desk and nothing here — the same catalogue, searched for the same reason, answering differently
+   * depending on which screen the owner happened to be on.
+   *
+   * The branch is `atBranch`, not the header's: a package is built from ONE branch's services (GRW-381), and a
+   * suggestion from another branch's menu is one the builder would refuse to add.
+   */
+  const remote = useServiceSuggestions(search, atBranch);
+  const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
+  /**
+   * Shown as their own row under the results, never mixed into them: a neighbour is not a match, and the list
+   * the owner typed for keeps its order. Resolved through the UNPICKED services, so a service already in the
+   * package is not offered a second time.
+   */
+  const alsoTry = useMemo(
+    () =>
+      extraSuggestions(filteredServices, remote, search, (id) => {
+        const service = serviceById.get(id);
+        return service && !selectedIds.includes(service.id) ? service : undefined;
+      }),
+    [filteredServices, remote, search, serviceById, selectedIds],
+  );
 
   const addService = (id: string) => {
     setSelectedIds((ids) => [...ids, id]);
@@ -600,9 +628,12 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                 {search.trim() !== '' && (
                   <div className="picker-results">
                     {filteredServices.length === 0 ? (
-                      <div className="picker-row" style={{ cursor: 'default' }}>
-                        <span className="muted">{t('noMatch')}</span>
-                      </div>
+                      /* Jira GRW-449 — "nothing matched" is not the answer while there is something to try. */
+                      alsoTry.length === 0 && (
+                        <div className="picker-row" style={{ cursor: 'default' }}>
+                          <span className="muted">{t('noMatch')}</span>
+                        </div>
+                      )
                     ) : (
                       filteredServices.slice(0, 20).map((s) => (
                         <div key={s.id} className="picker-row" onClick={() => addService(s.id)}>
@@ -616,6 +647,23 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                         </div>
                       ))
                     )}
+                  </div>
+                )}
+                {/*
+                  Jira GRW-449 — the meaning-based extras, in their own row under the results and never inside
+                  them. The walk-in sheet learned why: appended to the list they land below its fold, where
+                  nobody sees them, and they make a list that was already right look wrong.
+                */}
+                {alsoTry.length > 0 && (
+                  <div className="also-try">
+                    <span className="also-try-label">{t('alsoTry')}</span>
+                    <div className="also-try-chips">
+                      {alsoTry.map((s) => (
+                        <button key={s.id} type="button" className="also-try-chip" onClick={() => addService(s.id)}>
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 

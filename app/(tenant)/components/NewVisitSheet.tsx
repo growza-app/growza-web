@@ -43,13 +43,8 @@ import {
   type Service,
 } from '../lib/api';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
-import {
-  extraSuggestions,
-  normaliseTerm,
-  shouldAskServer,
-  SUGGEST_DEBOUNCE_MS,
-  type RemoteSuggestions,
-} from '../lib/service-suggest';
+import { extraSuggestions } from '../lib/service-suggest';
+import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { useLabel } from './LabelsProvider';
 import { useBranch } from './BranchProvider';
 import { useSession } from './SessionProvider';
@@ -562,15 +557,11 @@ export function NewVisitSheet({
   /**
    * Jira GRW-375 — services closest in MEANING, when a provider is configured.
    *
-   * Asked only once the typist pauses and has typed enough to mean something,
-   * and a 503 (the normal answer in production today) switches it off for the
-   * life of this sheet rather than costing a failed request per keystroke.
+   * Jira GRW-449 — asked only once the typist pauses and has typed enough to mean something, cached per
+   * branch, and switched off for the life of the sheet by a 503. All four rules, and the reasons for them,
+   * now live in `useServiceSuggestions` — the package builder and the Services screen ask the same way.
    */
-  const [remote, setRemote] = useState<RemoteSuggestions | null>(null);
-  const suggestOffRef = useRef(false);
-  // Jira GRW-389 — each reply kept for the life of the sheet: typing "facial", then back to "faci", then
-  // "facial" again asks the server once, not twice. Searches can be paid calls.
-  const suggestCacheRef = useRef(new Map<string, RemoteSuggestions>());
+  const remote = useServiceSuggestions(serviceTerm, listBranch);
 
   /**
    * Jira GRW-375 — "phacial" finds Facial. The whole catalogue is already in
@@ -587,34 +578,6 @@ export function NewVisitSheet({
       20,
     );
   }, [services, serviceTerm]);
-
-  useEffect(() => {
-    if (suggestOffRef.current || !shouldAskServer(serviceTerm)) return;
-    const q = normaliseTerm(serviceTerm);
-    // Jira GRW-379 (GRW-390's web half) — suggestions are one branch's, so the cache is kept per branch too.
-    const key = `${listBranch ?? ''}|${q}`;
-    const cached = suggestCacheRef.current.get(key);
-    if (cached) {
-      setRemote(cached);
-      return;
-    }
-    // Only the WAIT is cancelled on the next keystroke, not a request already sent. A reply is tagged with its
-    // term and ignored once the box says something else, so letting it finish costs nothing — and it is how a
-    // slow "search is off" (503) still switches the sheet off; cancelling it cost one more request (QA).
-    const timer = setTimeout(() => {
-      api
-        .suggestCatalog(q, listBranch ?? undefined)
-        .then(({ hits, floors }) => {
-          const reply: RemoteSuggestions = { term: q, hits, floors };
-          suggestCacheRef.current.set(key, reply);
-          setRemote(reply);
-        })
-        .catch((error: unknown) => {
-          if (error instanceof ApiError && error.status === 503) suggestOffRef.current = true;
-        });
-    }, SUGGEST_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [serviceTerm, listBranch]);
 
   /**
    * Meaning-based extras, shown as their own "Also try" row under the list rather than appended to it: QA found
