@@ -95,7 +95,7 @@ export interface DaySummary {
    *
    * Absent is the normal case: a branch's own summary, and every one-branch business.
    */
-  branches?: Array<{ id: string; name: string; bookings: number; revenueMinor: number; done: number }>;
+  branches?: Array<{ id: string; name: string; bookings: number; revenueMinor: number; done: number; closed?: boolean }>;
 }
 
 /** Jira GRW-222 — one walk-in waiting to be seen, first come first served. */

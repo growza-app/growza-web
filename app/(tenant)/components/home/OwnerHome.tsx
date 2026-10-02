@@ -534,6 +534,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           t={t}
           locationId={branch}
           subtitle={[p.dateLabel, locationLine, afterClose && closeTime ? t.dayClosed(closeTime) : null].filter(Boolean).join(' · ')}
+          dateLabel={p.dateLabel}
           onClose={() => setSummaryOpen(false)}
         />
       ) : null}

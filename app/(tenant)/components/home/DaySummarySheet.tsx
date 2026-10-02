@@ -19,7 +19,26 @@ import { branchTag } from '../../lib/day-summary-view';
  * the CSS decides. Fetched when opened rather than with the page, because most
  * visits to Home never open it and it runs the per-staff performance query.
  */
-export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeCopy; locationId: string | null; subtitle: string; onClose: () => void }) {
+export function DaySummarySheet({
+  t,
+  locationId,
+  subtitle,
+  dateLabel,
+  onClose,
+}: {
+  t: HomeCopy;
+  locationId: string | null;
+  subtitle: string;
+  /**
+   * Jira GRW-450 — the day, on its own, so a branch opened from the overview keeps it.
+   *
+   * `subtitle` is the caller's whole line (day · branch · closing time) and is replaced by the branch's name
+   * once one is opened. Without the day beside it the readout an owner reads at closing — and screenshots —
+   * said nothing about which day it was.
+   */
+  dateLabel?: string;
+  onClose: () => void;
+}) {
   const [data, setData] = useState<DaySummary | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -64,7 +83,7 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
               </button>
             ) : null}
             <h2 id="hm-sheet-title">{t.todaysSummary}</h2>
-            <p>{opened ? opened.name : subtitle}</p>
+            <p>{opened ? [dateLabel, opened.name].filter(Boolean).join(' · ') : subtitle}</p>
           </div>
           <button type="button" className="hm-icon-btn" aria-label={t.close} onClick={onClose}>
             <IconClose />
@@ -106,20 +125,37 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
                   </h2>
                 </div>
                 <ul className="hm-rows">
-                  {data.branches.map((b) => (
-                    <li key={b.id} className="hm-row hm-ds-branch">
-                      <button type="button" className="hm-ds-branch-btn" onClick={() => setOpened({ id: b.id, name: b.name })}>
+                  {data.branches.map((b) => {
+                    const figures = (
+                      <>
                         <span className="hm-row-main">
-                          <span className="hm-row-name">{b.name}</span>
+                          {/* The same "(closed)" the stylist's Home already says of a shut branch, not a second wording for it. */}
+                          <span className="hm-row-name">{b.closed ? t.branchClosed(b.name) : b.name}</span>
                         </span>
                         <span className="hm-row-meta">{t.staffBookings(b.bookings)}</span>
                         <span className="hm-row-money">{rupees(b.revenueMinor)}</span>
-                        <span className="hm-ds-branch-go" aria-hidden="true">
-                          ›
-                        </span>
-                      </button>
-                    </li>
-                  ))}
+                      </>
+                    );
+                    /*
+                     * A branch closed today is listed — its takings are in the total above — but it is not
+                     * offered as something to open: every route that takes a branch resolves it against the
+                     * OPEN branches and answers 404, so the tap would end on "Could not load this".
+                     */
+                    return (
+                      <li key={b.id} className={b.closed ? 'hm-row' : 'hm-row hm-ds-branch'}>
+                        {b.closed ? (
+                          figures
+                        ) : (
+                          <button type="button" className="hm-ds-branch-btn" onClick={() => setOpened({ id: b.id, name: b.name })}>
+                            {figures}
+                            <span className="hm-ds-branch-go" aria-hidden="true">
+                              ›
+                            </span>
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             ) : null}
