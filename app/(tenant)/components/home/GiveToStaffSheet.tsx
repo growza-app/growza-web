@@ -47,7 +47,8 @@ export function GiveToStaffSheet({
    * than sending the desk back to re-add the client.
    */
   const needsServices = entry.serviceIds.length === 0;
-  const [services, setServices] = useState<Service[]>([]);
+  /** Jira GRW-451 — `null` is "still loading", which an empty branch menu is not. */
+  const [services, setServices] = useState<Service[] | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   useEffect(() => {
     if (!needsServices) return;
@@ -59,7 +60,10 @@ export function GiveToStaffSheet({
         if (!cancelled) setServices(all);
       })
       .catch(() => {
-        // Nothing to pick; giving then answers with the API's own "pick what they are having".
+        // Jira GRW-451 — an empty list, not a permanent spinner: the sentence below is the honest answer
+        // either way, and the old comment ("giving then answers with the API's own 'pick what they are
+        // having'") was wrong — `give` refuses locally before the request is ever made.
+        if (!cancelled) setServices([]);
       });
     return () => {
       cancelled = true;
@@ -117,8 +121,12 @@ export function GiveToStaffSheet({
         {needsServices ? (
           <div className="hm-give-services">
             <div className="wi-section-label">{t.whatHaving}</div>
+            {/* Jira GRW-451 — a branch whose menu is empty says so, rather than showing a blank row above
+                stylists who all answer "pick what they are having first". */}
+            {services === null ? <p className="hm-empty">{t.loadingServicesHere}</p> : null}
+            {services !== null && services.length === 0 ? <p className="hm-empty">{t.noServicesHere}</p> : null}
             <div className="wi-chips">
-              {services.map((sv) => {
+              {(services ?? []).map((sv) => {
                 const on = picked.includes(sv.id);
                 return (
                   <button

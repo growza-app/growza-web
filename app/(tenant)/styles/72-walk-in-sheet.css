@@ -516,14 +516,31 @@ input.wi-search-input-plain {
 
 /* Jira GRW-222 — "Add to waiting queue" is a third button in a row built for
    two, and at 320px Back + Add to waiting queue + Start now do not fit on one
-   line. On a phone it takes a row of its own above the pair. */
+   line. On a phone it takes a row of its own.
+
+   Jira GRW-451 — BELOW the pair, not above it, and bordered.
+
+   It was `order: -1`, which moved it up the screen without moving it in the
+   DOM: the eye read it first and Tab reached it second, so a keyboard or
+   screen-reader user and a sighted one were being given two different orders
+   for the same three buttons. It is now last in both, which is also where the
+   alternative belongs — "Start now" is the answer most of the time.
+
+   The border is the other half. `btn-ghost` is bare text, which is fine beside
+   a filled button on the same line and is not fine alone on a line of its own,
+   left-aligned under a list of headed sections: it reads as another heading.
+   QA tapped past it twice believing it was a label. */
 @media (max-width: 860px) {
   .wi-actions {
     flex-wrap: wrap;
   }
   .wi-actions .wi-queue-btn {
-    order: -1;
     flex: 1 0 100%;
+    justify-content: center;
+    margin-top: 10px;
+    border: 1px solid var(--line, #e2e5e2);
+    border-radius: 12px;
+    background: #fff;
   }
 }
 

@@ -23,7 +23,8 @@ function newAttemptKey(): string {
 
 import Link from 'next/link';
 import { useNewVisitCopy } from '../lib/use-copy';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatDateWithWeekday } from '../lib/format';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -232,6 +233,7 @@ export function NewVisitSheet({
 }) {
   const tmin = useTranslations('services');
   const nv = useNewVisitCopy();
+  const locale = useLocale();
   // Jira GRW-363 — the same phrase the row this choice makes carries on Home and in Reports.
   const noProviderWord = useNoProvider();
   /*
@@ -750,6 +752,18 @@ export function NewVisitSheet({
     setPicked((prev) => prev.map((item, i) => (i === index ? { ...item, paidRupees: value } : item)));
   };
 
+  /**
+   * Jira GRW-451 — everything this visit is, in running order: the combo's own legs and anything beside them.
+   *
+   * Every line that tells the desk what just happened — "Token 4 · …", "Recorded · …", "Paid ₹900 · …", and the
+   * one under a chosen slot — mapped `picked` alone, so a service added beside a combo was booked, charged and
+   * never named. The slot line also measured `totalMinutes(picked)`, which undercounts the span the
+   * availability query had already asked for (it sums `picked` AND `extras`): a 30-minute summary over a
+   * 50-minute booking.
+   */
+  const everything = useMemo(() => [...picked, ...extras], [picked, extras]);
+  const everythingNamed = everything.map((p) => p.name).join(' + ');
+
   // Jira GRW-291 — a combo renders as one line: what the services list for, what it saves, what it costs.
   const comboActive = Boolean(offerId && comboPriceMinor);
   const comboListMinor = picked.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
@@ -1258,7 +1272,7 @@ export function NewVisitSheet({
         timezone={timezone}
         onBack={() => {
           setCheckoutRows(null);
-          if (forPayment) setTillClosedUnpaid(true);
+          setTillClosedUnpaid(true);
         }}
         onSaved={() => {
           setCheckoutRows(null);
@@ -1266,10 +1280,21 @@ export function NewVisitSheet({
         }}
         onClose={() => {
           setCheckoutRows(null);
-          // Jira GRW-289 — Record payment exists to take the money; leaving the
-          // till unsaved must not look like it did. Back to the done screen.
-          if (forPayment) setTillClosedUnpaid(true);
-          else onClose();
+          /*
+           * Jira GRW-289 — Record payment exists to take the money; leaving the
+           * till unsaved must not look like it did. Back to the done screen.
+           *
+           * Jira GRW-451 — unconditionally, because the condition had it backwards.
+           * The till is only ever opened from the `done` screen's "Take payment
+           * now", and `done` is only ever reached when `forPayment` is FALSE
+           * (Record payment settles inline through `payFor` and ends on `paid`).
+           * So `if (forPayment)` was dead, and the one purpose that does reach
+           * the till — plain Walk-in now — took the `else`: cancelling closed
+           * the whole sheet onto Bookings with a visit recorded, nothing paid
+           * and nothing saying so. "Done" is still right here; this tells
+           * rather than blocks, which is what GRW-289 decided.
+           */
+          setTillClosedUnpaid(true);
         }}
       />
     );
@@ -1987,16 +2012,6 @@ export function NewVisitSheet({
                   {nv.back}
                 </button>
               )}
-              {!later && !reclaim && !forPayment && (
-                <button
-                  type="button"
-                  className="btn btn-ghost wi-queue-btn"
-                  onClick={() => void queueIt(stage.client)}
-                  disabled={busy || linesLocked}
-                >
-                  {nv.addToQueue}
-                </button>
-              )}
               <button
                 type="button"
                 className="btn"
@@ -2007,6 +2022,18 @@ export function NewVisitSheet({
               >
                 {busy ? nv.saving : later ? nv.next : forPayment ? nv.markDone : nv.start}
               </button>
+              {/* Jira GRW-451 — last, because on a phone it wraps onto its own line and the eye should reach it
+                  in the order Tab does. It used to sit here in the DOM but render above the pair (`order: -1`). */}
+              {!later && !reclaim && !forPayment && (
+                <button
+                  type="button"
+                  className="btn btn-ghost wi-queue-btn"
+                  onClick={() => void queueIt(stage.client)}
+                  disabled={busy || linesLocked}
+                >
+                  {nv.addToQueue}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -2064,7 +2091,7 @@ export function NewVisitSheet({
 
             {slotUtc && (
               <div className="wi-summary">
-                {picked.map((p) => p.name).join(' + ')} · {tmin('minutes', { count: totalMinutes(picked) })}
+                {everythingNamed} · {tmin('minutes', { count: totalMinutes(everything) })}
               </div>
             )}
 
@@ -2097,7 +2124,7 @@ export function NewVisitSheet({
               <div>
                 <div className="wi-done-title">{stage.tokenNo ? nv.token(stage.tokenNo) : nv.queued}</div>
                 <div className="wi-done-sub">
-                  {[clientName(stage.client), picked.map((p) => p.name).join(' + ')].filter(Boolean).join(' · ')}
+                  {[clientName(stage.client), everythingNamed].filter(Boolean).join(' · ')}
                 </div>
               </div>
             </div>
@@ -2124,7 +2151,7 @@ export function NewVisitSheet({
                     // Jira GRW-403 — the token this payment closed, or the one it was given.
                     stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
                     clientName(stage.client),
-                    picked.map((p) => p.name).join(' + '),
+                    everythingNamed,
                   ]
                     .filter(Boolean)
                     .join(' · ')}
@@ -2147,7 +2174,17 @@ export function NewVisitSheet({
                 <div className="wi-done-sub">
                   {/* Jira GRW-403 — a walk-in gets the branch's next token; an advance booking gets one on arrival. */}
                   {stage.result.tokenNo ? `${nv.token(stage.result.tokenNo)} · ` : ''}
-                  {picked.map((p) => p.name).join(' + ')} ·{' '}
+                  {/*
+                    Jira GRW-451 — WHEN, for a booking that is not now.
+                    "Booked · Haircut · Nisha" is the one confirmation whose most important fact was missing:
+                    the day and time are what the receptionist reads back to the client, and they had to be
+                    taken on trust from the slot that was tapped two screens ago. A walk-in says nothing here,
+                    because "now" is the whole of its answer.
+                  */}
+                  {later
+                    ? `${formatDateWithWeekday(stage.result.startAt, timezone, { withYear: false, locale })} · ${formatTime(stage.result.startAt, timezone)} · `
+                    : ''}
+                  {everythingNamed} ·{' '}
                   {providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? providerNoun}
                 </div>
               </div>
