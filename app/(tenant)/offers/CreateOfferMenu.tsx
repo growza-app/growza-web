@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
@@ -11,67 +11,22 @@ const OFFER_TITLE_MAX = 60;
 const OFFER_DESCRIPTION_MAX = 120;
 
 /**
- * "Combo" and "Offer" are the same underlying row (migration 0003/0008) —
- * a combo is just an offer with a comboPriceMinor and linked services. The
- * combo builder wizard (services + pricing + rules) is the right shape for
- * that, but wrong for a plain wording-only offer, so this splits creation
- * into two paths at the point of intent rather than forcing every offer
- * through the wizard.
+ * Creating an announcement — the wording-only offer a customer reads.
+ *
+ * Jira GRW-438 — this used to be a two-way menu: an announcement, or a package. Packages moved to their own
+ * screen with their own Build button, which left this dropdown with exactly one row in it. A menu of one is
+ * a tap the owner has to make for no reason, so the button opens the modal directly now.
  */
 export function CreateOfferMenu() {
   const t = useTranslations('offers.menu');
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onClickAway = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onClickAway);
-    return () => document.removeEventListener('mousedown', onClickAway);
-  }, [open]);
 
   return (
-    <div className="create-offer-menu" ref={menuRef}>
-      <button type="button" className="btn" onClick={() => setOpen((v) => !v)}>
+    <div className="create-offer-menu">
+      <button type="button" className="btn" onClick={() => setShowOfferModal(true)}>
         {/* GRW-30 — a real icon, for the same reason as Clients'. */}
         <IconPlus /> {t('create')}
       </button>
-      {open && (
-        <div className="dropdown-panel">
-          <button
-            type="button"
-            className="dropdown-item"
-            onClick={() => {
-              setOpen(false);
-              setShowOfferModal(true);
-            }}
-          >
-            <span className="dropdown-item-icon dropdown-item-icon-offer">🏷️</span>
-            <span>
-              <span className="dropdown-item-title">{t('offerTitle')}</span>
-              <span className="dropdown-item-desc">{t('offerDesc')}</span>
-            </span>
-          </button>
-          <button
-            type="button"
-            className="dropdown-item"
-            onClick={() => {
-              setOpen(false);
-              router.push('/offers/new');
-            }}
-          >
-            <span className="dropdown-item-icon dropdown-item-icon-combo">🎁</span>
-            <span>
-              <span className="dropdown-item-title">{t('comboTitle')}</span>
-              <span className="dropdown-item-desc">{t('comboDesc')}</span>
-            </span>
-          </button>
-        </div>
-      )}
       {showOfferModal && <CreateOfferModal onClose={() => setShowOfferModal(false)} />}
     </div>
   );

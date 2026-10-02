@@ -3,18 +3,18 @@ import { screenTitle } from '../../../lib/page-title';
 import { notFound } from 'next/navigation';
 import { api, ApiError } from '../../../lib/api';
 import { PageHeader } from '../../../components/PageHeader';
-import { ComboBuilder } from '../../ComboBuilder';
+import { PackageBuilder } from '../../PackageBuilder';
 import { LoadErrorBanner } from '../../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../../lib/load-error';
 import { guardScreen } from '../../../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditComboPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditPackagePage({ params }: { params: Promise<{ id: string }> }) {
   // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
-  await guardScreen('/offers');
+  await guardScreen('/packages');
   const { id } = await params;
-  const t = await getTranslations('offers');
+  const t = await getTranslations('packages');
 
   let services, offer;
   try {
@@ -23,7 +23,7 @@ export default async function EditComboPage({ params }: { params: Promise<{ id: 
     if (err instanceof ApiError && err.status === 404) notFound();
     return (
       <>
-        <PageHeader title={t('editComboTitle')} />
+        <PageHeader title={t('editTitle')} />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(err)} />
         </div>
@@ -33,10 +33,10 @@ export default async function EditComboPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="page-body">
-      <ComboBuilder services={services} initialOffer={offer} />
+      <PackageBuilder services={services} initialOffer={offer} />
     </div>
   );
 }
 
 // Jira GRW-192 — the tab says which screen this is.
-export const metadata = screenTitle('Edit offer');
+export const metadata = screenTitle('Edit package');

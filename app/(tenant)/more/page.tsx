@@ -7,7 +7,7 @@ import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconOffers, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconOffers, IconPackages, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 import { SignOutButton } from '../components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
@@ -61,6 +61,8 @@ export default async function MorePage() {
     { href: '/offers', label: nav.nav.offers, icon: <IconOffers /> },
     { href: '/providers', label: nav.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: nav.nav.services, icon: <IconServices /> },
+    // Jira GRW-438 — the bottom bar's five slots do not change, so Packages rides this menu on a phone.
+    { href: '/packages', label: nav.nav.packages, icon: <IconPackages /> },
     // The design's mobile tab bar puts Reports in Offers' slot. The tab bar's
     // composition is its own product decision, so Reports arrives here instead
     // and the four frequent destinations keep their places (GRW-48 decision 2).
