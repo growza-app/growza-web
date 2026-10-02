@@ -2,9 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
-import { api, type ServiceCategoryAdmin } from '../lib/api';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { api, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
 import { IconEdit, IconPlus } from '../components/icons';
+import { CategoryServices } from './CategoryServices';
 import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
@@ -24,12 +24,15 @@ import { useDialog } from '../../shared/a11y/useDialog';
 export function CategoriesSheet({
   branchId,
   initial,
+  services,
   onClose,
   onChanged,
 }: {
   /** Jira GRW-378 — the branch on screen. A category belongs to one branch; nothing here reaches another. */
   branchId: string;
   initial: ServiceCategoryAdmin[];
+  /** Every service of this branch, retired ones included — a category's own are picked out of it. */
+  services: ServiceAdmin[];
   onClose: () => void;
   /** Called after anything is written, so the Services list behind reloads — a delete frees services it lists. */
   onChanged: () => void;
@@ -41,7 +44,8 @@ export function CategoriesSheet({
   const [editingName, setEditingName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<ServiceCategoryAdmin | null>(null);
+  /** The category opened into its own list of services; the sheet shows one or the other, never both. */
+  const [openId, setOpenId] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLInputElement>(null);
   useDialog(dialogRef, { onClose: busy ? undefined : onClose });
@@ -105,15 +109,8 @@ export function CategoriesSheet({
     );
   };
 
-  const remove = async (row: ServiceCategoryAdmin) => {
-    await run(
-      () => api.deleteCategory(branchId, row.id),
-      () => {
-        setRows((prev) => prev.filter((c) => c.id !== row.id));
-        setConfirmDelete(null);
-      },
-    );
-  };
+  // Looked up by id rather than held as an object, so a count that changed behind the detail view is the one shown.
+  const open = rows.find((c) => c.id === openId) ?? null;
 
   return (
     <>
@@ -126,6 +123,25 @@ export function CategoriesSheet({
           ref={dialogRef}
           onClick={(e) => e.stopPropagation()}
         >
+          {open ? (
+            <CategoryServices
+              branchId={branchId}
+              category={open}
+              services={services.filter((s) => s.categoryId === open.id)}
+              onBack={() => setOpenId(null)}
+              onChanged={async (gone) => {
+                if (gone) {
+                  setRows((prev) => prev.filter((c) => c.id !== open.id));
+                  setOpenId(null);
+                } else {
+                  // A retire changed this category's counts; re-read rather than guess at them here.
+                  setRows(await api.categoriesAtBranch(branchId).catch(() => rows));
+                }
+                onChanged();
+              }}
+            />
+          ) : (
+            <>
           <h3>{t('title')}</h3>
           <p className="svc-cat-hint">{t('hint')}</p>
 
@@ -167,16 +183,18 @@ export function CategoriesSheet({
                       </div>
                     ) : (
                       <>
-                        <div className="svc-cat-text">
-                          <div className="svc-cat-name">{row.name}</div>
-                          <div className="svc-cat-meta">
+                        {/* The row opens the category — removing services, and the category itself, happens in there. */}
+                        <button type="button" className="svc-cat-text" disabled={busy} onClick={() => setOpenId(row.id)}>
+                          <span className="svc-cat-name">{row.name}</span>
+                          <span className="svc-cat-meta">
                             {row.serviceCount === 0
                               ? t('empty')
                               : row.serviceCount === row.activeCount
                                 ? t('count', { count: row.serviceCount })
                                 : t('countWithRetired', { count: row.serviceCount, retired: row.serviceCount - row.activeCount })}
-                          </div>
-                        </div>
+                          </span>
+                          <span className="svc-cat-chevron" aria-hidden="true">›</span>
+                        </button>
                         <div className="svc-cat-actions">
                           <button
                             type="button"
@@ -207,14 +225,6 @@ export function CategoriesSheet({
                             }}
                           >
                             <IconEdit />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-danger svc-cat-delete"
-                            disabled={busy}
-                            onClick={() => setConfirmDelete(row)}
-                          >
-                            {t('delete')}
                           </button>
                         </div>
                       </>
@@ -247,21 +257,10 @@ export function CategoriesSheet({
               {t('done')}
             </button>
           </div>
+            </>
+          )}
         </div>
       </div>
-
-      {confirmDelete && (
-        <ConfirmDialog
-          title={t('deleteTitle', { name: confirmDelete.name })}
-          body={confirmDelete.serviceCount === 0 ? t('deleteBodyEmpty') : t('deleteBody', { count: confirmDelete.serviceCount })}
-          detail={t('deleteDetail')}
-          confirmLabel={t('delete')}
-          tone="danger"
-          busy={busy}
-          onConfirm={() => void remove(confirmDelete)}
-          onCancel={() => setConfirmDelete(null)}
-        />
-      )}
     </>
   );
 }

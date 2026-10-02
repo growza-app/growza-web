@@ -863,12 +863,27 @@
       "moveUpAria": "Move {name} up",
       "moveDownAria": "Move {name} down",
       "deleteTitle": "Delete {name}?",
-      "deleteBody": "{count, plural, one {Its # service stays} other {Its # services stay}} in your list, with no category.",
       "deleteBodyEmpty": "Nothing is filed under it.",
       "deleteDetail": "Your bookings are not affected.",
       "errors": {
         "failed": "Could not save."
-      }
+      },
+      "back": "Categories",
+      "selectAll": "Select all",
+      "clearAll": "Clear",
+      "selectedCount": "{count} of {total} selected",
+      "pickSome": "Pick what to take off the menu",
+      "retireAction": "{count, plural, one {Retire # service} other {Retire # services}}",
+      "deleteAllAction": "Delete {name} and all {count}",
+      "deleteEmptyAction": "Delete category",
+      "retireHint": "They stop being bookable. You can restore them any time.",
+      "retiredChip": "Retired",
+      "retire": "Retire",
+      "emptyDetail": "Nothing is filed under this category yet.",
+      "minutes": "{count} min",
+      "retireTitle": "{count, plural, one {Retire # service?} other {Retire # services?}}",
+      "retireBody": "{count, plural, one {It stops being bookable} other {They stop being bookable}} straight away, and {count, plural, one {stays} other {stay}} in your list to restore.",
+      "deleteAllBody": "The category goes, and {count, plural, =0 {all {total} services stay in your list} one {# service is retired} other {# services are retired}} — nothing is deleted."
     }
   },
   "staff": {

@@ -195,6 +195,7 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/services/copy-from-branch',
     'POST /api/v1/services/import/parse',
     'POST /api/v1/services/import',
+    'POST /api/v1/services/retire',
     // Jira GRW-428 — the category sheet. Same screen, same gate: a role the nav does not offer /services
     // never reaches these, and a role that is offered it manages the menu it is responsible for.
     'POST /api/v1/service-categories',

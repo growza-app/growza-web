@@ -95,8 +95,38 @@ tr:last-child td {
   border-top: 1px solid var(--border);
 }
 
+/* The row's text is the control that opens the category — a button, drawn as a row. */
 .svc-cat-text {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.svc-cat-text > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.svc-cat-name,
+.svc-cat-meta {
+  display: block;
+}
+
+.svc-cat-chevron {
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .svc-cat-name {
@@ -190,4 +220,141 @@ tr:last-child td {
   .svc-cat-text {
     flex: 1;
   }
+}
+
+/* ---------- a category opened, with its services to tick (Jira GRW-428) ---------- */
+
+/*
+ * The second page of the same sheet. Its own header carries the way back, the name, and "Select all"; the
+ * action at the foot reads the selection rather than being one button per possible command.
+ */
+.svc-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.svc-cat-back {
+  min-height: 44px;
+  padding: 0 4px 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.svc-cat-head-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 620;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.svc-cat-selectall {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.svc-cat-count {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/*
+ * One service, ticked or not. The whole row is the control: a 22px box beside a 15px name is a target only a
+ * mouse can hit, and this is a screen used with a thumb.
+ */
+.svc-pick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.svc-cat-list > li:first-child .svc-pick {
+  border-top: 0;
+}
+
+.svc-pick.is-retired {
+  opacity: 0.6;
+}
+
+.svc-pick-mark {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  line-height: 1;
+  color: transparent;
+}
+
+.svc-pick-mark.is-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+}
+
+.svc-pick-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.svc-pick-name {
+  display: block;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.svc-pick-name .chip {
+  margin-left: 6px;
+}
+
+/*
+ * The action spans the sheet: one thing to press, and its words say what pressing it does.
+ *
+ * `.modal-actions.svc-cat-foot` and not `.svc-cat-foot` alone — `.modal-actions` is a flex row that puts its
+ * children side by side, which left the hint sitting beside the button instead of under it.
+ */
+.modal-actions.svc-cat-foot {
+  display: block;
+}
+
+.svc-cat-action {
+  width: 100%;
+  min-height: 48px;
+}
+
+.svc-cat-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.svc-cat-foot-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
 }

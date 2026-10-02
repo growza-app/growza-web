@@ -4,8 +4,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
-import type { ServiceCategoryAdmin } from '../lib/api';
+import type { ServiceAdmin, ServiceCategoryAdmin } from '../lib/api';
 import { CategoriesSheet } from './CategoriesSheet';
+import { CategoryServices } from './CategoryServices';
 
 /**
  * Jira GRW-428 — the category sheet, rendered from the real component in both languages.
@@ -29,10 +30,39 @@ const cat = (over: Partial<ServiceCategoryAdmin>): ServiceCategoryAdmin => ({
   ...over,
 });
 
-const sheet = (locale: 'en' | 'hi', rows: ServiceCategoryAdmin[]) =>
+const sheet = (locale: 'en' | 'hi', rows: ServiceCategoryAdmin[], services: ServiceAdmin[] = []) =>
   wrap(
     locale,
-    createElement(CategoriesSheet, { branchId: 'b1', initial: rows, onClose: () => {}, onChanged: () => {} }),
+    createElement(CategoriesSheet, { branchId: 'b1', initial: rows, services, onClose: () => {}, onChanged: () => {} }),
+  );
+
+const svc = (over: Partial<ServiceAdmin>): ServiceAdmin =>
+  ({
+    id: 's1',
+    name: 'Blow dry',
+    categoryId: 'a',
+    categoryName: 'Hair',
+    durationMin: 30,
+    bufferBeforeMin: 0,
+    bufferAfterMin: 0,
+    priceMinor: '40000',
+    currency: 'INR',
+    imageUrl: null,
+    active: true,
+    ...over,
+  }) as ServiceAdmin;
+
+/** The category opened into its services. Rendered statically, so this is the nothing-selected state. */
+const detail = (locale: 'en' | 'hi', services: ServiceAdmin[]) =>
+  wrap(
+    locale,
+    createElement(CategoryServices, {
+      branchId: 'b1',
+      category: cat({ id: 'a', name: 'Hair', serviceCount: services.length, activeCount: services.filter((s) => s.active).length }),
+      services,
+      onBack: () => {},
+      onChanged: () => {},
+    }),
   );
 
 describe('the categories sheet', () => {
@@ -72,10 +102,14 @@ describe('the categories sheet', () => {
     expect(html.slice(Math.max(0, html.indexOf('Move Nails up') - 120), html.indexOf('Move Nails up'))).not.toContain('disabled');
   });
 
-  /** The destructive action is last in the row, where a thumb reaches it only on purpose. */
-  it('puts Delete after the arrows and the rename', () => {
+  /**
+   * Nothing destructive lives on the list row any more (owner's change, 2026-10-02): the row opens the
+   * category, and removing services — or the category with them — happens in there against a selection.
+   */
+  it('offers no delete on the row itself', () => {
     const html = sheet('en', [cat({ name: 'Hair' })]);
-    expect(html.indexOf('Rename Hair')).toBeLessThan(html.indexOf('Delete'));
+    expect(html).not.toContain('Delete');
+    expect(html).toContain('Rename Hair');
   });
 
   it('reads in Hindi', () => {
@@ -85,5 +119,44 @@ describe('the categories sheet', () => {
     expect(html).toContain('अभी कोई सेवा नहीं');
     expect(html).toContain('नई श्रेणी का नाम');
     for (const s of ['New category name', 'No services yet', '10 services']) expect(html, s).not.toContain(s);
+  });
+});
+
+describe('a category opened into its services', () => {
+  it('asks for a selection before it will do anything', () => {
+    const html = detail('en', [svc({}), svc({ id: 's2', name: 'Keratin' })]);
+    expect(html).toContain('0 of 2 selected');
+    expect(html).toContain('Pick what to take off the menu');
+    // The action cannot be pressed until something is ticked.
+    const action = html.indexOf('Pick what to take off the menu');
+    expect(html.slice(Math.max(0, action - 200), action)).toContain('disabled');
+    expect(html).toContain('Select all');
+  });
+
+  it('shows a retired service, dimmed and badged, so Select all still means the whole category', () => {
+    const html = detail('en', [svc({}), svc({ id: 's2', name: 'Keratin', active: false })]);
+    expect(html).toContain('Retired');
+    expect(html).toContain('is-retired');
+    expect(html).toContain('0 of 2 selected');
+  });
+
+  it('says the duration and price of each service', () => {
+    expect(detail('en', [svc({ durationMin: 45, priceMinor: '90000' })])).toContain('45 min');
+    expect(detail('en', [svc({ durationMin: 45, priceMinor: '90000' })])).toContain('900');
+  });
+
+  /** An empty category has nothing to tick, so its one action is the delete itself. */
+  it('offers the delete outright when nothing is filed under it', () => {
+    const html = detail('en', []);
+    expect(html).toContain('Nothing is filed under this category yet');
+    expect(html).toContain('Delete category');
+    expect(html).not.toContain('Select all');
+  });
+
+  it('reads in Hindi', () => {
+    const html = detail('hi', [svc({})]);
+    expect(html).toContain('सभी चुनें');
+    expect(html).toContain('चुनें कि मेन्यू से क्या हटाना है');
+    for (const s of ['Select all', 'Pick what to take off the menu']) expect(html, s).not.toContain(s);
   });
 });

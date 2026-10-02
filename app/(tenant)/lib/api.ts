@@ -546,6 +546,14 @@ export const api = {
   /** Answers how many services were left with no category — the number the confirmation promised. */
   deleteCategory: (location: string, id: string) =>
     del<{ released: number }>(`/api/v1/service-categories/${id}?location=${encodeURIComponent(location)}`),
+  /**
+   * Jira GRW-428 — retires several of one branch's services at once.
+   *
+   * Retire, not delete: a service is referenced by its bookings, its stylists' skills and any combo it is in.
+   * A list with a service of another branch in it refuses the whole call rather than retiring the rest.
+   */
+  retireServices: (location: string, serviceIds: string[]) =>
+    post<{ ok: true; retired: number }>('/api/v1/services/retire', { locationId: location, serviceIds }),
   /** The whole branch's order, every time: a partial list is refused rather than half-applied. */
   reorderCategories: (location: string, categoryIds: string[]) =>
     post<ServiceCategoryAdmin[]>('/api/v1/service-categories/reorder', { locationId: location, categoryIds }),

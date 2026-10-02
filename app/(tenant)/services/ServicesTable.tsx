@@ -425,6 +425,7 @@ export function ServicesTable({
         <CategoriesSheet
           branchId={branchId}
           initial={managing}
+          services={services}
           onClose={() => setManaging(null)}
           // A rename shows on every row of the list, and a delete frees services it lists: reload, don't patch.
           onChanged={() => void reload()}
