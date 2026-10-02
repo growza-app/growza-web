@@ -277,3 +277,89 @@
 .svc-cat-unsorted-list li {
   padding: 2px 0;
 }
+
+/* ── Jira GRW-442 — a service a package still sells ───────────────────────── */
+
+.held-modal {
+  max-width: 440px;
+}
+
+.held-body {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* Scrolls inside the dialog rather than growing it: a service can be in more packages than fit a phone. */
+.held-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  max-height: 46dvh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.held-list li + li {
+  border-top: 0.5px solid var(--border);
+}
+
+.held-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 12px;
+  min-height: 52px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.held-row:hover {
+  background: var(--page-bg);
+  text-decoration: none;
+  color: var(--text);
+}
+
+.held-row-icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.held-row-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.held-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.held-row-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.held-row-meta {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.held-row-chevron {
+  flex: none;
+  color: var(--muted);
+  font-size: 18px;
+}

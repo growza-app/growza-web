@@ -931,6 +931,13 @@
       "retireHint": "बुकिंग में नहीं दिखेगी",
       "restore": "वापस लाएँ",
       "delete": "मिटाएँ…"
+    },
+    "heldByPackages": {
+      "title": "{name} {count, plural, one {# पैकेज} other {# पैकेज}} में शामिल है",
+      "body": "जब तक कोई पैकेज इसे बेच रहा है, इसे हटाया नहीं जा सकता। पहले इन्हें बदलें, फिर हटाएँ।",
+      "contains": "{count, plural, one {# सेवा} other {# सेवाएँ}}",
+      "editPackages": "पैकेज बदलें",
+      "cancel": "रद्द करें"
     }
   },
   "staff": {

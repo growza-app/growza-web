@@ -119,8 +119,26 @@ import type {
   ReportTabKey,
 } from './report-types';
 
-/** Thrown for the 409s the booking API sends back — the slot-just-taken / hold-expired / already-checked-out cases. */
-export class BookingConflictError extends Error {}
+/**
+ * Thrown for the 409s the booking API sends back — the slot-just-taken / hold-expired / already-checked-out
+ * cases, and every other 409 besides, because `send()` makes no distinction.
+ *
+ * Jira GRW-442 — it carries the response body now. A 409 is the API refusing on purpose, and some of them say
+ * more than a sentence: retiring a service a package sells answers with the packages that hold it, so the
+ * screen can name them and offer the way out. That detail was parsed and thrown away.
+ *
+ * Optional and untyped at this layer: the shape belongs to the route that sent it, and a caller that only
+ * wants the sentence carries on reading `.message` exactly as before.
+ */
+export class BookingConflictError extends Error {
+  constructor(
+    message: string,
+    public details?: unknown,
+  ) {
+    super(message);
+    this.name = 'BookingConflictError';
+  }
+}
 
 /**
  * Any other non-ok response, with the real status and server message
@@ -165,7 +183,7 @@ async function apiError(res: Response, path: string): Promise<ApiError> {
 async function extractError(
   res: Response,
   path: string,
-): Promise<{ message: string; code?: string; support?: { phone?: string } }> {
+): Promise<{ message: string; code?: string; support?: { phone?: string }; body: unknown }> {
   const body = (await res.json().catch(() => null)) as
     | { error?: string; detail?: string; support?: { phone?: string } }
     | null;
@@ -181,6 +199,8 @@ async function extractError(
     message: typeof document === 'undefined' ? said : localiseApiMessage(said, document.documentElement.lang),
     code: body?.error,
     ...(body?.support ? { support: body.support } : {}),
+    // Jira GRW-442 — a 409 that says more than a sentence needs the rest of it, and the body can only be read once.
+    body,
   };
 }
 
@@ -197,7 +217,9 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 409) {
-    throw new BookingConflictError((await extractError(res, path)).message);
+    // Read once: the body is consumed by `extractError`, so it hands back what it parsed (GRW-442).
+    const { message, body } = await extractError(res, path);
+    throw new BookingConflictError(message, body);
   }
   if (!res.ok) throw await apiError(res, path);
   if (res.status === 204) return undefined as T;

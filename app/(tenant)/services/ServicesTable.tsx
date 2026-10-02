@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
+import { api, BookingConflictError, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
@@ -19,6 +19,8 @@ import { CopyFromBranch } from './CopyFromBranch';
 import { CategoriesSheet } from './CategoriesSheet';
 import { ALL_TAB, RETIRED_TAB, hasRetired, servicesOnTab, tabAfterChange, tabCounts } from './services-tabs';
 import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
+import { HeldByPackagesDialog } from './HeldByPackagesDialog';
+import { packagesInRefusal, type HeldPackage } from './held-by-packages';
 import { copyName } from './services-groups';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -86,6 +88,8 @@ export function ServicesTable({
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
   /** Jira GRW-431 — the other thing an owner can mean. Delete is final; retire above is not. */
   const [confirmDelete, setConfirmDelete] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
+  /** Jira GRW-442 — the service that could not be retired, and the packages still selling it. */
+  const [heldBy, setHeldBy] = useState<{ service: ServiceAdmin; packages: HeldPackage[] } | null>(null);
   /**
    * Jira GRW-439 — one file input for the screen, not one per row.
    *
@@ -226,7 +230,13 @@ export function ServicesTable({
     try {
       replace(await api.updateService(service.id, { active }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
+      /*
+       * Jira GRW-442 — a 409 naming packages is not an error to put in the page banner; it is a question with
+       * an answer. Anything else, including a 409 about something entirely different, keeps the old behaviour.
+       */
+      const packages = err instanceof BookingConflictError ? packagesInRefusal(err.details) : null;
+      if (packages) setHeldBy({ service, packages });
+      else setError(err instanceof Error ? err.message : t('errors.saveFailed'));
     } finally {
       setBusyId(null);
       setConfirmRetire(null);
@@ -489,6 +499,14 @@ export function ServicesTable({
           </PaginatedTable>
         )}
       </div>
+
+      {heldBy && (
+        <HeldByPackagesDialog
+          serviceName={heldBy.service.name}
+          packages={heldBy.packages}
+          onClose={() => setHeldBy(null)}
+        />
+      )}
 
       {managing && (
         <CategoriesSheet
