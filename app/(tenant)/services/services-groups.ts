@@ -20,13 +20,21 @@ export interface ServiceGroup<T> {
 /**
  * Group a page's rows under their category headings.
  *
- * In first-appearance order, because the API already returns the menu in the order customers meet it
- * (`sort_order`) and re-sorting here would quietly override what the owner arranged in the Categories sheet.
+ * `order` is the owner's own order of category names — the one the Categories sheet sets and the tabs read.
+ * Without it the headings followed whatever order the rows happened to arrive in, and a branch that had just
+ * been reordered showed its tabs as Nails · Hair · Bridal above headings that still said Hair · Bridal ·
+ * Nails. Two answers to the same question on one screen. Caught in the browser during Jira GRW-441.
+ *
+ * A category not named in `order` keeps its place by first appearance, after the ones that are, so a category
+ * created while the screen was open is listed rather than dropped.
  *
  * Services with no category go last, under their own heading. They are not dropped and not folded into the
  * first group: a service nobody has filed is one the owner should notice, not one that hides under "Hair".
  */
-export function groupByCategory<T extends GroupableService>(rows: readonly T[]): Array<ServiceGroup<T>> {
+export function groupByCategory<T extends GroupableService>(
+  rows: readonly T[],
+  order: readonly string[] = [],
+): Array<ServiceGroup<T>> {
   const byName = new Map<string, T[]>();
   const uncategorised: T[] = [];
 
@@ -40,7 +48,12 @@ export function groupByCategory<T extends GroupableService>(rows: readonly T[]):
     else byName.set(row.categoryName, [row]);
   }
 
-  const groups: Array<ServiceGroup<T>> = [...byName].map(([name, items]) => ({ name, items }));
+  const rank = new Map(order.map((name, i) => [name, i]));
+  const groups: Array<ServiceGroup<T>> = [...byName]
+    .map(([name, items], seen) => ({ name, items, at: rank.get(name) ?? order.length + seen }))
+    .sort((a, b) => a.at - b.at)
+    .map(({ name, items }) => ({ name, items }));
+
   if (uncategorised.length > 0) groups.push({ name: null, items: uncategorised });
   return groups;
 }

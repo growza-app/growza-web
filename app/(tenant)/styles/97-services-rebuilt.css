@@ -217,3 +217,63 @@
     display: none;
   }
 }
+
+/* ── Jira GRW-441 — the Categories sheet ──────────────────────────────────── */
+
+/*
+ * The drag handle. Its own 44px target, separate from the row's tap, because the row's job is to open the
+ * category: a row that both opens and drags does neither reliably.
+ */
+.svc-cat-grip {
+  flex: none;
+  width: 28px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+}
+
+.svc-cat-grip:active {
+  cursor: grabbing;
+}
+
+.svc-cat-row.is-dragging {
+  opacity: 0.45;
+}
+
+/* A footnote under its group, as the service sheet does it: what this part of the screen actually means. */
+.svc-cat-foot {
+  margin: 10px 2px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Unsorted is not a category, and does not look like one: no handle, no arrows, no rename. */
+.svc-cat-unsorted {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.svc-cat-unsorted-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.svc-cat-unsorted-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.svc-cat-unsorted-list li {
+  padding: 2px 0;
+}

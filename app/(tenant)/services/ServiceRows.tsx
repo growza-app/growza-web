@@ -19,6 +19,9 @@ import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
  * menu now, and on a phone behind a deliberate swipe.
  */
 
+/** The owner's own order of category names, so the headings and the tabs cannot disagree (GRW-441). */
+export type CategoryOrder = readonly string[];
+
 export interface RowActions {
   onEdit: (s: ServiceAdmin) => void;
   onPhoto: (s: ServiceAdmin) => void;
@@ -134,8 +137,8 @@ function NameCell({ service, t }: { service: ServiceAdmin; t: T }) {
  * "Type" is gone as a column — the category is the heading above the rows now, which is the same information
  * said once instead of on every line.
  */
-export function ServiceTableRows({ rows, actions, t }: { rows: ServiceAdmin[]; actions: RowActions; t: T }) {
-  const groups = groupByCategory(rows);
+export function ServiceTableRows({ rows, actions, t, order }: { rows: ServiceAdmin[]; actions: RowActions; t: T; order: CategoryOrder }) {
+  const groups = groupByCategory(rows, order);
   const headings = worthGrouping(groups);
   const out: ReactNode[] = [];
 
@@ -233,8 +236,8 @@ function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: Row
 }
 
 /** The phone's list: one inset card per category, iOS-style, with the heading above it. */
-export function ServiceCards({ rows, actions, t }: { rows: ServiceAdmin[]; actions: RowActions; t: T }) {
-  const groups = groupByCategory(rows);
+export function ServiceCards({ rows, actions, t, order }: { rows: ServiceAdmin[]; actions: RowActions; t: T; order: CategoryOrder }) {
+  const groups = groupByCategory(rows, order);
   const headings = worthGrouping(groups);
 
   return (

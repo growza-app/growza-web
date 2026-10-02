@@ -279,6 +279,9 @@ export function ServicesTable({
   };
 
   /** Everything a row can do, handed to both shapes so the table and the cards cannot drift apart. */
+  /** Jira GRW-441 — the headings read in the owner's order, the same one the tabs above them read. */
+  const categoryOrder = useMemo(() => categories.map((c) => c.name), [categories]);
+
   const rowActions: RowActions = {
     onEdit: setEditing,
     onPhoto: askPhoto,
@@ -442,7 +445,7 @@ export function ServicesTable({
         ) : (
           <PaginatedTable
             noun={tn('services')}
-            cards={<ServiceCards rows={filtered} actions={rowActions} t={t} />}
+            cards={<ServiceCards rows={filtered} actions={rowActions} t={t} order={categoryOrder} />}
             head={
               <tr>
                 <th>{t('cols.name')}</th>
@@ -452,7 +455,7 @@ export function ServicesTable({
               </tr>
             }
           >
-            <ServiceTableRows rows={filtered} actions={rowActions} t={t} />
+            <ServiceTableRows rows={filtered} actions={rowActions} t={t} order={categoryOrder} />
           </PaginatedTable>
         )}
       </div>
