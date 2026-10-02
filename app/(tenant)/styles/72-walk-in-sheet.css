@@ -161,6 +161,15 @@ input.wi-search-input-plain {
 .wi-actions {
   margin-top: 18px;
   padding-bottom: 4px;
+  /*
+   * Jira GRW-458 — the band has to end where the card ends.
+   *
+   * `.modal-actions` bleeds `-26px` for the checkout sheet's gutter, but every tray wearing `.wi-actions`
+   * sits in a `.wi-body`, whose gutter is 18px. So the white strip ran 8px past the card on each side,
+   * square-cornered against an 18px radius — measured at 430px: the card 16→414, the band 9→421.
+   */
+  margin-inline: -18px;
+  padding-inline: 18px;
 }
 
 .wi-error {
@@ -514,47 +523,100 @@ input.wi-search-input-plain {
   }
 }
 
-/* Jira GRW-222 — "Add to waiting queue" is a third button in a row built for
-   two, and at 320px Back + Add to waiting queue + Start now do not fit on one
-   line. On a phone it takes a row of its own.
+/* Jira GRW-458 — the tray of actions, and only actions.
 
-   Jira GRW-451 — BELOW the pair, not above it, and bordered.
+   The history, because it is the argument. GRW-222 made "Add to waiting queue"
+   a third button in a row built for two, since at 320px Back + Add to waiting
+   queue + Start now do not fit on one line. GRW-451 moved it BELOW the pair
+   and gave it a border: it had been `order: -1`, first for the eye and second
+   for Tab, and `btn-ghost` alone on a line under a list of headed sections
+   reads as another heading — QA tapped past it twice believing it was a label.
+   GRW-457 then lined all three up on the same edges at every width.
 
-   It was `order: -1`, which moved it up the screen without moving it in the
-   DOM: the eye read it first and Tab reached it second, so a keyboard or
-   screen-reader user and a sighted one were being given two different orders
-   for the same three buttons. It is now last in both, which is also where the
-   alternative belongs — "Start now" is the answer most of the time.
+   Each of those is right and none of them fixed it, because the fault was the
+   contents, not the arrangement: THREE buttons for TWO outcomes. Back is
+   navigation; Start now and Add to waiting queue both create a visit. Whatever
+   you align that row to, one button is the odd one out.
 
-   The border is the other half. `btn-ghost` is bare text, which is fine beside
-   a filled button on the same line and is not fine alone on a line of its own,
-   left-aligned under a list of headed sections: it reads as another heading.
-   QA tapped past it twice believing it was a label.
+   So Back went to the header, beside the title, where this app keeps going
+   back. What is left is the outcomes:
 
-   Jira GRW-457 — at every width, and the pair spread to the two edges.
+     phone    one column, every button the full width, the leading one at the
+              bottom — nearest the thumb, and last for the eye and for Tab
+     desktop  one row, right-aligned, the leading one last, which is the end
+              of the row this app has always kept for the action
 
-   This was a phone rule, so a wide screen put all three on one line: the ghost
-   alternative landed to the RIGHT of "Start now", in the corner this app keeps
-   for the primary action, 193px of bare unbordered text outboard of the filled
-   button. And on a phone the pair sat flush right above a full-width button —
-   three widths and two alignments in one block, lining up with nothing.
-
-   One layout now: Back on the left edge, the primary on the right edge, the
-   alternative across the full width below. Every edge meets another one. The
-   `:has()` keeps it to the three-button case — Record payment and the Move
-   sheet draw no queue button and stay grouped at the right. */
-.wi-actions:has(.wi-queue-btn) {
+   `.wi-acts` rather than `.wi-actions` so the Move sheet, which still has a
+   Back of its own, is not pulled into a layout written for a tray without one. */
+.wi-acts {
+  flex-direction: column;
+  align-items: stretch;
   flex-wrap: wrap;
-  justify-content: space-between;
 }
 
-.wi-actions .wi-queue-btn {
-  flex: 1 0 100%;
+.wi-acts .btn {
+  width: 100%;
+  min-height: 50px;
   justify-content: center;
-  margin-top: 10px;
-  border: 1px solid var(--line, #e2e5e2);
-  border-radius: 12px;
-  background: #fff;
+}
+
+/* The one that is not leading. `btn-ghost` is bare text, which needs the border
+   the moment it is alone on a line of its own (GRW-451, above). */
+.wi-acts .wi-act-alt {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  /* Not `--muted`: it is one of the two answers, not a footnote to the other. */
+  color: var(--text);
+}
+
+@media (min-width: 861px) {
+  .wi-acts {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .wi-acts .btn {
+    width: auto;
+    min-width: 136px;
+  }
+}
+
+/* Jira GRW-458 — going back, in the one place the rest of the app puts it. */
+.wi-back {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--slate-soft);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+
+.wi-back svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* Its seat, held open on the steps that have nowhere to go back to. */
+.wi-back-gap {
+  width: 44px;
+  height: 44px;
+}
+
+/* The two side tracks of that `1fr auto 1fr` grid are wider than the 44px controls in them, and a grid item
+   sits at the start of its track: the ✕ was landing 31px short of the card's edge. Each goes to its own
+   side, so the header is symmetrical about the title. */
+.wi-back,
+.wi-back-gap {
+  justify-self: start;
+}
+
+.sheet-head:has(.wi-back, .wi-back-gap) .wi-close {
+  justify-self: end;
 }
 
 /* Jira GRW-290 — Record payment: what was paid for each line, typed in place. */

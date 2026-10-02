@@ -73,12 +73,12 @@ describe('a booking says when it is', () => {
 });
 
 describe('"Add to waiting queue" is a button, in the order Tab reaches it', () => {
-  it('comes after the primary action in the DOM, so the wrap reads top to bottom', () => {
+  it('is ordered against the primary in the DOM, not against it in CSS', () => {
+    // GRW-451's claim, and the reason it still matters: GRW-458 lets the two swap places when no chair is
+    // free, and that swap is this array being written the other way round — never `order`, which would give
+    // the eye and Tab two different sequences again.
     const actions = sheet.slice(sheet.indexOf('className={`modal-actions wi-actions'));
-    const primary = actions.indexOf('nv.markDone : nv.start');
-    const queue = actions.indexOf('nv.addToQueue');
-    expect(primary).toBeGreaterThan(-1);
-    expect(queue).toBeGreaterThan(primary);
+    expect(actions).toMatch(/return queueLeads \? \[go, queue\] : \[queue, go\]/);
   });
 
   it('no longer moves itself up the screen with `order`', () => {
@@ -86,12 +86,12 @@ describe('"Add to waiting queue" is a button, in the order Tab reaches it', () =
     expect(css).not.toMatch(/\.wi-queue-btn\s*\{[^}]*order:\s*-1/);
   });
 
-  it('is bordered once it is alone on a line, so it does not read as a heading', () => {
-    // GRW-457 took this out of `@media (max-width: 860px)`: it is alone on its line at every width now,
-    // so the border belongs to the rule itself rather than to the phone.
-    const rule = css.slice(css.indexOf('.wi-actions .wi-queue-btn'));
+  it('is bordered whenever it is not the leading button, so it does not read as a heading', () => {
+    // GRW-458 moved this off the queue button and onto the role: whichever of the two is not leading is the
+    // outlined one, and on a phone each of them is alone on a line.
+    const rule = css.slice(css.indexOf('.wi-acts .wi-act-alt'));
     expect(rule.slice(0, 260)).toMatch(/border:\s*1px solid/);
-    expect(rule.slice(0, 260)).toMatch(/flex:\s*1 0 100%/);
+    expect(css.slice(css.indexOf('.wi-acts .btn {'), css.indexOf('.wi-acts .btn {') + 160)).toMatch(/width:\s*100%/);
   });
 });
 

@@ -56,7 +56,7 @@ import type { FreeTime } from '../lib/book-again';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
-import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
+import { IconArrowLeft, IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
@@ -917,6 +917,15 @@ export function NewVisitSheet({
   const branchChairs = chairs.filter((c) => branchProviders.some((p) => p.id === c.schedulableId));
   const freeCount = branchChairs.length > 0 ? branchChairs.filter((c) => c.free).length : null;
 
+  /**
+   * Jira GRW-458 — nobody can take them now: every chair busy, or no chairs at this branch at all.
+   *
+   * This decides which of the two outcomes leads, so it must not fire on a half-loaded screen. `freeCount`
+   * is `null` while the chair list is on its way, which is not the same answer as zero; and an empty roster
+   * only counts once `providers` has actually arrived, for the same reason.
+   */
+  const noChairFree = freeCount === 0 || (providers !== null && branchProviders.length === 0);
+
   useEffect(() => {
     if (later || stage.step !== 'details') return;
     let cancelled = false;
@@ -1370,6 +1379,30 @@ export function NewVisitSheet({
   const asPage = presentation === 'page';
   const sheetTitle = forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title;
 
+  /**
+   * Jira GRW-458 — Back is navigation, so it belongs beside the title, not in the tray of actions that
+   * create the visit.
+   *
+   * It used to sit in the footer of three different steps as a ghost button, which left every tray holding
+   * one button that was not an outcome: on the walk-in step that was three buttons for two outcomes, and
+   * nothing in the row could be aligned without one of them looking like the odd one out.
+   *
+   * `null` means there is nowhere to go: mid-save, with the lines already written (GRW-290), or paying a
+   * token, whose client is the token's and has no client step behind it (GRW-403).
+   */
+  const goBack = (() => {
+    if (busy || linesLocked) return null;
+    if (stage.step === 'newClient') return () => setStage({ step: 'client' });
+    if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
+      return () => setStage({ step: 'client' });
+    }
+    if (stage.step === 'when') {
+      const client = stage.client;
+      return () => setStage({ step: 'details', client });
+    }
+    return null;
+  })();
+
   return (
     <>
       {!asPage && <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />}
@@ -1383,6 +1416,22 @@ export function NewVisitSheet({
         {!asPage && <div className="sheet-grab" />}
 
         <div className="sheet-head">
+          {/*
+            Jira GRW-458 — the left cell is always drawn, empty when there is nowhere to go back to.
+
+            `.sheet-head` is `grid-template-columns: 1fr auto 1fr` (98-service-sheet.css), a header built for
+            a control on each side of a centred title. This sheet only ever gave it two children, so the
+            title took the first cell, the close button took the MIDDLE, and the third 1fr sat empty: the ✕
+            floated in the centre of the header with a column of nothing beside it. Keeping the cell holds
+            the title in the middle and the ✕ on the edge, with or without a back arrow.
+          */}
+          {goBack ? (
+            <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
+              <IconArrowLeft />
+            </button>
+          ) : (
+            <span className="wi-back-gap" aria-hidden="true" />
+          )}
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
             {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
@@ -1593,10 +1642,8 @@ export function NewVisitSheet({
               hint={later ? nv.phoneWhyLater : nv.phoneWhy}
             />
 
-            <div className="modal-actions wi-actions">
-              <button type="button" className="btn btn-ghost" onClick={() => setStage({ step: 'client' })}>
-                {nv.back}
-              </button>
+            {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
+            <div className="modal-actions wi-actions wi-acts">
               <button
                 type="button"
                 className="btn"
@@ -2055,7 +2102,7 @@ export function NewVisitSheet({
               <div className="wi-summary">{nv.startsNow(totalMinutes([...picked, ...extras]))}</div>
             )}
 
-            <div className={`modal-actions wi-actions ${forPayment ? 'wi-pay-actions' : ''}`}>
+            <div className={`modal-actions wi-actions wi-acts ${forPayment ? 'wi-pay-actions' : ''}`}>
               {/*
                 Jira GRW-290 — the payment mode lives in the pinned footer, not
                 the scrolling body. On a phone the body scrolls, and chips above
@@ -2082,39 +2129,58 @@ export function NewVisitSheet({
                   </div>
                 </div>
               )}
-              {/* Jira GRW-403 — a token's client is the token's: there is no client step to go back to. */}
-              {!paysToken && (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setStage({ step: 'client' })}
-                  disabled={busy || linesLocked}
-                >
-                  {nv.back}
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn"
-                onClick={() =>
-                  later ? setStage({ step: 'when', client: stage.client }) : void submit(stage.client)
-                }
-                disabled={busy || picked.length === 0 || (forPayment && !amountsValid)}
-              >
-                {busy ? nv.saving : later ? nv.next : forPayment ? nv.markDone : nv.start}
-              </button>
-              {/* Jira GRW-451 — last, because on a phone it wraps onto its own line and the eye should reach it
-                  in the order Tab does. It used to sit here in the DOM but render above the pair (`order: -1`). */}
-              {!later && !reclaim && !forPayment && (
-                <button
-                  type="button"
-                  className="btn btn-ghost wi-queue-btn"
-                  onClick={() => void queueIt(stage.client)}
-                  disabled={busy || linesLocked}
-                >
-                  {nv.addToQueue}
-                </button>
-              )}
+              {(() => {
+                /*
+                 * Jira GRW-458 — the tray holds outcomes, and the one this branch can actually honour
+                 * comes LAST: the bottom of the stack on a phone, the right of the row on a desktop,
+                 * filled in either. (Back left for the header; GRW-403's "a token has no client step
+                 * behind it" is decided there now, with the rest of the going-back.)
+                 *
+                 * When every chair is busy, the queue IS the answer. Leaving "Start now" as the big
+                 * green button there offers something the branch cannot do — GRW-456 had to disable it
+                 * outright at a branch with no staff, which is the screen admitting it put the wrong
+                 * thing first. So the two swap places and "Start now anyway" steps back.
+                 *
+                 * The swap is a reorder of these two elements, never `order` in CSS: GRW-451 is why the
+                 * eye and Tab have to be given one sequence, not two.
+                 */
+                const queueOffered = !later && !reclaim && !forPayment;
+                const queueLeads = queueOffered && noChairFree;
+                const go = (
+                  <button
+                    key="go"
+                    type="button"
+                    className={queueLeads ? 'btn btn-ghost wi-act-alt' : 'btn'}
+                    onClick={() =>
+                      later ? setStage({ step: 'when', client: stage.client }) : void submit(stage.client)
+                    }
+                    disabled={busy || picked.length === 0 || (forPayment && !amountsValid)}
+                  >
+                    {busy
+                      ? nv.saving
+                      : later
+                        ? nv.next
+                        : forPayment
+                          ? nv.markDone
+                          : queueLeads
+                            ? nv.startAnyway
+                            : nv.start}
+                  </button>
+                );
+                if (!queueOffered) return go;
+                const queue = (
+                  <button
+                    key="queue"
+                    type="button"
+                    className={queueLeads ? 'btn wi-queue-btn' : 'btn btn-ghost wi-act-alt wi-queue-btn'}
+                    onClick={() => void queueIt(stage.client)}
+                    disabled={busy || linesLocked}
+                  >
+                    {nv.addToQueue}
+                  </button>
+                );
+                return queueLeads ? [go, queue] : [queue, go];
+              })()}
             </div>
           </div>
         )}
@@ -2176,14 +2242,8 @@ export function NewVisitSheet({
               </div>
             )}
 
-            <div className="modal-actions wi-actions">
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => setStage({ step: 'details', client: stage.client })}
-              >
-                {nv.back}
-              </button>
+            {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that books the visit. */}
+            <div className="modal-actions wi-actions wi-acts">
               <button
                 type="button"
                 className="btn"
