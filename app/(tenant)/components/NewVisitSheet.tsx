@@ -388,16 +388,27 @@ export function NewVisitSheet({
    * names it, so a queue entry or a visit lands where its services are sold.
    */
   /*
-   * Jira GRW-392 — each branch keeps its own clients, so a client picked from the list decides the branch: their
-   * visit is at the branch they are a client of. Only a new client leaves the choice to the chips below.
+   * Jira GRW-453 — the branch is chosen FIRST, and nothing picked afterwards may change it.
+   *
+   * Jira GRW-392 made a client picked from the list decide the branch instead, because a client belongs to one
+   * branch and the database refuses a booking that pairs them with another (`appointment_client_same_branch_fk`).
+   * But the picker below offered every branch's clients, so at a branch selling one service, 19 of the 20 rows
+   * on offer silently moved the booking somewhere else — menu, stylists, times and the write all followed, and
+   * the only sign was the branch radio group turning into a single chip naming a branch nobody had asked for.
+   *
+   * Owner decision 2026-10-03: a client record is unique per branch (`customer_tenant_location_wa_phone`, and a
+   * number is optional, so the branch is part of telling two same-named clients apart), and the same person is
+   * shared across branches by having a record at each. So the branch leads: the picker shows that branch's own
+   * clients, and the client picked from it is already one of them. Nothing has to move.
+   *
+   * Paying a token is the one exception, and not really one: that visit already exists, at its own branch.
    */
-  const pickedClientBranch =
-    paysToken?.locationId ??
-    ('client' in stage && stage.client.kind === 'existing' && stage.client.locationId ? stage.client.locationId : null);
-  const listBranch = pickedClientBranch ?? (branches.length > 1 ? branchId : branchContext.one);
+  const tokenBranch = paysToken?.locationId ?? null;
+  const listBranch = tokenBranch ?? (branches.length > 1 ? branchId : branchContext.one);
+  /** Settled, so it is said rather than asked: a token's own branch, or the one the picked client was found at. */
+  const branchSettled = Boolean(tokenBranch) || ('client' in stage && stage.client.kind === 'existing');
   /*
-   * Anyone who is not fixed to one branch (an owner, a manager) searches every branch's clients, and one person can
-   * be a client of two branches, so each row says whose client it is — the pick decides where the visit happens.
+   * One person can be a client of two branches, so each row says whose client it is.
    * Jira GRW-392 (review): this was owner-only, and a manager saw two identical rows and booked the wrong branch.
    */
   const openBranches = session?.branches ?? [];
@@ -517,7 +528,9 @@ export function NewVisitSheet({
     setSearching(true);
     const timer = setTimeout(() => {
       void api
-        .customers({ search: term.trim(), limit: 8 })
+        // Jira GRW-453 — this branch's own clients. A name is not unique and a number is optional, so a search
+        // across the business would offer two indistinguishable rows for one booking that can only be at one.
+        .customers({ search: term.trim(), limit: 8, location: listBranch })
         .then((page) => {
           if (!cancelled) setResults(page.rows);
         })
@@ -532,17 +545,18 @@ export function NewVisitSheet({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [term]);
+  }, [term, listBranch]);
 
   /**
    * Jira GRW-297 — the client-picker step's default list, most-recently-active
-   * first (the API's own `sort=recent` default). Fetched once: this is a small,
-   * cheap read and the list only needs to be roughly current, not live.
+   * first (the API's own `sort=recent` default). A small, cheap read, and the list only needs to be roughly
+   * current, not live — but it is read again when the branch changes (Jira GRW-453): it is that branch's list.
    */
   useEffect(() => {
     let cancelled = false;
+    setRecent(null);
     void api
-      .customers({ limit: 20 })
+      .customers({ limit: 20, location: listBranch })
       .then((page) => {
         if (!cancelled) setRecent(page.rows);
       })
@@ -552,7 +566,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [listBranch]);
 
   const serviceById = useMemo(() => new Map((services ?? []).map((s) => [s.id, s])), [services]);
 
@@ -1553,21 +1567,23 @@ export function NewVisitSheet({
           <div className="wi-body">
             {stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
 
-            {/* Jira GRW-392 — a client already on file is served at their own branch: said, not asked. */}
-            {pickedClientBranch && branchNameOf(pickedClientBranch) ? (
+            {/* Jira GRW-453 — once the branch is settled it is said, not asked: the client was picked from this
+                branch's own list, and a token's visit is already at its branch. Changing it here would leave the
+                client belonging to one branch and the booking to another, which the database refuses. */}
+            {branchSettled && branchNameOf(listBranch ?? undefined) ? (
               <>
                 <h2 className="wi-section-label">{nv.whichBranch}</h2>
                 <div className="wi-chips">
                   <span className="wi-chip wi-chip-on" aria-current="true">
-                    {branchNameOf(pickedClientBranch)}
+                    {branchNameOf(listBranch ?? undefined)}
                   </span>
                 </div>
               </>
             ) : null}
 
-            {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-392 — and not asked
-                for a client already on file: they are a client of one branch, and that is where they are served. */}
-            {branches.length > 1 && !pickedClientBranch ? (
+            {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-453 — and only while
+                it is still open to change: for a new client, who becomes a client of whichever branch is chosen. */}
+            {branches.length > 1 && !branchSettled ? (
               <>
                 <h2 className="wi-section-label">{nv.whichBranch}</h2>
                 <div className="wi-chips" role="radiogroup" aria-label={nv.whichBranch}>
