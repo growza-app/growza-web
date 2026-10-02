@@ -883,11 +883,24 @@
       "minutes": "{count} मिनट",
       "retireTitle": "{count, plural, one {# सेवा हटाएँ?} other {# सेवाएँ हटाएँ?}}",
       "retireBody": "{count, plural, one {इसकी बुकिंग} other {इनकी बुकिंग}} तुरंत बंद हो जाएगी, और यह आपकी सूची में वापस लाने के लिए रहेंगी।",
-      "deleteAllBody": "श्रेणी हट जाएगी। {count, plural, =0 {इसकी {total} सेवाएँ आपकी सूची में रहेंगी} one {इसकी # सेवा मेन्यू से हटेगी, मिटेगी नहीं, और सूची में रहेगी} other {इसकी # सेवाएँ मेन्यू से हटेंगी, मिटेंगी नहीं, और सूची में रहेंगी}}।",
+      "deleteAllBody": "{name} और इसकी सभी {count} सेवाएँ हमेशा के लिए मिट जाएँगी। इन्हें वापस नहीं लाया जा सकता।",
       "deleteCardTitle": "{name} में से हटाएँ",
       "selectAllMeans": "सब कुछ निकल जाएगा, और {name} भी",
-      "working": "हो रहा है…"
-    }
+      "working": "हो रहा है…",
+      "deleteAction": "{count, plural, one {# सेवा मिटाएँ} other {# सेवाएँ मिटाएँ}}",
+      "deleteSomeBody": "{count, plural, one {वह सेवा हमेशा के लिए मिट जाएगी} other {वे # सेवाएँ हमेशा के लिए मिट जाएँगी}}। इन्हें वापस नहीं लाया जा सकता।",
+      "retireInstead": "{count, plural, one {सिर्फ़ मेन्यू से हटाएँ} other {सभी # को सिर्फ़ मेन्यू से हटाएँ}}",
+      "blockedHead": "{count, plural, one {# सेवा नहीं मिटाई जा सकी} other {# सेवाएँ नहीं मिटाई जा सकीं}}",
+      "blockedByOffer": "यह {offers} का हिस्सा है",
+      "blockedByQuestion": "इसमें अब भी {questions} पूछा जाता है",
+      "blockedByQueue": "अभी कोई इसका इंतज़ार कर रहा है",
+      "blockedFoot": "बाकी मिट गईं। इन्हें ठीक करके दोबारा कोशिश करें, या इन्हें मेन्यू से हटा दें।"
+    },
+    "delete": "मिटाएँ",
+    "deleteTitle": "{name} मिटाएँ?",
+    "deleteBody": "यह हमेशा के लिए मिट जाएगी — इसे वापस नहीं लाया जा सकता।",
+    "deleteDetail": "{count, plural, one {इसकी # पुरानी बुकिंग} other {इसकी # पुरानी बुकिंग}} उसी नाम और कीमत पर रहेंगी, इसलिए आपका इतिहास और रिपोर्ट नहीं बदलेंगे।",
+    "deleteDetailNone": "इस पर कोई बुकिंग नहीं हुई है।"
   },
   "staff": {
     "addLabel": "{label} जोड़ें",

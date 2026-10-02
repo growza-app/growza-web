@@ -16,12 +16,12 @@ import { useDialog } from '../../shared/a11y/useDialog';
  * means the category goes too. Ticking everything IS deleting the category, so there is no second command to
  * choose between — which is the whole reason this is one card and not two.
  *
- * Services are RETIRED, never deleted: `service.id` is referenced by `appointment`, `provider_service` and
- * `offer_service` with no cascade. A real delete arrives with Jira GRW-431, once GRW-430 has put the name and
- * price on the booking itself; this card's wording is already the shape that will take.
+ * Delete means delete (Jira GRW-431): the service row goes, and its bookings keep the name and price they were
+ * taken at (GRW-430). Taking something off the menu for the season is a different thing and still offered, as
+ * the quieter second action — an owner who wants it back next winter should not have to retype it.
  *
- * It confirms only what cannot be undone. A retirement is one tap from being restored on the Services screen,
- * so it goes through on the button; deleting the category asks first.
+ * Nothing here can be undone, so everything here confirms. The one exception is that second action: a
+ * retirement is one tap from being restored on the Services screen.
  */
 export function CategoryDeleteCard({
   branchId,
@@ -29,6 +29,7 @@ export function CategoryDeleteCard({
   services,
   onClose,
   onDone,
+  onChanged,
 }: {
   branchId: string;
   category: ServiceCategoryAdmin;
@@ -37,18 +38,22 @@ export function CategoryDeleteCard({
   onClose: () => void;
   /** Called after the write, with `gone` true when the category itself was deleted. */
   onDone: (gone: boolean) => void;
+  /** Called after a write that left the card open, so the list behind it reloads. */
+  onChanged: () => void;
 }) {
   const t = useTranslations('services.categories');
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  /** Jira GRW-431 — the ones the catalogue itself would not let go, and what is in the way of each. */
+  const [blocked, setBlocked] = useState<Array<{ id: string; name: string; blockers: { offers: Array<{ title: string }>; questions: Array<{ label: string }>; waitingInQueue: number } }>>([]);
   const cardRef = useRef<HTMLDivElement>(null);
   useDialog(cardRef, { onClose: busy ? undefined : onClose });
 
   const empty = services.length === 0;
   const allSelected = !empty && selected.size === services.length;
-  /** What will actually change: an already-retired service ticked by "Select all" is not a second retirement. */
+  /** For the retire path only: an already-retired service ticked by "Select all" is not a second retirement. */
   const willRetire = services.filter((s) => selected.has(s.id) && s.active).length;
   const takesCategory = allSelected || empty;
 
@@ -59,18 +64,37 @@ export function CategoryDeleteCard({
       return next;
     });
 
-  const run = async () => {
+  /**
+   * `mode` is which of the two things the owner asked for. Both end at the same place — those services are off
+   * the menu — but one of them is final and the other is not, so they are never the same button.
+   */
+  const run = async (mode: 'delete' | 'retire') => {
     setBusy(true);
     setError(null);
     try {
-      // Two calls, not one: a retirement is reversible from the Services screen and the delete is not, so they
-      // stay separate on the server even though one button asks for both.
-      if (selected.size > 0) await api.retireServices(branchId, [...selected]);
-      if (takesCategory) await api.deleteCategory(branchId, category.id);
-      onDone(takesCategory);
+      let stuck: typeof blocked = [];
+      if (selected.size > 0) {
+        if (mode === 'delete') {
+          const result = await api.deleteServices(branchId, [...selected]);
+          stuck = result.blocked;
+        } else {
+          await api.retireServices(branchId, [...selected]);
+        }
+      }
+      // A category whose services could not all go is not empty, so it stays — and the card says why.
+      if (takesCategory && stuck.length === 0 && mode === 'delete') await api.deleteCategory(branchId, category.id);
+      if (stuck.length > 0) {
+        setBlocked(stuck);
+        setSelected(new Set(stuck.map((b) => b.id)));
+        setConfirming(false);
+        onChanged();
+        return;
+      }
+      onDone(takesCategory && mode === 'delete');
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.failed'));
       setConfirming(false);
+    } finally {
       setBusy(false);
     }
   };
@@ -81,7 +105,7 @@ export function CategoryDeleteCard({
       ? t('pickSome')
       : allSelected
         ? t('deleteAllAction', { name: category.name, count: services.length })
-        : t('retireAction', { count: selected.size });
+        : t('deleteAction', { count: selected.size });
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
@@ -99,6 +123,25 @@ export function CategoryDeleteCard({
           {error && (
             <div role="alert" className="field-error" style={{ marginBottom: 10 }}>
               {error}
+            </div>
+          )}
+
+          {blocked.length > 0 && (
+            <div role="alert" className="svc-cat-blocked">
+              <p className="svc-cat-blocked-head">{t('blockedHead', { count: blocked.length })}</p>
+              <ul>
+                {blocked.map((b) => (
+                  <li key={b.id}>
+                    <b>{b.name}</b> —{' '}
+                    {b.blockers.offers.length > 0
+                      ? t('blockedByOffer', { offers: b.blockers.offers.map((o) => o.title).join(', ') })
+                      : b.blockers.questions.length > 0
+                        ? t('blockedByQuestion', { questions: b.blockers.questions.map((q) => q.label).join(', ') })
+                        : t('blockedByQueue')}
+                  </li>
+                ))}
+              </ul>
+              <p className="svc-cat-blocked-foot">{t('blockedFoot')}</p>
             </div>
           )}
 
@@ -173,21 +216,29 @@ export function CategoryDeleteCard({
             type="button"
             className={`btn svc-cat-action ${empty || selected.size > 0 ? 'btn-danger-solid' : ''}`}
             disabled={busy || (!empty && selected.size === 0)}
-            onClick={() => (takesCategory ? setConfirming(true) : void run())}
+            onClick={() => setConfirming(true)}
           >
             {busy ? t('working') : action}
           </button>
+          {/*
+            * The seasonal case, kept and kept quiet: an owner who wants it back next winter should not have to
+            * type it in again. Ghost, below, and never beside the delete as a second coloured button.
+            */}
+          {!empty && willRetire > 0 && (
+            <button type="button" className="btn btn-ghost svc-cat-retire" disabled={busy} onClick={() => void run('retire')}>
+              {t('retireInstead', { count: willRetire })}
+            </button>
+          )}
           <button type="button" className="btn btn-ghost svc-cat-cancel" disabled={busy} onClick={onClose}>
             {t('cancel')}
           </button>
-          {!empty && selected.size > 0 && !allSelected && <p className="svc-cat-foot-hint">{t('retireHint')}</p>}
         </div>
         )}
 
         {/*
-         * The only thing confirmed, because it is the only thing that cannot be undone. A retirement goes
-         * straight through: it is reversible from the Services screen, and asking twice about a reversible
-         * action teaches an owner to dismiss dialogs without reading them.
+         * Every delete confirms, because none of them can be undone — which is the one way this differs from
+         * the card before Jira GRW-431, when the partial action was a reversible retirement and went straight
+         * through. The retire button beside it still does.
          *
          * Inside the card rather than on top of it: a fourth floating layer over page, sheet and card is one
          * more than anybody can follow their way back out of.
@@ -195,14 +246,18 @@ export function CategoryDeleteCard({
         {confirming && (
           <div className="svc-cat-confirm" role="alertdialog" aria-label={t('deleteTitle', { name: category.name })}>
             <p className="svc-cat-confirm-body">
-              {empty ? t('deleteBodyEmpty') : t('deleteAllBody', { count: willRetire, total: services.length })}
+              {empty
+                ? t('deleteBodyEmpty')
+                : allSelected
+                  ? t('deleteAllBody', { name: category.name, count: services.length })
+                  : t('deleteSomeBody', { count: selected.size })}
             </p>
             <p className="svc-cat-confirm-detail">{t('deleteDetail')}</p>
             <div className="svc-cat-confirm-actions">
               <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setConfirming(false)}>
                 {t('cancel')}
               </button>
-              <button type="button" className="btn btn-danger-solid" disabled={busy} onClick={() => void run()}>
+              <button type="button" className="btn btn-danger-solid" disabled={busy} onClick={() => void run('delete')}>
                 {busy ? t('working') : t('delete')}
               </button>
             </div>

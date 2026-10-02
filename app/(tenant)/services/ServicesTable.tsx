@@ -80,6 +80,8 @@ export function ServicesTable({
     router.refresh();
   };
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
+  /** Jira GRW-431 — the other thing an owner can mean. Delete is final; retire above is not. */
+  const [confirmDelete, setConfirmDelete] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const replace = (saved: ServiceAdmin) => {
@@ -127,6 +129,36 @@ export function ServicesTable({
    * worth keeping regardless. Asks first, with the booking count, so the owner
    * knows what they're pulling out of the booking flows.
    */
+  const askDelete = async (service: ServiceAdmin) => {
+    setBusyId(service.id);
+    try {
+      const usage = await api.serviceUsage(service.id).catch(() => ({ bookings: 0, providers: 0, offers: 0 }));
+      setConfirmDelete({ service, bookings: usage.bookings });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /**
+   * Jira GRW-431 — a real delete. Its bookings keep the name and price they were taken at (GRW-430), so the
+   * 409 this can answer is about the CATALOGUE — a combo it is in, a question it still asks — never history.
+   */
+  const remove = async (service: ServiceAdmin) => {
+    setBusyId(service.id);
+    setError(null);
+    try {
+      await api.deleteService(branchId, service.id);
+      setServices((prev) => prev.filter((x) => x.id !== service.id));
+      setConfirmDelete(null);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
+      setConfirmDelete(null);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const askRetire = async (service: ServiceAdmin) => {
     setBusyId(service.id);
     try {
@@ -340,6 +372,10 @@ export function ServicesTable({
                       {t('restore')}
                     </button>
                   )}
+                  {/* Jira GRW-431 — last, after the reversible one. Two different things, in the safe order. */}
+                  <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askDelete(s)}>
+                    {t('delete')}
+                  </button>
                 </div>
               </div>
             ))}
@@ -413,6 +449,9 @@ export function ServicesTable({
                         {t('restore')}
                       </button>
                     )}
+                    <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askDelete(s)}>
+                      {t('delete')}
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -505,6 +544,23 @@ export function ServicesTable({
             setCopying(false);
             await reload();
           }}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={t('deleteTitle', { name: confirmDelete.service.name })}
+          body={t('deleteBody')}
+          detail={
+            confirmDelete.bookings > 0
+              ? t('deleteDetail', { count: confirmDelete.bookings })
+              : t('deleteDetailNone')
+          }
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busyId === confirmDelete.service.id}
+          onConfirm={() => void remove(confirmDelete.service)}
+          onCancel={() => setConfirmDelete(null)}
         />
       )}
 

@@ -554,6 +554,22 @@ export const api = {
    */
   retireServices: (location: string, serviceIds: string[]) =>
     post<{ ok: true; retired: number }>('/api/v1/services/retire', { locationId: location, serviceIds }),
+  /**
+   * Jira GRW-431 — deletes several of one branch's services outright.
+   *
+   * Partial on purpose, unlike `retireServices`: a service inside a combo is the catalogue's own state, not a
+   * broken request, so the rest go and `blocked` names the ones that did not with what is in their way.
+   */
+  deleteServices: (location: string, serviceIds: string[]) =>
+    post<{
+      ok: true;
+      deleted: number;
+      bookingsKept: number;
+      blocked: Array<{ id: string; name: string; blockers: { offers: Array<{ id: string; title: string }>; questions: Array<{ id: string; label: string }>; waitingInQueue: number } }>;
+    }>('/api/v1/services/delete', { locationId: location, serviceIds }),
+  /** One service, gone for good. Its bookings keep the name and price they were taken at (Jira GRW-430). */
+  deleteService: (location: string, id: string) =>
+    del<{ ok: true; bookingsKept: number }>(`/api/v1/services/${id}?location=${encodeURIComponent(location)}`),
   /** The whole branch's order, every time: a partial list is refused rather than half-applied. */
   reorderCategories: (location: string, categoryIds: string[]) =>
     post<ServiceCategoryAdmin[]>('/api/v1/service-categories/reorder', { locationId: location, categoryIds }),

@@ -425,3 +425,36 @@ tr:last-child td {
   color: var(--muted);
   text-align: center;
 }
+
+/* Jira GRW-431 — the ones the catalogue would not let go, and what is in the way of each. */
+.svc-cat-blocked {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft, #fdf3e3);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.svc-cat-blocked-head {
+  margin: 0 0 6px;
+  font-weight: 620;
+}
+
+.svc-cat-blocked ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.svc-cat-blocked-foot {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* The seasonal action: quiet, under the delete, never a second coloured button beside it. */
+.svc-cat-retire {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+}

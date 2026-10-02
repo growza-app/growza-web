@@ -168,6 +168,7 @@ describe('the delete card', () => {
         services,
         onClose: () => {},
         onDone: () => {},
+        onChanged: () => {},
       }),
     );
 

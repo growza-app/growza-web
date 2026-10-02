@@ -81,6 +81,8 @@ export function CategoryServices({
             setDeleting(false);
             onChanged(gone);
           }}
+          // A delete that left some services behind keeps the card open; the list behind it still has to reload.
+          onChanged={() => onChanged(false)}
         />
       )}
     </>
