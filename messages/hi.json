@@ -939,8 +939,8 @@
       "editPackages": "पैकेज बदलें",
       "cancel": "रद्द करें"
     },
-    "hours": "{count} घंटे",
-    "hoursMinutes": "{hours} घंटे {minutes} मिनट"
+    "hours": "{count, plural, one {# घंटा} other {# घंटे}}",
+    "hoursMinutes": "{hours, plural, one {# घंटा} other {# घंटे}} {minutes} मिनट"
   },
   "staff": {
     "addLabel": "{label} जोड़ें",
@@ -1198,8 +1198,8 @@
       "now": "अभी",
       "noEnd": "कोई आख़िरी तारीख़ नहीं",
       "always": "हमेशा दिखता है",
-      "hours": "{count} घंटे",
-      "hoursMinutes": "{hours} घंटे {minutes} मिनट"
+      "hours": "{count, plural, one {# घंटा} other {# घंटे}}",
+      "hoursMinutes": "{hours, plural, one {# घंटा} other {# घंटे}} {minutes} मिनट"
     },
     "builder": {
       "back": "← वापस",
