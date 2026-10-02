@@ -182,17 +182,27 @@ const SWIPE_THRESHOLD = 36;
  */
 function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: RowActions; t: T }) {
   const [open, setOpen] = useState(false);
-  const startX = useRef<number | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
   const busy = actions.busyId === service.id;
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (busy) return;
-    startX.current = e.touches[0]?.clientX ?? null;
+    const touch = e.touches[0];
+    start.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
   };
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (startX.current === null) return;
-    const dx = (e.changedTouches[0]?.clientX ?? startX.current) - startX.current;
-    startX.current = null;
+    const from = start.current;
+    start.current = null;
+    const touch = e.changedTouches[0];
+    if (!from || !touch) return;
+    const dx = touch.clientX - from.x;
+    const dy = touch.clientY - from.y;
+    /*
+     * Both axes, not just the horizontal one. A thumb flicking up through the list travels 300px vertically
+     * and drifts 40px sideways on the way, which cleared the threshold on its own and left Retire and Delete
+     * sitting open under the finger on a row the owner was only scrolling past.
+     */
+    if (Math.abs(dx) <= Math.abs(dy)) return;
     if (dx < -SWIPE_THRESHOLD) setOpen(true);
     else if (dx > SWIPE_THRESHOLD) setOpen(false);
   };
