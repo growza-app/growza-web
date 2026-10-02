@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatMoney, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
@@ -188,8 +188,19 @@ export function ServicesTable({
   // so retiring something changed no number on the screen.
   const counts = useMemo(() => tabCounts(services), [services]);
   const showRetiredTab = useMemo(() => hasRetired(services), [services]);
-  // Restoring the last retired service takes the Retired tab away from under the owner standing on it.
+  /*
+   * Restoring the last retired service takes the Retired tab away from under the owner standing on it, so the
+   * tab actually rendered is derived rather than read straight from state.
+   *
+   * Deriving alone is not enough, and that was a bug: `categoryId` kept saying `retired` while the screen showed
+   * All, so the next thing the owner retired brought the Retired tab back and the view jumped onto it, hiding
+   * every live service. Derive for this render so there is no empty frame, then commit it so it cannot come
+   * back.
+   */
   const tab = tabAfterChange(services, categoryId);
+  useEffect(() => {
+    if (tab !== categoryId) setCategoryId(tab);
+  }, [tab, categoryId]);
 
   const filtered = useMemo(() => {
     const inCategory = servicesOnTab(services, tab);

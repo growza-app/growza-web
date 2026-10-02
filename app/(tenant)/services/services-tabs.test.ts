@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   ALL_TAB,
@@ -105,5 +107,42 @@ describe('standing on a tab that goes away', () => {
   it('never moves the owner off All or off a category', () => {
     expect(tabAfterChange(branch, ALL_TAB)).toBe(ALL_TAB);
     expect(tabAfterChange(branch, HAIR)).toBe(HAIR);
+  });
+});
+
+/**
+ * The fallback has to be COMMITTED, not only derived.
+ *
+ * `ServicesTable` renders `tabAfterChange(services, categoryId)` rather than `categoryId`, which is right — it
+ * keeps the frame after a restore from flashing an empty list. But deriving alone left `categoryId` saying
+ * `retired` while the screen showed All, and the next thing the owner retired made `hasRetired` true again, so
+ * the derived tab snapped back to Retired and every live service vanished from view. Caught in review, after it
+ * was reproduced in a browser.
+ *
+ * The component is a client component with no DOM here (same reason as record-payment-one-screen.test.ts), so
+ * the wiring is read from source; the sequence itself is covered in the browser.
+ */
+describe('the Retired fallback is written back to state', () => {
+  const source = readFileSync(resolve(__dirname, 'ServicesTable.tsx'), 'utf8');
+
+  it('ServicesTable commits the derived tab instead of only rendering it', () => {
+    expect(source).toMatch(/setCategoryId\(tab\)/);
+  });
+
+  it('and does so whenever the derived tab disagrees with the stored one', () => {
+    expect(source.replace(/\s+/g, ' ')).toMatch(/if \(tab !== categoryId\) setCategoryId\(tab\)/);
+  });
+
+  /** Walks the sequence that broke: on Retired → restore the last one → retire something else. */
+  it('a retire after the fallback must not drag the owner back to Retired', () => {
+    const live = branch.map((s) => ({ ...s, active: true }));
+    // The fallback fires: nothing retired, so the stored tab is corrected to All...
+    const corrected = tabAfterChange(live, RETIRED_TAB);
+    expect(corrected).toBe(ALL_TAB);
+    // ...and because it is the CORRECTED value that is stored, retiring something later leaves it on All.
+    const oneRetiredAgain = live.map((s, i) => (i === 0 ? { ...s, active: false } : s));
+    expect(tabAfterChange(oneRetiredAgain, corrected)).toBe(ALL_TAB);
+    // The bug was passing the stale value here instead, which returns to Retired unprompted.
+    expect(tabAfterChange(oneRetiredAgain, RETIRED_TAB)).toBe(RETIRED_TAB);
   });
 });
