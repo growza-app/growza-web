@@ -1638,6 +1638,10 @@
     "notPaidYet": "विज़िट सेव है, पर भुगतान अभी नहीं हुआ। अभी भुगतान लें, या बाद में बुकिंग से।",
     "done": "हो गया",
     "noServicesAtBranch": "{branch} में अभी कोई {services} नहीं है, इसलिए वहाँ कुछ बुक नहीं हो सकता।",
+    "noStaffAtBranch": "{branch} में अभी कोई {provider} नहीं है, इसलिए इसे किसी के साथ नहीं जोड़ा जा सकता।",
+    "noStaffYet": "अभी कोई {provider} नहीं है, इसलिए इसे किसी के साथ नहीं जोड़ा जा सकता।",
+    "stillTakePayment": "आप फिर भी “{nobody}” के साथ भुगतान ले सकते हैं।",
+    "addStaff": "{provider} जोड़ें",
     "addOrCopyServices": "{services} जोड़ें या कॉपी करें"
   },
   "moveBooking": {
