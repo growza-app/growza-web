@@ -53,7 +53,7 @@ import { canSee, type MemberRole } from '../lib/nav-policy';
 import { PhoneField } from './PhoneField';
 import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
 import type { FreeTime } from '../lib/book-again';
-import { toStoredPhone } from '../lib/phone';
+import { fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
@@ -286,6 +286,12 @@ export function NewVisitSheet({
   // Stage 1 — find them
   const [term, setTerm] = useState('');
   const [results, setResults] = useState<Customer[]>([]);
+  /**
+   * Jira GRW-454 — the same search, at the other branches. Offered only once something has been typed: it is a
+   * second question ("do they exist elsewhere?"), and putting those rows in the browsable list would be GRW-453's
+   * bug again, where most of what the picker offered belonged to a branch nobody had chosen.
+   */
+  const [elsewhere, setElsewhere] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
   /**
    * Jira GRW-297 — who to pick before anyone has typed anything.
@@ -431,6 +437,22 @@ export function NewVisitSheet({
         : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone, locationId: c.locationId },
     });
   };
+  /**
+   * Jira GRW-454 — "Add them to {branch}": a client of another branch, taken on here.
+   *
+   * It does not pick them — it cannot, because the booking must use a client of its own branch
+   * (`appointment_client_same_branch_fk`). It opens the add step with their name and number already in it, so
+   * the desk sees exactly what will be made here and can correct a spelling first. Saving upserts by number, so
+   * doing it twice finds the record rather than making a second one.
+   *
+   * Only the name and the number travel. Their visits, spend and history stay with the branch they made them
+   * at: a client record is unique per branch, and this is a different record of the same person.
+   */
+  const bringHere = (c: Customer) => {
+    setNewName(c.name?.trim() ?? '');
+    setNewPhone(fromStoredPhone(c.waPhone));
+    setStage({ step: 'newClient' });
+  };
   const atBranch = listBranch ? { location: listBranch } : {};
   // What was picked is on the menu of the branch it was picked at; another branch sells its own rows. The chosen
   // stylist and reclaimed chair are that branch's too — however the branch changed (a chip, or picking a client of
@@ -521,6 +543,7 @@ export function NewVisitSheet({
   useEffect(() => {
     if (term.trim().length < SEARCH_MIN_CHARS) {
       setResults([]);
+      setElsewhere([]);
       setSearching(false);
       return;
     }
@@ -540,12 +563,30 @@ export function NewVisitSheet({
         .finally(() => {
           if (!cancelled) setSearching(false);
         });
+      /*
+       * Jira GRW-454 — and the same search across the business, so the desk can say "they come to Indiranagar"
+       * and add them here without typing a name and a number that are already on file.
+       *
+       * Only when there is more than one branch to look at, which in this sheet means an owner: `branches` is
+       * already owner-only, and a branch's own desk is scoped to it server-side by design (GRW-393, where being
+       * told a client "belongs to another branch" was itself the leak). They reach the same place by typing.
+       */
+      if (branches.length > 1) {
+        void api
+          .customers({ search: term.trim(), limit: 8 })
+          .then((page) => {
+            if (!cancelled) setElsewhere(page.rows.filter((c) => c.locationId && c.locationId !== listBranch));
+          })
+          .catch(() => {
+            if (!cancelled) setElsewhere([]);
+          });
+      }
     }, SEARCH_DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [term, listBranch]);
+  }, [term, listBranch, branches.length]);
 
   /**
    * Jira GRW-297 — the client-picker step's default list, most-recently-active
@@ -1440,7 +1481,31 @@ export function NewVisitSheet({
                 ))}
                 {!searching && results.length === 0 && <div className="empty">{nv.noMatch}</div>}
               </div>
-            ) : (
+            ) : null}
+
+            {/*
+              Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows and
+              below them: these are not people who can be booked here yet, they are an offer to take them on.
+            */}
+            {term.trim().length >= SEARCH_MIN_CHARS && elsewhere.length > 0 ? (
+              <>
+                <h2 className="wi-section-label">{nv.atOtherBranches}</h2>
+                <div className="picker-results">
+                  {elsewhere.map((c) => (
+                    <button key={c.id} type="button" className="picker-row wi-row" onClick={() => bringHere(c)}>
+                      <span>
+                        <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
+                        <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
+                        {clientBranchName(c.locationId)}
+                      </span>
+                      <span className="picker-row-meta">{nv.bringToBranch(branchNameOf(listBranch ?? undefined) ?? '')}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {term.trim().length < SEARCH_MIN_CHARS ? (
               /*
                * Jira GRW-297 — browsable before a search term exists. Same row
                * markup as the search results above (kept as one JSX block would
@@ -1468,7 +1533,7 @@ export function NewVisitSheet({
                   {recent !== null && recent.length === 0 && <div className="empty">{nv.noCustomersYet}</div>}
                 </div>
               </>
-            )}
+            ) : null}
 
             <button
               type="button"

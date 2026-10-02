@@ -1573,6 +1573,8 @@
     "loadingCustomers": "Loading…",
     "noCustomersYet": "No customers yet.",
     "addNew": "Add someone new",
+    "atOtherBranches": "At your other branches",
+    "bringToBranch": "Add them to {branch}",
     "nameRequired": "Name",
     "namePlaceholder": "First name is enough",
     "nameMissing": "A name is needed, even a first name.",

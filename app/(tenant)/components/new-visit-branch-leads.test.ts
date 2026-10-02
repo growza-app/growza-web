@@ -41,8 +41,8 @@ describe('the client picker is the branch’s own', () => {
 
   it('the search does too', () => {
     expect(code).toMatch(/\.customers\(\{ search: term\.trim\(\), limit: 8, location: listBranch \}\)/);
-    const effect = code.slice(code.indexOf('.customers({ search:'));
-    expect(effect.slice(0, 700)).toMatch(/\}, \[term, listBranch\]\)/);
+    // And re-run for a new branch: the deps carry it. (GRW-454 added `branches.length` for the wider look.)
+    expect(code).toMatch(/\}, \[term, listBranch, branches\.length\]\)/);
   });
 
   it('a branch’s list is cleared while the next branch’s is on its way', () => {
@@ -61,5 +61,55 @@ describe('what the branch step shows', () => {
 
   it('still asks while the answer is open — a new client becomes a client of whichever branch is chosen', () => {
     expect(code).toMatch(/\{branches\.length > 1 && !branchSettled \?/);
+  });
+});
+
+/**
+ * Jira GRW-454 — "Add them to {branch}": the way a client of another branch is taken on here.
+ *
+ * GRW-453 made the picker one branch's own, which left no way to say "they come to Indiranagar" without
+ * retyping a name and a number already on file. This offers them — apart from the branch's own rows, and only
+ * once something has been typed, because putting them in the browsable list is the bug GRW-453 fixed.
+ */
+describe('bringing a client over from another branch', () => {
+  it('searches the other branches too, but only when there is more than one', () => {
+    expect(code).toMatch(/if \(branches\.length > 1\) \{/);
+    const wider = code.slice(code.indexOf('if (branches.length > 1) {'));
+    expect(wider.slice(0, 500)).toMatch(/\.customers\(\{ search: term\.trim\(\), limit: 8 \}\)/);
+  });
+
+  it('drops this branch’s own rows from that second list — they are already above it', () => {
+    expect(code).toMatch(/setElsewhere\(page\.rows\.filter\(\(c\) => c\.locationId && c\.locationId !== listBranch\)\)/);
+  });
+
+  it('offers them only against a typed search, never in the browsable list', () => {
+    expect(code).toMatch(/\{term\.trim\(\)\.length >= SEARCH_MIN_CHARS && elsewhere\.length > 0 \?/);
+    // The browsable list is `recent`, and `recent` is this branch's alone.
+    const browsable = code.slice(code.indexOf('{term.trim().length < SEARCH_MIN_CHARS ?'));
+    expect(browsable.slice(0, 900)).not.toMatch(/elsewhere/);
+  });
+
+  it('clears them when the search is emptied', () => {
+    const short = code.slice(code.indexOf('if (term.trim().length < SEARCH_MIN_CHARS)'));
+    expect(short.slice(0, 220)).toMatch(/setElsewhere\(\[\]\)/);
+  });
+
+  it('does not pick them — the booking must use a client of its own branch', () => {
+    // `bringHere`, not `pickClient`: a row from another branch opens the add step instead of becoming the client.
+    const row = code.slice(code.indexOf('elsewhere.map('));
+    expect(row.slice(0, 600)).toMatch(/onClick=\{\(\) => bringHere\(c\)\}/);
+    expect(row.slice(0, 600)).not.toMatch(/pickClient/);
+  });
+
+  it('carries their name and number into the add step, the number as national digits', () => {
+    const fn = code.slice(code.indexOf('const bringHere ='));
+    expect(fn.slice(0, 300)).toMatch(/setNewName\(c\.name\?\.trim\(\) \?\? ''\)/);
+    // `fromStoredPhone`, not the stored `+91…`: PhoneField takes the national digits only.
+    expect(fn.slice(0, 300)).toMatch(/setNewPhone\(fromStoredPhone\(c\.waPhone\)\)/);
+    expect(fn.slice(0, 300)).toMatch(/setStage\(\{ step: 'newClient' \}\)/);
+  });
+
+  it('names the branch they are being added to', () => {
+    expect(code).toMatch(/nv\.bringToBranch\(branchNameOf\(listBranch \?\? undefined\) \?\? ''\)/);
   });
 });

@@ -1573,6 +1573,8 @@
     "loadingCustomers": "लोड हो रहा है…",
     "noCustomersYet": "अभी कोई ग्राहक नहीं।",
     "addNew": "नया व्यक्ति जोड़ें",
+    "atOtherBranches": "आपकी दूसरी ब्रांच में",
+    "bringToBranch": "इन्हें {branch} में जोड़ें",
     "nameRequired": "नाम",
     "namePlaceholder": "सिर्फ़ पहला नाम भी चलेगा",
     "nameMissing": "नाम चाहिए, पहला नाम भी चलेगा।",
