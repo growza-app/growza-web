@@ -1,11 +1,12 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { formatDate } from '../lib/format';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, formatMoney, type Offer, type Service } from '../lib/api';
+import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
 import { Pagination } from '../components/Pagination';
 import { IconFilter, IconSearch } from '../components/icons';
@@ -143,6 +144,13 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
       setBusyId(null);
     }
   };
+
+  /**
+   * Jira GRW-433 — the menu is positioned against the VIEWPORT, so the card's `overflow: hidden` cannot cut
+   * Delete in half any more. One hook for the list because only one menu is ever open.
+   */
+  const closeMenu = useCallback(() => setOpenMenuId(null), []);
+  const menu = useAnchoredPanel(openMenuId !== null, closeMenu);
 
   const removeOffer = async (offer: Offer) => {
     setOpenMenuId(null);
@@ -301,7 +309,12 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                       </div>
                     </div>
 
-                    <div className="dropdown-anchor" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="dropdown-anchor"
+                      ref={openMenuId === offer.id ? menu.anchorRef : undefined}
+                      onClick={(e) => e.stopPropagation()}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         type="button"
                         className="kebab-btn"
@@ -312,7 +325,12 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                         ⋮
                       </button>
                       {openMenuId === offer.id && (
-                        <div className="dropdown-panel dropdown-panel-sm dropdown-panel-right" onMouseLeave={() => setOpenMenuId(null)}>
+                        <div
+                          className="dropdown-panel dropdown-panel-sm dropdown-panel-right"
+                          ref={menu.panelRef}
+                          style={menu.style}
+                          onMouseLeave={closeMenu}
+                        >
                           <Link href={`/offers/${offer.id}/edit`} className="dropdown-item dropdown-item-plain">
                             {t('edit')}
                           </Link>

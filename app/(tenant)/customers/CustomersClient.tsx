@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatDate, formatPhone, formatRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -13,6 +13,7 @@ import {
   type CustomerStatusFilter,
   type SortDirection,
 } from '../lib/api';
+import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { initials } from '../lib/appointment-display';
 import { dialable } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
@@ -136,9 +137,12 @@ export function CustomersClient({
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<CustomerStatusFilter>(initialStatus ?? 'all');
   const [sort, setSort] = useState<CustomerSort>(initialSort ?? 'recent');
+  /** Jira GRW-433 — positioned against the viewport, and above the bottom nav rather than under it. */
+  const closeFilter = useCallback(() => setFilterOpen(false), []);
   const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const filterMenu = useAnchoredPanel(filterOpen, closeFilter);
   const searchParams = useSearchParams();
   // Which client's card is open. Null closes it; the list keeps its scroll
   // position because nothing navigates away.
@@ -418,12 +422,17 @@ export function CustomersClient({
                 }}
               />
             </label>
-            <div className="dropdown-anchor">
+            <div className="dropdown-anchor" ref={filterMenu.anchorRef}>
               <button type="button" className="btn btn-ghost" onClick={() => setFilterOpen((v) => !v)}>
                 {status === 'all' ? t('filter') : statusLabel(status)} ⌄
               </button>
               {filterOpen && (
-                <div className="dropdown-panel dropdown-panel-sm" onMouseLeave={() => setFilterOpen(false)}>
+                <div
+                  className="dropdown-panel dropdown-panel-sm"
+                  ref={filterMenu.panelRef}
+                  style={filterMenu.style}
+                  onMouseLeave={closeFilter}
+                >
                   {(['all', 'active', 'due', 'at_risk', 'inactive', 'never'] as CustomerStatusFilter[]).map((s) => (
                     <button
                       key={s}
