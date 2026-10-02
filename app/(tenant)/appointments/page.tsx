@@ -167,23 +167,11 @@ export default async function AppointmentsPage({
    * from a real layout fault. A screen that lies to a person lies to a test
    * too.
    */
-  const [appointmentsResult, capacity, earnings] = await Promise.all([
+  const [appointmentsResult, earnings] = await Promise.all([
     api
       .appointments(date, toDate, undefined, customerId)
       .then((rows) => ({ rows, failed: false }))
       .catch(() => ({ rows: [] as Appointment[], failed: true })),
-    /**
-     * Jira GRW-63 · GRW-168 — the busy figure's denominator, from the same
-     * `working_hours` rows the availability engine books against, over exactly
-     * the range being shown. It used to be `roster size × an assumed nine-hour
-     * day`, computed here in the browser; every tenant sets its own schedule
-     * and a stylist may override theirs, so the assumption was wrong for most
-     * salons and wrong by a different amount for each person in them.
-     *
-     * A failure yields no capacity, and the card shows no percentage rather
-     * than falling back to a number nobody can account for.
-     */
-    api.capacity(date, toDate).catch(() => null),
     api.myEarnings().catch(() => null),
   ]);
   const appointments = appointmentsResult.rows;
@@ -273,7 +261,6 @@ export default async function AppointmentsPage({
           canReschedule={me.capabilities.reschedule}
           loadFailed={appointmentsResult.failed}
           earnings={earnings}
-          capacityMin={capacity?.minutes ?? null}
         />
       </div>
     </>
