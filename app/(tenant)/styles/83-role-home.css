@@ -2934,3 +2934,48 @@ button.hm-now-count {
     font-size: 18px;
   }
 }
+
+/* ---------- Day summary: each branch today, and the way back out of one (Jira GRW-450) ---------- */
+
+/*
+ * The whole row is the button, so the tap target is the row and not the branch's name — on a phone the name is
+ * the narrowest thing on the line, and a 44px target that is only as wide as "MG Road" is a target that gets
+ * missed.
+ */
+.hm-ds-branch {
+  padding: 0;
+}
+.hm-ds-branch-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--sp-2) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.hm-ds-branch-go {
+  color: var(--hm-muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.hm-ds-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--hm-muted);
+  cursor: pointer;
+}
