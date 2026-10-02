@@ -3,12 +3,23 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatMoney, type CreatedOffer, type Offer, type OfferInput, type Service } from '../lib/api';
-import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
+import {
+  api,
+  ApiError,
+  BookingConflictError,
+  formatMoney,
+  type CreatedOffer,
+  type Offer,
+  type OfferInput,
+  type Service,
+} from '../lib/api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { weekdayNames } from '../lib/weekday-names';
+import { pricedMinor, type PriceMode } from './packages-logic';
 
 /**
  * Build → Rules → Preview wizard for creating/editing a combo offer. One
@@ -16,7 +27,7 @@ import { weekdayNames } from '../lib/weekday-names';
  * edit) — the API payload shape is identical either way.
  */
 
-/** Each step is named in `offers.builder.steps`; `nav` is the label on the button that leads to the NEXT step. */
+/** Each step is named in `packages.builder.steps`; `nav` is the label on the button that leads to the NEXT step. */
 const STEPS = [
   { key: 1, name: 'build', hasNav: true },
   { key: 2, name: 'rules', hasNav: true },
@@ -27,7 +38,6 @@ const TITLE_MAX = 60;
 const TAGLINE_MAX = 80;
 
 type VisibilityMode = 'always' | 'weekdays' | 'window';
-type PriceMode = 'flat' | 'percent';
 
 function toDatetimeLocal(iso: string | null): string {
   if (!iso) return '';
@@ -64,7 +74,7 @@ function PreviewCard({
   /** Only the Step 3 preview shows the 🟢/⚪ visible-right-now indicator — the sidebar preview stays neutral since it's always on screen, not something the admin is checking "right now" for. */
   showLiveIndicator?: { isVisibleNow: boolean };
 }) {
-  const t = useTranslations('offers.builder');
+  const t = useTranslations('packages.builder');
   const tm = useTranslations('services');
   const totalMin = services.reduce((sum, s) => sum + s.durationMin, 0);
   const formatDuration = (min: number): string => {
@@ -128,9 +138,9 @@ function PreviewCard({
   );
 }
 
-export function ComboBuilder({ services: allServices, initialOffer }: { services: Service[]; initialOffer?: Offer }) {
-  const t = useTranslations('offers.builder');
-  const tl = useTranslations('offers.list');
+export function PackageBuilder({ services: allServices, initialOffer }: { services: Service[]; initialOffer?: Offer }) {
+  const t = useTranslations('packages.builder');
+  const tl = useTranslations('packages.list');
   const tm = useTranslations('services');
   const locale = useLocale();
   const dayNames = weekdayNames(locale).short;
@@ -148,6 +158,9 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
   const atBranch = initialOffer?.locationId ?? pickedBranch ?? defaultBranch;
   const [allBranches, setAllBranches] = useState(false);
   const [published, setPublished] = useState<CreatedOffer | null>(null);
+  /** Jira GRW-435 — the delete confirmation, and why the last attempt was refused. */
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const services = useMemo(
     () => allServices.filter((s) => !atBranch || !s.locationId || s.locationId === atBranch),
     [allServices, atBranch],
@@ -171,7 +184,16 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
     (sum, id) => sum + Number(services.find((s) => s.id === id)?.priceMinor ?? 0),
     0,
   );
-  const [priceMode, setPriceMode] = useState<PriceMode>('flat');
+  /**
+   * Jira GRW-438 — a package already priced at exactly its parts total opens in "Sum of parts", not in
+   * "Fixed" showing that figure. Otherwise the owner who chose no discount is shown an amount to edit and
+   * has no way to tell which decision they made.
+   */
+  const [priceMode, setPriceMode] = useState<PriceMode>(
+    initialOffer?.comboPriceMinor != null && initialOriginal > 0 && Number(initialOffer.comboPriceMinor) === initialOriginal
+      ? 'sum'
+      : 'flat',
+  );
   const [flatInput, setFlatInput] = useState(
     initialOffer?.comboPriceMinor ? String(Number(initialOffer.comboPriceMinor) / 100) : '',
   );
@@ -200,14 +222,8 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
   );
   const originalPriceMinor = selectedServices.reduce((sum, s) => sum + Number(s.priceMinor ?? 0), 0);
 
-  const comboPriceMinor =
-    priceMode === 'flat'
-      ? flatInput.trim() === '' || !Number.isFinite(Number(flatInput))
-        ? null
-        : Math.round(Number(flatInput) * 100)
-      : percentInput.trim() === '' || !Number.isFinite(Number(percentInput))
-        ? null
-        : Math.round(originalPriceMinor * (1 - Number(percentInput) / 100));
+  /** Jira GRW-438 — the same arithmetic the list and its tests use, so no two views can disagree by a rupee. */
+  const comboPriceMinor = pricedMinor(priceMode, originalPriceMinor, { flat: flatInput, percent: percentInput });
 
   const savingsMinor = comboPriceMinor != null ? originalPriceMinor - comboPriceMinor : null;
   const savingsPct =
@@ -215,6 +231,7 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
 
   const switchPriceMode = (next: PriceMode) => {
     if (next === priceMode) return;
+    // Carry the price across so switching mode never silently changes what the customer pays.
     if (next === 'percent' && comboPriceMinor != null && originalPriceMinor > 0) {
       setPercentInput(String(Math.round((1 - comboPriceMinor / originalPriceMinor) * 100)));
     } else if (next === 'flat' && comboPriceMinor != null) {
@@ -335,7 +352,7 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
       } else {
         await api.updateOffer(initialOffer!.id, payload);
       }
-      router.push('/offers');
+      router.push('/packages');
       router.refresh();
     } catch {
       setError(t('errors.saveFailed'));
@@ -349,17 +366,29 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
    * the builder itself, and the per-service ✕ buttons in the picked list
    * (which only remove one service each) are easy to mistake for it.
    */
+  /**
+   * Jira GRW-435 — asked in the app's own dialog, and refused in the API's own words.
+   *
+   * The generic `errors.deleteFailed` ("check the server is running") was actively misleading here: the usual
+   * reason a combo will not delete is that somebody is waiting for it right now (GRW-434), which is about the
+   * salon, not the server. The owner was sent to look at infrastructure over a client in a chair.
+   */
   const deleteCombo = async () => {
     if (!initialOffer) return;
-    if (!window.confirm(tl('deleteConfirm', { title: initialOffer.title }))) return;
     setBusy(true);
+    setDeleteError(null);
+    // A failed save left its own message on the wizard behind this dialog, and only `save()` ever cleared it —
+    // so a refused delete showed the owner two unrelated errors at once. The delete owns the screen now.
     setError(null);
     try {
       await api.deleteOffer(initialOffer.id);
-      router.push('/offers');
+      setConfirmDelete(false);
+      router.push('/packages');
       router.refresh();
-    } catch {
-      setError(t('errors.deleteFailed'));
+    } catch (err) {
+      // `send()` raises every 409 as BookingConflictError, not ApiError — see the note in OffersList.doRemove.
+      const refused = err instanceof BookingConflictError || (err instanceof ApiError && err.status < 500);
+      setDeleteError(refused && err instanceof Error && err.message ? err.message : t('errors.deleteFailed'));
       setBusy(false);
     }
   };
@@ -381,7 +410,7 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
             type="button"
             className="btn"
             onClick={() => {
-              router.push('/offers');
+              router.push('/packages');
               router.refresh();
             }}
           >
@@ -396,7 +425,7 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
     <div>
       <div className="wizard-head">
         <div className="wizard-title">
-          <button className="btn btn-ghost" onClick={() => router.push('/offers')}>
+          <button className="btn btn-ghost" onClick={() => router.push('/packages')}>
             {t('back')}
           </button>
           <div>
@@ -406,7 +435,14 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
         </div>
         <div className="wizard-actions">
           {mode === 'edit' && (
-            <button className="btn btn-danger" disabled={busy} onClick={deleteCombo}>
+            <button
+              className="btn btn-danger"
+              disabled={busy}
+              onClick={() => {
+                setDeleteError(null);
+                setConfirmDelete(true);
+              }}
+            >
               {t('delete')}
             </button>
           )}
@@ -466,11 +502,11 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
           <div className="card-body" style={{ paddingTop: 18 }}>
             {step === 1 && (
               <>
-                <div className="wizard-section-title">{t('comboDetails')}</div>
+                <div className="wizard-section-title">{t('packageDetails')}</div>
                 <div className="grid-2">
                   <div className="field">
                     <label>
-                      <span>{t('comboName')}</span>
+                      <span>{t('packageName')}</span>
                       <span className="field-counter">
                         {title.length}/{TITLE_MAX}
                       </span>
@@ -612,7 +648,7 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
                     <div className="price-panel-value">{formatMoney(String(originalPriceMinor))}</div>
                   </div>
                   <div className="price-panel-cell">
-                    <label>{t('comboPrice')}</label>
+                    <label>{t('packagePrice')}</label>
                     <div className="price-mode-toggle">
                       <button className={priceMode === 'flat' ? 'active' : ''} onClick={() => switchPriceMode('flat')}>
                         {t('flat')}
@@ -620,8 +656,16 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
                       <button className={priceMode === 'percent' ? 'active' : ''} onClick={() => switchPriceMode('percent')}>
                         {t('percent')}
                       </button>
+                      {/*
+                        Jira GRW-438 — the third mode, and a real choice rather than the absence of one:
+                        "charge what the parts cost, show no discount". Stored as a price equal to the parts
+                        total, never as no price at all — a package with no price is an announcement.
+                      */}
+                      <button className={priceMode === 'sum' ? 'active' : ''} onClick={() => switchPriceMode('sum')}>
+                        {t('sumOfParts')}
+                      </button>
                     </div>
-                    {priceMode === 'flat' ? (
+                    {priceMode === 'flat' && (
                       <input
                         type="number"
                         min="0"
@@ -630,7 +674,8 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
                         placeholder="0"
                         style={{ width: '100%' }}
                       />
-                    ) : (
+                    )}
+                    {priceMode === 'percent' && (
                       <input
                         type="number"
                         min="0"
@@ -641,6 +686,7 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
                         style={{ width: '100%' }}
                       />
                     )}
+                    {priceMode === 'sum' && <div className="price-panel-note">{t('sumOfPartsNote')}</div>}
                   </div>
                   <div className="price-panel-cell">
                     <label>{t('youSave')}</label>
@@ -651,11 +697,15 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
                     </div>
                   </div>
                 </div>
-                {comboPriceMinor != null && (
-                  <div className="savings-banner">
-                    {t('customersPay', { combo: formatMoney(String(comboPriceMinor)), original: formatMoney(String(originalPriceMinor)) })}
-                  </div>
-                )}
+                {comboPriceMinor != null &&
+                  (savingsMinor != null && savingsMinor > 0 ? (
+                    <div className="savings-banner">
+                      {t('customersPay', { price: formatMoney(String(comboPriceMinor)), original: formatMoney(String(originalPriceMinor)) })}
+                    </div>
+                  ) : (
+                    /* Said plainly rather than left blank: "no saving" is a decision the owner should see they made. */
+                    <div className="savings-banner savings-banner-none">{t('noSavingShown')}</div>
+                  ))}
               </>
             )}
 
@@ -798,6 +848,23 @@ export function ComboBuilder({ services: allServices, initialOffer }: { services
         </div>
         </div>
       </div>
+
+      {confirmDelete && initialOffer && (
+        <ConfirmDialog
+          title={tl('deleteTitle', { title: initialOffer.title })}
+          body={tl('deleteBody')}
+          detail={initialOffer.comboPriceMinor != null ? tl('deleteDetail') : undefined}
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busy}
+          error={deleteError}
+          onConfirm={deleteCombo}
+          onCancel={() => {
+            setConfirmDelete(false);
+            setDeleteError(null);
+          }}
+        />
+      )}
     </div>
   );
 }

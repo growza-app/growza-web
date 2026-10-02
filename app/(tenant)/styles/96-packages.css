@@ -1,0 +1,249 @@
+/*
+ * Jira GRW-438 — the Packages screen.
+ *
+ * One layout, two shapes. On a laptop the rows line up under column titles, because an owner comparing four
+ * packages is comparing their prices. Below 861px the same markup becomes a stacked card: the grid collapses
+ * to one column and the price moves onto its own line beside the time, which is the arrangement the design
+ * draws for a phone.
+ *
+ * Phone first, per the standing rule: everything here is written for 344px and widened at the breakpoint.
+ */
+
+.pkg-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pkg-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pkg-toolbar .search-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Column titles belong to the laptop's table; a phone's cards label their own numbers. */
+.pkg-head {
+  display: none;
+}
+
+.pkg-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pkg-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'main actions'
+    'foot foot';
+  gap: 8px 12px;
+  align-items: start;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* The phone's footer: how long it takes on the left, what it costs on the right. */
+.pkg-foot {
+  grid-area: foot;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-left: 52px;
+}
+
+.pkg-row:last-child {
+  border-bottom: none;
+}
+
+/* A retired package is still readable — it is not a draft, it is something the owner stopped selling. */
+.pkg-row.is-retired .pkg-name,
+.pkg-row.is-retired .pkg-price-now {
+  color: var(--muted);
+}
+
+.pkg-row-main {
+  grid-area: main;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pkg-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pkg-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.pkg-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pkg-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.pkg-name {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pkg-includes,
+.pkg-missing {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Louder than the rest of the row on purpose: the owner is quoting a price for something that is gone.
+   #b91c1c is the red `.btn-danger` and `.confirm-error` already use — one red in the product, not three. */
+.pkg-missing {
+  color: #b91c1c;
+}
+
+.pkg-retired-chip {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.pkg-time {
+  grid-area: time;
+  flex: none;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pkg-price {
+  grid-area: price;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+/* A middle dot between the old price and the saving, drawn rather than typed — a bare "·" in the markup is a
+   string literal the i18n guard would have to excuse, and it is decoration, not words. */
+.pkg-price-sep::before {
+  content: '\00b7';
+  margin: 0 4px;
+}
+
+.pkg-price-now {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pkg-price-was {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pkg-strike {
+  text-decoration: line-through;
+}
+
+.pkg-actions {
+  grid-area: actions;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pkg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+/* The builder's third pricing mode has nothing to type, so it explains itself where the field would be. */
+.price-panel-note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.savings-banner-none {
+  color: var(--muted);
+}
+
+@media (min-width: 861px) {
+  .pkg-head,
+  .pkg-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px 200px 44px;
+    grid-template-areas: 'main time price actions';
+    gap: 16px;
+    align-items: center;
+  }
+
+  .pkg-head {
+    padding: 0 16px;
+    height: 36px;
+    background: var(--page-bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .pkg-head-price {
+    text-align: right;
+  }
+
+  .pkg-foot {
+    display: contents;
+  }
+
+  .pkg-time {
+    padding-left: 0;
+  }
+
+  /* On a laptop there is room to stack the price over what it saves, as the design draws it. */
+  .pkg-price {
+    display: block;
+  }
+
+  .pkg-price-now {
+    display: block;
+  }
+
+  .pkg-price-was {
+    display: block;
+    margin-top: 2px;
+  }
+}

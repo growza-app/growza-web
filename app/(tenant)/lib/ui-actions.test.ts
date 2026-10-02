@@ -207,6 +207,11 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/service-categories/reorder',
   ],
   '/offers': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
+  /*
+   * Jira GRW-438 — the same three writes, now reachable from two owner-only screens. Both are closed whole by
+   * `guardScreen`, so listing them twice is the honest answer rather than a sign one of them is ungated.
+   */
+  '/packages': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',
