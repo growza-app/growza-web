@@ -106,6 +106,29 @@ export function CategoryDeleteCard({
             <p className="svc-cat-meta">{t('emptyDetail')}</p>
           ) : (
             <ul className="svc-cat-list">
+              {/*
+               * First, where the owner asked for it, and still worded as a consequence rather than a
+               * convenience — a tick that quietly also deletes the category would be a trap, wherever it sits.
+               */}
+              <li>
+                <button
+                  type="button"
+                  className={`svc-pick svc-pick-all ${allSelected ? 'is-on' : ''}`}
+                  role="checkbox"
+                  aria-checked={allSelected}
+                  disabled={busy}
+                  onClick={() => setSelected(allSelected ? new Set() : new Set(services.map((s) => s.id)))}
+                >
+                  <span className={`svc-pick-mark ${allSelected ? 'is-on' : ''}`} aria-hidden="true">
+                    {allSelected ? '✓' : ''}
+                  </span>
+                  <span className="svc-pick-text">
+                    <span className="svc-pick-name">{t('selectAll')}</span>
+                    <span className="svc-cat-meta">{t('selectAllMeans', { name: category.name })}</span>
+                  </span>
+                </button>
+              </li>
+
               {services.map((s) => {
                 const on = selected.has(s.id);
                 return (
@@ -136,28 +159,6 @@ export function CategoryDeleteCard({
                 );
               })}
 
-              {/*
-               * Last, and worded as a consequence rather than a convenience. "Select all" that quietly also
-               * deletes the category would be a trap; this row says what ticking it means before it is ticked.
-               */}
-              <li>
-                <button
-                  type="button"
-                  className={`svc-pick svc-pick-all ${allSelected ? 'is-on' : ''}`}
-                  role="checkbox"
-                  aria-checked={allSelected}
-                  disabled={busy}
-                  onClick={() => setSelected(allSelected ? new Set() : new Set(services.map((s) => s.id)))}
-                >
-                  <span className={`svc-pick-mark ${allSelected ? 'is-on' : ''}`} aria-hidden="true">
-                    {allSelected ? '✓' : ''}
-                  </span>
-                  <span className="svc-pick-text">
-                    <span className="svc-pick-name">{t('selectAll')}</span>
-                    <span className="svc-cat-meta">{t('selectAllMeans', { name: category.name })}</span>
-                  </span>
-                </button>
-              </li>
             </ul>
           )}
         </div>

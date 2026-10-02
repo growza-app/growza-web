@@ -278,12 +278,18 @@ tr:last-child td {
 }
 
 /*
- * "Select all" as the LAST row of the delete card, worded as a consequence. A tick that quietly also deletes
- * the category would be a trap, so it sits with the things it affects and says what it means.
+ * "Select all" as the FIRST row of the delete card (owner's call, 2026-10-02), still worded as a consequence.
+ * A tick that quietly also deletes the category would be a trap wherever it sits, so the rule it moves with is
+ * the wording, not the position. The heavier border separates it from the services it governs.
  */
 .svc-pick-all {
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
+  border-top: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.svc-cat-list > li:first-child .svc-pick-all {
+  border-top: 0;
 }
 
 .svc-cat-cancel {
