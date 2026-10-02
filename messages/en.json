@@ -632,18 +632,16 @@
   "services": {
     "subtitle": "What you offer, how long each takes, and what you charge.",
     "cols": {
-      "photo": "Photo",
       "name": "Service",
-      "type": "Type",
-      "duration": "Minutes",
-      "cleanupTime": "Cleanup time after",
       "price": "Price",
-      "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "time": "Time",
+      "duration": "Minutes",
+      "status": "Status"
     },
     "noCleanup": "None",
     "minutes": "{count} min",
-    "cleanupPlus": "+{duration} cleanup",
+    "cleanupPlus": "+{count} cleanup",
     "addLabel": "Add {label}",
     "searchPlaceholder": "Search {count, plural, one {# service} other {# services}}...",
     "searchAria": "Search services",
@@ -668,7 +666,8 @@
       "photoTooBig": "{name}: photo must be under 5MB.",
       "uploadFailed": "Upload failed.",
       "removeFailed": "Remove failed.",
-      "saveFailed": "Could not save."
+      "saveFailed": "Could not save.",
+      "duplicateFailed": "Could not copy it. Please try again."
     },
     "form": {
       "titleEdit": "Edit {name}",
@@ -902,7 +901,22 @@
     "deleteBody": "It is gone for good — this cannot be undone.",
     "deleteDetail": "{count, plural, one {Its # past booking keeps} other {Its # past bookings keep}} the name and price they were taken at, so your history and your reports do not change.",
     "deleteDetailNone": "Nothing has been booked on it.",
-    "allRetired": "Nothing is on the menu here — everything at this branch has been retired."
+    "allRetired": "Nothing is on the menu here — everything at this branch has been retired.",
+    "unfiled": "Not in a category",
+    "swipeHint": "Swipe a row for Retire and Delete.",
+    "actionsAria": "Actions for {name}",
+    "copySuffix": "{name} (copy)",
+    "menu": {
+      "edit": "Edit service",
+      "addPhoto": "Add photo",
+      "changePhoto": "Change photo",
+      "removePhoto": "Remove photo",
+      "duplicate": "Duplicate",
+      "retire": "Retire",
+      "retireHint": "hide from booking",
+      "restore": "Restore",
+      "delete": "Delete…"
+    }
   },
   "staff": {
     "addLabel": "Add {label}",
