@@ -76,10 +76,26 @@ export const hasRetired = (services: readonly TabbableService[]): boolean => ser
 /**
  * The tab to fall back to when the selected one is no longer offered.
  *
- * Restoring the last retired service removes the Retired tab from under the owner while they are standing on
- * it. Without this they would be left looking at an empty list with no tab selected.
+ * A tab can stop existing underneath the owner in two ways, and both leave the same wreckage if unhandled — an
+ * empty list, and a `role="tablist"` in which nothing is selected:
+ *
+ *  - **Retired** goes when the last retired service is restored.
+ *  - **A category** goes when it is deleted from the category sheet, which GRW-428 made possible. This one was
+ *    already true before the Retired tab existed; it is handled here because this is where the question now
+ *    lives, rather than left as the one case that still breaks.
+ *
+ * `categoryIds` is required rather than optional on purpose: an optional argument that silently disables half
+ * the function is exactly the kind of thing that gets forgotten at a new call site.
+ *
+ * Whatever this returns must be WRITTEN BACK, not only rendered. Deriving it per render and leaving the stored
+ * tab stale meant the fallback undid itself the moment the vanished tab came back — see ServicesTable.
  */
-export function tabAfterChange(services: readonly TabbableService[], tab: ServiceTab): ServiceTab {
-  if (tab === RETIRED_TAB && !hasRetired(services)) return ALL_TAB;
-  return tab;
+export function tabAfterChange(
+  services: readonly TabbableService[],
+  tab: ServiceTab,
+  categoryIds: readonly string[],
+): ServiceTab {
+  if (tab === ALL_TAB) return ALL_TAB;
+  if (tab === RETIRED_TAB) return hasRetired(services) ? RETIRED_TAB : ALL_TAB;
+  return categoryIds.includes(tab) ? tab : ALL_TAB;
 }

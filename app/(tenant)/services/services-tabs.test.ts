@@ -16,6 +16,8 @@ const svc = (name: string, active: boolean, categoryId: string | null = null) =>
 
 const HAIR = 'c1111111-1111-1111-1111-111111111111';
 const SKIN = 'c2222222-2222-2222-2222-222222222222';
+/** The categories that still exist, as ServicesTable passes them from its `categories` prop. */
+const CATEGORIES = [HAIR, SKIN];
 
 /** The shape that prompted the story: four on the menu, the rest taken off it. */
 const branch = [
@@ -97,23 +99,43 @@ describe('when the Retired tab is offered', () => {
 describe('standing on a tab that goes away', () => {
   it('restoring the last retired service moves the owner back to All', () => {
     const nothingRetired = branch.map((s) => ({ ...s, active: true }));
-    expect(tabAfterChange(nothingRetired, RETIRED_TAB)).toBe(ALL_TAB);
+    expect(tabAfterChange(nothingRetired, RETIRED_TAB, CATEGORIES)).toBe(ALL_TAB);
   });
 
   it('leaves the tab alone while there is still something retired', () => {
-    expect(tabAfterChange(branch, RETIRED_TAB)).toBe(RETIRED_TAB);
+    expect(tabAfterChange(branch, RETIRED_TAB, CATEGORIES)).toBe(RETIRED_TAB);
   });
 
   it('never moves the owner off All or off a category', () => {
-    expect(tabAfterChange(branch, ALL_TAB)).toBe(ALL_TAB);
-    expect(tabAfterChange(branch, HAIR)).toBe(HAIR);
+    expect(tabAfterChange(branch, ALL_TAB, CATEGORIES)).toBe(ALL_TAB);
+    expect(tabAfterChange(branch, HAIR, CATEGORIES)).toBe(HAIR);
+  });
+
+  /*
+   * The other way a tab stops existing: GRW-428 lets the owner delete a category from the sheet, and they can
+   * do it while standing on that category's tab. Before this, they were left on a tab that was no longer
+   * rendered — an empty list, and a tablist with nothing selected.
+   */
+  it('deleting the category you are standing on falls back to All', () => {
+    expect(tabAfterChange(branch, SKIN, [HAIR])).toBe(ALL_TAB);
+  });
+
+  it('deleting a DIFFERENT category leaves the owner where they are', () => {
+    expect(tabAfterChange(branch, HAIR, [HAIR])).toBe(HAIR);
+  });
+
+  it('a branch with no categories at all still resolves to a real tab', () => {
+    expect(tabAfterChange(branch, HAIR, [])).toBe(ALL_TAB);
+    expect(tabAfterChange(branch, ALL_TAB, [])).toBe(ALL_TAB);
+    // Retired is not a category, so an empty category list must not knock the owner off it.
+    expect(tabAfterChange(branch, RETIRED_TAB, [])).toBe(RETIRED_TAB);
   });
 });
 
 /**
  * The fallback has to be COMMITTED, not only derived.
  *
- * `ServicesTable` renders `tabAfterChange(services, categoryId)` rather than `categoryId`, which is right — it
+ * `ServicesTable` renders `tabAfterChange(services, categoryId, categoryIds)` rather than `categoryId`, which is right — it
  * keeps the frame after a restore from flashing an empty list. But deriving alone left `categoryId` saying
  * `retired` while the screen showed All, and the next thing the owner retired made `hasRetired` true again, so
  * the derived tab snapped back to Retired and every live service vanished from view. Caught in review, after it
@@ -137,12 +159,12 @@ describe('the Retired fallback is written back to state', () => {
   it('a retire after the fallback must not drag the owner back to Retired', () => {
     const live = branch.map((s) => ({ ...s, active: true }));
     // The fallback fires: nothing retired, so the stored tab is corrected to All...
-    const corrected = tabAfterChange(live, RETIRED_TAB);
+    const corrected = tabAfterChange(live, RETIRED_TAB, CATEGORIES);
     expect(corrected).toBe(ALL_TAB);
     // ...and because it is the CORRECTED value that is stored, retiring something later leaves it on All.
     const oneRetiredAgain = live.map((s, i) => (i === 0 ? { ...s, active: false } : s));
-    expect(tabAfterChange(oneRetiredAgain, corrected)).toBe(ALL_TAB);
+    expect(tabAfterChange(oneRetiredAgain, corrected, CATEGORIES)).toBe(ALL_TAB);
     // The bug was passing the stale value here instead, which returns to Retired unprompted.
-    expect(tabAfterChange(oneRetiredAgain, RETIRED_TAB)).toBe(RETIRED_TAB);
+    expect(tabAfterChange(oneRetiredAgain, RETIRED_TAB, CATEGORIES)).toBe(RETIRED_TAB);
   });
 });

@@ -189,15 +189,17 @@ export function ServicesTable({
   const counts = useMemo(() => tabCounts(services), [services]);
   const showRetiredTab = useMemo(() => hasRetired(services), [services]);
   /*
-   * Restoring the last retired service takes the Retired tab away from under the owner standing on it, so the
-   * tab actually rendered is derived rather than read straight from state.
+   * A tab can stop existing underneath the owner — Retired when the last retired service is restored, a
+   * category when it is deleted from the sheet — so the tab actually rendered is derived rather than read
+   * straight from state.
    *
    * Deriving alone is not enough, and that was a bug: `categoryId` kept saying `retired` while the screen showed
    * All, so the next thing the owner retired brought the Retired tab back and the view jumped onto it, hiding
    * every live service. Derive for this render so there is no empty frame, then commit it so it cannot come
    * back.
    */
-  const tab = tabAfterChange(services, categoryId);
+  const categoryIds = useMemo(() => categories.map((c) => c.id), [categories]);
+  const tab = tabAfterChange(services, categoryId, categoryIds);
   useEffect(() => {
     if (tab !== categoryId) setCategoryId(tab);
   }, [tab, categoryId]);
