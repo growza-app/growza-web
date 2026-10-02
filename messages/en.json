@@ -11,8 +11,8 @@
     "bookingsUnavailableHelp": "The list below is not empty — it could not be fetched. Refresh to try again."
   },
   "search": {
-    "title": "Search",
-    "prompt": "Search anything...",
+    "title": "Find a client or booking",
+    "prompt": "Find a client or booking",
     "placeholder": "Name, phone, or booking ID",
     "customers": "CUSTOMERS",
     "bookings": "BOOKINGS",
