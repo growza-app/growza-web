@@ -26,7 +26,7 @@
     justify-content: center;
   }
   .hm-desk .tb-actions-row .hm-action strong {
-    font-size: 14px;
+    font-size: 0.875rem;
     overflow-wrap: anywhere;
   }
 }
@@ -69,7 +69,7 @@
   border-radius: 11px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-size: 12.5px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -167,7 +167,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-ink);
 }
@@ -178,7 +178,7 @@
 }
 .tb-meta {
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
   color: #8a5a0f;
@@ -190,7 +190,7 @@
   color: var(--hm-green-deep);
 }
 .tb-sub {
-  font-size: 13px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
   overflow-wrap: anywhere;
 }
@@ -211,15 +211,22 @@
   text-align: center;
   line-height: 1.2;
 }
+/* Jira GRW-481 — "Record payment" is the likelier of the two, so it still leads
+   the pair; it just no longer leads it by being a solid green block repeated
+   once per waiting row. Twenty-two filled buttons down one screen is twenty-two
+   things claiming to be the most important, which leaves nothing emphasised and
+   spends the brand colour on ordinary controls. An outline keeps the ranking
+   and gives the hero card its green back. */
 .tb-actions .tb-pay {
-  background: var(--hm-green-deep);
-  color: #fff;
+  background: #fff;
+  color: var(--hm-green-deep);
+  box-shadow: inset 0 0 0 1.5px var(--hm-green-deep);
 }
 
 /* ---------- booked for today ---------- */
 .tb-booked .hm-card-head h2 small {
   font-weight: 500;
-  font-size: 12.5px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
 }
 @media (max-width: 860px) {
@@ -230,13 +237,13 @@
   }
 }
 .tb-row-error {
-  font-size: 12.5px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #b93232;
 }
 .tb-time {
   min-width: 64px;
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-ink);
   white-space: nowrap;
@@ -256,7 +263,7 @@
 }
 .tb-new-note {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 .tb-new-actions {
@@ -275,7 +282,7 @@
   color: var(--hm-green);
 }
 .tb-issued-no {
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--hm-ink);

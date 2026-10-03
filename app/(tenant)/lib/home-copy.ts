@@ -227,7 +227,21 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     waitingTab: (n: number) => S(`Waiting (${n})`, `इंतज़ार (${n})`),
     doneTodayTab: (n: number) => S(`Done today (${n})`, `आज पूरे (${n})`),
     waitingQueue: S('Waiting queue', 'इंतज़ार की लाइन'),
-    waitingMin: (min: number) => S(`Waiting ${min} min`, `${min} मिनट इंतज़ार`),
+    /*
+     * Jira GRW-481 — a raw minute count stops being a duration somewhere around
+     * the hour mark. "Waiting 618 min" is ten and a half hours, and nobody reads
+     * it as that; they read it as a number that is large. Past 60 minutes this
+     * says hours and minutes, and past four hours the caller stops asking for a
+     * duration at all and shows the time the client actually walked in, which is
+     * the thing a receptionist can act on.
+     */
+    waitingMin: (min: number) => {
+      if (min < 60) return S(`Waiting ${min} min`, `${min} मिनट इंतज़ार`);
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return m === 0 ? S(`Waiting ${h}h`, `${h} घंटे इंतज़ार`) : S(`Waiting ${h}h ${m}m`, `${h} घंटे ${m} मिनट इंतज़ार`);
+    },
+    waitingSince: (time: string) => S(`Waiting since ${time}`, `${time} से इंतज़ार`),
     waitingOver10: S('Waiting over 10 min', '10 मिनट से ज़्यादा इंतज़ार'),
     giveToStaff: S('Give to staff', 'स्टाफ़ को दें'),
     giveTitle: (name: string) => S(`Give ${name} to…`, `${name} को किसे दें…`),

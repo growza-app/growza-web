@@ -20,17 +20,17 @@
   gap: var(--sp-2);
   color: var(--accent-deep);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .rp-headline-value {
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 800;
   margin-top: var(--sp-2);
   color: var(--accent-deep);
   line-height: 1.1;
 }
 
-.rp-headline-hint { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.rp-headline-hint { margin: 2px 0 0; color: var(--muted); font-size: 0.8125rem; }
 
 .rp-retention-panel .rp-figure-pair { border-top: none; padding-top: 0; margin-top: 0; }

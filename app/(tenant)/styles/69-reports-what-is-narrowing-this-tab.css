@@ -6,7 +6,7 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: var(--sp-3);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
 }
 
 .rp-applied-label { color: var(--muted); font-weight: 600; }
@@ -21,7 +21,7 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
   padding: 5px 12px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -30,7 +30,7 @@
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   text-decoration: underline;
   cursor: pointer;
@@ -61,7 +61,7 @@
   align-items: center;
   gap: 4px;
   margin-top: 10px;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 

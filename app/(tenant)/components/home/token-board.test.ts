@@ -324,3 +324,37 @@ describe('the board does not grow with the day', () => {
     expect(fit).toMatch(/\.hm-fit \.tb-rows \{\s*max-height:/);
   });
 });
+
+/**
+ * Jira GRW-481 — how long someone has been waiting, in the form that helps.
+ *
+ * The board printed raw minutes at every scale, so a client who walked in before
+ * lunch read as "Waiting 618 min". That is a number, not a duration: nobody
+ * converts it in their head, and the one thing the desk could act on — when she
+ * actually arrived — was the thing the row did not say.
+ */
+describe('a wait reads as a wait', () => {
+  const waitingSince = (minutes: number) =>
+    boardSays([row({ id: 'w', tokenNo: 9, customerName: 'Priya', addedAt: new Date(Date.parse(NOW) - minutes * 60_000).toISOString() })]);
+
+  it('still counts minutes under the hour', () => {
+    expect(waitingSince(45)).toContain('Waiting 45 min');
+  });
+
+  it('says hours and minutes past the hour', () => {
+    expect(waitingSince(90)).toContain('Waiting 1h 30m');
+    expect(waitingSince(120)).toContain('Waiting 2h');
+  });
+
+  it('stops counting past four hours and says when she walked in', () => {
+    const said = waitingSince(618);
+    expect(said).not.toContain('618');
+    expect(said).toContain('Waiting since');
+    // NOW is 06:00 UTC = 11:30 IST; 618 minutes earlier is 01:12 IST.
+    expect(said).toContain('1:12 am');
+  });
+
+  it('keeps the Hindi in step', () => {
+    expect(boardSays([row({ id: 'w', tokenNo: 9, addedAt: new Date(Date.parse(NOW) - 90 * 60_000).toISOString() })], { provider: 'Stylist' }, 'hi')).toContain('1 घंटे 30 मिनट इंतज़ार');
+  });
+});

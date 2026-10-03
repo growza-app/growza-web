@@ -22,7 +22,7 @@
   border: 0;
   background: transparent;
   color: var(--accent-deep);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 /* A 26px line, a 44px target: the tap area reaches past the text without moving anything. */

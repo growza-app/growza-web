@@ -21,11 +21,11 @@
 .edit-header-avatar {
   width: 48px;
   height: 48px;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .edit-crumb {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -41,7 +41,7 @@
 
 .edit-title {
   margin: 2px 0 0;
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -95,7 +95,7 @@
 }
 
 .edit-card-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   margin-bottom: var(--sp-4);
 }
@@ -105,7 +105,7 @@
 }
 
 .edit-count {
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .edit-grid {
@@ -121,7 +121,7 @@
 }
 
 .field-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #3d4a43;
   margin-bottom: 7px;
@@ -181,7 +181,7 @@
   border-radius: 999px;
   background: var(--slate-soft);
   font: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 550;
   color: #3d4a43;
   cursor: pointer;
@@ -204,7 +204,7 @@
 }
 
 .edit-side-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -226,12 +226,12 @@
 }
 
 .edit-stat span {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #5c6b63;
 }
 
 .edit-stat strong {
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-weight: 700;
 }
 
@@ -251,13 +251,13 @@
 .edit-upcoming-time {
   width: 62px;
   flex: none;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--accent-deep);
 }
 
 .edit-upcoming-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #3d4a43;
 }
 
@@ -286,7 +286,7 @@
   }
 
   .edit-title {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 
   /* Save moves to the pinned bar below, so the header keeps only the
@@ -344,7 +344,7 @@
     width: 100%;
     height: 50px;
     justify-content: center;
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   /* The pinned save bar replaces the tab bar's job here, and the page body

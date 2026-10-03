@@ -101,7 +101,12 @@ export function BottomNav({
         ) : (
           item.icon
         )}
-        {item.label}
+        {/* Jira GRW-481 — the label is its own element so it can give way. Five fixed
+            slots across a phone, and the label grows with the reader's text size; as a
+            bare text node it had nothing CSS could shorten, so at a large size the five
+            labels ran into one another and the last left the screen. The accessible
+            name above is never truncated. */}
+        <span className="bn-label">{item.label}</span>
         <span className="bn-mark" />
       </a>
     );

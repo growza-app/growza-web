@@ -29,14 +29,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 17px 20px;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
 
 .card-head .link {
   color: var(--accent-deep);
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 600;
   text-decoration: none;
 }

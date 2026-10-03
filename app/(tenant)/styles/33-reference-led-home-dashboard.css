@@ -27,8 +27,8 @@
   background: transparent;
 }
 
-.home-greeting { font-size: 28px; }
-.home-sub { font-size: 15px; margin-top: 2px; }
+.home-greeting { font-size: 1.75rem; }
+.home-sub { font-size: 0.9375rem; margin-top: 2px; }
 
 /* Jira GRW-30 — `.home-search` / `.desktop-home-search` / `.mobile-home-search`
    lived here: a 302px pill and a 48px icon button, one of them always hidden,
@@ -84,12 +84,12 @@
 /* Kept, but demoted: a smaller, quieter row below the style header rather
    than the primary control it used to be — see the comment at its JSX. */
 .range-toggle-secondary { background: transparent; padding: 0; margin: 0; gap: 4px; }
-.range-toggle-secondary button { color: var(--muted); font-size: 12.5px; font-weight: 600; padding: 4px 10px; }
+.range-toggle-secondary button { color: var(--muted); font-size: 0.875rem; font-weight: 600; padding: 4px 10px; }
 .range-toggle-secondary button.active { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
 
 .home-main .summary-progress-layout { display: flex; align-items: stretch; gap: 16px; }
 .summary-progress-hero { flex: 0 0 200px; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #0b3d2d, #104a37); color: #fff; display: flex; flex-direction: column; justify-content: center; }
-.summary-progress-line { font-size: 15px; font-weight: 600; }
+.summary-progress-line { font-size: 0.9375rem; font-weight: 600; }
 .summary-progress-hero .summary-bar { margin-top: 14px; background: rgba(255,255,255,.20); }
 .summary-progress-hero .summary-bar span { background: #20c568; }
 .summary-metrics { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; min-width: 0; }
@@ -102,8 +102,8 @@
 .summary-metric:first-child { border-left: 0; }
 .summary-metric-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; margin-bottom: 10px; }
 .summary-metric-icon svg { width: 22px; height: 22px; }
-.summary-metric strong { font-size: 24px; line-height: 1.15; letter-spacing: -.03em; white-space: nowrap; }
-.summary-metric > span:not(.summary-metric-icon) { font-size: 12.5px; margin-top: 4px; white-space: nowrap; }
+.summary-metric strong { font-size: 1.5rem; line-height: 1.15; letter-spacing: -.03em; white-space: nowrap; }
+.summary-metric > span:not(.summary-metric-icon) { font-size: 0.875rem; margin-top: 4px; white-space: nowrap; }
 .metric-bookings .summary-metric-icon { background: #dcf8e7; color: #16a34a; }
 .metric-customers .summary-metric-icon { background: #fff0e0; color: #f97316; }
 .metric-revenue .summary-metric-icon { background: #e3f8eb; color: #159447; }
@@ -114,14 +114,14 @@
    in the main column instead. Hidden here; shown in the mobile media query. */
 .mobile-only-section { display: none; }
 .home-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
-.home-section-head h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
-.home-section-head a { color: var(--accent-deep); font-size: 13px; font-weight: 650; text-decoration: none; }
+.home-section-head h2 { margin: 0; font-size: 1.0625rem; letter-spacing: -.02em; }
+.home-section-head a { color: var(--accent-deep); font-size: 0.9375rem; font-weight: 650; text-decoration: none; }
 .attention-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.attention-card { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 12px 34px 12px 12px; border: 1px solid; border-radius: 12px; color: var(--text); text-decoration: none; font-size: 12.5px; }
+.attention-card { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 12px 34px 12px 12px; border: 1px solid; border-radius: 12px; color: var(--text); text-decoration: none; font-size: 0.875rem; }
 .attention-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .attention-icon { width: 24px; height: 24px; flex-shrink: 0; border-radius: 7px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.65); }
 .attention-icon svg { width: 13px; height: 13px; }
-.attention-card .attention-value { font-size: 19px; font-weight: 700; line-height: 1; }
+.attention-card .attention-value { font-size: 1.1875rem; font-weight: 700; line-height: 1; }
 .attention-card > svg { position: absolute; right: 12px; top: 50%; width: 16px; transform: translateY(-50%); }
 .attention-card.amber { background: #fffaf1; border-color: #f7e7cf; color: #ae6e0d; }
 .attention-card.rose { background: #fff7f7; border-color: #f7dddd; color: #e35060; }
@@ -132,13 +132,13 @@
 .home-upcoming .sched-card { min-height: 92px; padding: 16px 15px; border: 1px solid var(--border); background: var(--surface); border-radius: 15px; box-shadow: 0 2px 8px rgba(18,38,29,.02); }
 .home-upcoming .sched-group { padding: 0; }
 .home-upcoming .sched-time { width: 104px; padding-top: 18px; }
-.home-upcoming .sched-time .t { font-size: 16px; color: var(--text); }
-.home-upcoming .sched-time .n { color: var(--accent-deep); font-size: 13px; margin-top: 5px; }
+.home-upcoming .sched-time .t { font-size: 1rem; color: var(--text); }
+.home-upcoming .sched-time .n { color: var(--accent-deep); font-size: 0.9375rem; margin-top: 5px; }
 .home-upcoming .sched-body { padding-bottom: 10px; padding-left: 13px; }
 .home-upcoming .sched-dot { width: 10px; height: 10px; }
-.home-upcoming .avatar { width: 52px; height: 52px; font-size: 18px; }
-.home-upcoming .sched-name { font-size: 15px; }
-.home-upcoming .sched-meta { font-size: 13px; }
+.home-upcoming .avatar { width: 52px; height: 52px; font-size: 1.125rem; }
+.home-upcoming .sched-name { font-size: 0.9375rem; }
+.home-upcoming .sched-meta { font-size: 0.9375rem; }
 .home-upcoming .call { width: 42px; height: 42px; background: var(--surface); border: 1px solid var(--border); }
 /* .call-strong (the very next booking's highlighted call button) wants a
    solid green circle + white icon, but the equal-specificity rule above
@@ -152,10 +152,10 @@
    rail card now shares that theme instead of plain white, so the rail reads
    as one family rather than the summary card standing alone. */
 .rail-card { padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); }
-.rail-card h3 { margin: 0 0 12px; font-size: 15px; }
+.rail-card h3 { margin: 0 0 12px; font-size: 0.9375rem; }
 .rail-actions { display: flex; flex-direction: column; gap: 10px; }
 .rail-actions h3 { margin-bottom: 10px; }
-.quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 11px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 14px; font-weight: 650; }
+.quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 11px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 0.875rem; font-weight: 650; }
 .quick-action svg { width: 18px; height: 18px; color: var(--text); flex-shrink: 0; }
 .quick-action:hover { filter: brightness(0.97); }
 /* The one prominent, filled CTA — every other action is a plain light row. */
@@ -167,28 +167,28 @@
 .rail-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .rail-head-row h3 { margin: 0; }
 .capacity-mode-toggle { display: flex; gap: 3px; padding: 2px; border-radius: 8px; background: var(--page-bg); flex-shrink: 0; }
-.capacity-mode-toggle button { border: none; background: transparent; color: var(--muted); font-size: 11.5px; font-weight: 650; padding: 4px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.capacity-mode-toggle button { border: none; background: transparent; color: var(--muted); font-size: 0.8125rem; font-weight: 650; padding: 4px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
 .capacity-mode-toggle button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(18, 38, 29, 0.08); }
 .capacity-row + .capacity-row { margin-top: 14px; }
-.capacity-row-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; font-size: 13.5px; }
+.capacity-row-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; font-size: 0.9375rem; }
 .capacity-name { font-weight: 650; }
-.capacity-status { color: var(--muted); font-size: 12px; }
+.capacity-status { color: var(--muted); font-size: 0.875rem; }
 .capacity-bar { height: 7px; border-radius: 4px; background: var(--surface); overflow: hidden; }
 .capacity-bar span { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
-.rail-see-more { display: block; margin-top: 14px; color: var(--accent-deep); font-size: 13px; font-weight: 650; text-decoration: none; }
+.rail-see-more { display: block; margin-top: 14px; color: var(--accent-deep); font-size: 0.9375rem; font-weight: 650; text-decoration: none; }
 
 /* ---- bookings-today chart ---- */
-.rail-trend { font-size: 12px; font-weight: 650; padding: 3px 8px; border-radius: 999px; }
+.rail-trend { font-size: 0.875rem; font-weight: 650; padding: 3px 8px; border-radius: 999px; }
 .rail-trend.up { background: var(--accent-soft); color: var(--accent-deep); }
 .rail-trend.down { background: #fde3e3; color: #c0362c; }
 .rail-chart-fill { fill: #7bd39c; fill-opacity: 0.18; stroke: none; }
 .rail-chart-line { fill: none; stroke: #6ec886; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .rail-chart-dot { fill: var(--surface); stroke: #6ec886; stroke-width: 2; }
-.rail-chart-value { font-size: 10.5px; font-weight: 700; fill: var(--text); }
-.rail-chart-label { font-size: 9.5px; fill: var(--muted); }
-.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 21px; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 11px; }.rail-insight p { margin: 2px 0 0; font-size: 11.5px; }.rail-insight svg { width: 17px; color: var(--accent); }
+.rail-chart-value { font-size: 0.75rem; font-weight: 700; fill: var(--text); }
+.rail-chart-label { font-size: 0.75rem; fill: var(--muted); }
+.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 1.3125rem; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 0.8125rem; }.rail-insight p { margin: 2px 0 0; font-size: 0.8125rem; }.rail-insight svg { width: 17px; color: var(--accent); }
 
-@media (max-width: 1180px) { .home-layout { grid-template-columns: minmax(0, 1fr) 305px; }.summary-metric { padding: 0 12px; }.summary-metric strong { font-size: 20px; }.summary-metric > span:not(.summary-metric-icon) { white-space: normal; } }
+@media (max-width: 1180px) { .home-layout { grid-template-columns: minmax(0, 1fr) 305px; }.summary-metric { padding: 0 12px; }.summary-metric strong { font-size: 1.25rem; }.summary-metric > span:not(.summary-metric-icon) { white-space: normal; } }
 /*
  * Jira GRW-217 — the ceiling is 1180, matching the rule above it.
  *
@@ -219,20 +219,20 @@
 @media (max-width: 860px) {
   .home-page { padding-top: 4px; }
   .home-head { padding: 14px 20px 10px; align-items: flex-start; }
-  .home-greeting { font-size: 22px; line-height: 1.15; }
-  .home-sub { font-size: 13px; margin-top: 2px; }
+  .home-greeting { font-size: 1.375rem; line-height: 1.15; }
+  .home-sub { font-size: 0.9375rem; margin-top: 2px; }
   /* The header wraps to two lines on a phone (the greeting is long), so the
      controls sit below the text and need the 5px that puts their optical
      centres on the same line as each other. Sizes come from
      76-header-controls.css; only the offset is Home's. */
   .home-head .hdr-search, .home-head .avatar-lg, .home-head .notif-wrap { margin-top: 5px; }
-  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 12.5px; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 15px; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 10px; white-space: normal; line-height: 1.2; }
+  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 0.875rem; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 0.9375rem; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 0.75rem; white-space: normal; line-height: 1.2; }
   /* repeat(2, 1fr), not 3: three columns in .home-main's full mobile width
      (no rail to share it with here) measured at 81-108px per card at 320px —
      the narrowest one clipped under the floating "+" button and its label
      wrapped to a single truncated word. Two stays comfortable (138px+ per
      card) all the way down to 320px, so a third tier was not needed. */
-  .attention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 11.5px; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 18px; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 20px; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 10.5px; padding: 3px 8px; min-width: 78px; }
+  .attention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 0.8125rem; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 1.125rem; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 1.25rem; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 0.75rem; padding: 3px 8px; min-width: 78px; }
   .mobile-only-section { display: block; }
   /* .home-rail's own (unconditional, later-in-file) display:flex would
      otherwise beat the earlier .desktop-only{display:none} rule at equal

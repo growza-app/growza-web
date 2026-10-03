@@ -4,7 +4,7 @@
   display: inline-block;
   padding: 5px 13px;
   border-radius: 999px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 630;
   white-space: nowrap;
 }
@@ -12,6 +12,14 @@
 .chip-completed {
   background: var(--slate-soft);
   color: #5b6660;
+}
+
+/* Jira GRW-482 — something on this row needs the owner to do something about it. Same amber pair
+   as .chip-reminder, which GRW-478 measured at 6.3:1; named for what it means rather than borrowed
+   from a chip about reminders. */
+.chip-attention {
+  background: var(--amber-soft);
+  color: #92400e;
 }
 
 .chip-confirmed {

@@ -953,7 +953,8 @@
       "cancel": "रद्द करें"
     },
     "hours": "{count, plural, one {# घंटा} other {# घंटे}}",
-    "hoursMinutes": "{hours, plural, one {# घंटा} other {# घंटे}} {minutes} मिनट"
+    "hoursMinutes": "{hours, plural, one {# घंटा} other {# घंटे}} {minutes} मिनट",
+    "nobodyDoesIt": "कोई {provider} नहीं"
   },
   "staff": {
     "addLabel": "{label} जोड़ें",

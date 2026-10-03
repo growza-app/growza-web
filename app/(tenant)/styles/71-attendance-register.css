@@ -37,14 +37,14 @@
 
 .att-title {
   margin: 0 0 var(--sp-1);
-  font-size: 27px;
+  font-size: 1.6875rem;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
 .att-sub {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 
@@ -65,7 +65,7 @@
   background: var(--slate-soft);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
 }
@@ -82,13 +82,13 @@
 }
 
 .att-daynav-date {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .att-daynav-sub {
-  font-size: 11px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -97,7 +97,7 @@
   padding: 0 14px;
   background: var(--accent-deep) !important;
   color: #fff !important;
-  font-size: 13px !important;
+  font-size: 0.8125rem !important;
 }
 
 /* ---------- summary tiles ---------- */
@@ -123,13 +123,13 @@
   align-items: center;
   gap: var(--sp-2);
   margin-bottom: 10px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   color: var(--muted);
 }
 
 .att-tile-count {
-  font-size: 30px;
+  font-size: 1.875rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -179,7 +179,7 @@
   outline: none;
   background: transparent;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text);
   height: 100%;
 }
@@ -195,7 +195,7 @@
   border-radius: 11px;
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -218,7 +218,7 @@
 }
 
 .att-caret {
-  font-size: 11px;
+  font-size: 0.75rem;
 }
 
 .att-markall {
@@ -233,7 +233,7 @@
   border-radius: 11px;
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -280,7 +280,7 @@
   padding: 9px 10px;
   cursor: pointer;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -353,7 +353,7 @@
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 0.875rem;
   flex: none;
 }
 
@@ -365,12 +365,12 @@
 }
 
 .att-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 
 .att-role {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -388,7 +388,7 @@
 }
 
 .att-field-label {
-  font-size: 10.5px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -406,7 +406,7 @@
   border-radius: 9px;
   padding: 8px 9px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   background: #fbfcfb;
   color: var(--text);
@@ -420,7 +420,7 @@
   border-radius: 8px;
   padding: 8px;
   font: inherit;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-deep);
   cursor: pointer;
@@ -437,7 +437,7 @@
 }
 
 .att-hours {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   padding: 8px 0;
   font-variant-numeric: tabular-nums;
@@ -456,7 +456,7 @@
   padding: 8px 11px;
   cursor: pointer;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 700;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -486,7 +486,7 @@
   background: var(--surface);
   border-radius: 9px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   align-self: flex-end;
 }
@@ -511,14 +511,14 @@
   border-radius: 9px;
   padding: 8px 10px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   background: #fbfcfb;
   color: var(--text);
 }
 
 .att-note-text,
 .att-note-hint {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -528,13 +528,13 @@
 }
 
 .att-empty-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text);
 }
 
 .att-empty-sub {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   margin-top: var(--sp-1);
 }
@@ -549,7 +549,7 @@
   justify-content: space-between;
   gap: 10px;
   margin-top: 14px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -599,16 +599,16 @@
   }
   .att-tile-head {
     margin-bottom: 4px;
-    font-size: 11.5px;
+    font-size: 0.75rem;
   }
   .att-tile-count {
-    font-size: 22px;
+    font-size: 1.375rem;
   }
 }
 
 @media (max-width: 420px) {
   .att-title {
-    font-size: 22px;
+    font-size: 1.375rem;
   }
   .att-timeset input {
     width: 96px;
@@ -659,11 +659,11 @@
   flex-wrap: wrap;
 }
 .ra-role-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 .ra-role-sub {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 .ra-tabs {
@@ -678,7 +678,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 13px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   cursor: pointer;
   background: var(--surface);
@@ -691,7 +691,7 @@
 /* Named on the chip, not buried in help text: an owner ticking "Overview"
    should know it carries the day's takings before they tick it. */
 .ra-money {
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--amber);
 }
@@ -714,7 +714,7 @@
 .am-back {
   display: inline-block;
   margin-bottom: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
   text-decoration: none;
@@ -756,7 +756,7 @@
 
 .am-dow-head {
   text-align: center;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -780,7 +780,7 @@
 }
 
 .am-cell-day {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -789,7 +789,7 @@
 /* The letter beside the colour. Not decoration — it is what makes the grid
    readable to somebody who cannot separate the green from the red. */
 .am-cell-mark {
-  font-size: 10px;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
   opacity: 0.8;
@@ -832,7 +832,7 @@
   margin-top: var(--sp-4);
   padding-top: var(--sp-3);
   border-top: 1px solid var(--border);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -860,7 +860,7 @@
   justify-content: space-between;
   gap: var(--sp-3);
   margin-bottom: 10px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .am-detail-body {
@@ -871,26 +871,26 @@
 }
 
 .am-detail-shift {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
 .am-hours {
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .am-note {
   margin: 10px 0 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
 .am-back {
   display: inline-block;
   margin-bottom: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
   text-decoration: none;
@@ -929,14 +929,14 @@
     border-radius: 8px;
   }
   .am-cell-day {
-    font-size: 12.5px;
+    font-size: 0.78125rem;
   }
   .am-cell-mark {
-    font-size: 9px;
+    font-size: 0.75rem;
   }
   .am-legend {
     gap: 6px 12px;
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 }
 
@@ -981,25 +981,25 @@
 }
 
 .acct-role {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 
 .acct-sub {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
   margin-top: 2px;
 }
 
 .acct-phone {
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .acct-biz {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -1016,7 +1016,7 @@
   border-radius: 9px;
   padding: 10px 10px;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -1034,7 +1034,7 @@
 }
 
 .acct-form label {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   margin-top: 6px;
@@ -1043,7 +1043,7 @@
 .acct-form input {
   padding: 9px 10px;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: #fbfcfb;
@@ -1053,7 +1053,7 @@
 
 .acct-hint {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -1065,7 +1065,7 @@
 
 .acct-done {
   margin: 0;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -1104,7 +1104,7 @@
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -1196,7 +1196,7 @@
     min-height: 48px;
     padding: 0 10px;
     border-radius: 12px;
-    font-size: 15.5px;
+    font-size: 0.96875rem;
   }
 
   .acct-item svg {

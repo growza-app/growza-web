@@ -141,9 +141,11 @@ describe('the accessibility stylesheet', () => {
 describe('one header, one ink, one dark card (Home and every other screen on a phone)', () => {
   const header = read(join(STYLES, '91-one-header.css'));
 
-  it('every screen\'s title is Home\'s: 21px, weight 800, on the page, no bar and no rule', () => {
+  it('every screen\'s title is Home\'s: 1.3125rem (21px at the default root), weight 800, on the page, no bar and no rule', () => {
     expect(header).toMatch(/@media \(max-width: 860px\)[\s\S]*\.topbar\s*\{\s*background:\s*transparent;\s*border-bottom:\s*0;/);
-    expect(header).toMatch(/\.topbar h1,\s*\.rp-title-row h1\s*\{[^}]*font-size:\s*21px;[^}]*font-weight:\s*800;/);
+    // Jira GRW-481 — the size is the same 21px it always was; it is written in rem
+    // so it grows with the reader's text size instead of ignoring it.
+    expect(header).toMatch(/\.topbar h1,\s*\.rp-title-row h1\s*\{[^}]*font-size:\s*1\.3125rem;[^}]*font-weight:\s*800;/);
   });
 
   it('a subtitle stays on one line, as Home\'s date does', () => {
@@ -185,5 +187,51 @@ describe('one vertical rhythm on a phone', () => {
   it("the phone's branch line is a 44px target without moving the title (Jira GRW-395)", () => {
     const css = read(join(STYLES, '94-header-branch-picker.css'));
     expect(css).toMatch(/\.hbp-line \.sbp-btn::after\s*\{\s*content:\s*'';\s*position:\s*absolute;\s*inset:\s*-9px -6px;/);
+  });
+});
+
+/**
+ * Jira GRW-481 — the reader's text size reaches the app.
+ *
+ * Every size in this app used to be a px literal measured against a hardcoded
+ * `body { font-size: 15.5px }`, 874 of them, so an owner who turned on Larger
+ * Text saw nothing change on any screen. These pin the two halves of the fix:
+ * the scale is in `rem`, and the root is the reader's own body size.
+ *
+ * The one deliberate exception is a form field at 16px. That is not a
+ * readability floor, it is the guard that stops iOS zooming the whole page when
+ * someone taps into a field; below 16px Safari zooms, and a `rem` that the
+ * reader had shrunk would walk straight back into it.
+ */
+describe('text grows with the reader', () => {
+  // Comments quote the old px values on purpose, so they are not code to check.
+  const sheets = readdirSync(STYLES)
+    .filter((n) => n.endsWith('.css'))
+    .map((n) => ({ name: n, css: read(join(STYLES, n)).replace(/\/\*[\s\S]*?\*\//g, '') }));
+
+  it('makes a rem the reader\'s body size, not ours', () => {
+    const base = read(join(STYLES, '00-base.css'));
+    expect(base).toMatch(/html\s*\{\s*font:\s*-apple-system-body;\s*\}/);
+    // Nothing may pin the root again afterwards — a font-size on html or body is
+    // what broke this in the first place, and in `rem` it would also be circular.
+    expect(base).not.toMatch(/html,\s*\nbody\s*\{[^}]*font-size:/);
+  });
+
+  it('writes every size in rem, except the field guard against iOS zoom', () => {
+    const stray: string[] = [];
+    for (const { name, css } of sheets) {
+      for (const m of css.matchAll(/font-size:\s*([0-9.]+)px/g)) {
+        if (m[1] !== '16') stray.push(`${name}: ${m[0]}`);
+      }
+    }
+    expect(stray).toEqual([]);
+  });
+
+  it('keeps the 12px floor as a floor, in the new unit', () => {
+    for (const { name, css } of sheets) {
+      for (const m of css.matchAll(/font-size:\s*([0-9.]+)rem/g)) {
+        expect(Number(m[1]), `${name}: ${m[0]}`).toBeGreaterThanOrEqual(0.75);
+      }
+    }
   });
 });

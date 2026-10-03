@@ -10,13 +10,13 @@
 }
 
 .home-greeting {
-  font-size: 21px;
+  font-size: 1.3125rem;
   font-weight: 660;
   letter-spacing: -0.02em;
 }
 
 .home-sub {
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   color: var(--muted);
 }
 

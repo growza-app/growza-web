@@ -42,7 +42,7 @@
 .field-hint {
   display: block;
   margin-top: 5px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -50,20 +50,20 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--muted);
   margin-bottom: 7px;
 }
 
 .field-counter {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted);
 }
 
 .wizard-section-title {
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   font-weight: 700;
   margin-bottom: 12px;
 }
@@ -73,7 +73,7 @@
    fixing without losing your place on the page. */
 .field-error {
   margin-top: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 550;
   color: var(--amber);
 }
@@ -100,7 +100,7 @@ textarea {
   border-radius: var(--radius-sm);
   background: var(--surface);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--text);
   min-width: 180px;
   /* Tap targets stay comfortable on a phone-sized PWA window without over-zooming Safari (16px+ avoids its auto-zoom-on-focus). */
@@ -180,7 +180,7 @@ select:focus-visible {
 
 .slot {
   padding: 11px 18px;
-  font-size: 16px;
+  font-size: 1rem;
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: var(--radius-sm);
@@ -192,7 +192,7 @@ select:focus-visible {
 .slot small {
   display: block;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   margin-top: 2px;
 }
@@ -224,7 +224,7 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--muted);
 }
 
@@ -248,7 +248,7 @@ select:focus-visible {
 }
 
 .section-label {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 650;
   color: var(--text);
   margin-top: 20px;

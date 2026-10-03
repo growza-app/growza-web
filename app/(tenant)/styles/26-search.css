@@ -48,7 +48,7 @@
   border: none;
   outline: none;
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -94,7 +94,7 @@
 }
 
 .sec-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 620;
   color: var(--muted);
   letter-spacing: 0.05em;
@@ -115,7 +115,7 @@
 }
 
 .ref {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
