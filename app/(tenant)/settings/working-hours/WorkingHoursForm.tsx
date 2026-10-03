@@ -28,7 +28,9 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
   })();
 
   const saveGrace = async () => {
-    if (!Number.isInteger(graceNum) || graceNum < 0 || graceNum > 120) {
+    // Jira GRW-474 — an emptied box is `Number('')`, which is 0 and passed; it saved "no grace at all" for a field
+    // the owner had only cleared. Empty is refused like any other value out of range.
+    if (grace.trim() === '' || !Number.isInteger(graceNum) || graceNum < 0 || graceNum > 120) {
       setGraceError(t('errors.graceRange'));
       return;
     }

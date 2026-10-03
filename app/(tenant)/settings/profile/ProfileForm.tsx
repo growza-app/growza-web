@@ -103,7 +103,7 @@ export function ProfileForm({
      * which turned it into "no phone": the stored number was erased and the screen said "saved". Empty still means
      * "no phone"; anything else must be a whole number.
      */
-    const phoneProblem = !businessOnly && f.phone.trim() ? checkPhone(f.phone) : null;
+    const phoneProblem = f.phone.trim() ? checkPhone(f.phone) : null;
     if (phoneProblem) {
       setError(phoneProblem);
       return;
@@ -145,7 +145,9 @@ export function ProfileForm({
       const { locationName, addressLine1, addressCity, ...business } = f;
       const updated = await api.updateProfile(
         businessOnly
-          ? { name: f.name, timezone: f.timezone }
+          ? // Jira GRW-474 — and the business's own number: the one WhatsApp number a multi-branch salon has, which
+            // Settings › Branches shows. It could not be changed anywhere once a second branch existed.
+            { name: f.name, timezone: f.timezone, phone: toStoredPhone(f.phone) ?? '' }
           : { ...business, phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
       );
       setSettings(updated);
@@ -369,7 +371,8 @@ export function ProfileForm({
         </section>
       ) : null}
 
-      {businessOnly ? null : (
+      {/* Jira GRW-474 — shown for a multi-branch business too: its number is the business's WhatsApp number. */}
+      {(
       <section className="card bp-card">
         <div className="bp-card-head">
           <span className="bp-card-icon">

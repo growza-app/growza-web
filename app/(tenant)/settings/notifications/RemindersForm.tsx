@@ -3,13 +3,13 @@
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { api, type SettingsSummary } from '../../lib/api';
+import { api, ApiError, type SettingsSummary } from '../../lib/api';
 
 interface ReminderRow {
   key: string;
   template: string;
-  /** Names the reminder in `settingsReminders` — `first` / `second`. */
-  nameKey: 'first' | 'second';
+  /** Names the reminder in `settingsReminders` — `first` / `second`, or `other` for one this screen did not create. */
+  nameKey: 'first' | 'second' | 'other';
   enabled: boolean;
   hours: number;
 }
@@ -39,8 +39,13 @@ export function RemindersForm({
 }) {
   const t = useTranslations('settingsReminders');
   const router = useRouter();
-  const [rows, setRows] = useState<ReminderRow[]>(() =>
-    REMINDER_DEFS.map((def) => {
+  /*
+   * Jira GRW-474 — every saved rule is a row, not only the two this screen knows. It was built from two hard-coded
+   * keys, so a business on another vertical's defaults (a clinic's 48-hour reminder) saw it as "off", and pressing
+   * Save deleted it. The two known reminders come first; anything else stored keeps its own key and message.
+   */
+  const [rows, setRows] = useState<ReminderRow[]>(() => [
+    ...REMINDER_DEFS.map((def) => {
       const existing = initial.reminderRules.find((r) => r.ruleKey === def.key);
       return {
         key: def.key,
@@ -50,7 +55,16 @@ export function RemindersForm({
         hours: existing ? Math.round(Math.abs(existing.offsetMin) / 60) : def.defaultHours,
       };
     }),
-  );
+    ...initial.reminderRules
+      .filter((r) => !REMINDER_DEFS.some((def) => def.key === r.ruleKey))
+      .map((r) => ({
+        key: r.ruleKey,
+        template: r.template,
+        nameKey: 'other' as const,
+        enabled: true,
+        hours: Math.round(Math.abs(r.offsetMin) / 60),
+      })),
+  ]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -60,6 +74,12 @@ export function RemindersForm({
   };
 
   const save = async () => {
+    // Jira GRW-474 — an emptied box was `Number('')`, 0: a reminder at the moment of the visit. A whole number of
+    // hours, 1 to 168 (a week), or the save does not go.
+    if (rows.some((r) => r.enabled && (!Number.isInteger(r.hours) || r.hours < 1 || r.hours > 168))) {
+      setError(t('errors.hoursRange'));
+      return;
+    }
     setBusy(true);
     setError(null);
     setSaved(false);
@@ -71,8 +91,9 @@ export function RemindersForm({
       setSaved(true);
       // Jira GRW-396 — the note above the form says whether this branch now has its own reminders.
       router.refresh();
-    } catch {
-      setError(t('errors.saveFailed'));
+    } catch (err) {
+      // The server's reason — "your plan allows 1 reminder", "two reminders cannot go out at the same time".
+      setError(err instanceof ApiError && err.status < 500 ? err.message : t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -119,6 +140,8 @@ export function RemindersForm({
                 <input
                   type="number"
                   min={1}
+                  max={168}
+                  step={1}
                   aria-labelledby={`rem-title-${row.key} rem-hint-${row.key}`}
                   style={{ width: 70, minWidth: 70 }}
                   value={row.hours}
