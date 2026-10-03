@@ -30,6 +30,11 @@ function bookingTotalMinor(b: BookingGroup): number {
   return bookingBill(b.appointments).totalMinor;
 }
 
+/** Jira GRW-480 — the API sends no prices to a stylist the owner keeps off the money. */
+function pricesShown(b: BookingGroup): boolean {
+  return b.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null);
+}
+
 /**
  * A staff member's rail/avatar colour, mobile only (GRW-46). Hashed from
  * their name rather than a per-name lookup table — the mock this mirrors
@@ -470,7 +475,8 @@ export function BookingsList({
                 {b.providerNames.join(', ')}
               </div>
             )}
-            <span className="bk-card-price">{formatMoney(String(bookingTotalMinor(b)))}</span>
+            {/* Jira GRW-480 (Q-1) — no price at all when the API withheld it, never a "₹0" that reads as free. */}
+            {pricesShown(b) && <span className="bk-card-price">{formatMoney(String(bookingTotalMinor(b)))}</span>}
           </div>
         </div>
         <div className="bk-card-right">

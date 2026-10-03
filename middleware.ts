@@ -11,8 +11,47 @@ import { NextResponse, type NextRequest } from 'next/server';
 const USER = process.env.TUNNEL_USER;
 const PASS = process.env.TUNNEL_PASS;
 
+/**
+ * Jira GRW-480 (S-10) — the admin portal runs only the scripts it was sent with.
+ *
+ * Its pages reach every business on the platform, so a script injected into one of them is the worst XSS this
+ * product can have. A fresh nonce per request goes into the CSP and the request headers; Next puts it on its own
+ * scripts, and the one inline script (`InstallPromptCapture`) takes it from `x-nonce`. `strict-dynamic` lets those
+ * scripts load the chunks they need and nothing else may run. Styles stay `'unsafe-inline'`: Next and the font
+ * loader inject them, and a style is not a script. Development adds `'unsafe-eval'`, which React's dev tooling needs.
+ */
+function adminCsp(nonce: string): string {
+  const dev = process.env.NODE_ENV !== 'production';
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+}
+
+function pass(req: NextRequest): NextResponse {
+  if (!req.nextUrl.pathname.startsWith('/admin')) return NextResponse.next();
+  const nonce = btoa(crypto.randomUUID());
+  const policy = adminCsp(nonce);
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('Content-Security-Policy', policy);
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set('Content-Security-Policy', policy);
+  return res;
+}
+
 export function middleware(req: NextRequest) {
-  if (!USER || !PASS) return NextResponse.next();
+  if (!USER || !PASS) return pass(req);
 
   const header = req.headers.get('authorization');
   if (header?.startsWith('Basic ')) {
@@ -29,7 +68,7 @@ export function middleware(req: NextRequest) {
     }
     const colon = decoded.indexOf(':');
     if (colon > 0 && sameText(decoded.slice(0, colon), USER) && sameText(decoded.slice(colon + 1), PASS)) {
-      return NextResponse.next();
+      return pass(req);
     }
   }
 

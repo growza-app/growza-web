@@ -248,7 +248,11 @@
     "noProviderSet": "No {label} set",
     "changeProvider": "Change {label}",
     "removeItem": "Remove {title}",
-    "priceOf": "{title} price"
+    "priceOf": "{title} price",
+    "largeTitle": "That is a large amount",
+    "largeBody": "It is far more than this visit usually costs. Check the amount — save it only if it is right.",
+    "largeConfirm": "Yes, save it",
+    "largeCancel": "Check again"
   },
   "settingsHub": {
     "subtitle": "How your business and bookings work.",
@@ -1659,7 +1663,8 @@
     "addStaff": "Add {provider}",
     "noOneDoes": "Nobody here does {service}, so there is no {provider} to put this with.",
     "whoDoesWhat": "Who does what",
-    "addOrCopyServices": "Add or copy {services}"
+    "addOrCopyServices": "Add or copy {services}",
+    "amountNotSaved": "Not saved. Check the amount, then try again."
   },
   "moveBooking": {
     "title": "Move this booking",

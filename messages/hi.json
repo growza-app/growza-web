@@ -248,7 +248,11 @@
     "noProviderSet": "कोई {label} तय नहीं",
     "changeProvider": "{label} बदलें",
     "removeItem": "{title} हटाएँ",
-    "priceOf": "{title} की कीमत"
+    "priceOf": "{title} की कीमत",
+    "largeTitle": "यह बड़ी रकम है",
+    "largeBody": "यह इस विज़िट की आम कीमत से बहुत ज़्यादा है। रकम जाँच लें — सही हो तभी सेव करें।",
+    "largeConfirm": "हाँ, सेव करें",
+    "largeCancel": "फिर से जाँचें"
   },
   "settingsHub": {
     "subtitle": "आपका बिज़नेस और बुकिंग कैसे काम करते हैं।",
@@ -1659,7 +1663,8 @@
     "addStaff": "{provider} जोड़ें",
     "noOneDoes": "यहाँ {service} कोई नहीं करता, इसलिए इसे किसी {provider} के साथ नहीं रखा जा सकता।",
     "whoDoesWhat": "कौन क्या करता है",
-    "addOrCopyServices": "{services} जोड़ें या कॉपी करें"
+    "addOrCopyServices": "{services} जोड़ें या कॉपी करें",
+    "amountNotSaved": "सेव नहीं हुआ। रकम जाँचकर फिर कोशिश करें।"
   },
   "moveBooking": {
     "title": "यह बुकिंग बदलें",

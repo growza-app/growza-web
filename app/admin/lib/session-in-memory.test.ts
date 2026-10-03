@@ -8,14 +8,14 @@ describe('admin session', () => {
   it('round-trips in memory and never writes sessionStorage', () => {
     const src = readFileSync(resolve(__dirname, 'session.ts'), 'utf8');
     expect(src).not.toMatch(/sessionStorage\.setItem/);
-    writeAdminSession({ token: 't', expiresAt: new Date(Date.now() + 60_000).toISOString() });
-    expect(readAdminSession()?.token).toBe('t');
+    writeAdminSession({ expiresAt: new Date(Date.now() + 60_000).toISOString() });
+    expect(readAdminSession()).not.toBeNull();
     clearAdminSession();
     expect(readAdminSession()).toBeNull();
   });
 
   it('forgets an expired token', () => {
-    writeAdminSession({ token: 't', expiresAt: new Date(Date.now() - 1).toISOString() });
+    writeAdminSession({ expiresAt: new Date(Date.now() - 1).toISOString() });
     expect(readAdminSession()).toBeNull();
   });
 });
