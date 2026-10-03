@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { csvLines } from '../lib/csv';
 import { formatDate, formatPhone, formatRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -295,9 +296,8 @@ export function CustomersClient({
       // cannot disagree about which clients are slipping.
       `${formatRecency(c.lastBookingAt)} (${c.segment})`,
     ]);
-    const csv = [header, ...rows]
-      .map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    // Jira GRW-476 — through the shared writer: a client's own name could be a formula.
+    const csv = csvLines([header, ...rows]);
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url;

@@ -14,27 +14,36 @@ export interface AdminSession {
   expiresAt: string;
 }
 
-export function readAdminSession(): AdminSession | null {
-  if (typeof window === 'undefined') return null;
+/*
+ * Jira GRW-476 — the admin bearer token lives in memory, not in sessionStorage.
+ *
+ * Stored, it was a cross-business admin token any script running on the page could read back at any time, and
+ * outlived the page that minted it. In memory it is gone on reload; the gate then re-mints one from the HttpOnly,
+ * path-scoped refresh cookie (GRW-417), which no script can read. Any value an older build left in
+ * sessionStorage is removed the first time this module runs.
+ */
+let current: AdminSession | null = null;
+if (typeof window !== 'undefined') {
   try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as AdminSession;
-    if (typeof parsed.token !== 'string' || typeof parsed.expiresAt !== 'string') return null;
-    if (new Date(parsed.expiresAt).getTime() <= Date.now()) {
-      clearAdminSession();
-      return null;
-    }
-    return parsed;
+    window.sessionStorage.removeItem(STORAGE_KEY);
   } catch {
-    return null;
+    // Storage blocked — nothing was stored there either.
   }
 }
 
+export function readAdminSession(): AdminSession | null {
+  if (!current) return null;
+  if (new Date(current.expiresAt).getTime() <= Date.now()) {
+    clearAdminSession();
+    return null;
+  }
+  return current;
+}
+
 export function writeAdminSession(session: AdminSession): void {
-  window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  current = session;
 }
 
 export function clearAdminSession(): void {
-  window.sessionStorage.removeItem(STORAGE_KEY);
+  current = null;
 }

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readAdminSession } from './session';
 import { refreshAdminSession } from './refresh';
 
 /**
@@ -46,7 +47,9 @@ describe('refreshAdminSession', () => {
     const outcome = await refreshAdminSession();
 
     expect(outcome).toEqual({ status: 'renewed', token: 'fresh-token' });
-    expect(JSON.parse(store.get('growza-admin-session')!)).toEqual({ token: 'fresh-token', expiresAt });
+    // Jira GRW-476 — held in memory now, not sessionStorage.
+    expect(readAdminSession()).toEqual({ token: 'fresh-token', expiresAt });
+    expect(store.get('growza-admin-session')).toBeUndefined();
   });
 
   // AC-02 — the only answers that may cost an administrator their session.

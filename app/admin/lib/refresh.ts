@@ -11,7 +11,7 @@ import { writeAdminSession } from './session';
  * could read it.
  */
 export type RefreshOutcome =
-  /** A new bearer token is in `sessionStorage` and returned here. */
+  /** A new bearer token is held in memory (session.ts, Jira GRW-476) and returned here. */
   | { status: 'renewed'; token: string }
   /** The server refused the cookie itself. Only a fresh sign-in helps. */
   | { status: 'dead' }
