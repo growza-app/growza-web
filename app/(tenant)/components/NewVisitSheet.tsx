@@ -914,8 +914,6 @@ export function NewVisitSheet({
     () => (providers ?? []).filter((p) => !listBranch || !p.locationId || p.locationId === listBranch),
     [providers, listBranch],
   );
-  const branchChairs = chairs.filter((c) => branchProviders.some((p) => p.id === c.schedulableId));
-  const freeCount = branchChairs.length > 0 ? branchChairs.filter((c) => c.free).length : null;
   /**
    * Jira GRW-456 — a branch with nobody on its team yet.
    *
@@ -928,6 +926,64 @@ export function NewVisitSheet({
    * and the chip only change once there is a real answer.
    */
   const noStaffHere = providers !== null && branchProviders.length === 0;
+
+  /**
+   * Jira GRW-461 — and of those, the ones who can do what was picked.
+   *
+   * The walk-in write chooses the chair with `listProvidersForService` on the FIRST picked service and
+   * refuses when nobody comes back. This sheet never asked, so at a branch where Nisha does hair and the desk
+   * picked Hair Botox it offered Nisha, said "1 free", and the save answered 400.
+   *
+   * The first service only, matching the write exactly: a multi-service walk-in runs on one chair and is
+   * sorted out at checkout, so asking for somebody who can do the whole basket would refuse visits the server
+   * would have accepted — a disagreement in the other direction.
+   *
+   * `null` is "not asked yet or not answered", never "nobody": a failed call must not empty the chair list.
+   */
+  const [skilled, setSkilled] = useState<Set<string> | null>(null);
+  const firstServiceId = picked[0]?.serviceId ?? null;
+
+  useEffect(() => {
+    if (later || !firstServiceId) {
+      setSkilled(null);
+      return;
+    }
+    let cancelled = false;
+    setSkilled(null);
+    void api
+      .providers({ service: firstServiceId, location: listBranch })
+      .then((rows) => {
+        if (!cancelled) setSkilled(new Set(rows.map((p) => p.id)));
+      })
+      .catch(() => {
+        if (!cancelled) setSkilled(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [later, firstServiceId, listBranch]);
+
+  /** The chairs actually on offer: this branch's people, narrowed to the ones who can do it once that is known. */
+  const ableProviders = skilled === null ? branchProviders : branchProviders.filter((p) => skilled.has(p.id));
+
+  /** Jira GRW-461 — staff here, but none of them can do this. Distinct from `noStaffHere`, which is nobody at all. */
+  const noOneCanDoIt = skilled !== null && branchProviders.length > 0 && ableProviders.length === 0;
+
+  // The chairs, and the free count, counted over the people actually on offer (GRW-461 narrowed that set):
+  // "2 free" must never include somebody who cannot do the thing that was picked.
+  const branchChairs = chairs.filter((c) => ableProviders.some((p) => p.id === c.schedulableId));
+  const freeCount = branchChairs.length > 0 ? branchChairs.filter((c) => c.free).length : null;
+
+  /*
+   * Jira GRW-461 — a stylist chosen before the service changed under them.
+   *
+   * Swapping the first service re-asks who can do it, and the person already picked may not be on the new
+   * answer. Leaving them selected would be a pick the save refuses, which is the whole defect.
+   */
+  useEffect(() => {
+    if (!schedulableId || skilled === null) return;
+    if (!skilled.has(schedulableId)) setSchedulableId(null);
+  }, [schedulableId, skilled]);
   /*
    * Record payment can still be settled: it is a sale at the counter, which is what "No stylist" (GRW-293) is
    * for. So that becomes the choice rather than a chip that can only be refused.
@@ -943,7 +999,7 @@ export function NewVisitSheet({
    * is `null` while the chair list is on its way, which is not the same answer as zero; `noStaffHere` above
    * carries the same care about `providers`, which is why it is read rather than re-derived.
    */
-  const noChairFree = freeCount === 0 || noStaffHere;
+  const noChairFree = freeCount === 0 || noStaffHere || noOneCanDoIt;
 
   useEffect(() => {
     if (later || stage.step !== 'details') return;
@@ -2041,7 +2097,7 @@ export function NewVisitSheet({
 
               {/* Jira GRW-403 — not for a token: the work is done, so it is somebody named, or nobody.
                   Jira GRW-456 — and not at a branch with nobody on it: "free" needs somebody to be free. */}
-              {!paysToken && !noStaffHere && (
+              {!paysToken && !noStaffHere && !noOneCanDoIt && (
               <button
                 type="button"
                 aria-pressed={schedulableId === null && !noStylist}
@@ -2060,7 +2116,8 @@ export function NewVisitSheet({
               </button>
               )}
 
-              {branchProviders.map((p) => {
+              {/* Jira GRW-461 — only the people who can do what was picked; the save asks the same question. */}
+              {ableProviders.map((p) => {
                 const chair = later ? null : chairs.find((c) => c.schedulableId === p.id);
                 const picked = schedulableId === p.id;
                 return (
@@ -2137,6 +2194,23 @@ export function NewVisitSheet({
               </div>
             ) : null}
 
+            {/*
+              Jira GRW-461 — the branch has people, and none of them do this one.
+
+              Said here rather than left to the save, which answers "No staff member can perform that
+              service" after the press. The service is named because that is what the desk can act on —
+              change the service, or give this person the skill.
+            */}
+            {noOneCanDoIt ? (
+              <div className="empty">
+                {nv.noOneDoes(picked[0]?.name ?? '', providerNoun.toLowerCase())}{' '}
+                {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
+                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
+                  <Link href={`/providers?branch=${listBranch}`}>{nv.whoDoesWhat(providerNoun.toLowerCase())}</Link>
+                ) : null}
+              </div>
+            ) : null}
+
             {picked.length > 0 && !later && !forPayment && (
               <div className="wi-summary">{nv.startsNow(totalMinutes([...picked, ...extras]))}</div>
             )}
@@ -2198,7 +2272,7 @@ export function NewVisitSheet({
                       busy ||
                       picked.length === 0 ||
                       (forPayment && !amountsValid) ||
-                      (!later && !forPayment && noStaffHere)
+                      (!later && !forPayment && (noStaffHere || noOneCanDoIt))
                     }
                   >
                     {busy

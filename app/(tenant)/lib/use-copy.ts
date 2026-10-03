@@ -71,6 +71,9 @@ export function useNewVisitCopy() {
     noStaffYet: (provider: string) => t('noStaffYet', { provider: pickNoun(locale, provider, tn('staff')) }),
     stillTakePayment: (nobody: string) => t('stillTakePayment', { nobody }),
     addStaff: (provider: string) => t('addStaff', { provider: pickNoun(locale, provider, tn('staff')) }),
+    // Jira GRW-461 — the branch has people and none of them do this one.
+    noOneDoes: (service: string, provider: string) => t('noOneDoes', { service, provider: pickNoun(locale, provider, tn('staff')) }),
+    whoDoesWhat: (provider: string) => t('whoDoesWhat', { provider: pickNoun(locale, provider, tn('staff')) }),
     noServiceMatch: t('noServiceMatch'),
     alsoTry: t('alsoTry'),
     combos: t('combos'),

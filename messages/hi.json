@@ -1633,6 +1633,8 @@
     "noStaffYet": "अभी कोई {provider} नहीं है, इसलिए इसे किसी के साथ नहीं जोड़ा जा सकता।",
     "stillTakePayment": "आप फिर भी “{nobody}” के साथ भुगतान ले सकते हैं।",
     "addStaff": "{provider} जोड़ें",
+    "noOneDoes": "यहाँ {service} कोई नहीं करता, इसलिए इसे किसी {provider} के साथ नहीं रखा जा सकता।",
+    "whoDoesWhat": "कौन क्या करता है",
     "addOrCopyServices": "{services} जोड़ें या कॉपी करें"
   },
   "moveBooking": {
