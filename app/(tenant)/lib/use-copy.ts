@@ -33,6 +33,7 @@ export function useNewVisitCopy() {
     amountFor: (service: string) => t('amountFor', { service }),
     paid: (amount: string, mode: string) => t('paid', { amount, mode }),
     paymentNotSaved: t('paymentNotSaved'),
+    amountNotSaved: t('amountNotSaved'),
     combo: t('combo'),
     comboSaves: (amount: string) => t('comboSaves', { amount }),
     close: t('close'),

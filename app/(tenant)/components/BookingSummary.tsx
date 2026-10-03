@@ -40,6 +40,7 @@ export function BookingSummary({
   const { totalMinor: totalPaid, savingsMinor: savings } = bookingBill(booking.appointments);
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
   const subtotal = totalPaid + savings;
+  const pricesShown = booking.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null);
   const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
   const dateLine = formatDateWithWeekday(booking.startAt, timezone, { locale });
 
@@ -79,6 +80,7 @@ export function BookingSummary({
           </div>
         </div>
 
+        {/* Jira GRW-480 (Q-1) — the API sends no prices to a stylist the owner keeps off the money. */}
         <div className="summary-section-label">{t('services')}</div>
         {booking.appointments.map((a) => (
           <div className="summary-row" key={a.id}>
@@ -88,10 +90,15 @@ export function BookingSummary({
               <div className="summary-stylist">{a.providerName ?? t('noStaff', { label: providerWord.toLowerCase() })}</div>
             </div>
             {/* Jira GRW-314 — a service cancelled at the till is listed, but is not on the bill. */}
-            <span className="summary-price">{a.status === 'cancelled' ? t('cancelled') : formatMoney(paidOf(a))}</span>
+            {a.status === 'cancelled' ? (
+              <span className="summary-price">{t('cancelled')}</span>
+            ) : pricesShown ? (
+              <span className="summary-price">{formatMoney(paidOf(a))}</span>
+            ) : null}
           </div>
         ))}
 
+        {pricesShown && (
         <div className="summary-totals">
           {savings > 0 && (
             <>
@@ -116,6 +123,7 @@ export function BookingSummary({
             </div>
           )}
         </div>
+        )}
 
         <div className="modal-actions" style={{ marginTop: 18 }}>
           <button type="button" className="btn btn-ghost" onClick={onClose}>

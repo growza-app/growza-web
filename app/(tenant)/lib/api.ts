@@ -758,6 +758,8 @@ export const api = {
       groupMembers?: CheckoutGroupMemberInput[];
       /** Jira GRW-314 — the combo's other legs the customer never had: cancelled, chair released. */
       cancelMemberIds?: string[];
+      /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
+      confirmLargeAmount?: boolean;
     },
   ) => post<CheckoutResponse>(`/api/v1/appointments/${appointmentId}/checkout`, args),
   /**
@@ -873,6 +875,8 @@ export const api = {
    */
   recordCounterSale: (
     input: {
+      /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
+      confirmLargeAmount?: boolean;
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;
       customerId?: string;

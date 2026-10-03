@@ -9,8 +9,12 @@
  */
 const STORAGE_KEY = 'growza-admin-session';
 
+/**
+ * Jira GRW-480 (S-10) — when the session ends, and nothing else. The token itself is an HttpOnly cookie the API
+ * sets; this page never sees it, so no script on it can take it. What is kept here is only enough to know whether
+ * the portal is signed in and when to refresh.
+ */
 export interface AdminSession {
-  token: string;
   expiresAt: string;
 }
 

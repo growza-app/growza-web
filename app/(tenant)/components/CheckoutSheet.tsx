@@ -31,6 +31,7 @@ import {
   type Line,
 } from '../lib/checkout-lines';
 import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
+import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
 
@@ -264,6 +265,7 @@ export function CheckoutSheet({
   onSaved?: () => void;
 }) {
   const locale = useLocale();
+  const { guard, dialog } = useLargeAmountGuard();
   const router = useRouter();
   const t = useTranslations('checkout');
   const tc = useTranslations('chrome');
@@ -355,10 +357,16 @@ export function CheckoutSheet({
     setBusy(true);
     setError(null);
     try {
-      await api.checkout(appointment.id, buildCheckoutRequest({ originalId: appointment.id, lines, addedServices, addedCombos, paymentMode }));
+      const request = buildCheckoutRequest({ originalId: appointment.id, lines, addedServices, addedCombos, paymentMode });
+      await guard((confirmed) => api.checkout(appointment.id, confirmed ? { ...request, confirmLargeAmount: true } : request));
       router.refresh();
       (onSaved ?? onClose)();
     } catch (err) {
+      // Jira GRW-480 — "Check again": back to the sheet with the amounts as they were, nothing said.
+      if (err instanceof LargeAmountDeclined) {
+        setBusy(false);
+        return;
+      }
       // Jira GRW-392 (review) — a refusal the server explains (a stylist from another branch, say) is shown as it
       // is: "check the connection" for a 400 sent the owner looking for a network fault that was not there.
       const explained = err instanceof BookingConflictError || (err instanceof ApiError && err.status >= 400 && err.status < 500);
@@ -566,6 +574,8 @@ export function CheckoutSheet({
           </button>
         </div>
       </div>
+      {/* A tap on the question's own backdrop must not reach this sheet's, which closes it. */}
+      {dialog && <div onClick={(e) => e.stopPropagation()}>{dialog}</div>}
     </div>
   );
 }

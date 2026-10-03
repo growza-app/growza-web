@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
           ),
         },
       );
-      const body = (await res.json().catch(() => null)) as { token?: string; expiresAt?: string; detail?: string; error?: string } | null;
+      const body = (await res.json().catch(() => null)) as { expiresAt?: string; detail?: string; error?: string } | null;
 
       /*
        * Not a failure: the password was RIGHT and is a one-time one. Swap the
@@ -66,10 +66,10 @@ export default function AdminLoginPage() {
         return;
       }
 
-      if (!res.ok || !body?.token || !body.expiresAt) {
+      if (!res.ok || !body?.expiresAt) {
         throw new AdminApiError(res.status, body?.detail ?? body?.error ?? 'Sign-in failed.');
       }
-      writeAdminSession({ token: body.token, expiresAt: body.expiresAt });
+      writeAdminSession({ expiresAt: body.expiresAt });
       router.push('/admin');
     } catch (err) {
       setError(err instanceof AdminApiError ? err.message : 'Could not reach the server. Try again.');

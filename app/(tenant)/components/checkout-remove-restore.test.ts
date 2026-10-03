@@ -72,7 +72,9 @@ describe('adding a combo', () => {
 
 describe('what is saved', () => {
   it('is built by the tested request builder, from the lines', () => {
-    expect(sheet).toMatch(/api\.checkout\(appointment\.id, buildCheckoutRequest\(\{ originalId: appointment\.id, lines, addedServices, addedCombos, paymentMode \}\)\)/);
+    expect(sheet).toMatch(/const request = buildCheckoutRequest\(\{ originalId: appointment\.id, lines, addedServices, addedCombos, paymentMode \}\);/);
+    // Jira GRW-480 — the same request, sent again with `confirmLargeAmount` when a large amount is confirmed.
+    expect(sheet).toMatch(/api\.checkout\(appointment\.id, confirmed \? \{ \.\.\.request, confirmLargeAmount: true \} : request\)/);
     expect(code('../lib/api.ts')).toMatch(/cancelMemberIds\?: string\[\];/);
   });
 

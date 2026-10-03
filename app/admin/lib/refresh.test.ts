@@ -42,13 +42,13 @@ afterEach(() => {
 describe('refreshAdminSession', () => {
   it('renews from a 200 and stores the new token', async () => {
     const expiresAt = new Date(Date.now() + 3600e3).toISOString();
-    vi.stubGlobal('fetch', vi.fn(async () => respond(200, { token: 'fresh-token', expiresAt })));
+    vi.stubGlobal('fetch', vi.fn(async () => respond(200, { expiresAt })));
 
     const outcome = await refreshAdminSession();
 
-    expect(outcome).toEqual({ status: 'renewed', token: 'fresh-token' });
+    expect(outcome).toEqual({ status: 'renewed' });
     // Jira GRW-476 — held in memory now, not sessionStorage.
-    expect(readAdminSession()).toEqual({ token: 'fresh-token', expiresAt });
+    expect(readAdminSession()).toEqual({ expiresAt });
     expect(store.get('growza-admin-session')).toBeUndefined();
   });
 
@@ -86,7 +86,7 @@ describe('refreshAdminSession', () => {
   });
 
   it('treats a 200 with nothing usable in it as unavailable rather than a renewal', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => respond(200, { expiresAt: 'but no token' })));
+    vi.stubGlobal('fetch', vi.fn(async () => respond(200, { nothing: 'about when it ends' })));
     await expect(refreshAdminSession()).resolves.toEqual({ status: 'unavailable' });
   });
 
@@ -97,13 +97,13 @@ describe('refreshAdminSession', () => {
    */
   it('collapses concurrent callers into a single request', async () => {
     const expiresAt = new Date(Date.now() + 3600e3).toISOString();
-    const fetchMock = vi.fn(async () => respond(200, { token: 'fresh-token', expiresAt }));
+    const fetchMock = vi.fn(async () => respond(200, { expiresAt }));
     vi.stubGlobal('fetch', fetchMock);
 
     const outcomes = await Promise.all([refreshAdminSession(), refreshAdminSession(), refreshAdminSession()]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    for (const outcome of outcomes) expect(outcome).toEqual({ status: 'renewed', token: 'fresh-token' });
+    for (const outcome of outcomes) expect(outcome).toEqual({ status: 'renewed' });
   });
 
   it('asks again after the previous attempt has settled', async () => {

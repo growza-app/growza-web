@@ -1,5 +1,5 @@
 import { refreshAdminSession } from './refresh';
-import { clearAdminSession, readAdminSession } from './session';
+import { clearAdminSession } from './session';
 
 /**
  * The admin plane's fetch wrapper (GRW-99) — same-origin `/api/admin/v1/...`
@@ -55,9 +55,9 @@ async function extractError(res: Response, path: string): Promise<{ message: str
  * body or none, so there is no stream here to be consumed by the first attempt.
  */
 async function send(path: string, init?: RequestInit): Promise<Response> {
-  const session = readAdminSession();
+  // Jira GRW-480 (S-10) — no Authorization header: the session is the HttpOnly cookie, sent with this same-origin
+  // request by the browser and readable by no script.
   const headers = new Headers(init?.headers);
-  if (session) headers.set('Authorization', `Bearer ${session.token}`);
   if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
 
   return fetch(`/api/admin/v1${path}`, { ...init, headers, cache: 'no-store' });

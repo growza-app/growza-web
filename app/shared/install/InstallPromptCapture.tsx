@@ -18,6 +18,7 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();s.p
 window.addEventListener('appinstalled',function(){s.installed=true;s.prompt=null;window.dispatchEvent(new Event('growza:appinstalled'));});
 }catch(e){}})();`;
 
-export function InstallPromptCapture() {
-  return <script dangerouslySetInnerHTML={{ __html: CAPTURE_SCRIPT }} />;
+/** `nonce` — Jira GRW-480: under the admin portal's strict CSP an inline script runs only with the request's nonce. */
+export function InstallPromptCapture({ nonce }: { nonce?: string } = {}) {
+  return <script nonce={nonce} dangerouslySetInnerHTML={{ __html: CAPTURE_SCRIPT }} />;
 }
