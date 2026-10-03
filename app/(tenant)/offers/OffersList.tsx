@@ -1,11 +1,13 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { formatDate } from '../lib/format';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatMoney, type Offer, type Service } from '../lib/api';
+import { api, ApiError, BookingConflictError, formatMoney, type Offer, type Service } from '../lib/api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
 import { Pagination } from '../components/Pagination';
 import { IconFilter, IconSearch } from '../components/icons';
@@ -15,7 +17,6 @@ import { useBranch } from '../components/BranchProvider';
 /** First paint only — the client immediately measures how many rows the screen actually fits. */
 const INITIAL_PAGE_SIZE = 4;
 
-type Tab = 'all' | 'offers' | 'combos';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 
@@ -33,18 +34,22 @@ function visibilitySummary(offer: Offer, t: ReturnType<typeof useTranslations<'o
 }
 
 /**
- * Admin list of offers & combos. Creating/editing a combo happens in the
- * dedicated wizard (`ComboBuilder`, /offers/new and /offers/[id]/edit); a
- * plain offer's quick-create modal lives in `CreateOfferMenu`. This page
- * only handles browsing (search/tabs/filter/pagination) and the per-row
- * actions that don't need the wizard: edit link, toggling active, deleting.
+ * Admin list of announcements — the wording-only offers a customer reads.
+ *
+ * Jira GRW-438 — packages left this screen for `/packages`. They were the other half of it, and the two
+ * halves had nothing in common from the owner's side: an announcement is a line of text with a date window,
+ * a package is a priced bundle that is booked, allocated, checked out and reported on. The tabs that used to
+ * separate them here are gone with them, because one tab is not a choice.
+ *
+ * Creating one is the quick modal in `CreateOfferMenu`; this page handles browsing (search, status filter,
+ * paging) and the per-row actions: edit, toggling active, deleting.
  */
 export function OffersList({ offers, services }: { offers: Offer[]; services: Service[] }) {
   const t = useTranslations('offers.list');
   const tn = useTranslations('nouns');
   const locale = useLocale();
   const router = useRouter();
-  // Jira GRW-381 — on "All branches" each offer says which branch runs it: the same combo at two branches is two offers.
+  // Jira GRW-381 — on "All branches" each offer says which branch runs it: the same offer at two branches is two rows.
   const branchContext = useBranch();
   const branchTag = (locationId: string | undefined) => {
     if (!branchContext.multi || branchContext.choice || !locationId) return null;
@@ -53,20 +58,22 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   };
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  /** Jira GRW-435 — the offer being confirmed, and why the last attempt was refused. */
+  const [confirmDelete, setConfirmDelete] = useState<Offer | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>('all');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   // Greedy fit-paging: each page starts at an offset and shows however many
-  // cards physically fit from there. Because a page of tall combos holds fewer
-  // than a page of short offers, the page size can't be fixed — so we track the
+  // cards physically fit from there. Because a card with a description is taller
+  // than one without, the page size can't be fixed — so we track the
   // start offset of each visited page and let `fitCount` (measured per page)
   // decide where the next page begins. This is what fills every page to the
   // bottom with no scrollbar and no wasted gap, regardless of card height.
   const [pageStarts, setPageStarts] = useState<number[]>([0]);
   const [pageIndex, setPageIndex] = useState(0);
-  const filterSig = `${tab}|${status}|${search}`;
+  const filterSig = `${status}|${search}`;
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
 
@@ -76,31 +83,11 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return offers.filter((o) => {
-      const isCombo = o.comboPriceMinor != null;
-      if (tab === 'offers' && isCombo) return false;
-      if (tab === 'combos' && !isCombo) return false;
       if (status === 'active' && !o.active) return false;
       if (status === 'inactive' && o.active) return false;
       if (q && !o.title.toLowerCase().includes(q) && !(o.description ?? '').toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [offers, tab, status, search]);
-
-  // Counted off the same predicate the tab itself applies, minus the tab
-  // filter — so the number always equals what tapping it would show.
-  const tabCounts = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const base = offers.filter((o) => {
-      if (status === 'active' && !o.active) return false;
-      if (status === 'inactive' && o.active) return false;
-      if (q && !o.title.toLowerCase().includes(q) && !(o.description ?? '').toLowerCase().includes(q)) return false;
-      return true;
-    });
-    return {
-      all: base.length,
-      offers: base.filter((o) => o.comboPriceMinor == null).length,
-      combos: base.filter((o) => o.comboPriceMinor != null).length,
-    };
   }, [offers, status, search]);
 
   // Clamp the start into range (the filter may have shrunk the list under us),
@@ -144,13 +131,46 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
     }
   };
 
-  const removeOffer = async (offer: Offer) => {
+  /**
+   * Jira GRW-433 — the menu is positioned against the VIEWPORT, so the card's `overflow: hidden` cannot cut
+   * Delete in half any more. One hook for the list because only one menu is ever open.
+   */
+  const closeMenu = useCallback(() => setOpenMenuId(null), []);
+  const menu = useAnchoredPanel(openMenuId !== null, closeMenu);
+
+  const askToRemove = (offer: Offer) => {
     setOpenMenuId(null);
-    if (!window.confirm(t('deleteConfirm', { title: offer.title }))) return;
+    setDeleteError(null);
+    setConfirmDelete(offer);
+  };
+
+  /**
+   * Jira GRW-435 — this used to be a `window.confirm` followed by `try/finally` with no `catch`.
+   *
+   * The missing `catch` is the part that mattered. `DELETE /offers/:id` answers 409 with a sentence written for
+   * the owner — "Somebody is waiting for this right now" (GRW-434) — and the rejection was swallowed whole: the
+   * spinner stopped, the row stayed, and the owner was told nothing. A combo that cannot be deleted yet and a
+   * combo whose delete button is broken looked identical, which is why it was reported as the latter.
+   *
+   * So a refusal keeps the dialog open and shows what the API said. Only a failure we have no words for falls
+   * back to the generic message.
+   */
+  const doRemove = async (offer: Offer) => {
     setBusyId(offer.id);
+    setDeleteError(null);
     try {
       await api.deleteOffer(offer.id);
+      setConfirmDelete(null);
       router.refresh();
+    } catch (err) {
+      /*
+       * Both arms are needed, and the first is the one that matters here: `send()` turns EVERY 409 into a
+       * `BookingConflictError`, which extends `Error` and not `ApiError` — so "Somebody is waiting for this right
+       * now" arrives as neither an `ApiError` nor a 409 that any `.status` check can see. Same pair as
+       * CheckoutSheet. A 4xx is the API refusing on purpose, in prose meant for this person; anything else is not.
+       */
+      const refused = err instanceof BookingConflictError || (err instanceof ApiError && err.status < 500);
+      setDeleteError(refused && err instanceof Error && err.message ? err.message : t('deleteFailed'));
     } finally {
       setBusyId(null);
     }
@@ -159,18 +179,6 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   return (
     <div className="card offers-card">
       <div className="offers-toolbar">
-        <div className="tabs">
-          {(['all', 'offers', 'combos'] as Tab[]).map((tb) => (
-            <button
-              key={tb}
-              type="button"
-              className={`tab ${tab === tb ? 'tab-active' : ''}`}
-              onClick={() => updateFilter(() => setTab(tb))}
-            >
-              {t('tabWithCount', { label: t(`tabs.${tb}`), count: tabCounts[tb] })}
-            </button>
-          ))}
-        </div>
         <label className="search-wrap">
           <IconSearch />
           <input
@@ -221,12 +229,6 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
         <>
           <div className="card-body offers-list" ref={listRef}>
             {pageItems.map((offer) => {
-              const isCombo = offer.comboPriceMinor != null;
-              const originalMinor = offer.serviceIds.reduce((sum, id) => sum + Number(serviceById.get(id)?.priceMinor ?? 0), 0);
-              const comboMinor = Number(offer.comboPriceMinor ?? 0);
-              const savingsMinor = originalMinor - comboMinor;
-              const savingsPct = originalMinor > 0 ? Math.round((savingsMinor / originalMinor) * 100) : 0;
-
               return (
                 <div
                   key={offer.id}
@@ -236,28 +238,15 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                   onDoubleClick={() => router.push(`/offers/${offer.id}/edit`)}
                 >
                   <div className="offer-row-head">
-                    <div className={`offer-icon ${isCombo ? 'offer-icon-combo' : 'offer-icon-offer'}`}>{isCombo ? '🎁' : '🏷️'}</div>
+                    <div className="offer-icon offer-icon-offer">🏷️</div>
 
                     <div className="offer-main">
                       <div className="offer-title-row">
                         <span className="offer-title">{offer.title}</span>
-                        <span className={`chip ${isCombo ? 'chip-combo' : 'chip-offer'}`}>{isCombo ? t('combo') : t('offer')}</span>
                         {branchTag(offer.locationId)}
                       </div>
                       {offer.serviceIds.length > 0 && <div className="muted offer-subtitle">{serviceNames(offer.serviceIds)}</div>}
                       {offer.description && <div className="muted offer-subtitle offer-desc">{offer.description}</div>}
-                      {isCombo && (
-                        <div className="offer-price-row">
-                          <span className="offer-price">{formatMoney(offer.comboPriceMinor)}</span>
-                          {savingsMinor > 0 && (
-                            <>
-                              <span className="chip chip-discount">{t('pctOff', { pct: savingsPct })}</span>
-                              <span className="offer-strike">{formatMoney(String(originalMinor))}</span>
-                              <span className="muted offer-savings">{t('save', { amount: formatMoney(String(savingsMinor)) })}</span>
-                            </>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -301,7 +290,12 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                       </div>
                     </div>
 
-                    <div className="dropdown-anchor" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="dropdown-anchor"
+                      ref={openMenuId === offer.id ? menu.anchorRef : undefined}
+                      onClick={(e) => e.stopPropagation()}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         type="button"
                         className="kebab-btn"
@@ -312,11 +306,16 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                         ⋮
                       </button>
                       {openMenuId === offer.id && (
-                        <div className="dropdown-panel dropdown-panel-sm dropdown-panel-right" onMouseLeave={() => setOpenMenuId(null)}>
+                        <div
+                          className="dropdown-panel dropdown-panel-sm dropdown-panel-right"
+                          ref={menu.panelRef}
+                          style={menu.style}
+                          onMouseLeave={closeMenu}
+                        >
                           <Link href={`/offers/${offer.id}/edit`} className="dropdown-item dropdown-item-plain">
                             {t('edit')}
                           </Link>
-                          <button type="button" className="dropdown-item dropdown-item-plain dropdown-item-danger" onClick={() => removeOffer(offer)}>
+                          <button type="button" className="dropdown-item dropdown-item-plain dropdown-item-danger" onClick={() => askToRemove(offer)}>
                             {t('delete')}
                           </button>
                         </div>
@@ -340,6 +339,22 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
             noun={tn('offers')}
           />
         </>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={t('deleteTitle', { title: confirmDelete.title })}
+          body={t('deleteBody')}
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busyId === confirmDelete.id}
+          error={deleteError}
+          onConfirm={() => doRemove(confirmDelete)}
+          onCancel={() => {
+            setConfirmDelete(null);
+            setDeleteError(null);
+          }}
+        />
       )}
     </div>
   );

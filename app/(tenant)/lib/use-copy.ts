@@ -47,6 +47,10 @@ export function useNewVisitCopy() {
     loadingCustomers: t('loadingCustomers'),
     noCustomersYet: t('noCustomersYet'),
     addNew: t('addNew'),
+    // Jira GRW-454 — a client of another branch, found by searching. A record here is made from their name and
+    // number; their visits stay with the branch they made them at.
+    atOtherBranches: t('atOtherBranches'),
+    bringToBranch: (branch: string) => t('bringToBranch', { branch }),
     nameRequired: t('nameRequired'),
     namePlaceholder: t('namePlaceholder'),
     nameMissing: t('nameMissing'),
@@ -62,6 +66,14 @@ export function useNewVisitCopy() {
     noServicesAtBranch: (branch: string, services: string) =>
       t('noServicesAtBranch', { branch, services: pickNoun(locale, services, tn('services')) }),
     addOrCopyServices: (services: string) => t('addOrCopyServices', { services: pickNoun(locale, services, tn('services')) }),
+    // Jira GRW-456 — a branch with nobody on it, said where the stylist is chosen.
+    noStaffAtBranch: (branch: string, provider: string) => t('noStaffAtBranch', { branch, provider: pickNoun(locale, provider, tn('staff')) }),
+    noStaffYet: (provider: string) => t('noStaffYet', { provider: pickNoun(locale, provider, tn('staff')) }),
+    stillTakePayment: (nobody: string) => t('stillTakePayment', { nobody }),
+    addStaff: (provider: string) => t('addStaff', { provider: pickNoun(locale, provider, tn('staff')) }),
+    // Jira GRW-461 — the branch has people and none of them do this one.
+    noOneDoes: (service: string, provider: string) => t('noOneDoes', { service, provider: pickNoun(locale, provider, tn('staff')) }),
+    whoDoesWhat: (provider: string) => t('whoDoesWhat', { provider: pickNoun(locale, provider, tn('staff')) }),
     noServiceMatch: t('noServiceMatch'),
     alsoTry: t('alsoTry'),
     combos: t('combos'),
@@ -83,6 +95,8 @@ export function useNewVisitCopy() {
     startsNow: (minutes: number) => t('startsNow', { minutes }),
     back: t('back'),
     start: t('start'),
+    // Jira GRW-458 — what the primary reads once the queue has taken its place, because no chair is free.
+    startAnyway: t('startAnyway'),
     saving: t('saving'),
     saveFailed: t('saveFailed'),
     saveUnknown: t('saveUnknown'),

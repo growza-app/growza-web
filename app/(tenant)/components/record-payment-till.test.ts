@@ -36,8 +36,19 @@ describe('closing the till without saving does not pass for paid', () => {
     expect(till).toMatch(/className="modal-backdrop" onClick=\{busy \? undefined : onClose\}/);
   });
 
-  it('Record payment: Cancel, close or backdrop returns to the done screen with the unpaid notice', () => {
-    expect(sheet).toMatch(/if \(forPayment\) setTillClosedUnpaid\(true\);\s*else onClose\(\);/);
+  /**
+   * Jira GRW-451 — the rule lost its `if`.
+   *
+   * It read `if (forPayment) setTillClosedUnpaid(true); else onClose();`, and that condition was exactly
+   * backwards: the till is only reachable from the `done` screen's "Take payment now", and `done` is only
+   * reached when `forPayment` is false (Record payment settles inline and ends on `paid`). So the notice
+   * branch was dead and the ONE purpose that opens a till — plain Walk-in now — took the `else` and had the
+   * whole sheet closed under it, leaving a recorded unpaid visit with nothing on screen saying so.
+   */
+  it('leaving the till without saving always returns to the done screen with the unpaid notice', () => {
+    const onCloseProp = sheet.slice(sheet.indexOf('onClose={() => {\n          setCheckoutRows(null);'));
+    expect(onCloseProp).not.toMatch(/if \(forPayment\) setTillClosedUnpaid/);
+    expect(sheet).toMatch(/onBack=\{\(\) => \{\s*setCheckoutRows\(null\);\s*setTillClosedUnpaid\(true\);/);
     expect(sheet).toMatch(/tillClosedUnpaid && <div[^>]*>\{nv\.notPaidYet\}<\/div>/);
   });
 

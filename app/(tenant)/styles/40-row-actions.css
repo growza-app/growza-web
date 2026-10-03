@@ -55,8 +55,14 @@
  * and there is no point at which borrowing feels like the wrong thing to do.
  * `.row-edit-btn` is named after the row, which is what it is.
  */
+/*
+ * Jira GRW-431 — 42px, which is what `.btn` next to it measures.
+ *
+ * Edit has always been 38px and sat beside a 42px Retire; with Delete added it is one short button between two
+ * tall ones, and the row reads as crooked. The buttons either match or they do not; they now do.
+ */
 .row-edit-btn {
-  height: 38px;
+  height: 42px;
   padding: 0 13px;
   display: inline-flex;
   align-items: center;

@@ -38,15 +38,8 @@ const norm = (s: string): string =>
 
 const words = (s: string): string[] => norm(s).split(' ').filter(Boolean);
 
-/**
- * A rough sound key: the spellings salon words actually arrive in.
- *
- * ph→f ("phacial"), sh→s, ck/qu→k, z→s, double letters collapsed, and every
- * vowel after the first dropped ("menicure" and "manicure" both become mnkr).
- * It is not Soundex or Metaphone — those are tuned for English surnames, and
- * this is tuned for what a front desk types.
- */
-export const soundKey = (w: string): string =>
+/** The letter swaps both keys below start from: the spellings salon words actually arrive in. */
+const soundBase = (w: string): string =>
   w
     .replace(/ph/g, 'f')
     .replace(/ck/g, 'k')
@@ -57,10 +50,62 @@ export const soundKey = (w: string): string =>
     .replace(/ou/g, 'u')
     .replace(/oo/g, 'u')
     .replace(/ee/g, 'i')
-    .replace(/y/g, 'i')
-    .replace(/[wh]/g, '')
-    .replace(/(.)\1+/g, '$1')
-    .replace(/[aeiou]+/g, (m, i: number) => (i === 0 ? m[0]! : ''));
+    .replace(/y/g, 'i');
+
+/**
+ * Double letters collapsed, then every vowel dropped EXCEPT one the word
+ * starts with. That exception is why "menicure" and "manicure" both become
+ * `mnkr`: a leading consonant puts every vowel past index 0, where they are
+ * dropped and their spelling stops mattering.
+ */
+const dropVowels = (s: string): string =>
+  s.replace(/(.)\1+/g, '$1').replace(/[aeiou]+/g, (m, i: number) => (i === 0 ? m[0]! : ''));
+
+/**
+ * A rough sound key: ph→f ("phacial"), sh→s, ck/qu→k, z→s, h and w dropped.
+ * Not Soundex or Metaphone — those are tuned for English surnames, and this is
+ * tuned for what a front desk types.
+ */
+export const soundKey = (w: string): string => dropVowels(soundBase(w).replace(/[wh]/g, ''));
+
+/**
+ * Jira GRW-426 — the same key, except a LEADING h or w survives.
+ *
+ * `soundKey` drops h and w before the vowels, and for a word starting h/w + vowel
+ * that is a trap: removing the leading consonant promotes the next vowel to index
+ * 0, where `dropVowels` then preserves it. So the one letter the typist got wrong
+ * is the one letter the key keeps — `hair`→`ar`, `hear`→`er`, `hiar`→`ir`, three
+ * keys for one word. Every "Hair …", "Head …", "Wash" and "Waxing" in the
+ * catalogue loses the vowel-blindness that `manicure` gets for free.
+ *
+ * Keeping the lead fixes those and breaks the mirror case (`ahir`, where the
+ * typist put the h second), which is why BOTH keys are kept and `soundsLike`
+ * accepts either. Measured over 2,884 vowel re-spellings of a real 53-service
+ * catalogue: 89.5% found with `soundKey` alone, 92.8% with both, and the only
+ * two words that collide are the two that should (manicure/manucure,
+ * colour/color).
+ */
+export const soundKeyKeepingLead = (w: string): string => dropVowels(soundBase(w).replace(/(?!^)[wh]/g, ''));
+
+/**
+ * Two keys, each compared for EQUALITY — not one key compared loosely. "Close
+ * keys" was tried and removed: it matched "waxing" to "Anti-Ageing" and "bridal"
+ * to "beard". This stays exact; it just asks the question twice.
+ */
+export const soundsLike = (a: string, b: string): boolean => {
+  /*
+   * Jira GRW-446 — a key of one letter is not a sound, it is what is left of one.
+   *
+   * QA typed "zzzz" into the services search and got "Women's Hair Color". Every z becomes s and the doubles
+   * collapse, so the key is "s" — which is also the key of the "s" in "Women's". Any four-letter nonsense of
+   * one repeated consonant matched any name with a one-letter word in it. Two characters is the floor, which
+   * is where "hear" → "hair" (`hr`) sits, so nothing the rule exists for is lost.
+   */
+  const ka = soundKey(a);
+  if (ka.length >= 2 && ka === soundKey(b)) return true;
+  const la = soundKeyKeepingLead(a);
+  return la.length >= 2 && la === soundKeyKeepingLead(b);
+};
 
 /**
  * Levenshtein distance, abandoned as soon as it passes `max`.
@@ -101,8 +146,9 @@ function wordScore(q: string, w: string): number {
   // The sound keys must be EQUAL, not merely close. "Close keys" was tried and
   // removed: it matched "waxing" to "Anti-Ageing" (both collapse to a-something
   // -ng) and "bridal" to "beard". Equality still carries "phacial" → Facial and
-  // "menicure" → Manicure, which is what the rule is for.
-  if (q.length >= 4 && soundKey(q) === soundKey(w)) return 55;
+  // "menicure" → Manicure, which is what the rule is for — and, since GRW-426,
+  // "hear" → Hair.
+  if (q.length >= 4 && soundsLike(q, w)) return 55;
   return 0;
 }
 

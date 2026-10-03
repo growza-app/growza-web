@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { editDistance, matchAll, matchItems, soundKey, type Matchable } from './service-match';
+import { editDistance, matchAll, matchItems, soundKey, soundKeyKeepingLead, soundsLike, type Matchable } from './service-match';
 
 /**
  * Jira GRW-375 — the words a front desk actually types.
@@ -74,6 +74,9 @@ describe('what reception types, and what it must find', () => {
     ['pedi', /^Pedicure$/],
     ['mani', /^Manicure$/],
     ['d tan', /D-Tan$/],
+    // Jira GRW-426 — a leading h is no longer a blind spot.
+    ['hear', /^Hair /],
+    ['hiar', /^Hair /],
   ];
 
   for (const [typed, meant] of cases) {
@@ -186,5 +189,83 @@ describe('the pieces', () => {
   it('editDistance gives up once it passes max', () => {
     expect(editDistance('haircut', 'haircat', 2)).toBe(1);
     expect(editDistance('haircut', 'pedicure', 2)).toBe(3);
+  });
+});
+
+/*
+ * Jira GRW-426 — "hear" found nothing on a catalogue of ten Hair services.
+ *
+ * `soundKey` drops h and w BEFORE the vowels, and for a word starting h/w + vowel
+ * that is a trap: losing the leading consonant promotes the next vowel to index 0,
+ * where the vowel rule preserves it. So the key kept exactly the letter the typist
+ * got wrong — `hair`→ar, `hear`→er, `hiar`→ir — while `manicure` keeps its `m` and
+ * goes vowel-blind for free. Hair, Head, Highlights, Wash and Waxing all lost that
+ * protection: roughly a third of a salon menu.
+ *
+ * The obvious fix — keep the leading h — was measured and rejected ON ITS OWN,
+ * because it breaks the mirror case where the typist put the h second (`ahir`).
+ * Both keys are kept, each compared for equality, and either may match.
+ */
+describe('a word starting h or w is as vowel-blind as any other', () => {
+  it('the vowels stop mattering, exactly as they already do for manicure', () => {
+    for (const typed of ['hear', 'hiar', 'haer']) expect(soundsLike(typed, 'hair')).toBe(true);
+    expect(soundsLike('wesh', 'wash')).toBe(true);
+    expect(soundKeyKeepingLead('hear')).toBe(soundKeyKeepingLead('hair'));
+  });
+
+  it('and the mirror typo, h typed second, still matches — which is why both keys are kept', () => {
+    // These go through the ORIGINAL key. Keeping only the leading-h key would lose them.
+    expect(soundsLike('ahir', 'hair')).toBe(true);
+    expect(soundsLike('ehad', 'head')).toBe(true);
+    expect(soundKey('ahir')).toBe(soundKey('hair'));
+  });
+
+  it('"hear" lists the Hair services first, with Head after them', () => {
+    // Head is one edit from "hear" and was always offered; the point of the fix is
+    // that Hair now outranks it instead of being absent.
+    const hits = matchItems(cand(CATALOGUE), 'hear', 6);
+    expect(hits.filter((h) => /^Hair /.test(h)).length).toBeGreaterThan(0);
+    expect(hits.findIndex((h) => /^Hair /.test(h))).toBeLessThan(hits.findIndex((h) => /^Head /.test(h)));
+  });
+
+  it('does not widen the net: the only words in the catalogue that share a key are the ones that should', () => {
+    const vocab = [
+      ...new Set(CATALOGUE.flatMap((n) => n.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter((w) => w.length >= 4))),
+    ];
+    const colliding: string[] = [];
+    for (let i = 0; i < vocab.length; i++) {
+      for (let j = i + 1; j < vocab.length; j++) if (soundsLike(vocab[i]!, vocab[j]!)) colliding.push(`${vocab[i]}/${vocab[j]}`);
+    }
+    expect(colliding).toEqual(['colour/color']);
+  });
+
+  it('still refuses nonsense', () => {
+    expect(matchItems(cand(CATALOGUE), 'pizza', 5)).toEqual([]);
+  });
+});
+
+/*
+ * Jira GRW-446 — QA typed "zzzz" into the services search and got "Women's Hair Color". Every z becomes s and
+ * the doubles collapse, so the key is "s" — which is also the key of the "s" in "Women's".
+ */
+describe('nonsense finds nothing', () => {
+  const catalogue = ['Women’s Hair Color', 'Haircut', 'Facial', 'Manicure'].map((name) => ({ item: name, text: [name] }));
+  const find = (q: string) => matchItems(catalogue, q);
+
+  it('four of one letter match nothing', () => {
+    expect(find('zzzz')).toEqual([]);
+    expect(find('ssss')).toEqual([]);
+  });
+
+  it('other nonsense still matches nothing', () => {
+    expect(find('qqq')).toEqual([]);
+    expect(find('xyz')).toEqual([]);
+  });
+
+  /** And the spellings the sound rule exists for still work. */
+  it('a misspelling that sounds the same still finds it', () => {
+    expect(find('phacial')).toContain('Facial');
+    expect(find('menicure')).toContain('Manicure');
+    expect(find('hiarcut')).toContain('Haircut');
   });
 });

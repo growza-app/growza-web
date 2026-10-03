@@ -164,6 +164,13 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     moneyTaken: S('Money today', 'आज मिला पैसा'),
     done: S('done', 'पूरे हुए'),
     notDone: S('still to do', 'बाकी हैं'),
+    /*
+     * Jira GRW-450 — the all-branches summary's own section. Plain words, as everywhere on this screen: the
+     * owner reading it at closing time wants "what did each shop do", not "branch performance breakdown".
+     */
+    eachBranch: S('Each branch today', 'आज हर ब्रांच'),
+    eachBranchSub: S('Tap a branch to see its full day', 'पूरा दिन देखने के लिए ब्रांच पर टैप करें'),
+    backToAll: S('All branches', 'सभी ब्रांच'),
     staffToday: S('Staff today', 'आज का स्टाफ़'),
     staffTodaySub: S('Work and money for each person', 'हर व्यक्ति का काम और पैसा'),
     staffBookings: (n: number) => `${n} ${bookingWord(n)}`,
@@ -230,6 +237,10 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     // Jira GRW-284 — a token issued by name alone.
     whatHaving: S('What are they having?', 'क्या करवा रहे हैं?'),
     pickServiceFirst: S('Pick what they are having first.', 'पहले सेवा चुनें।'),
+    // Jira GRW-451 — a branch with nothing on its menu. Without this the picker was simply blank, and every
+    // stylist tap answered "Pick what they are having first" with nothing there to pick.
+    loadingServicesHere: S('Loading…', 'लोड हो रहा है…'),
+    noServicesHere: S('This branch has no services yet. Add some on the Services screen, then give this token.', 'इस ब्रांच में अभी कोई सेवा नहीं है। पहले सेवा स्क्रीन पर सेवाएँ जोड़ें, फिर यह टोकन दें।'),
     stillBusy: (stylist: string) => S(`${stylist} still busy`, `${stylist} अभी व्यस्त`),
     longerThanBooked: S('Longer than booked', 'समय से ज़्यादा'),
     nobodyWaiting: S('Nobody is waiting.', 'कोई इंतज़ार में नहीं।'),
@@ -271,6 +282,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),
       services: hi ? 'सेवाएँ' : (labels.services ?? copy.nav.services),
       offers: S(copy.nav.offers, 'ऑफर'),
+      /** Jira GRW-438 — several services sold as one visit. "पैकेज" is the word a salon owner already uses. */
+      packages: S('Packages', 'पैकेज'),
       attendance: S('Attendance', 'हाज़िरी'),
       notifications: S('Notifications', 'सूचनाएं'),
       reports: S(copy.reports.navLabel, 'रिपोर्ट'),

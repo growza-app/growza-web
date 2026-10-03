@@ -68,17 +68,74 @@ describe('the search bar row', () => {
   });
 });
 
-describe('the Search screen has no search button in its header', () => {
+/*
+ * Jira GRW-448 — the way to this screen is Home's pill, and nowhere else.
+ *
+ * The header used to carry a magnifier on all fourteen screens. It finds clients and bookings and nothing
+ * else, so beside a screen with its own search box it read as "search this screen": the owner tapped it on
+ * Packages and was asked for a name, a phone number or a booking ID. Home keeps it, as the wide pill it draws
+ * itself — the landing screen, where it is an invitation rather than a shortcut.
+ */
+describe('the search lives on Home and nowhere else', () => {
   const header = readFileSync(resolve(__dirname, '../components/HeaderControls.tsx'), 'utf8');
   const pageHeader = readFileSync(resolve(__dirname, '../components/PageHeader.tsx'), 'utf8');
+  const home = readFileSync(resolve(__dirname, '../components/home/parts.tsx'), 'utf8');
 
-  it('asks the header to leave it out', () => {
-    expect(client).toMatch(/<PageHeader title=\{t\('title'\)\} hideSearch \/>/);
+  it('the shared header carries the branch, the bell and the account — not a search', () => {
+    expect(header).toMatch(/<HeaderBranchPicker \/>/);
+    expect(header).toMatch(/<NotificationBell \/>/);
+    expect(header).toMatch(/<AccountMenu \/>/);
+    expect(header).not.toMatch(/HeaderSearch/);
   });
 
-  it('and the header honours it, only on request — every other screen keeps its search button', () => {
-    expect(pageHeader).toMatch(/<HeaderControls hideSearch=\{hideSearch\} \/>/);
-    expect(header).toMatch(/\{hideSearch \? null : <HeaderSearch wide=\{wide\} \/>\}/);
-    expect(header).toMatch(/hideSearch = false/);
+  /** No `hideSearch` anywhere: a screen cannot opt out of something it is not given. */
+  it('leaves no switch behind for a screen to opt out with', () => {
+    expect(pageHeader).not.toMatch(/hideSearch/);
+    expect(header).not.toMatch(/hideSearch/);
+    expect(client).not.toMatch(/hideSearch/);
+  });
+
+  it('Home still draws it, as the wide pill', () => {
+    expect(home).toMatch(/<HeaderSearch wide \/>/);
+  });
+});
+
+/*
+ * Jira GRW-425 — the box drew a second rectangle inside itself and a second ×.
+ *
+ * Both came from rules written elsewhere for good reasons: the accessibility floor forces
+ * a focus ring on every input (GRW-342) and Chrome draws its own cancel button in a
+ * `type="search"` field. The bar already provides both, so it opts out of both — and must
+ * keep opting out, which is what these guard.
+ */
+describe('one ring and one clear button in the search box', () => {
+  const a11yCss = readFileSync(resolve(__dirname, '../styles/90-accessibility.css'), 'utf8');
+
+  it('the field inside the bar draws no ring of its own — the bar draws it', () => {
+    expect(searchCss).toMatch(/\.search-bar:focus-within\s*\{/);
+    expect(searchCss).toMatch(/\.search-bar input:focus-visible\s*\{[^}]*outline:\s*0\s*!important;/);
+  });
+
+  it('and the floor that forced the inner ring is left alone for every other field', () => {
+    // Weakening this instead would take the ring off Staff, Services and Attendance,
+    // which is the defect GRW-342 fixed.
+    expect(a11yCss).toMatch(/input:focus-visible,[^{]*\{[^}]*outline:\s*2px solid var\(--accent-deep\)\s*!important;/);
+  });
+
+  it("hides Chrome's own × only in this bar, which has a clear button of its own", () => {
+    expect(client).toMatch(/aria-label=\{t\('clear'\)\}/);
+    expect(searchCss).toMatch(/\.search-bar input\[type='search'\]::-webkit-search-cancel-button\s*\{[^}]*display:\s*none;/);
+  });
+
+  it('leaves it alone where it is the only way to empty the field', () => {
+    // Staff, Services, Attendance, the catalogue picker and the visit sheet render no
+    // clear button: hiding the native one there would strip the control, not de-duplicate it.
+    for (const file of [
+      '../providers/StaffClient.tsx',
+      '../services/ServicesTable.tsx',
+      '../attendance/AttendanceRegister.tsx',
+    ]) {
+      expect(readFileSync(resolve(__dirname, file), 'utf8')).not.toMatch(/search-cancel-button/);
+    }
   });
 });

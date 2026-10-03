@@ -19,6 +19,7 @@ import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
 import { useBranch } from '../BranchProvider';
 import { homeCopy } from '../../lib/home-copy';
+import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
 import { canSee, mayUse, type MemberRole } from '../../lib/nav-policy';
 import {
@@ -31,6 +32,7 @@ import {
   IconClock,
   IconDaySummary,
   IconOffers,
+  IconPackages,
   IconReceipt,
   IconReports,
   IconServices,
@@ -258,9 +260,28 @@ export function OwnerHome(p: OwnerHomeProps) {
   const branches = data?.branches ?? [];
   const multiBranch = branchContext.multi || branches.length > 1;
   const selected = branchContext.branches.find((b) => b.id === branch) ?? branches.find((b) => b.id === branch) ?? null;
+  /*
+   * Jira GRW-450 — more than one branch in view and none of them picked. Declared here because GRW-462 needs
+   * it one line later; the closing time below reads the same value.
+   */
+  const onAllBranches = multiBranch && branch === null;
+
   // The hours of the branch Home shows (the API reads the branch's own), else the business's.
   const hours = (dataIsForBranch ? data.hoursToday : null) ?? p.initial?.hoursToday ?? null;
-  const afterClose = hours?.afterClose ?? false;
+  /*
+   * Jira GRW-462 — and on All branches, there is no answer to "is it closed".
+   *
+   * GRW-450 made this argument and fixed half of it. With no branch the API has no branch's hours to read and
+   * falls back to the business-level `working_hours` row; branches set their own, so that row is a fact about
+   * none of them. GRW-450 dropped the closing TIME on that basis and left the claim that follows from it
+   * reading the same row — so past the business-level hour the header said "{Business} is closed for today"
+   * of a business one of whose branches may still be serving.
+   *
+   * The sentence is the smaller half. `afterClose` also decides which day `Right now` lists, so it was
+   * showing TOMORROW's bookings while a branch was still working today — not a claim to discount but the
+   * wrong day's data on screen.
+   */
+  const afterClose = !onAllBranches && (hours?.afterClose ?? false);
   // After closing, the list that matters is tomorrow's (FR-09) — for the branch picked, by the branch's own hours.
   const listIsTomorrow = afterClose;
 
@@ -310,7 +331,16 @@ export function OwnerHome(p: OwnerHomeProps) {
     return m;
   }, [todayGroups, now]);
 
-  const closeTime = hours?.closesAt ? formatClock(hours.closesAt) : null;
+  /*
+   * Jira GRW-450 — no closing time while more than one branch is in view.
+   *
+   * With no branch the API has no branch's hours to read and falls back to the business-level `working_hours`
+   * row. Branches set their own (`BRANCH_SETTING_KEYS`), so "Day closed at 8:00 pm" over three of them is a
+   * fact about none: one may have shut at 7, another may still be serving. The Day summary is reached from the
+   * header either way, so nothing becomes unreachable — only the claim goes.
+   */
+  const closesAt = closingTime(hours?.closesAt, onAllBranches);
+  const closeTime = closesAt ? formatClock(closesAt) : null;
 
   /*
    * Jira GRW-312 — the count above was made for the branch picked here, so the link takes
@@ -358,6 +388,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   const links = [
     { href: '/providers', label: t.nav.staff, icon: <IconStaff />, tone: 'rose' },
     { href: '/services', label: t.nav.services, icon: <IconServices />, tone: 'green' },
+    // Jira GRW-438 — a quick link of its own, asked for alongside the screen.
+    { href: '/packages', label: t.nav.packages, icon: <IconPackages />, tone: 'green' },
     { href: '/offers', label: t.nav.offers, icon: <IconOffers />, tone: 'violet' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
@@ -520,6 +552,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           t={t}
           locationId={branch}
           subtitle={[p.dateLabel, locationLine, afterClose && closeTime ? t.dayClosed(closeTime) : null].filter(Boolean).join(' · ')}
+          dateLabel={p.dateLabel}
           onClose={() => setSummaryOpen(false)}
         />
       ) : null}

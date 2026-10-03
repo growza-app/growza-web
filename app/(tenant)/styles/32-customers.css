@@ -268,19 +268,18 @@
 /* ================= bookings page (redesigned) ================= */
 
 /* ---- headline counts ---- */
-/* 4 count tiles + the "at a glance" metric card as a wider 5th column
-   (GRW-47, Bookings.dc.html) — the metric card replaced the old static
-   Revenue tile that used to fill this slot. */
+/* Four count tiles, equal width at every viewport. Jira GRW-455 removed the
+   "at a glance" metric card that used to be a wider 5th column here: with the
+   header's branch picked it read "—" (the GRW-312 capacity mismatch), and its
+   other two answers — busiest staff, top service — are Reports questions. One
+   grid now, so there is nothing left to reflow between 861 and 1149px. */
 .bk-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) 1.6fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--sp-2);
   margin-bottom: var(--sp-5);
 }
 
-/* Stays 5-across at every desktop width (matching the mock) — the tiles are
-   compact enough now that the count value and its label sit on one line, so
-   they don't need the extra room an earlier 3-up wrap was buying them. */
 
 .bk-kpi {
   background: var(--surface);
@@ -419,105 +418,6 @@
 }
 .bk-kpi-sub-red {
   color: #c0362c;
-}
-
-/* ---- "at a glance" metric card ----
-   Same dark gradient Home's summary hero already uses (.summary-progress-hero)
-   — one card, reflowed per viewport: the KPI row's 5th column on desktop
-   (icon+select on top, value/label below, an optional busy-% bar — matching
-   Bookings.dc.html), a single full-width row below the 2x2 grid on mobile
-   (value/label left, select right, no icon/bar — matching Bookings Mobile.dc.html,
-   GRW-46). The mobile media query below only touches layout, not these colours. */
-.bk-metric-card {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  /* Jira GRW-342 — the same dark green as Home's money card (was its own #0b3d2d → #104a37). */
-  background: linear-gradient(140deg, var(--hm-hero-a), var(--hm-hero-b));
-  border: 0;
-  border-radius: var(--radius);
-  padding: var(--sp-3) var(--sp-3) 12px;
-  color: #fff;
-  min-width: 0;
-}
-
-.bk-metric-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.bk-metric-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.14);
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-
-.bk-metric-icon svg {
-  width: 15px;
-  height: 15px;
-}
-
-.bk-metric-select {
-  flex-shrink: 0;
-  max-width: 132px;
-  height: 28px;
-  padding: 0 9px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  font-size: 11.5px;
-  font-weight: 700;
-  outline: none;
-  cursor: pointer;
-}
-
-.bk-metric-select option {
-  color: var(--text);
-}
-
-.bk-metric-main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.bk-metric-value {
-  font-size: 21px;
-  font-weight: 800;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bk-metric-label {
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bk-metric-bar {
-  height: 6px;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.22);
-  overflow: hidden;
-}
-
-.bk-metric-bar-fill {
-  height: 100%;
-  background: #fff;
-  border-radius: 99px;
 }
 
 /* ---- combined filter card (search / From / To / staff / Show) ----
@@ -1109,16 +1009,14 @@
 
 /*
  * GRW-46: Bookings, mobile redesign. Desktop is untouched — every rule here
- * lives inside this mobile-only query, and the three elements it turns on
- * (.bk-metric-card, .bk-search-row; the staff table has its own sheet, 93-staff-table.css) default to display:none
- * above, declared before this query so the mobile override always wins on
- * source order regardless of specificity (the same gotcha documented
+ * lives inside this mobile-only query, and .bk-search-row, which it turns on
+ * (the staff table has its own sheet, 93-staff-table.css), defaults to
+ * display:none above, declared before this query so the mobile override always
+ * wins on source order regardless of specificity (the same gotcha documented
  * elsewhere in this file: a later declaration wins at equal specificity).
  */
 @media (max-width: 860px) {
-  /* 4 compact count tiles across one row, exactly as the mobile mock has
-     them; the metric card becomes its own full-width row below (see
-     .bk-metric-card further down) rather than a 5th grid cell. */
+  /* 4 compact count tiles across one row, exactly as the mobile mock has them. */
   .bk-kpis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
@@ -1337,55 +1235,6 @@
     font-size: 14px;
     font-weight: 800;
     color: var(--text);
-  }
-
-  /* Single row on mobile — value/label on the left, the metric picker on the
-     right, no icon, no busy-% bar (matching Bookings Mobile.dc.html) — versus
-     desktop's icon+select-on-top / value-below / bar layout (Bookings.dc.html,
-     GRW-47). .bk-metric-top's own box is removed (display:contents) so its
-     icon + select become direct flex items of the row here; the icon is then
-     hidden outright, and `order` puts .bk-metric-main first regardless of
-     source order. */
-  .bk-metric-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 16px;
-    margin-top: 10px;
-    grid-column: 1 / -1;
-  }
-
-  .bk-metric-top {
-    display: contents;
-  }
-
-  .bk-metric-icon {
-    display: none;
-  }
-
-  .bk-metric-main {
-    order: 1;
-  }
-
-  .bk-metric-select {
-    order: 2;
-    max-width: none;
-    height: 32px;
-    padding: 0 10px;
-    font-size: 12px;
-  }
-
-  .bk-metric-value {
-    font-size: 22px;
-  }
-
-  .bk-metric-label {
-    font-size: 12px;
-  }
-
-  .bk-metric-bar {
-    display: none;
   }
 
   /* Search + staff chips: both filter the day's already-loaded bookings
@@ -1816,18 +1665,6 @@
  *
  * The five-across row returns at 1150px, where it genuinely fits.
  */
-@media (min-width: 861px) and (max-width: 1149px) {
-  .bk-kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .bk-metric-card {
-    grid-column: 1 / -1;
-    margin-top: 10px;
-  }
-}
-
-
 /* Kept at the END of the file on purpose: every rule above defines a class
    exactly once at the base (desktop) specificity, so with equal specificity
    CSS falls back to source order — a media-query override placed EARLIER
@@ -2579,6 +2416,22 @@
     white-space: nowrap;
     font-size: 0;
     padding: 9px 14px;
+  }
+
+  /*
+   * ...but a DIALOG opened from the header is not a header control.
+   *
+   * Jira GRW-447 — "New offer" is rendered by the button that opens it, so its markup sits inside `.topbar`
+   * and every `.btn` in it was caught by the rule above. Cancel and Create offer collapsed to 44px squares
+   * with no words in them: the label was still in the DOM, still white-on-green, and nought pixels tall. The
+   * owner saw a blank green box and had to guess.
+   *
+   * `inherit`, not a number: `.btn` is `font: inherit` everywhere else, so this is the size it would have had
+   * if the header had never spoken for it.
+   */
+  .topbar .modal .btn {
+    font-size: inherit;
+    padding: 9px 20px;
   }
 
   .cust-kpis {

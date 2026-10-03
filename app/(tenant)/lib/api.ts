@@ -97,6 +97,7 @@ import type {
   Service,
   ServiceAdmin,
   ServiceCategory,
+  ServiceCategoryAdmin,
   ServiceImportItem,
   ServiceInput,
   SettingsSummary,
@@ -118,8 +119,26 @@ import type {
   ReportTabKey,
 } from './report-types';
 
-/** Thrown for the 409s the booking API sends back — the slot-just-taken / hold-expired / already-checked-out cases. */
-export class BookingConflictError extends Error {}
+/**
+ * Thrown for the 409s the booking API sends back — the slot-just-taken / hold-expired / already-checked-out
+ * cases, and every other 409 besides, because `send()` makes no distinction.
+ *
+ * Jira GRW-442 — it carries the response body now. A 409 is the API refusing on purpose, and some of them say
+ * more than a sentence: retiring a service a package sells answers with the packages that hold it, so the
+ * screen can name them and offer the way out. That detail was parsed and thrown away.
+ *
+ * Optional and untyped at this layer: the shape belongs to the route that sent it, and a caller that only
+ * wants the sentence carries on reading `.message` exactly as before.
+ */
+export class BookingConflictError extends Error {
+  constructor(
+    message: string,
+    public details?: unknown,
+  ) {
+    super(message);
+    this.name = 'BookingConflictError';
+  }
+}
 
 /**
  * Any other non-ok response, with the real status and server message
@@ -164,7 +183,7 @@ async function apiError(res: Response, path: string): Promise<ApiError> {
 async function extractError(
   res: Response,
   path: string,
-): Promise<{ message: string; code?: string; support?: { phone?: string } }> {
+): Promise<{ message: string; code?: string; support?: { phone?: string }; body: unknown }> {
   const body = (await res.json().catch(() => null)) as
     | { error?: string; detail?: string; support?: { phone?: string } }
     | null;
@@ -180,6 +199,8 @@ async function extractError(
     message: typeof document === 'undefined' ? said : localiseApiMessage(said, document.documentElement.lang),
     code: body?.error,
     ...(body?.support ? { support: body.support } : {}),
+    // Jira GRW-442 — a 409 that says more than a sentence needs the rest of it, and the body can only be read once.
+    body,
   };
 }
 
@@ -196,7 +217,9 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 409) {
-    throw new BookingConflictError((await extractError(res, path)).message);
+    // Read once: the body is consumed by `extractError`, so it hands back what it parsed (GRW-442).
+    const { message, body } = await extractError(res, path);
+    throw new BookingConflictError(message, body);
   }
   if (!res.ok) throw await apiError(res, path);
   if (res.status === 204) return undefined as T;
@@ -367,7 +390,19 @@ export const api = {
       `/api/v1/catalog/suggest?q=${encodeURIComponent(q)}${location ? `&location=${encodeURIComponent(location)}` : ''}`,
       signal,
     ),
-  providers: () => get<Provider[]>('/api/v1/providers'),
+  /**
+   * Everyone, or — with `service` (Jira GRW-461) — only the people who can do that one thing.
+   *
+   * The same question the walk-in write asks before it picks a chair, so a screen can ask it first instead of
+   * offering a stylist the save will refuse with "No staff member can perform that service".
+   */
+  providers: (opts?: { service?: string; location?: string | null }) => {
+    const q = new URLSearchParams();
+    if (opts?.service) q.set('service', opts.service);
+    if (opts?.location) q.set('location', opts.location);
+    const qs = q.toString();
+    return get<Provider[]>(`/api/v1/providers${qs ? `?${qs}` : ''}`);
+  },
   /**
    * GRW-170 — the register for a day or a range, including everybody nobody
    * marked. `location` is Jira GRW-249 — one branch's register; a receptionist
@@ -530,6 +565,48 @@ export const api = {
   allServices: (location: string) => get<ServiceAdmin[]>(`/api/v1/services/all?location=${encodeURIComponent(location)}`),
   serviceCategories: (location?: string | null) =>
     get<ServiceCategory[]>(`/api/v1/service-categories${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /**
+   * Jira GRW-428 — the Services screen's own category list: one branch, empty categories included.
+   *
+   * `serviceCategories` above is the picker's list and leaves an empty category out, which would make a
+   * category the owner has just created disappear the moment the screen reloaded.
+   */
+  categoriesAtBranch: (location: string) =>
+    get<ServiceCategoryAdmin[]>(`/api/v1/service-categories/all?location=${encodeURIComponent(location)}`),
+  createCategory: (location: string, name: string) =>
+    post<ServiceCategoryAdmin>('/api/v1/service-categories', { name, locationId: location }),
+  renameCategory: (location: string, id: string, name: string) =>
+    patch<ServiceCategoryAdmin>(`/api/v1/service-categories/${id}?location=${encodeURIComponent(location)}`, { name }),
+  /** Answers how many services were left with no category — the number the confirmation promised. */
+  deleteCategory: (location: string, id: string) =>
+    del<{ released: number }>(`/api/v1/service-categories/${id}?location=${encodeURIComponent(location)}`),
+  /**
+   * Jira GRW-428 — retires several of one branch's services at once.
+   *
+   * Retire, not delete: a service is referenced by its bookings, its stylists' skills and any combo it is in.
+   * A list with a service of another branch in it refuses the whole call rather than retiring the rest.
+   */
+  retireServices: (location: string, serviceIds: string[]) =>
+    post<{ ok: true; retired: number }>('/api/v1/services/retire', { locationId: location, serviceIds }),
+  /**
+   * Jira GRW-431 — deletes several of one branch's services outright.
+   *
+   * Partial on purpose, unlike `retireServices`: a service inside a combo is the catalogue's own state, not a
+   * broken request, so the rest go and `blocked` names the ones that did not with what is in their way.
+   */
+  deleteServices: (location: string, serviceIds: string[]) =>
+    post<{
+      ok: true;
+      deleted: number;
+      bookingsKept: number;
+      blocked: Array<{ id: string; name: string; blockers: { offers: Array<{ id: string; title: string }>; questions: Array<{ id: string; label: string }>; waitingInQueue: number } }>;
+    }>('/api/v1/services/delete', { locationId: location, serviceIds }),
+  /** One service, gone for good. Its bookings keep the name and price they were taken at (Jira GRW-430). */
+  deleteService: (location: string, id: string) =>
+    del<{ ok: true; bookingsKept: number }>(`/api/v1/services/${id}?location=${encodeURIComponent(location)}`),
+  /** The whole branch's order, every time: a partial list is refused rather than half-applied. */
+  reorderCategories: (location: string, categoryIds: string[]) =>
+    post<ServiceCategoryAdmin[]>('/api/v1/service-categories/reorder', { locationId: location, categoryIds }),
   createService: (location: string, body: ServiceInput) => post<ServiceAdmin>('/api/v1/services', { ...body, locationId: location }),
   /** Jira GRW-378 — copy all (no ids) or some of another branch's services here; names already here are skipped. */
   copyServicesFromBranch: (from: string, to: string, serviceIds?: string[]) =>

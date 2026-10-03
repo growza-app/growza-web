@@ -116,3 +116,35 @@ describe('the extras shown beside the typed matches', () => {
     expect(names(extraSuggestions([], remote, 'nails', byId))).toEqual(['Manicure']);
   });
 });
+
+/**
+ * Jira GRW-449 — the two screens that joined the walk-in sheet, and the limits each puts on what may be
+ * suggested. Both are expressed as the `byId` the screen passes, which is the whole point of that argument:
+ * the rules above decide whether a hit is good enough, and the screen decides whether it is offerable at all.
+ */
+describe('what each screen is allowed to offer', () => {
+  it('the package builder does not offer a service the package already holds', () => {
+    const remote = { term: 'nails', hits: [hit('s1', 0.9), hit('s2', 0.86)] };
+    const picked = ['s1'];
+    const unpickedById = (id: string) => {
+      const service = byId(id);
+      return service && !picked.includes(service.id) ? service : undefined;
+    };
+    // Manicure is the best hit and is dropped anyway: it is already in the package, so offering it adds nothing.
+    expect(names(extraSuggestions([], remote, 'nails', unpickedById))).toEqual(['Pedicure']);
+  });
+
+  it('the Services screen does not offer a service the tab in view filters out', () => {
+    const remote = { term: 'nails', hits: [hit('s1', 0.9), hit('s3', 0.85)] };
+    // The Hair tab holds Nail Art and not Manicure (contrived, and exactly the shape of the real case): a chip
+    // for Manicure would set a search the tab then filters out, leaving "No services match here".
+    const onThisTab = [NAIL_ART];
+    const tabById = (id: string) => onThisTab.find((s) => s.id === id);
+    expect(names(extraSuggestions([], remote, 'nails', tabById))).toEqual(['Nail Art']);
+  });
+
+  it('a tab with nothing to offer offers nothing, rather than an empty row', () => {
+    const remote = { term: 'nails', hits: [hit('s1', 0.9)] };
+    expect(extraSuggestions([], remote, 'nails', () => undefined)).toEqual([]);
+  });
+});

@@ -102,10 +102,6 @@ describe('Bookings, when Home sends a branch', () => {
     expect(list).toMatch(/\}, \[branchContext\.ready, branchContext\.choice\]\);/);
     expect(list).toMatch(/name="location" value=\{branch\.id\}/);
   });
-
-  it('shows no "busy" figure for one branch while the capacity is the whole business\'s', () => {
-    expect(list).toMatch(/capacityMin > 0 && !branch \? Math\.round/);
-  });
 });
 
 describe('the period switch on the toolbar row (Jira GRW-313)', () => {

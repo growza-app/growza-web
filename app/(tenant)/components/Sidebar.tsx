@@ -15,6 +15,7 @@ import {
   IconChat,
   IconDashboard,
   IconOffers,
+  IconPackages,
   IconReports,
   IconServices,
   IconSettings,
@@ -123,6 +124,8 @@ export function Sidebar({
     { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
     { href: '/providers', label: t.nav.staff, icon: <IconStaff /> },
     { href: '/services', label: t.nav.services, icon: <IconServices /> },
+    // Jira GRW-438 — beside Services, because a package is made of them and the owner edits the two together.
+    { href: '/packages', label: t.nav.packages, icon: <IconPackages /> },
     { href: '/offers', label: t.nav.offers, icon: <IconOffers /> },
     { href: '/customers', label: t.nav.clients, icon: <IconUserPlus /> },
     // GRW-170 — who was here. Sits beside the client list because it is the

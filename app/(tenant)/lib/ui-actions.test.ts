@@ -160,7 +160,6 @@ describe('2b — the controls, each behind its own action', () => {
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [
-    ['components/HeaderControls.tsx', /\{hideSearch \? null : <HeaderSearch wide=\{wide\} \/>\}/],
     ['components/home/parts.tsx', /<HeaderSearch wide \/>/],
     ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new'\);/],
     ['components/home/OwnerHome.tsx', /const mayBook = mayUse\(p\.role, 'visit\.new'\);[\s\S]*const mayRecordPayment = mayUse\(p\.role, 'visit\.recordPayment'\);/],
@@ -195,8 +194,23 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/services/copy-from-branch',
     'POST /api/v1/services/import/parse',
     'POST /api/v1/services/import',
+    'POST /api/v1/services/retire',
+    // Jira GRW-431 — delete, beside retire. Same screen, same gate.
+    'DELETE /api/v1/services/:id',
+    'POST /api/v1/services/delete',
+    // Jira GRW-428 — the category sheet. Same screen, same gate: a role the nav does not offer /services
+    // never reaches these, and a role that is offered it manages the menu it is responsible for.
+    'POST /api/v1/service-categories',
+    'PATCH /api/v1/service-categories/:id',
+    'DELETE /api/v1/service-categories/:id',
+    'POST /api/v1/service-categories/reorder',
   ],
   '/offers': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
+  /*
+   * Jira GRW-438 — the same three writes, now reachable from two owner-only screens. Both are closed whole by
+   * `guardScreen`, so listing them twice is the honest answer rather than a sign one of them is ungated.
+   */
+  '/packages': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',

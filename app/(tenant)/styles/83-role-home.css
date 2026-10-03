@@ -469,6 +469,23 @@
       'clients clients';
     align-items: stretch;
   }
+  /*
+   * Jira GRW-436 — "this row collapses to nothing" above was not true.
+   *
+   * A row named in `grid-template-areas` exists whether or not anything is placed in it, so on every ordinary
+   * day — no walk-in waiting, which is most days — the laptop Home carried an empty `queue` row plus its two
+   * gaps: 88px of blank space between the money card and Bookings today, measured at 1366x768. Worse, that
+   * empty row is row two, so it took the one `minmax(0, 1fr)` track meant for Bookings today, which was left at
+   * its content height. The owner paid for the board on the days nobody was waiting.
+   *
+   * So the areas follow the DOM: no board, no row.
+   */
+  .hm-owner-grid:not(:has(> .hm-area-queue)) {
+    grid-template-areas:
+      'hero attention'
+      'bookings now'
+      'clients clients';
+  }
   .hm-area-queue {
     grid-area: queue;
   }
@@ -2359,6 +2376,42 @@ button.hm-now-count {
     gap: 12px;
     grid-template-rows: auto minmax(0, 1fr) auto;
   }
+  /*
+   * Jira GRW-436 — four areas need four tracks.
+   *
+   * The three above are hero / bookings / clients, and the `minmax(0, 1fr)` is deliberately the one track
+   * allowed to shrink past its content: Bookings today scrolls inside itself, so it is what absorbs a short
+   * screen. GRW-418 then inserted `queue` as row TWO and did not add a track — so the shrink-to-nothing track
+   * landed on the token board instead. On a day with somebody waiting, the board was squeezed from 172px to
+   * 119px and the overflow clipped by `.page-body.hm-fit`'s `overflow: hidden`: the owner saw a sliver of a
+   * card with the client's name cut in half, and the row that actually tells them somebody is in the salon was
+   * the one row that could not hold its own height.
+   *
+   * Only reachable with a walk-in waiting, which no fixture had — the sweep renders an empty board and an empty
+   * board has no row at all. The comment on `grid-template-areas` above asks for exactly this track and was
+   * missed; `:has()` keeps the two layouts in step instead of relying on it being remembered next time.
+   */
+  .hm-fit > .hm-owner-grid:has(> .hm-area-queue) {
+    /*
+     * `180px` and not `0`: once the board takes its real height there is not enough left on a 680px screen for
+     * Bookings today, and a `minmax(0, …)` track let it collapse to nothing — the card header with no card. The
+     * floor is the point below which the list stops being a list.
+     */
+    grid-template-rows: auto auto minmax(180px, 1fr) auto;
+  }
+  /*
+   * Jira GRW-436 — and on the shortest screens this layout runs at, four real rows no longer fit. GRW-418 said
+   * the page scrolls on a day with somebody waiting, which is the right trade; `overflow: hidden` above meant it
+   * never could, so the remainder was simply cut off with no way to reach it. The scrollbar appears ONLY with a
+   * board on screen — an ordinary day is the same one screen GRW-222 promised.
+   */
+  .page-body.hm-fit:has(.hm-area-queue) {
+    overflow-y: auto;
+  }
+  /* Grow into a tall screen, never shrink below content on a short one — the parent scrolls instead. */
+  .hm-fit:has(.hm-area-queue) > .hm-owner-grid {
+    flex: 1 0 auto;
+  }
   .hm-fit .hm-toolbar .hm-seg button {
     min-height: 34px;
     font-size: 13px;
@@ -2371,6 +2424,16 @@ button.hm-now-count {
   }
   .hm-fit .hm-card-head h2 {
     font-size: 15px;
+  }
+  /*
+   * Jira GRW-452 — the board's columns scroll inside themselves (95-token-board.css), and here they do it from a
+   * lower cap: on the owner's Home the board is ONE row of four, not the page. Its own 46dvh would take a third
+   * of the screen off Bookings today and How your clients are doing, which the two rules above
+   * (`overflow-y: auto`, `flex: 1 0 auto`) would then push below the fold — the scroll GRW-436 accepted as a
+   * trade, taken on every busy day rather than the short screens it was meant for.
+   */
+  .hm-fit .tb-rows {
+    max-height: min(34dvh, 330px);
   }
 
   .hm-fit .hm-area-attention {
@@ -2880,4 +2943,49 @@ button.hm-now-count {
   .hm-head-business {
     font-size: 18px;
   }
+}
+
+/* ---------- Day summary: each branch today, and the way back out of one (Jira GRW-450) ---------- */
+
+/*
+ * The whole row is the button, so the tap target is the row and not the branch's name — on a phone the name is
+ * the narrowest thing on the line, and a 44px target that is only as wide as "MG Road" is a target that gets
+ * missed.
+ */
+.hm-ds-branch {
+  padding: 0;
+}
+.hm-ds-branch-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--sp-2) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.hm-ds-branch-go {
+  color: var(--hm-muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.hm-ds-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--hm-muted);
+  cursor: pointer;
 }

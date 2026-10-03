@@ -91,7 +91,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
         beside a screen that is one big search box, and it read as broken. Every
         other screen still has it.
       */}
-      <PageHeader title={t('title')} hideSearch />
+      <PageHeader title={t('title')} />
       <div className="page-body">
         <div className="srch-bar-row">
           <a className="icon-btn" href="/" aria-label={t('back')}>

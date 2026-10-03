@@ -10,6 +10,7 @@ import { TokenFigures } from './TokenFigures';
 import { useTranslations } from 'next-intl';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { useNoProvider } from '../../lib/use-no-provider';
+import { branchTag } from '../../lib/day-summary-view';
 
 /**
  * Jira GRW-222 — the end-of-day readout: what came in, how, and who did it.
@@ -18,24 +19,54 @@ import { useNoProvider } from '../../lib/use-no-provider';
  * the CSS decides. Fetched when opened rather than with the page, because most
  * visits to Home never open it and it runs the per-staff performance query.
  */
-export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeCopy; locationId: string | null; subtitle: string; onClose: () => void }) {
+export function DaySummarySheet({
+  t,
+  locationId,
+  subtitle,
+  dateLabel,
+  onClose,
+}: {
+  t: HomeCopy;
+  locationId: string | null;
+  subtitle: string;
+  /**
+   * Jira GRW-450 — the day, on its own, so a branch opened from the overview keeps it.
+   *
+   * `subtitle` is the caller's whole line (day · branch · closing time) and is replaced by the branch's name
+   * once one is opened. Without the day beside it the readout an owner reads at closing — and screenshots —
+   * said nothing about which day it was.
+   */
+  dateLabel?: string;
+  onClose: () => void;
+}) {
   const [data, setData] = useState<DaySummary | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const tt = useTranslations('tokens');
 
+  /**
+   * Jira GRW-450 — the branch opened FROM the all-branches view, without leaving the sheet.
+   *
+   * The owner's question at closing is one question in two parts: "how did we do" and then "how did that shop
+   * do". Closing the sheet, switching the header's branch and opening it again is the same two parts with the
+   * first answer thrown away. Null means the view the sheet was opened on.
+   */
+  const [opened, setOpened] = useState<{ id: string; name: string } | null>(null);
+  const showing = opened?.id ?? locationId;
+
   useEffect(() => {
     let live = true;
     setFailed(false);
+    setData(null);
     api
-      .daySummary(locationId)
+      .daySummary(showing)
       .then((d) => live && setData(d))
       .catch(() => live && setFailed(true));
     return () => {
       live = false;
     };
-  }, [locationId, attempt]);
+  }, [showing, attempt]);
 
   // Jira GRW-342 — Escape, focus in, Tab kept inside, focus back on the button that opened it.
   useDialog(dialogRef, { onClose });
@@ -45,8 +76,14 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
       <div className="hm-sheet" role="dialog" aria-modal="true" aria-labelledby="hm-sheet-title" ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <div className="hm-sheet-head">
           <div>
+            {/* Jira GRW-450 — the way back out of a branch, before its name, so it reads as "← All branches / Koramangala". */}
+            {opened ? (
+              <button type="button" className="hm-ds-back" onClick={() => setOpened(null)}>
+                ← {t.backToAll}
+              </button>
+            ) : null}
             <h2 id="hm-sheet-title">{t.todaysSummary}</h2>
-            <p>{subtitle}</p>
+            <p>{opened ? [dateLabel, opened.name].filter(Boolean).join(' · ') : subtitle}</p>
           </div>
           <button type="button" className="hm-icon-btn" aria-label={t.close} onClick={onClose}>
             <IconClose />
@@ -74,6 +111,54 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
                 </span>
               </div>
             </section>
+
+            {/*
+              Jira GRW-450 — the split, directly under the total it splits.
+              Sent only when no branch was asked for and there is more than one, so this renders itself out of
+              existence on a branch's own summary and in every one-branch business.
+            */}
+            {data.branches && data.branches.length > 0 ? (
+              <section className="hm-card hm-sheet-wide">
+                <div className="hm-card-head">
+                  <h2>
+                    {t.eachBranch} <small>{t.eachBranchSub}</small>
+                  </h2>
+                </div>
+                <ul className="hm-rows">
+                  {data.branches.map((b) => {
+                    const figures = (
+                      <>
+                        <span className="hm-row-main">
+                          {/* The same "(closed)" the stylist's Home already says of a shut branch, not a second wording for it. */}
+                          <span className="hm-row-name">{b.closed ? t.branchClosed(b.name) : b.name}</span>
+                        </span>
+                        <span className="hm-row-meta">{t.staffBookings(b.bookings)}</span>
+                        <span className="hm-row-money">{rupees(b.revenueMinor)}</span>
+                      </>
+                    );
+                    /*
+                     * A branch closed today is listed — its takings are in the total above — but it is not
+                     * offered as something to open: every route that takes a branch resolves it against the
+                     * OPEN branches and answers 404, so the tap would end on "Could not load this".
+                     */
+                    return (
+                      <li key={b.id} className={b.closed ? 'hm-row' : 'hm-row hm-ds-branch'}>
+                        {b.closed ? (
+                          figures
+                        ) : (
+                          <button type="button" className="hm-ds-branch-btn" onClick={() => setOpened({ id: b.id, name: b.name })}>
+                            {figures}
+                            <span className="hm-ds-branch-go" aria-hidden="true">
+                              ›
+                            </span>
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ) : null}
 
             <section className="hm-card">
               <div className="hm-card-head">
@@ -170,7 +255,7 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
               </p>
             </section>
 
-            <StaffToday t={t} staff={data.staff} />
+            <StaffToday t={t} staff={data.staff} branches={data.branches} />
           </div>
         )}
 
@@ -186,7 +271,7 @@ export function DaySummarySheet({ t, locationId, subtitle, onClose }: { t: HomeC
  * Who worked today, with their bookings and money. Its own component (Jira GRW-363) so the rows
  * render in a test without the sheet's fetch.
  */
-export function StaffToday({ t, staff }: { t: HomeCopy; staff: DaySummary['staff'] }) {
+export function StaffToday({ t, staff, branches }: { t: HomeCopy; staff: DaySummary['staff']; branches?: DaySummary['branches'] }) {
   const noProvider = useNoProvider();
   return (
     <section className="hm-card hm-sheet-wide">
@@ -204,11 +289,14 @@ export function StaffToday({ t, staff }: { t: HomeCopy; staff: DaySummary['staff
             // it, with a neutral mark for an avatar; a person as typed.
             const nobody = s.key === 'unassigned';
             const name = nobody ? noProvider : s.name;
+            // Jira GRW-450 — which branch they work at, but only while the list mixes them.
+            const tag = branchTag(s.locationId, branches);
             return (
               <li key={s.id} className="hm-row">
                 <Avatar name={name} id={s.id} size={34} nobody={nobody} />
                 <span className="hm-row-main">
                   <span className="hm-row-name">{name}</span>
+                  {tag ? <span className="hm-row-sub">{tag}</span> : null}
                 </span>
                 <span className="hm-row-meta">{t.staffBookings(s.bookings)}</span>
                 <span className="hm-row-money">{rupees(s.revenueMinor)}</span>

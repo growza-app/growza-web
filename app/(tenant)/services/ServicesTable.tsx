@@ -1,21 +1,29 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatMoney, type ServiceAdmin, type ServiceCategory } from '../lib/api';
+import { api, BookingConflictError, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
-import { servicePhotoUrl } from '../lib/service-photos';
 import { PaginatedTable } from '../components/PaginatedTable';
+import { PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
-import { IconEdit, IconPlus, IconSearch } from '../components/icons';
+import { IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
+import { extraSuggestions } from '../lib/service-suggest';
+import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { ImportServices } from './ImportServices';
 import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser';
 import { CataloguePicker } from './CataloguePicker';
 import { CopyFromBranch } from './CopyFromBranch';
+import { CategoriesSheet } from './CategoriesSheet';
+import { ALL_TAB, RETIRED_TAB, hasRetired, servicesOnTab, tabAfterChange, tabCounts } from './services-tabs';
+import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
+import { HeldByPackagesDialog } from './HeldByPackagesDialog';
+import { packagesInRefusal, type HeldPackage } from './held-by-packages';
+import { categoryTotals, copyName, orderedByCategory } from './services-groups';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -57,24 +65,85 @@ export function ServicesTable({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string | 'all'>('all');
+  /** Jira GRW-437 — `all`, `retired`, or a category id. */
+  const [categoryId, setCategoryId] = useState<string>(ALL_TAB);
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [copying, setCopying] = useState(false);
+  /**
+   * Jira GRW-428 — the category sheet, and the admin list it needs.
+   *
+   * Not the `categories` prop: that is the picker's list, which leaves out a category with nothing in it, so a
+   * category created in the sheet would vanish from it. Fetched when the sheet opens rather than with the page,
+   * because most visits to this screen never open it.
+   */
+  const [managing, setManaging] = useState<ServiceCategoryAdmin[] | null>(null);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const canCopy = branches.length > 1;
   const reload = async () => {
     setServices(await api.allServices(branchId));
     router.refresh();
   };
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  /** Jira GRW-431 — the other thing an owner can mean. Delete is final; retire above is not. */
+  const [confirmDelete, setConfirmDelete] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
+  /** Jira GRW-442 — the service that could not be retired, and the packages still selling it. */
+  const [heldBy, setHeldBy] = useState<{ service: ServiceAdmin; packages: HeldPackage[] } | null>(null);
+  /**
+   * Jira GRW-439 — one file input for the screen, not one per row.
+   *
+   * The photo button moved into the ··· menu, and a menu that is only mounted while it is open cannot own the
+   * input it clicks: the input would unmount with the menu before the file dialog returned. So the input lives
+   * here, and `photoFor` remembers which service asked.
+   */
+  const photoInput = useRef<HTMLInputElement | null>(null);
+  const [photoFor, setPhotoFor] = useState<ServiceAdmin | null>(null);
 
   const replace = (saved: ServiceAdmin) => {
     setServices((prev) => (prev.some((s) => s.id === saved.id) ? prev.map((s) => (s.id === saved.id ? saved : s)) : [saved, ...prev]));
     router.refresh();
+  };
+
+  /**
+   * Jira GRW-439 — a copy starts retired.
+   *
+   * "Haircut (copy)" at the same price, live on the booking page the moment it is created, is a second thing
+   * the owner is selling without having decided to. It appears under Retired, one tap from a restore once
+   * they have edited it.
+   *
+   * And the screen GOES to Retired, because `All` lists what is being sold: a copy that starts retired landed
+   * on a tab the owner was not looking at, so Duplicate changed nothing they could see and the second tap gave
+   * them "Haircut (copy) 2" to clean up. The copy is shown where it actually is.
+   */
+  const duplicate = async (service: ServiceAdmin) => {
+    setError(null);
+    setBusyId(service.id);
+    try {
+      const created = await api.createService(branchId, {
+        name: copyName(service.name, services.map((s) => s.name), (name) => t('copySuffix', { name })),
+        categoryId: service.categoryId,
+        durationMin: service.durationMin,
+        bufferBeforeMin: service.bufferBeforeMin,
+        bufferAfterMin: service.bufferAfterMin,
+        priceMinor: service.priceMinor == null ? null : Number(service.priceMinor),
+        active: false,
+      });
+      replace(created);
+      // The copy carries the original's name, so an active search still matches it; only the tab has to move.
+      setCategoryId(RETIRED_TAB);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t('errors.duplicateFailed'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const askPhoto = (service: ServiceAdmin) => {
+    setPhotoFor(service);
+    photoInput.current?.click();
   };
 
   const onPick = async (service: ServiceAdmin, file: File | undefined) => {
@@ -117,6 +186,36 @@ export function ServicesTable({
    * worth keeping regardless. Asks first, with the booking count, so the owner
    * knows what they're pulling out of the booking flows.
    */
+  const askDelete = async (service: ServiceAdmin) => {
+    setBusyId(service.id);
+    try {
+      const usage = await api.serviceUsage(service.id).catch(() => ({ bookings: 0, providers: 0, offers: 0 }));
+      setConfirmDelete({ service, bookings: usage.bookings });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /**
+   * Jira GRW-431 — a real delete. Its bookings keep the name and price they were taken at (GRW-430), so the
+   * 409 this can answer is about the CATALOGUE — a combo it is in, a question it still asks — never history.
+   */
+  const remove = async (service: ServiceAdmin) => {
+    setBusyId(service.id);
+    setError(null);
+    try {
+      await api.deleteService(branchId, service.id);
+      setServices((prev) => prev.filter((x) => x.id !== service.id));
+      setConfirmDelete(null);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
+      setConfirmDelete(null);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const askRetire = async (service: ServiceAdmin) => {
     setBusyId(service.id);
     try {
@@ -133,30 +232,98 @@ export function ServicesTable({
     try {
       replace(await api.updateService(service.id, { active }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
+      /*
+       * Jira GRW-442 — a 409 naming packages is not an error to put in the page banner; it is a question with
+       * an answer. Anything else, including a 409 about something entirely different, keeps the old behaviour.
+       */
+      const packages = err instanceof BookingConflictError ? packagesInRefusal(err.details) : null;
+      if (packages) setHeldBy({ service, packages });
+      else setError(err instanceof Error ? err.message : t('errors.saveFailed'));
     } finally {
       setBusyId(null);
       setConfirmRetire(null);
     }
   };
 
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const s of services) if (s.categoryId) map.set(s.categoryId, (map.get(s.categoryId) ?? 0) + 1);
-    return map;
-  }, [services]);
+  // Jira GRW-437 — every count is the number of rows its own tab lists. It used to count retired services too,
+  // so retiring something changed no number on the screen.
+  const counts = useMemo(() => tabCounts(services), [services]);
+  const showRetiredTab = useMemo(() => hasRetired(services), [services]);
+  /*
+   * A tab can stop existing underneath the owner — Retired when the last retired service is restored, a
+   * category when it is deleted from the sheet — so the tab actually rendered is derived rather than read
+   * straight from state.
+   *
+   * Deriving alone is not enough, and that was a bug: `categoryId` kept saying `retired` while the screen showed
+   * All, so the next thing the owner retired brought the Retired tab back and the view jumped onto it, hiding
+   * every live service. Derive for this render so there is no empty frame, then commit it so it cannot come
+   * back.
+   */
+  const categoryIds = useMemo(() => categories.map((c) => c.id), [categories]);
+  /** Jira GRW-441 — the headings read in the owner's order, the same one the tabs above them read. */
+  const categoryOrder = useMemo(() => categories.map((c) => c.name), [categories]);
+  const tab = tabAfterChange(services, categoryId, categoryIds);
+  useEffect(() => {
+    if (tab !== categoryId) setCategoryId(tab);
+  }, [tab, categoryId]);
+
+  /** The services the tab in view lists — what the search looks through, and the only things it may offer. */
+  const inTab = useMemo(() => servicesOnTab(services, tab), [services, tab]);
 
   const filtered = useMemo(() => {
-    const inCategory = services.filter((s) => categoryId === 'all' || s.categoryId === categoryId);
     const q = search.trim();
-    if (q.length < MIN_CHARS) return inCategory;
+    if (q.length < MIN_CHARS) return inTab;
     // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
     // found by "phacial" at the desk is found by "phacial" here too.
     return matchItems(
-      inCategory.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
+      inTab.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
       q,
     );
-  }, [services, search, categoryId]);
+  }, [inTab, search]);
+
+  /**
+   * Jira GRW-449 — and the half of that search the screen never had: what the typed words MEAN.
+   *
+   * Only the walk-in sheet ever asked the server, so "nails" found Manicure at the front desk and nothing on
+   * the screen where the owner edits it.
+   *
+   * Resolved against `inTab` and not the whole branch, because a chip has to land somewhere: offering Manicure
+   * while the Hair tab is in view would set a search the tab then filters out, and the owner would be looking
+   * at "No services match here" having just been told there was a match.
+   */
+  const remote = useServiceSuggestions(search, branchId);
+  const byIdInTab = useMemo(() => new Map(inTab.map((s) => [s.id, s])), [inTab]);
+  const alsoTry = useMemo(
+    () => extraSuggestions(filtered, remote, search, (id) => byIdInTab.get(id)),
+    [filtered, remote, search, byIdInTab],
+  );
+
+  /*
+   * Jira GRW-439 — the page is sliced HERE, and `PaginatedTable` is driven in controlled mode.
+   *
+   * It used to slice its own `children`, which worked while they were one `<tr>` per service. They are a
+   * single `<ServiceTableRows>` now — the grouping has to see the whole page to put a heading above each
+   * category — and `Children.toArray` counts that as one item: every service rendered on one page and the
+   * footer disappeared, because `Pagination` draws nothing for a single page.
+   *
+   * Slicing the services and grouping afterwards also keeps the page honest at ten SERVICES, which slicing
+   * rows would not: a page of ten rows is eight services and two headings.
+   */
+  const [wantedPage, setWantedPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const page = Math.min(wantedPage, pageCount);
+  /*
+   * Jira GRW-446 — ordered by category BEFORE it is sliced, and the headings count the category rather than
+   * the page. Slicing the list as it arrived and grouping the slice put "Hair" on three different pages with a
+   * different count each time, beside a tab that said 18.
+   */
+  const ordered = useMemo(() => orderedByCategory(filtered, categoryOrder), [filtered, categoryOrder]);
+  const totals = useMemo(() => categoryTotals(filtered), [filtered]);
+  const pageRows = useMemo(() => ordered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [ordered, page]);
+  // Back to the first page when the list under it changes: page 3 of a search that now matches four rows is empty.
+  useEffect(() => {
+    setWantedPage(1);
+  }, [tab, search]);
 
   const exportCsv = () => {
     const header = ['Name', 'Type', 'Minutes', 'Cleanup after (min)', 'Price', 'Status'];
@@ -175,6 +342,18 @@ export function ServicesTable({
     a.download = 'services.csv';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  /** Everything a row can do, handed to both shapes so the table and the cards cannot drift apart. */
+  const rowActions: RowActions = {
+    onEdit: setEditing,
+    onPhoto: askPhoto,
+    onRemovePhoto: (s) => void onRemovePhoto(s),
+    onDuplicate: (s) => void duplicate(s),
+    onRetire: (s) => void askRetire(s),
+    onRestore: (s) => void setActive(s, true),
+    onDelete: (s) => void askDelete(s),
+    busyId,
   };
 
   return (
@@ -202,12 +381,36 @@ export function ServicesTable({
           <IconSearch />
           <input
             type="search"
-            placeholder={t('searchPlaceholder', { count: services.length })}
+            /*
+             * Jira GRW-437 — the number the search will actually look through, which is the tab in view and not
+             * the whole branch. "Search 19 services…" sitting beside a tab reading "All 1" invites the owner to
+             * type a retired service's name into a box that cannot find it.
+             */
+            placeholder={t('searchPlaceholder', { count: inTab.length })}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label={t('searchAria')}
           />
         </div>
+        {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service. */}
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={loadingCategories}
+          onClick={async () => {
+            setLoadingCategories(true);
+            setError(null);
+            try {
+              setManaging(await api.categoriesAtBranch(branchId));
+            } catch (err) {
+              setError(err instanceof Error ? err.message : t('categories.errors.failed'));
+            } finally {
+              setLoadingCategories(false);
+            }
+          }}
+        >
+          {loadingCategories ? '…' : t('categories.open')}
+        </button>
         <button type="button" className="btn btn-ghost" onClick={exportCsv}>
           {t('export')}
         </button>
@@ -217,27 +420,76 @@ export function ServicesTable({
         <button
           type="button"
           role="tab"
-          aria-selected={categoryId === 'all'}
-          className={`page-tab ${categoryId === 'all' ? 'active' : ''}`}
-          onClick={() => setCategoryId('all')}
+          aria-selected={tab === ALL_TAB}
+          className={`page-tab ${tab === ALL_TAB ? 'active' : ''}`}
+          onClick={() => setCategoryId(ALL_TAB)}
         >
-          {t('all')} <span className="page-tab-count">{services.length}</span>
+          {t('all')} <span className="page-tab-count">{counts.all}</span>
         </button>
         {categories.map((c) => (
           <button
             key={c.id}
             type="button"
             role="tab"
-            aria-selected={categoryId === c.id}
-            className={`page-tab ${categoryId === c.id ? 'active' : ''}`}
+            aria-selected={tab === c.id}
+            className={`page-tab ${tab === c.id ? 'active' : ''}`}
             onClick={() => setCategoryId(c.id)}
           >
-            {c.name} <span className="page-tab-count">{counts.get(c.id) ?? 0}</span>
+            {c.name} <span className="page-tab-count">{counts.byCategory.get(c.id) ?? 0}</span>
           </button>
         ))}
+        {/*
+         * Jira GRW-437 — last, and only when there is something in it. The owner's live menu reads left to
+         * right; what they have taken off it sits at the end, out of the way but one tap from a restore.
+         */}
+        {showRetiredTab && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === RETIRED_TAB}
+            className={`page-tab svc-tab-retired ${tab === RETIRED_TAB ? 'active' : ''}`}
+            onClick={() => setCategoryId(RETIRED_TAB)}
+          >
+            {t('retired')} <span className="page-tab-count">{counts.retired}</span>
+          </button>
+        )}
       </div>
 
-      <div className="card">
+      {/*
+        Jira GRW-449 — services close in MEANING to what was typed, above the table rather than inside it.
+        Tapping one puts its name in the search box: the table then lists it with its own row actions, which a
+        chip cannot carry, and the counts, grouping and paging below stay exactly what the owner typed for.
+      */}
+      {alsoTry.length > 0 && (
+        <div className="also-try">
+          <span className="also-try-label">{t('alsoTry')}</span>
+          <div className="also-try-chips">
+            {alsoTry.map((s) => (
+              <button key={s.id} type="button" className="also-try-chip" onClick={() => setSearch(s.name)}>
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* One input for the screen (see `photoFor`): the ··· menu unmounts when it closes, so it cannot own this. */}
+      <input
+        ref={photoInput}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const service = photoFor;
+          const file = e.target.files?.[0];
+          setPhotoFor(null);
+          // Cleared so picking the SAME file twice in a row still fires a change event.
+          e.target.value = '';
+          if (service) void onPick(service, file);
+        }}
+      />
+
+      <div className="card svc-shell">
         {error && <div role="alert" className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
         {services.length === 0 ? (
           <div className="empty svc-branch-empty">
@@ -254,149 +506,86 @@ export function ServicesTable({
             </div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="empty">{t('empty')}</div>
+          /*
+           * Jira GRW-437 — "No services match here" is right for a search that found nothing and alarming when
+           * the branch has a full catalogue that simply happens to be entirely retired: it reads as though the
+           * menu is gone. Say where everything went, and offer the one tap that gets there.
+           */
+          <div className="empty">
+            {tab === ALL_TAB && search.trim().length < MIN_CHARS && showRetiredTab ? (
+              <>
+                <p>{t('allRetired')}</p>
+                <button type="button" className="btn btn-ghost" onClick={() => setCategoryId(RETIRED_TAB)}>
+                  {t('retired')} ({counts.retired})
+                </button>
+              </>
+            ) : (
+              t('empty')
+            )}
+          </div>
         ) : (
           <PaginatedTable
             noun={tn('services')}
-            cards={filtered.map((s) => (
-              <div className={`svc-card ${s.active ? '' : 'is-retired'}`} key={s.id} data-row>
-                <div className="svc-card-head">
-                  {s.imageUrl ? (
-                    <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={40} height={40} />
-                  ) : (
-                    <span className="svc-photo-empty">{t('photoAdd')}</span>
-                  )}
-                  <div className="svc-card-text">
-                    <div className="svc-card-name">
-                      {s.name}
-                      {!s.active && <span className="chip chip-completed">{t('retired')}</span>}
-                    </div>
-                    <div className="svc-card-meta">
-                      {s.categoryName ?? '—'} · {t('minutes', { count: s.durationMin })}
-                      {s.bufferAfterMin > 0 && ` · ${t('cleanupPlus', { duration: t('minutes', { count: s.bufferAfterMin }) })}`}
-                    </div>
-                  </div>
-                  <div className="svc-card-price">{formatMoney(s.priceMinor, s.currency)}</div>
-                </div>
-                <div className="svc-card-foot">
-                  {/* `.svc-card-edit`, not `.row-edit-btn`: a card's footer
-                      button is full-bleed, not a 38px inline control. */}
-                  <button type="button" className="btn btn-ghost svc-card-edit" onClick={() => setEditing(s)}>
-                    <IconEdit /> {t('edit')}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    disabled={busyId === s.id}
-                    onClick={() => inputRefs.current[s.id]?.click()}
-                  >
-                    {busyId === s.id ? '…' : s.imageUrl ? t('changePhoto') : t('addPhoto')}
-                  </button>
-                  {s.active ? (
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-danger"
-                      disabled={busyId === s.id}
-                      onClick={() => askRetire(s)}
-                    >
-                      {t('retire')}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      disabled={busyId === s.id}
-                      onClick={() => setActive(s, true)}
-                    >
-                      {t('restore')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+            page={page}
+            total={filtered.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setWantedPage}
+            cards={<ServiceCards rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />}
             head={
               <tr>
-                <th>{t('cols.photo')}</th>
                 <th>{t('cols.name')}</th>
-                <th>{t('cols.type')}</th>
-                <th>{t('cols.duration')}</th>
-                <th>{t('cols.cleanupTime')}</th>
+                <th>{t('cols.time')}</th>
                 <th>{t('cols.price')}</th>
                 <th>{t('cols.actions')}</th>
               </tr>
             }
           >
-            {filtered.map((s) => (
-              <tr key={s.id} data-row className={s.active ? undefined : 'is-retired'}>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {/* Says whether a photo EXISTS — previously every row looked
-                        identical whether one had been uploaded or not. */}
-                    {s.imageUrl ? (
-                      <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
-                    ) : (
-                      <span className="svc-photo-empty">{t('photoAdd')}</span>
-                    )}
-                    <input
-                      ref={(el) => {
-                        inputRefs.current[s.id] = el;
-                      }}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      style={{ display: 'none' }}
-                      onChange={(e) => onPick(s, e.target.files?.[0])}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      disabled={busyId === s.id}
-                      onClick={() => inputRefs.current[s.id]?.click()}
-                    >
-                      {busyId === s.id ? '…' : s.imageUrl ? t('change') : t('upload')}
-                    </button>
-                    {s.imageUrl && (
-                      <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => onRemovePhoto(s)}>
-                        {t('remove')}
-                      </button>
-                    )}
-                  </div>
-                </td>
-                <td style={{ fontWeight: 620 }}>
-                  {s.name}
-                  {!s.active && <span className="chip chip-completed" style={{ marginLeft: 8 }}>{t('retired')}</span>}
-                </td>
-                <td className="muted">{s.categoryName ?? '—'}</td>
-                <td>{t('minutes', { count: s.durationMin })}</td>
-                {/* "Cleanup time" instead of "buffer" — same data, words an owner uses. */}
-                <td className="muted">{s.bufferAfterMin > 0 ? t('minutes', { count: s.bufferAfterMin }) : t('noCleanup')}</td>
-                <td>{formatMoney(s.priceMinor, s.currency)}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <button type="button" className="row-edit-btn" onClick={() => setEditing(s)}>
-                      <IconEdit /> {t('edit')}
-                    </button>
-                    {s.active ? (
-                      <button type="button" className="btn btn-ghost btn-danger" disabled={busyId === s.id} onClick={() => askRetire(s)}>
-                        {t('retire')}
-                      </button>
-                    ) : (
-                      <button type="button" className="btn btn-ghost" disabled={busyId === s.id} onClick={() => setActive(s, true)}>
-                        {t('restore')}
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            <ServiceTableRows rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />
           </PaginatedTable>
         )}
       </div>
+
+      {heldBy && (
+        <HeldByPackagesDialog
+          serviceName={heldBy.service.name}
+          packages={heldBy.packages}
+          onClose={() => setHeldBy(null)}
+        />
+      )}
+
+      {managing && (
+        <CategoriesSheet
+          branchId={branchId}
+          initial={managing}
+          services={services}
+          onClose={() => setManaging(null)}
+          // A rename shows on every row of the list, and a delete frees services it lists: reload, don't patch.
+          onChanged={() => void reload()}
+        />
+      )}
 
       {(creating || editing) && (
         <ServiceForm
           service={editing}
           categories={categories}
           branchId={branchId}
+          /*
+           * Jira GRW-440 — the sheet's own Retire and Delete. Handled here, not in the sheet, so they open the
+           * same confirmations the row's ··· menu opens (GRW-431): one dialog, asked the same way from both.
+           * The sheet closes first, because a confirmation stacked on top of it is two modals deep.
+           */
+          onRetire={(s) => {
+            setEditing(null);
+            void askRetire(s);
+          }}
+          onRestore={(s) => {
+            setEditing(null);
+            void setActive(s, true);
+          }}
+          onDelete={(s) => {
+            setEditing(null);
+            void askDelete(s);
+          }}
           onClose={() => {
             setCreating(false);
             setEditing(null);
@@ -465,6 +654,23 @@ export function ServicesTable({
             setCopying(false);
             await reload();
           }}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={t('deleteTitle', { name: confirmDelete.service.name })}
+          body={t('deleteBody')}
+          detail={
+            confirmDelete.bookings > 0
+              ? t('deleteDetail', { count: confirmDelete.bookings })
+              : t('deleteDetailNone')
+          }
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busyId === confirmDelete.service.id}
+          onConfirm={() => void remove(confirmDelete.service)}
+          onCancel={() => setConfirmDelete(null)}
         />
       )}
 

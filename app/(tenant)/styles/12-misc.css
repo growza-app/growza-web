@@ -47,3 +47,58 @@
   font-weight: 650;
   text-decoration: none;
 }
+
+/*
+ * ...unless that way out is a BUTTON.
+ *
+ * Jira GRW-447 — the rule above was written for a plain text link in an empty state. The Packages screen's
+ * "Build one from your 61 services" is a `<Link className="btn">`, which paints its own green background, so
+ * the green link colour landed on the label: green on green, a solid green slab with nothing written on it.
+ * `.btn` already says what colour its label is; this just stops the link colour from reaching it.
+ */
+.empty a.btn {
+  color: #fff;
+}
+
+/*
+ * Jira GRW-449 — the "Also try" row: services close in MEANING to what was typed, on any screen that searches
+ * services.
+ *
+ * Its own row, never inside the results list. The walk-in sheet (`.wi-also-try`, GRW-375) has its own copy of
+ * this sized for a bottom sheet; these are the shared ones the package builder and the Services screen use.
+ */
+.also-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.also-try-label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.also-try-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.also-try-chip {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  /* 44px is Apple's minimum tap target, and a chip row is the easiest place to fall under it (GRW-305). */
+  min-height: 44px;
+}
