@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { api, type SettingsSummary } from '../../lib/api';
+import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { SettingsSaveBar } from '../SettingsSaveBar';
 
 /**
@@ -21,7 +21,13 @@ import { SettingsSaveBar } from '../SettingsSaveBar';
  * that cannot do anything is worse than no control.
  */
 /** Each role and tab is named in `settingsReports.roles` / `.tabs`; the key is also what the API stores. */
-const ROLES = ['receptionist', 'staff'] as const;
+/*
+ * Jira GRW-471 — the receptionist only. Jira GRW-215 took the Reports tabs away from stylists ("the SALON's figures"),
+ * and the API accepts only `receptionist` (`security/report-access.ts`). This form still offered a stylist row, so
+ * ticking one of its boxes — or ticking and unticking it, which still sent `staff: []` — failed the whole save with
+ * a generic error, receptionist changes and all.
+ */
+const ROLES = ['receptionist'] as const;
 
 const TABS = [
   { key: 'overview', money: true },
@@ -55,13 +61,15 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
     setError(null);
     setSaved(false);
     try {
-      const fresh = await api.updateBookingRules({ reportAccess: granted });
+      // Only the roles this form offers: a key left over from before (a stored `staff`) would fail the save.
+      const reportAccess = Object.fromEntries(ROLES.map((role) => [role, granted[role] ?? []]));
+      const fresh = await api.updateBookingRules({ reportAccess });
       // Taken from the server's answer rather than kept locally: it drops a
       // role granted nothing, and the screen should show what was stored.
       setGranted({ ...fresh.reportAccess });
       setSaved(true);
-    } catch {
-      setError(t('errors.saveFailed'));
+    } catch (e) {
+      setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
