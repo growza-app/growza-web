@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { formatMoney, type ServiceAdmin } from '../lib/api';
+import { useLabel } from '../components/LabelsProvider';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
@@ -136,6 +137,8 @@ export function ServiceRowMenu({ service, actions, t }: { service: ServiceAdmin;
 
 /** The photo cell and the name, shared by both shapes. */
 function NameCell({ service, t }: { service: ServiceAdmin; t: T }) {
+  // Jira GRW-482 — the business's own word, so a clinic reads "No doctor".
+  const providerWord = useLabel('provider', 'stylist');
   return (
     <span className="svc-name-cell">
       {service.imageUrl ? (
@@ -146,6 +149,12 @@ function NameCell({ service, t }: { service: ServiceAdmin; t: T }) {
       <span className="svc-name-text">
         <span className="svc-name">{service.name}</span>
         {!service.active && <span className="chip chip-completed svc-retired-chip">{t('retired')}</span>}
+        {/* Jira GRW-482 — a live service nobody at this branch can do. Said here, where the owner
+            can fix it, rather than only at the moment a booking is refused (GRW-461). A retired
+            service is not flagged: it is off the menu already, so having no stylist is no fault. */}
+        {service.active && service.providerCount === 0 && (
+          <span className="chip chip-attention svc-nobody-chip">{t('nobodyDoesIt', { provider: providerWord.toLowerCase() })}</span>
+        )}
       </span>
     </span>
   );

@@ -953,7 +953,8 @@
       "cancel": "Cancel"
     },
     "hours": "{count, plural, one {# hr} other {# hrs}}",
-    "hoursMinutes": "{hours, plural, one {# hr} other {# hrs}} {minutes} min"
+    "hoursMinutes": "{hours, plural, one {# hr} other {# hrs}} {minutes} min",
+    "nobodyDoesIt": "No {provider}"
   },
   "staff": {
     "addLabel": "Add {label}",

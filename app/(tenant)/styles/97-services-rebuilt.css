@@ -53,7 +53,8 @@
   overflow-wrap: anywhere;
 }
 
-.svc-retired-chip {
+.svc-retired-chip,
+.svc-nobody-chip {
   flex: none;
 }
 

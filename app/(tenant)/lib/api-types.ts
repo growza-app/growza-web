@@ -135,6 +135,13 @@ export interface Service {
 export interface ServiceAdmin extends Service {
   categoryId: string | null;
   active: boolean;
+  /**
+   * Jira GRW-482 — how many of this branch's stylists can perform it.
+   *
+   * Zero means it is on the menu and bookable by nobody. Optional because an older
+   * API will not send it, and a missing count must not be read as a warning.
+   */
+  providerCount?: number;
 }
 
 export interface ServiceCategory {
