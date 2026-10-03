@@ -71,7 +71,7 @@ describe('the card', () => {
   });
 
   it('the branch line is for All branches on every tab, its amounts being the period\'s (GRW-313)', () => {
-    expect(hero).toMatch(/branches\.length > 1 && branchId === null && Boolean\(onPickBranch && onMoreBranches\)/);
+    expect(hero).toMatch(/branches\.length > 1 && branchId === null && Boolean\(onPickBranch\)/);
     expect(hero).not.toMatch(/money\.period === 'today' && Boolean/);
     expect(hero).toMatch(/y\.b\.revenueMinor - x\.b\.revenueMinor/);
     expect(hero).toMatch(/<b>\{rupees\(b\.revenueMinor\)\}<\/b>/);
@@ -149,5 +149,48 @@ describe('the period switch on the toolbar row (Jira GRW-313)', () => {
     expect(css).toMatch(/\.hm-hero-top\s*\{\s*position:\s*absolute;/);
     expect(css).toMatch(/\.hm-hero \.hm-hero-top \.hm-eyebrow\s*\{\s*display:\s*none;/);
     expect(css).toMatch(/\.hm-hero \.hm-hero-chip\s*\{\s*margin-right:\s*34px;/);
+  });
+});
+
+/**
+ * Jira GRW-485 — every branch's takings, from the branch line's "+N".
+ *
+ * The line holds two branches and says "+3" for the rest (GRW-394 keeps it to one row). That
+ * "+3" used to open the branch SWITCHER, which answered a question nobody had asked: an owner
+ * tapping it on a money line wants to see the other three numbers, not leave the screen.
+ *
+ * Measured in a browser at 390px and at 344px, with the root at 16, 20 and 23px: the popover
+ * is 296–300px wide, fits the screen at every one of them, and never scrolls.
+ */
+describe('the rest of the branch line', () => {
+  const hero = code('MoneyHero.tsx');
+  const css = readFileSync(resolve(__dirname, '../../styles/83-role-home.css'), 'utf8');
+
+  it('opens from "+N" as a popover, not as a trip to the picker', () => {
+    expect(hero).toMatch(/onMore=\{\(\) => setBranchMenu\(true\)\}/);
+    expect(hero).toMatch(/className="hm-menu hm-pay-menu hm-branch-menu" role="dialog"/);
+    // The same dismissal the payment popover has: Escape, and a tap outside.
+    expect(hero).toMatch(/useDialog\(branchMenuRef, \{ onClose: \(\) => setBranchMenu\(false\)/);
+  });
+
+  it('lists every branch, biggest first, with the total above them', () => {
+    expect(hero).toMatch(/<BranchMenu t=\{t\} branches=\{branches\} total=\{money\.revenueMinor\}/);
+    expect(hero).toMatch(/\.sort\(\(x, y\) => y\.b\.revenueMinor - x\.b\.revenueMinor\)/);
+  });
+
+  it('is a list of ways in, so every row is a 44px target', () => {
+    expect(css).toMatch(/\.hm-branch-list button \{[^}]*min-height: 44px;/);
+    expect(hero).toMatch(/onClick=\{\(\) => onPick\(b\.id\)\}/);
+  });
+
+  it('gives way on the name and never on the amount', () => {
+    expect(css).toMatch(/\.hm-branch-name \{[^}]*text-overflow: ellipsis;/);
+    expect(css).toMatch(/\.hm-branch-list b \{[^}]*flex: none;/);
+  });
+
+  it('is sized to its content — a popover that scrolls is a list that should have been a page', () => {
+    const block = css.slice(css.indexOf('.hm-branch-list {'), css.indexOf('.hm-branch-menu {') + 120);
+    expect(block).not.toMatch(/overflow-y:\s*(auto|scroll)/);
+    expect(block).not.toMatch(/max-height/);
   });
 });

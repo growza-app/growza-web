@@ -496,7 +496,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                 unmarkedHref={unmarkedHref}
                 branchId={branch}
                 onPickBranch={pickBranch}
-                onMoreBranches={() => branchContext.setPickerOpen(true)}
               /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/* The design gives "Needs your attention" to the laptop only; a phone's
