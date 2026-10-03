@@ -356,7 +356,7 @@ export interface SettingsSummary {
 
 export interface ActivityEvent {
   id: string;
-  topic: 'appointment.confirmed' | 'appointment.cancelled' | 'appointment.rescheduled' | 'billing.change_pending';
+  topic: 'appointment.confirmed' | 'appointment.cancelled' | 'appointment.rescheduled' | 'billing.change_pending' | 'conversation.handoff';
   createdAt: string;
   /** Booking topics only — null for `billing.change_pending`. */
   customerName: string | null;

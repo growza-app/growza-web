@@ -41,7 +41,8 @@
         "newBooking": "नई बुकिंग",
         "cancelled": "रद्द",
         "rescheduled": "समय बदला",
-        "billing": "बिलिंग"
+        "billing": "बिलिंग",
+        "handoff": "किसी से बात"
       },
       "title": "{topic} — {services}",
       "customer": "ग्राहक",
@@ -51,7 +52,8 @@
       "daysAgo": "{count} दिन पहले",
       "billUp": "बिल बढ़ने वाला है",
       "billDown": "बिल घटने वाला है",
-      "billSub": "{day} से: {next} प्रति माह (अभी {current}), {count, plural, one {# ब्रांच} other {# ब्रांच}} के लिए।"
+      "billSub": "{day} से: {next} प्रति माह (अभी {current}), {count, plural, one {# ब्रांच} other {# ब्रांच}} के लिए।",
+      "handoffTitle": "किसी से बात करना चाहते हैं"
     },
     "bellUnread": "सूचनाएं, {count} नई"
   },
