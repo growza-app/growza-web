@@ -99,6 +99,8 @@ export const KNOWN_ACTIONS = [
   'subscription.mandate_reapproval_withdrawn',
   'subscription.mandate_shortfall',
   'subscription.mandate_cancelled',
+  // Jira GRW-470 — an owner took a receptionist's or stylist's login away.
+  'team.member_removed',
 ] as const;
 
 interface AuditLogRow {

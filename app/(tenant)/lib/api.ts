@@ -495,6 +495,8 @@ export const api = {
   setTeamMemberBranch: (userId: string, locationId: string) =>
     patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { locationId }),
   revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
+  /** Jira GRW-470 — take a receptionist's or stylist's login away from this business. */
+  removeTeamMember: (userId: string) => del<{ ok: true }>(`/api/v1/team/members/${userId}`),
   // Jira GRW-230 — `location`: that branch's settings; omitted: the business defaults.
   settings: (location?: string | null) => get<SettingsSummary>(`/api/v1/settings${atBranch(location)}`),
   resetBranchSettings: (location: string, keys: string[]) =>
