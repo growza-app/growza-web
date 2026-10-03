@@ -78,6 +78,7 @@ export function SubscriptionPanel({
   subscriptionId,
   canManage,
   canRecordPayment = false,
+  canDiscount = false,
   /** Shown in the heading when the host already knows them — omitted, the panel just leads with the plan code. */
   businessName,
   planName,
@@ -93,6 +94,11 @@ export function SubscriptionPanel({
    * has not thought about it shows no button, which is the safe direction.
    */
   canRecordPayment?: boolean;
+  /**
+   * Jira GRW-475 — `admin.discount.manage`, which is what the discount routes now check. The permission sat in the
+   * role editor while the routes checked `subscription.manage`, so a role without it could still give 100% off.
+   */
+  canDiscount?: boolean;
   businessName?: string;
   planName?: string;
   /** Called after a status change, so a host showing the same status elsewhere can refresh it. */
@@ -275,13 +281,13 @@ export function SubscriptionPanel({
             {scheduledToEnd ? 'Keep subscription' : 'Cancel subscription'}
           </SecondaryButton>
           <SecondaryButton
-            disabled={!canManage || terminal}
+            disabled={!canDiscount || terminal}
             onClick={() => setDiscountOpen(true)}
             title={
               terminal
                 ? `This subscription is already ${status.toLowerCase()}.`
-                : !canManage
-                  ? 'Changing a price needs the subscription-manage permission.'
+                : !canDiscount
+                  ? 'Changing a price needs the discount permission.'
                   : undefined
             }
           >

@@ -63,7 +63,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // Jira GRW-475 — no zoom lock (WCAG 1.4.4); the business dashboard dropped it in GRW-306.
   themeColor: '#264a3c',
 };
 
