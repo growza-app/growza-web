@@ -43,7 +43,7 @@
     border-radius: 10px;
     background: rgba(253, 224, 71, 0.16);
     color: #fde68a;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     text-decoration: none;
   }
@@ -68,7 +68,7 @@
     padding-top: 2px;
     border-top: 1px solid rgba(255, 255, 255, 0.14);
     color: #e8f5ed;
-    font-size: 13px;
+    font-size: 15px;
   }
   /* Jira GRW-394 — the branch line stays ONE row: two names, their amounts and "+N" did not fit a 375px phone,
      so "+N" dropped to a second 44px row of its own and left a gap in the card. A long branch NAME is cut
@@ -134,7 +134,7 @@
   .hm-line-foot {
     margin: 0;
     color: #c5e6d2;
-    font-size: 12px;
+    font-size: 14px;
   }
   .hm-line-foot b {
     color: #fff;

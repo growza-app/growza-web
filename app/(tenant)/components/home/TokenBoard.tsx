@@ -194,6 +194,16 @@ export function TokenBoard({
     tabRefs.current[next]?.focus();
   };
 
+  /**
+   * Jira GRW-481 — how long someone has been waiting, in the form that helps.
+   * Under four hours a duration is what the desk wants; past that it has stopped
+   * being a duration and become a fact about this morning, so hand over the
+   * clock time they arrived instead. `arrivedAt` is a thunk because formatting a
+   * time costs more than the comparison that decides whether we need it.
+   */
+  const waitingWord = (minutes: number, arrivedAt: () => string) =>
+    minutes >= 4 * 60 ? t.waitingSince(arrivedAt()) : t.waitingMin(minutes);
+
   const services = (x: TokenRow) =>
     x.serviceNames.length > 0 ? x.serviceNames.join(' + ') : <span className="tb-muted">{w.servicesAtPayment}</span>;
 
@@ -207,7 +217,9 @@ export function TokenBoard({
           <span className="tb-name">{nameOf(x)}</span>
           <span className="tb-meta">
             {col === 'waiting'
-              ? t.waitingMin(minutesBetween(x.addedAt, now))
+              ? // Jira GRW-481 — past four hours a duration tells the desk nothing useful;
+                // the time they walked in does.
+                waitingWord(minutesBetween(x.addedAt, now), () => formatTime(x.addedAt, timezone))
               : col === 'with_stylist'
                 ? // Jira GRW-405 — a booked client's visit runs at the booked time, not when they walked in.
                   (x.booked ? w.bookedAt : t.started)(formatTime(x.visitStartAt ?? x.addedAt, timezone))
