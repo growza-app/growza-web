@@ -2090,16 +2090,20 @@ button.hm-now-count {
 .hm-wait-rose {
   color: #b93232;
 }
+/* Jira GRW-481 — 36px was below the 44x44 minimum, on the two buttons the desk
+   taps more than anything else in the app. Everything else on Home already
+   cleared 44, either outright or through the ::after expansion the branch chip
+   uses; these two were the only ones left short. */
 .hm-give {
   flex-shrink: 0;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 16px;
   border: 0;
-  border-radius: 20px;
+  border-radius: 22px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
   font: inherit;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;

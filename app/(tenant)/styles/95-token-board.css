@@ -211,9 +211,16 @@
   text-align: center;
   line-height: 1.2;
 }
+/* Jira GRW-481 — "Record payment" is the likelier of the two, so it still leads
+   the pair; it just no longer leads it by being a solid green block repeated
+   once per waiting row. Twenty-two filled buttons down one screen is twenty-two
+   things claiming to be the most important, which leaves nothing emphasised and
+   spends the brand colour on ordinary controls. An outline keeps the ranking
+   and gives the hero card its green back. */
 .tb-actions .tb-pay {
-  background: var(--hm-green-deep);
-  color: #fff;
+  background: #fff;
+  color: var(--hm-green-deep);
+  box-shadow: inset 0 0 0 1.5px var(--hm-green-deep);
 }
 
 /* ---------- booked for today ---------- */
