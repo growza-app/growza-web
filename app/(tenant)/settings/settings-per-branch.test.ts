@@ -44,8 +44,10 @@ describe('what exists once', () => {
     const row = SETTINGS_GROUPS.flatMap((g) => g.rows).find((r) => r.key === 'business')!;
     expect(row.href).toBe('/settings/business');
     expect(row.multiBranchOnly).toBe(true);
-    // …and send only those: a branch's phone and "about" are the branch's.
-    expect(src('profile/ProfileForm.tsx')).toMatch(/businessOnly\s*\? \{ name: f\.name, timezone: f\.timezone \}/);
+    // …and send only those, plus the business's own number. A branch's phone and "about" are the branch's; the
+    // business's number is the one booking links open WhatsApp at (GRW-385), and since Jira GRW-474 it can be
+    // changed here — it was frozen the moment a second branch existed.
+    expect(src('profile/ProfileForm.tsx')).toMatch(/\{ name: f\.name, timezone: f\.timezone, phone: toStoredPhone\(f\.phone\) \?\? '' \}/);
   });
 
   it('who sees client numbers moved from Booking rules (now a branch’s) to Who sees what', () => {

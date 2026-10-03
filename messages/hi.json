@@ -489,6 +489,7 @@
     "removeAllAria": "{day} को हर ब्रांच फिर से खोलें"
   },
   "settingsReminders": {
+    "other": "रिमाइंडर",
     "title": "सूचनाएं",
     "branchTitleNamed": "{name} के रिमाइंडर",
     "branchTitleUnnamed": "ब्रांच के रिमाइंडर",
@@ -503,6 +504,7 @@
     "saved": "सेव हो गया",
     "savedNotLive": "सेव हो गया — WhatsApp शुरू होते ही ये जाने लगेंगे",
     "errors": {
+      "hoursRange": "1 से 168 के बीच पूरे घंटे लिखें",
       "saveFailed": "सेव नहीं हो सका — जांचें कि सर्वर चल रहा है।"
     }
   },

@@ -22,6 +22,7 @@ export function StaffClient({
   staffWord,
   maxProviders,
   orgHours,
+  hoursByBranch = {},
   branches = [],
 }: {
   initialOverview: ProvidersOverview;
@@ -30,6 +31,8 @@ export function StaffClient({
   maxProviders: number;
   /** GRW-22 — the salon's own week, as stored. Expanded to seven editor rows here, on the client, because `toWeekdayRows` is a client module. */
   orgHours: Array<{ weekday: number; startTime: string; endTime: string }>;
+  /** Jira GRW-474 — each branch's own week, keyed by branch id. */
+  hoursByBranch?: Record<string, Array<{ weekday: number; startTime: string; endTime: string }>>;
   /** Jira GRW-234 — a multi-branch business's branches, main first; empty for one branch. */
   branches?: Array<{ id: string; name: string }>;
 }) {
@@ -393,6 +396,7 @@ export function StaffClient({
           services={services}
           roster={providers}
           orgHours={orgHourRows}
+          hoursByBranch={hoursByBranch}
           branches={branches}
           onClose={() => setCreating(false)}
           onCreated={refresh}

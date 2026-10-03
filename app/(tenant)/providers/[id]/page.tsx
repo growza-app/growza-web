@@ -26,7 +26,7 @@ export default async function StaffEditPage({ params }: { params: Promise<{ id: 
       api.services(),
       api.providerDay(id).catch(() => null),
       api.providerStats(id).catch(() => null),
-      api.settings().catch(() => null),
+      Promise.resolve(null),
       // Jira GRW-234 — where this person can be moved to (owner only; nobody else gets the field).
       api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name }))).catch(() => []),
     ]);
@@ -35,6 +35,12 @@ export default async function StaffEditPage({ params }: { params: Promise<{ id: 
   }
 
   if (!detail) notFound();
+  /*
+   * Jira GRW-474 — "same hours as the salon" means this person's branch's hours: that is what the server copies.
+   * The business-wide week was shown, so at a branch with its own hours the screen and the saved schedule
+   * disagreed. Read after `detail`, which names the branch.
+   */
+  settings = await api.settings(detail.locationId ?? null).catch(() => null);
 
   const staffWord = me.labels.providers ?? copy.nav.staff;
 
