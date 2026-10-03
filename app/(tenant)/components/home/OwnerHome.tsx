@@ -69,6 +69,13 @@ import { useMinuteClock } from './useMinuteClock';
  * your attention on top, Bookings today and Right now beneath (1.5fr / 1fr, the
  * same split), How your clients are doing at the bottom. The grid names its
  * areas (83-role-home.css), so a new card is a new area, not a new layout.
+ *
+ * ## The phone's order is this file's, not the stylesheet's (Jira GRW-486)
+ *
+ * Money, the queue when somebody is on it, what needs you, the day, clients, shortcuts — in
+ * that order here, because that is the order they are read in. 83-role-home.css used to set it
+ * with `order`, which moves the eye without moving Tab or VoiceOver. The laptop grid places by
+ * `grid-template-areas` and does not care what order these are in, so one DOM order serves both.
  */
 
 const HOME_BOOKINGS_SHOWN = 6;
@@ -493,17 +500,10 @@ export function OwnerHome(p: OwnerHomeProps) {
                 data={data}
                 loading={loading || !dataIsForBranch}
                 onDaySummary={() => setSummaryOpen(true)}
-                unmarkedHref={unmarkedHref}
                 branchId={branch}
                 onPickBranch={pickBranch}
                 onMoreBranches={() => branchContext.setPickerOpen(true)}
               /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
-
-          {/* The design gives "Needs your attention" to the laptop only; a phone's
-              Home is money, shortcuts, clients and the day. */}
-          <Card className="hm-area-attention hm-desktop" title={t.needsYourAttention}>
-            {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
-          </Card>
 
           {/*
             Jira GRW-418 — who is waiting, and the desk's own controls for dealing with them.
@@ -520,8 +520,17 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
           )}
 
-          <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
-            <QuickTiles items={links} />
+          {/*
+            Jira GRW-486 — on every width, and second only to somebody standing in the salon.
+
+            This card was `hm-desktop` from GRW-222 until now, on the reasoning that "a phone's Home is
+            money, shortcuts, clients and the day". But it is the only card on Home that asks the owner
+            to DO something — visits not marked done, today's cancellations, staff not marked in — and
+            the owner with a phone in their hand is the one who can act on it. What it displaced is a
+            grid of nine links to screens the tab bar and the drawer already reach.
+          */}
+          <Card className="hm-area-attention" title={t.needsYourAttention}>
+            {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
           </Card>
 
           <Card
@@ -547,6 +556,12 @@ export function OwnerHome(p: OwnerHomeProps) {
 
           <Card className="hm-area-clients" title={t.clientsDoingTitle}>
             <SegmentCards t={t} stats={clientStats} branch={branch} />
+          </Card>
+
+          {/* Jira GRW-486 — last on the phone, and nowhere else: these are shortcuts, and shortcuts
+              do not outrank the day. Kept because Packages, Offers and Free times have no tab. */}
+          <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
+            <QuickTiles items={links} />
           </Card>
         </div>
       </div>

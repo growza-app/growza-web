@@ -45,7 +45,6 @@ describe('the payment line', () => {
     expect(homeCopy('en').allPaidBy('Cash', 'cash')).toBe('All cash');
     expect(homeCopy('en').allPaidBy('UPI', 'upi')).toBe('All UPI');
     expect(homeCopy('hi').allPaidBy('नकद', 'cash')).toBe('सब नकद');
-    expect(homeCopy('en').notMarkedPill(2)).toBe('2 not marked done');
   });
 });
 
@@ -64,8 +63,16 @@ describe('the card', () => {
     expect(code('../../styles/86-money-card-phone.css')).toMatch(/\.hm-hero-week\s*\{\s*display:\s*none;/);
   });
 
-  it('the pill only appears when something needs marking, and links with the branch', () => {
-    expect(hero).toMatch(/notMarked > 0 && unmarkedHref/);
+  it('the not-marked count is stated once, by the card you can act from (Jira GRW-486)', () => {
+    // The pill lived here from GRW-312 because "Needs your attention" was laptop-only. It is on the
+    // phone now, directly below this card, so the pill would be the same count twice within 200px.
+    expect(hero).not.toMatch(/hm-todo/);
+    expect(hero).not.toMatch(/notMarkedPill/);
+    expect(hero).not.toMatch(/unmarkedHref/);
+    expect(code('../../styles/86-money-card-phone.css')).not.toMatch(/\.hm-todo/);
+    // The copy it used goes with it: a string nothing renders is the flag that does nothing.
+    expect(code('../../lib/home-copy.ts')).not.toMatch(/notMarkedPill/);
+    // The link itself stays — the attention row is what carries it now, branch and all.
     expect(code('OwnerHome.tsx')).toMatch(/unmarked=1\$\{branch \? `&location=\$\{encodeURIComponent\(branch\)\}` : ''\}/);
     expect(code('OwnerHome.tsx')).toMatch(/href: unmarkedHref/);
   });
@@ -149,5 +156,75 @@ describe('the period switch on the toolbar row (Jira GRW-313)', () => {
     expect(css).toMatch(/\.hm-hero-top\s*\{\s*position:\s*absolute;/);
     expect(css).toMatch(/\.hm-hero \.hm-hero-top \.hm-eyebrow\s*\{\s*display:\s*none;/);
     expect(css).toMatch(/\.hm-hero \.hm-hero-chip\s*\{\s*margin-right:\s*34px;/);
+  });
+});
+
+/**
+ * Jira GRW-486 — the three figures under the amount, at a reader's own text size.
+ *
+ * Measured in a browser at 344px: with `flex: 0 1 auto` on a `nowrap` row whose cells are
+ * `white-space: nowrap` and have no `overflow` rule, every cell runs past its box by 2-3px at a
+ * 20px root and by 13-18px at 23px, and the strip reads "2 bookings0 new client0% came back".
+ * `layout.md > Be prepared for text-size changes` is explicit that adjacent views have to give
+ * way so text is not cropped and does not overlap.
+ */
+describe('the figure strip at a larger text size (Jira GRW-486)', () => {
+  const home = code('../../styles/83-role-home.css');
+  const phoneBlock = () => {
+    // The last `max-width: 860px` block that styles the strip — the one that sets the spread.
+    const m = home.match(/@media \(max-width: 860px\) \{(?:(?!@media)[\s\S])*?\.hm-hero-stats \{[\s\S]*?\n\}/g);
+    return m![m!.length - 1]!;
+  };
+
+  it('wraps instead of shrinking its cells past their own text', () => {
+    expect(phoneBlock()).toMatch(/\.hm-hero-stats \{[^}]*flex-wrap:\s*wrap;/);
+  });
+
+  it('a wrapped row is given its own gap, so two rows do not touch', () => {
+    expect(phoneBlock()).toMatch(/\.hm-hero-stats \{[^}]*row-gap:\s*\d/);
+  });
+
+  it('lifts the nowrap, so a figure too wide for the whole strip breaks inside itself', () => {
+    // `.hm-chip-words`' block above sets `white-space: nowrap` on these cells; wrapping the row
+    // is tried first, so this only bites when one figure alone cannot fit.
+    expect(phoneBlock()).toMatch(/\.hm-hero-stats span \{[^}]*white-space:\s*normal;/);
+    expect(phoneBlock()).toMatch(/\.hm-hero-stats span \{[^}]*min-width:\s*0;/);
+  });
+
+  it('still fills a row before breaking one, so the usual three stay on one line', () => {
+    expect(phoneBlock()).toMatch(/\.hm-hero-stats span \{[^}]*flex:\s*0 1 auto;/);
+  });
+});
+
+/**
+ * Jira GRW-486 — what needs the owner, on the screen the owner holds.
+ */
+describe("the phone's card order (Jira GRW-486)", () => {
+  const owner = code('OwnerHome.tsx');
+  const home = code('../../styles/83-role-home.css');
+  const at = (cls: string) => owner.indexOf(`hm-area-${cls}`);
+
+  it('"Needs your attention" is no longer laptop-only', () => {
+    expect(owner).toMatch(/className="hm-area-attention" title=\{t\.needsYourAttention\}/);
+    expect(owner).not.toMatch(/hm-area-attention hm-desktop/);
+  });
+
+  it('reads money, queue, what needs you, the day, clients, shortcuts', () => {
+    const order = ['hero', 'queue', 'attention', 'bookings', 'clients', 'links'].map(at);
+    expect(order.every((n) => n > 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it('carries that order in the DOM, not with `order`, so Tab and VoiceOver agree', () => {
+    expect(home).not.toMatch(/\.hm-area-(?:hero|attention|queue|links|clients|bookings)\s*\{\s*order:/);
+  });
+
+  it('shortcuts stay on the phone — they are the only way to Packages and Free times', () => {
+    expect(owner).toMatch(/className="hm-area-links hm-mobile"/);
+  });
+
+  it('the laptop grid is untouched: it still places by name', () => {
+    expect(home).toMatch(/grid-template-areas:\s*\n?\s*'hero attention'/);
+    expect(home).toMatch(/\.hm-area-attention \{\s*grid-area: attention;/);
   });
 });
