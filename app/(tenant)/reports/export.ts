@@ -1,4 +1,5 @@
 import { copy } from '../lib/copy';
+import { csvCell, csvLines } from '../lib/csv';
 import { nounInSentence } from '../lib/nouns';
 import type { TabPayload } from './ReportsClient';
 
@@ -30,14 +31,9 @@ import type { TabPayload } from './ReportsClient';
  * to Excel. The screen keeps its formatting; the file is for arithmetic.
  */
 
-function esc(value: string | number | null | undefined): string {
-  if (value === null || value === undefined) return '';
-  const s = String(value);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
+// Jira GRW-476 — the shared writer, which also defuses a cell a spreadsheet would run as a formula.
 function rows(lines: (string | number | null | undefined)[][]): string {
-  return lines.map((line) => line.map(esc).join(',')).join('\n');
+  return csvLines(lines);
 }
 
 const money = (minor: number) => (minor / 100).toFixed(2);
@@ -45,7 +41,7 @@ const pct = (value: number | null) => (value === null ? '' : String(value));
 
 /** A section heading, a blank line before it, so one file can hold several tables. */
 function section(title: string, header: string[], body: (string | number | null | undefined)[][]) {
-  return body.length === 0 ? '' : `\n${esc(title)}\n${rows([header, ...body])}\n`;
+  return body.length === 0 ? '' : `\n${csvCell(title)}\n${rows([header, ...body])}\n`;
 }
 
 const c = copy.reports;

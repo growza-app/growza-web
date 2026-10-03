@@ -18,7 +18,7 @@ const LOGIN_PATH = '/admin/login';
  * sessionStorage or redirects there first; AdminShell only ever wraps a page
  * an authenticated admin is allowed to see.
  *
- * A client check, not a server one: the session lives in sessionStorage,
+ * A client check, not a server one: the session lives in memory (GRW-476),
  * which only the browser can read. This is a UX gate, not the security
  * boundary — that boundary is GRW-94's guard on every API call itself, which
  * an admin cannot get past no matter what this component does or doesn't do.
