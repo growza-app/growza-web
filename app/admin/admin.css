@@ -972,3 +972,13 @@ body.admin-body {
   grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   column-gap: 18px;
 }
+
+/*
+ * Jira GRW-475 — a visible focus ring for keyboard users (WCAG 2.4.7). Inputs set `outline: none` inline, and
+ * there was no :focus rule at all, so tabbing through an admin form showed nothing. !important because those
+ * inline styles otherwise win; :focus-visible so a mouse click still shows no ring.
+ */
+:focus-visible {
+  outline: 2px solid oklch(0.48 0.11 150) !important;
+  outline-offset: 2px;
+}

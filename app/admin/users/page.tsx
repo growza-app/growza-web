@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly } from '../lib/format';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow } from '../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, Table, TableRow, TextInput } from '../components/primitives';
 import { ADMIN_USER_COLUMNS } from '../lib/list-columns';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { oklch } from '../tokens';
@@ -55,6 +55,15 @@ export default function AdminUsersPage() {
   /** GRW-165 — the admin's own control: put somebody back to a one-time password. */
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetDone, setResetDone] = useState<string | null>(null);
+  /*
+   * Jira GRW-475 — the password reset and the role change were `window.prompt`: the new password showed in plain
+   * text with no second box to catch a typo, and an empty reason could be sent. Both are dialogs now, the password
+   * masked and typed twice, the reason required like every other write here.
+   */
+  const [resetting, setResetting] = useState<AdminRow | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordAgain, setNewPasswordAgain] = useState('');
+  const [roleChange, setRoleChange] = useState<{ user: AdminRow; roleId: string } | null>(null);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -93,11 +102,20 @@ export default function AdminUsersPage() {
 
   function changeRole(user: AdminRow, roleId: string) {
     setRoleError(null);
-    const reason = window.prompt(`Why is ${user.name}'s role changing?`);
-    if (!reason || reason.trim() === '') return;
+    setRoleChange({ user, roleId });
+  }
+
+  function confirmRoleChange(reason: string) {
+    if (!roleChange) return;
+    const { user, roleId } = roleChange;
+    setBusy(true);
     adminFetch(`/users/${user.id}/role`, { method: 'PATCH', body: JSON.stringify({ roleId, reason: reason.trim() }) })
-      .then(() => void load())
-      .catch((err) => setRoleError(err instanceof AdminApiError ? err.message : 'Could not change that role.'));
+      .then(() => {
+        setRoleChange(null);
+        void load();
+      })
+      .catch((err) => setRoleError(err instanceof AdminApiError ? err.message : 'Could not change that role.'))
+      .finally(() => setBusy(false));
   }
 
   /**
@@ -109,18 +127,36 @@ export default function AdminUsersPage() {
    * admin's name like every other write on this screen.
    */
   function resetPassword(user: AdminRow) {
-    const password = window.prompt(`New one-time password for ${user.name}. Tell it to them — they must replace it on their next sign-in.`);
-    if (password === null) return;
-    const reason = window.prompt('Why are you resetting it? This is recorded against your name.');
-    if (reason === null) return;
     setResetError(null);
     setResetDone(null);
+    setNewPassword('');
+    setNewPasswordAgain('');
+    setResetting(user);
+  }
+
+  function confirmReset(reason: string) {
+    if (!resetting) return;
+    if (newPassword.length < 8) {
+      setResetError('Use at least 8 characters.');
+      return;
+    }
+    if (newPassword !== newPasswordAgain) {
+      setResetError('The two passwords are not the same.');
+      return;
+    }
+    const user = resetting;
+    setBusy(true);
+    setResetError(null);
     adminFetch(`/users/${user.id}/password-reset`, {
       method: 'POST',
-      body: JSON.stringify({ password, reason: reason.trim() }),
+      body: JSON.stringify({ password: newPassword, reason: reason.trim() }),
     })
-      .then(() => setResetDone(`${user.name} now has a one-time password. They must change it when they next sign in.`))
-      .catch((err) => setResetError(err instanceof AdminApiError ? err.message : 'Could not reset that password.'));
+      .then(() => {
+        setResetting(null);
+        setResetDone(`${user.name} now has a one-time password. They must change it when they next sign in.`);
+      })
+      .catch((err) => setResetError(err instanceof AdminApiError ? err.message : 'Could not reset that password.'))
+      .finally(() => setBusy(false));
   }
 
   if (error) return <EmptyState icon="users" title="Could not load administrators" sub={error} />;
@@ -227,6 +263,56 @@ export default function AdminUsersPage() {
       </Card>
 
       <AddAdminModal open={addOpen} roles={data.roles} onClose={() => setAddOpen(false)} onAdded={() => void load()} />
+
+      <ConfirmDialog
+        open={resetting !== null}
+        title={`New one-time password for ${resetting?.name ?? 'this administrator'}`}
+        description="Tell it to them. They must replace it the next time they sign in."
+        confirmLabel="Set password"
+        reasonRequired
+        reasonPlaceholder="Why are you resetting it? This is recorded against your name."
+        loading={busy}
+        error={resetError}
+        onConfirm={confirmReset}
+        onCancel={() => {
+          setResetting(null);
+          setResetError(null);
+        }}
+      >
+        <TextInput
+          type="password"
+          autoComplete="new-password"
+          aria-label="New password"
+          placeholder="New password (8 characters or more)"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
+        <div style={{ height: 8 }} />
+        <TextInput
+          type="password"
+          autoComplete="new-password"
+          aria-label="New password again"
+          placeholder="The same password again"
+          value={newPasswordAgain}
+          onChange={(e) => setNewPasswordAgain(e.target.value)}
+        />
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={roleChange !== null}
+        title={`Change ${roleChange?.user.name ?? 'this administrator'}'s role?`}
+        description="What they can see and do changes the next time they load a page."
+        confirmLabel="Change role"
+        reasonRequired
+        reasonPlaceholder="Why is their role changing?"
+        loading={busy}
+        error={roleError}
+        onConfirm={confirmRoleChange}
+        onCancel={() => {
+          setRoleChange(null);
+          setRoleError(null);
+        }}
+      />
 
       <ConfirmDialog
         open={changing !== null}

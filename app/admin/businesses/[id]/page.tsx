@@ -406,6 +406,7 @@ function BusinessDetailInner() {
             subscriptionId={business.subscription.id}
             canManage={me?.permissions.includes('admin.subscription.manage') ?? false}
             canRecordPayment={me?.permissions.includes('admin.payment.record') ?? false}
+            canDiscount={me?.permissions.includes('admin.discount.manage') ?? false}
             businessName={business.name}
             planName={business.planName}
             // Cancelling here changes the status this page's own summary
