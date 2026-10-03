@@ -395,7 +395,7 @@ export const copy = {
       // Bookings screen cannot say different things about the same state —
       // which is what GRW-020 shipped (conventions §3).
       total: 'Bookings',
-      totalHint: 'Called-off visits and no-shows are left out of this count',
+      totalHint: "Called-off visits and visits where the client didn't come are left out of this count",
       trend: 'Is work going up or down?',
       trendHint: 'Bookings in each stretch of the period you picked',
       /**

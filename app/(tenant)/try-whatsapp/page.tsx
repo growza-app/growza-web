@@ -59,7 +59,7 @@ export default async function TryWhatsAppPage({ searchParams }: { searchParams: 
         subtitle={me.whatsapp?.booking ? t('subtitleLive') : t('tryIsADemo')}
       />
       <div className="page-body">
-        <ChatWindow tenantName={me.tenant?.name ?? 'Your business'} branch={branch} />
+        <ChatWindow tenantName={me.tenant?.name ?? (await getTranslations('chrome'))('yourBusiness')} branch={branch} />
       </div>
     </>
   );

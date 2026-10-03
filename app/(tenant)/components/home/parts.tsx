@@ -319,7 +319,7 @@ export function BookingRows({ t, groups, timezone, now, empty, showStaff = true 
     <ul className="hm-rows">
       {groups.map((g) => {
         const name = clientNameLabel(g);
-        const services = summarizeServices(g.serviceNames);
+        const services = summarizeServices(g.serviceNames, t.lang);
         return (
           <li key={g.key} className="hm-row">
             <span className="hm-row-time">{formatTime(g.startAt, timezone)}</span>

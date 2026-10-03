@@ -89,15 +89,24 @@ export function formatPhone(raw: string | null | undefined): string {
 }
 
 /** `Today` · `1 day ago` · `2 days ago` · `3 months ago` — per the spec's "recent past". */
-export function formatRecency(iso: string | null | undefined, now: Date = new Date()): string {
+export function formatRecency(iso: string | null | undefined, now: Date = new Date(), lang: string = 'en'): string {
+  const days = iso ? Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000) : 0;
+  // Jira GRW-478 (U-3) — "Today" and "days ago" stayed English on a Hindi screen.
+  if (lang === 'hi') {
+    if (!iso) return 'कभी नहीं';
+    if (days <= 0) return 'आज';
+    if (days < 30) return `${days} दिन पहले`;
+    if (days < 365) return `${Math.floor(days / 30)} महीने पहले`;
+    return `${Math.floor(days / 365)} साल पहले`;
+  }
   if (!iso) return 'Never';
-  const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000);
   if (days <= 0) return 'Today';
   if (days === 1) return '1 day ago';
   if (days < 30) return `${days} days ago`;
   const months = Math.floor(days / 30);
   if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} ago`;
-  const years = Math.floor(days / 365);
+  // At least one: days 360–364 are twelve months, not "0 years ago".
+  const years = Math.max(1, Math.floor(days / 365));
   return `${years} ${years === 1 ? 'year' : 'years'} ago`;
 }
 
@@ -129,4 +138,27 @@ export function clientRecency(iso: string | null | undefined, now: Date = new Da
   if (days <= SEGMENT_MAX_DAYS.due) return 'due';
   if (days <= SEGMENT_MAX_DAYS.at_risk) return 'at_risk';
   return 'inactive';
+}
+
+/**
+ * Jira GRW-478 (U-3) — a report chart's bucket, labelled in the page's language. The API's label is English
+ * ("1 Sep"); its `startISO` is the bucket's local midnight with the business's offset, so its date part IS the
+ * local day, and formatting that day at UTC cannot slip it into a neighbour.
+ */
+export function chartBucketLabel(startISO: string, unit: 'day' | 'week' | 'month', locale: string, apiLabel: string): string {
+  // English keeps the API's own words ("1 Sep"); Intl's en-IN would say "1 Sept".
+  if (locale !== 'hi') return apiLabel;
+  const [y, m, d] = startISO.slice(0, 10).split('-').map(Number);
+  const date = new Date(Date.UTC(y!, m! - 1, d!, 12));
+  const options: Intl.DateTimeFormatOptions = unit === 'month' ? { month: 'short', timeZone: 'UTC' } : { day: 'numeric', month: 'short', timeZone: 'UTC' };
+  return new Intl.DateTimeFormat(intlLocale(locale), options).format(date);
+}
+
+/**
+ * Jira GRW-478 (U-3) — the heatmap's column headings. English keeps the API's short "9 … 12p" form; Hindi reads
+ * the hour (0–23, the API's `hourNumbers`) on a 24-hour clock, which needs no Latin "a"/"p" and still fits a 26px
+ * column.
+ */
+export function heatmapHourLabel(hour: number, apiLabel: string, locale: string = 'en'): string {
+  return locale === 'hi' ? String(hour) : apiLabel;
 }

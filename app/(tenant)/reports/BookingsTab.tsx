@@ -6,7 +6,7 @@ import type { ReportBookings } from '../lib/api';
 import { IconAppointments, IconBan, IconUserCheck } from '../components/icons';
 import { BarList, Donut, Heatmap, LineChart } from './charts';
 import { Kpi } from './Kpi';
-import { weekdayShort } from '../lib/format';
+import { chartBucketLabel, heatmapHourLabel, weekdayShort } from '../lib/format';
 import { Card, countBars, rangeName } from './shared';
 import { linearTrend } from './trend';
 import { TokenFigures } from '../components/home/TokenFigures';
@@ -37,7 +37,9 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
   // Jira GRW-363 — the grid's rows named in the owner's language; the API's English only
   // when it predates `dayNumbers`.
   const days = data.peakPeriods.dayNumbers?.map((n) => weekdayShort(n, locale)) ?? data.peakPeriods.days;
-  const labels = data.range.buckets.map((b) => b.label);
+  // Jira GRW-478 (U-3) — dates and hours in the owner's language, not the API's English.
+  const labels = data.range.buckets.map((b) => chartBucketLabel(b.startISO, data.range.bucketUnit, locale, b.label));
+  const hours = data.peakPeriods.hours.map((h, i) => (data.peakPeriods.hourNumbers ? heatmapHourLabel(data.peakPeriods.hourNumbers[i]!, h, locale) : h));
   const { kpis } = data;
   // Straight from copy.status — the same four words the Bookings screen's
   // chips and filters use. Never re-typed here (conventions §3).
@@ -157,7 +159,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
       >
         <Heatmap
           days={days}
-          hours={data.peakPeriods.hours}
+          hours={hours}
           grid={data.peakPeriods.grid}
           describe={(day, hour, value) => c.peakCell(day, hour, Math.round(value * 100))}
           quietWord={c.peakQuiet}

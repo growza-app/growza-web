@@ -89,14 +89,14 @@ export function BookedToday({
       ) : (
         <ol className="tb-rows">
           {booked.map((g, i) => {
-            const name = clientNameLabel(g) ?? summarizeServices(g.serviceNames);
+            const name = clientNameLabel(g) ?? summarizeServices(g.serviceNames, t.lang);
             return (
               <li key={g.key} className="tb-row tb-row-booked">
                 <span className="tb-time">{formatTime(g.startAt, timezone)}</span>
                 <span className="tb-main">
                   <span className="tb-name">{name}</span>
                   <span className="tb-sub">
-                    {summarizeServices(g.serviceNames)}
+                    {summarizeServices(g.serviceNames, t.lang)}
                     {g.providerNames.length ? ` · ${g.providerNames.join(', ')}` : ''}
                   </span>
                   {error?.key === g.key ? (

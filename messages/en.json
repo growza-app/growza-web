@@ -8,20 +8,25 @@
     "downHelp": "Ask your developer to start it, or run <code>npm run dev</code>.",
     "tryAgain": "Try again",
     "bookingsUnavailable": "Could not load your bookings.",
-    "bookingsUnavailableHelp": "The list below is not empty — it could not be fetched. Refresh to try again."
+    "bookingsUnavailableHelp": "The list below is not empty — it could not be fetched. Refresh to try again.",
+    "crashed": "Something on this screen went wrong.",
+    "crashedHelp": "Try again. If it keeps happening, go back to Home and open it from there.",
+    "notFound": "This page is not here.",
+    "notFoundHelp": "The link may be old, or what it pointed to was removed.",
+    "backHome": "Back to Home"
   },
   "search": {
     "title": "Find a client or booking",
     "prompt": "Find a client or booking",
     "placeholder": "Name, phone, or booking ID",
-    "customers": "CUSTOMERS",
+    "customers": "CLIENTS",
     "bookings": "BOOKINGS",
     "nothing": "Nothing found.",
-    "hint": "Search by a customer name, any part of their phone number, or a booking ID.",
+    "hint": "Search by a client name, any part of their phone number, or a booking ID.",
     "back": "Back",
     "clear": "Clear",
     "call": "Call {name}",
-    "customer": "customer",
+    "customer": "client",
     "unknown": "Unknown",
     "visits": "{count, plural, one {# visit} other {# visits}}"
   },
@@ -39,7 +44,7 @@
         "billing": "Billing"
       },
       "title": "{topic} — {services}",
-      "customer": "Customer",
+      "customer": "Client",
       "justNow": "just now",
       "minutesAgo": "{count}m ago",
       "hoursAgo": "{count}h ago",
@@ -93,7 +98,7 @@
     "noneFoundHint": "Try another name, staff member or date.",
     "details": "Details",
     "callName": "Call {name}",
-    "customer": "customer",
+    "customer": "client",
     "kpiBookings": "Bookings",
     "today": "Today",
     "subtitle": "All your appointments in one place.",
@@ -107,9 +112,9 @@
     "everyBookingFor": "Every booking for {name}"
   },
   "nouns": {
-    "customers": "customers",
-    "customer": "customer",
-    "customersTitle": "Customers",
+    "customers": "clients",
+    "customer": "client",
+    "customersTitle": "Clients",
     "services": "services",
     "service": "service",
     "servicesTitle": "Services",
@@ -170,7 +175,7 @@
     "allNoun": "All {noun}",
     "noMatch": "No {noun} match your search.",
     "loading": "Loading…",
-    "colCustomer": "Customer",
+    "colCustomer": "Client",
     "colPhone": "Phone / WhatsApp",
     "colLastBooking": "Last booking",
     "colTotalSpent": "Total spent",
@@ -187,7 +192,7 @@
   },
   "freeTimes": {
     "title": "Free times",
-    "subtitle": "Times customers can book right now. Already-booked times and breaks are removed automatically.",
+    "subtitle": "Times clients can book right now. Already-booked times and breaks are removed automatically.",
     "newBookingTitle": "New booking",
     "newBookingSubtitle": "Pick a service and a time to book someone in.",
     "pickService": "Which service?",
@@ -205,16 +210,16 @@
     "bookAt": "Book {time}",
     "phoneNumber": "Phone number",
     "nameOptional": "Name (optional)",
-    "namePlaceholder": "Customer's name",
-    "bookingAnother": "Booking another service for this customer.",
+    "namePlaceholder": "Client's name",
+    "bookingAnother": "Booking another service for this client.",
     "notThem": "Not them? Clear",
     "cancel": "Cancel",
     "booking": "Booking…",
     "confirmBooking": "Confirm booking",
     "booked": "Booked ✓",
     "bookedLine": "{service} at {time} with {provider}.",
-    "bookAnotherHint": "Want to book another service for the same customer? Pick a different service above, then choose a time — their phone number will already be filled in.",
-    "differentCustomer": "Different customer",
+    "bookAnotherHint": "Want to book another service for the same client? Pick a different service above, then choose a time — their phone number will already be filled in.",
+    "differentCustomer": "Different client",
     "done": "Done",
     "couldntBook": "Couldn't book that",
     "showAgain": "Show free times again",
@@ -279,7 +284,7 @@
       },
       "bookingSettings": {
         "label": "Booking settings",
-        "sub": "Slot length, notice, horizon"
+        "sub": "Times shown, notice, how far ahead"
       },
       "payments": {
         "label": "Payments",
@@ -341,7 +346,8 @@
       "summary": "Showing <b>{from}–{to}</b> of <b>{total}</b> {noun}",
       "page": "Page {current} of {count}"
     },
-    "noProvider": "No {provider}"
+    "noProvider": "No {provider}",
+    "loading": "Loading…"
   },
   "branchScope": {
     "topics": {
@@ -370,8 +376,8 @@
     "titleBusinessOnly": "Business name and logo",
     "branchTitleNamed": "{name} profile",
     "branchTitleUnnamed": "Branch profile",
-    "sub": "What your customers see when they book with you.",
-    "subBranch": "What customers of this branch see when they book.",
+    "sub": "What your clients see when they book with you.",
+    "subBranch": "What clients of this branch see when they book.",
     "cards": {
       "thisBranch": "This branch",
       "yourBusiness": "Your business",
@@ -457,19 +463,19 @@
   },
   "settingsBooking": {
     "title": "Booking settings",
-    "slotLength": "Slot length",
+    "slotLength": "Show booking times every",
     "slotHint": "Bookable times are shown every {count, plural, one {# minute} other {# minutes}}.",
-    "slotPattern": "Slot pattern",
-    "fixedGrid": "Fixed grid",
-    "fixedGridSub": "Times always land on the slot length above — e.g. 9:00, 9:30, 10:00.",
-    "gapPacked": "Gap-packed",
+    "slotPattern": "How times are offered",
+    "fixedGrid": "At regular times",
+    "fixedGridSub": "Times always land on the gap above — e.g. 9:00, 9:30, 10:00.",
+    "gapPacked": "Fill the gaps",
     "gapPackedSub": "Times fill the gaps between existing bookings as tightly as possible.",
     "minNotice": "Minimum notice",
-    "noticeHint": "Customers must book at least {count, plural, one {# minute} other {# minutes}} ahead.",
-    "horizon": "Booking horizon",
-    "horizonHint": "Customers can book up to {count, plural, one {# day} other {# days}} ahead.",
-    "cutoff": "Cancellation cutoff",
-    "cutoffHint": "Customers can't cancel within {count, plural, one {# minute} other {# minutes}} of the start time.",
+    "noticeHint": "Clients must book at least {count, plural, one {# minute} other {# minutes}} ahead.",
+    "horizon": "How far ahead people can book",
+    "horizonHint": "Clients can book up to {count, plural, one {# day} other {# days}} ahead.",
+    "cutoff": "Last time to cancel",
+    "cutoffHint": "Clients can't cancel within {count, plural, one {# minute} other {# minutes}} of the start time.",
     "closedBusiness": "Days you are closed",
     "closedBranchNamed": "Days {name} is closed",
     "closedBranchUnnamed": "Days this branch is closed",
@@ -523,7 +529,7 @@
     },
     "tabs": {
       "overview": "Overview",
-      "revenue": "Revenue",
+      "revenue": "Money earned",
       "customers": "Clients",
       "staff": "Staff performance",
       "bookings": "Bookings",
@@ -674,7 +680,7 @@
       "titleAdd": "Add a service",
       "changePhoto": "Change photo",
       "addPhoto": "Add a photo",
-      "photoHint": "Optional. Customers see it when booking on WhatsApp.",
+      "photoHint": "Optional. Clients see it when booking on WhatsApp.",
       "remove": "Remove",
       "name": "Name",
       "namePlaceholder": "e.g. Haircut",
@@ -682,10 +688,10 @@
       "noType": "None",
       "duration": "Duration",
       "cleanup": "Cleanup after",
-      "cleanupHint": "Held after the booking so the next customer isn't booked into it.",
+      "cleanupHint": "Held after the booking so the next client isn't booked into it.",
       "price": "Price",
       "pricePlaceholder": "Leave blank if it varies",
-      "priceHint": "Applies to new bookings — already-booked customers keep the price they were quoted.",
+      "priceHint": "Applies to new bookings — already-booked clients keep the price they were quoted.",
       "cancel": "Cancel",
       "saving": "Saving…",
       "errors": {
@@ -904,11 +910,11 @@
       "blockedByQuestion": "it still asks {questions}",
       "blockedByQueue": "somebody is waiting for it right now",
       "blockedFoot": "The rest are gone. Sort these out and try again, or take them off the menu instead.",
-      "orderHint": "Drag to set the order customers see when they book on WhatsApp.",
-      "emptyStayHidden": "A category with nothing in it stays hidden from customers.",
+      "orderHint": "Drag to set the order clients see when they book on WhatsApp.",
+      "emptyStayHidden": "A category with nothing in it stays hidden from clients.",
       "dragAria": "Drag {name} to reorder",
       "unsorted": "Not in a category",
-      "unsortedCount": "{count, plural, one {# service} other {# services}} · hidden from customers",
+      "unsortedCount": "{count, plural, one {# service} other {# services}} · hidden from clients",
       "unsortedHint": "File these under a category to show them on your booking page.",
       "reorderFailed": "That order was not saved. Please try again."
     },
@@ -964,7 +970,9 @@
       "inactive": "Inactive"
     },
     "errors": {
-      "bringBack": "Could not bring them back. Please try again."
+      "bringBack": "Could not bring them back. Please try again.",
+      "retire": "Could not retire them. Please try again.",
+      "availability": "Could not change today's availability. Please try again."
     },
     "avail": {
       "titleOn": "Mark {name} available today?",
@@ -1101,8 +1109,8 @@
   },
   "offers": {
     "title": "Offers",
-    "subtitleLive": "Announcements customers see on your dashboard and in WhatsApp's Offers menu.",
-    "subtitleCrmOnly": "Announcements to sell more of what you already do. Customers will see them on WhatsApp too, once WhatsApp goes live for you.",
+    "subtitleLive": "Announcements clients see on your dashboard and in WhatsApp's Offers menu.",
+    "subtitleCrmOnly": "Announcements to sell more of what you already do. Clients will see them on WhatsApp too, once WhatsApp goes live for you.",
     "list": {
       "searchPlaceholder": "Search offers...",
       "filter": "Filter",
@@ -1116,7 +1124,7 @@
       "active": "Active",
       "inactive": "Inactive",
       "bookings": "Bookings",
-      "revenue": "Revenue",
+      "revenue": "Money earned",
       "actionsAria": "Offer actions",
       "edit": "Edit",
       "delete": "Delete",
@@ -1136,7 +1144,7 @@
     },
     "modal": {
       "title": "New offer",
-      "note": "Informational only — wording customers see, no linked services or price. For a bookable bundle, use Combo instead.",
+      "note": "Informational only — wording clients see, no linked services or price. For a bookable bundle, use Combo instead.",
       "titleLabel": "Offer title *",
       "titlePlaceholder": "e.g. 20% off Women's Hair Color",
       "descLabel": "Description (optional)",
@@ -1161,8 +1169,8 @@
   },
   "packages": {
     "title": "Packages",
-    "subtitleLive": "Several services sold together, at one price. Customers can book packages directly from WhatsApp.",
-    "subtitleCrmOnly": "Several services sold together, at one price. Add one to a booking at the desk today — customers will be able to book packages on WhatsApp too, once WhatsApp goes live for you.",
+    "subtitleLive": "Several services sold together, at one price. Clients can book packages directly from WhatsApp.",
+    "subtitleCrmOnly": "Several services sold together, at one price. Add one to a booking at the desk today — clients will be able to book packages on WhatsApp too, once WhatsApp goes live for you.",
     "build": "Make a package",
     "newTitle": "Make a package",
     "editTitle": "Edit package",
@@ -1206,7 +1214,7 @@
       "back": "← Back",
       "createTitle": "Make a package",
       "editTitle": "Edit {title}",
-      "subtitle": "Build a package of services and give your customers a special price.",
+      "subtitle": "Build a package of services and give your clients a special price.",
       "delete": "Delete",
       "saveDraft": "Save as draft",
       "draftShort": "Draft",
@@ -1227,11 +1235,11 @@
         },
         "preview": {
           "title": "Preview",
-          "sub": "See how customers see it"
+          "sub": "See how clients see it"
         }
       },
       "tip": "Tip",
-      "tipBody": "Customers will be able to book this package from your WhatsApp offers menu, once WhatsApp goes live for you.",
+      "tipBody": "Clients will be able to book this package from your WhatsApp offers menu, once WhatsApp goes live for you.",
       "namePlaceholder": "e.g. Weekend Glow Package",
       "tagline": "Tagline (optional)",
       "taglinePlaceholder": "e.g. Pamper yourself this weekend",
@@ -1249,12 +1257,12 @@
       "flat": "Flat ₹",
       "percent": "% off",
       "youSave": "You save",
-      "customersPay": "Customers pay {price} instead of {original}",
+      "customersPay": "Clients pay {price} instead of {original}",
       "rulesIntro": "Control which days this package is offered — useful for weekend specials or a one-day flash deal.",
       "visibility": {
         "always": {
           "title": "Always visible",
-          "sub": "Shown to customers every day"
+          "sub": "Shown to clients every day"
         },
         "weekdays": {
           "title": "Only on selected weekdays",
@@ -1272,7 +1280,7 @@
       "untitled": "Untitled package",
       "servicesCount": "{count, plural, one {# service} other {# services}}",
       "summary": {
-        "always": "Always visible to customers",
+        "always": "Always visible to clients",
         "pickDay": "Pick at least one day",
         "pickWindow": "Pick a start and/or end date",
         "range": "From {from} to {until}"
@@ -1300,7 +1308,7 @@
       },
       "sumOfParts": "Sum of parts",
       "sumOfPartsNote": "Charged at the sum of its parts — no discount.",
-      "noSavingShown": "No saving shown to customers.",
+      "noSavingShown": "No saving shown to clients.",
       "packageDetails": "1. Package details",
       "packageName": "Package name *",
       "packagePrice": "Package price"
@@ -1471,13 +1479,14 @@
       "minutes": "{count} min"
     },
     "callName": "Call {name}",
-    "customerLower": "customer",
+    "customerLower": "client",
     "branchPicker": {
       "label": "Branch",
       "all": "All branches",
       "allHint": "Every branch together",
       "thisBranch": "This branch"
-    }
+    },
+    "yourBusiness": "Your business"
   },
   "auth": {
     "metaTitle": "Sign in",
@@ -1528,8 +1537,8 @@
   },
   "tryWhatsApp": {
     "title": "Try WhatsApp booking",
-    "subtitleLive": "A stand-in for real WhatsApp — same booking engine, same flow your customers get.",
-    "tryIsADemo": "This is a practice run, just for you. Your customers cannot book on WhatsApp yet.",
+    "subtitleLive": "A stand-in for real WhatsApp — same booking engine, same flow your clients get.",
+    "tryIsADemo": "This is a practice run, just for you. Your clients cannot book on WhatsApp yet.",
     "chat": {
       "business": "WhatsApp Business",
       "online": "online",
@@ -1572,9 +1581,9 @@
     "noNumber": "no number",
     "noMatch": "Nobody on file matches that.",
     "visits": "{n, plural, one {# visit} other {# visits}}",
-    "recentCustomers": "Previous customers",
+    "recentCustomers": "Previous clients",
     "loadingCustomers": "Loading…",
-    "noCustomersYet": "No customers yet.",
+    "noCustomersYet": "No clients yet.",
     "addNew": "Add someone new",
     "atOtherBranches": "At your other branches",
     "bringToBranch": "Add them to {branch}",
@@ -1606,7 +1615,7 @@
     "chairBusy": "with {name} · till {until}",
     "someone": "someone",
     "reclaimOffer": "{name} hasn't turned up ({minAgo} min) — use this chair",
-    "reclaimOn": "{name} will be marked as a no-show",
+    "reclaimOn": "{name} will be marked as didn't come",
     "startsNow": "Starts now · {minutes} min in total",
     "back": "Back",
     "start": "Start now",
@@ -1675,7 +1684,7 @@
     "call": "Call {name}",
     "message": "Send a message",
     "markFinished": "Mark as done",
-    "markMissed": "Customer didn't come",
+    "markMissed": "Client didn't come",
     "reschedule": "Move to another time",
     "cancel": "Cancel this booking",
     "reference": "Booking ID"
@@ -1844,7 +1853,7 @@
     },
     "bookingsTab": {
       "total": "Bookings",
-      "totalHint": "Called-off visits and no-shows are left out of this count",
+      "totalHint": "Called-off visits and visits where the client didn't come are left out of this count",
       "trend": "Is work going up or down?",
       "trendHint": "Bookings in each stretch of the period you picked",
       "trendVerdict": {

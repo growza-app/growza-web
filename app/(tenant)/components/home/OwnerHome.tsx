@@ -325,12 +325,12 @@ export function OwnerHome(p: OwnerHomeProps) {
       if (liveState(g, now) !== 'in_service') continue;
       for (const a of g.appointments) {
         if (a.providerId && !m.has(a.providerId)) {
-          m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames), min: minutesBetween(g.startAt, now) });
+          m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames, t.lang), min: minutesBetween(g.startAt, now) });
         }
       }
     }
     return m;
-  }, [todayGroups, now]);
+  }, [todayGroups, now, t.lang]);
 
   /*
    * Jira GRW-450 — no closing time while more than one branch is in view.
@@ -367,7 +367,8 @@ export function OwnerHome(p: OwnerHomeProps) {
           label: t.cancelledTodayShort,
           sub: t.todayWord,
           tone: 'rose' as const,
-          href: '/appointments?status=cancelled',
+          // Jira GRW-478 — the branch Home is showing, as the unmarked link already carries.
+          href: `/appointments?status=cancelled${branch ? `&location=${encodeURIComponent(branch)}` : ''}`,
           icon: <IconBan />,
         },
         ...(p.staffNotMarkedIn !== null

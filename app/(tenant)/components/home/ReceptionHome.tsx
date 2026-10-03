@@ -72,11 +72,11 @@ export function ReceptionHome(p: ReceptionHomeProps) {
     for (const g of groups) {
       if (liveState(g, now) !== 'in_service') continue;
       for (const a of g.appointments) {
-        if (a.providerId && !m.has(a.providerId)) m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames), min: minutesBetween(g.startAt, now) });
+        if (a.providerId && !m.has(a.providerId)) m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames, t.lang), min: minutesBetween(g.startAt, now) });
       }
     }
     return m;
-  }, [groups, now]);
+  }, [groups, now, t.lang]);
 
   /*
    * Booked for today: the day's bookings still open that no token stands for. A walk-in has a token from the moment

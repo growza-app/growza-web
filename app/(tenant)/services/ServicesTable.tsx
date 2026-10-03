@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { csvLines } from '../lib/csv';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api, BookingConflictError, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 import { PaginatedTable } from '../components/PaginatedTable';
@@ -65,9 +65,14 @@ export function ServicesTable({
   const [services, setServices] = useState(initial);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  /*
+   * Jira GRW-478 (U-15) — the search, the tab and the page live in the address (`q`, `tab`, `page`), so Back from
+   * a service, or a reload, lands where the owner was instead of on page 1 of All with the search cleared.
+   */
+  const params = useSearchParams();
+  const [search, setSearch] = useState(() => params.get('q') ?? '');
   /** Jira GRW-437 — `all`, `retired`, or a category id. */
-  const [categoryId, setCategoryId] = useState<string>(ALL_TAB);
+  const [categoryId, setCategoryId] = useState<string>(() => params.get('tab') ?? ALL_TAB);
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
   /*
@@ -332,7 +337,7 @@ export function ServicesTable({
    * Slicing the services and grouping afterwards also keeps the page honest at ten SERVICES, which slicing
    * rows would not: a page of ten rows is eight services and two headings.
    */
-  const [wantedPage, setWantedPage] = useState(1);
+  const [wantedPage, setWantedPage] = useState(() => Math.max(1, Number(params.get('page')) || 1));
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(wantedPage, pageCount);
   /*
@@ -344,9 +349,22 @@ export function ServicesTable({
   const totals = useMemo(() => categoryTotals(filtered), [filtered]);
   const pageRows = useMemo(() => ordered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [ordered, page]);
   // Back to the first page when the list under it changes: page 3 of a search that now matches four rows is empty.
+  // Not on arrival, which is the address's page (GRW-478).
+  const listShown = useRef({ tab, search });
   useEffect(() => {
+    if (listShown.current.tab === tab && listShown.current.search === search) return;
+    listShown.current = { tab, search };
     setWantedPage(1);
   }, [tab, search]);
+  // Written with `replaceState`, not the router: a router replace would re-render this server page per keystroke.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const put = (key: string, value: string | null) => (value ? url.searchParams.set(key, value) : url.searchParams.delete(key));
+    put('q', search.trim() || null);
+    put('tab', tab === ALL_TAB ? null : tab);
+    put('page', page > 1 ? String(page) : null);
+    if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
+  }, [search, tab, page]);
 
   const exportCsv = () => {
     const header = ['Name', 'Type', 'Minutes', 'Cleanup after (min)', 'Price', 'Status'];

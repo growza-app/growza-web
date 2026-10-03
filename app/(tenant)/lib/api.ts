@@ -58,7 +58,7 @@ export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
-import { localiseApiMessage } from './api-messages';
+import { bareRefusalMessage, localiseApiMessage } from './api-messages';
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
@@ -176,6 +176,16 @@ export class BookingConflictError extends ApiError {
   }
 }
 
+/**
+ * Jira GRW-478 — the server's reason for any 4xx, or `fallback`. A refusal says what to do ("has bookings coming
+ * up", "already on this team", "the plan allows 3"); a screen that showed "save failed" instead, or only passed
+ * through one status, sent the owner to retry something retrying cannot fix. A 5xx or a network failure keeps
+ * the screen's own sentence — the server's text there is not written for a person.
+ */
+export function reasonOr(error: unknown, fallback: string): string {
+  return error instanceof ApiError && error.status >= 400 && error.status < 500 ? error.message : fallback;
+}
+
 /** Jira GRW-230 — `?location=` for a branch's settings, nothing for the business's. */
 const atBranch = (location?: string | null) => (location ? `?location=${encodeURIComponent(location)}` : '');
 
@@ -209,11 +219,20 @@ async function extractError(
   // reading `error` alone showed an owner the words "capability_denied".
   // Every other endpoint sends a human message in `error` and no `detail`,
   // so this changes nothing for them.
-  const said = body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
+  const lang = typeof document === 'undefined' ? 'en' : document.documentElement.lang;
+  // Jira GRW-478 — a bare code with no sentence ("forbidden", "unauthorized") is said in words, never shown raw.
+  const bare = !body?.detail && body?.error ? bareRefusalMessage(body.error, lang) : null;
+  const said = bare ?? body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
+  // Jira GRW-478 — the guard's 401 means the session is gone. In the browser, go and sign in again rather than
+  // leave a button that can only fail; a wrong password elsewhere (sign-in, invites) sends a sentence, not this code.
+  if (res.status === 401 && body?.error === 'unauthorized' && typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    // `SIGN_IN_PATH` (session-policy.ts), written out: that file imports this one.
+    window.location.assign('/login');
+  }
   return {
     // Jira GRW-365 — in the browser, a sentence we have in Hindi shows in Hindi when the page is; the server side
     // (which cannot see the visitor's language here) and every unknown sentence keep the API's own words.
-    message: typeof document === 'undefined' ? said : localiseApiMessage(said, document.documentElement.lang),
+    message: bare ?? (typeof document === 'undefined' ? said : localiseApiMessage(said, lang)),
     code: body?.error,
     ...(body?.support ? { support: body.support } : {}),
     // Jira GRW-442 — a 409 that says more than a sentence needs the rest of it, and the body can only be read once.

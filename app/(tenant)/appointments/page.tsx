@@ -241,7 +241,7 @@ export default async function AppointmentsPage({
           appointments={appointments}
           providers={providers}
           timezone={timezone}
-          noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
+          noun={pickNoun(locale, (me.labels.appointments ?? copy.nav.appointments).toLowerCase(), tn('bookings'))}
           nowISO={new Date().toISOString()}
           isToday={isToday}
           dayLabel={dayShort}

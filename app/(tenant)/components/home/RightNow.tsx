@@ -32,7 +32,7 @@ import { Card, CardError } from './parts';
  * says it could not check who is waiting, instead of "Nothing needs you right now".
  */
 
-const who = (g: BookingGroup) => clientNameLabel(g) ?? summarizeServices(g.serviceNames);
+const who = (g: BookingGroup, lang: string) => clientNameLabel(g) ?? summarizeServices(g.serviceNames, lang);
 
 interface RightNowProps {
   t: HomeCopy;
@@ -100,7 +100,7 @@ function useAlertRoom(bodyRef: RefObject<HTMLDivElement | null>, total: number, 
 }
 
 function AlertRow({ t, alert }: { t: HomeCopy; alert: NowAlert<BookingGroup, QueueEntry> }) {
-  const name = alert.kind === 'over_time' ? who(alert.group) : alert.entry.customerName;
+  const name = alert.kind === 'over_time' ? who(alert.group, t.lang) : alert.entry.customerName;
   const sub = alert.kind === 'over_time' ? t.overBooked(alert.minutes) : t.waitingMin(alert.minutes);
   // The name gives way first; the minutes never do (AC-02). The whole line is the tooltip.
   return (
@@ -124,7 +124,7 @@ function Live({ t, today, tomorrow, queue, now, afterClose, timezone }: RightNow
   const nextRow = next
     ? {
         lead: formatTime(next.startAt, timezone),
-        detail: who(next),
+        detail: who(next, t.lang),
         tail: s.nextIsTomorrow ? undefined : t.inMinShort(minutesBetween(now, next.startAt)),
       }
     : { detail: s.nextIsTomorrow ? (tomorrow === null ? t.couldNotLoad : t.nothingTomorrow) : t.nothingLater };
@@ -171,7 +171,7 @@ function Live({ t, today, tomorrow, queue, now, afterClose, timezone }: RightNow
 
         <ul className="hm-now-rows">
           {s.inChair ? (
-            <NowRow icon={<IconUserCheck />} label={t.inTheChair} count={s.inChair.length} detail={s.inChair.map(who).join(', ')} />
+            <NowRow icon={<IconUserCheck />} label={t.inTheChair} count={s.inChair.length} detail={s.inChair.map((g) => who(g, t.lang)).join(', ')} />
           ) : null}
           <NowRow icon={s.nextIsTomorrow ? <IconCalendar /> : <IconClock />} label={s.nextIsTomorrow ? t.firstTomorrow : t.nextUp} {...nextRow} />
           {s.walkIns ? (

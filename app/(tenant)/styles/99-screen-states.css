@@ -1,0 +1,79 @@
+/* Jira GRW-478 — the shell's own error, not-found and loading states (error.tsx, not-found.tsx, loading.tsx). */
+
+.screen-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.screen-error-actions .btn,
+.screen-error-actions .btn-ghost {
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.screen-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 24px;
+}
+
+.screen-loading-bar {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent-deep), transparent) 0 0 / 40% 100% no-repeat,
+    color-mix(in srgb, var(--accent-deep) 15%, transparent);
+  animation: screen-loading-slide 1.1s ease-in-out infinite;
+}
+
+.screen-loading-text {
+  color: var(--text-muted, var(--text));
+  font-size: 14px;
+}
+
+@keyframes screen-loading-slide {
+  from {
+    background-position: -40% 0, 0 0;
+  }
+  to {
+    background-position: 140% 0, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-loading-bar {
+    animation: none;
+  }
+}
+
+/*
+ * Jira GRW-478 (U-9) — 44px to a thumb, without moving anything. The kebab (32px), the pager's buttons (32px) and
+ * the header's round icon buttons, the bell among them (36px), were under Apple's minimum on phones. Growing
+ * them would reflow the fit-to-screen Offers cards and the header, so the TAP area grows instead: an invisible
+ * ring around each, the visible button unchanged.
+ */
+@media (max-width: 860px) {
+  .kebab-btn,
+  .pagination-btn,
+  .icon-btn {
+    position: relative;
+  }
+
+  .kebab-btn::after,
+  .pagination-btn::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+  }
+
+  .icon-btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+}

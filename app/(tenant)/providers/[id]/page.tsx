@@ -1,6 +1,8 @@
 import { screenTitle } from '../../lib/page-title';
 import { notFound } from 'next/navigation';
-import { api } from '../../lib/api';
+import { api, ApiError } from '../../lib/api';
+import { loadErrorKind } from '../../lib/load-error';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { copy } from '../../lib/copy';
 import { StaffEditClient } from './StaffEditClient';
 import { guardScreen } from '../../lib/screen-guard';
@@ -30,8 +32,17 @@ export default async function StaffEditPage({ params }: { params: Promise<{ id: 
       // Jira GRW-234 — where this person can be moved to (owner only; nobody else gets the field).
       api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name }))).catch(() => []),
     ]);
-  } catch {
-    notFound();
+  } catch (error) {
+    /*
+     * Jira GRW-478 (U-2) — only a real "no such person" is a 404. A busy or unreachable server was too, so an
+     * owner was told their stylist did not exist when the server was having a bad minute.
+     */
+    if (error instanceof ApiError && (error.status === 404 || error.status === 400)) notFound();
+    return (
+      <div className="page-body">
+        <LoadErrorBanner kind={loadErrorKind(error)} />
+      </div>
+    );
   }
 
   if (!detail) notFound();

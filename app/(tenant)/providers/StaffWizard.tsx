@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useBranch } from '../components/BranchProvider';
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { api, ApiError, type ProviderOverviewRow, type Service } from '../lib/api';
+import { api, reasonOr, type ProviderOverviewRow, type Service } from '../lib/api';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
@@ -224,7 +224,7 @@ export function StaffWizard({
       // A plan seat cap is not something retrying fixes, and "check the server
       // is running" sends the owner to look in the wrong place. The API says
       // which plan and how many people; pass it straight through.
-      setError(err instanceof ApiError && err.status === 403 ? err.message : t('saveFailed'));
+      setError(reasonOr(err, t('saveFailed')));
       setBusy(false);
     }
   };
@@ -236,7 +236,8 @@ export function StaffWizard({
 
   return (
     <>
-      <div className="drawer-scrim" onClick={onClose} />
+      {/* Jira GRW-478 (U-4) — once something is typed, a stray tap beside the panel does not throw it away; Close does. */}
+      <div className="drawer-scrim" onClick={displayName.trim() || phone.trim() || title.trim() || step !== 'who' ? undefined : onClose} />
       <div className="wiz" role="dialog" aria-modal="true" aria-label={t('title', { label: staffLower })} ref={dialogRef}>
         <div className="wiz-head">
           <div>

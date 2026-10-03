@@ -738,7 +738,7 @@ input.wi-search-input-plain {
 .wi-combo-save {
   font-size: 12px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-deep); /* Jira GRW-478 (U-7) — 12px text needs 4.5:1; --accent is 3.3:1 */
   white-space: nowrap;
 }
 .wi-combo-price {

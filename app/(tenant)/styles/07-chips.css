@@ -26,7 +26,8 @@
 
 .chip-reminder {
   background: var(--amber-soft);
-  color: var(--amber);
+  /* Jira GRW-478 (U-11) — --amber on its soft background is 4.45:1, just under; this is 6.3:1. */
+  color: #92400e;
 }
 
 /* Deliberately different treatments, not a shared rule: a cancellation is
@@ -36,7 +37,7 @@
    alarming red; cancelled gets a neutral, unremarkable gray. */
 .chip-cancelled {
   background: var(--slate-soft);
-  color: #6b6f6d;
+  color: #575b59; /* Jira GRW-478 (U-11) — was 4.38:1, now 5.9:1 */
 }
 
 .chip-no_show {
@@ -48,7 +49,7 @@
    win them back, not an error state. */
 .chip-lapsed {
   background: var(--amber-soft);
-  color: var(--amber);
+  color: #92400e; /* Jira GRW-478 (U-11) — as .chip-reminder */
 }
 
 /* Recency + its optional Lapsed chip, in the Clients "Last seen" column. */

@@ -1,7 +1,8 @@
 'use client';
 
 import { rangeName } from './shared';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { chartBucketLabel } from '../lib/format';
 import { useReportsCopy } from '../lib/use-reports-copy';
 import { InfoTip } from '../components/InfoTip';
 import { formatMoney, type ReportOverview } from '../lib/api';
@@ -46,7 +47,9 @@ export function OverviewTab({
   const t = useTranslations('reports');
   // Jira GRW-363 — a band's days in the owner's language, the same words the Clients page uses.
   const bands = useTranslations('customers');
-  const labels = data.range.buckets.map((b) => b.label);
+  const locale = useLocale();
+  // Jira GRW-478 (U-3) — dates in the owner's language, not the API's English.
+  const labels = data.range.buckets.map((b) => chartBucketLabel(b.startISO, data.range.bucketUnit, locale, b.label));
   const { kpis, sparklines } = data;
   const empty = data.kpis.bookings.value === 0 && data.kpis.revenueMinor.value === 0;
 
