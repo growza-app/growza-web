@@ -53,7 +53,7 @@
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     color: var(--muted);
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
   }
 
@@ -65,7 +65,7 @@
     height: 44px;
     border-bottom: 1px solid var(--hm-line-soft, var(--border));
     color: var(--text);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 500;
   }
   .bk-staff-table tbody tr:last-child th,
@@ -86,7 +86,7 @@
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 700;
     text-align: left;
     white-space: nowrap;
@@ -131,7 +131,7 @@
   }
   .bk-visit-time {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 600;
     line-height: 1.5;
   }
@@ -142,26 +142,26 @@
   }
   .bk-visit-who strong {
     color: var(--text);
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.4;
     overflow-wrap: anywhere;
   }
   .bk-visit-service {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.4;
   }
   .bk-visit-service.is-lead {
     color: var(--text);
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 700;
   }
   .bk-staff-nothing {
     margin: 0;
     padding: var(--sp-3);
     color: var(--muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
   /* Already done: still listed, quieter. */
   .bk-staff-visits li.is-completed .bk-visit-who strong,

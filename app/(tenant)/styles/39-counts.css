@@ -10,7 +10,7 @@
 }
 
 .staff-count-num {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
 }
@@ -20,7 +20,7 @@
 }
 
 .staff-count-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   white-space: nowrap;
 }

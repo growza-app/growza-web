@@ -65,14 +65,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--hm-ink);
   line-height: 1.2;
 }
 .hm-head-sub {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--hm-muted);
   white-space: nowrap;
@@ -98,7 +98,7 @@
   background: #f4f6f4;
   color: var(--hm-ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -157,7 +157,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    font-size: 21px;
+    font-size: 1.3125rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -169,7 +169,7 @@
     display: flex;
     align-items: center;
     gap: var(--sp-1);
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--hm-muted);
     min-width: 0;
@@ -254,13 +254,13 @@
 .hm-card-head h2,
 .hm-section-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--hm-ink);
 }
 .hm-card-head h2 small {
   margin-left: var(--sp-2);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--hm-faint);
 }
@@ -272,18 +272,18 @@
 }
 .hm-card-hint {
   margin: 0 0 var(--sp-3);
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--hm-faint);
   line-height: 1.35;
 }
 .hm-card-foot {
   margin: var(--sp-3) 0 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--hm-faint);
   text-align: center;
 }
 .hm-link {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-green-deep);
   text-decoration: none;
@@ -291,7 +291,7 @@
 }
 .hm-empty {
   margin: var(--sp-2) 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 .hm-error {
@@ -304,7 +304,7 @@
   background: #fdf1f1;
   border: 1px solid #f7d9d9;
   color: #9f2f2f;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-error button {
   min-height: 40px;
@@ -335,7 +335,7 @@
   flex-shrink: 0;
   border-radius: 11px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-tag {
   margin-left: var(--sp-2);
@@ -343,7 +343,7 @@
   border-radius: 6px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   vertical-align: middle;
 }
@@ -373,7 +373,7 @@
   height: 18px;
 }
 .hm-toolbar-actions .hm-action strong {
-  font-size: 14px;
+  font-size: 0.875rem;
   white-space: nowrap;
 }
 .hm-seg {
@@ -390,7 +390,7 @@
   background: transparent;
   color: var(--hm-muted);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -427,7 +427,7 @@
   background: transparent;
   color: var(--hm-ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -547,7 +547,7 @@
     background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6f66' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 15px 15px;
     color: var(--hm-ink);
     font: inherit;
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 700;
     appearance: none;
     -webkit-appearance: none;
@@ -577,7 +577,7 @@
   gap: var(--sp-2);
 }
 .hm-eyebrow {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -592,7 +592,7 @@
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   color: #bff0d0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -615,7 +615,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-pay-menu-head span {
   font-weight: 800;
@@ -629,7 +629,7 @@
 .hm-pay-menu .hm-empty {
   margin: 4px 0 10px;
   color: var(--hm-muted);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-hero-body {
   display: flex;
@@ -638,7 +638,7 @@
   gap: var(--sp-4);
 }
 .hm-hero-amount {
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -654,7 +654,7 @@
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.08);
   color: #bfe6cf;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -670,7 +670,7 @@
   gap: 2px;
 }
 .hm-hero-week strong {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 800;
 }
 .hm-spark {
@@ -698,7 +698,7 @@
      uses), so a month's 1 · 8 · 15 · 22 · 29 land where those days are. */
   position: relative;
   height: 1.3em;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #a9d6bd;
 }
@@ -710,7 +710,7 @@
 }
 .hm-hero-empty {
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: #bfe6cf;
 }
 .hm-paybar {
@@ -739,7 +739,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #bfe6cf;
 }
@@ -750,11 +750,11 @@
   flex-shrink: 0;
 }
 .hm-pay-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 .hm-pay-share {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #9fd3b4;
 }
@@ -777,14 +777,14 @@
 .hm-pay-list .hm-pay-label {
   flex: 1;
   color: var(--hm-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 .hm-pay-list .hm-pay-value {
   order: 3;
   width: 80px;
   text-align: right;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-pay-list .hm-pay-share {
   color: var(--hm-faint);
@@ -794,13 +794,13 @@
     padding: var(--sp-4);
   }
   .hm-hero-amount {
-    font-size: 28px;
+    font-size: 1.75rem;
   }
   .hm-eyebrow {
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
   .hm-pay-value {
-    font-size: 16px;
+    font-size: 1rem;
   }
   .hm-pay-tiles .hm-pay-item {
     padding: 0;
@@ -838,10 +838,10 @@
     max-width: 150px;
   }
   .hm-hero-week .hm-eyebrow {
-    font-size: 9.5px;
+    font-size: 0.75rem;
   }
   .hm-hero-week strong {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   .hm-hero-week .hm-spark,
   .hm-hero-week .hm-spark svg {
@@ -851,7 +851,7 @@
     height: 28px;
   }
   .hm-hero-week .hm-spark-days {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
   /* The design's phone hero: a ruled strip of three figures, not chips —
      number over its word, so "came back" is never cut to "came ba…". */
@@ -870,11 +870,11 @@
     flex-direction: column;
     padding: 0;
     background: transparent;
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.25;
   }
   .hm-hero-stats strong {
-    font-size: 16px;
+    font-size: 1rem;
   }
 }
 .hm-hero-small {
@@ -926,11 +926,11 @@
   flex-direction: column;
 }
 .hm-att-line {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 .hm-att-sub {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--hm-faint);
 }
@@ -989,7 +989,7 @@
   height: 24px;
 }
 .hm-tile-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
@@ -1002,7 +1002,7 @@
   border-radius: 5px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-size: 9.5px;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -1032,7 +1032,7 @@
     border-radius: 12px;
   }
   .hm-page > .hm-tiles .hm-tile-label {
-    font-size: 14px;
+    font-size: 0.875rem;
     text-align: left;
     color: var(--hm-ink);
   }
@@ -1083,7 +1083,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1094,7 +1094,7 @@
   background: var(--seg);
 }
 .hm-seg-range {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--hm-faint);
   white-space: nowrap;
@@ -1105,12 +1105,12 @@
   gap: var(--sp-2);
 }
 .hm-seg-count strong {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 .hm-seg-count span {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--hm-faint);
 }
@@ -1126,10 +1126,10 @@
     gap: 0;
   }
   .hm-seg-name {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-seg-range {
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
 }
 
@@ -1174,7 +1174,7 @@
 .hm-row-time {
   width: 64px;
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: #4a574f;
   white-space: nowrap;
@@ -1187,24 +1187,24 @@
 }
 .hm-row-name,
 .hm-person-name {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .hm-person-name {
-  font-size: 16px;
+  font-size: 1rem;
 }
 .hm-row-sub {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .hm-row-meta {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--hm-faint);
   white-space: nowrap;
@@ -1212,7 +1212,7 @@
 .hm-row-money {
   width: 76px;
   text-align: right;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -1227,7 +1227,7 @@
   flex-shrink: 0;
   padding: 3px 10px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1240,7 +1240,7 @@
 @media (max-width: 400px) {
   .hm-row-time {
     width: 56px;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-row .hm-avatar {
     display: none;
@@ -1290,7 +1290,7 @@
   margin: 0;
   padding: 6px 12px;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   min-width: 0;
   white-space: nowrap;
 }
@@ -1320,7 +1320,7 @@ button.hm-now-count {
   width: 100%;
   border: 0;
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   text-align: left;
   cursor: pointer;
 }
@@ -1341,7 +1341,7 @@ button.hm-now-count {
   background: transparent;
   color: var(--hm-green-deep);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1393,7 +1393,7 @@ button.hm-now-count {
 }
 .hm-now-label {
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--hm-muted);
   white-space: nowrap;
@@ -1406,18 +1406,18 @@ button.hm-now-count {
   align-items: baseline;
   justify-content: flex-end;
   gap: 6px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--hm-ink);
   white-space: nowrap;
 }
 .hm-now-value strong {
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 800;
 }
 .hm-now-value strong + strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-now-detail {
   min-width: 0;
@@ -1483,7 +1483,7 @@ button.hm-now-count {
     background: var(--hm-green-soft);
     color: var(--hm-green-deep);
     font: inherit;
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
@@ -1542,10 +1542,10 @@ button.hm-now-count {
   flex-direction: column;
 }
 .hm-closed-text strong {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }
 .hm-closed-text span {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #4f7d63;
 }
 
@@ -1580,12 +1580,12 @@ button.hm-now-count {
 }
 .hm-sheet-head h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
 }
 .hm-sheet-head p {
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 .hm-icon-btn {
@@ -1619,7 +1619,7 @@ button.hm-now-count {
   border-radius: 13px;
   font: inherit;
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   cursor: pointer;
 }
 .hm-btn-quiet {
@@ -1642,7 +1642,7 @@ button.hm-now-count {
     border-radius: 24px 24px 0 0;
   }
   .hm-sheet-head h2 {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
   .hm-sheet-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1686,10 +1686,10 @@ button.hm-now-count {
   flex-direction: column;
 }
 .hm-action strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-action small {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
 }
 .hm-action-dark {
@@ -1736,7 +1736,7 @@ button.hm-now-count {
 }
 .hm-person .hm-avatar {
   border-radius: 13px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 .hm-card-next {
   background: #f4f2fd;
@@ -1783,12 +1783,12 @@ button.hm-now-count {
   border-radius: 13px;
   border-width: 1px;
   border-style: solid;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--hm-muted);
 }
 .hm-count strong {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 .hm-mine {
@@ -1797,12 +1797,12 @@ button.hm-now-count {
   gap: var(--sp-3);
 }
 .hm-mine strong {
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 .hm-mine span {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 
@@ -1811,7 +1811,7 @@ button.hm-now-count {
   min-width: 0;
 }
 .brand-location {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #a7c4b8;
   white-space: nowrap;
   overflow: hidden;
@@ -1850,11 +1850,11 @@ button.hm-now-count {
   min-width: 0;
 }
 .nav-who-text strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: #fff;
 }
 .nav-who-text span {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #a7c4b8;
   white-space: nowrap;
   overflow: hidden;
@@ -1869,7 +1869,11 @@ button.hm-now-count {
   }
   .bn-centre {
     position: relative;
-    flex: 1;
+    /* Jira GRW-481 — a flex item will not shrink below its own content unless it is
+       told it may. Without this the raised button's label set the cell's width and
+       pushed the bar past the screen at a large reader text size. */
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1911,10 +1915,16 @@ button.hm-now-count {
      lift in this story is for content; a tab label that grew while its four
      neighbours did not would just look broken. */
   .bn-centre-label {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--hm-green-deep);
     white-space: nowrap;
+    /* Jira GRW-481 — "New booking" is the longest label in the bar, so at a large
+       reader text size it is the one that shoves its neighbours off the screen.
+       It gives way the same way they do. */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   /* The raised circle reaches 28px above the bar; give the page that much more
      room at the bottom so the last row is never under it. */
@@ -1935,7 +1945,7 @@ button.hm-now-count {
   min-height: 56px;
   padding: var(--sp-4) var(--sp-6);
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-desk .hm-primary-actions .hm-action svg {
   width: 20px;
@@ -1972,7 +1982,7 @@ button.hm-now-count {
 }
 .hm-att-count {
   grid-area: count;
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -1987,7 +1997,7 @@ button.hm-now-count {
 .hm-tone-violet > svg { color: #6d4fc4; }
 .hm-att-tile-label {
   grid-area: label;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: #4a574f;
 }
@@ -2002,7 +2012,7 @@ button.hm-now-count {
   padding: var(--sp-5);
 }
 .hm-desk .hm-card-head h2 {
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .hm-desk .hm-row {
   min-height: 64px;
@@ -2011,20 +2021,20 @@ button.hm-now-count {
 }
 .hm-desk .hm-row .hm-avatar {
   border-radius: 11px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-desk .hm-row-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-desk .hm-row-sub {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .hm-dot-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -2086,12 +2096,12 @@ button.hm-now-count {
   border-radius: 8px;
   background: #f1f4f1;
   color: #4a574f;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 .hm-wait {
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #8a5a0f;
   white-space: nowrap;
@@ -2112,7 +2122,7 @@ button.hm-now-count {
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -2161,14 +2171,14 @@ button.hm-now-count {
   }
   .hm-att-count {
     margin-top: 7px;
-    font-size: 22px;
+    font-size: 1.375rem;
   }
   .hm-att-tile > svg {
     width: 15px;
     height: 15px;
   }
   .hm-att-tile-label {
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.25;
     color: var(--hm-muted);
   }
@@ -2183,16 +2193,16 @@ button.hm-now-count {
   .hm-desk .hm-row .hm-avatar {
     width: 38px !important;
     height: 38px !important;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-desk .hm-row-name {
-    font-size: 14.5px;
+    font-size: 0.90625rem;
   }
   .hm-desk .hm-row-sub {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-dot-status {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-idx {
     width: 26px;
@@ -2216,7 +2226,7 @@ button.hm-now-count {
     margin-top: 1px;
   }
   .hm-seg-soft button {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 }
 
@@ -2239,7 +2249,7 @@ button.hm-now-count {
 .hm-block-inner-title {
   display: block;
   margin-bottom: var(--sp-3);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-muted);
 }
@@ -2256,7 +2266,7 @@ button.hm-now-count {
 }
 .hm-person-card .hm-avatar {
   border-radius: 13px;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .hm-person-card > svg {
   width: 20px;
@@ -2265,7 +2275,7 @@ button.hm-now-count {
   flex-shrink: 0;
 }
 .hm-person-card .hm-person-name {
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .hm-card-next .hm-avatar {
   background: #e6e0fa !important;
@@ -2293,13 +2303,13 @@ button.hm-now-count {
 }
 .hm-stylist .hm-tl .hm-row-time {
   width: 70px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-stylist .hm-tl .hm-row-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-stylist .hm-tl .hm-row-sub {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 @media (max-width: 860px) {
@@ -2316,7 +2326,7 @@ button.hm-now-count {
   }
   .hm-block-head h2 {
     margin: 0;
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 700;
   }
   .hm-block-inner-title {
@@ -2326,17 +2336,17 @@ button.hm-now-count {
     padding: var(--sp-4);
   }
   .hm-person-card .hm-person-name {
-    font-size: 16px;
+    font-size: 1rem;
   }
   .hm-stylist .hm-tl .hm-row-time {
     width: 56px;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-stylist .hm-tl .hm-row-name {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-stylist .hm-tl .hm-row-sub {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 }
 
@@ -2370,10 +2380,10 @@ button.hm-now-count {
     padding-bottom: 12px;
   }
   .hm-head:has(+ .hm-fit) .hm-head-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
   .hm-head:has(+ .hm-fit) .hm-head-sub {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 
   .page-body.hm-fit {
@@ -2427,7 +2437,7 @@ button.hm-now-count {
   }
   .hm-fit .hm-toolbar .hm-seg button {
     min-height: 34px;
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   .hm-fit .hm-card {
     padding: 14px 16px;
@@ -2436,7 +2446,7 @@ button.hm-now-count {
     margin-bottom: 4px;
   }
   .hm-fit .hm-card-head h2 {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   /*
    * Jira GRW-452 — the board's columns scroll inside themselves (95-token-board.css), and here they do it from a
@@ -2460,7 +2470,7 @@ button.hm-now-count {
     overflow: hidden;
   }
   .hm-fit .hm-hero-amount {
-    font-size: 32px;
+    font-size: 2rem;
   }
   .hm-fit .hm-hero-stats {
     margin-top: 8px;
@@ -2469,7 +2479,7 @@ button.hm-now-count {
     padding: 3px 9px;
   }
   .hm-fit .hm-hero-week strong {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   .hm-fit .hm-spark svg {
     height: 30px;
@@ -2496,7 +2506,7 @@ button.hm-now-count {
     padding: 8px 12px;
   }
   .hm-fit .hm-pay-tiles .hm-pay-label { grid-area: label; }
-  .hm-fit .hm-pay-tiles .hm-pay-value { grid-area: value; font-size: 18px; }
+  .hm-fit .hm-pay-tiles .hm-pay-value { grid-area: value; font-size: 1.125rem; }
   .hm-fit .hm-pay-tiles .hm-pay-share { grid-area: share; }
   .hm-fit .hm-attention {
     flex: 1 1 auto;
@@ -2522,13 +2532,13 @@ button.hm-now-count {
     padding: 10px 16px;
   }
   .hm-fit .hm-hero-amount {
-    font-size: 26px;
+    font-size: 1.625rem;
   }
   .hm-fit .hm-hero-stats {
     margin-top: 4px;
   }
   .hm-fit .hm-spark-days {
-    font-size: 9px;
+    font-size: 0.75rem;
     line-height: 1.1;
   }
   /* The payment split's colour bar stays — the owner asked for it back — just slimmer. */
@@ -2548,7 +2558,7 @@ button.hm-now-count {
     padding: 6px 10px;
   }
   .hm-fit .hm-pay-tiles .hm-pay-value {
-    font-size: 15px;
+    font-size: 0.9375rem;
     text-align: right;
   }
   .hm-fit .hm-att-sub {
@@ -2581,10 +2591,10 @@ button.hm-now-count {
   .hm-fit .hm-area-bookings .hm-row .hm-avatar {
     width: 30px !important;
     height: 30px !important;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-fit .hm-area-bookings .hm-row-sub {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   /* Row 2, right — Right now takes the same height as the list beside it, and scrolls inside itself (never
      clips) on the rare day with more alerts than a short laptop has room for. */
@@ -2624,7 +2634,7 @@ button.hm-now-count {
     gap: 2px;
   }
   .hm-fit .hm-seg-count strong {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 }
 
@@ -2644,13 +2654,13 @@ button.hm-now-count {
   border-width: 1px;
   border-style: solid;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--hm-muted);
   min-width: 0;
 }
 .hm-ds-stat strong {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
   line-height: 1.1;
 }
@@ -2662,7 +2672,7 @@ button.hm-now-count {
 }
 .hm-ds-lists h3 {
   margin: 0 0 var(--sp-2);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-ink);
 }
@@ -2679,7 +2689,7 @@ button.hm-now-count {
   align-items: center;
   gap: var(--sp-2);
   min-width: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 .hm-ds-lists li > span:not(.hm-avatar) {
@@ -2690,22 +2700,22 @@ button.hm-now-count {
   text-overflow: ellipsis;
 }
 .hm-ds-lists li strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 800;
 }
 .hm-ds-lists li .hm-avatar {
   border-radius: 9px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .hm-ds-lists .hm-empty {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .hm-ds-foot {
   margin: var(--sp-3) 0 0;
   padding-top: var(--sp-3);
   border-top: 1px solid var(--hm-line-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
 }
 @media (max-width: 860px) {
@@ -2737,10 +2747,10 @@ button.hm-now-count {
   }
   .hm-hero:not(.hm-hero-small) .hm-delta {
     padding: 2px 8px;
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-amount {
-    font-size: 26px;
+    font-size: 1.625rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week {
     display: grid;
@@ -2751,10 +2761,10 @@ button.hm-now-count {
     max-width: 160px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-eyebrow {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week strong {
-    font-size: 14px;
+    font-size: 0.875rem;
     text-align: right;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark {
@@ -2764,7 +2774,7 @@ button.hm-now-count {
     height: 20px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark-days {
-    font-size: 12px;
+    font-size: 0.75rem;
     line-height: 1.1;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats {
@@ -2775,11 +2785,11 @@ button.hm-now-count {
     flex-direction: row;
     align-items: baseline;
     gap: 4px;
-    font-size: 12px;
+    font-size: 0.75rem;
     white-space: nowrap;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats strong {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-pay .hm-pay {
     margin-top: 6px;
@@ -2798,10 +2808,10 @@ button.hm-now-count {
 }
 @media (max-width: 360px) {
   .hm-hero:not(.hm-hero-small) .hm-hero-stats span {
-    font-size: 9.5px;
+    font-size: 0.75rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats strong {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 }
 
@@ -2824,11 +2834,11 @@ button.hm-now-count {
   display: none;
 }
 .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-value {
-  font-size: 14px;
+  font-size: 0.875rem;
   white-space: nowrap;
 }
 .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2843,7 +2853,7 @@ button.hm-now-count {
     padding-bottom: 4px;
   }
   .hm-fit .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-value {
-    font-size: 15px;
+    font-size: 0.9375rem;
     text-align: left;
   }
 }
@@ -2880,7 +2890,7 @@ button.hm-now-count {
     background: transparent;
     color: #dff5e8;
     font: inherit;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 700;
     text-align: left;
     cursor: pointer;
@@ -2954,7 +2964,7 @@ button.hm-now-count {
     gap: var(--sp-2);
   }
   .hm-head-business {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 }
 
@@ -2985,7 +2995,7 @@ button.hm-now-count {
 }
 .hm-ds-branch-go {
   color: var(--hm-muted);
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -2997,7 +3007,7 @@ button.hm-now-count {
   border: 0;
   background: none;
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 650;
   color: var(--hm-muted);
   cursor: pointer;

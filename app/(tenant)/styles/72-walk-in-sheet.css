@@ -101,13 +101,13 @@ input.wi-search-input-plain {
 }
 
 .wi-also-try-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   color: var(--muted);
 }
 
 .wi-section-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   color: var(--muted);
   margin: 16px 0 8px;
@@ -125,7 +125,7 @@ input.wi-search-input-plain {
   border-radius: 999px;
   background: transparent;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -154,7 +154,7 @@ input.wi-search-input-plain {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: var(--slate-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
@@ -174,7 +174,7 @@ input.wi-search-input-plain {
 
 .wi-error {
   margin-top: 12px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #b91c1c;
 }
 
@@ -193,12 +193,12 @@ input.wi-search-input-plain {
 }
 
 .wi-done-title {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 650;
 }
 
 .wi-done-sub {
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--muted);
 }
 
@@ -210,7 +210,7 @@ input.wi-search-input-plain {
   border-radius: var(--radius-sm);
   background: #fef3c7;
   color: #92400e;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* The sheet's own action rows sit flush; `.wi-body` already supplies the
@@ -264,7 +264,7 @@ input.wi-search-input-plain {
 .wi-picked-name {
   flex: 1;
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   /* The list is the one place a long service name must not push the remove
      button off the row. */
   min-width: 0;
@@ -297,7 +297,7 @@ input.wi-search-input-plain {
   justify-content: space-between;
   padding: 11px 12px;
   background: var(--slate-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .wi-add-new {
@@ -339,7 +339,7 @@ input.wi-search-input-plain {
 }
 
 .wi-chip-meta {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   opacity: 0.75;
 }
@@ -371,7 +371,7 @@ input.wi-search-input-plain {
   border-radius: var(--radius-sm);
   background: transparent;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -441,13 +441,13 @@ input.wi-search-input-plain {
 }
 
 .wi-chair-name {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .wi-chair-state {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -473,7 +473,7 @@ input.wi-search-input-plain {
   background: #fffaf0;
   color: #92400e;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -631,7 +631,7 @@ input.wi-search-input-plain {
   border-radius: 10px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 /* A fixed box, not the input's own width: on a phone a sheet-wide input rule
    stretched it to half the row and squeezed the service name to nothing. */
@@ -663,7 +663,7 @@ input.wi-search-input-plain {
   border-radius: 6px;
   background: var(--slate-soft);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -681,7 +681,7 @@ input.wi-search-input-plain {
   gap: 6px 10px;
 }
 .wi-pay-modes-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   color: var(--muted);
 }
@@ -730,19 +730,19 @@ input.wi-search-input-plain {
   min-width: fit-content;
 }
 .wi-combo-list {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   text-decoration: line-through;
   white-space: nowrap;
 }
 .wi-combo-save {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-deep); /* Jira GRW-478 (U-7) — 12px text needs 4.5:1; --accent is 3.3:1 */
   white-space: nowrap;
 }
 .wi-combo-price {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   white-space: nowrap;
 }
 /* The row itself may wrap: figures move under the title once both cannot

@@ -56,7 +56,11 @@ describe('the Book again card', () => {
   it('is a 44px target, with labels of at least 12px', () => {
     const css = src('../styles/89-book-again.css');
     expect(css).toMatch(/\.wi-again-time\s*\{[^}]*min-height:\s*44px/);
-    expect(css).not.toMatch(/font-size:\s*(?:[0-9]|1[01])(?:\.\d+)?px/);
+    // Jira GRW-481 — the floor is the same 12px; it is counted in rem now, because
+    // that is the unit the whole scale is written in. 0.75rem is 12px at the
+    // default root and grows from there with the reader's text size.
+    for (const [, v] of css.matchAll(/font-size:\s*([0-9.]+)rem/g)) expect(Number(v)).toBeGreaterThanOrEqual(0.75);
+    expect(css).not.toMatch(/font-size:\s*[0-9.]+px/);
   });
 
   it('has its words in the message file', () => {

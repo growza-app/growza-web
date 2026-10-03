@@ -66,7 +66,7 @@
 
 .svc-group-head {
   text-align: left;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--text);
@@ -95,7 +95,7 @@
 
 .dropdown-item-hint {
   margin-left: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -125,7 +125,7 @@
 
 .svc-group-label {
   padding: 0 4px 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.05em;
@@ -177,7 +177,7 @@
 }
 
 .svc-card-right .svc-time {
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .svc-swipe-actions {
@@ -191,7 +191,7 @@
   border: 0;
   color: #fff;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -207,7 +207,7 @@
 
 .svc-swipe-hint {
   margin: 10px 4px 0;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -232,7 +232,7 @@
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  font-size: 17px;
+  font-size: 1.0625rem;
   line-height: 1;
   cursor: grab;
   user-select: none;
@@ -249,7 +249,7 @@
 /* A footnote under its group, as the service sheet does it: what this part of the screen actually means. */
 .svc-cat-foot {
   margin: 10px 2px 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.4;
   color: var(--muted);
 }
@@ -270,7 +270,7 @@
 .svc-cat-unsorted-list {
   margin: 8px 0 0;
   padding-left: 18px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text);
 }
 
@@ -286,7 +286,7 @@
 
 .held-body {
   margin: 4px 0 0;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   line-height: 1.45;
   color: var(--muted);
 }
@@ -346,14 +346,14 @@
 
 .held-row-title {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .held-row-meta {
   display: block;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
   margin-top: 1px;
 }
@@ -361,5 +361,5 @@
 .held-row-chevron {
   flex: none;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 1.125rem;
 }

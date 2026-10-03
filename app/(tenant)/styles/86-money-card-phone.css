@@ -43,7 +43,7 @@
     border-radius: 10px;
     background: rgba(253, 224, 71, 0.16);
     color: #fde68a;
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 700;
     text-decoration: none;
   }
@@ -73,7 +73,7 @@
        than letting "+N" drop to a row of its own; at 15px that cut started eating
        "MG Road" down to "MG R…". This is still a step up from the 13px it was, and
        it leaves the one-row rule intact. */
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   /* Jira GRW-394 — the branch line stays ONE row: two names, their amounts and "+N" did not fit a 375px phone,
      so "+N" dropped to a second 44px row of its own and left a gap in the card. A long branch NAME is cut
@@ -139,7 +139,7 @@
   .hm-line-foot {
     margin: 0;
     color: #c5e6d2;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-line-foot b {
     color: #fff;

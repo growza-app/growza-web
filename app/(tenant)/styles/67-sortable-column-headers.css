@@ -51,7 +51,7 @@
 .cust-fit .paged-table .avatar {
   width: 30px;
   height: 30px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .cust-fit .paged-table .cust-recency {
@@ -81,7 +81,7 @@
     display: block;
   }
 
-  .cust-segments-head h2 { font-size: 13.5px; }
+  .cust-segments-head h2 { font-size: 0.84375rem; }
   .cust-segments-head p { margin-top: 1px; }
 
   .cust-segments { padding: var(--sp-3); }
@@ -90,7 +90,7 @@
      and it is the line that makes each card three rows tall. */
   .cust-segment { padding: 7px 9px; }
   .cust-segment-range { display: none; }
-  .cust-segment-count { font-size: 17px; }
+  .cust-segment-count { font-size: 1.0625rem; }
 }
 
 /* ==========================================================================
@@ -124,17 +124,17 @@
 }
 
 .rp-cs-figure { min-width: 0; }
-.rp-cs-figure > span { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+.rp-cs-figure > span { display: block; color: var(--muted); font-size: 0.75rem; font-weight: 600; }
 
 .rp-cs-figure > strong {
   display: block;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.4px;
   line-height: 1.2;
 }
 
-.rp-cs-figure > em { font-style: normal; font-size: 11.5px; font-weight: 700; }
+.rp-cs-figure > em { font-style: normal; font-size: 0.75rem; font-weight: 700; }
 
 /* ---- a block inside the card: heading, then chips ---- */
 
@@ -143,7 +143,7 @@
   align-items: baseline;
   gap: var(--sp-2);
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--text);
   flex-wrap: wrap;
@@ -153,7 +153,7 @@
    own — it is an aside, and the card has no room for asides. */
 .rp-cs-heading em {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted);
 }
@@ -195,7 +195,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   min-width: 0;
@@ -210,13 +210,13 @@
   display: flex;
   align-items: baseline;
   gap: 5px;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
   line-height: 1.2;
   margin-top: 1px;
 }
 
-.rp-cs-band-figure em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.rp-cs-band-figure em { font-style: normal; font-size: 0.75rem; font-weight: 700; color: var(--muted); }
 
 /* The day window lives on the chip's title rather than a third line. Four
    words of label plus a count is enough to pick a band by; the exact
@@ -257,11 +257,11 @@
 }
 
 .rp-cs-group-icon svg { width: 100%; height: 100%; }
-.rp-cs-group-figure { font-size: 17px; font-weight: 800; flex: none; }
+.rp-cs-group-figure { font-size: 1.0625rem; font-weight: 800; flex: none; }
 
 .rp-cs-group-text {
   min-width: 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -271,7 +271,7 @@
 .rp-cs-group-text em {
   display: block;
   font-style: normal;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted);
 }
@@ -290,8 +290,8 @@
   /* Four figures stay four across; they are short enough, and two rows of two
      cost more height than a smaller type size does legibility. */
   .rp-cs-figures { gap: var(--sp-2); }
-  .rp-cs-figure > span { font-size: 10.5px; }
-  .rp-cs-figure > strong { font-size: 17px; }
+  .rp-cs-figure > span { font-size: 0.75rem; }
+  .rp-cs-figure > strong { font-size: 1.0625rem; }
 
   /* Bands become wrapping pills, one line each. In a two-column grid the five
      of them made three rows and stranded the fifth on its own. */
@@ -309,9 +309,9 @@
     border-radius: 8px;
   }
 
-  .rp-cs-band-name { font-size: 11.5px; }
-  .rp-cs-band-figure { font-size: 13px; margin-top: 0; }
-  .rp-cs-band-figure em { font-size: 10.5px; }
+  .rp-cs-band-name { font-size: 0.75rem; }
+  .rp-cs-band-figure { font-size: 0.8125rem; margin-top: 0; }
+  .rp-cs-band-figure em { font-size: 0.75rem; }
 
   /* Groups keep one line each: the count and the name carry it, and the
      qualifying clause is the part that made each of them two rows tall. */
@@ -333,7 +333,7 @@
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent-deep);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .bk-client-banner strong { font-weight: 700; }
@@ -346,7 +346,7 @@
     gap: var(--sp-2);
     margin-bottom: var(--sp-2);
     padding: 7px 10px;
-    font-size: 12px;
+    font-size: 0.75rem;
   }
   .bk-client-banner > span {
     overflow: hidden;

@@ -33,7 +33,7 @@
 
 .screen-loading-text {
   color: var(--text-muted, var(--text));
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 @keyframes screen-loading-slide {

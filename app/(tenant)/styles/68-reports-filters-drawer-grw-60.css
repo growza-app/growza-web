@@ -16,7 +16,7 @@
   border-radius: 999px;
   background: var(--accent-deep);
   color: #fff;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -54,13 +54,13 @@
   border-bottom: 1px solid var(--border);
 }
 
-.rp-fd-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.rp-fd-head h2 { margin: 0; font-size: 1rem; font-weight: 700; }
 
 .rp-fd-close {
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--muted);
   padding: 4px;
   line-height: 1;
@@ -78,14 +78,14 @@
 
 .rp-fd-group h3 {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--muted);
 }
 
-.rp-fd-none { margin: 0; font-size: 13px; color: var(--muted); }
+.rp-fd-none { margin: 0; font-size: 0.8125rem; color: var(--muted); }
 
 .rp-fd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
@@ -103,7 +103,7 @@
   border-radius: 999px;
   background: var(--surface);
   padding: 6px 13px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -115,7 +115,7 @@
   color: var(--accent-deep);
 }
 
-.rp-fd-retired { font-size: 10.5px; font-weight: 500; color: var(--muted); }
+.rp-fd-retired { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
 
 .rp-fd-foot {
   display: flex;

@@ -31,12 +31,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   font-weight: 640;
 }
 
 .summary-sub {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
   margin-top: 2px;
 }
@@ -47,7 +47,7 @@
 
 .summary-section-label {
   padding: 14px 18px 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 640;
   color: var(--muted);
   text-transform: uppercase;
@@ -70,7 +70,7 @@
   color: var(--accent-deep);
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 640;
 }
 
@@ -80,18 +80,18 @@
 }
 
 .summary-service {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 560;
 }
 
 .summary-stylist {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
 .summary-price {
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 620;
 }
 
@@ -106,7 +106,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -117,13 +117,13 @@
 .summary-line-total {
   align-items: baseline;
   margin-top: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .summary-total-value {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -147,7 +147,7 @@
   background: transparent;
   border: none;
   font: inherit;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   color: var(--text);
   cursor: pointer;
   text-align: left;
@@ -167,7 +167,7 @@
 
 .sheet-item .trail {
   margin-left: auto;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 

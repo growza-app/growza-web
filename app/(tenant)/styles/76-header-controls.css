@@ -48,7 +48,7 @@
   align-items: center;
   justify-content: flex-start;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .hdr-search-wide svg {

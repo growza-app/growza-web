@@ -40,6 +40,11 @@
        the home indicator sits inside the inset on a notched phone. */
     margin: 0 21px calc(12px + env(safe-area-inset-bottom));
     padding: 8px 6px;
+    /* Jira GRW-481 — the bar is a flex item, and a flex item does not shrink below
+       its own content unless told it may. At a large reader text size the five cells
+       made the bar wider than the phone and it hung off the right edge. */
+    min-width: 0;
+    max-width: 100%;
     border-radius: 26px;
     border: 1px solid rgba(255, 255, 255, 0.55);
     background: rgba(252, 253, 252, 0.82);
@@ -62,7 +67,7 @@
        Size each cell to its word and share what is left evenly, so the gaps between words are the same. */
     .bottom-nav > a,
     .bottom-nav > .bn-centre {
-      flex: 1 1 auto;
+      flex: 1 1 0;
     }
   }
 
@@ -94,12 +99,26 @@
     border-radius: 18px;
     /* 12px, the floor for any label on a phone (Jira GRW-339). Apple's tab label is 11pt; a shop owner reading
        across a counter needs more. */
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.1px;
     /* The tap target is the whole cell, not the glyph. */
     min-height: 48px;
     justify-content: center;
+    /* Jira GRW-481 — five fixed slots across a phone, and the label now grows with
+       the reader's text size. At the largest standard size the five labels ran into
+       one another and the last one left the screen. Each cell takes an equal share
+       of the bar rather than sizing to its own longest word, and cuts its own label
+       instead; the icon above it still says which tab this is, and the accessible
+       name is never truncated. */
+    flex: 1 1 0;
+  }
+
+  .bottom-nav .bn-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .bottom-nav svg {
@@ -207,7 +226,7 @@
   border-radius: 9px;
   background: transparent;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;

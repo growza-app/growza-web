@@ -21,7 +21,7 @@
   flex-shrink: 0;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   white-space: nowrap;
 }
 
@@ -34,7 +34,7 @@
   display: grid;
   place-items: center;
   font-weight: 650;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   flex-shrink: 0;
 }
 
@@ -45,11 +45,11 @@
 
 .appt-name {
   font-weight: 620;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .appt-sub {
   color: var(--muted);
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   margin-top: 1px;
 }

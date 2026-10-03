@@ -9,7 +9,7 @@
 
 @media (max-width: 860px) {
   .rp-header { padding-top: 10px; gap: var(--sp-2); }
-  .rp-title-row h1 { font-size: 22px; }
+  .rp-title-row h1 { font-size: 1.375rem; }
   .rp-grid-2 { grid-template-columns: 1fr; }
   .rp-kpi-grid-3,
   .rp-kpi-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -19,8 +19,8 @@
   .rp-kpi-grid-3 > :last-child:nth-child(3) { grid-column: span 2; }
   .rp-figure-pair { gap: var(--sp-4); }
   .rp-banner { padding: var(--sp-4); }
-  .rp-banner-body { font-size: 17px; }
-  .rp-kpi-value { font-size: 21px; }
+  .rp-banner-body { font-size: 1.0625rem; }
+  .rp-kpi-value { font-size: 1.3125rem; }
   .rp-kpi-spark { display: none; }
 }
 
@@ -30,9 +30,9 @@
    figure was being cut off rather than being small. The narrowest widths get
    a smaller figure; it is still the largest thing in the tile. */
 @media (max-width: 400px) {
-  .rp-kpi-value { font-size: 18px; letter-spacing: -0.3px; }
+  .rp-kpi-value { font-size: 1.125rem; letter-spacing: -0.3px; }
   .rp-controls-spacer { display: none; }
-  .rp-control { padding: 7px 10px; font-size: 12.5px; }
+  .rp-control { padding: 7px 10px; font-size: 0.78125rem; }
   /* Clear the floating action button, which sits 74px above the tab bar. The
      same 84px other mobile scrollers use — without it the last card ends up
      under the FAB and its bottom row is untappable. */
@@ -89,7 +89,7 @@
 
 .cpc-kicker {
   font-weight: 700;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -123,12 +123,12 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .cpc-name {
   font-weight: 800;
-  font-size: 19px;
+  font-size: 1.1875rem;
   letter-spacing: -0.3px;
   /* Long names truncate rather than push the close button off the panel. */
   overflow: hidden;
@@ -136,8 +136,8 @@
   white-space: nowrap;
 }
 
-.cpc-phone { color: var(--muted); font-size: 13px; margin-top: 2px; }
-.cpc-failed { margin: 0; color: var(--rp-red); font-size: 13px; }
+.cpc-phone { color: var(--muted); font-size: 0.8125rem; margin-top: 2px; }
+.cpc-failed { margin: 0; color: var(--rp-red); font-size: 0.8125rem; }
 
 .cpc-summary { display: flex; gap: 10px; }
 
@@ -150,8 +150,8 @@
   padding: 11px 13px;
 }
 
-.cpc-summary span { display: block; color: var(--muted); font-size: 11.5px; font-weight: 600; }
-.cpc-summary strong { display: block; font-size: 18px; font-weight: 800; margin-top: 2px; }
+.cpc-summary span { display: block; color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+.cpc-summary strong { display: block; font-size: 1.125rem; font-weight: 800; margin-top: 2px; }
 
 .cpc-body {
   flex: 1;
@@ -163,7 +163,7 @@
 .cpc-section {
   margin: 0 0 4px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text);
 }
 
@@ -179,9 +179,9 @@
   border-bottom: 1px solid #eef0ee;
 }
 
-.cpc-row > span { color: var(--muted); font-size: 13px; min-width: 0; }
-.cpc-row > span em { display: block; font-style: normal; font-size: 12px; margin-top: 1px; }
-.cpc-row > strong { font-weight: 700; font-size: 13.5px; text-align: right; white-space: nowrap; }
+.cpc-row > span { color: var(--muted); font-size: 0.8125rem; min-width: 0; }
+.cpc-row > span em { display: block; font-style: normal; font-size: 0.75rem; margin-top: 1px; }
+.cpc-row > strong { font-weight: 700; font-size: 0.84375rem; text-align: right; white-space: nowrap; }
 
 .cpc-foot {
   flex: 0 0 auto;
@@ -203,7 +203,7 @@
   background: var(--surface);
   color: var(--text);
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   cursor: pointer;
   text-decoration: none;
 }

@@ -41,7 +41,7 @@
 }
 
 .svc-card-meta {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -90,7 +90,7 @@
   place-items: center;
   border: 1.5px dashed #c9cfc6;
   border-radius: 8px;
-  font-size: 9.5px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -120,7 +120,7 @@ tr.is-retired td {
 }
 
 .svc-photo-empty-lg {
-  font-size: 11px;
+  font-size: 0.75rem;
 }
 
 /* ---------- Jira GRW-378 — a branch with no services yet, and copy from another branch ---------- */
@@ -183,5 +183,5 @@ tr.is-retired td {
 }
 .copy-branch-note {
   margin: var(--sp-2) 0 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }

@@ -52,7 +52,7 @@
   flex-wrap: wrap;
   gap: var(--sp-3);
   margin-bottom: var(--sp-4);
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 

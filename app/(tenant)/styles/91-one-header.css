@@ -16,14 +16,14 @@
   }
   .topbar h1,
   .rp-title-row h1 {
-    font-size: 21px;
+    font-size: 1.3125rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.2;
     color: var(--text);
   }
   .topbar-with-sub p {
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     font-weight: 500;
     color: var(--muted);
     /* One line, like Home's date: a subtitle that wraps costs the screen a row before any content. */

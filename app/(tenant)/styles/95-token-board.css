@@ -26,7 +26,7 @@
     justify-content: center;
   }
   .hm-desk .tb-actions-row .hm-action strong {
-    font-size: 14px;
+    font-size: 0.875rem;
     overflow-wrap: anywhere;
   }
 }
@@ -69,7 +69,7 @@
   border-radius: 11px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -167,7 +167,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-ink);
 }
@@ -178,7 +178,7 @@
 }
 .tb-meta {
   flex: 0 0 auto;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
   color: #8a5a0f;
@@ -190,7 +190,7 @@
   color: var(--hm-green-deep);
 }
 .tb-sub {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
   overflow-wrap: anywhere;
 }
@@ -226,7 +226,7 @@
 /* ---------- booked for today ---------- */
 .tb-booked .hm-card-head h2 small {
   font-weight: 500;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
 }
 @media (max-width: 860px) {
@@ -237,13 +237,13 @@
   }
 }
 .tb-row-error {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #b93232;
 }
 .tb-time {
   min-width: 64px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-ink);
   white-space: nowrap;
@@ -263,7 +263,7 @@
 }
 .tb-new-note {
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 .tb-new-actions {
@@ -282,7 +282,7 @@
   color: var(--hm-green);
 }
 .tb-issued-no {
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--hm-ink);

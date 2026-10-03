@@ -16,7 +16,7 @@
   .staff-summary {
     gap: var(--sp-2);
     margin-bottom: var(--sp-3);
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
 
   .page-tabs {
@@ -29,7 +29,7 @@
     flex: 1;
     text-align: center;
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
 
   .staff-group-head {
@@ -67,7 +67,7 @@
   .staff-card .staff-avatar {
     width: 42px;
     height: 42px;
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 
   .staff-card-identity {
@@ -79,7 +79,7 @@
   }
 
   .staff-card-name {
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 620;
     color: var(--text);
     overflow: hidden;
@@ -92,7 +92,7 @@
   }
 
   .staff-card-identity .staff-identity-role {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .staff-card-shift {
@@ -107,7 +107,7 @@
 
   .staff-card-count {
     flex: none;
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #3d4a43;
   }

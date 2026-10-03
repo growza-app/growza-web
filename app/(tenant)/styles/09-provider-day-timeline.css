@@ -14,7 +14,7 @@
 
 .tl-hour {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -30,7 +30,7 @@
   width: 100%;
   padding: 9px 14px;
   border-radius: var(--radius-sm);
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 600;
 }
 
@@ -52,5 +52,5 @@
 .tl-lunch,
 .tl-open {
   color: var(--muted);
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }

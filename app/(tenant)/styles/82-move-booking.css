@@ -47,7 +47,7 @@
   border-radius: 9px;
   padding: 8px 9px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   background: #fbfcfb;
   color: var(--text);
@@ -62,7 +62,7 @@
 }
 
 .mv-any-hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   flex: 1 1 160px;
   min-width: 0;
@@ -87,7 +87,7 @@
   border-radius: var(--radius-sm);
   background: #fef3c7;
   color: #92400e;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /*
@@ -193,7 +193,7 @@
  */
 .move-sheet .empty {
   padding: 16px 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 @media (max-height: 560px) {
