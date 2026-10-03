@@ -260,9 +260,28 @@ export function OwnerHome(p: OwnerHomeProps) {
   const branches = data?.branches ?? [];
   const multiBranch = branchContext.multi || branches.length > 1;
   const selected = branchContext.branches.find((b) => b.id === branch) ?? branches.find((b) => b.id === branch) ?? null;
+  /*
+   * Jira GRW-450 — more than one branch in view and none of them picked. Declared here because GRW-462 needs
+   * it one line later; the closing time below reads the same value.
+   */
+  const onAllBranches = multiBranch && branch === null;
+
   // The hours of the branch Home shows (the API reads the branch's own), else the business's.
   const hours = (dataIsForBranch ? data.hoursToday : null) ?? p.initial?.hoursToday ?? null;
-  const afterClose = hours?.afterClose ?? false;
+  /*
+   * Jira GRW-462 — and on All branches, there is no answer to "is it closed".
+   *
+   * GRW-450 made this argument and fixed half of it. With no branch the API has no branch's hours to read and
+   * falls back to the business-level `working_hours` row; branches set their own, so that row is a fact about
+   * none of them. GRW-450 dropped the closing TIME on that basis and left the claim that follows from it
+   * reading the same row — so past the business-level hour the header said "{Business} is closed for today"
+   * of a business one of whose branches may still be serving.
+   *
+   * The sentence is the smaller half. `afterClose` also decides which day `Right now` lists, so it was
+   * showing TOMORROW's bookings while a branch was still working today — not a claim to discount but the
+   * wrong day's data on screen.
+   */
+  const afterClose = !onAllBranches && (hours?.afterClose ?? false);
   // After closing, the list that matters is tomorrow's (FR-09) — for the branch picked, by the branch's own hours.
   const listIsTomorrow = afterClose;
 
@@ -320,7 +339,6 @@ export function OwnerHome(p: OwnerHomeProps) {
    * fact about none: one may have shut at 7, another may still be serving. The Day summary is reached from the
    * header either way, so nothing becomes unreachable — only the claim goes.
    */
-  const onAllBranches = multiBranch && branch === null;
   const closesAt = closingTime(hours?.closesAt, onAllBranches);
   const closeTime = closesAt ? formatClock(closesAt) : null;
 
