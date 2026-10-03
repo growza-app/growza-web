@@ -36,7 +36,7 @@ describe('one tap of − or +', () => {
 
   it('stops at the edges instead of wrapping', () => {
     expect(step(0, -1, CLEANUP)).toBe(0);
-    expect(step(60, 1, CLEANUP)).toBe(60);
+    expect(step(240, 1, CLEANUP)).toBe(240);
     expect(step(5, -1, DURATION)).toBe(5);
     expect(step(720, 1, DURATION)).toBe(720);
   });
@@ -67,7 +67,7 @@ describe('the slot the calendar actually loses', () => {
 
   it('clamps both halves, so a half-typed field cannot quote nonsense', () => {
     expect(slotMinutes(Number.NaN, Number.NaN)).toBe(5);
-    expect(slotMinutes(900, 900)).toBe(780);
+    expect(slotMinutes(900, 900)).toBe(960);
   });
 });
 

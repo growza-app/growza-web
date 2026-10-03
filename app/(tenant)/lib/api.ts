@@ -130,15 +130,6 @@ import type {
  * Optional and untyped at this layer: the shape belongs to the route that sent it, and a caller that only
  * wants the sentence carries on reading `.message` exactly as before.
  */
-export class BookingConflictError extends Error {
-  constructor(
-    message: string,
-    public details?: unknown,
-  ) {
-    super(message);
-    this.name = 'BookingConflictError';
-  }
-}
 
 /**
  * Any other non-ok response, with the real status and server message
@@ -159,9 +150,31 @@ export class ApiError extends Error {
     public code?: string,
     /** GRW-164 — support contacts, when the API sent them. Rendered as tappable links. */
     public support?: { phone?: string },
+    /**
+     * Jira GRW-473 — which field the server objected to (`field` in its 400), so a form can mark that field. It was
+     * dropped here, so no form could; every one fell back to a banner.
+     */
+    public field?: string,
+    /** Jira GRW-473 — the whole parsed body, for a refusal that carries more than a sentence (an existing id, a count). */
+    public body?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
+  }
+}
+export class BookingConflictError extends ApiError {
+  /*
+   * Jira GRW-473 — an ApiError, so every screen that shows "the server's reason for a 4xx" shows this one too. It
+   * was a plain Error: the till, the walk-in sheet, the team panel and Free times all fell back to a generic line
+   * for every 409, though each 409 says exactly what was wrong.
+   */
+  constructor(
+    message: string,
+    public details?: unknown,
+    code?: string,
+  ) {
+    super(409, message, code, undefined, fieldOf(details), details);
+    this.name = 'BookingConflictError';
   }
 }
 
@@ -176,8 +189,14 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 /** The one place an error response becomes an ApiError, so `code` can never be dropped by one call site. */
 async function apiError(res: Response, path: string): Promise<ApiError> {
-  const { message, code, support } = await extractError(res, path);
-  return new ApiError(res.status, message, code, support);
+  const { message, code, support, body } = await extractError(res, path);
+  return new ApiError(res.status, message, code, support, fieldOf(body), body);
+}
+
+/** The `field` a refusal named, when it named one. */
+function fieldOf(body: unknown): string | undefined {
+  const field = (body as { field?: unknown } | null)?.field;
+  return typeof field === 'string' ? field : undefined;
 }
 
 async function extractError(
@@ -218,8 +237,8 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
   });
   if (res.status === 409) {
     // Read once: the body is consumed by `extractError`, so it hands back what it parsed (GRW-442).
-    const { message, body } = await extractError(res, path);
-    throw new BookingConflictError(message, body);
+    const { message, body, code } = await extractError(res, path);
+    throw new BookingConflictError(message, body, code);
   }
   if (!res.ok) throw await apiError(res, path);
   if (res.status === 204) return undefined as T;

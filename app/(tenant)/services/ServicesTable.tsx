@@ -69,6 +69,28 @@ export function ServicesTable({
   const [categoryId, setCategoryId] = useState<string>(ALL_TAB);
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
+  /*
+   * Jira GRW-473 — the form's category picker lists EVERY category at this branch, empty ones included. It was
+   * handed `categories`, the tab list, which leaves out a category with no services — so a category just made in
+   * Manage categories could not be chosen for the first service meant to go in it.
+   */
+  const [pickerCategories, setPickerCategories] = useState<ServiceCategory[] | null>(null);
+  const formOpen = creating || editing !== null;
+  useEffect(() => {
+    if (!formOpen || !branchId) return;
+    let live = true;
+    api
+      .categoriesAtBranch(branchId)
+      .then((all) => {
+        if (live) setPickerCategories(all);
+      })
+      .catch(() => {
+        if (live) setPickerCategories(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [formOpen, branchId]);
   const [importing, setImporting] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -567,7 +589,7 @@ export function ServicesTable({
       {(creating || editing) && (
         <ServiceForm
           service={editing}
-          categories={categories}
+          categories={pickerCategories ?? categories}
           branchId={branchId}
           /*
            * Jira GRW-440 — the sheet's own Retire and Delete. Handled here, not in the sheet, so they open the

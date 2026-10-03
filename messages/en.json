@@ -328,6 +328,7 @@
     }
   },
   "common": {
+    "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",
     "confirm": "Confirm",
     "cancel": "Cancel",
@@ -667,6 +668,7 @@
       "duplicateFailed": "Could not copy it. Please try again."
     },
     "form": {
+      "bringBackRetired": "Bring back the retired one",
       "titleAdd": "Add a service",
       "changePhoto": "Change photo",
       "addPhoto": "Add a photo",
@@ -1289,7 +1291,10 @@
         "nameRequired": "Package name is required",
         "addOne": "Add at least one service",
         "saveFailed": "Could not save — check the server is running.",
-        "deleteFailed": "Could not delete — check the server is running."
+        "deleteFailed": "Could not delete — check the server is running.",
+        "priceRequired": "Enter the package price",
+        "pickADay": "Tick at least one day, or show it every day",
+        "windowBackwards": "The end must be after the start"
       },
       "sumOfParts": "Sum of parts",
       "sumOfPartsNote": "Charged at the sum of its parts — no discount.",

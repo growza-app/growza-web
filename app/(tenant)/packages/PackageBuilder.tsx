@@ -229,7 +229,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
   // Submission failures only (network/server) — field-level required-ness
   // shows inline next to the field itself, not as a banner up top.
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ title?: string; services?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ title?: string; services?: string; price?: string }>({});
 
   const selectedServices = useMemo(
     () => selectedIds.map((id) => services.find((s) => s.id === id)).filter((s): s is Service => !!s),
@@ -348,6 +348,12 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     const errs: typeof fieldErrors = {};
     if (!title.trim()) errs.title = t('errors.nameRequired');
     if (selectedIds.length === 0) errs.services = t('errors.addOne');
+    /*
+     * Jira GRW-473 — a package needs a price. "Fixed price" opens with an empty box, and Publish checked only the
+     * name: the package saved with no price, which the API stores as NULL — and NULL is what makes an offer an
+     * announcement, so the package turned up in Offers instead.
+     */
+    if (selectedIds.length > 0 && comboPriceMinor == null) errs.price = t('errors.priceRequired');
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -365,6 +371,24 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     if (!validateBuildStep()) {
       setStep(1);
       return;
+    }
+    /*
+     * Jira GRW-473 — two ways to save a package that would never show. "Only on" with no day ticked is visible on
+     * no day at all, and a window whose end is before its start contains no moment.
+     */
+    if (visibilityMode === 'weekdays' && visibleWeekdays.length === 0) {
+      setError(t('errors.pickADay'));
+      setStep(2);
+      return;
+    }
+    if (visibilityMode === 'window') {
+      const from = fromDatetimeLocal(visibleFromInput);
+      const until = fromDatetimeLocal(visibleUntilInput);
+      if (from && until && Date.parse(from) >= Date.parse(until)) {
+        setError(t('errors.windowBackwards'));
+        setStep(2);
+        return;
+      }
     }
     setBusy(true);
     setError(null);
@@ -395,8 +419,9 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
       }
       router.push('/packages');
       router.refresh();
-    } catch {
-      setError(t('errors.saveFailed'));
+    } catch (err) {
+      // Jira GRW-473 — the server's reason when it gave one ("a service from another branch"), not a guess.
+      setError(err instanceof ApiError && err.status < 500 ? err.message : t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -749,6 +774,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                       />
                     )}
                     {priceMode === 'sum' && <div className="price-panel-note">{t('sumOfPartsNote')}</div>}
+                    {fieldErrors.price && <div role="alert" className="field-error">{fieldErrors.price}</div>}
                   </div>
                   <div className="price-panel-cell">
                     <label>{t('youSave')}</label>
