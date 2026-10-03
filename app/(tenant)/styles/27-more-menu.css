@@ -26,8 +26,8 @@
 }
 
 .menu-row svg {
-  width: 19px;
-  height: 19px;
+  width: 1.1875rem;
+  height: 1.1875rem;
   color: var(--accent-deep);
   flex-shrink: 0;
 }

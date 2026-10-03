@@ -33,8 +33,8 @@
 }
 
 .wi-close svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 /*
@@ -69,8 +69,8 @@ input.wi-search-input-plain {
 }
 
 .wi-search-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
 }
 
 /* `.picker-row` is a div in ComboBuilder; here it is a button, so it needs the
@@ -186,8 +186,8 @@ input.wi-search-input-plain {
 }
 
 .wi-done svg {
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   color: var(--accent-deep);
   flex: none;
 }
@@ -287,8 +287,8 @@ input.wi-search-input-plain {
 }
 
 .wi-remove svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
 }
 
 .wi-picked-total {
@@ -318,8 +318,8 @@ input.wi-search-input-plain {
 }
 
 .wi-add-new svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 
 /* A combo chip carries two lines — its name and its price — so it is taller
@@ -597,8 +597,8 @@ input.wi-search-input-plain {
 }
 
 .wi-back svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 
 /* Its seat, held open on the steps that have nowhere to go back to. */

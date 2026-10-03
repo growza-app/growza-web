@@ -29,8 +29,8 @@
 }
 
 .hdr-search svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 /*
@@ -219,8 +219,8 @@
   }
 
   .menu-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
   .topbar-lead {

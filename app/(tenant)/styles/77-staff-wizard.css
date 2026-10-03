@@ -73,8 +73,8 @@
 }
 
 .wiz-close svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 /*
@@ -134,8 +134,8 @@
 }
 
 .wiz-step-num svg {
-  width: 11px;
-  height: 11px;
+  width: 0.6875rem;
+  height: 0.6875rem;
 }
 
 .wiz-step-label {
@@ -226,8 +226,8 @@
 }
 
 .wiz-chip svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .wiz-chip.is-on {
