@@ -880,7 +880,7 @@
   height: 22px;
   border-radius: 50%;
   background: var(--bk-staff-bg, var(--slate-soft));
-  color: var(--bk-rail, var(--muted));
+  color: var(--bk-staff-ink, var(--bk-rail, var(--muted)));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1221,7 +1221,7 @@
     height: 20px;
     border-radius: 50%;
     background: var(--bk-staff-bg, var(--slate-soft));
-    color: var(--bk-rail, var(--muted));
+    color: var(--bk-staff-ink, var(--bk-rail, var(--muted)));
     display: inline-flex;
     align-items: center;
     justify-content: center;

@@ -405,6 +405,7 @@
   border: 1px solid var(--border);
   border-radius: 9px;
   padding: 8px 9px;
+  min-height: 44px;
   font: inherit;
   font-size: 0.84375rem;
   font-weight: 600;
@@ -419,6 +420,8 @@
   background: var(--surface);
   border-radius: 8px;
   padding: 8px;
+  min-width: 44px;
+  min-height: 44px;
   font: inherit;
   font-size: 0.75rem;
   font-weight: 700;
@@ -447,11 +450,21 @@
 .att-hours-live { color: var(--accent-deep); }
 .att-hours-done { color: var(--text); }
 
+/*
+ * The register's controls are 44px high.
+ *
+ * Measured at 344px: the status pill was 39, the clock-in/out fields and their "Now" button 37,
+ * and the note toggle 34x34 — every control on the one screen a receptionist taps all day, and
+ * all of them under Apple's 44pt floor (`accessibility.md > Controls`). Unlike the kebab and the
+ * pager (GRW-478), these have room to simply be bigger, so they are: no invisible ring over a
+ * control that is still drawn too small to aim at.
+ */
 .att-pill {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   min-width: 150px;
+  min-height: 44px;
   border-radius: 9px;
   padding: 8px 11px;
   cursor: pointer;
@@ -480,8 +493,8 @@
 .att-pill-absent  { background: oklch(0.96 0.04 25);  border-color: oklch(0.88 0.06 25);  color: oklch(0.46 0.12 25); }
 
 .att-note-toggle {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 9px;
@@ -702,9 +715,20 @@
 
 /* ── GRW-200: one person's month ─────────────────────────────────────────── */
 
+/*
+ * The name opens that person's month, and as a bare text link it was 19px tall. The row's height
+ * is the register's rhythm, so the hit area grows and the type does not — the same trade GRW-478
+ * made for the kebab and the pager.
+ */
 .att-name-link {
+  position: relative;
   color: inherit;
   text-decoration: none;
+}
+.att-name-link::after {
+  content: '';
+  position: absolute;
+  inset: -13px -6px;
 }
 .att-name-link:hover {
   color: var(--accent-deep);

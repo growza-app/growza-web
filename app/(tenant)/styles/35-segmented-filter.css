@@ -58,9 +58,16 @@
   margin-left: 4px;
   border-left: 1px solid var(--hm-line, #e3e9e5);
   padding-left: 14px;
-  color: #7c8a82;
+  /*
+   * The "lighter label" above was #7c8a82 on the #eceeee track — 3.1:1, under WCAG 1.4.3's 4.5:1 —
+   * and its count was #9aa7a0 at 2.14:1, which is the lowest contrast in the app. The hairline to
+   * its left already does the setting-apart; the colour cannot also do it and stay readable, so it
+   * is `--muted` (4.8:1) now and the count is lighter by WEIGHT rather than by another shade.
+   */
+  color: var(--muted);
 }
 
 .page-tab.svc-tab-retired:not(.active) .page-tab-count {
-  color: #9aa7a0;
+  color: var(--muted);
+  font-weight: 500;
 }
