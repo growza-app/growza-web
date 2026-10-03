@@ -5,6 +5,8 @@ import { resolveBranchState } from '../lib/branch-context';
 import { BranchUrlSync } from '../components/BranchUrlSync';
 import { ServicesTable } from './ServicesTable';
 import { guardScreen } from '../lib/screen-guard';
+import { loadErrorKind } from '../lib/load-error';
+import { LoadErrorBanner } from '../components/LoadErrorBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +14,20 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
   // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
   await guardScreen('/services');
   const params = await searchParams;
-  const me = await api.me();
+  /*
+   * Jira GRW-478 (U-2) — a busy or unreachable server is the shared banner, as on every other screen. These reads
+   * had no catch, so a 429 or a 500 replaced the whole screen with a crash page.
+   */
+  let me: Awaited<ReturnType<typeof api.me>>;
+  try {
+    me = await api.me();
+  } catch (error) {
+    return (
+      <div className="page-body">
+        <LoadErrorBanner kind={loadErrorKind(error)} />
+      </div>
+    );
+  }
 
   // Jira GRW-378 — each branch has its own services, so this screen always shows exactly ONE branch: the one in
   // the address, else the main branch. BranchUrlSync puts the dashboard's shared branch into the address on
@@ -27,7 +42,17 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
 
   // allServices (not services) so retired rows are visible and restorable here;
   // the booking flows keep using the active-only list.
-  const [services, categories] = branchId ? await Promise.all([api.allServices(branchId), api.serviceCategories(branchId)]) : [[], []];
+  let services: Awaited<ReturnType<typeof api.allServices>> = [];
+  let categories: Awaited<ReturnType<typeof api.serviceCategories>> = [];
+  try {
+    if (branchId) [services, categories] = await Promise.all([api.allServices(branchId), api.serviceCategories(branchId)]);
+  } catch (error) {
+    return (
+      <div className="page-body">
+        <LoadErrorBanner kind={loadErrorKind(error)} />
+      </div>
+    );
+  }
 
   return (
     <>

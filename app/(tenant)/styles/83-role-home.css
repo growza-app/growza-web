@@ -929,7 +929,7 @@
   color: var(--hm-faint);
 }
 .hm-tone-amber { background: #fdf6ec; border-color: #f6e6cd; }
-.hm-tone-amber .hm-att-icon { background: #f9e8ca; color: #c07d18; }
+.hm-tone-amber .hm-att-icon { background: #f9e8ca; color: #9a6212; } /* Jira GRW-478 (U-7) — the icon was 2.8:1; 3:1 is the floor */
 .hm-tone-amber strong { color: #8a5a0f; }
 .hm-tone-rose { background: #fdf1f1; border-color: #f7d9d9; }
 .hm-tone-rose .hm-att-icon { background: #f9dede; color: #d64545; }

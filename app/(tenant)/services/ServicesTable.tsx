@@ -1,8 +1,9 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { csvLines } from '../lib/csv';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api, BookingConflictError, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 import { PaginatedTable } from '../components/PaginatedTable';
@@ -64,11 +65,38 @@ export function ServicesTable({
   const [services, setServices] = useState(initial);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  /*
+   * Jira GRW-478 (U-15) — the search, the tab and the page live in the address (`q`, `tab`, `page`), so Back from
+   * a service, or a reload, lands where the owner was instead of on page 1 of All with the search cleared.
+   */
+  const params = useSearchParams();
+  const [search, setSearch] = useState(() => params.get('q') ?? '');
   /** Jira GRW-437 — `all`, `retired`, or a category id. */
-  const [categoryId, setCategoryId] = useState<string>(ALL_TAB);
+  const [categoryId, setCategoryId] = useState<string>(() => params.get('tab') ?? ALL_TAB);
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
+  /*
+   * Jira GRW-473 — the form's category picker lists EVERY category at this branch, empty ones included. It was
+   * handed `categories`, the tab list, which leaves out a category with no services — so a category just made in
+   * Manage categories could not be chosen for the first service meant to go in it.
+   */
+  const [pickerCategories, setPickerCategories] = useState<ServiceCategory[] | null>(null);
+  const formOpen = creating || editing !== null;
+  useEffect(() => {
+    if (!formOpen || !branchId) return;
+    let live = true;
+    api
+      .categoriesAtBranch(branchId)
+      .then((all) => {
+        if (live) setPickerCategories(all);
+      })
+      .catch(() => {
+        if (live) setPickerCategories(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [formOpen, branchId]);
   const [importing, setImporting] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -309,7 +337,7 @@ export function ServicesTable({
    * Slicing the services and grouping afterwards also keeps the page honest at ten SERVICES, which slicing
    * rows would not: a page of ten rows is eight services and two headings.
    */
-  const [wantedPage, setWantedPage] = useState(1);
+  const [wantedPage, setWantedPage] = useState(() => Math.max(1, Number(params.get('page')) || 1));
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(wantedPage, pageCount);
   /*
@@ -321,9 +349,22 @@ export function ServicesTable({
   const totals = useMemo(() => categoryTotals(filtered), [filtered]);
   const pageRows = useMemo(() => ordered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [ordered, page]);
   // Back to the first page when the list under it changes: page 3 of a search that now matches four rows is empty.
+  // Not on arrival, which is the address's page (GRW-478).
+  const listShown = useRef({ tab, search });
   useEffect(() => {
+    if (listShown.current.tab === tab && listShown.current.search === search) return;
+    listShown.current = { tab, search };
     setWantedPage(1);
   }, [tab, search]);
+  // Written with `replaceState`, not the router: a router replace would re-render this server page per keystroke.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const put = (key: string, value: string | null) => (value ? url.searchParams.set(key, value) : url.searchParams.delete(key));
+    put('q', search.trim() || null);
+    put('tab', tab === ALL_TAB ? null : tab);
+    put('page', page > 1 ? String(page) : null);
+    if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
+  }, [search, tab, page]);
 
   const exportCsv = () => {
     const header = ['Name', 'Type', 'Minutes', 'Cleanup after (min)', 'Price', 'Status'];
@@ -335,7 +376,7 @@ export function ServicesTable({
       s.priceMinor ? String(Number(s.priceMinor) / 100) : '',
       s.active ? 'Active' : 'Retired',
     ]);
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = csvLines([header, ...rows]);
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url;
@@ -567,7 +608,7 @@ export function ServicesTable({
       {(creating || editing) && (
         <ServiceForm
           service={editing}
-          categories={categories}
+          categories={pickerCategories ?? categories}
           branchId={branchId}
           /*
            * Jira GRW-440 — the sheet's own Retire and Delete. Handled here, not in the sheet, so they open the

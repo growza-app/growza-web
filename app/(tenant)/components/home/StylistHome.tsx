@@ -46,7 +46,7 @@ type WorkItem = { kind: 'visit'; key: string; startAt: string; group: BookingGro
 
 function PersonCard({ t, group, timezone, now, mode }: { t: HomeCopy; group: BookingGroup; timezone: string; now: Date; mode: 'current' | 'next' }) {
   const name = clientNameLabel(group);
-  const services = summarizeServices(group.serviceNames);
+  const services = summarizeServices(group.serviceNames, t.lang);
   const time = formatTime(group.startAt, timezone);
   return (
     <a className={`hm-person-card ${mode === 'next' ? 'hm-person-next' : ''}`} href="/appointments">
@@ -171,8 +171,8 @@ export function StylistHome(p: StylistHomeProps) {
                     <span className="hm-row-time">{formatTime(w.startAt, p.timezone)}</span>
                     <span className={`hm-tl-dot hm-tl-dot-${st.dot}`} />
                     <span className="hm-row-main">
-                      <span className="hm-row-name">{clientNameLabel(w.group) ?? summarizeServices(w.group.serviceNames)}</span>
-                      {clientNameLabel(w.group) ? <span className="hm-row-sub">{summarizeServices(w.group.serviceNames)}</span> : null}
+                      <span className="hm-row-name">{clientNameLabel(w.group) ?? summarizeServices(w.group.serviceNames, t.lang)}</span>
+                      {clientNameLabel(w.group) ? <span className="hm-row-sub">{summarizeServices(w.group.serviceNames, t.lang)}</span> : null}
                     </span>
                     <span className={`hm-pill hm-pill-${st.tone}`}>{st.label}</span>
                   </li>

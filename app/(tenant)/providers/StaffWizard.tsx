@@ -3,13 +3,13 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useBranch } from '../components/BranchProvider';
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { api, ApiError, type ProviderOverviewRow, type Service } from '../lib/api';
+import { api, reasonOr, type ProviderOverviewRow, type Service } from '../lib/api';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { pickNoun } from '../lib/nouns';
 import { IconCheck, IconClose, IconPlus } from '../components/icons';
-import { WeekdayHoursEditor, type WeekdayRow } from '../components/WeekdayHoursEditor';
+import { WeekdayHoursEditor, toWeekdayRows, type WeekdayRow } from '../components/WeekdayHoursEditor';
 import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
@@ -69,6 +69,7 @@ export function StaffWizard({
   services,
   roster,
   orgHours,
+  hoursByBranch = {},
   branches = [],
   onClose,
   onCreated,
@@ -80,6 +81,8 @@ export function StaffWizard({
   roster: ProviderOverviewRow[];
   /** The salon's own week, so step 2 opens on what this person will actually work. */
   orgHours: WeekdayRow[];
+  /** Jira GRW-474 — each branch's own week (raw rows); the chosen branch's is what "same as the salon" copies. */
+  hoursByBranch?: Record<string, Array<{ weekday: number; startTime: string; endTime: string }>>;
   /** Jira GRW-234 — a multi-branch business's branches, main first. Empty: no choice to make. */
   branches?: Array<{ id: string; name: string }>;
   onClose: () => void;
@@ -120,7 +123,15 @@ export function StaffWizard({
    * change to the salon's week without anybody revisiting them.
    */
   const [followsSalon, setFollowsSalon] = useState(true);
-  const [hourRows, setHourRows] = useState<WeekdayRow[]>(orgHours);
+  // Jira GRW-474 — the hours of the branch they will work at, which is what the server copies.
+  const branchHours = useMemo(
+    () => (branchId && hoursByBranch[branchId] ? toWeekdayRows(hoursByBranch[branchId]!) : orgHours),
+    [branchId, hoursByBranch, orgHours],
+  );
+  const [hourRows, setHourRows] = useState<WeekdayRow[]>(branchHours);
+  useEffect(() => {
+    if (followsSalon) setHourRows(branchHours);
+  }, [branchHours, followsSalon]);
 
   /*
    * Everything, to match what the API does in silence. Showing the box already
@@ -213,7 +224,7 @@ export function StaffWizard({
       // A plan seat cap is not something retrying fixes, and "check the server
       // is running" sends the owner to look in the wrong place. The API says
       // which plan and how many people; pass it straight through.
-      setError(err instanceof ApiError && err.status === 403 ? err.message : t('saveFailed'));
+      setError(reasonOr(err, t('saveFailed')));
       setBusy(false);
     }
   };
@@ -221,11 +232,12 @@ export function StaffWizard({
   const index = STEPS.findIndex((s) => s.key === step);
   const openDays = hourRows.filter((r) => r.open).length;
   /** The salon itself has no week — following it is an intent, not hours. */
-  const salonHasNoHours = orgHours.every((r) => !r.open);
+  const salonHasNoHours = branchHours.every((r) => !r.open);
 
   return (
     <>
-      <div className="drawer-scrim" onClick={onClose} />
+      {/* Jira GRW-478 (U-4) — once something is typed, a stray tap beside the panel does not throw it away; Close does. */}
+      <div className="drawer-scrim" onClick={displayName.trim() || phone.trim() || title.trim() || step !== 'who' ? undefined : onClose} />
       <div className="wiz" role="dialog" aria-modal="true" aria-label={t('title', { label: staffLower })} ref={dialogRef}>
         <div className="wiz-head">
           <div>
@@ -373,7 +385,7 @@ export function StaffWizard({
                   checked={followsSalon}
                   onChange={(e) => {
                     setFollowsSalon(e.target.checked);
-                    if (e.target.checked) setHourRows(orgHours);
+                    if (e.target.checked) setHourRows(branchHours);
                   }}
                 />
                 <span>

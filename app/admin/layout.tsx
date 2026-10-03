@@ -2,6 +2,7 @@ import './admin.css';
 import { Hanken_Grotesk } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import { ImpersonationProvider } from './components/ImpersonationContext';
 import { SearchProvider } from './components/SearchContext';
 import { SessionGate } from './components/SessionGate';
@@ -63,15 +64,18 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // Jira GRW-475 — no zoom lock (WCAG 1.4.4); the business dashboard dropped it in GRW-306.
   themeColor: '#264a3c',
 };
 
-export default function AdminRootLayout({ children }: { children: ReactNode }) {
+export default async function AdminRootLayout({ children }: { children: ReactNode }) {
+  // Jira GRW-480 (S-10) — the nonce `middleware.ts` put in this request's CSP. Reading it also renders the portal per
+  // request, which a nonce needs: a page built once at deploy would carry no nonce, and every script would be refused.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html lang="en">
       <body className={`admin-body ${hanken.className}`}>
-        <InstallPromptCapture />
+        <InstallPromptCapture nonce={nonce} />
         <ImpersonationProvider>
           <SearchProvider>
             <SessionGate>{children}</SessionGate>

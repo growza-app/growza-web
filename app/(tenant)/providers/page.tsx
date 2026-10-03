@@ -42,6 +42,16 @@ export default async function ProvidersPage() {
   }
 
   const staffWord = me.labels.providers ?? copy.nav.staff;
+  /*
+   * Jira GRW-474 — each branch's own week, for the wizard's "same hours as the salon". The server copies the hours
+   * of the branch the person is placed at; the preview showed the business-wide week, so at a branch with its own
+   * hours the screen and the saved schedule disagreed.
+   */
+  const hoursByBranch: Record<string, Array<{ weekday: number; startTime: string; endTime: string }>> = {};
+  if (branches.length > 1) {
+    const each = await Promise.all(branches.map((b) => api.settings(b.id).then((s) => [b.id, s.workingHours] as const).catch(() => null)));
+    for (const entry of each) if (entry) hoursByBranch[entry[0]] = entry[1];
+  }
 
   return (
     <>
@@ -56,6 +66,7 @@ export default async function ProvidersPage() {
         staffWord={staffWord}
         maxProviders={me.capabilities.maxProviders}
         orgHours={settings.workingHours}
+        hoursByBranch={hoursByBranch}
         branches={branches.length > 1 ? branches : []}
       />
     </>

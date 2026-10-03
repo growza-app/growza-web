@@ -11,8 +11,8 @@ import { writeAdminSession } from './session';
  * could read it.
  */
 export type RefreshOutcome =
-  /** A new bearer token is in `sessionStorage` and returned here. */
-  | { status: 'renewed'; token: string }
+  /** A new bearer token is held in memory (session.ts, Jira GRW-476) and returned here. */
+  | { status: 'renewed' }
   /** The server refused the cookie itself. Only a fresh sign-in helps. */
   | { status: 'dead' }
   /** An outage, the throttle, or no network. The session is untouched — ask again later. */
@@ -47,17 +47,17 @@ async function attempt(): Promise<RefreshOutcome> {
   }
 
   if (res.ok) {
-    const body = (await res.json().catch(() => null)) as { token?: string; expiresAt?: string } | null;
-    if (!body?.token || !body.expiresAt) return { status: 'unavailable' };
+    const body = (await res.json().catch(() => null)) as { expiresAt?: string } | null;
+    if (!body?.expiresAt) return { status: 'unavailable' };
     try {
-      writeAdminSession({ token: body.token, expiresAt: body.expiresAt });
+      writeAdminSession({ expiresAt: body.expiresAt });
     } catch {
       // Storage refused (a private window with site data blocked). The token
       // is still good for the caller about to use it; it just will not
       // survive a reload, which is the same position that browser was in
       // before this ever ran.
     }
-    return { status: 'renewed', token: body.token };
+    return { status: 'renewed' };
   }
 
   /**

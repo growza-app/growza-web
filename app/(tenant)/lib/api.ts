@@ -58,7 +58,7 @@ export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
-import { localiseApiMessage } from './api-messages';
+import { bareRefusalMessage, localiseApiMessage } from './api-messages';
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
@@ -91,7 +91,6 @@ import type {
   ProviderStats,
   ProviderWorkingHourRow,
   ProvidersOverview,
-  RangeSummary,
   SearchResult,
   SeedCatalog,
   Service,
@@ -102,7 +101,6 @@ import type {
   ServiceInput,
   SettingsSummary,
   SortDirection,
-  TodayStats,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -130,15 +128,6 @@ import type {
  * Optional and untyped at this layer: the shape belongs to the route that sent it, and a caller that only
  * wants the sentence carries on reading `.message` exactly as before.
  */
-export class BookingConflictError extends Error {
-  constructor(
-    message: string,
-    public details?: unknown,
-  ) {
-    super(message);
-    this.name = 'BookingConflictError';
-  }
-}
 
 /**
  * Any other non-ok response, with the real status and server message
@@ -159,10 +148,42 @@ export class ApiError extends Error {
     public code?: string,
     /** GRW-164 — support contacts, when the API sent them. Rendered as tappable links. */
     public support?: { phone?: string },
+    /**
+     * Jira GRW-473 — which field the server objected to (`field` in its 400), so a form can mark that field. It was
+     * dropped here, so no form could; every one fell back to a banner.
+     */
+    public field?: string,
+    /** Jira GRW-473 — the whole parsed body, for a refusal that carries more than a sentence (an existing id, a count). */
+    public body?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
   }
+}
+export class BookingConflictError extends ApiError {
+  /*
+   * Jira GRW-473 — an ApiError, so every screen that shows "the server's reason for a 4xx" shows this one too. It
+   * was a plain Error: the till, the walk-in sheet, the team panel and Free times all fell back to a generic line
+   * for every 409, though each 409 says exactly what was wrong.
+   */
+  constructor(
+    message: string,
+    public details?: unknown,
+    code?: string,
+  ) {
+    super(409, message, code, undefined, fieldOf(details), details);
+    this.name = 'BookingConflictError';
+  }
+}
+
+/**
+ * Jira GRW-478 — the server's reason for any 4xx, or `fallback`. A refusal says what to do ("has bookings coming
+ * up", "already on this team", "the plan allows 3"); a screen that showed "save failed" instead, or only passed
+ * through one status, sent the owner to retry something retrying cannot fix. A 5xx or a network failure keeps
+ * the screen's own sentence — the server's text there is not written for a person.
+ */
+export function reasonOr(error: unknown, fallback: string): string {
+  return error instanceof ApiError && error.status >= 400 && error.status < 500 ? error.message : fallback;
 }
 
 /** Jira GRW-230 — `?location=` for a branch's settings, nothing for the business's. */
@@ -176,8 +197,14 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 /** The one place an error response becomes an ApiError, so `code` can never be dropped by one call site. */
 async function apiError(res: Response, path: string): Promise<ApiError> {
-  const { message, code, support } = await extractError(res, path);
-  return new ApiError(res.status, message, code, support);
+  const { message, code, support, body } = await extractError(res, path);
+  return new ApiError(res.status, message, code, support, fieldOf(body), body);
+}
+
+/** The `field` a refusal named, when it named one. */
+function fieldOf(body: unknown): string | undefined {
+  const field = (body as { field?: unknown } | null)?.field;
+  return typeof field === 'string' ? field : undefined;
 }
 
 async function extractError(
@@ -192,11 +219,20 @@ async function extractError(
   // reading `error` alone showed an owner the words "capability_denied".
   // Every other endpoint sends a human message in `error` and no `detail`,
   // so this changes nothing for them.
-  const said = body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
+  const lang = typeof document === 'undefined' ? 'en' : document.documentElement.lang;
+  // Jira GRW-478 — a bare code with no sentence ("forbidden", "unauthorized") is said in words, never shown raw.
+  const bare = !body?.detail && body?.error ? bareRefusalMessage(body.error, lang) : null;
+  const said = bare ?? body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
+  // Jira GRW-478 — the guard's 401 means the session is gone. In the browser, go and sign in again rather than
+  // leave a button that can only fail; a wrong password elsewhere (sign-in, invites) sends a sentence, not this code.
+  if (res.status === 401 && body?.error === 'unauthorized' && typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    // `SIGN_IN_PATH` (session-policy.ts), written out: that file imports this one.
+    window.location.assign('/login');
+  }
   return {
     // Jira GRW-365 — in the browser, a sentence we have in Hindi shows in Hindi when the page is; the server side
     // (which cannot see the visitor's language here) and every unknown sentence keep the API's own words.
-    message: typeof document === 'undefined' ? said : localiseApiMessage(said, document.documentElement.lang),
+    message: bare ?? (typeof document === 'undefined' ? said : localiseApiMessage(said, lang)),
     code: body?.error,
     ...(body?.support ? { support: body.support } : {}),
     // Jira GRW-442 — a 409 that says more than a sentence needs the rest of it, and the body can only be read once.
@@ -218,8 +254,8 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
   });
   if (res.status === 409) {
     // Read once: the body is consumed by `extractError`, so it hands back what it parsed (GRW-442).
-    const { message, body } = await extractError(res, path);
-    throw new BookingConflictError(message, body);
+    const { message, body, code } = await extractError(res, path);
+    throw new BookingConflictError(message, body, code);
   }
   if (!res.ok) throw await apiError(res, path);
   if (res.status === 204) return undefined as T;
@@ -232,7 +268,7 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
  * Under /reports/, never /analytics/ — these are fetched from the browser on
  * every tab and range change, and that path segment is a common ad-blocker
  * pattern. A blocked first-party request looks exactly like a network
- * failure client-side. Same reasoning as rangeSummary.
+ * failure client-side.
  */
 function reportGet<T>(
   tab: string,
@@ -442,7 +478,6 @@ export const api = {
     const qs = params.toString();
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
-  todayStats: () => get<TodayStats>('/api/v1/analytics/today'),
   /** Jira GRW-222 — the owner's Home. `location` null or absent means the whole business. */
   home: (period: HomePeriod = 'today', location?: string | null) =>
     get<HomeOverview>(`/api/v1/home?period=${period}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
@@ -467,7 +502,7 @@ export const api = {
   /**
    * Reports. Under /reports/, never /analytics/ — this is fetched from the
    * browser on every tab and range change, and that path segment is a common
-   * ad-blocker pattern, same reasoning as rangeSummary below.
+   * ad-blocker pattern.
    */
   reportsOverview: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportOverview>('overview', r, c, f, t, undefined, b),
   // Jira GRW-393 — the drawer offers the report's own branch.
@@ -480,11 +515,9 @@ export const api = {
   reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportCustomers>('customers', r, c, f, t, undefined, b),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),
-  // Not /analytics/range — that path segment gets silently blocked by
-  // browser ad/tracker blockers (this is fetched client-side, unlike
-  // todayStats which runs server-side during SSR and never hits that filter).
-  rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
-  notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
+  /** Jira GRW-477 — `location` is the header's branch; absent means the whole business (a pinned role's own, server-side). */
+  notifications: (limit = 20, location?: string | null) =>
+    get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
   /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. A timeout in the browser, so a stalled request cannot hold the poll shut. */
   liveVersion: (timeoutMs?: number) =>
     get<{ version: string }>('/api/v1/live-version', timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined).then((r) => r.version),
@@ -495,6 +528,8 @@ export const api = {
   setTeamMemberBranch: (userId: string, locationId: string) =>
     patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { locationId }),
   revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
+  /** Jira GRW-470 — take a receptionist's or stylist's login away from this business. */
+  removeTeamMember: (userId: string) => del<{ ok: true }>(`/api/v1/team/members/${userId}`),
   // Jira GRW-230 — `location`: that branch's settings; omitted: the business defaults.
   settings: (location?: string | null) => get<SettingsSummary>(`/api/v1/settings${atBranch(location)}`),
   resetBranchSettings: (location: string, keys: string[]) =>
@@ -561,6 +596,9 @@ export const api = {
    */
   updateCustomer: (id: string, body: { name?: string | null; phone?: string | null }) =>
     patch<{ id: string; name: string | null; waPhone: string | null }>(`/api/v1/customers/${id}`, body),
+  /** Jira GRW-477 — the owner's delete, undoable for the grace period (`graceDays`), then the worker erases it. */
+  deleteCustomer: (id: string) => del<{ status: 'erasure_requested'; graceDays: number }>(`/api/v1/customers/${id}`),
+  restoreCustomer: (id: string) => post<{ status: 'restored' }>(`/api/v1/customers/${id}/restore`, {}),
   /** Jira GRW-378 — one branch's catalogue; the Services screen always names the branch it shows. */
   allServices: (location: string) => get<ServiceAdmin[]>(`/api/v1/services/all?location=${encodeURIComponent(location)}`),
   serviceCategories: (location?: string | null) =>
@@ -720,6 +758,8 @@ export const api = {
       groupMembers?: CheckoutGroupMemberInput[];
       /** Jira GRW-314 — the combo's other legs the customer never had: cancelled, chair released. */
       cancelMemberIds?: string[];
+      /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
+      confirmLargeAmount?: boolean;
     },
   ) => post<CheckoutResponse>(`/api/v1/appointments/${appointmentId}/checkout`, args),
   /**
@@ -744,7 +784,9 @@ export const api = {
       overlapping: boolean;
       remindersScheduled: number;
     }>(`/api/v1/appointments/${appointmentId}/reschedule`, args),
-  search: (q: string) => get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}`),
+  /** Jira GRW-477 — `location` is the header's branch; absent searches every branch. */
+  search: (q: string, location?: string | null) =>
+    get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
   // Jira GRW-395 — one branch's combos (and the announcements); none is every branch.
   offers: (location?: string | null) => get<Offer[]>(`/api/v1/offers/all${atBranch(location)}`),
   offer: (id: string) => get<Offer>(`/api/v1/offers/${id}`),
@@ -833,6 +875,8 @@ export const api = {
    */
   recordCounterSale: (
     input: {
+      /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
+      confirmLargeAmount?: boolean;
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;
       customerId?: string;

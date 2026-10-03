@@ -148,7 +148,8 @@ export interface OwnerHomeProps {
   tomorrowAppointments: Appointment[] | null;
   customerStats: CustomerStats | null;
   /** Null when the register could not be read; the card is then left out rather than shown as 0. */
-  staffNotMarkedIn: number | null;
+  /** Jira GRW-477 — the provider ids, so the count follows the header's branch. */
+  staffNotMarkedIn: string[] | null;
   /** Jira GRW-242 — owner only: approve the new AutoPay amount before the billing date. */
   autopayRenewal?: AutopayRenewal | null;
   /** Jira GRW-402 — whether Approve can open a page at all (usable payment keys, online payments on). */
@@ -324,12 +325,12 @@ export function OwnerHome(p: OwnerHomeProps) {
       if (liveState(g, now) !== 'in_service') continue;
       for (const a of g.appointments) {
         if (a.providerId && !m.has(a.providerId)) {
-          m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames), min: minutesBetween(g.startAt, now) });
+          m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames, t.lang), min: minutesBetween(g.startAt, now) });
         }
       }
     }
     return m;
-  }, [todayGroups, now]);
+  }, [todayGroups, now, t.lang]);
 
   /*
    * Jira GRW-450 — no closing time while more than one branch is in view.
@@ -366,14 +367,17 @@ export function OwnerHome(p: OwnerHomeProps) {
           label: t.cancelledTodayShort,
           sub: t.todayWord,
           tone: 'rose' as const,
-          href: '/appointments?status=cancelled',
+          // Jira GRW-478 — the branch Home is showing, as the unmarked link already carries.
+          href: `/appointments?status=cancelled${branch ? `&location=${encodeURIComponent(branch)}` : ''}`,
           icon: <IconBan />,
         },
         ...(p.staffNotMarkedIn !== null
           ? [
               {
                 key: 'attendance',
-                count: p.staffNotMarkedIn,
+                count: branch
+                  ? p.staffNotMarkedIn.filter((id) => p.providers.find((x) => x.id === id)?.locationId === branch).length
+                  : p.staffNotMarkedIn.length,
                 label: t.staffNotMarkedIn,
                 sub: t.attendanceWord,
                 tone: 'blue' as const,

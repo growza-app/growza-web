@@ -13,6 +13,7 @@ import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider, t
  * `+91` and those ten.
  */
 import { PhoneField } from '../../components/PhoneField';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { toStoredPhone } from '../../lib/phone';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 
@@ -170,6 +171,30 @@ export function TeamAccessPanel({
       setSavingMember(null);
     }
   };
+
+  /**
+   * Jira GRW-470 — take a login away. There was no way to: somebody who left kept every client number at their
+   * branch for as long as their password worked. Asked first, because it is immediate — their next tap is refused.
+   */
+  const [confirmRemove, setConfirmRemove] = useState<TeamMember | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const doRemove = async (member: TeamMember) => {
+    setRemoving(true);
+    setRemoveError(null);
+    try {
+      await api.removeTeamMember(member.userId);
+      setMembers((all) => all.filter((m) => m.userId !== member.userId));
+      setConfirmRemove(null);
+    } catch (e) {
+      setRemoveError(e instanceof ApiError ? e.message : t('errors.loadError'));
+    } finally {
+      setRemoving(false);
+    }
+  };
+  const roleLabel = (m: TeamMember) => (m.role === 'receptionist' ? t('receptionist') : t('stylist'));
+  const memberName = (m: TeamMember) => m.providerName ?? m.phone ?? roleLabel(m);
+  const loginHolders = members.filter((m) => m.role === 'receptionist' || m.role === 'staff');
 
   const linkFor = (token: string) =>
     `${typeof window === 'undefined' ? '' : window.location.origin}/join/${token}`;
@@ -384,7 +409,62 @@ export function TeamAccessPanel({
               ))}
           </div>
         )}
+
+        {/* Jira GRW-470 — everybody who can sign in, and the way to stop them. The owner is not listed: a business
+            keeps its owner. */}
+        {loginHolders.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontWeight: 620, fontSize: 14.5, marginBottom: 8 }}>{t('canSignIn')}</div>
+            {loginHolders.map((m, i) => (
+              <div
+                key={m.userId}
+                className="team-member-row"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '12px 0',
+                  borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 620, fontSize: 14.5 }}>{memberName(m)}</div>
+                  <div className="field-hint" style={{ margin: 0 }}>
+                    {roleLabel(m)}
+                    {m.phone && m.providerName ? ` · ${m.phone}` : ''}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-danger"
+                  aria-label={t('removeFor', { name: memberName(m) })}
+                  onClick={() => {
+                    setRemoveError(null);
+                    setConfirmRemove(m);
+                  }}
+                >
+                  {t('remove')}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+      {confirmRemove && (
+        <ConfirmDialog
+          title={t('removeTitle', { name: memberName(confirmRemove) })}
+          body={t('removeBody')}
+          confirmLabel={t('remove')}
+          tone="danger"
+          busy={removing}
+          error={removeError}
+          onConfirm={() => void doRemove(confirmRemove)}
+          onCancel={() => {
+            setConfirmRemove(null);
+            setRemoveError(null);
+          }}
+        />
+      )}
     </div>
   );
 }

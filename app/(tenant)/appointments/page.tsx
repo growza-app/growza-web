@@ -172,7 +172,8 @@ export default async function AppointmentsPage({
       .appointments(date, toDate, undefined, customerId)
       .then((rows) => ({ rows, failed: false }))
       .catch(() => ({ rows: [] as Appointment[], failed: true })),
-    api.myEarnings().catch(() => null),
+    // Jira GRW-477 — staff only: for anybody else the route is a 403 in the log on every page load.
+    me.member?.role === 'staff' ? api.myEarnings().catch(() => null) : Promise.resolve(null),
   ]);
   const appointments = appointmentsResult.rows;
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
@@ -240,7 +241,7 @@ export default async function AppointmentsPage({
           appointments={appointments}
           providers={providers}
           timezone={timezone}
-          noun={(me.labels.appointments ?? copy.nav.appointments).toLowerCase()}
+          noun={pickNoun(locale, (me.labels.appointments ?? copy.nav.appointments).toLowerCase(), tn('bookings'))}
           nowISO={new Date().toISOString()}
           isToday={isToday}
           dayLabel={dayShort}

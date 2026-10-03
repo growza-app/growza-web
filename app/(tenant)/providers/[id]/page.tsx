@@ -1,6 +1,8 @@
 import { screenTitle } from '../../lib/page-title';
 import { notFound } from 'next/navigation';
-import { api } from '../../lib/api';
+import { api, ApiError } from '../../lib/api';
+import { loadErrorKind } from '../../lib/load-error';
+import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { copy } from '../../lib/copy';
 import { StaffEditClient } from './StaffEditClient';
 import { guardScreen } from '../../lib/screen-guard';
@@ -26,15 +28,30 @@ export default async function StaffEditPage({ params }: { params: Promise<{ id: 
       api.services(),
       api.providerDay(id).catch(() => null),
       api.providerStats(id).catch(() => null),
-      api.settings().catch(() => null),
+      Promise.resolve(null),
       // Jira GRW-234 — where this person can be moved to (owner only; nobody else gets the field).
       api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name }))).catch(() => []),
     ]);
-  } catch {
-    notFound();
+  } catch (error) {
+    /*
+     * Jira GRW-478 (U-2) — only a real "no such person" is a 404. A busy or unreachable server was too, so an
+     * owner was told their stylist did not exist when the server was having a bad minute.
+     */
+    if (error instanceof ApiError && (error.status === 404 || error.status === 400)) notFound();
+    return (
+      <div className="page-body">
+        <LoadErrorBanner kind={loadErrorKind(error)} />
+      </div>
+    );
   }
 
   if (!detail) notFound();
+  /*
+   * Jira GRW-474 — "same hours as the salon" means this person's branch's hours: that is what the server copies.
+   * The business-wide week was shown, so at a branch with its own hours the screen and the saved schedule
+   * disagreed. Read after `detail`, which names the branch.
+   */
+  settings = await api.settings(detail.locationId ?? null).catch(() => null);
 
   const staffWord = me.labels.providers ?? copy.nav.staff;
 

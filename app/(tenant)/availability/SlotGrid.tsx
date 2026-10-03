@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, BookingConflictError, type AvailabilityResponse } from '../lib/api';
+import { api, reasonOr, type AvailabilityResponse } from '../lib/api';
 import { useTranslations } from 'next-intl';
 import { PhoneField } from '../components/PhoneField';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
@@ -141,7 +141,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
       setModal({ step: 'success', slot });
       router.refresh(); // the booked slot should vanish from the free-times list
     } catch (error) {
-      const message = error instanceof BookingConflictError ? error.message : t('wentWrong');
+      const message = reasonOr(error, t('wentWrong'));
       setModal({ step: 'conflict', slot, message });
     }
   };

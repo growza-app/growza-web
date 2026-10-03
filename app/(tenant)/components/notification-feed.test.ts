@@ -41,7 +41,7 @@ describe('the notification feed', () => {
 
   it('names a customer-less event in the language', () => {
     const anon = { ...booking, customerName: null, startAt: null } as unknown as ActivityEvent;
-    expect(eventLine(anon, 'Asia/Kolkata', feed('en'), 'en').subtitle).toBe('Customer');
+    expect(eventLine(anon, 'Asia/Kolkata', feed('en'), 'en').subtitle).toBe('Client'); // GRW-478 — the salon's word
     expect(eventLine(anon, 'Asia/Kolkata', feed('hi'), 'hi').subtitle).toBe('ग्राहक');
   });
 });

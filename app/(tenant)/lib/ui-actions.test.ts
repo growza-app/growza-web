@@ -69,6 +69,7 @@ describe('1 — the matrix, typed out', () => {
     'clients.list': true,
     'client.profile': true,
     'client.edit': true,
+    'client.delete': false, // GRW-477 — the desk may correct a client, not delete one (the owner's rule)
     'attendance.mark': true,
     'billing.payNow': false, // the account's bill is the owner's
   };
@@ -84,6 +85,7 @@ describe('1 — the matrix, typed out', () => {
     'clients.list': false,
     'client.profile': false, // GRW-199 — never grantable, even with the Clients report tab
     'client.edit': false,
+    'client.delete': false,
     'attendance.mark': false, // GRW-200 — their own record, read-only
     'billing.payNow': false,
   };
@@ -222,6 +224,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',
+    // Jira GRW-470 — take a login away, from the Team panel.
+    'DELETE /api/v1/team/members/:userId',
     'DELETE /api/v1/team/invites/:id',
     'POST /api/v1/settings/branch-reset',
     'POST /api/v1/settings/apply-to-all',

@@ -5,7 +5,8 @@ import { useRef, useState } from 'react';
 import { PhoneField } from '../../components/PhoneField';
 import { IconCheck, IconChevronRight, IconMapPin, IconPhone, IconShop } from '../../components/icons';
 import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
-import { api, type SettingsSummary } from '../../lib/api';
+import { api, ApiError, type SettingsSummary } from '../../lib/api';
+import { usePhoneProblem } from '../../lib/use-phone-problem';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -71,6 +72,7 @@ export function ProfileForm({
 }) {
   const t = useTranslations('settingsProfile');
   const tCommon = useTranslations('common');
+  const checkPhone = usePhoneProblem();
   const branchId = initial.scope.locationId;
   const [settings, setSettings] = useState(initial);
   const [savedFields, setSavedFields] = useState<Fields>(() => fieldsOf(initial));
@@ -96,6 +98,16 @@ export function ProfileForm({
   const businessOnly = !branchId && multiBranch;
 
   const save = async () => {
+    /*
+     * Jira GRW-471 — check the number before sending it. A 9-digit phone went through `toStoredPhone(...) ?? ''`,
+     * which turned it into "no phone": the stored number was erased and the screen said "saved". Empty still means
+     * "no phone"; anything else must be a whole number.
+     */
+    const phoneProblem = f.phone.trim() ? checkPhone(f.phone) : null;
+    if (phoneProblem) {
+      setError(phoneProblem);
+      return;
+    }
     if (branchId) {
       // Jira GRW-230 — a branch's name, address, phone and "about". The business's name and logo are not a branch's.
       if (!f.locationName.trim()) {
@@ -113,7 +125,8 @@ export function ProfileForm({
         setF(fieldsOf(updated));
         setSaved(true);
       } catch (e) {
-        setError(e instanceof Error && /already has this name/.test(e.message) ? e.message : t('errors.saveFailed'));
+        // The server's own reason for anything it refused — a taken name, a timezone it does not know.
+        setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.saveFailed'));
       } finally {
         setBusy(false);
       }
@@ -132,7 +145,9 @@ export function ProfileForm({
       const { locationName, addressLine1, addressCity, ...business } = f;
       const updated = await api.updateProfile(
         businessOnly
-          ? { name: f.name, timezone: f.timezone }
+          ? // Jira GRW-474 — and the business's own number: the one WhatsApp number a multi-branch salon has, which
+            // Settings › Branches shows. It could not be changed anywhere once a second branch existed.
+            { name: f.name, timezone: f.timezone, phone: toStoredPhone(f.phone) ?? '' }
           : { ...business, phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
       );
       setSettings(updated);
@@ -140,8 +155,8 @@ export function ProfileForm({
       setSavedFields(next);
       setF(next);
       setSaved(true);
-    } catch {
-      setError(t('errors.saveFailed'));
+    } catch (e) {
+      setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -356,7 +371,8 @@ export function ProfileForm({
         </section>
       ) : null}
 
-      {businessOnly ? null : (
+      {/* Jira GRW-474 — shown for a multi-branch business too: its number is the business's WhatsApp number. */}
+      {(
       <section className="card bp-card">
         <div className="bp-card-head">
           <span className="bp-card-icon">

@@ -99,6 +99,11 @@ export function RecordPaymentModal({
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /*
+   * Jira GRW-475 — an amount far beyond what is owed comes back 409 `amount_unusually_large`. The admin sees why
+   * and records it anyway with one more tap, or corrects a slipped zero; nothing was written by the first try.
+   */
+  const [needsConfirm, setNeedsConfirm] = useState(false);
   const ids = useId();
 
   const open = businessName !== null && subscription !== null;
@@ -163,7 +168,7 @@ export function RecordPaymentModal({
             : null;
   const canSave = blocker === null && !saving;
 
-  function submit() {
+  function submit(confirmLargeAmount = false) {
     if (!parsedAmount.ok || !paidAtValid) return;
     setSaving(true);
     setError(null);
@@ -180,21 +185,23 @@ export function RecordPaymentModal({
         reference: reference.trim(),
         paidAt: paidAtDate!.toISOString(),
         reason: reason.trim(),
+        ...(confirmLargeAmount ? { confirmLargeAmount: true } : {}),
       }),
     })
       .then((result) => {
         onRecorded(result);
         onClose();
       })
-      .catch((err) =>
+      .catch((err) => {
+        setNeedsConfirm(err instanceof AdminApiError && err.code === 'amount_unusually_large');
         setError(
           err instanceof AdminApiError
             ? err.message
             : controller.signal.aborted
               ? 'That took too long to answer. Check the Payments screen before trying again — it may have been recorded.'
               : 'Could not record this payment.',
-        ),
-      )
+        );
+      })
       .finally(() => {
         clearTimeout(timer);
         setSaving(false);
@@ -402,6 +409,13 @@ export function RecordPaymentModal({
           </div>
 
           {error ? <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div> : null}
+          {needsConfirm ? (
+            <div style={{ marginTop: 8 }}>
+              <SecondaryButton onClick={() => submit(true)} disabled={saving}>
+                The amount is right — record it
+              </SecondaryButton>
+            </div>
+          ) : null}
         </div>
 
         <div style={{ display: 'flex', gap: 10, padding: '14px 24px 22px' }}>
@@ -409,7 +423,7 @@ export function RecordPaymentModal({
             Cancel
           </SecondaryButton>
           <PrimaryButton
-            onClick={submit}
+            onClick={() => submit()}
             disabled={!canSave}
             title={blocker ?? undefined}
             style={{ flex: 1, height: 46, justifyContent: 'center' }}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { csvLines } from '../lib/csv';
 import { formatDate, formatPhone, formatRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -31,6 +32,7 @@ import {
 } from '../components/icons';
 import { useTranslations, useLocale } from 'next-intl';
 import { copy } from '../lib/copy';
+import { pickNoun } from '../lib/nouns';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
@@ -120,7 +122,9 @@ export function CustomersClient({
 }) {
   const locale = useLocale();
   const t = useTranslations('customers');
-  const lower = label.toLowerCase();
+  const tn = useTranslations('nouns');
+  // Jira GRW-478 (U-3) — the vertical's word in English, the generic one in Hindi, as every other screen does.
+  const lower = pickNoun(locale, label.toLowerCase(), tn('customers'));
   const singular = lower.replace(/s$/, '');
   const statusLabel = (s: Exclude<CustomerStatusFilter, 'all'>) =>
     s === 'never' ? t('statusNever') : s === 'lapsed' ? t('statusLapsed') : t(`segments.${s}.label`);
@@ -293,15 +297,15 @@ export function CustomersClient({
       formatMoney(c.totalSpentMinor),
       // The exported band is the row's own, so a spreadsheet and the screen
       // cannot disagree about which clients are slipping.
-      `${formatRecency(c.lastBookingAt)} (${c.segment})`,
+      // Jira GRW-478 (U-15) — the band's own words, as the screen says it; the raw code (`at_risk`) read as a bug.
+      `${formatRecency(c.lastBookingAt, undefined, locale)} (${statusLabel(c.segment)})`,
     ]);
-    const csv = [header, ...rows]
-      .map((r) => r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    // Jira GRW-476 — through the shared writer: a client's own name could be a formula.
+    const csv = csvLines([header, ...rows]);
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'customers.csv';
+    a.download = 'clients.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -578,7 +582,7 @@ export function CustomersClient({
                       ago someone last came in does. */}
                   <td>
                     <div className="cust-recency">
-                      <span>{formatRecency(c.lastBookingAt)}</span>
+                      <span>{formatRecency(c.lastBookingAt, undefined, locale)}</span>
                       {chipOf(c.segment)}
                     </div>
                   </td>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { formatTime, type Appointment } from '../lib/api';
 import { copy } from '../lib/copy';
 import {
@@ -50,6 +50,7 @@ function Avatar({ name, muted }: { name: string | null; muted?: boolean }) {
 }
 
 function TimeCell({ booking, timezone, now }: { booking: BookingGroup; timezone: string; now: Date }) {
+  const locale = useLocale();
   const [clock, meridiem] = formatTime(booking.startAt, timezone).split(' '); // e.g. "11:30 am"
   return (
     <div className="sched-time">
@@ -58,14 +59,14 @@ function TimeCell({ booking, timezone, now }: { booking: BookingGroup; timezone:
       </div>
       {/* A settled booking (done/no-show/cancelled) has nothing left to count down to — show its
           duration instead, same as before. Only a still-confirmed booking gets "in 25m". */}
-      <div className="n">{booking.status === 'confirmed' ? relativeCountdown(booking.startAt, now) : formatDuration(booking.totalMin)}</div>
+      <div className="n">{booking.status === 'confirmed' ? relativeCountdown(booking.startAt, now, locale) : formatDuration(booking.totalMin, locale)}</div>
     </div>
   );
 }
 
 /** What each booking shows as its "service" line — every service, plus the staff. */
-function metaLine(booking: BookingGroup): string {
-  const services = summarizeServices(booking.serviceNames);
+function metaLine(booking: BookingGroup, lang: string): string {
+  const services = summarizeServices(booking.serviceNames, lang);
   const staff = booking.providerNames.join(', ');
   return staff ? `${services} · ${staff}` : services;
 }
@@ -83,6 +84,7 @@ export function DaySchedule({
   /** GRW-219 — `me.capabilities.reschedule`, threaded from the page that fetched it. */
   canMove?: boolean;
 }) {
+  const locale = useLocale();
   const ts = useTranslations('status');
   const tc = useTranslations('chrome');
   // Seeded from the server value, then switched to the real device clock
@@ -141,7 +143,7 @@ export function DaySchedule({
       <Avatar name={booking.customerName ?? null} muted />
       <div className="sched-main">
         <div className="sched-name">{clientNameLabel(booking)}</div>
-        <div className="sched-meta">{metaLine(booking)}</div>
+        <div className="sched-meta">{metaLine(booking, locale)}</div>
       </div>
       <span className="status-note">{ts(statusChip(booking).key)}</span>
     </div>
@@ -154,7 +156,7 @@ export function DaySchedule({
         <Avatar name={booking.customerName ?? null} />
         <div className="sched-main">
           <div className="sched-name">{clientNameLabel(booking)}</div>
-          <div className="sched-meta">{metaLine(booking)}</div>
+          <div className="sched-meta">{metaLine(booking, locale)}</div>
         </div>
         <div className="sched-actions">
           {callButton(booking, strong)}
@@ -208,7 +210,7 @@ export function DaySchedule({
                     <span className="ld" />
                   </span>
                   <span className="ln">
-                    {b.customerName ?? tc('unknown')} <span className="muted">· {summarizeServices(b.serviceNames)}</span>
+                    {b.customerName ?? tc('unknown')} <span className="muted">· {summarizeServices(b.serviceNames, locale)}</span>
                   </span>
                   {settled ? <span className="status-note">{ts(statusChip(b).key)}</span> : callButton(b, false)}
                 </div>

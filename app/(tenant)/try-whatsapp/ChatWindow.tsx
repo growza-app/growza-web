@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
-import { api, ApiError, BookingConflictError, type ChatOption, type ChatState } from '../lib/api';
+import { api, ApiError, BookingConflictError, reasonOr, type ChatOption, type ChatState } from '../lib/api';
 
 /**
  * A simulated WhatsApp thread driving the real conversation engine
@@ -43,8 +43,9 @@ export function ChatWindow({ tenantName, branch }: { tenantName: string; /** Jir
       const next = await api.chatStart(phone.trim(), name.trim() || undefined, branch);
       setState(next);
       setBubbles([{ from: 'bot', text: next.body }]);
-    } catch {
-      setError(t('unreachable'));
+    } catch (err) {
+      // Jira GRW-478 — a refused number is the server's sentence; "can't reach the server" is only for no answer.
+      setError(reasonOr(err, t('unreachable')));
     } finally {
       setBusy(false);
     }

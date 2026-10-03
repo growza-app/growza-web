@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { api } from '../lib/api';
-import { NOTIF_READ_EVENT, countUnread, readClearedBeforeId, readLastSeenId } from './NotificationBell';
+import { NOTIF_READ_EVENT, countUnread, readClearedBeforeId, readLastSeenId, useFeedBranch } from './NotificationBell';
 
 const POLL_MS = 15_000;
 
@@ -20,6 +20,7 @@ export function useUnreadNotifications(hostRef: RefObject<HTMLElement | null>): 
   const [events, setEvents] = useState<ReadonlyArray<{ id: string }>>([]);
   const [cursors, setCursors] = useState({ lastSeen: 0, cleared: 0 });
   const alive = useRef(true);
+  const { location } = useFeedBranch();
 
   useEffect(() => {
     alive.current = true;
@@ -30,7 +31,7 @@ export function useUnreadNotifications(hostRef: RefObject<HTMLElement | null>): 
       if (document.visibilityState !== 'visible') return;
       const host = hostRef.current;
       if (host && getComputedStyle(host).display === 'none') return;
-      const rows = await api.notifications(50).catch(() => null);
+      const rows = await api.notifications(50, location).catch(() => null);
       if (rows && alive.current) setEvents(rows);
       readCursors(); // another tab may have moved it
     };
@@ -47,7 +48,7 @@ export function useUnreadNotifications(hostRef: RefObject<HTMLElement | null>): 
       window.removeEventListener(NOTIF_READ_EVENT, readCursors);
       window.removeEventListener('storage', readCursors);
     };
-  }, [hostRef]);
+  }, [hostRef, location]);
 
   return countUnread(events, cursors.lastSeen, cursors.cleared);
 }

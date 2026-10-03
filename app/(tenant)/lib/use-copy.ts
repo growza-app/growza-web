@@ -33,6 +33,7 @@ export function useNewVisitCopy() {
     amountFor: (service: string) => t('amountFor', { service }),
     paid: (amount: string, mode: string) => t('paid', { amount, mode }),
     paymentNotSaved: t('paymentNotSaved'),
+    amountNotSaved: t('amountNotSaved'),
     combo: t('combo'),
     comboSaves: (amount: string) => t('comboSaves', { amount }),
     close: t('close'),
@@ -202,5 +203,14 @@ export function useClientCardCopy() {
     close: t('close'),
     loadFailed: t('loadFailed'),
     noPhone: t('noPhone'),
+    delete: t('delete'),
+    deleteTitle: t('deleteTitle'),
+    deleteBody: (days: number) => t('deleteBody', { days }),
+    deleteConfirm: t('deleteConfirm'),
+    deleting: t('deleting'),
+    deleted: (days: number) => t('deleted', { days }),
+    undo: t('undo'),
+    undoing: t('undoing'),
+    actionFailed: t('actionFailed'),
   }), [t, tn, locale]);
 }

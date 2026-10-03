@@ -71,6 +71,28 @@ const nextConfig: NextConfig = {
   // can't be tunnelled alongside and would trip mixed-content blocking).
   // These run server-side on the machine hosting Next, where localhost:3001
   // is always reachable.
+  // Jira GRW-476 — no "X-Powered-By: Next.js" advertising the framework and its version to whoever asks.
+  poweredByHeader: false,
+  /*
+   * Jira GRW-476 — the dashboard's own security headers. It sent none (QA: only X-Powered-By). No full CSP here —
+   * Next's own inline scripts would need a nonce pipeline, its own story — but framing is refused outright (the
+   * clickjacking half of a CSP, `frame-ancestors`), types are not sniffed, the referrer is trimmed, and the
+   * device features this app never uses are switched off.
+   */
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     return [
       { source: '/api/:path*', destination: `${API_ORIGIN}/api/:path*` },

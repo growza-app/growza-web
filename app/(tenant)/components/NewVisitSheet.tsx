@@ -47,6 +47,7 @@ import { matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { useLabel } from './LabelsProvider';
+import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useBranch } from './BranchProvider';
 import { useSession } from './SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
@@ -233,6 +234,8 @@ export function NewVisitSheet({
 }) {
   const tmin = useTranslations('services');
   const nv = useNewVisitCopy();
+  // Jira GRW-480 (S-18c) — "That is a large amount" before a typo is saved as takings.
+  const { guard: guardLargeAmount, dialog: largeAmountDialog } = useLargeAmountGuard();
   const locale = useLocale();
   // Jira GRW-363 — the same phrase the row this choice makes carries on Home and in Reports.
   const noProviderWord = useNoProvider();
@@ -1141,13 +1144,20 @@ export function NewVisitSheet({
       paidAmountMinor: rupeesToMinor(item.paidRupees) ?? 0,
     }));
     try {
-      await api.checkout(first, {
-        paidAmountMinor: amounts[0],
-        paymentMode,
-        groupMembers: rest.map((appointmentId, i) => ({ appointmentId, paidAmountMinor: amounts[i + 1]! })),
-        ...(extraServices.length > 0 ? { extraServices } : {}),
-      });
+      await guardLargeAmount((confirmed) =>
+        api.checkout(first, {
+          paidAmountMinor: amounts[0],
+          paymentMode,
+          groupMembers: rest.map((appointmentId, i) => ({ appointmentId, paidAmountMinor: amounts[i + 1]! })),
+          ...(extraServices.length > 0 ? { extraServices } : {}),
+          ...(confirmed ? { confirmLargeAmount: true } : {}),
+        }),
+      );
     } catch (error) {
+      if (error instanceof LargeAmountDeclined) {
+        setStage({ step: 'error', client, message: nv.amountNotSaved });
+        return;
+      }
       const settled =
         error instanceof BookingConflictError &&
         (await visitRows(visit)
@@ -1246,14 +1256,17 @@ export function NewVisitSheet({
           serviceId: item.serviceId,
           paidAmountMinor: rupeesToMinor(item.paidRupees) ?? 0,
         }));
-        const result = await api.recordCounterSale({
-          queueEntryId: paysToken.id,
-          services: lines,
-          ...(offerId ? { offerId } : {}),
-          ...(noStylist || !schedulableId ? { noStylist: true as const } : { schedulableId }),
-          paymentMode,
-          idempotencyKey: attemptKey,
-        });
+        const result = await guardLargeAmount((confirmed) =>
+          api.recordCounterSale({
+            queueEntryId: paysToken.id,
+            services: lines,
+            ...(offerId ? { offerId } : {}),
+            ...(noStylist || !schedulableId ? { noStylist: true as const } : { schedulableId }),
+            paymentMode,
+            idempotencyKey: attemptKey,
+              ...(confirmed ? { confirmLargeAmount: true } : {}),
+          }),
+        );
         router.refresh();
         setStage({
           step: 'paid',
@@ -1278,17 +1291,20 @@ export function NewVisitSheet({
           serviceId: item.serviceId,
           paidAmountMinor: rupeesToMinor(item.paidRupees) ?? 0,
         }));
-        const result = await api.recordCounterSale({
-          ...(client.kind === 'existing'
-            ? { customerId: client.id }
-            : { customerName: client.name, ...(client.phone ? { customerPhone: client.phone } : {}) }),
-          services,
-          ...(offerId ? { offerId } : {}),
-          noStylist: true,
-          paymentMode,
-          idempotencyKey: attemptKey,
-          ...atBranch,
-        });
+        const result = await guardLargeAmount((confirmed) =>
+          api.recordCounterSale({
+            ...(client.kind === 'existing'
+              ? { customerId: client.id }
+              : { customerName: client.name, ...(client.phone ? { customerPhone: client.phone } : {}) }),
+            services,
+            ...(offerId ? { offerId } : {}),
+            noStylist: true,
+            paymentMode,
+            idempotencyKey: attemptKey,
+            ...atBranch,
+              ...(confirmed ? { confirmLargeAmount: true } : {}),
+          }),
+        );
         router.refresh();
         setStage({
           step: 'paid',
@@ -1353,6 +1369,11 @@ export function NewVisitSheet({
       }
       setStage({ step: 'done', client, result: recorded });
     } catch (error) {
+      // Jira GRW-480 — "Check again" on a large amount: nothing was saved, and the sheet says so.
+      if (error instanceof LargeAmountDeclined) {
+        setStage({ step: 'error', client, message: nv.amountNotSaved });
+        return;
+      }
       /*
        * Only the API's own message reaches the receptionist.
        *
@@ -1373,7 +1394,8 @@ export function NewVisitSheet({
        * the time step with the list refreshed is the scripted recovery; leaving
        * them on an error screen would make them start the client over.
        */
-      if (later && error instanceof BookingConflictError) {
+      // Jira GRW-478 — only a lost slot; any other 409 (a client mid-erasure, a repeated request) is a sentence to read.
+      if (later && error instanceof BookingConflictError && error.code === 'slot_taken') {
         setSlotUtc(null);
         setSlots(null);
         setStage({ step: 'when', client });
@@ -1480,7 +1502,9 @@ export function NewVisitSheet({
 
   return (
     <>
-      {!asPage && <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />}
+      {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
+      {largeAmountDialog}
+      {!asPage && <div className="sheet-backdrop" onClick={busy || picked.length > 0 || newName.trim() || newPhone.trim() || stage.step !== 'client' ? undefined : onClose} />}
       <div
         className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
         role={asPage ? undefined : 'dialog'}

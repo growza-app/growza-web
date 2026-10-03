@@ -10,6 +10,7 @@ import {
   TOPIC_META,
   countUnread,
   eventLine,
+  useFeedBranch,
   readClearedBeforeId,
   readLastSeenId,
   timeAgo,
@@ -48,6 +49,7 @@ export function NotificationsClient() {
   const [lastSeenId, setLastSeenId] = useState(0);
   const [clearedBeforeId, setClearedBeforeId] = useState(0);
   const [timezone, setTimezone] = useState('Asia/Kolkata');
+  const feed = useFeedBranch();
 
   useEffect(() => {
     setLastSeenId(readLastSeenId());
@@ -62,7 +64,7 @@ export function NotificationsClient() {
     setError(null);
     // The full page, not the bell's 20-row dropdown — the same 50-row cap
     // `/api/v1/notifications` already enforces server-side.
-    api.notifications(50)
+    api.notifications(50, feed.location)
       .then((rows) => {
         if (!cancelled) setEvents(rows);
       })
@@ -72,7 +74,7 @@ export function NotificationsClient() {
     return () => {
       cancelled = true;
     };
-  }, [retryCount]);
+  }, [retryCount, feed.location]);
 
   const visibleEvents = (events ?? []).filter((e) => Number(e.id) > clearedBeforeId);
   const unreadCount = countUnread(events ?? [], lastSeenId, clearedBeforeId);
@@ -132,7 +134,7 @@ export function NotificationsClient() {
               visibleEvents.map((e) => {
                 const meta = TOPIC_META[e.topic];
                 const Icon = meta.icon;
-                const line = eventLine(e, timezone, nf, locale);
+                const line = eventLine(e, timezone, nf, locale, feed.showBranch);
                 const unread = Number(e.id) > lastSeenId;
                 return (
                   <div key={e.id} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>

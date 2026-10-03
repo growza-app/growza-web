@@ -112,7 +112,7 @@ describe('every installable root captures the install offer before the page (Jir
   for (const path of ['app/(auth)/layout.tsx', 'app/(tenant)/layout.tsx', 'app/admin/layout.tsx']) {
     it(path, () => {
       const layout = read(path);
-      expect(layout).toMatch(/<InstallPromptCapture\s*\/>/);
+      expect(layout).toMatch(/<InstallPromptCapture(\s+nonce=\{nonce\})?\s*\/>/);
       // Before the page content, or a prompt fired early is lost.
       expect(layout.indexOf('<InstallPromptCapture')).toBeLessThan(layout.indexOf('{children}'));
     });

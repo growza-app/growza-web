@@ -1,7 +1,7 @@
 'use client';
 
 import { useBookingCopy } from '../lib/use-copy';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatTime, type Appointment, type AppointmentStatus, type Offer, type Provider, type Service } from '../lib/api';
@@ -65,6 +65,7 @@ export function BookingSheet({
    */
   canMove?: boolean;
 }) {
+  const locale = useLocale();
   const bk = useBookingCopy();
   const tc = useTranslations('chrome');
   const tsh = useTranslations('chrome.sheet');
@@ -176,7 +177,7 @@ export function BookingSheet({
             <div className="sheet-title">{appointment.customerName ?? tc('unknown')}</div>
             <div className="sheet-sub">
               {comboServiceNames && comboServiceNames.length > 1
-                ? `${summarizeServices(comboServiceNames)}${comboTotalMin ? ` · ${formatDuration(comboTotalMin)}` : ''}`
+                ? `${summarizeServices(comboServiceNames, locale)}${comboTotalMin ? ` · ${formatDuration(comboTotalMin, locale)}` : ''}`
                 : `${appointment.serviceName}${appointment.providerName ? ` · ${appointment.providerName}` : ''}`}{' '}
               · {formatTime(appointment.startAt, timezone)}
             </div>

@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { rootTitle } from './lib/page-title';
 import { DateTime } from 'luxon';
 import { api, type Appointment, type AttendanceRegister, type CustomerStats, type HomeOverview, type Me, type ProviderDay } from './lib/api';
@@ -47,10 +48,13 @@ function dateLabel(lang: Lang, timezone: string, now: Date): string {
   return `${part('weekday')}, ${part('day')} ${part('month').slice(0, 3)}`;
 }
 
-/** Active staff on today's roster with no attendance row. Off-today people are not rostered, so they never count. */
-function notMarkedIn(register: AttendanceRegister | null): number | null {
+/**
+ * Active staff on today's roster with no attendance row. Off-today people are not rostered, so they never count.
+ * Jira GRW-477 — who, not how many: Home narrows them to its branch in the browser, as it does everything else.
+ */
+function notMarkedIn(register: AttendanceRegister | null): string[] | null {
   if (!register) return null;
-  return register.rows.filter((r) => r.onDate === register.today && r.rostered && r.status === null).length;
+  return register.rows.filter((r) => r.onDate === register.today && r.rostered && r.status === null).map((r) => r.providerId);
 }
 
 export default async function DashboardPage() {
@@ -73,7 +77,7 @@ export default async function DashboardPage() {
   const common = {
     lang,
     labels: me.labels,
-    businessName: me.tenant?.name ?? 'Your business',
+    businessName: me.tenant?.name ?? (await getTranslations('chrome'))('yourBusiness'),
     timezone,
     nowISO: now.toISOString(),
     dateLabel: dateLabel(lang, timezone, now),

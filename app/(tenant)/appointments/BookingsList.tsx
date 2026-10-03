@@ -30,6 +30,11 @@ function bookingTotalMinor(b: BookingGroup): number {
   return bookingBill(b.appointments).totalMinor;
 }
 
+/** Jira GRW-480 — the API sends no prices to a stylist the owner keeps off the money. */
+function pricesShown(b: BookingGroup): boolean {
+  return b.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null);
+}
+
 /**
  * A staff member's rail/avatar colour, mobile only (GRW-46). Hashed from
  * their name rather than a per-name lookup table — the mock this mirrors
@@ -430,7 +435,7 @@ export function BookingsList({
               mock. Desktop keeps both in the gutter / right column instead. */}
           <div className="bk-card-timerow">
             <span className="bk-card-time">
-              {clock} <span>{meridiem}</span> · {formatDuration(b.totalMin)}
+              {clock} <span>{meridiem}</span> · {formatDuration(b.totalMin, locale)}
             </span>
             <span className={`chip ${chip.cls}`}>{ts(chip.key)}</span>
           </div>
@@ -450,7 +455,7 @@ export function BookingsList({
               <span className="chip chip-combo">🎁 {b.offerTitle}</span>
             </div>
           )}
-          <div className="bk-card-services">{summarizeServices(b.serviceNames)}</div>
+          <div className="bk-card-services">{summarizeServices(b.serviceNames, locale)}</div>
           {b.customerPhone ? (
             <div className="bk-card-phone">
               <IconPhone />
@@ -462,7 +467,7 @@ export function BookingsList({
                 above, so repeating it here would print it twice on a phone. */}
             <span className="bk-card-dur">
               <IconClock />
-              {formatDuration(b.totalMin)}
+              {formatDuration(b.totalMin, locale)}
             </span>
             {b.providerNames.length > 0 && (
               <div className="bk-card-staff">
@@ -470,7 +475,8 @@ export function BookingsList({
                 {b.providerNames.join(', ')}
               </div>
             )}
-            <span className="bk-card-price">{formatMoney(String(bookingTotalMinor(b)))}</span>
+            {/* Jira GRW-480 (Q-1) — no price at all when the API withheld it, never a "₹0" that reads as free. */}
+            {pricesShown(b) && <span className="bk-card-price">{formatMoney(String(bookingTotalMinor(b)))}</span>}
           </div>
         </div>
         <div className="bk-card-right">
@@ -810,7 +816,7 @@ export function BookingsList({
                     {clock}
                     <span>{meridiem}</span>
                   </div>
-                  {!multi && <div className="bk-tl-dur">{formatDuration(slot.items[0]!.totalMin)}</div>}
+                  {!multi && <div className="bk-tl-dur">{formatDuration(slot.items[0]!.totalMin, locale)}</div>}
                 </div>
                 <div className="bk-tl-rail">
                   <span className={`bk-tl-dot ${multi ? 'is-multi' : slot.items[0]!.status === 'confirmed' ? 'is-up' : ''}`} />

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { useState } from 'react';
 import { formatTime } from '../lib/api';
 import { formatDuration } from '../lib/appointment-display';
@@ -49,6 +50,7 @@ export function StaffTable({
   upcoming: boolean;
   labels: StaffTableLabels;
 }) {
+  const locale = useLocale();
   // Whose bookings the sheet is showing: a person's name, 'Everyone', or nobody (closed).
   const [sheetFor, setSheetFor] = useState<string | null>(null);
   if (staff.length === 0) return null;
@@ -103,7 +105,7 @@ export function StaffTable({
                     <span className="bk-count-none">{row.bookings}</span>
                   )}
                 </td>
-                <td>{row.bookedMin > 0 ? formatDuration(row.bookedMin) : '—'}</td>
+                <td>{row.bookedMin > 0 ? formatDuration(row.bookedMin, locale) : '—'}</td>
                 <td>{row.nextAt ? formatTime(row.nextAt, timezone) : '—'}</td>
               </tr>
             );

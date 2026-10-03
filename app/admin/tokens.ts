@@ -12,7 +12,8 @@ export const oklch = {
   text: 'oklch(0.24 0.02 155)',
   textStrong: 'oklch(0.2 0.02 155)',
   textMuted: 'oklch(0.53 0.02 155)',
-  textFaint: 'oklch(0.55 0.02 155)',
+  // Jira GRW-478 (U-11) — 0.55 was 4.41:1 on pageBg, just under 4.5.
+  textFaint: 'oklch(0.52 0.02 155)',
   border: 'oklch(0.92 0.008 150)',
   borderStrong: 'oklch(0.9 0.008 150)',
   surface: 'oklch(1 0 0)',
@@ -37,7 +38,8 @@ export const oklch = {
 export const STATUS_COLORS: Record<string, [fg: string, bg: string]> = {
   Active: ['oklch(0.5 0.13 150)', 'oklch(0.95 0.035 150)'],
   Trial: ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
-  'Past due': ['oklch(0.55 0.17 25)', 'oklch(0.95 0.04 25)'],
+  // Jira GRW-478 (U-11) — 0.55 was 4.42:1 on its own background.
+  'Past due': ['oklch(0.5 0.17 25)', 'oklch(0.95 0.04 25)'],
   Suspended: ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],
   'Grace period': ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
   Success: ['oklch(0.5 0.13 150)', 'oklch(0.95 0.035 150)'],

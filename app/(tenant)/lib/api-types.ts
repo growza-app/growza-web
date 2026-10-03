@@ -356,43 +356,16 @@ export interface SettingsSummary {
 
 export interface ActivityEvent {
   id: string;
-  topic: 'appointment.confirmed' | 'appointment.cancelled' | 'appointment.rescheduled' | 'billing.change_pending';
+  topic: 'appointment.confirmed' | 'appointment.cancelled' | 'appointment.rescheduled' | 'billing.change_pending' | 'conversation.handoff';
   createdAt: string;
   /** Booking topics only — null for `billing.change_pending`. */
   customerName: string | null;
+  /** Jira GRW-477 — where the booking is; shown on "All branches". Null for billing rows. */
+  branchName: string | null;
   startAt: string | null;
   serviceNames: string[] | null;
   /** Jira GRW-301 — `billing.change_pending` only. */
   billing: { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number } | null;
-}
-
-export interface TodayStats {
-  bookingsToday: number;
-  bookingsYesterday: number;
-  noShowsThisWeek: number;
-  noShowsPrevWeek: number;
-  revenueTodayMinor: string;
-  revenuePrevWeekSameDayMinor: string;
-  completedToday: number;
-  bookedMinutesToday: number;
-  capacityMinutesToday: number;
-}
-
-export interface RangeBucket {
-  label: string;
-  bookings: number;
-  isCurrent: boolean;
-}
-
-export interface RangeSummary {
-  range: 'week' | 'month';
-  label: string;
-  bookings: number;
-  revenueMinor: string;
-  noShows: number;
-  comparisonPct: number | null;
-  busyPct: number;
-  buckets: RangeBucket[];
 }
 
 export interface ProviderDay {
