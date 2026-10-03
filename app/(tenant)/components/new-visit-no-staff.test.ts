@@ -27,7 +27,8 @@ describe('a branch with nobody on its team', () => {
   });
 
   it('does not offer "Whoever is free", because nobody can be free', () => {
-    expect(code).toMatch(/\{!paysToken && !noStaffHere && \(/);
+    // GRW-461 added a second reason there can be nobody to be free: staff here, none who do this service.
+    expect(code).toMatch(/\{!paysToken && !noStaffHere && !noOneCanDoIt && \(/);
   });
 
   it('settles Record payment with no stylist instead', () => {
@@ -52,7 +53,8 @@ describe('a branch with nobody on its team', () => {
     // whose staff are not set up yet.
         // GRW-458 moved this button into the tray's role helper and wrapped the expression; the clause this
     // story added is the last one, unchanged.
-    expect(code).toMatch(/busy \|\|\s*picked\.length === 0 \|\|\s*\(forPayment && !amountsValid\) \|\|\s*\(!later && !forPayment && noStaffHere\)/);
+    // GRW-461 widened this story's clause to cover a branch whose staff cannot do the picked service.
+    expect(code).toMatch(/busy \|\|\s*picked\.length === 0 \|\|\s*\(forPayment && !amountsValid\) \|\|\s*\(!later && !forPayment && \(noStaffHere \|\| noOneCanDoIt\)\)/);
     const queueBtn = code.slice(code.indexOf('nv.addToQueue'));
     expect(queueBtn.slice(0, 400)).not.toMatch(/noStaffHere/);
   });

@@ -64,7 +64,8 @@ describe('FR-05 — one Mark done, no till', () => {
     // payment is untouched by it (`!forPayment`) and still turns on `amountsValid` alone.
         // GRW-458 wrapped the expression over several lines when it moved the button into the tray's role
     // helper; the clauses are unchanged.
-    expect(sheet).toMatch(/busy \|\|\s*picked\.length === 0 \|\|\s*\(forPayment && !amountsValid\) \|\|\s*\(!later && !forPayment && noStaffHere\)/);
+    // GRW-461 widened the fourth clause; Record payment is still untouched by it (`!forPayment`).
+    expect(sheet).toMatch(/busy \|\|\s*picked\.length === 0 \|\|\s*\(forPayment && !amountsValid\) \|\|\s*\(!later && !forPayment && \(noStaffHere \|\| noOneCanDoIt\)\)/);
   });
 });
 

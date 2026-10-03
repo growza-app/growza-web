@@ -1633,6 +1633,8 @@
     "noStaffYet": "No {provider} yet, so there is nobody to put this with.",
     "stillTakePayment": "You can still take the payment with “{nobody}”.",
     "addStaff": "Add {provider}",
+    "noOneDoes": "Nobody here does {service}, so there is no {provider} to put this with.",
+    "whoDoesWhat": "Who does what",
     "addOrCopyServices": "Add or copy {services}"
   },
   "moveBooking": {

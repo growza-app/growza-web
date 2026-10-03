@@ -390,7 +390,19 @@ export const api = {
       `/api/v1/catalog/suggest?q=${encodeURIComponent(q)}${location ? `&location=${encodeURIComponent(location)}` : ''}`,
       signal,
     ),
-  providers: () => get<Provider[]>('/api/v1/providers'),
+  /**
+   * Everyone, or — with `service` (Jira GRW-461) — only the people who can do that one thing.
+   *
+   * The same question the walk-in write asks before it picks a chair, so a screen can ask it first instead of
+   * offering a stylist the save will refuse with "No staff member can perform that service".
+   */
+  providers: (opts?: { service?: string; location?: string | null }) => {
+    const q = new URLSearchParams();
+    if (opts?.service) q.set('service', opts.service);
+    if (opts?.location) q.set('location', opts.location);
+    const qs = q.toString();
+    return get<Provider[]>(`/api/v1/providers${qs ? `?${qs}` : ''}`);
+  },
   /**
    * GRW-170 — the register for a day or a range, including everybody nobody
    * marked. `location` is Jira GRW-249 — one branch's register; a receptionist
