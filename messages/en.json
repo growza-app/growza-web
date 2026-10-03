@@ -617,7 +617,13 @@
     "worksAt": "Works at {branch}",
     "everyBranch": "Every branch — choose one",
     "branchFor": "Branch for {phone}",
-    "branchForUnnamed": "Branch for receptionist"
+    "branchForUnnamed": "Branch for receptionist",
+    "canSignIn": "Who can sign in",
+    "stylist": "Stylist",
+    "remove": "Remove",
+    "removeFor": "Remove {name}",
+    "removeTitle": "Remove {name}?",
+    "removeBody": "They will be signed out straight away and cannot sign in to this business again unless you invite them. Their past bookings and records stay."
   },
   "services": {
     "subtitle": "What you offer, how long each takes, and what you charge.",

@@ -222,6 +222,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',
+    // Jira GRW-470 — take a login away, from the Team panel.
+    'DELETE /api/v1/team/members/:userId',
     'DELETE /api/v1/team/invites/:id',
     'POST /api/v1/settings/branch-reset',
     'POST /api/v1/settings/apply-to-all',
