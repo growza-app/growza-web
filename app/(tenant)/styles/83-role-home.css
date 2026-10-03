@@ -185,8 +185,14 @@
     flex-shrink: 0;
     max-width: 70%;
   }
+  /* Jira GRW-481 — on a phone the date goes entirely, rather than merely giving way
+     first. Two things on this screen were telling the owner what day it is: this,
+     and the range control directly beneath it reading "Today". The date was the
+     weaker of the two and it was costing the branch name its last few characters,
+     so a two-branch owner read "All branch…" at 344px. The laptop keeps its date
+     chip in the header controls, where there is room for both. */
   .hm-head-branch-date {
-    min-width: 0;
+    display: none;
   }
   .hm-head-branch svg {
     width: 14px;
