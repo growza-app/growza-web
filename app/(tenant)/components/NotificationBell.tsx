@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react';
 import { DateTime } from 'luxon';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
-import { IconBell, IconCalendarPlus, IconClose, IconMoveTime, IconReceipt } from './icons';
+import { IconBell, IconCalendarPlus, IconChat, IconClose, IconMoveTime, IconReceipt } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useBranch } from './BranchProvider';
 
@@ -60,13 +60,15 @@ export function countUnread(events: ReadonlyArray<{ id: string | number }>, last
 }
 
 /** The words are `notifications.feed.topics.<key>`; only the icon and class live here. */
-export const TOPIC_META: Record<ActivityEvent['topic'], { key: 'newBooking' | 'cancelled' | 'rescheduled' | 'billing'; icon: ComponentType; cls: string }> = {
+export const TOPIC_META: Record<ActivityEvent['topic'], { key: 'newBooking' | 'cancelled' | 'rescheduled' | 'billing' | 'handoff'; icon: ComponentType; cls: string }> = {
   'appointment.confirmed': { key: 'newBooking', icon: IconCalendarPlus, cls: 'notif-new' },
   'appointment.cancelled': { key: 'cancelled', icon: IconClose, cls: 'notif-cancel' },
   'appointment.rescheduled': { key: 'rescheduled', icon: IconMoveTime, cls: 'notif-reschedule' },
   // Jira GRW-301 — replaces the old top-of-page BillChangeBanner, which had
   // no dismiss and no read state; this is a normal feed entry now.
   'billing.change_pending': { key: 'billing', icon: IconReceipt, cls: 'notif-billing' },
+  // Jira GRW-479 (R-5) — a client asked the chat for a person; the bot has gone quiet for them.
+  'conversation.handoff': { key: 'handoff', icon: IconChat, cls: 'notif-handoff' },
 };
 
 /** The `notifications.feed` messages, as a translator — these are plain helpers and cannot call hooks. */
@@ -119,6 +121,10 @@ export function eventLine(
   showBranch = false,
 ): { title: string; subtitle: string } {
   if (e.topic === 'billing.change_pending' && e.billing) return billingLine(e.billing, t, locale);
+  if (e.topic === 'conversation.handoff') {
+    const who = e.customerName ?? t('customer');
+    return { title: t('handoffTitle'), subtitle: [who, showBranch ? e.branchName : null].filter(Boolean).join(' · ') };
+  }
   const services = (e.serviceNames ?? []).join(' + ');
   const local = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('ccc, h:mm a') : '';
   const customer = e.customerName ?? t('customer');

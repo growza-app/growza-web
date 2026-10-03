@@ -41,7 +41,8 @@
         "newBooking": "New booking",
         "cancelled": "Cancelled",
         "rescheduled": "Rescheduled",
-        "billing": "Billing"
+        "billing": "Billing",
+        "handoff": "Asked for a person"
       },
       "title": "{topic} — {services}",
       "customer": "Client",
@@ -51,7 +52,8 @@
       "daysAgo": "{count}d ago",
       "billUp": "Bill going up",
       "billDown": "Bill going down",
-      "billSub": "From {day}: {next} a month (now {current}), for {count, plural, one {# branch} other {# branches}}."
+      "billSub": "From {day}: {next} a month (now {current}), for {count, plural, one {# branch} other {# branches}}.",
+      "handoffTitle": "Wants to talk to someone"
     },
     "bellUnread": "Notifications, {count} unread"
   },
