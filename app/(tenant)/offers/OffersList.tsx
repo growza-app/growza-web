@@ -57,6 +57,13 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
     return name ? <span className="chip offer-branch-chip">{name}</span> : null;
   };
   const [busyId, setBusyId] = useState<string | null>(null);
+  /*
+   * Jira GRW-473 — a refused switch or copy says why. These ran in try/finally with no catch: a 400 (a package
+   * holding a retired service, say) became an unhandled rejection and the button simply did nothing.
+   */
+  const [actionError, setActionError] = useState<string | null>(null);
+  const tc = useTranslations('common');
+  const failed = (err: unknown) => setActionError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   /** Jira GRW-435 — the offer being confirmed, and why the last attempt was refused. */
   const [confirmDelete, setConfirmDelete] = useState<Offer | null>(null);
@@ -122,10 +129,13 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
 
   const toggleActive = async (offer: Offer) => {
     setOpenMenuId(null);
+    setActionError(null);
     setBusyId(offer.id);
     try {
       await api.updateOffer(offer.id, { active: !offer.active });
       router.refresh();
+    } catch (err) {
+      failed(err);
     } finally {
       setBusyId(null);
     }
@@ -178,6 +188,11 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
 
   return (
     <div className="card offers-card">
+      {actionError && (
+        <div className="banner" role="alert" style={{ margin: '0 0 12px' }}>
+          {actionError}
+        </div>
+      )}
       <div className="offers-toolbar">
         <label className="search-wrap">
           <IconSearch />

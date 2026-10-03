@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { api, type ServiceAdmin, type ServiceCategory } from '../lib/api';
+import { api, ApiError, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { CLEANUP, DURATION, canStep, clamp, isDirty, slotMinutes, step, type Bounds, type SheetValues } from './service-sheet';
@@ -141,8 +141,9 @@ export function ServiceForm({
 
   const [name, setName] = useState(service?.name ?? '');
   const [categoryId, setCategoryId] = useState(service?.categoryId ?? '');
-  const [durationMin, setDurationMin] = useState(clamp(service?.durationMin ?? 30, DURATION));
-  const [cleanupMin, setCleanupMin] = useState(clamp(service?.bufferAfterMin ?? 0, CLEANUP));
+  // Jira GRW-473 — the stored values as they are, not clamped: a value the owner does not touch is saved unchanged.
+  const [durationMin, setDurationMin] = useState(service?.durationMin ?? 30);
+  const [cleanupMin, setCleanupMin] = useState(service?.bufferAfterMin ?? 0);
   const [price, setPrice] = useState(fromMinor(service?.priceMinor ?? null));
 
   // Held until save. On create there is no service id to attach a photo to yet, so the file is uploaded
@@ -161,8 +162,8 @@ export function ServiceForm({
   const original: SheetValues = {
     name: service?.name ?? '',
     categoryId: service?.categoryId ?? '',
-    durationMin: clamp(service?.durationMin ?? 30, DURATION),
-    cleanupMin: clamp(service?.bufferAfterMin ?? 0, CLEANUP),
+    durationMin: service?.durationMin ?? 30,
+    cleanupMin: service?.bufferAfterMin ?? 0,
     price: fromMinor(service?.priceMinor ?? null),
     hasNewPhoto: false,
   };
@@ -204,6 +205,22 @@ export function ServiceForm({
         saved = { ...saved, imageUrl: withPhoto.imageUrl };
       }
       onSaved(saved);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.saveFailed'));
+      // Jira GRW-473 — the name belongs to a retired service: offer to bring that one back instead of a dead end.
+      const refusal = err instanceof ApiError ? (err.body as { existingId?: unknown; existingActive?: unknown } | null) : null;
+      setRetiredMatch(refusal && typeof refusal.existingId === 'string' && refusal.existingActive === false ? refusal.existingId : null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const [retiredMatch, setRetiredMatch] = useState<string | null>(null);
+  const bringBack = async (id: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      onSaved(await api.updateService(id, { active: true }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.saveFailed'));
     } finally {
@@ -406,6 +423,11 @@ export function ServiceForm({
           )}
 
           {error && <div role="alert" className="sheet-foot sheet-foot-error">{error}</div>}
+          {retiredMatch && (
+            <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void bringBack(retiredMatch)}>
+              {t('bringBackRetired')}
+            </button>
+          )}
         </div>
       </div>
     </div>

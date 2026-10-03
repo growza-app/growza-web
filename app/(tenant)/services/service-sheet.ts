@@ -9,8 +9,14 @@
 /** Duration: five minutes to twelve hours, which is the same window the API's own validation enforces. */
 export const DURATION = { min: 5, max: 12 * 60, step: 5 } as const;
 
+/*
+ * Jira GRW-473 — cleanup goes up to the API's own 4 hours. It stopped at 60, and the sheet clamped on OPEN, so
+ * renaming a service with 90 minutes of cleanup quietly saved 60. The form now opens on the stored values as they
+ * are (`ServiceForm`); these bounds govern only what the owner types or steps.
+ */
+
 /** Cleanup held after a booking. Zero is a real answer — most services need none. */
-export const CLEANUP = { min: 0, max: 60, step: 5 } as const;
+export const CLEANUP = { min: 0, max: 4 * 60, step: 5 } as const;
 
 export interface Bounds {
   readonly min: number;

@@ -85,18 +85,37 @@ export function ImportServices({
 
   const buildDrafts = () => {
     const at = (r: string[], i: number) => (i >= 0 ? (r[i] ?? '') : '');
+    /*
+     * Jira GRW-473 — minutes are whole, and an hours column is hours. "Labour hrs" is offered as a duration column,
+     * but its 1.5 went through as 1.5 MINUTES, and any fraction then failed in the database. An hours column is
+     * multiplied out; any other is rounded to the nearest minute.
+     */
+    const hoursColumn = map.durationMin >= 0 && /\b(hrs?|hours?)\b/i.test(headers[map.durationMin] ?? '');
+    const minutes = (raw: string, perUnit: number) => {
+      const cleaned = raw.replace(/[^\d.]/g, '');
+      if (!cleaned) return '';
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? String(Math.round(n * perUnit)) : cleaned;
+    };
+    // Jira GRW-473 — a name twice in the file becomes one service: the repeat starts skipped (the owner can still
+    // tick it, and the server then says which row clashes).
+    const seen = new Set<string>();
     setDrafts(
       rows.map((r) => {
         const name = at(r, map.name).trim();
+        const key = name.toLowerCase();
+        const existing = byName.get(key) ?? null;
+        const repeat = !existing && key !== '' && seen.has(key);
+        if (key) seen.add(key);
         return {
           name,
           categoryName: at(r, map.categoryName).trim(),
-          durationMin: at(r, map.durationMin).replace(/[^\d.]/g, ''),
-          bufferAfterMin: at(r, map.bufferAfterMin).replace(/[^\d.]/g, ''),
+          durationMin: minutes(at(r, map.durationMin), hoursColumn ? 60 : 1),
+          bufferAfterMin: minutes(at(r, map.bufferAfterMin), 1),
           // Strips "₹", commas and stray spaces so "₹1,500" imports as 1500.
           price: at(r, map.priceMinor).replace(/[^\d.]/g, ''),
-          existing: byName.get(name.toLowerCase()) ?? null,
-          skip: false,
+          existing,
+          skip: repeat,
         };
       }),
     );
