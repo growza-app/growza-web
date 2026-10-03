@@ -79,7 +79,7 @@
    second entry point to the same control). */
 .range-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 14px; }
 .home-main .summary-more { color: var(--muted); background: var(--surface); border: 1px solid var(--border); width: 30px; height: 30px; margin: 0; flex-shrink: 0; }
-.home-main .summary-more svg { width: 15px; height: 15px; }
+.home-main .summary-more svg { width: 0.9375rem; height: 0.9375rem; }
 
 /* Kept, but demoted: a smaller, quieter row below the style header rather
    than the primary control it used to be — see the comment at its JSX. */
@@ -101,7 +101,7 @@
 .summary-metric { min-width: 0; padding: 0 16px; display: flex; flex-direction: column; align-items: center; text-align: center; border-left: 1px solid #e6ece8; }
 .summary-metric:first-child { border-left: 0; }
 .summary-metric-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; margin-bottom: 10px; }
-.summary-metric-icon svg { width: 22px; height: 22px; }
+.summary-metric-icon svg { width: 1.375rem; height: 1.375rem; }
 .summary-metric strong { font-size: 1.5rem; line-height: 1.15; letter-spacing: -.03em; white-space: nowrap; }
 .summary-metric > span:not(.summary-metric-icon) { font-size: 0.875rem; margin-top: 4px; white-space: nowrap; }
 .metric-bookings .summary-metric-icon { background: #dcf8e7; color: #16a34a; }
@@ -120,9 +120,9 @@
 .attention-card { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 12px 34px 12px 12px; border: 1px solid; border-radius: 12px; color: var(--text); text-decoration: none; font-size: 0.875rem; }
 .attention-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .attention-icon { width: 24px; height: 24px; flex-shrink: 0; border-radius: 7px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.65); }
-.attention-icon svg { width: 13px; height: 13px; }
+.attention-icon svg { width: 0.8125rem; height: 0.8125rem; }
 .attention-card .attention-value { font-size: 1.1875rem; font-weight: 700; line-height: 1; }
-.attention-card > svg { position: absolute; right: 12px; top: 50%; width: 16px; transform: translateY(-50%); }
+.attention-card > svg { position: absolute; right: 12px; top: 50%; width: 1rem; transform: translateY(-50%); }
 .attention-card.amber { background: #fffaf1; border-color: #f7e7cf; color: #ae6e0d; }
 .attention-card.rose { background: #fff7f7; border-color: #f7dddd; color: #e35060; }
 .attention-card.violet { background: #faf8ff; border-color: #e8e0ff; color: #6f42d6; }
@@ -156,7 +156,7 @@
 .rail-actions { display: flex; flex-direction: column; gap: 10px; }
 .rail-actions h3 { margin-bottom: 10px; }
 .quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 11px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 0.875rem; font-weight: 650; }
-.quick-action svg { width: 18px; height: 18px; color: var(--text); flex-shrink: 0; }
+.quick-action svg { width: 1.125rem; height: 1.125rem; color: var(--text); flex-shrink: 0; }
 .quick-action:hover { filter: brightness(0.97); }
 /* The one prominent, filled CTA — every other action is a plain light row. */
 .quick-action-primary { background: var(--accent-deep); color: #fff; }
@@ -186,7 +186,7 @@
 .rail-chart-dot { fill: var(--surface); stroke: #6ec886; stroke-width: 2; }
 .rail-chart-value { font-size: 0.75rem; font-weight: 700; fill: var(--text); }
 .rail-chart-label { font-size: 0.75rem; fill: var(--muted); }
-.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 1.3125rem; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 0.8125rem; }.rail-insight p { margin: 2px 0 0; font-size: 0.8125rem; }.rail-insight svg { width: 17px; color: var(--accent); }
+.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 1.3125rem; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 0.8125rem; }.rail-insight p { margin: 2px 0 0; font-size: 0.8125rem; }.rail-insight svg { width: 1.0625rem; color: var(--accent); }
 
 @media (max-width: 1180px) { .home-layout { grid-template-columns: minmax(0, 1fr) 305px; }.summary-metric { padding: 0 12px; }.summary-metric strong { font-size: 1.25rem; }.summary-metric > span:not(.summary-metric-icon) { white-space: normal; } }
 /*
@@ -226,13 +226,13 @@
      centres on the same line as each other. Sizes come from
      76-header-controls.css; only the offset is Home's. */
   .home-head .hdr-search, .home-head .avatar-lg, .home-head .notif-wrap { margin-top: 5px; }
-  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 0.875rem; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 14px; height: 14px; }.summary-metric strong { font-size: 0.9375rem; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 0.75rem; white-space: normal; line-height: 1.2; }
+  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 0.875rem; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 0.875rem; height: 0.875rem; }.summary-metric strong { font-size: 0.9375rem; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 0.75rem; white-space: normal; line-height: 1.2; }
   /* repeat(2, 1fr), not 3: three columns in .home-main's full mobile width
      (no rail to share it with here) measured at 81-108px per card at 320px —
      the narrowest one clipped under the floating "+" button and its label
      wrapped to a single truncated word. Two stays comfortable (138px+ per
      card) all the way down to 320px, so a third tier was not needed. */
-  .attention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 0.8125rem; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 13px; height: 13px; }.attention-card .attention-value { font-size: 1.125rem; }.attention-card > svg { right: 8px; width: 15px; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 1.25rem; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 0.75rem; padding: 3px 8px; min-width: 78px; }
+  .attention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.attention-card { padding: 11px 24px 11px 11px; font-size: 0.8125rem; }.attention-icon { width: 24px; height: 24px; }.attention-icon svg { width: 0.8125rem; height: 0.8125rem; }.attention-card .attention-value { font-size: 1.125rem; }.attention-card > svg { right: 8px; width: 0.9375rem; }.home-section { margin-top: 26px; }.home-section-head h2 { font-size: 1.25rem; }.home-upcoming .sched-time { width: 77px; }.home-upcoming .sched-card { min-height: 104px; }.home-upcoming .avatar { width: 47px; height: 47px; }.home-upcoming .sched-body { padding-left: 7px; }.home-upcoming .sched-meta { -webkit-line-clamp: 2; }.home-upcoming .call { width: 38px; height: 38px; }.home-upcoming .sched-actions { flex-direction: column; gap: 6px; }.home-upcoming .sched-actions .chip { font-size: 0.75rem; padding: 3px 8px; min-width: 78px; }
   .mobile-only-section { display: block; }
   /* .home-rail's own (unconditional, later-in-file) display:flex would
      otherwise beat the earlier .desktop-only{display:none} rule at equal

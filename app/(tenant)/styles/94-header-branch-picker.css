@@ -34,8 +34,8 @@
 .hbp-line .sbp-btn > svg,
 .hbp-line .sbp-btn > svg:first-child {
   display: inline-block;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 .hbp-line .sbp-menu {
   left: 0;

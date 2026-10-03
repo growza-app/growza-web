@@ -85,8 +85,8 @@
 }
 
 .staff-profile-phone svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   color: var(--accent);
 }
 
@@ -143,8 +143,8 @@
 }
 
 .skill-pill svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
 }
 
 .weekday-hours-row {

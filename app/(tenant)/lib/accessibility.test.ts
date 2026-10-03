@@ -227,6 +227,27 @@ describe('text grows with the reader', () => {
     expect(stray).toEqual([]);
   });
 
+  /*
+   * Jira GRW-484 — the icons go with the text.
+   *
+   * GRW-481 moved the type scale to rem and left all 229 icon sizes in px, so turning
+   * Larger Text on widened the gap between a word and the icon beside it rather than
+   * scaling the screen. Apple's own line, from the page the type rules came from:
+   * "Increase the size of meaningful interface icons as font size increases."
+   */
+  it('sizes every icon in rem, so it grows with the words beside it', () => {
+    const stray: string[] = [];
+    for (const { name, css } of sheets) {
+      for (const rule of css.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+        if (!/svg/.test(rule[1]!)) continue;
+        for (const d of rule[2]!.matchAll(/(?:width|height):\s*[0-9.]+px/g)) {
+          stray.push(`${name}: ${rule[1]!.trim().slice(0, 40)} { ${d[0]} }`);
+        }
+      }
+    }
+    expect(stray).toEqual([]);
+  });
+
   it('keeps the 12px floor as a floor, in the new unit', () => {
     for (const { name, css } of sheets) {
       for (const m of css.matchAll(/font-size:\s*([0-9.]+)rem/g)) {

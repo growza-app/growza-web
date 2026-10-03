@@ -53,8 +53,8 @@
   flex-shrink: 0;
 }
 .bp-card-icon svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 .bp-card-title {
   font-size: 0.96875rem;
@@ -173,8 +173,8 @@
   min-width: 0;
 }
 .bp-link-chev svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   color: var(--muted);
 }
 
@@ -203,8 +203,8 @@
   color: var(--muted);
 }
 .bp-save-state svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   color: var(--accent-deep);
 }
 .bp-save-state.is-error {
@@ -276,8 +276,8 @@
   color: var(--muted);
 }
 .bp-branch-meta svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 .bp-card-actions {
   display: flex;

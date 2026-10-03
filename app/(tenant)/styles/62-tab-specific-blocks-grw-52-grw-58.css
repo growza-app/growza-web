@@ -61,7 +61,7 @@
   color: var(--rp-seg);
 }
 
-.rp-opp-card-icon svg { width: 18px; height: 18px; }
+.rp-opp-card-icon svg { width: 1.125rem; height: 1.125rem; }
 .rp-opp-card-count { font-size: 1.5625rem; font-weight: 800; letter-spacing: -0.5px; }
 .rp-opp-card-title { font-weight: 700; font-size: 0.84375rem; }
 

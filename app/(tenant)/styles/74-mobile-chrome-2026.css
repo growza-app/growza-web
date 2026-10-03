@@ -122,8 +122,8 @@
   }
 
   .bottom-nav svg {
-    width: 23px;
-    height: 23px;
+    width: 1.4375rem;
+    height: 1.4375rem;
     /* Rounder joins read as the current icon language rather than the older
        sharp-cornered outline set. */
     stroke-linecap: round;
@@ -195,8 +195,8 @@
   }
 
   .fab svg {
-    width: 25px;
-    height: 25px;
+    width: 1.5625rem;
+    height: 1.5625rem;
     stroke-linecap: round;
     stroke-linejoin: round;
   }

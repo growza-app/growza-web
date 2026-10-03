@@ -109,8 +109,8 @@
   color: var(--hm-green-deep);
 }
 .hm-summary-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 /* Jira GRW-306 — below 1181px the header has no room for the label (at 861px it
    was 3px wider than the page), and an icon on its own read as a mystery clock, so
@@ -195,8 +195,8 @@
     display: none;
   }
   .hm-head-branch svg {
-    width: 14px;
-    height: 14px;
+    width: 0.875rem;
+    height: 0.875rem;
     flex-shrink: 0;
   }
   /* A phone shows who and where; the greeting is a laptop's luxury. It stays as
@@ -369,8 +369,8 @@
   border-radius: 12px;
 }
 .hm-toolbar-actions .hm-action svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-toolbar-actions .hm-action strong {
   font-size: 0.875rem;
@@ -678,8 +678,8 @@
 }
 .hm-spark svg {
   display: block;
-  width: 200px;
-  height: 42px;
+  width: 12.5rem;
+  height: 2.625rem;
   overflow: visible;
 }
 .hm-spark polyline {
@@ -848,7 +848,7 @@
     width: 100%;
   }
   .hm-hero-week .hm-spark svg {
-    height: 28px;
+    height: 1.75rem;
   }
   .hm-hero-week .hm-spark-days {
     font-size: 0.75rem;
@@ -901,8 +901,8 @@
   color: var(--hm-ink);
 }
 .hm-att > svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
   color: #9aa39d;
   flex-shrink: 0;
 }
@@ -916,8 +916,8 @@
   flex-shrink: 0;
 }
 .hm-att-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-att-text {
   flex: 1;
@@ -985,8 +985,8 @@
   border-style: solid;
 }
 .hm-tile-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 .hm-tile-label {
   font-size: 0.8125rem;
@@ -1166,8 +1166,8 @@
   cursor: pointer;
 }
 .hm-row-button svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
   color: #9aa39d;
   flex-shrink: 0;
 }
@@ -1297,8 +1297,8 @@
 .hm-now-alert svg,
 .hm-now-calm svg,
 .hm-now-unread svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   flex-shrink: 0;
 }
 .hm-now-alert-amber { background: #fbf0dc; color: #7a4f0c; }
@@ -1329,8 +1329,8 @@ button.hm-now-count {
   font-weight: 700;
 }
 .hm-now-count .hm-now-alert-sub svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 /* "+2 more" opens every alert: a real button, 24px tall at least (WCAG 2.5.8). */
 .hm-now-more {
@@ -1388,8 +1388,8 @@ button.hm-now-count {
   flex-shrink: 0;
 }
 .hm-now-icon svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 .hm-now-label {
   flex-shrink: 0;
@@ -1494,8 +1494,8 @@ button.hm-now-count {
     text-overflow: ellipsis;
   }
   .hm-fit .hm-closed-chip svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
   }
 }
@@ -1517,8 +1517,8 @@ button.hm-now-count {
   cursor: pointer;
 }
 .hm-closed > svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   color: var(--hm-green);
 }
 .hm-closed-icon {
@@ -1533,8 +1533,8 @@ button.hm-now-count {
   flex-shrink: 0;
 }
 .hm-closed-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-closed-text {
   flex: 1;
@@ -1602,8 +1602,8 @@ button.hm-now-count {
   cursor: pointer;
 }
 .hm-icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-sheet-grid {
   display: grid;
@@ -1677,8 +1677,8 @@ button.hm-now-count {
   text-decoration: none;
 }
 .hm-action svg {
-  width: 22px;
-  height: 22px;
+  width: 1.375rem;
+  height: 1.375rem;
   flex-shrink: 0;
 }
 .hm-action span {
@@ -1907,8 +1907,8 @@ button.hm-now-count {
     transform: translateX(-50%) scale(0.94);
   }
   .bn-centre-btn svg {
-    width: 24px;
-    height: 24px;
+    width: 1.5rem;
+    height: 1.5rem;
     stroke-width: 2;
   }
   /* Jira GRW-481 — stays at the 12px the rest of the bar uses (GRW-339). The type
@@ -1948,8 +1948,8 @@ button.hm-now-count {
   font-size: 0.9375rem;
 }
 .hm-desk .hm-primary-actions .hm-action svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .hm-att-tiles {
@@ -1989,8 +1989,8 @@ button.hm-now-count {
 }
 .hm-att-tile > svg {
   grid-area: chev;
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 .hm-tone-amber > svg { color: #c07d18; }
 .hm-tone-rose > svg { color: #d64545; }
@@ -2166,16 +2166,16 @@ button.hm-now-count {
     border-radius: 9px;
   }
   .hm-att-tile .hm-att-icon svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
   }
   .hm-att-count {
     margin-top: 7px;
     font-size: 1.375rem;
   }
   .hm-att-tile > svg {
-    width: 15px;
-    height: 15px;
+    width: 0.9375rem;
+    height: 0.9375rem;
   }
   .hm-att-tile-label {
     font-size: 0.8125rem;
@@ -2269,8 +2269,8 @@ button.hm-now-count {
   font-size: 1.0625rem;
 }
 .hm-person-card > svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   color: #9aa39d;
   flex-shrink: 0;
 }
@@ -2482,7 +2482,7 @@ button.hm-now-count {
     font-size: 0.9375rem;
   }
   .hm-fit .hm-spark svg {
-    height: 30px;
+    height: 1.875rem;
   }
   .hm-fit .hm-hero-pay {
     margin-top: auto;
@@ -2546,7 +2546,7 @@ button.hm-now-count {
     height: 6px;
   }
   .hm-fit .hm-spark svg {
-    height: 16px;
+    height: 1rem;
   }
   .hm-fit .hm-pay {
     margin-top: 4px;
@@ -2771,7 +2771,7 @@ button.hm-now-count {
     grid-column: 1 / -1;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark svg {
-    height: 20px;
+    height: 1.25rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark-days {
     font-size: 0.75rem;
@@ -2896,16 +2896,16 @@ button.hm-now-count {
     cursor: pointer;
   }
   .hm-hero-summary svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     flex-shrink: 0;
   }
   .hm-hero-summary span {
     flex: 1;
   }
   .hm-hero-summary svg:last-child {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     opacity: 0.8;
   }
 }
@@ -2947,8 +2947,8 @@ button.hm-now-count {
     cursor: pointer;
   }
   .hm-toolbar-summary svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
   }
   /* The branch picker (`.hm-toolbar-end` pushes it right) and the summary icon sit
      together, not at opposite ends of the row. */

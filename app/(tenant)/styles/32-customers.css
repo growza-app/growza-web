@@ -36,8 +36,8 @@
 }
 
 .cust-kpi-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .cust-kpi-label {
@@ -75,8 +75,8 @@
 }
 
 .search-wrap svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   flex-shrink: 0;
 }
 
@@ -109,8 +109,8 @@
 }
 
 .cust-phone svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
   flex-shrink: 0;
 }
 
@@ -331,8 +331,8 @@
 }
 
 .bk-unmarked-chip svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   flex: none;
   color: #b8860b;
 }
@@ -364,8 +364,8 @@
 }
 
 .bk-kpi-icon svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 
 .bk-kpi-green {
@@ -456,8 +456,8 @@
 }
 
 .bk-field > label svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
   flex-shrink: 0;
 }
 
@@ -519,8 +519,8 @@
 }
 
 .bk-search-inline svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
   color: var(--muted);
   flex-shrink: 0;
 }
@@ -595,8 +595,8 @@
 }
 
 .bk-view-tab svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .bk-view-tab.is-active {
@@ -672,8 +672,8 @@
 }
 
 .bk-multi-badge svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
 }
 
 /* Duration moved onto the card's bottom row with a clock icon (per the mock).
@@ -689,8 +689,8 @@
 }
 
 .bk-card-dur svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 /* Time + status inside the card is a MOBILE affordance: mobile drops the
@@ -822,8 +822,8 @@
 }
 
 .bk-card-staff svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   flex-shrink: 0;
 }
 
@@ -859,8 +859,8 @@
 }
 
 .bk-card-phone svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   flex-shrink: 0;
 }
 
@@ -915,8 +915,8 @@
 }
 
 .bk-details svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .bk-list {
@@ -956,8 +956,8 @@
 }
 
 .bk-summary-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
 }
 
 .bk-summary-value {
@@ -991,8 +991,8 @@
 }
 
 .bk-summary-link svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 /* GRW-46: mobile-only. Hidden by default here so desktop never sees them —
@@ -1043,8 +1043,8 @@
   }
 
   .bk-kpi-icon svg {
-    width: 15px;
-    height: 15px;
+    width: 0.9375rem;
+    height: 0.9375rem;
   }
 
   .bk-kpi-value {
@@ -1195,8 +1195,8 @@
   }
 
   .bk-card-phone svg {
-    width: 13px;
-    height: 13px;
+    width: 0.8125rem;
+    height: 0.8125rem;
     flex-shrink: 0;
   }
 
@@ -1252,8 +1252,8 @@
   }
 
   .bk-search-row svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     color: var(--muted);
     flex-shrink: 0;
   }
@@ -1730,8 +1730,8 @@
   }
 
   .sidebar-close svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   /* Normal flex flow, NOT position:fixed. It's the last child of .content
@@ -1779,8 +1779,8 @@
   }
 
   .bottom-nav svg {
-    width: 21px;
-    height: 21px;
+    width: 1.3125rem;
+    height: 1.3125rem;
   }
 
   .bottom-nav .bn-mark {
@@ -1815,8 +1815,8 @@
   }
 
   .fab svg {
-    width: 26px;
-    height: 26px;
+    width: 1.625rem;
+    height: 1.625rem;
   }
 
   .fab-backdrop {
@@ -1868,8 +1868,8 @@
   }
 
   .fab-menu-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 1.375rem;
+    height: 1.375rem;
   }
 
   /* One compact bar on a phone: title on the left, primary action on the
@@ -2131,8 +2131,8 @@
   }
 
   .filter-btn-icon svg {
-    width: 17px;
-    height: 17px;
+    width: 1.0625rem;
+    height: 1.0625rem;
   }
 
   .filter-btn-on {

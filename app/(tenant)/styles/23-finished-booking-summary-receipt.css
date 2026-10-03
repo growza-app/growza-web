@@ -23,8 +23,8 @@
 }
 
 .summary-badge svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .summary-title {
@@ -159,8 +159,8 @@
 }
 
 .sheet-item svg {
-  width: 19px;
-  height: 19px;
+  width: 1.1875rem;
+  height: 1.1875rem;
   flex-shrink: 0;
   color: var(--accent-deep);
 }

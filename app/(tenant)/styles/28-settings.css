@@ -50,8 +50,8 @@
 }
 
 .settings-row-icon svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .settings-row-body {
@@ -80,8 +80,8 @@
 }
 
 .settings-row-chev svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 /* Rows the design names but nothing is built for yet (payments, WhatsApp
@@ -113,8 +113,8 @@
 }
 
 .settings-row-disabled .settings-row-icon svg {
-  width: 12px;
-  height: 12px;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 /**
@@ -187,8 +187,8 @@
 }
 
 .settings-back-link svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
 }
 
 @media (min-width: 861px) {

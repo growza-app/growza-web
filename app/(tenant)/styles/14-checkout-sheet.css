@@ -24,8 +24,8 @@
 }
 
 .checkout-header-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .checkout-header-name {
@@ -48,8 +48,8 @@
 }
 
 .checkout-call-btn svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
 }
 
 .checkout-header-sub {
@@ -80,8 +80,8 @@
 }
 
 .checkout-total-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .checkout-total-label {
@@ -193,8 +193,8 @@
 }
 
 .checkout-icon-btn svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .checkout-icon-btn-danger {
