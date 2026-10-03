@@ -148,7 +148,8 @@ export interface OwnerHomeProps {
   tomorrowAppointments: Appointment[] | null;
   customerStats: CustomerStats | null;
   /** Null when the register could not be read; the card is then left out rather than shown as 0. */
-  staffNotMarkedIn: number | null;
+  /** Jira GRW-477 — the provider ids, so the count follows the header's branch. */
+  staffNotMarkedIn: string[] | null;
   /** Jira GRW-242 — owner only: approve the new AutoPay amount before the billing date. */
   autopayRenewal?: AutopayRenewal | null;
   /** Jira GRW-402 — whether Approve can open a page at all (usable payment keys, online payments on). */
@@ -373,7 +374,9 @@ export function OwnerHome(p: OwnerHomeProps) {
           ? [
               {
                 key: 'attendance',
-                count: p.staffNotMarkedIn,
+                count: branch
+                  ? p.staffNotMarkedIn.filter((id) => p.providers.find((x) => x.id === id)?.locationId === branch).length
+                  : p.staffNotMarkedIn.length,
                 label: t.staffNotMarkedIn,
                 sub: t.attendanceWord,
                 tone: 'blue' as const,

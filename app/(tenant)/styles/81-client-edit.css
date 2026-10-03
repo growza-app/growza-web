@@ -140,3 +140,48 @@
   color: var(--text);
   border-color: #b9c2bb;
 }
+
+/* Jira GRW-477 — the owner's delete: a quiet text button under Save, never beside it, so it is not hit by a
+   thumb reaching for Save. 44px tall for the same thumb (phone-first). */
+.cpc-edit-delete {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #b3261e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cpc-edit-delete:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cpc-deleted {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, #b3261e 8%, transparent);
+  font-size: 13px;
+}
+
+.cpc-deleted button {
+  min-height: 44px;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface, transparent);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}

@@ -10,6 +10,7 @@ import { bookingRef, dialable } from '../components/BookingSheet';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { IconArrowLeft, IconClose, IconPhone, IconSearch } from '../components/icons';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
+import { useBranch } from '../components/BranchProvider';
 
 const EMPTY: SearchResult = { customers: [], bookings: [] };
 
@@ -34,6 +35,9 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
   const [loading, setLoading] = useState(false);
   const [openClientId, setOpenClientId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Jira GRW-477 — the header's branch, like every other screen; on "All" every branch, each row tagged.
+  const b = useBranch();
+  const location = b.multi && !b.pinned ? b.choice : null;
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -52,7 +56,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
     let cancelled = false;
     const timer = setTimeout(() => {
       api
-        .search(term)
+        .search(term, location)
         .then((r) => {
           if (!cancelled) setResults(r);
         })
@@ -68,7 +72,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [q]);
+  }, [q, location]);
 
   const term = q.trim();
   const nothing = term.length >= SEARCH_MIN_CHARS && !loading && results.customers.length === 0 && results.bookings.length === 0;
