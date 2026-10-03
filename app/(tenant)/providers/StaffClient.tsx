@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, ApiError, type ProviderOverviewRow, type ProvidersOverview, type Service } from '../lib/api';
+import { api, reasonOr, type ProviderOverviewRow, type ProvidersOverview, type Service } from '../lib/api';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
@@ -96,20 +96,28 @@ export function StaffClient({
       await api.updateProviderProfile(p.id, { active: true });
       await refresh();
     } catch (e) {
-      setError(e instanceof ApiError && e.status === 403 ? e.message : t('errors.bringBack'));
+      setError(reasonOr(e, t('errors.bringBack')));
     } finally {
       setBusyId(null);
     }
   };
 
+  /*
+   * Jira GRW-478 (U-12) — a refusal is said in the dialog, which stays open: retiring somebody with bookings still
+   * coming up is refused (GRW-472) and the owner needs to read why. It used to close with no word.
+   */
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const doRemove = async (p: ProviderOverviewRow) => {
     setBusyId(p.id);
+    setRemoveError(null);
     try {
       await api.updateProviderProfile(p.id, { active: false });
       await refresh();
+      setConfirmRemove(null);
+    } catch (e) {
+      setRemoveError(reasonOr(e, t('errors.retire')));
     } finally {
       setBusyId(null);
-      setConfirmRemove(null);
     }
   };
 
@@ -132,7 +140,9 @@ export function StaffClient({
     try {
       await api.setProviderAvailabilityToday(p.id, !available);
       await refresh();
-    } catch {
+    } catch (e) {
+      // Jira GRW-478 (U-12) — put the switch back AND say why; it used to snap back with no word.
+      setError(reasonOr(e, t('errors.availability')));
       await refresh();
     } finally {
       setBusyId(null);
@@ -370,8 +380,12 @@ export function StaffClient({
           confirmLabel={t('remove.confirm')}
           tone="danger"
           busy={busyId === confirmRemove.id}
+          error={removeError}
           onConfirm={() => doRemove(confirmRemove)}
-          onCancel={() => setConfirmRemove(null)}
+          onCancel={() => {
+            setConfirmRemove(null);
+            setRemoveError(null);
+          }}
         />
       )}
 

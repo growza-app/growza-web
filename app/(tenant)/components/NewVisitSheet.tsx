@@ -1373,7 +1373,8 @@ export function NewVisitSheet({
        * the time step with the list refreshed is the scripted recovery; leaving
        * them on an error screen would make them start the client over.
        */
-      if (later && error instanceof BookingConflictError) {
+      // Jira GRW-478 — only a lost slot; any other 409 (a client mid-erasure, a repeated request) is a sentence to read.
+      if (later && error instanceof BookingConflictError && error.code === 'slot_taken') {
         setSlotUtc(null);
         setSlots(null);
         setStage({ step: 'when', client });
@@ -1480,7 +1481,8 @@ export function NewVisitSheet({
 
   return (
     <>
-      {!asPage && <div className="sheet-backdrop" onClick={busy ? undefined : onClose} />}
+      {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
+      {!asPage && <div className="sheet-backdrop" onClick={busy || picked.length > 0 || newName.trim() || newPhone.trim() || stage.step !== 'client' ? undefined : onClose} />}
       <div
         className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
         role={asPage ? undefined : 'dialog'}

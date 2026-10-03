@@ -37,15 +37,22 @@ export function initials(name: string | null): string {
  * then "+ N more" — so a 6-service combo reads "Haircut + Facial + De-Tan + 3
  * more" instead of a runaway line. The checkout lists every service in full.
  */
-export function summarizeServices(names: string[]): string {
+export function summarizeServices(names: string[], lang: string = 'en'): string {
   if (names.length <= 3) return names.join(' + ');
-  return `${names.slice(0, 3).join(' + ')} + ${names.length - 3} more`;
+  // Jira GRW-478 (U-3) — in the page's language: "more" stayed English on a Hindi screen.
+  return `${names.slice(0, 3).join(' + ')} + ${names.length - 3} ${lang === 'hi' ? 'और' : 'more'}`;
 }
 
 /** "30 min", "1h", "1h 30m" — a booking's total time in plain words. */
-export function formatDuration(totalMin: number): string {
+export function formatDuration(totalMin: number, lang: string = 'en'): string {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
+  // Jira GRW-478 (U-3) — "1h 30m" stayed English on a Hindi screen.
+  if (lang === 'hi') {
+    if (h === 0) return `${m} मिनट`;
+    if (m === 0) return `${h} घंटे`;
+    return `${h} घं ${m} मि`;
+  }
   if (h === 0) return `${m} min`;
   if (m === 0) return `${h}h`;
   return `${h}h ${m}m`;
@@ -58,10 +65,15 @@ export function tomorrowInTimezone(timezone: string): string {
 }
 
 /** "in 25m", "in 2h 15m", "5m ago" — how far a booking's start time is from now. */
-export function relativeCountdown(startISO: string, now: Date): string {
+export function relativeCountdown(startISO: string, now: Date, lang: string = 'en'): string {
   const diffMin = Math.round((new Date(startISO).getTime() - now.getTime()) / 60000);
-  if (diffMin <= 0) return diffMin === 0 ? 'now' : `${formatDuration(Math.min(-diffMin, 24 * 60))} ago`;
-  return `in ${formatDuration(Math.min(diffMin, 24 * 60))}`;
+  const span = (min: number) => formatDuration(Math.min(min, 24 * 60), lang);
+  if (lang === 'hi') {
+    if (diffMin <= 0) return diffMin === 0 ? 'अभी' : `${span(-diffMin)} पहले`;
+    return `${span(diffMin)} में`;
+  }
+  if (diffMin <= 0) return diffMin === 0 ? 'now' : `${span(-diffMin)} ago`;
+  return `in ${span(diffMin)}`;
 }
 
 /**

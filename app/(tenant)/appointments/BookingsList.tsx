@@ -430,7 +430,7 @@ export function BookingsList({
               mock. Desktop keeps both in the gutter / right column instead. */}
           <div className="bk-card-timerow">
             <span className="bk-card-time">
-              {clock} <span>{meridiem}</span> · {formatDuration(b.totalMin)}
+              {clock} <span>{meridiem}</span> · {formatDuration(b.totalMin, locale)}
             </span>
             <span className={`chip ${chip.cls}`}>{ts(chip.key)}</span>
           </div>
@@ -450,7 +450,7 @@ export function BookingsList({
               <span className="chip chip-combo">🎁 {b.offerTitle}</span>
             </div>
           )}
-          <div className="bk-card-services">{summarizeServices(b.serviceNames)}</div>
+          <div className="bk-card-services">{summarizeServices(b.serviceNames, locale)}</div>
           {b.customerPhone ? (
             <div className="bk-card-phone">
               <IconPhone />
@@ -462,7 +462,7 @@ export function BookingsList({
                 above, so repeating it here would print it twice on a phone. */}
             <span className="bk-card-dur">
               <IconClock />
-              {formatDuration(b.totalMin)}
+              {formatDuration(b.totalMin, locale)}
             </span>
             {b.providerNames.length > 0 && (
               <div className="bk-card-staff">
@@ -810,7 +810,7 @@ export function BookingsList({
                     {clock}
                     <span>{meridiem}</span>
                   </div>
-                  {!multi && <div className="bk-tl-dur">{formatDuration(slot.items[0]!.totalMin)}</div>}
+                  {!multi && <div className="bk-tl-dur">{formatDuration(slot.items[0]!.totalMin, locale)}</div>}
                 </div>
                 <div className="bk-tl-rail">
                   <span className={`bk-tl-dot ${multi ? 'is-multi' : slot.items[0]!.status === 'confirmed' ? 'is-up' : ''}`} />

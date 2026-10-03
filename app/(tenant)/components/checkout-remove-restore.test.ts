@@ -78,6 +78,6 @@ describe('what is saved', () => {
 
   it('the header names what is still on the bill: a combo once, and nothing taken off', () => {
     expect(sheet).toMatch(/l\.kind === 'combo' \? l\.title : l\.leg\.name\)\), \.\.\.addedCombos\.map/);
-    expect(sheet).toMatch(/summarizeServices\(billNames\)/);
+    expect(sheet).toMatch(/summarizeServices\(billNames, locale\)/);
   });
 });

@@ -301,7 +301,8 @@ describe('the Overview tab', () => {
 
   it('and in Hindi', () => {
     const page = html('hi');
-    expect(page).toContain('aria-label="लौटकर आए, 1 Sep – 2 Sep"');
+    // Jira GRW-478 (U-3) — the dates too, not only the words.
+    expect(page).toContain('aria-label="लौटकर आए, 1 सित॰ – 2 सित॰"');
     expect(page).toContain('>0–30 दिन<');
     for (const s of ['Came back', '0–30 days']) expect(page, s).not.toContain(s);
   });

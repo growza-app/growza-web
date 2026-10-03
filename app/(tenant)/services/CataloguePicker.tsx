@@ -68,7 +68,6 @@ export function CataloguePicker({
   const [editing, setEditing] = useState<EditTarget | null>(null);
   const [rows, setRows] = useState<EditRow[]>([]);
   const [search, setSearch] = useState('');
-  const [useRegex, setUseRegex] = useState(false);
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
   // Monotonic, because `rows.length` is not: add, remove, add would hand the
   // second new row the key the first one already had, and React would reuse the
@@ -223,7 +222,8 @@ export function CataloguePicker({
     />
   ) : null;
 
-  const matcher = useMemo(() => buildMatcher(search, useRegex), [search, useRegex]);
+  // Jira GRW-478 (U-10) — plain words only: the ".*" pattern switch is gone, an owner is not asked for a regex.
+  const matcher = useMemo(() => buildMatcher(search, false), [search]);
   // Display only. `rows` stays whole: filtering must never quietly drop a service
   // from what Save writes back, nor hide a row that is blocking the save.
   const visibleRows = rows.filter((r) => matcher.test(r));
@@ -313,18 +313,9 @@ export function CataloguePicker({
                   type="search"
                   value={search}
                   aria-label={t('searchAria')}
-                  placeholder={useRegex ? t('searchPlaceholderRegex') : t('searchPlaceholder')}
+                  placeholder={t('searchPlaceholder')}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-                <button
-                  type="button"
-                  className={`cat-regex-toggle ${useRegex ? 'is-on' : ''}`}
-                  aria-pressed={useRegex}
-                  title={t('regexTitle')}
-                  onClick={() => setUseRegex((v) => !v)}
-                >
-                  .*
-                </button>
                 <span className="muted cat-search-count">
                   {matcher.error ? (
                     <span className="import-issue">{tp(`patternErrors.${matcher.error}`)}</span>

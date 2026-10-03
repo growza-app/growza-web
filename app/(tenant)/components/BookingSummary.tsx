@@ -69,7 +69,7 @@ export function BookingSummary({
               </a>
             </div>
             <div className="summary-sub">
-              {t('finished')} · {dateLine} · {formatTime(booking.startAt, timezone)} · {formatDuration(booking.totalMin)}
+              {t('finished')} · {dateLine} · {formatTime(booking.startAt, timezone)} · {formatDuration(booking.totalMin, locale)}
             </div>
             {booking.offerTitle && (
               <div className="summary-combo">

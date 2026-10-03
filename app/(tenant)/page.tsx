@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { rootTitle } from './lib/page-title';
 import { DateTime } from 'luxon';
 import { api, type Appointment, type AttendanceRegister, type CustomerStats, type HomeOverview, type Me, type ProviderDay } from './lib/api';
@@ -76,7 +77,7 @@ export default async function DashboardPage() {
   const common = {
     lang,
     labels: me.labels,
-    businessName: me.tenant?.name ?? 'Your business',
+    businessName: me.tenant?.name ?? (await getTranslations('chrome'))('yourBusiness'),
     timezone,
     nowISO: now.toISOString(),
     dateLabel: dateLabel(lang, timezone, now),

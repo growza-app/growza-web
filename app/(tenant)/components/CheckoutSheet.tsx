@@ -263,6 +263,7 @@ export function CheckoutSheet({
    */
   onSaved?: () => void;
 }) {
+  const locale = useLocale();
   const router = useRouter();
   const t = useTranslations('checkout');
   const tc = useTranslations('chrome');
@@ -388,7 +389,7 @@ export function CheckoutSheet({
             </div>
             <div className="checkout-header-sub">
               {billNames.length > 1
-                ? `${summarizeServices(billNames)} · ${formatTime(appointment.startAt, timezone)}`
+                ? `${summarizeServices(billNames, locale)} · ${formatTime(appointment.startAt, timezone)}`
                 : `${billNames[0] ?? 'No service left'}${kept[0]?.kind === 'leg' && providerName(kept[0].leg.providerId) ? ` · ${providerName(kept[0].leg.providerId)}` : ''} · ${formatTime(appointment.startAt, timezone)}`}
             </div>
           </div>

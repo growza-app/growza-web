@@ -158,6 +158,13 @@ export function ServiceForm({
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; price?: string }>({});
   // Escape does nothing while a save is in flight, the same rule the other sheets follow.
   useDialog(sheetRef, { onClose: busy ? undefined : onClose });
+  const changed =
+    name !== (service?.name ?? '') ||
+    categoryId !== (service?.categoryId ?? '') ||
+    durationMin !== (service?.durationMin ?? 30) ||
+    cleanupMin !== (service?.bufferAfterMin ?? 0) ||
+    price !== fromMinor(service?.priceMinor ?? null) ||
+    photo !== null;
 
   const original: SheetValues = {
     name: service?.name ?? '',
@@ -240,7 +247,8 @@ export function ServiceForm({
   const minutes = (count: number) => durationPhrase(count, words);
 
   return (
-    <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
+    // Jira GRW-478 (U-4) — a stray tap beside a changed form does not throw the changes away; Cancel does.
+    <div className="modal-backdrop" onClick={busy || changed ? undefined : onClose}>
       {/*
         Jira GRW-446 — a dialog that behaves like every other one in the product: Escape closes it, Tab stays
         inside it, and focus comes back where it left. This was the screen's main editor and the one modal that

@@ -15,6 +15,18 @@
  * run the test.
  */
 export const API_MESSAGES_HI: Record<string, string> = {
+  // ---- Jira GRW-478 (U-3) — sentences added by the GRW-463 fixes
+  'A name must be text, 80 characters or fewer': 'नाम 80 अक्षरों तक का टेक्स्ट होना चाहिए',
+  'A note must be text, 500 characters or fewer': 'नोट 500 अक्षरों तक का टेक्स्ट होना चाहिए',
+  'Choose one of your current stylists.': 'अपने मौजूदा स्टाइलिस्ट में से किसी को चुनें।',
+  'Nobody who does this is free at that time. Pick another.': 'उस समय यह काम करने वाला कोई खाली नहीं है। कोई दूसरा समय चुनें।',
+  'That day has already gone. Pick today or a later day.': 'वह दिन बीत चुका है। आज या आगे का कोई दिन चुनें।',
+  'That time was just taken. Pick another.': 'वह समय अभी-अभी भर गया। कोई दूसरा चुनें।',
+  'The owner cannot be removed from their own business.': 'मालिक को उनके अपने बिज़नेस से हटाया नहीं जा सकता।',
+  'You cannot remove yourself. Ask the owner.': 'आप ख़ुद को नहीं हटा सकते। मालिक से कहें।',
+  'This number is not part of a business any more. Ask the owner to invite you again.': 'यह नंबर अब किसी बिज़नेस से जुड़ा नहीं है। मालिक से फिर से न्योता भेजने को कहें।',
+  'One of the dates in this request is not a real day.': 'इस अनुरोध की एक तारीख़ असली दिन नहीं है।',
+  'The page size or position in this request is not valid.': 'इस अनुरोध में पेज का आकार या जगह सही नहीं है।',
   // ---- sign-in and passwords
   'Phone number or password is incorrect.': 'फ़ोन नंबर या पासवर्ड ग़लत है।',
   'Phone number and password are required.': 'फ़ोन नंबर और पासवर्ड ज़रूरी हैं।',
@@ -98,4 +110,19 @@ export const API_MESSAGES_HI: Record<string, string> = {
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */
 export function localiseApiMessage(message: string, lang: string): string {
   return lang === 'hi' ? (API_MESSAGES_HI[message] ?? message) : message;
+}
+
+/**
+ * Jira GRW-478 — the guard's bare refusals, which carry a code and no sentence (BR-03: it does not say why a token
+ * failed). A screen showed the code itself — "forbidden", "unauthorized". These are the dashboard's own words for
+ * them, not server sentences, so they live apart from `API_MESSAGES_HI` and its "key must exist in src/" guard.
+ */
+const BARE_REFUSALS: Record<string, { en: string; hi: string }> = {
+  forbidden: { en: 'You do not have access to this.', hi: 'आपको इसकी अनुमति नहीं है।' },
+  unauthorized: { en: 'You have been signed out. Please sign in again.', hi: 'आप साइन आउट हो गए हैं। कृपया फिर से साइन इन करें।' },
+};
+
+export function bareRefusalMessage(code: string, lang: string): string | null {
+  const words = BARE_REFUSALS[code];
+  return words ? (lang === 'hi' ? words.hi : words.en) : null;
 }

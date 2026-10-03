@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import {
   api,
   formatTime,
+  reasonOr,
   type Appointment,
   type AvailabilityResponse,
   type Provider,
@@ -239,7 +240,8 @@ export function MoveBookingSheet({
       router.refresh();
       onMoved();
     } catch (e) {
-      setError(e instanceof Error && e.message ? e.message : mv.failed);
+      // Jira GRW-478 — `instanceof Error` let a dropped connection's "Failed to fetch" through as if the server said it.
+      setError(reasonOr(e, mv.failed));
       setBusy(false);
     }
   };

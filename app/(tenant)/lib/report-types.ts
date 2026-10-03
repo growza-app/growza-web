@@ -83,6 +83,8 @@ export interface ReportHeatmap {
   days: string[];
   /** Jira GRW-363 — each row's weekday, 0 = Sunday. Absent from an API older than this. */
   dayNumbers?: number[];
+  /** Jira GRW-478 — each column's hour, 0–23, so the screen can name it in the owner's language. */
+  hourNumbers?: number[];
   hours: string[];
   grid: number[][];
   basis: 'booked_minutes' | 'booking_count';

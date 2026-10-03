@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { DateTime } from 'luxon';
 import {
   api,
-  ApiError,
+  reasonOr,
   type ProviderDay,
   type ProviderDetail,
   type ProviderStats,
@@ -237,8 +237,9 @@ export function StaffEditClient({
       resetFrom(await api.providerDetail(detail.id));
       setSaved(true);
       router.refresh();
-    } catch {
-      setError(t('errors.saveFailed'));
+    } catch (e) {
+      // Jira GRW-478 — the server's reason (a branch move refused, a clash of hours), not "save failed".
+      setError(reasonOr(e, t('errors.saveFailed')));
     } finally {
       setBusy(false);
     }
@@ -280,7 +281,7 @@ export function StaffEditClient({
        * fixed on the Add-staff panel — it sends an owner who has run out of
        * seats to go and look at their server.
        */
-      setError(e instanceof ApiError && e.status === 403 ? e.message : t('errors.saveFailed'));
+      setError(reasonOr(e, t('errors.saveFailed')));
     } finally {
       setBusy(false);
       setConfirmRemove(false);
