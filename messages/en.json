@@ -1716,7 +1716,16 @@
       "cancelRate": "Calls off",
       "since": "Client since",
       "nextVisit": "Due back"
-    }
+    },
+    "delete": "Delete client",
+    "deleteTitle": "Delete this client?",
+    "deleteBody": "They leave your client list now. You can undo this for {days} days; after that their name and number are erased for good.",
+    "deleteConfirm": "Delete",
+    "deleting": "Deleting…",
+    "deleted": "Client deleted. You can undo this for {days} days.",
+    "undo": "Undo",
+    "undoing": "Bringing back…",
+    "actionFailed": "That did not work. Try again."
   },
   "reports": {
     "title": "Reports",

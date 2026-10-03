@@ -6,6 +6,7 @@ import { DateTime } from 'luxon';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
 import { IconBell, IconCalendarPlus, IconClose, IconMoveTime, IconReceipt } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useBranch } from './BranchProvider';
 
 const POLL_MS = 15_000;
 const TOAST_MS = 6_000;
@@ -100,14 +101,30 @@ function billingLine(billing: NonNullable<ActivityEvent['billing']>, t: FeedT, l
   };
 }
 
-export function eventLine(e: ActivityEvent, timezone: string, t: FeedT, locale: string): { title: string; subtitle: string } {
+/**
+ * Jira GRW-477 — the feed follows the header's branch, like every other screen. On "All branches" each row says
+ * where it happened; a pinned receptionist's feed is their branch already, server-side.
+ */
+export function useFeedBranch(): { location: string | null; showBranch: boolean } {
+  const b = useBranch();
+  const free = b.multi && !b.pinned;
+  return { location: free ? b.choice : null, showBranch: free && !b.choice };
+}
+
+export function eventLine(
+  e: ActivityEvent,
+  timezone: string,
+  t: FeedT,
+  locale: string,
+  showBranch = false,
+): { title: string; subtitle: string } {
   if (e.topic === 'billing.change_pending' && e.billing) return billingLine(e.billing, t, locale);
   const services = (e.serviceNames ?? []).join(' + ');
   const local = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('ccc, h:mm a') : '';
   const customer = e.customerName ?? t('customer');
   return {
     title: t('title', { topic: t(`topics.${TOPIC_META[e.topic].key}`), services }),
-    subtitle: local ? `${customer} · ${local}` : customer,
+    subtitle: [customer, local, showBranch ? e.branchName : null].filter(Boolean).join(' · '),
   };
 }
 
@@ -142,6 +159,7 @@ export function NotificationBell() {
   const [clearedBeforeId, setClearedBeforeId] = useState(0);
   const [toastEvent, setToastEvent] = useState<ActivityEvent | null>(null);
   const [timezone, setTimezone] = useState('Asia/Kolkata');
+  const feed = useFeedBranch();
   // On mobile the dropdown is viewport-centered (position: fixed), so it can't
   // just inherit "top" from where the bell happens to sit in the header the
   // way the desktop absolute-positioned version does — header height varies
@@ -165,13 +183,15 @@ export function NotificationBell() {
   }, []);
 
   useEffect(() => {
+    // A branch switch is a different feed, not new arrivals: no toast for what was already there.
+    hasLoadedOnce.current = false;
     const load = async () => {
       if (document.visibilityState !== 'visible') return;
       // Jira GRW-310 — not while it is not on screen. On a phone the bell is hidden (the
       // Notifications tab is the way in), and so is its toast; polling for an unseen
       // bell is a request every 15 seconds that nothing can show.
       if (wrapRef.current && getComputedStyle(wrapRef.current).display === 'none') return;
-      const rows = await api.notifications(20).catch(() => null);
+      const rows = await api.notifications(20, feed.location).catch(() => null);
       if (!rows) return;
 
       const newestId = rows.length > 0 ? Number(rows[0]!.id) : 0;
@@ -193,7 +213,7 @@ export function NotificationBell() {
       document.removeEventListener('visibilitychange', load);
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
-  }, []);
+  }, [feed.location]);
 
   const visibleEvents = events.filter((e) => Number(e.id) > clearedBeforeId);
   const unreadCount = countUnread(events, lastSeenId, clearedBeforeId);
@@ -275,7 +295,7 @@ export function NotificationBell() {
                 {visibleEvents.map((e) => {
                   const meta = TOPIC_META[e.topic];
                   const Icon = meta.icon;
-                  const line = eventLine(e, timezone, tf, locale);
+                  const line = eventLine(e, timezone, tf, locale, feed.showBranch);
                   const unread = Number(e.id) > lastSeenId;
                   return (
                     <div key={e.id} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>

@@ -91,7 +91,6 @@ import type {
   ProviderStats,
   ProviderWorkingHourRow,
   ProvidersOverview,
-  RangeSummary,
   SearchResult,
   SeedCatalog,
   Service,
@@ -102,7 +101,6 @@ import type {
   ServiceInput,
   SettingsSummary,
   SortDirection,
-  TodayStats,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -251,7 +249,7 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
  * Under /reports/, never /analytics/ — these are fetched from the browser on
  * every tab and range change, and that path segment is a common ad-blocker
  * pattern. A blocked first-party request looks exactly like a network
- * failure client-side. Same reasoning as rangeSummary.
+ * failure client-side.
  */
 function reportGet<T>(
   tab: string,
@@ -461,7 +459,6 @@ export const api = {
     const qs = params.toString();
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
-  todayStats: () => get<TodayStats>('/api/v1/analytics/today'),
   /** Jira GRW-222 — the owner's Home. `location` null or absent means the whole business. */
   home: (period: HomePeriod = 'today', location?: string | null) =>
     get<HomeOverview>(`/api/v1/home?period=${period}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
@@ -486,7 +483,7 @@ export const api = {
   /**
    * Reports. Under /reports/, never /analytics/ — this is fetched from the
    * browser on every tab and range change, and that path segment is a common
-   * ad-blocker pattern, same reasoning as rangeSummary below.
+   * ad-blocker pattern.
    */
   reportsOverview: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportOverview>('overview', r, c, f, t, undefined, b),
   // Jira GRW-393 — the drawer offers the report's own branch.
@@ -499,11 +496,9 @@ export const api = {
   reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportCustomers>('customers', r, c, f, t, undefined, b),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),
-  // Not /analytics/range — that path segment gets silently blocked by
-  // browser ad/tracker blockers (this is fetched client-side, unlike
-  // todayStats which runs server-side during SSR and never hits that filter).
-  rangeSummary: (range: 'week' | 'month') => get<RangeSummary>(`/api/v1/summary/range?range=${range}`),
-  notifications: (limit = 20) => get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}`),
+  /** Jira GRW-477 — `location` is the header's branch; absent means the whole business (a pinned role's own, server-side). */
+  notifications: (limit = 20, location?: string | null) =>
+    get<ActivityEvent[]>(`/api/v1/notifications?limit=${limit}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
   /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. A timeout in the browser, so a stalled request cannot hold the poll shut. */
   liveVersion: (timeoutMs?: number) =>
     get<{ version: string }>('/api/v1/live-version', timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined).then((r) => r.version),
@@ -582,6 +577,9 @@ export const api = {
    */
   updateCustomer: (id: string, body: { name?: string | null; phone?: string | null }) =>
     patch<{ id: string; name: string | null; waPhone: string | null }>(`/api/v1/customers/${id}`, body),
+  /** Jira GRW-477 — the owner's delete, undoable for the grace period (`graceDays`), then the worker erases it. */
+  deleteCustomer: (id: string) => del<{ status: 'erasure_requested'; graceDays: number }>(`/api/v1/customers/${id}`),
+  restoreCustomer: (id: string) => post<{ status: 'restored' }>(`/api/v1/customers/${id}/restore`, {}),
   /** Jira GRW-378 — one branch's catalogue; the Services screen always names the branch it shows. */
   allServices: (location: string) => get<ServiceAdmin[]>(`/api/v1/services/all?location=${encodeURIComponent(location)}`),
   serviceCategories: (location?: string | null) =>
@@ -765,7 +763,9 @@ export const api = {
       overlapping: boolean;
       remindersScheduled: number;
     }>(`/api/v1/appointments/${appointmentId}/reschedule`, args),
-  search: (q: string) => get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}`),
+  /** Jira GRW-477 — `location` is the header's branch; absent searches every branch. */
+  search: (q: string, location?: string | null) =>
+    get<SearchResult>(`/api/v1/search?q=${encodeURIComponent(q)}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
   // Jira GRW-395 — one branch's combos (and the announcements); none is every branch.
   offers: (location?: string | null) => get<Offer[]>(`/api/v1/offers/all${atBranch(location)}`),
   offer: (id: string) => get<Offer>(`/api/v1/offers/${id}`),

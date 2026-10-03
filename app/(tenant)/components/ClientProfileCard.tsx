@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { api, formatMoney, type ClientProfile, type ClientProfileRow } from '../lib/api';
+import { api, ApiError, formatMoney, type ClientProfile, type ClientProfileRow } from '../lib/api';
+import { ConfirmDialog } from './ConfirmDialog';
 import { useClientCardCopy } from '../lib/use-copy';
 import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone } from './icons';
@@ -37,8 +38,8 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
    * and this is not a send. It is the identity, which somebody at a counter
    * gets wrong daily and could not correct anywhere in the product until now.
    *
-   * The receptionist may correct and may not delete (the owner's rule), and
-   * there is no delete here.
+   * The receptionist may correct and may not delete (the owner's rule); the
+   * delete below is drawn only for a role the API serves it to (GRW-477).
    *
    * Jira GRW-409 — this said "no role gate: a stylist cannot reach the Clients
    * screen and never sees this card". The card is also opened from Reports,
@@ -51,6 +52,16 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
   const [draftPhone, setDraftPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  /*
+   * Jira GRW-477 — the owner's delete, which the API had and no screen offered, with its undo. The grace period
+   * is the server's (`graceDays` in the answer); the undo is here while the card is open, as the moment somebody
+   * notices a wrong tap is the moment right after it.
+   */
+  const mayDelete = useMayUse('client.delete');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletedFor, setDeletedFor] = useState<number | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const c = useClientCardCopy();
   const router = useRouter();
@@ -63,6 +74,8 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
     // half-typed correction.
     setEditing(false);
     setSaveError(null);
+    setDeletedFor(null);
+    setConfirmDelete(false);
     api
       .clientProfile(clientId)
       .then((p) => live && setProfile(p))
@@ -118,13 +131,50 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
     setEditing(true);
   };
 
+  const remove = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const done = await api.deleteCustomer(clientId);
+      setConfirmDelete(false);
+      setDeletedFor(done.graceDays);
+      router.refresh();
+    } catch (err) {
+      // Refused for a reason the owner can act on (a booking still coming up, GRW-472) — said where they are looking.
+      setDeleteError(err instanceof ApiError ? err.message : c.actionFailed);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const undo = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.restoreCustomer(clientId);
+      setDeletedFor(null);
+      router.refresh();
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : c.actionFailed);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     setSaveError(null);
     try {
+      /*
+       * Jira GRW-477 — the number goes only when it was changed. A person who cannot see it (or saw it masked)
+       * and fixed a spelling sent back what the field held, and that blank or masked value replaced the client's
+       * real number.
+       */
+      const phoneAsShown = (profile?.phone ?? '').replace(/^\+91/, '');
+      const phoneChanged = draftPhone.trim() !== phoneAsShown.trim();
       const updated = await api.updateCustomer(clientId, {
         name: draftName.trim() || null,
-        phone: draftPhone.trim() || null,
+        ...(phoneChanged ? { phone: draftPhone.trim() || null } : {}),
       });
       /*
        * Patched in place rather than refetched. The figures below — spend,
@@ -214,6 +264,19 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
                         {c.cancel}
                       </button>
                     </div>
+                    {mayDelete && (
+                      <button
+                        type="button"
+                        className="cpc-edit-delete"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setConfirmDelete(true);
+                        }}
+                        disabled={saving}
+                      >
+                        {c.delete}
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div style={{ minWidth: 0 }}>
@@ -227,6 +290,15 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
                   </button>
                 )}
               </div>
+              {deletedFor !== null && (
+                <div className="cpc-deleted" role="status">
+                  <span>{c.deleted(deletedFor)}</span>
+                  <button type="button" onClick={undo} disabled={deleting}>
+                    {deleting ? c.undoing : c.undo}
+                  </button>
+                  {deleteError && <p className="cpc-edit-error">{deleteError}</p>}
+                </div>
+              )}
               <div className="cpc-summary">
                 <div>
                   <span>{c.totalSpent}</span>
@@ -291,6 +363,18 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
           </a>
         </footer>
       </div>
+      {confirmDelete && (
+        <ConfirmDialog
+          title={c.deleteTitle}
+          body={c.deleteBody(7)}
+          confirmLabel={deleting ? c.deleting : c.deleteConfirm}
+          tone="danger"
+          busy={deleting}
+          error={deleteError}
+          onConfirm={remove}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
     </>
   );
 }

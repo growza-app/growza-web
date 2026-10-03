@@ -202,5 +202,14 @@ export function useClientCardCopy() {
     close: t('close'),
     loadFailed: t('loadFailed'),
     noPhone: t('noPhone'),
+    delete: t('delete'),
+    deleteTitle: t('deleteTitle'),
+    deleteBody: (days: number) => t('deleteBody', { days }),
+    deleteConfirm: t('deleteConfirm'),
+    deleting: t('deleting'),
+    deleted: (days: number) => t('deleted', { days }),
+    undo: t('undo'),
+    undoing: t('undoing'),
+    actionFailed: t('actionFailed'),
   }), [t, tn, locale]);
 }
