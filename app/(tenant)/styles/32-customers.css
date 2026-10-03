@@ -2495,3 +2495,11 @@
   background: var(--slate-soft);
   color: #5b6660;
 }
+
+/* Was 📅 before the last-visit line (CustomersClient). An inline SVG, sized to the 13px beside it. */
+.cl-card .muted svg,
+.customers-list .muted svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  vertical-align: -2px;
+}

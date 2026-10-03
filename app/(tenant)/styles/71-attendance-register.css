@@ -1234,3 +1234,15 @@
     font-size: 16px;
   }
 }
+
+/* Was 🗒 / ＋ on the note toggle. */
+.att-note-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.att-note-toggle svg {
+  width: 1.0625rem;
+  height: 1.0625rem;
+}

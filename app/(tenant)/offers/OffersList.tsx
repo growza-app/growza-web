@@ -10,7 +10,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
 import { Pagination } from '../components/Pagination';
-import { IconFilter, IconSearch } from '../components/icons';
+import { IconCalendar, IconFilter, IconOffers, IconSearch } from '../components/icons';
 import { weekdayNames } from '../lib/weekday-names';
 import { useBranch } from '../components/BranchProvider';
 
@@ -253,7 +253,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                   onDoubleClick={() => router.push(`/offers/${offer.id}/edit`)}
                 >
                   <div className="offer-row-head">
-                    <div className="offer-icon offer-icon-offer">🏷️</div>
+                    <div className="offer-icon offer-icon-offer"><IconOffers /></div>
 
                     <div className="offer-main">
                       <div className="offer-title-row">
@@ -267,7 +267,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
 
                   <div className="offer-row-foot">
                     <div className="offer-info-col">
-                      <div className="offer-info-item">📅 {visibilitySummary(offer, t, locale)}</div>
+                      <div className="offer-info-item"><IconCalendar /> {visibilitySummary(offer, t, locale)}</div>
                     </div>
 
                     {/* A sibling of the stats rather than inside them: on desktop

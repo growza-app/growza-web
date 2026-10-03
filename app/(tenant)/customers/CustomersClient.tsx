@@ -29,6 +29,7 @@ import {
   IconStaff,
   IconUserPlus,
   IconWhatsApp,
+  IconCalendar,
 } from '../components/icons';
 import { useTranslations, useLocale } from 'next-intl';
 import { copy } from '../lib/copy';
@@ -523,7 +524,7 @@ export function CustomersClient({
                       )}
                       {c.lastBookingAt && (
                         <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                          📅 {formatDate(c.lastBookingAt, undefined, locale)} · {c.lastServiceName}
+                          <IconCalendar /> {formatDate(c.lastBookingAt, undefined, locale)} · {c.lastServiceName}
                         </div>
                       )}
                     </div>

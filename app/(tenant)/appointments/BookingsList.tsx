@@ -18,6 +18,7 @@ import {
   IconClock,
   IconFilter,
   IconMenu,
+  IconPackages,
   IconPhone,
   IconSearch,
   IconSort,
@@ -459,7 +460,7 @@ export function BookingsList({
           </div>
           {b.offerTitle && (
             <div className="bk-card-combo">
-              <span className="chip chip-combo">🎁 {b.offerTitle}</span>
+              <span className="chip chip-combo"><IconPackages /> {b.offerTitle}</span>
             </div>
           )}
           <div className="bk-card-services">{summarizeServices(b.serviceNames, locale)}</div>
