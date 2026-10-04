@@ -12,8 +12,6 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useBranch } from '../components/BranchProvider';
 import {
   IconCalendar,
-  IconArrowLeft,
-  IconArrowRight,
   IconCheck,
   IconChevronDown,
   IconClock,
@@ -124,7 +122,6 @@ export function BookingsList({
   timezone,
   noun,
   nowISO,
-  todayISO,
   isToday,
   dayLabel,
   date,
@@ -152,8 +149,6 @@ export function BookingsList({
   noun: string;
   /** Server clock, so the first client render matches SSR before the tick starts. */
   nowISO: string;
-  /** Today in the salon's own timezone, as the day stepper's "back to today". */
-  todayISO: string;
   /** Whether the selected day (the filter's date field) is today. */
   isToday: boolean;
   /** Short label for the selected day, e.g. "21 Aug" — used everywhere the page said "Today" when it's actually showing a different day. */
@@ -279,17 +274,11 @@ export function BookingsList({
    * How many filters are actually narrowing the list — the number on the funnel, so a filter can
    * never be on with the panel shut and nothing to say so.
    *
-   * Not the search, and not a single day: both have their own control in view now, and counting
-   * what is already on screen reports it twice. A RANGE is different — the stepper cannot show
-   * "1 Oct – 4 Oct", so the only thing saying a multi-day range is on is this count.
+   * Not the search and not the dates: all three have their own control in view, and counting what
+   * is already on screen reports it twice. The funnel counts only what the funnel hides.
    */
-  const isRange = toDate !== '' && toDate !== date;
   const filterCount =
-    (staffFilter !== 'Everyone' ? 1 : 0) +
-    (statusFilter ? 1 : 0) +
-    (unmarkedOnly ? 1 : 0) +
-    (sort !== 'asc' ? 1 : 0) +
-    (isRange ? 1 : 0);
+    (staffFilter !== 'Everyone' ? 1 : 0) + (statusFilter ? 1 : 0) + (unmarkedOnly ? 1 : 0) + (sort !== 'asc' ? 1 : 0);
   // Jira GRW-312 — a branch narrows the day itself, before the tiles are counted, so what Home
   // counted for that branch is what these tiles and this list show.
   const bookings = groupBookings(branch ? appointments.filter((a) => a.locationId === branch.id) : appointments);
@@ -367,29 +356,6 @@ export function BookingsList({
    * A tile's status in the words the owner reads, or null for a status no tile offers (the Status
    * dropdown's own values) — the line below the tiles is about the tiles, so it stays quiet then.
    */
-  /**
-   * The day stepper's links. `null` means today. Only the dates move: everything else on the URL
-   * is carried, so stepping a day never quietly drops a branch or a client's history.
-   */
-  const dayHref = (step: number | null): string => {
-    /* `date` is already the salon's own calendar day as YYYY-MM-DD, so a day either side is UTC
-       arithmetic on that string — no zone conversion, which would be the bug this avoids. */
-    const shiftISO = (iso: string, by: number) =>
-      new Date(`${iso}T00:00:00Z`).valueOf() + by * 86_400_000 > 0
-        ? new Date(new Date(`${iso}T00:00:00Z`).valueOf() + by * 86_400_000).toISOString().slice(0, 10)
-        : iso;
-    const base = step === null ? todayISO : shiftISO(date, step);
-    const params = new URLSearchParams();
-    if (base !== todayISO) {
-      params.set('date', base);
-      params.set('to', base);
-    }
-    if (customerId) params.set('customerId', customerId);
-    if (branch) params.set('location', branch.id);
-    const q = params.toString();
-    return q ? `?${q}` : '/appointments';
-  };
-
   const statusWord = (status: string): string | null =>
     status === 'confirmed' ? ts('confirmed') : status === 'completed' ? ts('done') : status === 'no_show' ? ts('didNotCome') : null;
   const statusTile = (status: string) => ({
@@ -741,7 +707,7 @@ export function BookingsList({
             </div>
           </div>
 
-          <div className="bk-field">
+          <div className="bk-field bk-field-date">
             <label htmlFor="date">{t('from')}</label>
             <input
               id="date"
@@ -753,7 +719,7 @@ export function BookingsList({
             />
             <span className="field-hint">{dayHint}</span>
           </div>
-          <div className="bk-field">
+          <div className="bk-field bk-field-date">
             <label htmlFor="to">{t('to')}</label>
             <input
               id="to"
@@ -879,38 +845,13 @@ export function BookingsList({
       */}
 
       {/*
-        Which day you are looking at is navigation, not a filter (owner, 2026-10-04).
+        The date is From/To, in view (owner, 2026-10-04).
 
-        It was a From/To pair inside the folded panel, which put the screen's own subject behind a
-        button labelled Filters. A stepper here instead, the same shape Attendance has had since
-        GRW-200, so the two screens are worked the same way. Links rather than buttons, because it
-        IS a navigation: the server reads `date`, so back works and a day can be bookmarked.
-        The range form stays in the panel for anyone who wants more than one day.
+        This was a day stepper for an afternoon — ‹ Today › — which is the right control when you
+        walk a day at a time, and the wrong one when you want "the first week of October". The two
+        fields are what the owner asked for and they are no longer folded away: they sit under the
+        search row, and only staff, status and order wait behind the funnel.
       */}
-      <div className="bk-daynav mobile-only">
-        {/*
-          No arrows on a range. "The day before" and "the day after" have no meaning across
-          1 Oct – 4 Oct, and stepping from one end of it would have thrown the range away without
-          saying so — a control that silently undoes what you set. The range is changed where it
-          was set, in the funnel; Today is the way back to a single day.
-        */}
-        {!isRange && (
-          <a className="bk-daynav-step" href={dayHref(-1)} aria-label={t('prevDay')}>
-            <IconArrowLeft />
-          </a>
-        )}
-        <span className="bk-daynav-label">{isToday ? t('today') : dayLabel}</span>
-        {!isRange && (
-          <a className="bk-daynav-step" href={dayHref(1)} aria-label={t('nextDay')}>
-            <IconArrowRight />
-          </a>
-        )}
-        {!isToday && (
-          <a className="bk-daynav-today" href={dayHref(null)}>
-            {t('today')}
-          </a>
-        )}
-      </div>
 
       <div className="bk-sched-head">
         <h2>
