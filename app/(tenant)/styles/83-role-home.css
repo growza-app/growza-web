@@ -632,6 +632,58 @@
 .hm-pay-menu .hm-pay-list .hm-pay-item:last-child {
   border-bottom: 0;
 }
+/*
+ * Jira GRW-485 — every branch's takings, opened from the branch line's "+N".
+ *
+ * Sized to its content and never scrolled: a popover that scrolls is a list that
+ * should have been a page, and a business has a handful of branches, not a feed.
+ * Each row is a 44px target because each row is also the way into that branch.
+ */
+.hm-branch-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hm-branch-list button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hm-branch-list li + li button {
+  border-top: 1px solid var(--hm-line);
+}
+.hm-branch-list i {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+/* The name gives way, never the amount — the amount is what the row is for. */
+.hm-branch-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-branch-list b {
+  flex: none;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.hm-branch-menu {
+  padding-bottom: 10px;
+}
+
 .hm-pay-menu .hm-empty {
   margin: 4px 0 10px;
   color: var(--hm-muted);

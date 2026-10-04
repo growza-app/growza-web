@@ -172,8 +172,15 @@ describe('the header picker', () => {
     for (const route of ['/', '/appointments', '/attendance', '/providers']) expect(branchInAddress(route)).toBe(false);
   });
 
-  it('can be opened from elsewhere on the screen (the money card\u2019s "+2")', () => {
-    expect(src('home/OwnerHome.tsx')).toMatch(/onMoreBranches=\{\(\) => branchContext\.setPickerOpen\(true\)\}/);
+  it('is the header\u2019s own, and a branch name on the money card still picks through it', () => {
+    /*
+     * Jira GRW-485 \u2014 the card's "+N" used to open this picker, which answered a question
+     * nobody asked: an owner tapping "+3" on a money line wants the other three numbers,
+     * not another screen. It opens the card's own list of branch takings now, and a row in
+     * THAT is what switches branch. The picker keeps its state and its other callers.
+     */
+    expect(src('home/OwnerHome.tsx')).not.toMatch(/onMoreBranches/);
+    expect(src('home/OwnerHome.tsx')).toMatch(/onPickBranch=\{pickBranch\}/);
     expect(src('BranchProvider.tsx')).toMatch(/const \[pickerOpen, setPickerOpen\] = useState\(false\);/);
   });
 });
