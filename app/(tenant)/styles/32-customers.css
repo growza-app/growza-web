@@ -2496,10 +2496,27 @@
   color: #5b6660;
 }
 
-/* Was 📅 before the last-visit line (CustomersClient). An inline SVG, sized to the 13px beside it. */
-.cl-card .muted svg,
-.customers-list .muted svg {
+/*
+ * Was 📅 before the last-visit line (CustomersClient).
+ *
+ * The icons in this app carry no width or height of their own — `base` in icons.tsx sets only a
+ * viewBox — so an inline SVG with no rule matching it stretches to fill its parent. The first
+ * version of this rule named `.cl-card .muted svg`, an ancestor that does not exist here, and ten
+ * calendars rendered at 282x282 down the list. The icon has its own element now, so the rule
+ * cannot miss it again.
+ */
+.cl-last-visit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cl-last-visit-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.cl-last-visit-icon svg {
   width: 0.9375rem;
   height: 0.9375rem;
-  vertical-align: -2px;
 }
