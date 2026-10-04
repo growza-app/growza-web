@@ -18,6 +18,7 @@ import {
   IconClock,
   IconFilter,
   IconMenu,
+  IconPackages,
   IconPhone,
   IconSearch,
   IconSort,
@@ -49,6 +50,13 @@ function staffHue(name: string): number {
 }
 const railColorFor = (name: string) => `oklch(0.56 0.13 ${staffHue(name)})`;
 const staffBgFor = (name: string) => `oklch(0.95 0.045 ${staffHue(name)})`;
+/*
+ * The initial in the avatar is text, and the rail's colour is not dark enough to be it: measured
+ * on a booking card, oklch(0.56 0.13 H) on oklch(0.95 0.045 H) is 3.69-3.73:1, under the 4.5:1
+ * that 12px type needs. The 4px rail down the card's edge is decoration and keeps its lightness;
+ * the letter gets its own ink, at the same lightness Attendance's avatars already use (8.5:1).
+ */
+const staffInkFor = (name: string) => `oklch(0.4 0.1 ${staffHue(name)})`;
 
 // `value` widened to string so the revenue tile can carry a formatted amount alongside the plain counts.
 function Kpi({
@@ -423,7 +431,7 @@ export function BookingsList({
     // shows in the staff line below (GRW-46).
     const staffName = b.providerNames[0];
     const railStyle = staffName
-      ? ({ '--bk-rail': railColorFor(staffName), '--bk-staff-bg': staffBgFor(staffName) } as CSSProperties)
+      ? ({ '--bk-rail': railColorFor(staffName), '--bk-staff-bg': staffBgFor(staffName), '--bk-staff-ink': staffInkFor(staffName) } as CSSProperties)
       : undefined;
     const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
     return (
@@ -452,7 +460,7 @@ export function BookingsList({
           </div>
           {b.offerTitle && (
             <div className="bk-card-combo">
-              <span className="chip chip-combo">🎁 {b.offerTitle}</span>
+              <span className="chip chip-combo"><IconPackages /> {b.offerTitle}</span>
             </div>
           )}
           <div className="bk-card-services">{summarizeServices(b.serviceNames, locale)}</div>

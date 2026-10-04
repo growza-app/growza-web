@@ -1,9 +1,18 @@
 /* ---------- KPI tile ---------- */
 
+/*
+ * The label wraps rather than running out of its tile. Measured at 344px: the tile is 150px and
+ * "Money earned" with its icon needs 135 of them on one line — it was over its box by 15px, and
+ * "New clients" by 10. `layout.md > Be prepared for text-size changes` asks for the second line
+ * instead, and these four tiles sit two-up on a phone, so there is nowhere narrower to go.
+ */
 .rp-kpi-label {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  text-align: center;
   gap: 6px;
   color: var(--muted);
   font-size: 0.75rem;

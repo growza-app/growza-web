@@ -19,7 +19,12 @@
   --accent-ink: #14532d;
   --blue: #1d4ed8;
   --blue-soft: #dfe7fd;
-  --amber: #b45309;
+  /* Jira GRW-305's sibling, found the same way: #b45309 reads 4.45:1 on --amber-soft and 4.42:1
+     on white — under 4.5:1 wherever it is used as text, which is all but one of its sixteen uses
+     ("No seats left on your plan", the FREE badge, every amber hint in the app). Darkened just
+     past the line to 4.99:1 on --amber-soft; the one place it is a BACKGROUND (the Retire swipe
+     action, white on amber) only gains by it. */
+  --amber: #a4500b;
   --amber-soft: #fdf0d5;
   --peach: #fde8dd;
   --slate-soft: #eceeee;

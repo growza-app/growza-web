@@ -67,3 +67,16 @@
   gap: var(--sp-2);
   white-space: nowrap;
 }
+
+/* Was 🎁 before a package's name, on a booking card and in its summary. */
+.chip-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chip-combo svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: none;
+}

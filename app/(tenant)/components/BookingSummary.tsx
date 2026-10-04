@@ -8,7 +8,7 @@ import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateWithWeekday } from '../lib/format';
 import { bookingBill, clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
-import { IconCheck, IconPhone } from './icons';
+import { IconCheck, IconPackages, IconPhone } from './icons';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
 
@@ -74,7 +74,7 @@ export function BookingSummary({
             </div>
             {booking.offerTitle && (
               <div className="summary-combo">
-                <span className="chip chip-combo">🎁 {booking.offerTitle}</span>
+                <span className="chip chip-combo"><IconPackages /> {booking.offerTitle}</span>
               </div>
             )}
           </div>
@@ -107,7 +107,7 @@ export function BookingSummary({
                 <span>{formatMoney(String(subtotal))}</span>
               </div>
               <div className="summary-line">
-                <span>🎁 {t('combo', { title: booking.offerTitle ?? '' })}</span>
+                <span><IconPackages /> {t('combo', { title: booking.offerTitle ?? '' })}</span>
                 <span className="summary-discount">− {formatMoney(String(savings))}</span>
               </div>
             </>

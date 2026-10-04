@@ -43,17 +43,31 @@
   padding: 3px;
 }
 
+/* 44px, and two inline SVGs where this drew 📱 and 🖥️ — the house rule is one icon language
+   and never an emoji as a UI icon (CLAUDE.md). */
 .device-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   border: none;
   border-radius: 999px;
   padding: 4px 9px;
+  color: var(--muted);
   font-size: 0.875rem;
   cursor: pointer;
 }
 
+.device-toggle button svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .device-toggle button.active {
   background: var(--accent-soft);
+  color: var(--accent-deep);
 }
 
 .device-frame-mobile {
@@ -345,6 +359,7 @@
 .price-mode-toggle button {
   background: var(--surface);
   border: none;
+  min-height: 44px;
   padding: 5px 12px;
   font-size: 0.78125rem;
   font-weight: 620;
@@ -531,4 +546,39 @@
   gap: 8px;
   font-size: 0.84375rem;
   color: var(--muted);
+}
+
+.preview-fact-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.preview-fact-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Was 🟢 / ⚪. A dot, and never the only thing saying it — the words beside it carry the state. */
+.pv-live-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c7cfc9;
+}
+
+.pv-live-dot.is-live {
+  background: var(--accent);
+}
+
+/* Was 💡 beside the builder's tip. */
+.wizard-tip-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--amber);
+}
+
+.wizard-tip-icon svg {
+  width: 1.0625rem;
+  height: 1.0625rem;
 }

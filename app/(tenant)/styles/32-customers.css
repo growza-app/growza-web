@@ -880,7 +880,7 @@
   height: 22px;
   border-radius: 50%;
   background: var(--bk-staff-bg, var(--slate-soft));
-  color: var(--bk-rail, var(--muted));
+  color: var(--bk-staff-ink, var(--bk-rail, var(--muted)));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1221,7 +1221,7 @@
     height: 20px;
     border-radius: 50%;
     background: var(--bk-staff-bg, var(--slate-soft));
-    color: var(--bk-rail, var(--muted));
+    color: var(--bk-staff-ink, var(--bk-rail, var(--muted)));
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2494,4 +2494,12 @@
   font-size: 0.75rem;
   background: var(--slate-soft);
   color: #5b6660;
+}
+
+/* Was 📅 before the last-visit line (CustomersClient). An inline SVG, sized to the 13px beside it. */
+.cl-card .muted svg,
+.customers-list .muted svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  vertical-align: -2px;
 }

@@ -291,6 +291,13 @@
   line-height: 1.35;
 }
 
+/* Was 📅. */
+.offer-info-item svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  vertical-align: -2px;
+}
+
 .offer-stats-col {
   flex-shrink: 0;
   display: flex;
@@ -544,8 +551,14 @@
   cursor: pointer;
 }
 
+/* The box was 22x22 and the label around it was the only thing you could aim at. */
+.offer-branch-field .offer-branch-all {
+  min-height: 44px;
+}
+
 .offer-branch-field .offer-branch-all input {
-  width: auto;
+  width: 24px;
+  height: 24px;
   margin: 0;
 }
 
@@ -554,4 +567,10 @@
   flex-direction: column;
   gap: 10px;
   align-items: flex-start;
+}
+
+/* Was 🏷️. The icon sits in a 32px tile, so it is sized like the other list glyphs. */
+.offer-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
 }

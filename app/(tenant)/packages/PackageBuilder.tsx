@@ -14,6 +14,16 @@ import {
   type Service,
 } from '../lib/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import {
+  IconCalendar,
+  IconClock,
+  IconDeviceDesktop,
+  IconDevicePhone,
+  IconLightbulb,
+  IconPackages,
+  IconReceipt,
+  IconUser,
+} from '../components/icons';
 import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
 import { matchItems, MIN_CHARS } from '../lib/service-match';
@@ -137,17 +147,27 @@ function PreviewCard({
 
         <div className="preview-facts">
           <div className="preview-fact">
-            <span>📅</span>
-            {showLiveIndicator ? (showLiveIndicator.isVisibleNow ? '🟢 ' : '⚪ ') : ''}
+            <span className="preview-fact-icon">
+              <IconCalendar />
+            </span>
+            {showLiveIndicator ? (
+              <span className={`pv-live-dot ${showLiveIndicator.isVisibleNow ? 'is-live' : ''}`} aria-hidden />
+            ) : null}
             {visibilitySummary}
           </div>
           {totalMin > 0 && (
             <div className="preview-fact">
-              <span>⏱️</span>{t('card.takes', { duration: formatDuration(totalMin) })}
+              <span className="preview-fact-icon">
+                <IconClock />
+              </span>
+              {t('card.takes', { duration: formatDuration(totalMin) })}
             </div>
           )}
           <div className="preview-fact">
-            <span>👤</span>{t('card.byAnyStaff')}
+            <span className="preview-fact-icon">
+              <IconUser />
+            </span>
+            {t('card.byAnyStaff')}
           </div>
         </div>
       </div>
@@ -552,7 +572,9 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
         </div>
 
         <div className="wizard-tip wizard-tip-rail">
-          <span>💡</span>
+          <span className="wizard-tip-icon">
+            <IconLightbulb />
+          </span>
           <div>
             <strong>{t('tip')}</strong>
             {/* GRW-165 — future tense, deliberately. Nothing sends or receives a
@@ -864,16 +886,20 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                 ) : (
                   <div className="preview-facts" style={{ borderTop: 'none', paddingTop: 0, marginTop: 4 }}>
                     <div className="preview-fact">
-                      <span>🎁</span>
+                      <span className="preview-fact-icon">
+                        <IconPackages />
+                      </span>
                       {title || t('untitled')}
                     </div>
                     <div className="preview-fact">
-                      <span>🧾</span>
+                      <span className="preview-fact-icon">
+                        <IconReceipt />
+                      </span>
                       {t('servicesCount', { count: selectedServices.length })} ·{' '}
                       {formatMoney(String(comboPriceMinor ?? originalPriceMinor))}
                     </div>
                     <div className="preview-fact">
-                      <span>{isVisibleNow() ? '🟢' : '⚪'}</span>
+                      <span className={`pv-live-dot ${isVisibleNow() ? 'is-live' : ''}`} aria-hidden />
                       {visibilitySummary()}
                     </div>
                   </div>
@@ -903,14 +929,14 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                 aria-label={t('mobileAria')}
                 onClick={() => setPreviewDevice('mobile')}
               >
-                📱
+                <IconDevicePhone />
               </button>
               <button
                 className={previewDevice === 'desktop' ? 'active' : ''}
                 aria-label={t('desktopAria')}
                 onClick={() => setPreviewDevice('desktop')}
               >
-                🖥️
+                <IconDeviceDesktop />
               </button>
             </div>
           </div>
