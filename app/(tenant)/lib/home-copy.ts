@@ -112,6 +112,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     quickLinks: S('Quick links', 'शॉर्टकट'),
     /** The money card's branch line (Jira GRW-312); the "Your branches" card it was named after is gone (Jira GRW-348). */
     yourBranches: S('Your branches', 'आपकी ब्रांच'),
+    // Jira GRW-485 — what "+N" on the branch line does: it shows the rest of the line, it does not go anywhere.
+    allBranchesOpen: (n: number) => S(`Show all branches, ${n} more`, `सभी ब्रांच दिखाएँ, ${n} और`),
     branchCount: (n: number) => S(`${n} branches`, `${n} ब्रांच`),
 
     /*
