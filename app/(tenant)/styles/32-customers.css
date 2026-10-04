@@ -273,9 +273,17 @@
    header's branch picked it read "—" (the GRW-312 capacity mismatch), and its
    other two answers — busiest staff, top service — are Reports questions. One
    grid now, so there is nothing left to reflow between 861 and 1149px. */
+/*
+ * The row shares itself out among the tiles that are drawn, not among four slots.
+ *
+ * "Didn't come" is left out on a day when nobody did (2026-10-04), and with `repeat(4, …)` the
+ * three that remained kept their 84px and left a quarter of the row empty — the tile had gone and
+ * taken nothing with it. `auto-fit` gives the three the width the fourth was holding.
+ */
 .bk-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
   gap: var(--sp-2);
   margin-bottom: var(--sp-5);
 }
@@ -1016,9 +1024,11 @@
  * elsewhere in this file: a later declaration wins at equal specificity).
  */
 @media (max-width: 860px) {
-  /* 4 compact count tiles across one row, exactly as the mobile mock has them. */
+  /* Compact count tiles across one row, exactly as the mobile mock has them — three or four of
+     them, depending on whether anybody failed to turn up (2026-10-04). */
   .bk-kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    grid-auto-flow: column;
     gap: 8px;
     margin-bottom: 0;
   }
@@ -2677,4 +2687,41 @@
   .cust-segments-toggle svg:last-child {
     transition: none;
   }
+}
+
+/*
+ * "Showing Confirmed only — Show all": the line a tile owes the list it is holding down.
+ *
+ * The KPI tiles are a summary and the status filter at once. The active tile takes an outline, but
+ * a figure that is also a control does not announce itself, and one outline among four is easy to
+ * miss — so when a tile is filtering, the screen says so in words and offers the way back.
+ * Same promise `.bk-filter-toggle` makes for the controls it folds away.
+ */
+.bk-status-on {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  padding: 0 var(--sp-3);
+  min-height: 44px;
+  border: 1px solid #cdeedb;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.bk-status-on button {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }

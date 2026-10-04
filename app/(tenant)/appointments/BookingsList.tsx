@@ -355,6 +355,12 @@ export function BookingsList({
    * list showed 7.
    */
   const countIn = (status: string) => inView.filter((b) => b.status === status).length;
+  /**
+   * A tile's status in the words the owner reads, or null for a status no tile offers (the Status
+   * dropdown's own values) — the line below the tiles is about the tiles, so it stays quiet then.
+   */
+  const statusWord = (status: string): string | null =>
+    status === 'confirmed' ? ts('confirmed') : status === 'completed' ? ts('done') : status === 'no_show' ? ts('didNotCome') : null;
   const statusTile = (status: string) => ({
     active: statusFilter === status,
     onPress: () => {
@@ -463,12 +469,19 @@ export function BookingsList({
             {/*
               GRW-166 — `customerName` ABSENT means the salon withholds it from
               staff; `null` means a client with no name on file, which is why
-              those two do not collapse into one placeholder. Withheld, the row
-              still carries the booking reference, so the card keeps something
-              to identify the booking by.
+              those two do not collapse into one placeholder.
+
+              2026-10-04 — the reference is drawn only when there is no name to draw. It used to sit
+              on every card in monospace at the weight of the client's name, and nobody reads a
+              booking reference except while someone is quoting it down the phone: it is in the
+              booking's own sheet, and search still matches on it. Withheld names still need it,
+              because then it is the only thing identifying the card.
             */}
-            {clientNameLabel(b) !== null ? <div className="bk-card-name">{clientNameLabel(b)}</div> : <div />}
-            <span className="bk-card-ref">{bookingRef(b.appointments[0]!.id)}</span>
+            {clientNameLabel(b) !== null ? (
+              <div className="bk-card-name">{clientNameLabel(b)}</div>
+            ) : (
+              <span className="bk-card-ref">{bookingRef(b.appointments[0]!.id)}</span>
+            )}
           </div>
           {b.offerTitle && (
             <div className="bk-card-combo">
@@ -575,8 +588,41 @@ export function BookingsList({
         />
         <Kpi tone="amber" icon={<IconClock />} value={countIn('confirmed')} label={ts('confirmed')} sub={isToday ? t('today') : dayLabel} {...statusTile('confirmed')} />
         <Kpi tone="purple" icon={<IconCheck />} value={countIn('completed')} label={ts('done')} sub={isToday ? t('today') : dayLabel} {...statusTile('completed')} />
-        <Kpi tone="red" icon={<IconUserPlus />} value={countIn('no_show')} label={ts('didNotCome')} sub={isToday ? t('today') : dayLabel} {...statusTile('no_show')} />
+        {/*
+          "Didn't come" is the one tile whose normal value is nought, and a quarter of the row to
+          say nothing went wrong is a quarter the other three could use — four tiles across a 390px
+          phone leave each about 88px. It appears on the days it has something to report, and the
+          three that always say something share the row on the days it does not. The count is still
+          reachable when it is zero: Status in the filters.
+        */}
+        {countIn('no_show') > 0 && (
+          <Kpi tone="red" icon={<IconUserPlus />} value={countIn('no_show')} label={ts('didNotCome')} sub={isToday ? t('today') : dayLabel} {...statusTile('no_show')} />
+        )}
       </div>
+      )}
+
+      {/*
+        The tiles are a summary AND the status filter, and nothing said so (2026-10-04).
+
+        Tapping one narrows the list below; the tile takes an active outline, but a tile that looks
+        like a figure does not announce that it is also a control, and the outline is easy to miss
+        on a screen of four. So when a tile is holding the list down, the screen says which one in
+        words and offers the way out — the same promise the Filters button makes for the controls
+        it hides.
+      */}
+      {statusWord(statusFilter) !== null && (
+        <div className="bk-status-on" role="status">
+          <span>{t('showingOnly', { status: statusWord(statusFilter)! })}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setStatusFilter('');
+              setPage(1);
+            }}
+          >
+            {t('showAll')}
+          </button>
+        </div>
       )}
 
       {/* Filters sit BELOW the headline row in both mocks, not above it — the
