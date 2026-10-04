@@ -2544,14 +2544,35 @@
 }
 
 @media (max-width: 860px) {
+  /*
+   * Search takes the row; the funnel sits at its end (owner, 2026-10-04).
+   *
+   * The first version of this was one full-width button reading "Filters", with search folded away
+   * inside it. Nobody opens a button called Filters looking for search, and on a list screen search
+   * is a primary position (`designing-for-ios.md`). So the row is the search field, and the funnel
+   * beside it still holds staff, status, order and the date range.
+   */
+  .bk-findrow {
+    display: flex;
+    align-items: stretch;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+  }
+
+  .bk-findrow .bk-search-row {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
   .bk-filter-toggle {
     display: flex;
     align-items: center;
-    gap: var(--sp-2);
-    width: 100%;
+    justify-content: center;
+    gap: 4px;
+    flex: none;
+    min-width: 44px;
     min-height: 44px;
-    margin-bottom: var(--sp-3);
-    padding: 0 var(--sp-3);
+    padding: 0 var(--sp-2);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--surface);
@@ -2569,14 +2590,14 @@
     color: var(--muted);
   }
 
-  /* The chevron sits at the far end and turns when the card is open. */
-  .bk-filter-toggle svg:last-child {
-    margin-left: auto;
-    transition: transform 0.15s ease;
+  /* Open: the funnel takes the accent, so the row says the panel below belongs to it. */
+  .bk-filter-toggle.is-open {
+    border-color: var(--accent-deep);
+    background: var(--accent-soft);
   }
 
-  .bk-filter-toggle.is-open svg:last-child {
-    transform: rotate(180deg);
+  .bk-filter-toggle.is-open svg {
+    color: var(--accent-deep);
   }
 
   /* The count is the whole point of the button: a filter left on is never silent. */
@@ -2724,4 +2745,70 @@
   font-weight: 700;
   text-decoration: underline;
   cursor: pointer;
+}
+
+/*
+ * The day stepper: which day the schedule is showing (owner, 2026-10-04).
+ *
+ * It was a From/To pair inside the folded filter panel, which put the screen's own subject behind a
+ * button labelled Filters. Same shape Attendance has had since GRW-200, so the two screens are
+ * worked the same way. Phone only: the laptop has the range form in view already.
+ */
+.bk-daynav {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .bk-daynav {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+  }
+
+  .bk-daynav-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .bk-daynav-step svg {
+    width: 1.0625rem;
+    height: 1.0625rem;
+  }
+
+  /* The day itself takes the middle and is the thing being read, so it is the heaviest here. */
+  .bk-daynav-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  /* Only drawn when you are not on today — a way back that is never a no-op. */
+  .bk-daynav-today {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    min-height: 44px;
+    padding: 0 var(--sp-3);
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
 }
