@@ -524,14 +524,20 @@
   }
 }
 @media (max-width: 860px) {
-  /* The design's phone order: money, what needs you, shortcuts, clients, the day. */
-  .hm-area-hero { order: 1; }
-  .hm-area-attention { order: 2; }
-  /* Jira GRW-418 — above the shortcuts: somebody waiting in the salon outranks a link to Offers. */
-  .hm-area-queue { order: 2; }
-  .hm-area-links { order: 3; }
-  .hm-area-clients { order: 5; }
-  .hm-area-bookings { order: 6; }
+  /*
+   * Jira GRW-486 — the phone order is the DOM's now, not this block's.
+   *
+   * It used to be six `order` declarations here: money, what needs you, the queue, shortcuts,
+   * clients, the day. Two things were wrong with that. The sequence it drew was never the one the
+   * comment described, because `OwnerHome` tagged "Needs your attention" `hm-desktop` and the card
+   * was not on a phone at all — so what the owner actually got was money, a grid of nine links,
+   * clients, and the day last. And `order` moves the eye without moving Tab or VoiceOver, which is
+   * the split `new-visit-actions-tray.test.ts` already guards against on the walk-in tray.
+   *
+   * So `OwnerHome` lays the cards out in the order they are read — money, the queue, what needs
+   * you, the day, clients, shortcuts — and nothing here reorders them. The laptop grid is
+   * untouched: it places by `grid-template-areas`, which does not care what order the DOM is in.
+   */
   /* A phone gets the period as a dropdown, styled as the branch picker beside it. */
   .hm-toolbar .hm-seg {
     display: none;
@@ -2848,14 +2854,35 @@ button.hm-now-count {
   }
 }
 @media (max-width: 860px) {
-  /* Figures size to their words, spread across the strip, so "100% came back"
-     is never cut at 320px (it was, by a few pixels, with equal thirds). */
+  /*
+   * Figures size to their words, spread across the strip, so "100% came back"
+   * is never cut at 320px (it was, by a few pixels, with equal thirds).
+   *
+   * Jira GRW-486 — and the strip WRAPS, because that fix bought the cut with an overlap.
+   *
+   * `flex: 0 1 auto` on a `nowrap` row with `white-space: nowrap` and no `overflow` rule means
+   * each figure shrinks past its own text and paints over the one beside it. Measured at 344px,
+   * every cell is over its box by 2-3px at a 20px root and by 13-18px at 23px, so the strip reads
+   * "2 bookings0 new client0% came back". 20px is the second setting in Larger Text, not an edge.
+   *
+   * So the row wraps: a figure that will not fit beside its neighbour takes the next row whole,
+   * which is what the payment line two blocks down has always done with three long amounts. The
+   * cells keep `flex: 0 1 auto`, so a line is filled before it is broken, and the `nowrap` from
+   * the 400px block above is lifted here — a single figure wider than the whole strip then breaks
+   * between its number and its word (which is the stacked shape this card had before GRW-312)
+   * rather than running off the card. Both are last resorts; at every ordinary size the three
+   * figures still sit on one row, unchanged.
+   */
   .hm-hero:not(.hm-hero-small) .hm-hero-stats {
+    flex-wrap: wrap;
     justify-content: space-between;
-    gap: 8px;
+    column-gap: 8px;
+    row-gap: 6px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats span {
     flex: 0 1 auto;
+    min-width: 0;
+    white-space: normal;
   }
 }
 @media (max-width: 360px) {

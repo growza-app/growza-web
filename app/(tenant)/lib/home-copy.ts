@@ -99,7 +99,6 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     needsYourAttention: S('Needs your attention', 'आपके ध्यान की ज़रूरत'),
     needsAttention: S('Needs attention', 'ध्यान देने वाली बातें'),
     notMarkedDone: S('Not marked done yet', 'अभी पूरे नहीं हुए'),
-    notMarkedPill: (n: number) => S(`${n} not marked done`, `${n} अभी पूरे नहीं हुए`),
     /** Everything came in one way: "All cash", "All UPI". A capital only where the word is an acronym. */
     allPaidBy: (label: string, mode: string) => (hi ? `सब ${label}` : `All ${mode === 'upi' ? label : label.toLowerCase()}`),
     fromToday: S('From today', 'आज के'),

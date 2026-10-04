@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { HomeOverview, PaymentModeSlice } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
-import { IconChevronRight, IconClock, IconDaySummary } from '../icons';
+import { IconChevronRight, IconDaySummary } from '../icons';
 import { rupees } from './parts';
 import { useDialog } from '../../../shared/a11y/useDialog';
 
@@ -189,7 +189,6 @@ export function MoneyHero({
   data,
   loading,
   onDaySummary,
-  unmarkedHref,
   branchId = null,
   onPickBranch,
 }: {
@@ -197,11 +196,6 @@ export function MoneyHero({
   data: HomeOverview;
   loading: boolean;
   onDaySummary?: () => void;
-  /**
-   * Jira GRW-312 — where the "not marked done" pill goes. It carries the picked
-   * branch, so Bookings opens on the same bookings the count was made from.
-   */
-  unmarkedHref?: string;
   /** The branch picked above the card; null is all of them. */
   branchId?: string | null;
   onPickBranch?: (id: string) => void;
@@ -248,7 +242,6 @@ export function MoneyHero({
         {money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(money.deltaPct)}% <span className={hideWords ? 'hm-desktop-inline' : 'hm-chip-words'}>{vs}</span>
       </span>
     ) : null;
-  const notMarked = data.attention.notMarkedDone;
   const branches = data.branches;
   // Jira GRW-485 — the card owns the "+N" popover now, so it no longer needs a handler passed in for it.
   const showBranchLine = branches.length > 1 && branchId === null && Boolean(onPickBranch);
@@ -309,18 +302,16 @@ export function MoneyHero({
       </div>
 
       {/*
-        Jira GRW-312 — the phone card, in words: what needs marking, where the money
-        was earned and how it was paid, each on one line, and no graph. From 861px
-        the card is the laptop's, unchanged, and this block is not drawn.
+        Jira GRW-312 — the phone card, in words: where the money was earned and how it was
+        paid, each on one line, and no graph. From 861px the card is the laptop's, unchanged,
+        and this block is not drawn.
+
+        Jira GRW-486 — "N not marked done" is no longer the first line of it. "Needs your
+        attention" is on the phone now, directly below this card, and it carries that same
+        count beside the other two. One fact in two places 200px apart is one too many, and
+        the card that states it is the one you can act from.
       */}
       <div className="hm-hero-phone hm-mobile">
-        {notMarked > 0 && unmarkedHref ? (
-          <a className="hm-todo" href={unmarkedHref}>
-            <IconClock />
-            <span>{t.notMarkedPill(notMarked)}</span>
-            <IconChevronRight />
-          </a>
-        ) : null}
         {showBranchLine ? <BranchLine t={t} branches={branches} onPick={onPickBranch!} onMore={() => setBranchMenu(true)} /> : null}
         <PaymentLine t={t} slices={money.byPaymentMode} total={money.revenueMinor} onMore={() => setMenu(true)} />
         {money.period === 'today' ? (

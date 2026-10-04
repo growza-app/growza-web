@@ -1,7 +1,9 @@
 /* ---------- the phone money card, in words (Jira GRW-312) ----------
  *
- * Amount and how it changed, what still needs marking, where the money came from and how it
- * was paid — each on one line, with no graph. Phone only (up to 860px): from 861px the card
+ * Amount and how it changed, where the money came from and how it was paid — each on one
+ * line, with no graph. ("What still needs marking" was a line here too until Jira GRW-486
+ * put "Needs your attention" on the phone, directly below this card, which already carries
+ * that count beside the other two.) Phone only (up to 860px): from 861px the card
  * is the laptop's and none of this is drawn (`.hm-mobile` is display:none there).
  *
  * The week graph and the payment bar are hidden here rather than removed from the markup,
@@ -32,29 +34,6 @@
     flex-direction: column;
     gap: 6px;
     margin-top: 6px;
-  }
-
-  .hm-todo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 12px;
-    border-radius: 10px;
-    background: rgba(253, 224, 71, 0.16);
-    color: #fde68a;
-    font-size: 0.9375rem;
-    font-weight: 700;
-    text-decoration: none;
-  }
-  .hm-todo span {
-    flex: 1;
-    min-width: 0;
-  }
-  .hm-todo svg {
-    width: 1rem;
-    height: 1rem;
-    flex: none;
   }
 
   /* One line where it fits. Where it does not (three long amounts on a 320px phone), it wraps to a
@@ -146,7 +125,6 @@
     font-weight: 700;
   }
 
-  .hm-todo:focus-visible,
   .hm-line-pick:focus-visible,
   .hm-line-more:focus-visible {
     outline: 2px solid #fff;
