@@ -69,6 +69,7 @@
   "bookings": {
     "none": "No bookings that day.",
     "search": "Search",
+    "filters": "Filters",
     "searchHint": "Search name, phone or booking ID",
     "from": "From",
     "to": "To",

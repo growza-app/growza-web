@@ -35,7 +35,11 @@ describe('the staff table', () => {
   });
 
   it('replaces the chips on Bookings, hidden from a stylist looking at their own calendar', () => {
-    expect(list).toMatch(/\{!viewerIsStaff && \(\s*<StaffTable/);
+    expect(list).toMatch(/\{!viewerIsStaff && \(\s*<div className="desktop-only">\s*<StaffTable/);
+    // Owner's call (2026-10-04): and it is the laptop's. Six rows by four columns sat between the
+    // filters and the day's schedule on a phone, so the owner scrolled a whole roster to reach two
+    // bookings. The same facts are on each booking's card, and Staff has the roster in full.
+    expect(src('../styles/32-customers.css')).toMatch(/\.desktop-only \{\s*display: none;/);
     expect(list).not.toMatch(/bk-staff-chip/);
     expect(src('../styles/32-customers.css')).not.toMatch(/bk-staff-chip/);
   });

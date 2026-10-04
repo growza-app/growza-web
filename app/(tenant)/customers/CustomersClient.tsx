@@ -21,6 +21,7 @@ import { PageHeader } from '../components/PageHeader';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
 import {
+  IconChevronDown,
   IconPercent,
   IconPlus,
   IconRepeat,
@@ -141,6 +142,12 @@ export function CustomersClient({
   const [page, setPage] = useState(initialPage);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<CustomerStatusFilter>(initialStatus ?? 'all');
+  // Owner's call (2026-10-04): on a phone the client bands fold away behind a button, as the
+  // Bookings filters do. Open from the start when a band is already on, so a filter arriving in
+  // the URL is never hidden behind a shut panel.
+  const [segmentsOpen, setSegmentsOpen] = useState((initialStatus ?? 'all') !== 'all');
+  /* The band that is on, taken from the list the card itself draws — so its key is one the words exist for. */
+  const onSegment = stats.segments.find((seg) => seg.key === status) ?? null;
   const [sort, setSort] = useState<CustomerSort>(initialSort ?? 'recent');
   /** Jira GRW-433 — positioned against the viewport, and above the bottom nav rather than under it. */
   const closeFilter = useCallback(() => setFilterOpen(false), []);
@@ -341,7 +348,27 @@ export function CustomersClient({
             page's own stats, from the same predicate the filter runs, so a
             card reading "462 Slipping away" cannot show a different number of
             rows than it counted (platform/segments.ts). */}
-        <div className="card cust-segments">
+        {/*
+          On a phone the bands fold away (owner, 2026-10-04).
+
+          Four KPI tiles and then four bands with a two-line note above them is eight numbers and
+          about 420px before the first client. They cannot move BELOW the list — tapping a band
+          filters it, and a filter under its own results is a trick — so they fold, the way the
+          Bookings filters do, and the button names the band that is on.
+        */}
+        <button
+          type="button"
+          className={`cust-segments-toggle mobile-only ${segmentsOpen ? 'is-open' : ''}`}
+          aria-expanded={segmentsOpen}
+          aria-controls="cust-segments"
+          onClick={() => setSegmentsOpen((v) => !v)}
+        >
+          <IconPercent />
+          <span>{t('segmentsTitle')}</span>
+          {onSegment && <span className="cust-segments-on">{t(`segments.${onSegment.key}.label`)}</span>}
+          <IconChevronDown />
+        </button>
+        <div id="cust-segments" className={`card cust-segments ${segmentsOpen ? 'is-open' : ''}`}>
           <div className="cust-segments-head">
             <h2>{t('segmentsTitle')}</h2>
             {/*
