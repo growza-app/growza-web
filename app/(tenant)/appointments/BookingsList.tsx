@@ -279,12 +279,17 @@ export function BookingsList({
    * How many filters are actually narrowing the list — the number on the funnel, so a filter can
    * never be on with the panel shut and nothing to say so.
    *
-   * Not the day, and not the search (owner, 2026-10-04): both have their own control in view now,
-   * and a count that includes what is already on screen reports it twice. The funnel counts only
-   * what the funnel hides.
+   * Not the search, and not a single day: both have their own control in view now, and counting
+   * what is already on screen reports it twice. A RANGE is different — the stepper cannot show
+   * "1 Oct – 4 Oct", so the only thing saying a multi-day range is on is this count.
    */
+  const isRange = toDate !== '' && toDate !== date;
   const filterCount =
-    (staffFilter !== 'Everyone' ? 1 : 0) + (statusFilter ? 1 : 0) + (unmarkedOnly ? 1 : 0) + (sort !== 'asc' ? 1 : 0);
+    (staffFilter !== 'Everyone' ? 1 : 0) +
+    (statusFilter ? 1 : 0) +
+    (unmarkedOnly ? 1 : 0) +
+    (sort !== 'asc' ? 1 : 0) +
+    (isRange ? 1 : 0);
   // Jira GRW-312 — a branch narrows the day itself, before the tiles are counted, so what Home
   // counted for that branch is what these tiles and this list show.
   const bookings = groupBookings(branch ? appointments.filter((a) => a.locationId === branch.id) : appointments);
@@ -883,13 +888,23 @@ export function BookingsList({
         The range form stays in the panel for anyone who wants more than one day.
       */}
       <div className="bk-daynav mobile-only">
-        <a className="bk-daynav-step" href={dayHref(-1)} aria-label={t('prevDay')}>
-          <IconArrowLeft />
-        </a>
+        {/*
+          No arrows on a range. "The day before" and "the day after" have no meaning across
+          1 Oct – 4 Oct, and stepping from one end of it would have thrown the range away without
+          saying so — a control that silently undoes what you set. The range is changed where it
+          was set, in the funnel; Today is the way back to a single day.
+        */}
+        {!isRange && (
+          <a className="bk-daynav-step" href={dayHref(-1)} aria-label={t('prevDay')}>
+            <IconArrowLeft />
+          </a>
+        )}
         <span className="bk-daynav-label">{isToday ? t('today') : dayLabel}</span>
-        <a className="bk-daynav-step" href={dayHref(1)} aria-label={t('nextDay')}>
-          <IconArrowRight />
-        </a>
+        {!isRange && (
+          <a className="bk-daynav-step" href={dayHref(1)} aria-label={t('nextDay')}>
+            <IconArrowRight />
+          </a>
+        )}
         {!isToday && (
           <a className="bk-daynav-today" href={dayHref(null)}>
             {t('today')}
