@@ -566,7 +566,15 @@ export function OwnerHome(p: OwnerHomeProps) {
           {/* Jira GRW-351 — laptop only; row 2 mirrors row 1. Its data is Bookings today's, so the two agree. */}
           <RightNow t={t} today={todayGroups} tomorrow={tomorrowGroups} queue={queue} now={now} afterClose={listIsTomorrow} timezone={p.timezone} />
 
-          <Card className="hm-area-clients" title={t.clientsDoingTitle}>
+          {/*
+            The client segments are the laptop's (owner, 2026-10-04).
+
+            Four tiles, a two-line explanation above them and about 320px of a phone screen, for
+            counts that do not change through the day and that nobody acts on standing at the
+            counter. Clients is a tab, and each tile's link is a filter on it, so nothing here
+            becomes unreachable — it stops taking the room the day's work wants.
+          */}
+          <Card className="hm-area-clients hm-desktop" title={t.clientsDoingTitle}>
             <SegmentCards t={t} stats={clientStats} branch={branch} />
           </Card>
 

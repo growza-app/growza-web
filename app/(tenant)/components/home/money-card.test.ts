@@ -209,10 +209,10 @@ describe("the phone's card order (Jira GRW-486)", () => {
     expect(owner).not.toMatch(/hm-area-attention hm-desktop/);
   });
 
-  it('reads money, shortcuts, queue, what needs you, the day, clients', () => {
+  it('reads money, shortcuts, queue, what needs you, the day', () => {
     // Shortcuts sit second by the owner's own call (2026-10-04) — Packages, Offers and Free times
     // have no tab, so this grid is how they get into the app.
-    const order = ['hero', 'links', 'queue', 'attention', 'bookings', 'clients'].map(at);
+    const order = ['hero', 'links', 'queue', 'attention', 'bookings'].map(at);
     expect(order.every((n) => n > 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
@@ -223,6 +223,12 @@ describe("the phone's card order (Jira GRW-486)", () => {
 
   it('shortcuts are on the phone and nowhere else', () => {
     expect(owner).toMatch(/className="hm-area-links hm-mobile"/);
+  });
+
+  it('the client segments are the laptop\'s — 320px of counts nobody acts on at the counter', () => {
+    expect(owner).toMatch(/className="hm-area-clients hm-desktop"/);
+    // Still reachable: Clients is a tab and every tile is a filter on it.
+    expect(code('parts.tsx')).toMatch(/href=\{`\/customers\?status=/);
   });
 
   it('the laptop grid is untouched: it still places by name', () => {
