@@ -9,8 +9,6 @@ import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { StaffTable } from './StaffTable';
-import { staffRows } from '../lib/staff-summary';
 import { useBranch } from '../components/BranchProvider';
 import {
   IconCalendar,
@@ -338,7 +336,6 @@ export function BookingsList({
   const staffChipNames = useMemo(() => ['Everyone', ...branchProviders.map((p) => p.displayName)], [branchProviders]);
 
   // Jira GRW-343 — each person's day for the phone's staff table. Not narrowed by the staff pick itself (it is what picks).
-  const staffTable = staffRows(bookings, branchProviders.map((p) => p.displayName), now, isToday);
 
 
   /*
@@ -688,8 +685,17 @@ export function BookingsList({
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
             />
           </div>
+          {/*
+            The staff filter is this dropdown at every width now (2026-10-04).
+
+            It was `desktop-only`, because the phone had `StaffTable` instead — six rows by four
+            columns, above the day's schedule. That table is gone (it cost ~340px above the thing
+            the screen is for), and when it went it took the phone's only way to filter by staff
+            with it. The dropdown is the same control the laptop has always used, and on a phone it
+            sits inside the filter panel that folds away, which is where a filter belongs.
+          */}
           {!viewerIsStaff && (
-          <div className="bk-field bk-field-staff desktop-only">
+          <div className="bk-field bk-field-staff">
             <label htmlFor="bk-staff-select">{t('staff')}</label>
             <select
               id="bk-staff-select"
@@ -783,40 +789,15 @@ export function BookingsList({
       ) : (
         <>
       {/*
-        The staff table is the laptop's (owner, 2026-10-04).
+        `StaffTable` is gone (2026-10-04).
 
-        Six rows by four columns — who, how many, how long booked, when next — is a desktop table,
-        and on a phone it sat between the filters and the day's schedule, so the owner scrolled past
-        a whole roster to reach the two bookings they came for. The same facts are on each booking's
-        own card below, and Staff has the roster in full.
+        It was never on the laptop — `.bk-staff-table-wrap` is `display: none` until 860px, and the
+        laptop has always used the Staff dropdown in the filter card. So the table was the PHONE's
+        staff filter, sitting as six rows by four columns between the filters and the day's
+        schedule: about 340px of roster above two bookings. The dropdown above serves both widths
+        now, from inside the panel that folds away. The component is in the history if the table is
+        ever wanted back.
       */}
-      {!viewerIsStaff && (
-        <div className="desktop-only">
-        <StaffTable
-          everyone={staffTable.everyone}
-          staff={staffTable.staff}
-          active={staffFilter}
-          onPick={(name) => {
-            setStaffFilter(name);
-            setPage(1);
-          }}
-          timezone={timezone}
-          upcoming={isToday}
-          labels={{
-            caption: t('staffTableCaption'),
-            staff: t('staff'),
-            bookings: t('kpiBookings'),
-            booked: t('staffColBooked'),
-            next: t('staffColNext'),
-            first: t('staffColFirst'),
-            everyone: t('staffEveryone'),
-            nothing: t('staffNothing'),
-            close: t('staffSheetClose'),
-            count: (n) => t('bookingCount', { count: n }),
-          }}
-        />
-        </div>
-      )}
 
       <div className="bk-sched-head">
         <h2>
