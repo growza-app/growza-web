@@ -423,10 +423,13 @@ export function NewVisitSheet({
   const openBranches = session?.branches ?? [];
   const branchNameOf = (locationId: string | undefined) =>
     openBranches.length > 1 && locationId ? openBranches.find((b) => b.id === locationId)?.name : undefined;
-  const clientBranchName = (locationId: string | undefined) => {
-    const name = branchNameOf(locationId);
-    return name ? <span className="picker-row-meta"> · {name}</span> : null;
-  };
+  /**
+   * A client row's second line: how many visits, their number if they have one, their branch if there
+   * is more than one. Built as a string so the row is a name over one quiet line, rather than three
+   * facts and a count fighting for the same row (owner, 2026-10-04).
+   */
+  const clientMetaLine = (c: Customer) =>
+    [nv.visits(c.totalBookings), c.waPhone, branchNameOf(c.locationId)].filter(Boolean).join(' · ');
   /*
    * A client of a branch that has since closed is served at an open one: carried over as that branch's client by
    * name and number (the upsert finds or makes their record there), never booked at the closed branch.
@@ -1474,7 +1477,17 @@ export function NewVisitSheet({
           : clientName(stage.client);
 
   const asPage = presentation === 'page';
-  const sheetTitle = forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title;
+  /*
+   * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
+   *
+   * The Walk-in / For later toggle sits under this title and sets it, so on arrival the screen was
+   * called "Walk-in" while the control that decides walk-in-or-not was still below it, unanswered —
+   * and the owner had tapped "New booking" to get here. While the toggle is on screen the title is
+   * the screen's own name; once a client is picked the toggle goes (it would silently rewrite what
+   * was just booked) and the title can say which of the two this is, because by then it is settled.
+   */
+  const modeStillOpen = !forPayment && (stage.step === 'client' || stage.step === 'newClient');
+  const sheetTitle = forPayment ? nv.paymentTitle : modeStillOpen ? nv.pageTitle : later ? nv.laterTitle : nv.title;
 
   /**
    * Jira GRW-458 — Back is navigation, so it belongs beside the title, not in the tray of actions that
@@ -1619,12 +1632,10 @@ export function NewVisitSheet({
                     className="picker-row wi-row"
                     onClick={() => pickClient(c)}
                   >
-                    <span>
+                    <span className="picker-row-text">
                       <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                      <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
-                      {clientBranchName(c.locationId)}
+                      <span className="picker-row-meta">{clientMetaLine(c)}</span>
                     </span>
-                    <span className="picker-row-meta">{nv.visits(c.totalBookings)}</span>
                   </button>
                 ))}
                 {!searching && results.length === 0 && <div className="empty">{nv.noMatch}</div>}
@@ -1641,10 +1652,10 @@ export function NewVisitSheet({
                 <div className="picker-results">
                   {elsewhere.map((c) => (
                     <button key={c.id} type="button" className="picker-row wi-row" onClick={() => bringHere(c)}>
-                      <span>
+                      {/* This one keeps its right-hand column: "Bring to MG Road" is the action, not a fact. */}
+                      <span className="picker-row-text">
                         <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                        <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
-                        {clientBranchName(c.locationId)}
+                        <span className="picker-row-meta">{clientMetaLine(c)}</span>
                       </span>
                       <span className="picker-row-meta">{nv.bringToBranch(branchNameOf(listBranch ?? undefined) ?? '')}</span>
                     </button>
@@ -1669,12 +1680,19 @@ export function NewVisitSheet({
                       className="picker-row wi-row"
                       onClick={() => pickClient(c)}
                     >
-                      <span>
+                      {/*
+                        Two lines, not three facts on one (owner, 2026-10-04).
+
+                        It was "Name · no number · MG Road" with the visit count squeezed into a column
+                        narrow enough to break "2 visits" across two lines — 70px rows of wrapped text to
+                        scan. The name gets its own line; what is true about them goes underneath. A
+                        missing phone number is not stated at all: an absence does not need announcing,
+                        and it was being given the same weight as the branch.
+                      */}
+                      <span className="picker-row-text">
                         <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                        <span className="picker-row-meta"> · {c.waPhone ?? nv.noNumber}</span>
-                        {clientBranchName(c.locationId)}
+                        <span className="picker-row-meta">{clientMetaLine(c)}</span>
                       </span>
-                      <span className="picker-row-meta">{nv.visits(c.totalBookings)}</span>
                     </button>
                   ))}
                   {recent === null && <div className="empty">{nv.loadingCustomers}</div>}
@@ -1781,15 +1799,16 @@ export function NewVisitSheet({
             {/* Jira GRW-453 — once the branch is settled it is said, not asked: the client was picked from this
                 branch's own list, and a token's visit is already at its branch. Changing it here would leave the
                 client belonging to one branch and the booking to another, which the database refuses. */}
-            {branchSettled && branchNameOf(listBranch ?? undefined) ? (
-              <>
-                <h2 className="wi-section-label">{nv.whichBranch}</h2>
-                <div className="wi-chips">
-                  <span className="wi-chip wi-chip-on" aria-current="true">
-                    {branchNameOf(listBranch ?? undefined)}
-                  </span>
-                </div>
-              </>
+            {branchSettled && branches.length > 1 && branchNameOf(listBranch ?? undefined) ? (
+              /*
+               * Said in one line, not asked (owner, 2026-10-04). It was a "Which branch?" heading over a
+               * single chip — a question with one possible answer, 44px of control that cannot change
+               * anything, at the top of the screen. `entering-data.md` asks the opposite: pre-gather what
+               * you can and ask for the rest. A one-branch salon is told nothing at all, because there is
+               * nothing to tell; with branches it still matters WHICH one this booking lands at, so the
+               * line stays.
+               */
+              <p className="wi-at-branch">{nv.atBranch(branchNameOf(listBranch ?? undefined)!)}</p>
             ) : null}
 
             {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-453 — and only while

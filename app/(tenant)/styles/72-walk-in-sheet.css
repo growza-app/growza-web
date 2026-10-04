@@ -792,3 +792,39 @@ input.wi-search-input-plain {
 .walk-in-page .wi-actions {
   position: static;
 }
+
+/*
+ * A client row: the name, then one quiet line under it (owner, 2026-10-04).
+ *
+ * It used to be "Name · no number · MG Road" in a shrinking left column with the visit count in a
+ * right one narrow enough to break "2 visits" over two lines — 70px rows of wrapped text to read
+ * past. The name owns the first line and cannot be cut mid-word; what is true about the client
+ * goes underneath, in one string.
+ */
+.picker-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.picker-row-text .picker-row-name,
+.picker-row-text .picker-row-meta {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The branch, once it cannot change: a line, not a question over a chip that answers it.
+ * Sits where the "Which branch?" heading did, in the same muted weight as the other labels.
+ */
+.wi-at-branch {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}

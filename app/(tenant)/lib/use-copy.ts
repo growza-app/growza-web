@@ -41,7 +41,6 @@ export function useNewVisitCopy() {
     whoIsThis: (client: string) => t('whoIsThis', { client: pickNoun(locale, client, tn('customer')) }),
     searchPlaceholder: t('searchPlaceholder'),
     noName: t('noName'),
-    noNumber: t('noNumber'),
     noMatch: t('noMatch'),
     visits: (n: number) => t('visits', { n }),
     recentCustomers: t('recentCustomers'),
@@ -108,6 +107,10 @@ export function useNewVisitCopy() {
     queued: t('queued'),
     token: (n: number) => t('token', { n }),
     laterTitle: t('laterTitle'),
+    /* The screen's own name, used while the Walk-in / For later toggle is still on screen. */
+    pageTitle: t('pageTitle'),
+    /** "At MG Road" — said, not asked, once the branch cannot change. */
+    atBranch: (name: string) => t('atBranch', { name }),
     modeLabel: t('modeLabel'),
     modeNow: t('modeNow'),
     modeLater: t('modeLater'),
