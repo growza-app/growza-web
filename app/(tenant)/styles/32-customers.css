@@ -2763,3 +2763,121 @@
   cursor: pointer;
 }
 
+/*
+ * Jira GRW-487 — the people waiting, above the day's timed rows.
+ *
+ * A walk-in with a token has no start time, so they cannot be a row in a list ordered by one, and
+ * they are not a booking, so they are not in the tiles. Their own short section instead, amber
+ * rather than the schedule's green: this is the part of the day that is standing in the salon
+ * rather than written in the book.
+ */
+.bk-waiting {
+  margin-bottom: var(--sp-4);
+  border: 1px solid #f3dcc0;
+  border-radius: var(--radius);
+  background: #fffaf2;
+  overflow: hidden;
+}
+
+.bk-waiting-error {
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--amber);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.bk-waiting-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) 0;
+}
+
+.bk-waiting-head h2 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.bk-waiting-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--amber);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.bk-waiting-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bk-waiting-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The number the client was told at the counter, so it leads the row and never shrinks. */
+.bk-waiting-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #fdf0d5;
+  color: var(--amber);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-waiting-who {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bk-waiting-name,
+.bk-waiting-svc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-waiting-name {
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.bk-waiting-svc {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* How long they have been sitting there — the one figure that decides whether this is a problem. */
+.bk-waiting-min {
+  flex: none;
+  color: var(--amber);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

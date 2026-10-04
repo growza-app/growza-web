@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider } from '../lib/api';
+import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider, type QueueEntry } from '../lib/api';
 import { useTranslations, useLocale } from 'next-intl';
 import { countsAsNotMarked } from '../lib/live-state';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
@@ -10,6 +10,7 @@ import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useBranch } from '../components/BranchProvider';
+import { atBranch, wholeMinutes } from '../lib/right-now';
 import {
   IconCalendar,
   IconCheck,
@@ -122,6 +123,7 @@ export function BookingsList({
   timezone,
   noun,
   nowISO,
+  queue,
   isToday,
   dayLabel,
   date,
@@ -149,6 +151,12 @@ export function BookingsList({
   noun: string;
   /** Server clock, so the first client render matches SSR before the tick starts. */
   nowISO: string;
+  /**
+   * Jira GRW-487 — today's walk-in queue, the whole business's (narrowed to the branch here, as the
+   * visits are). `[]` on any day but today; `null` when the read failed, which the section says
+   * rather than drawing itself empty.
+   */
+  queue: QueueEntry[] | null;
   /** Whether the selected day (the filter's date field) is today. */
   isToday: boolean;
   /** Short label for the selected day, e.g. "21 Aug" — used everywhere the page said "Today" when it's actually showing a different day. */
@@ -356,6 +364,15 @@ export function BookingsList({
    * A tile's status in the words the owner reads, or null for a status no tile offers (the Status
    * dropdown's own values) — the line below the tiles is about the tiles, so it stays quiet then.
    */
+  /*
+   * Jira GRW-487 — who is waiting, for the branch in view.
+   *
+   * Token order IS arrival order, so the server's order is kept rather than re-sorted. They are not
+   * folded into the schedule below: that list is ordered by start time and a waiting person has
+   * none — nobody has promised them one — so they would have to be given a fake time to sit in it.
+   */
+  const waiting = useMemo(() => (queue ? atBranch(queue, branch?.id ?? null) : null), [queue, branch]);
+
   const statusWord = (status: string): string | null =>
     status === 'confirmed' ? ts('confirmed') : status === 'completed' ? ts('done') : status === 'no_show' ? ts('didNotCome') : null;
   const statusTile = (status: string) => ({
@@ -852,6 +869,43 @@ export function BookingsList({
         fields are what the owner asked for and they are no longer folded away: they sit under the
         search row, and only staff, status and order wait behind the funnel.
       */}
+
+      {/*
+        Jira GRW-487 — the people waiting, above the day's timed rows.
+
+        Somebody standing in the salon comes before a visit booked for four o'clock. Read-only: a
+        row opens the board on Home, which is where a token is given a stylist, started and paid.
+        Out of the tiles above, too — a waiting person is not a booking, and counting them there
+        would make that figure disagree with Reports.
+      */}
+      {isToday && waiting === null && (
+        <div className="bk-waiting bk-waiting-error" role="status">
+          {t('queueUnreadable')}
+        </div>
+      )}
+      {isToday && waiting !== null && waiting.length > 0 && (
+        <section className="bk-waiting" aria-label={t('waitingTitle')}>
+          <div className="bk-waiting-head">
+            <h2>{t('waitingTitle')}</h2>
+            <span className="bk-waiting-count">{waiting.length}</span>
+          </div>
+          <ul className="bk-waiting-list">
+            {waiting.map((w) => (
+              <li key={w.id}>
+                <a className="bk-waiting-row" href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}>
+                  {/* The number is what the client was told at the counter, so it leads the row. */}
+                  <span className="bk-waiting-token">{w.tokenNo ?? '—'}</span>
+                  <span className="bk-waiting-who">
+                    <span className="bk-waiting-name">{w.customerName}</span>
+                    {w.serviceNames.length > 0 && <span className="bk-waiting-svc">{w.serviceNames.join(' · ')}</span>}
+                  </span>
+                  <span className="bk-waiting-min">{t('waitingMin', { count: wholeMinutes(w.addedAt, now) })}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="bk-sched-head">
         <h2>

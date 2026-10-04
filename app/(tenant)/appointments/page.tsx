@@ -167,19 +167,33 @@ export default async function AppointmentsPage({
    * from a real layout fault. A screen that lies to a person lies to a test
    * too.
    */
-  const [appointmentsResult, earnings] = await Promise.all([
+  /* Needed before the reads below decide whether to ask for the queue; `isToday` is this value. */
+  const isTodayRequest = !isRange && date === todayISO && !customerId;
+  const [appointmentsResult, earnings, queue] = await Promise.all([
     api
       .appointments(date, toDate, undefined, customerId)
       .then((rows) => ({ rows, failed: false }))
       .catch(() => ({ rows: [] as Appointment[], failed: true })),
     // Jira GRW-477 — staff only: for anybody else the route is a 403 in the log on every page load.
     me.member?.role === 'staff' ? api.myEarnings().catch(() => null) : Promise.resolve(null),
+    /*
+     * Jira GRW-487 — today's walk-in queue, so somebody waiting is not invisible on the day's screen.
+     *
+     * Only on today: a queue is a fact about now, and asking for it while looking at last Tuesday
+     * would draw people who are not there. The whole business's, narrowed to the branch in the
+     * browser — the branch switch here does not reload the page (it rewrites the URL), so a
+     * server-filtered queue would go stale the moment the owner changed branch.
+     *
+     * `null` on failure, never `[]`: the section must be able to say it could not look, because
+     * "nobody is waiting" is the one wrong answer to give about a salon with somebody in it.
+     */
+    isTodayRequest ? api.walkInQueue().catch(() => null) : Promise.resolve([]),
   ]);
   const appointments = appointmentsResult.rows;
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
   // A multi-day range is never "today", even when it starts today — the
   // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
-  const isToday = !isRange && date === todayISO && !customerId;
+  const isToday = isTodayRequest;
   const t = await getTranslations('bookings');
   const tn = await getTranslations('nouns');
   const locale = await getLocale();
@@ -244,6 +258,7 @@ export default async function AppointmentsPage({
           noun={pickNoun(locale, (me.labels.appointments ?? copy.nav.appointments).toLowerCase(), tn('bookings'))}
           nowISO={new Date().toISOString()}
           isToday={isToday}
+          queue={queue}
           dayLabel={dayShort}
           date={fieldFrom}
           toDate={fieldTo}
