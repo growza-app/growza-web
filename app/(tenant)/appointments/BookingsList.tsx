@@ -12,6 +12,8 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useBranch } from '../components/BranchProvider';
 import {
   IconCalendar,
+  IconArrowLeft,
+  IconArrowRight,
   IconCheck,
   IconChevronDown,
   IconClock,
@@ -122,6 +124,7 @@ export function BookingsList({
   timezone,
   noun,
   nowISO,
+  todayISO,
   isToday,
   dayLabel,
   date,
@@ -149,6 +152,8 @@ export function BookingsList({
   noun: string;
   /** Server clock, so the first client render matches SSR before the tick starts. */
   nowISO: string;
+  /** Today in the salon's own timezone, as the day stepper's "back to today". */
+  todayISO: string;
   /** Whether the selected day (the filter's date field) is today. */
   isToday: boolean;
   /** Short label for the selected day, e.g. "21 Aug" — used everywhere the page said "Today" when it's actually showing a different day. */
@@ -271,17 +276,15 @@ export function BookingsList({
   // From/To range, where the most recent day is usually the interesting end.
   const [sort, setSort] = useState<'asc' | 'desc'>(initialSort);
   /*
-   * How many filters are actually narrowing the list — the number on the fold-away button, so a
-   * filter can never be on with the card shut and nothing to say so. The dates are counted only
-   * when they are not today's: this screen opens on today, and "today" is the view, not a filter.
+   * How many filters are actually narrowing the list — the number on the funnel, so a filter can
+   * never be on with the panel shut and nothing to say so.
+   *
+   * Not the day, and not the search (owner, 2026-10-04): both have their own control in view now,
+   * and a count that includes what is already on screen reports it twice. The funnel counts only
+   * what the funnel hides.
    */
   const filterCount =
-    (query ? 1 : 0) +
-    (staffFilter !== 'Everyone' ? 1 : 0) +
-    (statusFilter ? 1 : 0) +
-    (unmarkedOnly ? 1 : 0) +
-    (sort !== 'asc' ? 1 : 0) +
-    (isToday ? 0 : 1);
+    (staffFilter !== 'Everyone' ? 1 : 0) + (statusFilter ? 1 : 0) + (unmarkedOnly ? 1 : 0) + (sort !== 'asc' ? 1 : 0);
   // Jira GRW-312 — a branch narrows the day itself, before the tiles are counted, so what Home
   // counted for that branch is what these tiles and this list show.
   const bookings = groupBookings(branch ? appointments.filter((a) => a.locationId === branch.id) : appointments);
@@ -359,6 +362,29 @@ export function BookingsList({
    * A tile's status in the words the owner reads, or null for a status no tile offers (the Status
    * dropdown's own values) — the line below the tiles is about the tiles, so it stays quiet then.
    */
+  /**
+   * The day stepper's links. `null` means today. Only the dates move: everything else on the URL
+   * is carried, so stepping a day never quietly drops a branch or a client's history.
+   */
+  const dayHref = (step: number | null): string => {
+    /* `date` is already the salon's own calendar day as YYYY-MM-DD, so a day either side is UTC
+       arithmetic on that string — no zone conversion, which would be the bug this avoids. */
+    const shiftISO = (iso: string, by: number) =>
+      new Date(`${iso}T00:00:00Z`).valueOf() + by * 86_400_000 > 0
+        ? new Date(new Date(`${iso}T00:00:00Z`).valueOf() + by * 86_400_000).toISOString().slice(0, 10)
+        : iso;
+    const base = step === null ? todayISO : shiftISO(date, step);
+    const params = new URLSearchParams();
+    if (base !== todayISO) {
+      params.set('date', base);
+      params.set('to', base);
+    }
+    if (customerId) params.set('customerId', customerId);
+    if (branch) params.set('location', branch.id);
+    const q = params.toString();
+    return q ? `?${q}` : '/appointments';
+  };
+
   const statusWord = (status: string): string | null =>
     status === 'confirmed' ? ts('confirmed') : status === 'completed' ? ts('done') : status === 'no_show' ? ts('didNotCome') : null;
   const statusTile = (status: string) => ({
@@ -638,18 +664,40 @@ export function BookingsList({
         to "everything, today" before it reaches a booking. The button says when any of them is
         actually narrowing the list, so a filter can never be on without the owner seeing it.
       */}
-      <button
-        type="button"
-        className={`bk-filter-toggle mobile-only ${filtersOpen ? 'is-open' : ''}`}
-        aria-expanded={filtersOpen}
-        aria-controls="bk-filter-card"
-        onClick={() => setFiltersOpen((v) => !v)}
-      >
-        <IconFilter />
-        <span>{t('filters')}</span>
-        {filterCount > 0 && <span className="bk-filter-count">{filterCount}</span>}
-        <IconChevronDown />
-      </button>
+      <div className="bk-findrow mobile-only">
+        {/*
+          Search is on the screen, not inside "Filters" (owner, 2026-10-04).
+
+          It was folded away with the rest. Nobody opens a button labelled Filters looking for
+          search, and `designing-for-ios.md` gives search on a list screen a primary position. It
+          takes the row; the funnel beside it still holds staff, status, order and the date range
+          for anyone who wants the long way round.
+        */}
+        <div className="bk-search-row">
+          <IconSearch />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder={t('searchHint')}
+            aria-label={t('search')}
+          />
+        </div>
+        <button
+          type="button"
+          className={`bk-filter-toggle ${filtersOpen ? 'is-open' : ''}`}
+          aria-expanded={filtersOpen}
+          aria-controls="bk-filter-card"
+          aria-label={t('filters')}
+          onClick={() => setFiltersOpen((v) => !v)}
+        >
+          <IconFilter />
+          {filterCount > 0 && <span className="bk-filter-count">{filterCount}</span>}
+        </button>
+      </div>
       <div id="bk-filter-card" className={`card bk-filter-card ${filtersOpen ? 'is-open' : ''}`}>
         <form method="get" className="bk-filters">
           {/* Search / staff / status / sort are client-side state, but this
@@ -684,26 +732,6 @@ export function BookingsList({
                   setPage(1);
                 }}
                 placeholder={t('searchHint')}
-              />
-            </div>
-          </div>
-
-          {/* Mobile's own search pill — same client-side query state as the
-              desktop field above (BR-01/BR-02), just the compact shape the
-              mobile mock uses, and inside the card so it lands above the
-              date range the way that mock orders them. */}
-          <div className="bk-field bk-field-search mobile-only">
-            <div className="bk-search-row">
-              <IconSearch />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setPage(1);
-                }}
-                placeholder={t('searchHint')}
-                aria-label={t('search')}
               />
             </div>
           </div>
@@ -844,6 +872,30 @@ export function BookingsList({
         now, from inside the panel that folds away. The component is in the history if the table is
         ever wanted back.
       */}
+
+      {/*
+        Which day you are looking at is navigation, not a filter (owner, 2026-10-04).
+
+        It was a From/To pair inside the folded panel, which put the screen's own subject behind a
+        button labelled Filters. A stepper here instead, the same shape Attendance has had since
+        GRW-200, so the two screens are worked the same way. Links rather than buttons, because it
+        IS a navigation: the server reads `date`, so back works and a day can be bookmarked.
+        The range form stays in the panel for anyone who wants more than one day.
+      */}
+      <div className="bk-daynav mobile-only">
+        <a className="bk-daynav-step" href={dayHref(-1)} aria-label={t('prevDay')}>
+          <IconArrowLeft />
+        </a>
+        <span className="bk-daynav-label">{isToday ? t('today') : dayLabel}</span>
+        <a className="bk-daynav-step" href={dayHref(1)} aria-label={t('nextDay')}>
+          <IconArrowRight />
+        </a>
+        {!isToday && (
+          <a className="bk-daynav-today" href={dayHref(null)}>
+            {t('today')}
+          </a>
+        )}
+      </div>
 
       <div className="bk-sched-head">
         <h2>

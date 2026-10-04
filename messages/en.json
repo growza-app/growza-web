@@ -70,6 +70,8 @@
     "none": "No bookings that day.",
     "search": "Search",
     "filters": "Filters",
+    "prevDay": "Day before",
+    "nextDay": "Day after",
     "showingOnly": "Showing {status} only",
     "showAll": "Show all bookings",
     "searchHint": "Search name, phone or booking ID",
