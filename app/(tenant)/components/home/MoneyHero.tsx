@@ -113,11 +113,47 @@ function BranchLine({
         </button>
       ))}
       {more > 0 ? (
-        <button type="button" className="hm-line-more" aria-label={`${t.yourBranches}: +${more}`} onClick={onMore}>
+        <button type="button" className="hm-line-more" aria-label={t.allBranchesOpen(more)} aria-haspopup="dialog" onClick={onMore}>
           +{more}
         </button>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Jira GRW-485 — the whole branch line, when it does not fit on the line.
+ *
+ * Read at a glance and ranked the way the line is, biggest first, with the same
+ * colour dot so a branch is the same colour wherever it appears. Every row is
+ * still a way into that branch: "+N" used to open the switcher, and nothing that
+ * worked before should stop working because the tap now shows numbers first.
+ *
+ * Sized to its content, never scrolled — a business with five branches has five
+ * short rows, and a popover that scrolls is a list that should have been a page.
+ */
+function BranchMenu({ t, branches, total, onPick }: { t: HomeCopy; branches: HomeOverview['branches']; total: number; onPick: (id: string) => void }) {
+  const ranked = branches
+    .map((b, i) => ({ b, colour: BRANCH_DOT[i % BRANCH_DOT.length]! }))
+    .sort((x, y) => y.b.revenueMinor - x.b.revenueMinor);
+  return (
+    <>
+      <div className="hm-pay-menu-head">
+        <strong>{t.yourBranches}</strong>
+        <span>{rupees(total)}</span>
+      </div>
+      <ul className="hm-branch-list">
+        {ranked.map(({ b, colour }) => (
+          <li key={b.id}>
+            <button type="button" onClick={() => onPick(b.id)}>
+              <i style={{ background: colour }} />
+              <span className="hm-branch-name">{b.name}</span>
+              <b>{rupees(b.revenueMinor)}</b>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -155,7 +191,6 @@ export function MoneyHero({
   onDaySummary,
   branchId = null,
   onPickBranch,
-  onMoreBranches,
 }: {
   t: HomeCopy;
   data: HomeOverview;
@@ -164,10 +199,20 @@ export function MoneyHero({
   /** The branch picked above the card; null is all of them. */
   branchId?: string | null;
   onPickBranch?: (id: string) => void;
-  onMoreBranches?: () => void;
 }) {
   const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  /*
+   * Jira GRW-485 — every branch's takings, from the branch line's "+N".
+   *
+   * "+3" used to open the branch SWITCHER, which answered a question nobody had
+   * asked: the owner tapping "+3" on a money line wants to see the other three
+   * numbers, not leave the screen. It opens the rest of the line instead, in the
+   * same popover the payment split already uses, and each row is still a way
+   * into that branch so nothing that worked before stopped working.
+   */
+  const [branchMenu, setBranchMenu] = useState(false);
+  const branchMenuRef = useRef<HTMLDivElement>(null);
   // Jira GRW-342 — a popover: focus moves in, Escape closes and returns to the ⋯ button, Tab past the end closes it.
   useDialog(menuRef, { onClose: () => setMenu(false), active: menu, trapTab: false });
   // Nothing to pick in this menu any more, so a tap anywhere else closes it.
@@ -179,6 +224,15 @@ export function MoneyHero({
     document.addEventListener('pointerdown', close);
     return () => document.removeEventListener('pointerdown', close);
   }, [menu]);
+  useDialog(branchMenuRef, { onClose: () => setBranchMenu(false), active: branchMenu, trapTab: false });
+  useEffect(() => {
+    if (!branchMenu) return;
+    const close = (e: PointerEvent) => {
+      if (!branchMenuRef.current?.parentElement?.contains(e.target as Node)) setBranchMenu(false);
+    };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [branchMenu]);
   const { money, week } = data;
   const eyebrow = money.period === 'today' ? t.moneyToday : money.period === 'week' ? t.moneyWeek : t.moneyMonth;
   const vs = money.period === 'today' ? t.vsYesterday : money.period === 'week' ? t.vsLastWeek : t.vsLastMonth;
@@ -189,7 +243,8 @@ export function MoneyHero({
       </span>
     ) : null;
   const branches = data.branches;
-  const showBranchLine = branches.length > 1 && branchId === null && Boolean(onPickBranch && onMoreBranches);
+  // Jira GRW-485 — the card owns the "+N" popover now, so it no longer needs a handler passed in for it.
+  const showBranchLine = branches.length > 1 && branchId === null && Boolean(onPickBranch);
 
   return (
     <section className={`hm-hero ${loading ? 'is-loading' : ''}`} aria-busy={loading}>
@@ -212,6 +267,11 @@ export function MoneyHero({
               <span>{rupees(money.revenueMinor)}</span>
             </div>
             <PaymentBar t={t} slices={money.byPaymentMode} total={money.revenueMinor} variant="list" />
+          </div>
+        ) : null}
+        {branchMenu ? (
+          <div ref={branchMenuRef} className="hm-menu hm-pay-menu hm-branch-menu" role="dialog" aria-label={t.yourBranches}>
+            <BranchMenu t={t} branches={branches} total={money.revenueMinor} onPick={onPickBranch!} />
           </div>
         ) : null}
       </div>
@@ -252,7 +312,7 @@ export function MoneyHero({
         the card that states it is the one you can act from.
       */}
       <div className="hm-hero-phone hm-mobile">
-        {showBranchLine ? <BranchLine t={t} branches={branches} onPick={onPickBranch!} onMore={onMoreBranches!} /> : null}
+        {showBranchLine ? <BranchLine t={t} branches={branches} onPick={onPickBranch!} onMore={() => setBranchMenu(true)} /> : null}
         <PaymentLine t={t} slices={money.byPaymentMode} total={money.revenueMinor} onMore={() => setMenu(true)} />
         {money.period === 'today' ? (
           <p className="hm-line-foot">

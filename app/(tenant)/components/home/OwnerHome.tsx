@@ -502,7 +502,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                 onDaySummary={() => setSummaryOpen(true)}
                 branchId={branch}
                 onPickBranch={pickBranch}
-                onMoreBranches={() => branchContext.setPickerOpen(true)}
               /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/*
