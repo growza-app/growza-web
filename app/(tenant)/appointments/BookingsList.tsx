@@ -15,6 +15,7 @@ import { useBranch } from '../components/BranchProvider';
 import {
   IconCalendar,
   IconCheck,
+  IconChevronDown,
   IconClock,
   IconFilter,
   IconMenu,
@@ -220,6 +221,8 @@ export function BookingsList({
   const te = useTranslations('errors');
   const [page, setPage] = useState(1);
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
+  // Jira-free, owner's call (2026-10-04): on a phone the filter card folds away behind a button.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [open, setOpen] = useState<BookingGroup | null>(null);
   // Mobile-only (GRW-46): both filter the day's already-loaded bookings
   // client-side, independent of the date form's own GET navigation — see
@@ -269,6 +272,18 @@ export function BookingsList({
   // the day, which is what the page is for. Latest-first earns its keep on a
   // From/To range, where the most recent day is usually the interesting end.
   const [sort, setSort] = useState<'asc' | 'desc'>(initialSort);
+  /*
+   * How many filters are actually narrowing the list — the number on the fold-away button, so a
+   * filter can never be on with the card shut and nothing to say so. The dates are counted only
+   * when they are not today's: this screen opens on today, and "today" is the view, not a filter.
+   */
+  const filterCount =
+    (query ? 1 : 0) +
+    (staffFilter !== 'Everyone' ? 1 : 0) +
+    (statusFilter ? 1 : 0) +
+    (unmarkedOnly ? 1 : 0) +
+    (sort !== 'asc' ? 1 : 0) +
+    (isToday ? 0 : 1);
   // Jira GRW-312 — a branch narrows the day itself, before the tiles are counted, so what Home
   // counted for that branch is what these tiles and this list show.
   const bookings = groupBookings(branch ? appointments.filter((a) => a.locationId === branch.id) : appointments);
@@ -572,7 +587,27 @@ export function BookingsList({
           select are desktop-only (mobile has its own search pill + tap chips
           inside this same card / just below it); the date range is on every
           viewport, since it's the one filter that actually re-queries. */}
-      <div className="card bk-filter-card">
+      {/*
+        On a phone the filters fold away (owner, 2026-10-04).
+
+        From, To, the search pill and the sort were about 240px of controls above the day's work,
+        and the dates open on today — so the commonest visit to this screen reads four filters set
+        to "everything, today" before it reaches a booking. The button says when any of them is
+        actually narrowing the list, so a filter can never be on without the owner seeing it.
+      */}
+      <button
+        type="button"
+        className={`bk-filter-toggle mobile-only ${filtersOpen ? 'is-open' : ''}`}
+        aria-expanded={filtersOpen}
+        aria-controls="bk-filter-card"
+        onClick={() => setFiltersOpen((v) => !v)}
+      >
+        <IconFilter />
+        <span>{t('filters')}</span>
+        {filterCount > 0 && <span className="bk-filter-count">{filterCount}</span>}
+        <IconChevronDown />
+      </button>
+      <div id="bk-filter-card" className={`card bk-filter-card ${filtersOpen ? 'is-open' : ''}`}>
         <form method="get" className="bk-filters">
           {/* Search / staff / status / sort are client-side state, but this
               form is a real GET submit — so Show (or changing a date on
@@ -747,7 +782,16 @@ export function BookingsList({
         </div>
       ) : (
         <>
+      {/*
+        The staff table is the laptop's (owner, 2026-10-04).
+
+        Six rows by four columns — who, how many, how long booked, when next — is a desktop table,
+        and on a phone it sat between the filters and the day's schedule, so the owner scrolled past
+        a whole roster to reach the two bookings they came for. The same facts are on each booking's
+        own card below, and Staff has the roster in full.
+      */}
       {!viewerIsStaff && (
+        <div className="desktop-only">
         <StaffTable
           everyone={staffTable.everyone}
           staff={staffTable.staff}
@@ -771,6 +815,7 @@ export function BookingsList({
             count: (n) => t('bookingCount', { count: n }),
           }}
         />
+        </div>
       )}
 
       <div className="bk-sched-head">

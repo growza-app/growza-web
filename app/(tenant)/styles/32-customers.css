@@ -2520,3 +2520,161 @@
   width: 0.9375rem;
   height: 0.9375rem;
 }
+
+/*
+ * Bookings on a phone: the filters fold away, the day leads (owner, 2026-10-04).
+ *
+ * The screen used to read four KPI tiles, a search pill, two date fields opening on today, a sort
+ * and a six-row staff table before the first booking — about 620px of controls above the thing the
+ * owner opened the screen to see. The staff table is `.desktop-only` now and the filter card hides
+ * behind this button, which carries a count so a filter can never be on with the card shut.
+ */
+.bk-filter-toggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .bk-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: var(--sp-3);
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    cursor: pointer;
+  }
+
+  .bk-filter-toggle svg {
+    width: 1.0625rem;
+    height: 1.0625rem;
+    flex: none;
+    color: var(--muted);
+  }
+
+  /* The chevron sits at the far end and turns when the card is open. */
+  .bk-filter-toggle svg:last-child {
+    margin-left: auto;
+    transition: transform 0.15s ease;
+  }
+
+  .bk-filter-toggle.is-open svg:last-child {
+    transform: rotate(180deg);
+  }
+
+  /* The count is the whole point of the button: a filter left on is never silent. */
+  .bk-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--accent-deep);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .bk-filter-card {
+    display: none;
+  }
+
+  .bk-filter-card.is-open {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-filter-toggle svg:last-child {
+    transition: none;
+  }
+}
+
+/*
+ * Clients on a phone: the bands fold away (owner, 2026-10-04).
+ *
+ * Four KPI tiles then four bands with a two-line note is eight numbers and about 420px before the
+ * first client. The bands are the list's filter, so they stay ABOVE it and fold instead — the same
+ * shape as `.bk-filter-toggle` on Bookings, so the two screens learn the same gesture.
+ */
+.cust-segments-toggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .cust-segments-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: var(--sp-3);
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .cust-segments-toggle > span:first-of-type {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cust-segments-toggle svg {
+    width: 1.0625rem;
+    height: 1.0625rem;
+    flex: none;
+    color: var(--muted);
+  }
+
+  .cust-segments-toggle svg:last-child {
+    margin-left: auto;
+    transition: transform 0.15s ease;
+  }
+
+  .cust-segments-toggle.is-open svg:last-child {
+    transform: rotate(180deg);
+  }
+
+  /* Which band is on, named rather than counted: "Slipping away" says more than "1". */
+  .cust-segments-on {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .cust-segments {
+    display: none;
+  }
+
+  .cust-segments.is-open {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cust-segments-toggle svg:last-child {
+    transition: none;
+  }
+}

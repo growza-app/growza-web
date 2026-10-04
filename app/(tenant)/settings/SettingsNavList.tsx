@@ -51,8 +51,6 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
             {group.rows.filter((row) => !row.multiBranchOnly || multi).map((row) => {
               const Icon = row.icon;
               const key = multi && row.multiBranchKey ? row.multiBranchKey : row.key;
-              // Before the href check: a row with an action has no href either,
-              // and would otherwise render as disabled with "Coming soon".
               if (row.action === 'logout') {
                 return (
                   <SignOutButton key={row.key} className="settings-row settings-row-action">
@@ -66,20 +64,12 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
                   </SignOutButton>
                 );
               }
-              if (!row.href) {
-                return (
-                  <div className="settings-row settings-row-disabled" key={row.key}>
-                    <span className="settings-row-icon">
-                      <Icon />
-                    </span>
-                    <div className="settings-row-body">
-                      <div className="settings-row-title">{t(`rows.${key}.label`)}</div>
-                      <div className="settings-row-sub">{t(`rows.${key}.sub`)}</div>
-                    </div>
-                    <span className="settings-row-soon">{t('comingSoon')}</span>
-                  </div>
-                );
-              }
+              /*
+               * There is no "Coming soon" row any more (owner, 2026-10-04). Five of them were drawn
+               * greyed out here; a row is worth drawing when it goes somewhere, and `nav-data` now
+               * lists only rows that do. A row with no `href` and no action would render as a dead
+               * link, so the type keeps `href` required for everything but an action.
+               */
               return (
                 <a className="settings-row" href={withBranch(row.href, branch)} key={row.key}>
                   <span className="settings-row-icon">

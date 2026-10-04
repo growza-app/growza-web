@@ -36,19 +36,16 @@ export type SettingsRowKey =
   | 'account'
   | 'logOut';
 
-export interface SettingsRow {
-  /** Present = a real, working page. Absent = shown but disabled — nothing exists to link to yet. */
-  href?: string;
-  /**
-   * Jira GRW-66 · GRW-160 — a row that DOES something rather than going
-   * somewhere. Only "Log out" so far.
-   *
-   * It needed its own kind because the two that existed did not fit: it has no
-   * `href`, and without this it fell into the no-href branch and rendered as
-   * disabled with a "Coming soon" pill — telling an owner that signing out was
-   * a future feature.
-   */
-  action?: 'logout';
+/**
+ * A row either goes somewhere or does something — never neither (owner, 2026-10-04).
+ *
+ * `href` used to be optional, and a row without one rendered greyed out with a "Coming soon" pill.
+ * Five of them shipped that way. The union makes that state unspellable: a new row has to name the
+ * page it opens, and it earns its line here on the day that page exists.
+ */
+export type SettingsRow = SettingsRowBase & ({ href: string; action?: never } | { href?: never; action: 'logout' });
+
+interface SettingsRowBase {
   /**
    * Jira GRW-227 — listed only for a business with more than one active
    * branch. With one, its address lives on Business profile and a Branches
@@ -111,22 +108,18 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
       { href: '/settings/billing', key: 'billing', icon: IconWallet },
-      { key: 'payments', icon: IconWallet },
-      { key: 'whatsapp', icon: IconWhatsApp },
     ],
   },
-  {
-    key: 'preferences',
-    rows: [
-      { key: 'appearance', icon: IconPalette },
-      { key: 'privacy', icon: IconLock },
-    ],
-  },
+  /*
+   * Gone: Payments, WhatsApp settings, Appearance, Privacy and Account (owner, 2026-10-04).
+   *
+   * Five rows with no href, drawn greyed out with a "Coming soon" pill — a third of this screen
+   * promising things that do not exist, on the one screen an owner opens when something is already
+   * not where they expected. Settings is now only what Settings can actually do. They come back as
+   * rows when they come back as screens, which is the only moment a row is worth drawing.
+   */
   {
     key: 'account',
-    rows: [
-      { key: 'account', icon: IconUser },
-      { key: 'logOut', icon: IconLogout, action: 'logout' },
-    ],
+    rows: [{ key: 'logOut', icon: IconLogout, action: 'logout' }],
   },
 ];
