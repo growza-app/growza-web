@@ -523,8 +523,11 @@ export function CustomersClient({
                         </a>
                       )}
                       {c.lastBookingAt && (
-                        <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                          <IconCalendar /> {formatDate(c.lastBookingAt, undefined, locale)} · {c.lastServiceName}
+                        <div className="muted cl-last-visit" style={{ fontSize: 13, marginTop: 2 }}>
+                          <span className="cl-last-visit-icon">
+                            <IconCalendar />
+                          </span>
+                          {formatDate(c.lastBookingAt, undefined, locale)} · {c.lastServiceName}
                         </div>
                       )}
                     </div>
