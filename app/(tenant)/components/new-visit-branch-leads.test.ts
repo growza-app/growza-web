@@ -56,7 +56,18 @@ describe('the client picker is the branch’s own', () => {
 describe('what the branch step shows', () => {
   it('says the branch once it is settled, rather than asking again', () => {
     expect(code).toMatch(/const branchSettled = Boolean\(tokenBranch\) \|\| \('client' in stage && stage\.client\.kind === 'existing'\)/);
-    expect(code).toMatch(/\{branchSettled && branchNameOf\(listBranch \?\? undefined\) \?/);
+    // Owner's call (2026-10-04): a line, not a "Which branch?" heading over a single chip that answers
+    // it. A question with one possible answer is not a question — `entering-data.md` asks for the
+    // opposite, pre-gather what you can.
+    expect(code).toMatch(/\{branchSettled && branches\.length > 1 && branchNameOf\(listBranch \?\? undefined\) \?/);
+    expect(code).toMatch(/<p className="wi-at-branch">\{nv\.atBranch\(/);
+    // The chip that pretended to be a choice is gone; nothing else in this file renders that markup.
+    expect(code).not.toMatch(/wi-chip wi-chip-on" aria-current/);
+  });
+
+  it('a one-branch salon is told nothing — there is nothing to tell', () => {
+    // The line is worth a row only when there is more than one branch it could have been.
+    expect(code).toMatch(/branchSettled && branches\.length > 1/);
   });
 
   it('still asks while the answer is open — a new client becomes a client of whichever branch is chosen', () => {
