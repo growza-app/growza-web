@@ -209,8 +209,10 @@ describe("the phone's card order (Jira GRW-486)", () => {
     expect(owner).not.toMatch(/hm-area-attention hm-desktop/);
   });
 
-  it('reads money, queue, what needs you, the day, clients, shortcuts', () => {
-    const order = ['hero', 'queue', 'attention', 'bookings', 'clients', 'links'].map(at);
+  it('reads money, shortcuts, queue, what needs you, the day, clients', () => {
+    // Shortcuts sit second by the owner's own call (2026-10-04) — Packages, Offers and Free times
+    // have no tab, so this grid is how they get into the app.
+    const order = ['hero', 'links', 'queue', 'attention', 'bookings', 'clients'].map(at);
     expect(order.every((n) => n > 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
@@ -219,7 +221,7 @@ describe("the phone's card order (Jira GRW-486)", () => {
     expect(home).not.toMatch(/\.hm-area-(?:hero|attention|queue|links|clients|bookings)\s*\{\s*order:/);
   });
 
-  it('shortcuts stay on the phone — they are the only way to Packages and Free times', () => {
+  it('shortcuts are on the phone and nowhere else', () => {
     expect(owner).toMatch(/className="hm-area-links hm-mobile"/);
   });
 

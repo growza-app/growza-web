@@ -72,7 +72,7 @@ import { useMinuteClock } from './useMinuteClock';
  *
  * ## The phone's order is this file's, not the stylesheet's (Jira GRW-486)
  *
- * Money, the queue when somebody is on it, what needs you, the day, clients, shortcuts — in
+ * Money, shortcuts, the queue when somebody is on it, what needs you, the day, clients — in
  * that order here, because that is the order they are read in. 83-role-home.css used to set it
  * with `order`, which moves the eye without moving Tab or VoiceOver. The laptop grid places by
  * `grid-template-areas` and does not care what order these are in, so one DOM order serves both.
@@ -505,6 +505,19 @@ export function OwnerHome(p: OwnerHomeProps) {
               /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
 
           {/*
+            Quick links, directly under the money card (owner, 2026-10-04).
+
+            GRW-486 had sent these to the bottom, on the argument that a grid of nine links repeats
+            the tab bar and should not outrank the day. The owner uses them as the way INTO the app
+            — Packages, Offers, Free times and Settings have no tab at all — and wants them where
+            the hand lands after reading the takings. So they sit second, and what needs the owner
+            follows them.
+          */}
+          <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
+            <QuickTiles items={links} />
+          </Card>
+
+          {/*
             Jira GRW-418 — who is waiting, and the desk's own controls for dealing with them.
 
             Every width, unlike `Right now` (which 83-role-home.css hides below 1101px): a salon owner
@@ -557,11 +570,6 @@ export function OwnerHome(p: OwnerHomeProps) {
             <SegmentCards t={t} stats={clientStats} branch={branch} />
           </Card>
 
-          {/* Jira GRW-486 — last on the phone, and nowhere else: these are shortcuts, and shortcuts
-              do not outrank the day. Kept because Packages, Offers and Free times have no tab. */}
-          <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
-            <QuickTiles items={links} />
-          </Card>
         </div>
       </div>
 
