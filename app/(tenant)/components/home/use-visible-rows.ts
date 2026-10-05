@@ -23,9 +23,15 @@ export function useVisibleRows(board: RefObject<HTMLElement | null>, enabled: bo
     const measure = () => {
       for (const list of lists) {
         const rows = list.children;
-        if (!enabled || rows.length <= VISIBLE_ROWS || list.offsetParent === null) {
+        if (!enabled || list.offsetParent === null) {
           list.style.removeProperty('--tb-visible');
           list.removeAttribute('data-more');
+          continue;
+        }
+        // Five rows or fewer: no row cap of its own, but the screen's cap (60dvh, in the sheet) can still make it scroll.
+        if (rows.length <= VISIBLE_ROWS) {
+          list.style.removeProperty('--tb-visible');
+          flag(list);
           continue;
         }
         const first = rows[0] as HTMLElement;
