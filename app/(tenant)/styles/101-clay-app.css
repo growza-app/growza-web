@@ -48,7 +48,9 @@
 .offer-card-row,
 .menu-list,
 .cust-kpi,
-.hm-att {
+.hm-att,
+.rp-card,
+.bk-waiting {
   box-shadow: var(--clay-raise);
 }
 
@@ -61,7 +63,10 @@
 .bk-filter-toggle,
 .cust-segments-toggle,
 .hm-btn-quiet,
-.btn-ghost {
+.btn-ghost,
+.hm-toolbar-summary,
+.hm-give,
+.rp-control {
   box-shadow: var(--clay-raise-soft);
 }
 
@@ -72,12 +77,18 @@
 .pagination-btn:active,
 .bk-filter-toggle:active,
 .hm-btn-quiet:active,
-.btn-ghost:active {
+.btn-ghost:active,
+.hm-give:active,
+.rp-control:active {
   box-shadow: var(--clay-press);
 }
 
 /* ---------- raised: the bottom bar and its centre ---------- */
 @media (max-width: 860px) {
+  /* Jira GRW-552 — the token card is a card on a phone (GRW-548), so it is raised like the rest. */
+  .tb-board .tb-row {
+    box-shadow: var(--clay-raise);
+  }
   .bottom-nav {
     box-shadow:
       4px 6px 16px rgba(14, 51, 37, 0.16),
@@ -151,4 +162,16 @@
 .sheet,
 .hm-sheet {
   box-shadow: 0 -6px 24px rgba(14, 51, 37, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.9);
+}
+
+/* ---------- raised: the quick-link tiles and their glyphs (Jira GRW-553 · GRW-554) ---------- */
+/* The tile is a small dome of clay: the raise shadow, plus a soft light across its upper left (a gradient
+   from white to clear, so each tile keeps its own tint underneath). The glyph itself is flat — no shadow on
+   the icon (the owner asked for it to go). */
+.hm-tile-icon {
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 62%);
+  box-shadow: var(--clay-raise);
+}
+.hm-tile:active .hm-tile-icon {
+  box-shadow: var(--clay-press);
 }

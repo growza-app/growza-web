@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { formatMoney, formatTime, type Provider, type QueueEntry, type TokenRow } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
-import { minutesBetween } from '../../lib/live-state';
 import { IconStopwatch } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { useMayUse } from '../SessionProvider';
@@ -196,16 +195,6 @@ export function TokenBoard({
     tabRefs.current[next]?.focus();
   };
 
-  /**
-   * Jira GRW-481 — how long someone has been waiting, in the form that helps.
-   * Under four hours a duration is what the desk wants; past that it has stopped
-   * being a duration and become a fact about this morning, so hand over the
-   * clock time they arrived instead. `arrivedAt` is a thunk because formatting a
-   * time costs more than the comparison that decides whether we need it.
-   */
-  const waitingWord = (minutes: number, arrivedAt: () => string) =>
-    minutes >= 4 * 60 ? t.sinceTime(arrivedAt()) : t.waitedFor(minutes);
-
   const services = (x: TokenRow) =>
     x.serviceNames.length > 0 ? x.serviceNames.join(' + ') : <span className="tb-muted">{w.servicesAtPayment}</span>;
 
@@ -216,15 +205,17 @@ export function TokenBoard({
         {/* Name and its one fact on a line; in a narrow column the fact drops under the name instead of squeezing it. */}
         <span className="tb-line">
           <span className="tb-name">{nameOf(x)}</span>
+          {/* Jira GRW-548 — "Token No: 13", a pill on the second line. Phone only: a laptop's row has no room for it. */}
+          <span className="tb-token">{w.tokenNoLabel(x.tokenNo)}</span>
           <span className="tb-meta">
             {col === 'waiting'
-              ? // Jira GRW-481 — past four hours a duration tells the desk nothing useful;
-                // the time they walked in does. Jira GRW-541 · GRW-543 · GRW-544 — a stopwatch icon, then the time, not the word "Waiting".
+              ? // Jira GRW-541 · GRW-543 · GRW-544 — a stopwatch icon, then the time, not the word "Waiting".
+                // Jira GRW-548 — and the time they arrived ("Since 2:57 pm"), in the owner's card design, at every width.
                 [
                   <span key="icon" className="tb-meta-icon" aria-hidden="true">
                     <IconStopwatch />
                   </span>,
-                  waitingWord(minutesBetween(x.addedAt, now), () => formatTime(x.addedAt, timezone)),
+                  t.sinceTime(formatTime(x.addedAt, timezone)),
                 ]
               : col === 'with_stylist'
                 ? // Jira GRW-405 — a booked client's visit runs at the booked time, not when they walked in.
