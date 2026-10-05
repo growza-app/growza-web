@@ -86,7 +86,10 @@ describe('bringing a client over from another branch', () => {
   });
 
   it('offers them only against a typed search', () => {
-    expect(code).toMatch(/\{term\.trim\(\)\.length >= SEARCH_MIN_CHARS && elsewhere\.length > 0 \?/);
+    // Jira GRW-520 — they live in the dropdown, which is only drawn for a typed search of enough characters.
+    expect(code).toMatch(/const showDrop = comboOpen && term\.trim\(\)\.length >= SEARCH_MIN_CHARS;/);
+    expect(code).toMatch(/\{showDrop \? \(/);
+    expect(code).toMatch(/\{elsewhere\.length > 0 \? \(/);
     // Jira GRW-517 — there is no browsable list at all now; a client is found by typing.
     expect(code).not.toMatch(/\{term\.trim\(\)\.length < SEARCH_MIN_CHARS \?/);
   });
@@ -98,9 +101,11 @@ describe('bringing a client over from another branch', () => {
 
   it('does not pick them — the booking must use a client of its own branch', () => {
     // `bringHere`, not `pickClient`: a row from another branch opens the add step instead of becoming the client.
-    const row = code.slice(code.indexOf('elsewhere.map('));
-    expect(row.slice(0, 600)).toMatch(/onClick=\{\(\) => bringHere\(c\)\}/);
-    expect(row.slice(0, 600)).not.toMatch(/pickClient/);
+    const row = code.slice(code.indexOf('elsewhere.map((c, j) =>'));
+    expect(row.slice(0, 1400)).toMatch(/onClick=\{\(\) => bringHere\(c\)\}/);
+    expect(row.slice(0, 1400)).not.toMatch(/pickClient/);
+    // And the keyboard path agrees: Enter on one of these brings them, it does not pick them.
+    expect(code).toMatch(/if \(o\.bring\) bringHere\(o\.c\);\s*else pickClient\(o\.c\);/);
   });
 
   it('carries their name and number into the add block, the number as national digits', () => {
