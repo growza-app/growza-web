@@ -26,16 +26,6 @@ import {
   IconUserPlus,
 } from '../components/icons';
 
-/** What the salon actually took for a booking (see `bookingBill`). */
-function bookingTotalMinor(b: BookingGroup): number {
-  return bookingBill(b.appointments).totalMinor;
-}
-
-/** Jira GRW-480 — the API sends no prices to a stylist the owner keeps off the money. */
-function pricesShown(b: BookingGroup): boolean {
-  return b.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null);
-}
-
 /**
  * A staff member's rail/avatar colour, mobile only (GRW-46). Hashed from
  * their name rather than a per-name lookup table — the mock this mirrors
@@ -58,59 +48,28 @@ const staffBgFor = (name: string) => `oklch(0.95 0.045 ${staffHue(name)})`;
  */
 const staffInkFor = (name: string) => `oklch(0.4 0.1 ${staffHue(name)})`;
 
-// `value` widened to string so the revenue tile can carry a formatted amount alongside the plain counts.
-function Kpi({
-  tone,
-  icon,
-  value,
-  label,
-  sub,
-  className,
-  active,
-  onPress,
-}: {
-  tone: string;
-  icon: ReactNode;
-  value: number | string;
-  label: string;
-  sub: string;
-  className?: string;
-  /**
-   * Jira GRW-308 — a tile that filters the list. `active` is whether it is the
-   * filter in force; `onPress` toggles it. Absent, the tile is a plain figure.
-   */
-  active?: boolean;
-  onPress?: () => void;
-}) {
-  const body = (
-    <>
-      <span className={`bk-kpi-icon bk-kpi-${tone}`}>{icon}</span>
-      <div className="bk-kpi-text">
-        <div className="bk-kpi-value">{value}</div>
-        <div className="bk-kpi-label">{label}</div>
-        <div className={`bk-kpi-sub bk-kpi-sub-${tone}`}>{sub}</div>
-      </div>
-    </>
-  );
-  // The "Today" / "Next 2 hrs" sub-line is dropped at narrower widths
-  // (there is no room for it in a quarter-width tile), which leaves the
-  // counts with nothing saying WHICH day they cover. The tooltip carries
-  // that on hover, and aria-label gives a screen reader the same sentence
-  // rather than three unlabelled numbers in a row.
-  const name = `${value} ${label}, ${sub}`;
-  if (onPress) {
-    return (
-      <button type="button" className={`bk-kpi bk-kpi-btn ${active ? 'is-active' : ''} ${className ?? ''}`} title={`${label} — ${sub}`} aria-label={name} aria-pressed={active} onClick={onPress}>
-        {body}
-      </button>
-    );
-  }
-  return (
-    <div className={`bk-kpi ${className ?? ''}`} title={`${label} — ${sub}`} aria-label={name}>
-      {body}
-    </div>
-  );
+/**
+ * The three lists the day can be read as.
+ *
+ * Waiting and Booked were separate until the owner pointed out that they are the same answer to
+ * the question a receptionist actually asks — what is left to do. They share a state: nobody has
+ * been served yet. They differ in where the person is, and that difference is kept inside `To do`,
+ * where the waiting block sits at the top with its tokens, rather than as a tab of its own.
+ *
+ * `To do` and `Completed` partition the day; `All` is the day in time order.
+ */
+const TABS = ['all', 'todo', 'completed'] as const;
+
+/** What the salon actually took for a booking (see `bookingBill`). */
+function bookingTotalMinor(b: BookingGroup): number {
+  return bookingBill(b.appointments).totalMinor;
 }
+
+/** Jira GRW-480 — the API sends no prices to a stylist the owner keeps off the money. */
+function pricesShown(b: BookingGroup): boolean {
+  return b.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null);
+}
+
 
 /**
  * The bookings page: a "today" dashboard — headline counts, then the day's
@@ -229,6 +188,7 @@ export function BookingsList({
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
   // Jira-free, owner's call (2026-10-04): on a phone the filter card folds away behind a button.
   const [filtersOpen, setFiltersOpen] = useState(false);
+
   const [open, setOpen] = useState<BookingGroup | null>(null);
   // Mobile-only (GRW-46): both filter the day's already-loaded bookings
   // client-side, independent of the date form's own GET navigation — see
@@ -285,8 +245,16 @@ export function BookingsList({
    * Not the search and not the dates: all three have their own control in view, and counting what
    * is already on screen reports it twice. The funnel counts only what the funnel hides.
    */
+  /*
+   * The status is the tab's now, so the funnel stops counting it: on Completed the tab already says
+   * so, and a badge reading 1 for the same fact is the screen telling you twice.
+   */
   const filterCount =
-    (staffFilter !== 'Everyone' ? 1 : 0) + (statusFilter ? 1 : 0) + (unmarkedOnly ? 1 : 0) + (sort !== 'asc' ? 1 : 0);
+    (staffFilter !== 'Everyone' ? 1 : 0) +
+    (unmarkedOnly ? 1 : 0) +
+    (sort !== 'asc' ? 1 : 0) +
+    // An exception status has no segment to show it, so this count is the only thing that can.
+    (statusFilter !== '' && statusFilter !== 'confirmed' && statusFilter !== 'completed' ? 1 : 0);
   // Jira GRW-312 — a branch narrows the day itself, before the tiles are counted, so what Home
   // counted for that branch is what these tiles and this list show.
   const bookings = groupBookings(branch ? appointments.filter((a) => a.locationId === branch.id) : appointments);
@@ -322,7 +290,7 @@ export function BookingsList({
   const matchesStaff = (b: BookingGroup) => staffFilter === 'Everyone' || b.providerNames.includes(staffFilter);
   const matchesStatus = (b: BookingGroup) => !statusFilter || b.status === statusFilter;
   // What the tiles count: everything that matches the search and the staff chips, before the
-  // status is applied (the status is what the tiles choose between; see `statusTile`).
+  // status is applied (the status is what the segmented control chooses between).
   const inView = bookings.filter((b) => matchesStaff(b) && matchesQuery(b));
   const matching = inView.filter(matchesStatus).filter((b) => !unmarkedOnly || countsAsNotMarked(b, now));
   // groupBookings already returns ascending by start time, so descending is a
@@ -371,17 +339,41 @@ export function BookingsList({
    * folded into the schedule below: that list is ordered by start time and a waiting person has
    * none — nobody has promised them one — so they would have to be given a fake time to sit in it.
    */
-  const waiting = useMemo(() => (queue ? atBranch(queue, branch?.id ?? null) : null), [queue, branch]);
+  const waiting = useMemo(() => {
+    if (!queue) return null;
+    /*
+     * Sorted by token number (owner, 2026-10-04). The server hands them back in arrival order, which
+     * is the same order — until it is not: a token given to a stylist leaves the queue, and one
+     * added at another branch can land between two of these. The receptionist calls numbers, so the
+     * list is sorted by the thing they call. A token with no number sinks to the bottom rather than
+     * sorting as nought.
+     */
+    return atBranch(queue, branch?.id ?? null)
+      .slice()
+      .sort((a, b) => (a.tokenNo ?? Number.MAX_SAFE_INTEGER) - (b.tokenNo ?? Number.MAX_SAFE_INTEGER));
+  }, [queue, branch]);
+
+  /** `To do` counts both halves of what is left: the people waiting and the visits not yet done. */
+  const tabCount = (seg: (typeof TABS)[number]): number =>
+    seg === 'todo'
+      ? countIn('confirmed') + (waiting?.length ?? 0)
+      : seg === 'completed'
+        ? countIn('completed')
+        : inView.length + (waiting?.length ?? 0);
+
+  /**
+   * Which segment is showing — DERIVED from the status filter, not a second state beside it.
+   *
+   * The two were separate for an afternoon and immediately disagreed: picking "Didn't come" from
+   * the funnel filtered the list while a segment stayed highlighted, so the row claimed one thing
+   * and the list showed another. The exceptions (didn't come, cancelled) map to no segment at all,
+   * which is honest — no segment is showing that list — and the funnel's count says so instead.
+   */
+  const tab: (typeof TABS)[number] | null =
+    statusFilter === '' ? 'all' : statusFilter === 'confirmed' ? 'todo' : statusFilter === 'completed' ? 'completed' : null;
 
   const statusWord = (status: string): string | null =>
     status === 'confirmed' ? ts('confirmed') : status === 'completed' ? ts('done') : status === 'no_show' ? ts('didNotCome') : null;
-  const statusTile = (status: string) => ({
-    active: statusFilter === status,
-    onPress: () => {
-      setStatusFilter(statusFilter === status ? '' : status);
-      setPage(1);
-    },
-  });
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const clamped = Math.min(page, pageCount);
@@ -586,56 +578,29 @@ export function BookingsList({
         </div>
       )}
 
-      {!loadFailed && (
-      <div className="bk-kpis">
-        <Kpi
-          tone="green"
-          icon={<IconCalendar />}
-          value={inView.length}
-          label={t('kpiBookings')}
-          sub={isToday ? t('today') : dayLabel}
-          active={statusFilter === ''}
-          onPress={() => {
-            setStatusFilter('');
-            setPage(1);
-          }}
-        />
-        <Kpi tone="amber" icon={<IconClock />} value={countIn('confirmed')} label={ts('confirmed')} sub={isToday ? t('today') : dayLabel} {...statusTile('confirmed')} />
-        <Kpi tone="purple" icon={<IconCheck />} value={countIn('completed')} label={ts('done')} sub={isToday ? t('today') : dayLabel} {...statusTile('completed')} />
-        {/*
-          "Didn't come" is the one tile whose normal value is nought, and a quarter of the row to
-          say nothing went wrong is a quarter the other three could use — four tiles across a 390px
-          phone leave each about 88px. It appears on the days it has something to report, and the
-          three that always say something share the row on the days it does not. The count is still
-          reachable when it is zero: Status in the filters.
-        */}
-        {countIn('no_show') > 0 && (
-          <Kpi tone="red" icon={<IconUserPlus />} value={countIn('no_show')} label={ts('didNotCome')} sub={isToday ? t('today') : dayLabel} {...statusTile('no_show')} />
-        )}
-      </div>
-      )}
-
       {/*
-        The tiles are a summary AND the status filter, and nothing said so (2026-10-04).
-
-        Tapping one narrows the list below; the tile takes an active outline, but a tile that looks
-        like a figure does not announce that it is also a control, and the outline is easy to miss
-        on a screen of four. So when a tile is holding the list down, the screen says which one in
-        words and offers the way out — the same promise the Filters button makes for the controls
-        it hides.
+        Jira GRW-488 — the tiles become a segmented control.
+        All · Waiting · Booked · Done, each with its count. The tiles were a summary AND the status
+        filter and hid which one was on; a segment cannot hide it. ~44px where the tiles took ~170.
       */}
-      {statusWord(statusFilter) !== null && (
-        <div className="bk-status-on" role="status">
-          <span>{t('showingOnly', { status: statusWord(statusFilter)! })}</span>
-          <button
-            type="button"
-            onClick={() => {
-              setStatusFilter('');
-              setPage(1);
-            }}
-          >
-            {t('showAll')}
-          </button>
+      {!loadFailed && (
+        <div className="page-tabs bk-tabs" role="tablist" aria-label={t('filters')}>
+          {TABS.map((seg) => (
+            <button
+              key={seg}
+              type="button"
+              role="tab"
+              aria-selected={tab === seg}
+              className={`page-tab ${tab === seg ? 'active' : ''}`}
+              onClick={() => {
+                setStatusFilter(seg === 'todo' ? 'confirmed' : seg === 'completed' ? 'completed' : '');
+                setPage(1);
+              }}
+            >
+              {t(`tab_${seg}`)}
+              <span className="page-tab-count">{tabCount(seg)}</span>
+            </button>
+          ))}
         </div>
       )}
 
@@ -794,9 +759,10 @@ export function BookingsList({
                 setPage(1);
               }}
             >
+              {/* Confirmed and Completed are the segments' now; what is left here is the two
+                  exceptions, which deserve no segment of their own because on most days they are
+                  empty and a segment that is always 0 is a quarter of the row saying nothing. */}
               <option value="">{t('allStatuses')}</option>
-              <option value="confirmed">{ts('confirmed')}</option>
-              <option value="completed">{ts('done')}</option>
               <option value="no_show">{ts('didNotCome')}</option>
               <option value="cancelled">{ts('cancelled')}</option>
             </select>
@@ -830,6 +796,49 @@ export function BookingsList({
               dates, and the hidden inputs above, through that submit. */}
         </form>
       </div>
+
+      {/*
+        Jira GRW-487 — the people waiting, above the day's timed rows — and above the empty state.
+
+        Somebody standing in the salon comes before a visit booked for four o'clock. Read-only: a
+        row opens the board on Home, which is where a token is given a stylist, started and paid.
+        Out of the tiles above, too — a waiting person is not a booking, and counting them there
+        would make that figure disagree with Reports.
+
+        Outside the "no bookings that day" branch, which is where this first sat: a morning of
+        walk-ins and nothing booked is the case this whole feature exists for, and it was the one
+        case that drew "No bookings that day" over a queue with two people in it.
+      */}
+      {isToday && waiting === null && (
+        <div className="bk-waiting bk-waiting-error" role="status">
+          {t('queueUnreadable')}
+        </div>
+      )}
+      {isToday && waiting !== null && waiting.length > 0 && (tab === 'all' || tab === 'todo') && (
+        <section className="bk-waiting" aria-label={t('waitingTitle')}>
+          <div className="bk-waiting-head">
+            <h2>{t('waitingTitle')}</h2>
+            <span className="bk-waiting-count">{waiting.length}</span>
+          </div>
+          <ul className="bk-waiting-list">
+            {waiting.map((w) => (
+              <li key={w.id}>
+                <a className="bk-waiting-row" href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}>
+                  {/* The number is what the client was told at the counter, so it leads the row. */}
+                  {/* "#2", not "2": a bare number beside a name reads as a count of something. */}
+                  <span className="bk-waiting-token">{w.tokenNo === null ? '—' : `#${w.tokenNo}`}</span>
+                  <span className="bk-waiting-who">
+                    <span className="bk-waiting-name">{w.customerName}</span>
+                    {w.serviceNames.length > 0 && <span className="bk-waiting-svc">{w.serviceNames.join(' · ')}</span>}
+                  </span>
+                  <span className="bk-waiting-min">{t('waitingMin', { count: wholeMinutes(w.addedAt, now) })}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
 
       {bookings.length === 0 ? (
         <div className="card">
@@ -869,43 +878,6 @@ export function BookingsList({
         fields are what the owner asked for and they are no longer folded away: they sit under the
         search row, and only staff, status and order wait behind the funnel.
       */}
-
-      {/*
-        Jira GRW-487 — the people waiting, above the day's timed rows.
-
-        Somebody standing in the salon comes before a visit booked for four o'clock. Read-only: a
-        row opens the board on Home, which is where a token is given a stylist, started and paid.
-        Out of the tiles above, too — a waiting person is not a booking, and counting them there
-        would make that figure disagree with Reports.
-      */}
-      {isToday && waiting === null && (
-        <div className="bk-waiting bk-waiting-error" role="status">
-          {t('queueUnreadable')}
-        </div>
-      )}
-      {isToday && waiting !== null && waiting.length > 0 && (
-        <section className="bk-waiting" aria-label={t('waitingTitle')}>
-          <div className="bk-waiting-head">
-            <h2>{t('waitingTitle')}</h2>
-            <span className="bk-waiting-count">{waiting.length}</span>
-          </div>
-          <ul className="bk-waiting-list">
-            {waiting.map((w) => (
-              <li key={w.id}>
-                <a className="bk-waiting-row" href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}>
-                  {/* The number is what the client was told at the counter, so it leads the row. */}
-                  <span className="bk-waiting-token">{w.tokenNo ?? '—'}</span>
-                  <span className="bk-waiting-who">
-                    <span className="bk-waiting-name">{w.customerName}</span>
-                    {w.serviceNames.length > 0 && <span className="bk-waiting-svc">{w.serviceNames.join(' · ')}</span>}
-                  </span>
-                  <span className="bk-waiting-min">{t('waitingMin', { count: wholeMinutes(w.addedAt, now) })}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       <div className="bk-sched-head">
         <h2>

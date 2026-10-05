@@ -2881,3 +2881,32 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/*
+ * The segmented control that replaced the KPI tiles.
+ *
+ * Sticky, so a long day can be re-cut without scrolling back to the top: measured at 390px over a
+ * five-day range, scrolled 700px inside `.page-body` and the row held at the container's top edge.
+ */
+.bk-tabs {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  width: 100%;
+  margin-bottom: var(--sp-3);
+  background: var(--page-bg);
+}
+
+.bk-tabs .page-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+

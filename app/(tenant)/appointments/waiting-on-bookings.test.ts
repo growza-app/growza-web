@@ -39,20 +39,30 @@ describe('the people waiting, on Bookings', () => {
   });
 
   it('draws nothing when nobody is waiting', () => {
-    expect(list).toMatch(/\{isToday && waiting !== null && waiting\.length > 0 && \(/);
+    expect(list).toMatch(/\{isToday && waiting !== null && waiting\.length > 0 &&/);
   });
 
   it('shows the token, the name, the services and how long they have waited', () => {
-    expect(list).toMatch(/className="bk-waiting-token">\{w\.tokenNo \?\? '—'\}/);
+    // "#2", not "2" — a bare number beside a name reads as a count of something.
+    expect(list).toMatch(/\{w\.tokenNo === null \? '—' : `#\$\{w\.tokenNo\}`\}/);
     expect(list).toMatch(/className="bk-waiting-name">\{w\.customerName\}/);
     expect(list).toMatch(/w\.serviceNames\.join\(' · '\)/);
     expect(list).toMatch(/t\('waitingMin', \{ count: wholeMinutes\(w\.addedAt, now\) \}\)/);
   });
 
-  it('keeps the queue\'s own order — token order is arrival order', () => {
-    const block = list.slice(list.indexOf('const waiting ='), list.indexOf('const statusWord'));
+  it('is sorted by token number — that is the number the receptionist calls', () => {
+    // Arrival order and token order are the same until they are not: a token given to a stylist
+    // leaves the queue, and one added at another branch can land between two of these.
+    const block = list.slice(list.indexOf('const waiting ='), list.indexOf('const tabCount'));
     expect(block).toMatch(/atBranch\(queue, branch\?\.id \?\? null\)/);
-    expect(block).not.toMatch(/\.sort\(/);
+    expect(block).toMatch(/\.sort\(\(a, b\) => \(a\.tokenNo \?\? Number\.MAX_SAFE_INTEGER\) - \(b\.tokenNo \?\? Number\.MAX_SAFE_INTEGER\)\)/);
+    // Sorted on a copy: the prop is the server's array and resorting it in place is a side effect.
+    expect(block).toMatch(/\.slice\(\)/);
+  });
+
+  it('a token without a number sinks, rather than sorting as nought', () => {
+    const block = list.slice(list.indexOf('const waiting ='), list.indexOf('const tabCount'));
+    expect(block).toMatch(/Number\.MAX_SAFE_INTEGER/);
   });
 
   it('follows the branch in view, like everything else on this screen', () => {
