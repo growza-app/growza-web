@@ -232,3 +232,19 @@
   background-image: none;
   box-shadow: none;
 }
+
+/* ---------- a booking's sheet ---------- */
+/* The action group is a raised card, each icon a small dome, the reference a raised chip; a row presses in. */
+.bk-sheet-actions {
+  box-shadow: var(--clay-raise);
+}
+.bk-sheet-actions .sheet-item svg {
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 62%);
+  box-shadow: var(--clay-raise-soft);
+}
+.bk-sheet-actions .sheet-item:active:not(:disabled) {
+  box-shadow: var(--clay-press);
+}
+.bk-sheet .ref {
+  box-shadow: var(--clay-raise-soft);
+}
