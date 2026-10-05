@@ -370,10 +370,10 @@ describe('the wait on a waiting token (GRW-541)', () => {
   const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
   const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
 
-  it('draws a countdown (hourglass) before the time, only in the Waiting column', () => {
+  it('draws a stopwatch before the time, only in the Waiting column', () => {
     const block = src.slice(src.indexOf('<span className="tb-meta">'), src.indexOf('<span className="tb-sub">'));
-    expect(block).toMatch(/col === 'waiting'\s*\?[\s\S]*?<IconHourglass \/>/);
-    expect(block.match(/<IconHourglass \/>/g)?.length).toBe(1);
+    expect(block).toMatch(/col === 'waiting'\s*\?[\s\S]*?<IconStopwatch \/>/);
+    expect(block.match(/<IconStopwatch \/>/g)?.length).toBe(1);
   });
 
   it('asks for the time without the word "Waiting"', () => {
