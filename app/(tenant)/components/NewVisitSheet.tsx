@@ -240,18 +240,20 @@ export function NewVisitSheet({
   // Jira GRW-363 — the same phrase the row this choice makes carries on Home and in Reports.
   const noProviderWord = useNoProvider();
   /*
-   * The mode is a control, not only a prop.
+   * Jira GRW-519 — the Booking date decides the kind of visit; there are no Walk-in / For later tabs.
    *
-   * It arrived as a prop because two buttons on a pop-up menu chose it before
-   * the sheet opened. Those buttons are gone: the choice belongs where the
-   * rest of the decision is, and a receptionist who opens "walk-in" and then
-   * realises the customer wants Saturday should not have to close and reopen.
+   * Left alone it is a walk-in now. Once the owner chooses a date — even today's, which means "later today" —
+   * it is a booking for that day. `initialMode` ('later', from a link that asks for one) starts with a date
+   * already chosen. Before GRW-519 this was a control of its own (two tabs), which the date made redundant: a
+   * receptionist who realises the customer wants Saturday just changes the date.
    */
   const forPayment = purpose === 'payment';
-  const [mode, setMode] = useState<VisitMode>(forPayment ? 'now' : initialMode);
+  const [dateChosen, setDateChosen] = useState(!forPayment && initialMode === 'later');
+  const mode: VisitMode = dateChosen ? 'later' : 'now';
   const later = mode === 'later';
   const checkPhone = usePhoneProblem();
   const tcr = useTranslations('chrome');
+  const tCommon = useTranslations('common');
   const tw = useTranslations('staffWizard');
   const router = useRouter();
   const clientNoun = useLabel('customer', 'Client');
@@ -1468,22 +1470,13 @@ export function NewVisitSheet({
         : clientName(stage.client);
 
   const asPage = presentation === 'page';
-  /**
-   * Jira GRW-518 — a walk-in is now, so choosing it puts the Booking date back to today; choosing a later
-   * date (below) goes the other way and makes the visit "For later". The two controls cannot disagree.
-   */
-  const chooseMode = (m: VisitMode) => {
-    setMode(m);
-    if (m === 'now') setDay(todayIso);
-  };
   /*
    * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
    *
-   * The Walk-in / For later toggle sits under this title and sets it, so on arrival the screen was
-   * called "Walk-in" while the control that decides walk-in-or-not was still below it, unanswered —
-   * and the owner had tapped "New booking" to get here. While the toggle is on screen the title is
-   * the screen's own name; once a client is picked the toggle goes (it would silently rewrite what
-   * was just booked) and the title can say which of the two this is, because by then it is settled.
+   * The Booking date sets it, so on arrival the screen was called "Walk-in" while the control that decides
+   * walk-in-or-not was still below it, unanswered — and the owner had tapped "New booking" to get here. While
+   * the date can still change the title is the screen's own name; once a client is picked it can say which of
+   * the two this is, because by then it is settled.
    */
   const modeStillOpen = !forPayment && stage.step === 'client';
   const sheetTitle = forPayment ? nv.paymentTitle : modeStillOpen ? nv.pageTitle : later ? nv.laterTitle : nv.title;
@@ -1552,72 +1545,9 @@ export function NewVisitSheet({
           </button>
         </div>
 
-        {/*
-          Only while the answer can still change. Once a visit is recorded or
-          booked, a toggle that would silently rewrite what just happened is a
-          trap, not a convenience.
-        */}
-        {!forPayment && stage.step === 'client' && (
-          <div
-            className="wi-segmented"
-            role="tablist"
-            aria-label={nv.modeLabel}
-            onKeyDown={(e) => {
-              // WAI-ARIA Tabs pattern — a screen-reader user is told "use
-              // arrow keys" the moment AT announces role="tab", so the
-              // widget has to actually honor that, not just Tab+Enter.
-              // Only two tabs, so either arrow always means "the other one".
-              if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-              e.preventDefault();
-              const tabs = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
-              const otherIndex = tabs.indexOf(document.activeElement as HTMLButtonElement) === 0 ? 1 : 0;
-              tabs[otherIndex]?.focus();
-              chooseMode(otherIndex === 0 ? 'now' : 'later');
-            }}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={!later}
-              aria-controls="wi-client-panel"
-              className={!later ? 'is-on' : ''}
-              onClick={() => chooseMode('now')}
-            >
-              {nv.modeNow}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={later}
-              aria-controls="wi-client-panel"
-              className={later ? 'is-on' : ''}
-              onClick={() => chooseMode('later')}
-            >
-              {nv.modeLater}
-            </button>
-          </div>
-        )}
-
         {/* ---------- Stage 1: find them ---------- */}
         {stage.step === 'client' && (
           <div className="wi-body" id="wi-client-panel">
-            {/* Jira GRW-518 — when. Today unless changed; never before today; a later day makes it "For later". */}
-            <div className="field wi-date-field">
-              <label htmlFor="wi-date">{nv.bookingDate}</label>
-              <input
-                id="wi-date"
-                type="date"
-                min={todayIso}
-                value={day}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (!v) return;
-                  const next = v < todayIso ? todayIso : v;
-                  setDay(next);
-                  if (next > todayIso) setMode('later');
-                }}
-              />
-            </div>
             <div className="picker-search">
               <span className="wi-search-icon">
                 <IconSearch />
@@ -1735,7 +1665,37 @@ export function NewVisitSheet({
                 hint={later ? nv.phoneWhyLater : nv.phoneWhy}
               />
 
-              {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
+              {/*
+              Jira GRW-518 · GRW-519 — the Booking date, last: search, name, phone, then when. It is empty until the
+              owner chooses one (optional): empty is a walk-in now, a chosen day — today included — is a booking
+              for that day. It is empty rather than pre-filled with today because a date input that already shows
+              today fires no change when today is picked again, so "later today" could not be chosen. Never
+              before today; cleared, it goes back to a walk-in.
+            */}
+            <div className="field wi-date-field">
+              <label htmlFor="wi-date">
+                {nv.bookingDate}
+                <span className="field-optional">{tCommon('optional')}</span>
+              </label>
+              <input
+                id="wi-date"
+                type="date"
+                min={todayIso}
+                value={dateChosen ? day : ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (!v) {
+                    setDay(todayIso);
+                    setDateChosen(false);
+                    return;
+                  }
+                  setDay(v < todayIso ? todayIso : v);
+                  setDateChosen(true);
+                }}
+              />
+            </div>
+
+            {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
               <div className="modal-actions wi-actions wi-acts">
                 <button
                   type="button"

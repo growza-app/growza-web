@@ -108,9 +108,6 @@ export function useNewVisitCopy() {
     pageTitle: t('pageTitle'),
     /** "At MG Road" — said, not asked, once the branch cannot change. */
     atBranch: (name: string) => t('atBranch', { name }),
-    modeLabel: t('modeLabel'),
-    modeNow: t('modeNow'),
-    modeLater: t('modeLater'),
     whichDay: t('whichDay'),
     today: t('today'),
     whichTime: t('whichTime'),

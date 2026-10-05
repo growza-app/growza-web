@@ -36,8 +36,8 @@ describe('New booking, first screen', () => {
     expect(code).toMatch(/phoneEdited\.current = true;\s*setNewPhone\(v\)/);
   });
 
-  it('the mode toggle and the title follow the one client step', () => {
+  it('the title follows the one client step, and there is no mode toggle (Jira GRW-519)', () => {
     expect(code).toMatch(/const modeStillOpen = !forPayment && stage\.step === 'client';/);
-    expect(code).toMatch(/\{!forPayment && stage\.step === 'client' && \(/);
+    expect(code).not.toMatch(/wi-segmented|role="tablist"|chooseMode/);
   });
 });
