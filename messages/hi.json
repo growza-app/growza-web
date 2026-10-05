@@ -75,6 +75,7 @@
     "tab_completed": "पूरे",
     "waitingTitle": "प्रतीक्षा में",
     "waitingMin": "{count, plural, one {# मिनट} other {# मिनट}}",
+    "showMore": "{count} और दिखाएँ",
     "queueUnreadable": "कौन इंतज़ार कर रहा है, पता नहीं चल सका।",
     "prevDay": "पिछला दिन",
     "nextDay": "अगला दिन",
@@ -2067,6 +2068,7 @@
     "noName": "बिना नाम",
     "giveFor": "{provider} को दें — टोकन {n}, {name}",
     "tokenNoLabel": "टोकन नंबर: {n}",
+    "showMore": "{count} और दिखाएँ",
     "payFor": "पेमेंट दर्ज करें — टोकन {n}, {name}",
     "cancelledCount": "रद्द हुए"
   }

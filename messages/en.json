@@ -75,6 +75,7 @@
     "tab_completed": "Completed",
     "waitingTitle": "Waiting",
     "waitingMin": "{count, plural, one {# min} other {# min}}",
+    "showMore": "Show {count} more",
     "queueUnreadable": "Could not check who is waiting.",
     "prevDay": "Day before",
     "nextDay": "Day after",
@@ -2067,6 +2068,7 @@
     "noName": "No name",
     "giveFor": "Give to {provider} — token {n}, {name}",
     "tokenNoLabel": "Token No: {n}",
+    "showMore": "Show {count} more",
     "payFor": "Record payment — token {n}, {name}",
     "cancelledCount": "Cancelled"
   }

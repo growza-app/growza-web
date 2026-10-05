@@ -55,6 +55,7 @@ export function useTokenWords() {
       noName: t('noName'),
       // Jira GRW-548 — the token number as a pill on a phone's card.
       tokenNoLabel: (n: number | null) => t('tokenNoLabel', { n: n ?? '' }),
+      showMore: (count: number) => t('showMore', { count }),
       giveFor: (n: number | null, name: string) => t('giveFor', { n: n ?? '', name, provider }),
       payFor: (n: number | null, name: string) => t('payFor', { n: n ?? '', name }),
     }),

@@ -157,4 +157,11 @@ describe('the people waiting, on Bookings', () => {
     // The half row is the hint that there is more; a row is 56px (the min-height above), so 5.5 of them.
     expect(css).toMatch(/@media \(max-width: 860px\) \{\s*\.bk-waiting-list \{\s*max-height: calc\(5\.5 \* 56px\);\s*overflow-y: auto;/);
   });
+
+  it('on a phone it draws ten rows and a Show more button adds ten', () => {
+    expect(list).toMatch(/useState\(SHOW_STEP\)/);
+    expect(list).toMatch(/\(phone \? waiting\.slice\(0, waitingShown\) : waiting\)\.map/);
+    expect(list).toMatch(/t\('showMore', \{ count: Math\.min\(SHOW_STEP, waiting\.length - waitingShown\) \}\)/);
+    expect(css).toMatch(/\.bk-waiting-more button \{[^}]*min-height: 44px;/);
+  });
 });

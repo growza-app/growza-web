@@ -429,7 +429,7 @@ describe('five rows in view on a phone', () => {
   it('is re-measured when the width changes and when the lists change', () => {
     expect(hook).toMatch(/new ResizeObserver\(measure\)/);
     expect(hook).toMatch(/addEventListener\('resize', measure\)/);
-    expect(board).toMatch(/useVisibleRows\(boardRef, phone, \[tab, columns\.waiting\.length, columns\.with_stylist\.length, columns\.paid\.length\]\);/);
+    expect(board).toMatch(/useVisibleRows\(boardRef, phone, \[tab, columns\.waiting\.length, columns\.with_stylist\.length, columns\.paid\.length, shown\.waiting, shown\.with_stylist, shown\.paid\]\);/);
   });
 
   it('the list scrolls inside itself on a phone, and is not a scroll trap', () => {
@@ -517,5 +517,32 @@ describe('the pill text on a token card (GRW-552)', () => {
     expect(rule).toMatch(/\.tb-board \.tb-col\[data-col='waiting'\] \.tb-meta \{/);
     expect(rule).toMatch(/font-size: 0\.75rem;/);
     expect(rule).not.toMatch(/font-size: \d+px/);
+  });
+});
+
+/** "Show more" — a phone's list draws its first ten rows and adds ten per tap; a laptop draws them all. */
+describe('show more on a phone', () => {
+  const board = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const hook = readFileSync(resolve(__dirname, 'use-visible-rows.ts'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('starts at ten rows and adds ten per tap, per tab', () => {
+    expect(hook).toMatch(/export const SHOW_STEP = 10;/);
+    expect(board).toMatch(/useState<Record<Column, number>>\(\{ waiting: SHOW_STEP, with_stylist: SHOW_STEP, paid: SHOW_STEP \}\)/);
+    expect(board).toMatch(/\[c\]: s\[c\] \+ SHOW_STEP/);
+  });
+
+  it('only a phone is limited — a laptop draws every row', () => {
+    expect(board).toMatch(/\(phone \? columns\[c\]\.slice\(0, shown\[c\]\) : columns\[c\]\)/);
+    expect(board).toMatch(/phone && columns\[c\]\.length > shown\[c\]/);
+  });
+
+  it('says how many it will add, and is a 44px button', () => {
+    expect(board).toMatch(/w\.showMore\(Math\.min\(SHOW_STEP, columns\[c\]\.length - shown\[c\]\)\)/);
+    expect(css).toMatch(/\.tb-more button \{[^}]*min-height: 44px;/);
+  });
+
+  it('re-measures the list when more rows are drawn', () => {
+    expect(board).toMatch(/shown\.waiting, shown\.with_stylist, shown\.paid\]\);/);
   });
 });
