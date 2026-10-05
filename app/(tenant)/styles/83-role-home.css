@@ -3025,12 +3025,16 @@ button.hm-now-count {
 }
 @media (max-width: 860px) {
   .hm-toolbar-summary {
-    display: inline-grid;
-    place-items: center;
-    flex: none;
-    width: 44px;
+    /* Jira GRW-511 — icon and its name. As wide as they need (44px at least), and it may give up width
+       to the row before it pushes the row off the screen: the label ends in an ellipsis. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    flex: 0 1 auto;
+    min-width: 44px;
     height: 44px;
-    padding: 0;
+    padding: 0 var(--sp-3);
     /* Jira GRW-510 — a secondary button, like the other quiet buttons (`.hm-btn-quiet`): white, a
        line border, an ink icon. It was a green-tinted square, which read as a status chip. */
     border: 1px solid var(--hm-line);
@@ -3042,6 +3046,15 @@ button.hm-now-count {
   .hm-toolbar-summary svg {
     width: 1.25rem;
     height: 1.25rem;
+    flex: none;
+  }
+  .hm-toolbar-summary-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
   }
   /* The branch picker (`.hm-toolbar-end` pushes it right) and the summary icon sit
      together, not at opposite ends of the row. */
