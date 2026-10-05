@@ -860,7 +860,25 @@ export function NewVisitSheet({
     d.setUTCDate(d.getUTCDate() + 1);
     return d.toISOString().slice(0, 10);
   });
-  const timePassed = day === todayIso && timeWanted !== '' && timeWanted < nowHm;
+  /*
+   * Jira GRW-533 — the Booking time is a list of quarter-hours, never a free-typed box, so a time that has
+   * passed is simply not in it. Today it starts at the next quarter-hour after now; any other day is the whole
+   * day. The first entry (empty) is no time: a walk-in now.
+   */
+  const timeOptions = (() => {
+    const first = day === todayIso ? (Math.floor((Number(nowHm.slice(0, 2)) * 60 + Number(nowHm.slice(3, 5))) / 15) + 1) * 15 : 0;
+    const label = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', hour: 'numeric', minute: '2-digit', hour12: true });
+    const out: Array<{ value: string; label: string }> = [];
+    for (let m = first; m < 24 * 60; m += 15) {
+      const value = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+      out.push({ value, label: label.format(new Date(Date.UTC(2000, 0, 1, Math.floor(m / 60), m % 60))) });
+    }
+    return out;
+  })();
+  // A chosen time that has since passed (the date went back to today, or the screen sat open) is cleared, not kept.
+  useEffect(() => {
+    if (timeWanted && day === todayIso && timeWanted < nowHm) setTimeWanted('');
+  }, [day, todayIso, timeWanted, nowHm]);
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotUtc, setSlotUtc] = useState<string | null>(null);
@@ -1796,27 +1814,22 @@ export function NewVisitSheet({
 
             {/*
               Jira GRW-527 — the Booking time, after the date. Optional: empty is a walk-in now. A time makes it a
-              booking — for the date shown, so "later today" is a time on today. Today, a time before now is flagged, not changed.
+              booking — for the date shown, so "later today" is a time on today. It is a list of quarter-hours from now (today), so a past time cannot be chosen.
             */}
             <div className="field wi-date-field">
               <label htmlFor="wi-time">
                 {nv.bookingTime}
               </label>
-              <input
-                id="wi-time"
-                type="time"
-                step={300}
-                value={timeWanted}
-                aria-invalid={timePassed || undefined}
-                aria-describedby={timePassed ? 'wi-time-error' : undefined}
-                onChange={(e) => setTimeWanted(e.target.value)}
-              />
+              <select id="wi-time" value={timeWanted} onChange={(e) => setTimeWanted(e.target.value)}>
+                <option value="">{nv.anyTime}</option>
+                {timeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
             </div>
-            {/* Jira GRW-531 — kept as typed (AM stays AM); a time already past today says so, full width under the row. */}
-            {timePassed && (
-              <div role="alert" id="wi-time-error" className="field-error">{nv.timePassed}</div>
-            )}
 
             {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
               <div className="modal-actions wi-actions wi-acts">
@@ -1833,7 +1846,6 @@ export function NewVisitSheet({
                      * give a real one. A half-typed number saved as-is is the
                      * shape that produced `+91786545789` in the live data.
                      */
-                    if (timePassed) return;
                     const phoneProblem = checkPhone(newPhone, { required: later });
                     if (phoneProblem) {
                       setPhoneError(phoneProblem);

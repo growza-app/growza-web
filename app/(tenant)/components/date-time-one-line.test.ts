@@ -27,6 +27,8 @@ describe('date and time on one line', () => {
 
   it('the inputs give back padding so a full date fits', () => {
     expect(css).toMatch(/\.wi-when input \{[^}]*padding-inline: 10px;/);
+    // The dropdown keeps room for its chevron.
+    expect(css).toMatch(/\.wi-when select \{[^}]*padding-right: 28px;/);
   });
 });
 
