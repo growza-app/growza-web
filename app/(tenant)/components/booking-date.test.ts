@@ -11,17 +11,22 @@ const sheet = strip(readFileSync(resolve(__dirname, 'NewVisitSheet.tsx'), 'utf8'
 const css = strip(readFileSync(resolve(__dirname, '../styles/72-walk-in-sheet.css'), 'utf8'));
 
 describe('the Booking date', () => {
-  it('is a date field on the first screen, empty until chosen, and not allowing the past', () => {
-    expect(sheet).toMatch(/const \[day, setDay\] = useState\(todayIso\);/);
-    expect(sheet).toMatch(/<input\s+id="wi-date"\s+type="date"\s+min=\{todayIso\}\s+value=\{dateChosen \? day : ''\}/);
-    // A typed past date is clamped, not accepted.
-    expect(sheet).toMatch(/setDay\(v < todayIso \? todayIso : v\);/);
+  it('is a date field on the first screen, showing today and not allowing the past (Jira GRW-521)', () => {
+    expect(sheet).toMatch(/<input\s+id="wi-date"\s+type="date"\s+min=\{todayIso\}\s+value=\{day\}/);
+    // A typed or cleared past/empty date is clamped to today, not accepted.
+    expect(sheet).toMatch(/const next = !v \|\| v < todayIso \? todayIso : v;/);
+    expect(sheet).toMatch(/if \(!dateChosen\) return todayIso;/);
   });
 
-  it('is optional: choosing a date makes it a booking, clearing it makes it a walk-in again (Jira GRW-519)', () => {
-    expect(sheet).toMatch(/setDay\(v < todayIso \? todayIso : v\);\s*setDateChosen\(true\);/);
-    expect(sheet).toMatch(/if \(!v\) \{\s*setDay\(todayIso\);\s*setDateChosen\(false\);\s*return;/);
+  it('today is a walk-in, a later day is a booking; back to today or cleared is a walk-in again', () => {
+    expect(sheet).toMatch(/setDay\(next\);\s*setDateChosen\(next > todayIso\);/);
+    expect(sheet).toMatch(/const mode: VisitMode = dateChosen \? 'later' : 'now';/);
     expect(sheet).toMatch(/<span className="field-optional">\{tCommon\('optional'\)\}<\/span>/);
+  });
+
+  it('a link that asks for a later booking starts on tomorrow, and Book again counts as a booking', () => {
+    expect(sheet).toMatch(/d\.setUTCDate\(d\.getUTCDate\(\) \+ 1\);/);
+    expect(sheet).toMatch(/setDay\(time\.day\);\s*(?:\/\/[^\n]*\n\s*)?setDateChosen\(true\);/);
   });
 
   it('there are no Walk-in / For later tabs, and the flow runs search, name, phone, date, continue', () => {
