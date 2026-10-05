@@ -1,0 +1,32 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+/**
+ * Jira GRW-529 — the Booking date and Booking time share one row, not two stacked ones. Two equal columns; at
+ * 344px each is ~130px, so the label's "optional" drops under its name and the fields give back some padding so a
+ * full date is not cut off.
+ */
+const strip = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+const sheet = strip(readFileSync(resolve(__dirname, 'NewVisitSheet.tsx'), 'utf8'));
+const css = readFileSync(resolve(__dirname, '../styles/72-walk-in-sheet.css'), 'utf8');
+
+describe('date and time on one line', () => {
+  it('both fields sit in one wrapper', () => {
+    const start = sheet.indexOf('<div className="wi-when">');
+    expect(start).toBeGreaterThan(-1);
+    const block = sheet.slice(start, sheet.indexOf('wi-actions', start));
+    expect(block).toContain('id="wi-date"');
+    expect(block).toContain('id="wi-time"');
+    expect(block.indexOf('id="wi-date"')).toBeLessThan(block.indexOf('id="wi-time"'));
+  });
+
+  it('the wrapper is two equal columns that can shrink', () => {
+    expect(css).toMatch(/\.wi-when \{[^}]*display: grid;[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+  });
+
+  it('the label stacks its optional tag, and the inputs give back padding', () => {
+    expect(css).toMatch(/\.wi-when label \{[^}]*flex-direction: column;/);
+    expect(css).toMatch(/\.wi-when input \{[^}]*padding-inline: 10px;/);
+  });
+});

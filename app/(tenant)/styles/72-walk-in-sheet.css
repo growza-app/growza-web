@@ -314,6 +314,33 @@ input.wi-search-input-plain {
   margin-bottom: var(--sp-3);
 }
 
+/* Jira GRW-529 — the Booking date and Booking time share one row, two equal columns. */
+.wi-when {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+.wi-when .wi-date-field {
+  min-width: 0;
+}
+
+/* Half a row is ~130px at 344px: the label's "optional" drops under the name, and the fields give back some padding so
+   a full date (05/10/2026) is not cut off. */
+.wi-when label {
+  display: flex;
+  flex-direction: column;
+}
+
+.wi-when input {
+  padding-inline: 10px;
+}
+
+.wi-when input::-webkit-calendar-picker-indicator {
+  margin-inline-start: 0;
+  padding: 0;
+}
+
 .wi-date-field input {
   width: 100%;
   min-width: 0;
