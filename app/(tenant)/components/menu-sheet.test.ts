@@ -65,8 +65,11 @@ describe('the menu button sits in the header row', () => {
     // and the 96px title minimum leaves Clients / Services / Staff on one row from 360px up.
     expect(css).toMatch(/\.topbar-lead\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*150px;/);
     expect(css).toMatch(/\.topbar-lead \.topbar-title\s*\{[^}]*min-width:\s*96px;/);
-    // A long title wraps to two lines beside the 44px button instead of dropping the actions a row.
-    expect(css).toMatch(/\.topbar-lead \.topbar-title h1\s*\{[^}]*white-space:\s*normal;/);
+    // Jira GRW-505 — a long title is ONE line ending in an ellipsis (it wrapped to two before), so the
+    // header never grows taller. The ellipsis itself is the base `.topbar-title h1` rule.
+    expect(css).toMatch(/\.topbar-lead \.topbar-title h1\s*\{[^}]*white-space:\s*nowrap;/);
+    expect(css).not.toMatch(/\.topbar-lead \.topbar-title h1\s*\{[^}]*white-space:\s*normal;/);
+    expect(css).toMatch(/\.topbar-title h1\s*\{\s*overflow:\s*hidden;\s*text-overflow:\s*ellipsis;\s*white-space:\s*nowrap;/);
   });
 
   it('it is a phone control: display:none from 861px, and a 44px target below', () => {
