@@ -92,7 +92,8 @@ describe('the floating action', () => {
     expect(home).not.toMatch(/\.bn-centre\s*\{[^}]*position:\s*fixed/);
   });
 
-  it('pages leave room for it at the bottom', () => {
-    expect(home).toMatch(/\.page-body\s*\{\s*padding-bottom:\s*calc\(var\(--sp-8\) \+ 68px\);/);
+  it('pages leave room for it at the bottom — only where it is drawn (Jira GRW-508)', () => {
+    expect(home).toMatch(/\.content:has\(> \.bottom-nav\.has-centre\) \.page-body\s*\{\s*padding-bottom:\s*calc\(var\(--sp-8\) \+ 68px\);/);
+    expect(home).not.toMatch(/^ {2}\.page-body\s*\{\s*padding-bottom:\s*calc\(var\(--sp-8\) \+ 68px\);/m);
   });
 });

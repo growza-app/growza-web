@@ -1972,11 +1972,12 @@ button.hm-now-count {
     stroke-width: 2.2;
   }
   /* The button covers the bottom right of the page by its own height plus its gap, so the
-     last row scrolls clear of it. */
-  .page-body {
+     last row scrolls clear of it. Jira GRW-508 — only where the button is drawn (Home, Bookings,
+     Clients): a screen without one keeps its ordinary bottom padding instead of an empty band. */
+  .content:has(> .bottom-nav.has-centre) .page-body {
     padding-bottom: calc(var(--sp-8) + 68px);
   }
-  .page-body.page-fit {
+  .content:has(> .bottom-nav.has-centre) .page-body.page-fit {
     padding-bottom: calc(var(--sp-3) + 68px);
   }
 }
