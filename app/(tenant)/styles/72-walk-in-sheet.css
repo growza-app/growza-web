@@ -833,3 +833,40 @@ input.wi-search-input-plain {
   font-size: 0.8125rem;
   font-weight: 650;
 }
+
+/* ---------- the client search as a dropdown (Jira GRW-520) ----------
+   The matches float under the box over the form, so Name, Phone and the date do not move while someone types.
+   `.picker-search` carries a 10px margin below it; the dropdown starts 4px under the box itself. */
+.wi-combo {
+  position: relative;
+}
+
+.wi-dropdown {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% - 6px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 28px rgba(9, 20, 15, 0.16);
+}
+
+.wi-dropdown .wi-section-label {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-3) var(--sp-1);
+}
+
+.wi-dropdown .empty {
+  padding: var(--sp-4) var(--sp-3);
+}
+
+/* The row the arrow keys are on. */
+.wi-row-active,
+.wi-dropdown .wi-row:hover {
+  background: var(--slate-soft);
+}

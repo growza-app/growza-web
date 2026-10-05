@@ -290,6 +290,10 @@ export function NewVisitSheet({
 
   // Stage 1 — find them
   const [term, setTerm] = useState('');
+  // Jira GRW-520 — the matches are a dropdown under the box: open while typing, closed by a pick, Escape or
+  // tapping elsewhere; `activeIdx` is the row the arrow keys are on (-1: none).
+  const [comboOpen, setComboOpen] = useState(true);
+  const [activeIdx, setActiveIdx] = useState(-1);
   const [results, setResults] = useState<Customer[]>([]);
   /**
    * Jira GRW-454 — the same search, at the other branches. Offered only once something has been typed: it is a
@@ -466,6 +470,7 @@ export function NewVisitSheet({
     nameEdited.current = true;
     phoneEdited.current = true;
     setStage({ step: 'client' });
+    setComboOpen(false);
     // Jira GRW-514 — the add block is on this screen now, below the list: bring it into view.
     window.setTimeout(() => addNewRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0);
   };
@@ -1470,6 +1475,12 @@ export function NewVisitSheet({
         : clientName(stage.client);
 
   const asPage = presentation === 'page';
+  // Jira GRW-520 — every row the dropdown can show, in order: this branch's matches, then the other branches'.
+  const comboOptions = [
+    ...results.map((c) => ({ c, bring: false })),
+    ...elsewhere.map((c) => ({ c, bring: true })),
+  ];
+  const showDrop = comboOpen && term.trim().length >= SEARCH_MIN_CHARS;
   /*
    * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
    *
@@ -1548,76 +1559,140 @@ export function NewVisitSheet({
         {/* ---------- Stage 1: find them ---------- */}
         {stage.step === 'client' && (
           <div className="wi-body" id="wi-client-panel">
-            <div className="picker-search">
-              <span className="wi-search-icon">
-                <IconSearch />
-              </span>
-              <input
-                type="search"
-                className="wi-search-input"
-                placeholder={nv.searchPlaceholder}
-                aria-label={nv.searchPlaceholder}
-                value={term}
-                autoFocus
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setTerm(v);
-                  // Jira GRW-514 — seed the add block below, unless the desk has typed in it.
-                  const typed = v.trim();
-                  if (digitsOf(typed).length >= 7) {
-                    if (!phoneEdited.current) setNewPhone(typed);
-                  } else if (!nameEdited.current) {
-                    setNewName(typed);
-                  }
-                }}
-              />
-              {term !== '' && (
-                <button type="button" className="search-clear-btn" onClick={() => setTerm('')} aria-label={nv.clear}>
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {term.trim().length >= SEARCH_MIN_CHARS ? (
-              <div className="picker-results">
-                {results.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className="picker-row wi-row"
-                    onClick={() => pickClient(c)}
-                  >
-                    <span className="picker-row-text">
-                      <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                      <span className="picker-row-meta">{clientMetaLine(c)}</span>
-                    </span>
-                  </button>
-                ))}
-                {!searching && results.length === 0 && <div className="empty">{nv.noMatch}</div>}
-              </div>
-            ) : null}
-
             {/*
-              Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows and
-              below them: these are not people who can be booked here yet, they are an offer to take them on.
+              Jira GRW-520 — a combobox: the matches float in a dropdown under the box instead of pushing the
+              form down. Pointer-down on the dropdown is kept from taking focus off the input, so a tap on a row
+              is not preceded by the box losing focus and the dropdown closing under the finger (iOS gives a
+              button no focus, so that blur arrives with no related target).
             */}
-            {term.trim().length >= SEARCH_MIN_CHARS && elsewhere.length > 0 ? (
-              <>
-                <h2 className="wi-section-label">{nv.atOtherBranches}</h2>
-                <div className="picker-results">
-                  {elsewhere.map((c) => (
-                    <button key={c.id} type="button" className="picker-row wi-row" onClick={() => bringHere(c)}>
-                      {/* This one keeps its right-hand column: "Bring to MG Road" is the action, not a fact. */}
+            <div
+              className="wi-combo"
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setComboOpen(false);
+              }}
+            >
+              <div className="picker-search">
+                <span className="wi-search-icon">
+                  <IconSearch />
+                </span>
+                <input
+                  type="search"
+                  className="wi-search-input"
+                  role="combobox"
+                  aria-expanded={showDrop}
+                  aria-controls="wi-dropdown"
+                  aria-autocomplete="list"
+                  aria-activedescendant={showDrop && activeIdx >= 0 ? `wi-opt-${activeIdx}` : undefined}
+                  placeholder={nv.searchPlaceholder}
+                  aria-label={nv.searchPlaceholder}
+                  value={term}
+                  autoFocus
+                  onFocus={() => setComboOpen(true)}
+                  onKeyDown={(e) => {
+                    if (!showDrop) return;
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setActiveIdx((i) => (comboOptions.length === 0 ? -1 : (i + 1) % comboOptions.length));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setActiveIdx((i) => (comboOptions.length === 0 ? -1 : i <= 0 ? comboOptions.length - 1 : i - 1));
+                    } else if (e.key === 'Enter' && activeIdx >= 0 && comboOptions[activeIdx]) {
+                      e.preventDefault();
+                      const o = comboOptions[activeIdx];
+                      if (o.bring) bringHere(o.c);
+                      else pickClient(o.c);
+                    } else if (e.key === 'Escape') {
+                      // Closes the dropdown, not the sheet: stopped here, before the dialog's own listener.
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setComboOpen(false);
+                    }
+                  }}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTerm(v);
+                    setComboOpen(true);
+                    setActiveIdx(-1);
+                    // Jira GRW-514 — seed the add block below, unless the desk has typed in it.
+                    const typed = v.trim();
+                    if (digitsOf(typed).length >= 7) {
+                      if (!phoneEdited.current) setNewPhone(typed);
+                    } else if (!nameEdited.current) {
+                      setNewName(typed);
+                    }
+                  }}
+                />
+                {term !== '' && (
+                  <button type="button" className="search-clear-btn" onClick={() => setTerm('')} aria-label={nv.clear}>
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {showDrop ? (
+                <div
+                  className="wi-dropdown"
+                  id="wi-dropdown"
+                  role="listbox"
+                  aria-label={nv.searchPlaceholder}
+                  onPointerDown={(e) => e.preventDefault()}
+                >
+                  {results.map((c, i) => (
+                    <button
+                      key={c.id}
+                      id={`wi-opt-${i}`}
+                      type="button"
+                      role="option"
+                      tabIndex={-1}
+                      aria-selected={activeIdx === i}
+                      className={`picker-row wi-row ${activeIdx === i ? 'wi-row-active' : ''}`}
+                      onClick={() => pickClient(c)}
+                    >
                       <span className="picker-row-text">
                         <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
                         <span className="picker-row-meta">{clientMetaLine(c)}</span>
                       </span>
-                      <span className="picker-row-meta">{nv.bringToBranch(branchNameOf(listBranch ?? undefined) ?? '')}</span>
                     </button>
                   ))}
+                  {!searching && results.length === 0 && elsewhere.length === 0 && <div className="empty">{nv.noMatch}</div>}
+
+                  {/*
+                    Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows
+                    and below them: these are not people who can be booked here yet, they are an offer to take
+                    them on.
+                  */}
+                  {elsewhere.length > 0 ? (
+                    <>
+                      <h2 className="wi-section-label" role="presentation">
+                        {nv.atOtherBranches}
+                      </h2>
+                      {elsewhere.map((c, j) => {
+                        const i = results.length + j;
+                        return (
+                          <button
+                            key={c.id}
+                            id={`wi-opt-${i}`}
+                            type="button"
+                            role="option"
+                            tabIndex={-1}
+                            aria-selected={activeIdx === i}
+                            className={`picker-row wi-row ${activeIdx === i ? 'wi-row-active' : ''}`}
+                            onClick={() => bringHere(c)}
+                          >
+                            {/* This one keeps its right-hand column: "Bring to MG Road" is the action, not a fact. */}
+                            <span className="picker-row-text">
+                              <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
+                              <span className="picker-row-meta">{clientMetaLine(c)}</span>
+                            </span>
+                            <span className="picker-row-meta">{nv.bringToBranch(branchNameOf(listBranch ?? undefined) ?? '')}</span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  ) : null}
                 </div>
-              </>
-            ) : null}
+              ) : null}
+            </div>
 
             {/* Jira GRW-517 — no list of previous clients: a client is found by typing, or added below. */}
 
