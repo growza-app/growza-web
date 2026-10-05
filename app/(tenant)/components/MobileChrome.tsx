@@ -31,6 +31,11 @@ import { BottomNav } from './BottomNav';
  */
 const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
 
+/**
+ * Jira GRW-507 — Notifications is a quiet page: no floating New booking on it.
+ */
+const QUIET_ROUTE_RE = /^\/notifications\/?$/;
+
 /** `timezone` stays in the props contract (the layout always passes it) even though this component no longer reads it itself — GRW-297 moved the booking sheet it used to seed off this component entirely. */
 export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[]; lang?: Lang }) {
   const pathname = usePathname();
@@ -49,7 +54,7 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
    */
   const mayBook = mayUse(role, 'visit.new');
   const onCentre =
-    mayBook && !EDIT_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
+    mayBook && !EDIT_ROUTE_RE.test(pathname) && !QUIET_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
 
   return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />;
 }

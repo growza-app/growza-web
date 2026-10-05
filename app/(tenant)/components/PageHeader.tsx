@@ -32,6 +32,7 @@ export function PageHeader({
   actions,
   mobileSubtitle,
   onBack,
+  bare,
 }: {
   title: string;
   subtitle?: string;
@@ -46,10 +47,15 @@ export function PageHeader({
    * one another, so nothing else needs a way back besides the nav itself.
    */
   onBack?: () => void;
+  /**
+   * Jira GRW-507 — on a phone, draw no controls group (search, bell, avatar) and no branch line:
+   * a quiet page with Back and the title. Phone only; a laptop header is untouched.
+   */
+  bare?: boolean;
   /** Jira GRW-307 — leave out the header's search button: the Search screen is what it opens. */
 }) {
   return (
-    <header className={`topbar ${mobileSubtitle ? 'topbar-with-sub' : ''}`}>
+    <header className={`topbar ${mobileSubtitle ? 'topbar-with-sub' : ''} ${bare ? 'topbar-bare' : ''}`}>
       {/* Jira GRW-306 — the phone's control at the left, in the row. Jira GRW-497 — it is Back on
           every screen but Home (the menu is on Home and behind the avatar); a screen with its own
           Back, inline with the title, keeps that one and shows nothing here. */}
