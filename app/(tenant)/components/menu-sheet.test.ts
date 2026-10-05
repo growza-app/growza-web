@@ -32,8 +32,10 @@ describe('the menu button sits in the header row', () => {
 
   it('every screen but Home wears Back where the menu goes, on a phone only (Jira GRW-497)', () => {
     const header = code('PageHeader.tsx');
-    expect(header).toMatch(/\{onBack \? null : <BackButton phoneOnly \/>\}/);
-    expect(header).not.toMatch(/MenuButton/);
+    // Jira GRW-538 — Bookings and Clients ask for the menu instead (`menu`); every other screen still gets Back.
+    expect(header).toMatch(/\{onBack \? null : menu \? <MenuButton \/> : <BackButton phoneOnly \/>\}/);
+    // The menu is an opt-in (`menu`), never the default.
+    expect(header.match(/<MenuButton \/>/g)?.length).toBe(1);
     expect(code('../reports/ReportsShell.tsx')).toMatch(/<BackButton phoneOnly \/>/);
     expect(code('../reports/ReportsShell.tsx')).not.toMatch(/MenuButton/);
     // Home keeps the menu.

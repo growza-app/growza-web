@@ -322,6 +322,7 @@ export function CustomersClient({
     <>
       <PageHeader
         title={label}
+        menu
         subtitle={t('subtitle', { noun: lower })}
         actions={
           <button type="button" className="btn" onClick={() => setAdding(true)}>
