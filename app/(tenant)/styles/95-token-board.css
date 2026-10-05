@@ -143,8 +143,9 @@
     gap: 0.25rem;
     padding: 0.125rem var(--sp-3);
     border-radius: 999px;
-    font-size: 0.875rem;
-    font-weight: 500;
+    /* Jira GRW-551 — 10px (0.625rem, so Larger Text still grows it) and semibold, at the owner's request. */
+    font-size: 0.625rem;
+    font-weight: 600;
     font-style: normal;
     white-space: nowrap;
   }
