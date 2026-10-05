@@ -798,6 +798,12 @@ input.wi-search-input-plain {
   position: static;
 }
 
+/* Jira GRW-526 — no tab bar under the page now, and that bar carried the home-indicator inset: the page keeps
+   its own, so its last button is not under it. */
+.page-body:has(> .walk-in-page) {
+  padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+}
+
 /*
  * A client row: the name, then one quiet line under it (owner, 2026-10-04).
  *

@@ -28,6 +28,13 @@ import { BottomNav } from './BottomNav';
  */
 
 /**
+ * Jira GRW-526 — the screens that have no tab bar at all. New booking asks for the whole screen (and ends with
+ * its own "Back to home page"); a bar under it only took height from the form. Every `.content` row is pinned
+ * by its own `grid-row` (01-shell.css), so leaving the bar out cannot move the others.
+ */
+const NO_BAR_ROUTE_RE = /^\/appointments\/new(\/|$)/;
+
+/**
  * Jira GRW-508 — the floating New booking is on Home, Bookings and Clients, and nowhere else.
  *
  * It used to be "everywhere except" a list that kept growing (a staff edit screen, then Notifications in
@@ -56,6 +63,9 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   const mayBook = mayUse(role, 'visit.new');
   const onCentre =
     mayBook && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
+
+  // Jira GRW-526 — New booking is a focused full screen: no tab bar under it, on any of its steps.
+  if (NO_BAR_ROUTE_RE.test(pathname)) return null;
 
   return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />;
 }
