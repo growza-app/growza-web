@@ -48,7 +48,9 @@
 .offer-card-row,
 .menu-list,
 .cust-kpi,
-.hm-att {
+.hm-att,
+.rp-card,
+.bk-waiting {
   box-shadow: var(--clay-raise);
 }
 
@@ -61,7 +63,10 @@
 .bk-filter-toggle,
 .cust-segments-toggle,
 .hm-btn-quiet,
-.btn-ghost {
+.btn-ghost,
+.hm-toolbar-summary,
+.hm-give,
+.rp-control {
   box-shadow: var(--clay-raise-soft);
 }
 
@@ -72,12 +77,18 @@
 .pagination-btn:active,
 .bk-filter-toggle:active,
 .hm-btn-quiet:active,
-.btn-ghost:active {
+.btn-ghost:active,
+.hm-give:active,
+.rp-control:active {
   box-shadow: var(--clay-press);
 }
 
 /* ---------- raised: the bottom bar and its centre ---------- */
 @media (max-width: 860px) {
+  /* Jira GRW-552 — the token card is a card on a phone (GRW-548), so it is raised like the rest. */
+  .tb-board .tb-row {
+    box-shadow: var(--clay-raise);
+  }
   .bottom-nav {
     box-shadow:
       4px 6px 16px rgba(14, 51, 37, 0.16),
