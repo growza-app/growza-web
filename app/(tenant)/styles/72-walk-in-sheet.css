@@ -84,6 +84,10 @@ input.wi-search-input-plain {
   text-align: left;
   font: inherit;
   color: inherit;
+  /* Jira GRW-515 — a one-line row (the Previous clients list is names only now) is still a 44px target. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 .wi-service-results {
