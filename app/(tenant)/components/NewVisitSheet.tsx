@@ -253,7 +253,14 @@ export function NewVisitSheet({
    */
   const forPayment = purpose === 'payment';
   const [dateChosen, setDateChosen] = useState(!forPayment && initialMode === 'later');
-  const mode: VisitMode = dateChosen ? 'later' : 'now';
+  /**
+   * Jira GRW-527 — the Booking time ('HH:mm', or '' for none). Setting one is what makes a booking for TODAY,
+   * which the date alone cannot (today is the walk-in): "later today" is a time, "another day" is a date.
+   */
+  const [timeWanted, setTimeWanted] = useState('');
+  const timeWantedRef = useRef('');
+  timeWantedRef.current = timeWanted;
+  const mode: VisitMode = dateChosen || timeWanted !== '' ? 'later' : 'now';
   const later = mode === 'later';
   const checkPhone = usePhoneProblem();
   const tcr = useTranslations('chrome');
@@ -845,6 +852,8 @@ export function NewVisitSheet({
   const todayIso = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()), [timezone]);
   // Jira GRW-521 — the date shows today unless a link asked for a later booking, which starts on tomorrow: a
   // booking for today is a walk-in, so "later" with today's date would not be one.
+  // Jira GRW-527 — now, as 'HH:mm' in the salon's zone: the earliest a booking TODAY can be.
+  const nowHm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
   const [day, setDay] = useState(() => {
     if (!dateChosen) return todayIso;
     const d = new Date(`${todayIso}T12:00:00Z`);
@@ -906,6 +915,13 @@ export function NewVisitSheet({
         const wanted = pendingSlot.current;
         pendingSlot.current = null;
         if (wanted && r.sections.some((sec) => sec.slots.some((sl) => sl.utc === wanted))) setSlotUtc(wanted);
+        // Jira GRW-527 — the time asked for on the first screen: that slot if it is free, else the first free one
+        // after it. Nothing is selected if nothing later is free (the desk picks).
+        else if (timeWantedRef.current) {
+          const hm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+          const next = r.sections.flatMap((sec) => sec.slots).find((sl) => hm.format(new Date(sl.utc)) >= timeWantedRef.current);
+          if (next) setSlotUtc(next.utc);
+        }
       })
       .catch(() => {
         if (!cancelled) setSlots(null);
@@ -916,7 +932,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, day, picked, extras, schedulableId, listBranch]);
+  }, [later, stage.step, day, picked, extras, schedulableId, listBranch, timezone]);
 
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
@@ -1773,6 +1789,28 @@ export function NewVisitSheet({
                   const next = !v || v < todayIso ? todayIso : v;
                   setDay(next);
                   setDateChosen(next > todayIso);
+                }}
+              />
+            </div>
+
+            {/*
+              Jira GRW-527 — the Booking time, after the date. Optional: empty is a walk-in now. A time makes it a
+              booking — for the date shown, so "later today" is a time on today. Not before now, today.
+            */}
+            <div className="field wi-date-field">
+              <label htmlFor="wi-time">
+                {nv.bookingTime}
+                <span className="field-optional">{tCommon('optional')}</span>
+              </label>
+              <input
+                id="wi-time"
+                type="time"
+                step={300}
+                min={day === todayIso ? nowHm : undefined}
+                value={timeWanted}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setTimeWanted(day === todayIso && v && v < nowHm ? nowHm : v);
                 }}
               />
             </div>

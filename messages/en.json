@@ -1599,6 +1599,7 @@
     "noMatch": "Nobody on file matches that.",
     "visits": "{n, plural, one {# visit} other {# visits}}",
     "bookingDate": "Booking date",
+    "bookingTime": "Booking time",
     "backToHome": "Back to home page",
     "atOtherBranches": "At your other branches",
     "bringToBranch": "Add them to {branch}",
