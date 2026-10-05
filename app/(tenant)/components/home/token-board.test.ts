@@ -370,10 +370,10 @@ describe('the wait on a waiting token (GRW-541)', () => {
   const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
   const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
 
-  it('draws a clock before the time, only in the Waiting column', () => {
+  it('draws a countdown (hourglass) before the time, only in the Waiting column', () => {
     const block = src.slice(src.indexOf('<span className="tb-meta">'), src.indexOf('<span className="tb-sub">'));
-    expect(block).toMatch(/col === 'waiting'\s*\?[\s\S]*?<IconClock \/>/);
-    expect(block.match(/<IconClock \/>/g)?.length).toBe(1);
+    expect(block).toMatch(/col === 'waiting'\s*\?[\s\S]*?<IconHourglass \/>/);
+    expect(block.match(/<IconHourglass \/>/g)?.length).toBe(1);
   });
 
   it('asks for the time without the word "Waiting"', () => {
@@ -381,12 +381,12 @@ describe('the wait on a waiting token (GRW-541)', () => {
     expect(src).not.toMatch(/t\.waitingMin|t\.waitingSince/);
   });
 
-  it('is regular weight, in that column only', () => {
-    expect(css).toMatch(/\.tb-col\[data-col='waiting'\] \.tb-meta \{[^}]*font-weight: 400;/);
+  it('is regular weight and italic, in that column only', () => {
+    expect(css).toMatch(/\.tb-col\[data-col='waiting'\] \.tb-meta \{[^}]*font-weight: 400;[^}]*font-style: italic;/);
     expect(css).toMatch(/\.tb-meta \{[^}]*font-weight: 700;/);
   });
 
-  it('the icon is sized in rem', () => {
-    expect(css).toMatch(/\.tb-meta-icon svg \{\s*width: 0\.875rem;\s*height: 0\.875rem;/);
+  it('the icon is 16×16, in rem', () => {
+    expect(css).toMatch(/\.tb-meta-icon svg \{\s*width: 1rem;\s*height: 1rem;/);
   });
 });

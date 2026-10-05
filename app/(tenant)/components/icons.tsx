@@ -179,6 +179,16 @@ export const IconClock = () => (
   </svg>
 );
 
+/** Jira GRW-543 — a countdown: an hourglass. Feather has none, so this is drawn here at Feather's stroke. */
+export const IconHourglass = () => (
+  <svg {...base}>
+    <path d="M6 2h12" />
+    <path d="M6 22h12" />
+    <path d="M6 2v4l6 6-6 6v4" />
+    <path d="M18 2v4l-6 6 6 6v4" />
+  </svg>
+);
+
 export const IconSearch = () => (
   <svg {...base}>
     <circle cx="11" cy="11" r="8" />

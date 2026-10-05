@@ -183,20 +183,22 @@
   white-space: nowrap;
   color: #8a5a0f;
 }
-/* Jira GRW-541 — a waiting token's wait: a clock, then the time, in regular weight (the column is headed Waiting). */
+/* Jira GRW-541 · GRW-543 — a waiting token's wait: a countdown icon, then the time, regular weight and italic
+   (the column is headed Waiting). */
 .tb-col[data-col='waiting'] .tb-meta {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   font-weight: 400;
+  font-style: italic;
 }
 .tb-meta-icon {
   display: inline-grid;
   flex: none;
 }
 .tb-meta-icon svg {
-  width: 0.875rem;
-  height: 0.875rem;
+  width: 1rem;
+  height: 1rem;
 }
 .tb-col[data-col='with_stylist'] .tb-meta {
   color: var(--hm-muted);
