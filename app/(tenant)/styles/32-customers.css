@@ -2820,14 +2820,32 @@
   list-style: none;
 }
 
+/*
+ * Jira GRW-489 — the row is a button now (a link only for a role that may not work a token), so it
+ * has to shed the browser's own button: full width, no chrome, the list's own type, left-aligned.
+ */
 .bk-waiting-row {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+  width: 100%;
   min-height: 56px;
   padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  background: none;
   color: inherit;
+  font: inherit;
+  text-align: left;
   text-decoration: none;
+}
+
+button.bk-waiting-row {
+  cursor: pointer;
+}
+
+button.bk-waiting-row:hover,
+button.bk-waiting-row:focus-visible {
+  background: #fdf4e6;
 }
 
 /* The number the client was told at the counter, so it leads the row and never shrinks. */

@@ -13,8 +13,10 @@ import { describe, expect, it } from 'vitest';
  *
  * They cannot simply join the list: it is ordered by start time, and giving them a made-up one to
  * sit in it would be a lie about when they are being seen. So: their own section above it, in
- * token order (which is arrival order), out of the counts, and read-only — a token is worked at the
- * board on Home.
+ * token order (which is arrival order), and out of the money figures.
+ *
+ * Jira GRW-489 — and worked from the row: the board's own give sheet, with Record payment handed up
+ * to the till and "They left" where it already was. Not read-only any more; `describe` below.
  */
 const here = (p: string) => readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), p), 'utf-8');
 const code = (p: string) => here(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
@@ -22,6 +24,7 @@ const code = (p: string) => here(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/
 const list = code('./BookingsList.tsx');
 const page = code('./page.tsx');
 const css = here('../styles/32-customers.css');
+const give = code('../components/home/GiveToStaffSheet.tsx');
 
 describe('the people waiting, on Bookings', () => {
   it('the page reads the queue, and only for today', () => {
@@ -72,16 +75,67 @@ describe('the people waiting, on Bookings', () => {
     expect(list).toMatch(/href=\{branch \? `\/\?location=\$\{encodeURIComponent\(branch\.id\)\}#hm-queue` : '\/#hm-queue'\}/);
   });
 
-  it('is read-only: a row opens the board, it does not work the token here', () => {
-    const section = list.slice(list.indexOf('bk-waiting-list'), list.indexOf('bk-sched-head'));
-    expect(section).not.toMatch(/onClick|<button/);
+  /**
+   * Jira GRW-489 — the row works the token, rather than sending the desk to Home for it.
+   *
+   * It was read-only when this section shipped, and the link to the board read as a dead end: tapping
+   * the person standing in front of you landed on another screen where you had to find the same row
+   * again. The row opens the desk's OWN sheets — the same components the board opens — so a token has
+   * one set of answers and not two.
+   */
+  describe('working a token from the row', () => {
+    it('the row is the control, and the whole of it', () => {
+      expect(list).toMatch(/<button\n\s+type="button"\n\s+className="bk-waiting-row"/);
+      expect(css).toMatch(/\.bk-waiting-row \{[^}]*width: 100%;/);
+      // Still 56px of it: a token is a target, not a line of text.
+      expect(css).toMatch(/\.bk-waiting-row \{[^}]*min-height: 56px;/);
+    });
+
+    it('opens the board\'s own give sheet, not a second copy of it', () => {
+      expect(list).toMatch(/import \{ GiveToStaffSheet \} from '\.\.\/components\/home\/GiveToStaffSheet'/);
+      expect(list).toMatch(/<GiveToStaffSheet/);
+      // The desk's words, not this screen's: two sets for the same four buttons is how they drift.
+      expect(list).toMatch(/t=\{hc\}/);
+    });
+
+    it('free/busy is the same fact Home shows — an unpaid visit in the chair', () => {
+      const block = list.slice(list.indexOf('const busy ='), list.indexOf('const tabCount'));
+      expect(block).toMatch(/liveState\(g, now\) !== 'in_service'/);
+      expect(block).toMatch(/minutesBetween\(g\.startAt, now\)/);
+    });
+
+    it('record payment is handed up, so one overlay is on screen at a time', () => {
+      // The give sheet does not open the till inside itself: it asks its parent to swap them.
+      expect(give).toMatch(/onRecordPayment\?: \(\) => void;/);
+      expect(give).not.toMatch(/NewVisitSheet|VisitTill/);
+      expect(list).toMatch(/setPayingToken\(giving\);/);
+      expect(list).toMatch(/<NewVisitSheet mode="now" purpose="payment" token=\{payingToken\}/);
+    });
+
+    it('they left is already in that sheet — this adds no second way to drop a token', () => {
+      expect(give).toMatch(/t\.theyLeft/);
+      expect(give).toMatch(/api\.queueEntryLeft\(entry\.id\)/);
+    });
+
+    it('a role that may do neither keeps the link to the board', () => {
+      // A button that can only answer 403 is worse than a trip to Home.
+      expect(list).toMatch(/\{mayGive \|\| mayRecordPayment \? \(/);
+      expect(list).toMatch(/useMayUse\('queue\.give'\)/);
+      expect(list).toMatch(/useMayUse\('visit\.recordPayment'\)/);
+      expect(list).toMatch(/href=\{branch \? `\/\?location=\$\{encodeURIComponent\(branch\.id\)\}#hm-queue` : '\/#hm-queue'\}/);
+    });
+
+    it('a desk that may only take money skips the stylist list', () => {
+      expect(list).toMatch(/onClick=\{\(\) => \(mayGive \? setGiving\(w\) : setPayingToken\(w\)\)\}/);
+    });
   });
 
-  it('stays out of the tiles — a waiting person is not a booking', () => {
-    // The counts come from `bookings`/`inView`, which are appointments. Nothing reads `waiting`.
-    const tiles = list.slice(list.indexOf('<div className="bk-kpis">'), list.indexOf('bk-findrow'));
-    expect(tiles).not.toMatch(/waiting/);
-    expect(list).not.toMatch(/countIn\([^)]*\) \+ waiting/);
+  it('counts with the work left, never with the day\'s takings', () => {
+    // `To do` is what is left to do, and somebody standing in the salon is left to do (GRW-488).
+    // `Completed` and `All`-as-bookings are appointments, so nothing waiting may reach a money figure.
+    expect(list).toMatch(/countIn\('confirmed'\) \+ \(waiting\?\.length \?\? 0\)/);
+    const earnings = list.slice(list.indexOf('const bookings ='), list.indexOf('const waiting ='));
+    expect(earnings).not.toMatch(/waiting/);
   });
 
   it('reads as the part of the day standing in the salon, not written in the book', () => {
