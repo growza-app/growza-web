@@ -42,6 +42,12 @@ describe('the menu button sits in the header row', () => {
     expect(code('../styles/76-header-controls.css')).toMatch(/@media \(min-width: 861px\) \{\s*\.topbar \.topbar-back-phone \{\s*display: none;/);
   });
 
+  it('the arrow is 16x16 (1rem) inside its 44px circle (Jira GRW-498)', () => {
+    const css = code('../styles/76-header-controls.css');
+    expect(css).toMatch(/\.topbar \.topbar-back-phone svg \{\s*width: 1rem;\s*height: 1rem;/);
+    expect(css).toMatch(/\.topbar \.topbar-back-phone \{[^}]*width: 44px;[^}]*height: 44px;/);
+  });
+
   it('Back steps through history and goes Home when there is none', () => {
     expect(code('BackButton.tsx')).toMatch(/window\.history\.length > 1 \? router\.back\(\) : router\.push\('\/'\)/);
   });
