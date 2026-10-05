@@ -879,3 +879,12 @@ input.wi-search-input-plain {
   box-sizing: border-box;
   text-overflow: ellipsis;
 }
+
+/* ---------- Which stylist?, as a dropdown (Jira GRW-524) ---------- */
+.wi-stylist-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+}
