@@ -1701,17 +1701,14 @@ export function NewVisitSheet({
                       onClick={() => pickClient(c)}
                     >
                       {/*
-                        Two lines, not three facts on one (owner, 2026-10-04).
-
-                        It was "Name · no number · MG Road" with the visit count squeezed into a column
-                        narrow enough to break "2 visits" across two lines — 70px rows of wrapped text to
-                        scan. The name gets its own line; what is true about them goes underneath. A
-                        missing phone number is not stated at all: an absence does not need announcing,
-                        and it was being given the same weight as the branch.
+                        Jira GRW-515 — the name alone (owner, 2026-10-05). It was two lines, the name and
+                        "2 visits · MG Road" under it (owner, 2026-10-04, before that three facts on one
+                        line); the owner asked for the details to go, so the list is one short line a
+                        person. Search results below keep theirs: there the branch is what tells two people
+                        with one name apart.
                       */}
                       <span className="picker-row-text">
                         <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                        <span className="picker-row-meta">{clientMetaLine(c)}</span>
                       </span>
                     </button>
                   ))}
