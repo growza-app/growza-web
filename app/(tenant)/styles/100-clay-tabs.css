@@ -1,0 +1,47 @@
+/*
+ * Jira GRW-499 — the filter tabs in a 3D clay look.
+ *
+ * Clay is two moves: the track is pressed INTO the page (a dark inner shadow on the lower right, a light
+ * one on the upper left), and the active tab is a soft piece lifted OUT of it (a drop shadow beneath, a
+ * highlight on its upper left, a gentle shade on its lower right). Big radii do the rest: nothing has a
+ * corner.
+ *
+ * One block, loaded last, touching colour, radius and shadow only — never size or layout — so taking it
+ * out is deleting this file and its @import. Text colours are kept at 4.5:1 or better on what they sit on.
+ */
+
+.page-tabs {
+  background: #e3e9e5;
+  border-radius: 22px;
+  box-shadow:
+    inset 4px 4px 9px rgba(14, 51, 37, 0.16),
+    inset -4px -4px 9px rgba(255, 255, 255, 0.95);
+}
+
+.page-tab {
+  border-radius: 17px;
+  color: #4f5d56;
+  transition: box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.page-tab.active {
+  background: linear-gradient(145deg, #ffffff, #f0f4f1);
+  box-shadow:
+    5px 6px 12px rgba(14, 51, 37, 0.22),
+    -3px -3px 8px rgba(255, 255, 255, 0.9),
+    inset 2px 2px 4px rgba(255, 255, 255, 1),
+    inset -3px -3px 6px rgba(14, 51, 37, 0.09);
+}
+
+/* Pressed: the piece sinks toward the track. */
+.page-tab:active {
+  box-shadow:
+    inset 3px 3px 7px rgba(14, 51, 37, 0.2),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-tab {
+    transition: none;
+  }
+}
