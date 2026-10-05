@@ -46,7 +46,6 @@ import { BranchCarousel } from './BranchCarousel';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
-import { useOnVisitChanged } from '../../lib/visit-changed';
 
 /**
  * Jira GRW-222 — the owner's Home.
@@ -208,35 +207,69 @@ export function OwnerHome(p: OwnerHomeProps) {
   const mayBook = mayUse(p.role, 'visit.new');
   const mayRecordPayment = mayUse(p.role, 'visit.recordPayment');
 
+  /*
+   * Only the newest read may land. A branch or period switch, or a refresh after a payment, can overlap an
+   * earlier read; without this the slower answer wins and Home shows another branch's or period's figures.
+   */
+  const homeSeq = useRef(0);
+  const statsSeq = useRef(0);
+
   const loadClientStats = (nextBranch: string | null) => {
+    const mine = ++statsSeq.current;
     api
       .customerStats(nextBranch)
-      .then(setClientStats)
-      .catch(() => setClientStats(null));
+      .then((s) => mine === statsSeq.current && setClientStats(s))
+      .catch(() => mine === statsSeq.current && setClientStats(null));
   };
 
-  const load = (nextPeriod: HomePeriod, nextBranch: string | null) => {
-    setLoading(true);
-    setFailed(false);
+  /** `quiet`: a refresh of what is already on screen — no spinner, and a failed read keeps the figures shown. */
+  const load = (nextPeriod: HomePeriod, nextBranch: string | null, quiet = false) => {
+    const mine = ++homeSeq.current;
+    if (!quiet) {
+      setLoading(true);
+      setFailed(false);
+    }
     api
       .home(nextPeriod, nextBranch)
       .then((d) => {
+        if (mine !== homeSeq.current) return;
         setData(d);
         setFailed(false);
       })
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (mine === homeSeq.current && !quiet) setFailed(true);
+      })
+      .finally(() => {
+        if (mine === homeSeq.current) setLoading(false);
+      });
   };
 
-  // Money was taken or a visit was marked done: re-read the figures quietly (no spinner, no timer).
-  useOnVisitChanged(() => {
+  /*
+   * Record payment, Mark done, a move, a token — and the same done on another phone — all end in a server
+   * refresh (`router.refresh()` from the sheet, or LiveRefresh's tick), which hands Home a new business-wide
+   * overview. The figures this screen holds for its branch and period are re-read when that overview has
+   * CHANGED, not on every tick: an unchanged refresh costs nothing here. Today on All branches is the server's
+   * own read, so it is taken as is.
+   */
+  const serverSig =
+    p.initial === null ? null : JSON.stringify([p.initial.money, p.initial.branches, p.initial.attention, p.initial.tokensToday ?? null, p.customerStats]);
+  const seenSig = useRef(serverSig);
+  useEffect(() => {
+    if (serverSig === null || serverSig === seenSig.current) return;
+    seenSig.current = serverSig;
     if (!branchContext.ready) return;
-    api
-      .home(period, branch)
-      .then(setData)
-      .catch(() => undefined);
+    if (period === 'today' && branch === null) {
+      homeSeq.current++;
+      statsSeq.current++;
+      setData(p.initial);
+      setFailed(false);
+      setClientStats(p.customerStats);
+      return;
+    }
+    load(period, branch, true);
     loadClientStats(branch);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSig]);
 
   /**
    * Jira GRW-340 — choose a branch from anywhere on this screen (the header's picker, the money card's branch line).
@@ -518,7 +551,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                 branchId={branch}
                 onPickBranch={pickBranch}
               /> : <CardError t={t} onRetry={() => load(period, branch)} />}
-            {showCarousel && data ? <BranchCarousel t={t} data={data} period={period} onPick={pickBranch} /> : null}
+            {showCarousel && data ? <BranchCarousel t={t} data={data} period={period} refreshKey={serverSig} onPick={pickBranch} /> : null}
           </div>
 
           {/*

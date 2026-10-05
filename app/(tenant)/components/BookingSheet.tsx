@@ -11,7 +11,6 @@ import { MoveBookingSheet } from './MoveBookingSheet';
 import { IconCheck, IconClose, IconMoveTime, IconPhone, IconWhatsApp } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useMayUse } from './SessionProvider';
-import { announceVisitChanged } from '../lib/visit-changed';
 
 /**
  * Digits only — `tel:` and `wa.me` both choke on spaces and punctuation.
@@ -108,7 +107,6 @@ export function BookingSheet({
       // that was tapped, instead of being left confirmed beside it.
       await api.updateAppointmentStatus(appointment.id, status, status === 'cancelled' || status === 'no_show');
       router.refresh();
-      announceVisitChanged();
       onClose();
     } catch {
       setError(tsh('saveFailed'));

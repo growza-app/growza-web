@@ -7,7 +7,6 @@ import type { HomeCopy } from '../../lib/home-copy';
 import { IconArrowLeft, IconClose } from '../icons';
 import { Avatar } from './parts';
 import { useDialog } from '../../../shared/a11y/useDialog';
-import { announceVisitChanged } from '../../lib/visit-changed';
 
 /**
  * Jira GRW-222 — "Give to staff": the one tap that starts a queued walk-in.
@@ -113,7 +112,6 @@ export function GiveToStaffSheet({
     try {
       await api.giveToStaff(entry.id, providerId, needsServices ? picked : undefined);
       router.refresh();
-      announceVisitChanged();
       onClose();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t.couldNotGive);
@@ -144,7 +142,6 @@ export function GiveToStaffSheet({
     try {
       await api.queueEntryLeft(entry.id);
       router.refresh();
-      announceVisitChanged();
       onClose();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t.couldNotGive);
