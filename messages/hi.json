@@ -1601,6 +1601,7 @@
     "bookingDate": "बुकिंग की तारीख",
     "bookingTime": "बुकिंग का समय",
     "anyTime": "कोई भी समय",
+    "timeNow": "अभी · {time}",
     "backToHome": "होम पेज पर वापस जाएँ",
     "atOtherBranches": "आपकी दूसरी ब्रांच में",
     "bringToBranch": "इन्हें {branch} में जोड़ें",

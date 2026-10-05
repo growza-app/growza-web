@@ -1821,7 +1821,12 @@ export function NewVisitSheet({
                 {nv.bookingTime}
               </label>
               <select id="wi-time" value={timeWanted} onChange={(e) => setTimeWanted(e.target.value)}>
-                <option value="">{nv.anyTime}</option>
+                {/* Jira GRW-534 — today the empty entry shows the current time and is still a walk-in; another day, "Any time". */}
+                <option value="">
+                  {day === todayIso
+                    ? nv.timeNow(new Intl.DateTimeFormat(locale, { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date()))
+                    : nv.anyTime}
+                </option>
                 {timeOptions.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
