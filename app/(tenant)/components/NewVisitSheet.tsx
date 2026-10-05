@@ -1774,6 +1774,8 @@ export function NewVisitSheet({
               today. Today is a walk-in now; a later day is a booking for that day (and needs a phone). Never
               before today; set back to today, or cleared, it is a walk-in again.
             */}
+            {/* Jira GRW-529 — date and time share one row. */}
+            <div className="wi-when">
             <div className="field wi-date-field">
               <label htmlFor="wi-date">
                 {nv.bookingDate}
@@ -1813,6 +1815,7 @@ export function NewVisitSheet({
                   setTimeWanted(day === todayIso && v && v < nowHm ? nowHm : v);
                 }}
               />
+            </div>
             </div>
 
             {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
