@@ -37,7 +37,8 @@ describe('the centre button opens the visit sheet on Walk-in now', () => {
   });
 
   it('AC-04 — For later is still one tap away inside the sheet', () => {
-    expect(sheet).toMatch(/onClick=\{\(\) => setMode\('later'\)\}/);
+    // Jira GRW-518 — through `chooseMode`, so choosing Walk-in now also puts the Booking date back to today.
+    expect(sheet).toMatch(/onClick=\{\(\) => chooseMode\('later'\)\}/);
     expect(sheet).toMatch(/mode: initialMode = 'now'/);
   });
 });

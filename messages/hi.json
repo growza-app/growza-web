@@ -1598,7 +1598,7 @@
     "noName": "नाम नहीं",
     "noMatch": "इससे मिलता कोई दर्ज नहीं है।",
     "visits": "{n, plural, one {# विज़िट} other {# विज़िट}}",
-    "addNew": "नया व्यक्ति जोड़ें",
+    "bookingDate": "बुकिंग की तारीख",
     "atOtherBranches": "आपकी दूसरी ब्रांच में",
     "bringToBranch": "इन्हें {branch} में जोड़ें",
     "nameRequired": "नाम",

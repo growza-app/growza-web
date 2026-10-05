@@ -57,7 +57,7 @@ import type { FreeTime } from '../lib/book-again';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
-import { IconArrowLeft, IconCheck, IconClose, IconSearch, IconUserPlus } from './icons';
+import { IconArrowLeft, IconCheck, IconClose, IconSearch } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
@@ -828,7 +828,9 @@ export function NewVisitSheet({
     ? (rupeesToMinor(comboAmountText) ?? 0) + extras.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0)
     : Number(comboPriceMinor ?? 0) + extras.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
   // --- `later` only: which day, and which slot on it ---
-  const [day, setDay] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()));
+  /** Jira GRW-518 — today in the salon's zone: the Booking date's default, and the earliest it can be. */
+  const todayIso = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()), [timezone]);
+  const [day, setDay] = useState(todayIso);
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotUtc, setSlotUtc] = useState<string | null>(null);
@@ -844,13 +846,17 @@ export function NewVisitSheet({
   const days = useMemo(() => {
     const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone });
     const label = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, weekday: 'short', day: 'numeric' });
-    return Array.from({ length: 7 }, (_, i) => {
+    const week = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setHours(12, 0, 0, 0);
       d.setDate(d.getDate() + i);
       return { iso: fmt.format(d), label: i === 0 ? nv.today : label.format(d) };
     });
-  }, [timezone]);
+    // Jira GRW-518 — a Booking date chosen past the week is still a day on this row, and selected: it was
+    // picked on the first screen, and the row must not show nothing chosen.
+    if (!week.some((d) => d.iso === day)) week.push({ iso: day, label: label.format(new Date(`${day}T12:00:00`)) });
+    return week;
+  }, [timezone, day]);
 
   /*
    * Slots for the WHOLE chain, not just its first service.
@@ -1462,6 +1468,14 @@ export function NewVisitSheet({
         : clientName(stage.client);
 
   const asPage = presentation === 'page';
+  /**
+   * Jira GRW-518 — a walk-in is now, so choosing it puts the Booking date back to today; choosing a later
+   * date (below) goes the other way and makes the visit "For later". The two controls cannot disagree.
+   */
+  const chooseMode = (m: VisitMode) => {
+    setMode(m);
+    if (m === 'now') setDay(todayIso);
+  };
   /*
    * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
    *
@@ -1558,7 +1572,7 @@ export function NewVisitSheet({
               const tabs = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
               const otherIndex = tabs.indexOf(document.activeElement as HTMLButtonElement) === 0 ? 1 : 0;
               tabs[otherIndex]?.focus();
-              setMode(otherIndex === 0 ? 'now' : 'later');
+              chooseMode(otherIndex === 0 ? 'now' : 'later');
             }}
           >
             <button
@@ -1567,7 +1581,7 @@ export function NewVisitSheet({
               aria-selected={!later}
               aria-controls="wi-client-panel"
               className={!later ? 'is-on' : ''}
-              onClick={() => setMode('now')}
+              onClick={() => chooseMode('now')}
             >
               {nv.modeNow}
             </button>
@@ -1577,7 +1591,7 @@ export function NewVisitSheet({
               aria-selected={later}
               aria-controls="wi-client-panel"
               className={later ? 'is-on' : ''}
-              onClick={() => setMode('later')}
+              onClick={() => chooseMode('later')}
             >
               {nv.modeLater}
             </button>
@@ -1587,6 +1601,23 @@ export function NewVisitSheet({
         {/* ---------- Stage 1: find them ---------- */}
         {stage.step === 'client' && (
           <div className="wi-body" id="wi-client-panel">
+            {/* Jira GRW-518 — when. Today unless changed; never before today; a later day makes it "For later". */}
+            <div className="field wi-date-field">
+              <label htmlFor="wi-date">{nv.bookingDate}</label>
+              <input
+                id="wi-date"
+                type="date"
+                min={todayIso}
+                value={day}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (!v) return;
+                  const next = v < todayIso ? todayIso : v;
+                  setDay(next);
+                  if (next > todayIso) setMode('later');
+                }}
+              />
+            </div>
             <div className="picker-search">
               <span className="wi-search-icon">
                 <IconSearch />
@@ -1661,13 +1692,11 @@ export function NewVisitSheet({
             {/* Jira GRW-517 — no list of previous clients: a client is found by typing, or added below. */}
 
             {/*
-              Jira GRW-514 — "Add someone new" is on this screen, under the search, not a button to another one.
+              Jira GRW-514 — adding someone new is on this screen, under the search, not a button to another one.
+              Jira GRW-518 — with no heading or icon of its own, and no margin above it: just the two fields.
               The old second step (name, phone, "Use this person") is these same fields and the same checks.
             */}
             <div className="wi-new-person" ref={addNewRef}>
-              <h2 className="wi-section-label">
-                <IconUserPlus /> {nv.addNew}
-              </h2>
               <div className="field">
                 <label htmlFor="wi-name">{nv.nameRequired}</label>
                 <input
