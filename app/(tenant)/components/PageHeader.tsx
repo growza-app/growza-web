@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { HeaderControls } from './HeaderControls';
 import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { BackButton } from './BackButton';
+import { MenuButton } from './MenuButton';
 
 /**
  * Jira GRW-30 — the one header. Title and subtitle left; the page's primary
@@ -33,6 +34,7 @@ export function PageHeader({
   mobileSubtitle,
   onBack,
   bare,
+  menu,
 }: {
   title: string;
   subtitle?: string;
@@ -52,6 +54,11 @@ export function PageHeader({
    * a quiet page with Back and the title. Phone only; a laptop header is untouched.
    */
   bare?: boolean;
+  /**
+   * Jira GRW-538 — the tab-bar screens (Bookings, Clients) have nothing behind them, so on a phone the menu
+   * button stands where Back would: the same circle, as on Home.
+   */
+  menu?: boolean;
   /** Jira GRW-307 — leave out the header's search button: the Search screen is what it opens. */
 }) {
   return (
@@ -60,7 +67,7 @@ export function PageHeader({
           every screen but Home (the menu is on Home and behind the avatar); a screen with its own
           Back, inline with the title, keeps that one and shows nothing here. */}
       <div className="topbar-lead">
-        {onBack ? null : <BackButton phoneOnly />}
+        {onBack ? null : menu ? <MenuButton /> : <BackButton phoneOnly />}
         <div className="topbar-title">
           {onBack ? (
             <div className="topbar-title-row">

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { formatMoney, formatTime, type Provider, type QueueEntry, type TokenRow } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
 import { minutesBetween } from '../../lib/live-state';
+import { IconStopwatch } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { useMayUse } from '../SessionProvider';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
@@ -202,7 +203,7 @@ export function TokenBoard({
    * time costs more than the comparison that decides whether we need it.
    */
   const waitingWord = (minutes: number, arrivedAt: () => string) =>
-    minutes >= 4 * 60 ? t.waitingSince(arrivedAt()) : t.waitingMin(minutes);
+    minutes >= 4 * 60 ? t.sinceTime(arrivedAt()) : t.waitedFor(minutes);
 
   const services = (x: TokenRow) =>
     x.serviceNames.length > 0 ? x.serviceNames.join(' + ') : <span className="tb-muted">{w.servicesAtPayment}</span>;
@@ -217,8 +218,13 @@ export function TokenBoard({
           <span className="tb-meta">
             {col === 'waiting'
               ? // Jira GRW-481 — past four hours a duration tells the desk nothing useful;
-                // the time they walked in does.
-                waitingWord(minutesBetween(x.addedAt, now), () => formatTime(x.addedAt, timezone))
+                // the time they walked in does. Jira GRW-541 · GRW-543 · GRW-544 — a stopwatch icon, then the time, not the word "Waiting".
+                [
+                  <span key="icon" className="tb-meta-icon" aria-hidden="true">
+                    <IconStopwatch />
+                  </span>,
+                  waitingWord(minutesBetween(x.addedAt, now), () => formatTime(x.addedAt, timezone)),
+                ]
               : col === 'with_stylist'
                 ? // Jira GRW-405 — a booked client's visit runs at the booked time, not when they walked in.
                   (x.booked ? w.bookedAt : t.started)(formatTime(x.visitStartAt ?? x.addedAt, timezone))

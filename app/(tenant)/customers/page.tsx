@@ -55,7 +55,7 @@ export default async function CustomersPage({
   } catch (error) {
     return (
       <>
-        <PageHeader title={nouns('customersTitle')} />
+        <PageHeader title={nouns('customersTitle')} menu />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>

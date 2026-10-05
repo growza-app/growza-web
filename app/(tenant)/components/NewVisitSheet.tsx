@@ -1556,6 +1556,11 @@ export function NewVisitSheet({
    */
   const goBack = (() => {
     if (busy || linesLocked) return null;
+    // Jira GRW-537 — the first screen of the page has Back too: through history, or Home when there is none (the
+    // app's own Back, GRW-497). Not in the pop-up, which has its ✕.
+    if (asPage && stage.step === 'client') {
+      return () => (window.history.length > 1 ? router.back() : router.push('/'));
+    }
     if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
       return () => setStage({ step: 'client' });
     }

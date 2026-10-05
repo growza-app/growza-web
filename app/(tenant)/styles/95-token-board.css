@@ -183,6 +183,23 @@
   white-space: nowrap;
   color: #8a5a0f;
 }
+/* Jira GRW-541 · GRW-543 · GRW-544 — a waiting token's wait: a stopwatch icon, then the time, regular weight and italic
+   (the column is headed Waiting). */
+.tb-col[data-col='waiting'] .tb-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 400;
+  font-style: italic;
+}
+.tb-meta-icon {
+  display: inline-grid;
+  flex: none;
+}
+.tb-meta-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
 .tb-col[data-col='with_stylist'] .tb-meta {
   color: var(--hm-muted);
 }

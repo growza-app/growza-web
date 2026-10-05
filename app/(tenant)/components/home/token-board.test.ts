@@ -339,24 +339,55 @@ describe('a wait reads as a wait', () => {
     boardSays([row({ id: 'w', tokenNo: 9, customerName: 'Priya', addedAt: new Date(Date.parse(NOW) - minutes * 60_000).toISOString() })]);
 
   it('still counts minutes under the hour', () => {
-    expect(waitingSince(45)).toContain('Waiting 45 min');
+    expect(waitingSince(45)).toContain('45 min');
+    // Jira GRW-541 — the column is headed Waiting, so the row does not say it again.
+    expect(waitingSince(45)).not.toContain('Waiting 45');
   });
 
   it('says hours and minutes past the hour', () => {
-    expect(waitingSince(90)).toContain('Waiting 1h 30m');
-    expect(waitingSince(120)).toContain('Waiting 2h');
+    expect(waitingSince(90)).toContain('1h 30m');
+    expect(waitingSince(120)).toContain('2h');
   });
 
   it('stops counting past four hours and says when she walked in', () => {
     const said = waitingSince(618);
     expect(said).not.toContain('618');
-    expect(said).toContain('Waiting since');
+    expect(said).toContain('since');
     // NOW is 06:00 UTC = 11:30 IST; 618 minutes earlier is 01:12 IST.
     expect(said).toContain('1:12 am');
   });
 
   it('keeps the Hindi in step', () => {
-    expect(boardSays([row({ id: 'w', tokenNo: 9, addedAt: new Date(Date.parse(NOW) - 90 * 60_000).toISOString() })], { provider: 'Stylist' }, 'hi')).toContain('1 घंटे 30 मिनट इंतज़ार');
+    expect(boardSays([row({ id: 'w', tokenNo: 9, addedAt: new Date(Date.parse(NOW) - 90 * 60_000).toISOString() })], { provider: 'Stylist' }, 'hi')).toContain('1 घंटे 30 मिनट');
+  });
+});
+
+/**
+ * Jira GRW-541 — a waiting token's wait is a clock icon and the time, in regular weight, with no word
+ * "Waiting" (the column is headed that). The other two columns keep their bold fact.
+ */
+describe('the wait on a waiting token (GRW-541)', () => {
+  const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('draws a stopwatch before the time, only in the Waiting column', () => {
+    const block = src.slice(src.indexOf('<span className="tb-meta">'), src.indexOf('<span className="tb-sub">'));
+    expect(block).toMatch(/col === 'waiting'\s*\?[\s\S]*?<IconStopwatch \/>/);
+    expect(block.match(/<IconStopwatch \/>/g)?.length).toBe(1);
+  });
+
+  it('asks for the time without the word "Waiting"', () => {
+    expect(src).toMatch(/t\.sinceTime\(arrivedAt\(\)\) : t\.waitedFor\(minutes\)/);
+    expect(src).not.toMatch(/t\.waitingMin|t\.waitingSince/);
+  });
+
+  it('is regular weight and italic, in that column only', () => {
+    expect(css).toMatch(/\.tb-col\[data-col='waiting'\] \.tb-meta \{[^}]*font-weight: 400;[^}]*font-style: italic;/);
+    expect(css).toMatch(/\.tb-meta \{[^}]*font-weight: 700;/);
+  });
+
+  it('the icon is 16×16, in rem', () => {
+    expect(css).toMatch(/\.tb-meta-icon svg \{\s*width: 1rem;\s*height: 1rem;/);
   });
 });
 

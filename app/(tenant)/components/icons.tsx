@@ -179,6 +179,15 @@ export const IconClock = () => (
   </svg>
 );
 
+/** Jira GRW-544 — a stopwatch: time elapsed. Feather has none, so this is drawn here at Feather's stroke. */
+export const IconStopwatch = () => (
+  <svg {...base}>
+    <circle cx="12" cy="14" r="8" />
+    <line x1="10" y1="2" x2="14" y2="2" />
+    <line x1="12" y1="14" x2="15" y2="11" />
+  </svg>
+);
+
 export const IconSearch = () => (
   <svg {...base}>
     <circle cx="11" cy="11" r="8" />
