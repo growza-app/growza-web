@@ -2127,9 +2127,17 @@ button.hm-now-count {
 /* Jira GRW-284 — services picked while giving a name-only token. Scrolls
    inside the sheet so a 50-service menu cannot push the stylists off-screen. */
 .hm-give-services {
-  max-height: 34dvh;
+  max-height: 46dvh;
   overflow-y: auto;
-  padding: 0 var(--sp-4) var(--sp-3);
+}
+/* The title takes what the back and close buttons leave; the one button of the second step is full width. */
+.hm-give-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.hm-give-go {
+  width: 100%;
+  min-height: 48px;
 }
 .hm-idx {
   display: inline-flex;
@@ -2181,6 +2189,29 @@ button.hm-now-count {
 }
 .hm-sheet-narrow {
   width: min(480px, 100%);
+}
+/* A stylist row is: face, name, free/busy. A long client's name in the "busy with" pill used to squeeze the face and the
+   stylist's own name to nothing, so the pill gives way (an ellipsis) and the face and name keep their room. */
+.hm-pick .hm-avatar {
+  flex: none;
+}
+.hm-pick .hm-row-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.hm-pick .hm-row-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-pick .hm-pill {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 58%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hm-pick .hm-row-button button:disabled {
   opacity: 0.6;
