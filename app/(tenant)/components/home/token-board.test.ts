@@ -454,7 +454,7 @@ describe('the token card on a phone (GRW-548)', () => {
 });
 
 /** Jira GRW-549 — on a phone card: 16px above and below the services line, and 32px buttons with a 44px tap. */
-describe('the spacing of a token card (GRW-549)', () => {
+describe('the spacing of a token card (GRW-549 · GRW-550)', () => {
   const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
 
   it('is 16px between the pills and the services line, and between the services line and the buttons', () => {
@@ -464,9 +464,9 @@ describe('the spacing of a token card (GRW-549)', () => {
     expect(base).toMatch(/--sp-4: 16px;/);
   });
 
-  it('has 32px buttons that keep a 44px tap', () => {
+  it('has 40px buttons that keep a 44px tap (40 + 2 above + 2 below)', () => {
     const rule = css.slice(css.indexOf('.tb-actions .hm-give {'), css.indexOf('}', css.indexOf('.tb-actions .hm-give {')));
-    expect(rule).toMatch(/min-height: 32px;/);
-    expect(css).toMatch(/\.tb-actions \.hm-give::after \{[^}]*inset: -6px 0;/);
+    expect(rule).toMatch(/min-height: 40px;/);
+    expect(css).toMatch(/\.tb-actions \.hm-give::after \{[^}]*inset: -2px 0;/);
   });
 });

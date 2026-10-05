@@ -293,16 +293,16 @@
   white-space: normal;
   text-align: center;
   line-height: 1.2;
-  /* Jira GRW-546 — 32px high on a token row (one line of text; two lines grow it). The look is smaller, the TAP is
-     not: an invisible 6px above and below keeps the target at 44px (GRW-481's rule for what the desk taps most). */
+  /* Jira GRW-546 · GRW-550 — 40px high on a token row (one line of text; two lines grow it; was 44, then 32). The
+     TAP stays at 44px (GRW-481's rule for what the desk taps most): an invisible 2px above and below. */
   position: relative;
-  min-height: 32px;
+  min-height: 40px;
   padding-block: 0.25rem;
 }
 .tb-actions .hm-give::after {
   content: '';
   position: absolute;
-  inset: -6px 0;
+  inset: -2px 0;
 }
 /* Jira GRW-481 — "Record payment" is the likelier of the two, so it still leads
    the pair; it just no longer leads it by being a solid green block repeated
