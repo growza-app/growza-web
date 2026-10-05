@@ -416,7 +416,8 @@ describe('ten rows in view on a phone (GRW-547)', () => {
   const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
   const hook = readFileSync(resolve(__dirname, 'use-ten-rows.ts'), 'utf8');
   const board = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
-  const phone = css.slice(css.indexOf('@media (max-width: 860px) {\n  .tb-rows {'), css.indexOf('.tb-main {'));
+  const phoneStart = css.indexOf('@media (max-width: 860px) {\n  .tb-rows {');
+  const phone = css.slice(phoneStart, css.indexOf('.tb-main {', phoneStart));
 
   it('is ten rows, measured against the eleventh — not a fixed number of pixels', () => {
     expect(hook).toMatch(/export const VISIBLE_ROWS = 10;/);
