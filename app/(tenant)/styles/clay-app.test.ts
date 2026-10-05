@@ -22,7 +22,7 @@ describe('the clay app stylesheet', () => {
 
   it('sets shadow, radius and the primary gradient — and no colour, size or layout', () => {
     const decls = [...css.matchAll(/^\s+([a-z-]+):/gm)].map((m) => m[1] ?? '');
-    const allowed = new Set(['--radius', '--radius-sm', '--clay-raise', '--clay-raise-soft', '--clay-press', '--clay-green', 'box-shadow', 'background-image']);
+    const allowed = new Set(['--radius', '--radius-sm', '--clay-raise', '--clay-raise-soft', '--clay-press', '--clay-green', 'box-shadow', 'background-image', 'filter']);
     expect([...new Set(decls)].filter((d) => !allowed.has(d))).toEqual([]);
   });
 
@@ -46,5 +46,12 @@ describe('the clay app stylesheet', () => {
     expect(css).toMatch(/\.rp-card,\n\.bk-waiting \{\s*box-shadow: var\(--clay-raise\);/);
     expect(css).toMatch(/\.hm-toolbar-summary,\n\.hm-give,\n\.rp-control \{\s*box-shadow: var\(--clay-raise-soft\);/);
     expect(css).toMatch(/@media \(max-width: 860px\) \{[^@]*\.tb-board \.tb-row \{\s*box-shadow: var\(--clay-raise\);/);
+  });
+
+  /** Jira GRW-553 — the quick-link tiles are domes, and their glyphs are embossed. */
+  it('raises the quick-link tiles and embosses their glyphs', () => {
+    expect(css).toMatch(/\.hm-tile-icon \{[^}]*background-image: linear-gradient\(145deg, rgba\(255, 255, 255, 0\.7\)[^}]*box-shadow: var\(--clay-raise\);/);
+    expect(css).toMatch(/\.hm-tile-icon svg \{\s*filter: drop-shadow\(0 1px 0 rgba\(255, 255, 255, 0\.95\)\) drop-shadow\(/);
+    expect(css).toMatch(/\.hm-tile:active \.hm-tile-icon \{\s*box-shadow: var\(--clay-press\);/);
   });
 });
