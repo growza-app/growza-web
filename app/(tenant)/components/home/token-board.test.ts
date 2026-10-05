@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { NextIntlClientProvider } from 'next-intl';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import en from '../../../../messages/en.json';
 import hi from '../../../../messages/hi.json';
@@ -356,5 +357,23 @@ describe('a wait reads as a wait', () => {
 
   it('keeps the Hindi in step', () => {
     expect(boardSays([row({ id: 'w', tokenNo: 9, addedAt: new Date(Date.parse(NOW) - 90 * 60_000).toISOString() })], { provider: 'Stylist' }, 'hi')).toContain('1 घंटे 30 मिनट इंतज़ार');
+  });
+});
+
+/** Jira GRW-542 — no number badge on a token row; the name leads. The number stays in the buttons' spoken labels. */
+describe('no token number badge (GRW-542)', () => {
+  const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('draws no badge in a row, and the row is one column', () => {
+    expect(src.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')).not.toMatch(/className="tb-no/);
+    expect(css).toMatch(/\.tb-row \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+    expect(css).toMatch(/\.tb-actions \{\s*grid-column: 1;/);
+  });
+
+  it('the buttons still say which token they are for', () => {
+    const html = boardSays([row({ id: 'a', tokenNo: 7, customerName: 'Simran' })]);
+    expect(html).toContain('token 7');
+    expect(html).not.toContain('tb-no');
   });
 });

@@ -209,8 +209,7 @@ export function TokenBoard({
 
   const row = (x: TokenRow, col: Column, index: number) => (
     <li key={x.id} className="tb-row" data-token={x.id}>
-      {/* The number the client was told. */}
-      <span className="tb-no hm-idx">{x.tokenNo}</span>
+      {/* Jira GRW-542 — no number badge: the name leads the row. The number is still in the buttons' spoken labels. */}
       <span className="tb-main">
         {/* Name and its one fact on a line; in a narrow column the fact drops under the name instead of squeezing it. */}
         <span className="tb-line">
