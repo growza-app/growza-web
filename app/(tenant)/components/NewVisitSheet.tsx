@@ -860,6 +860,7 @@ export function NewVisitSheet({
     d.setUTCDate(d.getUTCDate() + 1);
     return d.toISOString().slice(0, 10);
   });
+  const timePassed = day === todayIso && timeWanted !== '' && timeWanted < nowHm;
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotUtc, setSlotUtc] = useState<string | null>(null);
@@ -1796,7 +1797,7 @@ export function NewVisitSheet({
 
             {/*
               Jira GRW-527 — the Booking time, after the date. Optional: empty is a walk-in now. A time makes it a
-              booking — for the date shown, so "later today" is a time on today. Not before now, today.
+              booking — for the date shown, so "later today" is a time on today. Today, a time before now is flagged, not changed.
             */}
             <div className="field wi-date-field">
               <label htmlFor="wi-time">
@@ -1807,15 +1808,17 @@ export function NewVisitSheet({
                 id="wi-time"
                 type="time"
                 step={300}
-                min={day === todayIso ? nowHm : undefined}
                 value={timeWanted}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setTimeWanted(day === todayIso && v && v < nowHm ? nowHm : v);
-                }}
+                aria-invalid={timePassed || undefined}
+                aria-describedby={timePassed ? 'wi-time-error' : undefined}
+                onChange={(e) => setTimeWanted(e.target.value)}
               />
             </div>
             </div>
+            {/* Jira GRW-531 — kept as typed (AM stays AM); a time already past today says so, full width under the row. */}
+            {timePassed && (
+              <div role="alert" id="wi-time-error" className="field-error">{nv.timePassed}</div>
+            )}
 
             {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
               <div className="modal-actions wi-actions wi-acts">
@@ -1832,6 +1835,7 @@ export function NewVisitSheet({
                      * give a real one. A half-typed number saved as-is is the
                      * shape that produced `+91786545789` in the live data.
                      */
+                    if (timePassed) return;
                     const phoneProblem = checkPhone(newPhone, { required: later });
                     if (phoneProblem) {
                       setPhoneError(phoneProblem);

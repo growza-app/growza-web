@@ -1600,6 +1600,7 @@
     "visits": "{n, plural, one {# विज़िट} other {# विज़िट}}",
     "bookingDate": "बुकिंग की तारीख",
     "bookingTime": "बुकिंग का समय",
+    "timePassed": "यह समय निकल चुका है। बाद का समय चुनें, या कोई और दिन।",
     "backToHome": "होम पेज पर वापस जाएँ",
     "atOtherBranches": "आपकी दूसरी ब्रांच में",
     "bringToBranch": "इन्हें {branch} में जोड़ें",
