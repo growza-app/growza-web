@@ -490,6 +490,8 @@ export function OwnerHome(p: OwnerHomeProps) {
               height. From 861px it is the header's button or the card's row. */}
           <button type="button" className="hm-toolbar-summary" aria-label={t.daySummary} title={t.daySummary} onClick={() => setSummaryOpen(true)}>
             <IconDaySummary />
+            {/* Jira GRW-511 — its name beside the icon: an owner should not have to guess what an icon opens. */}
+            <span className="hm-toolbar-summary-label">{t.daySummary}</span>
           </button>
         </div>
 
