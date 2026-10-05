@@ -33,6 +33,7 @@ export function PageHeader({
   actions,
   mobileSubtitle,
   onBack,
+  backOnPhoneOnly,
 }: {
   title: string;
   subtitle?: string;
@@ -47,6 +48,12 @@ export function PageHeader({
    * one another, so nothing else needs a way back besides the nav itself.
    */
   onBack?: () => void;
+  /**
+   * Jira GRW-496 — for a screen that is a sidebar destination on a laptop but is reached from
+   * somewhere else on a phone (Staff, from the account menu): Back replaces the menu button on a
+   * phone, and on a laptop nothing is drawn, so the header is what it always was there.
+   */
+  backOnPhoneOnly?: boolean;
   /** Jira GRW-307 — leave out the header's search button: the Search screen is what it opens. */
 }) {
   return (
@@ -55,9 +62,13 @@ export function PageHeader({
           arrow shows that instead: it is a step deeper than the tab bar, and
           Back is the one control it needs at the left. */}
       <div className="topbar-lead">
-        {onBack ? null : <MenuButton />}
+        {onBack && backOnPhoneOnly ? (
+          <BackButton onBack={onBack} phoneOnly />
+        ) : onBack ? null : (
+          <MenuButton />
+        )}
         <div className="topbar-title">
-          {onBack ? (
+          {onBack && !backOnPhoneOnly ? (
             <div className="topbar-title-row">
               <BackButton onBack={onBack} />
               <h1>{title}</h1>

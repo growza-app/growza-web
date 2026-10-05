@@ -250,6 +250,8 @@ export function StaffClient({
       */}
       <PageHeader
         title={staffTitle}
+        onBack={() => (window.history.length > 1 ? router.back() : router.push('/'))}
+        backOnPhoneOnly
         actions={
           <button type="button" className="btn" onClick={() => setCreating(true)} disabled={seatsLeft === 0}>
             <IconPlus /> {t('addLabel', { label: staffLower })}

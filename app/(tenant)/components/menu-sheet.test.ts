@@ -33,7 +33,16 @@ describe('the menu button sits in the header row', () => {
   });
 
   it('a screen with a Back arrow shows that instead of the menu', () => {
-    expect(code('PageHeader.tsx')).toMatch(/\{onBack \? null : <MenuButton \/>\}/);
+    expect(code('PageHeader.tsx')).toMatch(/\) : onBack \? null : \(\s*<MenuButton \/>/);
+  });
+
+  it('Staff swaps the menu for Back on a phone only, and falls back to Home with no history (Jira GRW-496)', () => {
+    const header = code('PageHeader.tsx');
+    expect(header).toMatch(/onBack && backOnPhoneOnly \? \(\s*<BackButton onBack=\{onBack\} phoneOnly \/>/);
+    const staff = code('../providers/StaffClient.tsx');
+    expect(staff).toMatch(/onBack=\{\(\) => \(window\.history\.length > 1 \? router\.back\(\) : router\.push\('\/'\)\)\}\s*backOnPhoneOnly/);
+    // A laptop has the sidebar on screen: no Back there.
+    expect(code('../styles/76-header-controls.css')).toMatch(/@media \(min-width: 861px\) \{\s*\.topbar \.topbar-back-phone \{\s*display: none;/);
   });
 
   it('it says what it opens and whether it is open', () => {

@@ -190,6 +190,13 @@
   }
 }
 
+/* Jira GRW-496 — Staff's Back stands where the menu button does, so it is a phone's too. */
+@media (min-width: 861px) {
+  .topbar .topbar-back-phone {
+    display: none;
+  }
+}
+
 /* ---------- the menu button, in the header row (Jira GRW-306) ---------- */
 
 /* Not a phone: the sidebar is on screen. */
@@ -221,6 +228,21 @@
   .menu-btn svg {
     width: 1.25rem;
     height: 1.25rem;
+  }
+
+  /* Jira GRW-496 — Back where the menu button would be: the same circle, so the header does not shift. */
+  .topbar .topbar-back-phone {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
   }
 
   .topbar-lead {
