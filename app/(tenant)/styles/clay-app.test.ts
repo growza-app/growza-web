@@ -55,4 +55,12 @@ describe('the clay app stylesheet', () => {
     expect(css).not.toMatch(/drop-shadow|filter:/);
     expect(css).toMatch(/\.hm-tile:active \.hm-tile-icon \{\s*box-shadow: var\(--clay-press\);/);
   });
+
+  it('puts every bottom-bar tab on a tinted dome, with a ring on the current one', () => {
+    const chrome = readFileSync(resolve(__dirname, '74-mobile-chrome-2026.css'), 'utf8');
+    expect(chrome).toMatch(/\.bottom-nav a::before \{[^}]*background: var\(--bn-tint/);
+    expect(chrome).toMatch(/\.bottom-nav a:nth-of-type\(4\) \{ --bn-tint: #fdf6ec;/);
+    expect(css).toMatch(/\.bottom-nav a::before \{\s*background-image: linear-gradient\(145deg[^}]*box-shadow: var\(--clay-raise-soft\);/);
+    expect(css).toMatch(/\.bottom-nav a\.active::before \{\s*box-shadow: var\(--clay-raise-soft\), inset 0 0 0 1px var\(--bn-ink/);
+  });
 });

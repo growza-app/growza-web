@@ -139,17 +139,32 @@
     color: var(--accent-deep);
   }
 
-  .bottom-nav a.active::before {
+  /*
+   * Every tab sits on a small tinted tile, the quick links' own (their palette, their 12px corners); the one you are
+   * on is the same tile with a ring in its colour. The tint and ink come from the tab's place in the bar, so a role
+   * with other tabs still gets the same four.
+   */
+  .bottom-nav a::before {
     content: '';
     position: absolute;
-    top: 4px;
+    /* Centred on the 23px icon (it sits 2px from the top of the cell), so the tile ends above the label. */
+    top: -1px;
     left: 50%;
     transform: translateX(-50%);
     width: 46px;
     height: 30px;
-    border-radius: 15px;
-    background: var(--accent-soft);
+    border-radius: 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--bn-line, transparent);
+    background: var(--bn-tint, var(--accent-soft));
     z-index: 0;
+  }
+  .bottom-nav a:nth-of-type(1) { --bn-tint: #eef7f1; --bn-line: #dcece3; --bn-ink: #2f7d55; }
+  .bottom-nav a:nth-of-type(2) { --bn-tint: #f4f2fd; --bn-line: #e5e0f7; --bn-ink: #6d4fc4; }
+  .bottom-nav a:nth-of-type(3) { --bn-tint: #fdf1f1; --bn-line: #f7d9d9; --bn-ink: #d64545; }
+  .bottom-nav a:nth-of-type(4) { --bn-tint: #fdf6ec; --bn-line: #f6e6cd; --bn-ink: #c07d18; }
+  .bottom-nav a svg {
+    color: var(--bn-ink, currentColor);
   }
 
   .bottom-nav a {
