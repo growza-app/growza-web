@@ -11,20 +11,28 @@ const sheet = strip(readFileSync(resolve(__dirname, 'NewVisitSheet.tsx'), 'utf8'
 const css = strip(readFileSync(resolve(__dirname, '../styles/72-walk-in-sheet.css'), 'utf8'));
 
 describe('the Booking date', () => {
-  it('is a date field on the first screen, defaulting to today and not allowing the past', () => {
+  it('is a date field on the first screen, empty until chosen, and not allowing the past', () => {
     expect(sheet).toMatch(/const \[day, setDay\] = useState\(todayIso\);/);
-    expect(sheet).toMatch(/<input\s+id="wi-date"\s+type="date"\s+min=\{todayIso\}\s+value=\{day\}/);
+    expect(sheet).toMatch(/<input\s+id="wi-date"\s+type="date"\s+min=\{todayIso\}\s+value=\{dateChosen \? day : ''\}/);
     // A typed past date is clamped, not accepted.
-    expect(sheet).toMatch(/const next = v < todayIso \? todayIso : v;/);
+    expect(sheet).toMatch(/setDay\(v < todayIso \? todayIso : v\);/);
   });
 
-  it('a later date makes it "For later"; "Walk-in now" puts the date back to today', () => {
-    expect(sheet).toMatch(/if \(next > todayIso\) setMode\('later'\);/);
-    expect(sheet).toMatch(/const chooseMode = \(m: VisitMode\) => \{\s*setMode\(m\);\s*if \(m === 'now'\) setDay\(todayIso\);/);
-    // Every way of choosing the mode goes through it: both tabs and the arrow keys.
-    expect(sheet).toMatch(/chooseMode\(otherIndex === 0 \? 'now' : 'later'\)/);
-    expect(sheet).toMatch(/onClick=\{\(\) => chooseMode\('now'\)\}/);
-    expect(sheet).toMatch(/onClick=\{\(\) => chooseMode\('later'\)\}/);
+  it('is optional: choosing a date makes it a booking, clearing it makes it a walk-in again (Jira GRW-519)', () => {
+    expect(sheet).toMatch(/setDay\(v < todayIso \? todayIso : v\);\s*setDateChosen\(true\);/);
+    expect(sheet).toMatch(/if \(!v\) \{\s*setDay\(todayIso\);\s*setDateChosen\(false\);\s*return;/);
+    expect(sheet).toMatch(/<span className="field-optional">\{tCommon\('optional'\)\}<\/span>/);
+  });
+
+  it('there are no Walk-in / For later tabs, and the flow runs search, name, phone, date, continue', () => {
+    expect(sheet).not.toMatch(/wi-segmented|role="tablist"|modeNow|modeLater/);
+    const first = sheet.slice(sheet.indexOf("{stage.step === 'client' && ("), sheet.indexOf("(stage.step === 'details' || stage.step === 'saving'"));
+    const at = (needle: string) => first.indexOf(needle);
+    expect(at('wi-search-input')).toBeGreaterThan(-1);
+    expect(at('id="wi-name"')).toBeGreaterThan(at('wi-search-input'));
+    expect(at('id="wi-phone"')).toBeGreaterThan(at('id="wi-name"'));
+    expect(at('id="wi-date"')).toBeGreaterThan(at('id="wi-phone"'));
+    expect(at('nv.useThisPerson')).toBeGreaterThan(at('id="wi-date"'));
   });
 
   it('a date past the week still shows, selected, on the when-step', () => {
@@ -44,7 +52,7 @@ describe('the Booking date', () => {
         services: Record<string, string>;
       };
       expect(JSON.stringify(m)).toMatch(/"bookingDate":/);
-      expect(JSON.stringify(m)).not.toMatch(/"addNew":/);
+      expect(JSON.stringify(m)).not.toMatch(/"addNew":|"modeNow":|"modeLater":|"modeLabel":/);
     }
   });
 });

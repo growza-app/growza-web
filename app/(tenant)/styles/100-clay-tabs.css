@@ -93,11 +93,10 @@
 
 /*
  * Jira GRW-502 — the selected tab is green on every strip, so "this one is chosen" looks the same
- * everywhere. Home's switch and Reports' tabs already were (`--accent-deep`); the walk-in sheet's
- * Now / For later toggle and the Bookings list/calendar toggle were a white piece, and now join them.
+ * everywhere. Home's switch and Reports' tabs already were (`--accent-deep`); the Bookings
+ * list/calendar toggle was a white piece, and now joins them (the walk-in sheet's Now / For later toggle went in GRW-519).
  * White on #178246 is 4.9:1 and on #166534 is 7.1:1.
  */
-.wi-segmented button.is-on,
 .bk-view-tab.is-active {
   background: linear-gradient(145deg, #178246, #126a38);
   color: #fff;

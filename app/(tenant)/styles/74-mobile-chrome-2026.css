@@ -203,40 +203,4 @@
 
 /* ---------- the mode toggle inside the sheet ---------- */
 
-/*
- * A segmented control, which is what this choice actually is: two mutually
- * exclusive answers to one question, both worth seeing at once. It replaces a
- * pop-up menu of two floating buttons that had to be dismissed before the real
- * screen appeared.
- */
-.wi-segmented {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  margin: 12px 18px 14px;
-  padding: 3px;
-  background: var(--slate-soft);
-  border-radius: 12px;
-}
-
-.wi-segmented button {
-  padding: 9px 8px;
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  font: inherit;
-  font-size: 0.84375rem;
-  font-weight: 600;
-  color: var(--muted);
-  cursor: pointer;
-  /* Jira GRW-305 — was 38px, under Apple's/WCAG 2.5.5's 44px minimum; a
-     two-up control is easy to under-size. */
-  min-height: 44px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.wi-segmented button.is-on {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgba(9, 20, 15, 0.12);
-}
+/* Jira GRW-519 — the walk-in sheet's Walk-in now / For later segmented control was here; the Booking date replaced it. */

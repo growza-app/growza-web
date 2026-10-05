@@ -45,7 +45,7 @@ describe('the clay tabs', () => {
     expect(css).toMatch(/\.page-tab::before \{[^}]*background: linear-gradient\(145deg, #178246, #126a38\);/);
     expect(css).toMatch(/\.page-tab\.active \{[^}]*color: #fff;/);
     expect(css).toMatch(/\.page-tab\.active \.page-tab-count \{\s*color: #fff;/);
-    expect(css).toMatch(/\.wi-segmented button\.is-on,\s*\.bk-view-tab\.is-active \{[^}]*background: linear-gradient\(145deg, #178246, #126a38\);[^}]*color: #fff;/);
+    expect(css).toMatch(/\.bk-view-tab\.is-active \{[^}]*background: linear-gradient\(145deg, #178246, #126a38\);[^}]*color: #fff;/);
     // The two that were already green stay on the shared deep green.
     const home = readFileSync(resolve(__dirname, '83-role-home.css'), 'utf8');
     expect(home).toMatch(/\.hm-seg button\.is-on \{[^}]*var\(--hm-green-deep\)/);
