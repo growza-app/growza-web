@@ -3,6 +3,9 @@ import { useEffect, type RefObject } from 'react';
 /** Jira GRW-547 — how many rows of a token list are in view on a phone; the rest scroll inside the list. */
 export const VISIBLE_ROWS = 5;
 
+/** How many rows a phone's list draws at first, and how many more each "Show more" adds. */
+export const SHOW_STEP = 10;
+
 /**
  * On a phone each token list is as tall as its first five rows, and scrolls inside itself past that.
  *

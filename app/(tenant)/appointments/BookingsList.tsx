@@ -13,6 +13,8 @@ import { useBranch } from '../components/BranchProvider';
 import { useLabels } from '../components/LabelsProvider';
 import { useMayUse } from '../components/SessionProvider';
 import { GiveToStaffSheet } from '../components/home/GiveToStaffSheet';
+import { SHOW_STEP } from '../components/home/use-visible-rows';
+import { usePhoneLayout } from '../components/home/use-phone-layout';
 import { NewVisitSheet } from '../components/NewVisitSheet';
 import { homeCopy } from '../lib/home-copy';
 import { atBranch, wholeMinutes } from '../lib/right-now';
@@ -202,6 +204,9 @@ export function BookingsList({
    * one render both are set and the overlay never blinks out between them.
    */
   const [giving, setGiving] = useState<QueueEntry | null>(null);
+  // On a phone the waiting list draws ten rows and "Show more" adds ten at a time; a laptop draws them all.
+  const phone = usePhoneLayout();
+  const [waitingShown, setWaitingShown] = useState(SHOW_STEP);
   const [payingToken, setPayingToken] = useState<QueueEntry | null>(null);
   // Mobile-only (GRW-46): both filter the day's already-loaded bookings
   // client-side, independent of the date form's own GET navigation — see
@@ -890,7 +895,7 @@ export function BookingsList({
             <span className="bk-waiting-count">{waiting.length}</span>
           </div>
           <ul className="bk-waiting-list">
-            {waiting.map((w) => (
+            {(phone ? waiting.slice(0, waitingShown) : waiting).map((w) => (
               <li key={w.id}>
                 {/*
                   The row is the control, so the whole 56px of it is the target rather than a button
@@ -913,6 +918,13 @@ export function BookingsList({
                 )}
               </li>
             ))}
+            {phone && waiting.length > waitingShown ? (
+              <li className="bk-waiting-more">
+                <button type="button" onClick={() => setWaitingShown((n) => n + SHOW_STEP)}>
+                  {t('showMore', { count: Math.min(SHOW_STEP, waiting.length - waitingShown) })}
+                </button>
+              </li>
+            ) : null}
           </ul>
         </section>
       )}

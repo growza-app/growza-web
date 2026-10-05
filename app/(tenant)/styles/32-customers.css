@@ -2820,6 +2820,22 @@
   list-style: none;
 }
 
+.bk-waiting-more {
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+.bk-waiting-more button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #f3dcc0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--amber);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /*
  * Jira GRW-489 — the row is a button now (a link only for a role that may not work a token), so it
  * has to shed the browser's own button: full width, no chrome, the list's own type, left-aligned.

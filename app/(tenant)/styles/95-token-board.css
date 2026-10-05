@@ -418,3 +418,21 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* "Show more" at the foot of a phone's list (the first ten rows are drawn, ten more each tap). */
+.tb-more {
+  list-style: none;
+  padding: 0 0 var(--sp-3);
+}
+.tb-more button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
