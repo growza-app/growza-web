@@ -23,7 +23,9 @@ describe('Notifications is a quiet page on a phone', () => {
 
   it('draws no floating New booking there, and nowhere else is affected', () => {
     const chrome = read('../components/MobileChrome.tsx');
-    expect(chrome).toMatch(/const QUIET_ROUTE_RE = \/\^\\\/notifications\\\/\?\$\/;/);
-    expect(chrome).toMatch(/!QUIET_ROUTE_RE\.test\(pathname\)/);
+    // Jira GRW-508 — an allow-list now (Home, Bookings, Clients), so Notifications is simply not on it.
+    expect(chrome).toMatch(/PLUS_ROUTE_RE\.test\(pathname\)/);
+    const re = new RegExp(/const PLUS_ROUTE_RE = \/(.*)\/;/.exec(chrome)?.[1] ?? '$^');
+    expect(re.test('/notifications')).toBe(false);
   });
 });

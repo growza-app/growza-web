@@ -25,16 +25,14 @@ import { BottomNav } from './BottomNav';
  */
 
 /**
- * Full-screen edit forms with their own pinned primary button — the raised
- * centre action would sit on top of "Save changes". `/providers` (the roster)
- * keeps it; only `/providers/<id>` does not.
+ * Jira GRW-508 — the floating New booking is on Home, Bookings and Clients, and nowhere else.
+ *
+ * It used to be "everywhere except" a list that kept growing (a staff edit screen, then Notifications in
+ * GRW-507): every new screen got a button over its content until somebody noticed. An allow-list turns
+ * that round — a new screen has none until it is added here. Exact paths only: `/appointments/new` is the
+ * booking page itself and `/customers/<id>` is one client, and neither wants a "new booking" over it.
  */
-const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
-
-/**
- * Jira GRW-507 — Notifications is a quiet page: no floating New booking on it.
- */
-const QUIET_ROUTE_RE = /^\/notifications\/?$/;
+const PLUS_ROUTE_RE = /^\/(appointments|customers)?\/?$/;
 
 /** `timezone` stays in the props contract (the layout always passes it) even though this component no longer reads it itself — GRW-297 moved the booking sheet it used to seed off this component entirely. */
 export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[]; lang?: Lang }) {
@@ -54,7 +52,7 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
    */
   const mayBook = mayUse(role, 'visit.new');
   const onCentre =
-    mayBook && !EDIT_ROUTE_RE.test(pathname) && !QUIET_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
+    mayBook && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
 
   return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />;
 }
