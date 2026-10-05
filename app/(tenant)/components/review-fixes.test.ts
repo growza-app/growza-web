@@ -28,8 +28,9 @@ describe('the walk-in sheet says only what its controls do', () => {
     expect(sheet).toMatch(/aria-pressed=\{slotUtc === slot\.utc\}/);
   });
 
-  it('both tabs point at a panel that exists in both stages', () => {
-    expect(sheet.match(/id="wi-client-panel"/g)).toHaveLength(2);
+  it('both tabs point at a panel that exists on the client screen', () => {
+    // Jira GRW-514 — one client screen now (find or add), so one panel; there were two stages before.
+    expect(sheet.match(/id="wi-client-panel"/g)).toHaveLength(1);
   });
 });
 

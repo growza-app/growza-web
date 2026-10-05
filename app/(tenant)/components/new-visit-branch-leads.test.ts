@@ -112,12 +112,14 @@ describe('bringing a client over from another branch', () => {
     expect(row.slice(0, 600)).not.toMatch(/pickClient/);
   });
 
-  it('carries their name and number into the add step, the number as national digits', () => {
+  it('carries their name and number into the add block, the number as national digits', () => {
     const fn = code.slice(code.indexOf('const bringHere ='));
     expect(fn.slice(0, 300)).toMatch(/setNewName\(c\.name\?\.trim\(\) \?\? ''\)/);
     // `fromStoredPhone`, not the stored `+91…`: PhoneField takes the national digits only.
     expect(fn.slice(0, 300)).toMatch(/setNewPhone\(fromStoredPhone\(c\.waPhone\)\)/);
-    expect(fn.slice(0, 300)).toMatch(/setStage\(\{ step: 'newClient' \}\)/);
+    // Jira GRW-514 — there is no add step any more: they stay on the first screen, with the block filled.
+    expect(fn.slice(0, 700)).toMatch(/setStage\(\{ step: 'client' \}\)/);
+    expect(fn.slice(0, 700)).not.toMatch(/newClient/);
   });
 
   it('names the branch they are being added to', () => {
