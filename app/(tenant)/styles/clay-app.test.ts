@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Jira GRW-504 — the whole app in a clay style: one stylesheet, loaded last, shadow and radius only.
+ * Jira GRW-504 — a clay style: one stylesheet, loaded last, shadow and radius only. Jira GRW-539 — on HOME only,
+ * plus the bottom bar and its plus button, which are on every screen.
  *
  * Two things went wrong the first time it was drawn, and are pinned here: the primary button's green
  * gradient landed on `.btn-ghost` (Filter and Export read as dark text on green, because `.btn` is the base
@@ -39,5 +40,32 @@ describe('the clay app stylesheet', () => {
 
   it('a disabled button stays flat', () => {
     expect(css).toMatch(/\.btn:disabled,[\s\S]*?\{\s*box-shadow: none;/);
+  });
+
+  it('every rule is scoped to Home, except the bottom bar and its plus (Jira GRW-539)', () => {
+    const SC = '.content:has(.hm-page)';
+    // Strip comments, then every selector at the start of a line outside @media/:root must carry the scope.
+    const code = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const barAt = code.indexOf('@media (max-width: 860px) {');
+    const barEnd = code.indexOf('}\n}', barAt) + 3;
+    const scoped = code.slice(0, barAt) + code.slice(barEnd);
+    const selectors = [...scoped.matchAll(/(?:^|\n)([^\s{}:@][^{}]*?)\s*\{/g)].map((m) => (m[1] ?? '').trim());
+    for (const sel of selectors.flatMap((x) => x.split(/,\s*\n/))) {
+      expect(sel.startsWith(SC), `${sel} is not scoped to Home`).toBe(true);
+    }
+    expect(selectors.length).toBeGreaterThan(10);
+  });
+
+  it('the bottom bar and the plus keep their clay on every screen', () => {
+    const from = css.indexOf('@media (max-width: 860px) {');
+    const bar = css.slice(from, css.indexOf('}\n}', from) + 3);
+    expect(bar).toMatch(/\.bottom-nav \{\s*box-shadow:/);
+    expect(bar).toMatch(/\.bn-centre \{\s*box-shadow: var\(--clay-green\);/);
+    expect(bar).not.toMatch(/content:has/);
+  });
+
+  it('the rounder radii are Home\'s too, not the whole app\'s', () => {
+    expect(css).not.toMatch(/:root \{[^}]*--radius/);
+    expect(css).toMatch(/\.content:has\(\.hm-page\) \{\s*--radius: 18px;\s*--radius-sm: 14px;/);
   });
 });

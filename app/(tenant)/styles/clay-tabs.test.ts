@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Jira GRW-499 · GRW-500 — the clay tab strip, and the way it changes tab.
+ * Jira GRW-499 · GRW-500 — the tab strip, and the way it changes tab. Jira GRW-539 — flat: clay is Home-only.
  *
  * It lives in one stylesheet, loaded last, so it can be removed by deleting the file and its import.
  * The change of tab is a fade-and-settle on the tab's own ::before: short (under 200ms), eased out with
@@ -29,23 +29,25 @@ describe('the clay tabs', () => {
     }
   });
 
-  it('animates the raised piece, not the layout', () => {
+  it('animates the selected piece, not the layout', () => {
     expect(css).toMatch(/\.page-tab\.active::before \{\s*opacity: 1;\s*transform: scale\(1\);/);
     expect(css).not.toMatch(/transition:[^;]*(width|height|padding|margin)/);
   });
 
-  it('has soft corners and a light emboss (Jira GRW-501)', () => {
-    expect(css).toMatch(/\.page-tabs \{[^}]*border-radius: 18px;/);
-    expect(css).toMatch(/\.page-tab \{[^}]*border-radius: 13px;/);
-    // No offset past 3px: a deeper shadow is the heavy look this story took out.
-    for (const [, n] of css.matchAll(/(?:inset )?-?(\d+)px -?\d+px \d+px rgba/g)) expect(Number(n)).toBeLessThanOrEqual(3);
+  it('is flat — no clay shadow on the track or the piece (Jira GRW-539)', () => {
+    expect(css).toMatch(/\.page-tabs \{[^}]*border-radius: 12px;/);
+    expect(css).toMatch(/\.page-tab \{[^}]*border-radius: 9px;/);
+    const code = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    // The only shadow left is the explicit `none` on the selected tab's own box.
+    expect([...code.matchAll(/box-shadow:\s*([^;]+);/g)].map((m) => m[1])).toEqual(['none']);
+    expect(css).not.toMatch(/linear-gradient/);
   });
 
   it('the selected tab is green on every strip, with white text (Jira GRW-502)', () => {
-    expect(css).toMatch(/\.page-tab::before \{[^}]*background: linear-gradient\(145deg, #178246, #126a38\);/);
+    expect(css).toMatch(/\.page-tab::before \{[^}]*background: var\(--accent-deep\);/);
     expect(css).toMatch(/\.page-tab\.active \{[^}]*color: #fff;/);
     expect(css).toMatch(/\.page-tab\.active \.page-tab-count \{\s*color: #fff;/);
-    expect(css).toMatch(/\.bk-view-tab\.is-active \{[^}]*background: linear-gradient\(145deg, #178246, #126a38\);[^}]*color: #fff;/);
+    expect(css).toMatch(/\.bk-view-tab\.is-active \{[^}]*background: var\(--accent-deep\);[^}]*color: #fff;/);
     // The two that were already green stay on the shared deep green.
     const home = readFileSync(resolve(__dirname, '83-role-home.css'), 'utf8');
     expect(home).toMatch(/\.hm-seg button\.is-on \{[^}]*var\(--hm-green-deep\)/);
