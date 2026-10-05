@@ -169,7 +169,7 @@ export function BookingSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={name} ref={dialogRef}>
+      <div className="sheet bk-sheet" role="dialog" aria-modal="true" aria-label={name} ref={dialogRef}>
         <div className="sheet-grab" />
 
         <div className="sheet-head">
@@ -197,66 +197,68 @@ export function BookingSheet({
           looks like the product is broken rather than like there is nothing to
           dial.
         */}
-        {digits && (
-          <>
-            <a className="sheet-item" href={`tel:${digits}`}>
-              <IconPhone />
-              {bk.call(appointment.customerName?.split(' ')[0] ?? 'customer')}
-              <span className="trail">{appointment.customerPhone}</span>
-            </a>
+        <div className="bk-sheet-actions">
+          {digits && (
+            <>
+              <a className="sheet-item" href={`tel:${digits}`}>
+                <IconPhone />
+                {bk.call(appointment.customerName?.split(' ')[0] ?? 'customer')}
+                <span className="trail">{appointment.customerPhone}</span>
+              </a>
 
-            <a className="sheet-item" href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
-              <IconWhatsApp />
-              {bk.message}
-            </a>
-          </>
-        )}
+              <a className="sheet-item" href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
+                <IconWhatsApp />
+                {bk.message}
+              </a>
+            </>
+          )}
 
-        {!settled && (
-          <>
-            {mayCheckout && (
-              <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
-                <IconCheck />
-                {bk.markFinished}
-              </button>
-            )}
-            {maySetStatus && (
-              <button
-                type="button"
-                className="sheet-item sheet-neutral"
-                disabled={busy}
-                onClick={() => setStatus('no_show')}
-              >
-                <IconClose />
-                {bk.markMissed}
-              </button>
-            )}
-            {/*
-              GRW-219 — the words `bk.reschedule` has carried since
-              this sheet was written, finally attached to something. Above
-              Cancel deliberately: moving is what a client usually wants when
-              they ring, and the destructive action stays furthest from the
-              thumb.
-            */}
-            {mayMove && (
-              <button type="button" className="sheet-item" disabled={busy} onClick={() => setMoving(true)}>
-                <IconMoveTime />
-                {bk.reschedule}
-              </button>
-            )}
-            {maySetStatus && (
-              <button
-                type="button"
-                className="sheet-item sheet-danger"
-                disabled={busy}
-                onClick={() => setStatus('cancelled')}
-              >
-                <IconClose />
-                {bk.cancel}
-              </button>
-            )}
-          </>
-        )}
+          {!settled && (
+            <>
+              {mayCheckout && (
+                <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
+                  <IconCheck />
+                  {bk.markFinished}
+                </button>
+              )}
+              {maySetStatus && (
+                <button
+                  type="button"
+                  className="sheet-item sheet-neutral"
+                  disabled={busy}
+                  onClick={() => setStatus('no_show')}
+                >
+                  <IconClose />
+                  {bk.markMissed}
+                </button>
+              )}
+              {/*
+                GRW-219 — the words `bk.reschedule` has carried since
+                this sheet was written, finally attached to something. Above
+                Cancel deliberately: moving is what a client usually wants when
+                they ring, and the destructive action stays furthest from the
+                thumb.
+              */}
+              {mayMove && (
+                <button type="button" className="sheet-item" disabled={busy} onClick={() => setMoving(true)}>
+                  <IconMoveTime />
+                  {bk.reschedule}
+                </button>
+              )}
+              {maySetStatus && (
+                <button
+                  type="button"
+                  className="sheet-item sheet-danger"
+                  disabled={busy}
+                  onClick={() => setStatus('cancelled')}
+                >
+                  <IconClose />
+                  {bk.cancel}
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </>
   );
