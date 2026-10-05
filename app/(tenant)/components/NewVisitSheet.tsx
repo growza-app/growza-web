@@ -145,8 +145,8 @@ type PickedClient =
   | { kind: 'new'; name: string; phone: string };
 
 type Stage =
+  /** Jira GRW-514 — find them, or add them: one screen (there was a separate `newClient` step). */
   | { step: 'client' }
-  | { step: 'newClient' }
   | { step: 'details'; client: PickedClient }
   /** `later` only — which day and which slot. A walk-in's answer is "now". */
   | { step: 'when'; client: PickedClient }
@@ -302,11 +302,19 @@ export function NewVisitSheet({
    */
   const [recent, setRecent] = useState<Customer[] | null>(null);
 
-  // Stage 1b — add them
+  // Stage 1, the second half of it (Jira GRW-514) — add them, on the same screen as the search
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [nameError, setNameError] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  /**
+   * Jira GRW-514 — the search seeds the add block (a typed number goes to Phone, anything else to Name) so
+   * nothing is typed twice, but only until the person has typed in that block themselves: a seed must never
+   * overwrite what the desk wrote.
+   */
+  const nameEdited = useRef(false);
+  const phoneEdited = useRef(false);
+  const addNewRef = useRef<HTMLDivElement>(null);
 
   // Stage 2
   const [services, setServices] = useState<Service[] | null>(null);
@@ -457,7 +465,12 @@ export function NewVisitSheet({
   const bringHere = (c: Customer) => {
     setNewName(c.name?.trim() ?? '');
     setNewPhone(fromStoredPhone(c.waPhone));
-    setStage({ step: 'newClient' });
+    // Their details are now what the desk is confirming, so the search must not seed over them.
+    nameEdited.current = true;
+    phoneEdited.current = true;
+    setStage({ step: 'client' });
+    // Jira GRW-514 — the add block is on this screen now, below the list: bring it into view.
+    window.setTimeout(() => addNewRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0);
   };
   const atBranch = listBranch ? { location: listBranch } : {};
   // What was picked is on the menu of the branch it was picked at; another branch sells its own rows. The chosen
@@ -1470,11 +1483,9 @@ export function NewVisitSheet({
   const headSub =
     stage.step === 'client'
       ? nv.whoIsThis(clientNoun.toLowerCase())
-      : stage.step === 'newClient'
-        ? nv.addNew
-        : paysToken?.tokenNo
-          ? `${nv.token(paysToken.tokenNo)} · ${clientName(stage.client)}`
-          : clientName(stage.client);
+      : paysToken?.tokenNo
+        ? `${nv.token(paysToken.tokenNo)} · ${clientName(stage.client)}`
+        : clientName(stage.client);
 
   const asPage = presentation === 'page';
   /*
@@ -1486,7 +1497,7 @@ export function NewVisitSheet({
    * the screen's own name; once a client is picked the toggle goes (it would silently rewrite what
    * was just booked) and the title can say which of the two this is, because by then it is settled.
    */
-  const modeStillOpen = !forPayment && (stage.step === 'client' || stage.step === 'newClient');
+  const modeStillOpen = !forPayment && stage.step === 'client';
   const sheetTitle = forPayment ? nv.paymentTitle : modeStillOpen ? nv.pageTitle : later ? nv.laterTitle : nv.title;
 
   /**
@@ -1502,7 +1513,6 @@ export function NewVisitSheet({
    */
   const goBack = (() => {
     if (busy || linesLocked) return null;
-    if (stage.step === 'newClient') return () => setStage({ step: 'client' });
     if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
       return () => setStage({ step: 'client' });
     }
@@ -1559,7 +1569,7 @@ export function NewVisitSheet({
           booked, a toggle that would silently rewrite what just happened is a
           trap, not a convenience.
         */}
-        {!forPayment && (stage.step === 'client' || stage.step === 'newClient') && (
+        {!forPayment && stage.step === 'client' && (
           <div
             className="wi-segmented"
             role="tablist"
@@ -1614,7 +1624,17 @@ export function NewVisitSheet({
                 aria-label={nv.searchPlaceholder}
                 value={term}
                 autoFocus
-                onChange={(e) => setTerm(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setTerm(v);
+                  // Jira GRW-514 — seed the add block below, unless the desk has typed in it.
+                  const typed = v.trim();
+                  if (digitsOf(typed).length >= 7) {
+                    if (!phoneEdited.current) setNewPhone(typed);
+                  } else if (!nameEdited.current) {
+                    setNewName(typed);
+                  }
+                }}
               />
               {term !== '' && (
                 <button type="button" className="search-clear-btn" onClick={() => setTerm('')} aria-label={nv.clear}>
@@ -1701,92 +1721,81 @@ export function NewVisitSheet({
               </>
             ) : null}
 
-            <button
-              type="button"
-              className="wi-add-new"
-              onClick={() => {
-                // Seed whichever field the typed term looks like, so the
-                // receptionist never types the same thing twice.
-                const digits = digitsOf(term);
-                if (digits.length >= 7) setNewPhone(term.trim());
-                else setNewName(term.trim());
-                setStage({ step: 'newClient' });
-              }}
-            >
-              <IconUserPlus />
-              {nv.addNew}
-            </button>
-          </div>
-        )}
-
-        {/* ---------- Stage 1b: add them ---------- */}
-        {stage.step === 'newClient' && (
-          <div className="wi-body" id="wi-client-panel">
-            <div className="field">
-              <label htmlFor="wi-name">{nv.nameRequired}</label>
-              <input
-                id="wi-name"
-                type="text"
-                autoFocus
-                className={nameError ? 'field-invalid' : undefined}
-                value={newName}
-                placeholder={nv.namePlaceholder}
-                onChange={(e) => {
-                  setNewName(e.target.value);
-                  if (nameError) setNameError(false);
-                }}
-              />
-              {nameError && <div role="alert" className="field-error">{nv.nameMissing}</div>}
-            </div>
-
             {/*
-              Required for an advance booking, optional for a walk-in.
-              A different rule for a genuinely different situation: the person
-              in front of you does not need reminding, and Saturday's customer
-              cannot be reminded without a number. The hint says which is which
-              rather than leaving the receptionist to notice.
+              Jira GRW-514 — "Add someone new" is on this screen, under the list, not a button to another one.
+              The old second step (name, phone, "Use this person") is these same fields and the same checks.
             */}
-            <PhoneField
-              id="wi-phone"
-              label={nv.phoneRequired}
-              required={later}
-              value={newPhone}
-              onChange={(v) => {
-                setNewPhone(v);
-                if (phoneError) setPhoneError(null);
-              }}
-              error={phoneError}
-              hint={later ? nv.phoneWhyLater : nv.phoneWhy}
-            />
+            <div className="wi-new-person" ref={addNewRef}>
+              <h2 className="wi-section-label">
+                <IconUserPlus /> {nv.addNew}
+              </h2>
+              <div className="field">
+                <label htmlFor="wi-name">{nv.nameRequired}</label>
+                <input
+                  id="wi-name"
+                  type="text"
+                  className={nameError ? 'field-invalid' : undefined}
+                  value={newName}
+                  placeholder={nv.namePlaceholder}
+                  onChange={(e) => {
+                    nameEdited.current = true;
+                    setNewName(e.target.value);
+                    if (nameError) setNameError(false);
+                  }}
+                />
+                {nameError && <div role="alert" className="field-error">{nv.nameMissing}</div>}
+              </div>
 
-            {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
-            <div className="modal-actions wi-actions wi-acts">
-              <button
-                type="button"
-                className="btn"
-                onClick={() => {
-                  if (!newName.trim()) {
-                    setNameError(true);
-                    return;
-                  }
-                  /*
-                   * A walk-in may give no number; anyone who gives one must
-                   * give a real one. A half-typed number saved as-is is the
-                   * shape that produced `+91786545789` in the live data.
-                   */
-                  const phoneProblem = checkPhone(newPhone, { required: later });
-                  if (phoneProblem) {
-                    setPhoneError(phoneProblem);
-                    return;
-                  }
-                  setStage({
-                    step: 'details',
-                    client: { kind: 'new', name: newName.trim(), phone: toStoredPhone(newPhone) ?? '' },
-                  });
+              {/*
+                Required for an advance booking, optional for a walk-in.
+                A different rule for a genuinely different situation: the person
+                in front of you does not need reminding, and Saturday's customer
+                cannot be reminded without a number. The hint says which is which
+                rather than leaving the receptionist to notice.
+              */}
+              <PhoneField
+                id="wi-phone"
+                label={nv.phoneRequired}
+                required={later}
+                value={newPhone}
+                onChange={(v) => {
+                  phoneEdited.current = true;
+                  setNewPhone(v);
+                  if (phoneError) setPhoneError(null);
                 }}
-              >
-                {nv.useThisPerson}
-              </button>
+                error={phoneError}
+                hint={later ? nv.phoneWhyLater : nv.phoneWhy}
+              />
+
+              {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
+              <div className="modal-actions wi-actions wi-acts">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    if (!newName.trim()) {
+                      setNameError(true);
+                      return;
+                    }
+                    /*
+                     * A walk-in may give no number; anyone who gives one must
+                     * give a real one. A half-typed number saved as-is is the
+                     * shape that produced `+91786545789` in the live data.
+                     */
+                    const phoneProblem = checkPhone(newPhone, { required: later });
+                    if (phoneProblem) {
+                      setPhoneError(phoneProblem);
+                      return;
+                    }
+                    setStage({
+                      step: 'details',
+                      client: { kind: 'new', name: newName.trim(), phone: toStoredPhone(newPhone) ?? '' },
+                    });
+                  }}
+                >
+                  {nv.useThisPerson}
+                </button>
+              </div>
             </div>
           </div>
         )}
