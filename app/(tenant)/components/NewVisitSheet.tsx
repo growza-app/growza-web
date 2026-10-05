@@ -1830,25 +1830,25 @@ export function NewVisitSheet({
                 it is still open to change: for a new client, who becomes a client of whichever branch is chosen. */}
             {branches.length > 1 && !branchSettled ? (
               <>
-                <h2 className="wi-section-label">{nv.whichBranch}</h2>
-                <div className="wi-chips" role="radiogroup" aria-label={nv.whichBranch}>
-                  {branches.map((b, i) => (
-                    <button
-                      key={b.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={branchId === b.id}
-                      className={`wi-chip ${branchId === b.id ? 'wi-chip-on' : ''}`}
-                      onClick={() => {
-                        branchTouched.current = true;
-                        // Its menu, stylist and chair are cleared with it (the reset beside `listBranch`).
-                        setBranchId(b.id);
-                      }}
-                      disabled={busy || linesLocked}
-                    >
-                      {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
-                    </button>
-                  ))}
+                {/* Jira GRW-522 — a dropdown, not a row of chips that wrapped to three lines with five branches. */}
+                <div className="field wi-branch-field">
+                  <label htmlFor="wi-branch">{nv.whichBranch}</label>
+                  <select
+                    id="wi-branch"
+                    value={branchId ?? ''}
+                    onChange={(e) => {
+                      branchTouched.current = true;
+                      // Its menu, stylist and chair are cleared with it (the reset beside `listBranch`).
+                      setBranchId(e.target.value);
+                    }}
+                    disabled={busy || linesLocked}
+                  >
+                    {branches.map((b, i) => (
+                      <option key={b.id} value={b.id}>
+                        {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </>
             ) : null}
