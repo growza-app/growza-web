@@ -1752,8 +1752,8 @@ export function NewVisitSheet({
                 Required for an advance booking, optional for a walk-in.
                 A different rule for a genuinely different situation: the person
                 in front of you does not need reminding, and Saturday's customer
-                cannot be reminded without a number. The hint says which is which
-                rather than leaving the receptionist to notice.
+                cannot be reminded without a number. The label's required mark says
+                which is which. No helper text under it (Jira GRW-530).
               */}
               <PhoneField
                 id="wi-phone"
@@ -1766,7 +1766,6 @@ export function NewVisitSheet({
                   if (phoneError) setPhoneError(null);
                 }}
                 error={phoneError}
-                hint={later ? nv.phoneWhyLater : nv.phoneWhy}
               />
 
               {/*

@@ -116,7 +116,6 @@ export function useNewVisitCopy() {
     loadingTimes: t('loadingTimes'),
     noTimes: t('noTimes'),
     phoneRequired: t('phoneRequired'),
-    phoneWhyLater: t('phoneWhyLater'),
     phoneMissing: t('phoneMissing'),
     next: t('next'),
     bookIt: t('bookIt'),
