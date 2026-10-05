@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react';
 
 import { HeaderControls } from '../components/HeaderControls';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
-import { MenuButton } from '../components/MenuButton';
+import { BackButton } from '../components/BackButton';
 import {
   countFilters,
   isFilterableReportTab,
@@ -161,7 +161,7 @@ export function ReportsShell({
       <header className="rp-header">
         <div className="rp-title-row">
           <div className="topbar-lead">
-            <MenuButton />
+            <BackButton phoneOnly />
             <div className="topbar-title">
               <h1>{rp.title}</h1>
               <p>{rp.subtitles[tab]}</p>
