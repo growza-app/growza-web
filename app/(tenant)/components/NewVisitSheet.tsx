@@ -1779,7 +1779,6 @@ export function NewVisitSheet({
             <div className="field wi-date-field">
               <label htmlFor="wi-date">
                 {nv.bookingDate}
-                <span className="field-optional">{tCommon('optional')}</span>
               </label>
               <input
                 id="wi-date"
@@ -1802,7 +1801,6 @@ export function NewVisitSheet({
             <div className="field wi-date-field">
               <label htmlFor="wi-time">
                 {nv.bookingTime}
-                <span className="field-optional">{tCommon('optional')}</span>
               </label>
               <input
                 id="wi-time"

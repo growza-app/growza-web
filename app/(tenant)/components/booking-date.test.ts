@@ -22,7 +22,7 @@ describe('the Booking date', () => {
     expect(sheet).toMatch(/setDay\(next\);\s*setDateChosen\(next > todayIso\);/);
     // Jira GRW-527 — and a time set on the first screen makes it a booking too ("later today").
     expect(sheet).toMatch(/const mode: VisitMode = dateChosen \|\| timeWanted !== '' \? 'later' : 'now';/);
-    expect(sheet).toMatch(/<span className="field-optional">\{tCommon\('optional'\)\}<\/span>/);
+    expect(sheet).toMatch(/\{nv\.bookingDate\}\s*<\/label>/);
   });
 
   it('a link that asks for a later booking starts on tomorrow, and Book again counts as a booking', () => {
