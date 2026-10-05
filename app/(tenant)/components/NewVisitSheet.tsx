@@ -61,6 +61,7 @@ import { IconArrowLeft, IconCheck, IconClose, IconSearch } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
+import { announceVisitChanged } from '../lib/visit-changed';
 
 /**
  * Jira GRW-199 · GRW-219 — the walk-in sheet: client first, then the booking.
@@ -1227,6 +1228,7 @@ export function NewVisitSheet({
       }
     }
     router.refresh();
+    announceVisitChanged();
     setStage({
       step: 'paid',
       client,
@@ -1251,6 +1253,7 @@ export function NewVisitSheet({
         ...atBranch,
       });
       router.refresh();
+      announceVisitChanged();
       setStage({ step: 'queued', client, tokenNo: entry.tokenNo });
     } catch (error) {
       setStage({ step: 'error', client, message: error instanceof ApiError ? error.message : nv.saveUnknown });
@@ -1277,6 +1280,7 @@ export function NewVisitSheet({
           ...atBranch,
         });
         router.refresh();
+        announceVisitChanged();
         setStage({
           step: 'done',
           client,
@@ -1322,6 +1326,7 @@ export function NewVisitSheet({
           }),
         );
         router.refresh();
+        announceVisitChanged();
         setStage({
           step: 'paid',
           client,
@@ -1360,6 +1365,7 @@ export function NewVisitSheet({
           }),
         );
         router.refresh();
+        announceVisitChanged();
         setStage({
           step: 'paid',
           client,
@@ -1402,6 +1408,7 @@ export function NewVisitSheet({
         idempotencyKey: attemptKey,
       });
       router.refresh();
+      announceVisitChanged();
       const recorded: WalkInDone = {
         appointmentId: result.appointmentId,
         customerId: result.customerId,

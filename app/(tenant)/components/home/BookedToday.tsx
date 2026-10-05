@@ -8,6 +8,7 @@ import type { HomeCopy } from '../../lib/home-copy';
 import { useMayUse } from '../SessionProvider';
 import { CardError } from './parts';
 import type { TokenWords } from './token-words';
+import { announceVisitChanged } from '../../lib/visit-changed';
 
 /**
  * Jira GRW-404 · GRW-405 (epic GRW-283) — today's bookings that are not on the token board yet, and "Arrived".
@@ -65,6 +66,7 @@ export function BookedToday({
       await api.markArrived(appointmentId);
       restore.current = index;
       router.refresh();
+      announceVisitChanged();
     } catch (e) {
       setError({ key, message: e instanceof ApiError ? e.message : t.couldNotGive });
     } finally {
