@@ -9,12 +9,11 @@ import type { Lang } from '../lib/lang';
 import { useUnreadNotifications } from './useUnreadNotifications';
 import {
   IconBell,
-  IconCalendarPlus,
   IconNavAttendance,
   IconNavBookings,
   IconNavClients,
   IconNavHome,
-  IconUserPlus,
+  IconPlus,
 } from './icons';
 
 /**
@@ -25,7 +24,7 @@ import {
  * ## Jira GRW-495 — the action floats at the bottom right
  *
  * It left the middle of the bar for the corner above it, the way Compose sits in Gmail and
- * Outlook: an icon-and-label pill, anchored to the bar so it follows the bar's height at any
+ * Outlook: a plus-only round button (its name is the aria-label), anchored to the bar so it follows the bar's height at any
  * text size and clears the home indicator. The bar is four flat tabs again. The paragraph below
  * is the history that put it in the middle (GRW-222); the placement is the part that changed.
  *
@@ -122,11 +121,15 @@ export function BottomNav({
     <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label={tc('main')}>
       {visible.map(tab)}
       {centre ? (
-        <button type="button" className="bn-centre" onClick={onCentre}>
+        <button
+          type="button"
+          className="bn-centre"
+          onClick={onCentre}
+          aria-label={role === 'receptionist' ? t.walkInShort : t.nav.newBooking}
+        >
           <span className="bn-centre-btn" aria-hidden>
-            {role === 'receptionist' ? <IconUserPlus /> : <IconCalendarPlus />}
+            <IconPlus />
           </span>
-          <span className="bn-centre-label">{role === 'receptionist' ? t.walkInShort : t.nav.newBooking}</span>
         </button>
       ) : null}
     </nav>
