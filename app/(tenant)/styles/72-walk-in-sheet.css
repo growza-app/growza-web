@@ -870,3 +870,12 @@ input.wi-search-input-plain {
 .wi-dropdown .wi-row:hover {
   background: var(--slate-soft);
 }
+
+/* ---------- Which branch?, as a dropdown (Jira GRW-522) ---------- */
+.wi-branch-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+}
