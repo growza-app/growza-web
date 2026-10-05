@@ -40,4 +40,11 @@ describe('the clay app stylesheet', () => {
   it('a disabled button stays flat', () => {
     expect(css).toMatch(/\.btn:disabled,[\s\S]*?\{\s*box-shadow: none;/);
   });
+
+  /** Jira GRW-552 — a phone audit found these still flat: the token card and its buttons, Reports, the waiting section. */
+  it('raises the surfaces a phone audit found flat', () => {
+    expect(css).toMatch(/\.rp-card,\n\.bk-waiting \{\s*box-shadow: var\(--clay-raise\);/);
+    expect(css).toMatch(/\.hm-toolbar-summary,\n\.hm-give,\n\.rp-control \{\s*box-shadow: var\(--clay-raise-soft\);/);
+    expect(css).toMatch(/@media \(max-width: 860px\) \{[^@]*\.tb-board \.tb-row \{\s*box-shadow: var\(--clay-raise\);/);
+  });
 });
