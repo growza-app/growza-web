@@ -470,16 +470,3 @@ describe('the spacing of a token card (GRW-549 · GRW-550)', () => {
     expect(css).toMatch(/\.tb-actions \.hm-give::after \{[^}]*inset: -2px 0;/);
   });
 });
-
-/** Jira GRW-551 — the two pills' text is 10px and semibold, in rem so Larger Text still grows it. */
-describe('the pill text on a token card (GRW-551)', () => {
-  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
-  const rule = css.slice(css.indexOf('.tb-board .tb-token,'), css.indexOf('}', css.indexOf('.tb-board .tb-token,')));
-
-  it('is 0.625rem (10px) and weight 600, for both pills', () => {
-    expect(rule).toMatch(/\.tb-board \.tb-col\[data-col='waiting'\] \.tb-meta \{/);
-    expect(rule).toMatch(/font-size: 0\.625rem;/);
-    expect(rule).toMatch(/font-weight: 600;/);
-    expect(rule).not.toMatch(/font-size: \d+px/);
-  });
-});

@@ -248,37 +248,11 @@ describe('text grows with the reader', () => {
     expect(stray).toEqual([]);
   });
 
-  /**
-   * Jira GRW-551 — ONE named exception, at the owner's explicit request: the two pills on a phone's token card
-   * (`Token No: 1`, `Since 2:57 pm`) are 0.625rem (10px). It is allowed by SELECTOR — the rule that starts
-   * `.tb-board .tb-token,` in the token board sheet — so every other rule is still held to the floor and the
-   * exception cannot spread by accident. Returns true when this declaration is that rule's.
-   */
-  const isTokenPill = (name: string, css: string, at: number) => {
-    const before = css.slice(0, at);
-    const selector = before.slice(before.lastIndexOf('}') + 1, before.lastIndexOf('{')).trim();
-    return name === '95-token-board.css' && selector.startsWith('.tb-board .tb-token,');
-  };
-
   it('keeps the 12px floor as a floor, in the new unit', () => {
     for (const { name, css } of sheets) {
       for (const m of css.matchAll(/font-size:\s*([0-9.]+)rem/g)) {
-        if (isTokenPill(name, css, m.index ?? 0)) continue;
         expect(Number(m[1]), `${name}: ${m[0]}`).toBeGreaterThanOrEqual(0.75);
       }
     }
-  });
-
-  it('the only text under 12px is the token card pills (Jira GRW-551)', () => {
-    const small: string[] = [];
-    for (const { name, css } of sheets) {
-      for (const m of css.matchAll(/font-size:\s*([0-9.]+)rem/g)) {
-        if (Number(m[1]) < 0.75 && isTokenPill(name, css, m.index ?? 0)) small.push(`${name}: ${m[0]}`);
-      }
-    }
-    expect(small).toEqual(['95-token-board.css: font-size: 0.625rem']);
-    // ...and nothing else is below it (the floor test above would already fail, this names the exception's size).
-    const allSmall = sheets.flatMap(({ css }) => [...css.matchAll(/font-size:\s*([0-9.]+)rem/g)].filter((m) => Number(m[1]) < 0.75));
-    expect(allSmall).toHaveLength(1);
   });
 });
