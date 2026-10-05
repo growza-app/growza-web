@@ -3,13 +3,18 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider, type QueueEntry } from '../lib/api';
 import { useTranslations, useLocale } from 'next-intl';
-import { countsAsNotMarked } from '../lib/live-state';
+import { countsAsNotMarked, liveState, minutesBetween } from '../lib/live-state';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useBranch } from '../components/BranchProvider';
+import { useLabels } from '../components/LabelsProvider';
+import { useMayUse } from '../components/SessionProvider';
+import { GiveToStaffSheet } from '../components/home/GiveToStaffSheet';
+import { NewVisitSheet } from '../components/NewVisitSheet';
+import { homeCopy } from '../lib/home-copy';
 import { atBranch, wholeMinutes } from '../lib/right-now';
 import {
   IconCalendar,
@@ -190,6 +195,14 @@ export function BookingsList({
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [open, setOpen] = useState<BookingGroup | null>(null);
+  /*
+   * Jira GRW-489 — the token the desk has opened, and the one it is taking money for.
+   *
+   * Two states rather than one with a mode: the give sheet hands the token OVER to the till, so for
+   * one render both are set and the overlay never blinks out between them.
+   */
+  const [giving, setGiving] = useState<QueueEntry | null>(null);
+  const [payingToken, setPayingToken] = useState<QueueEntry | null>(null);
   // Mobile-only (GRW-46): both filter the day's already-loaded bookings
   // client-side, independent of the date form's own GET navigation — see
   // GRW-10's BR-01 on why that form stays a full-page submit.
@@ -352,6 +365,55 @@ export function BookingsList({
       .slice()
       .sort((a, b) => (a.tokenNo ?? Number.MAX_SAFE_INTEGER) - (b.tokenNo ?? Number.MAX_SAFE_INTEGER));
   }, [queue, branch]);
+
+  /**
+   * One waiting person's row. Lifted out because the row is a button for anyone who can act on a
+   * token and a link for anyone who cannot, and the two must not drift into saying different things
+   * about the same person.
+   */
+  const waitingRow = (w: QueueEntry) => (
+    <>
+      {/* The number is what the client was told at the counter, so it leads the row. */}
+      {/* "#2", not "2": a bare number beside a name reads as a count of something. */}
+      <span className="bk-waiting-token">{w.tokenNo === null ? '—' : `#${w.tokenNo}`}</span>
+      <span className="bk-waiting-who">
+        <span className="bk-waiting-name">{w.customerName}</span>
+        {w.serviceNames.length > 0 && <span className="bk-waiting-svc">{w.serviceNames.join(' · ')}</span>}
+      </span>
+      <span className="bk-waiting-min">{t('waitingMin', { count: wholeMinutes(w.addedAt, now) })}</span>
+    </>
+  );
+
+  /*
+   * Jira GRW-489 — what the give sheet needs, built here exactly as both Homes build it.
+   *
+   * `homeCopy` rather than this screen's `bookings` namespace: the sheet is the desk's, and giving it
+   * a second set of words for the same four buttons is how two screens start disagreeing about what
+   * "They left" means.
+   */
+  const labels = useLabels();
+  const hc = useMemo(() => homeCopy(locale === 'hi' ? 'hi' : 'en', labels), [locale, labels]);
+  const mayGive = useMayUse('queue.give');
+  const mayRecordPayment = useMayUse('visit.recordPayment');
+  /**
+   * providerId → who is in their chair and for how long, for the sheet's free/busy pills.
+   *
+   * The same derivation Home makes, from the same facts: busy is "has an unpaid visit in the chair"
+   * (`in_service`), not "has a booking whose time is now". A group from another day in a range can
+   * never be `in_service`, so the range needs no narrowing of its own.
+   */
+  const busy = useMemo(() => {
+    const m = new Map<string, { client: string; min: number }>();
+    for (const g of bookings) {
+      if (liveState(g, now) !== 'in_service') continue;
+      for (const a of g.appointments) {
+        if (a.providerId && !m.has(a.providerId)) {
+          m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames, hc.lang), min: minutesBetween(g.startAt, now) });
+        }
+      }
+    }
+    return m;
+  }, [bookings, now, hc.lang]);
 
   /** `To do` counts both halves of what is left: the people waiting and the visits not yet done. */
   const tabCount = (seg: (typeof TABS)[number]): number =>
@@ -800,10 +862,17 @@ export function BookingsList({
       {/*
         Jira GRW-487 — the people waiting, above the day's timed rows — and above the empty state.
 
-        Somebody standing in the salon comes before a visit booked for four o'clock. Read-only: a
-        row opens the board on Home, which is where a token is given a stylist, started and paid.
-        Out of the tiles above, too — a waiting person is not a booking, and counting them there
-        would make that figure disagree with Reports.
+        Somebody standing in the salon comes before a visit booked for four o'clock. Out of the tiles
+        above, too — a waiting person is not a booking, and counting them there would make that
+        figure disagree with Reports.
+
+        Jira GRW-489 — and the row is where the token is worked, not a trip to Home.
+
+        It used to be a link to the board (`/#hm-queue`), which read as a dead end: a receptionist who
+        taps the person standing in front of them lands on a different screen and has to find the same
+        row again. The row opens the token's own sheet instead — give it to a stylist, take the money,
+        or mark them gone — the same three the board offers, from the same component, so there is one
+        answer to "what can I do with a token" and not two that drift.
 
         Outside the "no bookings that day" branch, which is where this first sat: a morning of
         walk-ins and nothing booked is the case this whole feature exists for, and it was the one
@@ -823,16 +892,25 @@ export function BookingsList({
           <ul className="bk-waiting-list">
             {waiting.map((w) => (
               <li key={w.id}>
-                <a className="bk-waiting-row" href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}>
-                  {/* The number is what the client was told at the counter, so it leads the row. */}
-                  {/* "#2", not "2": a bare number beside a name reads as a count of something. */}
-                  <span className="bk-waiting-token">{w.tokenNo === null ? '—' : `#${w.tokenNo}`}</span>
-                  <span className="bk-waiting-who">
-                    <span className="bk-waiting-name">{w.customerName}</span>
-                    {w.serviceNames.length > 0 && <span className="bk-waiting-svc">{w.serviceNames.join(' · ')}</span>}
-                  </span>
-                  <span className="bk-waiting-min">{t('waitingMin', { count: wholeMinutes(w.addedAt, now) })}</span>
-                </a>
+                {/*
+                  The row is the control, so the whole 56px of it is the target rather than a button
+                  squeezed in beside the name. A role that may do neither thing keeps the old link to
+                  the board: a button that can only answer 403 is worse than a trip to Home.
+                */}
+                {mayGive || mayRecordPayment ? (
+                  <button
+                    type="button"
+                    className="bk-waiting-row"
+                    aria-label={mayGive ? hc.giveTitle(w.customerName) : `${hc.recordPayment} · ${w.customerName}`}
+                    onClick={() => (mayGive ? setGiving(w) : setPayingToken(w))}
+                  >
+                    {waitingRow(w)}
+                  </button>
+                ) : (
+                  <a className="bk-waiting-row" href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}>
+                    {waitingRow(w)}
+                  </a>
+                )}
               </li>
             ))}
           </ul>
@@ -982,6 +1060,32 @@ export function BookingsList({
             comboLegs={open.isCombo ? open.appointments : undefined}
           />
         ))}
+      {/*
+        Jira GRW-489 — the token's three answers, in the desk's own sheets.
+
+        Record payment is handed UP out of the give sheet rather than opened inside it: one overlay at
+        a time, and the till is a sheet of its own with a client, services and an amount in it.
+      */}
+      {giving ? (
+        <GiveToStaffSheet
+          t={hc}
+          entry={giving}
+          providers={providers}
+          busy={busy}
+          onClose={() => setGiving(null)}
+          onRecordPayment={
+            mayRecordPayment
+              ? () => {
+                  setPayingToken(giving);
+                  setGiving(null);
+                }
+              : undefined
+          }
+        />
+      ) : null}
+      {payingToken ? (
+        <NewVisitSheet mode="now" purpose="payment" token={payingToken} timezone={timezone} onClose={() => setPayingToken(null)} />
+      ) : null}
     </>
   );
 }

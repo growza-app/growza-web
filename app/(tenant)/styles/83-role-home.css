@@ -1691,6 +1691,11 @@ button.hm-now-count {
 .hm-sheet-close {
   align-self: flex-start;
 }
+/* Jira GRW-489 — the give sheet's two quiet exits: pay them here, or they left. */
+.hm-give-foot {
+  display: flex;
+  gap: var(--sp-2);
+}
 @media (max-width: 860px) {
   .hm-overlay {
     align-items: flex-end;
@@ -1710,6 +1715,10 @@ button.hm-now-count {
   }
   .hm-sheet-close {
     align-self: stretch;
+  }
+  .hm-give-foot .hm-btn {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 

@@ -27,6 +27,7 @@ export function GiveToStaffSheet({
   providers,
   busy,
   onClose,
+  onRecordPayment,
 }: {
   t: HomeCopy;
   entry: QueueEntry;
@@ -34,6 +35,16 @@ export function GiveToStaffSheet({
   /** providerId → who is in their chair and for how long. */
   busy: Map<string, { client: string; min: number }>;
   onClose: () => void;
+  /**
+   * Jira GRW-489 — the third thing a waiting token can be: paid where it stands.
+   *
+   * Only passed where the row that opened this sheet has no Record payment button of its own.
+   * The desk's board puts it on the row, so there it would be the same action twice in one
+   * glance; Bookings opens the whole token with one tap, so there it belongs in here. Handing it
+   * UP rather than opening the till from inside keeps one sheet on screen at a time — the parent
+   * closes this one and opens that one.
+   */
+  onRecordPayment?: () => void;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
@@ -162,9 +173,16 @@ export function GiveToStaffSheet({
             );
           })}
         </ul>
-        <button type="button" className="hm-btn hm-btn-quiet hm-sheet-close" disabled={saving !== null} onClick={() => void left()}>
-          {t.theyLeft}
-        </button>
+        <div className="hm-give-foot hm-sheet-close">
+          {onRecordPayment ? (
+            <button type="button" className="hm-btn hm-btn-quiet" disabled={saving !== null} onClick={onRecordPayment}>
+              {t.recordPayment}
+            </button>
+          ) : null}
+          <button type="button" className="hm-btn hm-btn-quiet" disabled={saving !== null} onClick={() => void left()}>
+            {t.theyLeft}
+          </button>
+        </div>
       </div>
     </div>
   );
