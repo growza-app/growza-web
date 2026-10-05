@@ -2495,7 +2495,7 @@ export function NewVisitSheet({
                 </div>
               </div>
             </div>
-            <button type="button" className="sheet-item" onClick={onClose}>
+            <button type="button" className="sheet-item wi-finish" onClick={onClose}>
               {nv.done}
             </button>
           </div>
@@ -2525,7 +2525,7 @@ export function NewVisitSheet({
                 </div>
               </div>
             </div>
-            <button type="button" className="sheet-item" onClick={onClose}>
+            <button type="button" className="sheet-item wi-finish" onClick={onClose}>
               {nv.done}
             </button>
           </div>
@@ -2592,7 +2592,7 @@ export function NewVisitSheet({
                 </button>
               </>
             )}
-            <button type="button" className="sheet-item" onClick={onClose}>
+            <button type="button" className="sheet-item wi-finish" onClick={onClose}>
               {nv.done}
             </button>
           </div>
