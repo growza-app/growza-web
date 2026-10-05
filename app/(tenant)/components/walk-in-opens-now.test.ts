@@ -35,6 +35,6 @@ describe('the centre button opens the visit sheet on Walk-in now', () => {
     // Left alone the sheet is a walk-in now; choosing a date — even today's — makes it a booking for that day.
     expect(sheet).toMatch(/mode: initialMode = 'now'/);
     expect(sheet).toMatch(/const \[dateChosen, setDateChosen\] = useState\(!forPayment && initialMode === 'later'\);/);
-    expect(sheet).toMatch(/const mode: VisitMode = dateChosen \? 'later' : 'now';/);
+    expect(sheet).toMatch(/const mode: VisitMode = dateChosen \|\| timeWanted !== '' \? 'later' : 'now';/);
   });
 });

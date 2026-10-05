@@ -20,7 +20,8 @@ describe('the Booking date', () => {
 
   it('today is a walk-in, a later day is a booking; back to today or cleared is a walk-in again', () => {
     expect(sheet).toMatch(/setDay\(next\);\s*setDateChosen\(next > todayIso\);/);
-    expect(sheet).toMatch(/const mode: VisitMode = dateChosen \? 'later' : 'now';/);
+    // Jira GRW-527 — and a time set on the first screen makes it a booking too ("later today").
+    expect(sheet).toMatch(/const mode: VisitMode = dateChosen \|\| timeWanted !== '' \? 'later' : 'now';/);
     expect(sheet).toMatch(/<span className="field-optional">\{tCommon\('optional'\)\}<\/span>/);
   });
 
