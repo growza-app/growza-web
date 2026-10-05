@@ -16,7 +16,7 @@ describe('the Booking time', () => {
     const date = sheet.indexOf('id="wi-date"');
     const time = sheet.indexOf('id="wi-time"');
     expect(time).toBeGreaterThan(date);
-    expect(sheet).toMatch(/\{nv\.bookingTime\}\s*<\/label>\s*<input\s+id="wi-time"/);
+    expect(sheet).toMatch(/\{nv\.bookingTime\}\s*<\/label>\s*<select id="wi-time"/);
   });
 
   it('setting one makes it a booking, so the phone is required', () => {
@@ -24,22 +24,31 @@ describe('the Booking time', () => {
     expect(sheet).toMatch(/required=\{later\}/);
   });
 
-  it('a time before now today is kept as typed and flagged, never moved (GRW-531: AM must stay selectable)', () => {
-    expect(sheet).toMatch(/const timePassed = day === todayIso && timeWanted !== '' && timeWanted < nowHm;/);
+  it('is a dropdown of quarter-hours that starts after now today, so a past time cannot be chosen (GRW-533)', () => {
+    expect(sheet).toMatch(/const timeOptions = \(\(\) => \{/);
+    expect(sheet).toMatch(/day === todayIso \? \(Math\.floor\(\(Number\(nowHm\.slice\(0, 2\)\) \* 60 \+ Number\(nowHm\.slice\(3, 5\)\)\) \/ 15\) \+ 1\) \* 15 : 0/);
+    expect(sheet).toMatch(/for \(let m = first; m < 24 \* 60; m \+= 15\)/);
+    // The first entry is empty: no time, a walk-in now.
+    expect(sheet).toMatch(/<option value="">\{nv\.anyTime\}<\/option>/);
     expect(sheet).toMatch(/onChange=\{\(e\) => setTimeWanted\(e\.target\.value\)\}/);
-    expect(sheet).not.toMatch(/\? nowHm : v/);
-    expect(sheet).toMatch(/\{timePassed && \(/);
-    expect(sheet).toMatch(/if \(timePassed\) return;/);
+    // No free-typed time box, and no "time has passed" message left: it can no longer happen.
+    expect(sheet).not.toMatch(/type="time"/);
+    expect(sheet).not.toMatch(/timePassed/);
   });
 
-  it('timePassed is declared AFTER `day` — reading it earlier crashes the screen (temporal dead zone)', () => {
-    expect(sheet.indexOf('const timePassed')).toBeGreaterThan(sheet.indexOf('const [day, setDay]'));
+  it('a chosen time that has since passed is cleared, not kept', () => {
+    expect(sheet).toMatch(/if \(timeWanted && day === todayIso && timeWanted < nowHm\) setTimeWanted\(''\);/);
   });
 
-  it('has its message in both languages', () => {
+  it('timeOptions is declared AFTER `day` — reading it earlier crashes the screen (temporal dead zone)', () => {
+    expect(sheet.indexOf('const timeOptions')).toBeGreaterThan(sheet.indexOf('const [day, setDay]'));
+  });
+
+  it('has its words in both languages', () => {
     for (const l of ['en', 'hi']) {
       const m = JSON.parse(readFileSync(resolve(__dirname, `../../../messages/${l}.json`), 'utf8')) as { newVisit: Record<string, string> };
-      expect(m.newVisit.timePassed).toBeTruthy();
+      expect(m.newVisit.anyTime).toBeTruthy();
+      expect(m.newVisit.timePassed).toBeUndefined();
     }
   });
 

@@ -330,6 +330,19 @@ input.wi-search-input-plain {
   padding-inline: 10px;
 }
 
+/* Jira GRW-533 — the time is a dropdown, full column width and as tall as the date beside it. */
+.wi-when select {
+  width: 100%;
+  min-width: 0;
+  min-height: 46.8px;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+  /* Room for the chevron the shared select rule draws at the right edge. */
+  padding-left: 10px;
+  padding-right: 28px;
+  background-position: right 9px center;
+}
+
 .wi-when input::-webkit-calendar-picker-indicator {
   margin-inline-start: 0;
   padding: 0;
