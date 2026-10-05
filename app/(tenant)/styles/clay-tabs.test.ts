@@ -32,6 +32,13 @@ describe('the clay tabs', () => {
     expect(css).not.toMatch(/transition:[^;]*(width|height|padding|margin)/);
   });
 
+  it('has soft corners and a light emboss (Jira GRW-501)', () => {
+    expect(css).toMatch(/\.page-tabs \{[^}]*border-radius: 18px;/);
+    expect(css).toMatch(/\.page-tab \{[^}]*border-radius: 13px;/);
+    // No offset past 3px: a deeper shadow is the heavy look this story took out.
+    for (const [, n] of css.matchAll(/(?:inset )?-?(\d+)px -?\d+px \d+px rgba/g)) expect(Number(n)).toBeLessThanOrEqual(3);
+  });
+
   it('switches the motion off for a reader who asked for less', () => {
     expect(css).toMatch(/prefers-reduced-motion: reduce\) \{\s*\.page-tab,\s*\.page-tab::before \{\s*transition: none;/);
   });

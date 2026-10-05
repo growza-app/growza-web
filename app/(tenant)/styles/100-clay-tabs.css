@@ -12,11 +12,16 @@
 
 .page-tabs {
   background: #e3e9e5;
-  border-radius: 22px;
+  border-radius: 18px;
   box-shadow:
-    inset 4px 4px 9px rgba(14, 51, 37, 0.16),
-    inset -4px -4px 9px rgba(255, 255, 255, 0.95);
+    inset 2px 2px 5px rgba(14, 51, 37, 0.12),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
 }
+
+/*
+ * Jira GRW-501 — calmer: the radii came down 4px (track 22 to 18, tab 17 to 13) and the shadows about
+ * halved in offset, blur and strength. Still pressed-in and raised, no longer heavy.
+ */
 
 /*
  * Jira GRW-500 — the change of tab eases, the way Linear's does.
@@ -29,7 +34,7 @@
 .page-tab {
   position: relative;
   isolation: isolate;
-  border-radius: 17px;
+  border-radius: 13px;
   color: #4f5d56;
   transition:
     color 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -44,10 +49,10 @@
   border-radius: inherit;
   background: linear-gradient(145deg, #ffffff, #f0f4f1);
   box-shadow:
-    5px 6px 12px rgba(14, 51, 37, 0.22),
-    -3px -3px 8px rgba(255, 255, 255, 0.9),
-    inset 2px 2px 4px rgba(255, 255, 255, 1),
-    inset -3px -3px 6px rgba(14, 51, 37, 0.09);
+    2px 3px 6px rgba(14, 51, 37, 0.14),
+    -1px -1px 4px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 1),
+    inset -1px -2px 3px rgba(14, 51, 37, 0.06);
   opacity: 0;
   transform: scale(0.92);
   transition:
