@@ -245,6 +245,13 @@
     cursor: pointer;
   }
 
+  /* Jira GRW-498 — the arrow is 16×16 in its 44px circle. 1rem, not 16px: every icon here is in rem
+     so it grows with the reader's text size (GRW-481), and 1rem is 16px at the default. */
+  .topbar .topbar-back-phone svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
   .topbar-lead {
     display: flex;
     align-items: center;
