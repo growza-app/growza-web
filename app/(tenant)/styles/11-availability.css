@@ -85,6 +85,7 @@
 select,
 input[type='text'],
 input[type='date'],
+input[type='time'],
 input[type='search'],
 input[type='tel'],
 input[type='email'],
@@ -139,7 +140,8 @@ textarea {
   min-height: 80px;
 }
 
-input[type='date'] {
+input[type='date'],
+input[type='time'] {
   /* Native date inputs ignore min-width the same way text inputs do — fixed so it doesn't dwarf its neighbours in a filter row. */
   min-width: 160px;
 }

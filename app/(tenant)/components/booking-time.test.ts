@@ -42,3 +42,11 @@ describe('the Booking time', () => {
     }
   });
 });
+
+describe('the time field wears the same chrome as the date field', () => {
+  it('is in the shared field rule, so it is not a bare browser default', () => {
+    const css = readFileSync(resolve(__dirname, '../styles/11-availability.css'), 'utf8');
+    const rule = css.slice(css.indexOf("select,\ninput[type='text']"), css.indexOf('textarea {'));
+    expect(rule).toContain("input[type='time']");
+  });
+});
