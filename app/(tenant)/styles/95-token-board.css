@@ -148,6 +148,27 @@
   }
 }
 
+/* Jira GRW-547 — on a phone a list shows its first ten rows and scrolls inside itself for the rest. `--tb-ten` is the
+   measured height of those ten (use-ten-rows.ts); a list of ten or fewer has none, so nothing changes for it.
+   `overscroll-behavior` is left at its default: at the end of the list the PAGE scrolls on, the list is not a trap.
+   A soft fade over the last stretch says there is more below, and goes at the end of the list (`data-more`). */
+@media (max-width: 860px) {
+  .tb-rows {
+    position: relative;
+    max-height: var(--tb-ten, none);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* An overflow box clips what overhangs it: the italic "m" of a waiting time was cut at the row's right edge. The
+       same 4px the laptop's scrollable list keeps, and the same thin scrollbar. */
+    padding-right: 4px;
+    scrollbar-width: thin;
+  }
+  .tb-rows[data-more] {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  }
+}
+
 .tb-main {
   display: flex;
   flex-direction: column;

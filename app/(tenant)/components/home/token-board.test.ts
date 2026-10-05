@@ -408,3 +408,39 @@ describe('no token number badge (GRW-542)', () => {
     expect(html).not.toContain('tb-no');
   });
 });
+
+/** Jira GRW-547 — on a phone a token list shows its first ten rows and scrolls inside itself for the rest. */
+describe('ten rows in view on a phone (GRW-547)', () => {
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+  const hook = readFileSync(resolve(__dirname, 'use-ten-rows.ts'), 'utf8');
+  const board = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const phone = css.slice(css.indexOf('@media (max-width: 860px) {\n  .tb-rows {'), css.indexOf('.tb-main {'));
+
+  it('is ten rows, measured against the eleventh — not a fixed number of pixels', () => {
+    expect(hook).toMatch(/export const VISIBLE_ROWS = 10;/);
+    expect(hook).toMatch(/rows\[VISIBLE_ROWS\]/);
+    expect(hook).toMatch(/eleventh\.offsetTop - first\.offsetTop/);
+    expect(hook).toMatch(/rows\.length <= VISIBLE_ROWS/);
+  });
+
+  it('is re-measured when the width changes and when the lists change', () => {
+    expect(hook).toMatch(/new ResizeObserver\(measure\)/);
+    expect(hook).toMatch(/addEventListener\('resize', measure\)/);
+    expect(board).toMatch(/useTenRows\(boardRef, phone, \[tab, columns\.waiting\.length, columns\.with_stylist\.length, columns\.paid\.length\]\);/);
+  });
+
+  it('the list scrolls inside itself on a phone, and is not a scroll trap', () => {
+    expect(phone).toMatch(/max-height: var\(--tb-ten, none\);/);
+    expect(phone).toMatch(/overflow-y: auto;/);
+    expect(phone).not.toMatch(/overscroll-behavior: contain/);
+  });
+
+  it('fades the bottom edge while there is more, and keeps room so the italic time is not clipped', () => {
+    expect(phone).toMatch(/\.tb-rows\[data-more\] \{[^}]*mask-image: linear-gradient\(to bottom, #000 calc\(100% - 28px\), transparent\);/);
+    expect(phone).toMatch(/padding-right: 4px;/);
+  });
+
+  it('leaves the laptop on its own height cap (GRW-452)', () => {
+    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.tb-rows \{\s*[^}]*max-height: max\(300px, 46dvh\);/);
+  });
+});
