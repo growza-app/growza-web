@@ -139,16 +139,27 @@
     color: var(--accent-deep);
   }
 
+  /*
+   * The tab you are on sits in a small glass lens, the way iOS draws it: a translucent, lightly tinted capsule that blurs
+   * what is behind it, with a bright hairline on its edge and a soft shadow (the sheen and shadow are in the clay sheet).
+   * Every other tab is plain and single-coloured — the bar stays monochrome and the accent is kept for the selected
+   * icon and label (Apple's Liquid Glass guide: "save it for ... the selected tab's icon").
+   */
   .bottom-nav a.active::before {
     content: '';
     position: absolute;
-    top: 4px;
+    /* Centred on the 23px icon (it sits 2px from the top of the cell), so the lens ends above the label. */
+    top: -1px;
     left: 50%;
     transform: translateX(-50%);
-    width: 46px;
+    width: 48px;
     height: 30px;
+    box-sizing: border-box;
     border-radius: 15px;
-    background: var(--accent-soft);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: rgba(22, 101, 52, 0.1);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     z-index: 0;
   }
 
