@@ -113,22 +113,31 @@
 }
 
 /* ---------- green: the primary buttons ---------- */
-.btn,
+/* `.btn` is the base of the ghost and danger buttons too (they only change its colours), so the green
+   goes on the plain primary alone. Painting the gradient on all of them put green under the Filter and
+   Export buttons' dark text. */
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid),
 .hm-btn:not(.hm-btn-quiet),
 .cpc-btn-primary,
 .rp-control-primary {
   background-image: linear-gradient(145deg, #178246, #126a38);
   box-shadow: var(--clay-green);
 }
-.btn:hover,
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):hover,
 .hm-btn:not(.hm-btn-quiet):hover {
   background-image: linear-gradient(145deg, #15773f, #105f33);
 }
-.btn:active,
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):active,
 .hm-btn:not(.hm-btn-quiet):active {
   box-shadow:
     inset 3px 3px 6px rgba(0, 0, 0, 0.25),
     inset -1px -1px 3px rgba(255, 255, 255, 0.12);
+}
+
+/* The secondary buttons are raised, not green. */
+.btn.btn-ghost,
+.btn.btn-danger {
+  box-shadow: var(--clay-raise-soft);
 }
 
 /* Disabled stays flat: a button you cannot press must not look pressable. */
