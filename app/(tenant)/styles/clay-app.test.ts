@@ -67,4 +67,14 @@ describe('the clay app stylesheet', () => {
   it('a disabled primary button loses the green gradient too, so its grey label can be read', () => {
     expect(css).toMatch(/\.btn:not\(\.btn-ghost\):not\(\.btn-danger\):not\(\.btn-danger-solid\):disabled,[\s\S]*?\{\s*background-image: none;\s*box-shadow: none;/);
   });
+
+  it('Sign in stays green when disabled: muted green, white label, 4.5:1 or better (the colour is in the login sheet, not here)', () => {
+    const login = readFileSync(resolve(__dirname, '70-what-does-this-count.css'), 'utf8');
+    expect(login).toMatch(/\.login-submit:disabled \{\s*background: #3f8157;\s*color: #fff;/);
+    const lum = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+    };
+    expect(1.05 / (lum('#3f8157') + 0.05)).toBeGreaterThanOrEqual(4.5);
+  });
 });

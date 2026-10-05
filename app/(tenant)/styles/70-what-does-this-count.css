@@ -127,9 +127,13 @@
   font-size: 0.9375rem;
 }
 
+/* Sign in is green in both states: a muted green with white text until the fields are filled (4.68:1), the full
+   accent once they are. It was grey, which read as a different, broken button. */
 .login-submit:disabled {
-  background: var(--slate-soft);
-  color: var(--muted);
+  background: #3f8157;
+  color: #fff;
+  /* The shared disabled rule fades a button to 55%, which would put the white label back at about 2:1. */
+  opacity: 1;
   cursor: not-allowed;
 }
 
