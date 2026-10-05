@@ -335,30 +335,32 @@ describe('the board does not grow with the day', () => {
  * actually arrived — was the thing the row did not say.
  */
 describe('a wait reads as a wait', () => {
-  const waitingSince = (minutes: number) =>
-    boardSays([row({ id: 'w', tokenNo: 9, customerName: 'Priya', addedAt: new Date(Date.parse(NOW) - minutes * 60_000).toISOString() })]);
+  const waitingSince = (minutes: number, lang: 'en' | 'hi' = 'en') =>
+    boardSays([row({ id: 'w', tokenNo: 9, customerName: 'Priya', addedAt: new Date(Date.parse(NOW) - minutes * 60_000).toISOString() })], { provider: 'Stylist' }, lang);
 
-  it('still counts minutes under the hour', () => {
-    expect(waitingSince(45)).toContain('45 min');
-    // Jira GRW-541 — the column is headed Waiting, so the row does not say it again.
-    expect(waitingSince(45)).not.toContain('Waiting 45');
+  /*
+   * Jira GRW-548 — the owner's card design shows when they arrived ("Since 2:57 PM"), at every wait, not a running
+   * duration. The duration rules (minutes under the hour, "1h 30m" past it, the four-hour cut-off) this block used
+   * to pin went with it; what is pinned now is that the time is the time they walked in, in the salon's zone.
+   * NOW is 06:00 UTC = 11:30 IST.
+   */
+  it('says when they walked in, whatever the wait', () => {
+    // 45 minutes before 11:30 IST is 10:45 am; 90 minutes is 10:00 am; 618 minutes is 1:12 am.
+    expect(waitingSince(45)).toContain('Since 10:45 am');
+    expect(waitingSince(90)).toContain('Since 10:00 am');
+    expect(waitingSince(618)).toContain('Since 1:12 am');
   });
 
-  it('says hours and minutes past the hour', () => {
-    expect(waitingSince(90)).toContain('1h 30m');
-    expect(waitingSince(120)).toContain('2h');
-  });
-
-  it('stops counting past four hours and says when she walked in', () => {
-    const said = waitingSince(618);
-    expect(said).not.toContain('618');
-    expect(said).toContain('since');
-    // NOW is 06:00 UTC = 11:30 IST; 618 minutes earlier is 01:12 IST.
-    expect(said).toContain('1:12 am');
+  it('never counts minutes, and never says "Waiting" (the column is headed that)', () => {
+    for (const m of [45, 90, 618]) {
+      const said = waitingSince(m);
+      expect(said).not.toContain(`${m} min`);
+      expect(said).not.toContain('Waiting 4');
+    }
   });
 
   it('keeps the Hindi in step', () => {
-    expect(boardSays([row({ id: 'w', tokenNo: 9, addedAt: new Date(Date.parse(NOW) - 90 * 60_000).toISOString() })], { provider: 'Stylist' }, 'hi')).toContain('1 घंटे 30 मिनट');
+    expect(waitingSince(90, 'hi')).toContain('10:00 am से');
   });
 });
 
@@ -376,12 +378,12 @@ describe('the wait on a waiting token (GRW-541)', () => {
     expect(block.match(/<IconStopwatch \/>/g)?.length).toBe(1);
   });
 
-  it('asks for the time without the word "Waiting"', () => {
-    expect(src).toMatch(/t\.sinceTime\(arrivedAt\(\)\) : t\.waitedFor\(minutes\)/);
-    expect(src).not.toMatch(/t\.waitingMin|t\.waitingSince/);
+  it('asks for the arrival time without the word "Waiting"', () => {
+    expect(src).toMatch(/t\.sinceTime\(formatTime\(x\.addedAt, timezone\)\)/);
+    expect(src).not.toMatch(/t\.waitingMin|t\.waitingSince|waitedFor/);
   });
 
-  it('is regular weight and italic, in that column only', () => {
+  it('is regular weight and italic as plain text on a laptop; a pill, upright, on a phone (GRW-548)', () => {
     expect(css).toMatch(/\.tb-col\[data-col='waiting'\] \.tb-meta \{[^}]*font-weight: 400;[^}]*font-style: italic;/);
     expect(css).toMatch(/\.tb-meta \{[^}]*font-weight: 700;/);
   });
@@ -406,5 +408,65 @@ describe('no token number badge (GRW-542)', () => {
     const html = boardSays([row({ id: 'a', tokenNo: 7, customerName: 'Simran' })]);
     expect(html).toContain('token 7');
     expect(html).not.toContain('tb-no');
+  });
+});
+
+/** Jira GRW-548 — on a phone a token is a card: name, pills (token number, since), services, buttons. */
+describe('the token card on a phone (GRW-548)', () => {
+  const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+  const phone = css.slice(css.indexOf('@media (max-width: 860px) {\n  .tb-tabs {'), css.indexOf('/* ---------- rows ---------- */'));
+
+  it('draws the token number as a pill, after the name and before the wait', () => {
+    const line = src.slice(src.indexOf('<span className="tb-line">'), src.indexOf('<span className="tb-sub">'));
+    expect(line.indexOf('className="tb-name"')).toBeLessThan(line.indexOf('className="tb-token"'));
+    expect(line.indexOf('className="tb-token"')).toBeLessThan(line.indexOf('className="tb-meta"'));
+    expect(line).toMatch(/w\.tokenNoLabel\(x\.tokenNo\)/);
+  });
+
+  it('says "Token No: 13" in both languages', () => {
+    const html = boardSays([row({ id: 'p', tokenNo: 13, customerName: 'Priya' })]);
+    expect(html).toContain('Token No: 13');
+    expect(boardSays([row({ id: 'p', tokenNo: 13, customerName: 'Priya' })], { provider: 'Stylist' }, 'hi')).toContain('टोकन नंबर: 13');
+  });
+
+  it('is its own rounded white card, on the page background', () => {
+    expect(phone).toMatch(/\.tb-board \.tb-col,[^{]*\{[^}]*background: transparent;[^}]*border: 0;/);
+    expect(phone).toMatch(/\.tb-board \.tb-rows > \.tb-row,\s*\.tb-board \.tb-rows > \.tb-row:first-child \{[^}]*border-radius: 18px;[^}]*background: var\(--surface\);/);
+  });
+
+  it('puts the name on a line of its own, so the pills fall to the next', () => {
+    expect(phone).toMatch(/\.tb-board \.tb-line > \.tb-name \{\s*flex: 1 1 100%;/);
+  });
+
+  it('the token pill is blue and the since pill amber, both readable', () => {
+    expect(phone).toMatch(/\.tb-board \.tb-token \{\s*background: var\(--blue-soft\);\s*color: var\(--blue\);/);
+    expect(phone).toMatch(/\.tb-board \.tb-col\[data-col='waiting'\] \.tb-meta \{\s*background: var\(--amber-soft\);/);
+  });
+
+  it('a laptop has no token pill', () => {
+    expect(css).toMatch(/\.tb-token \{\s*display: none;\s*\}\s*@media \(max-width: 860px\)/);
+  });
+
+  it('the services line is regular, not italic', () => {
+    expect(css).toMatch(/\.tb-muted \{\s*font-style: normal;/);
+  });
+});
+
+/** Jira GRW-549 — on a phone card: 16px above and below the services line, and 32px buttons with a 44px tap. */
+describe('the spacing of a token card (GRW-549 · GRW-550)', () => {
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('is 16px between the pills and the services line, and between the services line and the buttons', () => {
+    expect(css).toMatch(/\.tb-board \.tb-main \{\s*gap: var\(--sp-4\);/);
+    expect(css).toMatch(/\.tb-board \.tb-actions \{\s*margin-top: var\(--sp-4\);/);
+    const base = readFileSync(resolve(__dirname, '../../styles/00-base.css'), 'utf8');
+    expect(base).toMatch(/--sp-4: 16px;/);
+  });
+
+  it('has 40px buttons that keep a 44px tap (40 + 2 above + 2 below)', () => {
+    const rule = css.slice(css.indexOf('.tb-actions .hm-give {'), css.indexOf('}', css.indexOf('.tb-actions .hm-give {')));
+    expect(rule).toMatch(/min-height: 40px;/);
+    expect(css).toMatch(/\.tb-actions \.hm-give::after \{[^}]*inset: -2px 0;/);
   });
 });

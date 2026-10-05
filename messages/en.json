@@ -2066,6 +2066,7 @@
     "left": "Left without service",
     "noName": "No name",
     "giveFor": "Give to {provider} — token {n}, {name}",
+    "tokenNoLabel": "Token No: {n}",
     "payFor": "Record payment — token {n}, {name}",
     "cancelledCount": "Cancelled"
   }

@@ -2066,6 +2066,7 @@
     "left": "बिना सेवा चले गए",
     "noName": "बिना नाम",
     "giveFor": "{provider} को दें — टोकन {n}, {name}",
+    "tokenNoLabel": "टोकन नंबर: {n}",
     "payFor": "पेमेंट दर्ज करें — टोकन {n}, {name}",
     "cancelledCount": "रद्द हुए"
   }
