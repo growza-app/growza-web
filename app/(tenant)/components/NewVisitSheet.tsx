@@ -783,6 +783,8 @@ export function NewVisitSheet({
   const bookAgainAt = (client: PickedClient, plan: BookAgainPlan, time: FreeTime) => {
     applyPlan(plan);
     setDay(time.day);
+    // A time picked on the Book again card is a booking, whichever day it is on.
+    setDateChosen(true);
     pendingSlot.current = time.utc;
     setStage({ step: 'when', client });
   };
@@ -837,7 +839,14 @@ export function NewVisitSheet({
   // --- `later` only: which day, and which slot on it ---
   /** Jira GRW-518 — today in the salon's zone: the Booking date's default, and the earliest it can be. */
   const todayIso = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()), [timezone]);
-  const [day, setDay] = useState(todayIso);
+  // Jira GRW-521 — the date shows today unless a link asked for a later booking, which starts on tomorrow: a
+  // booking for today is a walk-in, so "later" with today's date would not be one.
+  const [day, setDay] = useState(() => {
+    if (!dateChosen) return todayIso;
+    const d = new Date(`${todayIso}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotUtc, setSlotUtc] = useState<string | null>(null);
@@ -1741,11 +1750,9 @@ export function NewVisitSheet({
               />
 
               {/*
-              Jira GRW-518 · GRW-519 — the Booking date, last: search, name, phone, then when. It is empty until the
-              owner chooses one (optional): empty is a walk-in now, a chosen day — today included — is a booking
-              for that day. It is empty rather than pre-filled with today because a date input that already shows
-              today fires no change when today is picked again, so "later today" could not be chosen. Never
-              before today; cleared, it goes back to a walk-in.
+              Jira GRW-518 · GRW-519 · GRW-521 — the Booking date, last: search, name, phone, then when. It shows
+              today. Today is a walk-in now; a later day is a booking for that day (and needs a phone). Never
+              before today; set back to today, or cleared, it is a walk-in again.
             */}
             <div className="field wi-date-field">
               <label htmlFor="wi-date">
@@ -1756,16 +1763,12 @@ export function NewVisitSheet({
                 id="wi-date"
                 type="date"
                 min={todayIso}
-                value={dateChosen ? day : ''}
+                value={day}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (!v) {
-                    setDay(todayIso);
-                    setDateChosen(false);
-                    return;
-                  }
-                  setDay(v < todayIso ? todayIso : v);
-                  setDateChosen(true);
+                  const next = !v || v < todayIso ? todayIso : v;
+                  setDay(next);
+                  setDateChosen(next > todayIso);
                 }}
               />
             </div>
