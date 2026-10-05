@@ -13,9 +13,11 @@ const css = readFileSync(resolve(__dirname, '100-clay-tabs.css'), 'utf8');
 const globals = readFileSync(resolve(__dirname, '../globals.css'), 'utf8');
 
 describe('the clay tabs', () => {
-  it('is loaded last, as one import', () => {
-    const imports = globals.match(/@import '\.\/styles\/[^']+';/g) ?? [];
-    expect(imports[imports.length - 1]).toBe("@import './styles/100-clay-tabs.css';");
+  it('is loaded after every screen sheet, as one import (the whole-app clay sheet follows it, GRW-504)', () => {
+    const imports: string[] = globals.match(/@import '\.\/styles\/[^']+';/g) ?? [];
+    const at = imports.indexOf("@import './styles/100-clay-tabs.css';");
+    expect(at).toBeGreaterThan(imports.indexOf("@import './styles/99-screen-states.css';"));
+    expect(imports.slice(at + 1)).toEqual(["@import './styles/101-clay-app.css';"]);
   });
 
   it('eases in under 200ms, with no overshoot', () => {

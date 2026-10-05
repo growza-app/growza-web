@@ -1,0 +1,154 @@
+/*
+ * Jira GRW-504 — the whole app in a clay style.
+ *
+ * Clay is three moves, the same three the tab strip already makes (100-clay-tabs.css):
+ *   RAISED  — a surface you could press: a soft drop shadow beneath, a bright edge on the upper left,
+ *             a faint shade on the lower right (cards, row cards, tiles, the bottom bar, round buttons).
+ *   PRESSED — a surface pushed into the page: an inner shadow (search bars, text fields).
+ *   GREEN   — the primary button is a raised green piece with the same light and shade.
+ * Radii are a little rounder, because nothing in clay has a corner.
+ *
+ * Colour, size, spacing, copy and layout are NOT touched: this file sets shadow, radius and the primary
+ * button's gradient, and nothing else. It is loaded last, so deleting it and its @import in globals.css
+ * puts the app back exactly as it was. Text colours are unchanged, so contrast is unchanged.
+ *
+ * Shadows are soft and blurred, which costs paint time on a mid-range Android phone. They are kept small
+ * (no more than 12px of blur) and none sits on anything that animates every frame.
+ */
+
+:root {
+  --radius: 18px;
+  --radius-sm: 14px;
+
+  --clay-raise:
+    3px 4px 10px rgba(14, 51, 37, 0.1),
+    -2px -2px 6px rgba(255, 255, 255, 0.9),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.9),
+    inset -1px -2px 3px rgba(14, 51, 37, 0.04);
+  --clay-raise-soft:
+    2px 3px 7px rgba(14, 51, 37, 0.09),
+    -1px -1px 4px rgba(255, 255, 255, 0.9),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+  --clay-press:
+    inset 2px 2px 5px rgba(14, 51, 37, 0.12),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+  --clay-green:
+    2px 4px 8px rgba(22, 101, 52, 0.3),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.26),
+    inset -2px -3px 4px rgba(0, 0, 0, 0.16);
+}
+
+/* ---------- raised: surfaces ---------- */
+.card,
+.hm-card,
+.bk-card,
+.cl-card,
+.staff-card,
+.svc-group-card,
+.offer-card-row,
+.menu-list,
+.cust-kpi,
+.hm-att {
+  box-shadow: var(--clay-raise);
+}
+
+/* ---------- raised: controls ---------- */
+.menu-btn,
+.hdr-search,
+.staff-icon-btn,
+.kebab-btn,
+.pagination-btn,
+.bk-filter-toggle,
+.cust-segments-toggle,
+.hm-btn-quiet,
+.btn-ghost {
+  box-shadow: var(--clay-raise-soft);
+}
+
+.menu-btn:active,
+.hdr-search:active,
+.staff-icon-btn:active,
+.kebab-btn:active,
+.pagination-btn:active,
+.bk-filter-toggle:active,
+.hm-btn-quiet:active,
+.btn-ghost:active {
+  box-shadow: var(--clay-press);
+}
+
+/* ---------- raised: the bottom bar and its centre ---------- */
+@media (max-width: 860px) {
+  .bottom-nav {
+    box-shadow:
+      4px 6px 16px rgba(14, 51, 37, 0.16),
+      -2px -2px 6px rgba(255, 255, 255, 0.9),
+      inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+  }
+  .bn-centre {
+    box-shadow: var(--clay-green);
+  }
+}
+
+/* ---------- pressed: fields and search bars ---------- */
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='hidden']), select, textarea),
+.bk-search-row,
+.search-wrap,
+.att-search,
+.hm-seg-select,
+.checkout-amount-field,
+.phone-field {
+  box-shadow: var(--clay-press);
+}
+
+/* A bare input sits inside a bordered wrapper that already carries the press: it takes none of its own,
+   or the two would double up into a dark band. (The field rule above is wrapped in :where() so it has no
+   specificity and this one wins.) */
+.bk-search-row input,
+.search-wrap input,
+.att-search input,
+.checkout-amount-field input,
+.phone-field input,
+.sheet-row input {
+  box-shadow: none;
+}
+
+/* ---------- green: the primary buttons ---------- */
+/* `.btn` is the base of the ghost and danger buttons too (they only change its colours), so the green
+   goes on the plain primary alone. Painting the gradient on all of them put green under the Filter and
+   Export buttons' dark text. */
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid),
+.hm-btn:not(.hm-btn-quiet),
+.cpc-btn-primary,
+.rp-control-primary {
+  background-image: linear-gradient(145deg, #178246, #126a38);
+  box-shadow: var(--clay-green);
+}
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):hover,
+.hm-btn:not(.hm-btn-quiet):hover {
+  background-image: linear-gradient(145deg, #15773f, #105f33);
+}
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):active,
+.hm-btn:not(.hm-btn-quiet):active {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.25),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.12);
+}
+
+/* The secondary buttons are raised, not green. */
+.btn.btn-ghost,
+.btn.btn-danger {
+  box-shadow: var(--clay-raise-soft);
+}
+
+/* Disabled stays flat: a button you cannot press must not look pressable. */
+.btn:disabled,
+.hm-btn:disabled,
+.btn[aria-disabled='true'] {
+  box-shadow: none;
+}
+
+/* ---------- raised: sheets ---------- */
+.sheet,
+.hm-sheet {
+  box-shadow: 0 -6px 24px rgba(14, 51, 37, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.9);
+}
