@@ -433,7 +433,7 @@ describe('five rows in view on a phone', () => {
   });
 
   it('the list scrolls inside itself on a phone, and is not a scroll trap', () => {
-    expect(phone).toMatch(/max-height: var\(--tb-visible, none\);/);
+    expect(phone).toMatch(/max-height: min\(var\(--tb-visible, 60dvh\), 60dvh\);/);
     expect(phone).toMatch(/overflow-y: auto;/);
     expect(phone).not.toMatch(/overscroll-behavior: contain/);
   });
