@@ -22,6 +22,13 @@ import {
  * breakpoint (see globals.css) — the frequent destinations in the thumb zone
  * rather than behind a hamburger.
  *
+ * ## Jira GRW-495 — the action floats at the bottom right
+ *
+ * It left the middle of the bar for the corner above it, the way Compose sits in Gmail and
+ * Outlook: an icon-and-label pill, anchored to the bar so it follows the bar's height at any
+ * text size and clears the home indicator. The bar is four flat tabs again. The paragraph below
+ * is the history that put it in the middle (GRW-222); the placement is the part that changed.
+ *
  * ## Jira GRW-222 — the raised centre action
  *
  * The floating "+" in the corner is gone. The design puts the one action that
@@ -79,7 +86,6 @@ export function BottomNav({
 
   const visible = visibleItems(items, role, reportTabs);
   const centre = !stylist && onCentre;
-  const half = Math.ceil(visible.length / 2);
 
   const tab = (item: (typeof visible)[number]) => {
     const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
@@ -114,20 +120,15 @@ export function BottomNav({
 
   return (
     <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label={tc('main')}>
+      {visible.map(tab)}
       {centre ? (
-        <>
-          {visible.slice(0, half).map(tab)}
-          <button type="button" className="bn-centre" onClick={onCentre}>
-            <span className="bn-centre-btn" aria-hidden>
-              {role === 'receptionist' ? <IconUserPlus /> : <IconCalendarPlus />}
-            </span>
-            <span className="bn-centre-label">{role === 'receptionist' ? t.walkInShort : t.nav.newBooking}</span>
-          </button>
-          {visible.slice(half).map(tab)}
-        </>
-      ) : (
-        visible.map(tab)
-      )}
+        <button type="button" className="bn-centre" onClick={onCentre}>
+          <span className="bn-centre-btn" aria-hidden>
+            {role === 'receptionist' ? <IconUserPlus /> : <IconCalendarPlus />}
+          </span>
+          <span className="bn-centre-label">{role === 'receptionist' ? t.walkInShort : t.nav.newBooking}</span>
+        </button>
+      ) : null}
     </nav>
   );
 }

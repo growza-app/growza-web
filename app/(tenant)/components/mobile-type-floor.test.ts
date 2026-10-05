@@ -35,12 +35,13 @@ describe('the 12px phone floor', () => {
   it('the bottom bar\'s tab and centre labels are 12px, and the narrow-phone bar gives them the room', () => {
     const chrome = css('74-mobile-chrome-2026.css');
     expect(chrome).toMatch(/\.bottom-nav a\s*\{[^}]*font-size:\s*0\.75rem;/);
-    expect(css('83-role-home.css')).toMatch(/\.bn-centre-label\s*\{\s*font-size:\s*0\.75rem;/);
+    // Jira GRW-495 — the pill's label is a button's, so 14px; it left the bar's twelve-pixel row.
+    expect(css('83-role-home.css')).toMatch(/\.bn-centre-label\s*\{\s*font-size:\s*0\.875rem;/);
     expect(chrome).toMatch(/@media \(max-width: 400px\)\s*\{\s*\.bottom-nav\s*\{\s*margin-inline:\s*8px;/);
     // Jira GRW-481 — `1 1 0`, not `1 1 auto`: the cells take an equal share of the bar
     // rather than sizing to their own longest word. Once the labels grew with the
     // reader's text size, content-sized cells pushed the last tab off the screen.
-    expect(chrome).toMatch(/\.bottom-nav > a,\s*\.bottom-nav > \.bn-centre\s*\{\s*flex:\s*1 1 0;/);
+    expect(chrome).toMatch(/\.bottom-nav > a\s*\{\s*flex:\s*1 1 0;/);
   });
 
   it('the unread count on the bell is 12px too', () => {
@@ -67,7 +68,8 @@ describe('the bottom bar at a large text size', () => {
 
   it('gives every cell an equal share rather than its own longest word', () => {
     expect(chrome).toMatch(/\.bottom-nav a\s*\{[^}]*flex:\s*1 1 0;/);
-    expect(home).toMatch(/\.bn-centre\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*0;/);
+    // Jira GRW-495 — the pill floats, so it is not a cell: it is capped to the screen instead.
+    expect(home).toMatch(/\.bn-centre\s*\{[^}]*max-width:\s*calc\(100vw - 2 \* var\(--sp-4\)\);/);
   });
 
   it('gives each label something CSS can shorten', () => {
