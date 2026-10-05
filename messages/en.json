@@ -114,7 +114,6 @@
     "customer": "client",
     "kpiBookings": "Bookings",
     "today": "Today",
-    "subtitle": "All your appointments in one place.",
     "clientShowing": "Showing bookings for <b>{name}</b>",
     "clientShowingAll": "Showing every booking for <b>{name}</b>",
     "clientNoneInDates": " — none in these dates",

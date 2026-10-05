@@ -114,7 +114,6 @@
     "customer": "ग्राहक",
     "kpiBookings": "बुकिंग",
     "today": "आज",
-    "subtitle": "आपकी सारी अपॉइंटमेंट एक जगह।",
     "clientShowing": "<b>{name}</b> की बुकिंग दिखा रहे हैं",
     "clientShowingAll": "<b>{name}</b> की सारी बुकिंग दिखा रहे हैं",
     "clientNoneInDates": " — इन तारीख़ों में कोई नहीं",

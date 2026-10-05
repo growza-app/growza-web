@@ -218,11 +218,9 @@ export default async function AppointmentsPage({
       {/* No search action in the header: this page has its own search field
           in the filter card now (GRW-47), and a second magnifier pointing at
           the global /search page right above it read as the same control. */}
-      <PageHeader
-        title={pageTitle}
-        subtitle={t('subtitle')}
-        mobileSubtitle
-      />
+      {/* Jira GRW-506 — no sentence under the title: the owner asked for it gone, and the screen's
+          name and the branch line already say where this is. */}
+      <PageHeader title={pageTitle} />
 
       <div className="page-body bk-fit">
         {/* Says whose bookings these are and how to get back out. Without it a
