@@ -1,20 +1,20 @@
 import { useEffect, type RefObject } from 'react';
 
 /** Jira GRW-547 — how many rows of a token list are in view on a phone; the rest scroll inside the list. */
-export const VISIBLE_ROWS = 10;
+export const VISIBLE_ROWS = 5;
 
 /**
- * On a phone each token list is as tall as its first ten rows, and scrolls inside itself past that.
+ * On a phone each token list is as tall as its first five rows, and scrolls inside itself past that.
  *
  * The height is MEASURED, not a number of pixels: a row is one line or three (a long name drops its wait under it,
- * the two buttons wrap), so ten rows is not a fixed height. It is the distance from the first row's top to the
- * eleventh's, which `offsetTop` gives against the same parent whatever the list has scrolled to. It is written as a
+ * the two buttons wrap), so five rows is not a fixed height. It is the distance from the first row's top to the
+ * sixth's, which `offsetTop` gives against the same parent whatever the list has scrolled to. It is written as a
  * CSS variable, so the stylesheet decides where it applies (phone only) and a laptop keeps its own cap (GRW-452).
  *
  * Re-measured when the width changes (a rotation, Larger Text re-wrap the rows) and when the board's lists change.
  * `data-more` says there is more below, for the soft fade at the bottom edge: a list that scrolls must look like it.
  */
-export function useTenRows(board: RefObject<HTMLElement | null>, enabled: boolean, deps: ReadonlyArray<unknown>) {
+export function useVisibleRows(board: RefObject<HTMLElement | null>, enabled: boolean, deps: ReadonlyArray<unknown>) {
   useEffect(() => {
     const root = board.current;
     if (!root) return;
@@ -24,13 +24,13 @@ export function useTenRows(board: RefObject<HTMLElement | null>, enabled: boolea
       for (const list of lists) {
         const rows = list.children;
         if (!enabled || rows.length <= VISIBLE_ROWS || list.offsetParent === null) {
-          list.style.removeProperty('--tb-ten');
+          list.style.removeProperty('--tb-visible');
           list.removeAttribute('data-more');
           continue;
         }
         const first = rows[0] as HTMLElement;
-        const eleventh = rows[VISIBLE_ROWS] as HTMLElement;
-        list.style.setProperty('--tb-ten', `${eleventh.offsetTop - first.offsetTop}px`);
+        const sixth = rows[VISIBLE_ROWS] as HTMLElement;
+        list.style.setProperty('--tb-visible', `${sixth.offsetTop - first.offsetTop}px`);
         flag(list);
       }
     };
