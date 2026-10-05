@@ -264,7 +264,6 @@ export function NewVisitSheet({
   const later = mode === 'later';
   const checkPhone = usePhoneProblem();
   const tcr = useTranslations('chrome');
-  const tCommon = useTranslations('common');
   const tw = useTranslations('staffWizard');
   const router = useRouter();
   const clientNoun = useLabel('customer', 'Client');
@@ -853,7 +852,8 @@ export function NewVisitSheet({
   // Jira GRW-521 — the date shows today unless a link asked for a later booking, which starts on tomorrow: a
   // booking for today is a walk-in, so "later" with today's date would not be one.
   // Jira GRW-527 — now, as 'HH:mm' in the salon's zone: the earliest a booking TODAY can be.
-  const nowHm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+  const hmFormat = useMemo(() => new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }), [timezone]);
+  const nowHm = hmFormat.format(new Date());
   const [day, setDay] = useState(() => {
     if (!dateChosen) return todayIso;
     const d = new Date(`${todayIso}T12:00:00Z`);
@@ -865,20 +865,23 @@ export function NewVisitSheet({
    * passed is simply not in it. Today it starts at the next quarter-hour after now; any other day is the whole
    * day. The first entry (empty) is no time: a walk-in now.
    */
-  const timeOptions = (() => {
-    const first = day === todayIso ? (Math.floor((Number(nowHm.slice(0, 2)) * 60 + Number(nowHm.slice(3, 5))) / 15) + 1) * 15 : 0;
+  // Rebuilt only when the day, the quarter-hour or the language changes — not on every keystroke in Name / Phone.
+  const firstMin = day === todayIso ? (Math.floor((Number(nowHm.slice(0, 2)) * 60 + Number(nowHm.slice(3, 5))) / 15) + 1) * 15 : 0;
+  const timeOptions = useMemo(() => {
     const label = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', hour: 'numeric', minute: '2-digit', hour12: true });
     const out: Array<{ value: string; label: string }> = [];
-    for (let m = first; m < 24 * 60; m += 15) {
+    for (let m = firstMin; m < 24 * 60; m += 15) {
       const value = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
       out.push({ value, label: label.format(new Date(Date.UTC(2000, 0, 1, Math.floor(m / 60), m % 60))) });
     }
     return out;
-  })();
-  // A chosen time that has since passed (the date went back to today, or the screen sat open) is cleared, not kept.
-  useEffect(() => {
-    if (timeWanted && day === todayIso && timeWanted < nowHm) setTimeWanted('');
-  }, [day, todayIso, timeWanted, nowHm]);
+  }, [firstMin, locale]);
+  // Jira GRW-534 — today the empty entry shows the current time (changes once a minute), another day "Any time".
+  const nowLabel = useMemo(
+    () => new Intl.DateTimeFormat(locale, { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `nowHm` is the minute the label is for
+    [locale, timezone, nowHm],
+  );
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotUtc, setSlotUtc] = useState<string | null>(null);
@@ -1808,6 +1811,9 @@ export function NewVisitSheet({
                   const next = !v || v < todayIso ? todayIso : v;
                   setDay(next);
                   setDateChosen(next > todayIso);
+                  // Jira GRW-535 — a morning time chosen for tomorrow is dropped when the date comes back to today and
+                  // it has passed. Only here: a clock tick never clears a time the person has just picked.
+                  if (next === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
                 }}
               />
             </div>
@@ -1823,9 +1829,7 @@ export function NewVisitSheet({
               <select id="wi-time" value={timeWanted} onChange={(e) => setTimeWanted(e.target.value)}>
                 {/* Jira GRW-534 — today the empty entry shows the current time and is still a walk-in; another day, "Any time". */}
                 <option value="">
-                  {day === todayIso
-                    ? nv.timeNow(new Intl.DateTimeFormat(locale, { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date()))
-                    : nv.anyTime}
+                  {day === todayIso ? nv.timeNow(nowLabel) : nv.anyTime}
                 </option>
                 {timeOptions.map((o) => (
                   <option key={o.value} value={o.value}>

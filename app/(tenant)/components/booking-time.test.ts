@@ -25,9 +25,8 @@ describe('the Booking time', () => {
   });
 
   it('is a dropdown of quarter-hours that starts after now today, so a past time cannot be chosen (GRW-533)', () => {
-    expect(sheet).toMatch(/const timeOptions = \(\(\) => \{/);
-    expect(sheet).toMatch(/day === todayIso \? \(Math\.floor\(\(Number\(nowHm\.slice\(0, 2\)\) \* 60 \+ Number\(nowHm\.slice\(3, 5\)\)\) \/ 15\) \+ 1\) \* 15 : 0/);
-    expect(sheet).toMatch(/for \(let m = first; m < 24 \* 60; m \+= 15\)/);
+        expect(sheet).toMatch(/const firstMin = day === todayIso \? \(Math\.floor\(\(Number\(nowHm\.slice\(0, 2\)\) \* 60 \+ Number\(nowHm\.slice\(3, 5\)\)\) \/ 15\) \+ 1\) \* 15 : 0/);
+    expect(sheet).toMatch(/for \(let m = firstMin; m < 24 \* 60; m \+= 15\)/);
     // The first entry is empty: no time, a walk-in now.
     // Today it shows the current time (GRW-534) and is still no time chosen; another day it reads "Any time".
     expect(sheet).toMatch(/<option value="">\s*\{day === todayIso\s*\? nv\.timeNow\(/);
@@ -38,8 +37,17 @@ describe('the Booking time', () => {
     expect(sheet).not.toMatch(/timePassed/);
   });
 
-  it('a chosen time that has since passed is cleared, not kept', () => {
-    expect(sheet).toMatch(/if \(timeWanted && day === todayIso && timeWanted < nowHm\) setTimeWanted\(''\);/);
+  it('a past time is dropped only when the date comes back to today — never by a clock tick (GRW-535)', () => {
+    expect(sheet).toMatch(/if \(next === todayIso && timeWanted && timeWanted < nowHm\) setTimeWanted\(''\);/);
+    // The old effect re-read the clock on every render, so a time picked off a stale list snapped back to Now.
+    expect(sheet).not.toMatch(/useEffect\(\(\) => \{\s*if \(timeWanted && day === todayIso/);
+  });
+
+  it('the list and the Now label are memoised, not rebuilt on every keystroke', () => {
+    expect(sheet).toMatch(/const timeOptions = useMemo\(\(\) => \{/);
+    expect(sheet).toMatch(/\}, \[firstMin, locale\]\);/);
+    expect(sheet).toMatch(/const nowLabel = useMemo\(/);
+    expect(sheet).toMatch(/const hmFormat = useMemo\(/);
   });
 
   it('timeOptions is declared AFTER `day` — reading it earlier crashes the screen (temporal dead zone)', () => {
@@ -69,10 +77,9 @@ describe('the Booking time', () => {
   });
 });
 
-describe('the time field wears the same chrome as the date field', () => {
-  it('is in the shared field rule, so it is not a bare browser default', () => {
+describe('no app-wide time-input style (GRW-535)', () => {
+  it('the shared field rule leaves other time inputs (Move booking, Attendance, week hours) alone', () => {
     const css = readFileSync(resolve(__dirname, '../styles/11-availability.css'), 'utf8');
-    const rule = css.slice(css.indexOf("select,\ninput[type='text']"), css.indexOf('textarea {'));
-    expect(rule).toContain("input[type='time']");
+    expect(css).not.toContain("input[type='time']");
   });
 });
