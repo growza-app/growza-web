@@ -8,7 +8,7 @@ import { IconStopwatch } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { useMayUse } from '../SessionProvider';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
-import { useTenRows } from './use-ten-rows';
+import { useVisibleRows } from './use-visible-rows';
 import { VisitTill } from './VisitTill';
 import type { TokenWords } from './token-words';
 
@@ -253,8 +253,8 @@ export function TokenBoard({
     </li>
   );
 
-  // Jira GRW-547 — ten rows in view at a time on a phone; the rest scroll inside the list.
-  useTenRows(boardRef, phone, [tab, columns.waiting.length, columns.with_stylist.length, columns.paid.length]);
+  // Jira GRW-547 — five rows in view at a time on a phone; the rest scroll inside the list.
+  useVisibleRows(boardRef, phone, [tab, columns.waiting.length, columns.with_stylist.length, columns.paid.length]);
 
   return (
     <div className="tb-board" data-tab={tab} id="hm-queue" ref={boardRef}>
