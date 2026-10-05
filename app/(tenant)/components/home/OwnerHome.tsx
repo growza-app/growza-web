@@ -46,6 +46,7 @@ import { BranchCarousel } from './BranchCarousel';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
+import { useOnVisitChanged } from '../../lib/visit-changed';
 
 /**
  * Jira GRW-222 — the owner's Home.
@@ -226,6 +227,16 @@ export function OwnerHome(p: OwnerHomeProps) {
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   };
+
+  // Money was taken or a visit was marked done: re-read the figures quietly (no spinner, no timer).
+  useOnVisitChanged(() => {
+    if (!branchContext.ready) return;
+    api
+      .home(period, branch)
+      .then(setData)
+      .catch(() => undefined);
+    loadClientStats(branch);
+  });
 
   /**
    * Jira GRW-340 — choose a branch from anywhere on this screen (the header's picker, the money card's branch line).

@@ -7,6 +7,7 @@ import type { HomeCopy } from '../../lib/home-copy';
 import { IconMapPin, IconTrendDown, IconTrendUp } from '../icons';
 import { rupees } from './parts';
 import { PaymentLine } from './MoneyHero';
+import { useOnVisitChanged } from '../../lib/visit-changed';
 
 /**
  * The phone's money card, one slide per branch.
@@ -31,19 +32,27 @@ export function BranchCarousel({ t, data, period, onPick }: { t: HomeCopy; data:
   const [figures, setFigures] = useState<Record<string, Figures>>({});
   const ids = data.branches.map((b) => b.id).join(',');
 
-  useEffect(() => {
-    let live = true;
-    setFigures({});
+  const read = (live: () => boolean) => {
     for (const id of ids.split(',').filter(Boolean)) {
       api
         .home(period, id)
-        .then((d) => live && setFigures((f) => ({ ...f, [id]: d.money })))
+        .then((d) => live() && setFigures((f) => ({ ...f, [id]: d.money })))
         .catch(() => undefined);
     }
+  };
+
+  useEffect(() => {
+    let live = true;
+    setFigures({});
+    read(() => live);
     return () => {
       live = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period, ids]);
+
+  // A visit changed: refresh each branch's figures in place, keeping the old ones on screen until the new arrive.
+  useOnVisitChanged(() => read(() => true));
 
   const track = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
