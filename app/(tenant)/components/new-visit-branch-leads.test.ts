@@ -33,23 +33,15 @@ describe('nothing picked after the branch may change it', () => {
 });
 
 describe('the client picker is the branch’s own', () => {
-  it('the default list asks for this branch, and again when the branch changes', () => {
-    expect(code).toMatch(/\.customers\(\{ limit: 20, location: listBranch \}\)/);
-    const effect = code.slice(code.indexOf('.customers({ limit: 20'));
-    expect(effect.slice(0, 400)).toMatch(/\}, \[listBranch\]\)/);
+  it('there is no default list — a client is found by typing (Jira GRW-517)', () => {
+    // The 20-client read, and the effect that re-ran it when the branch changed, went with the Previous clients list.
+    expect(code).not.toMatch(/\.customers\(\{ limit: 20/);
   });
 
   it('the search does too', () => {
     expect(code).toMatch(/\.customers\(\{ search: term\.trim\(\), limit: 8, location: listBranch \}\)/);
     // And re-run for a new branch: the deps carry it. (GRW-454 added `branches.length` for the wider look.)
     expect(code).toMatch(/\}, \[term, listBranch, branches\.length\]\)/);
-  });
-
-  it('a branch’s list is cleared while the next branch’s is on its way', () => {
-    // `null` is "still loading" in this sheet; leaving the old branch's rows up would offer clients to book at a
-    // branch they are not clients of.
-    const effect = code.slice(code.indexOf('useEffect'), code.indexOf('.customers({ limit: 20'));
-    expect(effect.slice(-200)).toMatch(/setRecent\(null\)/);
   });
 });
 
@@ -80,7 +72,7 @@ describe('what the branch step shows', () => {
  *
  * GRW-453 made the picker one branch's own, which left no way to say "they come to Indiranagar" without
  * retyping a name and a number already on file. This offers them — apart from the branch's own rows, and only
- * once something has been typed, because putting them in the browsable list is the bug GRW-453 fixed.
+ * once something has been typed, because putting them in a browsable list was the bug GRW-453 fixed (the list itself went in GRW-517).
  */
 describe('bringing a client over from another branch', () => {
   it('searches the other branches too, but only when there is more than one', () => {
@@ -93,11 +85,10 @@ describe('bringing a client over from another branch', () => {
     expect(code).toMatch(/setElsewhere\(page\.rows\.filter\(\(c\) => c\.locationId && c\.locationId !== listBranch\)\)/);
   });
 
-  it('offers them only against a typed search, never in the browsable list', () => {
+  it('offers them only against a typed search', () => {
     expect(code).toMatch(/\{term\.trim\(\)\.length >= SEARCH_MIN_CHARS && elsewhere\.length > 0 \?/);
-    // The browsable list is `recent`, and `recent` is this branch's alone.
-    const browsable = code.slice(code.indexOf('{term.trim().length < SEARCH_MIN_CHARS ?'));
-    expect(browsable.slice(0, 900)).not.toMatch(/elsewhere/);
+    // Jira GRW-517 — there is no browsable list at all now; a client is found by typing.
+    expect(code).not.toMatch(/\{term\.trim\(\)\.length < SEARCH_MIN_CHARS \?/);
   });
 
   it('clears them when the search is emptied', () => {

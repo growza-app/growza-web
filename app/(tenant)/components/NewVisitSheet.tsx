@@ -296,11 +296,6 @@ export function NewVisitSheet({
    */
   const [elsewhere, setElsewhere] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
-  /**
-   * Jira GRW-297 — who to pick before anyone has typed anything.
-   * `null` is "still loading", distinct from an empty tenant.
-   */
-  const [recent, setRecent] = useState<Customer[] | null>(null);
 
   // Stage 1, the second half of it (Jira GRW-514) — add them, on the same screen as the search
   const [newName, setNewName] = useState('');
@@ -606,27 +601,6 @@ export function NewVisitSheet({
       clearTimeout(timer);
     };
   }, [term, listBranch, branches.length]);
-
-  /**
-   * Jira GRW-297 — the client-picker step's default list, most-recently-active
-   * first (the API's own `sort=recent` default). A small, cheap read, and the list only needs to be roughly
-   * current, not live — but it is read again when the branch changes (Jira GRW-453): it is that branch's list.
-   */
-  useEffect(() => {
-    let cancelled = false;
-    setRecent(null);
-    void api
-      .customers({ limit: 20, location: listBranch })
-      .then((page) => {
-        if (!cancelled) setRecent(page.rows);
-      })
-      .catch(() => {
-        if (!cancelled) setRecent([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [listBranch]);
 
   const serviceById = useMemo(() => new Map((services ?? []).map((s) => [s.id, s])), [services]);
 
@@ -1684,42 +1658,10 @@ export function NewVisitSheet({
               </>
             ) : null}
 
-            {term.trim().length < SEARCH_MIN_CHARS ? (
-              /*
-               * Jira GRW-297 — browsable before a search term exists. Same row
-               * markup as the search results above (kept as one JSX block would
-               * duplicate this onClick either way), just a different source list.
-               */
-              <>
-                <h2 className="wi-section-label">{nv.recentCustomers}</h2>
-                <div className="picker-results">
-                  {(recent ?? []).map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      className="picker-row wi-row"
-                      onClick={() => pickClient(c)}
-                    >
-                      {/*
-                        Jira GRW-515 — the name alone (owner, 2026-10-05). It was two lines, the name and
-                        "2 visits · MG Road" under it (owner, 2026-10-04, before that three facts on one
-                        line); the owner asked for the details to go, so the list is one short line a
-                        person. Search results below keep theirs: there the branch is what tells two people
-                        with one name apart.
-                      */}
-                      <span className="picker-row-text">
-                        <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                      </span>
-                    </button>
-                  ))}
-                  {recent === null && <div className="empty">{nv.loadingCustomers}</div>}
-                  {recent !== null && recent.length === 0 && <div className="empty">{nv.noCustomersYet}</div>}
-                </div>
-              </>
-            ) : null}
+            {/* Jira GRW-517 — no list of previous clients: a client is found by typing, or added below. */}
 
             {/*
-              Jira GRW-514 — "Add someone new" is on this screen, under the list, not a button to another one.
+              Jira GRW-514 — "Add someone new" is on this screen, under the search, not a button to another one.
               The old second step (name, phone, "Use this person") is these same fields and the same checks.
             */}
             <div className="wi-new-person" ref={addNewRef}>
