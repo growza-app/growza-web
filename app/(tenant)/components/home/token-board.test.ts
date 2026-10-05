@@ -408,3 +408,24 @@ describe('no token number badge (GRW-542)', () => {
     expect(html).not.toContain('tb-no');
   });
 });
+
+/** Jira GRW-546 — a token row's action buttons are 32px high, with a 44px tap area. */
+describe('the token row buttons are 32px (GRW-546)', () => {
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+  const rule = css.slice(css.indexOf('.tb-actions .hm-give {'), css.indexOf('}', css.indexOf('.tb-actions .hm-give {')));
+
+  it('is 32px, and grows for a second line rather than clipping', () => {
+    expect(rule).toMatch(/min-height: 32px;/);
+    expect(rule).not.toMatch(/(?<![-\w])height: 32px;/);
+  });
+
+  it('keeps a 44px tap: 32 + 6 above + 6 below', () => {
+    expect(rule).toMatch(/position: relative;/);
+    expect(css).toMatch(/\.tb-actions \.hm-give::after \{[^}]*inset: -6px 0;/);
+  });
+
+  it('leaves the shared 44px button alone (the Give sheet and the rest of Home)', () => {
+    const home = readFileSync(resolve(__dirname, '../../styles/83-role-home.css'), 'utf8');
+    expect(home).toMatch(/\.hm-give \{[^}]*min-height: 44px;/);
+  });
+});
