@@ -75,7 +75,7 @@ export default async function AppointmentsPage({
     console.error('[bookings] could not load the page shell', error);
     return (
       <>
-        <PageHeader title={(await getTranslations('nouns'))('bookingsTitle')} />
+        <PageHeader title={(await getTranslations('nouns'))('bookingsTitle')} menu />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>
@@ -220,7 +220,7 @@ export default async function AppointmentsPage({
           the global /search page right above it read as the same control. */}
       {/* Jira GRW-506 — no sentence under the title: the owner asked for it gone, and the screen's
           name and the branch line already say where this is. */}
-      <PageHeader title={pageTitle} />
+      <PageHeader title={pageTitle} menu />
 
       <div className="page-body bk-fit">
         {/* Says whose bookings these are and how to get back out. Without it a
