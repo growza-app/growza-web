@@ -24,9 +24,23 @@ describe('the Booking time', () => {
     expect(sheet).toMatch(/required=\{later\}/);
   });
 
-  it('cannot be before now today: the field says so and a typed earlier time is moved to now', () => {
-    expect(sheet).toMatch(/min=\{day === todayIso \? nowHm : undefined\}/);
-    expect(sheet).toMatch(/setTimeWanted\(day === todayIso && v && v < nowHm \? nowHm : v\);/);
+  it('a time before now today is kept as typed and flagged, never moved (GRW-531: AM must stay selectable)', () => {
+    expect(sheet).toMatch(/const timePassed = day === todayIso && timeWanted !== '' && timeWanted < nowHm;/);
+    expect(sheet).toMatch(/onChange=\{\(e\) => setTimeWanted\(e\.target\.value\)\}/);
+    expect(sheet).not.toMatch(/\? nowHm : v/);
+    expect(sheet).toMatch(/\{timePassed && \(/);
+    expect(sheet).toMatch(/if \(timePassed\) return;/);
+  });
+
+  it('timePassed is declared AFTER `day` — reading it earlier crashes the screen (temporal dead zone)', () => {
+    expect(sheet.indexOf('const timePassed')).toBeGreaterThan(sheet.indexOf('const [day, setDay]'));
+  });
+
+  it('has its message in both languages', () => {
+    for (const l of ['en', 'hi']) {
+      const m = JSON.parse(readFileSync(resolve(__dirname, `../../../messages/${l}.json`), 'utf8')) as { newVisit: Record<string, string> };
+      expect(m.newVisit.timePassed).toBeTruthy();
+    }
   });
 
   it('the time step selects that slot if free, else the first free one after it', () => {

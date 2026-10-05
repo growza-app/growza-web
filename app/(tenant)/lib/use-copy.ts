@@ -45,6 +45,7 @@ export function useNewVisitCopy() {
     visits: (n: number) => t('visits', { n }),
     bookingDate: t('bookingDate'),
     bookingTime: t('bookingTime'),
+    timePassed: t('timePassed'),
     backToHome: t('backToHome'),
     // Jira GRW-454 — a client of another branch, found by searching. A record here is made from their name and
     // number; their visits stay with the branch they made them at.
