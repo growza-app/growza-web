@@ -47,4 +47,12 @@ describe('the clay app stylesheet', () => {
     expect(css).toMatch(/\.hm-toolbar-summary,\n\.hm-give,\n\.rp-control \{\s*box-shadow: var\(--clay-raise-soft\);/);
     expect(css).toMatch(/@media \(max-width: 860px\) \{[^@]*\.tb-board \.tb-row \{\s*box-shadow: var\(--clay-raise\);/);
   });
+
+  /** Jira GRW-553 · GRW-554 — the quick-link tiles are domes; the glyph on them has no shadow of its own. */
+  it('raises the quick-link tiles and leaves their glyphs flat', () => {
+    expect(css).toMatch(/\.hm-tile-icon \{[^}]*background-image: linear-gradient\(145deg, rgba\(255, 255, 255, 0\.7\)[^}]*box-shadow: var\(--clay-raise\);/);
+    expect(css).not.toMatch(/\.hm-tile-icon svg/);
+    expect(css).not.toMatch(/drop-shadow|filter:/);
+    expect(css).toMatch(/\.hm-tile:active \.hm-tile-icon \{\s*box-shadow: var\(--clay-press\);/);
+  });
 });
