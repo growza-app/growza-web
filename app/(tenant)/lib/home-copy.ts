@@ -243,6 +243,18 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       return m === 0 ? S(`Waiting ${h}h`, `${h} घंटे इंतज़ार`) : S(`Waiting ${h}h ${m}m`, `${h} घंटे ${m} मिनट इंतज़ार`);
     },
     waitingSince: (time: string) => S(`Waiting since ${time}`, `${time} से इंतज़ार`),
+    /*
+     * Jira GRW-541 — the wait on a token in the Waiting column, with no word "Waiting" (the column is headed
+     * that) and a clock icon beside it. Same rule as `waitingMin`: minutes under the hour, hours and minutes
+     * past it, and past four hours the caller passes the arrival time to `sinceTime` instead.
+     */
+    waitedFor: (min: number) => {
+      if (min < 60) return S(`${min} min`, `${min} मिनट`);
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return m === 0 ? S(`${h}h`, `${h} घंटे`) : S(`${h}h ${m}m`, `${h} घंटे ${m} मिनट`);
+    },
+    sinceTime: (time: string) => S(`since ${time}`, `${time} से`),
     waitingOver10: S('Waiting over 10 min', '10 मिनट से ज़्यादा इंतज़ार'),
     giveToStaff: S('Give to staff', 'स्टाफ़ को दें'),
     giveTitle: (name: string) => S(`Give ${name} to…`, `${name} को किसे दें…`),
