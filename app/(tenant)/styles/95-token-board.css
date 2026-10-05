@@ -221,7 +221,8 @@
 @media (max-width: 860px) {
   .tb-rows {
     position: relative;
-    max-height: var(--tb-visible, none);
+    /* Never taller than the screen can use — five rows, or 60% of the screen, whichever is less. */
+    max-height: min(var(--tb-visible, 60dvh), 60dvh);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     /* An overflow box clips what overhangs it: the italic "m" of a waiting time was cut at the row's right edge. The

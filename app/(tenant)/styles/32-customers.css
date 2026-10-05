@@ -2819,6 +2819,15 @@
   padding: 0;
   list-style: none;
 }
+/* On a phone the waiting list shows five rows and a half — the half row says "scroll" — and scrolls inside itself for the rest,
+   as the token board does. A row is 56px (min-height below). */
+@media (max-width: 860px) {
+  .bk-waiting-list {
+    max-height: calc(5.5 * 56px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
 
 .bk-waiting-more {
   padding: var(--sp-2) var(--sp-4) var(--sp-3);

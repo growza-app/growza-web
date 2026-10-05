@@ -152,4 +152,9 @@ describe('the people waiting, on Bookings', () => {
       expect(m.bookings.queueUnreadable).toBeTruthy();
     }
   });
+
+  it('on a phone the waiting list is five rows and a half, and scrolls inside itself', () => {
+    // The half row is the hint that there is more; a row is 56px (the min-height above), so 5.5 of them.
+    expect(css).toMatch(/@media \(max-width: 860px\) \{\s*\.bk-waiting-list \{\s*max-height: calc\(5\.5 \* 56px\);\s*overflow-y: auto;/);
+  });
 });
