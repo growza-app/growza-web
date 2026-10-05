@@ -1,0 +1,187 @@
+/*
+ * The phone's money card as a carousel, one slide per branch (BranchCarousel.tsx).
+ *
+ * Phone only: from 861px the laptop's hero is the card and this is not drawn. On a phone, when it is drawn, the
+ * hero beside it is hidden — the first slide is the same all-branches figures.
+ *
+ * Slides snap, the next one peeks in by the card's gutter so it reads as "more this way", and the track keeps its
+ * scrollbar to itself. The card colours are the hero's own tokens; nothing here is a new colour but the pill.
+ */
+.bc {
+  display: none;
+}
+@media (max-width: 860px) {
+  .hm-area-hero.has-carousel > .hm-hero {
+    display: none;
+  }
+  .hm-area-hero.has-carousel > .bc {
+    display: block;
+  }
+
+  .bc-title {
+    margin: 0 0 var(--sp-3);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--hm-ink, var(--text));
+  }
+  .bc-track {
+    display: flex;
+    gap: var(--sp-3);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* The track runs to the screen's edges so a card can slide under them; the padding puts the first card back. */
+    margin-inline: calc(var(--page-pad-x) * -1);
+    padding-inline: var(--page-pad-x);
+    scroll-padding-inline: var(--page-pad-x);
+  }
+  .bc-track::-webkit-scrollbar {
+    display: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .bc-track {
+      scroll-behavior: smooth;
+    }
+  }
+  .bc-card {
+    flex: 0 0 calc(100% - var(--sp-6));
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    min-width: 0;
+    padding: var(--sp-4);
+    border-radius: 20px;
+    background: linear-gradient(140deg, var(--hm-hero-a), var(--hm-hero-b));
+    color: #fff;
+  }
+  .bc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+  .bc-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 4px var(--sp-3) 4px 10px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--blue-soft);
+    color: var(--blue);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bc-pill svg {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+  }
+  .bc-pill-btn {
+    position: relative;
+    cursor: pointer;
+  }
+  /* The pill is 28px; the tap is 44 (an invisible expansion, as the token card's buttons do it). */
+  .bc-pill-btn::after {
+    content: '';
+    position: absolute;
+    inset: -8px 0;
+  }
+  .bc-delta {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    padding: 4px var(--sp-3);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #86efac;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  .bc-delta.down {
+    color: #fda4af;
+  }
+  .bc-delta svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  .bc-amount {
+    margin-top: var(--sp-1);
+    color: #86efac;
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  /* The payment line is the money card's own; here it sits flat under the amount, without its rule or height. */
+  .bc-card .hm-line {
+    min-height: 0;
+    padding: 0;
+    border-top: 0;
+    gap: 0 var(--sp-3);
+  }
+  .bc-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-1) var(--sp-2);
+    margin-top: var(--sp-1);
+    padding-top: var(--sp-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    color: #e8f5ed;
+    /* 13px so bookings, new clients and came back share one line on a 344px phone; they wrap, never clip, past that. */
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+  .bc-stats b {
+    color: #fff;
+    font-weight: 700;
+  }
+  /* Until that branch's own figures arrive: the space they take, so the card does not jump. */
+  .bc-wait {
+    min-height: 4.25rem;
+  }
+
+  .bc-dots {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin-top: var(--sp-2);
+  }
+  .bc-dots button {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .bc-dots button::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: #cdd3cf;
+    transition: background 0.15s ease;
+  }
+  .bc-dots button.is-on::before {
+    background: var(--hm-green-deep, var(--accent-deep));
+  }
+  /* A 16px button is 44px to a thumb: the hit area reaches out 14px each way. */
+  .bc-dots button::after {
+    content: '';
+    position: absolute;
+    inset: -14px -3px;
+  }
+}
