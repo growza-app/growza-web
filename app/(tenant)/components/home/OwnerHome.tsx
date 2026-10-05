@@ -43,6 +43,7 @@ import { NewVisitSheet } from '../NewVisitSheet';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
+import { BranchCarousel } from './BranchCarousel';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
@@ -251,6 +252,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   /** The overview Home holds is for the branch it shows (not one left from before a switch). */
   const dataIsForBranch = data !== null && (data.locationId ?? null) === branch;
+  const showCarousel = dataIsForBranch && branch === null && (data?.branches.length ?? 0) > 1;
 
   /*
    * Jira GRW-351 — no flash of every branch before the remembered one. The server draws "all" (it cannot see the
@@ -497,14 +499,18 @@ export function OwnerHome(p: OwnerHomeProps) {
 
         <div className={`hm-owner-grid ${hideUntilBranch ? 'is-settling' : ''}`} aria-busy={hideUntilBranch || undefined}>
           {/* The figures are the branch's; while a switch loads, the last ones stay, dimmed. A failed read says so. */}
-          <div className="hm-area-hero">{data && (dataIsForBranch || !failed) ? <MoneyHero
+          {/* On a phone, "All branches" is a carousel with one card per branch (the hero stays for a laptop). */}
+          <div className={`hm-area-hero ${showCarousel ? 'has-carousel' : ''}`}>
+            {data && (dataIsForBranch || !failed) ? <MoneyHero
                 t={t}
                 data={data}
                 loading={loading || !dataIsForBranch}
                 onDaySummary={() => setSummaryOpen(true)}
                 branchId={branch}
                 onPickBranch={pickBranch}
-              /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
+              /> : <CardError t={t} onRetry={() => load(period, branch)} />}
+            {showCarousel && data ? <BranchCarousel t={t} data={data} period={period} onPick={pickBranch} /> : null}
+          </div>
 
           {/*
             Quick links, directly under the money card (owner, 2026-10-04).
