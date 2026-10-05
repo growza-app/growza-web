@@ -107,6 +107,34 @@ textarea {
   min-height: 40px;
 }
 
+/*
+ * Jira GRW-491 — no stepper arrows on a number field.
+ *
+ * `type='number'` buys the numeric keypad on a phone and the browser's own
+ * refusal of letters; the ▲▼ it comes with on a pointer is a different thing,
+ * and a bad fit for what this app asks for. A bill is ₹300 and the step is 1,
+ * so the arrows are a hundred clicks from any answer; they also eat the right
+ * end of a narrow field — on the checkout row they sit where the amount is,
+ * in a box 60px wide.
+ *
+ * Nothing is lost: ↑ and ↓ on the keyboard still step the value, because the
+ * input is still a number input. Only the painted buttons go.
+ *
+ * The admin portal decided this for itself in GRW-024 and applied it
+ * portal-wide (`admin.css`); this is the same rule for the owner's app, put
+ * beside the shared control styling rather than patched onto each field.
+ */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 textarea {
   min-height: 80px;
 }

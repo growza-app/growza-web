@@ -54,6 +54,27 @@ describe('a phone does not zoom when these fields are focused (pinch-zoom is all
   });
 });
 
+/**
+ * Jira GRW-491 — the owner asked for the ▲▼ on the amount field to go.
+ *
+ * `type='number'` is kept: it is what gets the numeric keypad on a phone and what refuses letters. Only the
+ * painted buttons go, and the keyboard's own ↑/↓ still step the value. Checked on the SHARED rule, not on the
+ * checkout sheet, because the next number field should not have to remember this.
+ */
+describe('a number field has no stepper arrows', () => {
+  const css = read('../styles/11-availability.css');
+
+  it('both halves — WebKit paints two pseudo-elements, Firefox needs the appearance', () => {
+    expect(css).toMatch(/input\[type='number'\]::-webkit-outer-spin-button,\s*input\[type='number'\]::-webkit-inner-spin-button \{\s*-webkit-appearance: none;\s*margin: 0;/);
+    expect(css).toMatch(/input\[type='number'\] \{\s*-moz-appearance: textfield;\s*appearance: textfield;/);
+  });
+
+  it('the fields are still number fields — the keypad and the digits-only rule are the point of them', () => {
+    expect(read('CheckoutSheet.tsx')).toMatch(/type="number"/);
+    expect(css).toMatch(/input\[type='number'\],/);
+  });
+});
+
 describe('a phone keeps the account banner off the screen edges', () => {
   it('only when there is a banner', () => {
     expect(read('../styles/32-customers.css')).toMatch(/\.content-banners:not\(:empty\) \{\s*padding: 10px max\(16px, env\(safe-area-inset-right\)\) 0 max\(16px, env\(safe-area-inset-left\)\);/);
