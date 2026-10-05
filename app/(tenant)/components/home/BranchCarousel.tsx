@@ -7,7 +7,6 @@ import type { HomeCopy } from '../../lib/home-copy';
 import { IconMapPin, IconTrendDown, IconTrendUp } from '../icons';
 import { rupees } from './parts';
 import { PaymentLine } from './MoneyHero';
-import { useOnVisitChanged } from '../../lib/visit-changed';
 
 /**
  * The phone's money card, one slide per branch.
@@ -24,7 +23,20 @@ import { useOnVisitChanged } from '../../lib/visit-changed';
 type Slide = { key: string; id: string | null; name: string; revenueMinor: number };
 type Figures = HomeOverview['money'];
 
-export function BranchCarousel({ t, data, period, onPick }: { t: HomeCopy; data: HomeOverview; period: HomePeriod; onPick: (id: string) => void }) {
+export function BranchCarousel({
+  t,
+  data,
+  period,
+  refreshKey,
+  onPick,
+}: {
+  t: HomeCopy;
+  data: HomeOverview;
+  period: HomePeriod;
+  /** Changes when the server's overview changes (a payment, Mark done…): each branch is re-read in place. */
+  refreshKey: string | null;
+  onPick: (id: string) => void;
+}) {
   const slides: Slide[] = [
     { key: 'all', id: null, name: t.allBranches, revenueMinor: data.money.revenueMinor },
     ...data.branches.map((b) => ({ key: b.id, id: b.id, name: b.name, revenueMinor: b.revenueMinor })),
@@ -32,27 +44,28 @@ export function BranchCarousel({ t, data, period, onPick }: { t: HomeCopy; data:
   const [figures, setFigures] = useState<Record<string, Figures>>({});
   const ids = data.branches.map((b) => b.id).join(',');
 
-  const read = (live: () => boolean) => {
+  /*
+   * A new period or branch list starts empty; a refresh keeps the old figures on screen until the new arrive.
+   * Either way a read the next one has overtaken is dropped (`live`), so a late answer cannot show the wrong period.
+   */
+  const shownFor = useRef('');
+  useEffect(() => {
+    let live = true;
+    const key = `${period}|${ids}`;
+    if (shownFor.current !== key) {
+      shownFor.current = key;
+      setFigures({});
+    }
     for (const id of ids.split(',').filter(Boolean)) {
       api
         .home(period, id)
-        .then((d) => live() && setFigures((f) => ({ ...f, [id]: d.money })))
+        .then((d) => live && setFigures((f) => ({ ...f, [id]: d.money })))
         .catch(() => undefined);
     }
-  };
-
-  useEffect(() => {
-    let live = true;
-    setFigures({});
-    read(() => live);
     return () => {
       live = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, ids]);
-
-  // A visit changed: refresh each branch's figures in place, keeping the old ones on screen until the new arrive.
-  useOnVisitChanged(() => read(() => true));
+  }, [period, ids, refreshKey]);
 
   const track = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);

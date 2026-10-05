@@ -11,7 +11,6 @@ import { useDialog } from '../../../shared/a11y/useDialog';
 import { PhoneField } from '../PhoneField';
 import { IconCheck, IconClose } from '../icons';
 import type { TokenWords } from './token-words';
-import { announceVisitChanged } from '../../lib/visit-changed';
 
 /** One key per sheet, reused on every retry: a lost response and a second tap are one place in line (GRW-204). */
 function newAttemptKey(): string {
@@ -79,7 +78,6 @@ export function NewTokenSheet({
         ...(location ? { location } : {}),
       });
       router.refresh();
-      announceVisitChanged();
       setIssued({ tokenNo: entry.tokenNo, name: entry.customerName });
     } catch (e) {
       // Only the API's own sentence; a dropped connection may still have saved, and the same key makes a retry safe.

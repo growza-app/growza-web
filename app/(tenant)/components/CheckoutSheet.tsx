@@ -34,7 +34,6 @@ import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
 import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { announceVisitChanged } from '../lib/visit-changed';
 
 /**
  * Digits only — `tel:` chokes on spaces and punctuation. Duplicated from
@@ -361,7 +360,6 @@ export function CheckoutSheet({
       const request = buildCheckoutRequest({ originalId: appointment.id, lines, addedServices, addedCombos, paymentMode });
       await guard((confirmed) => api.checkout(appointment.id, confirmed ? { ...request, confirmLargeAmount: true } : request));
       router.refresh();
-      announceVisitChanged();
       (onSaved ?? onClose)();
     } catch (err) {
       // Jira GRW-480 — "Check again": back to the sheet with the amounts as they were, nothing said.
