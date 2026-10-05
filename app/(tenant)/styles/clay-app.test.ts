@@ -63,4 +63,8 @@ describe('the clay app stylesheet', () => {
     expect(chrome).not.toMatch(/--bn-tint|--bn-ink/);
     expect(css).toMatch(/\.bottom-nav a\.active::before \{\s*background-image: linear-gradient\(180deg[^}]*box-shadow:/);
   });
+
+  it('a disabled primary button loses the green gradient too, so its grey label can be read', () => {
+    expect(css).toMatch(/\.btn:not\(\.btn-ghost\):not\(\.btn-danger\):not\(\.btn-danger-solid\):disabled,[\s\S]*?\{\s*background-image: none;\s*box-shadow: none;/);
+  });
 });
