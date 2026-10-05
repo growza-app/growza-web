@@ -17,6 +17,14 @@
   height: 44px;
 }
 
+/* Jira GRW-513 — on a phone the header wears a Back arrow (GRW-497), so the row's own would be the same
+   control twice, stacked. It stays from 861px up, where the header has none. */
+@media (max-width: 860px) {
+  .srch-bar-row .icon-btn {
+    display: none;
+  }
+}
+
 .srch-bar-row .search-bar {
   min-height: 48px;
   padding: 0 14px;
