@@ -39,6 +39,18 @@ describe('the clay tabs', () => {
     for (const [, n] of css.matchAll(/(?:inset )?-?(\d+)px -?\d+px \d+px rgba/g)) expect(Number(n)).toBeLessThanOrEqual(3);
   });
 
+  it('the selected tab is green on every strip, with white text (Jira GRW-502)', () => {
+    expect(css).toMatch(/\.page-tab::before \{[^}]*background: linear-gradient\(145deg, #178246, #126a38\);/);
+    expect(css).toMatch(/\.page-tab\.active \{[^}]*color: #fff;/);
+    expect(css).toMatch(/\.page-tab\.active \.page-tab-count \{\s*color: #fff;/);
+    expect(css).toMatch(/\.wi-segmented button\.is-on,\s*\.bk-view-tab\.is-active \{[^}]*background: linear-gradient\(145deg, #178246, #126a38\);[^}]*color: #fff;/);
+    // The two that were already green stay on the shared deep green.
+    const home = readFileSync(resolve(__dirname, '83-role-home.css'), 'utf8');
+    expect(home).toMatch(/\.hm-seg button\.is-on \{[^}]*var\(--hm-green-deep\)/);
+    const a11y = readFileSync(resolve(__dirname, '90-accessibility.css'), 'utf8');
+    expect(a11y).toMatch(/\.rp-tabs button\.active,[^{]*\{[^}]*background: var\(--accent-deep\);/);
+  });
+
   it('switches the motion off for a reader who asked for less', () => {
     expect(css).toMatch(/prefers-reduced-motion: reduce\) \{\s*\.page-tab,\s*\.page-tab::before \{\s*transition: none;/);
   });
