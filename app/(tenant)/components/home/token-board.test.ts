@@ -390,3 +390,21 @@ describe('the wait on a waiting token (GRW-541)', () => {
     expect(css).toMatch(/\.tb-meta-icon svg \{\s*width: 1rem;\s*height: 1rem;/);
   });
 });
+
+/** Jira GRW-542 — no number badge on a token row; the name leads. The number stays in the buttons' spoken labels. */
+describe('no token number badge (GRW-542)', () => {
+  const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('draws no badge in a row, and the row is one column', () => {
+    expect(src.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')).not.toMatch(/className="tb-no/);
+    expect(css).toMatch(/\.tb-row \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+    expect(css).toMatch(/\.tb-actions \{\s*grid-column: 1;/);
+  });
+
+  it('the buttons still say which token they are for', () => {
+    const html = boardSays([row({ id: 'a', tokenNo: 7, customerName: 'Simran' })]);
+    expect(html).toContain('token 7');
+    expect(html).not.toContain('tb-no');
+  });
+});
