@@ -16,7 +16,7 @@ describe('the Booking time', () => {
     const date = sheet.indexOf('id="wi-date"');
     const time = sheet.indexOf('id="wi-time"');
     expect(time).toBeGreaterThan(date);
-    expect(sheet).toMatch(/<span className="field-optional">\{tCommon\('optional'\)\}<\/span>\s*<\/label>\s*<input\s+id="wi-time"/);
+    expect(sheet).toMatch(/\{nv\.bookingTime\}\s*<\/label>\s*<input\s+id="wi-time"/);
   });
 
   it('setting one makes it a booking, so the phone is required', () => {

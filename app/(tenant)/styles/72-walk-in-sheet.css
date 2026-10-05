@@ -325,13 +325,7 @@ input.wi-search-input-plain {
   min-width: 0;
 }
 
-/* Half a row is ~130px at 344px: the label's "optional" drops under the name, and the fields give back some padding so
-   a full date (05/10/2026) is not cut off. */
-.wi-when label {
-  display: flex;
-  flex-direction: column;
-}
-
+/* Half a row is ~130px at 344px: the fields give back some padding so a full date (05/10/2026) is not cut off. */
 .wi-when input {
   padding-inline: 10px;
 }

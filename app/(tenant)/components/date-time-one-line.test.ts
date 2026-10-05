@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * Jira GRW-529 — the Booking date and Booking time share one row, not two stacked ones. Two equal columns; at
- * 344px each is ~130px, so the label's "optional" drops under its name and the fields give back some padding so a
- * full date is not cut off.
+ * 344px each is ~130px, so the fields give back some padding so a full date is not cut off. (GRW-532: no "optional"
+ * tag under either label.)
  */
 const strip = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 const sheet = strip(readFileSync(resolve(__dirname, 'NewVisitSheet.tsx'), 'utf8'));
@@ -25,8 +25,18 @@ describe('date and time on one line', () => {
     expect(css).toMatch(/\.wi-when \{[^}]*display: grid;[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
   });
 
-  it('the label stacks its optional tag, and the inputs give back padding', () => {
-    expect(css).toMatch(/\.wi-when label \{[^}]*flex-direction: column;/);
+  it('the inputs give back padding so a full date fits', () => {
     expect(css).toMatch(/\.wi-when input \{[^}]*padding-inline: 10px;/);
+  });
+});
+
+describe('no "optional" text under Booking date or Booking time (GRW-532)', () => {
+  it('the two labels carry only their names', () => {
+    const start = sheet.indexOf('<div className="wi-when">');
+    const block = sheet.slice(start, sheet.indexOf('wi-actions', start));
+    expect(block).not.toContain('field-optional');
+    expect(block).not.toMatch(/tCommon\('optional'\)/);
+    expect(block).toMatch(/<label htmlFor="wi-date">\s*\{nv\.bookingDate\}\s*<\/label>/);
+    expect(block).toMatch(/<label htmlFor="wi-time">\s*\{nv\.bookingTime\}\s*<\/label>/);
   });
 });
