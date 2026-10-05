@@ -257,6 +257,11 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     theyLeft: S('They left', 'चले गए'),
     // Jira GRW-284 — a token issued by name alone.
     whatHaving: S('What are they having?', 'क्या करवा रहे हैं?'),
+    // The give sheet's second step (Jira-less, owner 2026-10-05): back to the stylists, the two groups, and the one button.
+    changeStylist: S('Change stylist', 'स्टाइलिस्ट बदलें'),
+    packagesLabel: S('Packages', 'पैकेज'),
+    servicesLabel: S('Services', 'सेवाएँ'),
+    giveToName: (name: string) => S(`Give to ${name}`, `${name} को दें`),
     pickServiceFirst: S('Pick what they are having first.', 'पहले सेवा चुनें।'),
     // Jira GRW-451 — a branch with nothing on its menu. Without this the picker was simply blank, and every
     // stylist tap answered "Pick what they are having first" with nothing there to pick.
