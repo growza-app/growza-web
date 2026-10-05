@@ -182,22 +182,29 @@ input.wi-search-input-plain {
   color: #b91c1c;
 }
 
+/* The confirmation reads as one centred piece: a round check badge, what happened, then the way out. */
 .wi-done {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 18px 0 8px;
+  text-align: center;
+  gap: var(--sp-3);
+  padding: var(--sp-6) 0 var(--sp-5);
 }
 
 .wi-done svg {
-  width: 1.625rem;
-  height: 1.625rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0.875rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
   color: var(--accent-deep);
+  stroke-width: 2.5;
   flex: none;
 }
 
 .wi-done-title {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 650;
 }
 
@@ -242,6 +249,30 @@ input.wi-search-input-plain {
 
 .wi-body .sheet-item.wi-take-payment:hover {
   background: var(--accent-deep);
+}
+
+/* Done is a button, not a list row: green when it is the only way on, a quiet raised one under Take payment. */
+.wi-body .sheet-item.wi-finish {
+  margin: var(--sp-2) 0 0;
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--accent-deep);
+  color: #fff;
+  font-weight: 620;
+}
+.wi-body .sheet-item.wi-finish:hover {
+  background: var(--accent-deep);
+}
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish,
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish:hover {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.wi-body .sheet-item.wi-take-payment {
+  min-height: 48px;
 }
 
 /* ---------- multi-service picking (GRW-199) ---------- */

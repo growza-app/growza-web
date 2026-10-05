@@ -193,3 +193,42 @@
 .hm-tile:active .hm-tile-icon {
   box-shadow: var(--clay-press);
 }
+
+/* ---------- the walk-in confirmation ---------- */
+/* The page card is raised; the check sits in a small green-tinted dome; Close is a round raised button. */
+.walk-in-page {
+  box-shadow: var(--clay-raise);
+}
+.wi-done svg {
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 62%);
+  box-shadow: var(--clay-raise);
+}
+.wi-close {
+  box-shadow: var(--clay-raise-soft);
+}
+.wi-close:active {
+  box-shadow: var(--clay-press);
+}
+/* Take payment, and Done when it is the only button, are the green pieces every primary button is. */
+.wi-body .sheet-item.wi-take-payment,
+.wi-body .sheet-item.wi-finish {
+  background-image: linear-gradient(145deg, #178246, #126a38);
+  box-shadow: var(--clay-green);
+}
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish {
+  background-image: none;
+  box-shadow: var(--clay-raise-soft);
+}
+.wi-body .sheet-item.wi-take-payment:active,
+.wi-body .sheet-item.wi-finish:active {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.25),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.12);
+}
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish:active {
+  box-shadow: var(--clay-press);
+}
+.wi-body .sheet-item.wi-take-payment:disabled {
+  background-image: none;
+  box-shadow: none;
+}
