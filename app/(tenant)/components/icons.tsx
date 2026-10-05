@@ -1,8 +1,19 @@
-/** Inline nav icons — no icon-font dependency, no external requests. */
+/**
+ * Inline icons — no icon-font dependency, no external requests.
+ *
+ * Jira GRW-503 — drawn from Feather (https://feathericons.com), copied in as path data rather than
+ * installed: 24x24, 2px round line, so the whole set is one family. The icons Feather has no
+ * counterpart for (WhatsApp, Rupee, Flame, Coins, Lightbulb, Palette and a few more) keep their own
+ * shape at the same stroke.
+ *
+ * Feather is MIT licensed, Copyright (c) 2013-2017 Cole Bemis.
+ * Permission is hereby granted, free of charge, to use, copy, modify and distribute it, provided this
+ * notice is included. The software is provided "as is", without warranty of any kind.
+ */
 const base = {
   fill: 'none',
   stroke: 'currentColor',
-  strokeWidth: 1.8,
+  strokeWidth: 2,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
   viewBox: '0 0 24 24',
@@ -10,66 +21,75 @@ const base = {
 
 export const IconDashboard = () => (
   <svg {...base}>
-    <rect x="3" y="3" width="7" height="9" rx="1.5" />
-    <rect x="14" y="3" width="7" height="5" rx="1.5" />
-    <rect x="14" y="12" width="7" height="9" rx="1.5" />
-    <rect x="3" y="16" width="7" height="5" rx="1.5" />
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <line x1="3" y1="9" x2="21" y2="9" />
+    <line x1="9" y1="21" x2="9" y2="9" />
   </svg>
 );
 
 export const IconCalendar = () => (
   <svg {...base}>
-    <rect x="3" y="5" width="18" height="16" rx="2" />
-    <path d="M8 3v4M16 3v4M3 10h18" />
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
 
 export const IconAppointments = () => (
   <svg {...base}>
-    <rect x="4" y="4" width="16" height="16" rx="2" />
-    <path d="m9 12 2 2 4-4" />
+    <polyline points="9 11 12 14 22 4" />
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
   </svg>
 );
 
 export const IconStaff = () => (
   <svg {...base}>
-    <circle cx="9" cy="8" r="3.2" />
-    <path d="M3 20a6 6 0 0 1 12 0M17 11a3 3 0 1 0-1.5-5.6M18 20a5.5 5.5 0 0 0-2-4.3" />
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
 
 export const IconServices = () => (
   <svg {...base}>
-    <path d="M4 7h16M4 12h11M4 17h7" />
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="6" cy="18" r="3" />
+    <line x1="20" y1="4" x2="8.12" y2="15.88" />
+    <line x1="14.47" y1="14.48" x2="20" y2="20" />
+    <line x1="8.12" y1="8.12" x2="12" y2="12" />
   </svg>
 );
 
 export const IconAnalytics = () => (
   <svg {...base}>
-    <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
   </svg>
 );
 
 export const IconChat = () => (
   <svg {...base}>
-    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
   </svg>
 );
 
 export const IconOffers = () => (
   <svg {...base}>
-    <path d="m12 2 3 5-3 3-3-3 3-5Z" />
-    <path d="M3 10h18v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3ZM5 15v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
-    <path d="M12 15v7" />
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
   </svg>
 );
 
 /** Jira GRW-438 — Packages. Layers, because a package is several services stacked into one visit. */
 export const IconPackages = () => (
   <svg {...base}>
-    <path d="m12 2 9 5-9 5-9-5 9-5Z" />
-    <path d="m3 12 9 5 9-5" />
-    <path d="m3 17 9 5 9-5" />
+    <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+    <line x1="12" y1="22.08" x2="12" y2="12" />
   </svg>
 );
 
@@ -82,29 +102,33 @@ export const IconLightbulb = () => (
 
 export const IconNote = () => (
   <svg {...base}>
-    <path d="M5 3h10l4 4v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-    <path d="M14 3v5h5M8 13h8M8 17h5" />
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
   </svg>
 );
 
 /* The preview's two device shapes — the package builder drew these as 📱 and 🖥️. */
 export const IconDevicePhone = () => (
   <svg {...base}>
-    <rect x="7" y="2" width="10" height="20" rx="2" />
-    <path d="M11 18.5h2" />
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+    <line x1="12" y1="18" x2="12.01" y2="18" />
   </svg>
 );
 
 export const IconDeviceDesktop = () => (
   <svg {...base}>
-    <rect x="2" y="4" width="20" height="12" rx="2" />
-    <path d="M8 20h8M12 16v4" />
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
   </svg>
 );
 
 export const IconPhone = () => (
   <svg {...base}>
-    <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z" />
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
   </svg>
 );
 
@@ -117,45 +141,48 @@ export const IconWhatsApp = () => (
 
 export const IconCheck = () => (
   <svg {...base}>
-    <path d="m4 12.5 5 5L20 6.5" />
+    <polyline points="20 6 9 17 4 12" />
   </svg>
 );
 
 export const IconClose = () => (
   <svg {...base}>
-    <path d="M18 6 6 18M6 6l12 12" />
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
 
 export const IconChevronRight = () => (
   <svg {...base}>
-    <path d="m9 6 6 6-6 6" />
+    <polyline points="9 18 15 12 9 6" />
   </svg>
 );
 
 export const IconArrowLeft = () => (
   <svg {...base}>
-    <path d="M19 12H5M12 19l-7-7 7-7" />
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
   </svg>
 );
 
 export const IconPlus = () => (
   <svg {...base}>
-    <path d="M12 5v14M5 12h14" />
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
 export const IconClock = () => (
   <svg {...base}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v5l3.2 1.9" />
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
 export const IconSearch = () => (
   <svg {...base}>
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3.5-3.5" />
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 
@@ -170,16 +197,17 @@ export const IconMoveTime = () => (
 
 export const IconUserPlus = () => (
   <svg {...base}>
-    <circle cx="9" cy="8" r="3.2" />
-    <path d="M3 20a6 6 0 0 1 12 0" />
-    <path d="M18 8v6M15 11h6" />
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="8.5" cy="7" r="4" />
+    <line x1="20" y1="8" x2="20" y2="14" />
+    <line x1="23" y1="11" x2="17" y2="11" />
   </svg>
 );
 
 export const IconUser = () => (
   <svg {...base}>
-    <circle cx="12" cy="8" r="3.6" />
-    <path d="M4 20a8 8 0 0 1 16 0" />
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
@@ -193,16 +221,16 @@ export const IconCalendarPlus = () => (
 
 export const IconGrid = () => (
   <svg {...base}>
-    <rect x="3" y="3" width="8" height="8" rx="1.6" />
-    <rect x="13" y="3" width="8" height="8" rx="1.6" />
-    <rect x="3" y="13" width="8" height="8" rx="1.6" />
-    <rect x="13" y="13" width="8" height="8" rx="1.6" />
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
   </svg>
 );
 
 export const IconFilter = () => (
   <svg {...base}>
-    <path d="M3 5h18l-7 8v5.5l-4 2V13z" />
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
   </svg>
 );
 
@@ -215,68 +243,67 @@ export const IconSort = () => (
 
 export const IconMenu = () => (
   <svg {...base}>
-    <path d="M3 6h18M3 12h18M3 18h18" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="18" x2="21" y2="18" />
   </svg>
 );
 
 export const IconBell = () => (
   <svg {...base}>
-    <path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5Z" />
-    <path d="M10 19a2 2 0 0 0 4 0" />
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 );
 
 export const IconSettings = () => (
   <svg {...base}>
     <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H23a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
   </svg>
 );
 
 export const IconWallet = () => (
   <svg {...base}>
-    <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2" />
-    <path d="M3 7v11a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-    <path d="M21 14h-4a2 2 0 0 1 0-4h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1Z" />
+    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+    <line x1="1" y1="10" x2="23" y2="10" />
   </svg>
 );
 
 export const IconEdit = () => (
   <svg {...base}>
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
   </svg>
 );
 
 /** "No entry" glyph — used to mark someone unavailable for today. */
 export const IconBan = () => (
   <svg {...base}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="m5.5 5.5 13 13" />
+    <circle cx="12" cy="12" r="10" />
+    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
   </svg>
 );
 
 export const IconTrash = () => (
   <svg {...base}>
-    <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" />
-    <path d="M10 11v6M14 11v6" />
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
   </svg>
 );
 
 export const IconShop = () => (
   <svg {...base}>
-    <path d="M3 9l1.5-5h15L21 9" />
-    <path d="M3 9a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0" />
-    <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" />
-    <path d="M10 20v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" />
+    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
   </svg>
 );
 
 export const IconShield = () => (
   <svg {...base}>
-    <path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3Z" />
-    <path d="m9 12 2 2 4-4" />
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
 
@@ -292,22 +319,22 @@ export const IconPalette = () => (
 
 export const IconLock = () => (
   <svg {...base}>
-    <rect x="4" y="11" width="16" height="10" rx="2" />
-    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </svg>
 );
 
 export const IconStar = () => (
   <svg {...base}>
-    <path d="m12 3 2.6 5.7 6.2.6-4.7 4.2 1.4 6.1L12 16.6l-5.5 3 1.4-6.1-4.7-4.2 6.2-.6Z" />
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 );
 
 export const IconLogout = () => (
   <svg {...base}>
-    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
-    <path d="M10 17l5-5-5-5" />
-    <path d="M15 12H3" />
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
   </svg>
 );
 
@@ -315,40 +342,38 @@ export const IconLogout = () => (
 
 export const IconReports = () => (
   <svg {...base}>
-    <path d="M3 3v18h18" />
-    <rect x="7" y="10" width="3" height="8" rx="1" />
-    <rect x="12" y="6" width="3" height="12" rx="1" />
-    <rect x="17" y="13" width="3" height="5" rx="1" />
+    <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+    <path d="M22 12A10 10 0 0 0 12 2v10z" />
   </svg>
 );
 
 export const IconTrendUp = () => (
   <svg {...base}>
-    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-    <polyline points="16 7 22 7 22 13" />
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
   </svg>
 );
 
 export const IconTrendDown = () => (
   <svg {...base}>
-    <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
-    <polyline points="16 17 22 17 22 11" />
+    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+    <polyline points="17 18 23 18 23 12" />
   </svg>
 );
 
 export const IconArrowRight = () => (
   <svg {...base}>
-    <path d="M5 12h14" />
-    <path d="m12 5 7 7-7 7" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
   </svg>
 );
 
 export const IconRepeat = () => (
   <svg {...base}>
-    <path d="m17 2 4 4-4 4" />
-    <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
-    <path d="m7 22-4-4 4-4" />
-    <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+    <polyline points="17 1 21 5 17 9" />
+    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+    <polyline points="7 23 3 19 7 15" />
+    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
   </svg>
 );
 
@@ -360,8 +385,9 @@ export const IconFlame = () => (
 
 export const IconAlert = () => (
   <svg {...base}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 8v5M12 16.5v.01" />
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>
 );
 
@@ -375,7 +401,7 @@ export const IconCoins = () => (
 
 export const IconPercent = () => (
   <svg {...base}>
-    <line x1="19" x2="5" y1="5" y2="19" />
+    <line x1="19" y1="5" x2="5" y2="19" />
     <circle cx="6.5" cy="6.5" r="2.5" />
     <circle cx="17.5" cy="17.5" r="2.5" />
   </svg>
@@ -383,9 +409,9 @@ export const IconPercent = () => (
 
 export const IconTarget = () => (
   <svg {...base}>
-    <circle cx="12" cy="12" r="9" />
-    <circle cx="12" cy="12" r="5" />
-    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
   </svg>
 );
 
@@ -393,7 +419,7 @@ export const IconDownload = () => (
   <svg {...base}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="7 10 12 15 17 10" />
-    <line x1="12" x2="12" y1="15" y2="3" />
+    <line x1="12" y1="15" x2="12" y2="3" />
   </svg>
 );
 
@@ -405,15 +431,15 @@ export const IconRupee = () => (
 
 export const IconUserCheck = () => (
   <svg {...base}>
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <polyline points="16 11 18 13 22 9" />
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="8.5" cy="7" r="4" />
+    <polyline points="17 11 19 13 23 9" />
   </svg>
 );
 
 export const IconChevronDown = () => (
   <svg {...base}>
-    <path d="m6 9 6 6 6-6" />
+    <polyline points="6 9 12 15 18 9" />
   </svg>
 );
 
@@ -436,53 +462,53 @@ export const IconChevronDown = () => (
 /** Home — a house. The one metaphor nobody has to learn. */
 export const IconNavHome = () => (
   <svg {...base}>
-    <path d="M3.5 10.2 12 3.5l8.5 6.7" />
-    <path d="M5.5 9.2V19a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5V9.2" />
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
   </svg>
 );
 
 /** Bookings — a calendar with the day marked, not a ticked box. */
 export const IconNavBookings = () => (
   <svg {...base}>
-    <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
-    <path d="M3.5 9.75h17M8 3.5v3M16 3.5v3" />
-    <circle cx="12" cy="14.75" r="1.5" fill="currentColor" stroke="none" />
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
 
 /** Clients — two people. A group, which is what the screen is. */
 export const IconNavClients = () => (
   <svg {...base}>
-    <circle cx="9.5" cy="8.5" r="3.2" />
-    <path d="M3.5 20c0-3.2 2.7-5.2 6-5.2s6 2 6 5.2" />
-    <path d="M16.5 6.4a3.2 3.2 0 0 1 0 6.1M17.8 14.9c1.7.6 2.7 2.1 2.7 4.2" />
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
 
 /** Offers — a price tag. Legible at 23px, which the old gift box was not. */
 export const IconNavOffers = () => (
   <svg {...base}>
-    <path d="M11.6 3.5H19a1.5 1.5 0 0 1 1.5 1.5v7.4a2 2 0 0 1-.6 1.4l-6.6 6.6a2 2 0 0 1-2.8 0l-6-6a2 2 0 0 1 0-2.8l6.7-6.6a2 2 0 0 1 1.4-.5Z" />
-    <circle cx="16" cy="8" r="1.5" />
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
   </svg>
 );
 
 /** Attendance — a person with a tick. Present, not added. */
 export const IconNavAttendance = () => (
   <svg {...base}>
-    <circle cx="10" cy="8" r="3.4" />
-    <path d="M3.8 20c0-3.4 2.8-5.5 6.2-5.5 1 0 2 .2 2.8.6" />
-    <path d="m15 17.5 2 2 4-4" />
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 );
 
 /** More — an ellipsis in a circle, so it sits as a shape beside four shapes. */
 export const IconNavMore = () => (
   <svg {...base}>
-    <circle cx="12" cy="12" r="8.5" />
-    <circle cx="8.6" cy="12" r="1.1" fill="currentColor" stroke="none" />
-    <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
-    <circle cx="15.4" cy="12" r="1.1" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="19" cy="12" r="1" />
+    <circle cx="5" cy="12" r="1" />
   </svg>
 );
 
@@ -493,8 +519,8 @@ export const IconNavMore = () => (
 
 export const IconMapPin = () => (
   <svg {...base}>
-    <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
-    <circle cx="12" cy="10" r="2.3" />
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
@@ -521,8 +547,10 @@ export const IconDaySummary = () => (
 
 export const IconScissors = () => (
   <svg {...base}>
-    <circle cx="6" cy="6" r="2.8" />
-    <circle cx="6" cy="18" r="2.8" />
-    <path d="M20 4 8.2 15.8M14.5 14.5 20 20M8.2 8.2 12 12" />
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="6" cy="18" r="3" />
+    <line x1="20" y1="4" x2="8.12" y2="15.88" />
+    <line x1="14.47" y1="14.48" x2="20" y2="20" />
+    <line x1="8.12" y1="8.12" x2="12" y2="12" />
   </svg>
 );
