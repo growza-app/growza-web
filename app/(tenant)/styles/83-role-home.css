@@ -152,18 +152,19 @@
     background: transparent;
     border-bottom: 0;
   }
-  /* Jira GRW-306 — the whole name, on up to two lines, instead of "Velvet Sciss…". */
+  /* Jira GRW-306 showed the whole name on up to two lines; Jira GRW-509 — the owner asked for one line
+     ending in an ellipsis instead, the same as every screen title (GRW-505): the header keeps its
+     height and the search and avatar never move. */
   .hm-head-business {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    display: block;
     font-size: 1.3125rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.2;
     color: var(--hm-ink);
+    white-space: nowrap;
     overflow: hidden;
-    overflow-wrap: anywhere;
+    text-overflow: ellipsis;
   }
   .hm-head-branch {
     display: flex;
@@ -3049,7 +3050,7 @@ button.hm-now-count {
 }
 
 /* A 320px phone gives the business name ~116px between the menu button and search;
-   at 18px a three-word name still reads on two lines instead of "Lotus Unisex…". */
+   at 18px it shows as much of the name as fits on its one line. */
 @media (max-width: 360px) {
   .hm-head {
     gap: var(--sp-2);
