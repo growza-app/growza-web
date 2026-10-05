@@ -18,7 +18,6 @@ describe('the dashboard offers it only when /me says it exists', () => {
   it('every menu that links to /try-whatsapp only does so behind whatsappDemo', () => {
     for (const [file, guard] of [
       ['app/(tenant)/components/Sidebar.tsx', /\.\.\.\(whatsappDemo \? \[\{ href: '\/try-whatsapp'/],
-      ['app/(tenant)/components/home/OwnerHome.tsx', /\.\.\.\(p\.whatsappDemo \? \[\{ href: '\/try-whatsapp'/],
       ['app/(tenant)/more/page.tsx', /\.\.\.\(whatsappDemo\s*\?\s*\[\s*\{\s*href: '\/try-whatsapp'/],
     ] as const) {
       const source = read(file);
@@ -27,10 +26,13 @@ describe('the dashboard offers it only when /me says it exists', () => {
     }
   });
 
+  it('Jira GRW-555 — Home\'s Quick links no longer carries it', () => {
+    expect(read('app/(tenant)/components/home/OwnerHome.tsx')).not.toMatch(/try-whatsapp|IconChat/);
+  });
+
   it('AC-02 — no other screen links to it', () => {
     const allowed = new Set([
       'app/(tenant)/components/Sidebar.tsx',
-      'app/(tenant)/components/home/OwnerHome.tsx',
       'app/(tenant)/more/page.tsx',
       // Jira GRW-409 — the screen naming its own route to close itself to a role the nav does not offer it. Not a
       // link: a link from this page to this page would take a salon nowhere it is not already.

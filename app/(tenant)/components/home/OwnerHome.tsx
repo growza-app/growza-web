@@ -26,7 +26,6 @@ import {
   IconAnalytics,
   IconBan,
   IconCalendarPlus,
-  IconChat,
   IconChevronRight,
   IconClipboardCheck,
   IconClock,
@@ -405,7 +404,6 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
     { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics />, tone: 'amber' },
-    ...(p.whatsappDemo ? [{ href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, tone: 'green', pill: p.whatsappLive ? null : t.nav.demo }] : []),
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
