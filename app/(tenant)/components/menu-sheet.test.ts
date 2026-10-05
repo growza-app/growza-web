@@ -26,23 +26,24 @@ describe('the menu button sits in the header row', () => {
     expect(allCss).not.toMatch(/padding[^;]*max\(58px/);
   });
 
-  it('every header row draws it: PageHeader, Home, and Reports', () => {
-    expect(code('PageHeader.tsx')).toMatch(/<MenuButton \/>/);
+  it('Home draws it — every other header wears Back there (Jira GRW-497, below)', () => {
     expect(code('home/parts.tsx')).toMatch(/<MenuButton \/>/);
-    expect(code('../reports/ReportsShell.tsx')).toMatch(/<MenuButton \/>/);
   });
 
-  it('a screen with a Back arrow shows that instead of the menu', () => {
-    expect(code('PageHeader.tsx')).toMatch(/\) : onBack \? null : \(\s*<MenuButton \/>/);
-  });
-
-  it('Staff swaps the menu for Back on a phone only, and falls back to Home with no history (Jira GRW-496)', () => {
+  it('every screen but Home wears Back where the menu goes, on a phone only (Jira GRW-497)', () => {
     const header = code('PageHeader.tsx');
-    expect(header).toMatch(/onBack && backOnPhoneOnly \? \(\s*<BackButton onBack=\{onBack\} phoneOnly \/>/);
-    const staff = code('../providers/StaffClient.tsx');
-    expect(staff).toMatch(/onBack=\{\(\) => \(window\.history\.length > 1 \? router\.back\(\) : router\.push\('\/'\)\)\}\s*backOnPhoneOnly/);
+    expect(header).toMatch(/\{onBack \? null : <BackButton phoneOnly \/>\}/);
+    expect(header).not.toMatch(/MenuButton/);
+    expect(code('../reports/ReportsShell.tsx')).toMatch(/<BackButton phoneOnly \/>/);
+    expect(code('../reports/ReportsShell.tsx')).not.toMatch(/MenuButton/);
+    // Home keeps the menu.
+    expect(code('home/parts.tsx')).toMatch(/<MenuButton \/>/);
     // A laptop has the sidebar on screen: no Back there.
     expect(code('../styles/76-header-controls.css')).toMatch(/@media \(min-width: 861px\) \{\s*\.topbar \.topbar-back-phone \{\s*display: none;/);
+  });
+
+  it('Back steps through history and goes Home when there is none', () => {
+    expect(code('BackButton.tsx')).toMatch(/window\.history\.length > 1 \? router\.back\(\) : router\.push\('\/'\)/);
   });
 
   it('it says what it opens and whether it is open', () => {
