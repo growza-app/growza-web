@@ -293,3 +293,11 @@
     line-height: 1.2;
   }
 }
+
+/* Jira GRW-507 — a bare header on a phone: Back and the title, no controls group and no branch line. */
+@media (max-width: 860px) {
+  .topbar-bare .topbar-actions,
+  .topbar-bare .hbp-line {
+    display: none;
+  }
+}
