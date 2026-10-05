@@ -35,12 +35,11 @@ describe('the 12px phone floor', () => {
   it('the bottom bar\'s tab and centre labels are 12px, and the narrow-phone bar gives them the room', () => {
     const chrome = css('74-mobile-chrome-2026.css');
     expect(chrome).toMatch(/\.bottom-nav a\s*\{[^}]*font-size:\s*0\.75rem;/);
-    expect(css('83-role-home.css')).toMatch(/\.bn-centre-label\s*\{\s*font-size:\s*0\.75rem;/);
     expect(chrome).toMatch(/@media \(max-width: 400px\)\s*\{\s*\.bottom-nav\s*\{\s*margin-inline:\s*8px;/);
     // Jira GRW-481 — `1 1 0`, not `1 1 auto`: the cells take an equal share of the bar
     // rather than sizing to their own longest word. Once the labels grew with the
     // reader's text size, content-sized cells pushed the last tab off the screen.
-    expect(chrome).toMatch(/\.bottom-nav > a,\s*\.bottom-nav > \.bn-centre\s*\{\s*flex:\s*1 1 0;/);
+    expect(chrome).toMatch(/\.bottom-nav > a\s*\{\s*flex:\s*1 1 0;/);
   });
 
   it('the unread count on the bell is 12px too', () => {
@@ -59,7 +58,6 @@ describe('the 12px phone floor', () => {
  */
 describe('the bottom bar at a large text size', () => {
   const chrome = css('74-mobile-chrome-2026.css');
-  const home = css('83-role-home.css');
 
   it('lets the bar itself shrink to the phone', () => {
     expect(chrome).toMatch(/\.bottom-nav\s*\{[^}]*min-width:\s*0;[^}]*max-width:\s*100%;/);
@@ -67,13 +65,35 @@ describe('the bottom bar at a large text size', () => {
 
   it('gives every cell an equal share rather than its own longest word', () => {
     expect(chrome).toMatch(/\.bottom-nav a\s*\{[^}]*flex:\s*1 1 0;/);
-    expect(home).toMatch(/\.bn-centre\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*0;/);
   });
 
   it('gives each label something CSS can shorten', () => {
     // A bare text node cannot be ellipsised, so the label is its own element.
     expect(readFileSync(resolve(__dirname, 'BottomNav.tsx'), 'utf8')).toMatch(/className="bn-label">\{item\.label\}/);
     expect(chrome).toMatch(/\.bottom-nav \.bn-label\s*\{[^}]*text-overflow:\s*ellipsis;/);
-    expect(home).toMatch(/\.bn-centre-label\s*\{[^}]*text-overflow:\s*ellipsis;/);
+  });
+});
+
+/**
+ * Jira GRW-495 — the New booking action is a round plus at the bottom right, like Compose in Gmail.
+ * It has no visible words, so its name has to be in the markup for a screen reader.
+ */
+describe('the floating action', () => {
+  const nav = readFileSync(resolve(__dirname, 'BottomNav.tsx'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const home = css('83-role-home.css');
+
+  it('is a plus, named by its aria-label', () => {
+    expect(nav).toMatch(/<IconPlus \/>/);
+    expect(nav).toMatch(/aria-label=\{role === 'receptionist' \? t\.walkInShort : t\.nav\.newBooking\}/);
+  });
+
+  it('sits above the bar at its right edge, anchored to the bar rather than the viewport', () => {
+    expect(home).toMatch(/\.bn-centre\s*\{[^}]*position:\s*absolute;[^}]*right:\s*0;[^}]*bottom:\s*calc\(100% \+ var\(--sp-3\)\);/);
+    expect(home).not.toMatch(/\.bn-centre\s*\{[^}]*position:\s*fixed/);
+  });
+
+  it('pages leave room for it at the bottom — only where it is drawn (Jira GRW-508)', () => {
+    expect(home).toMatch(/\.content:has\(> \.bottom-nav\.has-centre\) \.page-body\s*\{\s*padding-bottom:\s*calc\(var\(--sp-8\) \+ 68px\);/);
+    expect(home).not.toMatch(/^ {2}\.page-body\s*\{\s*padding-bottom:\s*calc\(var\(--sp-8\) \+ 68px\);/m);
   });
 });

@@ -65,8 +65,7 @@
     }
     /* Five equal cells are narrower than "Notifications" and "New booking" at 12px, and "Home" has room to spare.
        Size each cell to its word and share what is left evenly, so the gaps between words are the same. */
-    .bottom-nav > a,
-    .bottom-nav > .bn-centre {
+    .bottom-nav > a {
       flex: 1 1 0;
     }
   }
