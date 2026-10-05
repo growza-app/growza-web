@@ -3031,10 +3031,12 @@ button.hm-now-count {
     width: 44px;
     height: 44px;
     padding: 0;
-    border: 1px solid #cdeedb;
+    /* Jira GRW-510 — a secondary button, like the other quiet buttons (`.hm-btn-quiet`): white, a
+       line border, an ink icon. It was a green-tinted square, which read as a status chip. */
+    border: 1px solid var(--hm-line);
     border-radius: 13px;
-    background: var(--hm-green-soft);
-    color: var(--hm-green-deep);
+    background: #fff;
+    color: var(--hm-ink);
     cursor: pointer;
   }
   .hm-toolbar-summary svg {
