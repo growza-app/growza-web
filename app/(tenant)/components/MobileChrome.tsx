@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { mayUse, type MemberRole } from '../lib/nav-policy';
 import type { Lang } from '../lib/lang';
 import { BottomNav } from './BottomNav';
-import { NewVisitSheet } from './NewVisitSheet';
 
 /**
- * The fixed mobile furniture: the tab bar and the sheet the plus opens.
+ * The fixed mobile furniture: the tab bar and the plus's door to the New booking page.
+ *
+ * Jira GRW-523 — the plus opens the New booking PAGE again (it was a bottom sheet in GRW-512, a page before
+ * that in GRW-297): "Add new" is a next screen, not a popup, and the page ends with a Back to home page button.
  *
  * Jira GRW-222 — the floating "+" button this used to render is gone; its job
  * moved into the bar (see BottomNav). The five-screen NO_FAB list went with it,
@@ -36,12 +37,10 @@ import { NewVisitSheet } from './NewVisitSheet';
  */
 const PLUS_ROUTE_RE = /^\/(appointments|customers)?\/?$/;
 
-/** `timezone` seeds the booking sheet the plus opens (Jira GRW-512; GRW-297 had moved that sheet to a page and this stopped reading it). */
-export function MobileChrome({ labels, role, reportTabs, lang, timezone }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[]; lang?: Lang }) {
+/** `timezone` stays in the props contract (the layout always passes it) even though this component does not read it: the plus opens the New booking page, which loads its own (GRW-297, and again GRW-523). */
+export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[]; lang?: Lang }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Jira GRW-512 — the plus opens New booking as a sheet over the current screen, like the Day summary.
-  const [bookingOpen, setBookingOpen] = useState(false);
   /**
    * A stylist cannot create a booking — `POST /api/v1/walk-ins` and `/bookings`
    * are not in STAFF_ALLOWED (GRW-156). A receptionist CAN (GRW-169). Jira
@@ -56,25 +55,7 @@ export function MobileChrome({ labels, role, reportTabs, lang, timezone }: { lab
    */
   const mayBook = mayUse(role, 'visit.new');
   const onCentre =
-    mayBook && PLUS_ROUTE_RE.test(pathname) ? () => setBookingOpen(true) : undefined;
+    mayBook && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
 
-  return (
-    <>
-      <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />
-      {/* Opens on "Walk-in now" (GRW-268) — For later is one tap inside. Closing, or finishing a booking,
-          unmounts it and refreshes what is behind so the new booking is in the list. The route
-          `/appointments/new` stays for the links that still go there. */}
-      {bookingOpen ? (
-        <NewVisitSheet
-          mode="now"
-          purpose="visit"
-          timezone={timezone}
-          onClose={() => {
-            setBookingOpen(false);
-            router.refresh();
-          }}
-        />
-      ) : null}
-    </>
-  );
+  return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />;
 }
