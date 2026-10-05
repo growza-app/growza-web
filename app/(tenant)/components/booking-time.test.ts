@@ -29,7 +29,9 @@ describe('the Booking time', () => {
     expect(sheet).toMatch(/day === todayIso \? \(Math\.floor\(\(Number\(nowHm\.slice\(0, 2\)\) \* 60 \+ Number\(nowHm\.slice\(3, 5\)\)\) \/ 15\) \+ 1\) \* 15 : 0/);
     expect(sheet).toMatch(/for \(let m = first; m < 24 \* 60; m \+= 15\)/);
     // The first entry is empty: no time, a walk-in now.
-    expect(sheet).toMatch(/<option value="">\{nv\.anyTime\}<\/option>/);
+    // Today it shows the current time (GRW-534) and is still no time chosen; another day it reads "Any time".
+    expect(sheet).toMatch(/<option value="">\s*\{day === todayIso\s*\? nv\.timeNow\(/);
+    expect(sheet).toMatch(/: nv\.anyTime\}\s*<\/option>/);
     expect(sheet).toMatch(/onChange=\{\(e\) => setTimeWanted\(e\.target\.value\)\}/);
     // No free-typed time box, and no "time has passed" message left: it can no longer happen.
     expect(sheet).not.toMatch(/type="time"/);
@@ -48,6 +50,7 @@ describe('the Booking time', () => {
     for (const l of ['en', 'hi']) {
       const m = JSON.parse(readFileSync(resolve(__dirname, `../../../messages/${l}.json`), 'utf8')) as { newVisit: Record<string, string> };
       expect(m.newVisit.anyTime).toBeTruthy();
+      expect(m.newVisit.timeNow).toContain('{time}');
       expect(m.newVisit.timePassed).toBeUndefined();
     }
   });
