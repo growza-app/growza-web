@@ -1801,6 +1801,12 @@ export function NewVisitSheet({
                 >
                   {nv.useThisPerson}
                 </button>
+                {/* Jira GRW-523 — on the page, a way out to Home under the one action that moves forward. */}
+                {asPage ? (
+                  <button type="button" className="btn btn-ghost wi-act-alt" onClick={() => router.push('/')}>
+                    {nv.backToHome}
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>

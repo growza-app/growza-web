@@ -1599,6 +1599,7 @@
     "noMatch": "इससे मिलता कोई दर्ज नहीं है।",
     "visits": "{n, plural, one {# विज़िट} other {# विज़िट}}",
     "bookingDate": "बुकिंग की तारीख",
+    "backToHome": "होम पेज पर वापस जाएँ",
     "atOtherBranches": "आपकी दूसरी ब्रांच में",
     "bringToBranch": "इन्हें {branch} में जोड़ें",
     "nameRequired": "नाम",
