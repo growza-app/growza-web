@@ -164,6 +164,17 @@
 .btn[aria-disabled='true'] {
   box-shadow: none;
 }
+/* ...and takes the green gradient off too. It is painted by a rule with more specificity than the one above, so the
+   grey "disabled" label (#5f6a65) was left sitting on green — "Sign in" could not be read. These repeat the primary
+   selectors, with the disabled state added, so they win. */
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):disabled,
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid)[aria-disabled='true'],
+.hm-btn:not(.hm-btn-quiet):disabled,
+.cpc-btn-primary:disabled,
+.rp-control-primary:disabled {
+  background-image: none;
+  box-shadow: none;
+}
 
 /* ---------- raised: sheets ---------- */
 .sheet,
