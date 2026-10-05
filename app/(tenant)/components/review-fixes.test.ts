@@ -19,11 +19,13 @@ describe('the walk-in sheet says only what its controls do', () => {
     expect(sheet).not.toMatch(/role="list"/);
   });
 
-  it('chairs, days and times are labelled groups of toggle buttons, not a radiogroup with no arrow keys', () => {
-    for (const label of ['nv.withWhom(providerNoun.toLowerCase())', 'nv.whichDay', 'nv.whichTime']) {
+  it('days and times are labelled groups of toggle buttons, not a radiogroup with no arrow keys; the stylist is a labelled select', () => {
+    for (const label of ['nv.whichDay', 'nv.whichTime']) {
       expect(sheet).toContain(`role="group" aria-label={${label}}`);
     }
-    expect(sheet).toMatch(/aria-pressed=\{noStylist\}/);
+    // Jira GRW-524 — the chairs were toggle buttons in a group; they are one select, named by its heading.
+    expect(sheet).toMatch(/id="wi-stylist"/);
+    expect(sheet).toMatch(/aria-labelledby="wi-stylist-label"/);
     expect(sheet).toMatch(/aria-pressed=\{day === d\.iso\}/);
     expect(sheet).toMatch(/aria-pressed=\{slotUtc === slot\.utc\}/);
   });

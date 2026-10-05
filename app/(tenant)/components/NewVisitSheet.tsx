@@ -139,6 +139,10 @@ export function totalMinor(items: PickedItem[], comboPriceMinor: string | null):
   return String(items.reduce((sum, i) => sum + Number(i.priceMinor ?? 0), 0));
 }
 
+/** Jira GRW-524 — the stylist dropdown's two values that are not a stylist's id. */
+const WI_WHOEVER = '__whoever__';
+const WI_NO_STYLIST = '__none__';
+
 type PickedClient =
   /** Jira GRW-392 — `locationId`: the branch this client belongs to, which is where their visit is. */
   | { kind: 'existing'; id: string; name: string | null; phone: string | null; locationId?: string }
@@ -2124,7 +2128,7 @@ export function NewVisitSheet({
               </>
             )}
 
-            <h2 className="wi-section-label">{nv.withWhom(providerNoun.toLowerCase())}</h2>
+            <h2 className="wi-section-label" id="wi-stylist-label">{nv.withWhom(providerNoun.toLowerCase())}</h2>
             {/*
               GRW-198 — chairs, not a list of names.
               The receptionist's question is "who can take this person", and a
@@ -2134,110 +2138,81 @@ export function NewVisitSheet({
               rather than in a banner afterwards. Only for a walk-in — "later"
               is about a day that has not happened.
             */}
-            <div className="wi-chair-list" role="group" aria-label={nv.withWhom(providerNoun.toLowerCase())}>
-              {/*
-                Jira GRW-293 (epic GRW-283) — "No stylist", Record payment
-                only. `noStylist` and `schedulableId === null` used to mean
-                the same thing ("whoever is free"); they are now two
-                different choices, so every chip below also clears
-                `noStylist` when it is not the one being picked — a selected
-                chair or "Whoever is free" must never leave this flag on.
-              */}
-              {forPayment && (
-                <button
-                  type="button"
-                  aria-pressed={noStylist}
-                  className={`wi-chair ${noStylist ? 'wi-chair-on' : ''}`}
-                  onClick={() => {
-                    setSchedulableId(null);
-                    setNoStylist(true);
-                    setReclaim(null);
-                  }}
-                  disabled={busy || linesLocked}
-                >
-                  <span className="wi-chair-name">{noProviderWord}</span>
-                </button>
-              )}
-
-              {/* Jira GRW-403 — not for a token: the work is done, so it is somebody named, or nobody.
-                  Jira GRW-456 — and not at a branch with nobody on it: "free" needs somebody to be free. */}
-              {!paysToken && !noStaffHere && !noOneCanDoIt && (
-              <button
-                type="button"
-                aria-pressed={schedulableId === null && !noStylist}
-                className={`wi-chair ${schedulableId === null && !noStylist ? 'wi-chair-on' : ''}`}
-                onClick={() => {
+            {/*
+              Jira GRW-524 — a dropdown, not a card per stylist. What each chair is doing (GRW-198) moves into the
+              option's own words, so the desk still sees who is free where the choice is made.
+              Jira GRW-293 (epic GRW-283) — "No stylist", Record payment only. `noStylist` and `schedulableId === null`
+              used to mean the same thing ("whoever is free"); they are now two different choices, so each option
+              also clears `noStylist` when it is not the one picked.
+              Jira GRW-403 — "Whoever is free" is not for a token: the work is done, so it is somebody named, or
+              nobody. Jira GRW-456 — and not at a branch with nobody on it: "free" needs somebody to be free.
+              Jira GRW-461 — only the people who can do what was picked; the save asks the same question.
+            */}
+            <select
+              id="wi-stylist"
+              className="wi-stylist-select"
+              aria-labelledby="wi-stylist-label"
+              value={noStylist ? WI_NO_STYLIST : (schedulableId ?? WI_WHOEVER)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setReclaim(null);
+                if (v === WI_NO_STYLIST) {
+                  setSchedulableId(null);
+                  setNoStylist(true);
+                } else if (v === WI_WHOEVER) {
                   setSchedulableId(null);
                   setNoStylist(false);
-                  setReclaim(null);
-                }}
-                disabled={busy || linesLocked}
-              >
-                <span className="wi-chair-name">{nv.whoeverIsFree}</span>
-                {!later && freeCount !== null && (
-                  <span className="wi-chair-state">{nv.freeCount(freeCount)}</span>
-                )}
-              </button>
+                } else {
+                  setSchedulableId(v);
+                  setNoStylist(false);
+                }
+              }}
+              disabled={busy || linesLocked}
+            >
+              {forPayment && <option value={WI_NO_STYLIST}>{noProviderWord}</option>}
+              {!paysToken && !noStaffHere && !noOneCanDoIt && (
+                <option value={WI_WHOEVER}>
+                  {!later && freeCount !== null ? `${nv.whoeverIsFree} · ${nv.freeCount(freeCount)}` : nv.whoeverIsFree}
+                </option>
               )}
-
-              {/* Jira GRW-461 — only the people who can do what was picked; the save asks the same question. */}
               {ableProviders.map((p) => {
                 const chair = later ? null : chairs.find((c) => c.schedulableId === p.id);
-                const picked = schedulableId === p.id;
+                const state = !chair
+                  ? ''
+                  : chair.free
+                    ? nv.chairFree
+                    : nv.chairBusy(chair.occupant?.customerName ?? nv.someone, formatTime(chair.occupant!.freesAt, timezone));
                 return (
-                  <div key={p.id} className="wi-chair-wrap">
-                    <button
-                      type="button"
-                      aria-pressed={picked}
-                      className={`wi-chair ${picked ? 'wi-chair-on' : ''}`}
-                      onClick={() => {
-                        setSchedulableId(p.id);
-                        setNoStylist(false);
-                        setReclaim(null);
-                      }}
-                      disabled={busy || linesLocked}
-                    >
-                      <span className="wi-chair-name">{p.displayName}</span>
-                      {chair && (
-                        <span className={`wi-chair-state ${chair.free ? 'is-free' : 'is-busy'}`}>
-                          {chair.free
-                            ? nv.chairFree
-                            : nv.chairBusy(
-                                chair.occupant?.customerName ?? nv.someone,
-                                formatTime(chair.occupant!.freesAt, timezone),
-                              )}
-                        </span>
-                      )}
-                    </button>
-
-                    {/*
-                      The action the overlap banner never offered.
-                      Only on a chair whose booking has started, is still open,
-                      and is past the grace period — at 2:00 a 4:00 booking is
-                      the future, not an absence, and offering to take it
-                      invites destroying a booking by misreading a row.
-                    */}
-                    {picked && chair?.occupant?.couldBeANoShow && (
-                      <button
-                        type="button"
-                        className={`wi-reclaim ${reclaim === chair.occupant.appointmentId ? 'is-on' : ''}`}
-                        onClick={() =>
-                          setReclaim(reclaim === chair.occupant!.appointmentId ? null : chair.occupant!.appointmentId)
-                        }
-                        disabled={busy || linesLocked}
-                      >
-                        {reclaim === chair.occupant.appointmentId
-                          ? nv.reclaimOn(chair.occupant.customerName ?? nv.someone)
-                          : nv.reclaimOffer(
-                              chair.occupant.customerName ?? nv.someone,
-                              chair.occupant.startedMinAgo,
-                            )}
-                      </button>
-                    )}
-                  </div>
+                  <option key={p.id} value={p.id}>
+                    {state ? `${p.displayName} · ${state}` : p.displayName}
+                  </option>
                 );
               })}
-            </div>
+            </select>
+
+            {/*
+              The action the overlap banner never offered.
+              Only on a chair whose booking has started, is still open, and is past the grace period — at 2:00 a
+              4:00 booking is the future, not an absence, and offering to take it invites destroying a booking by
+              misreading a row. Shown under the dropdown for the stylist chosen in it.
+            */}
+            {(() => {
+              const chair = later || !schedulableId ? null : chairs.find((c) => c.schedulableId === schedulableId);
+              const occ = chair?.occupant;
+              if (!occ?.couldBeANoShow) return null;
+              return (
+                <button
+                  type="button"
+                  className={`wi-reclaim ${reclaim === occ.appointmentId ? 'is-on' : ''}`}
+                  onClick={() => setReclaim(reclaim === occ.appointmentId ? null : occ.appointmentId)}
+                  disabled={busy || linesLocked}
+                >
+                  {reclaim === occ.appointmentId
+                    ? nv.reclaimOn(occ.customerName ?? nv.someone)
+                    : nv.reclaimOffer(occ.customerName ?? nv.someone, occ.startedMinAgo)}
+                </button>
+              );
+            })()}
 
             {/*
               Jira GRW-456 — a branch with nobody on it says so here, where the choice is, rather than leaving
