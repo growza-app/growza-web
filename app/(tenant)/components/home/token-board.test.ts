@@ -408,3 +408,29 @@ describe('no token number badge (GRW-542)', () => {
     expect(html).not.toContain('tb-no');
   });
 });
+
+/** Jira GRW-545 — the wait on a waiting token is a pill: fully rounded, light amber, text at 4.5:1 or better. */
+describe('the wait is a pill (GRW-545)', () => {
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+  const rule = css.slice(css.indexOf(".tb-col[data-col='waiting'] .tb-meta {"), css.indexOf('}', css.indexOf(".tb-col[data-col='waiting'] .tb-meta {")));
+
+  it('is fully rounded on a light amber background, in that column only', () => {
+    expect(rule).toMatch(/border-radius: 999px;/);
+    expect(rule).toMatch(/background: var\(--amber-soft\);/);
+    // The other two columns keep their plain text: no background on the shared rule.
+    const shared = css.slice(css.indexOf('.tb-meta {'), css.indexOf('}', css.indexOf('.tb-meta {')));
+    expect(shared).not.toMatch(/background/);
+  });
+
+  it('keeps the text readable: #8a5a0f on #fdf0d5 is 4.5:1 or better', () => {
+    const lum = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
+    };
+    const ratio = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+    const base = readFileSync(resolve(__dirname, '../../styles/00-base.css'), 'utf8');
+    expect(base).toMatch(/--amber-soft: #fdf0d5;/);
+    expect(css).toMatch(/\.tb-meta \{[^}]*color: #8a5a0f;/);
+    expect(ratio('#8a5a0f', '#fdf0d5')).toBeGreaterThanOrEqual(4.5);
+  });
+});
