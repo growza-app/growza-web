@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 interface ReminderRow {
   key: string;
@@ -38,6 +39,8 @@ export function RemindersForm({
   whatsappLive?: boolean;
 }) {
   const t = useTranslations('settingsReminders');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/settings');
   const router = useRouter();
   /*
    * Jira GRW-474 — every saved rule is a row, not only the two this screen knows. It was built from two hard-coded
@@ -89,8 +92,11 @@ export function RemindersForm({
         .map((r) => ({ ruleKey: r.key, offsetMin: -(r.hours * 60), template: r.template }));
       await api.updateReminders(reminderRules, initial.scope.locationId);
       setSaved(true);
+      // Closes like every Settings form — unless WhatsApp is not live, when the saved message is also the news that
+      // nothing will be sent yet (`savedNotLive`), which the owner must read here.
+      if (whatsappLive) closeForm();
       // Jira GRW-396 — the note above the form says whether this branch now has its own reminders.
-      router.refresh();
+      else router.refresh();
     } catch (err) {
       // The server's reason — "your plan allows 1 reminder", "two reminders cannot go out at the same time".
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('errors.saveFailed'));

@@ -8,6 +8,7 @@ import type { SettingsSummary } from '../lib/api';
 import { IconArrowLeft } from '../components/icons';
 import { SettingsNavList } from './SettingsNavList';
 import { ReadOnlyFields } from '../components/ReadOnlyFields';
+import { SavedToast } from '../components/SavedToast';
 
 /**
  * Desktop: a persistent left nav pane beside the section content (both
@@ -34,6 +35,8 @@ export function SettingsShell({ settings, children }: { settings: SettingsSummar
        rules in 85-settings-fit.css can tighten that screen without touching a form's own layout.
        A class rather than a `:has()` chain: the shell already knows which route it is on. */
     <div className={`settings-shell ${isHub ? 'settings-hub' : ''}`}>
+      {/* Jira GRW-556 (follow-up) — a Settings form closes back here on Save; this says it saved. */}
+      <SavedToast />
       <div className={`settings-nav-pane ${isHub ? '' : 'settings-nav-pane-hidden-mobile'}`}>
         <SettingsNavList settings={settings} />
       </div>

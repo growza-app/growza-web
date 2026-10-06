@@ -1504,7 +1504,8 @@
       "allHint": "Every branch together",
       "thisBranch": "This branch"
     },
-    "yourBusiness": "Your business"
+    "yourBusiness": "Your business",
+    "savedToast": "Saved"
   },
   "auth": {
     "metaTitle": "Sign in",

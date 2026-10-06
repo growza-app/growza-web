@@ -1504,7 +1504,8 @@
       "allHint": "सभी ब्रांच एक साथ",
       "thisBranch": "यह ब्रांच"
     },
-    "yourBusiness": "आपका बिज़नेस"
+    "yourBusiness": "आपका बिज़नेस",
+    "savedToast": "सेव हो गया"
   },
   "auth": {
     "metaTitle": "साइन इन",

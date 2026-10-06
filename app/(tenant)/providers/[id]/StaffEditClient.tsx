@@ -25,6 +25,7 @@ import { avatarTone, initials } from '../StaffRoster';
 import { useLabel } from '../../components/LabelsProvider';
 import { ReadOnlyFields } from '../../components/ReadOnlyFields';
 import { useWritable } from '../../components/SessionProvider';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 function rowsEqual(a: WeekdayRow[], b: WeekdayRow[]): boolean {
   return (
@@ -61,6 +62,8 @@ export function StaffEditClient({
   branches?: Array<{ id: string; name: string }>;
 }) {
   const t = useTranslations('staffEdit');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/providers');
   const ts = useTranslations('staff');
   const tStatus = useTranslations('status');
   const tCommon = useTranslations('common');
@@ -240,7 +243,9 @@ export function StaffEditClient({
       setSkillsOnMove('match');
       resetFrom(await api.providerDetail(detail.id));
       setSaved(true);
-      router.refresh();
+      // A branch move that left skills to set by hand is said on THIS page, so it stays open for that one case.
+      if (moved?.unmatchedSkills?.length) router.refresh();
+      else closeForm();
     } catch (e) {
       // Jira GRW-478 — the server's reason (a branch move refused, a clash of hours), not "save failed".
       setError(reasonOr(e, t('errors.saveFailed')));
