@@ -12,6 +12,8 @@ import { toWeekdayRows } from '../components/WeekdayHoursEditor';
 import { pickNoun } from '../lib/nouns';
 import { IconPlus, IconSearch } from '../components/icons';
 import { StaffWizard } from './StaffWizard';
+import { useWritable } from '../components/SessionProvider';
+import { SavedToast } from '../components/SavedToast';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
 
 type Tab = 'all' | 'working' | 'off' | 'inactive';
@@ -59,6 +61,7 @@ export function StaffClient({
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<Tab>('all');
   const [page, setPage] = useState(1);
+  const writable = useWritable();
   const [creating, setCreating] = useState(false);
   const [sheetFor, setSheetFor] = useState<ProviderOverviewRow | null>(null);
   /** Pending availability change awaiting confirmation — the roster switch applies instantly, so it asks first. */
@@ -239,6 +242,8 @@ export function StaffClient({
 
   return (
     <>
+      {/* Jira GRW-556 (follow-up) — the staff edit page closes back here on Save; this says it saved. */}
+      <SavedToast />
       {/*
         Jira GRW-30 — the header moved in here so "Add staff" can live in it.
 
@@ -251,9 +256,12 @@ export function StaffClient({
       <PageHeader
         title={staffTitle}
         actions={
-          <button type="button" className="btn" onClick={() => setCreating(true)} disabled={seatsLeft === 0}>
-            <IconPlus /> {t('addLabel', { label: staffLower })}
-          </button>
+          // Jira GRW-556 (follow-up) — a business suspended for non-payment sees its team and adds none.
+          writable ? (
+            <button type="button" className="btn" onClick={() => setCreating(true)} disabled={seatsLeft === 0}>
+              <IconPlus /> {t('addLabel', { label: staffLower })}
+            </button>
+          ) : undefined
         }
       />
       <div className="page-body">

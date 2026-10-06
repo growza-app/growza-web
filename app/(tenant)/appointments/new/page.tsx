@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { guardLive } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import type { VisitMode } from '../../components/NewVisitSheet';
@@ -6,6 +7,7 @@ import { NewBookingClient } from './NewBookingClient';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
 import { mayUse } from '../../lib/nav-policy';
+import { isWritable } from '../../lib/read-only';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +23,8 @@ export default async function NewBookingPage({
 }: {
   searchParams: Promise<{ mode?: string }>;
 }) {
+  // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
+  await guardLive('/appointments/new');
   const params = await searchParams;
   const mode: VisitMode = params.mode === 'later' ? 'later' : 'now';
 
@@ -43,7 +47,8 @@ export default async function NewBookingPage({
    * used to be the only door to this flow.
    */
   // Jira GRW-409 — asked of the shared rule the centre button asks, so the page and the button cannot disagree.
-  if (!mayUse(me.member?.role, 'visit.new')) {
+  // Jira GRW-556 (follow-up) — and a business suspended for non-payment has nothing to book into: read-only.
+  if (!mayUse(me.member?.role, 'visit.new', isWritable(me.tenant?.status))) {
     redirect('/appointments');
   }
 

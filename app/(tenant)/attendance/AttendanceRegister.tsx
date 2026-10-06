@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type AttendanceRegister as Register, type AttendanceRow } from '../lib/api';
+import { useWritable } from '../components/SessionProvider';
 import { pickNoun } from '../lib/nouns';
 import { intlLocale } from './[providerId]/month';
 import { useBranch } from '../components/BranchProvider';
@@ -111,6 +112,9 @@ export function AttendanceRegister({
   staffWord: string;
   branches?: Array<{ id: string; name: string }>;
 }) {
+  // Jira GRW-556 (follow-up) — a business suspended for non-payment reads the register: who was in, when, and the
+  // notes, with every way of marking someone left inert. The date and branch controls above are reads and stay live.
+  const writable = useWritable();
   const t = useTranslations('attendance.register');
   const ts2 = useTranslations('attendance');
   const ts = useTranslations('attendance.status');
@@ -396,7 +400,7 @@ export function AttendanceRegister({
           )}
         </div>
 
-        <button type="button" className="att-markall" disabled={busy || !canMarkAll} onClick={() => void markAllPresent()}>
+        <button type="button" className="att-markall" disabled={busy || !canMarkAll || !writable} onClick={() => void markAllPresent()}>
           <span aria-hidden="true">✓</span> {t('markAll')}
         </button>
       </div>
@@ -462,10 +466,10 @@ export function AttendanceRegister({
                       <input
                         type="time"
                         value={view.inTime}
-                        disabled={busy || away}
+                        disabled={busy || away || !writable}
                         onChange={(e) => timeChanged(row, 'inTime', e.target.value)}
                       />
-                      <button type="button" title={t('setNow')} disabled={busy || away} onClick={() => setNow(row, 'inTime')}>
+                      <button type="button" title={t('setNow')} disabled={busy || away || !writable} onClick={() => setNow(row, 'inTime')}>
                         {t('now')}
                       </button>
                     </span>
@@ -477,10 +481,10 @@ export function AttendanceRegister({
                       <input
                         type="time"
                         value={view.outTime}
-                        disabled={busy || away}
+                        disabled={busy || away || !writable}
                         onChange={(e) => timeChanged(row, 'outTime', e.target.value)}
                       />
-                      <button type="button" title={t('setNow')} disabled={busy || away} onClick={() => setNow(row, 'outTime')}>
+                      <button type="button" title={t('setNow')} disabled={busy || away || !writable} onClick={() => setNow(row, 'outTime')}>
                         {t('now')}
                       </button>
                     </span>
@@ -500,7 +504,7 @@ export function AttendanceRegister({
                       className={`att-pill ${conf ? `att-pill-${conf.tone}` : 'att-pill-none'}`}
                       aria-haspopup="listbox"
                       aria-expanded={openMenu === row.providerId}
-                      disabled={busy}
+                      disabled={busy || !writable}
                       onClick={() => setOpenMenu((m) => (m === row.providerId ? null : row.providerId))}
                     >
                       <span className="att-dot" style={conf ? { background: conf.dot } : undefined} />
@@ -557,7 +561,7 @@ export function AttendanceRegister({
                     className={`att-note-toggle ${row.note ? 'has-note' : ''}`}
                     aria-label={row.note ? t('noteWith', { note: row.note }) : t('addNote')}
                     title={row.note ?? t('addNote')}
-                    disabled={busy}
+                    disabled={busy || !writable}
                     onClick={() => setNoteFor((n) => (n === row.providerId ? null : row.providerId))}
                   >
                     {row.note ? <IconNote /> : <IconPlus />}
@@ -573,7 +577,7 @@ export function AttendanceRegister({
                         autoFocus
                         defaultValue={row.note ?? ''}
                         placeholder={t('notePlaceholder')}
-                        disabled={busy || !view.status}
+                        disabled={busy || !view.status || !writable}
                         aria-label={t('noteAria', { name: row.displayName })}
                         onKeyDown={(e) => {
                           if (e.key === 'Escape') setNoteFor(null);

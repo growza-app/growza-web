@@ -122,3 +122,11 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Jira GRW-556 (follow-up) — `ReadOnlyFields`: a fieldset used only for its `disabled`, so it must look like no box at all. */
+.ro-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}

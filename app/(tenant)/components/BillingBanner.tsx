@@ -1,6 +1,16 @@
 import type { ReactNode } from 'react';
 import { PayNowButton } from './PayNowButton';
+import { IconAlert } from './icons';
 import { AutopayHaltedLine } from './AutopayHaltedNotice';
+import { billingCopy } from '../lib/billing-copy';
+import type { Lang } from '../lib/lang';
+
+/**
+ * Jira GRW-556 (follow-up) — the states that mean a bill is owed. Paused, Cancelled and Expired are not: the banner told
+ * those owners "Pay now", the API answered "nothing to pay", and the owner read "this looks settled already" on a screen
+ * telling them the account was paused.
+ */
+const OWES = new Set(['PAYMENT_FAILED', 'GRACE_PERIOD', 'PAST_DUE', 'SUSPENDED']);
 
 /**
  * GRW-122 — the owner's own billing warning, shown while a payment is in
@@ -20,6 +30,8 @@ import { AutopayHaltedLine } from './AutopayHaltedNotice';
 export function BillingBanner({
   billing,
   canPayOnline,
+  canOpenBilling = false,
+  lang = 'en',
 }: {
   billing: { status: string; message: string | null; autopayHalted?: boolean } | null;
   /**
@@ -30,12 +42,25 @@ export function BillingBanner({
    * button: it tells an owner in trouble that the fix is broken.
    */
   canPayOnline?: boolean;
+  /**
+   * Jira GRW-556 (follow-up) — may this person open Billing at all (the owner). When online payment is off there is no Pay
+   * now to offer, but the banner still points somewhere: the Billing page's Pay card says how to pay. Anybody else is told
+   * to ask the owner, instead of reading "pay your bill" with nothing they can do.
+   */
+  canOpenBilling?: boolean;
+  lang?: Lang;
 }): ReactNode {
   if (!billing?.message) return null;
+  const t = billingCopy(lang);
+  const owes = OWES.has(billing.status);
 
   // Restriction has already happened for these; the rest are warnings about
   // something that still can be prevented, which is the whole point of
   // telling the owner at all.
+  //
+  // Jira GRW-556 (follow-up) — SUSPENDED is now true to its word: the API refuses every write but the bill, and the
+  // dashboard draws no control that would. PAUSED restricts less (walk-ins, reminders, WhatsApp bookings) and the
+  // words the API sends say so; this only decides the colour.
   const restricted = billing.status === 'SUSPENDED' || billing.status === 'PAUSED';
 
   return (
@@ -62,7 +87,8 @@ export function BillingBanner({
       }}
     >
       <span aria-hidden style={{ flex: 'none', fontSize: 15, lineHeight: 1.4 }}>
-        {restricted ? '⚠' : 'ⓘ'}
+        {/* Inline SVG, the one icon language (CLAUDE.md UI rules) — it was a '⚠' / 'ⓘ' character. */}
+        <IconAlert />
       </span>
       {/*
        * Jira GRW-413 — when AutoPay has HALTED, this sentence REPLACES the status
@@ -101,7 +127,15 @@ export function BillingBanner({
       {/* GRW-145 — the one thing an owner reading this warning can actually do
           about it. Absent when online payment is off for them, in which case
           the message itself already tells them how to pay. */}
-      {canPayOnline ? <PayNowButton restricted={restricted} /> : null}
+      {!owes ? null : canPayOnline ? (
+        <PayNowButton restricted={restricted} />
+      ) : canOpenBilling ? (
+        <a className="btn" href="/settings/billing" style={{ flex: 'none', textDecoration: 'none' }}>
+          {t.howToPay}
+        </a>
+      ) : (
+        <span style={{ flexBasis: '100%', fontWeight: 600 }}>{t.askOwnerToPay}</span>
+      )}
     </div>
   );
 }

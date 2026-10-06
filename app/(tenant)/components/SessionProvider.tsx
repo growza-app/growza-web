@@ -26,6 +26,22 @@ export interface SessionInfo {
   branches?: Array<{ id: string; name: string }>;
   /** Jira GRW-306 — the language the page was rendered in, for the language switch in the account menu. */
   lang?: Lang;
+  /**
+   * Jira GRW-556 — false only while the business is still being set up. Absent reads as live: a session that cannot
+   * say is never shut out of the product.
+   */
+  live?: boolean;
+  /**
+   * Jira GRW-556 (follow-up) — false only for a business suspended for non-payment, which signs in read-only: every
+   * control that writes is left undrawn except the bill. Absent reads as writable, for the same reason `live` does.
+   */
+  writable?: boolean;
+  /**
+   * Jira GRW-556 (follow-up) — `me.capabilities.walkIn`. The API has always sent it and nothing read it, so a paused
+   * business drew the walk-in queue's "Give" and the token board's "Arrived" and the API answered every tap with a
+   * refusal (`requireFeature('booking.walk_in')`). Absent reads as on: only an explicit `false` hides a control.
+   */
+  walkIn?: boolean;
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);
@@ -47,5 +63,23 @@ export function useSession(): SessionInfo | null {
  * drawing a control a limited role might not have — not `role === 'owner'`.
  */
 export function useMayUse(action: UiAction): boolean {
-  return mayUse(useSession()?.role, action);
+  const session = useSession();
+  if (session?.walkIn === false && WALK_IN_ONLY.includes(action)) return false;
+  return mayUse(session?.role, action, session?.writable ?? true);
+}
+
+/**
+ * The controls whose every route needs the walk-in capability (`requireFeature('booking.walk_in')`: the queue's give,
+ * a token). "New visit" and "Record payment" are not here — each also books or settles something that is not a walk-in.
+ */
+const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
+
+/** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. */
+export function useWritable(): boolean {
+  return useSession()?.writable ?? true;
+}
+
+/** Jira GRW-556 — is the business live? False only while it is being set up, when only the setup screens are offered. */
+export function useLive(): boolean {
+  return useSession()?.live ?? true;
 }

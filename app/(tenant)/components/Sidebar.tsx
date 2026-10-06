@@ -8,6 +8,7 @@ import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
 import { useMobileNav } from './MobileNavProvider';
+import { useLive } from './SessionProvider';
 import {
   IconAnalytics,
   IconAppointments,
@@ -115,6 +116,8 @@ export function Sidebar({
 
   // Only routes that exist. Calendar is still in the design but has no page
   // yet — listing it here would be a link to a 404.
+  // Jira GRW-556 — while the business is being set up only the setup screens are offered.
+  const live = useLive();
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
     { href: '/', label: t.nav.home, icon: <IconDashboard /> },
     { href: '/appointments', label: role === 'staff' ? t.nav.schedule : t.nav.bookings, icon: <IconAppointments /> },
@@ -171,7 +174,7 @@ export function Sidebar({
           {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
               API is what refuses (GRW-156); this is about not wasting their time
               on eight links that 403. */}
-          {visibleItems(items, role, reportTabs).map((item) => (
+          {visibleItems(items, role, reportTabs, live).map((item) => (
             <a
               key={item.href}
               href={item.href}

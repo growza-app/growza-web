@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { PhoneField } from '../components/PhoneField';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
+import { useWritable } from '../components/SessionProvider';
 
 type Slot = AvailabilityResponse['sections'][number]['slots'][number];
 
@@ -55,6 +56,7 @@ function loadRememberedCustomer(): RememberedCustomer | null {
 export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Props) {
   const checkPhone = usePhoneProblem();
   const router = useRouter();
+  const writable = useWritable();
   const t = useTranslations('freeTimes');
   const sectionLabel = (name: string) =>
     name === 'Morning' ? t('morning') : name === 'Afternoon' ? t('afternoon') : name === 'Evening' ? t('evening') : name;
@@ -184,9 +186,12 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
             <button type="button" className="btn" onClick={sendOnWhatsApp}>
               {t('sendOnWhatsApp', { count: selectedSlots.length })}
             </button>
-            <button type="button" className="btn btn-ghost" onClick={() => openBooking(selectedSlots[0]!)}>
-              {t('bookAt', { time: selectedSlots[0]!.local })}
-            </button>
+            {/* Jira GRW-556 (follow-up) — Book holds the slot and confirms it: nothing a suspended business may do. */}
+            {writable && (
+              <button type="button" className="btn btn-ghost" onClick={() => openBooking(selectedSlots[0]!)}>
+                {t('bookAt', { time: selectedSlots[0]!.local })}
+              </button>
+            )}
           </div>
         </div>
       )}

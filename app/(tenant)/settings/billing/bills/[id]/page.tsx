@@ -2,7 +2,6 @@ import { screenTitle } from '../../../../lib/page-title';
 import { api, ApiError } from '../../../../lib/api';
 import { serverLang } from '../../../../lib/lang';
 import { billingCopy } from '../../../../lib/billing-copy';
-import { PayNowButton } from '../../../../components/PayNowButton';
 import { PrintButton } from './PrintButton';
 import { getTranslations } from 'next-intl/server';
 
@@ -17,10 +16,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
   const lang = await serverLang();
   const t = billingCopy(lang);
   const { id } = await params;
-  const [bill, me] = await Promise.all([
-    api.bill(id).catch((e) => (e instanceof ApiError && e.status === 404 ? 'missing' : null)),
-    api.me().catch(() => null),
-  ]);
+  const bill = await api.bill(id).catch((e) => (e instanceof ApiError && e.status === 404 ? 'missing' : null));
   if (bill === 'missing') return <div className="banner">{t.notFound}</div>;
   if (!bill) return <div className="banner">{t.loadError}</div>;
 
@@ -92,7 +88,12 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
         <div className="bill-doc-actions no-print">
-          {bill.unpaid && (me?.payments?.online ?? false) ? <PayNowButton restricted={false} /> : null}
+          {/* Jira GRW-556 (follow-up) — paying lives in one place. Pay now here paid the OLDEST bill, not this one, and said nothing at all when online payment was off. */}
+          {bill.unpaid ? (
+            <a className="btn" href="/settings/billing">
+              {t.payOnBilling}
+            </a>
+          ) : null}
           <PrintButton label={t.print} />
         </div>
       </section>

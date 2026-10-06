@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import type { ProviderOverviewRow } from '../lib/api';
+import { useWritable } from '../components/SessionProvider';
 import { IconAppointments, IconCalendar, IconClock, IconEdit, IconServices, IconTrash } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { weekdayNames } from '../lib/weekday-names';
@@ -132,12 +133,14 @@ function Switch({
   label: string;
   onChange: (next: boolean) => void;
 }) {
+  // Jira GRW-556 (follow-up) — shows who is in today and does not move, for a business suspended for non-payment.
+  const writable = useWritable();
   return (
     <label className="switch switch-lg" title={label}>
       <input
         type="checkbox"
         checked={on}
-        disabled={disabled}
+        disabled={disabled || !writable}
         aria-label={label}
         onChange={(e) => onChange(e.target.checked)}
       />
@@ -155,6 +158,7 @@ function Switch({
  * delete someone's booking history.
  */
 function RowMenu({ p, actions }: { p: ProviderOverviewRow; actions: RosterActions }) {
+  const writable = useWritable();
   const t = useTranslations('staff.row');
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -178,6 +182,8 @@ function RowMenu({ p, actions }: { p: ProviderOverviewRow; actions: RosterAction
     fn();
   };
 
+  // Jira GRW-556 (follow-up) — every item here edits or removes.
+  if (!writable) return null;
   return (
     <div className="staff-menu-wrap" ref={wrapRef}>
       <button
@@ -235,6 +241,7 @@ function StaffRow({
 }) {
   const t = useTranslations('staff');
   const locale = useLocale();
+  const writable = useWritable();
   const busy = actions.busyId === p.id;
   const segments = shiftSegments(p);
   const freeAllDay = !off && p.todayBookings === 0;
@@ -293,9 +300,12 @@ function StaffRow({
         ) : (
           <span className="staff-toggle-label">{t('row.inactive')}</span>
         )}
-        <button type="button" className="row-edit-btn" onClick={() => actions.onEdit(p)}>
-          <IconEdit /> {t('row.edit')}
-        </button>
+        {/* Jira GRW-556 (follow-up) — Edit and Remove are writes; the name above still opens their details to read. */}
+        {writable && (
+          <button type="button" className="row-edit-btn" onClick={() => actions.onEdit(p)}>
+            <IconEdit /> {t('row.edit')}
+          </button>
+        )}
         <RowMenu p={p} actions={actions} />
       </div>
     </div>
@@ -387,6 +397,7 @@ export function StaffActionSheet({
   onClose: () => void;
 }) {
   const t = useTranslations('staff.row');
+  const writable = useWritable();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
   const run = (fn: () => void) => () => {
@@ -435,8 +446,8 @@ export function StaffActionSheet({
           <IconServices /> {t('servicesSkills')}
         </button>
 
-        <div className="staff-menu-divider" />
-        {p.active ? (
+        {writable && <div className="staff-menu-divider" />}
+        {!writable ? null : p.active ? (
           <button type="button" className="sheet-item sheet-danger" onClick={run(() => actions.onSetActive(p, false))}>
             <IconTrash /> {t('removeFromTeam')}
           </button>

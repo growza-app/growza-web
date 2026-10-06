@@ -1,17 +1,18 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
 import { toWeekdayRows, WeekdayHoursEditor } from '../../components/WeekdayHoursEditor';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 export function WorkingHoursForm({ initial, branchName = null }: { initial: SettingsSummary; branchName?: string | null }) {
   const t = useTranslations('settingsHours');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/settings');
   // Jira GRW-230 — null: the business's hours; a branch id: that branch's own.
   const branchId = initial.scope.locationId;
   // Jira GRW-396 — after a save the note above the form ("uses the business's hours" / "has its own") is redrawn.
-  const router = useRouter();
   const [rows, setRows] = useState(() => toWeekdayRows(initial.workingHours));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +41,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
     try {
       await api.updateBookingRules({ attendanceLateGraceMin: graceNum }, branchId);
       setGraceSaved(true);
-      router.refresh();
+      closeForm();
     } catch {
       setGraceError(t('errors.saveFailed'));
     } finally {
@@ -67,7 +68,7 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
         branchId,
       );
       setSaved(true);
-      router.refresh();
+      closeForm();
     } catch {
       setError(t('errors.saveFailed'));
     } finally {

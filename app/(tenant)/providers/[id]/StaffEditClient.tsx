@@ -23,6 +23,9 @@ import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { avatarTone, initials } from '../StaffRoster';
 import { useLabel } from '../../components/LabelsProvider';
+import { ReadOnlyFields } from '../../components/ReadOnlyFields';
+import { useWritable } from '../../components/SessionProvider';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 function rowsEqual(a: WeekdayRow[], b: WeekdayRow[]): boolean {
   return (
@@ -59,6 +62,8 @@ export function StaffEditClient({
   branches?: Array<{ id: string; name: string }>;
 }) {
   const t = useTranslations('staffEdit');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/providers');
   const ts = useTranslations('staff');
   const tStatus = useTranslations('status');
   const tCommon = useTranslations('common');
@@ -70,6 +75,8 @@ export function StaffEditClient({
   const providerWord = pickNoun(locale, useLabel('provider', t('staffMember')), t('staffMember'));
   const staffTitle = pickNoun(locale, staffWord, tn('staffTitle'));
   const router = useRouter();
+  // Jira GRW-556 (follow-up) — a business suspended for non-payment reads this page: values shown, nothing editable, no Save.
+  const writable = useWritable();
   const [detail, setDetail] = useState(initialDetail);
 
   const [displayName, setDisplayName] = useState(detail.displayName);
@@ -236,7 +243,9 @@ export function StaffEditClient({
       setSkillsOnMove('match');
       resetFrom(await api.providerDetail(detail.id));
       setSaved(true);
-      router.refresh();
+      // A branch move that left skills to set by hand is said on THIS page, so it stays open for that one case.
+      if (moved?.unmatchedSkills?.length) router.refresh();
+      else closeForm();
     } catch (e) {
       // Jira GRW-478 — the server's reason (a branch move refused, a clash of hours), not "save failed".
       setError(reasonOr(e, t('errors.saveFailed')));
@@ -318,7 +327,7 @@ export function StaffEditClient({
               <input
                 type="checkbox"
                 checked={!unavailableToday}
-                disabled={busy}
+                disabled={busy || !writable}
                 aria-label={ts('row.availableToday', { name: detail.displayName })}
                 onChange={(e) => setAvailableToday(e.target.checked)}
               />
@@ -327,18 +336,23 @@ export function StaffEditClient({
               </span>
             </label>
           </div>
-          <button type="button" className="btn btn-ghost" onClick={() => router.push('/providers')} disabled={busy}>
-            {t('cancel')}
-          </button>
-          <button type="button" className="btn" onClick={save} disabled={busy || !dirty}>
-            {busy ? t('saving') : saved && !dirty ? t('saved') : t('saveChanges')}
-          </button>
+          {writable && (
+            <>
+              <button type="button" className="btn btn-ghost" onClick={() => router.push('/providers')} disabled={busy}>
+                {t('cancel')}
+              </button>
+              <button type="button" className="btn" onClick={save} disabled={busy || !dirty}>
+                {busy ? t('saving') : saved && !dirty ? t('saved') : t('saveChanges')}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       <div className="page-body">
         {error && <div role="alert" className="field-error edit-banner">{error}</div>}
 
+        <ReadOnlyFields>
         <div className="edit-layout">
           <div className="edit-main">
             <section className="card edit-card">
@@ -559,6 +573,7 @@ export function StaffEditClient({
             </section>
           </aside>
         </div>
+        </ReadOnlyFields>
       </div>
 
       {confirmRemove && (
@@ -575,11 +590,13 @@ export function StaffEditClient({
       )}
 
       {/* Mobile only: Save can never scroll out of reach. */}
-      <div className="edit-savebar">
-        <button type="button" className="btn edit-savebar-btn" onClick={save} disabled={busy || !dirty}>
-          {busy ? t('saving') : saved && !dirty ? t('saved') : t('saveChanges')}
-        </button>
-      </div>
+      {writable && (
+        <div className="edit-savebar">
+          <button type="button" className="btn edit-savebar-btn" onClick={save} disabled={busy || !dirty}>
+            {busy ? t('saving') : saved && !dirty ? t('saved') : t('saveChanges')}
+          </button>
+        </div>
+      )}
     </>
   );
 }

@@ -209,10 +209,10 @@ describe("the phone's card order (Jira GRW-486)", () => {
     expect(owner).not.toMatch(/hm-area-attention hm-desktop/);
   });
 
-  it('reads money, shortcuts, queue, what needs you, the day', () => {
+  it('reads money, shortcuts, queue, the day, what needs you', () => {
     // Shortcuts sit second by the owner's own call (2026-10-04) — Packages, Offers and Free times
-    // have no tab, so this grid is how they get into the app.
-    const order = ['hero', 'links', 'queue', 'attention', 'bookings'].map(at);
+    // have no tab, so this grid is how they get into the app. What needs you comes after the day (owner, 2026-10-06).
+    const order = ['hero', 'links', 'queue', 'bookings', 'attention'].map(at);
     expect(order.every((n) => n > 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });

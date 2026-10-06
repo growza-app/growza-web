@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
 import { IconPlus } from '../components/icons';
+import { useWritable } from '../components/SessionProvider';
 
 const OFFER_TITLE_MAX = 60;
 const OFFER_DESCRIPTION_MAX = 120;
@@ -20,6 +21,8 @@ const OFFER_DESCRIPTION_MAX = 120;
 export function CreateOfferMenu() {
   const t = useTranslations('offers.menu');
   const [showOfferModal, setShowOfferModal] = useState(false);
+  // Jira GRW-556 (follow-up) — a business suspended for non-payment reads its offers and makes none.
+  if (!useWritable()) return null;
 
   return (
     <div className="create-offer-menu">

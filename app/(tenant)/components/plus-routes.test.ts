@@ -12,7 +12,7 @@ const shows = (path: string) => new RegExp(source).test(path);
 
 describe('where the floating plus is drawn', () => {
   it('is gated by the allow-list, and by who may book', () => {
-    expect(chrome).toMatch(/mayBook && PLUS_ROUTE_RE\.test\(pathname\) \?/);
+    expect(chrome).toMatch(/mayBook && live && PLUS_ROUTE_RE\.test\(pathname\) \?/);
   });
 
   it('shows on Home, Bookings and Clients', () => {

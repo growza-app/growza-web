@@ -7,6 +7,7 @@ import { IconCheck, IconChevronRight, IconMapPin, IconPhone, IconShop } from '..
 import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -71,6 +72,8 @@ export function ProfileForm({
   branchName?: string | null;
 }) {
   const t = useTranslations('settingsProfile');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/settings');
   const tCommon = useTranslations('common');
   const checkPhone = usePhoneProblem();
   const branchId = initial.scope.locationId;
@@ -124,6 +127,7 @@ export function ProfileForm({
         setSavedFields(fieldsOf(updated));
         setF(fieldsOf(updated));
         setSaved(true);
+        closeForm();
       } catch (e) {
         // The server's own reason for anything it refused — a taken name, a timezone it does not know.
         setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.saveFailed'));
@@ -155,6 +159,7 @@ export function ProfileForm({
       setSavedFields(next);
       setF(next);
       setSaved(true);
+      closeForm();
     } catch (e) {
       setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.saveFailed'));
     } finally {

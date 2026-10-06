@@ -9,7 +9,7 @@ import { LabelsProvider } from '../components/LabelsProvider';
 import { StaffEditClient } from './[id]/StaffEditClient';
 import { StaffGroup, type RosterActions } from './StaffRoster';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: () => {}, push: () => {} }) }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: () => {}, push: () => {} }), useSearchParams: () => new URLSearchParams() }));
 
 /** Jira GRW-357 — the staff screens render in both languages, from real components. */
 const wrap = (locale: 'en' | 'hi', child: ReturnType<typeof createElement>) =>
