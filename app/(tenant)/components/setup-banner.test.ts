@@ -21,8 +21,7 @@ const here = (p: string) => readFileSync(path.resolve(path.dirname(fileURLToPath
 const code = (p: string) => here(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
 type Item = { key: string; met: boolean; branchName?: string };
-const render = (items: Item[], { canAct = true, lang = 'en' as const } = {}) =>
-  renderToStaticMarkup(createElement(SetupBanner, { setup: { items }, lang, canAct }));
+const render = (items: Item[], { lang = 'en' as const } = {}) => renderToStaticMarkup(createElement(SetupBanner, { setup: { items }, lang }));
 const glow: Item[] = [
   { key: 'services', met: true },
   { key: 'providers', met: true },
@@ -45,12 +44,6 @@ describe('the setup banner', () => {
     expect(html).toContain('href="/settings/working-hours"');
     expect(html).toContain('href="/providers"');
     expect(html).not.toContain('href="/services"');
-  });
-
-  it('a receptionist or stylist is told, not sent to screens they cannot open', () => {
-    const html = render(glow, { canAct: false });
-    expect(html).not.toContain('href=');
-    expect(html).toContain('The owner is finishing these');
   });
 
   it('the staff-hours hint sits under that line only', () => {
@@ -79,7 +72,7 @@ describe('the setup banner', () => {
     const html = render(glow.map((i) => ({ ...i, met: true })));
     expect(html).toContain('4 of 4 done');
     expect(html).toContain('Everything is added');
-    expect(renderToStaticMarkup(createElement(SetupBanner, { setup: null, lang: 'en', canAct: true }))).toBe('');
+    expect(renderToStaticMarkup(createElement(SetupBanner, { setup: null, lang: 'en' }))).toBe('');
   });
 
   it('reads in Hindi', () => {
@@ -100,11 +93,11 @@ describe('the setup banner', () => {
     expect(src).toMatch(/onClick=\{\(\) => \{\s*if \(window\.matchMedia\('\(max-width: 860px\)'\)\.matches\) setOpen\(false\);/);
   });
 
-  it('is wired in the layout, owner-only links, and the sheet follows the rules', () => {
+  it('is wired in the layout (the API sends it to the owner only), and the sheet follows the rules', () => {
     const layout = code('../layout.tsx');
     const css = here('../styles/99-setup-banner.css');
     expect(layout).toMatch(/setup = me\.setup \?\? null;/);
-    expect(layout).toMatch(/<SetupBanner setup=\{setup\} lang=\{lang\} canAct=\{role === null \|\| role === 'owner'\} \/>/);
+    expect(layout).toMatch(/<SetupBanner setup=\{setup\} lang=\{lang\} \/>/);
     expect(css).not.toMatch(/font-size:\s*\d+px/);
     expect(css).not.toMatch(/#[0-9a-f]{6}|rgba\(/i);
     expect(css).toMatch(/\.setup-row \{[^}]*min-height: 44px;/);

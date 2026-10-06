@@ -283,7 +283,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 */}
               <div className="content-banners">
                 <BillingBanner billing={billing} canPayOnline={canPayOnline} />
-                <SetupBanner setup={setup} lang={lang} canAct={role === null || role === 'owner'} />
+                <SetupBanner setup={setup} lang={lang} />
               </div>
               {/*
                 * Jira GRW-192 — one `<main>`, in the shell, for every screen.

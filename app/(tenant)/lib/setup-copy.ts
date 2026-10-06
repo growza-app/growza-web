@@ -17,11 +17,6 @@ export function setupCopy(lang: Lang) {
       'It cannot take bookings yet. Finish these, and the Growza team will switch it on.',
       'अभी इसमें बुकिंग नहीं ले सकते। ये पूरे करें, फिर Growza टीम इसे चालू कर देगी।',
     ),
-    /** For a receptionist or stylist: the steps are the owner's, so they are told, not sent to screens they cannot open. */
-    introStaff: S(
-      'The owner is finishing these. Bookings start once the Growza team switches the business on.',
-      'मालिक ये पूरे कर रहे हैं। Growza टीम के बिज़नेस चालू करने के बाद बुकिंग शुरू होगी।',
-    ),
     /** The folded banner's second line: the first thing still to do. */
     next: (what: string) => S(`Next: ${what}`, `अगला: ${what}`),
     allDone: S(

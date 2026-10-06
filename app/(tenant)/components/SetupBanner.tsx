@@ -15,23 +15,14 @@ const known = (item: SetupItem) => KNOWN.has(item.key) || item.key.startsWith('b
 /**
  * Jira GRW-516 — shown in place of the billing banner while a business is `provisioning`.
  *
- * The whole checklist, not only what is missing: what is already done reads as progress, and what is left names
- * its screen. Only the owner gets links — the screens are the owner's, and a receptionist sent to one meets a
- * refusal. Renders nothing for a live business, and nothing when the API could not say.
+ * The whole checklist, not only what is missing: what is already done reads as progress, and what is left links to
+ * its screen. The owner's alone: `/me` sends it to nobody else, since a receptionist or stylist can do none of it.
+ * Renders nothing for a live business, and nothing when the API could not say.
  *
  * Folded by default on a phone: the banner sits above every screen, and the open list is taller than half of a
  * small phone. Folded, it still says how far along the setup is and what comes next. On a wider screen it opens.
  */
-export function SetupBanner({
-  setup,
-  lang,
-  canAct,
-}: {
-  setup: { items: SetupItem[] } | null | undefined;
-  lang: Lang;
-  /** Owner (or the dev session with no member, treated as owner): the rows link to their screens. */
-  canAct: boolean;
-}): ReactNode {
+export function SetupBanner({ setup, lang }: { setup: { items: SetupItem[] } | null | undefined; lang: Lang }): ReactNode {
   const [open, setOpen] = useState(false);
   useLayoutEffect(() => {
     if (!window.matchMedia('(max-width: 860px)').matches) setOpen(true);
@@ -66,11 +57,11 @@ export function SetupBanner({
         </span>
       </summary>
       <p className="setup-intro" role="status">
-        {firstLeft ? (canAct ? c.intro : c.introStaff) : c.allDone}
+        {firstLeft ? c.intro : c.allDone}
       </p>
       <ul className="setup-list">
         {items.map((item) => {
-          const href = canAct && !item.met ? setupHref(item.key) : null;
+          const href = item.met ? null : setupHref(item.key);
           const row = (
             <>
               <span className={item.met ? 'setup-dot setup-dot-done' : 'setup-dot'} aria-hidden>
