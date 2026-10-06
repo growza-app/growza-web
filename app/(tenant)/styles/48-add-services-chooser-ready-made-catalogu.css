@@ -384,6 +384,17 @@
   background: var(--accent-soft);
 }
 
+/*
+ * The toolbar's two buttons are primaries: 101-clay-app.css paints every plain `.btn` green, and they sit on that
+ * green with `.cat-edit-btn`'s dark-green text (the white-surface button this class was written as) — unreadable.
+ * White on the green, like every other primary. The row buttons below are `btn-ghost`, so they stay white.
+ */
+.cat-toolbar .cat-edit-btn,
+.cat-toolbar .cat-edit-btn:hover {
+  color: #fff;
+  border-color: transparent;
+}
+
 /* Both row actions in one group, so the rightmost still lands on the 15px inset
    that "Clear all" sits on. */
 .cat-row-actions {

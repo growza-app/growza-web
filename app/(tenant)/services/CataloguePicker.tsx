@@ -512,7 +512,7 @@ export function CataloguePicker({
                         </span>
                       </div>
                       <div className="cat-row-actions">
-                        <button type="button" className="btn cat-edit-btn" onClick={() => openEditor(c.name)}>
+                        <button type="button" className="btn btn-ghost cat-edit-btn" onClick={() => openEditor(c.name)}>
                           {t('viewEdit')}
                         </button>
                         {/* Spelled out rather than a bin icon: an unlabelled glyph is
