@@ -76,10 +76,12 @@ export const IconChat = () => (
   </svg>
 );
 
+/** A megaphone — an offer is an announcement to clients. (A tag read as "price", and a percent sign is already Clients' repeat rate.) */
 export const IconOffers = () => (
   <svg {...base}>
-    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-    <line x1="7" y1="7" x2="7.01" y2="7" />
+    <path d="M3 10v4h3l8 4V6L6 10H3z" />
+    <path d="M7 14l1.5 6h2.5l-1-5" />
+    <path d="M18 9a4 4 0 0 1 0 6" />
   </svg>
 );
 
