@@ -34,6 +34,7 @@ describe('the setup banner', () => {
   it('a missing item links to its screen; a done one is not a link', () => {
     expect(banner).toMatch(/const href = item\.met \? null : setupHref\(item\.key\);/);
     expect(setupHref('services')).toBe('/services');
+    expect(setupHref('salon_hours')).toBe('/settings/working-hours');
     expect(setupHref('working_hours')).toBe('/providers');
     expect(setupHref('branch:abc')).toBe('/providers');
   });
@@ -43,6 +44,11 @@ describe('the setup banner', () => {
     expect(setupCopy('en').workingHoursHint).toMatch(/Salon hours alone are not enough/);
   });
 
+  it("asks for the salon's own hours as well as the staff's, each with its own line", () => {
+    expect(banner).toMatch(/item\.key === 'salon_hours'\s*\? c\.salonHours/);
+    expect(setupCopy('en').salonHours).not.toBe(setupCopy('en').workingHours);
+  });
+
   it('renders nothing when the API could not say, or the business is live', () => {
     expect(banner).toMatch(/if \(!setup \|\| setup\.items\.length === 0\) return null;/);
   });
@@ -50,7 +56,7 @@ describe('the setup banner', () => {
   it('has its words in both languages, and no inline sizes', () => {
     for (const lang of ['en', 'hi'] as const) {
       const c = setupCopy(lang);
-      expect(c.title && c.intro && c.allDone && c.workingHours && c.workingHoursHint && c.goLive).toBeTruthy();
+      expect(c.title && c.intro && c.allDone && c.salonHours && c.workingHours && c.workingHoursHint && c.goLive).toBeTruthy();
       expect(c.progress(1, 4)).toMatch(/1/);
     }
     // CLAUDE.md: type in rem, no px font-size; icons are inline SVG, never a glyph.

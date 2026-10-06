@@ -25,10 +25,12 @@ export function setupCopy(lang: Lang) {
     todo: S('To do', 'बाकी'),
     services: S('Add at least one service', 'कम से कम एक सेवा जोड़ें'),
     providers: S('Add a member of staff', 'एक स्टाफ सदस्य जोड़ें'),
+    salonHours: S("Set your salon's opening hours", 'अपने सैलून के खुलने का समय तय करें'),
     workingHours: S("Set a staff member's working hours", 'किसी स्टाफ सदस्य के काम के घंटे तय करें'),
     /**
-     * Under the working-hours line only: the salon's own opening hours (Settings) do not count here, because
-     * bookings are made against a person's hours. Owners set the salon's hours first and wonder why this stays open.
+     * Under the staff working-hours line only: the salon's opening hours (the line above it) are a separate item,
+     * because bookings are made against a person's own days and times. Owners set the salon's hours and wonder why
+     * this one stays open.
      */
     workingHoursHint: S(
       'Open a staff member and save their days and times. Salon hours alone are not enough.',
@@ -43,6 +45,7 @@ export function setupCopy(lang: Lang) {
 /** Where an owner goes to do each thing — one screen per item, nothing else. */
 export function setupHref(key: string): string | null {
   if (key === 'services') return '/services';
+  if (key === 'salon_hours') return '/settings/working-hours';
   if (key === 'providers' || key === 'working_hours' || key.startsWith('branch:')) return '/providers';
   return null;
 }

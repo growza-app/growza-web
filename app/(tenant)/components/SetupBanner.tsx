@@ -22,9 +22,11 @@ export function SetupBanner({ setup, lang }: { setup: { items: SetupItem[] } | n
       ? c.services
       : item.key === 'providers'
         ? c.providers
-        : item.key === 'working_hours'
-          ? c.workingHours
-          : c.branchStaff(item.branchName ?? '');
+        : item.key === 'salon_hours'
+          ? c.salonHours
+          : item.key === 'working_hours'
+            ? c.workingHours
+            : c.branchStaff(item.branchName ?? '');
   const done = setup.items.filter((i) => i.met).length;
   const total = setup.items.length;
   const allDone = done === total;
