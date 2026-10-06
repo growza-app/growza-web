@@ -314,7 +314,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       notifications: S('Notifications', 'सूचनाएं'),
       reports: S(copy.reports.navLabel, 'रिपोर्ट'),
       freeTimes: S(copy.nav.availability, 'खाली समय'),
-      billing: S('Billing', 'बिलिंग'),
+      billing: S('Billing', 'बिल'),
       whatsapp: 'WhatsApp',
       settings: S(copy.nav.settings, 'सेटिंग'),
       more: S(copy.nav.more, 'और'),
