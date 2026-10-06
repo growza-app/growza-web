@@ -5,8 +5,13 @@
  * stays the same.
  *
  * Jira GRW-556 — except `canSee` and `visibleItems`, which take a fourth argument: whether the business is live.
- * They stay the one chokepoint every nav surface asks (the sidebar, the tab bar, the More menu, Home's tiles, the
- * screen guard), so "a business being set up sees four destinations" is decided here and not four times.
+ * They stay the one chokepoint every nav SURFACE asks (the sidebar, the tab bar, the More menu, Home's tiles), so
+ * "a business being set up offers four destinations" is decided here and not four times.
+ *
+ * The screen guards are deliberately not in that list. `guardScreen` asks this WITHOUT the flag and tests the
+ * status itself, because its two refusals land somewhere different: a role that may never see a screen goes Home,
+ * and a screen that merely opens later goes to the page that says so. Folding them together would tell an owner
+ * their own Offers screen does not exist.
  */
 import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';

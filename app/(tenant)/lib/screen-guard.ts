@@ -35,12 +35,19 @@ export async function guardScreen(href: string): Promise<void> {
     return;
   }
   // Outside the try: `redirect()` works by throwing.
+  // The role question first, and asked WITHOUT the live flag: the two refusals are different screens, and a role
+  // that may never see this one should be told that rather than that it opens later.
   if (!canSee(href, role, reportTabs)) redirect('/');
-  if (!live && !isSetupDestination(href)) redirect(NOT_LIVE_PATH);
+  if (closedUntilGoLive(live, href)) redirect(NOT_LIVE_PATH);
 }
 
 /** Jira GRW-556 — where a screen that opens at go-live sends somebody who reached it by its address. */
 export const NOT_LIVE_PATH = '/not-live-yet';
+
+/** The one question both guards ask, so they cannot answer it differently. */
+function closedUntilGoLive(live: boolean, href: string): boolean {
+  return !live && !isSetupDestination(href);
+}
 
 /**
  * Jira GRW-556 — the same `/me`, asked only whether the business is live.
@@ -58,5 +65,5 @@ export async function guardLive(href: string): Promise<void> {
   } catch {
     return;
   }
-  if (!live && !isSetupDestination(href)) redirect(NOT_LIVE_PATH);
+  if (closedUntilGoLive(live, href)) redirect(NOT_LIVE_PATH);
 }

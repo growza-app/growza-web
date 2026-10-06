@@ -99,6 +99,15 @@ export function BottomNav({
   const visible = visibleItems(items, role, reportTabs, live);
   const centre = !stylist && onCentre;
 
+  /*
+   * Jira GRW-556 — a bar with one tab is not a tab bar.
+   *
+   * Before go-live the bar is the four setup screens, and a receptionist or a stylist may see none of them: the
+   * role filter above left them a single full-width "Home" capsule, pointing at the screen they were already on.
+   * Nothing to switch between means no bar — the same answer this component already gives New booking below.
+   */
+  if (visible.length < 2 && !centre) return null;
+
   const tab = (item: (typeof visible)[number]) => {
     const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
     // Jira GRW-338 — the Notifications tab carries the count, the way the desktop bell does; past 9 it reads "9+".

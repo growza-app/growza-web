@@ -88,9 +88,22 @@ export default async function DashboardPage() {
 
   const kind = homeKind(role);
 
-  // Jira GRW-556 — until the business is live a receptionist or stylist has nothing to run: the owner is setting it up.
-  if (!isLive(me.tenant?.status) && kind !== 'owner') {
-    return <NotLiveHome {...common} locationName={me.member?.locationName ?? me.tenant?.locationName ?? null} />;
+  /*
+   * Jira GRW-556 — until the business is live there is no day to show, for anybody: the owner is still setting it
+   * up and nobody can trade. Here, above every read below, and not inside a role's Home: gating it in `OwnerHome`
+   * meant the eight reads below still ran, and `OwnerHome`'s own two re-ran in the browser, for a screen that then
+   * drew three links.
+   */
+  if (!isLive(me.tenant?.status)) {
+    return (
+      <NotLiveHome
+        {...common}
+        role={role}
+        reportTabs={me.reportTabs}
+        // One branch: say which salon. Several: naming one of them on a screen about all of them is a lie.
+        locationName={(me.tenant?.branchCount ?? 1) > 1 ? null : (me.member?.locationName ?? me.tenant?.locationName ?? null)}
+      />
+    );
   }
 
   if (kind === 'stylist') {

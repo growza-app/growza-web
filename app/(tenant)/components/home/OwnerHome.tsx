@@ -46,7 +46,6 @@ import { BranchCarousel } from './BranchCarousel';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
-import { useLive } from '../SessionProvider';
 
 /**
  * Jira GRW-222 — the owner's Home.
@@ -179,8 +178,6 @@ export interface OwnerHomeProps {
 
 export function OwnerHome(p: OwnerHomeProps) {
   const t = homeCopy(p.lang, p.labels);
-  // Jira GRW-556 — false while the business is being set up: Home then shows only the places setup happens.
-  const live = useLive();
   // Jira GRW-418 — the board's own words, the same ones the desk's Home gives it.
   const w = useTokenWords();
   // Jira GRW-351 — moves on once a minute, so an alert appears at its tenth minute without waiting for a reload.
@@ -454,32 +451,7 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
     { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics />, tone: 'amber' },
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
-  ].filter((l) => canSee(l.href, p.role, p.reportTabs, live));
-
-  /*
-   * Jira GRW-556 — a business that is not live yet has no day to show: no takings, no queue, nothing to mark done. Home
-   * is the setup banner (above, in the shell) and the few places setup happens, and nothing that could not be used.
-   * After every hook, so the early return cannot change their order.
-   */
-  if (!live) {
-    return (
-      <>
-        <HomeHeader
-          t={t}
-          title={t.greeting(p.greetingPart)}
-          sub={t.ownerSub(p.businessName, false)}
-          businessName={p.businessName}
-          locationName={multiBranch ? null : locationLine}
-          dateLabel={p.dateLabel}
-        />
-        <div className="page-body hm-page">
-          <Card title={t.quickLinks}>
-            <QuickTiles items={links} />
-          </Card>
-        </div>
-      </>
-    );
-  }
+  ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
   return (
     <>
