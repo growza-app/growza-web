@@ -33,10 +33,9 @@ describe('nothing picked after the branch may change it', () => {
 });
 
 describe('the client picker is the branch’s own', () => {
-  it('the default list asks for this branch, and again when the branch changes', () => {
-    expect(code).toMatch(/\.customers\(\{ limit: 20, location: listBranch \}\)/);
-    const effect = code.slice(code.indexOf('.customers({ limit: 20'));
-    expect(effect.slice(0, 400)).toMatch(/\}, \[listBranch\]\)/);
+  it('there is no default list — a client is found by typing (Jira GRW-517)', () => {
+    // The 20-client read, and the effect that re-ran it when the branch changed, went with the Previous clients list.
+    expect(code).not.toMatch(/\.customers\(\{ limit: 20/);
   });
 
   it('the search does too', () => {
@@ -44,19 +43,23 @@ describe('the client picker is the branch’s own', () => {
     // And re-run for a new branch: the deps carry it. (GRW-454 added `branches.length` for the wider look.)
     expect(code).toMatch(/\}, \[term, listBranch, branches\.length\]\)/);
   });
-
-  it('a branch’s list is cleared while the next branch’s is on its way', () => {
-    // `null` is "still loading" in this sheet; leaving the old branch's rows up would offer clients to book at a
-    // branch they are not clients of.
-    const effect = code.slice(code.indexOf('useEffect'), code.indexOf('.customers({ limit: 20'));
-    expect(effect.slice(-200)).toMatch(/setRecent\(null\)/);
-  });
 });
 
 describe('what the branch step shows', () => {
   it('says the branch once it is settled, rather than asking again', () => {
     expect(code).toMatch(/const branchSettled = Boolean\(tokenBranch\) \|\| \('client' in stage && stage\.client\.kind === 'existing'\)/);
-    expect(code).toMatch(/\{branchSettled && branchNameOf\(listBranch \?\? undefined\) \?/);
+    // Owner's call (2026-10-04): a line, not a "Which branch?" heading over a single chip that answers
+    // it. A question with one possible answer is not a question — `entering-data.md` asks for the
+    // opposite, pre-gather what you can.
+    expect(code).toMatch(/\{branchSettled && branches\.length > 1 && branchNameOf\(listBranch \?\? undefined\) \?/);
+    expect(code).toMatch(/<p className="wi-at-branch">\{nv\.atBranch\(/);
+    // The chip that pretended to be a choice is gone; nothing else in this file renders that markup.
+    expect(code).not.toMatch(/wi-chip wi-chip-on" aria-current/);
+  });
+
+  it('a one-branch salon is told nothing — there is nothing to tell', () => {
+    // The line is worth a row only when there is more than one branch it could have been.
+    expect(code).toMatch(/branchSettled && branches\.length > 1/);
   });
 
   it('still asks while the answer is open — a new client becomes a client of whichever branch is chosen', () => {
@@ -69,7 +72,7 @@ describe('what the branch step shows', () => {
  *
  * GRW-453 made the picker one branch's own, which left no way to say "they come to Indiranagar" without
  * retyping a name and a number already on file. This offers them — apart from the branch's own rows, and only
- * once something has been typed, because putting them in the browsable list is the bug GRW-453 fixed.
+ * once something has been typed, because putting them in a browsable list was the bug GRW-453 fixed (the list itself went in GRW-517).
  */
 describe('bringing a client over from another branch', () => {
   it('searches the other branches too, but only when there is more than one', () => {
@@ -82,11 +85,13 @@ describe('bringing a client over from another branch', () => {
     expect(code).toMatch(/setElsewhere\(page\.rows\.filter\(\(c\) => c\.locationId && c\.locationId !== listBranch\)\)/);
   });
 
-  it('offers them only against a typed search, never in the browsable list', () => {
-    expect(code).toMatch(/\{term\.trim\(\)\.length >= SEARCH_MIN_CHARS && elsewhere\.length > 0 \?/);
-    // The browsable list is `recent`, and `recent` is this branch's alone.
-    const browsable = code.slice(code.indexOf('{term.trim().length < SEARCH_MIN_CHARS ?'));
-    expect(browsable.slice(0, 900)).not.toMatch(/elsewhere/);
+  it('offers them only against a typed search', () => {
+    // Jira GRW-520 — they live in the dropdown, which is only drawn for a typed search of enough characters.
+    expect(code).toMatch(/const showDrop = comboOpen && term\.trim\(\)\.length >= SEARCH_MIN_CHARS;/);
+    expect(code).toMatch(/\{showDrop \? \(/);
+    expect(code).toMatch(/\{elsewhere\.length > 0 \? \(/);
+    // Jira GRW-517 — there is no browsable list at all now; a client is found by typing.
+    expect(code).not.toMatch(/\{term\.trim\(\)\.length < SEARCH_MIN_CHARS \?/);
   });
 
   it('clears them when the search is emptied', () => {
@@ -96,17 +101,21 @@ describe('bringing a client over from another branch', () => {
 
   it('does not pick them — the booking must use a client of its own branch', () => {
     // `bringHere`, not `pickClient`: a row from another branch opens the add step instead of becoming the client.
-    const row = code.slice(code.indexOf('elsewhere.map('));
-    expect(row.slice(0, 600)).toMatch(/onClick=\{\(\) => bringHere\(c\)\}/);
-    expect(row.slice(0, 600)).not.toMatch(/pickClient/);
+    const row = code.slice(code.indexOf('elsewhere.map((c, j) =>'));
+    expect(row.slice(0, 1400)).toMatch(/onClick=\{\(\) => bringHere\(c\)\}/);
+    expect(row.slice(0, 1400)).not.toMatch(/pickClient/);
+    // And the keyboard path agrees: Enter on one of these brings them, it does not pick them.
+    expect(code).toMatch(/if \(o\.bring\) bringHere\(o\.c\);\s*else pickClient\(o\.c\);/);
   });
 
-  it('carries their name and number into the add step, the number as national digits', () => {
+  it('carries their name and number into the add block, the number as national digits', () => {
     const fn = code.slice(code.indexOf('const bringHere ='));
     expect(fn.slice(0, 300)).toMatch(/setNewName\(c\.name\?\.trim\(\) \?\? ''\)/);
     // `fromStoredPhone`, not the stored `+91…`: PhoneField takes the national digits only.
     expect(fn.slice(0, 300)).toMatch(/setNewPhone\(fromStoredPhone\(c\.waPhone\)\)/);
-    expect(fn.slice(0, 300)).toMatch(/setStage\(\{ step: 'newClient' \}\)/);
+    // Jira GRW-514 — there is no add step any more: they stay on the first screen, with the block filled.
+    expect(fn.slice(0, 700)).toMatch(/setStage\(\{ step: 'client' \}\)/);
+    expect(fn.slice(0, 700)).not.toMatch(/newClient/);
   });
 
   it('names the branch they are being added to', () => {

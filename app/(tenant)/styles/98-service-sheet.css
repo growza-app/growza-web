@@ -29,7 +29,7 @@
 }
 
 .sheet-head-title {
-  font-size: 16.5px;
+  font-size: 1.03125rem;
   font-weight: 600;
   letter-spacing: -0.015em;
   white-space: nowrap;
@@ -40,7 +40,7 @@
   border: 0;
   background: transparent;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--accent-deep);
   cursor: pointer;
   /* 44px targets, with the padding inside the button rather than around it. */
@@ -74,7 +74,7 @@
 
 .sheet-label {
   padding: 22px 4px 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.05em;
@@ -91,7 +91,7 @@
 /* The footnote: what the group above it actually does. */
 .sheet-foot {
   padding: 7px 4px 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.4;
   color: var(--muted);
 }
@@ -114,7 +114,7 @@
 
 .sheet-row-label {
   flex: none;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .sheet-row-value {
@@ -165,7 +165,7 @@
   background: var(--surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   font-family: inherit;
-  font-size: 19px;
+  font-size: 1.1875rem;
   line-height: 1;
   color: var(--text);
   cursor: pointer;
@@ -183,7 +183,7 @@
   border: 0;
   background: transparent;
   font-family: inherit;
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   font-weight: 600;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -198,7 +198,7 @@
 }
 
 .sheet-price-symbol {
-  font-size: 22px;
+  font-size: 1.375rem;
   color: var(--muted);
 }
 
@@ -208,7 +208,7 @@
   border: 0;
   background: transparent;
   font-family: inherit;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -254,13 +254,13 @@
 }
 
 .sheet-photo-action {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--accent-deep);
 }
 
 .sheet-photo-why {
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.35;
   color: var(--muted);
 }
@@ -271,7 +271,7 @@
   border: 0;
   background: transparent;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: #b91c1c;
   cursor: pointer;
 }
@@ -287,7 +287,7 @@
   border: 0;
   background: transparent;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--accent-deep);
   cursor: pointer;

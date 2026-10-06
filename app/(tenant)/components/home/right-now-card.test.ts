@@ -231,10 +231,11 @@ describe('the laptop grid (Jira GRW-348 · GRW-351)', () => {
     expect(css).toMatch(/\.hm-fit \.hm-now\s*\{\s*flex:\s*1 1 auto;\s*overflow-y:\s*auto;/);
   });
 
-  it('the money card keeps its one-row branch line (Jira GRW-394), and "+N" opens the header picker', () => {
+  it('the money card keeps its one-row branch line (Jira GRW-394), and "+N" opens the rest of it', () => {
     const hero = code('MoneyHero.tsx');
     expect(hero).toMatch(/const shown = branches\.length > 2 \? ranked\.slice\(0, 2\) : ranked;/);
-    expect(owner).toMatch(/onMoreBranches=\{\(\) => branchContext\.setPickerOpen\(true\)\}/);
+    // Jira GRW-485 — "+N" shows the branches it could not fit, rather than leaving for the picker.
+    expect(hero).toMatch(/onMore=\{\(\) => setBranchMenu\(true\)\}/);
     // A name picks through the same remembered choice as the header's picker.
     expect(owner).toMatch(/const pickBranch = \(next: string \| null\) => branchContext\.setBranch\(next\);/);
     expect(owner).toMatch(/onPickBranch=\{pickBranch\}/);

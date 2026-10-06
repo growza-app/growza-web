@@ -1,0 +1,104 @@
+/*
+ * Jira GRW-499 — the filter tabs in a 3D clay look.
+ *
+ * Clay is two moves: the track is pressed INTO the page (a dark inner shadow on the lower right, a light
+ * one on the upper left), and the active tab is a soft piece lifted OUT of it (a drop shadow beneath, a
+ * highlight on its upper left, a gentle shade on its lower right). Big radii do the rest: nothing has a
+ * corner.
+ *
+ * One block, loaded last, touching colour, radius and shadow only — never size or layout — so taking it
+ * out is deleting this file and its @import. Text colours are kept at 4.5:1 or better on what they sit on (the selected tab is white on green).
+ */
+
+.page-tabs {
+  background: #e3e9e5;
+  border-radius: 18px;
+  box-shadow:
+    inset 2px 2px 5px rgba(14, 51, 37, 0.12),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+}
+
+/*
+ * Jira GRW-501 — calmer: the radii came down 4px (track 22 to 18, tab 17 to 13) and the shadows about
+ * halved in offset, blur and strength. Still pressed-in and raised, no longer heavy.
+ */
+
+/*
+ * Jira GRW-500 — the change of tab eases, the way Linear's does.
+ *
+ * The raised piece is the tab's own ::before, so it can fade and settle (a gradient cannot be
+ * transitioned, an opacity and a scale can). 180ms on an ease-out curve that starts fast and lands soft:
+ * short enough never to make the owner wait, and no overshoot, because a bounce on a control used all day
+ * reads as a toy. Nothing queues: a transition retargets from wherever it is when the next tap lands.
+ */
+.page-tab {
+  position: relative;
+  isolation: isolate;
+  border-radius: 13px;
+  color: #4f5d56;
+  transition:
+    color 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(145deg, #178246, #126a38);
+  box-shadow:
+    2px 3px 6px rgba(14, 51, 37, 0.22),
+    -1px -1px 4px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.28),
+    inset -1px -2px 3px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.page-tab.active {
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+}
+
+.page-tab.active .page-tab-count {
+  color: #fff;
+}
+
+.page-tab.active::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Pressed: the whole piece sinks a little under the finger. */
+.page-tab:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-tab,
+  .page-tab::before {
+    transition: none;
+  }
+  .page-tab:active {
+    transform: none;
+  }
+}
+
+/*
+ * Jira GRW-502 — the selected tab is green on every strip, so "this one is chosen" looks the same
+ * everywhere. Home's switch and Reports' tabs already were (`--accent-deep`); the Bookings
+ * list/calendar toggle was a white piece, and now joins them (the walk-in sheet's Now / For later toggle went in GRW-519).
+ * White on #178246 is 4.9:1 and on #166534 is 7.1:1.
+ */
+.bk-view-tab.is-active {
+  background: linear-gradient(145deg, #178246, #126a38);
+  color: #fff;
+  box-shadow: 1px 2px 4px rgba(14, 51, 37, 0.22);
+}

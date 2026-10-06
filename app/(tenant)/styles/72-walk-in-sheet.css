@@ -33,8 +33,8 @@
 }
 
 .wi-close svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 /*
@@ -69,8 +69,8 @@ input.wi-search-input-plain {
 }
 
 .wi-search-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
 }
 
 /* `.picker-row` is a div in ComboBuilder; here it is a button, so it needs the
@@ -84,6 +84,10 @@ input.wi-search-input-plain {
   text-align: left;
   font: inherit;
   color: inherit;
+  /* Jira GRW-515 — a one-line row (the Previous clients list is names only now) is still a 44px target. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 .wi-service-results {
@@ -101,13 +105,13 @@ input.wi-search-input-plain {
 }
 
 .wi-also-try-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   color: var(--muted);
 }
 
 .wi-section-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   color: var(--muted);
   margin: 16px 0 8px;
@@ -125,7 +129,7 @@ input.wi-search-input-plain {
   border-radius: 999px;
   background: transparent;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -154,7 +158,7 @@ input.wi-search-input-plain {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: var(--slate-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
@@ -174,31 +178,38 @@ input.wi-search-input-plain {
 
 .wi-error {
   margin-top: 12px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #b91c1c;
 }
 
+/* The confirmation reads as one centred piece: a round check badge, what happened, then the way out. */
 .wi-done {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 18px 0 8px;
+  text-align: center;
+  gap: var(--sp-3);
+  padding: var(--sp-6) 0 var(--sp-5);
 }
 
 .wi-done svg {
-  width: 26px;
-  height: 26px;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0.875rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
   color: var(--accent-deep);
+  stroke-width: 2.5;
   flex: none;
 }
 
 .wi-done-title {
-  font-size: 16px;
+  font-size: 1.125rem;
   font-weight: 650;
 }
 
 .wi-done-sub {
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--muted);
 }
 
@@ -210,7 +221,7 @@ input.wi-search-input-plain {
   border-radius: var(--radius-sm);
   background: #fef3c7;
   color: #92400e;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* The sheet's own action rows sit flush; `.wi-body` already supplies the
@@ -240,6 +251,30 @@ input.wi-search-input-plain {
   background: var(--accent-deep);
 }
 
+/* Done is a button, not a list row: green when it is the only way on, a quiet raised one under Take payment. */
+.wi-body .sheet-item.wi-finish {
+  margin: var(--sp-2) 0 0;
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--accent-deep);
+  color: #fff;
+  font-weight: 620;
+}
+.wi-body .sheet-item.wi-finish:hover {
+  background: var(--accent-deep);
+}
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish,
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish:hover {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.wi-body .sheet-item.wi-take-payment {
+  min-height: 48px;
+}
+
 /* ---------- multi-service picking (GRW-199) ---------- */
 
 /*
@@ -264,7 +299,7 @@ input.wi-search-input-plain {
 .wi-picked-name {
   flex: 1;
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   /* The list is the one place a long service name must not push the remove
      button off the row. */
   min-width: 0;
@@ -287,8 +322,8 @@ input.wi-search-input-plain {
 }
 
 .wi-remove svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
 }
 
 .wi-picked-total {
@@ -297,29 +332,64 @@ input.wi-search-input-plain {
   justify-content: space-between;
   padding: 11px 12px;
   background: var(--slate-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
-.wi-add-new {
+/* Jira GRW-518 — the add block has no margin above it, no divider and no heading of its own. */
+.wi-new-person {
+  margin: 0;
+}
+
+/* The Booking date is as wide as the fields under it, with a little air before the search box. */
+.wi-date-field {
+  margin-bottom: var(--sp-3);
+}
+
+/* Jira GRW-529 — the Booking date and Booking time share one row, two equal columns. */
+.wi-when {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+.wi-when .wi-date-field {
+  min-width: 0;
+}
+
+/* Half a row is ~130px at 344px: the fields give back some padding so a full date (05/10/2026) is not cut off. */
+.wi-when input {
+  padding-inline: 10px;
+}
+
+/* Jira GRW-533 — the time is a dropdown, full column width and as tall as the date beside it. */
+.wi-when select {
   width: 100%;
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--accent-deep);
-  font: inherit;
-  font-weight: 620;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  min-width: 0;
+  min-height: 46.8px;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+  /* Room for the chevron the shared select rule draws at the right edge. */
+  padding-left: 10px;
+  padding-right: 28px;
+  background-position: right 9px center;
 }
 
-.wi-add-new svg {
-  width: 17px;
-  height: 17px;
+.wi-when input::-webkit-calendar-picker-indicator {
+  margin-inline-start: 0;
+  padding: 0;
+}
+
+.wi-date-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* The Name field is as wide as the Phone field beside it in the column, not its own default width. */
+.wi-new-person .field input[type='text'] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* A combo chip carries two lines — its name and its price — so it is taller
@@ -339,7 +409,7 @@ input.wi-search-input-plain {
 }
 
 .wi-chip-meta {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   opacity: 0.75;
 }
@@ -371,7 +441,7 @@ input.wi-search-input-plain {
   border-radius: var(--radius-sm);
   background: transparent;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -441,13 +511,13 @@ input.wi-search-input-plain {
 }
 
 .wi-chair-name {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .wi-chair-state {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -473,7 +543,7 @@ input.wi-search-input-plain {
   background: #fffaf0;
   color: #92400e;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -597,8 +667,8 @@ input.wi-search-input-plain {
 }
 
 .wi-back svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 
 /* Its seat, held open on the steps that have nowhere to go back to. */
@@ -631,7 +701,7 @@ input.wi-search-input-plain {
   border-radius: 10px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 /* A fixed box, not the input's own width: on a phone a sheet-wide input rule
    stretched it to half the row and squeezed the service name to nothing. */
@@ -663,7 +733,7 @@ input.wi-search-input-plain {
   border-radius: 6px;
   background: var(--slate-soft);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -681,7 +751,7 @@ input.wi-search-input-plain {
   gap: 6px 10px;
 }
 .wi-pay-modes-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   color: var(--muted);
 }
@@ -730,19 +800,19 @@ input.wi-search-input-plain {
   min-width: fit-content;
 }
 .wi-combo-list {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   text-decoration: line-through;
   white-space: nowrap;
 }
 .wi-combo-save {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-deep); /* Jira GRW-478 (U-7) — 12px text needs 4.5:1; --accent is 3.3:1 */
   white-space: nowrap;
 }
 .wi-combo-price {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   white-space: nowrap;
 }
 /* The row itself may wrap: figures move under the title once both cannot
@@ -791,4 +861,101 @@ input.wi-search-input-plain {
  */
 .walk-in-page .wi-actions {
   position: static;
+}
+
+/* Jira GRW-526 — no tab bar under the page now, and that bar carried the home-indicator inset: the page keeps
+   its own, so its last button is not under it. */
+.page-body:has(> .walk-in-page) {
+  padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+}
+
+/*
+ * A client row: the name, then one quiet line under it (owner, 2026-10-04).
+ *
+ * It used to be "Name · no number · MG Road" in a shrinking left column with the visit count in a
+ * right one narrow enough to break "2 visits" over two lines — 70px rows of wrapped text to read
+ * past. The name owns the first line and cannot be cut mid-word; what is true about the client
+ * goes underneath, in one string.
+ */
+.picker-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.picker-row-text .picker-row-name,
+.picker-row-text .picker-row-meta {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The branch, once it cannot change: a line, not a question over a chip that answers it.
+ * Sits where the "Which branch?" heading did, in the same muted weight as the other labels.
+ */
+.wi-at-branch {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+/* ---------- the client search as a dropdown (Jira GRW-520) ----------
+   The matches float under the box over the form, so Name, Phone and the date do not move while someone types.
+   `.picker-search` carries a 10px margin below it; the dropdown starts 4px under the box itself. */
+.wi-combo {
+  position: relative;
+}
+
+.wi-dropdown {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% - 6px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 28px rgba(9, 20, 15, 0.16);
+}
+
+.wi-dropdown .wi-section-label {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-3) var(--sp-1);
+}
+
+.wi-dropdown .empty {
+  padding: var(--sp-4) var(--sp-3);
+}
+
+/* The row the arrow keys are on. */
+.wi-row-active,
+.wi-dropdown .wi-row:hover {
+  background: var(--slate-soft);
+}
+
+/* ---------- Which branch?, as a dropdown (Jira GRW-522) ---------- */
+.wi-branch-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Which stylist?, as a dropdown (Jira GRW-524) ---------- */
+.wi-stylist-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
 }

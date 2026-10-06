@@ -10,7 +10,7 @@
 .staff-toggle-label {
   width: 68px;
   text-align: right;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #3d4a43;
 }
@@ -71,7 +71,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   font: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #3d4a43;
   cursor: pointer;
@@ -82,8 +82,8 @@
 }
 
 .row-edit-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .staff-icon-btn {
@@ -109,7 +109,7 @@
 }
 
 .staff-dots {
-  font-size: 17px;
+  font-size: 1.0625rem;
   line-height: 1;
   margin-top: -6px;
 }

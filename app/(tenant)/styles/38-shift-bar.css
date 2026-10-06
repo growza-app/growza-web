@@ -15,14 +15,14 @@
 }
 
 .staff-shift-time {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 550;
   color: #3d4a43;
   white-space: nowrap;
 }
 
 .staff-shift-off {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 

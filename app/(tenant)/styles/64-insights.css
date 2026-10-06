@@ -8,7 +8,7 @@
 }
 
 .rp-banner-kicker {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   opacity: 0.8;
   letter-spacing: 0.3px;
@@ -16,7 +16,7 @@
 }
 
 .rp-banner-body {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
   margin-top: var(--sp-2);
   letter-spacing: -0.3px;
@@ -42,10 +42,10 @@
   justify-content: center;
 }
 
-.rp-insight-icon svg { width: 18px; height: 18px; }
+.rp-insight-icon svg { width: 1.125rem; height: 1.125rem; }
 
 .rp-insight-cat {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
   letter-spacing: 0.4px;
@@ -54,7 +54,7 @@
 
 .rp-insight-headline {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.4;
   color: var(--text);
@@ -65,7 +65,7 @@
 .rp-insight-body {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -74,5 +74,5 @@
   padding-top: 0;
   border-top: none;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
 }

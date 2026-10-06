@@ -24,6 +24,45 @@ textarea:focus-visible {
 input.search-input-bare:focus-visible {
   outline: 0 !important;
 }
+
+/* ---- Jira GRW-490 — the ring goes on the box people can see --------------------------------------------------
+   The forced ring above is right for a field that IS the box. It is wrong for a field that is only part of one:
+   a bare input inside a bordered wrapper draws a second rectangle hugging the input, inside the wrapper's own
+   border, which reads as a stray box in the middle of the control. The owner found it on the checkout amount
+   field, where the ring sits inside the pill and beside the ₹ rather than around both.
+
+   Jira GRW-425 found and fixed exactly this on the search bar, and the comment it left in 26-search.css explains
+   the cascade: a wrapper's `outline: none` cannot beat an `!important` one. What it did not do was sweep the
+   other controls built the same way — seven of them, found by looking for an input whose own stylesheet takes
+   its border away. They are listed here rather than patched in seven sheets, because the rule they are opting
+   out of is the one directly above and the two belong next to each other. The service sheet is named by its
+   ROW (`.sheet-row`) rather than by the two cells inside it (`-price`, `-value`), because the row is the box
+   with the divider under it — the thing a reader would point at.
+
+   The wrapper takes the ring in the input's place, so the indicator is not lost — it gets bigger. `--accent-deep`
+   is 7.8:1 on white (`--accent` is 2.76:1, under WCAG 1.4.11's 3:1), matching the baseline rather than inventing
+   a second focus colour. */
+.checkout-amount-field:focus-within,
+.bk-search-inline:focus-within,
+.bk-search-row:focus-within,
+.att-search:focus-within,
+.wi-amount:focus-within,
+.phone-field:focus-within,
+.sheet-row:focus-within {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 1px;
+}
+
+.checkout-amount-field input:focus-visible,
+.bk-search-inline input:focus-visible,
+.bk-search-row input:focus-visible,
+.att-search input:focus-visible,
+.wi-amount input:focus-visible,
+.phone-field input:focus-visible,
+.sheet-row input:focus-visible,
+.sheet-row select:focus-visible {
+  outline: 0 !important;
+}
 /* Dark surfaces: the deep green would vanish into them. */
 .sidebar :focus-visible,
 .hm-hero :focus-visible {

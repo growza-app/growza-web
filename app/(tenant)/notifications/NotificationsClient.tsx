@@ -94,7 +94,7 @@ export function NotificationsClient() {
 
   return (
     <>
-      <PageHeader title={n('title')} onBack={() => router.back()} />
+      <PageHeader title={n('title')} onBack={() => router.back()} bare />
       <div className="page-body">
         {error ? (
           <div className="banner">

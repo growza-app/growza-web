@@ -40,6 +40,11 @@
        the home indicator sits inside the inset on a notched phone. */
     margin: 0 21px calc(12px + env(safe-area-inset-bottom));
     padding: 8px 6px;
+    /* Jira GRW-481 — the bar is a flex item, and a flex item does not shrink below
+       its own content unless told it may. At a large reader text size the five cells
+       made the bar wider than the phone and it hung off the right edge. */
+    min-width: 0;
+    max-width: 100%;
     border-radius: 26px;
     border: 1px solid rgba(255, 255, 255, 0.55);
     background: rgba(252, 253, 252, 0.82);
@@ -60,9 +65,8 @@
     }
     /* Five equal cells are narrower than "Notifications" and "New booking" at 12px, and "Home" has room to spare.
        Size each cell to its word and share what is left evenly, so the gaps between words are the same. */
-    .bottom-nav > a,
-    .bottom-nav > .bn-centre {
-      flex: 1 1 auto;
+    .bottom-nav > a {
+      flex: 1 1 0;
     }
   }
 
@@ -94,17 +98,31 @@
     border-radius: 18px;
     /* 12px, the floor for any label on a phone (Jira GRW-339). Apple's tab label is 11pt; a shop owner reading
        across a counter needs more. */
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.1px;
     /* The tap target is the whole cell, not the glyph. */
     min-height: 48px;
     justify-content: center;
+    /* Jira GRW-481 — five fixed slots across a phone, and the label now grows with
+       the reader's text size. At the largest standard size the five labels ran into
+       one another and the last one left the screen. Each cell takes an equal share
+       of the bar rather than sizing to its own longest word, and cuts its own label
+       instead; the icon above it still says which tab this is, and the accessible
+       name is never truncated. */
+    flex: 1 1 0;
+  }
+
+  .bottom-nav .bn-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .bottom-nav svg {
-    width: 23px;
-    height: 23px;
+    width: 1.4375rem;
+    height: 1.4375rem;
     /* Rounder joins read as the current icon language rather than the older
        sharp-cornered outline set. */
     stroke-linecap: round;
@@ -121,16 +139,27 @@
     color: var(--accent-deep);
   }
 
+  /*
+   * The tab you are on sits in a small glass lens, the way iOS draws it: a translucent, lightly tinted capsule that blurs
+   * what is behind it, with a bright hairline on its edge and a soft shadow (the sheen and shadow are in the clay sheet).
+   * Every other tab is plain and single-coloured — the bar stays monochrome and the accent is kept for the selected
+   * icon and label (Apple's Liquid Glass guide: "save it for ... the selected tab's icon").
+   */
   .bottom-nav a.active::before {
     content: '';
     position: absolute;
-    top: 4px;
+    /* Centred on the 23px icon (it sits 2px from the top of the cell), so the lens ends above the label. */
+    top: -1px;
     left: 50%;
     transform: translateX(-50%);
-    width: 46px;
+    width: 48px;
     height: 30px;
+    box-sizing: border-box;
     border-radius: 15px;
-    background: var(--accent-soft);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: rgba(22, 101, 52, 0.1);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     z-index: 0;
   }
 
@@ -176,8 +205,8 @@
   }
 
   .fab svg {
-    width: 25px;
-    height: 25px;
+    width: 1.5625rem;
+    height: 1.5625rem;
     stroke-linecap: round;
     stroke-linejoin: round;
   }
@@ -185,40 +214,4 @@
 
 /* ---------- the mode toggle inside the sheet ---------- */
 
-/*
- * A segmented control, which is what this choice actually is: two mutually
- * exclusive answers to one question, both worth seeing at once. It replaces a
- * pop-up menu of two floating buttons that had to be dismissed before the real
- * screen appeared.
- */
-.wi-segmented {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  margin: 12px 18px 14px;
-  padding: 3px;
-  background: var(--slate-soft);
-  border-radius: 12px;
-}
-
-.wi-segmented button {
-  padding: 9px 8px;
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--muted);
-  cursor: pointer;
-  /* Jira GRW-305 — was 38px, under Apple's/WCAG 2.5.5's 44px minimum; a
-     two-up control is easy to under-size. */
-  min-height: 44px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.wi-segmented button.is-on {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgba(9, 20, 15, 0.12);
-}
+/* Jira GRW-519 — the walk-in sheet's Walk-in now / For later segmented control was here; the Booking date replaced it. */

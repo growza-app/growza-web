@@ -15,13 +15,13 @@
 }
 
 .wizard-title h1 {
-  font-size: 22px;
+  font-size: 1.375rem;
   margin: 0;
 }
 
 .wizard-subtitle {
   margin: 3px 0 0;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--muted);
 }
 
@@ -43,17 +43,31 @@
   padding: 3px;
 }
 
+/* 44px, and two inline SVGs where this drew 📱 and 🖥️ — the house rule is one icon language
+   and never an emoji as a UI icon (CLAUDE.md). */
 .device-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   border: none;
   border-radius: 999px;
   padding: 4px 9px;
-  font-size: 14px;
+  color: var(--muted);
+  font-size: 0.875rem;
   cursor: pointer;
+}
+
+.device-toggle button svg {
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .device-toggle button.active {
   background: var(--accent-soft);
+  color: var(--accent-deep);
 }
 
 .device-frame-mobile {
@@ -73,7 +87,7 @@
 .preview-caption {
   text-align: center;
   margin-top: 10px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -83,14 +97,14 @@
   padding: 14px;
   background: var(--amber-soft);
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #7a4d0f;
 }
 
 .wizard-tip strong {
   display: block;
   margin-bottom: 2px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
 }
 
 /* The step rail carries the Tip on its right, so the wizard's right column ends
@@ -138,7 +152,7 @@
   border: 1.5px solid var(--border);
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -155,11 +169,11 @@
 
 .wizard-step-title {
   font-weight: 650;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .wizard-step-sub {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
 }
 
 .wizard-step:disabled,
@@ -207,7 +221,7 @@
   border-radius: 50%;
   background: var(--slate-soft);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1;
   cursor: pointer;
   display: grid;
@@ -246,12 +260,12 @@
 
 .picker-row-name {
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }
 
 .picker-row-meta {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .picker-row-thumb {
@@ -293,7 +307,7 @@
   cursor: pointer;
   padding: 1px 4px;
   line-height: 1;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .picked-row-order button:disabled {
@@ -324,13 +338,13 @@
 
 .price-panel-cell label {
   display: block;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   margin-bottom: 4px;
 }
 
 .price-panel-value {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
 }
 
@@ -345,8 +359,9 @@
 .price-mode-toggle button {
   background: var(--surface);
   border: none;
+  min-height: 44px;
   padding: 5px 12px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 620;
   color: var(--muted);
   cursor: pointer;
@@ -363,7 +378,7 @@
   background: var(--amber-soft);
   color: var(--amber);
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
@@ -381,12 +396,12 @@
 
 .rules-option-title {
   font-weight: 620;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }
 
 .rules-option-sub {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .weekday-picker {
@@ -401,7 +416,7 @@
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 620;
   cursor: pointer;
 }
@@ -432,7 +447,7 @@
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-deep);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.03em;
 }
@@ -442,19 +457,19 @@
 }
 
 .preview-title {
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-weight: 700;
   margin: 10px 0 2px;
 }
 
 .preview-services {
   color: var(--muted);
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }
 
 .preview-tagline {
   margin-top: 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .preview-price-row {
@@ -467,11 +482,11 @@
 .preview-price-original {
   color: var(--muted);
   text-decoration: line-through;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .preview-price-combo {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--accent-deep);
 }
@@ -494,7 +509,7 @@
 .preview-photo-plus {
   color: var(--muted);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .preview-photo-avatar {
@@ -507,7 +522,7 @@
 }
 
 .preview-photo-name {
-  font-size: 11.5px;
+  font-size: 0.75rem;
   color: var(--muted);
   text-align: center;
   max-width: 64px;
@@ -529,6 +544,41 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--muted);
+}
+
+.preview-fact-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.preview-fact-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Was 🟢 / ⚪. A dot, and never the only thing saying it — the words beside it carry the state. */
+.pv-live-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c7cfc9;
+}
+
+.pv-live-dot.is-live {
+  background: var(--accent);
+}
+
+/* Was 💡 beside the builder's tip. */
+.wizard-tip-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--amber);
+}
+
+.wizard-tip-icon svg {
+  width: 1.0625rem;
+  height: 1.0625rem;
 }

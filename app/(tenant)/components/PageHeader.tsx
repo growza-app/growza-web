@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { HeaderControls } from './HeaderControls';
 import { HeaderBranchPicker } from './HeaderBranchPicker';
-import { MenuButton } from './MenuButton';
 import { BackButton } from './BackButton';
+import { MenuButton } from './MenuButton';
 
 /**
  * Jira GRW-30 — the one header. Title and subtitle left; the page's primary
@@ -33,6 +33,8 @@ export function PageHeader({
   actions,
   mobileSubtitle,
   onBack,
+  bare,
+  menu,
 }: {
   title: string;
   subtitle?: string;
@@ -47,15 +49,25 @@ export function PageHeader({
    * one another, so nothing else needs a way back besides the nav itself.
    */
   onBack?: () => void;
+  /**
+   * Jira GRW-507 — on a phone, draw no controls group (search, bell, avatar) and no branch line:
+   * a quiet page with Back and the title. Phone only; a laptop header is untouched.
+   */
+  bare?: boolean;
+  /**
+   * Jira GRW-538 — the tab-bar screens (Bookings, Clients) have nothing behind them, so on a phone the menu
+   * button stands where Back would: the same circle, as on Home.
+   */
+  menu?: boolean;
   /** Jira GRW-307 — leave out the header's search button: the Search screen is what it opens. */
 }) {
   return (
-    <header className={`topbar ${mobileSubtitle ? 'topbar-with-sub' : ''}`}>
-      {/* Jira GRW-306 — the phone's menu button, in the row. A screen with a Back
-          arrow shows that instead: it is a step deeper than the tab bar, and
-          Back is the one control it needs at the left. */}
+    <header className={`topbar ${mobileSubtitle ? 'topbar-with-sub' : ''} ${bare ? 'topbar-bare' : ''}`}>
+      {/* Jira GRW-306 — the phone's control at the left, in the row. Jira GRW-497 — it is Back on
+          every screen but Home (the menu is on Home and behind the avatar); a screen with its own
+          Back, inline with the title, keeps that one and shows nothing here. */}
       <div className="topbar-lead">
-        {onBack ? null : <MenuButton />}
+        {onBack ? null : menu ? <MenuButton /> : <BackButton phoneOnly />}
         <div className="topbar-title">
           {onBack ? (
             <div className="topbar-title-row">

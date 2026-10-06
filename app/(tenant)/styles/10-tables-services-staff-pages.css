@@ -16,7 +16,7 @@ table {
 
 th {
   text-align: left;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--muted);
   padding: 13px 20px;
@@ -73,7 +73,7 @@ tr:last-child td {
  */
 .svc-cat-hint {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -124,13 +124,13 @@ tr:last-child td {
 
 .svc-cat-chevron {
   color: var(--muted);
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
   flex-shrink: 0;
 }
 
 .svc-cat-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 560;
   /* A 60-character name on a 344px fold truncates rather than pushing its own controls off the row. */
   overflow: hidden;
@@ -139,7 +139,7 @@ tr:last-child td {
 }
 
 .svc-cat-meta {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 2px;
 }
@@ -155,7 +155,7 @@ tr:last-child td {
 .svc-cat-actions .icon-btn {
   width: 44px;
   height: 44px;
-  font-size: 16px;
+  font-size: 1rem;
   background: var(--surface);
   flex-shrink: 0;
 }
@@ -243,14 +243,14 @@ tr:last-child td {
   background: transparent;
   color: var(--accent-deep);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   cursor: pointer;
 }
 
 .svc-cat-head-name {
   flex: 1;
   min-width: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 620;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -309,12 +309,12 @@ tr:last-child td {
 
 .svc-cat-confirm-body {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .svc-cat-confirm-detail {
   margin: 4px 0 10px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -331,7 +331,7 @@ tr:last-child td {
 
 .svc-cat-count {
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -371,7 +371,7 @@ tr:last-child td {
   border: 1.5px solid var(--border);
   display: grid;
   place-items: center;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1;
   color: transparent;
 }
@@ -389,7 +389,7 @@ tr:last-child td {
 
 .svc-pick-name {
   display: block;
-  font-size: 15px;
+  font-size: 0.9375rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -421,7 +421,7 @@ tr:last-child td {
 
 .svc-cat-foot-hint {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   text-align: center;
 }
@@ -433,7 +433,7 @@ tr:last-child td {
   border-radius: var(--radius-sm);
   background: var(--warn-soft, #fdf3e3);
   border: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .svc-cat-blocked-head {
@@ -448,7 +448,7 @@ tr:last-child td {
 
 .svc-cat-blocked-foot {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 

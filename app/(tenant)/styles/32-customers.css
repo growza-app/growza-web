@@ -36,18 +36,18 @@
 }
 
 .cust-kpi-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .cust-kpi-label {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
   line-height: 1.25;
 }
 
 .cust-kpi-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 680;
   letter-spacing: -0.02em;
   line-height: 1.2;
@@ -75,8 +75,8 @@
 }
 
 .search-wrap svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   flex-shrink: 0;
 }
 
@@ -109,8 +109,8 @@
 }
 
 .cust-phone svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
   flex-shrink: 0;
 }
 
@@ -149,7 +149,7 @@
   margin-top: 9px;
   padding-top: 9px;
   border-top: 1px dashed var(--border);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -202,14 +202,14 @@
   flex-shrink: 0;
   width: 56px;
   font-weight: 680;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.15;
   letter-spacing: -0.01em;
 }
 
 .booking-time span {
   display: block;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
@@ -225,7 +225,7 @@
 }
 
 .booking-staff {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .booking-main {
@@ -273,9 +273,17 @@
    header's branch picked it read "—" (the GRW-312 capacity mismatch), and its
    other two answers — busiest staff, top service — are Reports questions. One
    grid now, so there is nothing left to reflow between 861 and 1149px. */
+/*
+ * The row shares itself out among the tiles that are drawn, not among four slots.
+ *
+ * "Didn't come" is left out on a day when nobody did (2026-10-04), and with `repeat(4, …)` the
+ * three that remained kept their 84px and left a quarter of the row empty — the tile had gone and
+ * taken nothing with it. `auto-fit` gives the three the width the fourth was holding.
+ */
 .bk-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
   gap: var(--sp-2);
   margin-bottom: var(--sp-5);
 }
@@ -326,13 +334,13 @@
   border-radius: var(--radius-sm);
   background: #fdf8ec;
   color: #6b5423;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
 }
 
 .bk-unmarked-chip svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   flex: none;
   color: #b8860b;
 }
@@ -364,8 +372,8 @@
 }
 
 .bk-kpi-icon svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 
 .bk-kpi-green {
@@ -386,14 +394,14 @@
 }
 
 .bk-kpi-value {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.1;
 }
 
 .bk-kpi-label {
-  font-size: 11.5px;
+  font-size: 0.75rem;
   font-weight: 600;
   margin-top: 3px;
   white-space: nowrap;
@@ -449,15 +457,15 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   padding-left: 2px;
 }
 
 .bk-field > label svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
   flex-shrink: 0;
 }
 
@@ -470,7 +478,7 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 600;
   color: var(--text);
   outline: none;
@@ -519,8 +527,8 @@
 }
 
 .bk-search-inline svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
   color: var(--muted);
   flex-shrink: 0;
 }
@@ -533,7 +541,7 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 500;
   color: var(--text);
 }
@@ -549,7 +557,7 @@
 
 .bk-sched-head h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 680;
   letter-spacing: -0.01em;
 }
@@ -560,7 +568,7 @@
 .bk-sched-count {
   display: inline-block;
   margin-left: 8px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -588,15 +596,15 @@
   border-radius: 8px;
   background: transparent;
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .bk-view-tab svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .bk-view-tab.is-active {
@@ -623,7 +631,7 @@
   margin: var(--sp-4) 0 var(--sp-3);
   padding: 6px 0;
   background: var(--page-bg);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -666,14 +674,14 @@
   border-radius: 8px;
   background: var(--accent-soft);
   color: var(--accent-deep);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   border: 1px solid var(--border);
 }
 
 .bk-multi-badge svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
 }
 
 /* Duration moved onto the card's bottom row with a clock icon (per the mock).
@@ -682,15 +690,15 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
   flex-shrink: 0;
 }
 
 .bk-card-dur svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 /* Time + status inside the card is a MOBILE affordance: mobile drops the
@@ -715,7 +723,7 @@
 }
 
 .bk-tl-clock {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
@@ -723,7 +731,7 @@
 
 .bk-tl-clock span {
   display: block;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
@@ -792,7 +800,7 @@
 }
 
 .bk-card-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 660;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -804,7 +812,7 @@
 }
 
 .bk-card-services {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   margin-top: 3px;
   overflow: hidden;
@@ -816,14 +824,14 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
   margin-top: 6px;
 }
 
 .bk-card-staff svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   flex-shrink: 0;
 }
 
@@ -839,7 +847,7 @@
 
 .bk-card-ref {
   display: inline-block;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
   font-family: ui-monospace, monospace;
@@ -853,14 +861,14 @@
   align-items: center;
   gap: 6px;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   font-weight: 600;
 }
 
 .bk-card-phone svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   flex-shrink: 0;
 }
 
@@ -880,18 +888,18 @@
   height: 22px;
   border-radius: 50%;
   background: var(--bk-staff-bg, var(--slate-soft));
-  color: var(--bk-rail, var(--muted));
+  color: var(--bk-staff-ink, var(--bk-rail, var(--muted)));
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10.5px;
+  font-size: 0.75rem;
   font-weight: 800;
   flex-shrink: 0;
 }
 
 .bk-card-price {
   display: inline-block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 800;
   color: var(--text);
 }
@@ -909,14 +917,14 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   padding: 7px 12px;
   white-space: nowrap;
 }
 
 .bk-details svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .bk-list {
@@ -956,19 +964,19 @@
 }
 
 .bk-summary-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
 }
 
 .bk-summary-value {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
 }
 
 .bk-summary-label {
-  font-size: 11.5px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -984,15 +992,15 @@
   align-items: center;
   gap: 3px;
   color: var(--accent-deep);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .bk-summary-link svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 /* GRW-46: mobile-only. Hidden by default here so desktop never sees them —
@@ -1016,9 +1024,11 @@
  * elsewhere in this file: a later declaration wins at equal specificity).
  */
 @media (max-width: 860px) {
-  /* 4 compact count tiles across one row, exactly as the mobile mock has them. */
+  /* Compact count tiles across one row, exactly as the mobile mock has them — three or four of
+     them, depending on whether anybody failed to turn up (2026-10-04). */
   .bk-kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    grid-auto-flow: column;
     gap: 8px;
     margin-bottom: 0;
   }
@@ -1043,18 +1053,18 @@
   }
 
   .bk-kpi-icon svg {
-    width: 15px;
-    height: 15px;
+    width: 0.9375rem;
+    height: 0.9375rem;
   }
 
   .bk-kpi-value {
-    font-size: 19px;
+    font-size: 1.1875rem;
   }
 
   /* Quarter of a phone's width is not enough for "Completed" on one line —
      let it wrap instead of ellipsing to "Comple…", which reads as broken. */
   .bk-kpi-label {
-    font-size: 12px;
+    font-size: 0.75rem;
     line-height: 1.25;
     white-space: normal;
     overflow: visible;
@@ -1113,13 +1123,13 @@
   }
 
   .bk-card-time {
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 700;
     color: var(--text);
   }
 
   .bk-card-time span {
-    font-size: 11.5px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
@@ -1175,7 +1185,7 @@
   .bk-card-ref {
     display: inline-block;
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--muted);
     font-family: ui-monospace, monospace;
@@ -1189,14 +1199,14 @@
     align-items: center;
     gap: 6px;
     margin-top: 5px;
-    font-size: 12.5px;
+    font-size: 0.78125rem;
     color: var(--muted);
     font-weight: 600;
   }
 
   .bk-card-phone svg {
-    width: 13px;
-    height: 13px;
+    width: 0.8125rem;
+    height: 0.8125rem;
     flex-shrink: 0;
   }
 
@@ -1221,18 +1231,18 @@
     height: 20px;
     border-radius: 50%;
     background: var(--bk-staff-bg, var(--slate-soft));
-    color: var(--bk-rail, var(--muted));
+    color: var(--bk-staff-ink, var(--bk-rail, var(--muted)));
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 0.75rem;
     font-weight: 800;
     flex-shrink: 0;
   }
 
   .bk-card-price {
     display: inline-block;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 800;
     color: var(--text);
   }
@@ -1252,8 +1262,8 @@
   }
 
   .bk-search-row svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     color: var(--muted);
     flex-shrink: 0;
   }
@@ -1281,13 +1291,13 @@
   }
 
   .bk-no-matches-title {
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 800;
     color: var(--text);
   }
 
   .bk-no-matches-sub {
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--muted);
     margin-top: 5px;
   }
@@ -1302,12 +1312,12 @@
     justify-content: space-between;
     flex: 1;
     gap: 10px;
-    font-size: 19px;
+    font-size: 1.1875rem;
     font-weight: 800;
   }
 
   .bk-sched-count {
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     font-weight: 600;
   }
 
@@ -1359,14 +1369,19 @@
   .bk-field-sort select {
     height: 42px;
     padding: 0 10px;
-    font-size: 13.5px;
+    font-size: 0.84375rem;
   }
 
-  /* The labels ("From"/"To") and the weekday hint are what make this card
-     tall; the two date values read as a range on their own at this size. */
-  .bk-field > label,
+  /* The labels and the weekday hint are what make this card tall, so the folded fields drop them.
+     The dates keep theirs (owner, 2026-10-04): they are the first thing on the card now, and two
+     identical date boxes with nothing on them give no way to tell From from To. */
+  .bk-field:not(.bk-field-date) > label,
   .bk-filters .field-hint {
     display: none;
+  }
+
+  .bk-field-date > label {
+    font-size: 0.75rem;
   }
 
   /* 16px for the same reason as the search field above. */
@@ -1382,7 +1397,7 @@
 }
 
 .booking-sub {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   margin-top: 2px;
   overflow: hidden;
@@ -1444,7 +1459,7 @@
   .filters-inline .field > label {
     margin-bottom: 0;
     white-space: nowrap;
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--muted);
   }
   .filters-inline .field input,
@@ -1480,7 +1495,7 @@
   border: 1px solid #f7dddd;
   background: #fff7f7;
   border-radius: var(--radius-sm);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--text);
 }
 .status-filter-banner strong {
@@ -1622,15 +1637,15 @@
     min-width: 0;
   }
   .bk-kpi-value {
-    font-size: 20px;
+    font-size: 1.25rem;
     line-height: 1;
   }
   .bk-kpi-label {
-    font-size: 13px;
+    font-size: 0.8125rem;
     margin-top: 0;
   }
   .bk-kpi-sub {
-    font-size: 11px;
+    font-size: 0.75rem;
     margin-top: 0;
   }
 
@@ -1730,8 +1745,8 @@
   }
 
   .sidebar-close svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
   }
 
   /* Normal flex flow, NOT position:fixed. It's the last child of .content
@@ -1770,7 +1785,7 @@
     gap: 3px;
     text-decoration: none;
     color: var(--muted);
-    font-size: 11.5px;
+    font-size: 0.75rem;
     font-weight: 550;
   }
 
@@ -1779,8 +1794,8 @@
   }
 
   .bottom-nav svg {
-    width: 21px;
-    height: 21px;
+    width: 1.3125rem;
+    height: 1.3125rem;
   }
 
   .bottom-nav .bn-mark {
@@ -1815,8 +1830,8 @@
   }
 
   .fab svg {
-    width: 26px;
-    height: 26px;
+    width: 1.625rem;
+    height: 1.625rem;
   }
 
   .fab-backdrop {
@@ -1848,7 +1863,7 @@
   .fab-menu-label {
     background: var(--sidebar);
     color: #fff;
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 620;
     padding: 9px 15px;
     border-radius: 10px;
@@ -1868,8 +1883,8 @@
   }
 
   .fab-menu-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 1.375rem;
+    height: 1.375rem;
   }
 
   /* One compact bar on a phone: title on the left, primary action on the
@@ -1897,7 +1912,7 @@
   }
 
   .topbar h1 {
-    font-size: 18px;
+    font-size: 1.125rem;
     margin: 0;
   }
 
@@ -1909,7 +1924,7 @@
      ones stay hidden (they ran 3–4 lines and ate the top of the screen). */
   .topbar-with-sub p {
     display: block;
-    font-size: 12.5px;
+    font-size: 0.78125rem;
     margin-top: 1px;
   }
 
@@ -1918,11 +1933,11 @@
   }
 
   .home-greeting {
-    font-size: 17px;
+    font-size: 1.0625rem;
   }
 
   .home-sub {
-    font-size: 12.5px;
+    font-size: 0.78125rem;
   }
 
   /* Scrolling pages: the tab bar is a normal flex sibling now (see .bottom-nav
@@ -1957,7 +1972,7 @@
   }
 
   .tile .value {
-    font-size: 24px;
+    font-size: 1.5rem;
     margin: 6px 0 4px;
   }
 
@@ -2015,7 +2030,7 @@
   }
 
   .wizard-title h1 {
-    font-size: 17px;
+    font-size: 1.0625rem;
   }
 
   .wizard-subtitle {
@@ -2131,8 +2146,8 @@
   }
 
   .filter-btn-icon svg {
-    width: 17px;
-    height: 17px;
+    width: 1.0625rem;
+    height: 1.0625rem;
   }
 
   .filter-btn-on {
@@ -2260,7 +2275,7 @@
   }
 
   .offer-stat-label {
-    font-size: 11px;
+    font-size: 0.75rem;
   }
 
   /* The switch alone carries the state on a phone — the word beside it costs
@@ -2281,7 +2296,7 @@
   }
 
   .offer-title {
-    font-size: 14.5px;
+    font-size: 0.90625rem;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2301,11 +2316,11 @@
      them is what lets the name and the whole price row stay on one line. */
   .offer-card-row .chip {
     padding: 3px 9px;
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .offer-subtitle {
-    font-size: 12.5px;
+    font-size: 0.78125rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2335,19 +2350,19 @@
   }
 
   .offer-price {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 
   .offer-strike {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .offer-stat-value {
-    font-size: 13.5px;
+    font-size: 0.84375rem;
   }
 
   .offer-info-item {
-    font-size: 12px;
+    font-size: 0.75rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2366,7 +2381,7 @@
   }
 
   .pagination-summary {
-    font-size: 12.5px;
+    font-size: 0.78125rem;
   }
 
   .pagination-pages {
@@ -2459,7 +2474,7 @@
   }
 
   .cust-kpi-value {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 
   /* The WhatsApp link's own box was only 24px tall — text-height, not a tap
@@ -2491,7 +2506,450 @@
 .cust-branch-chip {
   margin-left: 6px;
   padding: 2px 9px;
-  font-size: 12px;
+  font-size: 0.75rem;
   background: var(--slate-soft);
   color: #5b6660;
 }
+
+/*
+ * Was 📅 before the last-visit line (CustomersClient).
+ *
+ * The icons in this app carry no width or height of their own — `base` in icons.tsx sets only a
+ * viewBox — so an inline SVG with no rule matching it stretches to fill its parent. The first
+ * version of this rule named `.cl-card .muted svg`, an ancestor that does not exist here, and ten
+ * calendars rendered at 282x282 down the list. The icon has its own element now, so the rule
+ * cannot miss it again.
+ */
+.cl-last-visit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cl-last-visit-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.cl-last-visit-icon svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+/*
+ * Bookings on a phone: the filters fold away, the day leads (owner, 2026-10-04).
+ *
+ * The screen used to read four KPI tiles, a search pill, two date fields opening on today, a sort
+ * and a six-row staff table before the first booking — about 620px of controls above the thing the
+ * owner opened the screen to see. The staff table is `.desktop-only` now and the filter card hides
+ * behind this button, which carries a count so a filter can never be on with the card shut.
+ */
+.bk-filter-toggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /*
+   * Search takes the row; the funnel sits at its end (owner, 2026-10-04).
+   *
+   * The first version of this was one full-width button reading "Filters", with search folded away
+   * inside it. Nobody opens a button called Filters looking for search, and on a list screen search
+   * is a primary position (`designing-for-ios.md`). So the row is the search field, and the funnel
+   * beside it still holds staff, status, order and the date range.
+   */
+  .bk-findrow {
+    display: flex;
+    align-items: stretch;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+  }
+
+  .bk-findrow .bk-search-row {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .bk-filter-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    cursor: pointer;
+  }
+
+  .bk-filter-toggle svg {
+    width: 1.0625rem;
+    height: 1.0625rem;
+    flex: none;
+    color: var(--muted);
+  }
+
+  /* Open: the funnel takes the accent, so the row says the panel below belongs to it. */
+  .bk-filter-toggle.is-open {
+    border-color: var(--accent-deep);
+    background: var(--accent-soft);
+  }
+
+  .bk-filter-toggle.is-open svg {
+    color: var(--accent-deep);
+  }
+
+  /* The count is the whole point of the button: a filter left on is never silent. */
+  .bk-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--accent-deep);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  /*
+   * The dates are never folded (owner, 2026-10-04).
+   *
+   * The card stays on screen on a phone and shows its two date fields; staff, status and order are
+   * what the funnel hides. The whole card used to fold, which put "which days am I looking at" —
+   * the screen's own subject — behind a button labelled Filters.
+   */
+  .bk-filter-card {
+    display: block;
+  }
+
+  .bk-filter-card .bk-field:not(.bk-field-date) {
+    display: none;
+  }
+
+  .bk-filter-card.is-open .bk-field:not(.bk-field-date):not(.desktop-only) {
+    display: flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-filter-toggle svg:last-child {
+    transition: none;
+  }
+}
+
+/*
+ * Clients on a phone: the bands fold away (owner, 2026-10-04).
+ *
+ * Four KPI tiles then four bands with a two-line note is eight numbers and about 420px before the
+ * first client. The bands are the list's filter, so they stay ABOVE it and fold instead — the same
+ * shape as `.bk-filter-toggle` on Bookings, so the two screens learn the same gesture.
+ */
+.cust-segments-toggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .cust-segments-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: var(--sp-3);
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .cust-segments-toggle > span:first-of-type {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cust-segments-toggle svg {
+    width: 1.0625rem;
+    height: 1.0625rem;
+    flex: none;
+    color: var(--muted);
+  }
+
+  .cust-segments-toggle svg:last-child {
+    margin-left: auto;
+    transition: transform 0.15s ease;
+  }
+
+  .cust-segments-toggle.is-open svg:last-child {
+    transform: rotate(180deg);
+  }
+
+  /* Which band is on, named rather than counted: "Slipping away" says more than "1". */
+  .cust-segments-on {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .cust-segments {
+    display: none;
+  }
+
+  .cust-segments.is-open {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cust-segments-toggle svg:last-child {
+    transition: none;
+  }
+}
+
+/*
+ * "Showing Confirmed only — Show all": the line a tile owes the list it is holding down.
+ *
+ * The KPI tiles are a summary and the status filter at once. The active tile takes an outline, but
+ * a figure that is also a control does not announce itself, and one outline among four is easy to
+ * miss — so when a tile is filtering, the screen says so in words and offers the way back.
+ * Same promise `.bk-filter-toggle` makes for the controls it folds away.
+ */
+.bk-status-on {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  padding: 0 var(--sp-3);
+  min-height: 44px;
+  border: 1px solid #cdeedb;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.bk-status-on button {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/*
+ * Jira GRW-487 — the people waiting, above the day's timed rows.
+ *
+ * A walk-in with a token has no start time, so they cannot be a row in a list ordered by one, and
+ * they are not a booking, so they are not in the tiles. Their own short section instead, amber
+ * rather than the schedule's green: this is the part of the day that is standing in the salon
+ * rather than written in the book.
+ */
+.bk-waiting {
+  margin-bottom: var(--sp-4);
+  border: 1px solid #f3dcc0;
+  border-radius: var(--radius);
+  background: #fffaf2;
+  overflow: hidden;
+}
+
+.bk-waiting-error {
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--amber);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.bk-waiting-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) 0;
+}
+
+.bk-waiting-head h2 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.bk-waiting-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--amber);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.bk-waiting-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* On a phone the waiting list shows five rows and a half — the half row says "scroll" — and scrolls inside itself for the rest,
+   as the token board does. A row is 56px (min-height below). */
+@media (max-width: 860px) {
+  .bk-waiting-list {
+    max-height: calc(5.5 * 56px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
+.bk-waiting-more {
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+.bk-waiting-more button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #f3dcc0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--amber);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/*
+ * Jira GRW-489 — the row is a button now (a link only for a role that may not work a token), so it
+ * has to shed the browser's own button: full width, no chrome, the list's own type, left-aligned.
+ */
+.bk-waiting-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+button.bk-waiting-row {
+  cursor: pointer;
+}
+
+button.bk-waiting-row:hover,
+button.bk-waiting-row:focus-visible {
+  background: #fdf4e6;
+}
+
+/* The number the client was told at the counter, so it leads the row and never shrinks. */
+.bk-waiting-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #fdf0d5;
+  color: var(--amber);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-waiting-who {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bk-waiting-name,
+.bk-waiting-svc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-waiting-name {
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.bk-waiting-svc {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* How long they have been sitting there — the one figure that decides whether this is a problem. */
+.bk-waiting-min {
+  flex: none;
+  color: var(--amber);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The segmented control that replaced the KPI tiles.
+ *
+ * Sticky, so a long day can be re-cut without scrolling back to the top: measured at 390px over a
+ * five-day range, scrolled 700px inside `.page-body` and the row held at the container's top edge.
+ */
+.bk-tabs {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  width: 100%;
+  margin-bottom: var(--sp-3);
+  background: var(--page-bg);
+}
+
+.bk-tabs .page-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+

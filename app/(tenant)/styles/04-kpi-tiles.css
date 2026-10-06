@@ -16,12 +16,12 @@
 
 .tile .label {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .tile .value {
-  font-size: 31px;
+  font-size: 1.9375rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   margin: 10px 0 6px;
@@ -29,7 +29,7 @@
 }
 
 .tile .delta {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 550;
   color: var(--muted);
 }

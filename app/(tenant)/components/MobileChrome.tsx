@@ -6,7 +6,10 @@ import type { Lang } from '../lib/lang';
 import { BottomNav } from './BottomNav';
 
 /**
- * The fixed mobile furniture: the tab bar and the centre action's booking page.
+ * The fixed mobile furniture: the tab bar and the plus's door to the New booking page.
+ *
+ * Jira GRW-523 — the plus opens the New booking PAGE again (it was a bottom sheet in GRW-512, a page before
+ * that in GRW-297): "Add new" is a next screen, not a popup, and the page ends with a Back to home page button.
  *
  * Jira GRW-222 — the floating "+" button this used to render is gone; its job
  * moved into the bar (see BottomNav). The five-screen NO_FAB list went with it,
@@ -25,13 +28,23 @@ import { BottomNav } from './BottomNav';
  */
 
 /**
- * Full-screen edit forms with their own pinned primary button — the raised
- * centre action would sit on top of "Save changes". `/providers` (the roster)
- * keeps it; only `/providers/<id>` does not.
+ * Jira GRW-526 — the screens that have no tab bar at all. New booking asks for the whole screen (and ends with
+ * its own "Back to home page"); a bar under it only took height from the form. Every `.content` row is pinned
+ * by its own `grid-row` (01-shell.css), so leaving the bar out cannot move the others.
  */
-const EDIT_ROUTE_RE = /^\/providers\/[^/]+$/;
+const NO_BAR_ROUTE_RE = /^\/appointments\/new(\/|$)/;
 
-/** `timezone` stays in the props contract (the layout always passes it) even though this component no longer reads it itself — GRW-297 moved the booking sheet it used to seed off this component entirely. */
+/**
+ * Jira GRW-508 — the floating New booking is on Home, Bookings and Clients, and nowhere else.
+ *
+ * It used to be "everywhere except" a list that kept growing (a staff edit screen, then Notifications in
+ * GRW-507): every new screen got a button over its content until somebody noticed. An allow-list turns
+ * that round — a new screen has none until it is added here. Exact paths only: `/appointments/new` is the
+ * booking page itself and `/customers/<id>` is one client, and neither wants a "new booking" over it.
+ */
+const PLUS_ROUTE_RE = /^\/(appointments|customers)?\/?$/;
+
+/** `timezone` stays in the props contract (the layout always passes it) even though this component does not read it: the plus opens the New booking page, which loads its own (GRW-297, and again GRW-523). */
 export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Record<string, string>; timezone: string; role?: MemberRole | null; reportTabs?: readonly string[]; lang?: Lang }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -49,7 +62,10 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
    */
   const mayBook = mayUse(role, 'visit.new');
   const onCentre =
-    mayBook && !EDIT_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
+    mayBook && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
+
+  // Jira GRW-526 — New booking is a focused full screen: no tab bar under it, on any of its steps.
+  if (NO_BAR_ROUTE_RE.test(pathname)) return null;
 
   return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />;
 }

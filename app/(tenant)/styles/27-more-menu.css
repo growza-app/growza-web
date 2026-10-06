@@ -14,7 +14,7 @@
   padding: 14px 18px;
   text-decoration: none;
   color: var(--text);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .menu-row + .menu-row {
@@ -26,8 +26,8 @@
 }
 
 .menu-row svg {
-  width: 19px;
-  height: 19px;
+  width: 1.1875rem;
+  height: 1.1875rem;
   color: var(--accent-deep);
   flex-shrink: 0;
 }

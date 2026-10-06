@@ -10,13 +10,13 @@
 }
 
 .home-greeting {
-  font-size: 21px;
+  font-size: 1.3125rem;
   font-weight: 660;
   letter-spacing: -0.02em;
 }
 
 .home-sub {
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   color: var(--muted);
 }
 
@@ -39,6 +39,6 @@
 }
 
 .icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }

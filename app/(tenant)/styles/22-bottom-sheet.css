@@ -37,7 +37,7 @@
 }
 
 .sheet-title {
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   font-weight: 640;
 }
 
@@ -47,7 +47,7 @@ h1.sheet-title {
 }
 
 .sheet-sub {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
 }
 
@@ -84,5 +84,72 @@ h1.sheet-title {
   margin: 0;
   padding: 18px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
+}
+
+/*
+ * A booking's sheet: the name on the sheet itself, and the actions in one rounded group below it, each with its
+ * icon in a small round badge — green for done, grey for "didn't come", red for cancel.
+ */
+.sheet.bk-sheet {
+  /* `.sheet` is re-set for the service form further down the cascade (98-service-sheet.css): padding 0,
+     overflow hidden and a three-column grid head. This sheet takes its own back. */
+  padding: 10px 0 calc(var(--sp-5) + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
+.bk-sheet .sheet-head {
+  display: flex;
+  align-items: flex-start;
+  background: transparent;
+  border-bottom: none;
+  padding: 0 var(--sp-5) var(--sp-4);
+}
+.bk-sheet .sheet-title {
+  font-size: 1.125rem;
+}
+.bk-sheet .sheet-sub {
+  font-size: 0.8125rem;
+  margin-top: 2px;
+}
+.bk-sheet .ref {
+  flex: none;
+  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.bk-sheet-actions {
+  margin: 0 var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.bk-sheet-actions .sheet-item {
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-4);
+  gap: var(--sp-3);
+}
+.bk-sheet-actions .sheet-item:focus-visible {
+  /* Inside the row: the group's rounded clip would otherwise cut the ring down to one line. */
+  outline-offset: -3px;
+  border-radius: var(--radius);
+}
+.bk-sheet-actions .sheet-item + .sheet-item {
+  border-top: 1px solid var(--border);
+}
+.bk-sheet-actions .sheet-item svg {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
+}
+.bk-sheet-actions .sheet-neutral svg {
+  background: var(--slate-soft);
+}
+.bk-sheet-actions .sheet-danger svg {
+  background: #fdecec;
+}
+/* A settled booking with no number to dial has no actions: no empty card. */
+.bk-sheet-actions:empty {
+  display: none;
 }

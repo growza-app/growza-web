@@ -92,8 +92,8 @@
 }
 
 .pkg-icon svg {
-  width: 21px;
-  height: 21px;
+  width: 1.3125rem;
+  height: 1.3125rem;
 }
 
 .pkg-text {
@@ -117,7 +117,7 @@
 
 .pkg-includes,
 .pkg-missing {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -137,7 +137,7 @@
 .pkg-time {
   grid-area: time;
   flex: none;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -165,7 +165,7 @@
 }
 
 .pkg-price-was {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -190,7 +190,7 @@
 
 /* The builder's third pricing mode has nothing to type, so it explains itself where the field would be. */
 .price-panel-note {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   line-height: 1.4;
 }
@@ -214,7 +214,7 @@
     height: 36px;
     background: var(--page-bg);
     border-bottom: 1px solid var(--border);
-    font-size: 11px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--muted);
     letter-spacing: 0.03em;

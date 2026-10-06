@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { NextIntlClientProvider } from 'next-intl';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import en from '../../../../messages/en.json';
 import hi from '../../../../messages/hi.json';
@@ -322,5 +323,226 @@ describe('the board does not grow with the day', () => {
   it('gives the owner’s one-screen Home a lower cap, because there the board is one row of four', () => {
     const fit = home.slice(home.indexOf('@media (min-width: 1101px) and (min-height: 680px)'));
     expect(fit).toMatch(/\.hm-fit \.tb-rows \{\s*max-height:/);
+  });
+});
+
+/**
+ * Jira GRW-481 — how long someone has been waiting, in the form that helps.
+ *
+ * The board printed raw minutes at every scale, so a client who walked in before
+ * lunch read as "Waiting 618 min". That is a number, not a duration: nobody
+ * converts it in their head, and the one thing the desk could act on — when she
+ * actually arrived — was the thing the row did not say.
+ */
+describe('a wait reads as a wait', () => {
+  const waitingSince = (minutes: number, lang: 'en' | 'hi' = 'en') =>
+    boardSays([row({ id: 'w', tokenNo: 9, customerName: 'Priya', addedAt: new Date(Date.parse(NOW) - minutes * 60_000).toISOString() })], { provider: 'Stylist' }, lang);
+
+  /*
+   * Jira GRW-548 — the owner's card design shows when they arrived ("Since 2:57 PM"), at every wait, not a running
+   * duration. The duration rules (minutes under the hour, "1h 30m" past it, the four-hour cut-off) this block used
+   * to pin went with it; what is pinned now is that the time is the time they walked in, in the salon's zone.
+   * NOW is 06:00 UTC = 11:30 IST.
+   */
+  it('says when they walked in, whatever the wait', () => {
+    // 45 minutes before 11:30 IST is 10:45 am; 90 minutes is 10:00 am; 618 minutes is 1:12 am.
+    expect(waitingSince(45)).toContain('Since 10:45 am');
+    expect(waitingSince(90)).toContain('Since 10:00 am');
+    expect(waitingSince(618)).toContain('Since 1:12 am');
+  });
+
+  it('never counts minutes, and never says "Waiting" (the column is headed that)', () => {
+    for (const m of [45, 90, 618]) {
+      const said = waitingSince(m);
+      expect(said).not.toContain(`${m} min`);
+      expect(said).not.toContain('Waiting 4');
+    }
+  });
+
+  it('keeps the Hindi in step', () => {
+    expect(waitingSince(90, 'hi')).toContain('10:00 am से');
+  });
+});
+
+/**
+ * Jira GRW-541 — a waiting token's wait is a clock icon and the time, in regular weight, with no word
+ * "Waiting" (the column is headed that). The other two columns keep their bold fact.
+ */
+describe('the wait on a waiting token (GRW-541)', () => {
+  const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('draws a stopwatch before the time, only in the Waiting column', () => {
+    const block = src.slice(src.indexOf('<span className="tb-meta">'), src.indexOf('<span className="tb-sub">'));
+    expect(block).toMatch(/col === 'waiting'\s*\?[\s\S]*?<IconStopwatch \/>/);
+    expect(block.match(/<IconStopwatch \/>/g)?.length).toBe(1);
+  });
+
+  it('asks for the arrival time without the word "Waiting"', () => {
+    expect(src).toMatch(/t\.sinceTime\(formatTime\(x\.addedAt, timezone\)\)/);
+    expect(src).not.toMatch(/t\.waitingMin|t\.waitingSince|waitedFor/);
+  });
+
+  it('is regular weight and italic as plain text on a laptop; a pill, upright, on a phone (GRW-548)', () => {
+    expect(css).toMatch(/\.tb-col\[data-col='waiting'\] \.tb-meta \{[^}]*font-weight: 400;[^}]*font-style: italic;/);
+    expect(css).toMatch(/\.tb-meta \{[^}]*font-weight: 700;/);
+  });
+
+  it('the icon is 16×16, in rem', () => {
+    expect(css).toMatch(/\.tb-meta-icon svg \{\s*width: 1rem;\s*height: 1rem;/);
+  });
+});
+
+/** Jira GRW-542 — no number badge on a token row; the name leads. The number stays in the buttons' spoken labels. */
+describe('no token number badge (GRW-542)', () => {
+  const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('draws no badge in a row, and the row is one column', () => {
+    expect(src.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')).not.toMatch(/className="tb-no/);
+    expect(css).toMatch(/\.tb-row \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+    expect(css).toMatch(/\.tb-actions \{\s*grid-column: 1;/);
+  });
+
+  it('the buttons still say which token they are for', () => {
+    const html = boardSays([row({ id: 'a', tokenNo: 7, customerName: 'Simran' })]);
+    expect(html).toContain('token 7');
+    expect(html).not.toContain('tb-no');
+  });
+});
+
+/** Jira GRW-547 — on a phone a token list shows its first five rows and scrolls inside itself for the rest. */
+describe('five rows in view on a phone', () => {
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+  const hook = readFileSync(resolve(__dirname, 'use-visible-rows.ts'), 'utf8');
+  const board = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const phoneStart = css.indexOf('@media (max-width: 860px) {\n  .tb-rows {');
+  const phone = css.slice(phoneStart, css.indexOf('.tb-main {', phoneStart));
+
+  it('is five rows, measured against the sixth — not a fixed number of pixels', () => {
+    expect(hook).toMatch(/export const VISIBLE_ROWS = 5;/);
+    expect(hook).toMatch(/rows\[VISIBLE_ROWS\]/);
+    expect(hook).toMatch(/sixth\.offsetTop - first\.offsetTop/);
+    expect(hook).toMatch(/rows\.length <= VISIBLE_ROWS/);
+  });
+
+  it('is re-measured when the width changes and when the lists change', () => {
+    expect(hook).toMatch(/new ResizeObserver\(measure\)/);
+    expect(hook).toMatch(/addEventListener\('resize', measure\)/);
+    expect(board).toMatch(/useVisibleRows\(boardRef, phone, \[tab, columns\.waiting\.length, columns\.with_stylist\.length, columns\.paid\.length, shown\.waiting, shown\.with_stylist, shown\.paid\]\);/);
+  });
+
+  it('the list scrolls inside itself on a phone, and is not a scroll trap', () => {
+    expect(phone).toMatch(/max-height: min\(var\(--tb-visible, 60dvh\), 60dvh\);/);
+    expect(phone).toMatch(/overflow-y: auto;/);
+    expect(phone).not.toMatch(/overscroll-behavior: contain/);
+  });
+
+  it('fades the bottom edge while there is more, and keeps room so the italic time is not clipped', () => {
+    expect(phone).toMatch(/\.tb-rows\[data-more\] \{[^}]*mask-image: linear-gradient\(to bottom, #000 calc\(100% - 28px\), transparent\);/);
+    expect(phone).toMatch(/padding-right: 4px;/);
+  });
+
+  it('leaves the laptop on its own height cap (GRW-452)', () => {
+    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.tb-rows \{\s*[^}]*max-height: max\(300px, 46dvh\);/);
+  });
+});
+
+/** Jira GRW-548 — on a phone a token is a card: name, pills (token number, since), services, buttons. */
+describe('the token card on a phone (GRW-548)', () => {
+  const src = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+  const phone = css.slice(css.indexOf('@media (max-width: 860px) {\n  .tb-tabs {'), css.indexOf('/* ---------- rows ---------- */'));
+
+  it('draws the token number as a pill, after the name and before the wait', () => {
+    const line = src.slice(src.indexOf('<span className="tb-line">'), src.indexOf('<span className="tb-sub">'));
+    expect(line.indexOf('className="tb-name"')).toBeLessThan(line.indexOf('className="tb-token"'));
+    expect(line.indexOf('className="tb-token"')).toBeLessThan(line.indexOf('className="tb-meta"'));
+    expect(line).toMatch(/w\.tokenNoLabel\(x\.tokenNo\)/);
+  });
+
+  it('says "Token No: 13" in both languages', () => {
+    const html = boardSays([row({ id: 'p', tokenNo: 13, customerName: 'Priya' })]);
+    expect(html).toContain('Token No: 13');
+    expect(boardSays([row({ id: 'p', tokenNo: 13, customerName: 'Priya' })], { provider: 'Stylist' }, 'hi')).toContain('टोकन नंबर: 13');
+  });
+
+  it('is its own rounded white card, on the page background', () => {
+    expect(phone).toMatch(/\.tb-board \.tb-col,[^{]*\{[^}]*background: transparent;[^}]*border: 0;/);
+    expect(phone).toMatch(/\.tb-board \.tb-rows > \.tb-row,\s*\.tb-board \.tb-rows > \.tb-row:first-child \{[^}]*border-radius: 18px;[^}]*background: var\(--surface\);/);
+  });
+
+  it('puts the name on a line of its own, so the pills fall to the next', () => {
+    expect(phone).toMatch(/\.tb-board \.tb-line > \.tb-name \{\s*flex: 1 1 100%;/);
+  });
+
+  it('the token pill is blue and the since pill amber, both readable', () => {
+    expect(phone).toMatch(/\.tb-board \.tb-token \{\s*background: var\(--blue-soft\);\s*color: var\(--blue\);/);
+    expect(phone).toMatch(/\.tb-board \.tb-col\[data-col='waiting'\] \.tb-meta \{\s*background: var\(--amber-soft\);/);
+  });
+
+  it('a laptop has no token pill', () => {
+    expect(css).toMatch(/\.tb-token \{\s*display: none;\s*\}\s*@media \(max-width: 860px\)/);
+  });
+
+  it('the services line is regular, not italic', () => {
+    expect(css).toMatch(/\.tb-muted \{\s*font-style: normal;/);
+  });
+});
+
+/** Jira GRW-549 — on a phone card: 16px above and below the services line, and 32px buttons with a 44px tap. */
+describe('the spacing of a token card (GRW-549 · GRW-550)', () => {
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('is 16px between the pills and the services line, and between the services line and the buttons', () => {
+    expect(css).toMatch(/\.tb-board \.tb-main \{\s*gap: var\(--sp-4\);/);
+    expect(css).toMatch(/\.tb-board \.tb-actions \{\s*margin-top: var\(--sp-4\);/);
+    const base = readFileSync(resolve(__dirname, '../../styles/00-base.css'), 'utf8');
+    expect(base).toMatch(/--sp-4: 16px;/);
+  });
+
+  it('has 40px buttons that keep a 44px tap (40 + 2 above + 2 below)', () => {
+    const rule = css.slice(css.indexOf('.tb-actions .hm-give {'), css.indexOf('}', css.indexOf('.tb-actions .hm-give {')));
+    expect(rule).toMatch(/min-height: 40px;/);
+    expect(css).toMatch(/\.tb-actions \.hm-give::after \{[^}]*inset: -2px 0;/);
+  });
+});
+
+/** Jira GRW-552 — the two pills' text is 12px, in rem so Larger Text still grows it. */
+describe('the pill text on a token card (GRW-552)', () => {
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+  const rule = css.slice(css.indexOf('.tb-board .tb-token,'), css.indexOf('}', css.indexOf('.tb-board .tb-token,')));
+
+  it('is 0.75rem (12px), for both pills', () => {
+    expect(rule).toMatch(/\.tb-board \.tb-col\[data-col='waiting'\] \.tb-meta \{/);
+    expect(rule).toMatch(/font-size: 0\.75rem;/);
+    expect(rule).not.toMatch(/font-size: \d+px/);
+  });
+});
+
+/** "Show more" — a phone's list draws its first ten rows and adds ten per tap; a laptop draws them all. */
+describe('show more on a phone', () => {
+  const board = readFileSync(resolve(__dirname, 'TokenBoard.tsx'), 'utf8');
+  const hook = readFileSync(resolve(__dirname, 'use-visible-rows.ts'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../../styles/95-token-board.css'), 'utf8');
+
+  it('starts at ten rows and adds ten per tap, per tab', () => {
+    expect(hook).toMatch(/export const SHOW_STEP = 10;/);
+    expect(board).toMatch(/useState<Record<Column, number>>\(\{ waiting: SHOW_STEP, with_stylist: SHOW_STEP, paid: SHOW_STEP \}\)/);
+    expect(board).toMatch(/\[c\]: s\[c\] \+ SHOW_STEP/);
+  });
+
+  it('only a phone is limited — a laptop draws every row', () => {
+    expect(board).toMatch(/\(phone \? columns\[c\]\.slice\(0, shown\[c\]\) : columns\[c\]\)/);
+    expect(board).toMatch(/phone && columns\[c\]\.length > shown\[c\]/);
+  });
+
+  it('says how many it will add, and is a 44px button', () => {
+    expect(board).toMatch(/w\.showMore\(Math\.min\(SHOW_STEP, columns\[c\]\.length - shown\[c\]\)\)/);
+    expect(css).toMatch(/\.tb-more button \{[^}]*min-height: 44px;/);
+  });
+
+  it('re-measures the list when more rows are drawn', () => {
+    expect(board).toMatch(/shown\.waiting, shown\.with_stylist, shown\.paid\]\);/);
   });
 });

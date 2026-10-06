@@ -29,8 +29,8 @@
 }
 
 .hdr-search svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 /*
@@ -48,7 +48,7 @@
   align-items: center;
   justify-content: flex-start;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .hdr-search-wide svg {
@@ -190,6 +190,13 @@
   }
 }
 
+/* Jira GRW-496 — Staff's Back stands where the menu button does, so it is a phone's too. */
+@media (min-width: 861px) {
+  .topbar .topbar-back-phone {
+    display: none;
+  }
+}
+
 /* ---------- the menu button, in the header row (Jira GRW-306) ---------- */
 
 /* Not a phone: the sidebar is on screen. */
@@ -219,8 +226,30 @@
   }
 
   .menu-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* Jira GRW-496 — Back where the menu button would be: the same circle, so the header does not shift. */
+  .topbar .topbar-back-phone {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  /* Jira GRW-498 — the arrow is 16×16 in its 44px circle. 1rem, not 16px: every icon here is in rem
+     so it grows with the reader's text size (GRW-481), and 1rem is 16px at the default. */
+  .topbar .topbar-back-phone svg {
+    width: 1rem;
+    height: 1rem;
   }
 
   .topbar-lead {
@@ -254,12 +283,21 @@
   .topbar-lead .topbar-title {
     min-width: 96px;
   }
-  /* A title that does not fit wraps to two lines (about the height of the 44px menu
-     button beside it) instead of a dropped second row of controls or an ellipsis
-     through "Offers & Combos". */
+  /* Jira GRW-505 — a title that does not fit is ONE line ending in an ellipsis, on a phone as on a
+     laptop. It used to wrap to two lines here (about the height of the 44px button beside it); the
+     owner asked for one line, so the header never grows taller and the controls never move. The
+     ellipsis, the nowrap and the overflow come from the base rule above — this only sets the
+     line-height the wrapped version needed. */
   .topbar-lead .topbar-title h1 {
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
     line-height: 1.2;
+  }
+}
+
+/* Jira GRW-507 — a bare header on a phone: Back and the title, no controls group and no branch line. */
+@media (max-width: 860px) {
+  .topbar-bare .topbar-actions,
+  .topbar-bare .hbp-line {
+    display: none;
   }
 }

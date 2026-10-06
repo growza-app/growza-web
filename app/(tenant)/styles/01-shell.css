@@ -52,12 +52,12 @@
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .brand-name {
   font-weight: 660;
-  font-size: 16px;
+  font-size: 1rem;
   letter-spacing: -0.01em;
 }
 
@@ -76,7 +76,7 @@
   color: var(--sidebar-text);
   text-decoration: none;
   font-weight: 500;
-  font-size: 15.5px;
+  font-size: 0.96875rem;
   transition: background 0.12s, color 0.12s;
 }
 
@@ -96,7 +96,7 @@
   .nav a {
     padding-top: 7px;
     padding-bottom: 7px;
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 }
 
@@ -112,8 +112,8 @@
 }
 
 .nav svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   flex-shrink: 0;
   opacity: 0.9;
 }

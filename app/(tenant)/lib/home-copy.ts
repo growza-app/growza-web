@@ -73,6 +73,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     /** Jira GRW-338 — the Notifications tab's name when something is waiting: "Notifications, 3 unread". */
     unreadCount: (n: number) => (hi ? `${n} नई` : `${n} unread`),
     allBranches: S('All branches', 'सभी ब्रांच'),
+    earningsByBranch: S('Earnings by branch', 'ब्रांच के हिसाब से कमाई'),
 
     moneyToday: S('Money today', 'आज का पैसा'),
     moneyWeek: S('Money this week', 'इस हफ़्ते का पैसा'),
@@ -99,7 +100,6 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     needsYourAttention: S('Needs your attention', 'आपके ध्यान की ज़रूरत'),
     needsAttention: S('Needs attention', 'ध्यान देने वाली बातें'),
     notMarkedDone: S('Not marked done yet', 'अभी पूरे नहीं हुए'),
-    notMarkedPill: (n: number) => S(`${n} not marked done`, `${n} अभी पूरे नहीं हुए`),
     /** Everything came in one way: "All cash", "All UPI". A capital only where the word is an acronym. */
     allPaidBy: (label: string, mode: string) => (hi ? `सब ${label}` : `All ${mode === 'upi' ? label : label.toLowerCase()}`),
     fromToday: S('From today', 'आज के'),
@@ -112,6 +112,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     quickLinks: S('Quick links', 'शॉर्टकट'),
     /** The money card's branch line (Jira GRW-312); the "Your branches" card it was named after is gone (Jira GRW-348). */
     yourBranches: S('Your branches', 'आपकी ब्रांच'),
+    // Jira GRW-485 — what "+N" on the branch line does: it shows the rest of the line, it does not go anywhere.
+    allBranchesOpen: (n: number) => S(`Show all branches, ${n} more`, `सभी ब्रांच दिखाएँ, ${n} और`),
     branchCount: (n: number) => S(`${n} branches`, `${n} ब्रांच`),
 
     /*
@@ -227,7 +229,26 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     waitingTab: (n: number) => S(`Waiting (${n})`, `इंतज़ार (${n})`),
     doneTodayTab: (n: number) => S(`Done today (${n})`, `आज पूरे (${n})`),
     waitingQueue: S('Waiting queue', 'इंतज़ार की लाइन'),
-    waitingMin: (min: number) => S(`Waiting ${min} min`, `${min} मिनट इंतज़ार`),
+    /*
+     * Jira GRW-481 — a raw minute count stops being a duration somewhere around
+     * the hour mark. "Waiting 618 min" is ten and a half hours, and nobody reads
+     * it as that; they read it as a number that is large. Past 60 minutes this
+     * says hours and minutes, and past four hours the caller stops asking for a
+     * duration at all and shows the time the client actually walked in, which is
+     * the thing a receptionist can act on.
+     */
+    waitingMin: (min: number) => {
+      if (min < 60) return S(`Waiting ${min} min`, `${min} मिनट इंतज़ार`);
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return m === 0 ? S(`Waiting ${h}h`, `${h} घंटे इंतज़ार`) : S(`Waiting ${h}h ${m}m`, `${h} घंटे ${m} मिनट इंतज़ार`);
+    },
+    waitingSince: (time: string) => S(`Waiting since ${time}`, `${time} से इंतज़ार`),
+    /*
+     * Jira GRW-541 · GRW-548 — when a token in the Waiting column arrived, on its pill: "Since 2:57 pm". No word
+     * "Waiting" (the column is headed that); the stopwatch icon is drawn beside it.
+     */
+    sinceTime: (time: string) => S(`Since ${time}`, `${time} से`),
     waitingOver10: S('Waiting over 10 min', '10 मिनट से ज़्यादा इंतज़ार'),
     giveToStaff: S('Give to staff', 'स्टाफ़ को दें'),
     giveTitle: (name: string) => S(`Give ${name} to…`, `${name} को किसे दें…`),
@@ -236,6 +257,11 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     theyLeft: S('They left', 'चले गए'),
     // Jira GRW-284 — a token issued by name alone.
     whatHaving: S('What are they having?', 'क्या करवा रहे हैं?'),
+    // The give sheet's second step (Jira-less, owner 2026-10-05): back to the stylists, the two groups, and the one button.
+    changeStylist: S('Change stylist', 'स्टाइलिस्ट बदलें'),
+    packagesLabel: S('Packages', 'पैकेज'),
+    servicesLabel: S('Services', 'सेवाएँ'),
+    giveToName: (name: string) => S(`Give to ${name}`, `${name} को दें`),
     pickServiceFirst: S('Pick what they are having first.', 'पहले सेवा चुनें।'),
     // Jira GRW-451 — a branch with nothing on its menu. Without this the picker was simply blank, and every
     // stylist tap answered "Pick what they are having first" with nothing there to pick.

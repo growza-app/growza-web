@@ -18,21 +18,21 @@
 .wi-again-title {
   margin: 0;
   color: var(--accent-deep);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 .wi-again-when {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
 }
 .wi-again-what {
   margin-top: var(--sp-2);
   color: var(--text);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -40,19 +40,19 @@
 .wi-again-meta {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 .wi-again-label {
   margin-top: var(--sp-3);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 .wi-again-note {
   margin-top: var(--sp-2);
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .wi-again-times {
   display: flex;
@@ -69,7 +69,7 @@
   background: #fff;
   color: var(--accent-deep);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -87,7 +87,7 @@
   background: transparent;
   color: var(--accent-deep);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;

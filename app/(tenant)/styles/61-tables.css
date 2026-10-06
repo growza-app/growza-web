@@ -16,7 +16,7 @@
 .rp-table th {
   text-align: left;
   padding: 0 14px 11px;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -27,7 +27,7 @@
 .rp-table td {
   padding: 13px 14px;
   border-top: 1px solid #eef0ee;
-  font-size: 13px;
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 
@@ -35,15 +35,15 @@
 .rp-row-clickable:hover { background: #f7f9f7; }
 
 .rp-cell-avatar { display: flex; align-items: center; gap: 10px; }
-.rp-cell-avatar .rp-avatar { width: 30px; height: 30px; flex: 0 0 30px; font-size: 12px; }
+.rp-cell-avatar .rp-avatar { width: 30px; height: 30px; flex: 0 0 30px; font-size: 0.75rem; }
 /* Jira GRW-363 — the no-stylist row is not a person: a neutral dash, not initials in a person's colour. */
 .rp-avatar.is-nobody { background: var(--border); color: var(--muted); }
-.rp-cell-name { font-weight: 700; font-size: 13.5px; }
+.rp-cell-name { font-weight: 700; font-size: 0.84375rem; }
 
 .rp-pill {
   background: var(--accent-soft);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 4px 9px;
   border-radius: 20px;
 }
@@ -51,4 +51,4 @@
 .rp-cell-bar { display: flex; align-items: center; gap: 8px; }
 .rp-cell-bar-track { width: 70px; height: 7px; background: #f0f1f0; border-radius: 5px; overflow: hidden; }
 .rp-cell-bar-fill { display: block; height: 100%; }
-.rp-cell-bar-value { font-size: 12.5px; font-weight: 700; }
+.rp-cell-bar-value { font-size: 0.78125rem; font-weight: 700; }

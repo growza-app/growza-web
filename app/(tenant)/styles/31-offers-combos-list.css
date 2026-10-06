@@ -23,7 +23,7 @@
   background: transparent;
   padding: 7px 14px;
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
@@ -45,7 +45,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   background: var(--page-bg);
   color: var(--text);
 }
@@ -104,7 +104,7 @@
 }
 
 .dropdown-item-plain {
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 560;
   padding: 8px 10px;
 }
@@ -114,7 +114,7 @@
 }
 
 .dropdown-item-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
   flex-shrink: 0;
   width: 34px;
   height: 34px;
@@ -134,13 +134,13 @@
 
 .dropdown-item-title {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 640;
 }
 
 .dropdown-item-desc {
   display: block;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--muted);
   margin-top: 1px;
 }
@@ -218,7 +218,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .offer-icon-combo {
@@ -243,12 +243,12 @@
 
 .offer-title {
   font-weight: 640;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .offer-subtitle {
   margin-top: 3px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .offer-price-row {
@@ -261,18 +261,18 @@
 
 .offer-price {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--accent-deep);
 }
 
 .offer-strike {
   color: var(--muted);
   text-decoration: line-through;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
 }
 
 .offer-savings {
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -283,12 +283,19 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
 }
 
 .offer-info-item {
   white-space: normal;
   line-height: 1.35;
+}
+
+/* Was 📅. */
+.offer-info-item svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  vertical-align: -2px;
 }
 
 .offer-stats-col {
@@ -353,13 +360,13 @@
 }
 
 .switch-label-on {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--accent-deep);
 }
 
 .switch-label-off {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -373,11 +380,11 @@
 
 .offer-stat-value {
   font-weight: 660;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }
 
 .offer-stat-label {
-  font-size: 11.5px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -388,7 +395,7 @@
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
   color: var(--muted);
   cursor: pointer;
@@ -442,7 +449,7 @@
   min-height: 52px;
   padding: var(--sp-2) var(--sp-5);
   border-top: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   flex-shrink: 0;
 }
@@ -480,7 +487,7 @@
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: var(--sp-2);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   color: var(--text);
 }
@@ -518,7 +525,7 @@
 /* Jira GRW-381 — which branch runs an offer, on "All branches". */
 .offer-branch-chip {
   padding: 2px 9px;
-  font-size: 12px;
+  font-size: 0.75rem;
   background: var(--slate-soft);
   color: #5b6660;
 }
@@ -539,13 +546,19 @@
   justify-content: flex-start;
   gap: 8px;
   margin: 10px 0 4px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
 }
 
+/* The box was 22x22 and the label around it was the only thing you could aim at. */
+.offer-branch-field .offer-branch-all {
+  min-height: 44px;
+}
+
 .offer-branch-field .offer-branch-all input {
-  width: auto;
+  width: 24px;
+  height: 24px;
   margin: 0;
 }
 
@@ -554,4 +567,10 @@
   flex-direction: column;
   gap: 10px;
   align-items: flex-start;
+}
+
+/* Was 🏷️. The icon sits in a 32px tile, so it is sized like the other list glyphs. */
+.offer-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
 }

@@ -26,14 +26,32 @@ describe('the menu button sits in the header row', () => {
     expect(allCss).not.toMatch(/padding[^;]*max\(58px/);
   });
 
-  it('every header row draws it: PageHeader, Home, and Reports', () => {
-    expect(code('PageHeader.tsx')).toMatch(/<MenuButton \/>/);
+  it('Home draws it — every other header wears Back there (Jira GRW-497, below)', () => {
     expect(code('home/parts.tsx')).toMatch(/<MenuButton \/>/);
-    expect(code('../reports/ReportsShell.tsx')).toMatch(/<MenuButton \/>/);
   });
 
-  it('a screen with a Back arrow shows that instead of the menu', () => {
-    expect(code('PageHeader.tsx')).toMatch(/\{onBack \? null : <MenuButton \/>\}/);
+  it('every screen but Home wears Back where the menu goes, on a phone only (Jira GRW-497)', () => {
+    const header = code('PageHeader.tsx');
+    // Jira GRW-538 — Bookings and Clients ask for the menu instead (`menu`); every other screen still gets Back.
+    expect(header).toMatch(/\{onBack \? null : menu \? <MenuButton \/> : <BackButton phoneOnly \/>\}/);
+    // The menu is an opt-in (`menu`), never the default.
+    expect(header.match(/<MenuButton \/>/g)?.length).toBe(1);
+    expect(code('../reports/ReportsShell.tsx')).toMatch(/<BackButton phoneOnly \/>/);
+    expect(code('../reports/ReportsShell.tsx')).not.toMatch(/MenuButton/);
+    // Home keeps the menu.
+    expect(code('home/parts.tsx')).toMatch(/<MenuButton \/>/);
+    // A laptop has the sidebar on screen: no Back there.
+    expect(code('../styles/76-header-controls.css')).toMatch(/@media \(min-width: 861px\) \{\s*\.topbar \.topbar-back-phone \{\s*display: none;/);
+  });
+
+  it('the arrow is 16x16 (1rem) inside its 44px circle (Jira GRW-498)', () => {
+    const css = code('../styles/76-header-controls.css');
+    expect(css).toMatch(/\.topbar \.topbar-back-phone svg \{\s*width: 1rem;\s*height: 1rem;/);
+    expect(css).toMatch(/\.topbar \.topbar-back-phone \{[^}]*width: 44px;[^}]*height: 44px;/);
+  });
+
+  it('Back steps through history and goes Home when there is none', () => {
+    expect(code('BackButton.tsx')).toMatch(/window\.history\.length > 1 \? router\.back\(\) : router\.push\('\/'\)/);
   });
 
   it('it says what it opens and whether it is open', () => {
@@ -49,8 +67,11 @@ describe('the menu button sits in the header row', () => {
     // and the 96px title minimum leaves Clients / Services / Staff on one row from 360px up.
     expect(css).toMatch(/\.topbar-lead\s*\{[^}]*flex:\s*1 1 0;[^}]*min-width:\s*150px;/);
     expect(css).toMatch(/\.topbar-lead \.topbar-title\s*\{[^}]*min-width:\s*96px;/);
-    // A long title wraps to two lines beside the 44px button instead of dropping the actions a row.
-    expect(css).toMatch(/\.topbar-lead \.topbar-title h1\s*\{[^}]*white-space:\s*normal;/);
+    // Jira GRW-505 — a long title is ONE line ending in an ellipsis (it wrapped to two before), so the
+    // header never grows taller. The ellipsis itself is the base `.topbar-title h1` rule.
+    expect(css).toMatch(/\.topbar-lead \.topbar-title h1\s*\{[^}]*white-space:\s*nowrap;/);
+    expect(css).not.toMatch(/\.topbar-lead \.topbar-title h1\s*\{[^}]*white-space:\s*normal;/);
+    expect(css).toMatch(/\.topbar-title h1\s*\{\s*overflow:\s*hidden;\s*text-overflow:\s*ellipsis;\s*white-space:\s*nowrap;/);
   });
 
   it('it is a phone control: display:none from 861px, and a 44px target below', () => {

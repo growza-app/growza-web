@@ -26,7 +26,6 @@ import {
   IconAnalytics,
   IconBan,
   IconCalendarPlus,
-  IconChat,
   IconChevronRight,
   IconClipboardCheck,
   IconClock,
@@ -43,6 +42,7 @@ import { NewVisitSheet } from '../NewVisitSheet';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
+import { BranchCarousel } from './BranchCarousel';
 import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
@@ -69,6 +69,13 @@ import { useMinuteClock } from './useMinuteClock';
  * your attention on top, Bookings today and Right now beneath (1.5fr / 1fr, the
  * same split), How your clients are doing at the bottom. The grid names its
  * areas (83-role-home.css), so a new card is a new area, not a new layout.
+ *
+ * ## The phone's order is this file's, not the stylesheet's (Jira GRW-486)
+ *
+ * Money, shortcuts, the queue when somebody is on it, what needs you, the day, clients — in
+ * that order here, because that is the order they are read in. 83-role-home.css used to set it
+ * with `order`, which moves the eye without moving Tab or VoiceOver. The laptop grid places by
+ * `grid-template-areas` and does not care what order these are in, so one DOM order serves both.
  */
 
 const HOME_BOOKINGS_SHOWN = 6;
@@ -200,25 +207,69 @@ export function OwnerHome(p: OwnerHomeProps) {
   const mayBook = mayUse(p.role, 'visit.new');
   const mayRecordPayment = mayUse(p.role, 'visit.recordPayment');
 
+  /*
+   * Only the newest read may land. A branch or period switch, or a refresh after a payment, can overlap an
+   * earlier read; without this the slower answer wins and Home shows another branch's or period's figures.
+   */
+  const homeSeq = useRef(0);
+  const statsSeq = useRef(0);
+
   const loadClientStats = (nextBranch: string | null) => {
+    const mine = ++statsSeq.current;
     api
       .customerStats(nextBranch)
-      .then(setClientStats)
-      .catch(() => setClientStats(null));
+      .then((s) => mine === statsSeq.current && setClientStats(s))
+      .catch(() => mine === statsSeq.current && setClientStats(null));
   };
 
-  const load = (nextPeriod: HomePeriod, nextBranch: string | null) => {
-    setLoading(true);
-    setFailed(false);
+  /** `quiet`: a refresh of what is already on screen — no spinner, and a failed read keeps the figures shown. */
+  const load = (nextPeriod: HomePeriod, nextBranch: string | null, quiet = false) => {
+    const mine = ++homeSeq.current;
+    if (!quiet) {
+      setLoading(true);
+      setFailed(false);
+    }
     api
       .home(nextPeriod, nextBranch)
       .then((d) => {
+        if (mine !== homeSeq.current) return;
         setData(d);
         setFailed(false);
       })
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (mine === homeSeq.current && !quiet) setFailed(true);
+      })
+      .finally(() => {
+        if (mine === homeSeq.current) setLoading(false);
+      });
   };
+
+  /*
+   * Record payment, Mark done, a move, a token — and the same done on another phone — all end in a server
+   * refresh (`router.refresh()` from the sheet, or LiveRefresh's tick), which hands Home a new business-wide
+   * overview. The figures this screen holds for its branch and period are re-read when that overview has
+   * CHANGED, not on every tick: an unchanged refresh costs nothing here. Today on All branches is the server's
+   * own read, so it is taken as is.
+   */
+  const serverSig =
+    p.initial === null ? null : JSON.stringify([p.initial.money, p.initial.branches, p.initial.attention, p.initial.tokensToday ?? null, p.customerStats]);
+  const seenSig = useRef(serverSig);
+  useEffect(() => {
+    if (serverSig === null || serverSig === seenSig.current) return;
+    seenSig.current = serverSig;
+    if (!branchContext.ready) return;
+    if (period === 'today' && branch === null) {
+      homeSeq.current++;
+      statsSeq.current++;
+      setData(p.initial);
+      setFailed(false);
+      setClientStats(p.customerStats);
+      return;
+    }
+    load(period, branch, true);
+    loadClientStats(branch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSig]);
 
   /**
    * Jira GRW-340 — choose a branch from anywhere on this screen (the header's picker, the money card's branch line).
@@ -244,6 +295,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   /** The overview Home holds is for the branch it shows (not one left from before a switch). */
   const dataIsForBranch = data !== null && (data.locationId ?? null) === branch;
+  const showCarousel = dataIsForBranch && branch === null && (data?.branches.length ?? 0) > 1;
 
   /*
    * Jira GRW-351 — no flash of every branch before the remembered one. The server draws "all" (it cannot see the
@@ -398,7 +450,6 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
     { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics />, tone: 'amber' },
-    ...(p.whatsappDemo ? [{ href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, tone: 'green', pill: p.whatsappLive ? null : t.nav.demo }] : []),
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
@@ -483,26 +534,37 @@ export function OwnerHome(p: OwnerHomeProps) {
               height. From 861px it is the header's button or the card's row. */}
           <button type="button" className="hm-toolbar-summary" aria-label={t.daySummary} title={t.daySummary} onClick={() => setSummaryOpen(true)}>
             <IconDaySummary />
+            {/* Jira GRW-511 — its name beside the icon: an owner should not have to guess what an icon opens. */}
+            <span className="hm-toolbar-summary-label">{t.daySummary}</span>
           </button>
         </div>
 
         <div className={`hm-owner-grid ${hideUntilBranch ? 'is-settling' : ''}`} aria-busy={hideUntilBranch || undefined}>
           {/* The figures are the branch's; while a switch loads, the last ones stay, dimmed. A failed read says so. */}
-          <div className="hm-area-hero">{data && (dataIsForBranch || !failed) ? <MoneyHero
+          {/* On a phone, "All branches" is a carousel with one card per branch (the hero stays for a laptop). */}
+          <div className={`hm-area-hero ${showCarousel ? 'has-carousel' : ''}`}>
+            {data && (dataIsForBranch || !failed) ? <MoneyHero
                 t={t}
                 data={data}
                 loading={loading || !dataIsForBranch}
                 onDaySummary={() => setSummaryOpen(true)}
-                unmarkedHref={unmarkedHref}
                 branchId={branch}
                 onPickBranch={pickBranch}
-                onMoreBranches={() => branchContext.setPickerOpen(true)}
-              /> : <CardError t={t} onRetry={() => load(period, branch)} />}</div>
+              /> : <CardError t={t} onRetry={() => load(period, branch)} />}
+            {showCarousel && data ? <BranchCarousel t={t} data={data} period={period} refreshKey={serverSig} onPick={pickBranch} /> : null}
+          </div>
 
-          {/* The design gives "Needs your attention" to the laptop only; a phone's
-              Home is money, shortcuts, clients and the day. */}
-          <Card className="hm-area-attention hm-desktop" title={t.needsYourAttention}>
-            {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
+          {/*
+            Quick links, directly under the money card (owner, 2026-10-04).
+
+            GRW-486 had sent these to the bottom, on the argument that a grid of nine links repeats
+            the tab bar and should not outrank the day. The owner uses them as the way INTO the app
+            — Packages, Offers, Free times and Settings have no tab at all — and wants them where
+            the hand lands after reading the takings. So they sit second, and what needs the owner
+            follows them.
+          */}
+          <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
+            <QuickTiles items={links} />
           </Card>
 
           {/*
@@ -520,8 +582,17 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
           )}
 
-          <Card className="hm-area-links hm-mobile" title={t.quickLinks}>
-            <QuickTiles items={links} />
+          {/*
+            Jira GRW-486 — on every width, and second only to somebody standing in the salon.
+
+            This card was `hm-desktop` from GRW-222 until now, on the reasoning that "a phone's Home is
+            money, shortcuts, clients and the day". But it is the only card on Home that asks the owner
+            to DO something — visits not marked done, today's cancellations, staff not marked in — and
+            the owner with a phone in their hand is the one who can act on it. What it displaced is a
+            grid of nine links to screens the tab bar and the drawer already reach.
+          */}
+          <Card className="hm-area-attention" title={t.needsYourAttention}>
+            {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
           </Card>
 
           <Card
@@ -545,9 +616,18 @@ export function OwnerHome(p: OwnerHomeProps) {
           {/* Jira GRW-351 — laptop only; row 2 mirrors row 1. Its data is Bookings today's, so the two agree. */}
           <RightNow t={t} today={todayGroups} tomorrow={tomorrowGroups} queue={queue} now={now} afterClose={listIsTomorrow} timezone={p.timezone} />
 
-          <Card className="hm-area-clients" title={t.clientsDoingTitle}>
+          {/*
+            The client segments are the laptop's (owner, 2026-10-04).
+
+            Four tiles, a two-line explanation above them and about 320px of a phone screen, for
+            counts that do not change through the day and that nobody acts on standing at the
+            counter. Clients is a tab, and each tile's link is a filter on it, so nothing here
+            becomes unreachable — it stops taking the room the day's work wants.
+          */}
+          <Card className="hm-area-clients hm-desktop" title={t.clientsDoingTitle}>
             <SegmentCards t={t} stats={clientStats} branch={branch} />
           </Card>
+
         </div>
       </div>
 

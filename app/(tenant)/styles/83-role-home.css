@@ -65,14 +65,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--hm-ink);
   line-height: 1.2;
 }
 .hm-head-sub {
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--hm-muted);
   white-space: nowrap;
@@ -98,7 +98,7 @@
   background: #f4f6f4;
   color: var(--hm-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -109,8 +109,8 @@
   color: var(--hm-green-deep);
 }
 .hm-summary-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 /* Jira GRW-306 — below 1181px the header has no room for the label (at 861px it
    was 3px wider than the page), and an icon on its own read as a mystery clock, so
@@ -152,24 +152,25 @@
     background: transparent;
     border-bottom: 0;
   }
-  /* Jira GRW-306 — the whole name, on up to two lines, instead of "Velvet Sciss…". */
+  /* Jira GRW-306 showed the whole name on up to two lines; Jira GRW-509 — the owner asked for one line
+     ending in an ellipsis instead, the same as every screen title (GRW-505): the header keeps its
+     height and the search and avatar never move. */
   .hm-head-business {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    font-size: 21px;
+    display: block;
+    font-size: 1.3125rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.2;
     color: var(--hm-ink);
+    white-space: nowrap;
     overflow: hidden;
-    overflow-wrap: anywhere;
+    text-overflow: ellipsis;
   }
   .hm-head-branch {
     display: flex;
     align-items: center;
     gap: var(--sp-1);
-    font-size: 12.5px;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--hm-muted);
     min-width: 0;
@@ -185,12 +186,18 @@
     flex-shrink: 0;
     max-width: 70%;
   }
+  /* Jira GRW-481 — on a phone the date goes entirely, rather than merely giving way
+     first. Two things on this screen were telling the owner what day it is: this,
+     and the range control directly beneath it reading "Today". The date was the
+     weaker of the two and it was costing the branch name its last few characters,
+     so a two-branch owner read "All branch…" at 344px. The laptop keeps its date
+     chip in the header controls, where there is room for both. */
   .hm-head-branch-date {
-    min-width: 0;
+    display: none;
   }
   .hm-head-branch svg {
-    width: 14px;
-    height: 14px;
+    width: 0.875rem;
+    height: 0.875rem;
     flex-shrink: 0;
   }
   /* A phone shows who and where; the greeting is a laptop's luxury. It stays as
@@ -248,13 +255,13 @@
 .hm-card-head h2,
 .hm-section-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--hm-ink);
 }
 .hm-card-head h2 small {
   margin-left: var(--sp-2);
-  font-size: 12.5px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--hm-faint);
 }
@@ -266,18 +273,18 @@
 }
 .hm-card-hint {
   margin: 0 0 var(--sp-3);
-  font-size: 12.5px;
+  font-size: 0.875rem;
   color: var(--hm-faint);
   line-height: 1.35;
 }
 .hm-card-foot {
   margin: var(--sp-3) 0 0;
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--hm-faint);
   text-align: center;
 }
 .hm-link {
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-green-deep);
   text-decoration: none;
@@ -285,7 +292,7 @@
 }
 .hm-empty {
   margin: var(--sp-2) 0;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 .hm-error {
@@ -298,7 +305,7 @@
   background: #fdf1f1;
   border: 1px solid #f7d9d9;
   color: #9f2f2f;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
 }
 .hm-error button {
   min-height: 40px;
@@ -329,7 +336,7 @@
   flex-shrink: 0;
   border-radius: 11px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 0.9375rem;
 }
 .hm-tag {
   margin-left: var(--sp-2);
@@ -337,7 +344,7 @@
   border-radius: 6px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-size: 10.5px;
+  font-size: 0.75rem;
   font-weight: 700;
   vertical-align: middle;
 }
@@ -363,11 +370,11 @@
   border-radius: 12px;
 }
 .hm-toolbar-actions .hm-action svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-toolbar-actions .hm-action strong {
-  font-size: 14px;
+  font-size: 0.875rem;
   white-space: nowrap;
 }
 .hm-seg {
@@ -384,7 +391,7 @@
   background: transparent;
   color: var(--hm-muted);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -421,7 +428,7 @@
   background: transparent;
   color: var(--hm-ink);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -518,14 +525,20 @@
   }
 }
 @media (max-width: 860px) {
-  /* The design's phone order: money, what needs you, shortcuts, clients, the day. */
-  .hm-area-hero { order: 1; }
-  .hm-area-attention { order: 2; }
-  /* Jira GRW-418 — above the shortcuts: somebody waiting in the salon outranks a link to Offers. */
-  .hm-area-queue { order: 2; }
-  .hm-area-links { order: 3; }
-  .hm-area-clients { order: 5; }
-  .hm-area-bookings { order: 6; }
+  /*
+   * Jira GRW-486 — the phone order is the DOM's now, not this block's.
+   *
+   * It used to be six `order` declarations here: money, what needs you, the queue, shortcuts,
+   * clients, the day. Two things were wrong with that. The sequence it drew was never the one the
+   * comment described, because `OwnerHome` tagged "Needs your attention" `hm-desktop` and the card
+   * was not on a phone at all — so what the owner actually got was money, a grid of nine links,
+   * clients, and the day last. And `order` moves the eye without moving Tab or VoiceOver, which is
+   * the split `new-visit-actions-tray.test.ts` already guards against on the walk-in tray.
+   *
+   * So `OwnerHome` lays the cards out in the order they are read — money, the queue, what needs
+   * you, the day, clients, shortcuts — and nothing here reorders them. The laptop grid is
+   * untouched: it places by `grid-template-areas`, which does not care what order the DOM is in.
+   */
   /* A phone gets the period as a dropdown, styled as the branch picker beside it. */
   .hm-toolbar .hm-seg {
     display: none;
@@ -541,7 +554,7 @@
     background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6f66' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 15px 15px;
     color: var(--hm-ink);
     font: inherit;
-    font-size: 13.5px;
+    font-size: 0.9375rem;
     font-weight: 700;
     appearance: none;
     -webkit-appearance: none;
@@ -571,7 +584,7 @@
   gap: var(--sp-2);
 }
 .hm-eyebrow {
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -586,7 +599,7 @@
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   color: #bff0d0;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -609,7 +622,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
 }
 .hm-pay-menu-head span {
   font-weight: 800;
@@ -620,10 +633,62 @@
 .hm-pay-menu .hm-pay-list .hm-pay-item:last-child {
   border-bottom: 0;
 }
+/*
+ * Jira GRW-485 — every branch's takings, opened from the branch line's "+N".
+ *
+ * Sized to its content and never scrolled: a popover that scrolls is a list that
+ * should have been a page, and a business has a handful of branches, not a feed.
+ * Each row is a 44px target because each row is also the way into that branch.
+ */
+.hm-branch-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hm-branch-list button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hm-branch-list li + li button {
+  border-top: 1px solid var(--hm-line);
+}
+.hm-branch-list i {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+/* The name gives way, never the amount — the amount is what the row is for. */
+.hm-branch-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-branch-list b {
+  flex: none;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.hm-branch-menu {
+  padding-bottom: 10px;
+}
+
 .hm-pay-menu .hm-empty {
   margin: 4px 0 10px;
   color: var(--hm-muted);
-  font-size: 13px;
+  font-size: 0.9375rem;
 }
 .hm-hero-body {
   display: flex;
@@ -632,7 +697,7 @@
   gap: var(--sp-4);
 }
 .hm-hero-amount {
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -648,7 +713,7 @@
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.08);
   color: #bfe6cf;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -664,7 +729,7 @@
   gap: 2px;
 }
 .hm-hero-week strong {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 800;
 }
 .hm-spark {
@@ -672,8 +737,8 @@
 }
 .hm-spark svg {
   display: block;
-  width: 200px;
-  height: 42px;
+  width: 12.5rem;
+  height: 2.625rem;
   overflow: visible;
 }
 .hm-spark polyline {
@@ -692,7 +757,7 @@
      uses), so a month's 1 · 8 · 15 · 22 · 29 land where those days are. */
   position: relative;
   height: 1.3em;
-  font-size: 10px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #a9d6bd;
 }
@@ -704,7 +769,7 @@
 }
 .hm-hero-empty {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.9375rem;
   color: #bfe6cf;
 }
 .hm-paybar {
@@ -733,7 +798,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #bfe6cf;
 }
@@ -744,11 +809,11 @@
   flex-shrink: 0;
 }
 .hm-pay-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 .hm-pay-share {
-  font-size: 11px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #9fd3b4;
 }
@@ -771,14 +836,14 @@
 .hm-pay-list .hm-pay-label {
   flex: 1;
   color: var(--hm-ink);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 .hm-pay-list .hm-pay-value {
   order: 3;
   width: 80px;
   text-align: right;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-pay-list .hm-pay-share {
   color: var(--hm-faint);
@@ -788,13 +853,13 @@
     padding: var(--sp-4);
   }
   .hm-hero-amount {
-    font-size: 28px;
+    font-size: 1.75rem;
   }
   .hm-eyebrow {
-    font-size: 11px;
+    font-size: 0.8125rem;
   }
   .hm-pay-value {
-    font-size: 16px;
+    font-size: 1rem;
   }
   .hm-pay-tiles .hm-pay-item {
     padding: 0;
@@ -832,20 +897,20 @@
     max-width: 150px;
   }
   .hm-hero-week .hm-eyebrow {
-    font-size: 9.5px;
+    font-size: 0.75rem;
   }
   .hm-hero-week strong {
-    font-size: 13px;
+    font-size: 0.9375rem;
   }
   .hm-hero-week .hm-spark,
   .hm-hero-week .hm-spark svg {
     width: 100%;
   }
   .hm-hero-week .hm-spark svg {
-    height: 28px;
+    height: 1.75rem;
   }
   .hm-hero-week .hm-spark-days {
-    font-size: 10px;
+    font-size: 0.75rem;
   }
   /* The design's phone hero: a ruled strip of three figures, not chips —
      number over its word, so "came back" is never cut to "came ba…". */
@@ -864,11 +929,11 @@
     flex-direction: column;
     padding: 0;
     background: transparent;
-    font-size: 11px;
+    font-size: 0.8125rem;
     line-height: 1.25;
   }
   .hm-hero-stats strong {
-    font-size: 16px;
+    font-size: 1rem;
   }
 }
 .hm-hero-small {
@@ -895,8 +960,8 @@
   color: var(--hm-ink);
 }
 .hm-att > svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
   color: #9aa39d;
   flex-shrink: 0;
 }
@@ -910,8 +975,8 @@
   flex-shrink: 0;
 }
 .hm-att-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-att-text {
   flex: 1;
@@ -920,11 +985,11 @@
   flex-direction: column;
 }
 .hm-att-line {
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 .hm-att-sub {
-  font-size: 11.5px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--hm-faint);
 }
@@ -979,11 +1044,11 @@
   border-style: solid;
 }
 .hm-tile-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 .hm-tile-label {
-  font-size: 11.5px;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
@@ -996,7 +1061,7 @@
   border-radius: 5px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-size: 9.5px;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -1026,7 +1091,7 @@
     border-radius: 12px;
   }
   .hm-page > .hm-tiles .hm-tile-label {
-    font-size: 14px;
+    font-size: 0.875rem;
     text-align: left;
     color: var(--hm-ink);
   }
@@ -1077,7 +1142,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1088,7 +1153,7 @@
   background: var(--seg);
 }
 .hm-seg-range {
-  font-size: 11.5px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--hm-faint);
   white-space: nowrap;
@@ -1099,12 +1164,12 @@
   gap: var(--sp-2);
 }
 .hm-seg-count strong {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 .hm-seg-count span {
-  font-size: 12.5px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--hm-faint);
 }
@@ -1120,10 +1185,10 @@
     gap: 0;
   }
   .hm-seg-name {
-    font-size: 12.5px;
+    font-size: 0.875rem;
   }
   .hm-seg-range {
-    font-size: 11.5px;
+    font-size: 0.8125rem;
   }
 }
 
@@ -1160,15 +1225,15 @@
   cursor: pointer;
 }
 .hm-row-button svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
   color: #9aa39d;
   flex-shrink: 0;
 }
 .hm-row-time {
   width: 64px;
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: #4a574f;
   white-space: nowrap;
@@ -1181,24 +1246,24 @@
 }
 .hm-row-name,
 .hm-person-name {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .hm-person-name {
-  font-size: 16px;
+  font-size: 1rem;
 }
 .hm-row-sub {
-  font-size: 12.5px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .hm-row-meta {
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--hm-faint);
   white-space: nowrap;
@@ -1206,7 +1271,7 @@
 .hm-row-money {
   width: 76px;
   text-align: right;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -1221,7 +1286,7 @@
   flex-shrink: 0;
   padding: 3px 10px;
   border-radius: 20px;
-  font-size: 11.5px;
+  font-size: 0.8125rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1232,9 +1297,12 @@
 .hm-pill-amber { background: #fbf0dc; color: #8a5a0f; }
 .hm-pill-rose { background: #fdecec; color: #c53434; }
 @media (max-width: 400px) {
+  /* A fixed width and `white-space: nowrap`: "10:00 am" needs 60px at this size and was painting
+     4px of itself over the client's name. The column still lines up — it just cannot be cut. */
   .hm-row-time {
-    width: 56px;
-    font-size: 12px;
+    width: auto;
+    min-width: 56px;
+    font-size: 0.875rem;
   }
   .hm-row .hm-avatar {
     display: none;
@@ -1284,15 +1352,15 @@
   margin: 0;
   padding: 6px 12px;
   border-radius: 12px;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   min-width: 0;
   white-space: nowrap;
 }
 .hm-now-alert svg,
 .hm-now-calm svg,
 .hm-now-unread svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   flex-shrink: 0;
 }
 .hm-now-alert-amber { background: #fbf0dc; color: #7a4f0c; }
@@ -1314,7 +1382,7 @@ button.hm-now-count {
   width: 100%;
   border: 0;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   text-align: left;
   cursor: pointer;
 }
@@ -1323,8 +1391,8 @@ button.hm-now-count {
   font-weight: 700;
 }
 .hm-now-count .hm-now-alert-sub svg {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 /* "+2 more" opens every alert: a real button, 24px tall at least (WCAG 2.5.8). */
 .hm-now-more {
@@ -1335,7 +1403,7 @@ button.hm-now-count {
   background: transparent;
   color: var(--hm-green-deep);
   font: inherit;
-  font-size: 12.5px;
+  font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1382,12 +1450,12 @@ button.hm-now-count {
   flex-shrink: 0;
 }
 .hm-now-icon svg {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 .hm-now-label {
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--hm-muted);
   white-space: nowrap;
@@ -1400,18 +1468,18 @@ button.hm-now-count {
   align-items: baseline;
   justify-content: flex-end;
   gap: 6px;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--hm-ink);
   white-space: nowrap;
 }
 .hm-now-value strong {
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 800;
 }
 .hm-now-value strong + strong {
-  font-size: 13.5px;
+  font-size: 0.9375rem;
 }
 .hm-now-detail {
   min-width: 0;
@@ -1477,7 +1545,7 @@ button.hm-now-count {
     background: var(--hm-green-soft);
     color: var(--hm-green-deep);
     font: inherit;
-    font-size: 13px;
+    font-size: 0.9375rem;
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
@@ -1488,8 +1556,8 @@ button.hm-now-count {
     text-overflow: ellipsis;
   }
   .hm-fit .hm-closed-chip svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
   }
 }
@@ -1511,8 +1579,8 @@ button.hm-now-count {
   cursor: pointer;
 }
 .hm-closed > svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   color: var(--hm-green);
 }
 .hm-closed-icon {
@@ -1527,8 +1595,8 @@ button.hm-now-count {
   flex-shrink: 0;
 }
 .hm-closed-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-closed-text {
   flex: 1;
@@ -1536,10 +1604,10 @@ button.hm-now-count {
   flex-direction: column;
 }
 .hm-closed-text strong {
-  font-size: 14.5px;
+  font-size: 0.90625rem;
 }
 .hm-closed-text span {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: #4f7d63;
 }
 
@@ -1574,12 +1642,12 @@ button.hm-now-count {
 }
 .hm-sheet-head h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
 }
 .hm-sheet-head p {
   margin: 0;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 .hm-icon-btn {
@@ -1596,8 +1664,8 @@ button.hm-now-count {
   cursor: pointer;
 }
 .hm-icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 .hm-sheet-grid {
   display: grid;
@@ -1613,7 +1681,7 @@ button.hm-now-count {
   border-radius: 13px;
   font: inherit;
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 0.90625rem;
   cursor: pointer;
 }
 .hm-btn-quiet {
@@ -1623,6 +1691,11 @@ button.hm-now-count {
 }
 .hm-sheet-close {
   align-self: flex-start;
+}
+/* Jira GRW-489 — the give sheet's two quiet exits: pay them here, or they left. */
+.hm-give-foot {
+  display: flex;
+  gap: var(--sp-2);
 }
 @media (max-width: 860px) {
   .hm-overlay {
@@ -1636,13 +1709,17 @@ button.hm-now-count {
     border-radius: 24px 24px 0 0;
   }
   .hm-sheet-head h2 {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
   .hm-sheet-grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .hm-sheet-close {
     align-self: stretch;
+  }
+  .hm-give-foot .hm-btn {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 
@@ -1671,8 +1748,8 @@ button.hm-now-count {
   text-decoration: none;
 }
 .hm-action svg {
-  width: 22px;
-  height: 22px;
+  width: 1.375rem;
+  height: 1.375rem;
   flex-shrink: 0;
 }
 .hm-action span {
@@ -1680,10 +1757,10 @@ button.hm-now-count {
   flex-direction: column;
 }
 .hm-action strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-action small {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
 }
 .hm-action-dark {
@@ -1730,7 +1807,7 @@ button.hm-now-count {
 }
 .hm-person .hm-avatar {
   border-radius: 13px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 .hm-card-next {
   background: #f4f2fd;
@@ -1777,12 +1854,12 @@ button.hm-now-count {
   border-radius: 13px;
   border-width: 1px;
   border-style: solid;
-  font-size: 11.5px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--hm-muted);
 }
 .hm-count strong {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 .hm-mine {
@@ -1791,12 +1868,12 @@ button.hm-now-count {
   gap: var(--sp-3);
 }
 .hm-mine strong {
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 .hm-mine span {
-  font-size: 13px;
+  font-size: 0.9375rem;
   color: var(--hm-muted);
 }
 
@@ -1805,7 +1882,7 @@ button.hm-now-count {
   min-width: 0;
 }
 .brand-location {
-  font-size: 11.5px;
+  font-size: 0.8125rem;
   color: #a7c4b8;
   white-space: nowrap;
   overflow: hidden;
@@ -1844,76 +1921,65 @@ button.hm-now-count {
   min-width: 0;
 }
 .nav-who-text strong {
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   color: #fff;
 }
 .nav-who-text span {
-  font-size: 11px;
+  font-size: 0.8125rem;
   color: #a7c4b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ---------- bottom nav: the raised centre action ---------- */
+/* ---------- bottom nav: the floating action (Jira GRW-495) ----------
+   A round plus button at the bottom right, above the bar, like Compose in Gmail or
+   Outlook. It is absolutely placed inside the bar rather than `position: fixed`: the bar
+   is in flow on purpose (74-mobile-chrome-2026.css, GRW-192), and anchoring to it means the
+   pill follows the bar's height at any text size and clears the home indicator for free. */
 @media (max-width: 860px) {
   .bottom-nav.has-centre {
     position: relative;
     overflow: visible;
   }
   .bn-centre {
-    position: relative;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    min-height: 48px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    font: inherit;
-    cursor: pointer;
-    z-index: 2;
-  }
-  .bn-centre-btn {
     position: absolute;
-    top: -28px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 0;
+    bottom: calc(100% + var(--sp-3));
     display: flex;
     align-items: center;
     justify-content: center;
     width: 56px;
     height: 56px;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
-    border: 4px solid #fff;
-    background: linear-gradient(140deg, #1c9d52, #127a3e);
+    background: linear-gradient(140deg, #168243, #127a3e);
     color: #fff;
-    box-shadow: 0 10px 22px rgba(22, 163, 74, 0.33);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(9, 20, 15, 0.2), 0 10px 22px rgba(22, 163, 74, 0.33);
     transition: transform 0.18s ease;
+    z-index: 5;
   }
-  .bn-centre:active .bn-centre-btn {
-    transform: translateX(-50%) scale(0.94);
+  .bn-centre:active {
+    transform: scale(0.94);
+  }
+  .bn-centre-btn {
+    display: flex;
   }
   .bn-centre-btn svg {
-    width: 24px;
-    height: 24px;
-    stroke-width: 2;
+    width: 1.75rem;
+    height: 1.75rem;
+    stroke-width: 2.2;
   }
-  .bn-centre-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--hm-green-deep);
-    white-space: nowrap;
+  /* The button covers the bottom right of the page by its own height plus its gap, so the
+     last row scrolls clear of it. Jira GRW-508 — only where the button is drawn (Home, Bookings,
+     Clients): a screen without one keeps its ordinary bottom padding instead of an empty band. */
+  .content:has(> .bottom-nav.has-centre) .page-body {
+    padding-bottom: calc(var(--sp-8) + 68px);
   }
-  /* The raised circle reaches 28px above the bar; give the page that much more
-     room at the bottom so the last row is never under it. */
-  .page-body {
-    padding-bottom: calc(var(--sp-8) + 28px);
-  }
-  .page-body.page-fit {
-    padding-bottom: calc(var(--sp-3) + 28px);
+  .content:has(> .bottom-nav.has-centre) .page-body.page-fit {
+    padding-bottom: calc(var(--sp-3) + 68px);
   }
 }
 
@@ -1926,11 +1992,11 @@ button.hm-now-count {
   min-height: 56px;
   padding: var(--sp-4) var(--sp-6);
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-desk .hm-primary-actions .hm-action svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .hm-att-tiles {
@@ -1963,22 +2029,22 @@ button.hm-now-count {
 }
 .hm-att-count {
   grid-area: count;
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
 }
 .hm-att-tile > svg {
   grid-area: chev;
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 .hm-tone-amber > svg { color: #c07d18; }
 .hm-tone-rose > svg { color: #d64545; }
 .hm-tone-violet > svg { color: #6d4fc4; }
 .hm-att-tile-label {
   grid-area: label;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: #4a574f;
 }
@@ -1993,7 +2059,7 @@ button.hm-now-count {
   padding: var(--sp-5);
 }
 .hm-desk .hm-card-head h2 {
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .hm-desk .hm-row {
   min-height: 64px;
@@ -2002,20 +2068,20 @@ button.hm-now-count {
 }
 .hm-desk .hm-row .hm-avatar {
   border-radius: 11px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-desk .hm-row-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-desk .hm-row-sub {
-  font-size: 13px;
+  font-size: 0.9375rem;
 }
 
 .hm-dot-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -2061,9 +2127,17 @@ button.hm-now-count {
 /* Jira GRW-284 — services picked while giving a name-only token. Scrolls
    inside the sheet so a 50-service menu cannot push the stylists off-screen. */
 .hm-give-services {
-  max-height: 34dvh;
+  max-height: 46dvh;
   overflow-y: auto;
-  padding: 0 var(--sp-4) var(--sp-3);
+}
+/* The title takes what the back and close buttons leave; the one button of the second step is full width. */
+.hm-give-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.hm-give-go {
+  width: 100%;
+  min-height: 48px;
 }
 .hm-idx {
   display: inline-flex;
@@ -2077,12 +2151,12 @@ button.hm-now-count {
   border-radius: 8px;
   background: #f1f4f1;
   color: #4a574f;
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 .hm-wait {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #8a5a0f;
   white-space: nowrap;
@@ -2090,16 +2164,20 @@ button.hm-now-count {
 .hm-wait-rose {
   color: #b93232;
 }
+/* Jira GRW-481 — 36px was below the 44x44 minimum, on the two buttons the desk
+   taps more than anything else in the app. Everything else on Home already
+   cleared 44, either outright or through the ::after expansion the branch chip
+   uses; these two were the only ones left short. */
 .hm-give {
   flex-shrink: 0;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 16px;
   border: 0;
-  border-radius: 20px;
+  border-radius: 22px;
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
   font: inherit;
-  font-size: 12.5px;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -2111,6 +2189,29 @@ button.hm-now-count {
 }
 .hm-sheet-narrow {
   width: min(480px, 100%);
+}
+/* A stylist row is: face, name, free/busy. A long client's name in the "busy with" pill used to squeeze the face and the
+   stylist's own name to nothing, so the pill gives way (an ellipsis) and the face and name keep their room. */
+.hm-pick .hm-avatar {
+  flex: none;
+}
+.hm-pick .hm-row-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.hm-pick .hm-row-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-pick .hm-pill {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 58%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hm-pick .hm-row-button button:disabled {
   opacity: 0.6;
@@ -2143,19 +2244,19 @@ button.hm-now-count {
     border-radius: 9px;
   }
   .hm-att-tile .hm-att-icon svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
   }
   .hm-att-count {
     margin-top: 7px;
-    font-size: 22px;
+    font-size: 1.375rem;
   }
   .hm-att-tile > svg {
-    width: 15px;
-    height: 15px;
+    width: 0.9375rem;
+    height: 0.9375rem;
   }
   .hm-att-tile-label {
-    font-size: 11px;
+    font-size: 0.8125rem;
     line-height: 1.25;
     color: var(--hm-muted);
   }
@@ -2170,16 +2271,16 @@ button.hm-now-count {
   .hm-desk .hm-row .hm-avatar {
     width: 38px !important;
     height: 38px !important;
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-desk .hm-row-name {
-    font-size: 14.5px;
+    font-size: 0.90625rem;
   }
   .hm-desk .hm-row-sub {
-    font-size: 12.5px;
+    font-size: 0.875rem;
   }
   .hm-dot-status {
-    font-size: 12.5px;
+    font-size: 0.875rem;
   }
   .hm-idx {
     width: 26px;
@@ -2203,7 +2304,7 @@ button.hm-now-count {
     margin-top: 1px;
   }
   .hm-seg-soft button {
-    font-size: 12px;
+    font-size: 0.875rem;
   }
 }
 
@@ -2226,7 +2327,7 @@ button.hm-now-count {
 .hm-block-inner-title {
   display: block;
   margin-bottom: var(--sp-3);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-muted);
 }
@@ -2243,16 +2344,16 @@ button.hm-now-count {
 }
 .hm-person-card .hm-avatar {
   border-radius: 13px;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .hm-person-card > svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   color: #9aa39d;
   flex-shrink: 0;
 }
 .hm-person-card .hm-person-name {
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .hm-card-next .hm-avatar {
   background: #e6e0fa !important;
@@ -2280,13 +2381,13 @@ button.hm-now-count {
 }
 .hm-stylist .hm-tl .hm-row-time {
   width: 70px;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
 }
 .hm-stylist .hm-tl .hm-row-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .hm-stylist .hm-tl .hm-row-sub {
-  font-size: 13px;
+  font-size: 0.9375rem;
 }
 
 @media (max-width: 860px) {
@@ -2303,7 +2404,7 @@ button.hm-now-count {
   }
   .hm-block-head h2 {
     margin: 0;
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 700;
   }
   .hm-block-inner-title {
@@ -2313,17 +2414,17 @@ button.hm-now-count {
     padding: var(--sp-4);
   }
   .hm-person-card .hm-person-name {
-    font-size: 16px;
+    font-size: 1rem;
   }
   .hm-stylist .hm-tl .hm-row-time {
     width: 56px;
-    font-size: 12.5px;
+    font-size: 0.875rem;
   }
   .hm-stylist .hm-tl .hm-row-name {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-stylist .hm-tl .hm-row-sub {
-    font-size: 12px;
+    font-size: 0.875rem;
   }
 }
 
@@ -2357,10 +2458,10 @@ button.hm-now-count {
     padding-bottom: 12px;
   }
   .hm-head:has(+ .hm-fit) .hm-head-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
   .hm-head:has(+ .hm-fit) .hm-head-sub {
-    font-size: 13px;
+    font-size: 0.9375rem;
   }
 
   .page-body.hm-fit {
@@ -2414,7 +2515,7 @@ button.hm-now-count {
   }
   .hm-fit .hm-toolbar .hm-seg button {
     min-height: 34px;
-    font-size: 13px;
+    font-size: 0.9375rem;
   }
   .hm-fit .hm-card {
     padding: 14px 16px;
@@ -2423,7 +2524,7 @@ button.hm-now-count {
     margin-bottom: 4px;
   }
   .hm-fit .hm-card-head h2 {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   /*
    * Jira GRW-452 — the board's columns scroll inside themselves (95-token-board.css), and here they do it from a
@@ -2447,7 +2548,7 @@ button.hm-now-count {
     overflow: hidden;
   }
   .hm-fit .hm-hero-amount {
-    font-size: 32px;
+    font-size: 2rem;
   }
   .hm-fit .hm-hero-stats {
     margin-top: 8px;
@@ -2456,10 +2557,10 @@ button.hm-now-count {
     padding: 3px 9px;
   }
   .hm-fit .hm-hero-week strong {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   .hm-fit .hm-spark svg {
-    height: 30px;
+    height: 1.875rem;
   }
   .hm-fit .hm-hero-pay {
     margin-top: auto;
@@ -2483,7 +2584,7 @@ button.hm-now-count {
     padding: 8px 12px;
   }
   .hm-fit .hm-pay-tiles .hm-pay-label { grid-area: label; }
-  .hm-fit .hm-pay-tiles .hm-pay-value { grid-area: value; font-size: 18px; }
+  .hm-fit .hm-pay-tiles .hm-pay-value { grid-area: value; font-size: 1.125rem; }
   .hm-fit .hm-pay-tiles .hm-pay-share { grid-area: share; }
   .hm-fit .hm-attention {
     flex: 1 1 auto;
@@ -2509,13 +2610,13 @@ button.hm-now-count {
     padding: 10px 16px;
   }
   .hm-fit .hm-hero-amount {
-    font-size: 26px;
+    font-size: 1.625rem;
   }
   .hm-fit .hm-hero-stats {
     margin-top: 4px;
   }
   .hm-fit .hm-spark-days {
-    font-size: 9px;
+    font-size: 0.75rem;
     line-height: 1.1;
   }
   /* The payment split's colour bar stays — the owner asked for it back — just slimmer. */
@@ -2523,7 +2624,7 @@ button.hm-now-count {
     height: 6px;
   }
   .hm-fit .hm-spark svg {
-    height: 16px;
+    height: 1rem;
   }
   .hm-fit .hm-pay {
     margin-top: 4px;
@@ -2535,7 +2636,7 @@ button.hm-now-count {
     padding: 6px 10px;
   }
   .hm-fit .hm-pay-tiles .hm-pay-value {
-    font-size: 15px;
+    font-size: 0.9375rem;
     text-align: right;
   }
   .hm-fit .hm-att-sub {
@@ -2568,10 +2669,10 @@ button.hm-now-count {
   .hm-fit .hm-area-bookings .hm-row .hm-avatar {
     width: 30px !important;
     height: 30px !important;
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   .hm-fit .hm-area-bookings .hm-row-sub {
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   /* Row 2, right — Right now takes the same height as the list beside it, and scrolls inside itself (never
      clips) on the rare day with more alerts than a short laptop has room for. */
@@ -2611,7 +2712,7 @@ button.hm-now-count {
     gap: 2px;
   }
   .hm-fit .hm-seg-count strong {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 }
 
@@ -2631,13 +2732,13 @@ button.hm-now-count {
   border-width: 1px;
   border-style: solid;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--hm-muted);
   min-width: 0;
 }
 .hm-ds-stat strong {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
   line-height: 1.1;
 }
@@ -2649,7 +2750,7 @@ button.hm-now-count {
 }
 .hm-ds-lists h3 {
   margin: 0 0 var(--sp-2);
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--hm-ink);
 }
@@ -2666,7 +2767,7 @@ button.hm-now-count {
   align-items: center;
   gap: var(--sp-2);
   min-width: 0;
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 .hm-ds-lists li > span:not(.hm-avatar) {
@@ -2677,22 +2778,22 @@ button.hm-now-count {
   text-overflow: ellipsis;
 }
 .hm-ds-lists li strong {
-  font-size: 13.5px;
+  font-size: 0.9375rem;
   font-weight: 800;
 }
 .hm-ds-lists li .hm-avatar {
   border-radius: 9px;
-  font-size: 11px;
+  font-size: 0.8125rem;
 }
 .hm-ds-lists .hm-empty {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 0.875rem;
 }
 .hm-ds-foot {
   margin: var(--sp-3) 0 0;
   padding-top: var(--sp-3);
   border-top: 1px solid var(--hm-line-soft);
-  font-size: 12.5px;
+  font-size: 0.875rem;
   color: var(--hm-muted);
 }
 @media (max-width: 860px) {
@@ -2724,10 +2825,10 @@ button.hm-now-count {
   }
   .hm-hero:not(.hm-hero-small) .hm-delta {
     padding: 2px 8px;
-    font-size: 11px;
+    font-size: 0.8125rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-amount {
-    font-size: 26px;
+    font-size: 1.625rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week {
     display: grid;
@@ -2738,20 +2839,20 @@ button.hm-now-count {
     max-width: 160px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-eyebrow {
-    font-size: 10px;
+    font-size: 0.75rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week strong {
-    font-size: 12px;
+    font-size: 0.875rem;
     text-align: right;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark {
     grid-column: 1 / -1;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark svg {
-    height: 20px;
+    height: 1.25rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week .hm-spark-days {
-    font-size: 10px;
+    font-size: 0.75rem;
     line-height: 1.1;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats {
@@ -2762,33 +2863,54 @@ button.hm-now-count {
     flex-direction: row;
     align-items: baseline;
     gap: 4px;
-    font-size: 10.5px;
+    font-size: 0.75rem;
     white-space: nowrap;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats strong {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-pay .hm-pay {
     margin-top: 6px;
   }
 }
 @media (max-width: 860px) {
-  /* Figures size to their words, spread across the strip, so "100% came back"
-     is never cut at 320px (it was, by a few pixels, with equal thirds). */
+  /*
+   * Figures size to their words, spread across the strip, so "100% came back"
+   * is never cut at 320px (it was, by a few pixels, with equal thirds).
+   *
+   * Jira GRW-486 — and the strip WRAPS, because that fix bought the cut with an overlap.
+   *
+   * `flex: 0 1 auto` on a `nowrap` row with `white-space: nowrap` and no `overflow` rule means
+   * each figure shrinks past its own text and paints over the one beside it. Measured at 344px,
+   * every cell is over its box by 2-3px at a 20px root and by 13-18px at 23px, so the strip reads
+   * "2 bookings0 new client0% came back". 20px is the second setting in Larger Text, not an edge.
+   *
+   * So the row wraps: a figure that will not fit beside its neighbour takes the next row whole,
+   * which is what the payment line two blocks down has always done with three long amounts. The
+   * cells keep `flex: 0 1 auto`, so a line is filled before it is broken, and the `nowrap` from
+   * the 400px block above is lifted here — a single figure wider than the whole strip then breaks
+   * between its number and its word (which is the stacked shape this card had before GRW-312)
+   * rather than running off the card. Both are last resorts; at every ordinary size the three
+   * figures still sit on one row, unchanged.
+   */
   .hm-hero:not(.hm-hero-small) .hm-hero-stats {
+    flex-wrap: wrap;
     justify-content: space-between;
-    gap: 8px;
+    column-gap: 8px;
+    row-gap: 6px;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats span {
     flex: 0 1 auto;
+    min-width: 0;
+    white-space: normal;
   }
 }
 @media (max-width: 360px) {
   .hm-hero:not(.hm-hero-small) .hm-hero-stats span {
-    font-size: 9.5px;
+    font-size: 0.75rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-stats strong {
-    font-size: 13px;
+    font-size: 0.9375rem;
   }
 }
 
@@ -2811,11 +2933,11 @@ button.hm-now-count {
   display: none;
 }
 .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-value {
-  font-size: 14px;
+  font-size: 0.875rem;
   white-space: nowrap;
 }
 .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-label {
-  font-size: 10.5px;
+  font-size: 0.75rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2830,7 +2952,7 @@ button.hm-now-count {
     padding-bottom: 4px;
   }
   .hm-fit .hm-pay-tiles:has(.hm-pay-item:nth-child(4)) .hm-pay-value {
-    font-size: 13px;
+    font-size: 0.9375rem;
     text-align: left;
   }
 }
@@ -2867,22 +2989,22 @@ button.hm-now-count {
     background: transparent;
     color: #dff5e8;
     font: inherit;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 700;
     text-align: left;
     cursor: pointer;
   }
   .hm-hero-summary svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     flex-shrink: 0;
   }
   .hm-hero-summary span {
     flex: 1;
   }
   .hm-hero-summary svg:last-child {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     opacity: 0.8;
   }
 }
@@ -2911,21 +3033,36 @@ button.hm-now-count {
 }
 @media (max-width: 860px) {
   .hm-toolbar-summary {
-    display: inline-grid;
-    place-items: center;
-    flex: none;
-    width: 44px;
+    /* Jira GRW-511 — icon and its name. As wide as they need (44px at least), and it may give up width
+       to the row before it pushes the row off the screen: the label ends in an ellipsis. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    flex: 0 1 auto;
+    min-width: 44px;
     height: 44px;
-    padding: 0;
-    border: 1px solid #cdeedb;
+    padding: 0 var(--sp-3);
+    /* Jira GRW-510 — a secondary button, like the other quiet buttons (`.hm-btn-quiet`): white, a
+       line border, an ink icon. It was a green-tinted square, which read as a status chip. */
+    border: 1px solid var(--hm-line);
     border-radius: 13px;
-    background: var(--hm-green-soft);
-    color: var(--hm-green-deep);
+    background: #fff;
+    color: var(--hm-ink);
     cursor: pointer;
   }
   .hm-toolbar-summary svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: none;
+  }
+  .hm-toolbar-summary-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
   }
   /* The branch picker (`.hm-toolbar-end` pushes it right) and the summary icon sit
      together, not at opposite ends of the row. */
@@ -2935,13 +3072,13 @@ button.hm-now-count {
 }
 
 /* A 320px phone gives the business name ~116px between the menu button and search;
-   at 18px a three-word name still reads on two lines instead of "Lotus Unisex…". */
+   at 18px it shows as much of the name as fits on its one line. */
 @media (max-width: 360px) {
   .hm-head {
     gap: var(--sp-2);
   }
   .hm-head-business {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 }
 
@@ -2972,7 +3109,7 @@ button.hm-now-count {
 }
 .hm-ds-branch-go {
   color: var(--hm-muted);
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -2984,7 +3121,7 @@ button.hm-now-count {
   border: 0;
   background: none;
   font: inherit;
-  font-size: 13px;
+  font-size: 0.9375rem;
   font-weight: 650;
   color: var(--hm-muted);
   cursor: pointer;

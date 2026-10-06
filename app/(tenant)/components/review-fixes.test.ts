@@ -19,17 +19,20 @@ describe('the walk-in sheet says only what its controls do', () => {
     expect(sheet).not.toMatch(/role="list"/);
   });
 
-  it('chairs, days and times are labelled groups of toggle buttons, not a radiogroup with no arrow keys', () => {
-    for (const label of ['nv.withWhom(providerNoun.toLowerCase())', 'nv.whichDay', 'nv.whichTime']) {
+  it('days and times are labelled groups of toggle buttons, not a radiogroup with no arrow keys; the stylist is a labelled select', () => {
+    for (const label of ['nv.whichDay', 'nv.whichTime']) {
       expect(sheet).toContain(`role="group" aria-label={${label}}`);
     }
-    expect(sheet).toMatch(/aria-pressed=\{noStylist\}/);
+    // Jira GRW-524 — the chairs were toggle buttons in a group; they are one select, named by its heading.
+    expect(sheet).toMatch(/id="wi-stylist"/);
+    expect(sheet).toMatch(/aria-labelledby="wi-stylist-label"/);
     expect(sheet).toMatch(/aria-pressed=\{day === d\.iso\}/);
     expect(sheet).toMatch(/aria-pressed=\{slotUtc === slot\.utc\}/);
   });
 
-  it('both tabs point at a panel that exists in both stages', () => {
-    expect(sheet.match(/id="wi-client-panel"/g)).toHaveLength(2);
+  it('the client screen has its one panel', () => {
+    // Jira GRW-514 — one client screen now (find or add), so one panel; there were two stages before.
+    expect(sheet.match(/id="wi-client-panel"/g)).toHaveLength(1);
   });
 });
 
@@ -51,6 +54,27 @@ describe('a phone does not zoom when these fields are focused (pinch-zoom is all
     expect(css('32-customers.css')).toMatch(/\.bk-field input \{[^}]*font-size: 16px;/);
     expect(css('32-customers.css')).toMatch(/\.bk-field select \{\s*font-size: 16px;/);
     expect(css('14-checkout-sheet.css')).toMatch(/\.checkout-amount-field input \{[^}]*font-size: 16px;/);
+  });
+});
+
+/**
+ * Jira GRW-491 — the owner asked for the ▲▼ on the amount field to go.
+ *
+ * `type='number'` is kept: it is what gets the numeric keypad on a phone and what refuses letters. Only the
+ * painted buttons go, and the keyboard's own ↑/↓ still step the value. Checked on the SHARED rule, not on the
+ * checkout sheet, because the next number field should not have to remember this.
+ */
+describe('a number field has no stepper arrows', () => {
+  const css = read('../styles/11-availability.css');
+
+  it('both halves — WebKit paints two pseudo-elements, Firefox needs the appearance', () => {
+    expect(css).toMatch(/input\[type='number'\]::-webkit-outer-spin-button,\s*input\[type='number'\]::-webkit-inner-spin-button \{\s*-webkit-appearance: none;\s*margin: 0;/);
+    expect(css).toMatch(/input\[type='number'\] \{\s*-moz-appearance: textfield;\s*appearance: textfield;/);
+  });
+
+  it('the fields are still number fields — the keypad and the digits-only rule are the point of them', () => {
+    expect(read('CheckoutSheet.tsx')).toMatch(/type="number"/);
+    expect(css).toMatch(/input\[type='number'\],/);
   });
 });
 

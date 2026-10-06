@@ -4,10 +4,12 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { formatMoney, formatTime, type Provider, type QueueEntry, type TokenRow } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
-import { minutesBetween } from '../../lib/live-state';
+import { IconStopwatch } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { useMayUse } from '../SessionProvider';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
+import { SHOW_STEP, useVisibleRows } from './use-visible-rows';
+import { usePhoneLayout } from './use-phone-layout';
 import { VisitTill } from './VisitTill';
 import type { TokenWords } from './token-words';
 
@@ -69,19 +71,6 @@ export function afterSheet(s: {
   return { focus: s.lost, keep: s.rowStillThere };
 }
 
-/** Whether the phone layout (≤860px, the system's breakpoint) is in force. False on the server and before mount. */
-function usePhoneLayout(): boolean {
-  const [phone, setPhone] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 860px)');
-    const update = () => setPhone(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-  return phone;
-}
-
 /**
  * Jira GRW-418 — is there anything on this board that still needs somebody?
  *
@@ -116,6 +105,8 @@ export function TokenBoard({
   const now = useMemo(() => new Date(nowISO), [nowISO]);
   const phone = usePhoneLayout();
   const [tab, setTab] = useState<Column>('waiting');
+  // On a phone a list draws its first ten rows and a "Show more" button adds ten at a time; a laptop draws them all.
+  const [shown, setShown] = useState<Record<Column, number>>({ waiting: SHOW_STEP, with_stylist: SHOW_STEP, paid: SHOW_STEP });
   const [giving, setGiving] = useState<TokenRow | null>(null);
   const [paying, setPaying] = useState<TokenRow | null>(null);
   const [till, setTill] = useState<TokenRow | null>(null);
@@ -199,15 +190,23 @@ export function TokenBoard({
 
   const row = (x: TokenRow, col: Column, index: number) => (
     <li key={x.id} className="tb-row" data-token={x.id}>
-      {/* The number the client was told. */}
-      <span className="tb-no hm-idx">{x.tokenNo}</span>
+      {/* Jira GRW-542 — no number badge: the name leads the row. The number is still in the buttons' spoken labels. */}
       <span className="tb-main">
         {/* Name and its one fact on a line; in a narrow column the fact drops under the name instead of squeezing it. */}
         <span className="tb-line">
           <span className="tb-name">{nameOf(x)}</span>
+          {/* Jira GRW-548 — "Token No: 13", a pill on the second line. Phone only: a laptop's row has no room for it. */}
+          <span className="tb-token">{w.tokenNoLabel(x.tokenNo)}</span>
           <span className="tb-meta">
             {col === 'waiting'
-              ? t.waitingMin(minutesBetween(x.addedAt, now))
+              ? // Jira GRW-541 · GRW-543 · GRW-544 — a stopwatch icon, then the time, not the word "Waiting".
+                // Jira GRW-548 — and the time they arrived ("Since 2:57 pm"), in the owner's card design, at every width.
+                [
+                  <span key="icon" className="tb-meta-icon" aria-hidden="true">
+                    <IconStopwatch />
+                  </span>,
+                  t.sinceTime(formatTime(x.addedAt, timezone)),
+                ]
               : col === 'with_stylist'
                 ? // Jira GRW-405 — a booked client's visit runs at the booked time, not when they walked in.
                   (x.booked ? w.bookedAt : t.started)(formatTime(x.visitStartAt ?? x.addedAt, timezone))
@@ -243,6 +242,9 @@ export function TokenBoard({
       ) : null}
     </li>
   );
+
+  // Jira GRW-547 — five rows in view at a time on a phone; the rest scroll inside the list.
+  useVisibleRows(boardRef, phone, [tab, columns.waiting.length, columns.with_stylist.length, columns.paid.length, shown.waiting, shown.with_stylist, shown.paid]);
 
   return (
     <div className="tb-board" data-tab={tab} id="hm-queue" ref={boardRef}>
@@ -283,7 +285,20 @@ export function TokenBoard({
                 {heads[c].title} <span className="tb-count">{columns[c].length}</span>
               </h2>
             </div>
-            {columns[c].length === 0 ? <p className="hm-empty">{heads[c].empty}</p> : <ol className="tb-rows">{columns[c].map((x, i) => row(x, c, i))}</ol>}
+            {columns[c].length === 0 ? (
+              <p className="hm-empty">{heads[c].empty}</p>
+            ) : (
+              <ol className="tb-rows">
+                {(phone ? columns[c].slice(0, shown[c]) : columns[c]).map((x, i) => row(x, c, i))}
+                {phone && columns[c].length > shown[c] ? (
+                  <li className="tb-more">
+                    <button type="button" onClick={() => setShown((s) => ({ ...s, [c]: s[c] + SHOW_STEP }))}>
+                      {w.showMore(Math.min(SHOW_STEP, columns[c].length - shown[c]))}
+                    </button>
+                  </li>
+                ) : null}
+              </ol>
+            )}
           </section>
         ))}
       </div>

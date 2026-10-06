@@ -34,7 +34,7 @@
 
 .drawer-head h2 {
   flex: 1;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 650;
   margin: 0;
 }
@@ -59,7 +59,7 @@
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 20px;
+  font-size: 1.25rem;
   flex-shrink: 0;
 }
 
@@ -71,7 +71,7 @@
 }
 
 .staff-profile-name {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 650;
 }
 
@@ -80,18 +80,18 @@
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   margin-top: 3px;
 }
 
 .staff-profile-phone svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   color: var(--accent);
 }
 
 .drawer-section-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   color: var(--muted);
   text-transform: uppercase;
@@ -130,7 +130,7 @@
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--page-bg);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
@@ -143,8 +143,8 @@
 }
 
 .skill-pill svg {
-  width: 13px;
-  height: 13px;
+  width: 0.8125rem;
+  height: 0.8125rem;
 }
 
 .weekday-hours-row {
@@ -170,7 +170,7 @@
 .weekday-hours-label {
   width: 40px;
   flex-shrink: 0;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   font-weight: 620;
 }
 
@@ -185,12 +185,12 @@
   min-width: 0;
   flex: 1;
   padding: 6px 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .weekday-hours-off {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   flex: 1;
 }
 
@@ -209,14 +209,14 @@
 .schedule-time {
   width: 62px;
   flex-shrink: 0;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 620;
   color: var(--muted);
 }
 
 .schedule-label {
   flex: 1;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
 }
 
 .drawer-actions {

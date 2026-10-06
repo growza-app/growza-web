@@ -1,0 +1,250 @@
+/*
+ * Jira GRW-504 — the whole app in a clay style.
+ *
+ * Clay is three moves, the same three the tab strip already makes (100-clay-tabs.css):
+ *   RAISED  — a surface you could press: a soft drop shadow beneath, a bright edge on the upper left,
+ *             a faint shade on the lower right (cards, row cards, tiles, the bottom bar, round buttons).
+ *   PRESSED — a surface pushed into the page: an inner shadow (search bars, text fields).
+ *   GREEN   — the primary button is a raised green piece with the same light and shade.
+ * Radii are a little rounder, because nothing in clay has a corner.
+ *
+ * Colour, size, spacing, copy and layout are NOT touched: this file sets shadow, radius and the primary
+ * button's gradient, and nothing else. It is loaded last, so deleting it and its @import in globals.css
+ * puts the app back exactly as it was. Text colours are unchanged, so contrast is unchanged.
+ *
+ * Shadows are soft and blurred, which costs paint time on a mid-range Android phone. They are kept small
+ * (no more than 12px of blur) and none sits on anything that animates every frame.
+ */
+
+:root {
+  --radius: 18px;
+  --radius-sm: 14px;
+
+  --clay-raise:
+    3px 4px 10px rgba(14, 51, 37, 0.1),
+    -2px -2px 6px rgba(255, 255, 255, 0.9),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.9),
+    inset -1px -2px 3px rgba(14, 51, 37, 0.04);
+  --clay-raise-soft:
+    2px 3px 7px rgba(14, 51, 37, 0.09),
+    -1px -1px 4px rgba(255, 255, 255, 0.9),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+  --clay-press:
+    inset 2px 2px 5px rgba(14, 51, 37, 0.12),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+  --clay-green:
+    2px 4px 8px rgba(22, 101, 52, 0.3),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.26),
+    inset -2px -3px 4px rgba(0, 0, 0, 0.16);
+}
+
+/* ---------- raised: surfaces ---------- */
+.card,
+.hm-card,
+.bk-card,
+.cl-card,
+.staff-card,
+.svc-group-card,
+.offer-card-row,
+.menu-list,
+.cust-kpi,
+.hm-att,
+.rp-card,
+.bk-waiting {
+  box-shadow: var(--clay-raise);
+}
+
+/* ---------- raised: controls ---------- */
+.menu-btn,
+.hdr-search,
+.staff-icon-btn,
+.kebab-btn,
+.pagination-btn,
+.bk-filter-toggle,
+.cust-segments-toggle,
+.hm-btn-quiet,
+.btn-ghost,
+.hm-toolbar-summary,
+.hm-give,
+.rp-control {
+  box-shadow: var(--clay-raise-soft);
+}
+
+.menu-btn:active,
+.hdr-search:active,
+.staff-icon-btn:active,
+.kebab-btn:active,
+.pagination-btn:active,
+.bk-filter-toggle:active,
+.hm-btn-quiet:active,
+.btn-ghost:active,
+.hm-give:active,
+.rp-control:active {
+  box-shadow: var(--clay-press);
+}
+
+/* ---------- raised: the bottom bar and its centre ---------- */
+@media (max-width: 860px) {
+  /* Jira GRW-552 — the token card is a card on a phone (GRW-548), so it is raised like the rest. */
+  .tb-board .tb-row {
+    box-shadow: var(--clay-raise);
+  }
+  .bottom-nav {
+    box-shadow:
+      4px 6px 16px rgba(14, 51, 37, 0.16),
+      -2px -2px 6px rgba(255, 255, 255, 0.9),
+      inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+  }
+  .bn-centre {
+    box-shadow: var(--clay-green);
+  }
+  /* The selected tab's glass lens: a sheen across the top, a soft shadow beneath, a bright rim just inside. */
+  .bottom-nav a.active::before {
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0) 70%);
+    box-shadow:
+      0 2px 8px rgba(14, 51, 37, 0.14),
+      inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  }
+}
+
+/* ---------- pressed: fields and search bars ---------- */
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='hidden']), select, textarea),
+.bk-search-row,
+.search-wrap,
+.att-search,
+.hm-seg-select,
+.checkout-amount-field,
+.phone-field {
+  box-shadow: var(--clay-press);
+}
+
+/* A bare input sits inside a bordered wrapper that already carries the press: it takes none of its own,
+   or the two would double up into a dark band. (The field rule above is wrapped in :where() so it has no
+   specificity and this one wins.) */
+.bk-search-row input,
+.search-wrap input,
+.att-search input,
+.checkout-amount-field input,
+.phone-field input,
+.sheet-row input {
+  box-shadow: none;
+}
+
+/* ---------- green: the primary buttons ---------- */
+/* `.btn` is the base of the ghost and danger buttons too (they only change its colours), so the green
+   goes on the plain primary alone. Painting the gradient on all of them put green under the Filter and
+   Export buttons' dark text. */
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid),
+.hm-btn:not(.hm-btn-quiet),
+.cpc-btn-primary,
+.rp-control-primary {
+  background-image: linear-gradient(145deg, #178246, #126a38);
+  box-shadow: var(--clay-green);
+}
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):hover,
+.hm-btn:not(.hm-btn-quiet):hover {
+  background-image: linear-gradient(145deg, #15773f, #105f33);
+}
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):active,
+.hm-btn:not(.hm-btn-quiet):active {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.25),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.12);
+}
+
+/* The secondary buttons are raised, not green. */
+.btn.btn-ghost,
+.btn.btn-danger {
+  box-shadow: var(--clay-raise-soft);
+}
+
+/* Disabled stays flat: a button you cannot press must not look pressable. */
+.btn:disabled,
+.hm-btn:disabled,
+.btn[aria-disabled='true'] {
+  box-shadow: none;
+}
+/* ...and takes the green gradient off too. It is painted by a rule with more specificity than the one above, so the
+   grey "disabled" label (#5f6a65) was left sitting on green — "Sign in" could not be read. These repeat the primary
+   selectors, with the disabled state added, so they win. */
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid):disabled,
+.btn:not(.btn-ghost):not(.btn-danger):not(.btn-danger-solid)[aria-disabled='true'],
+.hm-btn:not(.hm-btn-quiet):disabled,
+.cpc-btn-primary:disabled,
+.rp-control-primary:disabled {
+  background-image: none;
+  box-shadow: none;
+}
+
+/* ---------- raised: sheets ---------- */
+.sheet,
+.hm-sheet {
+  box-shadow: 0 -6px 24px rgba(14, 51, 37, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.9);
+}
+
+/* ---------- raised: the quick-link tiles and their glyphs (Jira GRW-553 · GRW-554) ---------- */
+/* The tile is a small dome of clay: the raise shadow, plus a soft light across its upper left (a gradient
+   from white to clear, so each tile keeps its own tint underneath). The glyph itself is flat — no shadow on
+   the icon (the owner asked for it to go). */
+.hm-tile-icon {
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 62%);
+  box-shadow: var(--clay-raise);
+}
+.hm-tile:active .hm-tile-icon {
+  box-shadow: var(--clay-press);
+}
+
+/* ---------- the walk-in confirmation ---------- */
+/* The page card is raised; the check sits in a small green-tinted dome; Close is a round raised button. */
+.walk-in-page {
+  box-shadow: var(--clay-raise);
+}
+.wi-done svg {
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 62%);
+  box-shadow: var(--clay-raise);
+}
+.wi-close {
+  box-shadow: var(--clay-raise-soft);
+}
+.wi-close:active {
+  box-shadow: var(--clay-press);
+}
+/* Take payment, and Done when it is the only button, are the green pieces every primary button is. */
+.wi-body .sheet-item.wi-take-payment,
+.wi-body .sheet-item.wi-finish {
+  background-image: linear-gradient(145deg, #178246, #126a38);
+  box-shadow: var(--clay-green);
+}
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish {
+  background-image: none;
+  box-shadow: var(--clay-raise-soft);
+}
+.wi-body .sheet-item.wi-take-payment:active,
+.wi-body .sheet-item.wi-finish:active {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.25),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.12);
+}
+.wi-body .wi-take-payment ~ .sheet-item.wi-finish:active {
+  box-shadow: var(--clay-press);
+}
+.wi-body .sheet-item.wi-take-payment:disabled {
+  background-image: none;
+  box-shadow: none;
+}
+
+/* ---------- a booking's sheet ---------- */
+/* The action group is a raised card, each icon a small dome, the reference a raised chip; a row presses in. */
+.bk-sheet-actions {
+  box-shadow: var(--clay-raise);
+}
+.bk-sheet-actions .sheet-item svg {
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 62%);
+  box-shadow: var(--clay-raise-soft);
+}
+.bk-sheet-actions .sheet-item:active:not(:disabled) {
+  box-shadow: var(--clay-press);
+}
+.bk-sheet .ref {
+  box-shadow: var(--clay-raise-soft);
+}

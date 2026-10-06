@@ -6,6 +6,7 @@ import { api, type AttendanceRegister as Register, type AttendanceRow } from '..
 import { pickNoun } from '../lib/nouns';
 import { intlLocale } from './[providerId]/month';
 import { useBranch } from '../components/BranchProvider';
+import { IconNote, IconPlus } from '../components/icons';
 
 /**
  * Jira GRW-63 · GRW-170 — the attendance register, built to Attendance.dc.html.
@@ -559,7 +560,7 @@ export function AttendanceRegister({
                     disabled={busy}
                     onClick={() => setNoteFor((n) => (n === row.providerId ? null : row.providerId))}
                   >
-                    {row.note ? '🗒' : '＋'}
+                    {row.note ? <IconNote /> : <IconPlus />}
                   </button>
                 </div>
 

@@ -17,6 +17,14 @@
   height: 44px;
 }
 
+/* Jira GRW-513 — on a phone the header wears a Back arrow (GRW-497), so the row's own would be the same
+   control twice, stacked. It stays from 861px up, where the header has none. */
+@media (max-width: 860px) {
+  .srch-bar-row .icon-btn {
+    display: none;
+  }
+}
+
 .srch-bar-row .search-bar {
   min-height: 48px;
   padding: 0 14px;
@@ -48,7 +56,7 @@
   border: none;
   outline: none;
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -87,14 +95,14 @@
 }
 
 .search-bar svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   color: var(--muted);
   flex-shrink: 0;
 }
 
 .sec-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 620;
   color: var(--muted);
   letter-spacing: 0.05em;
@@ -115,7 +123,7 @@
 }
 
 .ref {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }

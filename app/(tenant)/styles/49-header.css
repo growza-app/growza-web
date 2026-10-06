@@ -16,7 +16,7 @@
 
 .rp-title-row h1 {
   margin: 0;
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.5px;
   color: var(--text);
@@ -25,7 +25,7 @@
 .rp-title-row p {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .rp-controls {
@@ -49,7 +49,7 @@
   border-radius: 11px;
   padding: 8px 12px;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   color: var(--text);
   cursor: pointer;
 }

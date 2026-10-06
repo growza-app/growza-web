@@ -30,7 +30,7 @@
    * focus — and this card is most often opened on a phone at a counter, which
    * is the worst possible moment to have the viewport jump.
    */
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--text);
 }
 
@@ -63,7 +63,7 @@
   border-right: 0;
   border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   background: var(--slate-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -79,7 +79,7 @@
  */
 .cpc-edit-error {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   line-height: 1.35;
   color: #b3261e;
@@ -95,7 +95,7 @@
   border-radius: 999px;
   padding: 7px 15px;
   font: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -129,7 +129,7 @@
   background: transparent;
   padding: 5px 12px;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 700;
   color: var(--muted);
   cursor: pointer;
@@ -151,7 +151,7 @@
   background: transparent;
   color: #b3261e;
   font: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -170,7 +170,7 @@
   padding: 10px 12px;
   border-radius: 12px;
   background: color-mix(in srgb, #b3261e 8%, transparent);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .cpc-deleted button {

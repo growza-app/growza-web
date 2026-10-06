@@ -19,7 +19,12 @@
   --accent-ink: #14532d;
   --blue: #1d4ed8;
   --blue-soft: #dfe7fd;
-  --amber: #b45309;
+  /* Jira GRW-305's sibling, found the same way: #b45309 reads 4.45:1 on --amber-soft and 4.42:1
+     on white — under 4.5:1 wherever it is used as text, which is all but one of its sixteen uses
+     ("No seats left on your plan", the FREE badge, every amber hint in the app). Darkened just
+     past the line to 4.99:1 on --amber-soft; the one place it is a BACKGROUND (the Retire swipe
+     action, white on amber) only gains by it. */
+  --amber: #a4500b;
   --amber-soft: #fdf0d5;
   --peach: #fde8dd;
   --slate-soft: #eceeee;
@@ -79,6 +84,29 @@
   box-sizing: border-box;
 }
 
+/*
+ * Jira GRW-481 — the root size is the reader's, not ours.
+ *
+ * This sheet used to pin `font-size: 15.5px` here and every size in the app was
+ * a px literal measured against it, so an owner who turned on Larger Text saw
+ * nothing change anywhere. The whole scale is in `rem` now, and this is the one
+ * declaration that decides what a `rem` is worth.
+ *
+ * `-apple-system-body` is Safari's hook into Dynamic Type: it hands back the
+ * body size the reader has chosen in Settings, so the entire scale moves with
+ * it. Every other browser drops the declaration as invalid and the root keeps
+ * that browser's own font-size setting — which is the same mechanism reached by
+ * a different road, so nothing is lost by the fallback. Either way the base
+ * lands at 16-17px rather than 15.5, which is where iOS's own 17pt body sits.
+ *
+ * The rule has to come BEFORE the `html, body` block below: `font` is a
+ * shorthand and resets family, so the brand face is re-applied after it, not
+ * before.
+ */
+html {
+  font: -apple-system-body;
+}
+
 html,
 body {
   margin: 0;
@@ -91,7 +119,6 @@ body {
      self-hosted by next/font (layout.tsx). The system stack stays behind them,
      so a font that has not loaded yet still draws a readable screen. */
   font-family: var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  font-size: 15.5px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }

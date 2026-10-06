@@ -4,7 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Jira GRW-10 · GRW-455 — the Bookings headline row is four equal tiles, at every width.
+ * Jira GRW-10 · GRW-455 — the Bookings headline row: equal tiles on one row, at every width.
+ *
+ * Jira GRW-488 — the tiles are gone. They are a segmented control now (All · To do · Completed),
+ * which is where their rules live; see `kpi-tiles.test.ts`. What stays here is the history of the
+ * row that preceded it, and the two checks that outlived the tiles themselves.
  *
  * It used to be `repeat(4, 1fr) 1.6fr`: four counts and the "at a glance" metric card as a wider fifth column.
  * GRW-10 is what that cost — between 861px and about 1150px the fifth cell was too narrow and the row overflowed
@@ -22,9 +26,7 @@ const css = readFileSync(
 );
 
 describe('the Bookings KPI row', () => {
-  it('is four equal columns by default', () => {
-    expect(css).toMatch(/^\.bk-kpis\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)\s*;/m);
-  });
+
 
   it('has no fifth, wider column any more', () => {
     expect(css).not.toMatch(/repeat\(4,\s*minmax\(0,\s*1fr\)\)\s*1\.6fr/);
@@ -35,9 +37,16 @@ describe('the Bookings KPI row', () => {
     expect(css).not.toContain('@media (min-width: 861px) and (max-width: 1149px)');
   });
 
-  it('keeps the four count tiles on the phone too', () => {
-    const phone = css.slice(css.indexOf('@media (max-width: 860px)'));
-    expect(phone).toMatch(/\.bk-kpis\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
+
+
+  it('the booking reference is on a card only when there is no name to show', () => {
+    const list = readFileSync(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), './BookingsList.tsx'),
+      'utf-8',
+    );
+    // It sits in the booking's own sheet, and search still matches on it.
+    expect(list).toMatch(/clientNameLabel\(b\) !== null \? \(\s*<div className="bk-card-name">[\s\S]{0,120}<span className="bk-card-ref">/);
+    expect(list).toMatch(/bookingRef\(b\.appointments\[0\]!\.id\)[\s\S]{0,80}\.some\(|bookingRef\(b\.appointments\[0\]!\.id\), b\.customerName/);
   });
 
   it('leaves nothing of the metric card behind', () => {
