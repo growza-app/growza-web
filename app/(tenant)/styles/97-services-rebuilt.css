@@ -166,6 +166,16 @@
   touch-action: pan-y;
 }
 
+/*
+ * Every face is its own stacking layer (z-index 1, so it sits over the swipe actions under it). The ⋮ menu is
+ * `position: fixed` inside that layer, so its z-index only ranks it among that row's own children — and the NEXT
+ * row's face, later in the page, painted over it: the panel was open and white-on-white behind the rows below.
+ * The row that has a menu open goes one layer up, above its neighbours.
+ */
+.svc-swipe-face:has(.dropdown-panel) {
+  z-index: 2;
+}
+
 .svc-card-right {
   margin-left: auto;
   flex: none;
