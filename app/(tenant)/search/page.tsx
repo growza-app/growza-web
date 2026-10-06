@@ -1,4 +1,5 @@
 import { screenTitle } from '../lib/page-title';
+import { guardLive } from '../lib/screen-guard';
 import { redirect } from 'next/navigation';
 import { api } from '../lib/api';
 import { mayUse } from '../lib/nav-policy';
@@ -7,6 +8,8 @@ import { SearchClient } from './SearchClient';
 export const dynamic = 'force-dynamic';
 
 export default async function SearchPage() {
+  // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
+  await guardLive('/search');
   let timezone = 'Asia/Kolkata';
   let showBranch = false;
   let role: string | null = null;

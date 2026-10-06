@@ -9,6 +9,8 @@ import { canSeeRevenue, homeKind, type MemberRole } from './lib/nav-policy';
 import { OwnerHome } from './components/home/OwnerHome';
 import { ReceptionHome } from './components/home/ReceptionHome';
 import { StylistHome } from './components/home/StylistHome';
+import { NotLiveHome } from './components/home/NotLiveHome';
+import { isLive } from './lib/go-live';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,6 +87,24 @@ export default async function DashboardPage() {
   };
 
   const kind = homeKind(role);
+
+  /*
+   * Jira GRW-556 — until the business is live there is no day to show, for anybody: the owner is still setting it
+   * up and nobody can trade. Here, above every read below, and not inside a role's Home: gating it in `OwnerHome`
+   * meant the eight reads below still ran, and `OwnerHome`'s own two re-ran in the browser, for a screen that then
+   * drew three links.
+   */
+  if (!isLive(me.tenant?.status)) {
+    return (
+      <NotLiveHome
+        {...common}
+        role={role}
+        reportTabs={me.reportTabs}
+        // One branch: say which salon. Several: naming one of them on a screen about all of them is a lie.
+        locationName={(me.tenant?.branchCount ?? 1) > 1 ? null : (me.member?.locationName ?? me.tenant?.locationName ?? null)}
+      />
+    );
+  }
 
   if (kind === 'stylist') {
     const [appointments, day, attendanceMonth] = await Promise.all([

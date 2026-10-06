@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { guardLive } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import type { VisitMode } from '../../components/NewVisitSheet';
@@ -21,6 +22,8 @@ export default async function NewBookingPage({
 }: {
   searchParams: Promise<{ mode?: string }>;
 }) {
+  // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
+  await guardLive('/appointments/new');
   const params = await searchParams;
   const mode: VisitMode = params.mode === 'later' ? 'later' : 'now';
 

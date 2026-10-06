@@ -38,6 +38,21 @@ export function setupCopy(lang: Lang) {
       'Open a staff member and save their days and times. Salon hours alone are not enough.',
       'किसी स्टाफ सदस्य को खोलकर उनके दिन और समय सेव करें। सिर्फ़ सैलून के घंटे काफ़ी नहीं हैं।',
     ),
+    staffHomeTitle: S('Still being set up', 'अभी सेटअप हो रहा है'),
+    /** Home for a receptionist or stylist at a business that is not live yet — theirs to wait on, not to set up. */
+    staffHome: S(
+      'The owner is still setting this business up. Bookings, clients and your day open here as soon as it is live.',
+      'मालिक अभी बिज़नेस का सेटअप पूरा कर रहे हैं। चालू होते ही बुकिंग, क्लाइंट और आपका दिन यहाँ खुल जाएगा।',
+    ),
+    /** The page a closed screen's address lands on, until the business is live. */
+    closed: {
+      title: S('Not open yet', 'अभी बंद है'),
+      body: S(
+        'Bookings, clients, offers, reports and attendance open as soon as your business is live. Until then, finish setting it up — that is all that is left.',
+        'बुकिंग, क्लाइंट, ऑफ़र, रिपोर्ट और हाज़िरी बिज़नेस के चालू होते ही खुल जाएँगे। तब तक सेटअप पूरा करें — बस वही बाकी है।',
+      ),
+      back: S('Back to setup', 'सेटअप पर वापस जाएँ'),
+    },
     branchStaff: (name: string) =>
       S(`${name}: add a member of staff with working hours`, `${name}: काम के घंटों वाला एक स्टाफ सदस्य जोड़ें`),
   };

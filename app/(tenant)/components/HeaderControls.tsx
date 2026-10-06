@@ -1,6 +1,9 @@
+'use client';
+
 import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { NotificationBell } from './NotificationBell';
 import { AccountMenu } from './AccountMenu';
+import { useLive } from './SessionProvider';
 
 /**
  * Jira GRW-30 — search, notifications and account, in that order, on every screen.
@@ -39,11 +42,13 @@ import { AccountMenu } from './AccountMenu';
  * than a shortcut. Every other screen's search is its own, about what is on it.
  */
 export function HeaderControls() {
+  // Jira GRW-556 — no feed of bookings to look at until the business is live.
+  const live = useLive();
   return (
     <>
       {/* Jira GRW-395 — the branch the whole app is showing, first: every figure beside it depends on it. */}
       <HeaderBranchPicker />
-      <NotificationBell />
+      {live ? <NotificationBell /> : null}
       <AccountMenu />
     </>
   );

@@ -1,4 +1,5 @@
 import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
+import { guardLive } from '../lib/screen-guard';
 import { api, type Appointment } from '../lib/api';
 import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
@@ -39,6 +40,8 @@ export default async function AppointmentsPage({
     branch?: string;
   }>;
 }) {
+  // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
+  await guardLive('/appointments');
   const params = await searchParams;
   // Deep-linked from Home's "Cancellation today" card (?status=cancelled) —
   // validated against the real statuses so a stray query param is ignored

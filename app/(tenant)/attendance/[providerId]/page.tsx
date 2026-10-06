@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { screenTitle } from '../../lib/page-title';
+import { guardLive } from '../../lib/screen-guard';
 import { api } from '../../lib/api';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
@@ -25,6 +26,8 @@ export default async function AttendanceMonthPage({
   params: Promise<{ providerId: string }>;
   searchParams: Promise<{ month?: string }>;
 }) {
+  // Jira GRW-556 — attendance opens at go-live, and an address below a closed screen is still that screen.
+  await guardLive('/attendance');
   const { providerId } = await params;
   const { month } = await searchParams;
   const t = await getTranslations('attendance');
