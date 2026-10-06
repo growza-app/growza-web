@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { csvLines } from '../lib/csv';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useWritable } from '../components/SessionProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, BookingConflictError, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
@@ -56,6 +57,7 @@ export function ServicesTable({
   serviceLabel: string;
 }) {
   const router = useRouter();
+  const writable = useWritable();
   const t = useTranslations('services');
   const tn = useTranslations('nouns');
   const locale = useLocale();
@@ -411,9 +413,12 @@ export function ServicesTable({
         title={title}
         subtitle={t('subtitle')}
         actions={
-          <button type="button" className="btn" onClick={() => setChoosing(true)}>
-            <IconPlus /> {t('addLabel', { label: lower })}
-          </button>
+          // Jira GRW-556 (follow-up) — a business suspended for non-payment reads its menu and adds nothing to it.
+          writable ? (
+            <button type="button" className="btn" onClick={() => setChoosing(true)}>
+              <IconPlus /> {t('addLabel', { label: lower })}
+            </button>
+          ) : undefined
         }
       />
       <div className="page-body table-fit">
@@ -433,7 +438,9 @@ export function ServicesTable({
             aria-label={t('searchAria')}
           />
         </div>
-        {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service. */}
+        {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service.
+            Jira GRW-556 (follow-up) — the sheet it opens only adds, renames, reorders and deletes categories. */}
+        {writable && (
         <button
           type="button"
           className="btn btn-ghost"
@@ -452,6 +459,7 @@ export function ServicesTable({
         >
           {loadingCategories ? '…' : t('categories.open')}
         </button>
+        )}
         <button type="button" className="btn btn-ghost" onClick={exportCsv}>
           {t('export')}
         </button>
@@ -536,14 +544,16 @@ export function ServicesTable({
           <div className="empty svc-branch-empty">
             <p>{branches.length > 1 ? t('emptyBranch') : t('emptyAll')}</p>
             <div className="svc-branch-empty-actions">
-              {canCopy && (
+              {writable && canCopy && (
                 <button type="button" className="btn" onClick={() => setCopying(true)}>
                   {t('copyFromBranch')}
                 </button>
               )}
-              <button type="button" className={canCopy ? 'btn btn-ghost' : 'btn'} onClick={() => setChoosing(true)}>
-                <IconPlus /> {t('addLabel', { label: lower })}
-              </button>
+              {writable && (
+                <button type="button" className={canCopy ? 'btn btn-ghost' : 'btn'} onClick={() => setChoosing(true)}>
+                  <IconPlus /> {t('addLabel', { label: lower })}
+                </button>
+              )}
             </div>
           </div>
         ) : filtered.length === 0 ? (

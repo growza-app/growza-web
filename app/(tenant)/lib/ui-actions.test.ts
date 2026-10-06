@@ -164,8 +164,8 @@ describe('2b — the controls, each behind its own action', () => {
 
   const GATES: Array<[file: string, gate: RegExp]> = [
     ['components/home/parts.tsx', /<HeaderSearch wide \/>/],
-    ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new'\);/],
-    ['components/home/OwnerHome.tsx', /const mayBook = mayUse\(p\.role, 'visit\.new'\);[\s\S]*const mayRecordPayment = mayUse\(p\.role, 'visit\.recordPayment'\);/],
+    ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new', writable\);/],
+    ['components/home/OwnerHome.tsx', /const mayBook = mayUse\(p\.role, 'visit\.new', writable\);[\s\S]*const mayRecordPayment = mayUse\(p\.role, 'visit\.recordPayment', writable\);/],
     // Jira GRW-404 moved the desk's rows onto the token board, so the give and pay buttons are gated there.
     ['components/home/TokenBoard.tsx', /const mayGive = useMayUse\('queue\.give'\);[\s\S]*\{mayGive \? \(\s*<button type="button" className="hm-give"/],
     ['components/home/BookedToday.tsx', /const mayArrive = useMayUse\('token\.arrive'\);[\s\S]*\{mayArrive \? \(/],
@@ -174,7 +174,7 @@ describe('2b — the controls, each behind its own action', () => {
     ['reports/ReportsClient.tsx', /const onClient = useMayUse\('client\.profile'\) \? setOpenClientId : undefined;/],
     ['reports/ReportsClient.tsx', /onSegment=\{mayListClients \? goToSegment : undefined\}/],
     ['attendance/[providerId]/page.tsx', /const isOwnRecord = !mayUse\(me\.member\?\.role, 'attendance\.mark'\);/],
-    ['appointments/new/page.tsx', /if \(!mayUse\(me\.member\?\.role, 'visit\.new'\)\) \{\s*redirect\('\/appointments'\);/],
+    ['appointments/new/page.tsx', /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\) \{\s*redirect\('\/appointments'\);/],
   ];
   for (const [file, gate] of GATES) {
     it(`${file} — ${gate.source.slice(0, 60)}…`, () => {
@@ -317,7 +317,7 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     // Its own tab gate (GRW-197): a tab they cannot open lands on one they can, none says so plainly.
     '/reports': /const firstAllowed = ALL_REPORT_TABS\.find\(canOpen\)/,
     // The centre button and this page ask the same action.
-    '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new'\)\)/,
+    '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\)/,
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
     // sends a live business Home, since the address means nothing then.
     '/not-live-yet': /isLive\(\(await api\.me\(\)\)\.tenant\?\.status\)\) redirect\('\/'\)/,

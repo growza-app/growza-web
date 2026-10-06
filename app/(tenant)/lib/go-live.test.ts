@@ -162,7 +162,8 @@ describe('every surface that offers a destination follows the flag', () => {
   it('layout reads the status and hands it to the session', () => {
     const layout = code('layout.tsx');
     expect(layout).toMatch(/live = isLive\(me\.tenant\?\.status\);/);
-    expect(layout).toMatch(/\blive,\n\s*\}\}/);
+    // `writable` and `walkIn` ride beside it (Jira GRW-556 follow-up), so `live` is no longer last.
+    expect(layout).toMatch(/\blive,\n\s*writable,\n\s*walkIn,\n\s*\}\}/);
   });
 
   it('the sidebar, the tab bar and the More menu ask with the flag', () => {

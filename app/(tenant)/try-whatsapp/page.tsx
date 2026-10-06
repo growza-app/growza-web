@@ -6,7 +6,7 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
-import { guardScreen } from '../lib/screen-guard';
+import { guardScreen, guardWritable } from '../lib/screen-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +14,8 @@ export const dynamic = 'force-dynamic';
 export default async function TryWhatsAppPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
   await guardScreen('/try-whatsapp');
+  // Jira GRW-556 (follow-up) — every tap on this screen starts a chat the API refuses for a suspended business.
+  await guardWritable('/');
   // Jira GRW-385 — opened from a branch's booking link in Settings › Branches: the chat starts at that branch.
   const { branch } = await searchParams;
   const t = await getTranslations('tryWhatsApp');

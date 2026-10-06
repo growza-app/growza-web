@@ -9,7 +9,7 @@ import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-sta
 import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconPlus, IconReceipt, IconScissors, IconSearch, IconUserPlus } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { useBranch } from '../BranchProvider';
-import { useMayUse } from '../SessionProvider';
+import { useMayUse, useWritable } from '../SessionProvider';
 import { BookedToday, bookedNotOnBoard } from './BookedToday';
 import { NewTokenSheet } from './NewTokenSheet';
 import { TokenBoard } from './TokenBoard';
@@ -63,6 +63,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
   // Jira GRW-409 — every action here is the desk's today; each is still asked of the shared rule, so a role that
   // lands on this Home without them is shown no button that answers 403. New token writes a queue entry, so it
   // rides on the same action as a walk-in.
+  const writable = useWritable();
   const mayBook = useMayUse('visit.new');
   const mayRecordPayment = useMayUse('visit.recordPayment');
 
@@ -143,7 +144,8 @@ export function ReceptionHome(p: ReceptionHomeProps) {
 
         <QuickTiles
           items={[
-            { href: '/customers?add=1', label: t.addCustomer, icon: <IconUserPlus />, tone: 'blue' },
+            // Jira GRW-556 (follow-up) — Add client is a write; a suspended business has no Clients form to land on.
+            ...(writable ? [{ href: '/customers?add=1', label: t.addCustomer, icon: <IconUserPlus />, tone: 'blue' as const }] : []),
             // Jira GRW-404 — Record payment moved up beside New token; Walk-in now (start a visit with a stylist straight
             // away) keeps a way in on a laptop, where the phone's centre button is not.
             ...(mayBook ? [{ href: '/appointments/new?mode=now', label: t.walkInShort, icon: <IconScissors />, tone: 'green' as const }] : []),

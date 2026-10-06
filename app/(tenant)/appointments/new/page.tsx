@@ -7,6 +7,7 @@ import { NewBookingClient } from './NewBookingClient';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
 import { mayUse } from '../../lib/nav-policy';
+import { isWritable } from '../../lib/read-only';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,8 @@ export default async function NewBookingPage({
    * used to be the only door to this flow.
    */
   // Jira GRW-409 — asked of the shared rule the centre button asks, so the page and the button cannot disagree.
-  if (!mayUse(me.member?.role, 'visit.new')) {
+  // Jira GRW-556 (follow-up) — and a business suspended for non-payment has nothing to book into: read-only.
+  if (!mayUse(me.member?.role, 'visit.new', isWritable(me.tenant?.status))) {
     redirect('/appointments');
   }
 

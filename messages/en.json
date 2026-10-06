@@ -27,7 +27,7 @@
     "clear": "Clear",
     "call": "Call {name}",
     "customer": "client",
-    "unknown": "Unknown",
+    "unknown": "No name",
     "visits": "{count, plural, one {# visit} other {# visits}}"
   },
   "notifications": {
@@ -1421,7 +1421,7 @@
     }
   },
   "chrome": {
-    "unknown": "Unknown",
+    "unknown": "No name",
     "close": "Close",
     "closeMenu": "Close menu",
     "menu": "Menu",

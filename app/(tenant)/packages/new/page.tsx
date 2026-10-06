@@ -5,7 +5,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { PackageBuilder } from '../PackageBuilder';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
-import { guardScreen } from '../../lib/screen-guard';
+import { guardScreen, guardWritable } from '../../lib/screen-guard';
 import { BranchUrlSync } from '../../components/BranchUrlSync';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,8 @@ export const dynamic = 'force-dynamic';
 export default async function NewPackagePage() {
   // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
   await guardScreen('/packages');
+  // Jira GRW-556 (follow-up) — the builder only saves; a suspended business reads its packages and builds none.
+  await guardWritable('/packages');
   const t = await getTranslations('packages');
   let services;
   try {

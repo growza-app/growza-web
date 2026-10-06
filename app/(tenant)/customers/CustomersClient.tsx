@@ -18,6 +18,7 @@ import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { initials } from '../lib/appointment-display';
 import { dialable } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
+import { useWritable } from '../components/SessionProvider';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
 import {
@@ -162,9 +163,12 @@ export function CustomersClient({
   // Which way the sorted column runs. Clicking the same header again flips it,
   // which is what makes "who spends least" reachable without a second control.
   const [direction, setDirection] = useState<SortDirection>(initialDirection ?? 'desc');
+  // Jira GRW-556 (follow-up) — a business suspended for non-payment reads its clients and adds none.
+  const writable = useWritable();
   // ?add=1 (from the Home quick-actions panel) opens the sheet straight away
-  // instead of landing here and requiring a second click.
-  const [adding, setAdding] = useState(() => searchParams.get('add') === '1');
+  // instead of landing here and requiring a second click. Not for a read-only business: the link would open a form
+  // whose save the API refuses.
+  const [adding, setAdding] = useState(() => writable && searchParams.get('add') === '1');
   // Fixed page size: the list scrolls within the page and a numbered footer
   // pages through it — the standard pattern for a potentially large list.
   const pageSize = PAGE_SIZE;
@@ -325,12 +329,14 @@ export function CustomersClient({
         menu
         subtitle={t('subtitle', { noun: lower })}
         actions={
-          <button type="button" className="btn" onClick={() => setAdding(true)}>
-            {/* A real icon, not a typed "+". GRW-30: on a phone the header
-                action collapses to its icon, and a button whose plus is a
-                character has nothing left to show. */}
-            <IconPlus /> {t('addNoun', { noun: singular })}
-          </button>
+          writable ? (
+            <button type="button" className="btn" onClick={() => setAdding(true)}>
+              {/* A real icon, not a typed "+". GRW-30: on a phone the header
+                  action collapses to its icon, and a button whose plus is a
+                  character has nothing left to show. */}
+              <IconPlus /> {t('addNoun', { noun: singular })}
+            </button>
+          ) : undefined
         }
       />
       <div className="page-body table-fit cust-fit">

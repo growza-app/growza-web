@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { api } from './api';
 import { canSee, type MemberRole } from './nav-policy';
 import { isLive, isSetupDestination } from './go-live';
+import { isWritable } from './read-only';
 
 /**
  * Jira GRW-409 · GRW-319 — a screen the nav does not offer a role, reached by
@@ -67,3 +68,22 @@ export async function guardLive(href: string): Promise<void> {
   }
   if (closedUntilGoLive(live, href)) redirect(NOT_LIVE_PATH);
 }
+
+/**
+ * Jira GRW-556 (follow-up) — a screen whose whole job is a write, for a business that may not write.
+ *
+ * A business suspended for non-payment signs in read-only. The Package builder and Try WhatsApp are not views of
+ * anything: every control on them saves, and the API answers each with "suspended". Sent to `fallback` — the list
+ * the builder came from — instead of drawn. Fails open like the other guards: a `/me` that cannot answer is not a
+ * business that may not write.
+ */
+export async function guardWritable(fallback: string): Promise<void> {
+  let writable = true;
+  try {
+    writable = isWritable((await api.me()).tenant?.status);
+  } catch {
+    return;
+  }
+  if (!writable) redirect(fallback);
+}
+

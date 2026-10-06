@@ -4,6 +4,7 @@ import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { formatMoney, type ServiceAdmin } from '../lib/api';
 import { useLabel } from '../components/LabelsProvider';
+import { useWritable } from '../components/SessionProvider';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
@@ -74,6 +75,9 @@ function time(s: ServiceAdmin, t: T): string {
  * thing, then the final one.
  */
 export function ServiceRowMenu({ service, actions, t }: { service: ServiceAdmin; actions: RowActions; t: T }) {
+  // Jira GRW-556 (follow-up) — every item in this menu writes (edit, photo, duplicate, retire, delete): none for a
+  // business suspended for non-payment, which reads its menu and changes none of it.
+  const writable = useWritable();
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const panel = useAnchoredPanel(open, close);
@@ -82,6 +86,7 @@ export function ServiceRowMenu({ service, actions, t }: { service: ServiceAdmin;
     fn(service);
   };
 
+  if (!writable) return null;
   return (
     <div className="dropdown-anchor svc-row-actions" ref={open ? panel.anchorRef : undefined}>
       <button
@@ -225,12 +230,14 @@ const SWIPE_THRESHOLD = 36;
  * cannot be started twice.
  */
 function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: RowActions; t: T }) {
+  const writable = useWritable();
   const [open, setOpen] = useState(false);
   const start = useRef<{ x: number; y: number } | null>(null);
   const busy = actions.busyId === service.id;
 
   const onTouchStart = (e: React.TouchEvent) => {
-    if (busy) return;
+    // Jira GRW-556 (follow-up) — what the swipe reveals is Retire and Delete: nothing to reveal when read-only.
+    if (busy || !writable) return;
     const touch = e.touches[0];
     start.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
   };
@@ -268,6 +275,7 @@ function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: Row
         <ServiceRowMenu service={service} actions={actions} t={t} />
       </div>
       {/* `aria-hidden`, because the ··· menu already offers these to anyone not using a thumb. */}
+      {writable && (
       <div className="svc-swipe-actions" aria-hidden="true">
         {service.active ? (
           <button type="button" className="svc-swipe-retire" tabIndex={-1} disabled={busy} onClick={() => actions.onRetire(service)}>
@@ -282,6 +290,7 @@ function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: Row
           {t('delete')}
         </button>
       </div>
+      )}
     </div>
   );
 }
@@ -300,6 +309,7 @@ export function ServiceCards({
   order: CategoryOrder;
   totals?: CategoryTotals;
 }) {
+  const writable = useWritable();
   const groups = groupByCategory(rows, order);
   const headings = totals ? totals.size > 1 : worthGrouping(groups);
 
@@ -315,7 +325,8 @@ export function ServiceCards({
           </div>
         </div>
       ))}
-      <p className="svc-swipe-hint">{t('swipeHint')}</p>
+      {/* The hint teaches a swipe that does nothing for a read-only business. */}
+      {writable && <p className="svc-swipe-hint">{t('swipeHint')}</p>}
     </>
   );
 }

@@ -13,6 +13,7 @@ import { Pagination } from '../components/Pagination';
 import { IconCalendar, IconFilter, IconOffers, IconSearch } from '../components/icons';
 import { weekdayNames } from '../lib/weekday-names';
 import { useBranch } from '../components/BranchProvider';
+import { useWritable } from '../components/SessionProvider';
 
 /** First paint only — the client immediately measures how many rows the screen actually fits. */
 const INITIAL_PAGE_SIZE = 4;
@@ -49,6 +50,9 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   const tn = useTranslations('nouns');
   const locale = useLocale();
   const router = useRouter();
+  // Jira GRW-556 (follow-up) — read-only for a business suspended for non-payment: the switch shows the state and
+  // does not move, and there is no menu to edit or delete from.
+  const writable = useWritable();
   // Jira GRW-381 — on "All branches" each offer says which branch runs it: the same offer at two branches is two rows.
   const branchContext = useBranch();
   const branchTag = (locationId: string | undefined) => {
@@ -250,7 +254,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                   data-row
                   className={`offer-card-row ${selectedId === offer.id ? 'offer-card-row-selected' : ''}`}
                   onClick={() => setSelectedId(offer.id)}
-                  onDoubleClick={() => router.push(`/offers/${offer.id}/edit`)}
+                  onDoubleClick={writable ? () => router.push(`/offers/${offer.id}/edit`) : undefined}
                 >
                   <div className="offer-row-head">
                     <div className="offer-icon offer-icon-offer"><IconOffers /></div>
@@ -283,7 +287,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                       <input
                         type="checkbox"
                         checked={offer.active}
-                        disabled={busyId === offer.id}
+                        disabled={busyId === offer.id || !writable}
                         onChange={() => toggleActive(offer)}
                       />
                       <span className="switch-track">
@@ -305,6 +309,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                       </div>
                     </div>
 
+                    {writable && (
                     <div
                       className="dropdown-anchor"
                       ref={openMenuId === offer.id ? menu.anchorRef : undefined}
@@ -336,6 +341,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 </div>
               );

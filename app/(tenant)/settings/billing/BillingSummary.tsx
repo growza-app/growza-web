@@ -1,7 +1,8 @@
 import type { OwnerBilling } from '../../lib/api-types';
 import { billingCopy } from '../../lib/billing-copy';
 import type { Lang } from '../../lib/lang';
-import { PayNowButton } from '../../components/PayNowButton';
+import { PayCard } from '../../components/PayCard';
+import { PaymentReceived } from '../../components/PaymentReceived';
 import { AutoPayCard } from './AutoPayCard';
 
 /**
@@ -40,12 +41,10 @@ export function BillingSummary({
         <p className="bp-sub">{t.sub}</p>
       </div>
 
-      {billing.due ? (
-        <div className="bill-due" role="status">
-          <span>{t.due}</span>
-          {canPayOnline ? <PayNowButton restricted={false} /> : null}
-        </div>
-      ) : null}
+      {/* Jira GRW-556 (follow-up) — one card: how much, for which month, and Pay now or where to send it. */}
+      {billing.due ? <PayCard due={billing.due} payHow={billing.payHow} canPayOnline={canPayOnline} lang={lang} /> : null}
+      {/* Jira GRW-556 (follow-up) — and when it has landed: told, rather than the warning just disappearing. */}
+      {!billing.due && billing.lastPayment ? <PaymentReceived payment={billing.lastPayment} lang={lang} /> : null}
 
       <div className="bill-grid">
         <section className="card bill-card" aria-labelledby="bill-plan">
@@ -82,16 +81,19 @@ export function BillingSummary({
                 <span>{t.monthly}</span>
                 <span>{money(sub.nextBill.amountMinor)}</span>
               </div>
-              <p className="bill-paid-by">
-                <strong>{t.paidBy}:</strong>{' '}
-                {sub.paidBy === 'autopay'
-                  ? t.paidAutopay
-                  : sub.paidBy === 'autopay_halted'
-                    ? t.paidAutopayHalted
-                    : sub.paidBy === 'online_link'
-                      ? t.paidOnline
-                      : t.paidOffline}
-              </p>
+              {/* While a bill is due the Pay card above already says how; saying it twice, in different words, is the confusion. */}
+              {billing.due && (sub.paidBy === 'offline' || sub.paidBy === 'online_link') ? null : (
+                <p className="bill-paid-by">
+                  <strong>{t.paidBy}:</strong>{' '}
+                  {sub.paidBy === 'autopay'
+                    ? t.paidAutopay
+                    : sub.paidBy === 'autopay_halted'
+                      ? t.paidAutopayHalted
+                      : sub.paidBy === 'online_link'
+                        ? t.paidOnline
+                        : t.paidOffline}
+                </p>
+              )}
             </>
           )}
         </section>

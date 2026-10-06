@@ -25,7 +25,7 @@ export function billingCopy(lang: Lang) {
     amount: S('Amount', 'राशि'),
     paidBy: S('How it is paid', 'भुगतान कैसे होता है'),
     paidOnline: S('Pay online when the bill arrives, with Pay now.', 'बिल आने पर "अभी भुगतान करें" से ऑनलाइन भुगतान करें।'),
-    paidOffline: S('Pay Growza by bank transfer or UPI; we record it for you.', 'बैंक ट्रांसफ़र या UPI से Growza को भुगतान करें; हम उसे दर्ज करते हैं।'),
+    paidOffline: S('Pay Growza by UPI; we record it for you.', 'UPI से Growza को भुगतान करें; हम उसे दर्ज करते हैं।'),
     /*
      * Jira GRW-241 — UPI AutoPay, in the plainest words available.
      *
@@ -71,8 +71,30 @@ export function billingCopy(lang: Lang) {
     autopayError: S('We could not start automatic payment just now. Please try again shortly.', 'अभी अपने आप भुगतान चालू नहीं हो सका। कृपया थोड़ी देर बाद कोशिश करें।'),
     change: (from: string, amount: string, now: string) =>
       S(`From ${from} your bill is ${amount} a month (now ${now}).`, `${from} से आपका बिल ${amount} प्रति माह होगा (अभी ${now})।`),
-    due: S('You have a bill to pay.', 'आपका एक बिल भुगतान के लिए बाकी है।'),
-    payNow: S('Pay now', 'अभी भुगतान करें'),
+    /*
+     * Jira GRW-556 (follow-up) — the Pay card. One card, one set of words, whether or not there is a Pay now button: it says
+     * how much, for which month, and either the button or exactly where to send the money. "Bill" throughout; "invoice",
+     * "link" and "mandate" are not words an owner reads.
+     */
+    payTitle: S('Pay your bill', 'अपना बिल भरें'),
+    payFor: (month: string) => S(`Bill for ${month}`, `${month} का बिल`),
+    payMoreBills: (n: number, total: string) =>
+      S(`You have ${n} unpaid bills — ${total} in all. The oldest is paid first.`, `आपके ${n} बिल बाकी हैं — कुल ${total}। सबसे पुराना पहले भरा जाएगा।`),
+    howToPay: S('How to pay', 'भुगतान कैसे करें'),
+    askOwnerToPay: S('Ask the owner to pay this bill.', 'कृपया मालिक से यह बिल भरने को कहें।'),
+    payOnlineNote: S(
+      'You pay on a secure page. Choose Google Pay, PhonePe, Paytm, any UPI app, a card or net banking.',
+      'आप एक सुरक्षित पेज पर भुगतान करते हैं। Google Pay, PhonePe, Paytm, कोई भी UPI ऐप, कार्ड या नेट बैंकिंग चुनें।',
+    ),
+    payNotOn: S('Online payment is not switched on for your account yet. Call us to pay.', 'आपके अकाउंट पर ऑनलाइन भुगतान अभी चालू नहीं है। भुगतान के लिए हमें कॉल करें।'),
+    payCallUs: S('Call us', 'हमें कॉल करें'),
+    payConfirming: S('Thank you. We are confirming your payment — this usually takes a few seconds.', 'धन्यवाद। हम आपका भुगतान पक्का कर रहे हैं — इसमें आमतौर पर कुछ सेकंड लगते हैं।'),
+    payStillConfirming: S('Still waiting to hear from the bank. If you have paid, it will show here shortly. You can also call us.', 'बैंक से अभी जवाब नहीं आया। अगर आपने भुगतान कर दिया है तो यह जल्द यहाँ दिखेगा। आप हमें कॉल भी कर सकते हैं।'),
+    paymentReceived: S('Payment received', 'भुगतान मिल गया'),
+    closeNotice: S('Close', 'बंद करें'),
+    paymentReceivedLine: (amount: string, date: string) =>
+      S(`${amount} received on ${date}. Thank you.`, `${amount} ${date} को मिला। धन्यवाद।`),
+    payOnBilling: S('Pay it on the Billing page', 'इसे बिल पेज पर भरें'),
     bills: S('Your bills', 'आपके बिल'),
     seeAll: S('See all bills', 'सभी बिल देखें'),
     allBills: S('All bills', 'सभी बिल'),
