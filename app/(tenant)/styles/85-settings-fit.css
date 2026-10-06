@@ -1074,3 +1074,24 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
   border: 0; background: transparent; color: inherit; cursor: pointer; border-radius: 12px;
 }
 .payment-received-close:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+
+/*
+ * Save bars on a phone, docked rather than floating (Jira GRW-556 follow-up, QA 2026-10-06).
+ *
+ * Both bars were pinned to the bottom of the scroller, but that bottom is `.page-body`'s 84px of padding — room kept for
+ * the floating "+", which Settings does not have. So the Booking bar floated 84px above the tab bar and Business profile's
+ * (pulled down 60px) 24px above it, each a card hovering over the middle of the form with fields showing through the gap
+ * underneath: two bars, two heights, neither attached to anything. Settings keeps one bar's-gap of padding instead, both
+ * bars sit at that edge, and a strip of page background around each (the spread shadow) hides whatever scrolls past behind
+ * it — so the bar reads as a tray docked above the tab bar on every Settings tab.
+ */
+@media (max-width: 860px) {
+  .page-body.settings-page {
+    padding-bottom: var(--sp-3);
+  }
+  .settings-page .bp-savebar,
+  .settings-page .settings-savebar {
+    bottom: 0;
+    box-shadow: 0 0 0 var(--sp-3) var(--page-bg), 0 -14px 24px rgba(16, 38, 26, 0.08);
+  }
+}

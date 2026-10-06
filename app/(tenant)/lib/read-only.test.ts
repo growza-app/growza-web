@@ -172,3 +172,14 @@ describe('every screen that writes asks whether it may (the list that cannot qui
   });
 });
 
+describe('save bars on a phone dock above the tab bar, on every Settings tab', () => {
+  const sheet = read('styles/85-settings-fit.css');
+  const block = sheet.slice(sheet.indexOf('Save bars on a phone, docked rather than floating'));
+  it('Settings keeps one bar\'s gap of padding, not the 84px the floating "+" needs', () => {
+    expect(block).toMatch(/\.page-body\.settings-page \{\s*padding-bottom: var\(--sp-3\);/);
+  });
+  it('both bars sit at that edge, on a strip of page background, so nothing shows through under them', () => {
+    expect(block).toMatch(/\.settings-page \.bp-savebar,\s*\.settings-page \.settings-savebar \{\s*bottom: 0;\s*box-shadow: 0 0 0 var\(--sp-3\) var\(--page-bg\)/);
+  });
+});
+
