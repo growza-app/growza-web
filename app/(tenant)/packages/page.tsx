@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
+import { WriteOnly } from '../components/WriteOnly';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { loadAtBranch } from '../lib/branch-load';
@@ -61,9 +62,12 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
         title={t('title')}
         subtitle={whatsappLive ? t('subtitleLive') : t('subtitleCrmOnly')}
         actions={
-          <Link className="btn" href="/packages/new">
-            <IconPlus /> {t('build')}
-          </Link>
+          // Jira GRW-556 (follow-up) — the builder only saves; a suspended business builds nothing.
+          <WriteOnly>
+            <Link className="btn" href="/packages/new">
+              <IconPlus /> {t('build')}
+            </Link>
+          </WriteOnly>
         }
       />
       <div className="page-body page-fit">

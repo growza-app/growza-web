@@ -20,8 +20,11 @@ import { BranchProvider } from './components/BranchProvider';
 import { LabelsProvider } from './components/LabelsProvider';
 import { mayUse, type MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
+import { HomeOnly } from './components/HomeOnly';
+import { PaymentReceived } from './components/PaymentReceived';
 import { SetupBanner } from './components/SetupBanner';
 import { isLive } from './lib/go-live';
+import { isWritable } from './lib/read-only';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
 import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
@@ -128,10 +131,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let billing: { status: string; message: string | null; autopayHalted?: boolean } | null = null;
   /** GRW-145/163 — whether the billing banner may offer "Pay now". */
   let canPayOnline = false;
+  /** Jira GRW-556 (follow-up) — may this role open Billing (the owner), whether or not there is a Pay now button. */
+  let canOpenBilling = false;
+  /** Jira GRW-556 (follow-up) — a payment recorded in the last three days; Home says it arrived. */
+  let paymentReceived: Me['paymentReceived'] = null;
   /** Jira GRW-516 — what a business still being set up is waiting on; null once it is live. */
   let setup: Me['setup'] = null;
   /** Jira GRW-556 — false while the business is being set up; only then are the setup screens all that is offered. */
   let live = true;
+  /** Jira GRW-556 (follow-up) — false only while suspended for non-payment: signed in, read-only, the bill still payable. */
+  let writable = true;
+  /** Jira GRW-556 (follow-up) — `me.capabilities.walkIn`; only an explicit false hides the queue's and the token board's controls. */
+  let walkIn = true;
   /**
    * GRW-165 — whether WhatsApp is live for this business.
    *
@@ -186,12 +197,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     billing = me.billing ?? null;
     setup = me.setup ?? null;
     live = isLive(me.tenant?.status);
+    writable = isWritable(me.tenant?.status);
+    walkIn = me.capabilities?.walkIn !== false;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     // Jira GRW-409 — the banner's words are for everyone at the salon; "Pay now" only for a role the payment-link
     // route serves. A receptionist tapping it got "forbidden" in the middle of a warning about the account.
     canPayOnline = (me.payments?.online ?? false) && mayUse(role, 'billing.payNow');
+    canOpenBilling = mayUse(role, 'billing.payNow');
+    paymentReceived = me.paymentReceived ?? null;
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
     branches = me.branches ?? [];
@@ -265,6 +280,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             branches,
             lang,
             live,
+            writable,
+            walkIn,
           }}
         >
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>
@@ -287,7 +304,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 * one that used to make this two.
                 */}
               <div className="content-banners">
-                <BillingBanner billing={billing} canPayOnline={canPayOnline} />
+                {/* Jira GRW-556 (follow-up) — Home only: it repeated, a third of a phone screen, above every other screen. */}
+                <HomeOnly>
+                  <BillingBanner billing={billing} canPayOnline={canPayOnline} canOpenBilling={canOpenBilling} lang={lang} />
+                  {paymentReceived && !billing ? <PaymentReceived payment={paymentReceived} lang={lang} /> : null}
+                </HomeOnly>
                 <SetupBanner setup={setup} lang={lang} />
               </div>
               {/*

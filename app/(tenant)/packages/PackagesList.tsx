@@ -11,6 +11,7 @@ import { IconPackages, IconSearch } from '../components/icons';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
 import { useBranch } from '../components/BranchProvider';
+import { useWritable } from '../components/SessionProvider';
 import { partsMinutes, partsOf, partsTotalMinor, savingMinor, savingPct, searchPackages } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
 
@@ -28,6 +29,8 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
   const tn = useTranslations('nouns');
   const router = useRouter();
   const branchContext = useBranch();
+  // Jira GRW-556 (follow-up) — read-only for a business suspended for non-payment: no builder, no menu, no switch.
+  const writable = useWritable();
 
   const [busyId, setBusyId] = useState<string | null>(null);
   /*
@@ -178,7 +181,7 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
       {filtered.length === 0 ? (
         <div className="empty pkg-empty">
           <p>{packages.length === 0 ? t('emptyNone') : t('emptySearch')}</p>
-          {packages.length === 0 && (
+          {packages.length === 0 && writable && (
             <Link className="btn" href="/packages/new">
               {t('buildFirst')}
             </Link>
@@ -206,7 +209,7 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                   key={pkg.id}
                   data-row
                   className={`pkg-row ${pkg.active ? '' : 'is-retired'}`}
-                  onDoubleClick={() => router.push(`/packages/${pkg.id}/edit`)}
+                  onDoubleClick={writable ? () => router.push(`/packages/${pkg.id}/edit`) : undefined}
                 >
                   <div className="pkg-row-main">
                     <span className="pkg-icon" aria-hidden="true">
@@ -260,6 +263,7 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                     </div>
                   </div>
 
+                  {writable && (
                   <div
                     className="dropdown-anchor pkg-actions"
                     ref={openMenuId === pkg.id ? menu.anchorRef : undefined}
@@ -299,6 +303,7 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
               );
             })}

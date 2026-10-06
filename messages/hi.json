@@ -27,7 +27,7 @@
     "clear": "हटाएँ",
     "call": "{name} को कॉल करें",
     "customer": "ग्राहक",
-    "unknown": "अज्ञात",
+    "unknown": "कोई नाम नहीं",
     "visits": "{count, plural, one {# विज़िट} other {# विज़िट}}"
   },
   "notifications": {
@@ -1421,7 +1421,7 @@
     }
   },
   "chrome": {
-    "unknown": "अनजान",
+    "unknown": "कोई नाम नहीं",
     "close": "बंद करें",
     "closeMenu": "मेन्यू बंद करें",
     "menu": "मेन्यू",

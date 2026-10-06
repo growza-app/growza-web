@@ -32,6 +32,6 @@ describe('the Which branch? dropdown is for the owner', () => {
   });
 
   it('a stylist cannot reach New booking: the page sends them to Bookings', () => {
-    expect(page).toMatch(/if \(!mayUse\(me\.member\?\.role, 'visit\.new'\)\) \{\s*redirect\('\/appointments'\);/);
+    expect(page).toMatch(/if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\) \{\s*redirect\('\/appointments'\);/);
   });
 });

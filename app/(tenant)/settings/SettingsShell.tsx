@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import type { SettingsSummary } from '../lib/api';
 import { IconArrowLeft } from '../components/icons';
 import { SettingsNavList } from './SettingsNavList';
+import { ReadOnlyFields } from '../components/ReadOnlyFields';
 
 /**
  * Desktop: a persistent left nav pane beside the section content (both
@@ -21,6 +22,12 @@ export function SettingsShell({ settings, children }: { settings: SettingsSummar
   const isHub = pathname === '/settings';
   const t = useTranslations('settingsHub');
   const branch = useSearchParams().get('branch');
+  /*
+   * Jira GRW-556 (follow-up) — a business suspended for non-payment reads every Settings page and changes none of them: the
+   * content pane is one `ReadOnlyFields`, so every field, switch and button inside goes inert while the values stay on show.
+   * Billing is the exception — paying is the way back — and the back link sits outside it.
+   */
+  const onBilling = pathname.startsWith('/settings/billing');
 
   return (
     /* Jira GRW-229 — `settings-hub` marks the one route where the LIST is the screen, so the phone
@@ -35,7 +42,7 @@ export function SettingsShell({ settings, children }: { settings: SettingsSummar
           <IconArrowLeft />
           {t('back')}
         </a>
-        {children}
+        <ReadOnlyFields exempt={onBilling}>{children}</ReadOnlyFields>
       </div>
     </div>
   );

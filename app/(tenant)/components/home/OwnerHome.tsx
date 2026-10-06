@@ -18,6 +18,7 @@ import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
 import { useBranch } from '../BranchProvider';
+import { useWritable } from '../SessionProvider';
 import { homeCopy } from '../../lib/home-copy';
 import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
@@ -204,8 +205,10 @@ export function OwnerHome(p: OwnerHomeProps) {
    */
   const [visitSheet, setVisitSheet] = useState<'payment' | null>(null);
   // Jira GRW-409 — the shared rule, not `role !== 'staff'`: each button is drawn for a role that may make its calls.
-  const mayBook = mayUse(p.role, 'visit.new');
-  const mayRecordPayment = mayUse(p.role, 'visit.recordPayment');
+  // Jira GRW-556 (follow-up) — and the business being allowed to write: a suspended one sees Home but starts nothing.
+  const writable = useWritable();
+  const mayBook = mayUse(p.role, 'visit.new', writable);
+  const mayRecordPayment = mayUse(p.role, 'visit.recordPayment', writable);
 
   /*
    * Only the newest read may land. A branch or period switch, or a refresh after a payment, can overlap an

@@ -146,7 +146,8 @@
      later rule wins at every height this one matches. Removed with Jira GRW-229
      rather than left looking load-bearing. */
   /* Direct children only: the profile and branch cards manage their own gaps. */
-  .settings-page .settings-content-pane > .card + .card {
+  .settings-page .settings-content-pane > .card + .card,
+  .settings-page .settings-content-pane > .ro-fields > .card + .card {
     margin-top: 12px;
   }
   .settings-page .bp-form .field textarea {
@@ -359,7 +360,8 @@
   .settings-page .settings-nav-pane .settings-row-action {
     display: none;
   }
-  .settings-page .settings-content-pane > .card + .card {
+  .settings-page .settings-content-pane > .card + .card,
+  .settings-page .settings-content-pane > .ro-fields > .card + .card {
     margin-top: 12px !important;
   }
   .settings-page .settings-content-pane .card-head {
@@ -1024,3 +1026,51 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
     padding: 0 22px;
   }
 }
+
+/*
+ * Jira GRW-556 (follow-up) — a business suspended for non-payment reads Settings: `SettingsShell` wraps the form in a
+ * disabled fieldset (`.ro-fields`), which must change nothing about the layout. `display: contents` lets the form's
+ * children lay out exactly as they did as direct children of the pane; the two `> .card + .card` rules above carry the
+ * same selector one level down. The save bars are left out: a Save on a form nobody can edit is noise.
+ */
+.settings-content-pane > .ro-fields {
+  display: contents;
+}
+.settings-content-pane > .ro-fields:disabled .settings-savebar,
+.settings-content-pane > .ro-fields:disabled .bp-savebar {
+  display: none;
+}
+
+/* Jira GRW-556 (follow-up) — the Pay card on Billing: how much, for which month, and either Pay now or where to send it. */
+.pay-card { padding: 16px 18px; min-width: 0; border-color: oklch(0.85 0.09 80); background: oklch(0.985 0.03 85); }
+.pay-card-title { margin: 0 0 6px; font-size: 0.9375rem; font-weight: 700; }
+.pay-card-amount { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.pay-card-figure { font-size: 1.75rem; font-weight: 700; line-height: 1.2; }
+.pay-card-for { font-size: 0.875rem; color: var(--muted); }
+.pay-card-more { margin: 6px 0 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.5; }
+.pay-card-action { margin-top: 12px; }
+.pay-card-offline { margin-top: 12px; }
+.pay-card-how { margin: 0 0 8px; font-size: 0.875rem; font-weight: 700; }
+.pay-card-upi { display: flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none; text-align: center; }
+.pay-card-apps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.pay-card-app { flex: 1 1 0; min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.pay-card-upiid { margin: 4px 0 0; font-size: 1.0625rem; font-weight: 700; overflow-wrap: anywhere; user-select: all; }
+.pay-card-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.5; }
+.pay-card-call { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 12px; max-width: 100%; text-align: center; }
+
+/* Jira GRW-556 (follow-up) — "we are confirming your payment", and the acknowledgement that it arrived. */
+.pay-card-confirming { margin: 10px 0 0; padding: 8px 10px; border-radius: 10px; font-size: 0.8125rem; line-height: 1.45; background: oklch(0.97 0.02 250); color: oklch(0.38 0.08 255); }
+.pay-card-confirming a { font-weight: 700; }
+.payment-received {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px; font-size: 0.875rem; line-height: 1.45;
+  border: 1px solid oklch(0.82 0.1 150); background: oklch(0.96 0.05 150); color: oklch(0.35 0.09 150);
+}
+.payment-received-tick { flex: none; display: inline-flex; padding-top: 1px; }
+.payment-received-tick svg, .payment-received-close svg { width: 1.125rem; height: 1.125rem; }
+.payment-received-text { flex: 1; min-width: 0; }
+/* 44px target, drawn small: the notice is a row, the tap area is not. Pulled into the padding so the row stays as tall. */
+.payment-received-close {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -12px -14px -12px 0;
+  border: 0; background: transparent; color: inherit; cursor: pointer; border-radius: 12px;
+}
+.payment-received-close:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }

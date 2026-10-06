@@ -96,10 +96,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That visit was not today — only an owner can put a stylist on it now': 'वह विज़िट आज की नहीं थी — अब सिर्फ़ मालिक ही उसमें स्टाइलिस्ट जोड़ सकता है',
   'This stylist is not shown their own takings': 'इस स्टाइलिस्ट को अपनी कमाई नहीं दिखती',
   // ---- payment
-  'Online payment is not set up yet. Please pay by bank transfer and we will record it.': 'ऑनलाइन भुगतान अभी शुरू नहीं हुआ है। कृपया बैंक ट्रांसफ़र से भुगतान करें, हम उसे दर्ज कर लेंगे।',
-  'Automatic payment is not set up yet. Please pay by bank transfer and we will record it.': 'ऑटोमैटिक भुगतान अभी शुरू नहीं हुआ है। कृपया बैंक ट्रांसफ़र से भुगतान करें, हम उसे दर्ज कर लेंगे।',
+  'Online payment is not set up yet. Please pay by UPI and we will record it.': 'ऑनलाइन भुगतान अभी शुरू नहीं हुआ है। कृपया UPI से भुगतान करें, हम उसे दर्ज कर लेंगे।',
+  'Automatic payment is not set up yet. Please pay by UPI and we will record it.': 'ऑटोमैटिक भुगतान अभी शुरू नहीं हुआ है। कृपया UPI से भुगतान करें, हम उसे दर्ज कर लेंगे।',
   'We could not reach the payment service just now. Please try again in a few minutes.': 'अभी भुगतान सेवा तक नहीं पहुंच सके। कृपया कुछ मिनट में फिर कोशिश करें।',
-  'We could not start the payment just now. Please try again in a few minutes, or pay by bank transfer and we will record it.': 'अभी भुगतान शुरू नहीं हो सका। कृपया कुछ मिनट में फिर कोशिश करें, या बैंक ट्रांसफ़र से भुगतान करें, हम उसे दर्ज कर लेंगे।',
+  'We could not start the payment just now. Please try again in a few minutes, or pay by UPI and we will record it.': 'अभी भुगतान शुरू नहीं हो सका। कृपया कुछ मिनट में फिर कोशिश करें, या UPI से भुगतान करें, हम उसे दर्ज कर लेंगे।',
   'AutoPay is already set up.': 'ऑटोपे पहले से चालू है।',
   'There is nothing to pay right now.': 'अभी चुकाने के लिए कुछ नहीं है।',
   'There is no active plan on this account.': 'इस अकाउंट पर कोई चालू प्लान नहीं है।',

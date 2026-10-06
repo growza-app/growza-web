@@ -186,7 +186,7 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
  *
  *   withheld  the salon does not let staff see who the client is → show
  *             nothing, because a placeholder reads as a fault in the product
- *   no name   a walk-in nobody took a name for → "Unknown", which is true
+ *   no name   a walk-in nobody took a name for → "No name", which is true
  *   named     the name
  *
  * Absence of the KEY is what separates the first from the second, so this
@@ -194,7 +194,7 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
  */
 export function clientNameLabel(booking: { customerName?: string | null }): string | null {
   if (!('customerName' in booking)) return null;
-  return booking.customerName ?? 'Unknown';
+  return booking.customerName ?? 'No name';
 }
 
 

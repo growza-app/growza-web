@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { mayUse, type MemberRole } from '../lib/nav-policy';
 import type { Lang } from '../lib/lang';
-import { useLive } from './SessionProvider';
+import { useLive, useWritable } from './SessionProvider';
 import { BottomNav } from './BottomNav';
 
 /**
@@ -61,7 +61,9 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
    * a salon the person tapping it on a phone mostly has a customer in front
    * of them, and one tap on "For later" is still there when they do not.
    */
-  const mayBook = mayUse(role, 'visit.new');
+  // Jira GRW-556 (follow-up) — and the business being allowed to write: a suspended one has nothing to start.
+  const writable = useWritable();
+  const mayBook = mayUse(role, 'visit.new', writable);
   // Jira GRW-556 — no floating "+" until the business is live: there is nothing it could start.
   const live = useLive();
   const onCentre =

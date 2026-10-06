@@ -14,6 +14,7 @@ import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, Select,
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
 import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
 import { BillingTab } from '../../components/BillingTab';
+import { PaymentsCard, type BusinessPayments } from '../../components/PaymentsCard';
 import { subscriptionStatusLabel } from '../../lib/subscription-status';
 import { inr, oklch, typeColor } from '../../tokens';
 
@@ -70,6 +71,8 @@ interface DetailResponse {
   customers: { total: number };
   /** GRW-176 — present only while the business is `provisioning`. */
   readiness: { ready: boolean; items: ReadinessItem[] } | null;
+  /** Jira GRW-556 (follow-up) — online payment for this business. Absent from an older API. */
+  payments?: BusinessPayments;
 }
 
 interface Me {
@@ -151,6 +154,8 @@ function BusinessDetailInner() {
   const [goLiveOpen, setGoLiveOpen] = useState(false);
   const [goLiveBusy, setGoLiveBusy] = useState(false);
   const [goLiveError, setGoLiveError] = useState<string | null>(null);
+  /** Jira GRW-556 (follow-up) — set when going live landed the business suspended; shown above the banner that explains why. */
+  const [goLiveNotice, setGoLiveNotice] = useState<string | null>(null);
 
   const [impersonateOpen, setImpersonateOpen] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState(false);
@@ -217,9 +222,19 @@ function BusinessDetailInner() {
   function goLive(reason: string) {
     setGoLiveBusy(true);
     setGoLiveError(null);
-    adminFetch(`/businesses/${params.id}/activate`, { method: 'POST', body: JSON.stringify({ reason }) })
-      .then(() => {
+    adminFetch<{ status?: string; suspendedForNonPayment?: boolean }>(`/businesses/${params.id}/activate`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    })
+      .then((res) => {
         setGoLiveOpen(false);
+        // Jira GRW-556 (follow-up) — it went live and was suspended in the same breath, because its subscription is
+        // already unpaid. Said here, or the page reloads showing "suspended" with no clue why.
+        setGoLiveNotice(
+          res?.suspendedForNonPayment
+            ? 'Taken live — but its subscription is already suspended for non-payment, so it is read-only until the bill is paid.'
+            : null,
+        );
         setRetryToken((n) => n + 1);
       })
       .catch((err) => {
@@ -284,7 +299,7 @@ function BusinessDetailInner() {
     );
   }
 
-  const { business, bookings, customers, readiness } = data;
+  const { business, bookings, customers, readiness, payments } = data;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -313,6 +328,7 @@ function BusinessDetailInner() {
         onCancel={() => setImpersonateOpen(false)}
       />
 
+      {goLiveNotice ? <div role="status" style={{ fontSize: 13.5, color: oklch.textStrong }}>{goLiveNotice}</div> : null}
       {business.status === 'suspended' ? <SuspendedBanner reason={business.suspensionReason} /> : null}
 
       {readiness ? (
@@ -322,6 +338,16 @@ function BusinessDetailInner() {
           canManage={canManage}
           busy={goLiveBusy}
           onGoLive={() => setGoLiveOpen(true)}
+        />
+      ) : null}
+
+      {payments ? (
+        <PaymentsCard
+          businessId={params.id}
+          businessName={business.name}
+          payments={payments}
+          canManage={me?.permissions.includes('admin.feature_flag.manage') ?? false}
+          onChanged={() => setRetryToken((n) => n + 1)}
         />
       ) : null}
 
@@ -605,11 +631,17 @@ function SuspendedBanner({ reason }: { reason: string | null }) {
         <Icon name="alert" size={18} />
       </span>
       <div style={{ fontSize: 13.5, color: oklch.textStrong, lineHeight: 1.5 }}>
-        <strong>This business is suspended.</strong> Its dashboard users cannot sign in and no proactive WhatsApp
-        messages are sent on its behalf. Its data is untouched.
+        <strong>This business is suspended.</strong> Its dashboard users can sign in and look at everything, but cannot
+        change anything except pay the bill, and no proactive WhatsApp messages are sent on its behalf. Its data is
+        untouched.
         {reason ? (
           <span style={{ display: 'block', marginTop: 4, color: oklch.textMuted }}>Reason: {reason}</span>
-        ) : null}
+        ) : (
+          // Jira GRW-556 (follow-up) — no reason is what a billing suspension looks like (an admin's hold requires one).
+          <span style={{ display: 'block', marginTop: 4, color: oklch.textMuted }}>
+            Suspended automatically for non-payment. It lifts by itself when the bill is paid.
+          </span>
+        )}
       </div>
     </div>
   );

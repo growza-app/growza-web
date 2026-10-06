@@ -45,6 +45,8 @@ export interface Me {
    * billing date. Null for every other role, and when nothing is asked.
    */
   autopayRenewal?: AutopayRenewal | null;
+  /** Jira GRW-556 (follow-up) — a payment the provider recorded in the last three days; Home says it arrived. Owner only. */
+  paymentReceived?: { amountMinor: number; currency: string; paidOn: string } | null;
   labels: Record<string, string>;
   /**
    * Jira GRW-66 · GRW-157 — who is signed in.
@@ -696,7 +698,19 @@ export interface OwnerBilling {
     pendingChange: null | { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number };
   };
   invoices: Array<{ id: string; invoiceNumber: string; periodStart: string; periodEnd: string; amountMinor: number; paymentStatus: string; unpaid: boolean }>;
-  due: null | { invoiceNumber: string };
+  due: null | {
+    invoiceNumber: string;
+    /** Still owed on the oldest unpaid bill, the one Pay now settles (Jira GRW-556 follow-up). */
+    amountMinor: number;
+    currency: string;
+    periodStart: string;
+    billsOwed: number;
+    totalOwedMinor: number;
+  };
+  /** Who to ring when there is no Pay now button — paying is online, and this is what a business not switched on for it is given. */
+  payHow?: { supportPhone?: string };
+  /** The newest payment received in the last week, so the owner is told it arrived. Null when none. */
+  lastPayment?: { amountMinor: number; currency: string; paidOn: string } | null;
   /** Jira GRW-407 — money received that no bill has taken yet; taken off the next one. */
   onAccountMinor?: number;
 }
