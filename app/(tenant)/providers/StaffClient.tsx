@@ -13,6 +13,7 @@ import { pickNoun } from '../lib/nouns';
 import { IconPlus, IconSearch } from '../components/icons';
 import { StaffWizard } from './StaffWizard';
 import { useWritable } from '../components/SessionProvider';
+import { SavedToast } from '../components/SavedToast';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
 
 type Tab = 'all' | 'working' | 'off' | 'inactive';
@@ -241,6 +242,8 @@ export function StaffClient({
 
   return (
     <>
+      {/* Jira GRW-556 (follow-up) — the staff edit page closes back here on Save; this says it saved. */}
+      <SavedToast />
       {/*
         Jira GRW-30 — the header moved in here so "Add staff" can live in it.
 

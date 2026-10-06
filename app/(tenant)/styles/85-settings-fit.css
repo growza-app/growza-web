@@ -1095,3 +1095,18 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
     box-shadow: 0 0 0 var(--sp-3) var(--page-bg), 0 -14px 24px rgba(16, 38, 26, 0.08);
   }
 }
+
+/* Jira GRW-556 (follow-up) — "Saved", on the list a form closed back to. Above the tab bar on a phone, top-right on a laptop. */
+.saved-toast {
+  position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px;
+  font-size: 0.875rem; font-weight: 600; background: var(--accent-deep, #1f5136); color: #fff; box-shadow: 0 8px 24px rgba(16, 38, 26, 0.18);
+}
+.saved-toast svg { width: 1rem; height: 1rem; }
+@media (min-width: 861px) {
+  .saved-toast { left: auto; right: 24px; transform: none; top: 20px; bottom: auto; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .saved-toast { animation: saved-toast-in 0.18s ease-out; }
+  @keyframes saved-toast-in { from { opacity: 0; } to { opacity: 1; } }
+}

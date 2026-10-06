@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { SettingsSaveBar } from '../SettingsSaveBar';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 /**
  * Jira GRW-63 · GRW-197 — who else may open Reports, and which tabs.
@@ -40,6 +41,8 @@ const TABS = [
 
 export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
   const t = useTranslations('settingsReports');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/settings');
   const [granted, setGranted] = useState<Record<string, string[]>>(() => ({ ...initial.reportAccess }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +71,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
       // role granted nothing, and the screen should show what was stored.
       setGranted({ ...fresh.reportAccess });
       setSaved(true);
+      closeForm();
     } catch (e) {
       setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.saveFailed'));
     } finally {

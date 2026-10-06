@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { changeOf, daysOf, fromSaved, withDay, withoutDay } from './day-edits';
 import { SettingsSaveBar } from '../SettingsSaveBar';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 /** "Mon, 20 Oct" for a stored "2026-10-20" — read as a calendar date, never shifted by the browser's timezone. */
 function dayLabel(iso: string, locale: string): string {
@@ -16,6 +17,8 @@ function dayLabel(iso: string, locale: string): string {
 export function BookingRulesForm({ initial, branchName = null }: { initial: SettingsSummary; branchName?: string | null }) {
   const router = useRouter();
   const t = useTranslations('settingsBooking');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/settings');
   const locale = useLocale();
   const day = (iso: string) => dayLabel(iso, locale);
   /** Jira GRW-248 — a branch is picked: these rules and closed days are that branch's. */
@@ -82,6 +85,7 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
         setOwn(fromSaved(after.booking.closedDates ?? []));
       }
       setSaved(true);
+      closeForm();
     } catch (e) {
       // The server's own words ("Minimum notice must be shorter than…", "20 Sep 2026 has already passed").
       setError(e instanceof ApiError ? e.message : t('errors.saveFailed'));

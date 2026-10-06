@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { BranchActionDialog } from './BranchActionDialog';
 import { IconCheck, IconMapPin, IconStaff } from '../../components/icons';
 import { ApiError, BookingConflictError, api, type BranchSettings } from '../../lib/api';
+import { useCloseAfterSave } from '../../lib/close-after-save';
 
 /**
  * Jira GRW-227 — Settings › Branches: every branch of the business, each its
@@ -56,6 +57,8 @@ export function BranchesForm({
 
 function BranchCard({ initial, whatsappNumber, demo }: { initial: BranchSettings; whatsappNumber: string | null; demo: boolean }) {
   const t = useTranslations('settingsBranches');
+  // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
+  const closeForm = useCloseAfterSave('/settings');
   const router = useRouter();
   const [branch, setBranch] = useState(initial);
   const [action, setAction] = useState<'close' | 'make-main' | null>(null);
@@ -86,6 +89,7 @@ function BranchCard({ initial, whatsappNumber, demo }: { initial: BranchSettings
       setBranch(next);
       setD(draftOf(next));
       setSaved(true);
+      closeForm();
     } catch (e) {
       // The client raises every 409 as BookingConflictError; here it can only be the name (BR-02).
       if (e instanceof BookingConflictError) setNameError(e.message);

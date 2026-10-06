@@ -86,10 +86,12 @@ describe('the note on a branch tab', () => {
 
 /** Jira GRW-396 — what the QA pass found. */
 describe('Settings per branch, as the QA pass left it', () => {
-  it('a save keeps its "Saved" and redraws the note: forms are keyed by branch only, and refresh after saving', () => {
+  it('a save redraws: forms are keyed by branch only, and saving closes back to Settings (which refreshes) or refreshes in place', () => {
     expect(src('scope.ts')).toMatch(/return settings\.scope\.locationId \?\? 'all';/);
-    expect(src('working-hours/WorkingHoursForm.tsx')).toMatch(/setSaved\(true\);\s*router\.refresh\(\);/);
-    expect(src('notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);[\s\S]{0,120}router\.refresh\(\);/);
+    // Jira GRW-556 (follow-up) — Save closes the form; `useCloseAfterSave` pushes the list and refreshes.
+    expect(src('working-hours/WorkingHoursForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
+    expect(src('../lib/close-after-save.ts')).toMatch(/router\.push\([\s\S]*?\);\s*router\.refresh\(\);/);
+    expect(src('notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);[\s\S]{0,400}if \(whatsappLive\) closeForm\(\);[\s\S]{0,160}else router\.refresh\(\);/);
   });
 
   it('"Use business settings" redraws the form from the start; the note is keyed by branch', () => {
