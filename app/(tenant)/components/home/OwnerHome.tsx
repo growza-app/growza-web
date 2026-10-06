@@ -24,7 +24,6 @@ import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
 import { canSee, mayUse, type MemberRole } from '../../lib/nav-policy';
 import {
-  IconAnalytics,
   IconBan,
   IconCalendarPlus,
   IconChevronRight,
@@ -38,6 +37,7 @@ import {
   IconServices,
   IconSettings,
   IconStaff,
+  IconWallet,
 } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
@@ -73,7 +73,7 @@ import { useMinuteClock } from './useMinuteClock';
  *
  * ## The phone's order is this file's, not the stylesheet's (Jira GRW-486)
  *
- * Money, shortcuts, the queue when somebody is on it, what needs you, the day, clients — in
+ * Money, shortcuts, the queue when somebody is on it, the day, what needs you, clients — in
  * that order here, because that is the order they are read in. 83-role-home.css used to set it
  * with `order`, which moves the eye without moving Tab or VoiceOver. The laptop grid places by
  * `grid-template-areas` and does not care what order these are in, so one DOM order serves both.
@@ -452,7 +452,8 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/offers', label: t.nav.offers, icon: <IconOffers />, tone: 'violet' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
-    { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics />, tone: 'amber' },
+    // The bill is what an owner has to find fastest when it is overdue; free times are still one tap away in More.
+    { href: '/settings/billing', label: t.nav.billing, icon: <IconWallet />, tone: 'amber' },
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
@@ -585,19 +586,6 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
           )}
 
-          {/*
-            Jira GRW-486 — on every width, and second only to somebody standing in the salon.
-
-            This card was `hm-desktop` from GRW-222 until now, on the reasoning that "a phone's Home is
-            money, shortcuts, clients and the day". But it is the only card on Home that asks the owner
-            to DO something — visits not marked done, today's cancellations, staff not marked in — and
-            the owner with a phone in their hand is the one who can act on it. What it displaced is a
-            grid of nine links to screens the tab bar and the drawer already reach.
-          */}
-          <Card className="hm-area-attention" title={t.needsYourAttention}>
-            {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
-          </Card>
-
           <Card
             className="hm-area-bookings"
             title={listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}
@@ -614,6 +602,20 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <BookingRows t={t} groups={groups.shown} timezone={p.timezone} now={now} empty={listIsTomorrow ? t.nothingTomorrow : t.nothingToday} />
               )}
             </div>
+          </Card>
+
+          {/*
+            Jira GRW-486 — on every width. Last of the phone's cards but the laptop's (owner, 2026-10-06): the day's
+            bookings are read first, and this is what is left to do once they are.
+
+            This card was `hm-desktop` from GRW-222 until now, on the reasoning that "a phone's Home is
+            money, shortcuts, clients and the day". But it is the only card on Home that asks the owner
+            to DO something — visits not marked done, today's cancellations, staff not marked in — and
+            the owner with a phone in their hand is the one who can act on it. What it displaced is a
+            grid of nine links to screens the tab bar and the drawer already reach.
+          */}
+          <Card className="hm-area-attention" title={t.needsYourAttention}>
+            {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
           </Card>
 
           {/* Jira GRW-351 — laptop only; row 2 mirrors row 1. Its data is Bookings today's, so the two agree. */}

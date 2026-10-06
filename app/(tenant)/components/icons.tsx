@@ -76,10 +76,14 @@ export const IconChat = () => (
   </svg>
 );
 
+/** A gift box — an offer is a treat for a client. Ribbon and bow keep it apart from Packages' plain cube. */
 export const IconOffers = () => (
   <svg {...base}>
-    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-    <line x1="7" y1="7" x2="7.01" y2="7" />
+    <rect x="3" y="8" width="18" height="4" rx="1" />
+    <path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+    <path d="M12 8v13" />
+    <path d="M12 8H8.5a2.5 2.5 0 1 1 0-5C11 3 12 8 12 8z" />
+    <path d="M12 8h3.5a2.5 2.5 0 1 0 0-5C13 3 12 8 12 8z" />
   </svg>
 );
 
