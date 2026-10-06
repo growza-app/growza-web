@@ -73,6 +73,12 @@ export function BranchScopeNote({
   if (!branchId || !keys || keys.length === 0) return null;
   const branch = branchName ?? '';
   const own = keys.filter((k) => settings.scope.ownKeys.includes(k));
+  /*
+   * "Uses the business's hours" was said of a branch when the business had none either (QA, GRW-516): the branch
+   * then has no opening hours at all. At branch scope `workingHours` is the branch's own, else the business's, so
+   * an empty list with nothing of its own means there is nothing to use.
+   */
+  const noHoursYet = topic === 'hours' && own.length === 0 && settings.workingHours.length === 0;
 
   const run = async (kind: 'reset' | 'apply') => {
     setBusy(kind);
@@ -126,7 +132,7 @@ export function BranchScopeNote({
       <span aria-live="polite">
         {applied
           ? t.rich('applied', { ...bold, what, count: settings.branchCount })
-          : t.rich(own.length > 0 ? 'hasOwn' : 'usesBusiness', { ...bold, what, branch })}
+          : t.rich(own.length > 0 ? 'hasOwn' : noHoursYet ? 'noHoursYet' : 'usesBusiness', { ...bold, what, branch })}
       </span>
       <span className="bsn-actions">
         {own.length > 0 ? (

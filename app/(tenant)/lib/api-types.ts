@@ -34,6 +34,11 @@ export interface Me {
     autopayHalted?: boolean;
   } | null;
   /**
+   * Jira GRW-516 — what a business still being set up is waiting on, one row per thing, met or not. Null once it is live
+   * (and when the API could not say).
+   */
+  setup?: { items: Array<{ key: string; met: boolean; branchName?: string }> } | null;
+  /**
    * Jira GRW-242 — owner only: the next bill has outgrown the AutoPay amount
    * they approved, and they are asked to approve the new one before the
    * billing date. Null for every other role, and when nothing is asked.
