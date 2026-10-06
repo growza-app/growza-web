@@ -91,7 +91,15 @@ export function SetupBanner({
           return (
             <li key={item.key} className={item.met ? 'setup-item setup-item-done' : 'setup-item'}>
               {href ? (
-                <Link href={href} className="setup-row setup-row-link">
+                <Link
+                  href={href}
+                  className="setup-row setup-row-link"
+                  // On a phone, fold on the way out: the open list would otherwise sit over the screen the owner went
+                  // to fix (QA). A wider screen keeps it open, as it was.
+                  onClick={() => {
+                    if (window.matchMedia('(max-width: 860px)').matches) setOpen(false);
+                  }}
+                >
                   {row}
                 </Link>
               ) : (

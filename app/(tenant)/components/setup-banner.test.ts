@@ -95,6 +95,11 @@ describe('the setup banner', () => {
     expect(setupHref('branch:abc')).toBe('/providers');
   });
 
+  it('a link folds the banner on a phone, so it does not cover the screen it opened', () => {
+    const src = code('./SetupBanner.tsx');
+    expect(src).toMatch(/onClick=\{\(\) => \{\s*if \(window\.matchMedia\('\(max-width: 860px\)'\)\.matches\) setOpen\(false\);/);
+  });
+
   it('is wired in the layout, owner-only links, and the sheet follows the rules', () => {
     const layout = code('../layout.tsx');
     const css = here('../styles/99-setup-banner.css');

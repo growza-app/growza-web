@@ -375,6 +375,7 @@
     },
     "sameForAll": "<b>Same for every branch.</b> Changes to {what} here apply to all {count} branches.",
     "usesBusiness": "<b>{branch}</b> uses the business’s {what}. Change anything here to give {branch} its own.",
+    "noHoursYet": "<b>{branch}</b> has no opening hours yet. Set them below, then use Apply to all branches to give every branch the same.",
     "hasOwn": "<b>{branch}</b> has its own {what}.",
     "resetting": "Resetting…",
     "resetFailed": "Could not reset — try again",
