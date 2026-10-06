@@ -69,8 +69,16 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   const onCentre =
     mayBook && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
 
+  /*
+   * Owner, 2026-10-06 — the plus offers two things: New booking (the page) and Record payment (a page on a phone,
+   * `?purpose=payment`, like New booking).
+   * Whoever may not record a payment gets the plus straight to New booking, as before.
+   */
+  const mayRecordPayment = mayUse(role, 'visit.recordPayment', writable);
+  const onPayment = onCentre && mayRecordPayment ? () => router.push('/appointments/new?purpose=payment') : undefined;
+
   // Jira GRW-526 — New booking is a focused full screen: no tab bar under it, on any of its steps.
   if (NO_BAR_ROUTE_RE.test(pathname)) return null;
 
-  return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} />;
+  return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} onPayment={onPayment} />;
 }

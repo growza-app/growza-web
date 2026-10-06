@@ -959,3 +959,51 @@ input.wi-search-input-plain {
   box-sizing: border-box;
   text-overflow: ellipsis;
 }
+
+/*
+ * The single New Booking page, on a phone: the service list is not browsed — it is searched (owner, 2026-10-06).
+ * The 52 rows made the page a long scroll before the stylist. Typing in the box, the Combos chips and "Also try"
+ * are how a service is found; the list appears once there is something typed.
+ */
+@media (max-width: 860px) {
+  .walk-in-page .wi-service-idle {
+    display: none;
+  }
+}
+
+/*
+ * The single New Booking page, on a phone: the actions stay at the foot of the screen while the form scrolls
+ * (owner, 2026-10-06). The page is long now — services and a stylist as well as who and when — so "Start now" at
+ * its end was a scroll away. The tray carries the home-indicator inset itself.
+ */
+@media (max-width: 860px) {
+  .walk-in-page .wi-actions {
+    position: sticky;
+    /*
+     * `bottom: 0`, never a negative one. A negative value holds the tray's bottom edge BELOW the scrollport,
+     * so that much of its own padding is never drawn on screen — the home-indicator inset included, which put
+     * the button 14px from the physical bottom of an iPhone, inside the swipe-up gesture. GRW-526 gave this
+     * page its own inset for exactly that reason (`.page-body:has(> .walk-in-page)`); a pinned tray has to
+     * carry it in padding that is actually visible.
+     */
+    bottom: 0;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* The branch sits first on Record payment, directly above the search box: a little air between them. */
+.walk-in-page .wi-branch-field {
+  margin-bottom: var(--sp-3);
+}
+
+/*
+ * Record payment, on its page: "How did they pay?" and Mark done are the last thing in the form — they follow
+ * the stylist and scroll with it, rather than sitting pinned over what is still being filled in (owner, 2026-10-06).
+ * New booking's Start now / Book it keeps the pinned tray above.
+ */
+@media (max-width: 860px) {
+  .walk-in-page .wi-pay-actions {
+    position: static;
+    padding-bottom: 14px;
+  }
+}

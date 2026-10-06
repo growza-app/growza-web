@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { usePhone } from '../../lib/use-phone';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   api,
@@ -204,6 +206,9 @@ export function OwnerHome(p: OwnerHomeProps) {
    * unchanged and still opens here.
    */
   const [visitSheet, setVisitSheet] = useState<'payment' | null>(null);
+  // Owner, 2026-10-06 — on a phone Record payment is a page of its own (`?purpose=payment`); a larger screen keeps the overlay.
+  const phone = usePhone();
+  const router = useRouter();
   // Jira GRW-409 — the shared rule, not `role !== 'staff'`: each button is drawn for a role that may make its calls.
   // Jira GRW-556 (follow-up) — and the business being allowed to write: a suspended one sees Home but starts nothing.
   const writable = useWritable();
@@ -518,7 +523,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                  overlay, unchanged. */
               <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
                 {mayRecordPayment ? (
-                  <button type="button" className="hm-action" onClick={() => setVisitSheet('payment')}>
+                  <button type="button" className="hm-action" onClick={() => (phone ? router.push('/appointments/new?purpose=payment') : setVisitSheet('payment'))}>
                     <IconReceipt />
                     <strong>{t.recordPayment}</strong>
                   </button>

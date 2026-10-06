@@ -41,7 +41,7 @@ describe('the Book again card', () => {
   });
 
   it('a time picked on the card survives the time step\'s own slot fetch, and only if it is still free', () => {
-    expect(sheet).toMatch(/pendingSlot\.current = time\.utc;\s*setStage\(\{ step: 'when', client \}\);/);
+    expect(sheet).toMatch(/pendingSlot\.current = time\.utc;\s*if \(!pageForm\) setStage\(\{ step: 'when', client \}\);/);
     expect(sheet).toMatch(/r\.sections\.some\(\(sec\) => sec\.slots\.some\(\(sl\) => sl\.utc === wanted\)\)\) setSlotUtc\(wanted\)/);
   });
 

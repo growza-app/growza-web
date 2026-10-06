@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { useLive } from './SessionProvider';
@@ -13,6 +14,7 @@ import {
   IconNavAttendance,
   IconNavBookings,
   IconNavClients,
+  IconRupee,
   IconNavHome,
   IconPlus,
   IconServices,
@@ -53,6 +55,7 @@ export function BottomNav({
   reportTabs,
   lang = 'en',
   onCentre,
+  onPayment,
 }: {
   labels: Record<string, string>;
   role?: MemberRole | null;
@@ -60,6 +63,11 @@ export function BottomNav({
   lang?: Lang;
   /** Absent means no centre action (a stylist, or a screen where it would sit on a pinned Save). */
   onCentre?: () => void;
+  /**
+   * Record payment, offered beside New booking. Present only for someone who may record a payment; with it the
+   * plus opens a two-choice menu, without it the plus goes straight to New booking as it always did.
+   */
+  onPayment?: () => void;
 }) {
   const tc = useTranslations('chrome');
   const pathname = usePathname();
@@ -98,6 +106,19 @@ export function BottomNav({
 
   const visible = visibleItems(items, role, reportTabs, live);
   const centre = !stylist && onCentre;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menu = Boolean(centre && onPayment);
+
+  // Escape closes the menu, and so does leaving the screen it was opened on.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+  useEffect(() => setMenuOpen(false), [pathname]);
 
   /*
    * Jira GRW-556 — a bar with one tab is not a tab bar.
@@ -140,19 +161,68 @@ export function BottomNav({
   };
 
   return (
-    <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''}`} aria-label={tc('main')}>
+    <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''} ${menuOpen ? 'menu-open' : ''}`} aria-label={tc('main')}>
       {visible.map(tab)}
       {centre ? (
-        <button
-          type="button"
-          className="bn-centre"
-          onClick={onCentre}
-          aria-label={role === 'receptionist' ? t.walkInShort : t.nav.newBooking}
-        >
-          <span className="bn-centre-btn" aria-hidden>
-            <IconPlus />
-          </span>
-        </button>
+        <>
+          {/* Owner, 2026-10-06 — the plus opens a speed-dial: New booking, or Record payment. Tapping anywhere else closes it. */}
+          {/* In the body, not the bar: the bar's blur makes it the containing block of anything fixed inside it, which would dim only the bar. */}
+          {menu && typeof document !== 'undefined'
+            ? createPortal(
+                <div className={`bn-scrim ${menuOpen ? 'is-open' : ''}`} onClick={() => setMenuOpen(false)} aria-hidden="true" />,
+                document.body,
+              )
+            : null}
+          {menu ? (
+            <div className={`bn-menu ${menuOpen ? 'is-open' : ''}`} id="bn-menu" role="menu" aria-label={t.nav.newBooking}>
+              <button
+                type="button"
+                role="menuitem"
+                className="bn-menu-item"
+                style={{ '--i': 1 } as CSSProperties}
+                tabIndex={menuOpen ? 0 : -1}
+                onClick={() => {
+                  setMenuOpen(false);
+                  onPayment?.();
+                }}
+              >
+                <span className="bn-menu-label">{t.recordPayment}</span>
+                <span className="bn-menu-icon" aria-hidden>
+                  <IconRupee />
+                </span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="bn-menu-item"
+                style={{ '--i': 2 } as CSSProperties}
+                tabIndex={menuOpen ? 0 : -1}
+                onClick={() => {
+                  setMenuOpen(false);
+                  onCentre?.();
+                }}
+              >
+                <span className="bn-menu-label">{t.nav.newBooking}</span>
+                <span className="bn-menu-icon" aria-hidden>
+                  <IconNavBookings />
+                </span>
+              </button>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className={`bn-centre ${menuOpen ? 'is-open' : ''}`}
+            onClick={menu ? () => setMenuOpen((o) => !o) : onCentre}
+            aria-label={role === 'receptionist' ? t.walkInShort : t.nav.newBooking}
+            aria-haspopup={menu ? 'menu' : undefined}
+            aria-expanded={menu ? menuOpen : undefined}
+            aria-controls={menu ? 'bn-menu' : undefined}
+          >
+            <span className="bn-centre-btn" aria-hidden>
+              <IconPlus />
+            </span>
+          </button>
+        </>
       ) : null}
     </nav>
   );
