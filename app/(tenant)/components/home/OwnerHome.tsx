@@ -24,7 +24,6 @@ import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
 import { canSee, mayUse, type MemberRole } from '../../lib/nav-policy';
 import {
-  IconAnalytics,
   IconBan,
   IconCalendarPlus,
   IconChevronRight,
@@ -38,6 +37,7 @@ import {
   IconServices,
   IconSettings,
   IconStaff,
+  IconWallet,
 } from '../icons';
 import { NewVisitSheet } from '../NewVisitSheet';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
@@ -452,7 +452,8 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/offers', label: t.nav.offers, icon: <IconOffers />, tone: 'violet' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
-    { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics />, tone: 'amber' },
+    // The bill is what an owner has to find fastest when it is overdue; free times are still one tap away in More.
+    { href: '/settings/billing', label: t.nav.billing, icon: <IconWallet />, tone: 'amber' },
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
