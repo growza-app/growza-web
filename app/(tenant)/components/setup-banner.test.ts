@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
 import { setupCopy, setupHref } from '../lib/setup-copy';
+import { SetupBanner } from './SetupBanner';
+
+vi.mock('next/link', () => ({
+  default: ({ href, children, ...rest }: { href: string; children: unknown }) => createElement('a', { href, ...rest }, children as never),
+}));
 
 /**
  * Jira GRW-516 — the setup banner lists everything a business still being set up needs, done or not.
@@ -12,61 +19,90 @@ import { setupCopy, setupHref } from '../lib/setup-copy';
  */
 const here = (p: string) => readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), p), 'utf-8');
 const code = (p: string) => here(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-const banner = code('./SetupBanner.tsx');
-const layout = code('../layout.tsx');
-const css = here('../styles/99-setup-banner.css');
-const globals = here('../globals.css');
+
+type Item = { key: string; met: boolean; branchName?: string };
+const render = (items: Item[], { canAct = true, lang = 'en' as const } = {}) =>
+  renderToStaticMarkup(createElement(SetupBanner, { setup: { items }, lang, canAct }));
+const glow: Item[] = [
+  { key: 'services', met: true },
+  { key: 'providers', met: true },
+  { key: 'salon_hours', met: false },
+  { key: 'working_hours', met: false },
+];
 
 describe('the setup banner', () => {
-  it('is read from /me and drawn with the other account banners', () => {
-    expect(layout).toMatch(/setup = me\.setup \?\? null;/);
-    expect(layout).toMatch(/<SetupBanner setup=\{setup\} lang=\{lang\} \/>/);
-    expect(layout.indexOf('<SetupBanner')).toBeGreaterThan(layout.indexOf('<div className="content-banners">'));
+  it('lists every item, done and to do, with a count that matches the rows', () => {
+    const html = render(glow);
+    for (const s of ['Add at least one service', 'Add a member of staff', "Set your salon&#x27;s opening hours", "Set a staff member&#x27;s working hours"]) {
+      expect(html, s).toContain(s);
+    }
+    expect(html).toContain('2 of 4 done');
+    expect((html.match(/class="setup-item/g) ?? []).length).toBe(4);
   });
 
-  it('lists every item, not only the missing ones, with a progress count', () => {
-    expect(banner).toMatch(/setup\.items\.map\(/);
-    expect(banner).not.toMatch(/filter\(\(i\) => !i\.met\)/);
-    expect(banner).toMatch(/c\.progress\(done, total\)/);
-    expect(banner).toMatch(/item\.met \? c\.done : c\.todo/);
+  it('an owner gets a link on each thing left, and none on a thing done', () => {
+    const html = render(glow);
+    expect(html).toContain('href="/settings/working-hours"');
+    expect(html).toContain('href="/providers"');
+    expect(html).not.toContain('href="/services"');
   });
 
-  it('a missing item links to its screen; a done one is not a link', () => {
-    expect(banner).toMatch(/const href = item\.met \? null : setupHref\(item\.key\);/);
+  it('a receptionist or stylist is told, not sent to screens they cannot open', () => {
+    const html = render(glow, { canAct: false });
+    expect(html).not.toContain('href=');
+    expect(html).toContain('The owner is finishing these');
+  });
+
+  it('the staff-hours hint sits under that line only', () => {
+    const html = render(glow);
+    expect((html.match(/class="setup-hint"/g) ?? []).length).toBe(1);
+    expect(html).toContain('Salon hours alone are not enough');
+  });
+
+  it('folded at first (a phone keeps it that way), still saying what is next', () => {
+    const html = render(glow);
+    expect(html).not.toMatch(/<details[^>]*\sopen/);
+    expect(html).toContain("Next: Set your salon&#x27;s opening hours");
+  });
+
+  it('an item it does not know is left out, not worded as a branch', () => {
+    const html = render([...glow, { key: 'owner', met: false }, { key: 'something_new', met: false }]);
+    expect(html).toContain('2 of 4 done');
+    expect(html).not.toContain(': add a member of staff');
+  });
+
+  it('a branch item names its branch', () => {
+    expect(render([{ key: 'branch:x', met: false, branchName: 'Indiranagar' }])).toContain('Indiranagar: add a member of staff with working hours');
+  });
+
+  it('all done says so; nothing at all when the API could not say', () => {
+    const html = render(glow.map((i) => ({ ...i, met: true })));
+    expect(html).toContain('4 of 4 done');
+    expect(html).toContain('Everything is added');
+    expect(renderToStaticMarkup(createElement(SetupBanner, { setup: null, lang: 'en', canAct: true }))).toBe('');
+  });
+
+  it('reads in Hindi', () => {
+    const html = render(glow, { lang: 'hi' as never });
+    expect(html).toContain(setupCopy('hi').title);
+    expect(html).not.toContain('Finish setting up');
+  });
+
+  it('links go where each thing is done', () => {
     expect(setupHref('services')).toBe('/services');
     expect(setupHref('salon_hours')).toBe('/settings/working-hours');
     expect(setupHref('working_hours')).toBe('/providers');
     expect(setupHref('branch:abc')).toBe('/providers');
   });
 
-  it('says why the salon\'s own hours do not clear the working-hours item', () => {
-    expect(banner).toMatch(/item\.key === 'working_hours' \? <span className="setup-hint">/);
-    expect(setupCopy('en').workingHoursHint).toMatch(/Salon hours alone are not enough/);
-  });
-
-  it("asks for the salon's own hours as well as the staff's, each with its own line", () => {
-    expect(banner).toMatch(/item\.key === 'salon_hours'\s*\? c\.salonHours/);
-    expect(setupCopy('en').salonHours).not.toBe(setupCopy('en').workingHours);
-  });
-
-  it('renders nothing when the API could not say, or the business is live', () => {
-    expect(banner).toMatch(/if \(!setup \|\| setup\.items\.length === 0\) return null;/);
-  });
-
-  it('has its words in both languages, and no inline sizes', () => {
-    for (const lang of ['en', 'hi'] as const) {
-      const c = setupCopy(lang);
-      expect(c.title && c.intro && c.allDone && c.salonHours && c.workingHours && c.workingHoursHint && c.goLive).toBeTruthy();
-      expect(c.progress(1, 4)).toMatch(/1/);
-    }
-    // CLAUDE.md: type in rem, no px font-size; icons are inline SVG, never a glyph.
+  it('is wired in the layout, owner-only links, and the sheet follows the rules', () => {
+    const layout = code('../layout.tsx');
+    const css = here('../styles/99-setup-banner.css');
+    expect(layout).toMatch(/setup = me\.setup \?\? null;/);
+    expect(layout).toMatch(/<SetupBanner setup=\{setup\} lang=\{lang\} canAct=\{role === null \|\| role === 'owner'\} \/>/);
     expect(css).not.toMatch(/font-size:\s*\d+px/);
-    expect(banner).not.toMatch(/style=\{\{|ⓘ|○/);
-  });
-
-  it('rows are at least 44px and the sheet loads before the clay sheets', () => {
+    expect(css).not.toMatch(/#[0-9a-f]{6}|rgba\(/i);
     expect(css).toMatch(/\.setup-row \{[^}]*min-height: 44px;/);
-    expect(css).toMatch(/\.setup-head \{[^}]*min-height: 44px;/);
-    expect(globals.indexOf('99-setup-banner.css')).toBeLessThan(globals.indexOf('100-clay-tabs.css'));
+    expect(here('../globals.css').indexOf('99-setup-banner.css')).toBeLessThan(here('../globals.css').indexOf('100-clay-tabs.css'));
   });
 });
