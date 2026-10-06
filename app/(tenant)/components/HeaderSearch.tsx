@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { IconSearch } from './icons';
-import { useMayUse } from './SessionProvider';
+import { useLive, useMayUse } from './SessionProvider';
 
 /**
  * Jira GRW-409 · GRW-319 — the header's search, for the people it can answer.
@@ -24,7 +24,10 @@ import { useMayUse } from './SessionProvider';
  */
 export function HeaderSearch({ wide = false }: { wide?: boolean }) {
   const t = useTranslations('search');
-  if (!useMayUse('search')) return null;
+  const mayUseSearch = useMayUse('search');
+  // Jira GRW-556 — it finds clients and bookings, and a business being set up has neither.
+  const live = useLive();
+  if (!mayUseSearch || !live) return null;
   return (
     <a className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`} href="/search" aria-label={t('title')}>
       <IconSearch />

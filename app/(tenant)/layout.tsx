@@ -21,6 +21,7 @@ import { LabelsProvider } from './components/LabelsProvider';
 import { mayUse, type MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 import { SetupBanner } from './components/SetupBanner';
+import { isLive } from './lib/go-live';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { redirect } from 'next/navigation';
 import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
@@ -129,6 +130,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let canPayOnline = false;
   /** Jira GRW-516 — what a business still being set up is waiting on; null once it is live. */
   let setup: Me['setup'] = null;
+  /** Jira GRW-556 — false while the business is being set up; only then are the setup screens all that is offered. */
+  let live = true;
   /**
    * GRW-165 — whether WhatsApp is live for this business.
    *
@@ -182,6 +185,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
     setup = me.setup ?? null;
+    live = isLive(me.tenant?.status);
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
@@ -260,6 +264,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             businessName: tenantName ?? null,
             branches,
             lang,
+            live,
           }}
         >
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>

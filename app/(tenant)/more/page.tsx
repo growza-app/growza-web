@@ -6,6 +6,7 @@ import { serverLang } from '../lib/lang';
 import { api } from '../lib/api';
 import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
+import { isLive } from '../lib/go-live';
 import { PageHeader } from '../components/PageHeader';
 import { IconAnalytics, IconChat, IconOffers, IconPackages, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 import { SignOutButton } from '../components/SignOutButton';
@@ -35,6 +36,8 @@ export default async function MorePage() {
    * menu did not, so a receptionist granted a tab was offered Reports in one menu and not in the other.
    */
   let reportTabs: string[] | undefined;
+  // Jira GRW-556 — false while the business is being set up; the menu then lists the setup screens only.
+  let live = true;
   try {
     const me = await api.me();
     labels = me.labels;
@@ -42,6 +45,7 @@ export default async function MorePage() {
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     reportTabs = me.reportTabs;
+    live = isLive(me.tenant?.status);
   } catch {
     // Falls back to the plain-language defaults below, and to the owner nav —
     // a degraded API must not hide the product from the person who owns it.
@@ -90,7 +94,7 @@ export default async function MorePage() {
       <PageHeader title={tn('moreTitle')} />
       <div className="page-body">
         <div className="menu-list">
-          {visibleItems(items, role, reportTabs).map((item) => (
+          {visibleItems(items, role, reportTabs, live).map((item) => (
             <a className="menu-row" key={item.href} href={item.href}>
               {item.icon}
               {item.label}

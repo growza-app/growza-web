@@ -9,6 +9,8 @@ import { canSeeRevenue, homeKind, type MemberRole } from './lib/nav-policy';
 import { OwnerHome } from './components/home/OwnerHome';
 import { ReceptionHome } from './components/home/ReceptionHome';
 import { StylistHome } from './components/home/StylistHome';
+import { NotLiveHome } from './components/home/NotLiveHome';
+import { isLive } from './lib/go-live';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,6 +87,11 @@ export default async function DashboardPage() {
   };
 
   const kind = homeKind(role);
+
+  // Jira GRW-556 — until the business is live a receptionist or stylist has nothing to run: the owner is setting it up.
+  if (!isLive(me.tenant?.status) && kind !== 'owner') {
+    return <NotLiveHome {...common} locationName={me.member?.locationName ?? me.tenant?.locationName ?? null} />;
+  }
 
   if (kind === 'stylist') {
     const [appointments, day, attendanceMonth] = await Promise.all([

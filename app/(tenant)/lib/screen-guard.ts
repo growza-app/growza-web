@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { api } from './api';
 import { canSee, type MemberRole } from './nav-policy';
+import { isLive, isSetupDestination } from './go-live';
 
 /**
  * Jira GRW-409 · GRW-319 — a screen the nav does not offer a role, reached by
@@ -24,13 +25,38 @@ import { canSee, type MemberRole } from './nav-policy';
 export async function guardScreen(href: string): Promise<void> {
   let role: MemberRole | null = null;
   let reportTabs: string[] | undefined;
+  let live = true;
   try {
     const me = await api.me();
     role = (me.member?.role as MemberRole | undefined) ?? null;
     reportTabs = me.reportTabs;
+    live = isLive(me.tenant?.status);
   } catch {
     return;
   }
   // Outside the try: `redirect()` works by throwing.
   if (!canSee(href, role, reportTabs)) redirect('/');
+  if (!live && !isSetupDestination(href)) redirect(NOT_LIVE_PATH);
+}
+
+/** Jira GRW-556 — where a screen that opens at go-live sends somebody who reached it by its address. */
+export const NOT_LIVE_PATH = '/not-live-yet';
+
+/**
+ * Jira GRW-556 — the same `/me`, asked only whether the business is live.
+ *
+ * For the screens `guardScreen` does not cover because its role question is not theirs (New booking and Search
+ * are in no role's destination list, so `canSee` would send a receptionist Home from a screen they may use once
+ * the business is live). A business being set up is sent to the page that says so, rather than shown a screen
+ * whose every action the API refuses. Fails open like `guardScreen`: a `/me` that cannot answer is not an
+ * account that is not live.
+ */
+export async function guardLive(href: string): Promise<void> {
+  let live = true;
+  try {
+    live = isLive((await api.me()).tenant?.status);
+  } catch {
+    return;
+  }
+  if (!live && !isSetupDestination(href)) redirect(NOT_LIVE_PATH);
 }

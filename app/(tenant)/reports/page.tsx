@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { guardLive } from '../lib/screen-guard';
 import { screenTitle } from '../lib/page-title';
 import { Suspense } from 'react';
 
@@ -71,6 +72,8 @@ export default async function ReportsPage({
     branch?: string;
   }>;
 }) {
+  // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
+  await guardLive('/reports');
   const t = await getTranslations('reports');
   const params = await searchParams;
   const tab = (params.tab && TABS.has(params.tab) ? params.tab : 'overview') as ReportTabKey;

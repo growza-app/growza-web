@@ -13,7 +13,8 @@
  */
 
 export interface Me {
-  tenant: { id: string; name: string; timezone: string; locationName: string | null; branchCount?: number } | null;
+  /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
+  tenant: { id: string; name: string; timezone: string; locationName: string | null; branchCount?: number; status?: string } | null;
   /** Jira GRW-235 — open branches, main first. */
   branches?: Array<{ id: string; name: string }>;
   /**

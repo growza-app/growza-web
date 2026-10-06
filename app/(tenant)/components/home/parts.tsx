@@ -10,6 +10,7 @@ import { AccountMenu } from '../AccountMenu';
 import { HeaderBranchPicker } from '../HeaderBranchPicker';
 import { MenuButton } from '../MenuButton';
 import { NotificationBell } from '../NotificationBell';
+import { useLive } from '../SessionProvider';
 import { IconChevronRight, IconDaySummary, IconMapPin } from '../icons';
 import { HeaderSearch } from '../HeaderSearch';
 
@@ -90,6 +91,8 @@ export function HomeHeader({
   /** Owner only — the Day summary is the business's takings. */
   onDaySummary?: () => void;
 }) {
+  // Jira GRW-556 — no bookings feed until the business is live.
+  const live = useLive();
   return (
     <header className="hm-head">
       <MenuButton />
@@ -120,7 +123,7 @@ export function HomeHeader({
           </button>
         ) : null}
         <span className="hm-date-chip hm-desktop">{dateLabel}</span>
-        <NotificationBell />
+        {live ? <NotificationBell /> : null}
         <AccountMenu />
       </div>
     </header>

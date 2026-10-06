@@ -26,6 +26,11 @@ export interface SessionInfo {
   branches?: Array<{ id: string; name: string }>;
   /** Jira GRW-306 — the language the page was rendered in, for the language switch in the account menu. */
   lang?: Lang;
+  /**
+   * Jira GRW-556 — false only while the business is still being set up. Absent reads as live: a session that cannot
+   * say is never shut out of the product.
+   */
+  live?: boolean;
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);
@@ -48,4 +53,9 @@ export function useSession(): SessionInfo | null {
  */
 export function useMayUse(action: UiAction): boolean {
   return mayUse(useSession()?.role, action);
+}
+
+/** Jira GRW-556 — is the business live? False only while it is being set up, when only the setup screens are offered. */
+export function useLive(): boolean {
+  return useSession()?.live ?? true;
 }

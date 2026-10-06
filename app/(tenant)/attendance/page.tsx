@@ -1,4 +1,5 @@
 import { screenTitle } from '../lib/page-title';
+import { guardLive } from '../lib/screen-guard';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { api } from '../lib/api';
@@ -24,6 +25,8 @@ export default async function AttendancePage({
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
+  // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
+  await guardLive('/attendance');
   const params = await searchParams;
   const t = await getTranslations('attendance');
 

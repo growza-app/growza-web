@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
+import { useLive } from './SessionProvider';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { useUnreadNotifications } from './useUnreadNotifications';
@@ -14,6 +15,9 @@ import {
   IconNavClients,
   IconNavHome,
   IconPlus,
+  IconServices,
+  IconSettings,
+  IconStaff,
 } from './icons';
 
 /**
@@ -63,13 +67,22 @@ export function BottomNav({
   const navRef = useRef<HTMLElement>(null);
   const unread = useUnreadNotifications(navRef);
   const stylist = role === 'staff';
+  // Jira GRW-556 — until the business is live, the bar is the setup: Home, the menu, the people, the settings.
+  const live = useLive();
 
   // Jira GRW-300 — "More" moved into the hamburger drawer (Sidebar, doubling
   // as the mobile nav — see MobileChrome/Sidebar): it was the 6th element
   // (5 flat tabs + the centre action) that made every slot here "very
   // contracted". Notifications stays a direct tab, after the role's other
   // frequent destinations — owner-requested, not buried in the drawer.
-  const items = stylist
+  const items = !live
+    ? [
+        { href: '/', label: t.nav.home, icon: <IconNavHome /> },
+        { href: '/services', label: t.nav.services, icon: <IconServices /> },
+        { href: '/providers', label: t.nav.staff, icon: <IconStaff /> },
+        { href: '/settings', label: t.nav.settings, icon: <IconSettings /> },
+      ]
+    : stylist
     ? [
         { href: '/', label: t.nav.home, icon: <IconNavHome /> },
         { href: '/appointments', label: t.nav.schedule, icon: <IconNavBookings /> },
@@ -83,7 +96,7 @@ export function BottomNav({
         { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
       ];
 
-  const visible = visibleItems(items, role, reportTabs);
+  const visible = visibleItems(items, role, reportTabs, live);
   const centre = !stylist && onCentre;
 
   const tab = (item: (typeof visible)[number]) => {

@@ -158,7 +158,8 @@ describe('2b — the controls, each behind its own action', () => {
   it('there is ONE link to /search, and it asks the search action first', () => {
     const linking = sources().filter((f) => /href="\/search"/.test(readFileSync(f, 'utf8')));
     expect(linking.map((f) => path.relative(tenantDir, f))).toEqual([path.join('components', 'HeaderSearch.tsx')]);
-    expect(read('components/HeaderSearch.tsx')).toMatch(/if \(!useMayUse\('search'\)\) return null;/);
+    // Jira GRW-556 — and the business being live: it finds clients and bookings, which a business being set up has none of.
+    expect(read('components/HeaderSearch.tsx')).toMatch(/const mayUseSearch = useMayUse\('search'\);[\s\S]*if \(!mayUseSearch \|\| !live\) return null;/);
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [
@@ -317,6 +318,9 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/reports': /const firstAllowed = ALL_REPORT_TABS\.find\(canOpen\)/,
     // The centre button and this page ask the same action.
     '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new'\)\)/,
+    // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
+    // sends a live business Home, since the address means nothing then.
+    '/not-live-yet': /isLive\(\(await api\.me\(\)\)\.tenant\?\.status\)\) redirect\('\/'\)/,
   };
   const offeredToBoth = (href: string) => LIMITED.every((role) => canSee(href, role));
 
