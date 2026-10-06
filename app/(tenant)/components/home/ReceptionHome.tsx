@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { usePhone } from '../../lib/use-phone';
 import { useMemo, useState } from 'react';
 import { type Appointment, type Provider, type TokenBoard as TokenBoardData } from '../../lib/api';
 import { clientNameLabel, groupBookings, summarizeServices } from '../../lib/appointment-display';
@@ -57,6 +59,9 @@ export function ReceptionHome(p: ReceptionHomeProps) {
   const now = useMemo(() => new Date(p.nowISO), [p.nowISO]);
   const branch = useBranch();
   const [sheet, setSheet] = useState<'payment' | 'token' | null>(null);
+  // Owner, 2026-10-06 — on a phone Record payment is a page of its own; a larger screen keeps the overlay.
+  const phone = usePhone();
+  const router = useRouter();
   const inBranch = (locationId: string | undefined | null) => !branch.choice || !locationId || locationId === branch.choice;
   const tokens = useMemo(() => (p.board?.tokens ?? []).filter((x) => inBranch(x.locationId)), [p.board, branch.choice]); // eslint-disable-line react-hooks/exhaustive-deps
   const groups = useMemo(() => groupBookings((p.appointments ?? []).filter((a) => inBranch(a.locationId))), [p.appointments, branch.choice]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -111,7 +116,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
             </button>
           ) : null}
           {mayRecordPayment ? (
-            <button type="button" className="hm-action" onClick={() => setSheet('payment')}>
+            <button type="button" className="hm-action" onClick={() => (phone ? router.push('/appointments/new?purpose=payment') : setSheet('payment'))}>
               <IconReceipt />
               <strong>{w.recordPayment}</strong>
             </button>

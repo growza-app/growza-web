@@ -262,6 +262,8 @@ export function NewVisitSheet({
   timeWantedRef.current = timeWanted;
   const mode: VisitMode = dateChosen || timeWanted !== '' ? 'later' : 'now';
   const later = mode === 'later';
+  /** The New Booking page (not Record payment): every question on one screen, instead of find-them then what-are-they-having. */
+  const pageForm = presentation === 'page' && !token;
   const checkPhone = usePhoneProblem();
   const tcr = useTranslations('chrome');
   const tw = useTranslations('staffWizard');
@@ -271,6 +273,10 @@ export function NewVisitSheet({
   const servicesNoun = useLabel('services', 'Services');
 
   const [stage, setStage] = useState<Stage>(() => (token && forPayment ? { step: 'details', client: clientOfToken(token) } : { step: 'client' }));
+  /** On the single page the form stays on screen while it saves and when a save fails. */
+  const onForm = stage.step === 'client' || stage.step === 'saving' || stage.step === 'error';
+  /** The single page: who was picked from the search, if anyone (otherwise the name and phone typed in). */
+  const [selected, setSelected] = useState<PickedClient | null>(null);
   /** Jira GRW-403 — paying a waiting token: its client, its branch, its services. */
   const paysToken = forPayment && token ? token : null;
 
@@ -455,12 +461,17 @@ export function NewVisitSheet({
    */
   const pickClient = (c: Customer) => {
     const closed = Boolean(c.locationId) && openBranches.length > 0 && !openBranches.some((b) => b.id === c.locationId);
-    setStage({
-      step: 'details',
-      client: closed
-        ? { kind: 'new', name: c.name?.trim() || nv.noName, phone: c.waPhone ?? '' }
-        : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone, locationId: c.locationId },
-    });
+    const client: PickedClient = closed
+      ? { kind: 'new', name: c.name?.trim() || nv.noName, phone: c.waPhone ?? '' }
+      : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone, locationId: c.locationId };
+    if (pageForm) {
+      // The single page: the person is shown in place of the name and phone fields, and the rest stays on screen.
+      setSelected(client);
+      setTerm('');
+      setComboOpen(false);
+      return;
+    }
+    setStage({ step: 'details', client });
   };
   /**
    * Jira GRW-454 — "Add them to {branch}": a client of another branch, taken on here.
@@ -479,6 +490,7 @@ export function NewVisitSheet({
     // Their details are now what the desk is confirming, so the search must not seed over them.
     nameEdited.current = true;
     phoneEdited.current = true;
+    setSelected(null);
     setStage({ step: 'client' });
     setComboOpen(false);
     // Jira GRW-514 — the add block is on this screen now, below the list: bring it into view.
@@ -491,6 +503,14 @@ export function NewVisitSheet({
   const [menuBranch, setMenuBranch] = useState(listBranch);
   if (menuBranch !== listBranch) {
     setMenuBranch(listBranch);
+    /*
+     * The client least of all (Jira GRW-453): a client record belongs to ONE branch, and
+     * `appointment_client_same_branch_fk` refuses a visit that pairs them with another. The branch dropdown
+     * clears `selected` itself, but on a full reload the shared branch arrives late and moves the branch with
+     * nobody having touched it — that path left the old branch's client attached to the new branch's visit,
+     * and the refusal only surfaced at the save.
+     */
+    setSelected(null);
     setSchedulableId(null);
     setReclaim(null);
     setPicked([]);
@@ -796,7 +816,7 @@ export function NewVisitSheet({
     // A time picked on the Book again card is a booking, whichever day it is on.
     setDateChosen(true);
     pendingSlot.current = time.utc;
-    setStage({ step: 'when', client });
+    if (!pageForm) setStage({ step: 'when', client });
   };
 
   const removeExtraAt = (index: number) => {
@@ -919,7 +939,7 @@ export function NewVisitSheet({
    * of confirming — the worst possible time to find out.
    */
   useEffect(() => {
-    if (!later || stage.step !== 'when' || picked.length === 0) return;
+    if (!later || !(pageForm ? onForm : stage.step === 'when') || picked.length === 0) return;
     let cancelled = false;
     setLoadingSlots(true);
     setSlotUtc(null);
@@ -954,7 +974,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, day, picked, extras, schedulableId, listBranch, timezone]);
+  }, [later, stage.step, onForm, pageForm, day, picked, extras, schedulableId, listBranch, timezone]);
 
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
@@ -1059,7 +1079,7 @@ export function NewVisitSheet({
   const noChairFree = freeCount === 0 || noStaffHere || noOneCanDoIt;
 
   useEffect(() => {
-    if (later || stage.step !== 'details') return;
+    if (later || !(pageForm ? onForm : stage.step === 'details')) return;
     let cancelled = false;
     void api
       .chairs()
@@ -1073,7 +1093,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step]);
+  }, [later, stage.step, onForm, pageForm]);
 
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
@@ -1255,6 +1275,21 @@ export function NewVisitSheet({
     } catch (error) {
       setStage({ step: 'error', client, message: error instanceof ApiError ? error.message : nv.saveUnknown });
     }
+  };
+
+  /** The single page's person: the one picked from the search, or the typed name and phone — null (fields flagged) while neither is usable. */
+  const pageClient = (): PickedClient | null => {
+    if (selected) return selected;
+    if (!newName.trim()) {
+      setNameError(true);
+      return null;
+    }
+    const phoneProblem = checkPhone(newPhone, { required: later });
+    if (phoneProblem) {
+      setPhoneError(phoneProblem);
+      return null;
+    }
+    return { kind: 'new', name: newName.trim(), phone: toStoredPhone(newPhone) ?? '' };
   };
 
   const submit = async (client: PickedClient) => {
@@ -1452,7 +1487,7 @@ export function NewVisitSheet({
       if (later && error instanceof BookingConflictError && error.code === 'slot_taken') {
         setSlotUtc(null);
         setSlots(null);
-        setStage({ step: 'when', client });
+        setStage(pageForm ? { step: 'client' } : { step: 'when', client });
         setCheckoutError(null);
         setSlotError(nv.slotTaken);
         return;
@@ -1519,436 +1554,122 @@ export function NewVisitSheet({
   /** Jira GRW-290 — once a Record payment visit exists, its lines are what was written. */
   const linesLocked = forPayment && savedVisit !== null;
   const headSub =
-    stage.step === 'client'
+    stage.step === 'client' || (pageForm && (stage.step === 'saving' || stage.step === 'error'))
       ? nv.whoIsThis(clientNoun.toLowerCase())
       : paysToken?.tokenNo
         ? `${nv.token(paysToken.tokenNo)} · ${clientName(stage.client)}`
         : clientName(stage.client);
 
-  const asPage = presentation === 'page';
-  // Jira GRW-520 — every row the dropdown can show, in order: this branch's matches, then the other branches'.
-  const comboOptions = [
-    ...results.map((c) => ({ c, bring: false })),
-    ...elsewhere.map((c) => ({ c, bring: true })),
-  ];
-  const showDrop = comboOpen && term.trim().length >= SEARCH_MIN_CHARS;
-  /*
-   * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
-   *
-   * The Booking date sets it, so on arrival the screen was called "Walk-in" while the control that decides
-   * walk-in-or-not was still below it, unanswered — and the owner had tapped "New booking" to get here. While
-   * the date can still change the title is the screen's own name; once a client is picked it can say which of
-   * the two this is, because by then it is settled.
-   */
-  const modeStillOpen = !forPayment && stage.step === 'client';
-  const sheetTitle = forPayment ? nv.paymentTitle : modeStillOpen ? nv.pageTitle : later ? nv.laterTitle : nv.title;
-
-  /**
-   * Jira GRW-458 — Back is navigation, so it belongs beside the title, not in the tray of actions that
-   * create the visit.
-   *
-   * It used to sit in the footer of three different steps as a ghost button, which left every tray holding
-   * one button that was not an outcome: on the walk-in step that was three buttons for two outcomes, and
-   * nothing in the row could be aligned without one of them looking like the odd one out.
-   *
-   * `null` means there is nowhere to go: mid-save, with the lines already written (GRW-290), or paying a
-   * token, whose client is the token's and has no client step behind it (GRW-403).
-   */
-  const goBack = (() => {
-    if (busy || linesLocked) return null;
-    // Jira GRW-537 — the first screen of the page has Back too: through history, or Home when there is none (the
-    // app's own Back, GRW-497). Not in the pop-up, which has its ✕.
-    if (asPage && stage.step === 'client') {
-      return () => (window.history.length > 1 ? router.back() : router.push('/'));
-    }
-    if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
-      return () => setStage({ step: 'client' });
-    }
-    if (stage.step === 'when') {
-      const client = stage.client;
-      return () => setStage({ step: 'details', client });
-    }
-    return null;
-  })();
-
-  return (
+  const serviceSearch = (
     <>
-      {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
-      {largeAmountDialog}
-      {!asPage && <div className="sheet-backdrop" onClick={busy || picked.length > 0 || newName.trim() || newPhone.trim() || stage.step !== 'client' ? undefined : onClose} />}
-      <div
-        className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
-        role={asPage ? undefined : 'dialog'}
-        aria-modal={asPage ? undefined : true}
-        ref={sheetRef}
-        aria-label={asPage ? undefined : forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title}
-      >
-        {!asPage && <div className="sheet-grab" />}
-
-        <div className="sheet-head">
-          {/*
-            Jira GRW-458 — the left cell is always drawn, empty when there is nowhere to go back to.
-
-            `.sheet-head` is `grid-template-columns: 1fr auto 1fr` (98-service-sheet.css), a header built for
-            a control on each side of a centred title. This sheet only ever gave it two children, so the
-            title took the first cell, the close button took the MIDDLE, and the third 1fr sat empty: the ✕
-            floated in the centre of the header with a column of nothing beside it. Keeping the cell holds
-            the title in the middle and the ✕ on the edge, with or without a back arrow.
-          */}
-          {goBack ? (
-            <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
-              <IconArrowLeft />
-            </button>
-          ) : (
-            <span className="wi-back-gap" aria-hidden="true" />
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
-            {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
-            <div className="sheet-sub">{headSub}</div>
-          </div>
-          <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
-            <IconClose />
-          </button>
-        </div>
-
-        {/* ---------- Stage 1: find them ---------- */}
-        {stage.step === 'client' && (
-          <div className="wi-body" id="wi-client-panel">
+            <h2 className="wi-section-label">
+              {picked.length > 0 ? nv.addMore : nv.whichService}
+            </h2>
+            <div className="picker-search">
+              <input
+                type="search"
+                className="wi-search-input wi-search-input-plain"
+                placeholder={services === null ? nv.loadingServices : nv.searchServices(services.length)}
+                aria-label={picked.length > 0 ? nv.addMore : nv.whichService}
+                value={serviceTerm}
+                onChange={(e) => setServiceTerm(e.target.value)}
+                disabled={busy || linesLocked}
+              />
+            </div>
             {/*
-              Jira GRW-520 — a combobox: the matches float in a dropdown under the box instead of pushing the
-              form down. Pointer-down on the dropdown is kept from taking focus off the input, so a tap on a row
-              is not preceded by the box losing focus and the dropdown closing under the finger (iOS gives a
-              button no focus, so that blur arrives with no related target).
+              `wi-service-idle` folds the untyped list away on a phone (72-walk-in-sheet.css) — but ONLY when
+              there are rows to fold. This box also holds what the screen says when there is nothing to list:
+              "loading", and GRW-384 AC-03's "this branch has no services yet" with the owner's add-or-copy
+              link. Hiding those leaves an empty search box and a dead button explaining nothing.
             */}
             <div
-              className="wi-combo"
-              onBlur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setComboOpen(false);
-              }}
+              className={`picker-results wi-service-results ${
+                services !== null && services.length > 0 && serviceTerm.trim() === '' ? 'wi-service-idle' : ''
+              }`}
             >
-              <div className="picker-search">
-                <span className="wi-search-icon">
-                  <IconSearch />
-                </span>
-                <input
-                  type="search"
-                  className="wi-search-input"
-                  role="combobox"
-                  aria-expanded={showDrop}
-                  aria-controls="wi-dropdown"
-                  aria-autocomplete="list"
-                  aria-activedescendant={showDrop && activeIdx >= 0 ? `wi-opt-${activeIdx}` : undefined}
-                  placeholder={nv.searchPlaceholder}
-                  aria-label={nv.searchPlaceholder}
-                  value={term}
-                  autoFocus
-                  onFocus={() => setComboOpen(true)}
-                  onKeyDown={(e) => {
-                    if (!showDrop) return;
-                    if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      setActiveIdx((i) => (comboOptions.length === 0 ? -1 : (i + 1) % comboOptions.length));
-                    } else if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      setActiveIdx((i) => (comboOptions.length === 0 ? -1 : i <= 0 ? comboOptions.length - 1 : i - 1));
-                    } else if (e.key === 'Enter' && activeIdx >= 0 && comboOptions[activeIdx]) {
-                      e.preventDefault();
-                      const o = comboOptions[activeIdx];
-                      if (o.bring) bringHere(o.c);
-                      else pickClient(o.c);
-                    } else if (e.key === 'Escape') {
-                      // Closes the dropdown, not the sheet: stopped here, before the dialog's own listener.
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setComboOpen(false);
-                    }
-                  }}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setTerm(v);
-                    setComboOpen(true);
-                    setActiveIdx(-1);
-                    // Jira GRW-514 — seed the add block below, unless the desk has typed in it.
-                    const typed = v.trim();
-                    if (digitsOf(typed).length >= 7) {
-                      if (!phoneEdited.current) setNewPhone(typed);
-                    } else if (!nameEdited.current) {
-                      setNewName(typed);
-                    }
-                  }}
-                />
-                {term !== '' && (
-                  <button type="button" className="search-clear-btn" onClick={() => setTerm('')} aria-label={nv.clear}>
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {showDrop ? (
-                <div
-                  className="wi-dropdown"
-                  id="wi-dropdown"
-                  role="listbox"
-                  aria-label={nv.searchPlaceholder}
-                  onPointerDown={(e) => e.preventDefault()}
-                >
-                  {results.map((c, i) => (
-                    <button
-                      key={c.id}
-                      id={`wi-opt-${i}`}
-                      type="button"
-                      role="option"
-                      tabIndex={-1}
-                      aria-selected={activeIdx === i}
-                      className={`picker-row wi-row ${activeIdx === i ? 'wi-row-active' : ''}`}
-                      onClick={() => pickClient(c)}
-                    >
-                      <span className="picker-row-text">
-                        <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                        <span className="picker-row-meta">{clientMetaLine(c)}</span>
-                      </span>
-                    </button>
-                  ))}
-                  {!searching && results.length === 0 && elsewhere.length === 0 && <div className="empty">{nv.noMatch}</div>}
-
-                  {/*
-                    Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows
-                    and below them: these are not people who can be booked here yet, they are an offer to take
-                    them on.
-                  */}
-                  {elsewhere.length > 0 ? (
-                    <>
-                      <h2 className="wi-section-label" role="presentation">
-                        {nv.atOtherBranches}
-                      </h2>
-                      {elsewhere.map((c, j) => {
-                        const i = results.length + j;
-                        return (
-                          <button
-                            key={c.id}
-                            id={`wi-opt-${i}`}
-                            type="button"
-                            role="option"
-                            tabIndex={-1}
-                            aria-selected={activeIdx === i}
-                            className={`picker-row wi-row ${activeIdx === i ? 'wi-row-active' : ''}`}
-                            onClick={() => bringHere(c)}
-                          >
-                            {/* This one keeps its right-hand column: "Bring to MG Road" is the action, not a fact. */}
-                            <span className="picker-row-text">
-                              <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
-                              <span className="picker-row-meta">{clientMetaLine(c)}</span>
-                            </span>
-                            <span className="picker-row-meta">{nv.bringToBranch(branchNameOf(listBranch ?? undefined) ?? '')}</span>
-                          </button>
-                        );
-                      })}
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-
-            {/* Jira GRW-517 — no list of previous clients: a client is found by typing, or added below. */}
-
-            {/*
-              Jira GRW-514 — adding someone new is on this screen, under the search, not a button to another one.
-              Jira GRW-518 — with no heading or icon of its own, and no margin above it: just the two fields.
-              The old second step (name, phone, "Use this person") is these same fields and the same checks.
-            */}
-            <div className="wi-new-person" ref={addNewRef}>
-              <div className="field">
-                <label htmlFor="wi-name">{nv.nameRequired}</label>
-                <input
-                  id="wi-name"
-                  type="text"
-                  className={nameError ? 'field-invalid' : undefined}
-                  value={newName}
-                  placeholder={nv.namePlaceholder}
-                  onChange={(e) => {
-                    nameEdited.current = true;
-                    setNewName(e.target.value);
-                    if (nameError) setNameError(false);
-                  }}
-                />
-                {nameError && <div role="alert" className="field-error">{nv.nameMissing}</div>}
-              </div>
-
-              {/*
-                Required for an advance booking, optional for a walk-in.
-                A different rule for a genuinely different situation: the person
-                in front of you does not need reminding, and Saturday's customer
-                cannot be reminded without a number. The label's required mark says
-                which is which. No helper text under it (Jira GRW-530).
-              */}
-              <PhoneField
-                id="wi-phone"
-                label={nv.phoneRequired}
-                required={later}
-                value={newPhone}
-                onChange={(v) => {
-                  phoneEdited.current = true;
-                  setNewPhone(v);
-                  if (phoneError) setPhoneError(null);
-                }}
-                error={phoneError}
-              />
-
-              {/*
-              Jira GRW-518 · GRW-519 · GRW-521 — the Booking date, last: search, name, phone, then when. It shows
-              today. Today is a walk-in now; a later day is a booking for that day (and needs a phone). Never
-              before today; set back to today, or cleared, it is a walk-in again.
-            */}
-            {/* Jira GRW-529 — date and time share one row. */}
-            <div className="wi-when">
-            <div className="field wi-date-field">
-              <label htmlFor="wi-date">
-                {nv.bookingDate}
-              </label>
-              <input
-                id="wi-date"
-                type="date"
-                min={todayIso}
-                value={day}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  const next = !v || v < todayIso ? todayIso : v;
-                  setDay(next);
-                  setDateChosen(next > todayIso);
-                  // Jira GRW-535 — a morning time chosen for tomorrow is dropped when the date comes back to today and
-                  // it has passed. Only here: a clock tick never clears a time the person has just picked.
-                  if (next === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
-                }}
-              />
-            </div>
-
-            {/*
-              Jira GRW-527 — the Booking time, after the date. Optional: empty is a walk-in now. A time makes it a
-              booking — for the date shown, so "later today" is a time on today. It is a list of quarter-hours from now (today), so a past time cannot be chosen.
-            */}
-            <div className="field wi-date-field">
-              <label htmlFor="wi-time">
-                {nv.bookingTime}
-              </label>
-              <select id="wi-time" value={timeWanted} onChange={(e) => setTimeWanted(e.target.value)}>
-                {/* Jira GRW-534 — today the empty entry shows the current time and is still a walk-in; another day, "Any time". */}
-                <option value="">
-                  {day === todayIso ? nv.timeNow(nowLabel) : nv.anyTime}
-                </option>
-                {timeOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            </div>
-
-            {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
-              <div className="modal-actions wi-actions wi-acts">
+              {matchingCombos.map((o) => (
                 <button
+                  key={`combo-${o.id}`}
                   type="button"
-                  className="btn"
-                  onClick={() => {
-                    if (!newName.trim()) {
-                      setNameError(true);
-                      return;
-                    }
-                    /*
-                     * A walk-in may give no number; anyone who gives one must
-                     * give a real one. A half-typed number saved as-is is the
-                     * shape that produced `+91786545789` in the live data.
-                     */
-                    const phoneProblem = checkPhone(newPhone, { required: later });
-                    if (phoneProblem) {
-                      setPhoneError(phoneProblem);
-                      return;
-                    }
-                    setStage({
-                      step: 'details',
-                      client: { kind: 'new', name: newName.trim(), phone: toStoredPhone(newPhone) ?? '' },
-                    });
-                  }}
+                  className="picker-row wi-row"
+                  onClick={() => applyCombo(o)}
+                  disabled={busy || linesLocked}
                 >
-                  {nv.useThisPerson}
+                  <span className="picker-row-name">
+                    {o.title} <span className="wi-combo-tag">{nv.combo}</span>
+                  </span>
+                  <span className="picker-row-meta">
+                    {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}
+                  </span>
                 </button>
-                {/* Jira GRW-523 — on the page, a way out to Home under the one action that moves forward. */}
-                {asPage ? (
-                  <button type="button" className="btn btn-ghost wi-act-alt" onClick={() => router.push('/')}>
-                    {nv.backToHome}
-                  </button>
-                ) : null}
-              </div>
+              ))}
+              {filteredServices.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="picker-row wi-row"
+                  onClick={() => addService(s)}
+                  disabled={busy || linesLocked}
+                >
+                  <span className="picker-row-name">{s.name}</span>
+                  <span className="picker-row-meta">
+                    {tmin('minutes', { count: s.durationMin })} · {formatMoney(s.priceMinor)}
+                  </span>
+                </button>
+              ))}
+              {services === null ? (
+                <div className="empty">{nv.loadingServices}</div>
+              ) : services.length === 0 ? (
+                // Jira GRW-384 (AC-03) — a branch opened with an empty menu says so, and the owner is shown where
+                // to add or copy one; anyone else is told plainly why nothing is listed.
+                branchNameOf(listBranch ?? undefined) ? (
+                  <div className="empty">
+                    {nv.noServicesAtBranch(branchNameOf(listBranch ?? undefined)!, servicesNoun.toLowerCase())}{' '}
+                    {/* Jira GRW-409 — a link to the Services screen for whoever the nav offers it to (the shared rule), not `isOwner`. */}
+                    {canSee('/services', session?.role as MemberRole | null | undefined) ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
+                  </div>
+                ) : (
+                  <div className="empty">{nv.noServicesYet}</div>
+                )
+              ) : (
+                filteredServices.length === 0 &&
+                matchingCombos.length === 0 &&
+                alsoTry.length === 0 && <div className="empty">{nv.noServiceMatch}</div>
+              )}
             </div>
-          </div>
-        )}
 
-        {/* ---------- Stage 2: what are they having ---------- */}
-        {(stage.step === 'details' || stage.step === 'saving' || stage.step === 'error') && (
-          <div className="wi-body">
-            {stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
+    </>
+  );
 
-            {/* Jira GRW-453 — once the branch is settled it is said, not asked: the client was picked from this
-                branch's own list, and a token's visit is already at its branch. Changing it here would leave the
-                client belonging to one branch and the booking to another, which the database refuses. */}
-            {branchSettled && branches.length > 1 && branchNameOf(listBranch ?? undefined) ? (
-              /*
-               * Said in one line, not asked (owner, 2026-10-04). It was a "Which branch?" heading over a
-               * single chip — a question with one possible answer, 44px of control that cannot change
-               * anything, at the top of the screen. `entering-data.md` asks the opposite: pre-gather what
-               * you can and ask for the rest. A one-branch salon is told nothing at all, because there is
-               * nothing to tell; with branches it still matters WHICH one this booking lands at, so the
-               * line stays.
-               */
-              <p className="wi-at-branch">{nv.atBranch(branchNameOf(listBranch ?? undefined)!)}</p>
-            ) : null}
+  /* The single page's branch: the search lists this branch's clients, and the menu and stylists below are its too. Record payment asks it first; New booking, under the search. */
+  const pageBranchField =
+    branches.length > 1 ? (
+              <div className="field wi-branch-field">
+                <label htmlFor="wi-branch">{nv.whichBranch}</label>
+                <select
+                  id="wi-branch"
+                  value={branchId ?? ''}
+                  onChange={(e) => {
+                    branchTouched.current = true;
+                    setBranchId(e.target.value);
+                    // A client belongs to one branch: the one picked from the old branch's list cannot ride along.
+                    setSelected(null);
+                  }}
+                  disabled={busy || linesLocked}
+                >
+                  {branches.map((b, i) => (
+                    <option key={b.id} value={b.id}>
+                      {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+    ) : null;
 
-            {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-453 — and only while
-                it is still open to change: for a new client, who becomes a client of whichever branch is chosen. */}
-            {branches.length > 1 && !branchSettled ? (
-              <>
-                {/* Jira GRW-522 — a dropdown, not a row of chips that wrapped to three lines with five branches. */}
-                <div className="field wi-branch-field">
-                  <label htmlFor="wi-branch">{nv.whichBranch}</label>
-                  <select
-                    id="wi-branch"
-                    value={branchId ?? ''}
-                    onChange={(e) => {
-                      branchTouched.current = true;
-                      // Its menu, stylist and chair are cleared with it (the reset beside `listBranch`).
-                      setBranchId(e.target.value);
-                    }}
-                    disabled={busy || linesLocked}
-                  >
-                    {branches.map((b, i) => (
-                      <option key={b.id} value={b.id}>
-                        {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            ) : null}
-
-            {/* Jira GRW-341 — a returning client: last time's visit, and the next free times. */}
-            {stage.step === 'details' && stage.client.kind === 'existing' && picked.length === 0 && extras.length === 0 && services && providers && offers ? (
-              <BookAgainCard
-                clientId={stage.client.id}
-                services={services}
-                providers={branchProviders}
-                offers={combos}
-                branchId={listBranch}
-                days={days.map((d) => d.iso)}
-                timezone={timezone}
-                later={later}
-                onUse={(plan, moveOn) => {
-                  applyPlan(plan);
-                  if (moveOn) setStage({ step: 'when', client: stage.client });
-                }}
-                onPickTime={(plan, time) => bookAgainAt(stage.client, plan, time)}
-              />
-            ) : null}
+  const servicesAndStylist = (
+    <>
+            {/* The single page: the search sits above what has been chosen, so adding a service never means scrolling past the list. */}
+            {pageForm && serviceSearch}
 
             {/* Chosen list first — it is the answer being assembled. */}
             {(picked.length > 0 || extras.length > 0) && (
@@ -2091,71 +1812,7 @@ export function NewVisitSheet({
               </>
             )}
 
-            <h2 className="wi-section-label">
-              {picked.length > 0 ? nv.addMore : nv.whichService}
-            </h2>
-            <div className="picker-search">
-              <input
-                type="search"
-                className="wi-search-input wi-search-input-plain"
-                placeholder={services === null ? nv.loadingServices : nv.searchServices(services.length)}
-                aria-label={picked.length > 0 ? nv.addMore : nv.whichService}
-                value={serviceTerm}
-                onChange={(e) => setServiceTerm(e.target.value)}
-                disabled={busy || linesLocked}
-              />
-            </div>
-            <div className="picker-results wi-service-results">
-              {matchingCombos.map((o) => (
-                <button
-                  key={`combo-${o.id}`}
-                  type="button"
-                  className="picker-row wi-row"
-                  onClick={() => applyCombo(o)}
-                  disabled={busy || linesLocked}
-                >
-                  <span className="picker-row-name">
-                    {o.title} <span className="wi-combo-tag">{nv.combo}</span>
-                  </span>
-                  <span className="picker-row-meta">
-                    {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}
-                  </span>
-                </button>
-              ))}
-              {filteredServices.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="picker-row wi-row"
-                  onClick={() => addService(s)}
-                  disabled={busy || linesLocked}
-                >
-                  <span className="picker-row-name">{s.name}</span>
-                  <span className="picker-row-meta">
-                    {tmin('minutes', { count: s.durationMin })} · {formatMoney(s.priceMinor)}
-                  </span>
-                </button>
-              ))}
-              {services === null ? (
-                <div className="empty">{nv.loadingServices}</div>
-              ) : services.length === 0 ? (
-                // Jira GRW-384 (AC-03) — a branch opened with an empty menu says so, and the owner is shown where
-                // to add or copy one; anyone else is told plainly why nothing is listed.
-                branchNameOf(listBranch ?? undefined) ? (
-                  <div className="empty">
-                    {nv.noServicesAtBranch(branchNameOf(listBranch ?? undefined)!, servicesNoun.toLowerCase())}{' '}
-                    {/* Jira GRW-409 — a link to the Services screen for whoever the nav offers it to (the shared rule), not `isOwner`. */}
-                    {canSee('/services', session?.role as MemberRole | null | undefined) ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
-                  </div>
-                ) : (
-                  <div className="empty">{nv.noServicesYet}</div>
-                )
-              ) : (
-                filteredServices.length === 0 &&
-                matchingCombos.length === 0 &&
-                alsoTry.length === 0 && <div className="empty">{nv.noServiceMatch}</div>
-              )}
-            </div>
+            {!pageForm && serviceSearch}
 
             {alsoTry.length > 0 && (
               <div className="wi-also-try">
@@ -2322,6 +1979,579 @@ export function NewVisitSheet({
               <div className="wi-summary">{nv.startsNow(totalMinutes([...picked, ...extras]))}</div>
             )}
 
+    </>
+  );
+
+  const asPage = presentation === 'page';
+  // Jira GRW-520 — every row the dropdown can show, in order: this branch's matches, then the other branches'.
+  const comboOptions = [
+    ...results.map((c) => ({ c, bring: false })),
+    ...elsewhere.map((c) => ({ c, bring: true })),
+  ];
+  const showDrop = comboOpen && term.trim().length >= SEARCH_MIN_CHARS;
+  /*
+   * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
+   *
+   * The Booking date sets it, so on arrival the screen was called "Walk-in" while the control that decides
+   * walk-in-or-not was still below it, unanswered — and the owner had tapped "New booking" to get here. While
+   * the date can still change the title is the screen's own name; once a client is picked it can say which of
+   * the two this is, because by then it is settled.
+   */
+  const modeStillOpen = !forPayment && stage.step === 'client';
+  const sheetTitle = forPayment ? nv.paymentTitle : modeStillOpen ? nv.pageTitle : later ? nv.laterTitle : nv.title;
+
+  /**
+   * Jira GRW-458 — Back is navigation, so it belongs beside the title, not in the tray of actions that
+   * create the visit.
+   *
+   * It used to sit in the footer of three different steps as a ghost button, which left every tray holding
+   * one button that was not an outcome: on the walk-in step that was three buttons for two outcomes, and
+   * nothing in the row could be aligned without one of them looking like the odd one out.
+   *
+   * `null` means there is nowhere to go: mid-save, with the lines already written (GRW-290), or paying a
+   * token, whose client is the token's and has no client step behind it (GRW-403).
+   */
+  const goBack = (() => {
+    if (busy || linesLocked) return null;
+    // Jira GRW-537 — the first screen of the page has Back too: through history, or Home when there is none (the
+    // app's own Back, GRW-497). Not in the pop-up, which has its ✕.
+    if (asPage && stage.step === 'client') {
+      return () => (window.history.length > 1 ? router.back() : router.push('/'));
+    }
+    // The single page keeps its form on screen after a failed save: Back leaves the page, as it does from the form.
+    if (pageForm && stage.step === 'error') {
+      return () => (window.history.length > 1 ? router.back() : router.push('/'));
+    }
+    if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
+      return () => setStage({ step: 'client' });
+    }
+    if (stage.step === 'when') {
+      const client = stage.client;
+      return () => setStage({ step: 'details', client });
+    }
+    return null;
+  })();
+
+  return (
+    <>
+      {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
+      {largeAmountDialog}
+      {!asPage && <div className="sheet-backdrop" onClick={busy || picked.length > 0 || newName.trim() || newPhone.trim() || stage.step !== 'client' ? undefined : onClose} />}
+      <div
+        className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
+        role={asPage ? undefined : 'dialog'}
+        aria-modal={asPage ? undefined : true}
+        ref={sheetRef}
+        aria-label={asPage ? undefined : forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title}
+      >
+        {!asPage && <div className="sheet-grab" />}
+
+        <div className="sheet-head">
+          {/*
+            Jira GRW-458 — the left cell is always drawn, empty when there is nowhere to go back to.
+
+            `.sheet-head` is `grid-template-columns: 1fr auto 1fr` (98-service-sheet.css), a header built for
+            a control on each side of a centred title. This sheet only ever gave it two children, so the
+            title took the first cell, the close button took the MIDDLE, and the third 1fr sat empty: the ✕
+            floated in the centre of the header with a column of nothing beside it. Keeping the cell holds
+            the title in the middle and the ✕ on the edge, with or without a back arrow.
+          */}
+          {goBack ? (
+            <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
+              <IconArrowLeft />
+            </button>
+          ) : (
+            <span className="wi-back-gap" aria-hidden="true" />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
+            {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
+            <div className="sheet-sub">{headSub}</div>
+          </div>
+          <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
+            <IconClose />
+          </button>
+        </div>
+
+        {/* ---------- Stage 1: find them ---------- */}
+        {(stage.step === 'client' || (pageForm && onForm)) && (
+          <div className="wi-body" id="wi-client-panel">
+            {pageForm && stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
+            {/*
+              Jira GRW-520 — a combobox: the matches float in a dropdown under the box instead of pushing the
+              form down. Pointer-down on the dropdown is kept from taking focus off the input, so a tap on a row
+              is not preceded by the box losing focus and the dropdown closing under the finger (iOS gives a
+              button no focus, so that blur arrives with no related target).
+            */}
+            {pageForm && forPayment ? pageBranchField : null}
+
+            <div
+              className="wi-combo"
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setComboOpen(false);
+              }}
+            >
+              <div className="picker-search">
+                <span className="wi-search-icon">
+                  <IconSearch />
+                </span>
+                <input
+                  type="search"
+                  className="wi-search-input"
+                  role="combobox"
+                  aria-expanded={showDrop}
+                  aria-controls="wi-dropdown"
+                  aria-autocomplete="list"
+                  aria-activedescendant={showDrop && activeIdx >= 0 ? `wi-opt-${activeIdx}` : undefined}
+                  placeholder={nv.searchPlaceholder}
+                  aria-label={nv.searchPlaceholder}
+                  value={term}
+                  autoFocus
+                  onFocus={() => setComboOpen(true)}
+                  onKeyDown={(e) => {
+                    if (!showDrop) return;
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setActiveIdx((i) => (comboOptions.length === 0 ? -1 : (i + 1) % comboOptions.length));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setActiveIdx((i) => (comboOptions.length === 0 ? -1 : i <= 0 ? comboOptions.length - 1 : i - 1));
+                    } else if (e.key === 'Enter' && activeIdx >= 0 && comboOptions[activeIdx]) {
+                      e.preventDefault();
+                      const o = comboOptions[activeIdx];
+                      if (o.bring) bringHere(o.c);
+                      else pickClient(o.c);
+                    } else if (e.key === 'Escape') {
+                      // Closes the dropdown, not the sheet: stopped here, before the dialog's own listener.
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setComboOpen(false);
+                    }
+                  }}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTerm(v);
+                    setComboOpen(true);
+                    setActiveIdx(-1);
+                    // Jira GRW-514 — seed the add block below, unless the desk has typed in it.
+                    const typed = v.trim();
+                    if (digitsOf(typed).length >= 7) {
+                      if (!phoneEdited.current) setNewPhone(typed);
+                    } else if (!nameEdited.current) {
+                      setNewName(typed);
+                    }
+                  }}
+                />
+                {term !== '' && (
+                  <button type="button" className="search-clear-btn" onClick={() => setTerm('')} aria-label={nv.clear}>
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {showDrop ? (
+                <div
+                  className="wi-dropdown"
+                  id="wi-dropdown"
+                  role="listbox"
+                  aria-label={nv.searchPlaceholder}
+                  onPointerDown={(e) => e.preventDefault()}
+                >
+                  {results.map((c, i) => (
+                    <button
+                      key={c.id}
+                      id={`wi-opt-${i}`}
+                      type="button"
+                      role="option"
+                      tabIndex={-1}
+                      aria-selected={activeIdx === i}
+                      className={`picker-row wi-row ${activeIdx === i ? 'wi-row-active' : ''}`}
+                      onClick={() => pickClient(c)}
+                    >
+                      <span className="picker-row-text">
+                        <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
+                        <span className="picker-row-meta">{clientMetaLine(c)}</span>
+                      </span>
+                    </button>
+                  ))}
+                  {!searching && results.length === 0 && elsewhere.length === 0 && <div className="empty">{nv.noMatch}</div>}
+
+                  {/*
+                    Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows
+                    and below them: these are not people who can be booked here yet, they are an offer to take
+                    them on.
+                  */}
+                  {elsewhere.length > 0 ? (
+                    <>
+                      <h2 className="wi-section-label" role="presentation">
+                        {nv.atOtherBranches}
+                      </h2>
+                      {elsewhere.map((c, j) => {
+                        const i = results.length + j;
+                        return (
+                          <button
+                            key={c.id}
+                            id={`wi-opt-${i}`}
+                            type="button"
+                            role="option"
+                            tabIndex={-1}
+                            aria-selected={activeIdx === i}
+                            className={`picker-row wi-row ${activeIdx === i ? 'wi-row-active' : ''}`}
+                            onClick={() => bringHere(c)}
+                          >
+                            {/* This one keeps its right-hand column: "Bring to MG Road" is the action, not a fact. */}
+                            <span className="picker-row-text">
+                              <span className="picker-row-name">{c.name?.trim() || nv.noName}</span>
+                              <span className="picker-row-meta">{clientMetaLine(c)}</span>
+                            </span>
+                            <span className="picker-row-meta">{nv.bringToBranch(branchNameOf(listBranch ?? undefined) ?? '')}</span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {pageForm && !forPayment ? pageBranchField : null}
+
+            {/* Jira GRW-517 — no list of previous clients: a client is found by typing, or added below. */}
+
+            {/*
+              Jira GRW-514 — adding someone new is on this screen, under the search, not a button to another one.
+              Jira GRW-518 — with no heading or icon of its own, and no margin above it: just the two fields.
+              The old second step (name, phone, "Use this person") is these same fields and the same checks.
+            */}
+            <div className="wi-new-person" ref={addNewRef}>
+              {pageForm && selected ? (
+                <div className="wi-picked-row">
+                  <span className="wi-picked-name">
+                    {selected.name?.trim() || nv.noName}
+                    {selected.phone ? <span className="picker-row-meta"> · {selected.phone}</span> : null}
+                  </span>
+                  <button type="button" className="wi-remove" aria-label={nv.clear} onClick={() => setSelected(null)} disabled={busy}>
+                    <IconClose />
+                  </button>
+                </div>
+              ) : (
+                <>
+              <div className="field">
+                <label htmlFor="wi-name">{nv.nameRequired}</label>
+                <input
+                  id="wi-name"
+                  type="text"
+                  className={nameError ? 'field-invalid' : undefined}
+                  value={newName}
+                  placeholder={nv.namePlaceholder}
+                  onChange={(e) => {
+                    nameEdited.current = true;
+                    setNewName(e.target.value);
+                    if (nameError) setNameError(false);
+                  }}
+                />
+                {nameError && <div role="alert" className="field-error">{nv.nameMissing}</div>}
+              </div>
+
+              {/*
+                Required for an advance booking, optional for a walk-in.
+                A different rule for a genuinely different situation: the person
+                in front of you does not need reminding, and Saturday's customer
+                cannot be reminded without a number. The label's required mark says
+                which is which. No helper text under it (Jira GRW-530).
+              */}
+              <PhoneField
+                id="wi-phone"
+                label={nv.phoneRequired}
+                required={later}
+                value={newPhone}
+                onChange={(v) => {
+                  phoneEdited.current = true;
+                  setNewPhone(v);
+                  if (phoneError) setPhoneError(null);
+                }}
+                error={phoneError}
+              />
+                </>
+              )}
+
+              {/* Jira GRW-341 — a returning client: last time's visit, and the next free times. */}
+              {pageForm && !forPayment && selected?.kind === 'existing' && picked.length === 0 && extras.length === 0 && services && providers && offers ? (
+                <BookAgainCard
+                  clientId={selected.id}
+                  services={services}
+                  providers={branchProviders}
+                  offers={combos}
+                  branchId={listBranch}
+                  days={days.map((d) => d.iso)}
+                  timezone={timezone}
+                  later={later}
+                  onUse={(plan) => applyPlan(plan)}
+                  onPickTime={(plan, time) => bookAgainAt(selected, plan, time)}
+                />
+              ) : null}
+
+              {/*
+              Jira GRW-518 · GRW-519 · GRW-521 — the Booking date, last: search, name, phone, then when. It shows
+              today. Today is a walk-in now; a later day is a booking for that day (and needs a phone). Never
+              before today; set back to today, or cleared, it is a walk-in again.
+            */}
+            {/* Jira GRW-529 — date and time share one row. */}
+            <div className="wi-when">
+            <div className="field wi-date-field">
+              <label htmlFor="wi-date">
+                {nv.bookingDate}
+              </label>
+              <input
+                id="wi-date"
+                type="date"
+                min={todayIso}
+                value={day}
+                disabled={forPayment}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  const next = !v || v < todayIso ? todayIso : v;
+                  setDay(next);
+                  setDateChosen(next > todayIso);
+                  // Jira GRW-535 — a morning time chosen for tomorrow is dropped when the date comes back to today and
+                  // it has passed. Only here: a clock tick never clears a time the person has just picked.
+                  if (next === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
+                }}
+              />
+            </div>
+
+            {/*
+              Jira GRW-527 — the Booking time, after the date. Optional: empty is a walk-in now. A time makes it a
+              booking — for the date shown, so "later today" is a time on today. It is a list of quarter-hours from now (today), so a past time cannot be chosen.
+            */}
+            <div className="field wi-date-field">
+              <label htmlFor="wi-time">
+                {nv.bookingTime}
+              </label>
+              <select id="wi-time" value={timeWanted} onChange={(e) => setTimeWanted(e.target.value)} disabled={forPayment}>
+                {/* Jira GRW-534 — today the empty entry shows the current time and is still a walk-in; another day, "Any time". */}
+                <option value="">
+                  {day === todayIso ? nv.timeNow(nowLabel) : nv.anyTime}
+                </option>
+                {timeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            </div>
+
+            {pageForm ? (
+              <>
+                {servicesAndStylist}
+
+                {/* Free times for what was chosen, once there is something to fit: the booking time asked for above is picked if it is free. */}
+                {later && picked.length > 0 ? (
+                  <>
+                    {slotError && <div role="alert" className="wi-error">{slotError}</div>}
+                    <h2 className="wi-section-label">{nv.whichTime}</h2>
+                    {loadingSlots ? (
+                      <div className="empty">{nv.loadingTimes}</div>
+                    ) : !slots || slots.slotCount === 0 ? (
+                      <div className="empty" id="wi-no-times">
+                        {nv.noTimes}
+                      </div>
+                    ) : (
+                      <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
+                        {slots.sections.flatMap((sec) =>
+                          sec.slots.map((slot) => (
+                            <button
+                              key={slot.utc}
+                              type="button"
+                              aria-pressed={slotUtc === slot.utc}
+                              className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
+                              onClick={() => setSlotUtc(slot.utc)}
+                              disabled={busy}
+                            >
+                              {slot.local}
+                            </button>
+                          )),
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : null}
+
+                <div className={`modal-actions wi-actions wi-acts ${forPayment ? 'wi-pay-actions' : ''}`}>
+                  {/* Record payment: how they paid sits in the tray beside Mark done (GRW-290). */}
+                  {forPayment && (
+                    <div className="wi-pay-modes" role="radiogroup" aria-label={nv.howPaid}>
+                      <span className="wi-pay-modes-label">{nv.howPaid}</span>
+                      <div className="wi-chips">
+                        {PAYMENT_MODES.map((m) => (
+                          <button
+                            key={m.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={paymentMode === m.value}
+                            className={`wi-chip ${paymentMode === m.value ? 'wi-chip-on' : ''}`}
+                            onClick={() => setPaymentMode(m.value)}
+                            disabled={busy}
+                          >
+                            {tcr(`pay.${m.value}`)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {(() => {
+                    // Same rule as the stepped flow's tray: when every chair is busy the queue leads.
+                    const queueOffered = !later && !reclaim && !forPayment;
+                    const queueLeads = queueOffered && noChairFree;
+                    // Record payment has an answer with nobody on the branch (no stylist); a walk-in or booking does not.
+                    const cannot = (later && !slotUtc) || (forPayment ? !amountsValid : noStaffHere || noOneCanDoIt);
+                    const go = (
+                      <button
+                        key="go"
+                        type="button"
+                        className={queueLeads ? 'btn btn-ghost wi-act-alt' : 'btn'}
+                        onClick={() => {
+                          const client = pageClient();
+                          if (client) void submit(client);
+                        }}
+                        disabled={busy || picked.length === 0 || cannot}
+                      >
+                        {busy ? nv.saving : forPayment ? nv.markDone : later ? nv.bookIt : queueLeads ? nv.startAnyway : nv.start}
+                      </button>
+                    );
+                    if (!queueOffered) return go;
+                    const queue = (
+                      <button
+                        key="queue"
+                        type="button"
+                        className={queueLeads ? 'btn wi-queue-btn' : 'btn btn-ghost wi-act-alt wi-queue-btn'}
+                        onClick={() => {
+                          const client = pageClient();
+                          if (client) void queueIt(client);
+                        }}
+                        disabled={busy}
+                      >
+                        {nv.addToQueue}
+                      </button>
+                    );
+                    return queueLeads ? [go, queue] : [queue, go];
+                  })()}
+                </div>
+              </>
+            ) : null}
+
+            {!pageForm && (
+              <>
+            {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
+              <div className="modal-actions wi-actions wi-acts">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    if (!newName.trim()) {
+                      setNameError(true);
+                      return;
+                    }
+                    /*
+                     * A walk-in may give no number; anyone who gives one must
+                     * give a real one. A half-typed number saved as-is is the
+                     * shape that produced `+91786545789` in the live data.
+                     */
+                    const phoneProblem = checkPhone(newPhone, { required: later });
+                    if (phoneProblem) {
+                      setPhoneError(phoneProblem);
+                      return;
+                    }
+                    setStage({
+                      step: 'details',
+                      client: { kind: 'new', name: newName.trim(), phone: toStoredPhone(newPhone) ?? '' },
+                    });
+                  }}
+                >
+                  {nv.useThisPerson}
+                </button>
+                {/* Jira GRW-523 — on the page, a way out to Home under the one action that moves forward. */}
+                {asPage ? (
+                  <button type="button" className="btn btn-ghost wi-act-alt" onClick={() => router.push('/')}>
+                    {nv.backToHome}
+                  </button>
+                ) : null}
+              </div>
+              </>
+            )}
+            </div>
+          </div>
+        )}
+
+        {/* ---------- Stage 2: what are they having ---------- */}
+        {!pageForm && (stage.step === 'details' || stage.step === 'saving' || stage.step === 'error') && (
+          <div className="wi-body">
+            {stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
+
+            {/* Jira GRW-453 — once the branch is settled it is said, not asked: the client was picked from this
+                branch's own list, and a token's visit is already at its branch. Changing it here would leave the
+                client belonging to one branch and the booking to another, which the database refuses. */}
+            {branchSettled && branches.length > 1 && branchNameOf(listBranch ?? undefined) ? (
+              /*
+               * Said in one line, not asked (owner, 2026-10-04). It was a "Which branch?" heading over a
+               * single chip — a question with one possible answer, 44px of control that cannot change
+               * anything, at the top of the screen. `entering-data.md` asks the opposite: pre-gather what
+               * you can and ask for the rest. A one-branch salon is told nothing at all, because there is
+               * nothing to tell; with branches it still matters WHICH one this booking lands at, so the
+               * line stays.
+               */
+              <p className="wi-at-branch">{nv.atBranch(branchNameOf(listBranch ?? undefined)!)}</p>
+            ) : null}
+
+            {/* Jira GRW-379 — first, because the branch decides the menu below it. Jira GRW-453 — and only while
+                it is still open to change: for a new client, who becomes a client of whichever branch is chosen. */}
+            {branches.length > 1 && !branchSettled ? (
+              <>
+                {/* Jira GRW-522 — a dropdown, not a row of chips that wrapped to three lines with five branches. */}
+                <div className="field wi-branch-field">
+                  <label htmlFor="wi-branch">{nv.whichBranch}</label>
+                  <select
+                    id="wi-branch"
+                    value={branchId ?? ''}
+                    onChange={(e) => {
+                      branchTouched.current = true;
+                      // Its menu, stylist and chair are cleared with it (the reset beside `listBranch`).
+                      setBranchId(e.target.value);
+                    }}
+                    disabled={busy || linesLocked}
+                  >
+                    {branches.map((b, i) => (
+                      <option key={b.id} value={b.id}>
+                        {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : null}
+
+            {/* Jira GRW-341 — a returning client: last time's visit, and the next free times. */}
+            {stage.step === 'details' && stage.client.kind === 'existing' && picked.length === 0 && extras.length === 0 && services && providers && offers ? (
+              <BookAgainCard
+                clientId={stage.client.id}
+                services={services}
+                providers={branchProviders}
+                offers={combos}
+                branchId={listBranch}
+                days={days.map((d) => d.iso)}
+                timezone={timezone}
+                later={later}
+                onUse={(plan, moveOn) => {
+                  applyPlan(plan);
+                  if (moveOn) setStage({ step: 'when', client: stage.client });
+                }}
+                onPickTime={(plan, time) => bookAgainAt(stage.client, plan, time)}
+              />
+            ) : null}
+
+            {servicesAndStylist}
+
             <div className={`modal-actions wi-actions wi-acts ${forPayment ? 'wi-pay-actions' : ''}`}>
               {/*
                 Jira GRW-290 — the payment mode lives in the pinned footer, not
@@ -2412,7 +2642,7 @@ export function NewVisitSheet({
         )}
 
         {/* ---------- Stage 2b (`later` only): when ---------- */}
-        {stage.step === 'when' && (
+        {!pageForm && stage.step === 'when' && (
           <div className="wi-body">
             {slotError && <div role="alert" className="wi-error">{slotError}</div>}
             <h2 className="wi-section-label">{nv.whichDay}</h2>

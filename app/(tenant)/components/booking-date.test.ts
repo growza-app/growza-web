@@ -32,7 +32,7 @@ describe('the Booking date', () => {
 
   it('there are no Walk-in / For later tabs, and the flow runs search, name, phone, date, continue', () => {
     expect(sheet).not.toMatch(/wi-segmented|role="tablist"|modeNow|modeLater/);
-    const first = sheet.slice(sheet.indexOf("{stage.step === 'client' && ("), sheet.indexOf("(stage.step === 'details' || stage.step === 'saving'"));
+    const first = sheet.slice(sheet.indexOf("{(stage.step === 'client' || (pageForm && onForm)) && ("), sheet.indexOf("(stage.step === 'details' || stage.step === 'saving'"));
     const at = (needle: string) => first.indexOf(needle);
     expect(at('wi-search-input')).toBeGreaterThan(-1);
     expect(at('id="wi-name"')).toBeGreaterThan(at('wi-search-input'));

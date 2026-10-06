@@ -21,12 +21,14 @@ export const dynamic = 'force-dynamic';
 export default async function NewBookingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ mode?: string; purpose?: string }>;
 }) {
   // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
   await guardLive('/appointments/new');
   const params = await searchParams;
   const mode: VisitMode = params.mode === 'later' ? 'later' : 'now';
+  // Owner, 2026-10-06 — Record payment on a phone is this page with `?purpose=payment`: one screen, ending in Mark done.
+  const paying = params.purpose === 'payment';
 
   let me;
   try {
@@ -51,12 +53,18 @@ export default async function NewBookingPage({
   if (!mayUse(me.member?.role, 'visit.new', isWritable(me.tenant?.status))) {
     redirect('/appointments');
   }
+  // Record payment is its own action: a role that may book but not take money is not offered the till.
+  if (paying && !mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status))) {
+    redirect('/appointments/new');
+  }
 
   return (
     <div className="page-body">
-      <NewBookingClient mode={mode} timezone={me.tenant?.timezone ?? 'Asia/Kolkata'} />
+      <NewBookingClient mode={mode} purpose={paying ? 'payment' : 'visit'} timezone={me.tenant?.timezone ?? 'Asia/Kolkata'} />
     </div>
   );
 }
 
-export const metadata = screenTitle('New booking');
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ purpose?: string }> }) {
+  return screenTitle((await searchParams).purpose === 'payment' ? 'Record payment' : 'New booking');
+}
