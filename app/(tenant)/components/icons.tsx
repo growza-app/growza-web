@@ -76,11 +76,14 @@ export const IconChat = () => (
   </svg>
 );
 
-/** A coupon — an offer is something a client redeems. (A tag read as "price"; a percent sign is Clients' repeat rate; a gift looks like Packages.) */
+/** A gift box — an offer is a treat for a client. Ribbon and bow keep it apart from Packages' plain cube. */
 export const IconOffers = () => (
   <svg {...base}>
-    <path d="M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a2.5 2.5 0 0 0 0 5v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a2.5 2.5 0 0 0 0-5z" />
-    <path d="M14 6.5v11" strokeDasharray="2 2.5" />
+    <rect x="3" y="8" width="18" height="4" rx="1" />
+    <path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+    <path d="M12 8v13" />
+    <path d="M12 8H8.5a2.5 2.5 0 1 1 0-5C11 3 12 8 12 8z" />
+    <path d="M12 8h3.5a2.5 2.5 0 1 0 0-5C13 3 12 8 12 8z" />
   </svg>
 );
 
