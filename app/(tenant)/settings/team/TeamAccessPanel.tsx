@@ -13,6 +13,7 @@ import { api, ApiError, type CreatedInvite, type PendingInvite, type Provider, t
  * `+91` and those ten.
  */
 import { PhoneField } from '../../components/PhoneField';
+import { copyToClipboard } from '../../lib/copy-to-clipboard';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { toStoredPhone } from '../../lib/phone';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
@@ -83,6 +84,7 @@ export function TeamAccessPanel({
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<(CreatedInvite & { phone: string }) | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const refresh = async () => {
     const { invites: next } = await api.teamInvites();
@@ -122,6 +124,7 @@ export function TeamAccessPanel({
     setPhoneError(null);
     setCreated(null);
     setCopied(false);
+    setCopyFailed(false);
     try {
       const invite = await api.createTeamInvite({
         phone: e164,
@@ -317,13 +320,22 @@ export function TeamAccessPanel({
                 type="button"
                 className="btn"
                 onClick={() => {
-                  void navigator.clipboard?.writeText(linkFor(created.token));
-                  setCopied(true);
+                  void copyToClipboard(linkFor(created.token)).then((ok) => {
+                    setCopied(ok);
+                    setCopyFailed(!ok);
+                  });
                 }}
               >
                 {copied ? t('copied') : t('copyLink')}
               </button>
             </div>
+            {/* Said instead of "Copied", never alongside it: the link is shown once, so a refused copy has to
+                be visible while the field is still on screen to copy from by hand. */}
+            {copyFailed && (
+              <div role="alert" className="field-hint" style={{ marginTop: 8 }}>
+                {t('copyFailed')}
+              </div>
+            )}
           </div>
         )}
 

@@ -633,6 +633,7 @@
     "resentNote": "Their previous link has stopped working.",
     "copied": "Copied",
     "copyLink": "Copy link",
+    "copyFailed": "Could not copy automatically. Tap the link above to select it, then copy it.",
     "waiting": "Waiting to join",
     "noInvites": "No invites waiting. Anyone you invite shows here until they join.",
     "expiresToday": "Expires today",
