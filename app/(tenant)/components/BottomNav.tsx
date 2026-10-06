@@ -109,6 +109,15 @@ export function BottomNav({
   const [menuOpen, setMenuOpen] = useState(false);
   const menu = Boolean(centre && onPayment);
 
+  /*
+   * The scrim below is a portal, and a portal is a child position like any other. Testing `typeof document` to
+   * decide whether to render it put a child there on the client that the server had not written, so React
+   * hydrated the menu against the scrim and threw the whole bar away to re-render it. Mount first, portal second:
+   * the first client render then matches the server's, and the scrim arrives on the pass after.
+   */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Escape closes the menu, and so does leaving the screen it was opened on.
   useEffect(() => {
     if (!menuOpen) return;
@@ -167,7 +176,7 @@ export function BottomNav({
         <>
           {/* Owner, 2026-10-06 — the plus opens a speed-dial: New booking, or Record payment. Tapping anywhere else closes it. */}
           {/* In the body, not the bar: the bar's blur makes it the containing block of anything fixed inside it, which would dim only the bar. */}
-          {menu && typeof document !== 'undefined'
+          {menu && mounted
             ? createPortal(
                 <div className={`bn-scrim ${menuOpen ? 'is-open' : ''}`} onClick={() => setMenuOpen(false)} aria-hidden="true" />,
                 document.body,
