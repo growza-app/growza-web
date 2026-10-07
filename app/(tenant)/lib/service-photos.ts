@@ -33,7 +33,8 @@ import type { Service } from './api';
  * thing that drifts. A duplicate-looking picture is a smaller problem than a
  * wrong one.
  */
-const PACK_KEYS: ReadonlySet<string> = new Set([
+/** Exported for the disk guard in service-photos.test.ts, which checks it BOTH ways. */
+export const PACK_KEYS: ReadonlySet<string> = new Set([
   'anti-acne-facial',
   'aroma-facial',
   'beard-trim',
