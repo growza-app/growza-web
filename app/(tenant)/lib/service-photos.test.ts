@@ -1,7 +1,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { hasServicePhoto, packPhotoUrl, servicePhotoUrl } from './service-photos';
+import { PACK_KEYS, hasServicePhoto, packPhotoUrl, servicePhotoUrl } from './service-photos';
 
 /**
  * Jira GRW-560 — the supplied pack, and the two ways it goes wrong quietly.
@@ -18,9 +18,24 @@ const svc = (over: Partial<Parameters<typeof servicePhotoUrl>[0]> = {}) =>
   ({ imageUrl: null, categoryName: null, catalogKey: null, ...over }) as Parameters<typeof servicePhotoUrl>[0];
 
 describe('the pack on disk', () => {
+  it('is not empty', () => {
+    expect(onDisk.length, 'the pack directory is empty').toBeGreaterThan(0);
+  });
+
+  /**
+   * The direction that breaks production, and the one this test checked for a
+   * while without noticing: it walked the FILES and asserted each had a key,
+   * which is the harmless way round. A key with no file passed silently — I put
+   * a made-up key in the list and all eight tests stayed green — and every
+   * service matched to it would render a broken <img> on every row of a price
+   * list. The list is forty hand-written entries, so one typo is all it takes.
+   */
   it('has a file for every key the code will build a URL for', () => {
-    const missing = onDisk.length === 0 ? ['the pack directory is empty'] : [];
-    expect(missing).toEqual([]);
+    const keyless = [...PACK_KEYS].filter((key) => !onDisk.includes(`${key}.webp`));
+    expect(keyless, 'these keys build a URL that 404s').toEqual([]);
+  });
+
+  it('has a key for every file, so nothing ships unused weight', () => {
     for (const file of onDisk) {
       const key = file.replace(/\.webp$/, '');
       expect(packPhotoUrl(key), `${key} is on disk but the code will not serve it`).toBe(`/catalog/${key}.webp`);
