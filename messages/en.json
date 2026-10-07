@@ -689,7 +689,6 @@
     "retireDetail": "{count, plural, one {# past booking keeps} other {# past bookings keep}} this service and its price — nothing in your history changes. Already-booked future appointments are not cancelled. You can restore it any time.",
     "retireDetailNone": "You can restore it any time.",
     "errors": {
-      "photoTooBig": "{name}: photo must be under 5MB.",
       "uploadFailed": "Upload failed.",
       "removeFailed": "Remove failed.",
       "saveFailed": "Could not save.",
@@ -718,7 +717,6 @@
         "nameRequired": "Name is required",
         "nameLong": "Name must be 80 characters or fewer",
         "priceNegative": "Price cannot be negative",
-        "photoTooBig": "Photo must be under 5MB.",
         "saveFailed": "Could not save."
       },
       "titleEditShort": "Edit service",

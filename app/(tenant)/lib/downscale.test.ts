@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { downscaleImage, MAX_UPLOAD_EDGE } from './downscale';
 
@@ -112,5 +114,42 @@ describe('what it does when something goes wrong — always, send the original',
     const { createCanvas } = stubCanvas({ type: 'image/webp', size: 3_500_000 });
     const big = file('photo.jpg', 'image/jpeg', 3_000_000);
     expect(await downscaleImage(big, { createBitmap: bitmap(3000, 2000), createCanvas })).toBe(big);
+  });
+});
+
+/**
+ * Jira GRW-558 — QA, 2026-10-07. Two findings about the call sites rather than the function.
+ *
+ * These read source, as `settings-review.test.ts` and `NewVisitSheet`'s tests do: they are client
+ * components and this repo's vitest runs in node with no DOM, and adding jsdom to assert four
+ * lines would be a dependency bought to make a test possible rather than the product work.
+ */
+describe('who gets downscaled, and what nobody refuses first', () => {
+  const read = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
+
+  /** `uploadFile` also carries the service-sheet import; a CSV was being handed to `createImageBitmap`. */
+  it('only a picture goes through the downscaler', () => {
+    const api = read('./api.ts');
+    expect(api).toMatch(/const isPicture = file\.type === '' \|\| file\.type\.startsWith\('image\/'\);/);
+    expect(api).toMatch(/form\.append\(field, isPicture \? await downscaleImage\(file\) : file\);/);
+  });
+
+  /**
+   * The screens used to refuse anything over 5 MB before the downscaler ran — which is the photo a
+   * phone actually takes. The API's cap is the only one now, and it answers with a sentence.
+   */
+  it('no screen refuses a photo on size before it has been downscaled', () => {
+    for (const p of ['../services/ServicesTable.tsx', '../services/ServiceForm.tsx', '../settings/profile/ProfileForm.tsx']) {
+      const src = read(p);
+      expect(src, p).not.toMatch(/MAX_PHOTO_BYTES/);
+      expect(src, p).not.toMatch(/5 \* 1024 \* 1024/);
+      expect(src, p).not.toMatch(/photoTooBig/);
+    }
+  });
+
+  it('and the copy for that refusal is gone from both languages', () => {
+    for (const lang of ['en', 'hi']) {
+      expect(read(`../../../messages/${lang}.json`), lang).not.toMatch(/photoTooBig/);
+    }
   });
 });

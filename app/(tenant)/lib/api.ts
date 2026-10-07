@@ -355,7 +355,13 @@ const del = <T>(path: string) => send<T>('DELETE', path);
  */
 async function uploadFile<T>(path: string, field: string, file: File): Promise<T> {
   const form = new FormData();
-  form.append(field, await downscaleImage(file));
+  // Only pictures. This helper also carries the service-sheet import, and a CSV went through
+  // `downscaleImage` to be rescued by its own try/catch — working by accident, which is not the
+  // same as working. A spreadsheet has no business being handed to `createImageBitmap`.
+  // An empty `type` still goes through: a browser that cannot name the file may still be
+  // holding a photo, and `downscaleImage` fails open on anything it cannot decode.
+  const isPicture = file.type === '' || file.type.startsWith('image/');
+  form.append(field, isPicture ? await downscaleImage(file) : file);
   // No Content-Type of our own — the browser must set its own boundary'd one.
   const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form, headers: await authHeaders() });
   if (!res.ok) throw await apiError(res, path);
