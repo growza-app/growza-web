@@ -1,0 +1,40 @@
+/*
+ * Jira GRW-559 — a photograph in a tile that was built for two letters.
+ *
+ * Every site that draws a person already sizes and shapes its own tile
+ * (.staff-avatar is 44px, .edit-header-avatar 48px, .bk-card-staff-avatar
+ * smaller still), and `PersonPhoto` keeps those classes. All that is missing
+ * when the tile holds an <img> is the handful of rules an image needs to fill
+ * a box that was laid out for text — so this sheet is deliberately four rules
+ * and no sizes. A width here would fight every screen that already has one.
+ */
+
+.person-photo {
+  object-fit: cover;
+  /* The tile centres text with `display: grid; place-items: center`, which on an
+     <img> would shrink it to its intrinsic size instead of filling the box. */
+  display: block;
+  /* The photo is the content, so no tinted background shows through while it loads. */
+  background: var(--surface-2, #f0f2ef);
+}
+
+/* Off today / inactive: the same greying the lettered tile gets, done with a
+   filter because there is no text colour to mute on a photograph. */
+.person-photo.is-muted {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+/*
+ * The photo FIELD reuses the service sheet's `.sheet-photo-img` box (60px,
+ * rounded, object-fit), which was written for an <img> and so says nothing
+ * about centring text. When the person has no photo the same box holds their
+ * initials, and without these three rules the letters sit top-left in a
+ * transparent square. The tone class still supplies the colour.
+ */
+.sheet-photo-img:not(img) {
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+}

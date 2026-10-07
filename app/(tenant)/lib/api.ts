@@ -949,6 +949,20 @@ export const api = {
     }>('/api/v1/bookings', input),
   uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
   removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),
+
+  /**
+   * Jira GRW-559 — a photo of somebody who works here.
+   *
+   * Two pairs, not one, because the person may have no provider row: an owner
+   * or a receptionist is a `dashboard_user`, and `/me/photo` writes whichever
+   * row the signed-in person actually is. Both go through `uploadFile`, so the
+   * browser downscales before the wire exactly as it does for a service.
+   */
+  uploadProviderPhoto: (id: string, file: File) =>
+    uploadFile<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`, 'photo', file),
+  removeProviderPhoto: (id: string) => del<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`),
+  uploadMyPhoto: (file: File) => uploadFile<{ photoUrl: string | null }>('/api/v1/me/photo', 'photo', file),
+  removeMyPhoto: () => del<{ photoUrl: string | null }>('/api/v1/me/photo'),
 };
 
 export function formatMoney(minor: string | null, currency = 'INR'): string {

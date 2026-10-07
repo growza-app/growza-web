@@ -237,6 +237,8 @@ export interface Provider {
 export interface ProviderOverviewRow {
   id: string;
   displayName: string;
+  /** Jira GRW-559 — this person's photo, already a URL by the time it leaves the API. Null draws their initials. */
+  photoUrl: string | null;
   /** Jira GRW-234 — the branch this person works at. `branchLabel` is set by the Staff screen only for a multi-branch business. */
   locationId?: string;
   locationName?: string;
@@ -276,6 +278,8 @@ export interface ProviderWorkingHourRow {
 export interface ProviderDetail {
   id: string;
   displayName: string;
+  /** Jira GRW-559 — this person's photo, already a URL by the time it leaves the API. Null draws their initials. */
+  photoUrl: string | null;
   /** Jira GRW-234 — the branch this person works at. */
   locationId?: string;
   locationName?: string;

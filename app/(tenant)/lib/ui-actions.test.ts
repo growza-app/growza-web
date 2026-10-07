@@ -220,6 +220,10 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'PATCH /api/v1/providers/:id/working-hours',
     'PATCH /api/v1/providers/:id/services',
     'PATCH /api/v1/providers/:id/availability-today',
+    // Jira GRW-559 — a stylist's photo, from the staff edit screen. Same screen, same gate as
+    // the rest of their record; the API narrows it further to owner/manager or the person themself.
+    'POST /api/v1/providers/:id/photo',
+    'DELETE /api/v1/providers/:id/photo',
   ],
   '/settings': [
     'POST /api/v1/billing/autopay',
@@ -247,7 +251,14 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
 };
 
 /** Every signed-in person's own: the session says whose, and no role can widen it. */
-const EVERY_ROLE = ['POST /api/v1/auth/change-password', 'PUT /api/v1/me/language'];
+const EVERY_ROLE = [
+  'POST /api/v1/auth/change-password',
+  'PUT /api/v1/me/language',
+  // Jira GRW-559 — your own face, from the account menu. Beside the language switch for the same
+  // reason: it belongs to no screen, every role has it, and the session decides whose row it writes.
+  'POST /api/v1/me/photo',
+  'DELETE /api/v1/me/photo',
+];
 
 /** The writes the dashboard's API client can make, read from the client itself. */
 function clientWrites(): Set<string> {

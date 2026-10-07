@@ -2127,5 +2127,13 @@
     "showMore": "Show {count} more",
     "payFor": "Record payment — token {n}, {name}",
     "cancelledCount": "Cancelled"
+  },
+  "personPhoto": {
+    "add": "Add photo",
+    "change": "Change photo",
+    "hint": "Optional. Helps your team and clients recognise them.",
+    "saving": "Saving…",
+    "failed": "Could not save that photo. Try again.",
+    "remove": "Remove"
   }
 }

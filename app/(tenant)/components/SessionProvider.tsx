@@ -21,6 +21,14 @@ export interface SessionInfo {
   role: string | null;
   /** What they sign in with (GRW-198). Null where none was recorded. */
   phone: string | null;
+  /**
+   * Jira GRW-559 — the signed-in person's own photo, or null for their initials.
+   *
+   * Not the business's logo: `initial` above is the business. This is the face
+   * in the account menu, and it comes from whichever row the person IS — a
+   * provider row for a stylist, a dashboard_user row for everyone else.
+   */
+  photoUrl?: string | null;
   businessName: string | null;
   /** Jira GRW-235 — open branches, main first; one or none means there is no branch to choose. */
   branches?: Array<{ id: string; name: string }>;

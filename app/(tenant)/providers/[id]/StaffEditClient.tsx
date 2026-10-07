@@ -1,6 +1,8 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { PersonPhoto } from '../../components/PersonPhoto';
+import { PersonPhotoField } from '../../components/PersonPhotoField';
 import { useState } from 'react';
 import { PhoneField } from '../../components/PhoneField';
 import { useRouter } from 'next/navigation';
@@ -310,7 +312,7 @@ export function StaffEditClient({
           <Link href="/providers" className="staff-icon-btn" aria-label={t('backTo', { label: staffTitle })}>
             <IconArrowLeft />
           </Link>
-          <div className={`staff-avatar ${avatarTone(detail.displayName)} edit-header-avatar`}>{initials(detail.displayName)}</div>
+          <PersonPhoto name={detail.displayName} photoUrl={detail.photoUrl} className="staff-avatar edit-header-avatar" />
           <div>
             <div className="edit-crumb">
               <Link href="/providers">{staffTitle}</Link> · {t('crumbEdit')}
@@ -357,6 +359,24 @@ export function StaffEditClient({
           <div className="edit-main">
             <section className="card edit-card">
               <div className="edit-card-title">{t('details')}</div>
+              {/*
+                Jira GRW-559 — above the name, because it is the same fact: who this is. It saves
+                on pick rather than on Save, like the service photo and unlike every field below it;
+                an upload is its own round trip to its own route, so pretending it is part of the
+                form would mean holding a File in state and a half-saved record if the rest fails.
+              */}
+              <PersonPhotoField
+                name={detail.displayName}
+                photoUrl={detail.photoUrl}
+                onUpload={async (file) => {
+                  const { photoUrl } = await api.uploadProviderPhoto(detail.id, file);
+                  setDetail((d) => ({ ...d, photoUrl }));
+                }}
+                onRemove={async () => {
+                  const { photoUrl } = await api.removeProviderPhoto(detail.id);
+                  setDetail((d) => ({ ...d, photoUrl }));
+                }}
+              />
               <div className="edit-grid">
                 <label className="field">
                   <span className="field-label">{t('fullName')}</span>
