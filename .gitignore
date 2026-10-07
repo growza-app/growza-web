@@ -1,0 +1,46 @@
+# This repository had no .gitignore at all until 2026-10-07.
+#
+# The two-repo split (Jira GRW-369 · GRW-370) moved `web/` out of the monorepo
+# and left the rules behind: the API repo still carries `web/.next/`,
+# `web/next-env.d.ts`, `web/AGENTS.md` and `web/CLAUDE.md` in ITS ignore file,
+# where they now match nothing. Here they matched nothing either, because the
+# file did not exist — so `node_modules` (391M), `.next` (1.3G) and the
+# generated files below all sat in `git status` as untracked, one `git add -A`
+# away from the history. Nothing junk had been committed; every file was
+# staged by name instead, which is not a thing to rely on twice.
+
+# No trailing slash, copied deliberately from the API repo's own comment:
+# `node_modules/` matches only a directory, which is how a worktree's
+# node_modules SYMLINK got committed there (4f00168) and replaced the real
+# folder on merge.
+node_modules
+
+# Next's build output and the types it writes on `dev`/`build`.
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Next installs these agent rules into the repo root ("BEGIN:nextjs-agent-rules");
+# CLAUDE.md is one line importing AGENTS.md. Generated, not authored — the API
+# repo made the same call for them when they lived at `web/`.
+AGENTS.md
+CLAUDE.md
+
+# Secrets never committed (conventions, 06 §6): real values belong in SSM.
+.env
+.env.local
+.env.*.local
+.env.test
+.env.production
+
+# A salon's own catalogue, converted for onboarding (menu PDF, services and
+# packages). Real business data and a one-off working set, not product code —
+# kept on disk, out of the history. Track a particular import deliberately if
+# it ever needs sharing.
+imports/
+
+.claude/settings.local.json
+coverage/
+*.log
+.DS_Store
