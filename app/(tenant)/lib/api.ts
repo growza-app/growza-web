@@ -953,16 +953,19 @@ export const api = {
   /**
    * Jira GRW-559 — a photo of somebody who works here.
    *
-   * Two pairs, not one, because the person may have no provider row: an owner
-   * or a receptionist is a `dashboard_user`, and `/me/photo` writes whichever
-   * row the signed-in person actually is. Both go through `uploadFile`, so the
-   * browser downscales before the wire exactly as it does for a service.
+   * Goes through `uploadFile`, so the browser downscales before the wire
+   * exactly as it does for a service photo.
+   *
+   * Only the stylist's photo, set from the staff screen. The signed-in
+   * person's OWN photo (`/me/photo`) was built and then dropped: the role
+   * allowlist for it lives in @growza-app/shared, growza-web pins a published
+   * version, and it is not worth a package release on its own. The schema
+   * column for it stays (migration 0104) so it costs nothing to finish later.
    */
   uploadProviderPhoto: (id: string, file: File) =>
     uploadFile<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`, 'photo', file),
   removeProviderPhoto: (id: string) => del<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`),
-  uploadMyPhoto: (file: File) => uploadFile<{ photoUrl: string | null }>('/api/v1/me/photo', 'photo', file),
-  removeMyPhoto: () => del<{ photoUrl: string | null }>('/api/v1/me/photo'),
+
 };
 
 export function formatMoney(minor: string | null, currency = 'INR'): string {

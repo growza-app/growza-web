@@ -251,14 +251,7 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
 };
 
 /** Every signed-in person's own: the session says whose, and no role can widen it. */
-const EVERY_ROLE = [
-  'POST /api/v1/auth/change-password',
-  'PUT /api/v1/me/language',
-  // Jira GRW-559 — your own face, from the account menu. Beside the language switch for the same
-  // reason: it belongs to no screen, every role has it, and the session decides whose row it writes.
-  'POST /api/v1/me/photo',
-  'DELETE /api/v1/me/photo',
-];
+const EVERY_ROLE = ['POST /api/v1/auth/change-password', 'PUT /api/v1/me/language'];
 
 /** The writes the dashboard's API client can make, read from the client itself. */
 function clientWrites(): Set<string> {
