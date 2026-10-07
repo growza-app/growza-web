@@ -133,6 +133,8 @@ export function useNewVisitCopy() {
     freeCount: (n: number) => t('freeCount', { n }),
     chairFree: t('chairFree'),
     chairBusy: (name: string, until: string) => t('chairBusy', { name, until }),
+    /** The same chair, on a chip, where "with Nisha · till 4:00 PM" would not fit beside a name. */
+    chipBusy: (until: string) => t('chipBusy', { until }),
     someone: t('someone'),
     reclaimOffer: (name: string, minAgo: number) => t('reclaimOffer', { name, minAgo }),
     reclaimOn: (name: string) => t('reclaimOn', { name }),
@@ -148,6 +150,27 @@ export function useNewVisitCopy() {
     overlap: (provider: string) => t('overlap', { provider }),
     takePayment: t('takePayment'),
     addToQueue: t('addToQueue'),
+    /**
+     * The outcome chips on a page's footer (owner, 2026-10-07), where Record payment asks how they paid.
+     *
+     * They name the STATE the visit is about to be in — waiting, or starting — and the button under them names
+     * the action. Both saying "Start now" read as the screen stuttering.
+     */
+    whatNow: t('whatNow'),
+    outcomeWaiting: t('outcomeWaiting'),
+    outcomeStart: t('outcomeStart'),
+    /**
+     * The confirmation a client is sent after a booking or a queue token (owner, 2026-10-07) — the same
+     * `wa.me` link as the bill, with facts a booking is read back from. It never says "paid".
+     */
+    confirmBooked: t('confirmBooked'),
+    confirmQueued: t('confirmQueued'),
+    confirmSeeThen: t('confirmSeeThen'),
+    confirmSeeSoon: t('confirmSeeSoon'),
+    confirmPreview: t('confirmPreview'),
+    sendConfirm: t('sendConfirm'),
+    shareConfirm: t('shareConfirm'),
+    confirmHint: t('confirmHint'),
     queued: t('queued'),
     token: (n: number) => t('token', { n }),
     laterTitle: t('laterTitle'),

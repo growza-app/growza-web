@@ -45,8 +45,12 @@ describe('going back left the tray', () => {
   });
 });
 
+/**
+ * Owner, 2026-10-07 — the two PAGES now ask the outcome as chips with one button under them, and only the
+ * SHEET still swaps two buttons. Everything below is the sheet's tray; the page's rule is the describe after it.
+ */
 describe('the two outcomes', () => {
-  const block = code.slice(code.indexOf('const queueOffered ='));
+  const block = code.slice(code.indexOf('const queueLeads = queueOffered && noChairFree'));
 
   it('put the leading one last, which is what makes it the filled button', () => {
     expect(block.slice(0, 2400)).toMatch(/return queueLeads \? \[go, queue\] : \[queue, go\]/);
@@ -75,6 +79,44 @@ describe('the two outcomes', () => {
     // For later, a reclaim and Record payment each have a single outcome; they get it alone, full width.
     expect(block.slice(0, 2400)).toMatch(/if \(!queueOffered\) return go/);
   });
+});
+
+/**
+ * Owner, 2026-10-07 — on a page the outcome is a chip, not a choice of button.
+ *
+ * The swap above exists because two filled-or-outlined buttons cannot both be the answer. A chip row can:
+ * with no chair free, "Waiting" is the one that arrives chosen, and "Start now" is still there to tap.
+ */
+describe('a page asks the outcome above one button', () => {
+  it('asks it in the slot where Record payment asks how they paid', () => {
+    expect(code).toMatch(/const pageOutcome = onPage && queueOffered;/);
+    expect(code).toMatch(/const outcome = outcomeWanted \?\? \(noChairFree \? 'queue' : 'start'\);/);
+    expect(code).toMatch(/const outcomeChips = pageOutcome \? \(\s*\n\s*<div className="wi-pay-modes" role="radiogroup" aria-label=\{nv\.whatNow\}>/);
+  });
+
+  it('leaves one button, named by the chip above it', () => {
+    const tray = code.slice(code.indexOf('{outcomeChips}'));
+    expect(tray.slice(0, 1200)).toMatch(/className="btn"/);
+    expect(tray.slice(0, 1200)).toMatch(/queueing \? queueIt : submit/);
+    expect(tray.slice(0, 1200)).toMatch(/queueing\s*\n?\s*\? nv\.addToQueue/);
+    // No swap and no second button on a page: there is nothing to put in front of anything.
+    expect(tray.slice(0, 1200)).not.toMatch(/queueLeads|wi-queue-btn/);
+  });
+
+  it('asks less of someone who is only waiting', () => {
+    // A person can wait before anybody has decided what they are having: no service, no chair, nobody able.
+    expect(code).toMatch(/disabled=\{queueing \? busy : busy \|\| \(forPayment \? false : picked\.length === 0 \|\| cannot\)\}/);
+    // Jira GRW-456 — and the chip that cannot be honoured is the one turned off, not the button.
+    expect(code).toMatch(/disabled=\{busy \|\| \(o\.value === 'start' && \(noStaffHere \|\| noOneCanDoIt\)\)\}/);
+  });
+
+  for (const [lang, m] of [['en', en], ['hi', hi]] as const) {
+    it(`${lang} names both chips, shorter than the button they name`, () => {
+      const nv = (m as { newVisit: Record<string, string> }).newVisit;
+      for (const k of ['whatNow', 'outcomeWaiting', 'outcomeStart']) expect(nv[k], `${lang}.newVisit.${k}`).toBeTruthy();
+      expect(nv.outcomeWaiting!.length).toBeLessThan(nv.addToQueue!.length);
+    });
+  }
 });
 
 describe('“no chair is free” is an answer, not a blank', () => {

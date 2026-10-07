@@ -1634,9 +1634,38 @@ input.wi-search-input-plain {
 }
 
 /* ---------- Record payment: who did it, as a row of names (owner, 2026-10-07) ---------- */
+/*
+ * One sideways row (owner, 2026-10-07), the same as the kinds of service below it.
+ *
+ * It wrapped until now, on the grounds that two scrolling rows stacked on each other read as one. They are no
+ * longer stacked: the service search box sits between them. Wrapping cost more than it saved — six names and a
+ * "Whoever is free" became three lines on a 344px phone, each one pushing the menu further down the screen,
+ * and a two-line chip (the chair state) made it four.
+ */
+/* The noun, then the scrolling row beside it: the label is not IN the scroller, so nothing can slide under it. */
+.wi-stylist-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-2);
+}
+
 .wi-stylist-chips {
   align-items: center;
-  margin-bottom: var(--sp-2);
+  /* Takes the rest of the line and may shrink — without `min-width: 0` a flex item refuses to go below its
+     content, and the row would push the names off the card instead of scrolling them. */
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  /* The row is scrolled by thumb; a bar under it would sit between the names and the search box. */
+  scrollbar-width: none;
+  /* Room for the chips' own shadow, which `overflow` would otherwise cut off at the top and bottom. */
+  padding-block: 4px;
+}
+
+.wi-stylist-chips::-webkit-scrollbar {
+  display: none;
 }
 
 /* The noun leads the row, so "Rahul" and "Priya" read as the stylist without a heading above them. */
@@ -1649,6 +1678,38 @@ input.wi-search-input-plain {
 
 .wi-stylist-chips .wi-chip {
   min-height: 2.75rem;
+  /* Never squeezed to fit: a name is as wide as the name. */
+  flex: 0 0 auto;
+}
+
+/*
+ * The noun stays while the names go past it — by sitting outside the scroller, not by `position: sticky`.
+ *
+ * Sticky was the first attempt and it was wrong twice over: a sticky item is painted OVER the content that
+ * scrolls past it, so the label printed itself across "Whoever is free"; and scroll-snap then pulled the first
+ * chip to the scroller's own start, which is behind the label, so the row loaded reading "ever is free".
+ */
+.wi-stylist-chips-label {
+  flex: 0 0 auto;
+}
+
+/*
+ * A chip that also says what the chair is doing (owner, 2026-10-07 — New booking took these chips and kept
+ * GRW-198's chair state). Two lines inside ONE button: a screen reader reads "Rahul free now" as the name of
+ * the thing being chosen, which a separate label beside it would not be.
+ */
+.wi-chip-two {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding-block: 6px;
+  line-height: 1.25;
+}
+
+.wi-chip-under {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.7;
 }
 
 /* ---------- Record payment: the bill, to send on WhatsApp (owner, 2026-10-07) ---------- */

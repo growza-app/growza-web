@@ -10,6 +10,7 @@
  * list row, the builder's summary and the dialog all quote a saving, and three copies of
  * "parts total minus price" is how two of them end up disagreeing by a rupee.
  */
+import { asMinor, priceAsked } from '../lib/service-match';
 import type { Offer, Service } from '../lib/api';
 
 /** The only thing that tells a package from an announcement. */
@@ -136,7 +137,14 @@ export function clampPercentInput(raw: string): string {
   return String(Math.min(100, Math.max(0, Math.round(pct))));
 }
 
-/** Searching a package finds it by its name, its description, or any service inside it. */
+/**
+ * Searching a package finds it by its name, its description, any service inside it — or its price.
+ *
+ * The price is what the package SELLS for (owner, 2026-10-07), matched exactly. Not the separate total: that
+ * is the "before" figure beside the saving, a number nobody is ever charged, and a list that answered 450
+ * with a package costing 399 would be telling the owner something untrue about his own menu. Exact, because
+ * `includes` would answer "300" with ₹1,300 and ₹300 alike.
+ */
 export function searchPackages(
   packages: readonly Offer[],
   byId: ReadonlyMap<string, PricedPart>,
@@ -144,7 +152,9 @@ export function searchPackages(
 ): Offer[] {
   const q = query.trim().toLowerCase();
   if (q === '') return [...packages];
+  const asked = priceAsked(q);
   return packages.filter((p) => {
+    if (asked !== null && asMinor(p.comboPriceMinor) === asked) return true;
     if (p.title.toLowerCase().includes(q)) return true;
     if ((p.description ?? '').toLowerCase().includes(q)) return true;
     return p.serviceIds.some((id) => byId.get(id)?.name.toLowerCase().includes(q));

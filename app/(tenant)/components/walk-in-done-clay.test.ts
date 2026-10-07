@@ -12,7 +12,16 @@ const clay = here('../styles/101-clay-app.css');
 describe('the walk-in confirmation', () => {
   it('every Done is the finish button, in all three end states', () => {
     // After a payment its bill's Send on WhatsApp is the filled action, so that Done is the quiet variant (2026-10-07).
-    expect(sheet.match(/className="sheet-item wi-finish(?: wi-finish-quiet)?" onClick=\{onClose\}/g)).toHaveLength(3);
+    expect(sheet).toMatch(/className="sheet-item wi-finish wi-finish-quiet" onClick=\{onClose\}/);
+    // Queued and booked took the same shape: quiet only while there is a message above them to send.
+    expect(sheet.match(/className=\{`sheet-item wi-finish \$\{stage\.confirm \? 'wi-finish-quiet' : ''\}`\} onClick=\{onClose\}/g)).toHaveLength(2);
+  });
+
+  /** Owner, 2026-10-07 — the confirmation is handed over the same way the bill is, by the same component. */
+  it('offers the booking or the token on WhatsApp, and nothing after a visit that just started', () => {
+    expect(sheet.match(/<ReceiptShare bill=\{stage\.confirm\} phone=\{stage\.client\.phone \|\| null\} kind="confirm" \/>/g)).toHaveLength(2);
+    // Built as the visit lands, like the bill: the page refreshes after a save and the state behind it moves.
+    expect(sheet).toMatch(/if \(!opts\.startAt && opts\.tokenNo === null\) return null;/);
   });
 
   it('is centred, with the check in a round badge', () => {

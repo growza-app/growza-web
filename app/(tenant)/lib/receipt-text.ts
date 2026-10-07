@@ -140,3 +140,66 @@ export function receiptText(input: ReceiptInput, copy: ReceiptCopy, money: (mino
 export function whatsappHref(digits: string, text: string): string {
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 }
+
+/**
+ * The OTHER message this screen can hand a client: what was just booked, or what they are waiting for
+ * (owner, 2026-10-07 — "the complete confirmation should be the same for sharing WhatsApp").
+ *
+ * Same `wa.me` link, same marks, same share-and-print row as the bill. Different facts, because a booking's
+ * job is to be read back later: when, with whom, and which token. It never says "paid".
+ *
+ * No services and no money (owner, 2026-10-07). Both would be a quote taken before the visit, and a visit
+ * grows: somebody booked for a haircut leaves having had a beard trim too. A client holding a message that
+ * says ₹300 and a bill that says ₹800 is an argument at the counter that the message started. Prices belong
+ * on the receipt, which is written when the work is done and cannot be overtaken.
+ */
+export interface ConfirmInput {
+  businessName: string | null;
+  branchName: string | null;
+  /** A booking's day and time, already formatted. Null for a queued visit, which has a token instead. */
+  when: string | null;
+  tokenNo: number | null;
+  stylist: string | null;
+}
+
+export interface ConfirmCopy {
+  /** "Booking confirmed", or "You are in the queue". */
+  title: string;
+  token: (n: number) => string;
+  stylist: (name: string) => string;
+  /**
+   * The closing line — "See you then!" for a booking, "See you soon!" for a queue.
+   *
+   * Owner, 2026-10-07: it must not promise a call. Nothing in Growza rings anybody, and a queue is called out
+   * across the room by its token number — a message saying otherwise is the salon breaking a promise it never made.
+   */
+  seeYou: string;
+}
+
+export function confirmRows(input: ConfirmInput, copy: ConfirmCopy): ReceiptRow[] {
+  const rows: ReceiptRow[] = [];
+  const line = (...segs: ReceiptSeg[]) => rows.push(segs);
+  const gap = () => rows.push([]);
+
+  const business = input.businessName ? plain(input.businessName) : '';
+  const branch = input.branchName ? plain(input.branchName) : '';
+  if (business || branch)
+    line(
+      ...(business ? [{ t: business, bold: true }] : []),
+      ...(business && branch ? [{ t: ' · ' }] : []),
+      ...(branch ? [{ t: branch }] : []),
+    );
+  line({ t: copy.title });
+  gap();
+
+  if (input.when) line({ t: `📅 ${input.when}` });
+  const who = [
+    input.tokenNo ? copy.token(input.tokenNo) : null,
+    input.stylist ? copy.stylist(plain(input.stylist)) : null,
+  ].filter(Boolean);
+  if (who.length > 0) line({ t: `${input.tokenNo ? '🎟 ' : ''}${who.join(' · ')}` });
+  if (input.when || who.length > 0) gap();
+
+  line({ t: `${copy.seeYou} 🙏` });
+  return rows;
+}

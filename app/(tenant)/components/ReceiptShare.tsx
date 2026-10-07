@@ -36,9 +36,34 @@ function Row({ row }: { row: ReceiptRow }) {
  * somewhere else (a parent's phone) without touching the client's record. Share hands the same text to any app on a
  * phone; Print prints the bill alone, which is also how it becomes a PDF (the print dialog's Save as PDF).
  */
-export function ReceiptShare({ bill, phone }: { bill: ReceiptRow[]; phone: string | null }) {
+export function ReceiptShare({
+  bill,
+  phone,
+  kind = 'bill',
+}: {
+  bill: ReceiptRow[];
+  phone: string | null;
+  /**
+   * Which message this is (owner, 2026-10-07). The same screen hands over a bill after a payment and a
+   * confirmation after a booking; only the words around it change, because everything else — the number, the
+   * `wa.me` link, Share, Print — is the same act.
+   */
+  kind?: 'bill' | 'confirm';
+}) {
   const text = useMemo(() => rowsToText(bill), [bill]);
   const nv = useNewVisitCopy();
+  const words =
+    kind === 'bill'
+      ? { preview: nv.billPreview, send: nv.sendOnWhatsapp, hint: nv.sendHint, share: nv.shareBill }
+      : { preview: nv.confirmPreview, send: nv.sendConfirm, hint: nv.confirmHint, share: nv.shareConfirm };
+  /*
+   * Only a bill prints (owner, 2026-10-07).
+   *
+   * Print is on the receipt because a salon is sometimes asked for one on paper, and because the print dialog's
+   * "Save as PDF" is how that receipt becomes a file. A booking confirmation is neither: nobody hands a client a
+   * printed sheet saying they are seventh in the queue, and the message is going to their phone anyway.
+   */
+  const canPrint = kind === 'bill';
   const checkPhone = usePhoneProblem();
   const [editing, setEditing] = useState(!phone);
   const [typed, setTyped] = useState(fromStoredPhone(phone));
@@ -66,8 +91,8 @@ export function ReceiptShare({ bill, phone }: { bill: ReceiptRow[]; phone: strin
   const shownProblem = touched ? problem : null;
 
   return (
-    <section className="wi-receipt-share" aria-label={nv.billPreview}>
-      <h2 className="wi-section-label">{nv.billPreview}</h2>
+    <section className="wi-receipt-share" aria-label={words.preview}>
+      <h2 className="wi-section-label">{words.preview}</h2>
       <div className="wi-receipt-paper">
         {bill.map((row, i) => (
           <Row key={i} row={row} />
@@ -78,7 +103,7 @@ export function ReceiptShare({ bill, phone }: { bill: ReceiptRow[]; phone: strin
         other child out of the page (`display: none`) rather than hide it — hidden content keeps its height, and a
         long page printed as one bill and several blank sheets.
       */}
-      {mounted
+      {mounted && canPrint
         ? createPortal(
             <div className="wi-receipt-print" aria-hidden="true">
               {bill.map((row, i) => (
@@ -122,7 +147,7 @@ export function ReceiptShare({ bill, phone }: { bill: ReceiptRow[]; phone: strin
       {digits ? (
         <a className="btn wi-receipt-send" href={whatsappHref(digits, text)} target="_blank" rel="noopener noreferrer">
           <IconWhatsApp />
-          {nv.sendOnWhatsapp}
+          {words.send}
         </a>
       ) : (
         // No usable number yet: the button says what it will do, and pressing it says what is missing.
@@ -133,27 +158,31 @@ export function ReceiptShare({ bill, phone }: { bill: ReceiptRow[]; phone: strin
           aria-describedby="wi-receipt-phone"
         >
           <IconWhatsApp />
-          {nv.sendOnWhatsapp}
+          {words.send}
         </button>
       )}
-      <p className="wi-receipt-hint">{nv.sendHint}</p>
+      <p className="wi-receipt-hint">{words.hint}</p>
 
-      <div className="wi-receipt-more">
-        {canShare ? (
-          <button
-            type="button"
-            className="btn btn-ghost wi-act-alt"
-            onClick={() => void navigator.share({ text }).catch(() => undefined)}
-          >
-            <IconShare />
-            {nv.shareBill}
-          </button>
-        ) : null}
-        <button type="button" className="btn btn-ghost wi-act-alt" onClick={() => window.print()}>
-          <IconPrint />
-          {nv.printBill}
-        </button>
-      </div>
+      {canShare || canPrint ? (
+        <div className="wi-receipt-more">
+          {canShare ? (
+            <button
+              type="button"
+              className="btn btn-ghost wi-act-alt"
+              onClick={() => void navigator.share({ text }).catch(() => undefined)}
+            >
+              <IconShare />
+              {words.share}
+            </button>
+          ) : null}
+          {canPrint ? (
+            <button type="button" className="btn btn-ghost wi-act-alt" onClick={() => window.print()}>
+              <IconPrint />
+              {nv.printBill}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

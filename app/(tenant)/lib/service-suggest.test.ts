@@ -40,6 +40,17 @@ describe('when the server is asked at all', () => {
   it('compares trimmed, lower-cased text', () => {
     expect(normaliseTerm('  Facial ')).toBe('facial');
   });
+
+  /** Owner, 2026-10-07 — a price is answered exactly, in the browser. There is no meaning in 1200 to ask for. */
+  it('never asks what a number means, however long it is', () => {
+    expect(shouldAskServer('1200')).toBe(false);
+    expect(shouldAskServer('₹1,200')).toBe(false);
+    expect(shouldAskServer('300.50')).toBe(false);
+  });
+
+  it('a name with a number in it is still a name', () => {
+    expect(shouldAskServer('300ml')).toBe(true);
+  });
 });
 
 describe('which hits are worth showing', () => {

@@ -1,6 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { receiptRows, receiptText, rowsToText, whatsappHref, type ReceiptCopy, type ReceiptInput } from './receipt-text';
+import {
+  confirmRows,
+  receiptRows,
+  receiptText,
+  rowsToText,
+  whatsappHref,
+  type ConfirmCopy,
+  type ConfirmInput,
+  type ReceiptCopy,
+  type ReceiptInput,
+} from './receipt-text';
 
 const copy: ReceiptCopy = {
   title: 'Payment receipt',
@@ -124,7 +134,9 @@ describe('the screen after Mark done offers the bill', () => {
     const css = readFileSync(new URL('../styles/72-walk-in-sheet.css', import.meta.url), 'utf8');
     expect(css).toMatch(/body:has\(> \.wi-receipt-print\) > \*:not\(\.wi-receipt-print\) \{\s*display: none !important;/);
     expect(css).not.toMatch(/visibility: hidden;/);
-    expect(share).toMatch(/mounted\s*\? createPortal\(/);
+    expect(share).toMatch(/mounted && canPrint\s*\? createPortal\(/);
+    // Owner, 2026-10-07 — and only a bill prints: nobody hands a client a printed sheet of their queue number.
+    expect(share).toMatch(/const canPrint = kind === 'bill';/);
   });
 
   it('Share only on a touch screen; Change has a way back to the client’s number', () => {
@@ -136,5 +148,61 @@ describe('the screen after Mark done offers the bill', () => {
     expect(share).toMatch(/href=\{whatsappHref\(digits, text\)\}/);
     expect(share).toMatch(/const digits = problem \? '' :/);
     expect(share).not.toMatch(/api\./);
+  });
+});
+
+
+/** Owner, 2026-10-07 — the other message: what was booked, or what they are waiting for. It never says "paid". */
+describe('the WhatsApp confirmation', () => {
+  const copy: ConfirmCopy = {
+    title: 'Booking confirmed',
+    token: (n) => `Token ${n}`,
+    stylist: (name) => `Stylist: ${name}`,
+    seeYou: 'See you then!',
+  };
+  const booked: ConfirmInput = {
+    businessName: 'Maya Unisex',
+    branchName: 'MG Road',
+    when: 'Sat, 11 Oct · 11:30 AM',
+    tokenNo: null,
+    stylist: 'Rahul',
+  };
+  const text = (i: ConfirmInput, c: ConfirmCopy = copy) => rowsToText(confirmRows(i, c));
+
+  it('is the day and the person, and nothing else', () => {
+    expect(text(booked)).toBe(
+      ['*Maya Unisex* · MG Road', 'Booking confirmed', '', '📅 Sat, 11 Oct · 11:30 AM', 'Stylist: Rahul', '', 'See you then! 🙏'].join('\n'),
+    );
+  });
+
+  /**
+   * Owner, 2026-10-07 — a visit grows. Somebody booked for a haircut leaves having had a beard trim too, and a
+   * message quoting ₹300 against a bill of ₹800 is an argument at the counter that the message started.
+   */
+  it('quotes no service and no amount: there is no money in it at all', () => {
+    expect(text(booked)).not.toMatch(/₹|\d+\.\d{2}|Total|Services/);
+    expect(text({ ...booked, when: null, tokenNo: 7, stylist: null })).not.toMatch(/₹|Total|Services/);
+  });
+
+  it('never says a word about having been paid', () => {
+    expect(text(booked)).not.toMatch(/paid|receipt|thank you for visiting/i);
+  });
+
+  it('a queued visit leads on its token and has no day', () => {
+    const queued = text(
+      { ...booked, when: null, tokenNo: 7, stylist: null },
+      { ...copy, title: 'You are in the queue', seeYou: 'See you soon!' },
+    );
+    expect(queued.split('\n')[1]).toBe('You are in the queue');
+    expect(queued).toContain('🎟 Token 7');
+    expect(queued).not.toMatch(/📅/);
+  });
+
+  it('promises no call: the queue is called out by its number, and nothing here rings anybody', () => {
+    expect(text({ ...booked, when: null, tokenNo: 7 }, { ...copy, seeYou: 'See you soon!' })).not.toMatch(/call|ring|phone/i);
+  });
+
+  it('a salon called Glam*Studio cannot turn its own message bold', () => {
+    expect(text({ ...booked, businessName: 'Glam*Studio' }).split('\n')[0]).toBe('*Glam Studio* · MG Road');
   });
 });

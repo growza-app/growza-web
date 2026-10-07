@@ -37,10 +37,14 @@ describe('Record payment fits one phone screen', () => {
     expect(css).toMatch(/\.wi-head-branch select \{[^}]*opacity: 0;/);
   });
 
-  it('closes the name and number fields on Record payment only', () => {
-    expect(sheet).toMatch(/const newPersonClosed =\s*\n?\s*forPayment && pageForm &&/);
-    // New booking is never affected: it has no `forPayment`, so it keeps every field it had.
-    expect(sheet).toMatch(/\{pageForm && !forPayment \? pageBranchField : null\}/);
+  it('closes the name and number fields on both pages, and opens them the moment nobody matches', () => {
+    // Owner, 2026-10-07 — the same question in the same place on New booking, which opened on two empty fields.
+    expect(sheet).toMatch(/const newPersonClosed =\s*\n?\s*pageForm && !addingNew && !nobodyMatched/);
+    // The branch is in the header on BOTH pages now; the body field it used to have is gone.
+    expect(sheet).not.toMatch(/pageBranchField/);
+    expect(sheet).toMatch(/const pageHead =\s*\n?\s*pageForm && \(forPayment \|\| branches\.length > 1\)/);
+    // Only Record payment puts a clock up there: New booking has a Booking date and time of its own to set.
+    expect(sheet).toMatch(/\{forPayment \? <span className="wi-head-now">\{nowLabel\}<\/span> : null\}/);
   });
 
   it('opens them whenever they have something to say', () => {
@@ -56,8 +60,8 @@ describe('Record payment fits one phone screen', () => {
     expect(css).toMatch(/\.wi-card-main \{[^}]*grid-template-columns: 2\.75rem minmax\(0, 1fr\) 1\.5rem;/);
     expect(css).toMatch(/\.wi-card-main \{[^}]*min-height: 3\.5rem;/);
     expect(css).not.toMatch(/repeat\(3, minmax\(0, 1fr\)\)/);
-    // New booking alone keeps hiding the untyped list; the till lists the whole menu.
-    expect(sheet).toMatch(/!payPage && services !== null && services\.length > 0/);
+    // A SHEET alone keeps hiding the untyped list; both pages list the menu (owner, 2026-10-07 — align the two).
+    expect(sheet).toMatch(/!onPage && services !== null && services\.length > 0/);
   });
 
   it('takes the same service more than once — a parent and two children', () => {
@@ -78,15 +82,15 @@ describe('Record payment fits one phone screen', () => {
     // Without a term the till shows every service (New booking shows the first six): 46 of 52 were unreachable.
     expect(sheet).toMatch(/const pool = typed \? filteredServices : \(services \?\? \[\]\);/);
     expect(sheet).toMatch(/serviceCategory \? pool\.filter\(\(s\) => s\.categoryName === serviceCategory\) : pool/);
-    expect(sheet).toMatch(/payPage && categories\.length \+ \(combos\.length > 0 \? 1 : 0\) > 1/);
+    expect(sheet).toMatch(/onPage && categories\.length \+ \(combos\.length > 0 \? 1 : 0\) > 1/);
     expect(css).toMatch(/\.wi-category-chips \.wi-chip \{[^}]*min-height: 2\.75rem;/);
   });
 
-  it('drops the two headings the till does not need, and keeps the controls named', () => {
-    expect(sheet).toMatch(/\{payPage \? null : \(\s*\n\s*<h2 className="wi-section-label" id="wi-stylist-label">/);
-    expect(sheet).toMatch(/aria-label=\{payPage \? nv\.withWhom\(providerNoun\.toLowerCase\(\)\) : undefined\}/);
+  it('drops the two headings a page does not need, and keeps the controls named', () => {
+    expect(sheet).toMatch(/\{onPage \? null : \(\s*\n\s*<h2 className="wi-section-label" id="wi-stylist-label">/);
+    expect(sheet).toMatch(/aria-label=\{onPage \? nv\.withWhom\(providerNoun\.toLowerCase\(\)\) : undefined\}/);
     // With no heading, the two options that are not a person's name carry the noun themselves.
-    expect(sheet).toMatch(/payPage \? `\$\{providerNoun\} · ` : ''/);
+    expect(sheet).toMatch(/onPage \? `\$\{providerNoun\} · ` : ''/);
   });
 
   it('calls it the bill, and says the total need not match the prices', () => {
@@ -103,8 +107,8 @@ describe('Record payment fits one phone screen', () => {
 
   it('lets Mark done be pressed with something missing, then says what and scrolls to it', () => {
     // Disabled said nothing: the till is never greyed out for a missing field.
-    expect(sheet).toMatch(/disabled=\{busy \|\| \(forPayment \? false : picked\.length === 0 \|\| cannot\)\}/);
-    expect(sheet).toMatch(/thenVisit\(forPayment \? checkBeforeMarkDone\(\) : pageClient\(\), submit\)/);
+    expect(sheet).toMatch(/disabled=\{queueing \? busy : busy \|\| \(forPayment \? false : picked\.length === 0 \|\| cannot\)\}/);
+    expect(sheet).toMatch(/thenVisit\(forPayment \? checkBeforeMarkDone\(\) : pageClient\(\), queueing \? queueIt : submit\)/);
     expect(sheet).toMatch(/const bringIntoView = [\s\S]*?scrollIntoView\(\{ block: 'center'/);
     expect(sheet).toMatch(/const checkBeforeMarkDone = [\s\S]*?bringIntoView\(/);
     // Top of the page first: the person, then the services, then an amount that is not a number.
@@ -115,7 +119,7 @@ describe('Record payment fits one phone screen', () => {
 
   it('stars what cannot be left empty', () => {
     expect(sheet).toMatch(/\{nv\.nameRequired\}\s*\n\s*<span className="field-required" aria-hidden="true"> \*<\/span>/);
-    expect(sheet).toMatch(/payPage && picked\.length === 0 && extras\.length === 0 \? ' \*' : ''/);
+    expect(sheet).toMatch(/onPage && picked\.length === 0 && extras\.length === 0 \? ' \*' : ''/);
     expect(css).toMatch(/\.field-required \{[^}]*var\(--amber\)/);
   });
 
@@ -158,16 +162,16 @@ describe('Record payment fits one phone screen', () => {
     // A half-typed number gets the same check as a new client's.
     expect(sheet).toMatch(/const problem = checkPhone\(pickedPhone, \{ required: false \}\);/);
     // Every way forward goes through it: Mark done, Start, Book it, and Add to queue.
-    expect(sheet).toMatch(/void thenVisit\(forPayment \? checkBeforeMarkDone\(\) : pageClient\(\), submit\)/);
-    expect(sheet).toMatch(/void thenVisit\(pageClient\(\), queueIt\)/);
+    expect(sheet).toMatch(/void thenVisit\(forPayment \? checkBeforeMarkDone\(\) : pageClient\(\), queueing \? queueIt : submit\)/);
+    expect(sheet).toMatch(/queueing \? queueIt : submit/);
   });
 
   it('lists the Packages tab under its own chip, and calls them packages, never combos', () => {
     // A chip of its own, only when the business has packages; each one a row that toggles at its one price.
     expect(sheet).toMatch(/\.\.\.\(combos\.length > 0 \? \[PACKAGES_CHIP\] : \[\]\)/);
     expect(sheet).toMatch(/onClick=\{\(\) => \(on \? removeCombo\(\) : applyCombo\(o\)\)\}/);
-    // The till does not ALSO show New booking's row of package chips under the bill.
-    expect(sheet).toMatch(/\{!payPage && combos\.length > 0 && serviceTerm\.trim\(\) === '' && \(/);
+    // Neither page ALSO shows the sheet's row of package chips under the list: the Packages chip is the way in.
+    expect(sheet).toMatch(/\{!onPage && combos\.length > 0 && serviceTerm\.trim\(\) === '' && \(/);
     // Owner, 2026-10-07: the word is "package", in both languages, everywhere.
     const words = (o: unknown): string[] =>
       typeof o === 'string' ? [o] : o && typeof o === 'object' ? Object.values(o).flatMap(words) : [];

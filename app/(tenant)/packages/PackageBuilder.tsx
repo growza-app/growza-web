@@ -26,7 +26,7 @@ import {
 } from '../components/icons';
 import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
-import { matchItems, MIN_CHARS } from '../lib/service-match';
+import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { servicePhotoUrl } from '../lib/service-photos';
@@ -281,7 +281,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     search.trim().length < MIN_CHARS
       ? unpicked
       : matchItems(
-          unpicked.map((s) => ({ item: s, text: [s.name] })),
+          unpicked.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })),
           search,
         );
 

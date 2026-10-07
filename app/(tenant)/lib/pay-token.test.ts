@@ -49,7 +49,10 @@ describe('paying a token has the same tray as the plain page', () => {
   });
 
   it('shows the total beside Mark done in both trays', () => {
-    expect(sheet.match(/if \(!queueOffered && trayTotal\) return <div className="wi-tray-row">\{trayTotal\}\{go\}<\/div>;/g)).toHaveLength(2);
+    // `trayTotal` is itself payPage-only, so the page's tray asks about it alone; the sheet's still asks
+    // whether a queue is on offer, because there it decides between one button and two.
+    expect(sheet).toMatch(/return trayTotal \? <div className="wi-tray-row">\{trayTotal\}\{go\}<\/div> : go;/);
+    expect(sheet).toMatch(/if \(!queueOffered && trayTotal\) return <div className="wi-tray-row">\{trayTotal\}\{go\}<\/div>;/);
   });
 
   it('a package that would take the bill past 12 lines is refused with a message, before Mark done', () => {

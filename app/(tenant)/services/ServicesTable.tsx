@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
-import { matchItems, MIN_CHARS } from '../lib/service-match';
+import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { ImportServices } from './ImportServices';
@@ -306,7 +306,7 @@ export function ServicesTable({
     // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
     // found by "phacial" at the desk is found by "phacial" here too.
     return matchItems(
-      inTab.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
+      inTab.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
       q,
     );
   }, [inTab, search]);

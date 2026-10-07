@@ -59,7 +59,10 @@ describe('every line that ends a step names everything that was picked', () => {
 describe('a booking says when it is', () => {
   it('the done screen names the day and the time, in the salon’s zone', () => {
     expect(sheet).toMatch(/formatDateWithWeekday\(stage\.result\.startAt, timezone, \{ withYear: false, locale \}\)/);
-    expect(sheet).toMatch(/formatTime\(stage\.result\.startAt, timezone\)/);
+    // Owner, 2026-10-07 — through this screen's own clock, not `formatTime`: en-IN gives "11:30 am" there, and
+    // the confirmation two lines below says "11:30 AM". One formatter, so one minute is not spelt two ways.
+    expect(sheet).toMatch(/clockTime\(stage\.result\.startAt\)/);
+    expect(sheet).toMatch(/const clockTime = \(at: Date \| string\) =>/);
   });
 
   it('only for a booking — a walk-in’s answer is "now"', () => {
