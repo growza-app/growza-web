@@ -49,7 +49,7 @@ describe('the two outcomes', () => {
   const block = code.slice(code.indexOf('const queueOffered ='));
 
   it('put the leading one last, which is what makes it the filled button', () => {
-    expect(block.slice(0, 1800)).toMatch(/return queueLeads \? \[go, queue\] : \[queue, go\]/);
+    expect(block.slice(0, 2400)).toMatch(/return queueLeads \? \[go, queue\] : \[queue, go\]/);
   });
 
   it('decide which leads by whether a chair can take them', () => {
@@ -59,21 +59,21 @@ describe('the two outcomes', () => {
   it('swap in the DOM, never with `order` — one sequence for the eye and for Tab', () => {
     // GRW-451's rule. `order: -1` is what it was written against.
     expect(css).not.toMatch(/\.wi-(?:act[a-z-]*|queue-btn)\s*\{[^}]*\border:\s*-?\d/);
-    expect(block.slice(0, 1800)).not.toMatch(/order:/);
+    expect(block.slice(0, 2400)).not.toMatch(/order:/);
   });
 
   it('dress by role, not by identity: whichever is not leading is the outlined one', () => {
-    expect(block.slice(0, 1800)).toMatch(/className=\{queueLeads \? 'btn btn-ghost wi-act-alt' : 'btn'\}/);
-    expect(block.slice(0, 1800)).toMatch(/className=\{queueLeads \? 'btn wi-queue-btn' : 'btn btn-ghost wi-act-alt wi-queue-btn'\}/);
+    expect(block.slice(0, 2400)).toMatch(/className=\{queueLeads \? 'btn btn-ghost wi-act-alt' : 'btn'\}/);
+    expect(block.slice(0, 2400)).toMatch(/className=\{queueLeads \? 'btn wi-queue-btn' : 'btn btn-ghost wi-act-alt wi-queue-btn'\}/);
   });
 
   it('say "Start now anyway" once the queue has taken the lead', () => {
-    expect(block.slice(0, 1800)).toMatch(/queueLeads\s*\?\s*nv\.startAnyway/);
+    expect(block.slice(0, 2400)).toMatch(/queueLeads\s*\?\s*nv\.startAnyway/);
   });
 
   it('are the only thing in the tray where there is just one of them', () => {
     // For later, a reclaim and Record payment each have a single outcome; they get it alone, full width.
-    expect(block.slice(0, 1800)).toMatch(/if \(!queueOffered\) return go/);
+    expect(block.slice(0, 2400)).toMatch(/if \(!queueOffered\) return go/);
   });
 });
 

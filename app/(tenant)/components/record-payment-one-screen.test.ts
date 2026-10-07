@@ -65,7 +65,8 @@ describe('FR-05 — one Mark done, no till', () => {
         // GRW-458 wrapped the expression over several lines when it moved the button into the tray's role
     // helper; the clauses are unchanged.
     // GRW-461 widened the fourth clause; Record payment is still untouched by it (`!forPayment`).
-    expect(sheet).toMatch(/busy \|\|\s*picked\.length === 0 \|\|\s*\(forPayment && !amountsValid\) \|\|\s*\(!later && !forPayment && \(noStaffHere \|\| noOneCanDoIt\)\)/);
+    // Owner, 2026-10-07 — except on the Record payment page (`payPage`), where Mark done says what is missing instead.
+    expect(sheet).toMatch(/busy \|\|\s*\(!payPage && picked\.length === 0\) \|\|\s*\(forPayment && !payPage && !amountsValid\) \|\|\s*\(!later && !forPayment && \(noStaffHere \|\| noOneCanDoIt\)\)/);
   });
 });
 

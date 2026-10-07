@@ -11,7 +11,8 @@ const clay = here('../styles/101-clay-app.css');
 
 describe('the walk-in confirmation', () => {
   it('every Done is the finish button, in all three end states', () => {
-    expect(sheet.match(/className="sheet-item wi-finish" onClick=\{onClose\}/g)).toHaveLength(3);
+    // After a payment its bill's Send on WhatsApp is the filled action, so that Done is the quiet variant (2026-10-07).
+    expect(sheet.match(/className="sheet-item wi-finish(?: wi-finish-quiet)?" onClick=\{onClose\}/g)).toHaveLength(3);
   });
 
   it('is centred, with the check in a round badge', () => {

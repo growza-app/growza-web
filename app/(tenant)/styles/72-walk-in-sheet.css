@@ -764,6 +764,69 @@ input.wi-search-input-plain {
 }
 
 /*
+ * The four ways of paying as equal tiles, the icon above the word (the design's Record payment mock): four
+ * labels and four glyphs to be told apart at a glance, with one thumb, at a counter. They share the row equally,
+ * so "Cash" and "Other" are the same size to hit. `.wi-chip-on` fills the chosen one; its icon follows the text.
+ */
+.wi-pay-modes .wi-chips {
+  flex: 1 1 100%;
+  flex-wrap: nowrap;
+}
+
+.wi-pay-modes .wi-pay-tile {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 2.875rem;
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: var(--radius-sm);
+  /* The 12px floor (GRW-481); the mock's 11px would be under it. */
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.wi-pay-icon {
+  display: flex;
+  color: var(--muted);
+}
+
+/*
+ * Each way of paying has its own colour, so the row is told apart by more than reading four words — the existing
+ * palette, every one over 3:1 against white (non-text contrast): cash green, card blue, UPI purple, other amber.
+ * Not on the chosen tile: that is filled, and its icon turns white with its text.
+ */
+.wi-pay-icon-cash {
+  color: var(--accent-deep);
+}
+
+.wi-pay-icon-card {
+  color: var(--blue);
+}
+
+.wi-pay-icon-upi {
+  color: var(--purple);
+}
+
+.wi-pay-icon-other {
+  color: var(--amber);
+}
+
+.wi-pay-tile.wi-chip-on .wi-pay-icon,
+.wi-pay-tile.wi-chip-on .wi-pay-icon-cash,
+.wi-pay-tile.wi-chip-on .wi-pay-icon-card,
+.wi-pay-tile.wi-chip-on .wi-pay-icon-upi,
+.wi-pay-tile.wi-chip-on .wi-pay-icon-other {
+  color: inherit;
+}
+
+.wi-pay-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/*
  * Jira GRW-291 — a combo as one line: title, what it saves, what it costs.
  *
  * `.wi-picked-name` stays a plain (non-flex) element here — nesting a second
@@ -989,21 +1052,738 @@ input.wi-search-input-plain {
     bottom: 0;
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   }
+
+  /*
+   * A sticky box pins to its scroller's CONTENT box, not its padding box — so the page's own bottom padding
+   * (16px plus the inset, GRW-526's) became a strip under the tray that the list scrolled through, visible
+   * between the Mark done button and the edge of the screen. The tray carries the inset itself now, so the page
+   * gives its padding up and the tray sits on the real edge.
+   */
+  .page-body:has(> .walk-in-page) {
+    padding-bottom: 0;
+  }
 }
 
-/* The branch sits first on Record payment, directly above the search box: a little air between them. */
+/* The branch sits first on New booking's page, directly above the search box: a little air between them. */
 .walk-in-page .wi-branch-field {
   margin-bottom: var(--sp-3);
 }
 
 /*
- * Record payment, on its page: "How did they pay?" and Mark done are the last thing in the form — they follow
- * the stylist and scroll with it, rather than sitting pinned over what is still being filled in (owner, 2026-10-06).
- * New booking's Start now / Book it keeps the pinned tray above.
+ * Record payment carries its branch and its moment in the header (owner, 2026-10-07).
+ *
+ * They used to be three rows of the form: a "Which branch?" field, and a Booking date and Booking time pair that
+ * were `disabled` on this screen, because a payment is always recorded as today, now. 170px of a phone, two of the
+ * controls untouchable — and the form came to 858px against a 667px viewport, so Mark done sat below the fold.
+ *
+ * The branch stays a real `<select>`: the native control keeps its own keyboard and screen-reader behaviour, and
+ * the chevron comes from the shared rule in 11-availability.css. It just reads as part of the subtitle.
  */
-@media (max-width: 860px) {
-  .walk-in-page .wi-pay-actions {
-    position: static;
-    padding-bottom: 14px;
+.wi-head-when {
+  /* Its own row across the whole header: the middle cell of `1fr auto 1fr` is ~230px at 375, which cut the branch name. */
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+/* `.sheet-head`'s `gap: 12px` is meant for the space beside the back arrow; between the two rows it is just height. */
+.sheet-head:has(.wi-head-when) {
+  row-gap: 0;
+}
+
+/*
+ * The branch is a pop-up button: a tinted capsule that says where you are and shows with a chevron that it opens
+ * (pop-up-buttons.md — "the button can update its content to indicate the current selection").
+ *
+ * The capsule is drawn by the span and its three children; the real `<select>` lies over all of it, transparent,
+ * and 44px tall, so a tap lands on the phone's own picker and the capsule can be a slimmer 36px. 90-accessibility.css
+ * forces a select to 16px on a phone so that focusing one cannot zoom the page — that is why the visible name is
+ * its own text, free to be 15px, rather than the select's.
+ */
+.wi-head-branch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  max-width: 100%;
+  height: 2.25rem;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.wi-head-pin,
+.wi-head-chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.wi-head-pin svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+.wi-head-chevron svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.wi-head-branch-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wi-head-branch select {
+  position: absolute;
+  /* 36px of capsule, 44px of target: the extra 4px above and below belongs to the header's own padding. */
+  inset: -0.25rem 0;
+  width: 100%;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/*
+ * Jira GRW-490 — one ring per control. The select is invisible, so the ring goes on the capsule it sits in, and
+ * only for a keyboard: a ring left behind after a tap read as a green box around a half-drawn button.
+ */
+.wi-head-branch select:focus-visible {
+  outline: 0 !important;
+}
+
+.wi-head-branch:focus-within:has(select:focus-visible) {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+.wi-head-branch:has(select:disabled) {
+  opacity: 0.6;
+}
+
+/*
+ * The disclosure that opens Record payment's Name and Phone number fields. A quiet row, not a button with weight:
+ * most counter sales never need it, because the search box above has already captured the name.
+ */
+.wi-add-person {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-deep);
+  text-align: start;
+  cursor: pointer;
+}
+
+.wi-add-person::before {
+  content: '+';
+  margin-inline-end: 7px;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* The moment is a fact, not a control — it never looks tappable. */
+.wi-head-now {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+/* With one branch there is nothing to choose, so the row is text alone and the header keeps its usual height. */
+.wi-head-when:not(:has(.wi-head-branch)) {
+  min-height: 0;
+}
+
+/*
+ * Record payment, on its page: the till is one screen, and "How did they pay?" and Mark done stay on it
+ * (owner, 2026-10-07 — this reverses 2026-10-06, which let the tray scroll away with the form).
+ *
+ * Nothing above it is a long scroll any more: the branch and the moment went into the header, the name and
+ * number are behind a disclosure, and the menu is a grid of cards rather than 52 rows. What is left fits, so a
+ * tray that stays put covers nothing. It carries the home-indicator inset in padding that is actually drawn —
+ * see the `.walk-in-page .wi-actions` rule above for why a negative `bottom` is never right here.
+ */
+
+/*
+ * ---------- Record payment's menu: one list, the whole menu (owner, 2026-10-07) ----------
+ *
+ * It was a grid of three photo cards. At 344px a card is ~100px wide, which cut "Anti-Ageing Facial" to
+ * "Anti-Ageing F…" and "Back & Shoulder Massage" to "Back & Should…" — and at a till the name IS the control. One
+ * column gives the name the width it needs, puts every price in the same place to read down, and keeps the whole
+ * row a target. The tick moved from the photo's corner to the row's end, where a thumb is already going.
+ * An inset list in one bordered box, as lists-and-tables.md has it.
+ */
+.wi-service-list {
+  display: block;
+  max-height: none;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: 0;
+}
+
+/* Kinds of service: a row that scrolls sideways rather than wrapping to a second line of chips. */
+.wi-category-chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin-bottom: var(--sp-2);
+  scrollbar-width: none;
+}
+
+.wi-category-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.wi-category-chips .wi-chip {
+  flex: 0 0 auto;
+  min-height: 2.75rem;
+}
+
+/*
+ * "Koramangala has no services yet…", "Loading…" and "Nothing matches that" sit in the list's box, centred, with
+ * the air `.empty` already has for a bordered list.
+ */
+.wi-service-list > .empty {
+  padding: var(--sp-5) var(--sp-4);
+}
+
+.wi-service-list .wi-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: var(--surface);
+}
+
+/* The row's own tap: photo, name and price, and the ring while it is not on the bill. */
+.wi-card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) 1.5rem;
+  align-items: center;
+  column-gap: var(--sp-3);
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* On the bill the ring gives way to the counter, which sits outside this button (a button cannot hold buttons). */
+.wi-card-on .wi-card-main {
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  padding-inline-end: var(--sp-2);
+}
+
+/*
+ * Name over price. With the counter on the row there is no room for both side by side at 344px — a name column
+ * of ~56px — so the price sits under the name on every row, in the same place whether it is on the bill or not.
+ */
+.wi-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wi-service-list .wi-card-on {
+  background: var(--accent-soft);
+}
+
+/* − 2 + : two 44px targets and the number between them. */
+.wi-qty {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-inline-end: var(--sp-2);
+}
+
+.wi-qty-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--accent-deep);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.wi-qty-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.wi-qty-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.wi-qty-n {
+  min-width: 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--accent-ink);
+}
+
+.wi-card-photo {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+.wi-card-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The name wraps rather than truncates; a two-line name makes its row taller, never unreadable. */
+.wi-service-list .wi-card .picker-row-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.wi-service-list .wi-card .picker-row-meta {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* The empty ring on a row not yet on the bill; once it is, the counter takes its place. */
+.wi-card-tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  box-sizing: border-box;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  color: #fff;
+}
+
+
+/*
+ * The stylist, as one row (owner, 2026-10-07). With the heading gone the select has to carry the question
+ * itself, so it reads "Stylist · whoever is free" rather than a bare name under a label.
+ */
+.wi-stylist-row {
+  min-height: 44px;
+  font-size: 0.78125rem;
+  font-weight: 600;
+}
+
+/* ---------- The bill's heading, and what it does not promise ---------- */
+.wi-bill-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--sp-2);
+}
+
+/* "In this bill · 3" never breaks after its dot; at 344px the hint goes under it instead of squeezing it. */
+.wi-bill-head .wi-section-label {
+  white-space: nowrap;
+}
+
+.wi-bill-hint {
+  /* The 12px floor (GRW-481) — the mock's 11.5px would be under it. */
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: end;
+}
+
+/*
+ * The star on a field that cannot be left empty. The same amber as `.field-error`, so that a star the person
+ * ignored and the sentence Mark done puts under it read as one thing.
+ */
+.field-required {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/*
+ * Record payment's tray: the total beside Mark done (the design's mock). The amount is the second thing the
+ * eye needs after "is it right?", so it sits where the thumb already is, and it is a button: the bill's lines,
+ * where an amount is changed, are under the menu, and this is the way to them.
+ */
+.wi-tray-row {
+  display: flex;
+  /* The tray is a column that centres its children (`.wi-pay-actions`); this row and the tiles above it take
+     the full width, so the total and the button line up with the edges of everything else on the screen. */
+  align-self: stretch;
+  align-items: stretch;
+  gap: var(--sp-3);
+}
+
+.wi-pay-actions .wi-pay-modes {
+  align-self: stretch;
+}
+
+.wi-tray-row .btn {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.wi-tray-total {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: start;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.wi-tray-total-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wi-tray-total-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+/* ---------- A package: "View details", and the overlay it opens (owner, 2026-10-07) ---------- */
+
+/*
+ * A package row looks exactly like a service row — photo, name over price, the ring at the end, filled with a tick
+ * once it is on the bill (owner, 2026-10-07) — with "View details" on the price line. The toggle is a button stretched
+ * over the whole row; the link sits above it, so tapping the link opens the details and tapping anywhere else
+ * toggles the package.
+ */
+.wi-service-list .wi-card-pkg {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) 1.5rem;
+  align-items: center;
+  column-gap: var(--sp-3);
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.wi-card-hit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Everything drawn on the row lets a tap fall through to the toggle — except the link. */
+.wi-card-pkg > :not(.wi-card-hit) {
+  pointer-events: none;
+}
+
+.wi-pkg-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-1);
+}
+
+.wi-pkg-dot {
+  color: var(--muted);
+}
+
+.wi-pkg-details {
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* A 44px target without making the row taller: the hit area reaches above and below the words. */
+.wi-pkg-details::before {
+  content: '';
+  position: absolute;
+  inset: -0.75rem -0.25rem;
+}
+
+.wi-card-pkg.wi-card-on .wi-card-tick {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.wi-card-tick svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.pkg-details-count {
+  margin: 0 0 var(--sp-2);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.pkg-details-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.pkg-details-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+}
+
+.pkg-details-price {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.pkg-details-sum {
+  margin: var(--sp-3) 0 0;
+}
+
+.pkg-details-sum > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-1) 0;
+}
+
+.pkg-details-sum dt,
+.pkg-details-sum dd {
+  margin: 0;
+}
+
+/* What the services come to on their own, struck through: the package price replaces it. */
+.pkg-details-was {
+  color: var(--muted);
+  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+
+.pkg-details-total {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pkg-details-saves {
+  margin: var(--sp-1) 0 0;
+  font-weight: 600;
+  color: var(--accent-deep);
+  text-align: end;
+}
+
+/* ---------- Record payment: who did it, as a row of names (owner, 2026-10-07) ---------- */
+.wi-stylist-chips {
+  align-items: center;
+  margin-bottom: var(--sp-2);
+}
+
+/* The noun leads the row, so "Rahul" and "Priya" read as the stylist without a heading above them. */
+.wi-stylist-chips-label {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--muted);
+  margin-inline-end: var(--sp-1);
+}
+
+.wi-stylist-chips .wi-chip {
+  min-height: 2.75rem;
+}
+
+/* ---------- Record payment: the bill, to send on WhatsApp (owner, 2026-10-07) ---------- */
+.wi-receipt-share {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.wi-receipt-share .wi-section-label {
+  margin: 0;
+}
+
+/* The bill as the client will read it: a slip of paper, the chat's own bold and italic, the text's own line breaks. */
+.wi-receipt-paper {
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.wi-receipt-gap {
+  height: var(--sp-2);
+}
+
+/* "Sending to" over the number, and Change at the end of the number's line: at 344px the three on one line wrap. */
+.wi-receipt-to {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: var(--sp-2);
+}
+
+.wi-receipt-to-label {
+  grid-column: 1 / -1;
+}
+
+.wi-receipt-to-label {
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wi-receipt-to-number {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wi-receipt-change {
+  min-height: 44px;
+}
+
+.wi-receipt-send {
+  width: 100%;
+  min-height: 50px;
+  justify-content: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+}
+
+.wi-receipt-send svg,
+.wi-receipt-more svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.wi-receipt-hint {
+  margin: calc(-1 * var(--sp-1)) 0 0;
+  font-size: 0.78125rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.wi-receipt-more {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--sp-2);
+}
+
+.wi-receipt-more .btn {
+  min-height: 44px;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+/* Back to the client's own number, under the field Change opened. */
+.wi-receipt-back {
+  justify-self: start;
+}
+
+/* After a payment with its bill, Send on WhatsApp is the one filled action; Done steps back to an outlined one. */
+.wi-body .sheet-item.wi-finish.wi-finish-quiet,
+.wi-body .sheet-item.wi-finish.wi-finish-quiet:hover {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* The copy Print prints (ReceiptShare's portal): never on screen. */
+.wi-receipt-print {
+  display: none;
+}
+
+/*
+ * Print (and Save as PDF): the bill alone. The copy is a direct child of <body>, so every other child leaves the
+ * page with `display: none` — `visibility: hidden` kept the form's height, and the bill printed on page one of
+ * several, the rest blank.
+ */
+@media print {
+  body:has(> .wi-receipt-print) > *:not(.wi-receipt-print) {
+    display: none !important;
+  }
+
+  body:has(> .wi-receipt-print) {
+    background: #fff;
+  }
+
+  .wi-receipt-print {
+    display: block;
+    width: 80mm;
+    padding: 4mm 0;
+    color: #000;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wi-receipt-print .wi-receipt-gap {
+    height: 0.5rem;
   }
 }

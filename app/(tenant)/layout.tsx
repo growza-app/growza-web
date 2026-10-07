@@ -133,7 +133,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let canPayOnline = false;
   /** Jira GRW-556 (follow-up) — may this role open Billing (the owner), whether or not there is a Pay now button. */
   let canOpenBilling = false;
-  /** Jira GRW-556 (follow-up) — a payment recorded in the last three days; Home says it arrived. */
+  /** Jira GRW-556 (follow-up) — a payment recorded in the last two hours; Home says it arrived. */
   let paymentReceived: Me['paymentReceived'] = null;
   /** Jira GRW-516 — what a business still being set up is waiting on; null once it is live. */
   let setup: Me['setup'] = null;

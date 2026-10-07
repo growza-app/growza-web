@@ -25,7 +25,8 @@ describe('the walk-in sheet says only what its controls do', () => {
     }
     // Jira GRW-524 — the chairs were toggle buttons in a group; they are one select, named by its heading.
     expect(sheet).toMatch(/id="wi-stylist"/);
-    expect(sheet).toMatch(/aria-labelledby="wi-stylist-label"/);
+    // Named either by the heading above it, or — on the till, which has no heading — by its own aria-label.
+    expect(sheet).toMatch(/aria-labelledby=\{payPage \? undefined : 'wi-stylist-label'\}/);
     expect(sheet).toMatch(/aria-pressed=\{day === d\.iso\}/);
     expect(sheet).toMatch(/aria-pressed=\{slotUtc === slot\.utc\}/);
   });

@@ -45,7 +45,7 @@ export interface Me {
    * billing date. Null for every other role, and when nothing is asked.
    */
   autopayRenewal?: AutopayRenewal | null;
-  /** Jira GRW-556 (follow-up) — a payment the provider recorded in the last three days; Home says it arrived. Owner only. */
+  /** Jira GRW-556 (follow-up) — a payment the provider recorded in the last two hours; Home says it arrived. Owner only. */
   paymentReceived?: { amountMinor: number; currency: string; paidOn: string } | null;
   labels: Record<string, string>;
   /**
@@ -253,6 +253,8 @@ export interface ProvidersOverview {
   topPerformer: { id: string; displayName: string; bookingsCount: number } | null;
   /** Jira GRW-395 — each branch's own top performer, by branch id; a branch with no bookings is absent. */
   topByBranch?: Record<string, { id: string; displayName: string; bookingsCount: number }>;
+  /** Jira GRW-557 — each open branch's places for people (its own number, else the plan's). Absent from an older API. */
+  placesByBranch?: Record<string, number>;
 }
 
 export interface ProviderWorkingHourRow {

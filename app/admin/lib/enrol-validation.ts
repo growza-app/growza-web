@@ -50,12 +50,26 @@ const hasLetterOrDigit = (v: string) => /[\p{L}\p{N}]/u.test(v);
  * buys is that an admin finds out about a typo before a round trip, and against
  * the field rather than in a banner.
  */
+/**
+ * Jira GRW-557 — how many stylists a branch may have: asked for every branch, the main one included. A whole number,
+ * 1–999 (999 is what Pro calls unlimited); the API refuses anything else with the same words.
+ */
+export function stylistsProblem(value: string): string | null {
+  const v = value.trim();
+  if (!v) return 'Enter how many stylists this branch may have';
+  if (!/^\d+$/.test(v)) return 'Enter a whole number of stylists';
+  const n = Number(v);
+  if (n < 1) return 'A branch needs at least 1 place for a stylist';
+  if (n > 999) return 'That is more than 999 — check the number';
+  return null;
+}
+
 export function validate(values: {
   name: string;
   country: string;
   typeCode: string;
   planCode: string;
-  branches: { name: string; line1: string; city: string }[];
+  branches: { name: string; line1: string; city: string; stylists: string }[];
   nationalNumber: string;
   dialCode: string | null;
   reason: string;
@@ -90,6 +104,8 @@ export function validate(values: {
 
     if (branch.line1.trim().length > 160) errors[`branch.${i}.line1`] = 'Address is too long (160 characters maximum)';
     if (branch.city.trim().length > 80) errors[`branch.${i}.city`] = 'City is too long (80 characters maximum)';
+    const stylists = stylistsProblem(branch.stylists);
+    if (stylists) errors[`branch.${i}.stylists`] = stylists;
   });
 
   if (values.branches.length === 0) errors['branch.0.name'] = 'Add at least one branch';

@@ -1,11 +1,12 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { formatMoney, formatTime, type Provider, type QueueEntry, type TokenRow } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
+import { payTokenHref } from '../../lib/pay-token';
 import { IconStopwatch } from '../icons';
-import { NewVisitSheet } from '../NewVisitSheet';
 import { useMayUse } from '../SessionProvider';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
 import { SHOW_STEP, useVisibleRows } from './use-visible-rows';
@@ -108,7 +109,8 @@ export function TokenBoard({
   // On a phone a list draws its first ten rows and a "Show more" button adds ten at a time; a laptop draws them all.
   const [shown, setShown] = useState<Record<Column, number>>({ waiting: SHOW_STEP, with_stylist: SHOW_STEP, paid: SHOW_STEP });
   const [giving, setGiving] = useState<TokenRow | null>(null);
-  const [paying, setPaying] = useState<TokenRow | null>(null);
+  // Owner, 2026-10-07 — paying a token opens the Record payment page, not an overlay of the old form.
+  const router = useRouter();
   const [till, setTill] = useState<TokenRow | null>(null);
   /**
    * Jira GRW-409 — a row's buttons, each asked of the shared rule. A role the API would refuse is shown the token
@@ -149,7 +151,7 @@ export function TokenBoard({
    */
   useEffect(() => {
     const want = restore.current;
-    if (!want || giving || paying || till) return;
+    if (!want || giving || till) return;
     const panel = document.getElementById(`tb-col-${want.col}`);
     const active = document.activeElement;
     const next = afterSheet({
@@ -163,7 +165,7 @@ export function TokenBoard({
     const row = rows[Math.min(want.index, rows.length - 1)];
     const target = row?.querySelector<HTMLElement>('button') ?? (phone ? tabRefs.current[want.col] : panel?.querySelector<HTMLElement>('h2'));
     target?.focus();
-  }, [tokens, giving, paying, till, phone]);
+  }, [tokens, giving, till, phone]);
 
   const open = (col: Column, index: number, set: (x: TokenRow) => void, x: TokenRow) => {
     restore.current = { id: x.id, col, index };
@@ -226,7 +228,7 @@ export function TokenBoard({
             </button>
           ) : null}
           {mayRecordPayment ? (
-            <button type="button" className="hm-give tb-pay" aria-label={w.payFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setPaying, x)}>
+            <button type="button" className="hm-give tb-pay" aria-label={w.payFor(x.tokenNo, nameOf(x))} onClick={() => router.push(payTokenHref(x))}>
               {w.recordPayment}
             </button>
           ) : null}
@@ -304,7 +306,6 @@ export function TokenBoard({
       </div>
 
       {giving ? <GiveToStaffSheet t={t} entry={asEntry(giving)} providers={providers} busy={busy} onClose={() => setGiving(null)} /> : null}
-      {paying ? <NewVisitSheet mode="now" purpose="payment" token={asEntry(paying)} timezone={timezone} onClose={() => setPaying(null)} /> : null}
       {till ? (
         <VisitTill legIds={till.legIds} customerId={till.customerId} locationId={till.locationId} timezone={timezone} onClose={() => setTill(null)} />
       ) : null}

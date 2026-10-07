@@ -3,6 +3,7 @@ import { guardLive } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import type { VisitMode } from '../../components/NewVisitSheet';
+import type { QueueEntry } from '../../lib/home-types';
 import { NewBookingClient } from './NewBookingClient';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
@@ -21,7 +22,7 @@ export const dynamic = 'force-dynamic';
 export default async function NewBookingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string; purpose?: string }>;
+  searchParams: Promise<{ mode?: string; purpose?: string; token?: string; location?: string; from?: string }>;
 }) {
   // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
   await guardLive('/appointments/new');
@@ -58,9 +59,25 @@ export default async function NewBookingPage({
     redirect('/appointments/new');
   }
 
+  /*
+   * Owner, 2026-10-07 — paying a waiting token is this page too (`&token=…&location=…`), not the old overlay: the
+   * token's client, branch and services filled in. A token that is no longer waiting (paid on another phone, left)
+   * is not found: the page opens as a plain Record payment and SAYS so, or the desk takes the money a second time
+   * for a visit that is already settled.
+   */
+  let token: QueueEntry | undefined;
+  if (paying && params.token) {
+    try {
+      token = (await api.walkInQueue(params.location ?? null)).find((x) => x.id === params.token);
+    } catch {
+      token = undefined;
+    }
+  }
+  const tokenGone = Boolean(paying && params.token && !token);
+
   return (
     <div className="page-body">
-      <NewBookingClient mode={mode} purpose={paying ? 'payment' : 'visit'} timezone={me.tenant?.timezone ?? 'Asia/Kolkata'} />
+      <NewBookingClient mode={mode} purpose={paying ? 'payment' : 'visit'} token={token} tokenGone={tokenGone} backTo={params.from === 'bookings' ? '/appointments' : undefined} timezone={me.tenant?.timezone ?? 'Asia/Kolkata'} />
     </div>
   );
 }

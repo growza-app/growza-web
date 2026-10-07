@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { usePhone } from '../../lib/use-phone';
 import { useMemo, useState } from 'react';
 import { type Appointment, type Provider, type TokenBoard as TokenBoardData } from '../../lib/api';
 import { clientNameLabel, groupBookings, summarizeServices } from '../../lib/appointment-display';
@@ -9,7 +8,6 @@ import { homeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
 import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-state';
 import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconPlus, IconReceipt, IconScissors, IconSearch, IconUserPlus } from '../icons';
-import { NewVisitSheet } from '../NewVisitSheet';
 import { useBranch } from '../BranchProvider';
 import { useMayUse, useWritable } from '../SessionProvider';
 import { BookedToday, bookedNotOnBoard } from './BookedToday';
@@ -58,9 +56,8 @@ export function ReceptionHome(p: ReceptionHomeProps) {
   const w = useTokenWords();
   const now = useMemo(() => new Date(p.nowISO), [p.nowISO]);
   const branch = useBranch();
-  const [sheet, setSheet] = useState<'payment' | 'token' | null>(null);
-  // Owner, 2026-10-06 — on a phone Record payment is a page of its own; a larger screen keeps the overlay.
-  const phone = usePhone();
+  // Owner, 2026-10-07 — Record payment is a page of its own at every width; the laptop overlay drew the old form.
+  const [sheet, setSheet] = useState<'token' | null>(null);
   const router = useRouter();
   const inBranch = (locationId: string | undefined | null) => !branch.choice || !locationId || locationId === branch.choice;
   const tokens = useMemo(() => (p.board?.tokens ?? []).filter((x) => inBranch(x.locationId)), [p.board, branch.choice]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -116,7 +113,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
             </button>
           ) : null}
           {mayRecordPayment ? (
-            <button type="button" className="hm-action" onClick={() => (phone ? router.push('/appointments/new?purpose=payment') : setSheet('payment'))}>
+            <button type="button" className="hm-action" onClick={() => router.push('/appointments/new?purpose=payment')}>
               <IconReceipt />
               <strong>{w.recordPayment}</strong>
             </button>
@@ -162,7 +159,6 @@ export function ReceptionHome(p: ReceptionHomeProps) {
         />
       </div>
 
-      {sheet === 'payment' ? <NewVisitSheet mode="now" purpose="payment" timezone={p.timezone} onClose={() => setSheet(null)} /> : null}
       {sheet === 'token' ? <NewTokenSheet w={w} location={tokenBranch} branchName={tokenBranchName} onClose={() => setSheet(null)} /> : null}
     </>
   );

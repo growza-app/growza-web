@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { DIAL_CODES, validate } from './enrol-validation';
 
@@ -14,7 +17,7 @@ const good = {
   country: 'IN',
   typeCode: 'salon',
   planCode: 'prime',
-  branches: [{ name: 'MG Road', line1: '', city: '' }],
+  branches: [{ name: 'MG Road', line1: '', city: '', stylists: '5' }],
   nationalNumber: '9876543210',
   dialCode: '+91',
   reason: 'Signed up on a call',
@@ -108,13 +111,13 @@ describe('the other fields', () => {
   });
 
   it('refuses a branch name that is too short or too long', () => {
-    expect(validate({ ...good, branches: [{ name: 'M', line1: '', city: '' }] })['branch.0.name']).toBeTruthy();
-    expect(validate({ ...good, branches: [{ name: 'x'.repeat(81), line1: '', city: '' }] })['branch.0.name']).toContain('too long');
+    expect(validate({ ...good, branches: [{ name: 'M', line1: '', city: '', stylists: '5' }] })['branch.0.name']).toBeTruthy();
+    expect(validate({ ...good, branches: [{ name: 'x'.repeat(81), line1: '', city: '', stylists: '5' }] })['branch.0.name']).toContain('too long');
   });
 
   it('refuses an address or city over its limit, but not an empty one', () => {
-    expect(validate({ ...good, branches: [{ name: 'MG Road', line1: 'x'.repeat(161), city: '' }] })['branch.0.line1']).toContain('too long');
-    expect(validate({ ...good, branches: [{ name: 'MG Road', line1: '', city: 'x'.repeat(81) }] })['branch.0.city']).toContain('too long');
+    expect(validate({ ...good, branches: [{ name: 'MG Road', line1: 'x'.repeat(161), city: '', stylists: '5' }] })['branch.0.line1']).toContain('too long');
+    expect(validate({ ...good, branches: [{ name: 'MG Road', line1: '', city: 'x'.repeat(81), stylists: '5' }] })['branch.0.city']).toContain('too long');
     expect(validate(good)['branch.0.line1']).toBeUndefined();
   });
 
@@ -137,7 +140,7 @@ describe('the other fields', () => {
 describe('branches', () => {
   const withBranches = (...names: string[]) => ({
     ...good,
-    branches: names.map((name) => ({ name, line1: '', city: '' })),
+    branches: names.map((name) => ({ name, line1: '', city: '', stylists: '5' })),
   });
 
   it('accepts several branches with distinct names', () => {
@@ -170,5 +173,36 @@ describe('reporting', () => {
   it('reports every bad field at once, not just the first', () => {
     const errors = validate({ ...good, name: '', reason: '', nationalNumber: '' });
     expect(Object.keys(errors).sort()).toEqual(['name', 'owner.phone', 'reason']);
+  });
+});
+
+describe('Jira GRW-557 — stylists at most, per branch', () => {
+  const branch = (stylists: string) => ({ ...good, branches: [{ name: 'MG Road', line1: '', city: '', stylists }] });
+
+  it('accepts a whole number from 1 to 999', () => {
+    for (const n of ['1', '5', '999']) expect(validate(branch(n))['branch.0.stylists']).toBeUndefined();
+  });
+
+  it('asks for one when it is empty, and refuses 0, a fraction and more than 999', () => {
+    expect(validate(branch(''))['branch.0.stylists']).toBe('Enter how many stylists this branch may have');
+    expect(validate(branch('0'))['branch.0.stylists']).toBe('A branch needs at least 1 place for a stylist');
+    expect(validate(branch('2.5'))['branch.0.stylists']).toBe('Enter a whole number of stylists');
+    expect(validate(branch('1000'))['branch.0.stylists']).toBe('That is more than 999 — check the number');
+  });
+
+  it('is checked per branch, so the message sits on the branch it is about', () => {
+    const two = { ...good, branches: [{ name: 'MG Road', line1: '', city: '', stylists: '5' }, { name: 'Indiranagar', line1: '', city: '', stylists: '' }] };
+    const errors = validate(two);
+    expect(errors['branch.0.stylists']).toBeUndefined();
+    expect(errors['branch.1.stylists']).toBeTruthy();
+  });
+});
+
+describe('Jira GRW-557 — an API error always lands somewhere visible', () => {
+  const modal = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../components/AddBusinessModal.tsx'), 'utf8');
+
+  it('maps a branch address field to the form field, and anything without a field to the banner', () => {
+    expect(modal).toMatch(/\.replace\(\/\^locations\\\.\(\\d\+\)\\\.\(\?:address\\\.\)\?\/, 'branch\.\$1\.'\)/);
+    expect(modal).toMatch(/if \(field && SHOWN_FIELD\.test\(field\)\) setErrors/);
   });
 });

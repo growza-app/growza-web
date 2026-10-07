@@ -2,6 +2,8 @@
 
 import { BranchBillPreview } from '../../components/BranchBillPreview';
 import { BranchRowActions } from '../../components/BranchRowActions';
+import { BranchPlaces } from '../../components/BranchPlaces';
+import { stylistsProblem } from '../../lib/enrol-validation';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -43,7 +45,17 @@ interface BusinessDetail {
   waPhoneNumber: string | null;
   businessTypeVersion: number;
   // Jira GRW-236 — main branch first; `isMain` marks it.
-  locations: Array<{ id: string; name: string; active: boolean; isMain: boolean }>;
+  locations: Array<{
+    id: string;
+    name: string;
+    active: boolean;
+    isMain: boolean;
+    /** Jira GRW-557 — the branch's own number of stylists; null while it uses the plan's. */
+    maxProviders: number | null;
+    activeStylists: number;
+  }>;
+  /** Jira GRW-557 — the plan's number of stylists per branch; null when it could not be resolved. */
+  placesDefault?: number | null;
   members: Array<{ userId: string; phone: string | null; role: string }>;
   suspensionReason: string | null;
   subscription: {
@@ -419,6 +431,7 @@ function BusinessDetailInner() {
           businessId={params.id}
           businessName={business.name}
           locations={business.locations}
+          placesDefault={business.placesDefault ?? null}
           canManage={canManage}
           onChanged={() => setRetryToken((n) => n + 1)}
         />
@@ -744,6 +757,8 @@ function UsersTab({ members }: { members: BusinessDetail['members'] }) {
 const BRANCHES_COLUMNS: TableColumn[] = [
   { label: 'Branch', width: '2fr' },
   { label: 'Status', width: '1fr' },
+  // Jira GRW-557 — active stylists against the branch's own number.
+  { label: 'Stylists', width: '1.4fr' },
   { label: '', width: '1.6fr' },
 ];
 
@@ -760,17 +775,21 @@ function BranchesTab({
   businessId,
   businessName,
   locations,
+  placesDefault,
   canManage,
   onChanged,
 }: {
   businessId: string;
   businessName: string;
   locations: BusinessDetail['locations'];
+  placesDefault: number | null;
   canManage: boolean;
   onChanged: () => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
+  /** Jira GRW-557 — how many stylists the new branch may have; starts at the plan's number each time it opens. */
+  const [stylists, setStylists] = useState('');
   const [line1, setLine1] = useState('');
   const [city, setCity] = useState('');
   /**
@@ -790,6 +809,11 @@ function BranchesTab({
       setError('A branch name of at least 2 characters is needed.');
       return;
     }
+    const stylistsError = stylistsProblem(stylists);
+    if (stylistsError) {
+      setError(stylistsError);
+      return;
+    }
     setBusy(true);
     setError(null);
     adminFetch(`/businesses/${businessId}/branches`, {
@@ -798,6 +822,7 @@ function BranchesTab({
         name: name.trim(),
         address: { line1: line1.trim(), city: city.trim() },
         reason,
+        maxProviders: Number(stylists.trim()),
         ...(menu.startsWith('copy:') ? { menu: 'copy', copyFrom: menu.slice(5) } : { menu }),
       }),
     })
@@ -832,6 +857,7 @@ function BranchesTab({
           <PrimaryButton
             onClick={() => {
               setError(null);
+              setStylists(placesDefault === null ? '' : String(placesDefault));
               setAdding(true);
             }}
             disabled={openCount >= 20}
@@ -858,6 +884,9 @@ function BranchesTab({
               </div>
               <div>
                 <StatusPill status={l.active ? 'Active' : 'Closed'} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <BranchPlaces businessId={businessId} branch={l} placesDefault={placesDefault} canManage={canManage} onChanged={onChanged} />
               </div>
               <div style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 {/* Jira GRW-246 — Reopen on a closed branch, Make main on an open one. */}
@@ -904,6 +933,19 @@ function BranchesTab({
             City (optional)
           </label>
           <TextInput id="add-branch-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Bengaluru" />
+          <label htmlFor="add-branch-stylists" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+            Stylists at most
+          </label>
+          <TextInput
+            id="add-branch-stylists"
+            value={stylists}
+            inputMode="numeric"
+            onChange={(e) => setStylists(e.target.value.replace(/[^0-9]/g, ''))}
+            placeholder={placesDefault === null ? '5' : String(placesDefault)}
+          />
+          <span style={{ fontSize: 12.5, color: oklch.textMuted }}>
+            Starts at the plan&rsquo;s number: fewer for a small branch, more for a large one. Can be changed later.
+          </span>
           <label htmlFor="add-branch-menu" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
             Its menu
           </label>

@@ -38,6 +38,9 @@ const FIELD_FOR_ERROR: Record<string, string> = {
   vertical_version_not_found: 'businessTypeCode',
 };
 
+/** Every error key this form draws against a field; anything else would be set and never seen. */
+const SHOWN_FIELD = /^(name|country|businessTypeCode|planCode|owner\.phone|reason|branch\.\d+\.(name|line1|city|stylists))$/;
+
 export interface CreatedBusiness {
   id: string;
   ownerTemporaryPassword: string;
@@ -54,6 +57,8 @@ interface PlanOption {
   code: string;
   name: string;
   status: string;
+  /** Jira GRW-557 — the plan's limits; `limits.max_providers` is where each branch's "Stylists at most" starts. */
+  limits?: Record<string, number>;
 }
 
 /** The unset state of a select that must be chosen, not defaulted. */
@@ -129,6 +134,19 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   }, []);
 
   const selectedType = types?.find((t) => t.code === typeCode);
+
+  /*
+   * Jira GRW-557 — every branch's "Stylists at most" starts at the chosen plan's number, and follows the plan while
+   * nobody has typed a different one: a row still showing the previous plan's number (or nothing) takes the new one.
+   */
+  const planStylists = plans?.find((p) => p.code === planCode)?.limits?.['limits.max_providers'];
+  const planStylistsText = planStylists === undefined ? '' : String(planStylists);
+  const previousPlanStylists = useRef('');
+  useEffect(() => {
+    const before = previousPlanStylists.current;
+    previousPlanStylists.current = planStylistsText;
+    setBranches((rows) => rows.map((row) => (row.stylists === '' || row.stylists === before ? { ...row, stylists: planStylistsText } : row)));
+  }, [planStylistsText]);
   const errorFor = (field: string) => errors[field] || undefined;
 
   async function submit() {
@@ -163,6 +181,8 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
                     ...(branch.city.trim() ? { city: branch.city.trim() } : {}),
                   }
                 : undefined,
+            // Jira GRW-557 — validated above, so a whole number 1–999.
+            maxProviders: Number(branch.stylists.trim()),
           })),
           /**
            * Composed here, so what the route receives is always E.164 and the
@@ -180,8 +200,13 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
         // about — the field it named itself, or the one its error code maps to
         // — and as a banner when it is about the request as a whole, because a
         // provider being down is nobody's typo.
-        const field = err.field ?? (err.code ? FIELD_FOR_ERROR[err.code] : undefined);
-        if (field) setErrors({ [field]: err.message });
+        // The API names a branch's fields `locations.0.maxProviders` / `locations.0.address.line1`; the form's are
+        // `branch.0.stylists` / `branch.0.line1`. A field the form has no place for goes to the banner, never nowhere.
+        const apiField = err.field
+          ?.replace(/^locations\.(\d+)\.maxProviders$/, 'branch.$1.stylists')
+          .replace(/^locations\.(\d+)\.(?:address\.)?/, 'branch.$1.');
+        const field = apiField ?? (err.code ? FIELD_FOR_ERROR[err.code] : undefined);
+        if (field && SHOWN_FIELD.test(field)) setErrors({ [field]: err.message });
         else setFormError(err.message);
       } else {
         setFormError('Could not create this business.');
@@ -194,7 +219,13 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   // on submit against the field — a button that stays grey without saying why
   // is the worse of the two failures.
   const complete =
-    name && country && typeCode && planCode && visibleBranches.every((b) => b.name.trim()) && nationalNumber && reason;
+    name &&
+    country &&
+    typeCode &&
+    planCode &&
+    visibleBranches.every((b) => b.name.trim() && b.stylists.trim()) &&
+    nationalNumber &&
+    reason;
 
   return (
     <div
@@ -310,13 +341,13 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
               // A second row appears as soon as it is asked for, rather than
               // making the admin find an "add" button to discover what the
               // toggle did.
-              if (next && branches.length === 1) setBranches((rows) => [...rows, emptyBranch()]);
+              if (next && branches.length === 1) setBranches((rows) => [...rows, emptyBranch(planStylistsText)]);
             }}
             onChange={(index, patch, field) => {
               setBranch(index, patch);
               clear(`branch.${index}.${field}`);
             }}
-            onAdd={() => setBranches((rows) => [...rows, emptyBranch()])}
+            onAdd={() => setBranches((rows) => [...rows, emptyBranch(planStylistsText)])}
             onRemove={(index) => {
               setBranches((rows) => rows.filter((_, i) => i !== index));
               // Indices shift, so keeping per-branch errors would show them

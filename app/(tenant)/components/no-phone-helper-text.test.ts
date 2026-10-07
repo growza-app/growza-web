@@ -10,7 +10,8 @@ const strip = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$
 const sheet = strip(readFileSync(resolve(__dirname, 'NewVisitSheet.tsx'), 'utf8'));
 
 describe('New booking has no helper text under Phone number', () => {
-  const start = sheet.indexOf('<PhoneField');
+  // The new person's Phone number field — not the returning client's "Add phone number" one above it.
+  const start = sheet.search(/<PhoneField\s+id="wi-phone"/);
   const block = sheet.slice(start, sheet.indexOf('/>', start));
 
   it('passes no hint', () => {

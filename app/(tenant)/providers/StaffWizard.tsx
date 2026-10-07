@@ -71,6 +71,7 @@ export function StaffWizard({
   orgHours,
   hoursByBranch = {},
   branches = [],
+  fullBranches = [],
   onClose,
   onCreated,
 }: {
@@ -85,6 +86,8 @@ export function StaffWizard({
   hoursByBranch?: Record<string, Array<{ weekday: number; startTime: string; endTime: string }>>;
   /** Jira GRW-234 — a multi-branch business's branches, main first. Empty: no choice to make. */
   branches?: Array<{ id: string; name: string }>;
+  /** Jira GRW-557 — branches with no place left: offered, but not choosable, and never the one it starts on. */
+  fullBranches?: string[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -104,7 +107,10 @@ export function StaffWizard({
   const [addingRole, setAddingRole] = useState(false);
   // Jira GRW-377 — a new stylist starts at the branch the dashboard is looking at, not always the main one.
   const branchContext = useBranch();
-  const [branchId, setBranchId] = useState<string | null>(branches.find((b) => b.id === branchContext.one)?.id ?? branches[0]?.id ?? null);
+  const roomAt = branches.filter((b) => !fullBranches.includes(b.id));
+  const [branchId, setBranchId] = useState<string | null>(
+    branches.find((b) => b.id === branchContext.one)?.id ?? roomAt[0]?.id ?? branches[0]?.id ?? null,
+  );
   // QA (Jira GRW-377) — the same guard as the walk-in sheet: if this ever renders before the shared branch is
   // `ready`, take it when it arrives, unless the owner already chose one here.
   const branchTouched = useRef(false);
@@ -356,21 +362,26 @@ export function StaffWizard({
                 <>
                   <div className="wiz-section-label">{t('branch')}</div>
                   <div className="wiz-chips" role="radiogroup" aria-label={t('branch')}>
-                    {branches.map((b, i) => (
-                      <button
-                        key={b.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={branchId === b.id}
-                        className={`wiz-chip ${branchId === b.id ? 'is-on' : ''}`}
-                        onClick={() => {
-                          branchTouched.current = true;
-                          setBranchId(b.id);
-                        }}
-                      >
-                        {i === 0 ? t('mainSuffix', { name: b.name }) : b.name}
-                      </button>
-                    ))}
+                    {branches.map((b, i) => {
+                      const label = i === 0 ? t('mainSuffix', { name: b.name }) : b.name;
+                      const full = fullBranches.includes(b.id);
+                      return (
+                        <button
+                          key={b.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={branchId === b.id}
+                          className={`wiz-chip ${branchId === b.id ? 'is-on' : ''}`}
+                          disabled={full}
+                          onClick={() => {
+                            branchTouched.current = true;
+                            setBranchId(b.id);
+                          }}
+                        >
+                          {full ? t('branchFull', { name: label }) : label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </>
               ) : null}

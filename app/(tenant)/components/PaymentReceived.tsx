@@ -12,7 +12,7 @@ import type { Lang } from '../lib/lang';
  * arrived — on Billing, where they paid, and on Home, where they land. It only ever comes from a payment the provider's
  * webhook recorded (`recentPayment`), never from the click on Pay now.
  *
- * It can be closed. It is good news and it stays for days, so it has to be dismissible — an owner who has read it should not
+ * It can be closed. It is good news and it stays for two hours (owner, 2026-10-07 — it was three days), so it has to be dismissible — an owner who has read it should not
  * have it sit above their day. The dismissal is remembered per payment on this device (so closing it on Home also closes it on
  * Billing, and the NEXT payment is announced again) and costs nothing if storage is unavailable: it just shows again.
  */
