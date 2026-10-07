@@ -105,7 +105,7 @@ import type {
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 import type { AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
-import { downscaleImage } from './downscale.js';
+import { downscaleImage } from './downscale';
 import type {
   ClientProfile,
   ReportBookings,
