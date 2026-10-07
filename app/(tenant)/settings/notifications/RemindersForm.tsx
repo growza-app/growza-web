@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { SettingsSaveBar } from '../SettingsSaveBar';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
@@ -162,18 +163,20 @@ export function RemindersForm({
           </div>
         ))}
         {error && <div role="alert" className="field-error">{error}</div>}
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn" disabled={busy} onClick={save}>
-            {busy ? t('saving') : t('save')}
-          </button>
-          {saved && !busy && (
-            <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              {/* "Saved" alone would read as "done, it's working now". It is
-                  saved; it is not sending. Say both. */}
-              {whatsappLive ? t('saved') : t('savedNotLive')}
-            </span>
-          )}
-        </div>
+        {/*
+          The shared bar (design review, 2026-10-07), which on a phone sticks to the bottom of the scroller.
+          This was a hand-rolled copy of it — the same inline `marginTop: 16, display: flex, gap: 12` that
+          GRW-416 wrote this component to stop being copied — so Save sat wherever the form happened to end.
+        */}
+        <SettingsSaveBar
+          busy={busy}
+          saved={saved}
+          onSave={save}
+          saveLabel={t('save')}
+          savingLabel={t('saving')}
+          // "Saved" alone would read as "done, it's working now". It is saved; it is not sending. Say both.
+          savedLabel={whatsappLive ? t('saved') : t('savedNotLive')}
+        />
       </div>
     </div>
     </>

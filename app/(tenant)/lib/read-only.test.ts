@@ -179,7 +179,12 @@ describe('save bars on a phone dock above the tab bar, on every Settings tab', (
     expect(block).toMatch(/\.page-body\.settings-page \{\s*padding-bottom: var\(--sp-3\);/);
   });
   it('both bars sit at that edge, on a strip of page background, so nothing shows through under them', () => {
-    expect(block).toMatch(/\.settings-page \.bp-savebar,\s*\.settings-page \.settings-savebar \{\s*bottom: 0;\s*box-shadow: 0 0 0 var\(--sp-3\) var\(--page-bg\)/);
+    /*
+     * Design review, 2026-10-07 — the DOCKED bars only. The strip is a spread shadow in the page colour, which
+     * hides what scrolls behind a bar stuck to the scroller's edge; on a bar sitting in the flow of a card it
+     * painted a grey band across the card and out past its corner, once on each of Working hours' two forms.
+     */
+    expect(block).toMatch(/\.settings-page \.bp-savebar,\s*\.settings-page \.settings-savebar-pinned \{\s*bottom: 0;\s*box-shadow: 0 0 0 var\(--sp-3\) var\(--page-bg\)/);
   });
 });
 

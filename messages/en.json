@@ -270,7 +270,7 @@
     "back": "Back to Settings",
     "comingSoon": "Coming soon",
     "groups": {
-      "branchNamed": "{name} branch",
+      "thisBranch": "This branch",
       "business": "Business",
       "wholeBusiness": "Whole business",
       "teamAndBilling": "Team and billing",
@@ -465,6 +465,8 @@
     "hintBranchNamed": "When {name} is open. Staff at {name} who follow the salon's hours follow these.",
     "hintBranchUnnamed": "When this branch is open. Staff at this branch who follow the salon's hours follow these.",
     "save": "Save changes",
+    "saveHours": "Save hours",
+    "saveAttendance": "Save attendance",
     "saving": "Saving…",
     "saved": "Saved",
     "attendance": "Attendance",

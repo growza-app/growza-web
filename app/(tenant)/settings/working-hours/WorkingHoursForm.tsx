@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { SettingsSaveBar } from '../SettingsSaveBar';
 import { useState } from 'react';
 import { api, type SettingsSummary } from '../../lib/api';
 import { toWeekdayRows, WeekdayHoursEditor } from '../../components/WeekdayHoursEditor';
@@ -86,16 +87,21 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
         </p>
         <WeekdayHoursEditor rows={rows} onChange={update} />
         {error && <div role="alert" className="field-error">{error}</div>}
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn" disabled={busy} onClick={save}>
-            {busy ? t('saving') : t('save')}
-          </button>
-          {saved && !busy && (
-            <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              {t('saved')}
-            </span>
-          )}
-        </div>
+        {/*
+          Two forms on this screen, two saves, and until now both said "Save changes" (design review,
+          2026-10-07). Change the hours AND the grace period, press one, and the other was gone with nothing
+          said. Each button names what it keeps, and neither sticks to the phone's bottom edge: two bars on
+          one edge would cover each other.
+        */}
+        <SettingsSaveBar
+          pinned={false}
+          busy={busy}
+          saved={saved}
+          onSave={save}
+          saveLabel={t('saveHours')}
+          savingLabel={t('saving')}
+          savedLabel={t('saved')}
+        />
       </div>
     </div>
 
@@ -141,16 +147,15 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
           {t('lateFrom', { time: graceLabel })}
         </p>
         {graceError && <div role="alert" className="field-error">{graceError}</div>}
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn" disabled={busy} onClick={saveGrace}>
-            {busy ? t('saving') : t('save')}
-          </button>
-          {graceSaved && !busy && (
-            <span className="field-hint" style={{ margin: 0, color: 'var(--accent-deep)' }}>
-              {t('saved')}
-            </span>
-          )}
-        </div>
+        <SettingsSaveBar
+          pinned={false}
+          busy={busy}
+          saved={graceSaved}
+          onSave={saveGrace}
+          saveLabel={t('saveAttendance')}
+          savingLabel={t('saving')}
+          savedLabel={t('saved')}
+        />
       </div>
     </div>
     </>
