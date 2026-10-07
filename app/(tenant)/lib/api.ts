@@ -105,6 +105,7 @@ import type {
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 import type { AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
+import { downscaleImage } from './downscale.js';
 import type {
   ClientProfile,
   ReportBookings,
@@ -342,10 +343,19 @@ const patch = <T>(path: string, body: unknown) => send<T>('PATCH', path, body);
 const put = <T>(path: string, body: unknown) => send<T>('PUT', path, body);
 const del = <T>(path: string) => send<T>('DELETE', path);
 
-/** Multipart upload — deliberately not routed through send(), the browser needs to set its own boundary'd Content-Type, not JSON. */
+/**
+ * Multipart upload — deliberately not routed through send(), the browser needs to set its own boundary'd Content-Type, not JSON.
+ *
+ * Jira GRW-558 — every picture is made small HERE, at the one place uploads go
+ * through, rather than at each screen that has a photo control. A 4 MB
+ * camera-roll photo leaves at around 120 KB, which on a salon's connection is
+ * the difference between an instant save and a progress bar. `downscaleImage`
+ * fails open on anything unexpected, so the server's cap and byte-sniff stay
+ * the real limits and this can never be the reason an upload is refused.
+ */
 async function uploadFile<T>(path: string, field: string, file: File): Promise<T> {
   const form = new FormData();
-  form.append(field, file);
+  form.append(field, await downscaleImage(file));
   // No Content-Type of our own — the browser must set its own boundary'd one.
   const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form, headers: await authHeaders() });
   if (!res.ok) throw await apiError(res, path);
