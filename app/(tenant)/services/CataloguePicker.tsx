@@ -246,6 +246,8 @@ export function CataloguePicker({
         const price = effectivePrice(s, scalePct);
         return {
           name: s.name,
+          // Jira GRW-560 — rung 1: the catalogue's own key, so a later rename keeps the picture.
+          catalogKey: s.catalogKey,
           categoryName: s.category ?? '',
           durationMin: String(s.durationMin),
           bufferAfterMin: String(s.bufferAfterMin),

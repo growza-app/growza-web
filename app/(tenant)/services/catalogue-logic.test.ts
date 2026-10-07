@@ -19,6 +19,7 @@ import {
 
 const svc = (over: Partial<WorkingService> = {}): WorkingService => ({
   name: 'Haircut',
+  catalogKey: 'haircut',
   category: 'Hair',
   durationMin: 30,
   bufferAfterMin: 0,

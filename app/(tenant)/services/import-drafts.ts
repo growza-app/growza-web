@@ -13,6 +13,12 @@ export interface Draft {
   durationMin: string;
   bufferAfterMin: string;
   price: string;
+  /**
+   * Jira GRW-560 — the pack concept, when the route that made this draft knew it.
+   * The ready-made catalogue does; a spreadsheet does not, and the API falls back
+   * to matching on the name there.
+   */
+  catalogKey?: string | null;
   /** Set when a service of this name already exists — offer a price update, not a second copy. */
   existing: ServiceAdmin | null;
   skip: boolean;
@@ -55,6 +61,7 @@ export function toImportItems(drafts: Draft[]): ServiceImportItem[] {
         : {
             mode: 'create',
             name: d.name.trim(),
+            catalogKey: d.catalogKey ?? null,
             categoryName: d.categoryName.trim() || null,
             durationMin: Number(d.durationMin),
             bufferAfterMin: Number(d.bufferAfterMin) || 0,

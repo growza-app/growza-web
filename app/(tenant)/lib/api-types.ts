@@ -133,7 +133,13 @@ export interface Service {
   bufferAfterMin: number;
   priceMinor: string | null;
   currency: string;
-  /** Null until a real photo is uploaded — see servicePhotoUrl() for the local-placeholder fallback. */
+  /**
+   * Jira GRW-560 — which pack concept this service is, decided by the API at write
+   * time and kept through a rename. The dashboard turns it into a picture only when
+   * the pack has that one; see `servicePhotoUrl`.
+   */
+  catalogKey?: string | null;
+  /** Null until a real photo is uploaded — see servicePhotoUrl() for the pack and placeholder fallback. */
   imageUrl: string | null;
   /** Jira GRW-378 · GRW-379 — the one branch this service is sold at. */
   locationId: string;
@@ -173,6 +179,8 @@ export interface ServiceCategoryAdmin extends ServiceCategory {
 /** The ready-made catalogue for the tenant's pinned vertical (boards 3a/3b). */
 export interface SeedCatalogService {
   name: string;
+  /** Jira GRW-560 — travels with the pick, so the row it creates is keyed exactly rather than matched by name. */
+  catalogKey: string | null;
   category: string | null;
   durationMin: number;
   bufferAfterMin: number;
@@ -199,6 +207,8 @@ export interface ServiceImportItem {
   mode: 'create' | 'updatePrice';
   existingId?: string;
   name: string;
+  /** Jira GRW-560 — only the ready-made catalogue knows this; a spreadsheet has none and the API matches on the name. */
+  catalogKey?: string | null;
   categoryName?: string | null;
   durationMin: number;
   bufferAfterMin?: number;
