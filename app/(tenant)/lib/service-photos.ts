@@ -32,8 +32,21 @@ import type { Service } from './api';
  * draws at — but sharing needs a second map from key to file, and a map is a
  * thing that drifts. A duplicate-looking picture is a smaller problem than a
  * wrong one.
+ *
+ * **The spellings here are not checked against anything.** `service-photos.test.ts`
+ * walks this list against `public/catalog/` in both directions, so a key with no
+ * file and a file with no key both fail — but both sides of that check are ours.
+ * A key that is internally consistent and WRONG relative to the API's `CONCEPTS`
+ * passes everything: write `hair-color` here and name the file to match, and the
+ * suite is green while `hair-colour` — which is what the API actually sends, on
+ * the commonest service a salon sells — silently falls to the placeholder and the
+ * file ships as weight nothing requests. Nothing in either repo can catch that
+ * today, because `CONCEPTS` lives in `growza` and is not published in
+ * `@growza-app/shared`. Moving it there is the fix; until then, check a new key's
+ * spelling against `src/modules/catalog/catalog-keys.ts` by hand.
+ *
+ * Exported for that disk guard; nothing else should import it.
  */
-/** Exported for the disk guard in service-photos.test.ts, which checks it BOTH ways. */
 export const PACK_KEYS: ReadonlySet<string> = new Set([
   'anti-acne-facial',
   'aroma-facial',
