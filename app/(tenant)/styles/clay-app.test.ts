@@ -31,8 +31,16 @@ describe('the clay app stylesheet', () => {
 
   it('sets shadow, radius and the primary gradient — and no colour, size or layout', () => {
     const decls = [...css.matchAll(/^\s+([a-z-]+):/gm)].map((m) => m[1] ?? '');
-    const allowed = new Set(['--radius', '--radius-sm', '--clay-raise', '--clay-raise-soft', '--clay-press', '--clay-green', 'box-shadow', 'background-image']);
+    const allowed = new Set(['--radius', '--radius-sm', '--clay-raise', '--clay-raise-soft', '--clay-press', '--clay-green', 'box-shadow', 'background-image', 'border-radius']);
     expect([...new Set(decls)].filter((d) => !allowed.has(d))).toEqual([]);
+  });
+
+  /** Owner, 2026-10-08 — Reports: the pieces inside its cards are clay too, and a figure that goes nowhere is flat. */
+  it('raises the Reports chips, presses the chosen one, and keeps a disabled band flat', () => {
+    expect(css).toMatch(/\.rp-cs-band,\s*\.rp-cs-group,[^{]*\{\s*box-shadow: var\(--clay-raise-soft\);/);
+    expect(css).toMatch(/\.rp-cs-band\.is-on \{\s*box-shadow: var\(--clay-press\);/);
+    expect(css).toMatch(/\.rp-cs-band:disabled \{\s*box-shadow: none;/);
+    expect(css).toMatch(/\.rp-tabs button\.active \{[^}]*box-shadow: var\(--clay-raise-soft\);/);
   });
 
   it('puts the green on the plain primary button only', () => {

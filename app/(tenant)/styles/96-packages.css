@@ -61,6 +61,15 @@
   padding-left: 52px;
 }
 
+.pkg-row {
+  cursor: pointer;
+}
+
+.pkg-row:focus-visible {
+  outline: 2px solid var(--accent, #2d6a3e);
+  outline-offset: -2px;
+}
+
 .pkg-row:last-child {
   border-bottom: none;
 }
@@ -121,6 +130,19 @@
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/*
+ * Two lines of what is inside, then an ellipsis (owner, 2026-10-08: "why showing only one package?").
+ * This list pages to fit the screen, and a package holding eight services ran to seven lines — about 300px on
+ * a phone — so the first row alone filled it and the footer said "1–1 of 4". The full list is one tap away in
+ * the package's own overview, which is what a tap on the row opens.
+ */
+.pkg-includes {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* Louder than the rest of the row on purpose: the owner is quoting a price for something that is gone.
@@ -188,16 +210,6 @@
   text-align: center;
 }
 
-/* The builder's third pricing mode has nothing to type, so it explains itself where the field would be. */
-.price-panel-note {
-  font-size: 0.8125rem;
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-.savings-banner-none {
-  color: var(--muted);
-}
 
 @media (min-width: 861px) {
   .pkg-head,
@@ -246,4 +258,66 @@
     display: block;
     margin-top: 2px;
   }
+}
+
+/*
+ * A 344px row: the footer was a single flex line whose price could not shrink below its own text, so it ran left
+ * over the time ("6 hrs 20 min" under "₹6,000" — owner, 2026-10-08). The footer wraps instead, and the price
+ * stacks its saving under itself, so the two never occupy the same pixels.
+ */
+@media (max-width: 860px) {
+  .pkg-foot {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  /* Beside the time when there is room for it, under it when there is not; the saving stacks under the price. */
+  .pkg-price {
+    flex: 1 1 110px;
+    display: block;
+  }
+  .pkg-price-now,
+  .pkg-price-was {
+    display: block;
+  }
+}
+
+/* At 344px the 52px indent that lines the footer up with the name costs the time and the price their shared line. */
+@media (max-width: 420px) {
+  .pkg-foot {
+    padding-left: 0;
+  }
+}
+
+/*
+ * On a phone the Packages page scrolls (owner, 2026-10-08: "the 3rd is not scrollable and it's not viewing on
+ * screen"). It wears `page-fit` for the laptop, whose rows are sized to the screen, and `page-fit` is
+ * `overflow: hidden` — which is right for a list that pages and wrong for one that does not: the third package sat
+ * under the bottom bar with nothing to scroll it into view. The bottom padding is the bar's own height, so the last
+ * package stops above it rather than behind it.
+ */
+@media (max-width: 860px) {
+  .page-body.page-fit.pkg-page {
+    overflow-y: auto;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/*
+ * The package overview shows each service's picture (owner, 2026-10-08). The row centres what is in it — a name
+ * beside a 36px picture reads as one line, not two things on different baselines — and the name takes the room, so a
+ * long one wraps beside its picture rather than pushing the price off the edge.
+ */
+.pkg-details .pkg-details-row {
+  align-items: center;
+}
+
+.pkg-details .pkg-details-name {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Eight rows with pictures are taller than a phone: the list scrolls inside the modal, and Close / Edit stay in reach. */
+.pkg-details .modal-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

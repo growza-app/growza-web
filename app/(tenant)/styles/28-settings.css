@@ -241,6 +241,11 @@
 }
 
 @media (max-width: 860px) {
+  /* The header's back arrow already steps back to the Settings list; the link under it said the same thing. */
+  /* Two classes: 90-accessibility.css loads later and makes `.settings-back-link` a flex row for its 44px target. */
+  .settings-content-pane > .settings-back-link {
+    display: none;
+  }
   .settings-nav-pane-hidden-mobile,
   .settings-content-pane-hidden-mobile {
     display: none;

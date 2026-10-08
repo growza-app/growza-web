@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, BookingConflictError, formatMoney, type Offer, type Service } from '../lib/api';
@@ -10,13 +10,17 @@ import { Pagination } from '../components/Pagination';
 import { IconPackages, IconSearch } from '../components/icons';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
+import { usePhone } from '../lib/use-phone';
+import { servicePhotoUrl } from '../lib/service-photos';
 import { useBranch } from '../components/BranchProvider';
 import { useWritable } from '../components/SessionProvider';
 import { partsMinutes, partsOf, partsTotalMinor, savingMinor, savingPct, searchPackages } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
+import { PackageOverview } from './PackageOverview';
 
 /** First paint only — the client then measures how many rows this screen actually fits. */
 const INITIAL_PAGE_SIZE = 5;
+
 
 /**
  * Jira GRW-438 — the owner's packages, on their own screen.
@@ -41,6 +45,19 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
   const tc = useTranslations('common');
   const failed = (err: unknown) => setActionError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  /** The package whose contents are open in the overlay — tapping a row, not its ⋮. */
+  const [viewId, setViewId] = useState<string | null>(null);
+  /*
+   * A single click opens the overview, a double-click still goes to the editor. The overview therefore waits out
+   * the double-click window: opening it on the first click put a backdrop under the second, so the dblclick
+   * never reached the row.
+   */
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelOpen = () => {
+    if (openTimer.current) clearTimeout(openTimer.current);
+    openTimer.current = null;
+  };
+  useEffect(() => cancelOpen, []);
   /** Jira GRW-435's shape, kept: the row being confirmed, and why the last attempt was refused. */
   const [confirmDelete, setConfirmDelete] = useState<Offer | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -57,14 +74,22 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
     return name ? <span className="chip pkg-branch-chip">{name}</span> : null;
   };
 
+  const viewing = viewId ? (packages.find((p) => p.id === viewId) ?? null) : null;
+
   const filtered = useMemo(() => searchPackages(packages, serviceById, search), [packages, serviceById, search]);
 
-  const start = Math.min(pageStarts[pageIndex] ?? 0, Math.max(0, filtered.length - 1));
+  /*
+   * On a phone the list is one scroll, no pages (owner, 2026-10-08). Fitting rows to the screen left a package with
+   * eight services alone on its page ("1–1 of 4") at 344px, and five-a-page hid its own footer until the sixth
+   * package. A salon's packages are a short list; the page scrolls, and Pagination is for the laptop.
+   */
+  const phone = usePhone();
+  const start = phone ? 0 : Math.min(pageStarts[pageIndex] ?? 0, Math.max(0, filtered.length - 1));
   const { pageSize: fitCount, listRef } = useFitRows({
     fallback: INITIAL_PAGE_SIZE,
     resetKey: `${start}|${search}`,
   });
-  const pageItems = filtered.slice(start, start + fitCount);
+  const pageItems = phone ? filtered : filtered.slice(start, start + fitCount);
   const shownTo = start + pageItems.length;
 
   const goNext = () => {
@@ -209,7 +234,30 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                   key={pkg.id}
                   data-row
                   className={`pkg-row ${pkg.active ? '' : 'is-retired'}`}
-                  onDoubleClick={writable ? () => router.push(`/packages/${pkg.id}/edit`) : undefined}
+                  onDoubleClick={
+                    writable
+                      ? () => {
+                          cancelOpen();
+                          router.push(`/packages/${pkg.id}/edit`);
+                        }
+                      : undefined
+                  }
+                  tabIndex={0}
+                  aria-haspopup="dialog"
+                  onClick={(e) => {
+                    // The ⋮ and its menu are their own targets; only the rest of the card opens the details.
+                    if ((e.target as HTMLElement).closest('.pkg-actions')) return;
+                    // Without an editor to go to there is no double-click to wait for.
+                    cancelOpen();
+                    if (!writable) setViewId(pkg.id);
+                    else openTimer.current = setTimeout(() => setViewId(pkg.id), 250);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      setViewId(pkg.id);
+                    }
+                  }}
                 >
                   <div className="pkg-row-main">
                     <span className="pkg-icon" aria-hidden="true">
@@ -309,18 +357,35 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
             })}
           </div>
 
-          <Pagination
-            mode="cursor"
-            from={filtered.length === 0 ? 0 : start + 1}
-            to={shownTo}
-            total={filtered.length}
-            hasPrev={pageIndex > 0}
-            hasNext={shownTo < filtered.length}
-            onPrev={goPrev}
-            onNext={goNext}
-            noun={tn('packages')}
-          />
+          {!phone && (
+            <Pagination
+              mode="cursor"
+              from={filtered.length === 0 ? 0 : start + 1}
+              to={shownTo}
+              total={filtered.length}
+              hasPrev={pageIndex > 0}
+              hasNext={shownTo < filtered.length}
+              onPrev={goPrev}
+              onNext={goNext}
+              noun={tn('packages')}
+            />
+          )}
         </>
+      )}
+
+      {viewing && (
+        <PackageOverview
+          title={viewing.title}
+          services={partsOf(viewing, serviceById).parts.map((part) => ({
+            ...part,
+            photo: servicePhotoUrl(serviceById.get(part.id)!),
+          }))}
+          missingNote={partsOf(viewing, serviceById).missing > 0 ? t('missingServices', { count: partsOf(viewing, serviceById).missing }) : null}
+          priceMinor={viewing.comboPriceMinor}
+          editHref={writable ? `/packages/${viewing.id}/edit` : null}
+          editLabel={t('edit')}
+          onClose={() => setViewId(null)}
+        />
       )}
 
       {confirmDelete && (

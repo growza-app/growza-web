@@ -67,6 +67,7 @@ import type {
   AppointmentStatus,
   AttendanceRegister,
   AttendanceRow,
+  BookingCorrection,
   AvailabilityResponse,
   Capacity,
   ChairsNow,
@@ -759,6 +760,14 @@ export const api = {
   chatStart: (phone: string, name?: string, branch?: string) => post<ChatState>('/api/v1/chat/start', { phone, name, ...(branch ? { branch } : {}) }),
   chatTap: (phone: string, optionId: string, nonce: string) =>
     post<ChatState>('/api/v1/chat/tap', { phone, optionId, nonce }),
+  /** What the owner corrected on this booking, newest first. */
+  bookingCorrections: (appointmentId: string) =>
+    get<{ corrections: BookingCorrection[] }>(`/api/v1/appointments/${appointmentId}/corrections`),
+  /** The owner fixes a finished booking's amount or service. `:id` is any leg of the visit. */
+  correctBooking: (
+    appointmentId: string,
+    args: { legs: { appointmentId: string; serviceId?: string; paidAmountMinor: number }[]; reason?: string; confirmLargeAmount?: boolean },
+  ) => post<{ bookingGroupId: string | null }>(`/api/v1/appointments/${appointmentId}/correct`, args),
   /** Jira GRW-318 — `wholeBooking` applies a cancel or a no-show to every still-confirmed service of the visit. */
   updateAppointmentStatus: (id: string, status: AppointmentStatus, wholeBooking = false) =>
     patch<{ id: string; status: AppointmentStatus }>(`/api/v1/appointments/${id}/status`, wholeBooking ? { status, wholeBooking: true } : { status }),

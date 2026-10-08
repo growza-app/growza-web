@@ -329,7 +329,8 @@ describe('every search box offers the price to match on', () => {
   const BOXES: Array<[string, number]> = [
     ['../components/NewVisitSheet.tsx', 2],
     ['../services/ServicesTable.tsx', 1],
-    ['../packages/PackageBuilder.tsx', 1],
+    // The builder's service search moved into a sheet of its own (2026-10-08); it is still a search box.
+    ['../packages/ServicePickerSheet.tsx', 1],
   ];
 
   it('passes a price at every matchItems call', () => {

@@ -1231,54 +1231,23 @@
       "hoursMinutes": "{hours, plural, one {# hr} other {# hrs}} {minutes} min"
     },
     "builder": {
-      "back": "← Back",
       "createTitle": "Make a package",
       "editTitle": "Edit {title}",
-      "subtitle": "Build a package of services and give your clients a special price.",
       "delete": "Delete",
       "saveDraft": "Save as draft",
-      "draftShort": "Draft",
-      "nextFull": "Next: {label} →",
-      "nextShort": "Next →",
       "saving": "Saving…",
       "publish": "Save package",
-      "steps": {
-        "build": {
-          "title": "Build",
-          "sub": "Add services & pricing",
-          "nav": "Rules & availability"
-        },
-        "rules": {
-          "title": "Rules",
-          "sub": "Set visibility & limits",
-          "nav": "Preview"
-        },
-        "preview": {
-          "title": "Preview",
-          "sub": "See how clients see it"
-        }
-      },
-      "tip": "Tip",
-      "tipBody": "Clients will be able to book this package from your WhatsApp offers menu, once WhatsApp goes live for you.",
       "namePlaceholder": "e.g. Weekend Glow Package",
       "tagline": "Tagline (optional)",
       "taglinePlaceholder": "e.g. Pamper yourself this weekend",
-      "addServices": "2. Add services *",
-      "addServicesHint": "Search and add the services you want to include in this package.",
+      "addTagline": "+ Add a tagline (optional)",
       "searchServices": "{count, plural, one {Search 1 service…} other {Search # services…}}",
       "clearSearch": "Clear search",
       "noMatch": "No matching services",
       "alsoTry": "Also try",
-      "pickHint": "Search above and tap a service to add it.",
       "moveUp": "Move up",
       "moveDown": "Move down",
-      "pricing": "3. Pricing",
-      "original": "Original price",
-      "flat": "Flat ₹",
       "percent": "% off",
-      "youSave": "You save",
-      "customersPay": "Clients pay {price} instead of {original}",
-      "rulesIntro": "Control which days this package is offered — useful for weekend specials or a one-day flash deal.",
       "visibility": {
         "always": {
           "title": "Always visible",
@@ -1295,19 +1264,14 @@
       },
       "from": "From (optional)",
       "until": "Until (optional)",
-      "previewIntro": "Check the summary on the right, then publish — or go back if anything needs changing. WhatsApp itself shows this as plain text (no photos or styling — see the details in Try WhatsApp), so this preview is a dashboard-side summary, not a screenshot of the real chat.",
-      "previewEmpty": "Add services in the Build step before publishing.",
       "untitled": "Untitled package",
-      "servicesCount": "{count, plural, one {# service} other {# services}}",
       "summary": {
-        "always": "Always visible to clients",
+        "always": "Every day",
         "pickDay": "Pick at least one day",
         "pickWindow": "Pick a start and/or end date",
         "range": "From {from} to {until}"
       },
       "sidebarPreview": "Preview",
-      "mobileAria": "Preview as mobile",
-      "desktopAria": "Preview as desktop",
       "sidebarEmpty": "Add services to see the preview.",
       "caption": "📲 Will be bookable from WhatsApp",
       "card": {
@@ -1327,11 +1291,36 @@
         "windowBackwards": "The end must be after the start"
       },
       "sumOfParts": "Sum of parts",
-      "sumOfPartsNote": "Charged at the sum of its parts — no discount.",
-      "noSavingShown": "No saving shown to clients.",
-      "packageDetails": "1. Package details",
       "packageName": "Package name *",
-      "packagePrice": "Package price"
+      "packagePrice": "Package price",
+      "backAria": "Back to packages",
+      "groups": {
+        "details": "Details",
+        "services": "Services",
+        "price": "Price",
+        "when": "When it runs"
+      },
+      "servicesEmpty": "No services in it yet.",
+      "whenItRuns": "Shown to clients",
+      "deleteRow": "Delete this package",
+      "picker": {
+        "title": "Add services",
+        "open": "+ Add services",
+        "done": "Done",
+        "chosen": "{count, plural, one {# chosen} other {# chosen}}"
+      },
+      "price": {
+        "needServices": "Add services first, then set the price.",
+        "setCost": "Set what the package costs.",
+        "noSaving": "No saving shown to clients.",
+        "above": "{amount} more than the services come to.",
+        "nothing": "—"
+      },
+      "servicesSummary": "{count, plural, one {# service} other {# services}} · takes {duration}",
+      "original": "Original price",
+      "youSave": "You save",
+      "flat": "Flat ₹",
+      "customersPay": "Clients pay {price} instead of {original}"
     }
   },
   "attendance": {
@@ -1507,7 +1496,24 @@
       "thisBranch": "This branch"
     },
     "yourBusiness": "Your business",
-    "savedToast": "Saved"
+    "savedToast": "Saved",
+    "correct": {
+      "title": "Correct this booking",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "service": "Service",
+      "amount": "Amount ₹",
+      "reason": "Reason",
+      "reasonPlaceholder": "Optional",
+      "note": "The old amount and service stay in the activity log.",
+      "amountInvalid": "Enter an amount for each service.",
+      "saveFailed": "That did not save. Check the connection and try again.",
+      "item": "Correct amount or service",
+      "loadFailed": "Could not load services. Check the connection and try again.",
+      "notePackage": "A service in a package keeps its service; you can fix its amount. The old amount stays in the activity log.",
+      "historyTitle": "Corrected"
+    }
   },
   "auth": {
     "metaTitle": "Sign in",
