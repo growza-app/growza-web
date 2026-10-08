@@ -18,6 +18,23 @@ import { avatarTone, initials } from '../providers/StaffRoster';
  * shape (44px roster row, 48px edit header, 28px booking card) keeps working
  * with no new CSS per site; `person-photo` only adds the object-fit the <img>
  * needs to fill a box the tile already sized.
+ *
+ * **Two sites deliberately do NOT use this, and should not be "fixed" to.**
+ * Both were weighed when the picker and the register gained photos (GRW-559):
+ *
+ *   - `AttendanceRegister` tints its tile with a per-name `oklch` hue computed
+ *     inline, not with the four tone CLASSES this returns. Routing it through
+ *     here would recolour a screen the desk reads every morning, to no one's
+ *     benefit, so it keeps its own tile and only gained a branch for the photo.
+ *   - The stylist chip in `NewVisitSheet` has to wrap the name and its "free
+ *     now" line in a box of their own, because the chip is `flex-direction:
+ *     column` and a bare <img> sibling would sit ABOVE the name. This renders
+ *     one element; it has nowhere to put that wrapper.
+ *
+ * So this is the chokepoint for a tile that wants the FOUR TONES and holds
+ * nothing but the face or the letters. Anything else is a third case, and the
+ * honest thing is to add it to this list rather than to pretend the list of
+ * users is complete.
  */
 export function PersonPhoto({
   name,
