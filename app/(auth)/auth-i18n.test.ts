@@ -9,6 +9,7 @@ import { AUTH_MESSAGES } from '../../i18n/client-messages';
 import { pickNamespaces, type Messages } from '../../i18n/messages';
 import LoginPage from './login/page';
 import { JoinForm } from './join/[token]/JoinForm';
+import ForgotPassword from './login/ForgotPassword';
 import { localiseApiMessage } from '../(tenant)/lib/api-messages';
 import { fromDashboard } from '../(tenant)/lib/dashboard-root';
 
@@ -62,6 +63,59 @@ describe('a failed sign-in is answered in the language of the page', () => {
     expect(form).toMatch(/localiseApiMessage\(body\.detail, locale\)/);
     expect(form.match(/localiseApiMessage\(/g)?.length, 'both setError sites').toBe(2);
     expect(form, 'no raw API sentence may reach setError').not.toMatch(/setError\(body\?\.detail \?\?/);
+  });
+});
+
+/**
+ * Jira GRW-561 — the forgot-password screens, in both languages, rendered through the sign-in pages' own message
+ * subset. A key the component reads but `AUTH_MESSAGES` lacks would print blank here as it would on a phone.
+ */
+describe('forgot password', () => {
+  const screen = (locale: 'en' | 'hi') => page(locale, createElement(ForgotPassword, { initialPhone: '', onBack: () => {} }));
+
+  it('opens on the phone step, in English', () => {
+    const html = screen('en');
+    for (const s of ['Reset your password', 'Enter the phone number you sign in with. We will text you a code.', 'Send code', 'Back to sign in']) {
+      expect(html, s).toContain(s);
+    }
+  });
+
+  it('opens on the phone step, in Hindi, with nothing left in English', () => {
+    const html = screen('hi');
+    for (const s of ['अपना पासवर्ड रीसेट करें', 'कोड भेजें', 'साइन इन पर वापस जाएँ']) expect(html, s).toContain(s);
+    for (const s of ['Reset your password', 'Send code', 'Back to sign in']) expect(html, s).not.toContain(s);
+  });
+
+  it('has the same keys in both languages, so no screen can be blank in one of them', () => {
+    const keys = (o: unknown, prefix = ''): string[] =>
+      Object.entries(o as Record<string, unknown>).flatMap(([k, v]) =>
+        typeof v === 'object' && v !== null ? keys(v, `${prefix}${k}.`) : [`${prefix}${k}`],
+      );
+    const block = (m: unknown) => (m as { auth: { forgotPassword: unknown } }).auth.forgotPassword;
+    expect(keys(block(hi)).sort()).toEqual(keys(block(en)).sort());
+  });
+
+  it('carries the support number into the sentence rather than hard-coding one', () => {
+    const phone = (m: unknown) => (m as { auth: { forgotPassword: { locked: { call: string } } } }).auth.forgotPassword.locked.call;
+    expect(phone(en)).toContain('{phone}');
+    expect(phone(hi)).toContain('{phone}');
+  });
+});
+
+/** The sentences the API sends back from the reset routes. Each has to read in Hindi, or a Hindi page shows English. */
+describe('every sentence the reset routes send has a Hindi', () => {
+  it.each([
+    'That code is not right, or it has expired. Ask for a new one.',
+    'Phone number is required.',
+    'Phone number, the code and a new password are all required.',
+    'Choose a password of at least 8 characters.',
+    'That password does not meet the requirements.',
+    'Could not reach the sign-in service. Please try again shortly.',
+    'Too many attempts. Please wait a few minutes and try again.',
+    'Resetting a password here is not available yet. Please contact Growza support.',
+    'We could not reset your password here. Please contact Growza support.',
+  ])('%s', (sentence) => {
+    expect(localiseApiMessage(sentence, 'hi')).not.toBe(sentence);
   });
 });
 

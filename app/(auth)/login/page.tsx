@@ -1,11 +1,12 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PhoneField } from '../../(tenant)/components/PhoneField';
 import { toStoredPhone } from '../../(tenant)/lib/phone';
 import { rememberLang, type Lang } from '../../(tenant)/lib/lang';
 import { localiseApiMessage } from '../../(tenant)/lib/api-messages';
+import ForgotPassword from './ForgotPassword';
 
 /**
  * Jira GRW-66 · GRW-160 — where a salon owner signs in.
@@ -23,6 +24,7 @@ import { localiseApiMessage } from '../../(tenant)/lib/api-messages';
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const ta = useTranslations('auth');
+  const tf = useTranslations('auth.forgotPassword');
   const locale = useLocale();
   /** A visitor on a new device has no language cookie yet, so the sign-in card lets them pick one. */
   const chooseLang = (lang: Lang) => {
@@ -34,6 +36,26 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Jira GRW-561 — whether this deployment can send a reset code at all. Asked of the API rather than decided here,
+   * because the switch belongs to the thing that has to deliver the text (it stays off until the SMS side exists),
+   * and a second flag on the web side could disagree with it. Starts false and fails closed: until the answer
+   * arrives, or if it never does, the card says what it has always said, "ask whoever set up your account".
+   */
+  const [canReset, setCanReset] = useState(false);
+  const [forgot, setForgot] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetch('/api/v1/auth/options', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { passwordReset?: boolean } | null) => {
+        if (live) setCanReset(body?.passwordReset === true);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
   /**
    * Jira GRW-233 — a newly enrolled owner signs in with the one-time password
    * Growza gave them, and the API answers 409 `password_change_required`. The
@@ -150,6 +172,8 @@ export default function LoginPage() {
     }
   }
 
+  if (forgot) return <ForgotPassword initialPhone={phone} onBack={() => setForgot(false)} />;
+
   if (temporary !== null) {
     return (
       <main className="login-page">
@@ -261,7 +285,13 @@ export default function LoginPage() {
           {loading ? t('signingIn') : t('submit')}
         </button>
 
-        <p className="login-foot">{t('forgot')}</p>
+        {canReset ? (
+          <button type="button" className="login-back" onClick={() => setForgot(true)}>
+            {tf('link')}
+          </button>
+        ) : (
+          <p className="login-foot">{t('forgot')}</p>
+        )}
 
         <div className="login-foot login-lang" role="group" aria-label={ta('language')}>
           <button type="button" lang="en" aria-pressed={locale === 'en'} onClick={() => chooseLang('en')}>

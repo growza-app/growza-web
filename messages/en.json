@@ -1537,6 +1537,36 @@
         "firstFailed": "Could not set your password. Please try again."
       }
     },
+    "forgotPassword": {
+      "link": "Forgot your password?",
+      "back": "Back to sign in",
+      "phone": {
+        "title": "Reset your password",
+        "intro": "Enter the phone number you sign in with. We will text you a code.",
+        "send": "Send code",
+        "sending": "Sending…"
+      },
+      "code": {
+        "title": "Enter the code",
+        "intro": "If that number has an account, a code is on its way. It can take a minute.",
+        "label": "Code",
+        "newPassword": "New password",
+        "again": "Type it again",
+        "save": "Reset password",
+        "saving": "Saving…",
+        "resend": "Send the code again",
+        "resendIn": "Send again in {seconds}s"
+      },
+      "locked": {
+        "title": "Please call us",
+        "body": "We could not reset your password here. Call Growza support and we will help you get back in.",
+        "call": "Call {phone}"
+      },
+      "errors": {
+        "sendFailed": "Could not send a code. Please try again.",
+        "resetFailed": "Could not reset your password. Please try again."
+      }
+    },
     "join": {
       "checking": "Checking your invite…",
       "couldNotCheck": "Could not check your invite",

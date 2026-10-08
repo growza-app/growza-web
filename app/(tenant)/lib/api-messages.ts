@@ -36,6 +36,13 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That is not your current password.': 'यह आपका मौजूदा पासवर्ड नहीं है।',
   'That is your current password. Choose a different one.': 'यह आपका मौजूदा पासवर्ड ही है। कोई दूसरा चुनें।',
   'Choose a password of at least 8 characters.': 'कम से कम 8 अक्षर का पासवर्ड चुनें।',
+  // Jira GRW-561 — forgot password.
+  'That code is not right, or it has expired. Ask for a new one.': 'यह कोड सही नहीं है, या इसकी समय-सीमा खत्म हो गई है। नया कोड मंगवाएँ।',
+  'Phone number is required.': 'फ़ोन नंबर ज़रूरी है।',
+  'Phone number, the code and a new password are all required.': 'फ़ोन नंबर, कोड और नया पासवर्ड, तीनों ज़रूरी हैं।',
+  'Could not reach the sign-in service. Please try again shortly.': 'साइन इन सेवा तक नहीं पहुंच सके। कृपया थोड़ी देर में फिर कोशिश करें।',
+  'Resetting a password here is not available yet. Please contact Growza support.': 'यहाँ पासवर्ड रीसेट करना अभी उपलब्ध नहीं है। कृपया Growza सपोर्ट से संपर्क करें।',
+  'We could not reset your password here. Please contact Growza support.': 'हम यहाँ आपका पासवर्ड रीसेट नहीं कर सके। कृपया Growza सपोर्ट से संपर्क करें।',
   'That password does not meet the requirements.': 'यह पासवर्ड ज़रूरी शर्तें पूरी नहीं करता।',
   'That password was refused. Try a longer one.': 'यह पासवर्ड मंज़ूर नहीं हुआ। थोड़ा लंबा आज़माएँ।',
   'That password was refused. Try a longer one, with a mix of letters, numbers and symbols.': 'यह पासवर्ड मंज़ूर नहीं हुआ। अक्षर, अंक और चिह्नों के मेल वाला थोड़ा लंबा पासवर्ड आज़माएँ।',

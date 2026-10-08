@@ -127,6 +127,12 @@
   font-size: 0.9375rem;
 }
 
+/* Jira GRW-561 — the "call support" button is a link (`tel:`) wearing the button's class. Without this it kept the
+   browser's underline, the one button on the sign-in card that had one. */
+a.login-submit {
+  text-decoration: none;
+}
+
 /* Sign in is green in both states: a muted green with white text until the fields are filled (4.68:1), the full
    accent once they are. It was grey, which read as a different, broken button. */
 .login-submit:disabled {
@@ -144,10 +150,13 @@
   text-align: center;
 }
 
-/* Jira GRW-233 — leave the "choose your password" step without signing in. */
+/* Jira GRW-233 — leave the "choose your password" step without signing in.
+   Jira GRW-561 — also the "Forgot your password?" link and "send the code again". 44px is the tap target the UI
+   rules ask for; at 33px it was the smallest thing on a card people use one-handed. The text stays where it was. */
 .login-back {
   align-self: center;
   margin-top: 4px;
+  min-height: 44px;
   padding: 6px 10px;
   border: 0;
   background: none;
