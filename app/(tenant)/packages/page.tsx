@@ -70,7 +70,7 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
           </WriteOnly>
         }
       />
-      <div className="page-body page-fit">
+      <div className="page-body page-fit pkg-page">
         <PackagesList packages={packages} services={services} />
       </div>
     </>

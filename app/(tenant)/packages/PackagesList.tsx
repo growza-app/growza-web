@@ -10,6 +10,8 @@ import { Pagination } from '../components/Pagination';
 import { IconPackages, IconSearch } from '../components/icons';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { useFitRows } from '../lib/use-fit-rows';
+import { usePhone } from '../lib/use-phone';
+import { servicePhotoUrl } from '../lib/service-photos';
 import { useBranch } from '../components/BranchProvider';
 import { useWritable } from '../components/SessionProvider';
 import { partsMinutes, partsOf, partsTotalMinor, savingMinor, savingPct, searchPackages } from './packages-logic';
@@ -18,6 +20,7 @@ import { PackageOverview } from './PackageOverview';
 
 /** First paint only — the client then measures how many rows this screen actually fits. */
 const INITIAL_PAGE_SIZE = 5;
+
 
 /**
  * Jira GRW-438 — the owner's packages, on their own screen.
@@ -75,12 +78,18 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
 
   const filtered = useMemo(() => searchPackages(packages, serviceById, search), [packages, serviceById, search]);
 
-  const start = Math.min(pageStarts[pageIndex] ?? 0, Math.max(0, filtered.length - 1));
+  /*
+   * On a phone the list is one scroll, no pages (owner, 2026-10-08). Fitting rows to the screen left a package with
+   * eight services alone on its page ("1–1 of 4") at 344px, and five-a-page hid its own footer until the sixth
+   * package. A salon's packages are a short list; the page scrolls, and Pagination is for the laptop.
+   */
+  const phone = usePhone();
+  const start = phone ? 0 : Math.min(pageStarts[pageIndex] ?? 0, Math.max(0, filtered.length - 1));
   const { pageSize: fitCount, listRef } = useFitRows({
     fallback: INITIAL_PAGE_SIZE,
     resetKey: `${start}|${search}`,
   });
-  const pageItems = filtered.slice(start, start + fitCount);
+  const pageItems = phone ? filtered : filtered.slice(start, start + fitCount);
   const shownTo = start + pageItems.length;
 
   const goNext = () => {
@@ -348,24 +357,29 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
             })}
           </div>
 
-          <Pagination
-            mode="cursor"
-            from={filtered.length === 0 ? 0 : start + 1}
-            to={shownTo}
-            total={filtered.length}
-            hasPrev={pageIndex > 0}
-            hasNext={shownTo < filtered.length}
-            onPrev={goPrev}
-            onNext={goNext}
-            noun={tn('packages')}
-          />
+          {!phone && (
+            <Pagination
+              mode="cursor"
+              from={filtered.length === 0 ? 0 : start + 1}
+              to={shownTo}
+              total={filtered.length}
+              hasPrev={pageIndex > 0}
+              hasNext={shownTo < filtered.length}
+              onPrev={goPrev}
+              onNext={goNext}
+              noun={tn('packages')}
+            />
+          )}
         </>
       )}
 
       {viewing && (
         <PackageOverview
           title={viewing.title}
-          services={partsOf(viewing, serviceById).parts}
+          services={partsOf(viewing, serviceById).parts.map((part) => ({
+            ...part,
+            photo: servicePhotoUrl(serviceById.get(part.id)!),
+          }))}
           missingNote={partsOf(viewing, serviceById).missing > 0 ? t('missingServices', { count: partsOf(viewing, serviceById).missing }) : null}
           priceMinor={viewing.comboPriceMinor}
           editHref={writable ? `/packages/${viewing.id}/edit` : null}

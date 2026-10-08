@@ -23,7 +23,8 @@ export function PackageOverview({
   onClose,
 }: {
   title: string;
-  services: { id: string; name: string; priceMinor: string | null }[];
+  /** `photo` is the service's picture URL — its own upload, else the pack's, else a placeholder (servicePhotoUrl). */
+  services: { id: string; name: string; priceMinor: string | null; photo?: string }[];
   priceMinor: string | null;
   /** Set when a service in the package has been deleted: the sums below would be over a part of it, so they are left out. */
   missingNote: string | null;
@@ -56,6 +57,16 @@ export function PackageOverview({
           <ul className="pkg-details-list">
             {services.map((s) => (
               <li key={s.id} className="pkg-details-row">
+                {s.photo && (
+                  /*
+                   * The same 36px square the builder, the picker and the services list draw: a fixed box with
+                   * `object-fit: cover`, so a tall or wide upload is cropped to it and never stretched. Width and
+                   * height are attributes too, so the row has its size before the picture does and nothing jumps.
+                   * Lazy: the modal is already open, but a long package's lower rows are off screen until scrolled to.
+                   */
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="picker-row-thumb" src={s.photo} alt="" width={36} height={36} loading="lazy" decoding="async" />
+                )}
                 <span className="pkg-details-name">{s.name}</span>
                 <span className="pkg-details-price">{formatMoney(s.priceMinor)}</span>
               </li>

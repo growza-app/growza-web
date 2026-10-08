@@ -1116,3 +1116,37 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
   .saved-toast { animation: saved-toast-in 0.18s ease-out; }
   @keyframes saved-toast-in { from { opacity: 0; } to { opacity: 1; } }
 }
+
+/*
+ * A branch's profile on one phone screen (owner, 2026-10-08).
+ *
+ * It ran about 1.7 screens: a heading and sentence the header already says, a title on each of two cards, and the
+ * fields at their roomy spacing. The header names the branch, so the heading goes; the cards' own titles go (the fields
+ * say what they are); the two cards sit as one block with tighter spacing. Every field and the Save bar stay.
+ * Phone only: a laptop has the room and keeps the headings.
+ */
+@media (max-width: 860px) {
+  .bp-form-branch {
+    gap: var(--sp-2);
+  }
+  .bp-form-branch .bp-intro,
+  .bp-form-branch .bp-card-head {
+    display: none;
+  }
+  .bp-form-branch .bp-columns,
+  .bp-form-branch .bp-col {
+    gap: var(--sp-2);
+  }
+  .bp-form-branch .bp-card {
+    padding: var(--sp-3);
+  }
+  .bp-form-branch .bp-grid {
+    gap: var(--sp-3);
+  }
+  .bp-form-branch .field label {
+    margin-bottom: 4px;
+  }
+  .bp-form-branch .field textarea {
+    min-height: 56px;
+  }
+}

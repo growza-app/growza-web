@@ -1,87 +1,222 @@
-/* ---------- combo builder wizard ---------- */
+/* ---------- the package editor ---------- */
 
-.wizard-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-}
+/*
+ * One page, in the grouped-form language the service sheet already speaks (98-service-sheet.css supplies
+ * .sheet-label / .sheet-group / .sheet-row / .sheet-foot, and they do not need a .sheet around them).
+ *
+ * This was a three-step wizard (owner, 2026-10-08): a step rail, a Tip card, a device toggle, a sidebar preview and
+ * a first step holding the name, the branch, a search box, a results list, the picked list and a three-cell price
+ * panel. The rail, the Tip, the toggle and the panel are gone — not restyled — because the screen's problem was how
+ * much of it was chrome. What is left is a form, a sheet for choosing services, and the client's view beside it on a
+ * laptop. The .pe- prefix is this page's own; .picker-* / .picked-* / .preview-* are shared with what reads them.
+ */
 
-.wizard-title {
+.pe-head {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 10px;
 }
 
-.wizard-title h1 {
-  font-size: 1.375rem;
-  margin: 0;
-}
-
-.wizard-subtitle {
-  margin: 3px 0 0;
-  font-size: 0.84375rem;
-  color: var(--muted);
-}
-
-.wizard-nav-label-short {
-  display: none;
-}
-
-.wizard-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.device-toggle {
-  display: flex;
-  gap: 4px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 3px;
-}
-
-/* 44px, and two inline SVGs where this drew 📱 and 🖥️ — the house rule is one icon language
-   and never an emoji as a UI icon (CLAUDE.md). */
-.device-toggle button {
+.pe-back {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  background: none;
-  border: none;
-  border-radius: 999px;
-  padding: 4px 9px;
-  color: var(--muted);
-  font-size: 0.875rem;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.25rem;
+  line-height: 1;
   cursor: pointer;
 }
 
-.device-toggle button svg {
-  width: 1.125rem;
-  height: 1.125rem;
+.pe-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.device-toggle button.active {
-  background: var(--accent-soft);
+.pe-save {
+  flex: none;
+}
+
+.pe-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.pe-form {
+  min-width: 0;
+}
+
+/* The first group's label sits under the header, not 22px below it. */
+.pe-form > .sheet-label:first-child {
+  padding-top: 4px;
+}
+
+/* Jira GRW-381 — the branch field keeps its own shape; it just needs the group spacing around it. */
+.pe-form > .offer-branch-field {
+  margin-top: 10px;
+}
+
+/* An "add" row at the foot of a group: the group's own last row, not a button floating under it. */
+.pe-add-row {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--accent-deep);
+  text-align: left;
+  cursor: pointer;
 }
 
-.device-frame-mobile {
-  max-width: 300px;
-  margin: 0 auto;
+.sheet-row + .pe-add-row,
+.pe-add-row + .sheet-row {
+  border-top: 0.5px solid var(--border);
 }
 
-.device-frame-mobile .preview-card {
-  border-radius: 20px;
-  box-shadow: 0 6px 20px rgba(15, 61, 46, 0.1);
+.pe-service-row {
+  gap: 10px;
 }
 
-.device-frame-desktop .preview-card {
-  border-radius: var(--radius);
+/* The price: which of the three ways is in force, then the number it sets, on one row. */
+.pe-price-value {
+  align-items: center;
+  gap: 10px;
+}
+
+/*
+ * It read as a label, not a control (owner, 2026-10-08): green bold words with no edge and no arrow, so "Fixed
+ * price" looked like the name of the field beside it. A tinted pill with a chevron, in the same language as the
+ * branch picker. 16px because a select under that size makes iOS zoom the page on focus.
+ */
+.pe-price-value .pe-price-mode {
+  flex: none;
+  width: auto;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 26px 0 12px;
+  border-radius: 999px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--accent-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 11px;
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-align: left;
+  text-align-last: left;
+  cursor: pointer;
+}
+
+.pe-price-value input {
+  flex: 0 1 110px;
+  min-width: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "Shown to clients — Always visible ›": the row states its own answer and opens on the choices behind it. */
+.pe-disclosure {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pe-disclosure-value {
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  text-align: right;
+}
+
+.pe-chevron {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-right: 1.75px solid var(--muted);
+  border-bottom: 1.75px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.pe-disclosure[aria-expanded='true'] .pe-chevron {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pe-chevron {
+    transition: none;
+  }
+}
+
+.pe-when {
+  padding: 0 14px 10px;
+  border-top: 0.5px solid var(--border);
+}
+
+/* Each choice is a row of the group it opened from, not a card inside a card. */
+.pe-when > div + div .rules-option {
+  border-top: 0.5px solid var(--border);
+}
+
+.pe-when .rules-option input {
+  accent-color: var(--accent-deep);
+}
+
+.pe-when .rules-option:has(input:checked) .rules-option-title {
+  color: var(--accent-ink);
+}
+
+.pe-when .weekday-picker,
+.pe-when .date-window {
+  margin-left: 26px;
+  margin-bottom: 10px;
+}
+
+/* Preview and Save as draft: below the form, not competing with Save at the top of it. */
+.pe-secondary {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.pe-secondary .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+}
+
+/* A laptop keeps the client's view on screen the whole time, so it has no reason to open it. */
+.pe-preview-btn {
+  display: none;
+}
+
+.pe-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .preview-caption {
@@ -91,112 +226,122 @@
   color: var(--muted);
 }
 
-.wizard-tip {
-  display: flex;
-  gap: 10px;
-  padding: 14px;
-  background: var(--amber-soft);
-  border-radius: var(--radius-sm);
+/* Below the width the two columns need, the preview becomes something you open. */
+@media (max-width: 1059px) {
+  .pe-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pe-aside {
+    display: none;
+  }
+
+  .pe-preview-btn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 860px) {
+  .pe-head {
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .pe-title {
+    font-size: 1.125rem;
+  }
+
+  .pe-back {
+    width: 38px;
+    height: 38px;
+  }
+
+  .pe-form > .sheet-label {
+    padding: 14px 4px 5px;
+  }
+
+  .pe-secondary {
+    margin-top: 18px;
+  }
+}
+
+/* ---------- choosing the services (the sheet) ---------- */
+
+.svc-picker-count {
+  justify-self: start;
   font-size: 0.8125rem;
-  color: #7a4d0f;
-}
-
-.wizard-tip strong {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 0.84375rem;
-}
-
-/* The step rail carries the Tip on its right, so the wizard's right column ends
-   with the Preview rather than trailing off below it (Growza Fixes, board 2f). */
-.wizard-rail {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.wizard-rail .wizard-steps {
-  flex: 1;
-  min-width: 0;
-}
-
-.wizard-tip-rail {
-  flex: none;
-  max-width: 360px;
-  margin-bottom: 18px;
-}
-
-.wizard-steps {
-  display: flex;
-  gap: 28px;
-  padding: 4px 0 22px;
-}
-
-.wizard-step {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
   color: var(--muted);
 }
 
-.wizard-step-num {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border);
-  display: grid;
-  place-items: center;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  flex-shrink: 0;
+.svc-picker-search {
+  flex: none;
+  margin-bottom: 0;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
-.wizard-step-active .wizard-step-num {
-  background: var(--accent-deep);
-  border-color: var(--accent);
-  color: #fff;
+.svc-picker-search input {
+  width: 100%;
 }
 
-.wizard-step-active .wizard-step-title {
-  color: var(--text);
+.svc-picker-body .also-try {
+  margin-bottom: 10px;
 }
 
-.wizard-step-title {
-  font-weight: 650;
-  font-size: 0.9375rem;
-}
-
-.wizard-step-sub {
-  font-size: 0.78125rem;
-}
-
-.wizard-step:disabled,
-.wizard-step-locked {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.wizard-nav {
+.svc-pick-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid var(--border);
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.wizard-layout {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 20px;
-  align-items: start;
+.svc-pick-row + .svc-pick-row {
+  border-top: 0.5px solid var(--border);
 }
+
+.svc-pick-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The tick, and never the only thing saying it — the row carries aria-pressed. */
+.svc-pick-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 12px;
+}
+
+.svc-pick-row.is-picked .svc-pick-check {
+  border-color: var(--accent-deep);
+  background-color: var(--accent-deep);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+}
+
+.svc-pick-row.is-picked .picker-row-name {
+  color: var(--accent-ink);
+}
+
+/* The preview, opened rather than always beside the form. */
+.pv-sheet-body {
+  padding: 16px;
+}
+
+/* ---------- the pieces the editor and the sheet share ---------- */
 
 .picker-search {
   position: relative;
@@ -233,29 +378,8 @@
   color: var(--text);
 }
 
-.picker-results {
-  max-height: 220px;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-.picker-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-top: 1px solid var(--border);
-  cursor: pointer;
-}
-
-.picker-row:first-child {
-  border-top: none;
-}
-
-.picker-row:hover {
-  background: var(--slate-soft);
+.svc-picker-search .search-clear-btn {
+  right: 24px;
 }
 
 .picker-row-name {
@@ -278,22 +402,6 @@
   display: block;
 }
 
-.picked-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 14px 0;
-}
-
-.picked-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
 .picked-row-order {
   display: flex;
   flex-direction: column;
@@ -303,7 +411,7 @@
 .picked-row-order button {
   background: none;
   border: none;
-  color: var(--muted);
+  color: var(--accent-deep);
   cursor: pointer;
   padding: 1px 4px;
   line-height: 1;
@@ -326,50 +434,21 @@
   white-space: nowrap;
 }
 
-.price-panel {
+/* Taking one service back out: a small round soft-red piece, not a second Delete. */
+.pkg-remove {
+  flex: none;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  padding: 14px;
-  background: var(--slate-soft);
-  border-radius: var(--radius-sm);
-  margin-top: 8px;
-}
-
-.price-panel-cell label {
-  display: block;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fdeaea;
+  color: #b91c1c;
   font-size: 0.8125rem;
-  color: var(--muted);
-  margin-bottom: 4px;
-}
-
-.price-panel-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.price-mode-toggle {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.price-mode-toggle button {
-  background: var(--surface);
-  border: none;
-  min-height: 44px;
-  padding: 5px 12px;
-  font-size: 0.78125rem;
-  font-weight: 620;
-  color: var(--muted);
+  line-height: 1;
   cursor: pointer;
-}
-
-.price-mode-toggle button.active {
-  background: var(--accent-deep);
-  color: #fff;
 }
 
 .savings-banner {
@@ -433,6 +512,8 @@
   margin: 10px 0 0 26px;
   flex-wrap: wrap;
 }
+
+/* ---------- the card a client sees ---------- */
 
 .preview-card {
   border: 1px solid var(--border);
@@ -558,27 +639,230 @@
   height: 1rem;
 }
 
-/* Was 🟢 / ⚪. A dot, and never the only thing saying it — the words beside it carry the state. */
-.pv-live-dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #c7cfc9;
+/*
+ * Colour on the editor (owner, 2026-10-08): the page was four grey labels, four grey footnotes and one green
+ * button. This is the same pass the service sheet had — a badge per section, money that reads as money, and a
+ * header the top of the screen can land on. Phone only; a laptop has the preview card carrying the colour.
+ */
+@media (max-width: 860px) {
+  /* A band behind the header, so the screen opens on the brand rather than on grey. */
+  .pkg-editor .pe-head {
+    margin: -10px -14px 6px;
+    padding: 10px 14px 12px;
+    background: linear-gradient(180deg, var(--accent-soft), transparent);
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .pkg-editor .pe-back {
+    background: var(--surface);
+    border-color: transparent;
+    color: var(--accent-deep);
+  }
+
+  .pkg-editor .pe-title {
+    color: var(--accent-ink);
+  }
+
+  /* One badge per section — green for what it is called, purple for what is in it, amber for money, blue for when. */
+  .pe-label-services::before {
+    background-color: var(--purple-soft);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236d28d9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l8 4.5v9L12 21l-8-4.5v-9z'/%3E%3Cpath d='M4 7.5l8 4.5 8-4.5M12 12v9'/%3E%3C/svg%3E");
+  }
+
+  .pe-label-when::before {
+    background-color: var(--blue-soft);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d4ed8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='15' rx='2'/%3E%3Cpath d='M3.5 10h17M8 3v4M16 3v4'/%3E%3C/svg%3E");
+  }
+
+
+  /* The services footnote carries its section's colour, so four footnotes are not four identical grey lines. */
+  .pkg-editor .pe-foot-services::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: #6d28d9;
+    vertical-align: middle;
+  }
+
+  .pkg-editor .pe-foot-services.sheet-foot-error::before {
+    background: #b91c1c;
+  }
 }
 
-.pv-live-dot.is-live {
-  background: var(--accent);
+/*
+ * A 344px screen: "Package price" + the mode pill + the amount need 371px and have 316, so the amount was
+ * clipped to "600". The label goes — the pill beside it already names the row, and the PRICE heading above it
+ * says what the group is — and it stays readable to a screen reader. 393px has the room, so it keeps its label.
+ */
+@media (max-width: 380px) {
+  .pkg-editor .sheet-row:has(.pe-price-value) > .sheet-row-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .pkg-editor .pe-price-value {
+    justify-content: space-between;
+  }
+
+  .pkg-editor .pe-price-value input {
+    flex: 1 1 auto;
+  }
 }
 
-/* Was 💡 beside the builder's tip. */
-.wizard-tip-icon {
-  display: inline-flex;
-  flex: none;
-  color: var(--amber);
+/*
+ * The price is green, the way the card a client sees draws it (.preview-price-combo) — it is the number this
+ * whole screen exists to set. --accent-deep, not --accent-ink: #14532d reads as black at this size.
+ */
+/* Three classes deep because `.sheet-row-value input` (98-service-sheet.css, a later sheet) also sets a colour. */
+.pkg-editor .sheet-row-value.pe-price-value input,
+.pkg-editor .sheet-row-value.pe-price-value .pe-readout {
+  color: var(--accent-deep);
+  font-size: 1.0625rem;
+  font-weight: 700;
 }
 
-.wizard-tip-icon svg {
-  width: 1.0625rem;
-  height: 1.0625rem;
+/* The two figures the owner reads rather than types. */
+.pe-readout {
+  justify-content: flex-end;
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The saving is the best news on the page, so it carries the colour the rest of the app gives money. */
+.pe-readout.is-saving {
+  color: var(--accent-deep);
+}
+
+/*
+ * The price panel (owner, 2026-10-08): the design's shape — a label over each figure, the three ways to price it as
+ * one segmented control, the amount in a field of its own — in a light Growza green, and compact. The deep Home-hero
+ * green was 304px tall at 393 and read as a second hero card on a form; this is the same panel at about 60% of the
+ * height, because what it holds is two figures that sit side by side and one decision.
+ */
+.pe-price-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  padding: 12px 14px 14px;
+  border: 1px solid #bfe0cc;
+  border-radius: 16px;
+  background: var(--accent-soft);
+}
+
+/* What the services come to and what that saves, side by side; the decision underneath, full width. */
+.pe-price-field:nth-child(1) {
+  order: 1;
+}
+
+.pe-price-field:nth-child(3) {
+  order: 2;
+}
+
+.pe-price-field:nth-child(2) {
+  order: 3;
+  grid-column: 1 / -1;
+}
+
+.pe-price-label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.pe-price-figure {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pe-price-figure.is-saving {
+  color: var(--accent-deep);
+}
+
+/* Flat ₹ · % off · Sum of parts — one control, the live one filled. */
+.pe-mode-toggle {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.pe-mode-toggle button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pe-mode-toggle button.is-on {
+  background: var(--accent-deep);
+  color: #fff;
+}
+
+/* The amount, in a field of its own under the control that says what it means. */
+.pkg-editor .pe-price-input {
+  width: 100%;
+  margin-top: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #bfe0cc;
+  border-radius: 12px;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.pkg-editor .pe-price-input::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.pe-price-field > .pe-price-figure:not(:first-of-type) {
+  margin-top: 8px;
+}
+
+/* "Clients pay ₹6,000 instead of ₹7,080" sits tight under the panel it explains. */
+.pe-price-card + .savings-banner {
+  margin-top: 8px;
+}
+
+@media (max-width: 380px) {
+  .pe-mode-toggle button {
+    padding: 4px 4px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Eight services show in full; past that the list scrolls inside its own group (owner, 2026-10-08). */
+.pe-service-list.is-long {
+  max-height: 432px; /* eight 54px rows */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pe-add-row + .pe-service-list .sheet-row:first-child {
+  border-top: 0.5px solid var(--border);
 }

@@ -126,7 +126,8 @@
 .att-search input,
 .checkout-amount-field input,
 .phone-field input,
-.sheet-row input {
+.sheet-row input,
+.sheet-row select {
   box-shadow: none;
 }
 
@@ -312,4 +313,41 @@
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 70%);
   box-shadow: var(--clay-raise-soft);
   border-radius: 12px;
+}
+
+/* ---------- the service sheet's Retire and Delete (owner, 2026-10-08) ---------- */
+/* Two rows, each a raised piece that presses in under the thumb. Phone only, like the rows' own surface (98-service-sheet.css). */
+@media (max-width: 860px) {
+  .sheet-danger-row {
+    box-shadow: var(--clay-raise-soft);
+  }
+  .sheet-danger-row:active {
+    box-shadow: var(--clay-press);
+  }
+}
+
+/* ---------- the package editor on a phone (owner, 2026-10-08) ---------- */
+/* The groups are the service sheet's, so they are already raised there; what is new here is this page's own pieces. */
+@media (max-width: 860px) {
+  .pkg-editor .sheet-group,
+  .svc-picker .sheet-group {
+    box-shadow: var(--clay-raise-soft);
+  }
+  .pkg-editor .pkg-remove,
+  .pkg-editor .weekday-chip {
+    box-shadow: var(--clay-raise-soft);
+  }
+  .pkg-editor .weekday-chip.active {
+    box-shadow: var(--clay-green);
+  }
+  .pkg-editor .pe-back {
+    box-shadow: var(--clay-raise-soft);
+  }
+  .pkg-editor .pe-back:active,
+  .pkg-editor .pkg-remove:active {
+    box-shadow: var(--clay-press);
+  }
+  .svc-picker .svc-pick-row.is-picked .svc-pick-check {
+    box-shadow: var(--clay-green);
+  }
 }

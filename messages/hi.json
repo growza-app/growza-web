@@ -1231,54 +1231,23 @@
       "hoursMinutes": "{hours, plural, one {# घंटा} other {# घंटे}} {minutes} मिनट"
     },
     "builder": {
-      "back": "← वापस",
       "createTitle": "पैकेज बनाएँ",
       "editTitle": "{title} बदलें",
-      "subtitle": "सेवाओं का पैकेज बनाएँ और अपने ग्राहकों को ख़ास कीमत दें।",
       "delete": "हटाएँ",
       "saveDraft": "ड्राफ़्ट में सेव करें",
-      "draftShort": "ड्राफ़्ट",
-      "nextFull": "आगे: {label} →",
-      "nextShort": "आगे →",
       "saving": "सेव हो रहा है…",
       "publish": "पैकेज सेव करें",
-      "steps": {
-        "build": {
-          "title": "बनाएँ",
-          "sub": "सेवाएँ और कीमत जोड़ें",
-          "nav": "नियम और उपलब्धता"
-        },
-        "rules": {
-          "title": "नियम",
-          "sub": "कब दिखे और सीमाएँ तय करें",
-          "nav": "पूर्वावलोकन"
-        },
-        "preview": {
-          "title": "पूर्वावलोकन",
-          "sub": "देखें ग्राहकों को कैसा दिखेगा"
-        }
-      },
-      "tip": "सुझाव",
-      "tipBody": "WhatsApp शुरू होने के बाद ग्राहक इस पैकेज को आपके WhatsApp ऑफ़र मेन्यू से बुक कर पाएँगे।",
       "namePlaceholder": "जैसे: वीकेंड ग्लो पैकेज",
       "tagline": "टैगलाइन (वैकल्पिक)",
       "taglinePlaceholder": "जैसे: इस वीकेंड ख़ुद को पैम्पर करें",
-      "addServices": "2. सेवाएँ जोड़ें *",
-      "addServicesHint": "इस पैकेज में जो सेवाएँ रखनी हैं उन्हें खोजकर जोड़ें।",
+      "addTagline": "+ टैगलाइन जोड़ें (वैकल्पिक)",
       "searchServices": "{count, plural, one {1 सेवा में खोजें…} other {# सेवाओं में खोजें…}}",
       "clearSearch": "खोज साफ़ करें",
       "noMatch": "कोई सेवा नहीं मिली",
       "alsoTry": "यह भी देखें",
-      "pickHint": "ऊपर खोजें और जोड़ने के लिए किसी सेवा पर टैप करें।",
       "moveUp": "ऊपर करें",
       "moveDown": "नीचे करें",
-      "pricing": "3. कीमत",
-      "original": "असली कीमत",
-      "flat": "तय ₹",
       "percent": "% छूट",
-      "youSave": "आपकी बचत",
-      "customersPay": "ग्राहक {original} की जगह {price} देंगे",
-      "rulesIntro": "तय करें कि यह पैकेज किन दिनों दिखे — वीकेंड स्पेशल या एक दिन की फ़्लैश डील के लिए काम का।",
       "visibility": {
         "always": {
           "title": "हमेशा दिखता है",
@@ -1295,19 +1264,14 @@
       },
       "from": "से (वैकल्पिक)",
       "until": "तक (वैकल्पिक)",
-      "previewIntro": "दाईं तरफ़ का सारांश देखें, फिर चालू करें — या कुछ बदलना हो तो वापस जाएँ। WhatsApp इसे सादे टेक्स्ट में दिखाता है (फ़ोटो या डिज़ाइन के बिना — जानकारी Try WhatsApp में देखें), इसलिए यह पूर्वावलोकन डैशबोर्ड का सारांश है, असली चैट का स्क्रीनशॉट नहीं।",
-      "previewEmpty": "चालू करने से पहले “बनाएँ” चरण में सेवाएँ जोड़ें।",
       "untitled": "बिना नाम का पैकेज",
-      "servicesCount": "{count, plural, one {# सेवा} other {# सेवाएँ}}",
       "summary": {
-        "always": "ग्राहकों को हमेशा दिखता है",
+        "always": "हर दिन",
         "pickDay": "कम से कम एक दिन चुनें",
         "pickWindow": "शुरू और/या आख़िरी तारीख़ चुनें",
         "range": "{from} से {until} तक"
       },
       "sidebarPreview": "पूर्वावलोकन",
-      "mobileAria": "मोबाइल की तरह देखें",
-      "desktopAria": "कंप्यूटर की तरह देखें",
       "sidebarEmpty": "पूर्वावलोकन देखने के लिए सेवाएँ जोड़ें।",
       "caption": "📲 WhatsApp से बुक हो सकेगा",
       "card": {
@@ -1327,11 +1291,36 @@
         "windowBackwards": "खत्म होने का समय शुरू होने के बाद का होना चाहिए"
       },
       "sumOfParts": "जोड़ की कीमत",
-      "sumOfPartsNote": "सब सेवाओं की जोड़ वाली कीमत — कोई छूट नहीं।",
-      "noSavingShown": "ग्राहकों को कोई बचत नहीं दिखेगी।",
-      "packageDetails": "1. पैकेज की जानकारी",
       "packageName": "पैकेज का नाम *",
-      "packagePrice": "पैकेज की कीमत"
+      "packagePrice": "पैकेज की कीमत",
+      "backAria": "पैकेज पर वापस",
+      "groups": {
+        "details": "जानकारी",
+        "services": "सेवाएँ",
+        "price": "कीमत",
+        "when": "कब दिखे"
+      },
+      "servicesEmpty": "अभी इसमें कोई सेवा नहीं।",
+      "whenItRuns": "ग्राहकों को दिखे",
+      "deleteRow": "यह पैकेज हटाएँ",
+      "picker": {
+        "title": "सेवाएँ जोड़ें",
+        "open": "+ सेवाएँ जोड़ें",
+        "done": "हो गया",
+        "chosen": "{count, plural, one {# चुनी} other {# चुनी गईं}}"
+      },
+      "price": {
+        "needServices": "पहले सेवाएँ जोड़ें, फिर कीमत तय करें।",
+        "setCost": "पैकेज की कीमत रखें।",
+        "noSaving": "ग्राहकों को कोई बचत नहीं दिखेगी।",
+        "above": "सेवाओं के जोड़ से {amount} ज़्यादा।",
+        "nothing": "—"
+      },
+      "servicesSummary": "{count, plural, one {# सेवा} other {# सेवाएँ}} · {duration} लगते हैं",
+      "original": "असली कीमत",
+      "youSave": "आप बचाते हैं",
+      "flat": "तय ₹",
+      "customersPay": "ग्राहक {original} की जगह {price} देंगे"
     }
   },
   "attendance": {

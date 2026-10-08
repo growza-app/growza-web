@@ -279,6 +279,9 @@ export function ServiceForm({
               <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
             ) : imageUrl ? (
               <img className="sheet-photo-img" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
+            ) : service ? (
+              /* The list shows the supplied pack picture when there is no upload; the sheet showed an empty box for the same service. */
+              <img className="sheet-photo-img" src={servicePhotoUrl(service)} alt="" />
             ) : (
               <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
             )}
@@ -317,7 +320,7 @@ export function ServiceForm({
             )}
           </div>
 
-          <div className="sheet-label">{t('groups.details')}</div>
+          <div className="sheet-label sheet-label-details">{t('groups.details')}</div>
           <div className="sheet-group">
             <Row label={t('name')} htmlFor="svc-name">
               <input
@@ -346,7 +349,7 @@ export function ServiceForm({
           </div>
           {fieldErrors.name && <div role="alert" className="sheet-foot sheet-foot-error">{fieldErrors.name}</div>}
 
-          <div className="sheet-label">{t('groups.time')}</div>
+          <div className="sheet-label sheet-label-time">{t('groups.time')}</div>
           <div className="sheet-group">
             <Row label={t('duration')}>
               <Stepper
@@ -376,7 +379,7 @@ export function ServiceForm({
             {t('cleanupHint')} {t('slotIs', { duration: minutes(slotMinutes(durationMin, cleanupMin)) })}
           </div>
 
-          <div className="sheet-label">{t('groups.price')}</div>
+          <div className="sheet-label sheet-label-price">{t('groups.price')}</div>
           <div className="sheet-group">
             <div className="sheet-row sheet-row-price">
               <span className="sheet-price-symbol" aria-hidden="true">
