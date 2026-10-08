@@ -52,3 +52,15 @@
 .rp-cell-bar-track { width: 70px; height: 7px; background: #f0f1f0; border-radius: 5px; overflow: hidden; }
 .rp-cell-bar-fill { display: block; height: 100%; }
 .rp-cell-bar-value { font-size: 0.78125rem; font-weight: 700; }
+
+/*
+ * A phone shows the first few columns, not a sideways scroll that cuts the last one in half. The rest are on the
+ * client's own page. Wider than a phone keeps every column and scrolls. Client · Visits · Total spent is what fits at 344px.
+ */
+@media (max-width: 520px) {
+  .rp-table-phone-2, .rp-table-phone-3, .rp-table-phone-4 { min-width: 0; }
+  .rp-table-phone-2 :is(th, td):nth-child(n + 3),
+  .rp-table-phone-3 :is(th, td):nth-child(n + 4),
+  .rp-table-phone-4 :is(th, td):nth-child(n + 5) { display: none; }
+  .rp-table-phone-3 th, .rp-table-phone-3 td { padding-left: 8px; padding-right: 8px; }
+}

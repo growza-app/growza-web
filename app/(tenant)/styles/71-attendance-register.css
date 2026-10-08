@@ -1246,3 +1246,22 @@
   width: 1.0625rem;
   height: 1.0625rem;
 }
+
+/*
+ * Phone (design review, 2026-10-08): the search shared a row with the filter and was squeezed until its placeholder
+ * read "Search staff by r…", and the time fields lost "AM" to the clock glyph inside them. The search takes the whole
+ * row; the clock icon goes (the field opens its own picker when tapped), which is the width "09:00 AM" needs.
+ */
+@media (max-width: 520px) {
+  .att-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .att-timeset input {
+    padding-left: 8px;
+    padding-right: 4px;
+  }
+  .att-timeset input::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+}

@@ -287,8 +287,6 @@
    * different way rather than all of them stacking:
    */
 
-  /* Four figures stay four across; they are short enough, and two rows of two
-     cost more height than a smaller type size does legibility. */
   .rp-cs-figures { gap: var(--sp-2); }
   .rp-cs-figure > span { font-size: 0.75rem; }
   .rp-cs-figure > strong { font-size: 1.0625rem; }
@@ -356,4 +354,10 @@
     white-space: nowrap;
   }
   .bk-client-banner > a { flex: none; }
+}
+
+/* Four across fits a tablet. At phone width "New clients" wraps and its ⓘ drops under it, so the four figures sat on
+   four different baselines (found live at 393px). Two rows of two, each label on one line. */
+@media (max-width: 520px) {
+  .rp-cs-figures { gap: var(--sp-3) var(--sp-2); grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

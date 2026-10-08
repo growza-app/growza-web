@@ -62,17 +62,20 @@ export function ReportTable({
   rows,
   onRowClick,
   emptyText,
+  phoneColumns,
 }: {
   columns: string[];
   rows: TableRow[];
   onRowClick?: (id: string) => void;
   emptyText: string;
+  /** On a phone only the first N columns are shown, so the table fits instead of scrolling sideways. */
+  phoneColumns?: 2 | 3 | 4;
 }) {
   if (rows.length === 0) return <p className="rp-empty">{emptyText}</p>;
 
   return (
     <div className="rp-table-scroll">
-      <table className="rp-table">
+      <table className={`rp-table ${phoneColumns ? `rp-table-phone-${phoneColumns}` : ''}`}>
         <thead>
           <tr>
             {columns.map((column) => (
