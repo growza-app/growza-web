@@ -66,6 +66,7 @@ describe('1 — the matrix, typed out', () => {
     'booking.checkout': true,
     'booking.setStatus': true,
     'booking.reschedule': true,
+    'booking.correct': false, // the owner fixes a finished booking; the desk does not
     'clients.list': true,
     'client.profile': true,
     'client.edit': true,
@@ -82,6 +83,7 @@ describe('1 — the matrix, typed out', () => {
     'booking.checkout': false, // GRW-195 — checkout completes the booking
     'booking.setStatus': false,
     'booking.reschedule': false,
+    'booking.correct': false,
     'clients.list': false,
     'client.profile': false, // GRW-199 — never grantable, even with the Clients report tab
     'client.edit': false,
