@@ -16,6 +16,7 @@ import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionRefresh } from './components/SessionRefresh';
 import { SessionProvider } from './components/SessionProvider';
+import { SessionResume } from './components/SessionResume';
 import { BranchProvider } from './components/BranchProvider';
 import { LabelsProvider } from './components/LabelsProvider';
 import { mayUse, type MemberRole } from './lib/nav-policy';
@@ -26,8 +27,7 @@ import { SetupBanner } from './components/SetupBanner';
 import { isLive } from './lib/go-live';
 import { isWritable } from './lib/read-only';
 import { ImpersonationBanner } from './components/ImpersonationBanner';
-import { redirect } from 'next/navigation';
-import { accountStatusRefusal, shouldSignInAgain, SIGN_IN_PATH } from './lib/session-policy';
+import { accountStatusRefusal, shouldSignInAgain } from './lib/session-policy';
 import { AccountStatusScreen } from './components/AccountStatusScreen';
 import { serverLang } from './lib/lang';
 import { NextIntlClientProvider } from 'next-intl';
@@ -169,6 +169,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let impersonation: { businessName: string; role: string } | null = null;
   /** GRW-164 — set when the API says this account may not operate. */
   let accountStatus: { reason: string; message: string; support?: { phone?: string } } | null = null;
+  /** `/me` answered 401: either a session cookie that has run out, or nobody signed in. `SessionResume` tells them apart. */
+  let lapsed = false;
   /** Jira GRW-222 — the primary branch's name for the sidebar, when there is one. */
   let locationName: string | null = null;
   // Jira GRW-395 — where a member held to a branch works, at a business with several (null otherwise): the header says it.
@@ -225,10 +227,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
      * we can act on. Everything else still falls through to the degraded
      * render below (BR-03).
      *
-     * `redirect()` works by throwing, so it must be the last thing in this
-     * block: anything after it would not run.
+     * It no longer redirects to /login, it records the fact and renders `SessionResume`. A session cookie that has
+     * simply run out and a person who is genuinely signed out are the same 401 from here, and only the second needs
+     * the form — the 30-day refresh cookie can usually mint a new session for the first, and nothing on a page load
+     * had ever asked it to. `SessionResume` asks, and sends them to `SIGN_IN_PATH` when the answer is no.
+     *
+     * A flag rather than an early `return`, because `redirect()` used to end this block by throwing and a bare
+     * `return` here would skip `accountStatusRefusal` below.
      */
-    if (shouldSignInAgain(error)) redirect(SIGN_IN_PATH);
+    if (shouldSignInAgain(error)) lapsed = true;
     /**
      * GRW-164 — a suspended, closed or half-provisioned account.
      *
@@ -240,6 +247,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     accountStatus = accountStatusRefusal(error);
     // API down — pages render their own error state, and `billing` stays
     // null so no banner claims anything it cannot know (GRW-122).
+  }
+
+  if (lapsed) {
+    return (
+      <html lang={lang} className={fontClass}>
+        <body>
+          <SessionResume />
+        </body>
+      </html>
+    );
   }
 
   if (accountStatus) {
