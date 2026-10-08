@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { PhoneField } from '../../(tenant)/components/PhoneField';
 import { toStoredPhone } from '../../(tenant)/lib/phone';
 import { rememberLang, type Lang } from '../../(tenant)/lib/lang';
+import { localiseApiMessage } from '../../(tenant)/lib/api-messages';
 
 /**
  * Jira GRW-66 · GRW-160 — where a salon owner signs in.
@@ -80,7 +81,10 @@ export default function LoginPage() {
         const body = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
         // BR-04 — the API's own words. It answers generically on purpose
         // (GRW-159 FR-02) and rewording it here is how a leak gets put back.
-        setError(body?.detail ?? body?.error ?? t('errors.failed'));
+        // Translated, not reworded: `localiseApiMessage` swaps a sentence for the same sentence in Hindi from a
+        // fixed table and leaves anything it does not know exactly as the server said it. Without it a Hindi page
+        // told a mistyped password in English. A bare code (`body.error`) is never a sentence, so it is not looked up.
+        setError(body?.detail ? localiseApiMessage(body.detail, locale) : (body?.error ?? t('errors.failed')));
         setPassword('');
         setLoading(false);
         return;
@@ -133,7 +137,7 @@ export default function LoginPage() {
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
-        setError(body?.detail ?? t('errors.firstFailed'));
+        setError(body?.detail ? localiseApiMessage(body.detail, locale) : t('errors.firstFailed'));
         // A refused one-time password cannot be retried from here; start again.
         if (body?.error === 'invalid_credentials') setTemporary(null);
         setLoading(false);
