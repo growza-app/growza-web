@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
+import { newAttemptKey } from '../lib/attempt-key';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
 import { inr, oklch } from '../tokens';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextInput } from './primitives';
@@ -143,6 +144,8 @@ export function ReenrolModal({
 
   const open = subscriptionId !== null;
   const openedFor = useRef<string | null>(null);
+  /** Stands in for the reference of a cash payment that has none, so a resend is not a second payment. One per opening. */
+  const attemptKey = useRef(newAttemptKey());
 
   /**
    * Seed and load ONCE per opening, on the transition into open — the same
@@ -157,6 +160,7 @@ export function ReenrolModal({
     }
     if (openedFor.current === subscriptionId) return;
     openedFor.current = subscriptionId;
+    attemptKey.current = newAttemptKey();
 
     setPreview(null);
     setLoadError(null);
@@ -209,7 +213,7 @@ export function ReenrolModal({
             ? 'Enter when the payment arrived.'
             : future
               ? 'That is in the future. A payment can only be recorded after it arrived.'
-              : reference.trim() === ''
+              : reference.trim() === '' && method !== 'cash'
                 ? 'Enter the reference from the bank statement.'
                 : null;
   const canSave = blocker === null && !saving;
@@ -229,7 +233,7 @@ export function ReenrolModal({
       body: JSON.stringify({
         reason: reason.trim(),
         ...(withPayment && parsedAmount.ok && paidAtValid
-          ? { payment: { amountMinor: parsedAmount.minor, method, reference: reference.trim(), paidAt: paidAtDate!.toISOString() } }
+          ? { payment: { amountMinor: parsedAmount.minor, method, ...(reference.trim() === '' ? { idempotencyKey: attemptKey.current } : { reference: reference.trim() }), paidAt: paidAtDate!.toISOString() } }
           : {}),
       }),
     })
@@ -393,8 +397,8 @@ export function ReenrolModal({
                     </select>
                   </div>
                   <div>
-                    <FieldLabel htmlFor={`${ids}-reference`}>Reference</FieldLabel>
-                    <TextInput id={`${ids}-reference`} value={reference} onChange={(e) => setReference(e.target.value)} placeholder="UTR / cheque number" disabled={saving} />
+                    <FieldLabel htmlFor={`${ids}-reference`}>{method === 'cash' ? 'Reference (optional)' : 'Reference'}</FieldLabel>
+                    <TextInput id={`${ids}-reference`} value={reference} onChange={(e) => setReference(e.target.value)} placeholder={method === 'cash' ? 'Receipt number, if you gave one' : 'UTR / cheque number'} disabled={saving} />
                   </div>
                   <div>
                     <FieldLabel htmlFor={`${ids}-paid-at`}>When it arrived</FieldLabel>
@@ -414,7 +418,7 @@ export function ReenrolModal({
                     </div>
                   ) : null}
                   <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
-                    Recorded on your word — no provider will confirm it. The reference is what ties it to a bank statement.
+                    Recorded on your word — no provider will confirm it. The reference is what ties it to a bank statement; cash needs none.
                   </div>
                 </div>
               ) : null}
