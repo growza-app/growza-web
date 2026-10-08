@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
+import { newAttemptKey } from '../lib/attempt-key';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
@@ -108,6 +109,11 @@ export function RecordPaymentModal({
 
   const open = businessName !== null && subscription !== null;
   const openedFor = useRef<string | null>(null);
+  /**
+   * What makes a cash payment with no reference one payment however often it is sent. Made once per opening, so a
+   * retry after a timeout lands on the first row instead of recording the cash twice.
+   */
+  const attemptKey = useRef(newAttemptKey());
 
   /**
    * Seed the form ONCE per opening, on the transition into open.
@@ -131,6 +137,7 @@ export function RecordPaymentModal({
     }
     if (openedFor.current === subscription.id) return;
     openedFor.current = subscription.id;
+    attemptKey.current = newAttemptKey();
     setAmount(String(subscription.finalPriceMinor / 100));
     setMethod('bank_transfer');
     setReference('');
@@ -161,7 +168,7 @@ export function RecordPaymentModal({
       ? 'Enter when the payment arrived.'
       : future
         ? 'That is in the future. A payment can only be recorded after it arrived.'
-        : reference.trim() === ''
+        : reference.trim() === '' && method !== 'cash'
           ? 'Enter the reference from the bank statement.'
           : reason.trim() === ''
             ? 'Enter a reason — it is recorded against your name.'
@@ -182,7 +189,8 @@ export function RecordPaymentModal({
       body: JSON.stringify({
         amountMinor: parsedAmount.minor,
         method,
-        reference: reference.trim(),
+        // Cash may have none. Then the key stands in, so a resend is not a second payment.
+        ...(reference.trim() === '' ? { idempotencyKey: attemptKey.current } : { reference: reference.trim() }),
         paidAt: paidAtDate!.toISOString(),
         reason: reason.trim(),
         ...(confirmLargeAmount ? { confirmLargeAmount: true } : {}),
@@ -349,14 +357,14 @@ export function RecordPaymentModal({
 
           <div style={{ marginTop: 16 }}>
             <label htmlFor={`${ids}-reference`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
-              Reference
+              {method === 'cash' ? 'Reference (optional)' : 'Reference'}
             </label>
             <TextInput
               id={`${ids}-reference`}
               disabled={saving}
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              placeholder="UTR, UPI reference, cheque number, or receipt number"
+              placeholder={method === 'cash' ? 'Receipt number, if you gave one' : 'UTR, UPI reference, cheque number, or receipt number'}
               style={{ marginTop: 7, fontWeight: 500 }}
             />
             {/* Not decoration: the reference is what makes this payment
@@ -365,7 +373,9 @@ export function RecordPaymentModal({
                 or an admin who cannot find the UTR will type something
                 arbitrary. */}
             <div style={{ marginTop: 6, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
-              This is what ties the payment to the bank statement. The same reference cannot be recorded twice for this business.
+              {method === 'cash'
+                ? 'Cash has no bank statement, so a reference is optional. If you give one, the same reference cannot be recorded twice for this business.'
+                : 'This is what ties the payment to the bank statement. The same reference cannot be recorded twice for this business.'}
             </div>
           </div>
 
