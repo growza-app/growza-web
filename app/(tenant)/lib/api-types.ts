@@ -332,8 +332,8 @@ export interface Appointment {
    * compiler point at each one.
    */
   customerPhone: string | null;
-  /** GRW-219 — what the move sheet asks the availability endpoint about. */
-  serviceId: string;
+  /** GRW-219 — what the move sheet asks the availability endpoint about. NULL once the service has been deleted: the booking keeps its own name and price. */
+  serviceId: string | null;
   serviceName: string;
   priceMinor: string | null;
   /** What was actually charged at checkout — null until completed; fall back to priceMinor for display. */
@@ -804,4 +804,17 @@ export interface OwnerBill extends Omit<OwnerBillRow, never> {
   discountAmountMinor: number;
   /** Jira GRW-407 — the payments put against this bill. */
   payments?: Array<{ amountMinor: number; refundedMinor: number; via: 'autopay' | 'pay_now' | 'recorded'; paidOn: string | null; fromAccount: boolean }>;
+}
+
+/** One correction the owner made to a finished booking — what a service was, and what it is now. */
+export interface BookingCorrection {
+  at: string;
+  reason: string | null;
+  changes: Array<{
+    appointmentId: string;
+    beforeService: string | null;
+    afterService: string | null;
+    beforeMinor: number | null;
+    afterMinor: number;
+  }>;
 }

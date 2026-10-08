@@ -93,7 +93,8 @@ export function BookingSheet({
    */
   const mayCheckout = useMayUse('booking.checkout');
   const maySetStatus = useMayUse('booking.setStatus');
-  const mayMove = useMayUse('booking.reschedule') && canMove;
+  // A booking whose service has since been deleted has no duration to look times up for, so it cannot be moved.
+  const mayMove = useMayUse('booking.reschedule') && canMove && (comboLegs ?? [appointment]).every((l) => l.serviceId !== null);
 
   const digits = dialable(appointment.customerPhone);
   const name = appointment.customerName ?? 'this customer';

@@ -1496,7 +1496,24 @@
       "thisBranch": "This branch"
     },
     "yourBusiness": "Your business",
-    "savedToast": "Saved"
+    "savedToast": "Saved",
+    "correct": {
+      "title": "Correct this booking",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "service": "Service",
+      "amount": "Amount ₹",
+      "reason": "Reason",
+      "reasonPlaceholder": "Optional",
+      "note": "The old amount and service stay in the activity log.",
+      "amountInvalid": "Enter an amount for each service.",
+      "saveFailed": "That did not save. Check the connection and try again.",
+      "item": "Correct amount or service",
+      "loadFailed": "Could not load services. Check the connection and try again.",
+      "notePackage": "A service in a package keeps its service; you can fix its amount. The old amount stays in the activity log.",
+      "historyTitle": "Corrected"
+    }
   },
   "auth": {
     "metaTitle": "Sign in",

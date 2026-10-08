@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@growza-app/shared": "1.0.2",
+    "@growza-app/shared": "1.0.4",
     "luxon": "^3.7.2",
     "next": "^16.3.8",
     "next-intl": "^4.14.5",

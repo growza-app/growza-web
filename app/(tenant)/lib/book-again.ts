@@ -35,7 +35,8 @@ export function lastVisitOf(appointments: readonly Appointment[], now: Date): La
     ? happened.filter((a) => a.bookingGroupId === newest.bookingGroupId).sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
     : [newest];
   return {
-    serviceIds: legs.map((l) => l.serviceId),
+    // A service the owner has since deleted cannot be booked again, so it is left out rather than offered.
+    serviceIds: legs.flatMap((l) => (l.serviceId ? [l.serviceId] : [])),
     providerId: legs[0]?.providerId ?? null,
     offerTitle: legs.find((l) => l.offerTitle)?.offerTitle ?? null,
     startAt: legs[0]!.startAt,

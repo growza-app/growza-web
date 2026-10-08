@@ -142,7 +142,7 @@ export function MoveBookingSheet({
    * is booked at half past, and the failure would surface at the moment of
    * confirming. The same reasoning the walk-in sheet's "later" mode records.
    */
-  const serviceIds = useMemo(() => legs.map((l) => l.serviceId), [legs]);
+  const serviceIds = useMemo(() => legs.flatMap((l) => (l.serviceId ? [l.serviceId] : [])), [legs]);
 
   useEffect(() => {
     let cancelled = false;

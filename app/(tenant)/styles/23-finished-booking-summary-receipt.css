@@ -189,3 +189,42 @@
   opacity: 0.5;
   cursor: default;
 }
+
+/*
+ * The buttons under the receipt. `.modal-actions` assumes a `.modal` with 26px of side padding that its negative
+ * margins cancel; this is a `.sheet`, which has none, so the row ran 26px past each edge and the Close button
+ * was clipped at 344px. Inside the sheet's own gutter, and wrapping, so "Correct amount or service" sits on its
+ * own line when it does not fit beside Close.
+ */
+.sheet .modal-actions.summary-actions {
+  margin: 18px 0 0;
+  padding: 0 18px calc(14px + env(safe-area-inset-bottom, 0px));
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* What the owner corrected on this visit: when, what it was, what it is now, and why. */
+.summary-correction {
+  margin-top: 8px;
+  padding: 8px 18px 0;
+  border-top: 1px solid var(--border);
+}
+
+.summary-section-label + .summary-correction {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.summary-correction-when {
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.summary-correction-reason {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--muted);
+}
