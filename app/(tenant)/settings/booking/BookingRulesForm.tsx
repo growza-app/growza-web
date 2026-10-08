@@ -14,9 +14,14 @@ function dayLabel(iso: string, locale: string): string {
   return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(`${locale}-IN`, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
+/** What a salon actually books by. Anything else already saved is added to this list rather than lost. */
+const SLOT_CHOICES = [10, 15, 20, 30, 45, 60];
+
 export function BookingRulesForm({ initial, branchName = null }: { initial: SettingsSummary; branchName?: string | null }) {
   const router = useRouter();
   const t = useTranslations('settingsBooking');
+  // The same "{count} min" the menu and the free-times screen use, so one duration is written one way.
+  const tmin = useTranslations('services');
   // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
   const closeForm = useCloseAfterSave('/settings');
   const locale = useLocale();
@@ -120,14 +125,26 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
           <label htmlFor="rule-slot">
             <span>{t('slotLength')}</span>
           </label>
-          <input id="rule-slot"
-            type="number"
-            min={5}
-            max={240}
-            step={5}
+          {/*
+            A choice, not a typed number (design review, 2026-10-07): "offer choices instead of requiring text
+            entry" (HIG, Entering data). It was a number field from 5 to 240 in steps of 5 — forty-eight
+            answers, of which a salon uses five, and no salon has ever wanted bookings every 185 minutes.
+            A value already saved that is not on the list is kept and shown, so an old setting is never
+            silently rounded to something the owner did not choose.
+          */}
+          <select
+            id="rule-slot"
             value={slotGranularityMin}
             onChange={(e) => setSlotGranularityMin(Number(e.target.value))}
-          />
+          >
+            {[...new Set([...SLOT_CHOICES, slotGranularityMin])]
+              .sort((a, b) => a - b)
+              .map((n) => (
+                <option key={n} value={n}>
+                  {tmin('minutes', { count: n })}
+                </option>
+              ))}
+          </select>
           <span className="field-hint">{t('slotHint', { count: slotGranularityMin || 0 })}</span>
         </div>
 

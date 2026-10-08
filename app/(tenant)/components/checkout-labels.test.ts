@@ -52,28 +52,28 @@ describe('the Mark as done sheet, in a business\'s own words', () => {
   it('a clinic reads "Consultation", not "service"', () => {
     const html = sheetSays({ service: 'Consultation', services: 'Consultations' });
     expect(html).toContain('Consultations');
-    expect(html).toContain('Select a consultation or combo');
-    expect(html).toContain('Add a consultation or a combo');
+    expect(html).toContain('Select a consultation or package');
+    expect(html).toContain('Add a consultation or a package');
     expect(html).not.toMatch(/Select a service/i);
     expect(html).not.toMatch(/>Services</);
   });
 
   it('a salon reads what it always did', () => {
     const html = sheetSays({ service: 'Service', services: 'Services' });
-    expect(html).toContain('Select a service or combo');
-    expect(html).toContain('Add a service or a combo');
+    expect(html).toContain('Select a service or package');
+    expect(html).toContain('Add a service or a package');
     expect(html).toContain('>Services<');
-    expect(html).toContain('label="Combos"');
+    expect(html).toContain('label="Packages"');
   });
 
   it('with no labels at all (the API was down) it still reads, in neutral words', () => {
     const html = sheetSays({});
-    expect(html).toContain('Select a service or combo');
+    expect(html).toContain('Select a service or package');
   });
 
   it('in Hindi the sentence is Hindi and still carries the business\'s noun', () => {
     const html = sheetSays({ service: 'Consultation', services: 'Consultations' }, 'hi');
-    expect(html).toContain('consultation या कॉम्बो चुनें');
+    expect(html).toContain('consultation या पैकेज चुनें');
     expect(html).not.toContain('Select a');
   });
 

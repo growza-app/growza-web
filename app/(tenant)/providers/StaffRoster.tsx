@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { PersonPhoto } from '../components/PersonPhoto';
 import { useEffect, useRef, useState } from 'react';
 import type { ProviderOverviewRow } from '../lib/api';
 import { useWritable } from '../components/SessionProvider';
@@ -249,7 +250,7 @@ function StaffRow({
 
   return (
     <div className={`staff-row ${off ? 'is-off' : ''}`}>
-      <div className={`staff-avatar ${avatarTone(p.displayName)} ${off ? 'is-muted' : ''}`}>{initials(p.displayName)}</div>
+      <PersonPhoto name={p.displayName} photoUrl={p.photoUrl} muted={off} />
 
       <div className="staff-identity">
         <div className="staff-identity-name">
@@ -347,7 +348,7 @@ function StaffCard({
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onOpenSheet(p))}
     >
       <div className="staff-card-top">
-        <div className={`staff-avatar ${avatarTone(p.displayName)} ${off ? 'is-muted' : ''}`}>{initials(p.displayName)}</div>
+        <PersonPhoto name={p.displayName} photoUrl={p.photoUrl} muted={off} />
         <div className="staff-card-identity">
           <div className="staff-identity-name">
             <span className="staff-card-name">{p.displayName}</span>
@@ -411,7 +412,7 @@ export function StaffActionSheet({
       <div className="sheet" role="dialog" aria-modal="true" aria-label={t('actionsFor', { name: p.displayName })} ref={dialogRef}>
         <div className="sheet-grab" />
         <div className="sheet-head">
-          <div className={`staff-avatar ${avatarTone(p.displayName)}`}>{initials(p.displayName)}</div>
+          <PersonPhoto name={p.displayName} photoUrl={p.photoUrl} />
           <div>
             <div className="sheet-title">{p.displayName}</div>
             <div className="sheet-sub">

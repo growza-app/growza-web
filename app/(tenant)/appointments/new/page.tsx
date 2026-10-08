@@ -3,6 +3,7 @@ import { guardLive } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import type { VisitMode } from '../../components/NewVisitSheet';
+import type { QueueEntry } from '../../lib/home-types';
 import { NewBookingClient } from './NewBookingClient';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
@@ -21,12 +22,14 @@ export const dynamic = 'force-dynamic';
 export default async function NewBookingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ mode?: string; purpose?: string; token?: string; location?: string; from?: string }>;
 }) {
   // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
   await guardLive('/appointments/new');
   const params = await searchParams;
   const mode: VisitMode = params.mode === 'later' ? 'later' : 'now';
+  // Owner, 2026-10-06 — Record payment on a phone is this page with `?purpose=payment`: one screen, ending in Mark done.
+  const paying = params.purpose === 'payment';
 
   let me;
   try {
@@ -51,12 +54,34 @@ export default async function NewBookingPage({
   if (!mayUse(me.member?.role, 'visit.new', isWritable(me.tenant?.status))) {
     redirect('/appointments');
   }
+  // Record payment is its own action: a role that may book but not take money is not offered the till.
+  if (paying && !mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status))) {
+    redirect('/appointments/new');
+  }
+
+  /*
+   * Owner, 2026-10-07 — paying a waiting token is this page too (`&token=…&location=…`), not the old overlay: the
+   * token's client, branch and services filled in. A token that is no longer waiting (paid on another phone, left)
+   * is not found: the page opens as a plain Record payment and SAYS so, or the desk takes the money a second time
+   * for a visit that is already settled.
+   */
+  let token: QueueEntry | undefined;
+  if (paying && params.token) {
+    try {
+      token = (await api.walkInQueue(params.location ?? null)).find((x) => x.id === params.token);
+    } catch {
+      token = undefined;
+    }
+  }
+  const tokenGone = Boolean(paying && params.token && !token);
 
   return (
     <div className="page-body">
-      <NewBookingClient mode={mode} timezone={me.tenant?.timezone ?? 'Asia/Kolkata'} />
+      <NewBookingClient mode={mode} purpose={paying ? 'payment' : 'visit'} token={token} tokenGone={tokenGone} backTo={params.from === 'bookings' ? '/appointments' : undefined} timezone={me.tenant?.timezone ?? 'Asia/Kolkata'} />
     </div>
   );
 }
 
-export const metadata = screenTitle('New booking');
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ purpose?: string }> }) {
+  return screenTitle((await searchParams).purpose === 'payment' ? 'Record payment' : 'New booking');
+}

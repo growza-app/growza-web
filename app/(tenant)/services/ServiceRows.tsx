@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { formatMoney, type ServiceAdmin } from '../lib/api';
 import { useLabel } from '../components/LabelsProvider';
 import { useWritable } from '../components/SessionProvider';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { hasServicePhoto, servicePhotoUrl } from '../lib/service-photos';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
@@ -146,8 +146,11 @@ function NameCell({ service, t }: { service: ServiceAdmin; t: T }) {
   const providerWord = useLabel('provider', 'stylist');
   return (
     <span className="svc-name-cell">
-      {service.imageUrl ? (
-        <img className="svc-thumb" src={servicePhotoUrl(service)} alt="" width={42} height={42} />
+      {/* Jira GRW-560 — the owner's own photo, else the pack's for this concept, else an empty tile.
+          Never a stock placeholder here: a list of thirty services would be thirty photographs of
+          somebody else's salon, which reads worse than nothing. */}
+      {hasServicePhoto(service) ? (
+        <img className="svc-thumb" src={servicePhotoUrl(service)} alt="" width={42} height={42} loading="lazy" decoding="async" />
       ) : (
         <span className="svc-thumb svc-thumb-empty" aria-hidden="true" />
       )}

@@ -1006,7 +1006,8 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
  * scroller's own edge instead.
  */
 @media (max-width: 860px) {
-  .settings-savebar {
+  /* `-pinned` only: a screen with two forms draws two bars, and two stuck to one edge cover each other. */
+  .settings-savebar-pinned {
     position: sticky;
     bottom: 0;
     z-index: 2;
@@ -1089,8 +1090,13 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
   .page-body.settings-page {
     padding-bottom: var(--sp-3);
   }
+  /*
+   * `-pinned` only (design review, 2026-10-07). The spread shadow is a strip of page background that hides
+   * whatever scrolls behind a DOCKED bar. On a bar sitting in the flow of a card it painted a grey band
+   * across the card and out past its rounded corner — Working hours drew one over each of its two forms.
+   */
   .settings-page .bp-savebar,
-  .settings-page .settings-savebar {
+  .settings-page .settings-savebar-pinned {
     bottom: 0;
     box-shadow: 0 0 0 var(--sp-3) var(--page-bg), 0 -14px 24px rgba(16, 38, 26, 0.08);
   }

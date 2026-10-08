@@ -12,7 +12,8 @@ const sheet = strip(readFileSync(resolve(__dirname, 'NewVisitSheet.tsx'), 'utf8'
 const css = strip(readFileSync(resolve(__dirname, '../styles/72-walk-in-sheet.css'), 'utf8'));
 
 describe('Which branch?', () => {
-  const block = sheet.slice(sheet.indexOf('{branches.length > 1 && !branchSettled ? ('), sheet.indexOf('<BookAgainCard'));
+  const blockStart = sheet.indexOf('{branches.length > 1 && !branchSettled ? (');
+  const block = sheet.slice(blockStart, sheet.indexOf('<BookAgainCard', blockStart));
 
   it('is a select with every branch as an option, the first labelled Main', () => {
     expect(block).toMatch(/<select\s+id="wi-branch"\s+value=\{branchId \?\? ''\}/);
@@ -27,6 +28,20 @@ describe('Which branch?', () => {
 
   it('is gone as chips', () => {
     expect(block).not.toMatch(/role="radiogroup"|wi-chip/);
+  });
+
+  /*
+   * Jira GRW-453 — a client record belongs to one branch, and `appointment_client_same_branch_fk` refuses a
+   * visit that pairs them with another. The dropdown clears the picked client itself, but the branch also
+   * moves on its own when the shared branch arrives late on a full reload, so the reset that every other
+   * branch-bound choice goes through has to clear it too.
+   */
+  it('a branch change clears the client picked at the old branch, not only the menu', () => {
+    const reset = sheet.slice(sheet.indexOf('if (menuBranch !== listBranch) {'));
+    const body = reset.slice(0, reset.indexOf('\n  }'));
+    expect(body).toMatch(/setSelected\(null\);/);
+    expect(body).toMatch(/setPicked\(\[\]\);/);
+    expect(body).toMatch(/setSchedulableId\(null\);/);
   });
 
   it('fits a narrow phone: full width, 44px, a long name cut with an ellipsis', () => {

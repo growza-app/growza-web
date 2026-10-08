@@ -24,9 +24,11 @@ export interface Branch {
   name: string;
   line1: string;
   city: string;
+  /** Jira GRW-557 — how many stylists this branch may have, as typed; starts at the plan's number. */
+  stylists: string;
 }
 
-export const emptyBranch = (): Branch => ({ name: '', line1: '', city: '' });
+export const emptyBranch = (stylists = ''): Branch => ({ name: '', line1: '', city: '', stylists });
 
 export function BranchFields({
   branches,
@@ -120,6 +122,21 @@ export function BranchFields({
               />
             </Field>
           </div>
+
+          {/* Jira GRW-557 — each branch's own number: a few for a small branch, more for a large one. */}
+          <Field
+            label="Stylists at most"
+            hint="Starts at the plan's number. Can be changed later from the business page."
+            error={errorFor(`branch.${index}.stylists`)}
+          >
+            <TextInput
+              value={branch.stylists}
+              invalid={!!errorFor(`branch.${index}.stylists`)}
+              onChange={(e) => onChange(index, { stylists: e.target.value.replace(/[^0-9]/g, '') }, 'stylists')}
+              inputMode="numeric"
+              placeholder="5"
+            />
+          </Field>
         </div>
       ))}
 

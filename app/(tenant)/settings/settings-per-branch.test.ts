@@ -32,10 +32,16 @@ describe('whose settings a tab shows', () => {
     expect(wholeBusiness('/settings/billing/bills')).toBe(true);
   });
 
-  it('the branch group is titled with the branch the tabs load (the address’s, else the main one)', () => {
+  it('the branch group is titled for the branch the tabs load (the address’s, else the main one)', () => {
     const nav = src('SettingsNavList.tsx');
     expect(nav).toMatch(/branches\.find\(\(b\) => b\.id === branch\) \?\? branches\[0\]/);
-    expect(nav).toMatch(/t\('groups\.branchNamed', \{ name: shown\.name \}\)/);
+    /*
+     * Design review, 2026-10-07 — "This branch", not the branch's name. Which branch is the header's job,
+     * two rows above; the title's job is the contrast with "Whole business" under it. `shown` still decides
+     * whether there IS a branch group, which is why the lookup above is still pinned.
+     */
+    expect(nav).toMatch(/shown \? t\('groups\.thisBranch'\) : t\('groups\.business'\)/);
+    expect(nav).not.toMatch(/groups\.branchNamed/);
   });
 });
 

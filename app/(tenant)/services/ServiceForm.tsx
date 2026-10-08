@@ -290,10 +290,7 @@ export function ServiceForm({
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (!f) return;
-                if (f.size > 5 * 1024 * 1024) {
-                  setError(t('errors.photoTooBig'));
-                  return;
-                }
+                // No size check: the upload downscales first, so the API's cap is the only one. See ServicesTable.onPick.
                 setError(null);
                 setPhoto(f);
               }}

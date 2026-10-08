@@ -170,7 +170,20 @@ export function StaffClient({
   const workingTodayCount = providers.filter((p) => p.active && isWorkingToday(p)).length;
   const offTodayCount = providers.filter((p) => p.active && !isWorkingToday(p)).length;
   const inactiveCount = providers.filter((p) => !p.active).length;
-  const seatsLeft = Math.max(0, maxProviders - everyone.filter((p) => p.active).length);
+  /*
+   * Jira GRW-557 — the places are each branch's, not the business's. On a branch: that branch's number against its
+   * own active people. On "All branches": every branch's room added up, so Add stays open while any branch has a
+   * place (the add sheet asks which branch). An older API without `placesByBranch` keeps the business-wide count.
+   */
+  const places = overview.placesByBranch;
+  const activeAt = (branch: string) => everyone.filter((p) => p.active && p.locationId === branch).length;
+  const seatsLeft = !places
+    ? Math.max(0, maxProviders - everyone.filter((p) => p.active).length)
+    : branchId
+      ? Math.max(0, (places[branchId] ?? maxProviders) - activeAt(branchId))
+      : Object.entries(places).reduce((sum, [branch, limit]) => sum + Math.max(0, limit - activeAt(branch)), 0);
+  // The branches with no place left, so the add sheet on "All branches" does not start on (or offer) one of them.
+  const fullBranches = places ? Object.keys(places).filter((branch) => places[branch]! - activeAt(branch) <= 0) : [];
   // The branch's own best, not the business's: on a branch the badge went to nobody, the business's top person
   // working elsewhere (GRW-395 QA).
   const topPerformerId = (branchId ? overview.topByBranch?.[branchId] : overview.topPerformer)?.id ?? null;
@@ -420,6 +433,7 @@ export function StaffClient({
           orgHours={orgHourRows}
           hoursByBranch={hoursByBranch}
           branches={branches}
+          fullBranches={fullBranches}
           onClose={() => setCreating(false)}
           onCreated={refresh}
         />

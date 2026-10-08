@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
-import { matchItems, MIN_CHARS } from '../lib/service-match';
+import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { ImportServices } from './ImportServices';
@@ -26,8 +26,6 @@ import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
 import { HeldByPackagesDialog } from './HeldByPackagesDialog';
 import { packagesInRefusal, type HeldPackage } from './held-by-packages';
 import { categoryTotals, copyName, orderedByCategory } from './services-groups';
-
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 /**
  * The catalogue screen. Until now this was read-only apart from photos, which
@@ -176,13 +174,19 @@ export function ServicesTable({
     photoInput.current?.click();
   };
 
+  /**
+   * No size check here, deliberately (Jira GRW-558).
+   *
+   * There used to be one at 5 MB, in front of everything — and it refused the
+   * photo a phone actually takes. `uploadFile` downscales before sending, so a
+   * 6 MB camera-roll picture leaves at a few hundred KB and the API takes it
+   * happily; the old guard turned that into "photo must be under 5MB" without
+   * attempting the upload at all. The limit now lives in one place, the API,
+   * which answers 413 with a sentence this screen shows as it is.
+   */
   const onPick = async (service: ServiceAdmin, file: File | undefined) => {
     if (!file) return;
     setError(null);
-    if (file.size > MAX_PHOTO_BYTES) {
-      setError(t('errors.photoTooBig', { name: service.name }));
-      return;
-    }
     setBusyId(service.id);
     try {
       const updated = await api.uploadServicePhoto(service.id, file);
@@ -306,7 +310,7 @@ export function ServicesTable({
     // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
     // found by "phacial" at the desk is found by "phacial" here too.
     return matchItems(
-      inTab.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''] })),
+      inTab.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
       q,
     );
   }, [inTab, search]);

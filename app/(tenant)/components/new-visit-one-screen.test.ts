@@ -18,7 +18,7 @@ describe('New booking, first screen', () => {
   });
 
   it('shows the add block on the first screen, with the same fields and the same checks', () => {
-    const start = code.indexOf("{stage.step === 'client' && (");
+    const start = code.indexOf("{(stage.step === 'client' || (pageForm && onForm)) && (");
     const first = code.slice(start, code.indexOf("(stage.step === 'details' || stage.step === 'saving'", start));
     expect(first.length).toBeGreaterThan(1000);
     expect(first).toMatch(/className="wi-new-person"/);

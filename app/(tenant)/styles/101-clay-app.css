@@ -248,3 +248,31 @@
 .bk-sheet .ref {
   box-shadow: var(--clay-raise-soft);
 }
+
+/* ---------- the stylist row (owner, 2026-10-07) ---------- */
+/*
+ * The people as pieces of clay: each name raised off the page, the chosen one a green piece lifted out of it,
+ * and any of them pressing in under the thumb. Same three moves as everything else here — shadow, radius and
+ * the green gradient only, no size, colour or layout.
+ *
+ * The row scrolls sideways (72-walk-in-sheet.css), which is why the chips carry their own shadow rather than
+ * sitting in a pressed track: a track would need its shadow to survive being scrolled, and a scrolled inner
+ * shadow drags visibly on Android.
+ */
+.wi-stylist-chips .wi-chip {
+  box-shadow: var(--clay-raise-soft);
+}
+
+.wi-stylist-chips .wi-chip-on {
+  background-image: linear-gradient(145deg, #178246, #126a38);
+  box-shadow: var(--clay-green);
+}
+
+.wi-stylist-chips .wi-chip:active:not(:disabled) {
+  box-shadow: var(--clay-press);
+}
+
+/* Off the clay: a name that cannot be chosen is flat, which is the one state that must not look pressable. */
+.wi-stylist-chips .wi-chip:disabled {
+  box-shadow: none;
+}

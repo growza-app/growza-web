@@ -25,14 +25,13 @@ import Link from 'next/link';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useLocale, useTranslations } from 'next-intl';
 import { formatDateWithWeekday } from '../lib/format';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   api,
   ApiError,
   BookingConflictError,
   formatMoney,
-  formatTime,
   type Appointment,
   type AvailabilityResponse,
   type ChairNow,
@@ -43,7 +42,7 @@ import {
   type QueueEntry,
   type Service,
 } from '../lib/api';
-import { matchItems, MIN_CHARS } from '../lib/service-match';
+import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { useLabel } from './LabelsProvider';
@@ -57,7 +56,25 @@ import type { FreeTime } from '../lib/book-again';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
-import { IconArrowLeft, IconCheck, IconClose, IconSearch } from './icons';
+import { Pagination } from './Pagination';
+import { PackageDetails } from './PackageDetails';
+import { ReceiptShare } from './ReceiptShare';
+import { confirmRows, receiptRows, type ReceiptRow } from '../lib/receipt-text';
+import {
+  IconArrowLeft,
+  IconCheck,
+  IconChevronDown,
+  IconClose,
+  IconMapPin,
+  IconMinus,
+  IconPayCard,
+  IconPayCash,
+  IconPayOther,
+  IconPayUpi,
+  IconPlus,
+  IconSearch,
+} from './icons';
+import { servicePhotoUrl } from '../lib/service-photos';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
@@ -142,6 +159,39 @@ export function totalMinor(items: PickedItem[], comboPriceMinor: string | null):
 /** Jira GRW-524 — the stylist dropdown's two values that are not a stylist's id. */
 const WI_WHOEVER = '__whoever__';
 const WI_NO_STYLIST = '__none__';
+/** The icon above each way of paying — the design's four tiles. Keyed by the mode the API stores. */
+const PAY_ICONS: Record<string, ReactNode> = {
+  cash: <IconPayCash />,
+  card: <IconPayCard />,
+  upi: <IconPayUpi />,
+  other: <IconPayOther />,
+};
+
+/**
+ * Record payment's menu, rows per page. Three rows are 184px and the pager under them 54px. Measured at 375×667,
+ * the shortest phone this ships to, the form above the list ends at 382px and the tray starts at 516px, so two
+ * rows show above the tray and the pager is a ~100px scroll away; from about 780px tall the whole page is on
+ * screen. What matters is that it is bounded: three rows and a pager, never a list as long as the menu.
+ */
+const SERVICES_PER_PAGE = 3;
+/** The most lines one sale may carry — `POST /api/v1/counter-sales` takes 1–12, so + stops there. */
+const BILL_MAX_LINES = 12;
+/** Up to this many people, Record payment shows them as a row of names; more, and it keeps the dropdown. */
+const STYLIST_CHIPS_MAX = 6;
+/** The chip that lists the Packages tab's packages rather than one kind of service. Not a category name anyone can type. */
+const PACKAGES_CHIP = '\u0000packages';
+
+/**
+ * A bill line's name, numbered when the same service is on the bill more than once — "Haircut (2/3)" — so three
+ * lines that each take an amount can be told apart (a child's cut may cost less than the parent's).
+ */
+function numberedName(list: { serviceId: string; name: string }[], i: number): string {
+  const item = list[i]!;
+  const same = list.filter((x) => x.serviceId === item.serviceId).length;
+  if (same < 2) return item.name;
+  const nth = list.slice(0, i + 1).filter((x) => x.serviceId === item.serviceId).length;
+  return `${item.name} (${nth}/${same})`;
+}
 
 type PickedClient =
   /** Jira GRW-392 — `locationId`: the branch this client belongs to, which is where their visit is. */
@@ -155,12 +205,25 @@ type Stage =
   /** `later` only — which day and which slot. A walk-in's answer is "now". */
   | { step: 'when'; client: PickedClient }
   | { step: 'saving'; client: PickedClient }
-  | { step: 'done'; client: PickedClient; result: WalkInDone }
+  /**
+   * `confirm` is the message for this client, built HERE rather than at render (owner, 2026-10-07), for the
+   * same reason the bill is: the page refreshes after a save and the state the message is made of moves.
+   * Null for a visit starting now — there is nothing to tell somebody already in the chair.
+   */
+  | { step: 'done'; client: PickedClient; result: WalkInDone; confirm: ReceiptRow[] | null }
   /** Jira GRW-222 — waiting in the queue; no stylist and no visit yet. */
-  | { step: 'queued'; client: PickedClient; tokenNo: number | null }
+  | { step: 'queued'; client: PickedClient; tokenNo: number | null; confirm: ReceiptRow[] | null }
   | { step: 'error'; client: PickedClient; message: string }
   /** Jira GRW-290 — Record payment settled in one go. */
-  | { step: 'paid'; client: PickedClient; result: WalkInDone; totalMinor: number; mode: PaymentMode };
+  | {
+      step: 'paid';
+      client: PickedClient;
+      result: WalkInDone;
+      totalMinor: number;
+      mode: PaymentMode;
+      /** The WhatsApp bill, built once as the payment landed: the page refreshes after it, and the token goes with it. */
+      bill: ReceiptRow[];
+    };
 
 interface WalkInDone {
   appointmentId: string;
@@ -213,6 +276,7 @@ export function NewVisitSheet({
   purpose = 'visit',
   presentation = 'sheet',
   token,
+  tokenGone = false,
 }: {
   onClose: () => void;
   timezone: string;
@@ -227,6 +291,11 @@ export function NewVisitSheet({
    * Mark done pays the token (`POST /counter-sales` with `queueEntryId`), which closes it: the board reads Paid.
    */
   token?: QueueEntry;
+  /**
+   * Paying a token whose link no longer finds it waiting (paid on another phone, or left): the form opens as a plain
+   * Record payment with a warning above it, so the money is not taken twice without anyone noticing.
+   */
+  tokenGone?: boolean;
   /**
    * Jira GRW-297 — `'page'` renders the same stages, the same markup and
    * copy, without the backdrop and the fixed-position bottom-sheet frame:
@@ -262,6 +331,34 @@ export function NewVisitSheet({
   timeWantedRef.current = timeWanted;
   const mode: VisitMode = dateChosen || timeWanted !== '' ? 'later' : 'now';
   const later = mode === 'later';
+  /** The New Booking page (not Record payment): every question on one screen, instead of find-them then what-are-they-having. */
+  const pageForm = presentation === 'page' && !token;
+  /** Record payment on its own routed page — the one-screen till the mock draws, not the New booking form. */
+  const payPage = forPayment && presentation === 'page';
+  /**
+   * Both routed pages — New booking and Record payment — pick services the same way (owner, 2026-10-07).
+   *
+   * They had drifted into two pickers over the same catalogue: a photo menu you could browse by kind, paged,
+   * tapped on and off; and a text list that appeared only once you had typed a name you were expected to
+   * already know. One owner called it out as "a bit different", and it is the same job on both screens — the
+   * receptionist taking the booking is the one who rings it up an hour later.
+   *
+   * A sheet keeps the compact list: it opens over something else, with no room for a menu.
+   */
+  const onPage = presentation === 'page';
+  /**
+   * What happens to this visit now: it waits, or it starts (owner, 2026-10-07).
+   *
+   * A page asks it as chips, in the slot where Record payment asks how they paid, with ONE filled button under
+   * them. Two competing buttons was the old shape, and it needed GRW-458's swap — "Start now" moved below the
+   * queue when no chair was free, because leading with it offered something the branch could not do, and
+   * GRW-456 had to disable it outright at a branch with nobody on. A chip row has no such problem: with no
+   * chair free "Waiting" is simply the one already chosen, and "Start now" is still there to be tapped.
+   *
+   * `null` means nobody has chosen, so the branch's own state answers. A sheet keeps the two buttons: its tray
+   * has no room for a row of chips above one.
+   */
+  const [outcomeWanted, setOutcomeWanted] = useState<'queue' | 'start' | null>(null);
   const checkPhone = usePhoneProblem();
   const tcr = useTranslations('chrome');
   const tw = useTranslations('staffWizard');
@@ -271,6 +368,10 @@ export function NewVisitSheet({
   const servicesNoun = useLabel('services', 'Services');
 
   const [stage, setStage] = useState<Stage>(() => (token && forPayment ? { step: 'details', client: clientOfToken(token) } : { step: 'client' }));
+  /** On the single page the form stays on screen while it saves and when a save fails. */
+  const onForm = stage.step === 'client' || stage.step === 'saving' || stage.step === 'error';
+  /** The single page: who was picked from the search, if anyone (otherwise the name and phone typed in). */
+  const [selected, setSelected] = useState<PickedClient | null>(null);
   /** Jira GRW-403 — paying a waiting token: its client, its branch, its services. */
   const paysToken = forPayment && token ? token : null;
 
@@ -317,6 +418,37 @@ export function NewVisitSheet({
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [nameError, setNameError] = useState(false);
+  // Record payment: Mark done was pressed with no service on the bill.
+  const [servicesError, setServicesError] = useState(false);
+  /*
+   * A returning client picked with no number on file, who gives one now: the number the desk types for them. It is
+   * saved to the client with the visit (Mark done, Start, Book it), and cleared whenever a different client is picked.
+   */
+  const [addingPhone, setAddingPhone] = useState(false);
+  const [pickedPhone, setPickedPhone] = useState('');
+  const [pickedPhoneError, setPickedPhoneError] = useState<string | null>(null);
+  const [phoneSaving, setPhoneSaving] = useState(false);
+  const selectedId = selected?.kind === 'existing' ? selected.id : null;
+  useEffect(() => {
+    setAddingPhone(false);
+    setPickedPhone('');
+    setPickedPhoneError(null);
+  }, [selectedId]);
+  // Record payment: a package was picked that would take the bill past its line limit. Cleared by any change to the bill.
+  const [billFull, setBillFull] = useState(false);
+  // Record payment: which kind of service the list shows ('' is all of them).
+  const [serviceCategory, setServiceCategory] = useState('');
+  const [servicePage, setServicePage] = useState(1);
+  /** The package whose "View details" is open, if any. */
+  const [pkgDetailsId, setPkgDetailsId] = useState<string | null>(null);
+  /*
+   * Record payment keeps the Name and Phone number fields closed until they are asked for.
+   *
+   * The search box above already seeds the name from whatever is typed into it (see its `onChange`), so for the
+   * usual counter sale the two fields are a copy of what the desk has just written — 148px of a phone, under a
+   * search box that did the job. They are still one tap away, for a number, or to correct the name.
+   */
+  const [addingNew, setAddingNew] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   /**
    * Jira GRW-514 — the search seeds the add block (a typed number goes to Phone, anything else to Name) so
@@ -455,12 +587,17 @@ export function NewVisitSheet({
    */
   const pickClient = (c: Customer) => {
     const closed = Boolean(c.locationId) && openBranches.length > 0 && !openBranches.some((b) => b.id === c.locationId);
-    setStage({
-      step: 'details',
-      client: closed
-        ? { kind: 'new', name: c.name?.trim() || nv.noName, phone: c.waPhone ?? '' }
-        : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone, locationId: c.locationId },
-    });
+    const client: PickedClient = closed
+      ? { kind: 'new', name: c.name?.trim() || nv.noName, phone: c.waPhone ?? '' }
+      : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone, locationId: c.locationId };
+    if (pageForm) {
+      // The single page: the person is shown in place of the name and phone fields, and the rest stays on screen.
+      setSelected(client);
+      setTerm('');
+      setComboOpen(false);
+      return;
+    }
+    setStage({ step: 'details', client });
   };
   /**
    * Jira GRW-454 — "Add them to {branch}": a client of another branch, taken on here.
@@ -479,6 +616,7 @@ export function NewVisitSheet({
     // Their details are now what the desk is confirming, so the search must not seed over them.
     nameEdited.current = true;
     phoneEdited.current = true;
+    setSelected(null);
     setStage({ step: 'client' });
     setComboOpen(false);
     // Jira GRW-514 — the add block is on this screen now, below the list: bring it into view.
@@ -491,6 +629,14 @@ export function NewVisitSheet({
   const [menuBranch, setMenuBranch] = useState(listBranch);
   if (menuBranch !== listBranch) {
     setMenuBranch(listBranch);
+    /*
+     * The client least of all (Jira GRW-453): a client record belongs to ONE branch, and
+     * `appointment_client_same_branch_fk` refuses a visit that pairs them with another. The branch dropdown
+     * clears `selected` itself, but on a full reload the shared branch arrives late and moves the branch with
+     * nobody having touched it — that path left the old branch's client attached to the new branch's visit,
+     * and the refusal only surfaced at the save.
+     */
+    setSelected(null);
     setSchedulableId(null);
     setReclaim(null);
     setPicked([]);
@@ -640,11 +786,31 @@ export function NewVisitSheet({
     const q = serviceTerm.trim();
     if (q.length < MIN_CHARS) return services.slice(0, 6);
     return matchItems(
-      services.map((s) => ({ item: s, text: [s.name] })),
+      services.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })),
       q,
       20,
     );
   }, [services, serviceTerm]);
+
+  /**
+   * Record payment lists the whole menu, because a counter rings up what was done and cannot be expected to
+   * know a name to type: the first six alphabetically are what New booking offers before anyone has typed, and
+   * on this screen that left 46 of 52 services reachable only by guessing at the search box. A kind narrows it.
+   */
+  const categories = useMemo(
+    () => (onPage && services ? [...new Set(services.map((s) => s.categoryName).filter((c): c is string => Boolean(c)))] : []),
+    [onPage, services],
+  );
+  /** Record payment's Packages chip: the Packages tab's bundles, listed in the menu's place. */
+  const packageMode = onPage && serviceCategory === PACKAGES_CHIP;
+  const shownServices = useMemo(() => {
+    if (!onPage) return filteredServices;
+    if (serviceCategory === PACKAGES_CHIP) return [];
+    const typed = serviceTerm.trim().length >= MIN_CHARS;
+    const pool = typed ? filteredServices : (services ?? []);
+    return serviceCategory ? pool.filter((s) => s.categoryName === serviceCategory) : pool;
+  }, [onPage, filteredServices, services, serviceTerm, serviceCategory]);
+
 
   /**
    * Meaning-based extras, shown as their own "Also try" row under the list rather than appended to it: QA found
@@ -675,10 +841,30 @@ export function NewVisitSheet({
     const q = serviceTerm.trim();
     if (q.length < MIN_CHARS) return [];
     return matchItems(
-      combos.map((o) => ({ item: o, text: [o.title, ...o.serviceIds.map((id) => serviceById.get(id)?.name ?? '')] })),
+      combos.map((o) => ({
+        item: o,
+        text: [o.title, ...o.serviceIds.map((id) => serviceById.get(id)?.name ?? '')],
+        priceMinor: asMinor(o.comboPriceMinor),
+      })),
       q,
     );
   }, [combos, serviceTerm, serviceById]);
+
+  /*
+   * Record payment shows its menu a few rows at a time, never as one long scroll. Eighteen Hair services, or all
+   * fifty-two, are a long way to drag a thumb, a long way to tab through, and fifty-two buttons for a screen reader
+   * to read out. A page is three rows: it sits on the screen with the tray on a phone's height, and the shared
+   * Pagination under it says where you are. Narrowing (a kind, or typing) starts again at page one.
+   */
+  const shownPackages = packageMode ? (serviceTerm.trim().length >= MIN_CHARS ? matchingCombos : combos) : [];
+  const shownCount = packageMode ? shownPackages.length : shownServices.length;
+  const serviceLastPage = Math.max(1, Math.ceil(shownCount / SERVICES_PER_PAGE));
+  const serviceAt = Math.min(servicePage, serviceLastPage);
+  const pagedServices = onPage
+    ? shownServices.slice((serviceAt - 1) * SERVICES_PER_PAGE, serviceAt * SERVICES_PER_PAGE)
+    : shownServices;
+  const pagedPackages = shownPackages.slice((serviceAt - 1) * SERVICES_PER_PAGE, serviceAt * SERVICES_PER_PAGE);
+  useEffect(() => setServicePage(1), [serviceCategory, serviceTerm]);
 
   /*
    * Jira GRW-403 — what the token was issued with, picked once the branch's menu (and its combos) have loaded. A
@@ -724,12 +910,24 @@ export function NewVisitSheet({
       .map((s) => ({ serviceId: s.id, name: s.name, durationMin: s.durationMin, priceMinor: s.priceMinor }));
     if (items.length === 0) return;
     const shares = forPayment ? splitComboRupees(items, offer.comboPriceMinor) : [];
+    /*
+     * Record payment: a package joins the bill, it does not replace it (owner, 2026-10-07 — a facial rung up, then
+     * a package picked, left only the package). Whatever single services were already on the bill move beside it,
+     * as extras, with the amounts already typed for them. Only a previous package's own services go, since one
+     * package is on the bill at a time. New booking keeps replacing: it cannot settle extras beside a package.
+     */
+    const singles = comboActive ? extras : picked;
+    // `POST /counter-sales` takes at most BILL_MAX_LINES lines: say so now, not as a refusal at Mark done.
+    if (forPayment && singles.length + items.length > BILL_MAX_LINES) {
+      setBillFull(true);
+      return;
+    }
     setPicked(forPayment ? items.map((item, i) => ({ ...item, paidRupees: shares[i] })) : items);
     setOfferId(offer.id);
     setComboPriceMinor(offer.comboPriceMinor);
     setComboTitle(offer.title);
     setComboAmountText(offer.comboPriceMinor ? String(Number(offer.comboPriceMinor) / 100) : '');
-    setExtras([]);
+    setExtras(forPayment ? singles : []);
     setServiceTerm('');
   };
 
@@ -796,7 +994,7 @@ export function NewVisitSheet({
     // A time picked on the Book again card is a booking, whichever day it is on.
     setDateChosen(true);
     pendingSlot.current = time.utc;
-    setStage({ step: 'when', client });
+    if (!pageForm) setStage({ step: 'when', client });
   };
 
   const removeExtraAt = (index: number) => {
@@ -813,6 +1011,45 @@ export function NewVisitSheet({
     setComboPriceMinor(null);
     setComboTitle(null);
     setComboAmountText('');
+  };
+
+  /*
+   * Record payment: one service more than once — a parent and two children all having a haircut. Each one is its
+   * own line on the bill, which is what the API already takes (one leg per line) and what makes reports count three
+   * haircuts, not one.
+   */
+  const countOnBill = (serviceId: string) =>
+    // With a package on the bill, `picked` is the package's own services: a Haircut inside it is not a Haircut
+    // the row's counter added, and − on it must not take the package apart.
+    (comboActive ? 0 : picked.filter((x) => x.serviceId === serviceId).length) +
+    extras.filter((x) => x.serviceId === serviceId).length;
+
+  /** One more of a service. Unlike `addService`, the search it was found by stays, so + can be tapped again. */
+  const addOneMore = (s: Service) => {
+    const item = toItem(s);
+    if (comboActive) setExtras((prev) => [...prev, item]);
+    else setPicked((prev) => [...prev, item]);
+  };
+
+  /** One fewer: the line added last goes first, so an amount typed on an earlier line is kept. */
+  const removeOneOf = (serviceId: string) => {
+    const e = extras.map((x) => x.serviceId).lastIndexOf(serviceId);
+    if (e >= 0) return removeExtraAt(e);
+    if (comboActive) return;
+    const p = picked.map((x) => x.serviceId).lastIndexOf(serviceId);
+    if (p >= 0) removeAt(p);
+  };
+
+  /** Off the bill altogether: the row's own tap, as it always was. */
+  const removeAllOf = (serviceId: string) => {
+    setExtras((prev) => prev.filter((x) => x.serviceId !== serviceId));
+    if (!comboActive && picked.some((x) => x.serviceId === serviceId)) {
+      setPicked((prev) => prev.filter((x) => x.serviceId !== serviceId));
+      setOfferId(null);
+      setComboPriceMinor(null);
+      setComboTitle(null);
+      setComboAmountText('');
+    }
   };
 
   const setAmountAt = (index: number, value: string) => {
@@ -839,6 +1076,9 @@ export function NewVisitSheet({
   const amountsValid =
     picked.every((item) => rupeesToMinor(item.paidRupees) !== null) &&
     extras.every((item) => rupeesToMinor(item.paidRupees) !== null);
+  // Shown only while it is still true: the first service put on the bill answers it.
+  const showServicesError = servicesError && picked.length === 0;
+  useEffect(() => setBillFull(false), [picked.length, extras.length]);
   const paidTotalMinor =
     picked.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0) +
     extras.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0);
@@ -846,6 +1086,29 @@ export function NewVisitSheet({
   const comboWithExtrasTotalMinor = forPayment
     ? (rupeesToMinor(comboAmountText) ?? 0) + extras.reduce((sum, item) => sum + (rupeesToMinor(item.paidRupees) ?? 0), 0)
     : Number(comboPriceMinor ?? 0) + extras.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
+  /** Record payment: the money being taken, as the bill below adds it up — what the tray shows beside Mark done. */
+  const billTotalMinor = comboActive ? comboWithExtrasTotalMinor : paidTotalMinor;
+  /*
+   * Record payment: what is being charged sits beside Mark done. The bill's lines are under the menu, and with the
+   * tray pinned over the bottom of the page they were a scroll below it — the person was asked to take money for an
+   * amount the screen was not showing. Tapping the total takes them to the lines, where each amount can be changed.
+   */
+  const billCount = picked.length + extras.length;
+  const trayTotal =
+    payPage && billCount > 0 ? (
+      <button
+        type="button"
+        className="wi-tray-total"
+        aria-label={nv.trayTotalA11y(billCount, formatMoney(String(billTotalMinor)))}
+        onClick={() => {
+          const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          document.getElementById('wi-bill')?.scrollIntoView({ block: 'start', behavior: still ? 'auto' : 'smooth' });
+        }}
+      >
+        <span className="wi-tray-total-label">{nv.trayTotal(billCount)}</span>
+        <span className="wi-tray-total-amount">{formatMoney(String(billTotalMinor))}</span>
+      </button>
+    ) : null;
   // --- `later` only: which day, and which slot on it ---
   /** Jira GRW-518 — today in the salon's zone: the Booking date's default, and the earliest it can be. */
   const todayIso = useMemo(() => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()), [timezone]);
@@ -877,11 +1140,37 @@ export function NewVisitSheet({
     return out;
   }, [firstMin, locale]);
   // Jira GRW-534 — today the empty entry shows the current time (changes once a minute), another day "Any time".
+  /**
+   * The time as this screen writes it: "11:30 AM".
+   *
+   * `formatTime`'s en-IN gives "11:30 am", and on the confirmation screen that sat two lines above the message's
+   * own "11:30 AM" — the same minute, spelt two ways, in one glance. One formatter for all of them.
+   */
+  const clockTime = (at: Date | string) =>
+    new Intl.DateTimeFormat(locale, { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(
+      typeof at === 'string' ? new Date(at) : at,
+    );
   const nowLabel = useMemo(
-    () => new Intl.DateTimeFormat(locale, { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date()),
+    () => clockTime(new Date()),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `nowHm` is the minute the label is for
     [locale, timezone, nowHm],
   );
+  /*
+   * The till's clock, made true.
+   *
+   * `nowLabel` is only ever as fresh as the last render, and the comment above it has long claimed it "changes
+   * once a minute" — nothing made it. On a form nobody is typing in there is no render, so the header kept the
+   * minute the screen was opened: a desk that opens Record payment, serves the client and takes the money ten
+   * minutes later was told the wrong time on the one screen whose job is recording when money changed hands.
+   * Half a minute keeps it within a minute of right; it runs only where the clock is shown.
+   */
+  const [, setMinute] = useState(0);
+  useEffect(() => {
+    if (!forPayment) return;
+    const id = window.setInterval(() => setMinute((n) => n + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, [forPayment]);
+
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotUtc, setSlotUtc] = useState<string | null>(null);
@@ -919,7 +1208,7 @@ export function NewVisitSheet({
    * of confirming — the worst possible time to find out.
    */
   useEffect(() => {
-    if (!later || stage.step !== 'when' || picked.length === 0) return;
+    if (!later || !(pageForm ? onForm : stage.step === 'when') || picked.length === 0) return;
     let cancelled = false;
     setLoadingSlots(true);
     setSlotUtc(null);
@@ -954,7 +1243,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, day, picked, extras, schedulableId, listBranch, timezone]);
+  }, [later, stage.step, onForm, pageForm, day, picked, extras, schedulableId, listBranch, timezone]);
 
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
@@ -1057,9 +1346,15 @@ export function NewVisitSheet({
    * carries the same care about `providers`, which is why it is read rather than re-derived.
    */
   const noChairFree = freeCount === 0 || noStaffHere || noOneCanDoIt;
+  /** Hoisted out of the tray: the chips above the button and the button itself have to agree about this. */
+  const queueOffered = !later && !reclaim && !forPayment;
+  /** A page decides the outcome with chips; the sheet still decides it by which of two buttons is pressed. */
+  const pageOutcome = onPage && queueOffered;
+  const outcome = outcomeWanted ?? (noChairFree ? 'queue' : 'start');
+  const queueing = pageOutcome && outcome === 'queue';
 
   useEffect(() => {
-    if (later || stage.step !== 'details') return;
+    if (later || !(pageForm ? onForm : stage.step === 'details')) return;
     let cancelled = false;
     void api
       .chairs()
@@ -1073,7 +1368,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step]);
+  }, [later, stage.step, onForm, pageForm]);
 
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
@@ -1227,13 +1522,13 @@ export function NewVisitSheet({
       }
     }
     router.refresh();
-    setStage({
+    setStage(withBill({
       step: 'paid',
       client,
       result: visit,
       totalMinor: amounts.reduce((a, b) => a + b, 0) + extraServices.reduce((sum, e) => sum + e.paidAmountMinor, 0),
       mode: paymentMode,
-    });
+    }));
   };
 
   const queueIt = async (client: PickedClient) => {
@@ -1251,10 +1546,97 @@ export function NewVisitSheet({
         ...atBranch,
       });
       router.refresh();
-      setStage({ step: 'queued', client, tokenNo: entry.tokenNo });
+      setStage({ step: 'queued', client, tokenNo: entry.tokenNo, confirm: confirmFor({ startAt: null, tokenNo: entry.tokenNo, schedulableId: null }) });
     } catch (error) {
       setStage({ step: 'error', client, message: error instanceof ApiError ? error.message : nv.saveUnknown });
     }
+  };
+
+  /** The single page's person: the one picked from the search, or the typed name and phone — null (fields flagged) while neither is usable. */
+  const pageClient = (): PickedClient | null => {
+    if (selected) return selected;
+    if (!newName.trim()) {
+      setNameError(true);
+      return null;
+    }
+    const phoneProblem = checkPhone(newPhone, { required: later });
+    if (phoneProblem) {
+      setPhoneError(phoneProblem);
+      return null;
+    }
+    return { kind: 'new', name: newName.trim(), phone: toStoredPhone(newPhone) ?? '' };
+  };
+
+  /**
+   * Record payment: Mark done stays pressable, so that pressing it with something missing can say what.
+   * Flags every missing field, takes the eye to the first one from the top of the page, and returns the
+   * client only when there is nothing left to fill in.
+   */
+  /** Takes the eye to a field that needs fixing, on the next render (it may only mount on that render). */
+  const bringIntoView = (find: () => HTMLElement | null) => {
+    const run = () => {
+      const target = find();
+      if (!target) return;
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
+      // Not the service search: focusing it would raise the keyboard over the menu the person has to look at.
+      if (target.id !== 'wi-services') target.focus({ preventScroll: true });
+    };
+    window.setTimeout(run, 0);
+  };
+
+  /*
+   * A returning client with no number gives one at the counter. It is saved to their record BEFORE the visit, so a
+   * number the salon cannot take — half-typed, or already another client's — stops the visit with the field saying
+   * why, rather than the visit going through and the number being lost after it. The server names the other client
+   * (409 `phone_in_use`), and its sentence is shown as it is, as the client profile does.
+   */
+  const withPickedPhone = async (client: PickedClient): Promise<PickedClient | null> => {
+    if (client.kind !== 'existing' || client.phone || !pickedPhone.trim()) return client;
+    const problem = checkPhone(pickedPhone, { required: false });
+    if (problem) {
+      setPickedPhoneError(problem);
+      bringIntoView(() => document.getElementById('wi-picked-phone'));
+      return null;
+    }
+    setPhoneSaving(true);
+    try {
+      const updated = await api.updateCustomer(client.id, { phone: toStoredPhone(pickedPhone) ?? null });
+      const next: PickedClient = { ...client, phone: updated.waPhone };
+      setSelected(next);
+      return next;
+    } catch (err) {
+      setPickedPhoneError(err instanceof ApiError ? err.message : nv.saveUnknown);
+      bringIntoView(() => document.getElementById('wi-picked-phone'));
+      return null;
+    } finally {
+      setPhoneSaving(false);
+    }
+  };
+
+  /** The page's one way forward: who it is (and their new number, if any), then the visit. */
+  const thenVisit = async (client: PickedClient | null, visit: (c: PickedClient) => Promise<void>) => {
+    if (!client) return;
+    const ready = await withPickedPhone(client);
+    if (ready) await visit(ready);
+  };
+
+  // `known`: paying a token, whose client is the token's and has no fields to check.
+  const checkBeforeMarkDone = (known?: PickedClient): PickedClient | null => {
+    const client = known ?? pageClient();
+    const noServices = picked.length === 0;
+    if (noServices) setServicesError(true);
+    const firstBadAmount = !noServices && !amountsValid;
+    if (client && !noServices && !firstBadAmount) return client;
+    // The fields behind "Add name and number" mount on the next render, so look for the target after it.
+    bringIntoView(() =>
+      !client
+        ? document.getElementById(newName.trim() ? 'wi-phone' : 'wi-name')
+        : noServices
+          ? document.getElementById('wi-services')
+          : document.querySelector<HTMLElement>('.wi-amount input[aria-invalid="true"]'),
+    );
+    return null;
   };
 
   const submit = async (client: PickedClient) => {
@@ -1288,6 +1670,7 @@ export function NewVisitSheet({
             startAt: booked.startAt,
             overlapping: false,
           },
+          confirm: confirmFor({ startAt: booked.startAt, tokenNo: null, schedulableId: booked.schedulableId }),
         });
         return;
       }
@@ -1322,7 +1705,7 @@ export function NewVisitSheet({
           }),
         );
         router.refresh();
-        setStage({
+        setStage(withBill({
           step: 'paid',
           client,
           result: {
@@ -1336,7 +1719,7 @@ export function NewVisitSheet({
           },
           totalMinor: result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
           mode: paymentMode,
-        });
+        }));
         return;
       }
 
@@ -1360,7 +1743,7 @@ export function NewVisitSheet({
           }),
         );
         router.refresh();
-        setStage({
+        setStage(withBill({
           step: 'paid',
           client,
           result: {
@@ -1374,7 +1757,7 @@ export function NewVisitSheet({
           },
           totalMinor: result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
           mode: paymentMode,
-        });
+        }));
         return;
       }
 
@@ -1421,7 +1804,13 @@ export function NewVisitSheet({
         await payFor(client, recorded);
         return;
       }
-      setStage({ step: 'done', client, result: recorded });
+      // A walk-in that has just started gets no message: `confirmFor` answers null for it.
+      setStage({
+        step: 'done',
+        client,
+        result: recorded,
+        confirm: confirmFor({ startAt: later ? recorded.startAt : null, tokenNo: recorded.tokenNo ?? null, schedulableId: recorded.schedulableId }),
+      });
     } catch (error) {
       // Jira GRW-480 — "Check again" on a large amount: nothing was saved, and the sheet says so.
       if (error instanceof LargeAmountDeclined) {
@@ -1452,7 +1841,7 @@ export function NewVisitSheet({
       if (later && error instanceof BookingConflictError && error.code === 'slot_taken') {
         setSlotUtc(null);
         setSlots(null);
-        setStage({ step: 'when', client });
+        setStage(pageForm ? { step: 'client' } : { step: 'when', client });
         setCheckoutError(null);
         setSlotError(nv.slotTaken);
         return;
@@ -1515,15 +1904,898 @@ export function NewVisitSheet({
     );
   }
 
-  const busy = stage.step === 'saving';
+  /*
+   * Owner, 2026-10-07 — the WhatsApp bill, from what Mark done recorded: singles at what was charged, a package at
+   * its amount with what its services cost separately, the branch named only where there is more than one.
+   *
+   * Built ONCE, as the payment lands, from the state Mark done was pressed with, and kept on the stage. Every payment
+   * path calls `router.refresh()`, and on a token's page that re-runs the route: the token is no longer waiting, so it
+   * comes back undefined and with it the token's branch — a bill rebuilt on each render could change branch, or lose
+   * its stylist when the branch's people reload, after the client has already seen it.
+   */
+  const withBill = (paid: Omit<Extract<Stage, { step: 'paid' }>, 'bill'>): Stage => ({ ...paid, bill: billFor(paid) });
+  const billFor = (paid: Omit<Extract<Stage, { step: 'paid' }>, 'bill'>): ReceiptRow[] => {
+    const all = session?.branches ?? [];
+    const branchName = all.length > 1 ? (all.find((b) => b.id === (paysToken?.locationId ?? listBranch))?.name ?? null) : null;
+    // The day, then the time as this screen's own clock writes it ("1:37 PM"; `formatTime`'s en-IN gives "1:37 pm").
+    const day = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
+      timeZone: timezone,
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(paid.result.startAt));
+    const time = clockTime(paid.result.startAt);
+    const when = `${day}, ${time}`;
+    const lineOf = (item: PickedItem) => ({ name: item.name, amountMinor: rupeesToMinor(item.paidRupees) ?? 0 });
+    const stylist = paid.result.schedulableId ? (providers?.find((p) => p.id === paid.result.schedulableId)?.displayName ?? null) : null;
+    return receiptRows(
+      {
+        businessName: session?.businessName ?? null,
+        branchName,
+        when,
+        tokenNo: paid.result.tokenNo ?? null,
+        stylist,
+        singles: (comboActive ? extras : picked).map(lineOf),
+        pkg: comboActive
+          ? {
+              title: comboTitle ?? nv.combo,
+              services: picked.map((x) => x.name),
+              paidMinor: rupeesToMinor(comboAmountText) ?? 0,
+              separateMinor: comboListMinor,
+            }
+          : null,
+        totalMinor: paid.totalMinor,
+        paidBy: PAYMENT_MODES.some((m) => m.value === paid.mode) ? tcr(`pay.${paid.mode}`) : paid.mode,
+      },
+      {
+        title: nv.receiptTitle,
+        thanks: nv.receiptThanks,
+        services: nv.receiptServices,
+        token: nv.token,
+        stylist: (name) => nv.receiptStylist(providerNoun, name),
+        packageName: nv.receiptPackage,
+        separately: nv.receiptSeparately,
+        total: nv.receiptTotal,
+        saved: nv.receiptSaved,
+        paidBy: nv.receiptPaidBy,
+        seeYou: nv.receiptSeeYou,
+      },
+      (minor) => formatMoney(String(minor)),
+    );
+  };
+
+  /**
+   * The confirmation to hand the client: what was booked, or what they are waiting for.
+   *
+   * Only where there is something worth sending — a day and time they will have to remember, or a token
+   * number they are holding. A walk-in starting now gets nothing: they are standing at the counter.
+   *
+   * No services and no total on it (owner, 2026-10-07): a visit grows, and a message quoting ₹300 against a
+   * bill of ₹800 is an argument at the counter that the message started. Money goes on the receipt, which is
+   * written once the work is done.
+   */
+  const confirmFor = (opts: { startAt: string | null; tokenNo: number | null; schedulableId: string | null }): ReceiptRow[] | null => {
+    if (!opts.startAt && opts.tokenNo === null) return null;
+    const all = session?.branches ?? [];
+    const branchName = all.length > 1 ? (all.find((b) => b.id === listBranch)?.name ?? null) : null;
+    const when = opts.startAt
+      ? `${formatDateWithWeekday(opts.startAt, timezone, { withYear: false, locale })} · ${clockTime(opts.startAt)}`
+      : null;
+    const stylist = opts.schedulableId ? (providers?.find((p) => p.id === opts.schedulableId)?.displayName ?? null) : null;
+    return confirmRows(
+      { businessName: session?.businessName ?? null, branchName, when, tokenNo: opts.tokenNo, stylist },
+      {
+        title: opts.startAt ? nv.confirmBooked : nv.confirmQueued,
+        token: nv.token,
+        stylist: (name: string) => nv.receiptStylist(providerNoun, name),
+        seeYou: opts.startAt ? nv.confirmSeeThen : nv.confirmSeeSoon,
+      },
+    );
+  };
+
+  const busy = stage.step === 'saving' || phoneSaving;
   /** Jira GRW-290 — once a Record payment visit exists, its lines are what was written. */
   const linesLocked = forPayment && savedVisit !== null;
   const headSub =
-    stage.step === 'client'
+    stage.step === 'client' || (pageForm && (stage.step === 'saving' || stage.step === 'error'))
       ? nv.whoIsThis(clientNoun.toLowerCase())
       : paysToken?.tokenNo
         ? `${nv.token(paysToken.tokenNo)} · ${clientName(stage.client)}`
         : clientName(stage.client);
+
+  const serviceSearch = (
+    <>
+            {/* Same on the till: "Search 52 services or combos…" in the box says it, and the grid below shows it. */}
+            {onPage ? null : (
+              <h2 className="wi-section-label">
+                {picked.length > 0 ? nv.addMore : nv.whichService}
+              </h2>
+            )}
+            <div id="wi-services" className="picker-search">
+              <input
+                type="search"
+                className={`wi-search-input wi-search-input-plain ${showServicesError ? 'field-invalid' : ''}`}
+                placeholder={services === null ? nv.loadingServices : nv.searchServices(services.length) + (onPage && picked.length === 0 && extras.length === 0 ? ' *' : '')}
+                aria-required={onPage ? true : undefined}
+                aria-invalid={showServicesError || undefined}
+                aria-label={picked.length > 0 ? nv.addMore : nv.whichService}
+                value={serviceTerm}
+                onChange={(e) => setServiceTerm(e.target.value)}
+                disabled={busy || linesLocked}
+              />
+            </div>
+            {showServicesError ? (
+              <div role="alert" className="field-error">
+                {nv.servicesMissing}
+              </div>
+            ) : null}
+            {billFull ? (
+              <div role="alert" className="field-error">
+                {nv.billFull(BILL_MAX_LINES)}
+              </div>
+            ) : null}
+            {/* Kinds of service, one tap each: Hair, Skin, Nails. Only when there is something to choose between. */}
+            {onPage && categories.length + (combos.length > 0 ? 1 : 0) > 1 ? (
+              <div className="wi-chips wi-category-chips" role="group" aria-label={nv.serviceKinds}>
+                {['', ...categories, ...(combos.length > 0 ? [PACKAGES_CHIP] : [])].map((c) => (
+                  <button
+                    key={c || 'all'}
+                    type="button"
+                    className={`wi-chip ${serviceCategory === c ? 'wi-chip-on' : ''}`}
+                    aria-pressed={serviceCategory === c}
+                    onClick={() => setServiceCategory(c)}
+                  >
+                    {c === PACKAGES_CHIP ? nv.packagesChip : c || nv.allServices}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {/*
+              `wi-service-idle` folds the untyped list away on a phone (72-walk-in-sheet.css) — but ONLY when
+              there are rows to fold. This box also holds what the screen says when there is nothing to list:
+              "loading", and GRW-384 AC-03's "this branch has no services yet" with the owner's add-or-copy
+              link. Hiding those leaves an empty search box and a dead button explaining nothing.
+            */}
+            <div
+              className={`picker-results wi-service-results ${onPage ? 'wi-service-list' : ''} ${
+                // A page browses: its menu is a few rows at a time, not 52, so it stays on screen. A sheet still
+                // folds the untyped list away — it opens over something else and has no room to show one.
+                !onPage && services !== null && services.length > 0 && serviceTerm.trim() === '' ? 'wi-service-idle' : ''
+              }`}
+            >
+              {/*
+                * The Packages chip: each package from the Packages tab as one row that toggles, like a service. Tapping
+                * one puts its services on the bill at the package's one price; tapping it again takes the package off.
+                */}
+              {pagedPackages.map((o) => {
+                const on = offerId === o.id;
+                const first = serviceById.get(o.serviceIds[0] ?? '');
+                const price = o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length);
+                /*
+                 * Laid out exactly as a service row — photo, name over price, the ring at the end — with "View details"
+                 * on the price line. The whole row is one toggle (`wi-card-hit`, stretched over it) and the link sits
+                 * above that, so it can be a button of its own: a button cannot hold another button. What the row
+                 * shows is hidden from a screen reader, which hears the toggle's own name instead, once.
+                 */
+                return (
+                  <div key={`pkg-${o.id}`} className={`picker-row wi-row wi-card wi-card-pkg ${on ? 'wi-card-on' : ''}`}>
+                    <button
+                      type="button"
+                      className="wi-card-hit"
+                      aria-pressed={on}
+                      aria-label={`${o.title}, ${price}`}
+                      onClick={() => (on ? removeCombo() : applyCombo(o))}
+                      disabled={busy || linesLocked}
+                    />
+                    <span className="wi-card-photo" aria-hidden="true">
+                      {first ? <img src={servicePhotoUrl(first)} alt="" width={44} height={44} /> : null}
+                    </span>
+                    <span className="wi-card-text">
+                      <span className="picker-row-name" aria-hidden="true">
+                        {o.title}
+                      </span>
+                      <span className="wi-pkg-line">
+                        <span className="picker-row-meta" aria-hidden="true">
+                          {price}
+                        </span>
+                        <span className="wi-pkg-dot" aria-hidden="true">
+                          ·
+                        </span>
+                        <button
+                          type="button"
+                          className="wi-pkg-details"
+                          aria-label={nv.viewDetailsOf(o.title)}
+                          aria-haspopup="dialog"
+                          onClick={() => setPkgDetailsId(o.id)}
+                        >
+                          {nv.viewDetails}
+                        </button>
+                      </span>
+                    </span>
+                    <span className="wi-card-tick" aria-hidden="true">
+                      {on ? <IconCheck /> : null}
+                    </span>
+                  </div>
+                );
+              })}
+              {(packageMode ? [] : matchingCombos).map((o) => (
+                <button
+                  key={`combo-${o.id}`}
+                  type="button"
+                  className="picker-row wi-row"
+                  onClick={() => applyCombo(o)}
+                  disabled={busy || linesLocked}
+                >
+                  <span className="picker-row-name">
+                    {o.title} <span className="wi-combo-tag">{nv.combo}</span>
+                  </span>
+                  <span className="picker-row-meta">
+                    {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}
+                  </span>
+                </button>
+              ))}
+              {pagedServices.map((s) => {
+                /*
+                 * A page's menu rows TOGGLE (owner, 2026-10-07): at a counter the same handful of services is rung
+                 * up all day, so they are tapped rather than searched, and tapping one already on the list takes it
+                 * off again. Once it is on, a counter takes the place of the tick, for the same service more than
+                 * once — a parent and two children having a haircut (owner, 2026-10-07).
+                 * New booking draws the same row: the search no longer clears when one is tapped, which is what lets
+                 * a second and a third be added without typing the name again.
+                 * A sheet keeps the plain row — one tap, straight onto the list, because it has no room for a menu.
+                 */
+                if (onPage) {
+                  const count = countOnBill(s.id);
+                  const full = picked.length + extras.length >= BILL_MAX_LINES;
+                  return (
+                    <div key={s.id} className={`picker-row wi-row wi-card ${count > 0 ? 'wi-card-on' : ''}`}>
+                      <button
+                        type="button"
+                        className="wi-card-main"
+                        aria-pressed={count > 0}
+                        onClick={() => (count > 0 ? removeAllOf(s.id) : addOneMore(s))}
+                        disabled={busy || linesLocked || (count === 0 && full)}
+                      >
+                        <span className="wi-card-photo">
+                          <img src={servicePhotoUrl(s)} alt="" width={44} height={44} />
+                        </span>
+                        <span className="wi-card-text">
+                          <span className="picker-row-name">{s.name}</span>
+                          <span className="picker-row-meta">{formatMoney(s.priceMinor)}</span>
+                        </span>
+                        {/* An empty ring until it is on the bill; then the counter beside it says how many. */}
+                        {count === 0 ? <span className="wi-card-tick" aria-hidden="true" /> : null}
+                      </button>
+                      {count > 0 ? (
+                        <span className="wi-qty" role="group" aria-label={nv.qtyOnBill(s.name, count)}>
+                          <button
+                            type="button"
+                            className="wi-qty-btn"
+                            aria-label={nv.oneLess(s.name)}
+                            onClick={() => removeOneOf(s.id)}
+                            disabled={busy || linesLocked}
+                          >
+                            <IconMinus />
+                          </button>
+                          <span className="wi-qty-n" aria-live="polite">
+                            {count}
+                          </span>
+                          <button
+                            type="button"
+                            className="wi-qty-btn"
+                            aria-label={nv.oneMore(s.name)}
+                            onClick={() => addOneMore(s)}
+                            disabled={busy || linesLocked || full}
+                          >
+                            <IconPlus />
+                          </button>
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                }
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="picker-row wi-row"
+                    onClick={() => addService(s)}
+                    disabled={busy || linesLocked}
+                  >
+                    <span className="picker-row-name">{s.name}</span>
+                    <span className="picker-row-meta">{`${tmin('minutes', { count: s.durationMin })} · ${formatMoney(s.priceMinor)}`}</span>
+                  </button>
+                );
+              })}
+              {services === null ? (
+                <div className="empty">{nv.loadingServices}</div>
+              ) : services.length === 0 ? (
+                // Jira GRW-384 (AC-03) — a branch opened with an empty menu says so, and the owner is shown where
+                // to add or copy one; anyone else is told plainly why nothing is listed.
+                branchNameOf(listBranch ?? undefined) ? (
+                  <div className="empty">
+                    {nv.noServicesAtBranch(branchNameOf(listBranch ?? undefined)!, servicesNoun.toLowerCase())}{' '}
+                    {/* Jira GRW-409 — a link to the Services screen for whoever the nav offers it to (the shared rule), not `isOwner`. */}
+                    {canSee('/services', session?.role as MemberRole | null | undefined) ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
+                  </div>
+                ) : (
+                  <div className="empty">{nv.noServicesYet}</div>
+                )
+              ) : (
+                shownServices.length === 0 &&
+                pagedPackages.length === 0 &&
+                matchingCombos.length === 0 &&
+                alsoTry.length === 0 && <div className="empty">{nv.noServiceMatch}</div>
+              )}
+            </div>
+            {(() => {
+              const o = pkgDetailsId ? combos.find((x) => x.id === pkgDetailsId) : undefined;
+              if (!o) return null;
+              const inIt = o.serviceIds
+                .map((id) => serviceById.get(id))
+                .filter((x): x is Service => Boolean(x))
+                .map((x) => ({ id: x.id, name: x.name, priceMinor: x.priceMinor, durationMin: x.durationMin }));
+              return (
+                <PackageDetails
+                  title={o.title}
+                  services={inIt}
+                  priceMinor={o.comboPriceMinor ?? null}
+                  onBill={offerId === o.id}
+                  disabled={busy || linesLocked}
+                  onToggle={() => (offerId === o.id ? removeCombo() : applyCombo(o))}
+                  onClose={() => setPkgDetailsId(null)}
+                />
+              );
+            })()}
+            {onPage ? (
+              <Pagination
+                page={serviceAt}
+                total={shownCount}
+                pageSize={SERVICES_PER_PAGE}
+                noun={servicesNoun.toLowerCase()}
+                onChange={setServicePage}
+              />
+            ) : null}
+
+    </>
+  );
+
+  /*
+   * A page's branch, and — on Record payment — its moment, in the header.
+   *
+   * Both used to be fields in the body: a "Which branch?" row, and a Booking date + Booking time pair that were
+   * `disabled` on this screen because a payment is always recorded as today, now. Three rows, 170px of a phone,
+   * one of them two controls nobody could touch — and the screen came to 858px against a 667px viewport, so
+   * Mark done sat below the fold. The branch is still a real `<select>`, now under the title; the moment reads
+   * as the words it always was.
+   *
+   * New booking carries its branch here too (owner, 2026-10-07): it is the context everything below is read in —
+   * which clients the search lists, which menu, which people — not an answer typed into the form. Its moment is
+   * NOT here, because that screen has a real Booking date and time to set; a clock above them would be a second
+   * answer to a question already asked.
+   */
+  /*
+   * A page's footer asks what happens now, where Record payment asks how they paid (owner, 2026-10-07).
+   *
+   * One row of chips and ONE filled button under them, on both pages. The two competing buttons this replaces
+   * needed GRW-458's swap — "Start now" dropped below the queue when no chair was free, because leading with it
+   * offered what the branch could not do, and GRW-456 disabled it outright at a branch with nobody on. Chips
+   * have no such problem: with no chair free, "Waiting" is simply the chip that arrives chosen.
+   */
+  const outcomeChips = pageOutcome ? (
+    <div className="wi-pay-modes" role="radiogroup" aria-label={nv.whatNow}>
+      <span className="wi-pay-modes-label">{nv.whatNow}</span>
+      <div className="wi-chips">
+        {[
+          { value: 'queue' as const, label: nv.outcomeWaiting },
+          { value: 'start' as const, label: nv.outcomeStart },
+        ].map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={outcome === o.value}
+            className={`wi-chip ${outcome === o.value ? 'wi-chip-on' : ''}`}
+            onClick={() => setOutcomeWanted(o.value)}
+            // Jira GRW-456 — nobody on the branch, or nobody who does this: starting is the one it cannot honour.
+            disabled={busy || (o.value === 'start' && (noStaffHere || noOneCanDoIt))}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const pageHead =
+    pageForm && (forPayment || branches.length > 1) ? (
+      <span className="wi-head-when">
+        {branches.length > 1 ? (
+          <span className="wi-head-branch">
+            {/* What people see. The select on top of it is what they touch: it keeps the phone's own picker, and says nothing here. */}
+            <span className="wi-head-pin" aria-hidden="true">
+              <IconMapPin />
+            </span>
+            <span className="wi-head-branch-name" aria-hidden="true">
+              {(() => {
+                const current = branches.find((b) => b.id === branchId) ?? branches[0];
+                if (!current) return null;
+                return current.id === branches[0]?.id ? tw('mainSuffix', { name: current.name }) : current.name;
+              })()}
+            </span>
+            <span className="wi-head-chevron" aria-hidden="true">
+              <IconChevronDown />
+            </span>
+            <select
+              id="wi-branch"
+              aria-label={nv.whichBranch}
+              value={branchId ?? ''}
+              onChange={(e) => {
+                branchTouched.current = true;
+                setBranchId(e.target.value);
+                // A client belongs to one branch: the one picked from the old branch's list cannot ride along.
+                setSelected(null);
+              }}
+              disabled={busy || linesLocked}
+            >
+              {branches.map((b, i) => (
+                <option key={b.id} value={b.id}>
+                  {i === 0 ? tw('mainSuffix', { name: b.name }) : b.name}
+                </option>
+              ))}
+            </select>
+          </span>
+        ) : null}
+        {/* The clock alone: "Now 7:59 AM" said the same thing twice, and the half of it that could be wrong was the clock. */}
+        {forPayment ? <span className="wi-head-now">{nowLabel}</span> : null}
+      </span>
+    ) : null;
+
+  /*
+   * Either page asks who BEFORE what (owner, 2026-10-07): the mock puts the stylist directly under the client,
+   * above the menu, because at a counter the person is known before the bill is — and the receptionist taking
+   * the booking knows who is free before they know what is being had.
+   * A sheet keeps it last, after the services it has to be able to do.
+   */
+  /** One choice of who did it, from either control below: a person, whoever is free, or nobody. */
+  const pickStylist = (v: string) => {
+    setReclaim(null);
+    if (v === WI_NO_STYLIST) {
+      setSchedulableId(null);
+      setNoStylist(true);
+    } else if (v === WI_WHOEVER) {
+      setSchedulableId(null);
+      setNoStylist(false);
+    } else {
+      setSchedulableId(v);
+      setNoStylist(false);
+    }
+  };
+  const stylistValue = noStylist ? WI_NO_STYLIST : (schedulableId ?? WI_WHOEVER);
+  const offersWhoever = !paysToken && !noStaffHere && !noOneCanDoIt;
+  /*
+   * Record payment: the people as a row of names, one tap each (owner, 2026-10-07), where GRW-524 had made it a
+   * dropdown — two taps, and every name hidden until it opened. That dropdown carried what each chair was doing
+   * (GRW-198), which matters for who takes a walk-in and not for who DID a visit being paid for, so the till's
+   * row is names alone. It wraps rather than scrolls: the kinds of service under it already scroll sideways, and
+   * two sideways rows on top of each other read as one. Past six people a wrapped row is taller than the menu it
+   * sits over, so a bigger team keeps the dropdown.
+   */
+  const stylistChips = onPage && ableProviders.length <= STYLIST_CHIPS_MAX;
+  /**
+   * What the chair is doing, short enough to sit under a name (owner, 2026-10-07 — the two pages align).
+   *
+   * GRW-198 put this in the control because "who can take this person" is the receptionist's actual question and
+   * a bare list of names made them guess. Moving New booking to the till's chips would have thrown it away, so
+   * it comes along: "free now", or the time they are free at. Never on Record payment — the work is already
+   * done there, and what a chair is doing now says nothing about who did it.
+   */
+  const chairLine = (id: string): string | null => {
+    if (forPayment || later) return null;
+    const chair = chairs.find((c) => c.schedulableId === id);
+    if (!chair) return null;
+    return chair.free ? nv.chairFree : nv.chipBusy(clockTime(chair.occupant!.freesAt));
+  };
+
+  const stylistField = (
+    <>
+            {/* On the till the row speaks for itself ("Stylist · whoever is free"), so the heading above it is just height. */}
+            {onPage ? null : (
+              <h2 className="wi-section-label" id="wi-stylist-label">{nv.withWhom(providerNoun.toLowerCase())}</h2>
+            )}
+            {/*
+              GRW-198 — chairs, not a list of names.
+              The receptionist's question is "who can take this person", and a
+              bare list of stylists asked them to guess: three of the five might
+              be mid-haircut. Each chair now says what it is doing, and the one
+              whose customer never turned up says so where the decision is made
+              rather than in a banner afterwards. Only for a walk-in — "later"
+              is about a day that has not happened.
+            */}
+            {/*
+              Jira GRW-524 — a dropdown, not a card per stylist. What each chair is doing (GRW-198) moves into the
+              option's own words, so the desk still sees who is free where the choice is made.
+              Jira GRW-293 (epic GRW-283) — "No stylist", Record payment only. `noStylist` and `schedulableId === null`
+              used to mean the same thing ("whoever is free"); they are now two different choices, so each option
+              also clears `noStylist` when it is not the one picked.
+              Jira GRW-403 — "Whoever is free" is not for a token: the work is done, so it is somebody named, or
+              nobody. Jira GRW-456 — and not at a branch with nobody on it: "free" needs somebody to be free.
+              Jira GRW-461 — only the people who can do what was picked; the save asks the same question.
+            */}
+            {stylistChips ? (
+              /*
+                The noun sits OUTSIDE the scrolling row (owner, 2026-10-07). It was the row's first item, held in
+                place with `position: sticky` — and a sticky item inside its own scroller is drawn OVER what
+                scrolls past it, so the row arrived with "Stylist" printed across "Whoever is free". Out here it
+                cannot collide with anything: the names scroll in the space left beside it.
+              */
+              <div className="wi-stylist-bar">
+                <span className="wi-stylist-chips-label" aria-hidden="true">
+                  {providerNoun}
+                </span>
+                <div id="wi-stylist" className="wi-chips wi-stylist-chips" role="radiogroup" aria-label={nv.withWhom(providerNoun.toLowerCase())}>
+                {[
+                  ...(offersWhoever
+                    ? [
+                        {
+                          value: WI_WHOEVER,
+                          label: nv.whoeverIsFree,
+                          photoUrl: null,
+                          // How many are free is for choosing who TAKES this person. A payment is for work already done.
+                          under: forPayment || later || freeCount === null ? null : nv.freeCount(freeCount),
+                        },
+                      ]
+                    : []),
+                  ...ableProviders.map((p) => ({ value: p.id, label: p.displayName, under: chairLine(p.id), photoUrl: p.photoUrl })),
+                  ...(forPayment ? [{ value: WI_NO_STYLIST, label: noProviderWord, under: null, photoUrl: null }] : []),
+                ].map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={stylistValue === o.value}
+                    className={`wi-chip ${o.under ? 'wi-chip-two' : ''} ${o.photoUrl ? 'wi-chip-faced' : ''} ${stylistValue === o.value ? 'wi-chip-on' : ''}`}
+                    onClick={() => pickStylist(o.value)}
+                    disabled={busy || linesLocked}
+                  >
+                    {/*
+                      Jira GRW-559 — the face in front of the name, and ONLY when there is one. The
+                      row stays what the owner settled on 2026-10-07: people as names, one tap each.
+                      A chip with no photo renders exactly the markup it did before, so a salon that
+                      has photographed nobody sees no change at all.
+
+                      The two-line variant is `flex-direction: column`, so the name and its "free
+                      now" line have to be stacked INSIDE their own box — an <img> dropped in as a
+                      sibling would sit above the name and make every chip two rows taller.
+                    */}
+                    {o.photoUrl ? (
+                      <>
+                        <img className="wi-chip-face" src={o.photoUrl} alt="" />
+                        <span className="wi-chip-lines">
+                          {o.label}
+                          {o.under ? <span className="wi-chip-under">{o.under}</span> : null}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {o.label}
+                        {/* Read as one name by a screen reader: "Rahul free now" is the sentence, not two labels. */}
+                        {o.under ? <span className="wi-chip-under">{o.under}</span> : null}
+                      </>
+                    )}
+                  </button>
+                ))}
+                </div>
+              </div>
+            ) : (
+            <select
+              id="wi-stylist"
+              className={`wi-stylist-select ${onPage ? 'wi-stylist-row' : ''}`}
+              aria-label={onPage ? nv.withWhom(providerNoun.toLowerCase()) : undefined}
+              aria-labelledby={onPage ? undefined : 'wi-stylist-label'}
+              value={stylistValue}
+              onChange={(e) => pickStylist(e.target.value)}
+              disabled={busy || linesLocked}
+            >
+              {forPayment && <option value={WI_NO_STYLIST}>{onPage ? `${providerNoun} · ${noProviderWord}` : noProviderWord}</option>}
+              {offersWhoever && (
+                <option value={WI_WHOEVER}>
+                  {/*
+                    With no heading above it (the till), "Whoever is free" alone does not say what it is choosing.
+                    The noun goes on this option and on "No stylist" — the two that are not a person's name — so the
+                    closed row reads "Stylist · whoever is free" without repeating the word down an open list.
+                  */}
+                  {onPage ? `${providerNoun} · ` : ''}
+                  {!later && freeCount !== null ? `${nv.whoeverIsFree} · ${nv.freeCount(freeCount)}` : nv.whoeverIsFree}
+                </option>
+              )}
+              {ableProviders.map((p) => {
+                const chair = later ? null : chairs.find((c) => c.schedulableId === p.id);
+                const state = !chair
+                  ? ''
+                  : chair.free
+                    ? nv.chairFree
+                    : nv.chairBusy(chair.occupant?.customerName ?? nv.someone, clockTime(chair.occupant!.freesAt));
+                return (
+                  <option key={p.id} value={p.id}>
+                    {state ? `${p.displayName} · ${state}` : p.displayName}
+                  </option>
+                );
+              })}
+            </select>
+            )}
+
+            {/*
+              The action the overlap banner never offered.
+              Only on a chair whose booking has started, is still open, and is past the grace period — at 2:00 a
+              4:00 booking is the future, not an absence, and offering to take it invites destroying a booking by
+              misreading a row. Shown under the dropdown for the stylist chosen in it.
+            */}
+            {(() => {
+              const chair = later || !schedulableId ? null : chairs.find((c) => c.schedulableId === schedulableId);
+              const occ = chair?.occupant;
+              if (!occ?.couldBeANoShow) return null;
+              return (
+                <button
+                  type="button"
+                  className={`wi-reclaim ${reclaim === occ.appointmentId ? 'is-on' : ''}`}
+                  onClick={() => setReclaim(reclaim === occ.appointmentId ? null : occ.appointmentId)}
+                  disabled={busy || linesLocked}
+                >
+                  {reclaim === occ.appointmentId
+                    ? nv.reclaimOn(occ.customerName ?? nv.someone)
+                    : nv.reclaimOffer(occ.customerName ?? nv.someone, occ.startedMinAgo)}
+                </button>
+              );
+            })()}
+
+            {/*
+              Jira GRW-456 — a branch with nobody on it says so here, where the choice is, rather than leaving
+              the desk to read "No staff member can perform that service" after pressing the one button there
+              was. Record payment still has an answer — the sale is taken with no one against it — so it is told
+              that too; a walk-in has none, and its button is off below.
+            */}
+            {noStaffHere ? (
+              <div className="empty">
+                {branchNameOf(listBranch ?? undefined)
+                  ? nv.noStaffAtBranch(branchNameOf(listBranch ?? undefined)!, providerNoun.toLowerCase())
+                  : nv.noStaffYet(providerNoun.toLowerCase())}{' '}
+                {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
+                {/* Jira GRW-409 — the Staff screen for whoever the nav offers it to, by the shared rule. */}
+                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
+                  <Link href={`/providers?branch=${listBranch}`}>{nv.addStaff(providerNoun.toLowerCase())}</Link>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/*
+              Jira GRW-461 — the branch has people, and none of them do this one.
+
+              Said here rather than left to the save, which answers "No staff member can perform that
+              service" after the press. The service is named because that is what the desk can act on —
+              change the service, or give this person the skill.
+            */}
+            {noOneCanDoIt ? (
+              <div className="empty">
+                {nv.noOneDoes(picked[0]?.name ?? '', providerNoun.toLowerCase())}{' '}
+                {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
+                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
+                  <Link href={`/providers?branch=${listBranch}`}>{nv.whoDoesWhat(providerNoun.toLowerCase())}</Link>
+                ) : null}
+              </div>
+            ) : null}
+
+    </>
+  );
+
+  const servicesAndStylist = (
+    <>
+            {onPage ? stylistField : null}
+
+            {/* Either page: the search sits above what has been chosen, so adding a service never means scrolling past the list. */}
+            {onPage && serviceSearch}
+
+            {/* Chosen list first — it is the answer being assembled. */}
+            {(picked.length > 0 || extras.length > 0) && (
+              <>
+                {/* Record payment calls it the bill, and says beside it that the money taken need not match these prices. */}
+                {payPage ? (
+                  <div className="wi-bill-head" id="wi-bill">
+                    <h2 className="wi-section-label">{nv.inThisBill(picked.length + extras.length)}</h2>
+                    <span className="wi-bill-hint">
+                      {nv.totalCanDiffer(tmin('minutes', { count: totalMinutes([...picked, ...extras]) }))}
+                    </span>
+                  </div>
+                ) : (
+                  <h2 className="wi-section-label">{nv.picked}</h2>
+                )}
+                <div className="wi-picked">
+                  {comboActive ? (
+                    /*
+                     * Jira GRW-291 — a combo is one line: what it would have
+                     * cost, what it saves, and what it costs — not its
+                     * services listed apart with the discount invisible
+                     * between them. `applyCombo` always replaces the whole
+                     * list, so `picked` here IS the combo and nothing else.
+                     */
+                    <div className="wi-picked-row wi-picked-combo">
+                      <span className="wi-picked-name">
+                        {comboTitle}
+                        <span className="wi-combo-tag">{nv.combo}</span>
+                      </span>
+                      <span className="wi-combo-figures">
+                        <span className="wi-combo-list">{formatMoney(String(comboListMinor))}</span>
+                        <span className="wi-combo-save">{nv.comboSaves(formatMoney(String(comboSavingMinor)))}</span>
+                        {forPayment ? (
+                          <label className="wi-amount">
+                            <span aria-hidden>₹</span>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              aria-label={nv.amountFor(comboTitle ?? nv.combo)}
+                              aria-invalid={rupeesToMinor(comboAmountText) === null}
+                              value={comboAmountText}
+                              onChange={(e) => setComboAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                              disabled={busy || linesLocked}
+                            />
+                          </label>
+                        ) : (
+                          <strong className="wi-combo-price">{formatMoney(comboPriceMinor!)}</strong>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        className="wi-remove"
+                        aria-label={`${nv.removeService} ${comboTitle ?? nv.combo}`}
+                        onClick={removeCombo}
+                        disabled={busy || linesLocked}
+                      >
+                        <IconClose />
+                      </button>
+                    </div>
+                  ) : null}
+                  {/*
+                   * Jira GRW-292 — whatever was added beside the combo: its
+                   * own row, its own price, same markup the plain (no-combo)
+                   * list below uses. Record payment settles these through
+                   * `extraServices` at Mark done; Walk-in now / For later have
+                   * no second step to settle them through, so the footer
+                   * disables the primary button and says why while any of
+                   * these sit next to a combo.
+                   */}
+                  {extras.map((item, i) => (
+                    <div className="wi-picked-row" key={`extra-${item.serviceId}-${i}`}>
+                      <span className="wi-picked-name">{numberedName(extras, i)}</span>
+                      {forPayment ? (
+                        <label className="wi-amount">
+                          <span aria-hidden>₹</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            aria-label={nv.amountFor(item.name)}
+                            aria-invalid={rupeesToMinor(item.paidRupees) === null}
+                            value={item.paidRupees ?? ''}
+                            onChange={(e) => setExtraAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
+                            disabled={busy}
+                          />
+                        </label>
+                      ) : (
+                        <span className="picker-row-meta">{tmin('minutes', { count: item.durationMin })}</span>
+                      )}
+                      <button
+                        type="button"
+                        className="wi-remove"
+                        aria-label={`${nv.removeService} ${item.name}`}
+                        onClick={() => removeExtraAt(i)}
+                        disabled={busy || linesLocked}
+                      >
+                        <IconClose />
+                      </button>
+                    </div>
+                  ))}
+                  {/*
+                   * Jira GRW-292 — the combo row already says its own price;
+                   * this total only appears once there is something ELSE to
+                   * add it to, same as the plain list's total below.
+                   */}
+                  {comboActive && extras.length > 0 && (
+                    <div className="wi-picked-total">
+                      <span>{nv.total}</span>
+                      <strong>{formatMoney(String(comboWithExtrasTotalMinor))}</strong>
+                    </div>
+                  )}
+                  {!comboActive && (
+                    <>
+                      {picked.map((item, i) => (
+                        <div className="wi-picked-row" key={`${item.serviceId}-${i}`}>
+                          <span className="wi-picked-name">{numberedName(picked, i)}</span>
+                          {forPayment ? (
+                            <label className="wi-amount">
+                              <span aria-hidden>₹</span>
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                aria-label={nv.amountFor(item.name)}
+                                aria-invalid={rupeesToMinor(item.paidRupees) === null}
+                                value={item.paidRupees ?? ''}
+                                onChange={(e) => setAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
+                                disabled={busy}
+                              />
+                            </label>
+                          ) : (
+                            <span className="picker-row-meta">{tmin('minutes', { count: item.durationMin })}</span>
+                          )}
+                          <button
+                            type="button"
+                            className="wi-remove"
+                            aria-label={`${nv.removeService} ${item.name}`}
+                            onClick={() => removeAt(i)}
+                            disabled={busy || linesLocked}
+                          >
+                            <IconClose />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="wi-picked-total">
+                        <span>{nv.total}</span>
+                        <strong>{formatMoney(forPayment ? String(paidTotalMinor) : totalMinor(picked, comboPriceMinor))}</strong>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+            {!onPage && serviceSearch}
+
+            {alsoTry.length > 0 && (
+              <div className="wi-also-try">
+                <span className="wi-also-try-label">{nv.alsoTry}</span>
+                <div className="wi-chips">
+                  {alsoTry.map((s) => (
+                    <button key={s.id} type="button" className="wi-chip" onClick={() => addService(s)} disabled={busy || linesLocked}>
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Combos replace the whole list rather than appending to it — a
+                combo is priced as a unit, so half of one is not a thing. */}
+            {/* On either page the Packages chip above lists them, in the menu; this row is the sheet's. */}
+            {!onPage && combos.length > 0 && serviceTerm.trim() === '' && (
+              <>
+                <h2 className="wi-section-label">{nv.combos}</h2>
+                <div className="wi-chips">
+                  {combos.map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      className={`wi-chip wi-chip-combo ${offerId === o.id ? 'wi-chip-on' : ''}`}
+                      onClick={() => applyCombo(o)}
+                      disabled={busy || linesLocked}
+                    >
+                      {o.title}
+                      <span className="wi-chip-meta">
+                        {o.comboPriceMinor
+                          ? formatMoney(o.comboPriceMinor)
+                          : nv.comboServices(o.serviceIds.length)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {onPage ? null : stylistField}
+
+            {picked.length > 0 && !later && !forPayment && (
+              <div className="wi-summary">{nv.startsNow(totalMinutes([...picked, ...extras]))}</div>
+            )}
+
+    </>
+  );
 
   const asPage = presentation === 'page';
   // Jira GRW-520 — every row the dropdown can show, in order: this branch's matches, then the other branches'.
@@ -1532,6 +2804,21 @@ export function NewVisitSheet({
     ...elsewhere.map((c) => ({ c, bring: true })),
   ];
   const showDrop = comboOpen && term.trim().length >= SEARCH_MIN_CHARS;
+  /*
+   * Either page keeps the Name and Phone number fields closed — but never while they have something to say.
+   *
+   * "Nobody on file matches that" is the moment they are wanted: the dropdown saying it sits directly over the
+   * button that would open them, so a closed block there is a dead end. A number already typed, or an error on
+   * either field, would likewise be hidden behind the button.
+   *
+   * New booking closed them too (owner, 2026-10-07). It is the same question in the same place, and the screen
+   * opened on two empty fields for a client who, most of the time, is already on file — and who, when they are
+   * not, opens the fields by the search failing to find them.
+   */
+  const nobodyMatched =
+    term.trim().length >= SEARCH_MIN_CHARS && !searching && results.length === 0 && elsewhere.length === 0;
+  const newPersonClosed =
+    pageForm && !addingNew && !nobodyMatched && !newPhone.trim() && !nameError && phoneError === null;
   /*
    * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
    *
@@ -1559,6 +2846,10 @@ export function NewVisitSheet({
     // Jira GRW-537 — the first screen of the page has Back too: through history, or Home when there is none (the
     // app's own Back, GRW-497). Not in the pop-up, which has its ✕.
     if (asPage && stage.step === 'client') {
+      return () => (window.history.length > 1 ? router.back() : router.push('/'));
+    }
+    // The single page keeps its form on screen after a failed save: Back leaves the page, as it does from the form.
+    if (pageForm && stage.step === 'error') {
       return () => (window.history.length > 1 ? router.back() : router.push('/'));
     }
     if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
@@ -1605,22 +2896,32 @@ export function NewVisitSheet({
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
             {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
-            <div className="sheet-sub">{headSub}</div>
+            {pageHead ? null : <div className="sheet-sub">{headSub}</div>}
           </div>
           <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
             <IconClose />
           </button>
+          {/*
+            A row of its own, not the middle cell's sub-line: `.sheet-head` is `1fr auto 1fr`, so between a back
+            arrow and a ✕ the middle cell is about 230px at 375 and the branch name came out as "MG Road…".
+            Spanning all three columns gives the name the header's full width.
+          */}
+          {pageHead}
         </div>
 
         {/* ---------- Stage 1: find them ---------- */}
-        {stage.step === 'client' && (
+        {(stage.step === 'client' || (pageForm && onForm)) && (
           <div className="wi-body" id="wi-client-panel">
+            {pageForm && stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
+            {pageForm && tokenGone && <div role="alert" className="wi-error">{nv.tokenGone}</div>}
             {/*
               Jira GRW-520 — a combobox: the matches float in a dropdown under the box instead of pushing the
               form down. Pointer-down on the dropdown is kept from taking focus off the input, so a tap on a row
               is not preceded by the box losing focus and the dropdown closing under the finger (iOS gives a
               button no focus, so that blur arrives with no related target).
             */}
+            {/* Either page's branch is in the header (`pageHead`), not here. */}
+
             <div
               className="wi-combo"
               onBlur={(e) => {
@@ -1639,7 +2940,8 @@ export function NewVisitSheet({
                   aria-controls="wi-dropdown"
                   aria-autocomplete="list"
                   aria-activedescendant={showDrop && activeIdx >= 0 ? `wi-opt-${activeIdx}` : undefined}
-                  placeholder={nv.searchPlaceholder}
+                  placeholder={!selected && newPersonClosed ? `${nv.searchPlaceholder} *` : nv.searchPlaceholder}
+                  aria-required={pageForm || forPayment ? true : undefined}
                   aria-label={nv.searchPlaceholder}
                   value={term}
                   autoFocus
@@ -1758,11 +3060,60 @@ export function NewVisitSheet({
               The old second step (name, phone, "Use this person") is these same fields and the same checks.
             */}
             <div className="wi-new-person" ref={addNewRef}>
+              {pageForm && selected ? (
+                <>
+                <div className="wi-picked-row">
+                  <span className="wi-picked-name">
+                    {selected.name?.trim() || nv.noName}
+                    {selected.phone ? <span className="picker-row-meta"> · {selected.phone}</span> : null}
+                  </span>
+                  <button type="button" className="wi-remove" aria-label={nv.clear} onClick={() => setSelected(null)} disabled={busy}>
+                    <IconClose />
+                  </button>
+                </div>
+                {/* On file with a name and no number, and they give one now: it goes onto their record with the visit. */}
+                {selected.kind === 'existing' && !selected.phone ? (
+                  addingPhone || pickedPhone.trim() || pickedPhoneError ? (
+                    <PhoneField
+                      id="wi-picked-phone"
+                      label={nv.phoneRequired}
+                      value={pickedPhone}
+                      onChange={(v) => {
+                        setPickedPhone(v);
+                        if (pickedPhoneError) setPickedPhoneError(null);
+                      }}
+                      error={pickedPhoneError}
+                      autoFocus={addingPhone && !pickedPhone}
+                      /* Not `busy`: that includes saving this number, and a field disabled while its own save fails
+                         cannot take the focus that is sent back to it with the reason. */
+                      disabled={stage.step === 'saving'}
+                    />
+                  ) : (
+                    <button type="button" className="wi-add-person" onClick={() => setAddingPhone(true)} disabled={busy}>
+                      {nv.addPhoneNumber}
+                    </button>
+                  )
+                ) : null}
+                </>
+              ) : newPersonClosed ? (
+                /* Closed on Record payment until it is wanted. Never while it has something to say: a number already
+                   typed, or an error on either field, each of which would otherwise be hidden behind this button. */
+                <button type="button" className="wi-add-person" onClick={() => setAddingNew(true)} disabled={busy}>
+                  {nv.addNameAndNumber}
+                </button>
+              ) : (
+                <>
               <div className="field">
-                <label htmlFor="wi-name">{nv.nameRequired}</label>
+                <label htmlFor="wi-name">
+                  <span>
+                    {nv.nameRequired}
+                    <span className="field-required" aria-hidden="true"> *</span>
+                  </span>
+                </label>
                 <input
                   id="wi-name"
                   type="text"
+                  aria-required="true"
                   className={nameError ? 'field-invalid' : undefined}
                   value={newName}
                   placeholder={nv.namePlaceholder}
@@ -1794,6 +3145,24 @@ export function NewVisitSheet({
                 }}
                 error={phoneError}
               />
+                </>
+              )}
+
+              {/* Jira GRW-341 — a returning client: last time's visit, and the next free times. */}
+              {pageForm && !forPayment && selected?.kind === 'existing' && picked.length === 0 && extras.length === 0 && services && providers && offers ? (
+                <BookAgainCard
+                  clientId={selected.id}
+                  services={services}
+                  providers={branchProviders}
+                  offers={combos}
+                  branchId={listBranch}
+                  days={days.map((d) => d.iso)}
+                  timezone={timezone}
+                  later={later}
+                  onUse={(plan) => applyPlan(plan)}
+                  onPickTime={(plan, time) => bookAgainAt(selected, plan, time)}
+                />
+              ) : null}
 
               {/*
               Jira GRW-518 · GRW-519 · GRW-521 — the Booking date, last: search, name, phone, then when. It shows
@@ -1801,6 +3170,8 @@ export function NewVisitSheet({
               before today; set back to today, or cleared, it is a walk-in again.
             */}
             {/* Jira GRW-529 — date and time share one row. */}
+            {/* Record payment never asks: both controls were `disabled` here, and the header says "Now 10:51 PM" instead. */}
+            {forPayment ? null : (
             <div className="wi-when">
             <div className="field wi-date-field">
               <label htmlFor="wi-date">
@@ -1844,7 +3215,103 @@ export function NewVisitSheet({
               </select>
             </div>
             </div>
+            )}
 
+            {pageForm ? (
+              <>
+                {servicesAndStylist}
+
+                {/* Free times for what was chosen, once there is something to fit: the booking time asked for above is picked if it is free. */}
+                {later && picked.length > 0 ? (
+                  <>
+                    {slotError && <div role="alert" className="wi-error">{slotError}</div>}
+                    <h2 className="wi-section-label">{nv.whichTime}</h2>
+                    {loadingSlots ? (
+                      <div className="empty">{nv.loadingTimes}</div>
+                    ) : !slots || slots.slotCount === 0 ? (
+                      <div className="empty" id="wi-no-times">
+                        {nv.noTimes}
+                      </div>
+                    ) : (
+                      <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
+                        {slots.sections.flatMap((sec) =>
+                          sec.slots.map((slot) => (
+                            <button
+                              key={slot.utc}
+                              type="button"
+                              aria-pressed={slotUtc === slot.utc}
+                              className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
+                              onClick={() => setSlotUtc(slot.utc)}
+                              disabled={busy}
+                            >
+                              {slot.local}
+                            </button>
+                          )),
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : null}
+
+                <div className={`modal-actions wi-actions wi-acts ${forPayment ? 'wi-pay-actions' : ''}`}>
+                  {/* Record payment: how they paid sits in the tray beside Mark done (GRW-290). */}
+                  {forPayment && (
+                    <div className="wi-pay-modes" role="radiogroup" aria-label={nv.howPaid}>
+                      <span className="wi-pay-modes-label">{nv.howPaid}</span>
+                      <div className="wi-chips">
+                        {PAYMENT_MODES.map((m) => (
+                          <button
+                            key={m.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={paymentMode === m.value}
+                            className={`wi-chip wi-pay-tile ${paymentMode === m.value ? 'wi-chip-on' : ''}`}
+                            onClick={() => setPaymentMode(m.value)}
+                            disabled={busy}
+                          >
+                            <span className={`wi-pay-icon wi-pay-icon-${m.value}`} aria-hidden="true">{PAY_ICONS[m.value]}</span>
+                            {tcr(`pay.${m.value}`)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {outcomeChips}
+                  {(() => {
+                    // Record payment has an answer with nobody on the branch (no stylist); a walk-in or booking does not.
+                    const cannot = (later && !slotUtc) || (forPayment ? !amountsValid : noStaffHere || noOneCanDoIt);
+                    /*
+                     * One button, named by the chip above it. Queueing asks for less than starting does — a person
+                     * can wait before anybody has decided what they are having, so it does not want a service, a
+                     * free chair, or somebody who can do it.
+                     */
+                    const go = (
+                      <button
+                        key="go"
+                        type="button"
+                        className="btn"
+                        onClick={() => void thenVisit(forPayment ? checkBeforeMarkDone() : pageClient(), queueing ? queueIt : submit)}
+                        disabled={queueing ? busy : busy || (forPayment ? false : picked.length === 0 || cannot)}
+                      >
+                        {busy
+                          ? nv.saving
+                          : forPayment
+                            ? nv.markDone
+                            : later
+                              ? nv.bookIt
+                              : queueing
+                                ? nv.addToQueue
+                                : nv.start}
+                      </button>
+                    );
+                    return trayTotal ? <div className="wi-tray-row">{trayTotal}{go}</div> : go;
+                  })()}
+                </div>
+              </>
+            ) : null}
+
+            {!pageForm && (
+              <>
             {/* Jira GRW-458 — Back is in the header now; this tray holds the one action that moves forward. */}
               <div className="modal-actions wi-actions wi-acts">
                 <button
@@ -1880,12 +3347,14 @@ export function NewVisitSheet({
                   </button>
                 ) : null}
               </div>
+              </>
+            )}
             </div>
           </div>
         )}
 
         {/* ---------- Stage 2: what are they having ---------- */}
-        {(stage.step === 'details' || stage.step === 'saving' || stage.step === 'error') && (
+        {!pageForm && (stage.step === 'details' || stage.step === 'saving' || stage.step === 'error') && (
           <div className="wi-body">
             {stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
 
@@ -1950,377 +3419,7 @@ export function NewVisitSheet({
               />
             ) : null}
 
-            {/* Chosen list first — it is the answer being assembled. */}
-            {(picked.length > 0 || extras.length > 0) && (
-              <>
-                <h2 className="wi-section-label">{nv.picked}</h2>
-                <div className="wi-picked">
-                  {comboActive ? (
-                    /*
-                     * Jira GRW-291 — a combo is one line: what it would have
-                     * cost, what it saves, and what it costs — not its
-                     * services listed apart with the discount invisible
-                     * between them. `applyCombo` always replaces the whole
-                     * list, so `picked` here IS the combo and nothing else.
-                     */
-                    <div className="wi-picked-row wi-picked-combo">
-                      <span className="wi-picked-name">
-                        {comboTitle}
-                        <span className="wi-combo-tag">{nv.combo}</span>
-                      </span>
-                      <span className="wi-combo-figures">
-                        <span className="wi-combo-list">{formatMoney(String(comboListMinor))}</span>
-                        <span className="wi-combo-save">{nv.comboSaves(formatMoney(String(comboSavingMinor)))}</span>
-                        {forPayment ? (
-                          <label className="wi-amount">
-                            <span aria-hidden>₹</span>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              aria-label={nv.amountFor(comboTitle ?? nv.combo)}
-                              aria-invalid={rupeesToMinor(comboAmountText) === null}
-                              value={comboAmountText}
-                              onChange={(e) => setComboAmount(e.target.value.replace(/[^0-9.]/g, ''))}
-                              disabled={busy || linesLocked}
-                            />
-                          </label>
-                        ) : (
-                          <strong className="wi-combo-price">{formatMoney(comboPriceMinor!)}</strong>
-                        )}
-                      </span>
-                      <button
-                        type="button"
-                        className="wi-remove"
-                        aria-label={`${nv.removeService} ${comboTitle ?? nv.combo}`}
-                        onClick={removeCombo}
-                        disabled={busy || linesLocked}
-                      >
-                        <IconClose />
-                      </button>
-                    </div>
-                  ) : null}
-                  {/*
-                   * Jira GRW-292 — whatever was added beside the combo: its
-                   * own row, its own price, same markup the plain (no-combo)
-                   * list below uses. Record payment settles these through
-                   * `extraServices` at Mark done; Walk-in now / For later have
-                   * no second step to settle them through, so the footer
-                   * disables the primary button and says why while any of
-                   * these sit next to a combo.
-                   */}
-                  {extras.map((item, i) => (
-                    <div className="wi-picked-row" key={`extra-${item.serviceId}-${i}`}>
-                      <span className="wi-picked-name">{item.name}</span>
-                      {forPayment ? (
-                        <label className="wi-amount">
-                          <span aria-hidden>₹</span>
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            aria-label={nv.amountFor(item.name)}
-                            aria-invalid={rupeesToMinor(item.paidRupees) === null}
-                            value={item.paidRupees ?? ''}
-                            onChange={(e) => setExtraAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
-                            disabled={busy}
-                          />
-                        </label>
-                      ) : (
-                        <span className="picker-row-meta">{tmin('minutes', { count: item.durationMin })}</span>
-                      )}
-                      <button
-                        type="button"
-                        className="wi-remove"
-                        aria-label={`${nv.removeService} ${item.name}`}
-                        onClick={() => removeExtraAt(i)}
-                        disabled={busy || linesLocked}
-                      >
-                        <IconClose />
-                      </button>
-                    </div>
-                  ))}
-                  {/*
-                   * Jira GRW-292 — the combo row already says its own price;
-                   * this total only appears once there is something ELSE to
-                   * add it to, same as the plain list's total below.
-                   */}
-                  {comboActive && extras.length > 0 && (
-                    <div className="wi-picked-total">
-                      <span>{nv.total}</span>
-                      <strong>{formatMoney(String(comboWithExtrasTotalMinor))}</strong>
-                    </div>
-                  )}
-                  {!comboActive && (
-                    <>
-                      {picked.map((item, i) => (
-                        <div className="wi-picked-row" key={`${item.serviceId}-${i}`}>
-                          <span className="wi-picked-name">{item.name}</span>
-                          {forPayment ? (
-                            <label className="wi-amount">
-                              <span aria-hidden>₹</span>
-                              <input
-                                type="text"
-                                inputMode="decimal"
-                                aria-label={nv.amountFor(item.name)}
-                                aria-invalid={rupeesToMinor(item.paidRupees) === null}
-                                value={item.paidRupees ?? ''}
-                                onChange={(e) => setAmountAt(i, e.target.value.replace(/[^0-9.]/g, ''))}
-                                disabled={busy}
-                              />
-                            </label>
-                          ) : (
-                            <span className="picker-row-meta">{tmin('minutes', { count: item.durationMin })}</span>
-                          )}
-                          <button
-                            type="button"
-                            className="wi-remove"
-                            aria-label={`${nv.removeService} ${item.name}`}
-                            onClick={() => removeAt(i)}
-                            disabled={busy || linesLocked}
-                          >
-                            <IconClose />
-                          </button>
-                        </div>
-                      ))}
-                      <div className="wi-picked-total">
-                        <span>{nv.total}</span>
-                        <strong>{formatMoney(forPayment ? String(paidTotalMinor) : totalMinor(picked, comboPriceMinor))}</strong>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-
-            <h2 className="wi-section-label">
-              {picked.length > 0 ? nv.addMore : nv.whichService}
-            </h2>
-            <div className="picker-search">
-              <input
-                type="search"
-                className="wi-search-input wi-search-input-plain"
-                placeholder={services === null ? nv.loadingServices : nv.searchServices(services.length)}
-                aria-label={picked.length > 0 ? nv.addMore : nv.whichService}
-                value={serviceTerm}
-                onChange={(e) => setServiceTerm(e.target.value)}
-                disabled={busy || linesLocked}
-              />
-            </div>
-            <div className="picker-results wi-service-results">
-              {matchingCombos.map((o) => (
-                <button
-                  key={`combo-${o.id}`}
-                  type="button"
-                  className="picker-row wi-row"
-                  onClick={() => applyCombo(o)}
-                  disabled={busy || linesLocked}
-                >
-                  <span className="picker-row-name">
-                    {o.title} <span className="wi-combo-tag">{nv.combo}</span>
-                  </span>
-                  <span className="picker-row-meta">
-                    {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}
-                  </span>
-                </button>
-              ))}
-              {filteredServices.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="picker-row wi-row"
-                  onClick={() => addService(s)}
-                  disabled={busy || linesLocked}
-                >
-                  <span className="picker-row-name">{s.name}</span>
-                  <span className="picker-row-meta">
-                    {tmin('minutes', { count: s.durationMin })} · {formatMoney(s.priceMinor)}
-                  </span>
-                </button>
-              ))}
-              {services === null ? (
-                <div className="empty">{nv.loadingServices}</div>
-              ) : services.length === 0 ? (
-                // Jira GRW-384 (AC-03) — a branch opened with an empty menu says so, and the owner is shown where
-                // to add or copy one; anyone else is told plainly why nothing is listed.
-                branchNameOf(listBranch ?? undefined) ? (
-                  <div className="empty">
-                    {nv.noServicesAtBranch(branchNameOf(listBranch ?? undefined)!, servicesNoun.toLowerCase())}{' '}
-                    {/* Jira GRW-409 — a link to the Services screen for whoever the nav offers it to (the shared rule), not `isOwner`. */}
-                    {canSee('/services', session?.role as MemberRole | null | undefined) ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
-                  </div>
-                ) : (
-                  <div className="empty">{nv.noServicesYet}</div>
-                )
-              ) : (
-                filteredServices.length === 0 &&
-                matchingCombos.length === 0 &&
-                alsoTry.length === 0 && <div className="empty">{nv.noServiceMatch}</div>
-              )}
-            </div>
-
-            {alsoTry.length > 0 && (
-              <div className="wi-also-try">
-                <span className="wi-also-try-label">{nv.alsoTry}</span>
-                <div className="wi-chips">
-                  {alsoTry.map((s) => (
-                    <button key={s.id} type="button" className="wi-chip" onClick={() => addService(s)} disabled={busy || linesLocked}>
-                      {s.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Combos replace the whole list rather than appending to it — a
-                combo is priced as a unit, so half of one is not a thing. */}
-            {combos.length > 0 && serviceTerm.trim() === '' && (
-              <>
-                <h2 className="wi-section-label">{nv.combos}</h2>
-                <div className="wi-chips">
-                  {combos.map((o) => (
-                    <button
-                      key={o.id}
-                      type="button"
-                      className={`wi-chip wi-chip-combo ${offerId === o.id ? 'wi-chip-on' : ''}`}
-                      onClick={() => applyCombo(o)}
-                      disabled={busy || linesLocked}
-                    >
-                      {o.title}
-                      <span className="wi-chip-meta">
-                        {o.comboPriceMinor
-                          ? formatMoney(o.comboPriceMinor)
-                          : nv.comboServices(o.serviceIds.length)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            <h2 className="wi-section-label" id="wi-stylist-label">{nv.withWhom(providerNoun.toLowerCase())}</h2>
-            {/*
-              GRW-198 — chairs, not a list of names.
-              The receptionist's question is "who can take this person", and a
-              bare list of stylists asked them to guess: three of the five might
-              be mid-haircut. Each chair now says what it is doing, and the one
-              whose customer never turned up says so where the decision is made
-              rather than in a banner afterwards. Only for a walk-in — "later"
-              is about a day that has not happened.
-            */}
-            {/*
-              Jira GRW-524 — a dropdown, not a card per stylist. What each chair is doing (GRW-198) moves into the
-              option's own words, so the desk still sees who is free where the choice is made.
-              Jira GRW-293 (epic GRW-283) — "No stylist", Record payment only. `noStylist` and `schedulableId === null`
-              used to mean the same thing ("whoever is free"); they are now two different choices, so each option
-              also clears `noStylist` when it is not the one picked.
-              Jira GRW-403 — "Whoever is free" is not for a token: the work is done, so it is somebody named, or
-              nobody. Jira GRW-456 — and not at a branch with nobody on it: "free" needs somebody to be free.
-              Jira GRW-461 — only the people who can do what was picked; the save asks the same question.
-            */}
-            <select
-              id="wi-stylist"
-              className="wi-stylist-select"
-              aria-labelledby="wi-stylist-label"
-              value={noStylist ? WI_NO_STYLIST : (schedulableId ?? WI_WHOEVER)}
-              onChange={(e) => {
-                const v = e.target.value;
-                setReclaim(null);
-                if (v === WI_NO_STYLIST) {
-                  setSchedulableId(null);
-                  setNoStylist(true);
-                } else if (v === WI_WHOEVER) {
-                  setSchedulableId(null);
-                  setNoStylist(false);
-                } else {
-                  setSchedulableId(v);
-                  setNoStylist(false);
-                }
-              }}
-              disabled={busy || linesLocked}
-            >
-              {forPayment && <option value={WI_NO_STYLIST}>{noProviderWord}</option>}
-              {!paysToken && !noStaffHere && !noOneCanDoIt && (
-                <option value={WI_WHOEVER}>
-                  {!later && freeCount !== null ? `${nv.whoeverIsFree} · ${nv.freeCount(freeCount)}` : nv.whoeverIsFree}
-                </option>
-              )}
-              {ableProviders.map((p) => {
-                const chair = later ? null : chairs.find((c) => c.schedulableId === p.id);
-                const state = !chair
-                  ? ''
-                  : chair.free
-                    ? nv.chairFree
-                    : nv.chairBusy(chair.occupant?.customerName ?? nv.someone, formatTime(chair.occupant!.freesAt, timezone));
-                return (
-                  <option key={p.id} value={p.id}>
-                    {state ? `${p.displayName} · ${state}` : p.displayName}
-                  </option>
-                );
-              })}
-            </select>
-
-            {/*
-              The action the overlap banner never offered.
-              Only on a chair whose booking has started, is still open, and is past the grace period — at 2:00 a
-              4:00 booking is the future, not an absence, and offering to take it invites destroying a booking by
-              misreading a row. Shown under the dropdown for the stylist chosen in it.
-            */}
-            {(() => {
-              const chair = later || !schedulableId ? null : chairs.find((c) => c.schedulableId === schedulableId);
-              const occ = chair?.occupant;
-              if (!occ?.couldBeANoShow) return null;
-              return (
-                <button
-                  type="button"
-                  className={`wi-reclaim ${reclaim === occ.appointmentId ? 'is-on' : ''}`}
-                  onClick={() => setReclaim(reclaim === occ.appointmentId ? null : occ.appointmentId)}
-                  disabled={busy || linesLocked}
-                >
-                  {reclaim === occ.appointmentId
-                    ? nv.reclaimOn(occ.customerName ?? nv.someone)
-                    : nv.reclaimOffer(occ.customerName ?? nv.someone, occ.startedMinAgo)}
-                </button>
-              );
-            })()}
-
-            {/*
-              Jira GRW-456 — a branch with nobody on it says so here, where the choice is, rather than leaving
-              the desk to read "No staff member can perform that service" after pressing the one button there
-              was. Record payment still has an answer — the sale is taken with no one against it — so it is told
-              that too; a walk-in has none, and its button is off below.
-            */}
-            {noStaffHere ? (
-              <div className="empty">
-                {branchNameOf(listBranch ?? undefined)
-                  ? nv.noStaffAtBranch(branchNameOf(listBranch ?? undefined)!, providerNoun.toLowerCase())
-                  : nv.noStaffYet(providerNoun.toLowerCase())}{' '}
-                {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
-                {/* Jira GRW-409 — the Staff screen for whoever the nav offers it to, by the shared rule. */}
-                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
-                  <Link href={`/providers?branch=${listBranch}`}>{nv.addStaff(providerNoun.toLowerCase())}</Link>
-                ) : null}
-              </div>
-            ) : null}
-
-            {/*
-              Jira GRW-461 — the branch has people, and none of them do this one.
-
-              Said here rather than left to the save, which answers "No staff member can perform that
-              service" after the press. The service is named because that is what the desk can act on —
-              change the service, or give this person the skill.
-            */}
-            {noOneCanDoIt ? (
-              <div className="empty">
-                {nv.noOneDoes(picked[0]?.name ?? '', providerNoun.toLowerCase())}{' '}
-                {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
-                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
-                  <Link href={`/providers?branch=${listBranch}`}>{nv.whoDoesWhat(providerNoun.toLowerCase())}</Link>
-                ) : null}
-              </div>
-            ) : null}
-
-            {picked.length > 0 && !later && !forPayment && (
-              <div className="wi-summary">{nv.startsNow(totalMinutes([...picked, ...extras]))}</div>
-            )}
+            {servicesAndStylist}
 
             <div className={`modal-actions wi-actions wi-acts ${forPayment ? 'wi-pay-actions' : ''}`}>
               {/*
@@ -2339,10 +3438,11 @@ export function NewVisitSheet({
                         type="button"
                         role="radio"
                         aria-checked={paymentMode === m.value}
-                        className={`wi-chip ${paymentMode === m.value ? 'wi-chip-on' : ''}`}
+                        className={`wi-chip wi-pay-tile ${paymentMode === m.value ? 'wi-chip-on' : ''}`}
                         onClick={() => setPaymentMode(m.value)}
                         disabled={busy}
                       >
+                        <span className={`wi-pay-icon wi-pay-icon-${m.value}`} aria-hidden="true">{PAY_ICONS[m.value]}</span>
                         {tcr(`pay.${m.value}`)}
                       </button>
                     ))}
@@ -2364,21 +3464,28 @@ export function NewVisitSheet({
                  * The swap is a reorder of these two elements, never `order` in CSS: GRW-451 is why the
                  * eye and Tab have to be given one sequence, not two.
                  */
-                const queueOffered = !later && !reclaim && !forPayment;
                 const queueLeads = queueOffered && noChairFree;
                 const go = (
                   <button
                     key="go"
                     type="button"
                     className={queueLeads ? 'btn btn-ghost wi-act-alt' : 'btn'}
-                    onClick={() =>
-                      later ? setStage({ step: 'when', client: stage.client }) : void submit(stage.client)
-                    }
+                    onClick={() => {
+                      if (later) return setStage({ step: 'when', client: stage.client });
+                      // Paying a token on the Record payment page: the same Mark done as the plain page, which says
+                      // what is missing (and takes the eye there) rather than sitting greyed out.
+                      if (payPage) {
+                        const ready = checkBeforeMarkDone(stage.client);
+                        if (ready) void submit(ready);
+                        return;
+                      }
+                      void submit(stage.client);
+                    }}
                     // Jira GRW-456 — a walk-in needs a chair and there is none; the queue beside it still takes them.
                     disabled={
                       busy ||
-                      picked.length === 0 ||
-                      (forPayment && !amountsValid) ||
+                      (!payPage && picked.length === 0) ||
+                      (forPayment && !payPage && !amountsValid) ||
                       (!later && !forPayment && (noStaffHere || noOneCanDoIt))
                     }
                   >
@@ -2393,6 +3500,8 @@ export function NewVisitSheet({
                             : nv.start}
                   </button>
                 );
+                // The bill's total beside Mark done, as on the plain Record payment page.
+                if (!queueOffered && trayTotal) return <div className="wi-tray-row">{trayTotal}{go}</div>;
                 if (!queueOffered) return go;
                 const queue = (
                   <button
@@ -2412,7 +3521,7 @@ export function NewVisitSheet({
         )}
 
         {/* ---------- Stage 2b (`later` only): when ---------- */}
-        {stage.step === 'when' && (
+        {!pageForm && stage.step === 'when' && (
           <div className="wi-body">
             {slotError && <div role="alert" className="wi-error">{slotError}</div>}
             <h2 className="wi-section-label">{nv.whichDay}</h2>
@@ -2495,7 +3604,9 @@ export function NewVisitSheet({
                 </div>
               </div>
             </div>
-            <button type="button" className="sheet-item wi-finish" onClick={onClose}>
+            {/* Owner, 2026-10-07 — the same hand-over as the bill: the token to send, if they gave a number. */}
+            {stage.confirm ? <ReceiptShare bill={stage.confirm} phone={stage.client.phone || null} kind="confirm" /> : null}
+            <button type="button" className={`sheet-item wi-finish ${stage.confirm ? 'wi-finish-quiet' : ''}`} onClick={onClose}>
               {nv.done}
             </button>
           </div>
@@ -2525,7 +3636,9 @@ export function NewVisitSheet({
                 </div>
               </div>
             </div>
-            <button type="button" className="sheet-item wi-finish" onClick={onClose}>
+            {/* Owner, 2026-10-07 — the bill, to send the client on WhatsApp (the design's "Mobile · 2"). */}
+            <ReceiptShare bill={stage.bill} phone={stage.client.phone || null} />
+            <button type="button" className="sheet-item wi-finish wi-finish-quiet" onClick={onClose}>
               {nv.done}
             </button>
           </div>
@@ -2549,7 +3662,7 @@ export function NewVisitSheet({
                     because "now" is the whole of its answer.
                   */}
                   {later
-                    ? `${formatDateWithWeekday(stage.result.startAt, timezone, { withYear: false, locale })} · ${formatTime(stage.result.startAt, timezone)} · `
+                    ? `${formatDateWithWeekday(stage.result.startAt, timezone, { withYear: false, locale })} · ${clockTime(stage.result.startAt)} · `
                     : ''}
                   {everythingNamed} ·{' '}
                   {providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? providerNoun}
@@ -2592,7 +3705,12 @@ export function NewVisitSheet({
                 </button>
               </>
             )}
-            <button type="button" className="sheet-item wi-finish" onClick={onClose}>
+            {/*
+              Owner, 2026-10-07 — and the booking itself, to send: the day and time are what the client has to
+              remember, and until now they were read out at the counter and nowhere else.
+            */}
+            {stage.confirm ? <ReceiptShare bill={stage.confirm} phone={stage.client.phone || null} kind="confirm" /> : null}
+            <button type="button" className={`sheet-item wi-finish ${stage.confirm ? 'wi-finish-quiet' : ''}`} onClick={onClose}>
               {nv.done}
             </button>
           </div>

@@ -105,6 +105,7 @@ import type {
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 import type { AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
+import { downscaleImage } from './downscale';
 import type {
   ClientProfile,
   ReportBookings,
@@ -342,10 +343,25 @@ const patch = <T>(path: string, body: unknown) => send<T>('PATCH', path, body);
 const put = <T>(path: string, body: unknown) => send<T>('PUT', path, body);
 const del = <T>(path: string) => send<T>('DELETE', path);
 
-/** Multipart upload — deliberately not routed through send(), the browser needs to set its own boundary'd Content-Type, not JSON. */
+/**
+ * Multipart upload — deliberately not routed through send(), the browser needs to set its own boundary'd Content-Type, not JSON.
+ *
+ * Jira GRW-558 — every picture is made small HERE, at the one place uploads go
+ * through, rather than at each screen that has a photo control. A 4 MB
+ * camera-roll photo leaves at around 120 KB, which on a salon's connection is
+ * the difference between an instant save and a progress bar. `downscaleImage`
+ * fails open on anything unexpected, so the server's cap and byte-sniff stay
+ * the real limits and this can never be the reason an upload is refused.
+ */
 async function uploadFile<T>(path: string, field: string, file: File): Promise<T> {
   const form = new FormData();
-  form.append(field, file);
+  // Only pictures. This helper also carries the service-sheet import, and a CSV went through
+  // `downscaleImage` to be rescued by its own try/catch — working by accident, which is not the
+  // same as working. A spreadsheet has no business being handed to `createImageBitmap`.
+  // An empty `type` still goes through: a browser that cannot name the file may still be
+  // holding a photo, and `downscaleImage` fails open on anything it cannot decode.
+  const isPicture = file.type === '' || file.type.startsWith('image/');
+  form.append(field, isPicture ? await downscaleImage(file) : file);
   // No Content-Type of our own — the browser must set its own boundary'd one.
   const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form, headers: await authHeaders() });
   if (!res.ok) throw await apiError(res, path);
@@ -933,6 +949,23 @@ export const api = {
     }>('/api/v1/bookings', input),
   uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
   removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),
+
+  /**
+   * Jira GRW-559 — a photo of somebody who works here.
+   *
+   * Goes through `uploadFile`, so the browser downscales before the wire
+   * exactly as it does for a service photo.
+   *
+   * Only the stylist's photo, set from the staff screen. The signed-in
+   * person's OWN photo (`/me/photo`) was built and then dropped: the role
+   * allowlist for it lives in @growza-app/shared, growza-web pins a published
+   * version, and it is not worth a package release on its own. The schema
+   * column for it stays (migration 0104) so it costs nothing to finish later.
+   */
+  uploadProviderPhoto: (id: string, file: File) =>
+    uploadFile<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`, 'photo', file),
+  removeProviderPhoto: (id: string) => del<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`),
+
 };
 
 export function formatMoney(minor: string | null, currency = 'INR'): string {

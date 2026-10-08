@@ -20,6 +20,15 @@ describe('the clay app stylesheet', () => {
     expect(imports[imports.length - 2]).toBe("@import './styles/100-clay-tabs.css';");
   });
 
+  /** Owner, 2026-10-07 — the people are pieces of clay too: raised, green when chosen, pressed under a thumb. */
+  it('gives the stylist row the same three moves as everything else', () => {
+    expect(css).toMatch(/\.wi-stylist-chips \.wi-chip \{\s*box-shadow: var\(--clay-raise-soft\);/);
+    expect(css).toMatch(/\.wi-stylist-chips \.wi-chip-on \{[^}]*box-shadow: var\(--clay-green\);/);
+    expect(css).toMatch(/\.wi-stylist-chips \.wi-chip:active:not\(:disabled\) \{\s*box-shadow: var\(--clay-press\);/);
+    // The one state that must not look pressable.
+    expect(css).toMatch(/\.wi-stylist-chips \.wi-chip:disabled \{\s*box-shadow: none;\s*\}/);
+  });
+
   it('sets shadow, radius and the primary gradient — and no colour, size or layout', () => {
     const decls = [...css.matchAll(/^\s+([a-z-]+):/gm)].map((m) => m[1] ?? '');
     const allowed = new Set(['--radius', '--radius-sm', '--clay-raise', '--clay-raise-soft', '--clay-press', '--clay-green', 'box-shadow', 'background-image']);

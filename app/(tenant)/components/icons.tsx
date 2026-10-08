@@ -176,6 +176,33 @@ export const IconPlus = () => (
   </svg>
 );
 
+/** IconPlus without its upright: the "one fewer" half of a quantity counter. */
+export const IconMinus = () => (
+  <svg {...base}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+/** Feather `share-2` — hand the bill to any app on the phone. */
+export const IconShare = () => (
+  <svg {...base}>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+  </svg>
+);
+
+/** Feather `printer` — print the bill, or save it as a PDF from the print dialog. */
+export const IconPrint = () => (
+  <svg {...base}>
+    <polyline points="6 9 6 2 18 2 18 9" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <rect x="6" y="14" width="12" height="8" />
+  </svg>
+);
+
 export const IconClock = () => (
   <svg {...base}>
     <circle cx="12" cy="12" r="10" />
@@ -573,5 +600,35 @@ export const IconScissors = () => (
     <line x1="20" y1="4" x2="8.12" y2="15.88" />
     <line x1="14.47" y1="14.48" x2="20" y2="20" />
     <line x1="8.12" y1="8.12" x2="12" y2="12" />
+  </svg>
+);
+
+/* ---------- how they paid: the four tiles on Record payment, drawn to the design's mock ---------- */
+
+export const IconPayCash = () => (
+  <svg {...base}>
+    <rect x="2" y="6" width="20" height="12" rx="2.5" />
+    <circle cx="12" cy="12" r="2.8" />
+  </svg>
+);
+
+export const IconPayCard = () => (
+  <svg {...base}>
+    <rect x="2" y="5" width="20" height="14" rx="3" />
+    <path d="M2 10h20" />
+  </svg>
+);
+
+export const IconPayUpi = () => (
+  <svg {...base}>
+    <rect x="6" y="2" width="12" height="20" rx="3" />
+    <path d="M10.5 18.5h3" />
+    <path d="M9 9.5l3-2.5 3 2.5" />
+  </svg>
+);
+
+export const IconPayOther = () => (
+  <svg {...base}>
+    <path d="M5 12h.01M12 12h.01M19 12h.01" />
   </svg>
 );

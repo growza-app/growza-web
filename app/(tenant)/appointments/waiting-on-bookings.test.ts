@@ -104,12 +104,14 @@ describe('the people waiting, on Bookings', () => {
       expect(block).toMatch(/minutesBetween\(g\.startAt, now\)/);
     });
 
-    it('record payment is handed up, so one overlay is on screen at a time', () => {
-      // The give sheet does not open the till inside itself: it asks its parent to swap them.
+    it('record payment is handed up, and opens the Record payment page with the token', () => {
+      // The give sheet does not open the till inside itself: it asks its parent, which closes it and leaves.
       expect(give).toMatch(/onRecordPayment\?: \(\) => void;/);
       expect(give).not.toMatch(/NewVisitSheet|VisitTill/);
-      expect(list).toMatch(/setPayingToken\(giving\);/);
-      expect(list).toMatch(/<NewVisitSheet mode="now" purpose="payment" token=\{payingToken\}/);
+      expect(list).toMatch(/setGiving\(null\);\s*payToken\(giving\);/);
+      expect(list).toMatch(/router\.push\(payTokenHref\(entry, 'bookings'\)\)/);
+      // Owner, 2026-10-07 — not the old overlay: one Record payment form, wherever it is opened from.
+      expect(list).not.toMatch(/<NewVisitSheet/);
     });
 
     it('they left is already in that sheet — this adds no second way to drop a token', () => {
@@ -126,7 +128,7 @@ describe('the people waiting, on Bookings', () => {
     });
 
     it('a desk that may only take money skips the stylist list', () => {
-      expect(list).toMatch(/onClick=\{\(\) => \(mayGive \? setGiving\(w\) : setPayingToken\(w\)\)\}/);
+      expect(list).toMatch(/onClick=\{\(\) => \(mayGive \? setGiving\(w\) : payToken\(w\)\)\}/);
     });
   });
 

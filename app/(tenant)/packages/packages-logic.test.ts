@@ -156,7 +156,7 @@ describe('the three ways to price a package', () => {
 describe('finding a package', () => {
   const all = [
     offer({ id: 'o1', title: 'Bridal Complete', serviceIds: ['s1', 's2', 's3'] }),
-    offer({ id: 'o2', title: "Groom's Day", description: 'For the groom', serviceIds: ['s2'] }),
+    offer({ id: 'o2', title: "Groom's Day", description: 'For the groom', serviceIds: ['s2'], comboPriceMinor: '120000' }),
   ];
 
   it('an empty search is every package', () => {
@@ -178,6 +178,23 @@ describe('finding a package', () => {
 
   it('a search that matches nothing returns nothing, not everything', () => {
     expect(searchPackages(all, byId, 'zzzz')).toEqual([]);
+  });
+
+  /**
+   * Owner, 2026-10-07 — "include packages amount as well". Bridal Complete sells for ₹15,000 and its
+   * services come to ₹17,300 bought one by one.
+   */
+  it('finds one by what it sells for', () => {
+    expect(searchPackages(all, byId, '15000').map((p) => p.id)).toEqual(['o1']);
+    expect(searchPackages(all, byId, '₹15,000').map((p) => p.id)).toEqual(['o1']);
+  });
+
+  it('never by the separate total, which is a number nobody is charged', () => {
+    expect(searchPackages(all, byId, '17300')).toEqual([]);
+  });
+
+  it('exactly: a price that merely contains the digits is not a match', () => {
+    expect(searchPackages(all, byId, '1500')).toEqual([]);
   });
 });
 

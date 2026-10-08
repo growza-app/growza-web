@@ -339,8 +339,10 @@
 .bk-client-banner strong { font-weight: 700; }
 
 /* On a phone this sits above a fit-to-screen list, so it earns one line and
-   no more — two wrapped lines cost a booking card's worth of height. */
-@media (max-width: 859px) {
+   no more — two wrapped lines cost a booking card's worth of height.
+   860px, the app's own mobile breakpoint: at 859 a 860px-wide screen got the
+   phone's fit-to-screen list with this banner still at its desktop height. */
+@media (max-width: 860px) {
   .bk-client-banner {
     flex-wrap: nowrap;
     gap: var(--sp-2);

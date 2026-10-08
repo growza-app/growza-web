@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { editDistance, matchAll, matchItems, soundKey, soundKeyKeepingLead, soundsLike, type Matchable } from './service-match';
 
@@ -267,5 +268,91 @@ describe('nonsense finds nothing', () => {
     expect(find('phacial')).toContain('Facial');
     expect(find('menicure')).toContain('Manicure');
     expect(find('hiarcut')).toContain('Haircut');
+  });
+});
+
+/**
+ * Owner, 2026-10-07: "he wants to search services from price amount also like 300, it should show all
+ * services with that price — not the discount amount, actual amount."
+ */
+describe('a number is a price', () => {
+  const priced = [
+    { item: 'Haircut', text: ['Haircut'], priceMinor: 30000 },
+    { item: 'Threading', text: ['Threading'], priceMinor: 30000 },
+    { item: 'Keratin 300ml', text: ['Keratin 300ml'], priceMinor: 250000 },
+    { item: 'Bridal Makeup', text: ['Bridal Makeup'], priceMinor: 130000 },
+    { item: 'Head Massage', text: ['Head Massage'], priceMinor: null },
+  ];
+  const find = (q: string) => matchItems(priced, q);
+
+  it('finds everything at that price', () => {
+    expect(find('300')).toEqual(expect.arrayContaining(['Haircut', 'Threading']));
+  });
+
+  it('₹, rupees and thousands separators are the same question', () => {
+    for (const q of ['₹300', 'rs 300', 'Rs. 300', '300.00']) expect(find(q).slice(0, 2).sort()).toEqual(['Haircut', 'Threading']);
+    expect(find('1,300')).toEqual(['Bridal Makeup']);
+  });
+
+  it('exactly, never as a substring: ₹1,300 is not an answer to 300', () => {
+    expect(find('300')).not.toContain('Bridal Makeup');
+    expect(find('30')).not.toContain('Haircut');
+  });
+
+  it('a name with the number in it still matches — under the prices, not instead of them', () => {
+    const hits = find('300');
+    expect(hits).toContain('Keratin 300ml');
+    expect(hits.indexOf('Keratin 300ml')).toBeGreaterThan(hits.indexOf('Haircut'));
+  });
+
+  it('a service with no price set is never an answer to a number', () => {
+    expect(find('0')).not.toContain('Head Massage');
+    expect(find('300')).not.toContain('Head Massage');
+  });
+
+  it('a number inside a name is not a price search', () => {
+    expect(find('300ml')).toEqual(['Keratin 300ml']);
+  });
+
+  it('names still work, and nonsense still finds nothing', () => {
+    expect(find('haircat')).toContain('Haircut');
+    expect(find('999')).toEqual([]);
+  });
+});
+
+/**
+ * The price is only searchable if every screen hands it over, and a search box added later will not know to.
+ * This is the "flag that does nothing" guard: a matcher that can rank by price, and nobody passing one.
+ */
+describe('every search box offers the price to match on', () => {
+  const read = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8');
+  const BOXES: Array<[string, number]> = [
+    ['../components/NewVisitSheet.tsx', 2],
+    ['../services/ServicesTable.tsx', 1],
+    ['../packages/PackageBuilder.tsx', 1],
+  ];
+
+  it('passes a price at every matchItems call', () => {
+    for (const [file, calls] of BOXES) {
+      const src = read(file);
+      expect(src.match(/matchItems\(/g) ?? []).toHaveLength(calls);
+      expect(src.match(/priceMinor: asMinor\(/g) ?? []).toHaveLength(calls);
+    }
+  });
+
+  it('the walk-in sheet offers the package price for a package, and the service price for a service', () => {
+    const src = read('../components/NewVisitSheet.tsx');
+    expect(src).toContain('priceMinor: asMinor(o.comboPriceMinor)');
+    expect(src).toContain('priceMinor: asMinor(s.priceMinor)');
+  });
+
+  it('the packages list has its own search, and matches what a package sells for', () => {
+    const src = read('../packages/packages-logic.ts');
+    expect(src).toMatch(/asked !== null && asMinor\(p\.comboPriceMinor\) === asked/);
+    expect(src).not.toMatch(/partsTotalMinor\([^)]*\) === asked/);
+  });
+
+  it('a price is never sent to the meaning search', () => {
+    expect(read('./service-suggest.ts')).toMatch(/if \(priceAsked\(term\) !== null\) return false;/);
   });
 });

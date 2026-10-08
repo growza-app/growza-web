@@ -12,6 +12,7 @@
   margin-top: 9px;
 }
 
+/* An `<h2>` now, so its own browser margins and size have to be taken off. */
 .settings-group-title {
   font-size: 0.75rem;
   font-weight: 650;
@@ -30,8 +31,40 @@
   color: var(--text);
 }
 
-.settings-row + .settings-row {
+/*
+ * The rows are an `<ul>` now (design review, 2026-10-07), so the divider is between the ITEMS. `.settings-row
+ * + .settings-row` matched nothing once each row gained an `<li>` of its own, and every rule was gone.
+ */
+.settings-group .menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-group .menu-list li + li .settings-row {
   border-top: 1px solid var(--border);
+}
+
+/*
+ * The row you are looking at. Only ever visible beside the screen it opened — on a phone this list is a
+ * screen of its own and you have left it — but it is what the desktop pane was missing: eleven identical
+ * rows, with nothing saying which one is open.
+ *
+ * A fill AND the label's weight, never the fill alone: "convey information with more than color alone"
+ * (HIG, Accessibility). `aria-current="page"` on the anchor carries it for a screen reader.
+ */
+.settings-row-current,
+.settings-row-current:hover {
+  background: var(--accent-soft);
+}
+
+.settings-row-current .settings-row-title {
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+.settings-row-current .settings-row-chev {
+  color: var(--accent-deep);
 }
 
 .settings-row:hover {

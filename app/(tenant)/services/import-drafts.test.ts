@@ -76,11 +76,18 @@ describe('toImportItems', () => {
     expect(toImportItems([draft()])[0]).toEqual({
       mode: 'create',
       name: 'Hair Spa',
+      // Jira GRW-560 — null for a row typed or read from a spreadsheet; the API matches on the name there.
+      catalogKey: null,
       categoryName: 'Hair',
       durationMin: 40,
       bufferAfterMin: 0,
       priceMinor: 70000,
     });
+  });
+
+  /** A row that came from the ready-made catalogue carries its concept to the API (rung 1). */
+  it('passes the catalogue key along when the row came from the catalogue', () => {
+    expect(toImportItems([draft({ catalogKey: 'hair-spa' })])[0]).toMatchObject({ catalogKey: 'hair-spa' });
   });
 
   it('re-prices rather than duplicating a name already in the catalogue', () => {

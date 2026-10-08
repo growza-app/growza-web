@@ -256,7 +256,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     busyWith: (client: string, min: number) => S(`Busy · ${client} · ${min} min`, `व्यस्त · ${client} · ${min} मिनट`),
     theyLeft: S('They left', 'चले गए'),
     // Jira GRW-284 — a token issued by name alone.
-    whatHaving: S('What are they having?', 'क्या करवा रहे हैं?'),
+    whatHaving: S('Select services', 'सेवा चुनें'),
     // The give sheet's second step (Jira-less, owner 2026-10-05): back to the stylists, the two groups, and the one button.
     changeStylist: S('Change stylist', 'स्टाइलिस्ट बदलें'),
     packagesLabel: S('Packages', 'पैकेज'),

@@ -22,6 +22,8 @@
  * answer for "fac" cannot overwrite the results for "facial".
  */
 
+import { priceAsked } from './service-match';
+
 export interface SuggestionHit {
   serviceId: string;
   score: number;
@@ -73,8 +75,16 @@ export function normaliseTerm(term: string): string {
   return term.trim().toLowerCase();
 }
 
-/** True when this term is long enough to be worth a request. */
+/**
+ * True when this term is long enough to be worth a request — and is words rather than a price.
+ *
+ * A price search ("1200", owner 2026-10-07) is answered exactly, in the browser, from a number the screen
+ * already holds. Asking a meaning model what 1200 means is a round trip for an answer that cannot be right:
+ * nearest-neighbour always returns neighbours, so it would hand back five services that merely have digits
+ * near them in the embedding space and offer them as "also try".
+ */
 export function shouldAskServer(term: string): boolean {
+  if (priceAsked(term) !== null) return false;
   return normaliseTerm(term).length >= SUGGEST_MIN_CHARS;
 }
 

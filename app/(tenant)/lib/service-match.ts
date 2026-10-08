@@ -25,7 +25,21 @@
 export interface Matchable<T> {
   item: T;
   text: string[];
+  /**
+   * What it costs, in minor units, so a typed number can find it by price (owner, 2026-10-07).
+   *
+   * The price it is SOLD at and nothing else: a service's own price, a package's package price. Never a
+   * discounted or already-charged amount — the owner asked for the actual price, and a search that answers
+   * 300 with something that is not ₹300 is worse than a search that answers nothing.
+   *
+   * Absent means this kind of thing has no price to search; `null` means this one has none set.
+   */
+  priceMinor?: number | null;
 }
+
+/** A stored price as a number, keeping "no price" apart from zero — `Number(null)` and `Number('')` are both 0. */
+export const asMinor = (v: string | number | null | undefined): number | null =>
+  v === null || v === undefined || v === '' ? null : Number(v);
 
 const norm = (s: string): string =>
   s
@@ -165,12 +179,47 @@ export interface MatchResult<T> {
 }
 
 /**
+ * A typed number read as a price, in minor units — or null when it is not just a number.
+ *
+ * `₹300`, `rs 300`, `1,200` and `300.50` are all somebody asking what costs that. Anything with a letter in
+ * it is a name, so "300ml" is not a price and goes down the ordinary path.
+ */
+export function priceAsked(query: string): number | null {
+  const m = /^(?:₹|rs\.?|inr)?\s*([0-9][0-9,]*)(?:\.([0-9]{1,2}))?$/i.exec(query.trim());
+  if (!m) return null;
+  const rupees = Number(m[1]!.replace(/,/g, ''));
+  if (!Number.isFinite(rupees)) return null;
+  return rupees * 100 + (m[2] ? Number(m[2].padEnd(2, '0')) : 0);
+}
+
+/**
+ * Above anything a name can score, so "300" lists the ₹300 services first and "Keratin 300ml" under them.
+ * A name tops out near 115 (an exact word, plus the whole-phrase bonus).
+ */
+const PRICE_SCORE = 1000;
+
+/**
  * Ranks `candidates` against what was typed: real matches only, best first.
  *
  * An empty query returns everything at score 0 in the given order, so a caller
  * can use one code path for browsing and for searching.
+ *
+ * A number is matched BOTH ways (owner, 2026-10-07): exactly against the price, which ranks first, and as
+ * text, so a service with a number in its name is not lost. Exactly, never as a substring — ₹1,300 is not an
+ * answer to "300", and a front desk that has to read prices to check the list has gained nothing.
  */
 export function matchAll<T>(candidates: ReadonlyArray<Matchable<T>>, query: string): Array<MatchResult<T>> {
+  const asked = priceAsked(query);
+  if (asked === null) return byText(candidates, query);
+
+  const scores = new Map<T, number>();
+  for (const r of byText(candidates, query)) scores.set(r.item, r.score);
+  for (const c of candidates) if (c.priceMinor != null && c.priceMinor === asked) scores.set(c.item, PRICE_SCORE);
+  return [...scores].map(([item, score]) => ({ item, score })).sort((a, b) => b.score - a.score);
+}
+
+/** The spelling match: everything above except the price, and what `matchAll` meant before prices. */
+function byText<T>(candidates: ReadonlyArray<Matchable<T>>, query: string): Array<MatchResult<T>> {
   const qs = words(query);
   if (qs.length === 0) return candidates.map(({ item }) => ({ item, score: 0 }));
 

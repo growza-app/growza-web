@@ -13,8 +13,10 @@ export default async function BookingSettingsPage({ searchParams }: { searchPara
   if (!settings) return <LoadErrorBanner kind={loadError ?? 'down'} />;
   return (
     <>
-      <BranchScopeNote key={`note:${scopeKey(settings)}`} settings={settings} branchName={branchName} keys={BOOKING_RULE_KEYS} topic="bookingRules" />
       <BookingRulesForm key={scopeKey(settings)} initial={settings} branchName={branchName} />
+      {/* Below the settings, not above them (design review, 2026-10-07): the rules are what
+          this screen is for, and whether to push them to every branch is decided after reading them. */}
+      <BranchScopeNote key={`note:${scopeKey(settings)}`} settings={settings} branchName={branchName} keys={BOOKING_RULE_KEYS} topic="bookingRules" />
     </>
   );
 }

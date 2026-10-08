@@ -83,6 +83,8 @@ export function deriveCategories(services: WorkingService[], order: string[], pc
 export interface EditRow {
   key: string;
   name: string;
+  /** Jira GRW-560 — carried through the editor untouched; editing a price does not change what a service IS. */
+  catalogKey: string | null;
   /** Only editable in the flat editor; in a category editor it is that category. */
   category: string;
   minutes: string;
@@ -102,6 +104,8 @@ export function blankRow(id: number, category: string): EditRow {
   return {
     key: `new-${id}`,
     name: '',
+    // A row the owner is typing from scratch: the API matches its name once it is saved.
+    catalogKey: null,
     category,
     minutes: '30',
     price: '',
@@ -117,6 +121,7 @@ export function toEditRow(s: WorkingService, key: string, pct: number): EditRow 
   return {
     key,
     name: s.name,
+    catalogKey: s.catalogKey,
     category: s.category ?? '',
     minutes: String(s.durationMin),
     price: rupees(effectivePrice(s, pct)),
@@ -142,6 +147,7 @@ export function fromEditRow(
 ): WorkingService {
   return {
     name: r.name.trim(),
+    catalogKey: r.catalogKey,
     category,
     durationMin: Number(r.minutes),
     bufferAfterMin: r.bufferAfterMin,

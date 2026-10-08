@@ -23,8 +23,10 @@ export default async function NotificationsSettingsPage({ searchParams }: { sear
   if (!settings) return <LoadErrorBanner kind={loadError ?? 'down'} />;
   return (
     <>
-      <BranchScopeNote key={`note:${scopeKey(settings)}`} settings={settings} branchName={branchName} keys={REMINDER_KEYS} topic="reminders" />
       <RemindersForm key={scopeKey(settings)} initial={settings} branchName={branchName} whatsappLive={me?.whatsapp?.booking ?? false} />
+      {/* Below the settings, not above them (design review, 2026-10-07): the rules are what
+          this screen is for, and whether to push them to every branch is decided after reading them. */}
+      <BranchScopeNote key={`note:${scopeKey(settings)}`} settings={settings} branchName={branchName} keys={REMINDER_KEYS} topic="reminders" />
     </>
   );
 }

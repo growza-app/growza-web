@@ -45,7 +45,7 @@ export interface Me {
    * billing date. Null for every other role, and when nothing is asked.
    */
   autopayRenewal?: AutopayRenewal | null;
-  /** Jira GRW-556 (follow-up) — a payment the provider recorded in the last three days; Home says it arrived. Owner only. */
+  /** Jira GRW-556 (follow-up) — a payment the provider recorded in the last two hours; Home says it arrived. Owner only. */
   paymentReceived?: { amountMinor: number; currency: string; paidOn: string } | null;
   labels: Record<string, string>;
   /**
@@ -133,7 +133,13 @@ export interface Service {
   bufferAfterMin: number;
   priceMinor: string | null;
   currency: string;
-  /** Null until a real photo is uploaded — see servicePhotoUrl() for the local-placeholder fallback. */
+  /**
+   * Jira GRW-560 — which pack concept this service is, decided by the API at write
+   * time and kept through a rename. The dashboard turns it into a picture only when
+   * the pack has that one; see `servicePhotoUrl`.
+   */
+  catalogKey?: string | null;
+  /** Null until a real photo is uploaded — see servicePhotoUrl() for the pack and placeholder fallback. */
   imageUrl: string | null;
   /** Jira GRW-378 · GRW-379 — the one branch this service is sold at. */
   locationId: string;
@@ -173,6 +179,8 @@ export interface ServiceCategoryAdmin extends ServiceCategory {
 /** The ready-made catalogue for the tenant's pinned vertical (boards 3a/3b). */
 export interface SeedCatalogService {
   name: string;
+  /** Jira GRW-560 — travels with the pick, so the row it creates is keyed exactly rather than matched by name. */
+  catalogKey: string | null;
   category: string | null;
   durationMin: number;
   bufferAfterMin: number;
@@ -199,6 +207,8 @@ export interface ServiceImportItem {
   mode: 'create' | 'updatePrice';
   existingId?: string;
   name: string;
+  /** Jira GRW-560 — only the ready-made catalogue knows this; a spreadsheet has none and the API matches on the name. */
+  catalogKey?: string | null;
   categoryName?: string | null;
   durationMin: number;
   bufferAfterMin?: number;
@@ -218,6 +228,13 @@ export interface ServiceInput {
 export interface Provider {
   id: string;
   displayName: string;
+  /**
+   * Jira GRW-559 — their photo, or null/absent for the lettered tile.
+   *
+   * Optional, unlike the staff screen's copy: the booking sheet and Record payment read this
+   * all day and the API can be a deploy behind the dashboard. An absent field draws initials.
+   */
+  photoUrl?: string | null;
   /** Jira GRW-235 — which branch they work at (the booking sheet narrows by it). */
   locationId?: string;
   title: string | null;
@@ -227,6 +244,8 @@ export interface Provider {
 export interface ProviderOverviewRow {
   id: string;
   displayName: string;
+  /** Jira GRW-559 — this person's photo, already a URL by the time it leaves the API. Null draws their initials. */
+  photoUrl: string | null;
   /** Jira GRW-234 — the branch this person works at. `branchLabel` is set by the Staff screen only for a multi-branch business. */
   locationId?: string;
   locationName?: string;
@@ -253,6 +272,8 @@ export interface ProvidersOverview {
   topPerformer: { id: string; displayName: string; bookingsCount: number } | null;
   /** Jira GRW-395 — each branch's own top performer, by branch id; a branch with no bookings is absent. */
   topByBranch?: Record<string, { id: string; displayName: string; bookingsCount: number }>;
+  /** Jira GRW-557 — each open branch's places for people (its own number, else the plan's). Absent from an older API. */
+  placesByBranch?: Record<string, number>;
 }
 
 export interface ProviderWorkingHourRow {
@@ -264,6 +285,8 @@ export interface ProviderWorkingHourRow {
 export interface ProviderDetail {
   id: string;
   displayName: string;
+  /** Jira GRW-559 — this person's photo, already a URL by the time it leaves the API. Null draws their initials. */
+  photoUrl: string | null;
   /** Jira GRW-234 — the branch this person works at. */
   locationId?: string;
   locationName?: string;
@@ -593,6 +616,14 @@ export interface Capacity {
 export interface AttendanceRow {
   providerId: string;
   displayName: string;
+  /**
+   * Jira GRW-559 — their photo, or null for the lettered tile.
+   *
+   * OPTIONAL on purpose, unlike the staff screen's copy. These two shapes are read by
+   * screens the desk uses all day, and the API may be a deploy behind the dashboard —
+   * an absent field has to draw initials, not crash a till.
+   */
+  photoUrl?: string | null;
   title: string | null;
   onDate: string;
   status: 'present' | 'late' | 'half_day' | 'absent' | 'leave' | null;

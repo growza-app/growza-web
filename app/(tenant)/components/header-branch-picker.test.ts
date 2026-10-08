@@ -106,9 +106,13 @@ describe('every screen follows the one choice', () => {
     expect(src('../availability/page.tsx')).toMatch(/<input type="hidden" name="branch" value=\{branch\} \/>/);
   });
 
-  it("Staff narrows its list in the browser, and counts the plan's seats across the whole business", () => {
+  it("Staff narrows its list in the browser, and counts each branch's own places (Jira GRW-557)", () => {
     const staff = src('../providers/StaffClient.tsx');
-    expect(staff).toMatch(/const seatsLeft = Math\.max\(0, maxProviders - everyone\.filter\(\(p\) => p\.active\)\.length\);/);
+    // On a branch: its number against its own people. On "All": every branch's room added up.
+    expect(staff).toMatch(/Math\.max\(0, \(places\[branchId\] \?\? maxProviders\) - activeAt\(branchId\)\)/);
+    expect(staff).toMatch(/Object\.entries\(places\)\.reduce\(\(sum, \[branch, limit\]\) => sum \+ Math\.max\(0, limit - activeAt\(branch\)\), 0\)/);
+    // An API without the per-branch numbers keeps the old business-wide count rather than showing nothing.
+    expect(staff).toMatch(/Math\.max\(0, maxProviders - everyone\.filter\(\(p\) => p\.active\)\.length\)/);
     expect(staff).toMatch(/everyone\.filter\(\(p\) => p\.locationId === branchId\)/);
     // A new person is asked for a branch only on "All"; otherwise they join the header's.
     expect(src('../providers/StaffWizard.tsx')).toMatch(/branches\.length > 1 && branchContext\.choice === null \?/);

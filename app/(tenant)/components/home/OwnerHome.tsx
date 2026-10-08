@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   api,
@@ -39,7 +40,6 @@ import {
   IconStaff,
   IconWallet,
 } from '../icons';
-import { NewVisitSheet } from '../NewVisitSheet';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
@@ -203,7 +203,9 @@ export function OwnerHome(p: OwnerHomeProps) {
    * overlay onto its own page (`/appointments/new`); Record payment is
    * unchanged and still opens here.
    */
-  const [visitSheet, setVisitSheet] = useState<'payment' | null>(null);
+  // Owner, 2026-10-07 — Record payment is a page of its own (`?purpose=payment`) at every width; the overlay it
+  // replaced on a laptop still drew the old form.
+  const router = useRouter();
   // Jira GRW-409 — the shared rule, not `role !== 'staff'`: each button is drawn for a role that may make its calls.
   // Jira GRW-556 (follow-up) — and the business being allowed to write: a suspended one sees Home but starts nothing.
   const writable = useWritable();
@@ -518,7 +520,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                  overlay, unchanged. */
               <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
                 {mayRecordPayment ? (
-                  <button type="button" className="hm-action" onClick={() => setVisitSheet('payment')}>
+                  <button type="button" className="hm-action" onClick={() => router.push('/appointments/new?purpose=payment')}>
                     <IconReceipt />
                     <strong>{t.recordPayment}</strong>
                   </button>
@@ -645,7 +647,6 @@ export function OwnerHome(p: OwnerHomeProps) {
           onClose={() => setSummaryOpen(false)}
         />
       ) : null}
-      {visitSheet ? <NewVisitSheet purpose={visitSheet} timezone={p.timezone} onClose={() => setVisitSheet(null)} /> : null}
     </>
   );
 }

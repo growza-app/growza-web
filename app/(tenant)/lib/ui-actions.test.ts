@@ -220,6 +220,10 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'PATCH /api/v1/providers/:id/working-hours',
     'PATCH /api/v1/providers/:id/services',
     'PATCH /api/v1/providers/:id/availability-today',
+    // Jira GRW-559 — a stylist's photo, from the staff edit screen. Same screen, same gate as
+    // the rest of their record; the API narrows it further to owner/manager or the person themself.
+    'POST /api/v1/providers/:id/photo',
+    'DELETE /api/v1/providers/:id/photo',
   ],
   '/settings': [
     'POST /api/v1/billing/autopay',

@@ -15,7 +15,8 @@ import { useMayUse } from '../components/SessionProvider';
 import { GiveToStaffSheet } from '../components/home/GiveToStaffSheet';
 import { SHOW_STEP } from '../components/home/use-visible-rows';
 import { usePhoneLayout } from '../components/home/use-phone-layout';
-import { NewVisitSheet } from '../components/NewVisitSheet';
+import { useRouter } from 'next/navigation';
+import { payTokenHref } from '../lib/pay-token';
 import { homeCopy } from '../lib/home-copy';
 import { atBranch, wholeMinutes } from '../lib/right-now';
 import {
@@ -207,7 +208,9 @@ export function BookingsList({
   // On a phone the waiting list draws ten rows and "Show more" adds ten at a time; a laptop draws them all.
   const phone = usePhoneLayout();
   const [waitingShown, setWaitingShown] = useState(SHOW_STEP);
-  const [payingToken, setPayingToken] = useState<QueueEntry | null>(null);
+  // Owner, 2026-10-07 — paying a waiting token opens the Record payment page, not an overlay of the old form.
+  const router = useRouter();
+  const payToken = (entry: QueueEntry) => router.push(payTokenHref(entry, 'bookings'));
   // Mobile-only (GRW-46): both filter the day's already-loaded bookings
   // client-side, independent of the date form's own GET navigation — see
   // GRW-10's BR-01 on why that form stays a full-page submit.
@@ -907,7 +910,7 @@ export function BookingsList({
                     type="button"
                     className="bk-waiting-row"
                     aria-label={mayGive ? hc.giveTitle(w.customerName) : `${hc.recordPayment} · ${w.customerName}`}
-                    onClick={() => (mayGive ? setGiving(w) : setPayingToken(w))}
+                    onClick={() => (mayGive ? setGiving(w) : payToken(w))}
                   >
                     {waitingRow(w)}
                   </button>
@@ -1088,15 +1091,12 @@ export function BookingsList({
           onRecordPayment={
             mayRecordPayment
               ? () => {
-                  setPayingToken(giving);
                   setGiving(null);
+                  payToken(giving);
                 }
               : undefined
           }
         />
-      ) : null}
-      {payingToken ? (
-        <NewVisitSheet mode="now" purpose="payment" token={payingToken} timezone={timezone} onClose={() => setPayingToken(null)} />
       ) : null}
     </>
   );

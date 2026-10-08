@@ -28,6 +28,7 @@ export function SettingsSaveBar({
   saveLabel,
   savingLabel,
   savedLabel,
+  pinned = true,
 }: {
   busy: boolean;
   saved: boolean;
@@ -35,9 +36,17 @@ export function SettingsSaveBar({
   saveLabel: string;
   savingLabel: string;
   savedLabel: string;
+  /**
+   * Whether this bar sticks to the bottom of a phone's screen (design review, 2026-10-07).
+   *
+   * True for a screen with ONE thing to save, which is nearly all of them. False where a screen holds two
+   * forms that save apart — Working hours keeps the salon's hours and the attendance grace period — because
+   * two bars stuck to the same edge would cover each other, and neither would say which half it kept.
+   */
+  pinned?: boolean;
 }) {
   return (
-    <div className="settings-savebar">
+    <div className={`settings-savebar ${pinned ? 'settings-savebar-pinned' : ''}`}>
       <button className="btn settings-savebar-btn" disabled={busy} onClick={onSave}>
         {busy ? savingLabel : saveLabel}
       </button>
