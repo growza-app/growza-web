@@ -949,6 +949,23 @@ export const api = {
     }>('/api/v1/bookings', input),
   uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
   removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),
+
+  /**
+   * Jira GRW-559 — a photo of somebody who works here.
+   *
+   * Goes through `uploadFile`, so the browser downscales before the wire
+   * exactly as it does for a service photo.
+   *
+   * Only the stylist's photo, set from the staff screen. The signed-in
+   * person's OWN photo (`/me/photo`) was built and then dropped: the role
+   * allowlist for it lives in @growza-app/shared, growza-web pins a published
+   * version, and it is not worth a package release on its own. The schema
+   * column for it stays (migration 0104) so it costs nothing to finish later.
+   */
+  uploadProviderPhoto: (id: string, file: File) =>
+    uploadFile<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`, 'photo', file),
+  removeProviderPhoto: (id: string) => del<{ photoUrl: string | null }>(`/api/v1/providers/${id}/photo`),
+
 };
 
 export function formatMoney(minor: string | null, currency = 'INR'): string {
