@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   api,
@@ -14,38 +14,27 @@ import {
   type Service,
 } from '../lib/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import {
-  IconCalendar,
-  IconClock,
-  IconDeviceDesktop,
-  IconDevicePhone,
-  IconLightbulb,
-  IconPackages,
-  IconReceipt,
-  IconUser,
-} from '../components/icons';
+import { IconCalendar, IconClock, IconUser } from '../components/icons';
+import { useDialog } from '../../shared/a11y/useDialog';
 import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
-import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
-import { extraSuggestions } from '../lib/service-suggest';
-import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { weekdayNames } from '../lib/weekday-names';
 import { clampPercentInput, percentOff, pricedMinor, type PriceMode } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
+import { ServicePickerSheet } from './ServicePickerSheet';
 
 /**
- * Build → Rules → Preview wizard for creating/editing a combo offer. One
- * component handles both create and edit (`initialOffer` present only for
- * edit) — the API payload shape is identical either way.
+ * Making or editing a package: ONE page, in the grouped-form language the service sheet already speaks
+ * (`98-service-sheet.css` — inset white groups, 44px rows, a footnote under the group it explains).
+ *
+ * It was a three-step wizard, and the steps were the problem (owner, 2026-10-08). Step 1 held four jobs — name,
+ * branch, every service, the price — while steps 2 and 3 held one small thing each, so a screen that had to fit a
+ * phone was being shrunk a label at a time while two near-empty screens sat behind it. What replaced it is what a
+ * Shopify or Stripe editor does: one scrolling page, create and edit the same screen, the long list moved into a
+ * sheet of its own (`ServicePickerSheet`), the scheduling collapsed into a row that says its own answer, and the
+ * preview a thing you open rather than a stage you pass. An editor is allowed to scroll; a list screen is not.
  */
-
-/** Each step is named in `packages.builder.steps`; `nav` is the label on the button that leads to the NEXT step. */
-const STEPS = [
-  { key: 1, name: 'build', hasNav: true },
-  { key: 2, name: 'rules', hasNav: true },
-  { key: 3, name: 'preview', hasNav: false },
-] as const;
 
 const TITLE_MAX = 60;
 const TAGLINE_MAX = 80;
@@ -74,7 +63,6 @@ function PreviewCard({
   savingsMinor,
   savingsPct,
   visibilitySummary,
-  showLiveIndicator,
 }: {
   title: string;
   services: Service[];
@@ -84,8 +72,6 @@ function PreviewCard({
   savingsMinor: number | null;
   savingsPct: number | null;
   visibilitySummary: string;
-  /** Only the Step 3 preview shows the 🟢/⚪ visible-right-now indicator — the sidebar preview stays neutral since it's always on screen, not something the admin is checking "right now" for. */
-  showLiveIndicator?: { isVisibleNow: boolean };
 }) {
   const t = useTranslations('packages.builder');
   const tm = useTranslations('services');
@@ -150,9 +136,6 @@ function PreviewCard({
             <span className="preview-fact-icon">
               <IconCalendar />
             </span>
-            {showLiveIndicator ? (
-              <span className={`pv-live-dot ${showLiveIndicator.isVisibleNow ? 'is-live' : ''}`} aria-hidden />
-            ) : null}
             {visibilitySummary}
           </div>
           {totalMin > 0 && (
@@ -170,6 +153,34 @@ function PreviewCard({
             {t('card.byAnyStaff')}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** The preview a phone opens, where a laptop has it beside the form the whole time. */
+function PreviewSheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  const t = useTranslations('packages.builder');
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useDialog(sheetRef, { onClose });
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div
+        className="modal sheet pv-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('sidebarPreview')}
+        ref={sheetRef}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sheet-head">
+          <span />
+          <span className="sheet-head-title">{t('sidebarPreview')}</span>
+          <button type="button" className="sheet-head-save" onClick={onClose}>
+            {t('picker.done')}
+          </button>
+        </div>
+        <div className="sheet-body pv-sheet-body">{children}</div>
       </div>
     </div>
   );
@@ -203,18 +214,25 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     [allServices, atBranch],
   );
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  // Publishing needs a real look at Preview first — the step tabs only let
-  // you jump BACK to an already-visited step (to edit something), never
-  // ahead, so there's no way to skip straight to Publish from Build.
-  const [maxStepReached, setMaxStepReached] = useState<1 | 2 | 3>(1);
-  // Pure display toggle for the preview card — same data either way, just
-  // how wide/framed it renders, matching the phone customers actually see
-  // this on vs. the dashboard the admin is looking at right now.
-  const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
+  /*
+   * The one way out of this page. Leaving by `router.push('/packages')` ADDED the list to the history a second time,
+   * so the list's own Back arrow stepped to the editor it had just left — the owner pressed Back on Packages and
+   * landed on Edit package (owner, 2026-10-08). Stepping back removes the editor from the history instead; a page
+   * opened straight from a link has nothing behind it, and goes to the list. Refreshed either way: what was just
+   * saved has to be what the list shows.
+   */
+  const leave = () => {
+    if (window.history.length > 1) router.back();
+    else router.push('/packages');
+    router.refresh();
+  };
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [title, setTitle] = useState(initialOffer?.title ?? '');
   const [description, setDescription] = useState(initialOffer?.description ?? '');
-  const [search, setSearch] = useState('');
+  /** The tagline is optional, so it starts as one line of text and opens into a field unless the package already has one. */
+  const [taglineOpen, setTaglineOpen] = useState(Boolean(initialOffer?.description));
   const [selectedIds, setSelectedIds] = useState<string[]>(initialOffer?.serviceIds ?? []);
 
   const initialOriginal = (initialOffer?.serviceIds ?? []).reduce(
@@ -244,6 +262,8 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
   const [visibleWeekdays, setVisibleWeekdays] = useState<number[]>(initialOffer?.visibleWeekdays ?? []);
   const [visibleFromInput, setVisibleFromInput] = useState(toDatetimeLocal(initialOffer?.visibleFrom ?? null));
   const [visibleUntilInput, setVisibleUntilInput] = useState(toDatetimeLocal(initialOffer?.visibleUntil ?? null));
+  /** Always visible is the answer for almost every package, so the choices stay folded behind the row that states it. */
+  const [whenOpen, setWhenOpen] = useState(false);
 
   const [busy, setBusy] = useState(false);
   // Submission failures only (network/server) — field-level required-ness
@@ -275,49 +295,8 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     setPriceMode(next);
   };
 
-  // Jira GRW-375 — same matching as the walk-in sheet and the services table.
-  const unpicked = services.filter((s) => !selectedIds.includes(s.id));
-  const filteredServices =
-    search.trim().length < MIN_CHARS
-      ? unpicked
-      : matchItems(
-          unpicked.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })),
-          search,
-        );
-
-  /**
-   * Jira GRW-449 — and the other half of that search: what the typed words MEAN.
-   *
-   * The walk-in sheet has had this since GRW-375 and the builder had not, so "nails" found Manicure at the
-   * front desk and nothing here — the same catalogue, searched for the same reason, answering differently
-   * depending on which screen the owner happened to be on.
-   *
-   * The branch is `atBranch`, not the header's: a package is built from ONE branch's services (GRW-381), and a
-   * suggestion from another branch's menu is one the builder would refuse to add.
-   */
-  const remote = useServiceSuggestions(search, atBranch);
-  const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
-  /**
-   * Shown as their own row under the results, never mixed into them: a neighbour is not a match, and the list
-   * the owner typed for keeps its order. Resolved through the UNPICKED services, so a service already in the
-   * package is not offered a second time.
-   */
-  const alsoTry = useMemo(
-    () =>
-      extraSuggestions(filteredServices, remote, search, (id) => {
-        const service = serviceById.get(id);
-        return service && !selectedIds.includes(service.id) ? service : undefined;
-      }),
-    [filteredServices, remote, search, serviceById, selectedIds],
-  );
-
-  const addService = (id: string) => {
-    setSelectedIds((ids) => [...ids, id]);
-    // Clears the box and closes the results list — picking a service is a
-    // completed action, not something that should leave a stale query (and
-    // a "No matching services" dead end) sitting open behind it. Typing
-    // again starts a fresh search the same way.
-    setSearch('');
+  const toggleService = (id: string) => {
+    setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
     setFieldErrors((e) => (e.services ? { ...e, services: undefined } : e));
   };
   const removeService = (id: string) => setSelectedIds((ids) => ids.filter((x) => x !== id));
@@ -333,19 +312,6 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
   const toggleWeekday = (day: number) =>
     setVisibleWeekdays((days) => (days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort()));
 
-  const isVisibleNow = (): boolean => {
-    const now = new Date();
-    if (visibilityMode === 'weekdays') return visibleWeekdays.includes(now.getDay());
-    if (visibilityMode === 'window') {
-      const from = fromDatetimeLocal(visibleFromInput);
-      const until = fromDatetimeLocal(visibleUntilInput);
-      if (from && now < new Date(from)) return false;
-      if (until && now > new Date(until)) return false;
-      return true;
-    }
-    return true;
-  };
-
   const visibilitySummary = (): string => {
     if (visibilityMode === 'always') return t('summary.always');
     if (visibilityMode === 'weekdays') {
@@ -358,13 +324,21 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     return t('summary.range', { from, until });
   };
 
-  /** Step tabs: only lets you jump back to an already-visited step — never ahead. */
-  const goToStep = (target: 1 | 2 | 3) => {
-    if (target <= maxStepReached) setStep(target);
+  /**
+   * What the price actually means, in one sentence under the group — including the two cases the old three-cell
+   * panel left the owner to work out: no saving at all, and a package priced ABOVE what its parts come to.
+   */
+  const priceFootnote = (): string => {
+    if (selectedServices.length === 0) return t('price.needServices');
+    if (comboPriceMinor == null) return t('price.setCost');
+    // The one case the three rows read wrong on their own: a package dearer than its parts shows "You save —".
+    if (savingsMinor != null && savingsMinor < 0) return t('price.above', { amount: formatMoney(String(-savingsMinor)) });
+    if (savingsMinor === 0) return t('price.noSaving');
+    return '';
   };
 
-  /** Mandatory-field checks for the Build step — each error renders inline next to its own field, not as a top banner. */
-  const validateBuildStep = (): boolean => {
+  /** Mandatory-field checks — each error renders inline next to its own field, not as a banner up top. */
+  const validateForm = (): boolean => {
     const errs: typeof fieldErrors = {};
     if (!title.trim()) errs.title = t('errors.nameRequired');
     if (selectedIds.length === 0) errs.services = t('errors.addOne');
@@ -378,27 +352,16 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     return Object.keys(errs).length === 0;
   };
 
-  const goNext = () => {
-    if (step === 1 && !validateBuildStep()) return;
-    const next = ((step + 1) as 1 | 2 | 3);
-    setStep(next);
-    setMaxStepReached((m) => (next > m ? next : m));
-  };
-
-  const goBack = () => setStep((s) => ((s - 1) as 1 | 2 | 3));
-
   const save = async (publish: boolean) => {
-    if (!validateBuildStep()) {
-      setStep(1);
-      return;
-    }
+    if (!validateForm()) return;
     /*
      * Jira GRW-473 — two ways to save a package that would never show. "Only on" with no day ticked is visible on
-     * no day at all, and a window whose end is before its start contains no moment.
+     * no day at all, and a window whose end is before its start contains no moment. Both live behind the folded
+     * row, so the row opens on the way to saying so.
      */
     if (visibilityMode === 'weekdays' && visibleWeekdays.length === 0) {
       setError(t('errors.pickADay'));
-      setStep(2);
+      setWhenOpen(true);
       return;
     }
     if (visibilityMode === 'window') {
@@ -406,7 +369,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
       const until = fromDatetimeLocal(visibleUntilInput);
       if (from && until && Date.parse(from) >= Date.parse(until)) {
         setError(t('errors.windowBackwards'));
-        setStep(2);
+        setWhenOpen(true);
         return;
       }
     }
@@ -437,8 +400,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
       } else {
         await api.updateOffer(initialOffer!.id, payload);
       }
-      router.push('/packages');
-      router.refresh();
+      leave();
     } catch (err) {
       // Jira GRW-473 — the server's reason when it gave one ("a service from another branch"), not a guess.
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('errors.saveFailed'));
@@ -447,11 +409,6 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     }
   };
 
-  /**
-   * Edit mode only — there's otherwise no way to delete a combo from inside
-   * the builder itself, and the per-service ✕ buttons in the picked list
-   * (which only remove one service each) are easy to mistake for it.
-   */
   /**
    * Jira GRW-435 — asked in the app's own dialog, and refused in the API's own words.
    *
@@ -463,14 +420,13 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     if (!initialOffer) return;
     setBusy(true);
     setDeleteError(null);
-    // A failed save left its own message on the wizard behind this dialog, and only `save()` ever cleared it —
+    // A failed save left its own message on the page behind this dialog, and only `save()` ever cleared it —
     // so a refused delete showed the owner two unrelated errors at once. The delete owns the screen now.
     setError(null);
     try {
       await api.deleteOffer(initialOffer.id);
       setConfirmDelete(false);
-      router.push('/packages');
-      router.refresh();
+      leave();
     } catch (err) {
       // `send()` raises every 409 as BookingConflictError, not ApiError — see the note in OffersList.doRemove.
       const refused = err instanceof BookingConflictError || (err instanceof ApiError && err.status < 500);
@@ -496,8 +452,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
             type="button"
             className="btn"
             onClick={() => {
-              router.push('/packages');
-              router.refresh();
+              leave();
             }}
           >
             {tb('done')}
@@ -507,323 +462,265 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     );
   }
 
+  const previewCard = (
+    <PreviewCard
+      title={title}
+      services={selectedServices}
+      description={description}
+      originalPriceMinor={originalPriceMinor}
+      comboPriceMinor={comboPriceMinor}
+      savingsMinor={savingsMinor}
+      savingsPct={savingsPct}
+      visibilitySummary={visibilitySummary()}
+    />
+  );
+
   return (
-    <div>
-      <div className="wizard-head">
-        <div className="wizard-title">
-          <button className="btn btn-ghost" onClick={() => router.push('/packages')}>
-            {t('back')}
-          </button>
-          <div>
-            <h1>{mode === 'create' ? t('createTitle') : t('editTitle', { title: initialOffer!.title })}</h1>
-            <p className="wizard-subtitle">{t('subtitle')}</p>
-          </div>
-        </div>
-        <div className="wizard-actions">
-          {mode === 'edit' && (
-            <button
-              className="btn btn-danger"
-              disabled={busy}
-              onClick={() => {
-                setDeleteError(null);
-                setConfirmDelete(true);
-              }}
-            >
-              {t('delete')}
-            </button>
-          )}
-          <button className="btn btn-ghost" disabled={busy} onClick={() => save(false)}>
-            <span className="wizard-nav-label-full">{t('saveDraft')}</span>
-            <span className="wizard-nav-label-short">{t('draftShort')}</span>
-          </button>
-          {step < 3 ? (
-            <button className="btn" onClick={goNext}>
-              <span className="wizard-nav-label-full">
-                {t('nextFull', { label: t(`steps.${STEPS[step - 1]!.name}.nav` as 'steps.build.nav') })}
-              </span>
-              <span className="wizard-nav-label-short">{t('nextShort')}</span>
-            </button>
-          ) : (
-            <button className="btn" disabled={busy || !title.trim()} onClick={() => save(true)}>
-              {busy ? t('saving') : t('publish')}
-            </button>
-          )}
-        </div>
+    <div className="pkg-editor">
+      {/* Back · what this screen is · Save. Nothing else competes for the top of a 344px screen. */}
+      <div className="pe-head">
+        <button type="button" className="pe-back" aria-label={t('backAria')} onClick={leave}>
+          <span aria-hidden="true">←</span>
+        </button>
+        <h1 className="pe-title">{mode === 'create' ? t('createTitle') : t('editTitle', { title: initialOffer!.title })}</h1>
+        <button type="button" className="btn pe-save" disabled={busy} onClick={() => save(true)}>
+          {busy ? t('saving') : t('publish')}
+        </button>
       </div>
 
-      {error && <div className="banner" role="alert" style={{ marginBottom: 16 }}>{error}</div>}
-
-      <div className="wizard-rail">
-        <div className="wizard-steps">
-          {STEPS.map((s) => (
-            <button
-              key={s.key}
-              className={`wizard-step ${step === s.key ? 'wizard-step-active' : ''} ${s.key > maxStepReached ? 'wizard-step-locked' : ''}`}
-              disabled={s.key > maxStepReached}
-              onClick={() => goToStep(s.key)}
-            >
-              <span className="wizard-step-num">{s.key}</span>
-              <span>
-                <div className="wizard-step-title">{t(`steps.${s.name}.title`)}</div>
-                <div className="wizard-step-sub">{t(`steps.${s.name}.sub`)}</div>
-              </span>
-            </button>
-          ))}
+      {error && (
+        <div className="banner" role="alert" style={{ marginBottom: 12 }}>
+          {error}
         </div>
+      )}
 
-        <div className="wizard-tip wizard-tip-rail">
-          <span className="wizard-tip-icon">
-            <IconLightbulb />
-          </span>
-          <div>
-            <strong>{t('tip')}</strong>
-            {/* GRW-165 — future tense, deliberately. Nothing sends or receives a
-                WhatsApp message yet, and a builder that says otherwise is
-                selling the owner a feature they have not got. */}
-            <div>{t('tipBody')}</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="wizard-layout">
-        <div className="card">
-          <div className="card-body" style={{ paddingTop: 18 }}>
-            {step === 1 && (
-              <>
-                <div className="wizard-section-title">{t('packageDetails')}</div>
-                <div className="grid-2">
-                  <div className="field">
-                    <label>
-                      <span>{t('packageName')}</span>
-                      <span className="field-counter">
-                        {title.length}/{TITLE_MAX}
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      maxLength={TITLE_MAX}
-                      onChange={(e) => {
-                        setTitle(e.target.value);
-                        if (fieldErrors.title && e.target.value.trim()) setFieldErrors((er) => ({ ...er, title: undefined }));
-                      }}
-                      placeholder={t('namePlaceholder')}
-                      className={fieldErrors.title ? 'field-invalid' : undefined}
-                      style={{ width: '100%' }}
-                    />
-                    {fieldErrors.title && <div role="alert" className="field-error">{fieldErrors.title}</div>}
-                  </div>
-                  <div className="field">
-                    <label>
-                      <span>{t('tagline')}</span>
-                      <span className="field-counter">
-                        {description.length}/{TAGLINE_MAX}
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={description}
-                      maxLength={TAGLINE_MAX}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder={t('taglinePlaceholder')}
-                      style={{ width: '100%' }}
-                    />
-                  </div>
-                </div>
-
-                {mode === 'create' ? (
-                  <OfferBranchField
-                    value={atBranch}
-                    onChange={(id) => {
-                      // Another branch's menu: what was picked here is not on it.
-                      setPickedBranch(id);
-                      setSelectedIds([]);
-                    }}
-                    allBranches={allBranches}
-                    onAllBranches={setAllBranches}
-                    disabled={busy}
-                  />
-                ) : null}
-
-                <div className="wizard-section-title" style={{ marginTop: 22 }}>
-                  {t('addServices')}
-                </div>
-                <p className="muted" style={{ marginTop: -8, marginBottom: 12, fontSize: 13.5 }}>
-                  {t('addServicesHint')}
-                </p>
-                <div className="picker-search" style={{ marginTop: 8 }}>
+      <div className="pe-layout">
+        <div className="pe-form">
+          <div className="sheet-label sheet-label-details">{t('groups.details')}</div>
+          <div className="sheet-group">
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="pkg-name">
+                {t('packageName')}
+              </label>
+              <div className="sheet-row-value">
+                <input
+                  id="pkg-name"
+                  type="text"
+                  value={title}
+                  maxLength={TITLE_MAX}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (fieldErrors.title && e.target.value.trim()) setFieldErrors((er) => ({ ...er, title: undefined }));
+                  }}
+                  placeholder={t('namePlaceholder')}
+                  className={fieldErrors.title ? 'field-invalid' : undefined}
+                />
+              </div>
+            </div>
+            {taglineOpen ? (
+              <div className="sheet-row">
+                <label className="sheet-row-label" htmlFor="pkg-tagline">
+                  {t('tagline')}
+                </label>
+                <div className="sheet-row-value">
                   <input
-                    type="search"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder={t('searchServices', { count: services.length })}
-                    className={fieldErrors.services ? 'field-invalid' : undefined}
-                    style={{ width: '100%', paddingRight: search ? 36 : undefined }}
+                    id="pkg-tagline"
+                    type="text"
+                    value={description}
+                    maxLength={TAGLINE_MAX}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder={t('taglinePlaceholder')}
                   />
-                  {search !== '' && (
-                    <button
-                      type="button"
-                      className="search-clear-btn"
-                      onClick={() => setSearch('')}
-                      aria-label={t('clearSearch')}
-                    >
-                      ✕
-                    </button>
-                  )}
                 </div>
-                {fieldErrors.services && <div role="alert" className="field-error">{fieldErrors.services}</div>}
-                {search.trim() !== '' && (
-                  <div className="picker-results">
-                    {filteredServices.length === 0 ? (
-                      /* Jira GRW-449 — "nothing matched" is not the answer while there is something to try. */
-                      alsoTry.length === 0 && (
-                        <div className="picker-row" style={{ cursor: 'default' }}>
-                          <span className="muted">{t('noMatch')}</span>
-                        </div>
-                      )
-                    ) : (
-                      filteredServices.slice(0, 20).map((s) => (
-                        <div key={s.id} className="picker-row" onClick={() => addService(s.id)}>
-                          { }
-                          <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
-                          <div style={{ flex: 1 }}>
-                            <div className="picker-row-name">{s.name}</div>
-                            <div className="picker-row-meta">{tm('minutes', { count: s.durationMin })}</div>
-                          </div>
-                          <span className="picker-row-price">{formatMoney(s.priceMinor)}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-                {/*
-                  Jira GRW-449 — the meaning-based extras, in their own row under the results and never inside
-                  them. The walk-in sheet learned why: appended to the list they land below its fold, where
-                  nobody sees them, and they make a list that was already right look wrong.
-                */}
-                {alsoTry.length > 0 && (
-                  <div className="also-try">
-                    <span className="also-try-label">{t('alsoTry')}</span>
-                    <div className="also-try-chips">
-                      {alsoTry.map((s) => (
-                        <button key={s.id} type="button" className="also-try-chip" onClick={() => addService(s.id)}>
-                          {s.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="picked-list">
-                  {selectedServices.length === 0 ? (
-                    <div className="empty">{t('pickHint')}</div>
-                  ) : (
-                    selectedServices.map((s, i) => (
-                      <div key={s.id} className="picked-row">
-                        <div className="picked-row-order">
-                          <button disabled={i === 0} onClick={() => moveService(i, -1)} aria-label={t('moveUp')}>
-                            ▲
-                          </button>
-                          <button
-                            disabled={i === selectedServices.length - 1}
-                            onClick={() => moveService(i, 1)}
-                            aria-label={t('moveDown')}
-                          >
-                            ▼
-                          </button>
-                        </div>
-                        { }
-                        <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
-                        <div className="picked-row-main">
-                          <div className="picker-row-name">{s.name}</div>
-                          <div className="picker-row-meta">{tm('minutes', { count: s.durationMin })}</div>
-                        </div>
-                        <span className="picked-row-price">{formatMoney(s.priceMinor)}</span>
-                        <button className="btn-ghost" style={{ padding: '4px 8px' }} onClick={() => removeService(s.id)}>
-                          ✕
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="wizard-section-title" style={{ marginTop: 22 }}>
-                  {t('pricing')}
-                </div>
-                <div className="price-panel">
-                  <div className="price-panel-cell">
-                    <label>{t('original')}</label>
-                    <div className="price-panel-value">{formatMoney(String(originalPriceMinor))}</div>
-                  </div>
-                  <div className="price-panel-cell">
-                    <label>{t('packagePrice')}</label>
-                    <div className="price-mode-toggle">
-                      <button className={priceMode === 'flat' ? 'active' : ''} onClick={() => switchPriceMode('flat')}>
-                        {t('flat')}
-                      </button>
-                      <button className={priceMode === 'percent' ? 'active' : ''} onClick={() => switchPriceMode('percent')}>
-                        {t('percent')}
-                      </button>
-                      {/*
-                        Jira GRW-438 — the third mode, and a real choice rather than the absence of one:
-                        "charge what the parts cost, show no discount". Stored as a price equal to the parts
-                        total, never as no price at all — a package with no price is an announcement.
-                      */}
-                      <button className={priceMode === 'sum' ? 'active' : ''} onClick={() => switchPriceMode('sum')}>
-                        {t('sumOfParts')}
-                      </button>
-                    </div>
-                    {priceMode === 'flat' && (
-                      <input
-                        type="number"
-                        min="0"
-                        value={flatInput}
-                        onChange={(e) => setFlatInput(e.target.value)}
-                        placeholder="0"
-                        style={{ width: '100%' }}
-                      />
-                    )}
-                    {priceMode === 'percent' && (
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={percentInput}
-                        onChange={(e) => setPercentInput(e.target.value)}
-                        onBlur={(e) => setPercentInput(clampPercentInput(e.target.value))}
-                        placeholder="0"
-                        style={{ width: '100%' }}
-                      />
-                    )}
-                    {priceMode === 'sum' && <div className="price-panel-note">{t('sumOfPartsNote')}</div>}
-                    {fieldErrors.price && <div role="alert" className="field-error">{fieldErrors.price}</div>}
-                  </div>
-                  <div className="price-panel-cell">
-                    <label>{t('youSave')}</label>
-                    <div className="price-panel-value" style={{ color: 'var(--accent-deep)' }}>
-                      {savingsMinor != null && savingsMinor >= 0
-                        ? `${formatMoney(String(savingsMinor))} (${savingsPct}%)`
-                        : '—'}
-                    </div>
-                  </div>
-                </div>
-                {comboPriceMinor != null &&
-                  (savingsMinor != null && savingsMinor > 0 ? (
-                    <div className="savings-banner">
-                      {t('customersPay', { price: formatMoney(String(comboPriceMinor)), original: formatMoney(String(originalPriceMinor)) })}
-                    </div>
-                  ) : (
-                    /* Said plainly rather than left blank: "no saving" is a decision the owner should see they made. */
-                    <div className="savings-banner savings-banner-none">{t('noSavingShown')}</div>
-                  ))}
-              </>
+              </div>
+            ) : (
+              <button type="button" className="pe-add-row" onClick={() => setTaglineOpen(true)}>
+                {t('addTagline')}
+              </button>
             )}
+          </div>
+          {fieldErrors.title && (
+            <div role="alert" className="sheet-foot sheet-foot-error">
+              {fieldErrors.title}
+            </div>
+          )}
 
-            {step === 2 && (
-              <>
-                <p className="muted" style={{ marginTop: 0 }}>
-                  {t('rulesIntro')}
-                </p>
+          {mode === 'create' ? (
+            <OfferBranchField
+              value={atBranch}
+              onChange={(id) => {
+                // Another branch's menu: what was picked here is not on it.
+                setPickedBranch(id);
+                setSelectedIds([]);
+              }}
+              allBranches={allBranches}
+              onAllBranches={setAllBranches}
+              disabled={busy}
+            />
+          ) : null}
+
+          <div className="sheet-label pe-label-services">{t('groups.services')}</div>
+          <div className="sheet-group">
+            {/* At the top of the group, not under the list: with eight services in it, the way to add a ninth
+                was a scroll away, and it is the one control on this group an owner comes back for. */}
+            <button type="button" className="pe-add-row" onClick={() => setPickerOpen(true)}>
+              {t('picker.open')}
+            </button>
+            {/* Eight rows show in full; a ninth and beyond scroll inside the group, so Add services and everything under it stay in reach. */}
+            <div className={`pe-service-list ${selectedServices.length > 8 ? 'is-long' : ''}`}>
+            {selectedServices.map((s, i) => (
+              <div key={s.id} className="sheet-row pe-service-row">
+                <div className="picked-row-order">
+                  <button type="button" disabled={i === 0} onClick={() => moveService(i, -1)} aria-label={t('moveUp')}>
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    disabled={i === selectedServices.length - 1}
+                    onClick={() => moveService(i, 1)}
+                    aria-label={t('moveDown')}
+                  >
+                    ▼
+                  </button>
+                </div>
+                { }
+                <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
+                <div className="picked-row-main">
+                  <div className="picker-row-name">{s.name}</div>
+                  <div className="picker-row-meta">{tm('minutes', { count: s.durationMin })}</div>
+                </div>
+                <span className="picked-row-price">{formatMoney(s.priceMinor)}</span>
+                <button type="button" className="pkg-remove" aria-label={`${s.name} ✕`} onClick={() => removeService(s.id)}>
+                  ✕
+                </button>
+              </div>
+            ))}
+            </div>
+          </div>
+          <div role={fieldErrors.services ? 'alert' : undefined} className={`sheet-foot pe-foot-services ${fieldErrors.services ? 'sheet-foot-error' : ''}`}>
+            {/* The time it all takes is nowhere else on this page now, and it is what an owner books against. */}
+            {fieldErrors.services ??
+              (selectedServices.length === 0
+                ? t('servicesEmpty')
+                : t('servicesSummary', {
+                    count: selectedServices.length,
+                    duration: durationPhrase(
+                      selectedServices.reduce((sum, s) => sum + s.durationMin, 0),
+                      {
+                        minutes: (c) => tm('minutes', { count: c }),
+                        hours: (c) => tm('hours', { count: c }),
+                        hoursMinutes: (h, m) => tm('hoursMinutes', { hours: h, minutes: m }),
+                      },
+                    ),
+                  }))}
+          </div>
+
+          <div className="sheet-label sheet-label-price">{t('groups.price')}</div>
+          {/*
+            The panel the design draws: each figure under its own label, the three ways to price it as one
+            segmented control, and the amount in a field of its own. It went to single rows on the way to fitting
+            a phone and lost the shape; the shape is what makes the three numbers read as one sum.
+          */}
+          <div className="pe-price-card">
+            <div className="pe-price-field">
+              <span className="pe-price-label">{t('original')}</span>
+              <div className="pe-price-figure">{formatMoney(String(originalPriceMinor))}</div>
+            </div>
+
+            <div className="pe-price-field">
+              <span className="pe-price-label" id="pkg-price-label">
+                {t('packagePrice')}
+              </span>
+              {/*
+                Jira GRW-438 — three ways to price it, and "Sum of parts" is a real choice rather than the absence
+                of one. All three visible, because which one is NOT in force is half of what the control says.
+              */}
+              <div className="pe-mode-toggle" role="group" aria-labelledby="pkg-price-label">
+                {(['flat', 'percent', 'sum'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={priceMode === m ? 'is-on' : ''}
+                    aria-pressed={priceMode === m}
+                    onClick={() => switchPriceMode(m)}
+                  >
+                    {t(m === 'flat' ? 'flat' : m === 'percent' ? 'percent' : 'sumOfParts')}
+                  </button>
+                ))}
+              </div>
+              {priceMode === 'flat' && (
+                <input
+                  className={`pe-price-input ${fieldErrors.price ? 'field-invalid' : ''}`}
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={flatInput}
+                  onChange={(e) => setFlatInput(e.target.value)}
+                  placeholder="0"
+                  aria-label={t('packagePrice')}
+                />
+              )}
+              {priceMode === 'percent' && (
+                <input
+                  className={`pe-price-input ${fieldErrors.price ? 'field-invalid' : ''}`}
+                  type="number"
+                  min="0"
+                  max="100"
+                  inputMode="numeric"
+                  value={percentInput}
+                  onChange={(e) => setPercentInput(e.target.value)}
+                  onBlur={(e) => setPercentInput(clampPercentInput(e.target.value))}
+                  placeholder="0"
+                  aria-label={t('percent')}
+                />
+              )}
+              {/* "Sum of parts" sets no number of its own — it IS the total above, so the field says so. */}
+              {priceMode === 'sum' && <div className="pe-price-figure">{formatMoney(String(originalPriceMinor))}</div>}
+            </div>
+
+            <div className="pe-price-field">
+              <span className="pe-price-label">{t('youSave')}</span>
+              <div className={`pe-price-figure ${savingsMinor != null && savingsMinor > 0 ? 'is-saving' : ''}`}>
+                {savingsMinor != null && savingsMinor > 0
+                  ? `${formatMoney(String(savingsMinor))} (${savingsPct}%)`
+                  : t('price.nothing')}
+              </div>
+            </div>
+          </div>
+
+          {/* What the client ends up paying, said in words, the way the design has it under the panel. */}
+          {fieldErrors.price ? (
+            <div role="alert" className="sheet-foot sheet-foot-error">
+              {fieldErrors.price}
+            </div>
+          ) : savingsMinor != null && savingsMinor > 0 ? (
+            <div className="savings-banner">
+              {t('customersPay', {
+                price: formatMoney(String(comboPriceMinor!)),
+                original: formatMoney(String(originalPriceMinor)),
+              })}
+            </div>
+          ) : (
+            priceFootnote() && <div className="sheet-foot">{priceFootnote()}</div>
+          )}
+
+          {/* When it runs: one row that states its own answer, and opens on the choices behind it. */}
+          <div className="sheet-label pe-label-when">{t('groups.when')}</div>
+          <div className="sheet-group">
+            <button
+              type="button"
+              className="sheet-row pe-disclosure"
+              aria-expanded={whenOpen}
+              onClick={() => setWhenOpen((o) => !o)}
+            >
+              <span className="sheet-row-label">{t('whenItRuns')}</span>
+              <span className="sheet-row-value pe-disclosure-value">
+                {visibilitySummary()}
+                <span className="pe-chevron" aria-hidden="true" />
+              </span>
+            </button>
+            {whenOpen && (
+              <div className="pe-when">
                 {(['always', 'weekdays', 'window'] as const).map((opt) => (
                   <div key={opt}>
                     <label className="rules-option">
@@ -843,6 +740,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                         {dayNames.map((name, i) => (
                           <button
                             key={name}
+                            type="button"
                             className={`weekday-chip ${visibleWeekdays.includes(i) ? 'active' : ''}`}
                             onClick={() => toggleWeekday(i)}
                           >
@@ -854,16 +752,18 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                     {opt === 'window' && visibilityMode === 'window' && (
                       <div className="date-window">
                         <div className="field">
-                          <label>{t('from')}</label>
+                          <label htmlFor="pkg-from">{t('from')}</label>
                           <input
+                            id="pkg-from"
                             type="datetime-local"
                             value={visibleFromInput}
                             onChange={(e) => setVisibleFromInput(e.target.value)}
                           />
                         </div>
                         <div className="field">
-                          <label>{t('until')}</label>
+                          <label htmlFor="pkg-until">{t('until')}</label>
                           <input
+                            id="pkg-until"
                             type="datetime-local"
                             value={visibleUntilInput}
                             onChange={(e) => setVisibleUntilInput(e.target.value)}
@@ -873,95 +773,72 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                     )}
                   </div>
                 ))}
-              </>
-            )}
-
-            {step === 3 && (
-              <>
-                <p className="muted" style={{ marginTop: 0 }}>
-                  {t('previewIntro')}
-                </p>
-                {selectedServices.length === 0 ? (
-                  <div className="empty">{t('previewEmpty')}</div>
-                ) : (
-                  <div className="preview-facts" style={{ borderTop: 'none', paddingTop: 0, marginTop: 4 }}>
-                    <div className="preview-fact">
-                      <span className="preview-fact-icon">
-                        <IconPackages />
-                      </span>
-                      {title || t('untitled')}
-                    </div>
-                    <div className="preview-fact">
-                      <span className="preview-fact-icon">
-                        <IconReceipt />
-                      </span>
-                      {t('servicesCount', { count: selectedServices.length })} ·{' '}
-                      {formatMoney(String(comboPriceMinor ?? originalPriceMinor))}
-                    </div>
-                    <div className="preview-fact">
-                      <span className={`pv-live-dot ${isVisibleNow() ? 'is-live' : ''}`} aria-hidden />
-                      {visibilitySummary()}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Forward progress (Next/Publish) and Save-as-draft live in the top bar, always in view —
-                this row is just the way back down here for editing something after scrolling. */}
-            {step > 1 && (
-              <div className="wizard-nav">
-                <button className="btn btn-ghost" onClick={goBack}>
-                  {t('back')}
-                </button>
               </div>
             )}
           </div>
-        </div>
 
-        <div className="wizard-sidebar">
-        <div className="card">
-          <div className="card-head">
-            <span>{t('sidebarPreview')}</span>
-            <div className="device-toggle">
+          {/* The two secondary ways out, below the form rather than competing with Save at the top. */}
+          <div className="pe-secondary">
+            <button type="button" className="btn btn-ghost pe-preview-btn" onClick={() => setPreviewOpen(true)}>
+              {t('sidebarPreview')}
+            </button>
+            <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => save(false)}>
+              {t('saveDraft')}
+            </button>
+          </div>
+
+          {mode === 'edit' && (
+            <div className="sheet-group sheet-group-danger">
               <button
-                className={previewDevice === 'mobile' ? 'active' : ''}
-                aria-label={t('mobileAria')}
-                onClick={() => setPreviewDevice('mobile')}
+                type="button"
+                className="sheet-danger-row sheet-danger-delete"
+                disabled={busy}
+                onClick={() => {
+                  setDeleteError(null);
+                  setConfirmDelete(true);
+                }}
               >
-                <IconDevicePhone />
-              </button>
-              <button
-                className={previewDevice === 'desktop' ? 'active' : ''}
-                aria-label={t('desktopAria')}
-                onClick={() => setPreviewDevice('desktop')}
-              >
-                <IconDeviceDesktop />
+                {t('deleteRow')}
               </button>
             </div>
-          </div>
-          <div className="card-body">
-            {selectedServices.length === 0 ? (
-              <div className="empty">{t('sidebarEmpty')}</div>
-            ) : (
-              <div className={`device-frame device-frame-${previewDevice}`}>
-                <PreviewCard
-                  title={title}
-                  services={selectedServices}
-                  description={description}
-                  originalPriceMinor={originalPriceMinor}
-                  comboPriceMinor={comboPriceMinor}
-                  savingsMinor={savingsMinor}
-                  savingsPct={savingsPct}
-                  visibilitySummary={visibilitySummary()}
-                />
-                <div className="preview-caption">{t('caption')}</div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-        </div>
+
+        {/* A laptop has the room to keep the client's view on screen the whole time; a phone opens it. */}
+        <aside className="pe-aside">
+          <div className="card">
+            <div className="card-head">
+              <span>{t('sidebarPreview')}</span>
+            </div>
+            <div className="card-body">
+              {selectedServices.length === 0 ? (
+                <div className="empty">{t('sidebarEmpty')}</div>
+              ) : (
+                <>
+                  {previewCard}
+                  <div className="preview-caption">{t('caption')}</div>
+                </>
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
+
+      {pickerOpen && (
+        <ServicePickerSheet
+          services={services}
+          selectedIds={selectedIds}
+          branchId={atBranch}
+          onToggle={toggleService}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {previewOpen && (
+        <PreviewSheet onClose={() => setPreviewOpen(false)}>
+          {selectedServices.length === 0 ? <div className="empty">{t('sidebarEmpty')}</div> : previewCard}
+        </PreviewSheet>
+      )}
 
       {confirmDelete && initialOffer && (
         <ConfirmDialog

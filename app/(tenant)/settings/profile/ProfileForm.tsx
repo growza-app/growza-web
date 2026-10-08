@@ -183,7 +183,7 @@ export function ProfileForm({
 
   return (
     <form
-      className="bp-form"
+      className={`bp-form ${branchId ? 'bp-form-branch' : ''}`}
       onSubmit={(e) => {
         e.preventDefault();
         void save();
@@ -237,7 +237,7 @@ export function ProfileForm({
                   {f.description.length}/{DESCRIPTION_MAX}
                 </span>
               </label>
-              <textarea id="bp-description" value={f.description} maxLength={DESCRIPTION_MAX} onChange={(e) => set('description', e.target.value)} rows={3} />
+              <textarea id="bp-description" value={f.description} maxLength={DESCRIPTION_MAX} onChange={(e) => set('description', e.target.value)} rows={2} />
             </div>
           </div>
         </section>

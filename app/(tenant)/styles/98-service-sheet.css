@@ -178,7 +178,14 @@
   cursor: default;
 }
 
-.sheet-stepper-value {
+/*
+ * Two classes on purpose: `.sheet-row-value input { width: 100% }` is more specific than `.sheet-stepper-value` alone, so
+ * the value box had grown to the whole row and pushed the stepper over its own label ("Durati", "Cleanu").
+ */
+.sheet-row-value .sheet-stepper-value {
+  flex: none;
+  /* The global `input { min-width: 180px }` is what held it at 180px even once `width` was 86. */
+  min-width: 0;
   width: 86px;
   border: 0;
   background: transparent;
@@ -310,8 +317,159 @@
 @media (max-width: 860px) {
   .sheet {
     width: 100%;
-    max-height: 92dvh;
+    max-height: calc(100dvh - 24px);
     margin-top: auto;
     border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  /*
+   * One screen (owner, 2026-10-08): Retire and Delete sat below the fold, so an owner had to scroll a form to find the
+   * two buttons they came for. Nothing is removed — the photo, every field, every footnote and both actions stay — the
+   * space between them is what goes: section titles sit closer, the photo row is shorter, rows lose 4px each, the
+   * footnotes are a size down, and Retire and Delete share one line instead of taking two.
+   */
+  .sheet-head {
+    padding: 8px 16px;
+  }
+  .sheet-body {
+    padding: 6px 16px 12px;
+  }
+  .sheet-label {
+    padding: 8px 4px 3px;
+  }
+  .sheet-foot {
+    padding: 3px 4px 0;
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+  .sheet-row {
+    min-height: 46px;
+    /* A text field inside is 44px tall, so the row was 56px with 6px above and below it. */
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+  .sheet-photo {
+    padding: 8px 14px;
+  }
+  .sheet-photo-img {
+    width: 48px;
+    height: 48px;
+  }
+  /* Retire and Delete: two rows, each its own raised piece (the shadow is in 101-clay-app.css). */
+  .sheet-group-danger {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .sheet-danger-row {
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+  }
+  .sheet-danger-row + .sheet-danger-row {
+    border-top: 0;
+  }
+  /* A field inside a row is 44px tall by the global rule; the row is the tap target, so the field gives that back. */
+  .sheet .sheet-row-value input,
+  .sheet .sheet-row-value select {
+    min-height: 36px;
+  }
+}
+
+/*
+ * Colour (owner, 2026-10-08): the sheet was white and grey while Home, Settings and Reports wear the Growza palette.
+ * The same palette, nothing new: a tinted round badge on each group title (as the Home quick links have), green where
+ * you act (steppers, the rupee sign, Save once it can be pressed), Retire in amber and Delete in red. Colour and
+ * shape only — no row grows, so the one-screen fit above is unchanged. Shadows are in 101-clay-app.css.
+ */
+@media (max-width: 860px) {
+  .sheet-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sheet-label::before {
+    content: '';
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+  }
+  .sheet-label-details::before {
+    background-color: var(--accent-soft);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6h16M4 12h16M4 18h10'/%3E%3C/svg%3E");
+  }
+  .sheet-label-time::before {
+    background-color: var(--blue-soft);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d4ed8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E");
+  }
+  .sheet-label-price::before {
+    background-color: var(--amber-soft);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a4500b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 5h10M7 9h10M9 5c5 0 6 3.5 3 6s-3 3-5 3h1l6 6'/%3E%3C/svg%3E");
+  }
+
+  /* The photo: purple, the colour Home gives Offers, so it is not mistaken for an action. */
+  .sheet-photo-empty {
+    border-color: #c4b5fd;
+    background: var(--purple-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236d28d9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3v11H4z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E") center / 22px no-repeat;
+  }
+
+  /* Green where you act. */
+  .sheet-stepper {
+    background: var(--accent-soft);
+  }
+  .sheet-stepper-btn {
+    color: var(--accent-deep);
+  }
+  .sheet-stepper-value {
+    color: var(--accent-ink);
+  }
+  .sheet-price-symbol {
+    color: var(--accent-deep);
+  }
+  .sheet-head-save:not(:disabled) {
+    min-height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--accent-deep);
+    color: #fff;
+  }
+  .sheet-group:focus-within {
+    box-shadow: 0 0 0 1.5px rgba(22, 163, 74, 0.45);
+  }
+
+  /* Retire and Delete: a soft fill and a small icon each, so the two read differently at a glance. */
+  .sheet-danger-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .sheet-danger-row::before {
+    content: '';
+    width: 18px;
+    height: 18px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 18px;
+  }
+  .sheet-danger-warn {
+    background: var(--amber-soft);
+  }
+  .sheet-danger-warn::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a4500b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16v3H4zM6 10v9h12v-9M10 14h4'/%3E%3C/svg%3E");
+  }
+  .sheet-danger-delete {
+    background: #fdeaea;
+  }
+  .sheet-danger-delete::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b91c1c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v6M14 11v6'/%3E%3C/svg%3E");
   }
 }
