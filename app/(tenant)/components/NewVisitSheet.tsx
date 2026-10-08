@@ -2440,26 +2440,49 @@ export function NewVisitSheet({
                         {
                           value: WI_WHOEVER,
                           label: nv.whoeverIsFree,
+                          photoUrl: null,
                           // How many are free is for choosing who TAKES this person. A payment is for work already done.
                           under: forPayment || later || freeCount === null ? null : nv.freeCount(freeCount),
                         },
                       ]
                     : []),
-                  ...ableProviders.map((p) => ({ value: p.id, label: p.displayName, under: chairLine(p.id) })),
-                  ...(forPayment ? [{ value: WI_NO_STYLIST, label: noProviderWord, under: null }] : []),
+                  ...ableProviders.map((p) => ({ value: p.id, label: p.displayName, under: chairLine(p.id), photoUrl: p.photoUrl })),
+                  ...(forPayment ? [{ value: WI_NO_STYLIST, label: noProviderWord, under: null, photoUrl: null }] : []),
                 ].map((o) => (
                   <button
                     key={o.value}
                     type="button"
                     role="radio"
                     aria-checked={stylistValue === o.value}
-                    className={`wi-chip ${o.under ? 'wi-chip-two' : ''} ${stylistValue === o.value ? 'wi-chip-on' : ''}`}
+                    className={`wi-chip ${o.under ? 'wi-chip-two' : ''} ${o.photoUrl ? 'wi-chip-faced' : ''} ${stylistValue === o.value ? 'wi-chip-on' : ''}`}
                     onClick={() => pickStylist(o.value)}
                     disabled={busy || linesLocked}
                   >
-                    {o.label}
-                    {/* Read as one name by a screen reader: "Rahul free now" is the sentence, not two labels. */}
-                    {o.under ? <span className="wi-chip-under">{o.under}</span> : null}
+                    {/*
+                      Jira GRW-559 — the face in front of the name, and ONLY when there is one. The
+                      row stays what the owner settled on 2026-10-07: people as names, one tap each.
+                      A chip with no photo renders exactly the markup it did before, so a salon that
+                      has photographed nobody sees no change at all.
+
+                      The two-line variant is `flex-direction: column`, so the name and its "free
+                      now" line have to be stacked INSIDE their own box — an <img> dropped in as a
+                      sibling would sit above the name and make every chip two rows taller.
+                    */}
+                    {o.photoUrl ? (
+                      <>
+                        <img className="wi-chip-face" src={o.photoUrl} alt="" />
+                        <span className="wi-chip-lines">
+                          {o.label}
+                          {o.under ? <span className="wi-chip-under">{o.under}</span> : null}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {o.label}
+                        {/* Read as one name by a screen reader: "Rahul free now" is the sentence, not two labels. */}
+                        {o.under ? <span className="wi-chip-under">{o.under}</span> : null}
+                      </>
+                    )}
                   </button>
                 ))}
                 </div>

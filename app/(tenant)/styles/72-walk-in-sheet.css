@@ -1848,3 +1848,36 @@ input.wi-search-input-plain {
     height: 0.5rem;
   }
 }
+
+/*
+ * Jira GRW-559 — a face on a stylist chip.
+ *
+ * Sized so the chip does NOT grow: 24px inside a 44px minimum tap target with
+ * the padding already there. A chip with no photo carries none of these classes
+ * and is untouched, which matters because this row is the booking sheet AND
+ * Record payment, both used all day.
+ */
+.wi-chip-face {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 999px;
+  object-fit: cover;
+  margin-right: 8px;
+  background: var(--border);
+}
+
+/* `.wi-chip-two` turns the chip into a column for the "free now" line. With a
+   face it has to stay a row, and the two lines stack inside `.wi-chip-lines`. */
+.wi-chip-faced {
+  flex-direction: row;
+  align-items: center;
+}
+
+.wi-chip-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+  min-width: 0;
+}

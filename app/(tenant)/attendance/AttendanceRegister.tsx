@@ -437,13 +437,23 @@ export function AttendanceRegister({
             return (
               <div key={row.providerId} className={`att-row ${row.rostered ? '' : 'is-off'}`}>
                 <div className="att-who">
-                  <span
-                    className="att-avatar"
-                    style={{ background: `oklch(0.94 0.04 ${hue})`, color: `oklch(0.40 0.10 ${hue})` }}
-                    aria-hidden="true"
-                  >
-                    {initialsOf(row.displayName)}
-                  </span>
+                  {/*
+                    Jira GRW-559 — the photo where there is one, and otherwise the hue tile
+                    exactly as it was. This register has its own per-name hue rather than the
+                    staff screen's four tones, so it is left alone: nobody without a photo sees
+                    their row change, which is the point of only adding a branch here.
+                  */}
+                  {row.photoUrl ? (
+                    <img className="att-avatar person-photo" src={row.photoUrl} alt="" />
+                  ) : (
+                    <span
+                      className="att-avatar"
+                      style={{ background: `oklch(0.94 0.04 ${hue})`, color: `oklch(0.40 0.10 ${hue})` }}
+                      aria-hidden="true"
+                    >
+                      {initialsOf(row.displayName)}
+                    </span>
+                  )}
                   <span className="att-who-text">
                     {/* GRW-200 — the name opens their month. The register
                         answers "who was here today"; this is the other question

@@ -228,6 +228,13 @@ export interface ServiceInput {
 export interface Provider {
   id: string;
   displayName: string;
+  /**
+   * Jira GRW-559 — their photo, or null/absent for the lettered tile.
+   *
+   * Optional, unlike the staff screen's copy: the booking sheet and Record payment read this
+   * all day and the API can be a deploy behind the dashboard. An absent field draws initials.
+   */
+  photoUrl?: string | null;
   /** Jira GRW-235 — which branch they work at (the booking sheet narrows by it). */
   locationId?: string;
   title: string | null;
@@ -609,6 +616,14 @@ export interface Capacity {
 export interface AttendanceRow {
   providerId: string;
   displayName: string;
+  /**
+   * Jira GRW-559 — their photo, or null for the lettered tile.
+   *
+   * OPTIONAL on purpose, unlike the staff screen's copy. These two shapes are read by
+   * screens the desk uses all day, and the API may be a deploy behind the dashboard —
+   * an absent field has to draw initials, not crash a till.
+   */
+  photoUrl?: string | null;
   title: string | null;
   onDate: string;
   status: 'present' | 'late' | 'half_day' | 'absent' | 'leave' | null;
