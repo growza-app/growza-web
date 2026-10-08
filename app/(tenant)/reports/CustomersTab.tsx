@@ -214,6 +214,7 @@ export function CustomersTab({
           rows={rows}
           onRowClick={onClient}
           emptyText={rp.noData}
+          phoneColumns={3}
         />
       </Card>
 

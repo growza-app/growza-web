@@ -66,6 +66,40 @@ export function useAnchoredPanel(open: boolean, onClose: () => void) {
     place();
   }, [open, place]);
 
+  /*
+   * A press anywhere else, or Escape, closes it. Before this the panel only closed on `mouseleave` — which a
+   * finger never fires — so on a phone the menu stayed open over the list until a row was picked.
+   * `pointerdown` (not `click`) so it closes before the press lands on whatever is underneath.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onPress = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (target && (panelRef.current?.contains(target) || anchorRef.current?.contains(target))) return;
+      onClose();
+      /*
+       * The press that closes the menu must not also act on what is under it: tapping card B to dismiss the menu
+       * on card A would otherwise open B. The click that follows this press is swallowed once; the timeout stops
+       * a press that never produces a click (a drag, a scroll) from eating the next, unrelated one.
+       */
+      const swallow = (ev: MouseEvent) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+      };
+      window.addEventListener('click', swallow, { capture: true, once: true });
+      setTimeout(() => window.removeEventListener('click', swallow, true), 400);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('pointerdown', onPress, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPress, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, onClose]);
+
   useEffect(() => {
     if (!open) return;
     // `true` so a scroll inside the list itself closes it, not only one on the window.

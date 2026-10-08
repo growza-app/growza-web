@@ -61,6 +61,15 @@
   padding-left: 52px;
 }
 
+.pkg-row {
+  cursor: pointer;
+}
+
+.pkg-row:focus-visible {
+  outline: 2px solid var(--accent, #2d6a3e);
+  outline-offset: -2px;
+}
+
 .pkg-row:last-child {
   border-bottom: none;
 }

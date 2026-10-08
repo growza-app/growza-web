@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, BookingConflictError, formatMoney, type Offer, type Service } from '../lib/api';
@@ -14,6 +14,7 @@ import { useBranch } from '../components/BranchProvider';
 import { useWritable } from '../components/SessionProvider';
 import { partsMinutes, partsOf, partsTotalMinor, savingMinor, savingPct, searchPackages } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
+import { PackageOverview } from './PackageOverview';
 
 /** First paint only — the client then measures how many rows this screen actually fits. */
 const INITIAL_PAGE_SIZE = 5;
@@ -41,6 +42,19 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
   const tc = useTranslations('common');
   const failed = (err: unknown) => setActionError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  /** The package whose contents are open in the overlay — tapping a row, not its ⋮. */
+  const [viewId, setViewId] = useState<string | null>(null);
+  /*
+   * A single click opens the overview, a double-click still goes to the editor. The overview therefore waits out
+   * the double-click window: opening it on the first click put a backdrop under the second, so the dblclick
+   * never reached the row.
+   */
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelOpen = () => {
+    if (openTimer.current) clearTimeout(openTimer.current);
+    openTimer.current = null;
+  };
+  useEffect(() => cancelOpen, []);
   /** Jira GRW-435's shape, kept: the row being confirmed, and why the last attempt was refused. */
   const [confirmDelete, setConfirmDelete] = useState<Offer | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -56,6 +70,8 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
     const name = branchContext.branches.find((b) => b.id === locationId)?.name;
     return name ? <span className="chip pkg-branch-chip">{name}</span> : null;
   };
+
+  const viewing = viewId ? (packages.find((p) => p.id === viewId) ?? null) : null;
 
   const filtered = useMemo(() => searchPackages(packages, serviceById, search), [packages, serviceById, search]);
 
@@ -209,7 +225,30 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                   key={pkg.id}
                   data-row
                   className={`pkg-row ${pkg.active ? '' : 'is-retired'}`}
-                  onDoubleClick={writable ? () => router.push(`/packages/${pkg.id}/edit`) : undefined}
+                  onDoubleClick={
+                    writable
+                      ? () => {
+                          cancelOpen();
+                          router.push(`/packages/${pkg.id}/edit`);
+                        }
+                      : undefined
+                  }
+                  tabIndex={0}
+                  aria-haspopup="dialog"
+                  onClick={(e) => {
+                    // The ⋮ and its menu are their own targets; only the rest of the card opens the details.
+                    if ((e.target as HTMLElement).closest('.pkg-actions')) return;
+                    // Without an editor to go to there is no double-click to wait for.
+                    cancelOpen();
+                    if (!writable) setViewId(pkg.id);
+                    else openTimer.current = setTimeout(() => setViewId(pkg.id), 250);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      setViewId(pkg.id);
+                    }
+                  }}
                 >
                   <div className="pkg-row-main">
                     <span className="pkg-icon" aria-hidden="true">
@@ -321,6 +360,18 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
             noun={tn('packages')}
           />
         </>
+      )}
+
+      {viewing && (
+        <PackageOverview
+          title={viewing.title}
+          services={partsOf(viewing, serviceById).parts}
+          missingNote={partsOf(viewing, serviceById).missing > 0 ? t('missingServices', { count: partsOf(viewing, serviceById).missing }) : null}
+          priceMinor={viewing.comboPriceMinor}
+          editHref={writable ? `/packages/${viewing.id}/edit` : null}
+          editLabel={t('edit')}
+          onClose={() => setViewId(null)}
+        />
       )}
 
       {confirmDelete && (
