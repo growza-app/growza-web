@@ -100,6 +100,8 @@ export interface ReenrolResult {
   created: boolean;
   trading: boolean;
   outstandingMinor: number;
+  /** The payment this request recorded, or null when it recorded none. */
+  payment: unknown | null;
   /** The subscription the business is on now — a NEW one when `created`, which is what re-enrolling a cancelled one does. */
   subscription: { id: string };
 }
@@ -203,12 +205,23 @@ export function ReenrolModal({
   const paidAtValid = paidAtDate !== null && !Number.isNaN(paidAtDate.getTime());
   const future = paidAtValid && paidAtDate.getTime() > Date.now();
 
+  /*
+   * Admin audit 2026-10-09 (M5) — Reactivate and Resume keep the same subscription and trade again only once nothing
+   * is owed (reenrol.ts). Without a payment, that request changed nothing: a 200, an audit row for a no-op, and a
+   * note saying "Recorded, but…" about money nobody recorded. Refused here instead, saying what it needs. Re-enrol
+   * starts a NEW subscription regardless of the old bill, so it is not held to this.
+   */
+  const settlesFirst = !!preview && preview.action !== 'reenrol' && preview.outstandingMinor > 0;
   const blocker = !preview
     ? 'Loading…'
     : preview.planRetired
       ? `${preview.planName ?? preview.planCode} has been retired, so it cannot be sold again. Create a subscription on a current plan from the business page instead.`
       : reason.trim() === ''
       ? 'Enter a reason — it is recorded against your name.'
+      : !withPayment && settlesFirst
+        ? preview.mayRecordPayment
+          ? `${formatMoneyMinor(preview.outstandingMinor)} is still owed. Tick "Record a payment" and record what arrived — it cannot ${preview.action === 'resume' ? 'resume' : 'be reactivated'} until the bill is paid.`
+          : `${formatMoneyMinor(preview.outstandingMinor)} is still owed, and it cannot ${preview.action === 'resume' ? 'resume' : 'be reactivated'} until the bill is paid. Recording the payment needs someone who can record payments.`
       : !withPayment
         ? null
         : !parsedAmount.ok

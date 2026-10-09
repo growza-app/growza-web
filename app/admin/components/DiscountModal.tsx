@@ -32,28 +32,38 @@ export interface CurrentDiscount {
   endsAt: string | null;
 }
 
-/**
- * Whole calendar months between two 'YYYY-MM-DD' dates, day-of-month
- * ignored (QA pass 7). Only ever used to prefill the Duration select on
- * reopen — the server is what actually validates and computes the real
- * window (this file's own top comment), so an off-by-a-few-days rounding
- * here has no correctness consequence, only a cosmetic one.
- */
-function monthsBetween(startISO: string, endISO: string): number {
-  // GRW-171 — `split('-')` can yield fewer than two parts for a malformed
-  // date, which noUncheckedIndexedAccess now makes visible. Falling back to 0
-  // keeps the Math.max(1, ...) floor below meaningful: a bad date reads as one
-  // month rather than NaN months, which is what this cosmetic estimate wants.
-  const [sy = 0, sm = 0] = startISO.split('-').map(Number);
-  const [ey = 0, em = 0] = endISO.split('-').map(Number);
-  return Math.max(1, (ey - sy) * 12 + (em - sm));
-}
 
 export interface DiscountModalSubscription {
   id: string;
   listPriceMinor: number;
   discountAmountMinor: number;
   finalPriceMinor: number;
+  /** The next bill's extra-branch charge (Jira GRW-161). Absent means none. */
+  nextBill?: { branchAmountMinor: number };
+}
+
+/**
+ * Admin audit 2026-10-09 (M4) — the preview in the API's own arithmetic (`billFor`, billing/pricing.ts).
+ *
+ * The discount is STORED against the base price (that is what the API validates and saves), but BILLED on base plus
+ * extra branches: a percent applies to the whole of it, while a fixed or final discount stays the stored amount and
+ * the branches are added on top. The preview used the base price alone, so a salon with branches was shown "₹500 a
+ * month" for a final price of ₹500 and then billed ₹500 plus its branches.
+ */
+export function discountPreview(
+  type: 'fixed' | 'percent' | 'final',
+  typed: number,
+  basePriceMinor: number,
+  branchAmountMinor: number,
+): { storedMinor: number; outOfRange: boolean; listMinor: number; discountMinor: number; finalMinor: number } {
+  const storedRaw =
+    type === 'fixed' ? Math.round(typed * 100) : type === 'percent' ? Math.round((basePriceMinor * typed) / 100) : basePriceMinor - Math.round(typed * 100);
+  const outOfRange = storedRaw < 0 || storedRaw > basePriceMinor;
+  const storedMinor = Math.max(0, Math.min(basePriceMinor, storedRaw));
+  const listMinor = basePriceMinor + branchAmountMinor;
+  const billed = type === 'percent' ? Math.round((listMinor * typed) / 100) : storedMinor;
+  const discountMinor = Math.min(Math.max(0, billed), listMinor);
+  return { storedMinor, outOfRange, listMinor, discountMinor, finalMinor: listMinor - discountMinor };
 }
 
 /** The full round-trip shape PUT/DELETE .../discount return — matches SubscriptionPanelSubscription's own discount fields exactly, so a caller can spread the response straight onto its existing subscription state with nothing left stale. */
@@ -111,21 +121,11 @@ export function DiscountModal({
       setType(currentDiscount.type);
       setValue(String(currentDiscount.value));
       setReason(currentDiscount.reason);
-      // QA pass 7 (HIGH, confirmed independently twice) — this used to
-      // hardcode '3' whenever the discount had any end date at all,
-      // silently truncating a 6- or 12-month discount to 3 months on
-      // every reopen-and-resave, with nothing in the UI hinting it had
-      // changed. Reopening now preselects the discount's OWN original
-      // duration (whole months between when it started and when it
-      // ends) — the closest of this select's fixed options when one
-      // matches exactly, or the real computed value otherwise, so an
-      // uncommon duration is shown honestly rather than snapped to the
-      // nearest preset.
-      setDuration(
-        currentDiscount.endsAt && currentDiscount.startsAt
-          ? String(monthsBetween(currentDiscount.startsAt, currentDiscount.endsAt))
-          : '0',
-      );
+      // Admin audit 2026-10-09 (M6) — an existing discount keeps its window unless the admin picks a new one. QA
+      // pass 7 preselected its original length instead (6 months), which was right about the number and wrong about
+      // the date: every save restarted that length from today, so fixing a typo in April moved a June end to
+      // October. "Keep" sends `keepWindow`, and the API leaves the start and end exactly as they are.
+      setDuration('keep');
     } else {
       setType('fixed');
       setValue('200');
@@ -137,17 +137,11 @@ export function DiscountModal({
 
   const listPriceRupees = (subscription?.listPriceMinor ?? 0) / 100;
 
+  const branchAmountMinor = subscription?.nextBill?.branchAmountMinor ?? 0;
   const math = useMemo(() => {
-    const n = Number(value) || 0;
-    let amountMinor = 0;
-    if (type === 'fixed') amountMinor = Math.round(n * 100);
-    else if (type === 'percent') amountMinor = Math.round(((subscription?.listPriceMinor ?? 0) * n) / 100);
-    else amountMinor = (subscription?.listPriceMinor ?? 0) - Math.round(n * 100);
-    const listPriceMinor = subscription?.listPriceMinor ?? 0;
-    const outOfRange = amountMinor < 0 || amountMinor > listPriceMinor;
-    const clamped = Math.max(0, Math.min(listPriceMinor, amountMinor));
-    return { amountMinor: clamped, outOfRange, finalMinor: listPriceMinor - clamped };
-  }, [type, value, subscription?.listPriceMinor]);
+    const p = discountPreview(type, Number(value) || 0, subscription?.listPriceMinor ?? 0, branchAmountMinor);
+    return { amountMinor: p.discountMinor, outOfRange: p.outOfRange, finalMinor: p.finalMinor };
+  }, [type, value, subscription?.listPriceMinor, branchAmountMinor]);
 
   if (!businessName || !subscription) return null;
 
@@ -169,7 +163,8 @@ export function DiscountModal({
           type,
           value: type === 'percent' ? Number(value) || 0 : Math.round((Number(value) || 0) * 100),
           reason,
-          durationMonths: duration === '0' ? null : Number(duration),
+          durationMonths: duration === '0' || duration === 'keep' ? null : Number(duration),
+          keepWindow: duration === 'keep',
         }),
       },
     )
@@ -375,14 +370,15 @@ export function DiscountModal({
                   cursor: busy ? 'not-allowed' : 'pointer',
                 }}
               >
-                {!['0', '3', '6', '12'].includes(duration) ? (
-                  <option value={duration}>
-                    {duration} month{duration === '1' ? '' : 's'} (current)
+                {currentDiscount ? (
+                  <option value="keep">
+                    {currentDiscount.endsAt ? `Keep — ends ${formatDateOnly(currentDiscount.endsAt)}` : 'Keep — permanent'}
                   </option>
                 ) : null}
-                <option value="3">3 months</option>
-                <option value="6">6 months</option>
-                <option value="12">12 months</option>
+                {/* With a discount already running these restart from today, and the labels say so. */}
+                <option value="3">{currentDiscount ? '3 months from today' : '3 months'}</option>
+                <option value="6">{currentDiscount ? '6 months from today' : '6 months'}</option>
+                <option value="12">{currentDiscount ? '12 months from today' : '12 months'}</option>
                 <option value="0">Permanent</option>
               </select>
             </div>
@@ -412,6 +408,7 @@ export function DiscountModal({
             }}
           >
             <Row label="List price" value={inr(listPriceRupees)} />
+            {branchAmountMinor > 0 ? <Row label="Extra branches" value={'+ ' + inr(branchAmountMinor / 100)} /> : null}
             <Row label="Discount" value={'− ' + inr(math.amountMinor / 100)} valueColor="oklch(0.5 0.15 25)" />
             <div
               style={{
