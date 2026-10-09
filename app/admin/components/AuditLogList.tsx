@@ -133,22 +133,32 @@ interface AuditLogPage {
 }
 
 interface Filters {
-  actorId: string;
+  /**
+   * Admin audit 2026-10-09, L9 — what was typed in the Admin box: a name, a phone number or an id; the API works
+   * out which. The box used to take only a raw platform-user UUID, and every keystroke of one was a failed request
+   * and an error card.
+   */
+  actor: string;
   action: string;
   entityType: string;
+  /** The business an embedded list is locked to (`fixedTenantId`). */
   tenantId: string;
+  /** What was typed in the Business box — a name or an id, like `actor`. */
+  business: string;
   from: string;
   to: string;
 }
 
-const EMPTY_FILTERS: Filters = { actorId: '', action: '', entityType: '', tenantId: '', from: '', to: '' };
+const EMPTY_FILTERS: Filters = { actor: '', action: '', entityType: '', tenantId: '', business: '', from: '', to: '' };
 
 function filtersFromParams(params: URLSearchParams): Filters {
   return {
-    actorId: params.get('actorId') ?? '',
+    // `actorId` / `tenantId` are what links into this screen used to carry; an id still works in either box.
+    actor: params.get('actor') ?? params.get('actorId') ?? '',
     action: params.get('action') ?? '',
     entityType: params.get('entityType') ?? '',
-    tenantId: params.get('tenantId') ?? '',
+    tenantId: '',
+    business: params.get('business') ?? params.get('tenantId') ?? '',
     from: params.get('from') ?? '',
     to: params.get('to') ?? '',
   };
@@ -173,7 +183,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [filters, setFilters] = useState<Filters>(() => ({ ...filtersFromParams(searchParams), ...(fixedTenantId ? { tenantId: fixedTenantId } : {}) }));
+  const [filters, setFilters] = useState<Filters>(() => ({ ...filtersFromParams(searchParams), ...(fixedTenantId ? { tenantId: fixedTenantId, business: '' } : {}) }));
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<AuditLogPage | null>(null);
   /**
@@ -209,10 +219,11 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
     setError(null);
 
     const params = new URLSearchParams();
-    if (filters.actorId) params.set('actorId', filters.actorId);
+    if (filters.actor.trim()) params.set('actor', filters.actor.trim());
     if (filters.action) params.set('action', filters.action);
     if (filters.entityType) params.set('entityType', filters.entityType);
     if (filters.tenantId) params.set('tenantId', filters.tenantId);
+    if (filters.business.trim()) params.set('business', filters.business.trim());
     if (filters.from) params.set('from', filters.from);
     if (filters.to) params.set('to', filters.to);
     applyPageParams(params, paging);
@@ -248,7 +259,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
   const filterFields = (
     <>
       <Field label="Admin">
-        <TextInput placeholder="Platform user ID" value={filters.actorId} onChange={(e) => updateFilter('actorId', e.target.value)} />
+        <TextInput placeholder="Name or phone" value={filters.actor} onChange={(e) => updateFilter('actor', e.target.value)} />
       </Field>
       <Field label="Action">
         <Select options={['All', ...KNOWN_ACTIONS]} value={filters.action || 'All'} onChange={(e) => updateFilter('action', e.target.value === 'All' ? '' : e.target.value)} />
@@ -258,7 +269,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
       </Field>
       {fixedTenantId ? null : (
         <Field label="Business">
-          <TextInput placeholder="Tenant ID" value={filters.tenantId} onChange={(e) => updateFilter('tenantId', e.target.value)} />
+          <TextInput placeholder="Business name" value={filters.business} onChange={(e) => updateFilter('business', e.target.value)} />
         </Field>
       )}
       <Field label="From">
