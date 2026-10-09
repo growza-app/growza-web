@@ -31,12 +31,23 @@ describe('auto-focus across the whole dashboard', () => {
         return src
           .split('\n')
           .map((line, i) => ({ line: line.trim(), at: `${path.slice(app.length + 1)}:${i + 1}` }))
-          .filter(({ line }) => /\bautoFocus\b/.test(line) && !/autoFocusField\(/.test(line))
+          // A comment may name the prop it is explaining; only code counts.
+          .filter(({ line }) => !/^(\/\/|\/\*|\*)/.test(line))
+          .filter(({ line }) => /\bautoFocus\b/.test(line) && !/autoFocusField(<[^>]*>)?\(/.test(line))
           // PhoneField and the admin TextInput only pass the answer down; they do not decide it.
           .filter(({ line }) => !/autoFocus(\?)?:|autoFocus = false|autoFocus=\{autoFocus\}/.test(line))
           .map(({ at }) => at);
       });
     expect(offenders).toEqual([]);
+  });
+
+  it('is a ref, not an attribute, on the fields that come down in the page’s own HTML', () => {
+    // React compares `autoFocus` when it hydrates. The server has no pointer to ask about, so an answer computed
+    // during render disagrees with the browser's and the whole subtree reports a mismatch — which is exactly what
+    // the search box on Record payment did. These two are rendered on the server; they take focus from a ref.
+    for (const path of ['../../(tenant)/components/NewVisitSheet.tsx', '../../admin/login/page.tsx']) {
+      expect(readFileSync(resolve(__dirname, path), 'utf8')).toMatch(/useAutoFocusField<HTMLInputElement>\(\)/);
+    }
   });
 
   it('is skipped where focusing a field would raise a keyboard, and kept where it would not', () => {

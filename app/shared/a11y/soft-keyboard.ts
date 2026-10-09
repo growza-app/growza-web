@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+
 /**
  * Whether focusing a text field would raise the on-screen keyboard — and what auto-focus should do about it.
  *
@@ -11,9 +15,10 @@
  * a dialog on touch — onto the dialog itself, which is what a screen reader needs — it just does not land in a
  * field and summon the keyboard.
  *
- * Deliberately a plain function, not a hook: it is read during render, where `autoFocus` is read, and the server
- * answers "not touch", which is what it already emitted (React drops `autoFocus` from server HTML and applies it
- * on mount, so the client's answer is the one that counts).
+ * `autoFocusField()` is read during render, where `autoFocus` is read, and it is for a field that only ever mounts
+ * on the client — a sheet, a dialog, a step that opens when something is tapped. A field that is part of a page's
+ * own HTML must use `useAutoFocusField()` instead: React compares `autoFocus` when it hydrates, the server has no
+ * pointer to ask about, and the two answers disagreeing is a hydration mismatch (and a dev overlay full of it).
  */
 export function opensSoftKeyboard(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
@@ -28,6 +33,21 @@ export function opensSoftKeyboard(): boolean {
 /** `autoFocus={autoFocusField()}` — true where a keyboard is already attached, false where one would appear. */
 export function autoFocusField(wanted = true): boolean {
   return wanted && !opensSoftKeyboard();
+}
+
+/**
+ * The same answer for a field that is in a page's own HTML: a ref to put on the input, which takes focus once the
+ * page is live, on a pointer that has a keyboard behind it. Nothing is rendered either side of hydration, so the
+ * server and the browser cannot disagree.
+ */
+export function useAutoFocusField<T extends HTMLElement>(wanted = true) {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    if (wanted && !opensSoftKeyboard()) ref.current?.focus({ preventScroll: true });
+    // Only on the way in: re-focusing because a sibling's state changed would steal the caret mid-sentence.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return ref;
 }
 
 /** Does focusing this element raise the keyboard? A button or a link does not; a field does. */
