@@ -58,6 +58,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
 import { confirmRows, receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import {
@@ -2951,7 +2952,7 @@ export function NewVisitSheet({
                   aria-required={pageForm || forPayment ? true : undefined}
                   aria-label={nv.searchPlaceholder}
                   value={term}
-                  autoFocus
+                  autoFocus={autoFocusField()}
                   onFocus={() => setComboOpen(true)}
                   onKeyDown={(e) => {
                     if (!showDrop) return;
@@ -3094,7 +3095,7 @@ export function NewVisitSheet({
                         if (pickedPhoneError) setPickedPhoneError(null);
                       }}
                       error={pickedPhoneError}
-                      autoFocus={addingPhone && !pickedPhone}
+                      autoFocus={autoFocusField(addingPhone && !pickedPhone)}
                       /* Not `busy`: that includes saving this number, and a field disabled while its own save fails
                          cannot take the focus that is sent back to it with the reason. */
                       disabled={stage.step === 'saving'}

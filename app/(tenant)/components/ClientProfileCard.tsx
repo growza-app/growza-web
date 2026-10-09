@@ -10,6 +10,7 @@ import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useMayUse } from './SessionProvider';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * One client's whole story, in a card that opens over the list.
@@ -241,7 +242,7 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
                       placeholder={c.namePlaceholder}
                       disabled={saving}
                       aria-label={c.namePlaceholder}
-                      autoFocus
+                      autoFocus={autoFocusField()}
                     />
                     <div className="cpc-edit-phone-row">
                       <span className="cpc-edit-cc">+91</span>

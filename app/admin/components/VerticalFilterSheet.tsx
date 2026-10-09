@@ -5,6 +5,7 @@ import { Icon, TypeIcon } from '../icons';
 import { oklch } from '../tokens';
 import { TextInput } from './primitives';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 const ALL = 'All';
 
@@ -98,7 +99,7 @@ export function VerticalFilterSheet({
               <Icon name="search" size={16} />
             </span>
             <TextInput
-              autoFocus
+              autoFocus={autoFocusField()}
               aria-label="Search verticals"
               placeholder="Search verticals…"
               value={search}

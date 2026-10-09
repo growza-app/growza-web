@@ -11,6 +11,7 @@ import { pickNoun } from '../lib/nouns';
 import { IconCheck, IconClose, IconPlus } from '../components/icons';
 import { WeekdayHoursEditor, toWeekdayRows, type WeekdayRow } from '../components/WeekdayHoursEditor';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * Jira GRW-22 — adding somebody, in three steps, with the first one enough.
@@ -281,7 +282,7 @@ export function StaffWizard({
                 <input
                   id="wiz-name"
                   type="text"
-                  autoFocus
+                  autoFocus={autoFocusField()}
                   value={displayName}
                   placeholder={t('namePlaceholder')}
                   aria-invalid={nameInvalid ? true : undefined}
@@ -322,7 +323,7 @@ export function StaffWizard({
                   <input
                     type="text"
                     className="wiz-new-role"
-                    autoFocus
+                    autoFocus={autoFocusField()}
                     value={newRole}
                     placeholder={t('rolePlaceholder')}
                     onChange={(e) => setNewRole(e.target.value)}

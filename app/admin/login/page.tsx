@@ -6,6 +6,7 @@ import { AdminApiError } from '../lib/api';
 import { writeAdminSession } from '../lib/session';
 import { oklch } from '../tokens';
 import { Field, PrimaryButton, TextInput } from '../components/primitives';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * GRW-99's login prerequisite. The platform plane signs in by phone number,
@@ -135,7 +136,7 @@ export default function AdminLoginPage() {
               placeholder="+91 98765 43210"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              autoFocus
+              autoFocus={autoFocusField()}
               required
             />
           </Field>
@@ -156,7 +157,7 @@ export default function AdminLoginPage() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                autoFocus
+                autoFocus={autoFocusField()}
                 required
               />
             </Field>

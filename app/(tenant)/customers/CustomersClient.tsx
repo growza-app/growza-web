@@ -41,6 +41,7 @@ import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -719,7 +720,7 @@ function AddCustomerModal({
           id="add-client-phone"
           label={t('whatsappNumber')}
           required
-          autoFocus
+          autoFocus={autoFocusField()}
           value={phone}
           onChange={(v) => {
             setPhone(v);
