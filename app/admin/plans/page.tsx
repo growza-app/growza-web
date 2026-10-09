@@ -6,6 +6,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, StatusPill } from '../components/primitives';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-108's Plans screen. Every card here is derived from real data —
@@ -40,6 +41,7 @@ interface PlanSummary {
 }
 
 export default function AdminPlansPage() {
+  const canManage = useAdminMe().can('admin.plan.manage');
   const router = useRouter();
   const [plans, setPlans] = useState<PlanSummary[] | null>(null);
   const [registry, setRegistry] = useState<CapabilityKeyMeta[] | null>(null);
@@ -70,12 +72,15 @@ export default function AdminPlansPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
-        <PrimaryButton onClick={() => router.push('/admin/plans/new')}>
-          <Icon name="plus" size={16} />
-          Create plan
-        </PrimaryButton>
-      </div>
+      {/* Batch D — creating and changing plans needs `admin.plan.manage`; the screen is open to `admin.plan.view`. */}
+      {canManage ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+          <PrimaryButton onClick={() => router.push('/admin/plans/new')}>
+            <Icon name="plus" size={16} />
+            Create plan
+          </PrimaryButton>
+        </div>
+      ) : null}
 
       {error ? (
         <Card>
@@ -97,7 +102,7 @@ export default function AdminPlansPage() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 16, alignItems: 'start' }}>
           {plans.map((plan) => (
-            <PlanCard key={plan.code} plan={plan} registry={registry} onEdit={() => router.push(`/admin/plans/${plan.code}`)} />
+            <PlanCard key={plan.code} plan={plan} registry={registry} canManage={canManage} onEdit={() => router.push(`/admin/plans/${plan.code}`)} />
           ))}
         </div>
       )}
@@ -105,7 +110,7 @@ export default function AdminPlansPage() {
   );
 }
 
-function PlanCard({ plan, registry, onEdit }: { plan: PlanSummary; registry: CapabilityKeyMeta[]; onEdit: () => void }) {
+function PlanCard({ plan, registry, canManage, onEdit }: { plan: PlanSummary; registry: CapabilityKeyMeta[]; canManage: boolean; onEdit: () => void }) {
   const booleanKeys = registry.filter((k) => k.type === 'boolean');
   // BR-02 — what a plan does not include is stated as plainly as what it
   // does; both lists read the EFFECTIVE value (plan override, or the
@@ -149,7 +154,7 @@ function PlanCard({ plan, registry, onEdit }: { plan: PlanSummary; registry: Cap
         <div style={{ fontSize: 13, color: oklch.textFaint, fontWeight: 600 }}>
           {plan.businessCount} {plan.businessCount === 1 ? 'business' : 'businesses'} on this plan
         </div>
-        <SecondaryButton onClick={onEdit}>Edit plan</SecondaryButton>
+        <SecondaryButton onClick={onEdit}>{canManage ? 'Edit plan' : 'View plan'}</SecondaryButton>
       </div>
     </Card>
   );

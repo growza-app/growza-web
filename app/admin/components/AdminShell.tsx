@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
-import { adminFetch, AdminApiError } from '../lib/api';
+import { adminFetch } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
 import { BROWSER_BACK, NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
@@ -12,12 +12,8 @@ import { NotificationBell } from './NotificationBell';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
 import { useAdminSearch } from './SearchContext';
+import { useAdminMe } from './AdminMeContext';
 
-interface Me {
-  /** GRW-202 — `phone` and `roleName` so the account panel can name the role and the credential. */
-  admin: { id: string; name: string; phone: string | null; roleName: string | null };
-  permissions: string[];
-}
 
 function initialsOf(name: string): string {
   return name
@@ -38,11 +34,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [navOpen, setNavOpen] = useState(false);
-  const [me, setMe] = useState<Me['admin'] | null>(null);
+  // Batch D — /me comes from AdminMeProvider (SessionGate), shared with every screen, instead of a fetch of its own.
+  const { state: meState } = useAdminMe();
+  const me = meState.status === 'ready' ? meState.me.admin : null;
   // Null until /me answers — the nav renders nothing rather than flashing
   // items the admin may not be allowed to see.
-  const [permissions, setPermissions] = useState<string[] | null>(null);
-  const [meError, setMeError] = useState(false);
+  const permissions = meState.status === 'ready' ? meState.me.permissions : null;
+  // A 401 is handled by adminFetch's own sign-out; any other failure shows the whole nav (see below).
+  const meError = meState.status === 'error' && !meState.unauthorised;
   const [changingPassword, setChangingPassword] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
@@ -84,33 +83,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // leave it hanging open behind the new screen.
   useEffect(() => setNavOpen(false), [pathname]);
 
-  // GRW-93: the identity shown here is the admin actually signed in, not
-  // the design canvas's fixed mock person — a stale name next to a real
-  // sign-out control would be its own small QA finding.
-  useEffect(() => {
-    let cancelled = false;
-    adminFetch<Me>('/me')
-      .then((result) => {
-        if (cancelled) return;
-        setMe(result.admin);
-        setPermissions(result.permissions);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        // A 401 is genuinely handled elsewhere — SessionGate guarantees a
-        // session before this mounts, and adminFetch redirects on expiry. Any
-        // OTHER failure used to be swallowed entirely, which left the sidebar
-        // stuck on "Loading…" with blank initials and no explanation. That
-        // matters more now the nav itself is built from this response: a
-        // network blip would render an empty portal that looks like a
-        // permissions problem.
-        if (err instanceof AdminApiError && err.status === 401) return;
-        setMeError(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // GRW-93: the identity shown here is the admin actually signed in, not the design canvas's fixed mock person. A
+  // non-401 /me failure used to be swallowed, leaving the sidebar stuck on "Loading…"; the provider now records it
+  // as `error`, and the nav shows everything rather than nothing (see above).
 
   async function signOut() {
     if (signingOut) return;

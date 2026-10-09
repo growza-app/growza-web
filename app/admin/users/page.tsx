@@ -8,6 +8,7 @@ import { ADMIN_USER_COLUMNS } from '../lib/list-columns';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { oklch } from '../tokens';
 import { AddAdminModal, type RoleOption } from './AddAdminModal';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-133 — who can administer Growza, as a page rather than a query.
@@ -49,6 +50,14 @@ export default function AdminUsersPage() {
   const [showDeactivated, setShowDeactivated] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [changing, setChanging] = useState<{ user: AdminRow; status: 'active' | 'deactivated' } | null>(null);
+  /**
+   * Batch D — the users routes need `admin.user.manage`, and refuse anything involving a role with a permission you
+   * do not hold (`beyond_your_permissions`): adding someone to it, moving someone into or out of it, resetting or
+   * deactivating someone on it. Every control here was offered regardless, so a limited admin could pick Super
+   * Admin from the dropdown, type a reason, and be refused.
+   */
+  const { can, holdsAll } = useAdminMe();
+  const canManage = can('admin.user.manage');
   const [changeError, setChangeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
@@ -164,6 +173,8 @@ export default function AdminUsersPage() {
 
   const visible = data.rows.filter((u) => showDeactivated || u.status === 'active');
   const activeSupers = data.rows.filter((u) => u.roleIsBuiltin && u.status === 'active').length;
+  const rolesInReach = data.roles.filter((role) => holdsAll(role.permissions));
+  const roleInReach = (roleId: string | null) => roleId === null || rolesInReach.some((role) => role.id === roleId);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -175,7 +186,11 @@ export default function AdminUsersPage() {
               <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} />
               Show deactivated
             </label>
-            <PrimaryButton onClick={() => setAddOpen(true)}>Add administrator</PrimaryButton>
+            {canManage ? (
+              <PrimaryButton onClick={() => setAddOpen(true)}>Add administrator</PrimaryButton>
+            ) : (
+              <span style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>View only — changing administrators needs Manage administrators.</span>
+            )}
           </div>
         </div>
 
@@ -193,7 +208,13 @@ export default function AdminUsersPage() {
               // AC-03 — the last active Super Admin is protected VISIBLY, so
               // the control is absent rather than offered and then refused.
               const isLastSuper = user.roleIsBuiltin && user.status === 'active' && activeSupers === 1;
-              const locked = isSelf ? 'This is you — ask another administrator.' : isLastSuper ? 'The last Super Admin.' : null;
+              const locked = isSelf
+                ? 'This is you — ask another administrator.'
+                : isLastSuper
+                  ? 'The last Super Admin.'
+                  : !roleInReach(user.roleId)
+                    ? 'Has permissions you do not hold.'
+                    : null;
 
               return (
                 <TableRow key={user.id} columns={COLUMNS}>
@@ -205,7 +226,7 @@ export default function AdminUsersPage() {
                   </div>
 
                   <div>
-                    {locked ? (
+                    {locked || !canManage ? (
                       <span style={{ fontSize: 13, fontWeight: 700, color: oklch.textStrong }}>{user.roleName ?? 'No role'}</span>
                     ) : (
                       <select
@@ -215,7 +236,7 @@ export default function AdminUsersPage() {
                         style={{ padding: '6px 9px', borderRadius: 9, border: `1px solid ${oklch.border}`, fontSize: 12.5, fontWeight: 600, maxWidth: 170 }}
                       >
                         {user.roleId === null ? <option value="">No role</option> : null}
-                        {data.roles.map((role) => (
+                        {rolesInReach.map((role) => (
                           <option key={role.id} value={role.id}>
                             {role.name}
                           </option>
@@ -242,10 +263,10 @@ export default function AdminUsersPage() {
                       thing to do, unlike deactivating yourself, so the `locked`
                       guard above does not apply to it.
                     */}
-                    {user.status === 'active' ? (
+                    {canManage && user.status === 'active' && (isSelf || roleInReach(user.roleId)) ? (
                       <SecondaryButton onClick={() => resetPassword(user)}>Reset password</SecondaryButton>
                     ) : null}
-                    {locked ? (
+                    {!canManage ? null : locked ? (
                       <span style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600, alignSelf: 'center' }}>{locked}</span>
                     ) : user.status === 'active' ? (
                       <SecondaryButton danger onClick={() => setChanging({ user, status: 'deactivated' })}>
@@ -262,7 +283,8 @@ export default function AdminUsersPage() {
         )}
       </Card>
 
-      <AddAdminModal open={addOpen} roles={data.roles} onClose={() => setAddOpen(false)} onAdded={() => void load()} />
+      {/* Only roles within reach: the server refuses to add someone to a role with a permission you do not hold. */}
+      <AddAdminModal open={addOpen} roles={rolesInReach} onClose={() => setAddOpen(false)} onAdded={() => void load()} />
 
       <ConfirmDialog
         open={resetting !== null}

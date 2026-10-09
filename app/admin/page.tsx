@@ -27,6 +27,7 @@ import {
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
 import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL } from './dashboard-config';
+import { useAdminMe } from './components/AdminMeContext';
 
 /**
  * GRW-104's platform dashboard. GRW-020 — "Two Home labels that were not
@@ -88,6 +89,8 @@ export default function AdminDashboardPage() {
    * screen their permissions actually open.
    */
   const router = useRouter();
+  const { can } = useAdminMe();
+  const quickActions = QUICK_ACTIONS.filter((action) => can(action.permission));
   const [noWayIn, setNoWayIn] = useState(false);
 
   useEffect(() => {
@@ -220,6 +223,7 @@ export default function AdminDashboardPage() {
           leaving the cell empty. */}
       <div className="admin-dash-cols" data-has-revenue={data.revenue ? 'true' : 'false'}>
         {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}
+        {quickActions.length > 0 ? (
         <Card className="admin-dash-quick">
           <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
           {/* Fixed 5-column grid, not auto-fit/minmax — same reasoning as the KPI
@@ -229,7 +233,7 @@ export default function AdminDashboardPage() {
             style used elsewhere, on purpose — 5 short labels read better
             stacked than they did squeezed into a 2-up bordered row. */}
           <div className="admin-quick-grid">
-            {QUICK_ACTIONS.map((action) => {
+            {quickActions.map((action) => {
               const tint = ACTION_TINTS[action.tint];
               return (
                 // The reference tints the whole tile, not just an icon badge —
@@ -261,6 +265,7 @@ export default function AdminDashboardPage() {
             })}
           </div>
         </Card>
+        ) : null}
 
         {/* GRW-276 — collected revenue, from settled `payment` rows. Absent
           entirely (not zeroed) for an admin without `admin.payment.view`:
