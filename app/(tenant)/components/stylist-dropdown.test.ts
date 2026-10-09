@@ -21,7 +21,7 @@ describe('Which stylist?', () => {
   });
 
   it('offers Whoever is free (not for a token, a branch with nobody, or a service nobody does) and the able stylists', () => {
-    expect(sheet).toMatch(/const offersWhoever = !paysToken && !noStaffHere && !noOneCanDoIt;/);
+    expect(sheet).toMatch(/const offersWhoever = !forPayment && !paysToken && !noStaffHere && !noOneCanDoIt;/);
     expect(block).toMatch(/\{offersWhoever && \(\s*<option value=\{WI_WHOEVER\}>/);
     expect(block).toMatch(/\{ableProviders\.map\(\(p\) => \{/);
     // On the till that option carries the noun too, for the same reason.
@@ -52,9 +52,10 @@ describe('Which stylist?', () => {
     expect(chips).toMatch(/\.\.\.\(offersWhoever\s*\n\s*\? \[\s*\n\s*\{\s*\n\s*value: WI_WHOEVER,/);
     // How many are free is for choosing who takes this person; a payment is for work already done.
     expect(chips).toMatch(/under: forPayment \|\| later \|\| freeCount === null \? null : nv\.freeCount\(freeCount\)/);
-    expect(chips).toMatch(/\.\.\.\(forPayment \? \[\{ value: WI_NO_STYLIST/);
+    // Record payment has no "No stylist" chip any more: nobody is what it is until a name is tapped (owner, 2026-10-09).
+    expect(chips).not.toMatch(/value: WI_NO_STYLIST/);
     expect(chips).toMatch(/role="radio"\s+aria-checked=\{stylistValue === o\.value\}/);
-    expect(chips).toMatch(/onClick=\{\(\) => pickStylist\(o\.value\)\}/);
+    expect(chips).toMatch(/onClick=\{\(\) => pickStylist\(forPayment && stylistValue === o\.value \? WI_NO_STYLIST : o\.value\)\}/);
     /*
      * Owner, 2026-10-07 — ONE sideways row, like the kinds of service below it. It wrapped until now, on the
      * grounds that two scrolling rows stacked read as one; they are no longer stacked (the search box is

@@ -504,7 +504,9 @@ export function NewVisitSheet({
    * exactly as before, so this can only ever be true when `forPayment` is.
    */
   // Jira GRW-403 — a token's visit has happened: nobody, unless the desk names who did it.
-  const [noStylist, setNoStylist] = useState(Boolean(token && forPayment));
+  // Record payment is the same everywhere (owner, 2026-10-09): the work is done, so nobody is the answer until a name
+  // is tapped, and "Whoever is free" and "No stylist" are no longer chips to pick between.
+  const [noStylist, setNoStylist] = useState(forPayment);
   // GRW-198 — the booking in the chosen chair whose client never turned up. Declared here: a branch change clears it.
   const [reclaim, setReclaim] = useState<string | null>(null);
   // Jira GRW-290 — Record payment: how they paid, and the visit once it exists.
@@ -2377,7 +2379,7 @@ export function NewVisitSheet({
     }
   };
   const stylistValue = noStylist ? WI_NO_STYLIST : (schedulableId ?? WI_WHOEVER);
-  const offersWhoever = !paysToken && !noStaffHere && !noOneCanDoIt;
+  const offersWhoever = !forPayment && !paysToken && !noStaffHere && !noOneCanDoIt;
   /*
    * Record payment: the people as a row of names, one tap each (owner, 2026-10-07), where GRW-524 had made it a
    * dropdown — two taps, and every name hidden until it opened. That dropdown carried what each chair was doing
@@ -2452,7 +2454,6 @@ export function NewVisitSheet({
                       ]
                     : []),
                   ...ableProviders.map((p) => ({ value: p.id, label: p.displayName, under: chairLine(p.id), photoUrl: p.photoUrl })),
-                  ...(forPayment ? [{ value: WI_NO_STYLIST, label: noProviderWord, under: null, photoUrl: null }] : []),
                 ].map((o) => (
                   <button
                     key={o.value}
@@ -2460,7 +2461,8 @@ export function NewVisitSheet({
                     role="radio"
                     aria-checked={stylistValue === o.value}
                     className={`wi-chip ${o.under ? 'wi-chip-two' : ''} ${o.photoUrl ? 'wi-chip-faced' : ''} ${stylistValue === o.value ? 'wi-chip-on' : ''}`}
-                    onClick={() => pickStylist(o.value)}
+                    // On Record payment a second tap on the chosen name puts it back to nobody; there is no chip for that any more.
+                    onClick={() => pickStylist(forPayment && stylistValue === o.value ? WI_NO_STYLIST : o.value)}
                     disabled={busy || linesLocked}
                   >
                     {/*
