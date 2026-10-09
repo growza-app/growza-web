@@ -11,7 +11,9 @@
 
 export const PAYMENT_STATUS_VALUES = ['SUCCESS', 'PENDING', 'FAILED', 'PARTIALLY_REFUNDED', 'REFUNDED'] as const;
 
-export const INVOICE_PAYMENT_STATUS_VALUES = ['UNPAID', 'PAID', 'FAILED', 'PARTIALLY_REFUNDED', 'REFUNDED'] as const;
+// PARTIALLY_PAID (migration 0030) is written by part payments, AutoPay and the arrears allocation; without it here a
+// part-paid bill could not be filtered for and its pill read the raw code.
+export const INVOICE_PAYMENT_STATUS_VALUES = ['UNPAID', 'PARTIALLY_PAID', 'PAID', 'FAILED', 'PARTIALLY_REFUNDED', 'REFUNDED'] as const;
 
 const LABELS: Record<string, string> = {
   SUCCESS: 'Success',
@@ -20,6 +22,7 @@ const LABELS: Record<string, string> = {
   REFUNDED: 'Refunded',
   PARTIALLY_REFUNDED: 'Part refunded',
   UNPAID: 'Unpaid',
+  PARTIALLY_PAID: 'Part paid',
   PAID: 'Paid',
   ISSUED: 'Issued',
   VOID: 'Void',

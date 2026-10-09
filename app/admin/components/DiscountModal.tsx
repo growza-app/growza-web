@@ -207,7 +207,10 @@ export function DiscountModal({
   }
 
   const busy = saving || removing;
-  const canSave = reason.trim().length > 0 && !math.outOfRange && !busy;
+  // The API takes a whole-number percent (`int4NonNegative`). 12.5 used to preview happily and then fail with a
+  // generic "expected integer" — refused here instead, where the admin can still fix it.
+  const notWholePercent = type === 'percent' && value.trim() !== '' && !Number.isInteger(Number(value));
+  const canSave = reason.trim().length > 0 && !math.outOfRange && !notWholePercent && !busy;
 
   return (
     <div
@@ -335,11 +338,19 @@ export function DiscountModal({
                 id={valueId}
                 type="number"
                 min={0}
+                step={type === 'percent' ? 1 : 0.01}
                 disabled={busy}
                 value={value}
+                aria-invalid={notWholePercent || undefined}
+                aria-describedby={notWholePercent ? `${valueId}-whole` : undefined}
                 onChange={(e) => setValue(e.target.value)}
                 style={{ marginTop: 7, fontSize: 15, fontWeight: 700 }}
               />
+              {notWholePercent ? (
+                <p id={`${valueId}-whole`} role="alert" style={{ margin: '6px 0 0', fontSize: 12.5, color: 'oklch(0.5 0.17 25)' }}>
+                  Use a whole number — for example 12 or 13, not 12.5.
+                </p>
+              ) : null}
             </div>
             <div>
               <label htmlFor={durationId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>

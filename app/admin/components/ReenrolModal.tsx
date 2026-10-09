@@ -100,6 +100,8 @@ export interface ReenrolResult {
   created: boolean;
   trading: boolean;
   outstandingMinor: number;
+  /** The subscription the business is on now — a NEW one when `created`, which is what re-enrolling a cancelled one does. */
+  subscription: { id: string };
 }
 
 function localDateTimeValue(d: Date): string {
@@ -138,11 +140,13 @@ export function ReenrolModal({
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
-  useDialog(dialogRef, { onClose: saving ? undefined : onClose });
+  const open = subscriptionId !== null;
+  // `active: open`, as RecordPaymentModal passes: this modal is always mounted and renders nothing while closed, so a
+  // hook armed once at mount found no dialog and never armed again — Escape did nothing and Tab left the dialog.
+  useDialog(dialogRef, { onClose: saving ? undefined : onClose, active: open });
   const [error, setError] = useState<string | null>(null);
   const ids = useId();
 
-  const open = subscriptionId !== null;
   const openedFor = useRef<string | null>(null);
   /** Stands in for the reference of a cash payment that has none, so a resend is not a second payment. One per opening. */
   const attemptKey = useRef(newAttemptKey());

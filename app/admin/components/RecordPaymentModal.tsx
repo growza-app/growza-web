@@ -145,6 +145,9 @@ export function RecordPaymentModal({
     setPaidAt(localDateTimeValue(new Date()));
     setReason('');
     setError(null);
+    // Jira GRW-475 — a confirmation answers one figure. Left set, reopening showed "The amount is right — record it"
+    // with no warning above it, ready to send an unchecked amount pre-confirmed.
+    setNeedsConfirm(false);
   }, [open, subscription]);
 
   // Escape closes it, focus stays inside, and goes back to the button that opened it (Jira GRW-342). Not while a
@@ -336,7 +339,11 @@ export function RecordPaymentModal({
                 inputMode="decimal"
                 disabled={saving}
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  // A changed amount has not been confirmed: it goes back through the server's check (GRW-475).
+                  setNeedsConfirm(false);
+                }}
                 style={{ marginTop: 7, fontSize: 15, fontWeight: 700 }}
               />
             </div>
