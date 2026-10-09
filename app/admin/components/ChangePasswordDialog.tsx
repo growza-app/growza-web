@@ -54,7 +54,9 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
   return (
     <>
       <div
-        onClick={onClose}
+        // Same rule as Escape above: while the request is in flight the admin must not lose the dialog that will
+        // tell them whether their password changed.
+        onClick={busy ? undefined : onClose}
         style={{ position: 'fixed', inset: 0, background: 'oklch(0.2 0.02 250 / 0.4)', zIndex: 200 }}
       />
       <div

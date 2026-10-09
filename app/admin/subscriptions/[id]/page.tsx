@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';
 import { Card, SecondaryButton } from '../../components/primitives';
@@ -23,6 +23,7 @@ interface BusinessDetailResponse {
 
 export default function SubscriptionDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [meError, setMeError] = useState<string | null>(null);
   const [business, setBusiness] = useState<{ name: string; planName: string } | null>(null);
@@ -82,6 +83,9 @@ export default function SubscriptionDetailPage() {
       canDiscount={me.permissions.includes('admin.discount.manage')}
       businessName={business?.name}
       planName={business?.planName}
+      // Re-enrolling a cancelled subscription creates a new one: this page moves to it, so the admin sees the result
+      // instead of the row they re-enrolled from.
+      onReplaced={(id) => router.replace(`/admin/subscriptions/${id}`)}
     />
   );
 }

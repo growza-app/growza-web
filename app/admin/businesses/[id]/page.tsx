@@ -381,8 +381,8 @@ function BusinessDetailInner() {
         title={pendingAction === 'suspend' ? `Suspend ${business.name}?` : `Reactivate ${business.name}?`}
         description={
           pendingAction === 'suspend'
-            ? 'Its dashboard users will not be able to sign in and no proactive WhatsApp messages will be sent on its behalf. Its bookings, customers, services and WhatsApp number are untouched — this can be reversed at any time.'
-            : 'Dashboard sign-in and proactive WhatsApp messages resume immediately. Nothing else about the business changes.'
+            ? 'Its dashboard users can still sign in and look at everything, but cannot change anything except pay the bill, and no proactive WhatsApp messages will be sent on its behalf. Its bookings, customers, services and WhatsApp number are untouched — this can be reversed at any time.'
+            : 'Its dashboard users can change things again and proactive WhatsApp messages resume immediately. Nothing else about the business changes.'
         }
         confirmLabel={pendingAction === 'suspend' ? 'Suspend business' : 'Reactivate business'}
         danger={pendingAction === 'suspend'}
