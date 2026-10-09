@@ -706,6 +706,14 @@ input.wi-search-input-plain {
   justify-self: end;
 }
 
+/* The ✕'s own seat, held open on the page, where the back arrow is the way out and the ✕ is not drawn: without
+   it the title loses its middle cell and slides right. */
+.wi-close-gap {
+  width: 44px;
+  height: 44px;
+  justify-self: end;
+}
+
 /* Jira GRW-290 — Record payment: what was paid for each line, typed in place. */
 .wi-amount {
   display: inline-flex;

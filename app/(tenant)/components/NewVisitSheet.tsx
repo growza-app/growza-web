@@ -2921,9 +2921,19 @@ export function NewVisitSheet({
             {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
             {pageHead ? null : <div className="sheet-sub">{headSub}</div>}
           </div>
-          <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
-            <IconClose />
-          </button>
+          {/*
+            One way out, not two (owner, 2026-10-09). A pop-up is closed by its ✕; a page is left by its back
+            arrow. On the routed page both were drawn, 250px apart, and they went to DIFFERENT places — ← to
+            whatever opened the page, ✕ always Home — with nothing on either to say which. The ✕ stays on the
+            steps where there is nowhere to go back to, so a page is never left with no exit at all.
+          */}
+          {asPage && goBack ? (
+            <span className="wi-close-gap" aria-hidden="true" />
+          ) : (
+            <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
+              <IconClose />
+            </button>
+          )}
           {/*
             A row of its own, not the middle cell's sub-line: `.sheet-head` is `1fr auto 1fr`, so between a back
             arrow and a ✕ the middle cell is about 230px at 375 and the branch name came out as "MG Road…".
