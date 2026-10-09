@@ -44,6 +44,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const meError = meState.status === 'error' && !meState.unauthorised;
   const [changingPassword, setChangingPassword] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
   const { query, setQuery } = useAdminSearch();
   const meta = resolveRouteMeta(pathname);
@@ -87,20 +88,28 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // non-401 /me failure used to be swallowed, leaving the sidebar stuck on "Loading…"; the provider now records it
   // as `error`, and the nav shows everything rather than nothing (see above).
 
+  /**
+   * Admin audit 2026-10-09, M9 — sign-out has to reach the server, or it has not happened.
+   *
+   * This used to clear the screen whatever the request did, on the reasoning that there was no server session to
+   * end. There is (GRW-480 stamps the sign-out and revokes the refresh token) and, more to the point, the refresh
+   * cookie is HttpOnly — only the server's reply can clear it. A logout that never arrived left it in the browser,
+   * and the next visit to /admin renewed from it without asking: "signed out" on a shared computer, still signed
+   * in. So a failure now says so and leaves the admin where they are, able to try again.
+   */
   async function signOut() {
     if (signingOut) return;
     setSigningOut(true);
+    setSignOutError(null);
     try {
       await adminFetch('/auth/logout', { method: 'POST' });
     } catch {
-      // Sign out client-side regardless — there is no server-side session
-      // to fail to clear (stateless bearer tokens; see the route's own
-      // comment), so a failed request here is never a reason to leave the
-      // admin stuck signed in.
-    } finally {
-      clearAdminSession();
-      router.push('/admin/login');
+      setSignOutError('Could not sign you out — you are still signed in. Check your connection and try again.');
+      setSigningOut(false);
+      return;
     }
+    clearAdminSession();
+    router.push('/admin/login');
   }
 
   return (
@@ -353,6 +362,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Icon name="logout" size={16} />
           </button>
         </div>
+        {signOutError ? (
+          <div role="alert" style={{ marginTop: 8, padding: '0 4px', fontSize: 12, lineHeight: 1.45, fontWeight: 600, color: 'oklch(0.86 0.09 40)' }}>
+            {signOutError}
+          </div>
+        ) : null}
       </aside>
 
       {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}
