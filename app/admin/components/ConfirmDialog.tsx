@@ -5,6 +5,7 @@ import { Icon } from '../icons';
 import { oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * GRW-96's confirmation primitive. Names the target, states the consequence,
@@ -176,7 +177,7 @@ export function ConfirmDialog({
               // Not when the dialog carries a form: the first thing to fill is
               // that form's first field, and stealing focus past it means
               // every caller with children has to fight the dialog for it.
-              autoFocus={!children}
+              autoFocus={autoFocusField(!children)}
             />
             {triedWithoutReason && reasonMissing ? (
               <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, color: oklch.danger }}>

@@ -40,6 +40,8 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
   const location = b.multi && !b.pinned ? b.choice : null;
 
   useEffect(() => {
+    // The search screen is the one place where the keyboard arriving is the point: there is nothing to read
+    // until something is typed. Every other screen now waits to be asked (shared/a11y/soft-keyboard.ts).
     inputRef.current?.focus();
   }, []);
 

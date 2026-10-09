@@ -34,6 +34,7 @@ import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
 import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * Digits only — `tel:` chokes on spaces and punctuation. Duplicated from
@@ -95,7 +96,7 @@ function ServiceRow({
             onChange={(e) => onProviderChange(e.target.value)}
             onBlur={onToggleEdit}
             disabled={disabled}
-            autoFocus
+            autoFocus={autoFocusField()}
           >
             {providers.map((p) => (
               <option key={p.id} value={p.id}>

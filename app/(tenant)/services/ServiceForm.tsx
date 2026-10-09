@@ -8,6 +8,7 @@ import { packPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
 import { PackPhotoSheet } from './PackPhotoSheet';
 import { CLEANUP, DURATION, canStep, clamp, isDirty, slotMinutes, step, type Bounds, type SheetValues } from './service-sheet';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /** Rupees in the form, paise in the database — converted at this boundary only. */
 function toMinor(rupees: string): number | null {
@@ -343,7 +344,7 @@ export function ServiceForm({
                 id="svc-name"
                 type="text"
                 value={name}
-                autoFocus
+                autoFocus={autoFocusField()}
                 placeholder={t('namePlaceholder')}
                 className={fieldErrors.name ? 'field-invalid' : undefined}
                 onChange={(e) => {

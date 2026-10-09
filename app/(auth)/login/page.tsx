@@ -7,6 +7,7 @@ import { PhoneField } from '../../(tenant)/components/PhoneField';
 import { toStoredPhone } from '../../(tenant)/lib/phone';
 import { rememberLang, type Lang } from '../../(tenant)/lib/lang';
 import { localiseApiMessage } from '../../(tenant)/lib/api-messages';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * Jira GRW-66 · GRW-160 — where a salon owner signs in.
@@ -171,7 +172,7 @@ export default function LoginPage() {
                 setError(null);
               }}
               disabled={loading}
-              autoFocus
+              autoFocus={autoFocusField()}
             />
           </div>
           <div className="field">

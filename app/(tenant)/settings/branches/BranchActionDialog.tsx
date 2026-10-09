@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, api, type BranchClosePreview } from '../../lib/api';
 import { useDialog } from '../../../shared/a11y/useDialog';
+import { opensSoftKeyboard } from '../../../shared/a11y/soft-keyboard';
 
 /**
  * Jira GRW-246 — the owner closes a branch, or makes it the main one.
@@ -36,7 +37,9 @@ export function BranchActionDialog({
   useDialog(dialogRef, { onClose: busy ? undefined : onCancel });
 
   useEffect(() => {
-    reasonRef.current?.focus();
+    // Not on a phone: this dialog explains what closing a branch does, and the keyboard would cover the
+    // explanation before it has been read.
+    if (!opensSoftKeyboard()) reasonRef.current?.focus();
     if (action === 'close') api.branchClosePreview(branch.id).then(setPreview).catch(() => setPreview(null));
   }, [action, branch.id]);
 

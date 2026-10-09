@@ -7,6 +7,7 @@ import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
 import { PrimaryButton, SecondaryButton, TextInput } from './primitives';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * Recording a payment that arrived outside the payment provider (GRW-144) —
@@ -331,7 +332,7 @@ export function RecordPaymentModal({
               </label>
               <TextInput
                 id={`${ids}-amount`}
-                autoFocus
+                autoFocus={autoFocusField()}
                 inputMode="decimal"
                 disabled={saving}
                 value={amount}
