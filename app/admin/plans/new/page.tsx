@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { adminFetch, AdminApiError } from '../../lib/api';
 import { Card, Field, PrimaryButton, SecondaryButton, Select, SectionTitle, TextInput } from '../../components/primitives';
 import { oklch } from '../../tokens';
+import { useAdminMe } from '../../components/AdminMeContext';
 
 /**
  * GRW-108 — creating a plan Growza sells, closing the loop GRW-105 left
@@ -15,6 +16,7 @@ import { oklch } from '../../tokens';
  */
 export default function CreatePlanPage() {
   const router = useRouter();
+  const canManage = useAdminMe().can('admin.plan.manage');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -52,6 +54,16 @@ export default function CreatePlanPage() {
       .then((created) => router.push(`/admin/plans/${created.code}`))
       .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not create the plan.'))
       .finally(() => setSaving(false));
+  }
+
+  // Batch D — the nav and the Plans list no longer offer this to a viewer, but the URL can still be typed.
+  if (!canManage) {
+    return (
+      <Card>
+        <SectionTitle title="Create a plan" />
+        <p style={{ fontSize: 13.5, color: oklch.textMuted, margin: '6px 0 0' }}>Creating a plan needs Manage plans, which your role does not have.</p>
+      </Card>
+    );
   }
 
   return (

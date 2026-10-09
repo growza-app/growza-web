@@ -14,6 +14,7 @@ import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { Icon, TypeIcon } from '../icons';
 import { oklch, typeColor } from '../tokens';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-111's Subscriptions list, wired to real `subscription` rows (GRW-109)
@@ -63,6 +64,7 @@ export default function AdminSubscriptionsPage() {
   const [status, setStatus] = useState('All');
   /** The subscription the re-enrol dialog is open for, or null (GRW-148). */
   const [reenrolFor, setReenrolFor] = useState<string | null>(null);
+  const canManage = useAdminMe().can('admin.subscription.manage');
   /**
    * Bumped to refetch the list after an action that changed a row.
    *
@@ -247,7 +249,9 @@ export default function AdminSubscriptionsPage() {
                     {/* FR-01 — labelled with the action it will actually
                         perform, and absent entirely on a subscription that is
                         already trading normally (FR-05). */}
-                    {reenrolActionLabel(s.status) ? (
+                    {/* Batch D — re-enrol, reactivate and resume need `admin.subscription.manage`; the list is open to
+                        `admin.subscription.view`, and its dialog's first request answered a viewer with a 403. */}
+                    {canManage && reenrolActionLabel(s.status) ? (
                       <button
                         type="button"
                         onClick={(e) => {

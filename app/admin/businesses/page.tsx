@@ -12,6 +12,7 @@ import { VerticalFilterSheet } from '../components/VerticalFilterSheet';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch, STATUS_COLORS, typeColor } from '../tokens';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-101's Businesses list, wired to GRW-100's real read layer in place of
@@ -149,23 +150,20 @@ function AdminBusinessesInner() {
   /**
    * The verticals that exist, and whether this admin may add a business.
    *
-   * `/me` is the same source `AdminShell` filters the nav from — one answer
-   * about permissions in the frontend, not two that can disagree. AC-02: the
-   * control is not rendered for an admin who cannot use it, and the route
-   * refuses them regardless.
+   * AC-02: the control is not rendered for an admin who cannot use it, and the route refuses them regardless.
+   *
+   * Batch D — permissions come from the shared `/me` (`useAdminMe`) instead of a second read here, and Add business
+   * needs `admin.plan.view` as well: the form's plan picker loads `/plans`, so a role that could create but not see
+   * plans was offered a form that only ever showed a load error.
    */
   const [verticalNames, setVerticalNames] = useState<string[]>([]);
-  const [canCreate, setCanCreate] = useState(false);
+  const { can } = useAdminMe();
+  const canCreate = can('admin.business.create') && can('admin.plan.view');
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([
-      adminFetch<{ code: string; name: string }[]>('/business-types', { signal: controller.signal }),
-      adminFetch<{ permissions: string[] }>('/me', { signal: controller.signal }),
-    ])
-      .then(([types, me]) => {
-        if (controller.signal.aborted) return;
-        setVerticalNames(types.map((t) => t.name));
-        setCanCreate(me.permissions.includes('admin.business.create'));
+    adminFetch<{ code: string; name: string }[]>('/business-types', { signal: controller.signal })
+      .then((types) => {
+        if (!controller.signal.aborted) setVerticalNames(types.map((t) => t.name));
       })
       .catch(() => {
         // A filter list that failed to load is a narrower page, not a broken

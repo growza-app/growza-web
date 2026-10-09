@@ -7,6 +7,7 @@ import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle } from '
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { oklch } from '../tokens';
 import { RoleEditor, type PermissionOption, type RoleRow } from './RoleEditor';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-135 — the platform roles screen.
@@ -37,6 +38,20 @@ export default function AdminRolesPage() {
   const [deleting, setDeleting] = useState<RoleRow | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+
+  /**
+   * Batch D — what this admin may do here, said up front instead of discovered as a 403/409 after typing a reason.
+   * The same three rules the roles routes apply (roles.controller.ts): `admin.role.manage` to change anything; never
+   * the role you hold (`own_role`); never a role carrying a permission you do not (`beyond_your_permissions`).
+   */
+  const { me, can, holdsAll } = useAdminMe();
+  const canManage = can('admin.role.manage');
+  const lockedReason = (role: RoleRow): string | null =>
+    me && role.name === me.admin.roleName
+      ? 'This is your own role — ask another administrator to change it.'
+      : !holdsAll(role.permissions)
+        ? 'Has permissions you do not hold — only someone who holds them can change it.'
+        : null;
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -84,14 +99,18 @@ export default function AdminRolesPage() {
       <Card>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <SectionTitle title="Platform roles" />
-          <PrimaryButton
-            onClick={() => {
-              setEditing(null);
-              setEditorOpen(true);
-            }}
-          >
-            New role
-          </PrimaryButton>
+          {canManage ? (
+            <PrimaryButton
+              onClick={() => {
+                setEditing(null);
+                setEditorOpen(true);
+              }}
+            >
+              New role
+            </PrimaryButton>
+          ) : (
+            <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>View only — changing roles needs Manage roles.</div>
+          )}
         </div>
 
         {!data ? (
@@ -141,8 +160,10 @@ export default function AdminRolesPage() {
                     <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, maxWidth: 320 }}>
                       Cannot be changed — it is what guarantees somebody can always administer this platform.
                     </div>
+                  ) : !canManage ? null : lockedReason(role) ? (
+                    <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, maxWidth: 320 }}>{lockedReason(role)}</div>
                   ) : (
-                    <div style={{ display: 'flex', gap: 9 }}>
+                    <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
                       <SecondaryButton
                         onClick={() => {
                           setEditing(role);
@@ -151,15 +172,22 @@ export default function AdminRolesPage() {
                       >
                         Edit
                       </SecondaryButton>
-                      <SecondaryButton
-                        danger
-                        onClick={() => {
-                          setDeleteError(null);
-                          setDeleting(role);
-                        }}
-                      >
-                        Delete
-                      </SecondaryButton>
+                      {/* The server refuses to delete a role somebody still holds (`role_in_use`) — said here instead. */}
+                      {role.holders > 0 ? (
+                        <span style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600 }}>
+                          In use — move its {role.holders === 1 ? 'administrator' : 'administrators'} first to delete it.
+                        </span>
+                      ) : (
+                        <SecondaryButton
+                          danger
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleting(role);
+                          }}
+                        >
+                          Delete
+                        </SecondaryButton>
+                      )}
                     </div>
                   )}
                 </div>

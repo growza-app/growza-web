@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { refreshAdminSession } from '../lib/refresh';
 import { readAdminSession } from '../lib/session';
 import { AdminShell } from './AdminShell';
+import { AdminMeProvider } from './AdminMeContext';
 import { SessionRefresh } from './SessionRefresh';
 
 const LOGIN_PATH = '/admin/login';
@@ -73,7 +74,10 @@ export function SessionGate({ children }: { children: ReactNode }) {
     <>
       {/* Jira GRW-417 — only mounted once there is a session for it to renew. */}
       <SessionRefresh />
-      <AdminShell>{children}</AdminShell>
+      {/* Batch D — /me read once here, for the shell's nav and every screen's controls alike. */}
+      <AdminMeProvider>
+        <AdminShell>{children}</AdminShell>
+      </AdminMeProvider>
     </>
   );
 }
