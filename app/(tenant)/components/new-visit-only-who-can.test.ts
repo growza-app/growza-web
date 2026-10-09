@@ -72,7 +72,7 @@ describe('what the stylist step then offers', () => {
   });
 
   it('does not offer "Whoever is free" when nobody can be', () => {
-    expect(code).toMatch(/const offersWhoever = !paysToken && !noStaffHere && !noOneCanDoIt;/);
+    expect(code).toMatch(/const offersWhoever = !forPayment && !paysToken && !noStaffHere && !noOneCanDoIt;/);
   });
 
   it('says so, naming the service, where the stylist is chosen', () => {
