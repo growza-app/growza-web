@@ -9,6 +9,7 @@ import { Icon } from '../icons';
 import { Card, EmptyState, Field, SecondaryButton, Select, TextInput } from './primitives';
 import { Pagination, type PaginationState } from './Pagination';
 import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
+import { applyPersonFilters, NAME_SEARCH_DEBOUNCE_MS, NAME_SEARCH_UNSUPPORTED } from '../lib/audit-person-filter';
 import { oklch } from '../tokens';
 
 /**
@@ -130,6 +131,8 @@ interface AuditLogRow {
 interface AuditLogPage {
   rows: AuditLogRow[];
   total: number;
+  /** True from an API that reads the `actor` / `business` name filters (batch G); absent from an older one. */
+  searchesByName?: boolean;
 }
 
 interface Filters {
@@ -185,6 +188,11 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
 
   const [filters, setFilters] = useState<Filters>(() => ({ ...filtersFromParams(searchParams), ...(fixedTenantId ? { tenantId: fixedTenantId, business: '' } : {}) }));
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
+  /**
+   * Review fix — the Admin and Business boxes as last SEARCHED, which trails what is typed by
+   * NAME_SEARCH_DEBOUNCE_MS: each search is a wildcard query over the whole log, so not one per keystroke.
+   */
+  const [nameQuery, setNameQuery] = useState(() => ({ actor: filters.actor, business: filters.business }));
   const [page, setPage] = useState<AuditLogPage | null>(null);
   /**
    * Jira GRW-140 — what is on screen, which is no longer the same thing as
@@ -208,6 +216,15 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
   }, [filters]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      // Both bail out when nothing changed, so settling on what was already searched fetches nothing.
+      setNameQuery((q) => (q.actor === filters.actor && q.business === filters.business ? q : { actor: filters.actor, business: filters.business }));
+      setPaging((p) => (p.page === 1 && p.intent === 'replace' ? p : { ...p, page: 1, intent: 'replace' }));
+    }, NAME_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [filters.actor, filters.business]);
+
+  useEffect(() => {
     if (filters.from && filters.to && filters.to < filters.from) {
       setRangeError('End date is before the start date.');
       return;
@@ -219,17 +236,24 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
     setError(null);
 
     const params = new URLSearchParams();
-    if (filters.actor.trim()) params.set('actor', filters.actor.trim());
     if (filters.action) params.set('action', filters.action);
     if (filters.entityType) params.set('entityType', filters.entityType);
     if (filters.tenantId) params.set('tenantId', filters.tenantId);
-    if (filters.business.trim()) params.set('business', filters.business.trim());
+    const byName = applyPersonFilters(params, nameQuery);
     if (filters.from) params.set('from', filters.from);
     if (filters.to) params.set('to', filters.to);
     applyPageParams(params, paging);
 
     adminFetch<AuditLogPage>(`/audit?${params}`, { signal: controller.signal })
       .then((result) => {
+        // Review fix — an API without the name search ignores the boxes and sends every row. Shown as a list, that
+        // reads as "this is what they did"; it is not, so say so and show nothing.
+        if (byName && !result.searchesByName) {
+          setPage(null);
+          setRows([]);
+          setError(NAME_SEARCH_UNSUPPORTED);
+          return;
+        }
         setPage(result);
         setRows((prev) => mergeRows(prev, result.rows, paging.intent));
       })
@@ -243,16 +267,18 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
 
     return () => controller.abort();
      
-  }, [filters, paging]);
+  }, [filters.action, filters.entityType, filters.tenantId, filters.from, filters.to, nameQuery, paging]);
 
   function updateFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
-    setPaging((p) => ({ ...p, page: 1, intent: 'replace' }));
+    // The two text boxes go back to page 1 when their search settles (above), not on every keystroke.
+    if (key !== 'actor' && key !== 'business') setPaging((p) => ({ ...p, page: 1, intent: 'replace' }));
   }
 
   const hasActiveFilters = Object.entries(filters).some(([k, v]) => v && k !== 'tenantId') || (!fixedTenantId && filters.tenantId);
   const clearFilters = () => {
     setFilters(fixedTenantId ? { ...EMPTY_FILTERS, tenantId: fixedTenantId } : EMPTY_FILTERS);
+    setNameQuery({ actor: '', business: '' });
     setPaging((p) => ({ ...p, page: 1, intent: 'replace' }));
   };
 

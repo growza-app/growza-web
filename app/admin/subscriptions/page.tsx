@@ -219,8 +219,9 @@ function SubscriptionsList() {
           </div>
         </Card>
       ) : !page || page.total === 0 ? (
-        view ? (
+        view && status === 'All' && !discountedOnly && trimmedSearch.length < 2 ? (
           // A dashboard tile can be opened after its count has gone to 0 — that is good news, not a failed search.
+          // Only on the view alone (review fix): with a status or search on top, the empty list is theirs.
           <EmptyState icon="subs" title="None right now" sub={`No subscriptions are in “${SUBSCRIPTION_VIEWS[view]}” at the moment.`} />
         ) : hasActiveFilters ? (
           <EmptyState icon="subs" title="No subscriptions match" sub="Try a different status or search term." />

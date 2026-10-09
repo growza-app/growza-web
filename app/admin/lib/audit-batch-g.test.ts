@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { countDelta, lastMonthFigure, percentDelta, SAME_DAY_LAST_MONTH } from '../components/DashboardParts';
 import { SUBSCRIPTION_VIEWS } from './subscription-status';
+import { applyPersonFilters, NAME_SEARCH_DEBOUNCE_MS, NAME_SEARCH_UNSUPPORTED } from './audit-person-filter';
 
 /**
  * Admin portal audit, batch G (2026-10-09) — the dashboard and monitoring figures.
@@ -73,12 +74,53 @@ describe('L9 — the Audit log filters take a name', () => {
   it('Admin and Business are searched by name, not by a UUID', () => {
     expect(list).toMatch(/placeholder="Name or phone" value=\{filters\.actor\}/);
     expect(list).toMatch(/placeholder="Business name" value=\{filters\.business\}/);
-    expect(list).toMatch(/params\.set\('actor', filters\.actor\.trim\(\)\)/);
-    expect(list).toMatch(/params\.set\('business', filters\.business\.trim\(\)\)/);
+    expect(list).toMatch(/const byName = applyPersonFilters\(params, nameQuery\);/);
     expect(list).not.toMatch(/Platform user ID/);
   });
   it('old links carrying actorId / tenantId still filter', () => {
     expect(list).toMatch(/actor: params\.get\('actor'\) \?\? params\.get\('actorId'\) \?\? ''/);
     expect(list).toMatch(/business: params\.get\('business'\) \?\? params\.get\('tenantId'\) \?\? ''/);
+  });
+});
+
+describe('L9 review fixes — the Admin and Business boxes', () => {
+  const list = read('components/AuditLogList.tsx');
+  const sent = (actor: string, business = '') => {
+    const params = new URLSearchParams();
+    const byName = applyPersonFilters(params, { actor, business });
+    return { byName, query: params.toString() };
+  };
+
+  it('a name goes as actor / business; an id as the actorId / tenantId every API reads', () => {
+    expect(sent(' asha ')).toEqual({ byName: true, query: 'actor=asha' });
+    expect(sent('', 'Glow')).toEqual({ byName: true, query: 'business=Glow' });
+    expect(sent('11111111-1111-4111-8111-00000000d001', '22222222-2222-4222-8222-00000000d002')).toEqual({
+      byName: false,
+      query: 'actorId=11111111-1111-4111-8111-00000000d001&tenantId=22222222-2222-4222-8222-00000000d002',
+    });
+    // A half-typed id is a search, as the API treats it.
+    expect(sent('11111111-1111')).toEqual({ byName: true, query: 'actor=11111111-1111' });
+    expect(sent('  ', '')).toEqual({ byName: false, query: '' });
+  });
+
+  it('searches once typing settles, not per keystroke', () => {
+    expect(NAME_SEARCH_DEBOUNCE_MS).toBeGreaterThanOrEqual(250);
+    expect(list).toMatch(/setTimeout\(\(\) => \{[\s\S]*?setNameQuery\([\s\S]*?\}, NAME_SEARCH_DEBOUNCE_MS\);/);
+    // The fetch reads the settled search, not the box; and typing does not reset paging (which would refetch).
+    expect(list).toMatch(/\}, \[filters\.action, filters\.entityType, filters\.tenantId, filters\.from, filters\.to, nameQuery, paging\]\);/);
+    expect(list).toMatch(/if \(key !== 'actor' && key !== 'business'\) setPaging/);
+  });
+
+  it('an API that ignored a name search is not shown as a filtered list', () => {
+    expect(list).toMatch(/if \(byName && !result\.searchesByName\) \{\s*setPage\(null\);\s*setRows\(\[\]\);\s*setError\(NAME_SEARCH_UNSUPPORTED\);/);
+    expect(NAME_SEARCH_UNSUPPORTED).toMatch(/Paste the full id/);
+  });
+});
+
+describe('M10 review fix — the view empty state', () => {
+  it('says "None right now" only for the view alone; with a status, Discounted or search on top it is "No match"', () => {
+    const page = read('subscriptions/page.tsx');
+    expect(page).toMatch(/view && status === 'All' && !discountedOnly && trimmedSearch\.length < 2 \? \(\s*\/\/[^\n]*\n[^\n]*\n\s*<EmptyState icon="subs" title="None right now"/);
+    expect(page).toMatch(/\) : hasActiveFilters \? \(\s*<EmptyState icon="subs" title="No subscriptions match"/);
   });
 });
