@@ -102,6 +102,11 @@ import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
  * fictional client.
  */
 
+/** Only digits and the marks a number is written with, and at least one digit: what a phone number looks like as it is typed. */
+export function isNumberLike(value: string): boolean {
+  return /^[+\d\s()-]+$/.test(value) && /\d/.test(value);
+}
+
 function digitsOf(value: string): string {
   return value.replace(/[^0-9]/g, '');
 }
@@ -2973,10 +2978,14 @@ export function NewVisitSheet({
                     setActiveIdx(-1);
                     // Jira GRW-514 — seed the add block below, unless the desk has typed in it.
                     const typed = v.trim();
-                    if (digitsOf(typed).length >= 7) {
-                      if (!phoneEdited.current) setNewPhone(typed);
+                    // A number is never a name: its first digits used to land in Name and stay there once the rest
+                    // arrived (9599420200 left "959942" in Name), so a numeric search clears a name it seeded.
+                    if (isNumberLike(typed)) {
+                      if (!nameEdited.current) setNewName('');
+                      if (!phoneEdited.current) setNewPhone(digitsOf(typed).length >= 7 ? typed : '');
                     } else if (!nameEdited.current) {
                       setNewName(typed);
+                      if (!phoneEdited.current) setNewPhone('');
                     }
                   }}
                 />
