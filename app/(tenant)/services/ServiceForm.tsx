@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { api, ApiError, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { packPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
+import { PackPhotoSheet } from './PackPhotoSheet';
 import { CLEANUP, DURATION, canStep, clamp, isDirty, slotMinutes, step, type Bounds, type SheetValues } from './service-sheet';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
 
@@ -151,6 +152,10 @@ export function ServiceForm({
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState(service?.imageUrl ?? null);
   const photoRef = useRef<HTMLInputElement>(null);
+  // The owner's pick from the supplied pictures. undefined = untouched, null = go back to matching on the name.
+  const [pickedKey, setPickedKey] = useState<string | null | undefined>(undefined);
+  const [picking, setPicking] = useState(false);
+  const shownKey = pickedKey === undefined ? (service?.catalogKey ?? null) : pickedKey;
   const sheetRef = useRef<HTMLDivElement>(null);
 
   const [busy, setBusy] = useState(false);
@@ -164,7 +169,8 @@ export function ServiceForm({
     durationMin !== (service?.durationMin ?? 30) ||
     cleanupMin !== (service?.bufferAfterMin ?? 0) ||
     price !== fromMinor(service?.priceMinor ?? null) ||
-    photo !== null;
+    photo !== null ||
+    pickedKey !== undefined;
 
   const original: SheetValues = {
     name: service?.name ?? '',
@@ -174,7 +180,7 @@ export function ServiceForm({
     price: fromMinor(service?.priceMinor ?? null),
     hasNewPhoto: false,
   };
-  const current: SheetValues = { name, categoryId, durationMin, cleanupMin, price, hasNewPhoto: photo !== null };
+  const current: SheetValues = { name, categoryId, durationMin, cleanupMin, price, hasNewPhoto: photo !== null || pickedKey !== undefined };
   // On create there is nothing to compare against, so Save waits only on a name.
   const canSave = service ? isDirty(current, original) : name.trim().length > 0;
 
@@ -206,7 +212,11 @@ export function ServiceForm({
       priceMinor: toMinor(price),
     };
     try {
-      let saved = service ? await api.updateService(service.id, payload) : await api.createService(branchId, payload);
+      let saved = service
+        ? await api.updateService(service.id, { ...payload, ...(pickedKey !== undefined ? { catalogKey: pickedKey } : {}) })
+        : await api.createService(branchId, payload);
+      // Create has no key to take; the pick goes on right after, once there is a service to put it on.
+      if (!service && pickedKey) saved = await api.updateService(saved.id, { catalogKey: pickedKey });
       if (photo) {
         const withPhoto = await api.uploadServicePhoto(saved.id, photo);
         saved = { ...saved, imageUrl: withPhoto.imageUrl };
@@ -279,6 +289,8 @@ export function ServiceForm({
               <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
             ) : imageUrl ? (
               <img className="sheet-photo-img" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
+            ) : imageUrl === null && pickedKey ? (
+              <img className="sheet-photo-img" src={packPhotoUrl(pickedKey) ?? ''} alt="" />
             ) : service ? (
               /* The list shows the supplied pack picture when there is no upload; the sheet showed an empty box for the same service. */
               <img className="sheet-photo-img" src={servicePhotoUrl(service)} alt="" />
@@ -302,12 +314,16 @@ export function ServiceForm({
               <span className="sheet-photo-action">{photo || imageUrl ? t('changePhoto') : t('addPhoto')}</span>
               <span className="sheet-photo-why">{t('photoHint')}</span>
             </button>
-            {(photo || imageUrl) && (
+            <button type="button" className="sheet-photo-choose" onClick={() => setPicking(true)}>
+              {t('pack.choose')}
+            </button>
+            {(photo || imageUrl || pickedKey) && (
               <button
                 type="button"
                 className="sheet-photo-remove"
                 onClick={async () => {
                   setPhoto(null);
+                  if (pickedKey) setPickedKey(service ? null : undefined);
                   if (service && imageUrl) {
                     await api.removeServicePhoto(service.id).catch(() => {});
                     setImageUrl(null);
@@ -437,6 +453,16 @@ export function ServiceForm({
             </button>
           )}
         </div>
+        {picking && (
+          <PackPhotoSheet
+            current={shownKey}
+            onPick={(key) => {
+              setPickedKey(key);
+              setPicking(false);
+            }}
+            onClose={() => setPicking(false)}
+          />
+        )}
       </div>
     </div>
   );

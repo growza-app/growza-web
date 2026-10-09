@@ -227,6 +227,7 @@
 
 .sheet-photo {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
   padding: 14px;
@@ -270,6 +271,22 @@
   font-size: 0.8125rem;
   line-height: 1.35;
   color: var(--muted);
+}
+
+.sheet-photo-choose {
+  flex: 1 1 100%;
+  min-height: 44px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0 -14px -14px;
+  padding: 0 14px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+  text-align: left;
+  cursor: pointer;
 }
 
 .sheet-photo-remove {
@@ -485,4 +502,49 @@
     position: static;
     border-radius: var(--radius);
   }
+}
+
+/* ── Choosing a picture from the pack ─────────────────────────────────────── */
+
+.pack-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 420px) {
+  .pack-photo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.pack-photo-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--card, #fff);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pack-photo-tile img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.pack-photo-tile.is-picked {
+  border-color: var(--accent-deep);
 }
