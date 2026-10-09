@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { amountToRecord } from '../components/RecordPaymentModal';
-import { discountPreview } from '../components/DiscountModal';
+import { billingToday, canKeepWindow, discountPreview, keepFallbackMonths } from '../components/DiscountModal';
 
 /**
  * Admin portal audit, batch E (2026-10-09) — the money the billing screens show and act on.
@@ -91,12 +91,38 @@ describe('M5 — Reactivate / Resume cannot be sent as a no-op', () => {
 describe('M6 — editing a discount keeps its window', () => {
   const src = read('components/DiscountModal.tsx');
   it('an existing discount opens on "Keep", and sends keepWindow', () => {
-    expect(src).toMatch(/setDuration\('keep'\);/);
-    expect(src).toMatch(/<option value="keep">\s*\{currentDiscount\.endsAt \? `Keep — ends \$\{formatDateOnly\(currentDiscount\.endsAt\)\}` : 'Keep — permanent'\}/);
+    expect(src).toMatch(/setDuration\(canKeepWindow\(currentDiscount, billingToday\(\)\) \? 'keep' : '6'\);/);
+    expect(src).toMatch(
+      /currentDiscount && canKeepWindow\(currentDiscount, billingToday\(\)\) \? \(\s*<option value="keep">\s*\{currentDiscount\.endsAt \? `Keep — ends \$\{formatDateOnly\(currentDiscount\.endsAt\)\}` : 'Keep — permanent'\}/,
+    );
     expect(src).toMatch(/keepWindow: duration === 'keep',/);
-    expect(src).toMatch(/durationMonths: duration === '0' \|\| duration === 'keep' \? null : Number\(duration\),/);
+    // Review fix — never null for a timed discount: an API without keepWindow reads null as permanent.
+    expect(src).toMatch(/duration === 'keep' \? keepFallbackMonths\(currentDiscount\?\.endsAt \?\? null, billingToday\(\)\) : duration === '0' \? null : Number\(duration\),/);
   });
   it('the other lengths say they restart from today', () => {
     expect(src).toMatch(/\{currentDiscount \? '6 months from today' : '6 months'\}/);
+  });
+});
+
+describe('review fixes — Keep is safe on an older API, and never offered for an ended window', () => {
+  it('billingToday is the IST date, not UTC', () => {
+    // 20:00 UTC on the 9th is 01:30 on the 10th in India.
+    expect(billingToday(new Date('2026-10-09T20:00:00Z'))).toBe('2026-10-10');
+  });
+
+  it('a window ending today or earlier cannot be kept (the sweep expires it today); later or permanent can', () => {
+    expect(canKeepWindow({ endsAt: '2026-10-09' }, '2026-10-10')).toBe(false);
+    expect(canKeepWindow({ endsAt: '2026-10-10' }, '2026-10-10')).toBe(false);
+    expect(canKeepWindow({ endsAt: '2026-10-11' }, '2026-10-10')).toBe(true);
+    expect(canKeepWindow({ endsAt: null }, '2026-10-10')).toBe(true);
+    expect(canKeepWindow(null, '2026-10-10')).toBe(false);
+  });
+
+  it('the fallback duration ends within the same month on an older API, and is null only for a permanent one', () => {
+    expect(keepFallbackMonths(null, '2026-10-10')).toBeNull();
+    expect(keepFallbackMonths('2027-04-10', '2026-10-10')).toBe(6);
+    expect(keepFallbackMonths('2027-04-11', '2026-10-10')).toBe(7);
+    expect(keepFallbackMonths('2026-10-20', '2026-10-10')).toBe(1);
+    expect(keepFallbackMonths('2099-01-01', '2026-10-10')).toBe(240);
   });
 });

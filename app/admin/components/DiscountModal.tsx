@@ -66,6 +66,33 @@ export function discountPreview(
   return { storedMinor, outOfRange, listMinor, discountMinor, finalMinor: listMinor - discountMinor };
 }
 
+/** Today's date in the billing zone (IST), 'YYYY-MM-DD' — the calendar the API's discount windows are written in. */
+export function billingToday(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+}
+
+/**
+ * Review fix — whether "Keep" can be offered. The expiry sweep removes a discount whose end is today or earlier,
+ * so keeping that window would save an edit only for it to be swept away; the API refuses it, and so does this.
+ */
+export function canKeepWindow(current: Pick<CurrentDiscount, 'endsAt'> | null, today: string): boolean {
+  return current !== null && (current.endsAt === null || current.endsAt > today);
+}
+
+/**
+ * Review fix — the `durationMonths` sent beside `keepWindow`. An API without batch E ignores `keepWindow` and reads
+ * this alone; `null` there means PERMANENT, so "Keep" on a 6-month discount would have made it run for ever. Whole
+ * months from today to the current end, rounded up, so an older API ends it within the same month instead. A
+ * permanent discount sends null, which is right on either API.
+ */
+export function keepFallbackMonths(endsAt: string | null, today: string): number | null {
+  if (endsAt === null) return null;
+  const [ty = 0, tm = 0, td = 0] = today.split('-').map(Number);
+  const [ey = 0, em = 0, ed = 0] = endsAt.split('-').map(Number);
+  const months = (ey - ty) * 12 + (em - tm) + (ed > td ? 1 : 0);
+  return Math.min(240, Math.max(1, months));
+}
+
 /** The full round-trip shape PUT/DELETE .../discount return — matches SubscriptionPanelSubscription's own discount fields exactly, so a caller can spread the response straight onto its existing subscription state with nothing left stale. */
 export interface DiscountedSubscription extends DiscountModalSubscription {
   discountType: 'fixed' | 'percent' | 'final' | null;
@@ -124,8 +151,9 @@ export function DiscountModal({
       // Admin audit 2026-10-09 (M6) — an existing discount keeps its window unless the admin picks a new one. QA
       // pass 7 preselected its original length instead (6 months), which was right about the number and wrong about
       // the date: every save restarted that length from today, so fixing a typo in April moved a June end to
-      // October. "Keep" sends `keepWindow`, and the API leaves the start and end exactly as they are.
-      setDuration('keep');
+      // October. "Keep" sends `keepWindow`, and the API leaves the start and end exactly as they are. A window that
+      // has already closed cannot be kept (review fix), so that edit starts a new one.
+      setDuration(canKeepWindow(currentDiscount, billingToday()) ? 'keep' : '6');
     } else {
       setType('fixed');
       setValue('200');
@@ -163,7 +191,8 @@ export function DiscountModal({
           type,
           value: type === 'percent' ? Number(value) || 0 : Math.round((Number(value) || 0) * 100),
           reason,
-          durationMonths: duration === '0' || duration === 'keep' ? null : Number(duration),
+          durationMonths:
+            duration === 'keep' ? keepFallbackMonths(currentDiscount?.endsAt ?? null, billingToday()) : duration === '0' ? null : Number(duration),
           keepWindow: duration === 'keep',
         }),
       },
@@ -370,7 +399,7 @@ export function DiscountModal({
                   cursor: busy ? 'not-allowed' : 'pointer',
                 }}
               >
-                {currentDiscount ? (
+                {currentDiscount && canKeepWindow(currentDiscount, billingToday()) ? (
                   <option value="keep">
                     {currentDiscount.endsAt ? `Keep — ends ${formatDateOnly(currentDiscount.endsAt)}` : 'Keep — permanent'}
                   </option>
