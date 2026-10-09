@@ -30,7 +30,7 @@ describe('New booking, first screen', () => {
   });
 
   it('the search seeds the block, but never over what the desk typed', () => {
-    expect(code).toMatch(/if \(digitsOf\(typed\)\.length >= 7\) \{\s*if \(!phoneEdited\.current\) setNewPhone\(typed\);/);
+    expect(code).toMatch(/if \(!phoneEdited\.current\) setNewPhone\(digitsOf\(typed\)\.length >= 7 \? typed : ''\);/);
     expect(code).toMatch(/else if \(!nameEdited\.current\) \{\s*setNewName\(typed\);/);
     expect(code).toMatch(/nameEdited\.current = true;\s*setNewName\(e\.target\.value\)/);
     expect(code).toMatch(/phoneEdited\.current = true;\s*setNewPhone\(v\)/);
