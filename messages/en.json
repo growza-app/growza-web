@@ -1571,6 +1571,8 @@
       "tagline": "Manage your bookings, staff and services.",
       "phone": "Phone number",
       "password": "Password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
       "submit": "Sign in",
       "signingIn": "Signing in…",
       "forgot": "Forgotten your password? Ask whoever set up your account.",
