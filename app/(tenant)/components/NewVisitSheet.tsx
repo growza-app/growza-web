@@ -58,7 +58,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
-import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
 import { confirmRows, receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import {
@@ -407,6 +407,9 @@ export function NewVisitSheet({
 
   // Stage 1 — find them
   const [term, setTerm] = useState('');
+  // On the New booking and Record payment PAGES this box is part of the server's HTML, so the keyboard question is
+  // asked after hydration through this ref rather than through `autoFocus`, which the two sides would disagree on.
+  const searchRef = useAutoFocusField<HTMLInputElement>();
   // Jira GRW-520 — the matches are a dropdown under the box: open while typing, closed by a pick, Escape or
   // tapping elsewhere; `activeIdx` is the row the arrow keys are on (-1: none).
   const [comboOpen, setComboOpen] = useState(true);
@@ -2478,7 +2481,19 @@ export function NewVisitSheet({
                     */}
                     {o.photoUrl ? (
                       <>
-                        <img className="wi-chip-face" src={o.photoUrl} alt="" />
+                        {/*
+                          A photo that does not load leaves the browser's broken-image glyph in front of the
+                          name — a torn page where a face should be, on every chip, for as long as the file is
+                          missing. The chip then reads as the photoless one it already knows how to be.
+                        */}
+                        <img
+                          className="wi-chip-face"
+                          src={o.photoUrl}
+                          alt=""
+                          onError={(e) => {
+                            e.currentTarget.hidden = true;
+                          }}
+                        />
                         <span className="wi-chip-lines">
                           {o.label}
                           {o.under ? <span className="wi-chip-under">{o.under}</span> : null}
@@ -2906,9 +2921,19 @@ export function NewVisitSheet({
             {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
             {pageHead ? null : <div className="sheet-sub">{headSub}</div>}
           </div>
-          <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
-            <IconClose />
-          </button>
+          {/*
+            One way out, not two (owner, 2026-10-09). A pop-up is closed by its ✕; a page is left by its back
+            arrow. On the routed page both were drawn, 250px apart, and they went to DIFFERENT places — ← to
+            whatever opened the page, ✕ always Home — with nothing on either to say which. The ✕ stays on the
+            steps where there is nowhere to go back to, so a page is never left with no exit at all.
+          */}
+          {asPage && goBack ? (
+            <span className="wi-close-gap" aria-hidden="true" />
+          ) : (
+            <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
+              <IconClose />
+            </button>
+          )}
           {/*
             A row of its own, not the middle cell's sub-line: `.sheet-head` is `1fr auto 1fr`, so between a back
             arrow and a ✕ the middle cell is about 230px at 375 and the branch name came out as "MG Road…".
@@ -2952,7 +2977,7 @@ export function NewVisitSheet({
                   aria-required={pageForm || forPayment ? true : undefined}
                   aria-label={nv.searchPlaceholder}
                   value={term}
-                  autoFocus={autoFocusField()}
+                  ref={searchRef}
                   onFocus={() => setComboOpen(true)}
                   onKeyDown={(e) => {
                     if (!showDrop) return;

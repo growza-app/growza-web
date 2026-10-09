@@ -561,7 +561,10 @@ const inputBase: CSSProperties = {
  * stays, so the red border can survive the error that caused it. Found by
  * opening the page — `npm run build:web` and every test were happy with it.
  */
-export function TextInput({ invalid, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
+export function TextInput({
+  invalid,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean; ref?: React.Ref<HTMLInputElement> }) {
   return (
     <input
       {...props}

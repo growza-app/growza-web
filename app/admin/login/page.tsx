@@ -6,7 +6,7 @@ import { AdminApiError } from '../lib/api';
 import { writeAdminSession } from '../lib/session';
 import { oklch } from '../tokens';
 import { Field, PrimaryButton, TextInput } from '../components/primitives';
-import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * GRW-99's login prerequisite. The platform plane signs in by phone number,
@@ -20,6 +20,9 @@ import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 export default function AdminLoginPage() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
+  // Rendered in the page's own HTML, so focus comes from the ref after hydration, not from an `autoFocus` the
+  // server and the browser would answer differently.
+  const phoneRef = useAutoFocusField<HTMLInputElement>();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +139,7 @@ export default function AdminLoginPage() {
               placeholder="+91 98765 43210"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              autoFocus={autoFocusField()}
+              ref={phoneRef}
               required
             />
           </Field>
