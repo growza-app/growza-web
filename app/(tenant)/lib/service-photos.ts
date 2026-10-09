@@ -107,6 +107,9 @@ const CATEGORY_PLACEHOLDERS: Record<string, string> = {
 
 const DEFAULT_PLACEHOLDER = '/service-photos/default.jpg';
 
+/** The concepts an owner can pick from, in the order the pack lists them — for the "Choose a photo" sheet. */
+export const PACK_KEY_LIST: readonly string[] = [...PACK_KEYS];
+
 /** The pack's picture for a concept, or null when that one has not been made yet. */
 export function packPhotoUrl(catalogKey: string | null | undefined): string | null {
   return catalogKey && PACK_KEYS.has(catalogKey) ? `/catalog/${catalogKey}.webp` : null;
