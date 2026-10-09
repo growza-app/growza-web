@@ -96,7 +96,7 @@ export function PlanForm({
           View only — changing plans needs Manage plans.
         </div>
       )}
-      <fieldset disabled={!canManage} style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <fieldset disabled={!canManage} className="admin-view-only" style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <PlanDetailsCard plan={plan} onSaved={onPlanUpdated} />
         <PricingCard plan={plan} onVersionCreated={onVersionCreated} />
         <StatusCard plan={plan} otherActivePlansCount={otherActivePlansCount} onSaved={onPlanUpdated} />

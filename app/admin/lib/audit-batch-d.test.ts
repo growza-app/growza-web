@@ -95,6 +95,9 @@ describe('Plans', () => {
   it('the plan form is read-only for a viewer — one fieldset, nothing missed', () => {
     const form = read('components/PlanForm.tsx');
     expect(form).toMatch(/<fieldset disabled=\{!canManage\}/);
+    // …and looks it: the buttons inside style themselves from a prop the fieldset does not pass down.
+    expect(form).toMatch(/<fieldset disabled=\{!canManage\} className="admin-view-only"/);
+    expect(read('admin.css')).toMatch(/\.admin-view-only button:disabled \{\s*opacity: 0\.5 !important;/);
     expect(form).toMatch(/View only — changing plans needs Manage plans\./);
   });
   it('/admin/plans/new typed directly says why instead of offering a form that will be refused', () => {
