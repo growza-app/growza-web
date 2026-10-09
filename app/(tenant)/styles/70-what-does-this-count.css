@@ -117,6 +117,29 @@
   font-size: 16px;
 }
 
+/* The fields were a 1px #e8eaea line plus a faint inset shadow on a white card: they read as blank space, and
+   focus only changed that hairline. A 3:1 border (WCAG 1.4.11) marks the edge, focus darkens it. */
+.login-card .field input,
+.login-card .phone-field {
+  border: 1.5px solid #84948c;
+  background: #fff;
+}
+.login-card .field input {
+  border-radius: var(--radius-sm);
+}
+.login-card .phone-field input {
+  border: 0;
+}
+.login-card .phone-dial {
+  border-right: 1.5px solid #84948c;
+  background: #eef1ef;
+  color: var(--text);
+}
+.login-card .field input:focus,
+.login-card .phone-field:focus-within {
+  border-color: var(--accent-deep);
+}
+
 .login-error {
   margin: 0;
 }
@@ -476,4 +499,29 @@
 
 .account-status-contact:hover {
   background: var(--accent-soft);
+}
+
+/* Eye on the password box: the button sits inside the field's right edge, the input leaves room for it. */
+.password-field {
+  position: relative;
+}
+.password-field input {
+  padding-right: 48px;
+}
+.password-eye {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.password-eye:hover:not(:disabled) {
+  color: var(--text);
 }
