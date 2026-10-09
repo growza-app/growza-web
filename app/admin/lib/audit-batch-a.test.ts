@@ -150,3 +150,12 @@ describe('L6 — a percent discount must be whole', () => {
     expect(src).toMatch(/Use a whole number — for example 12 or 13, not 12\.5\./);
   });
 });
+
+describe('Found in browser QA — the re-enrol dialog can always be closed', () => {
+  const src = read('components/ReenrolModal.tsx');
+  it('shows a Close button when it cannot load, and stops saying it is still working', () => {
+    const errorState = src.slice(src.indexOf('{loadError ? ('), src.indexOf(') : !preview ? ('));
+    expect(errorState).toMatch(/<SecondaryButton onClick=\{onClose\}>Close<\/SecondaryButton>/);
+    expect(src).toMatch(/: loadError\s*\? 'This cannot be done from here\.'\s*: 'Working out what this needs…'/);
+  });
+});

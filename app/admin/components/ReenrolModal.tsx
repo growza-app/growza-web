@@ -303,13 +303,25 @@ export function ReenrolModal({
             {copy?.title ?? 'Continue this subscription'}
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
-            {preview ? `${preview.businessName} — currently ${preview.currentStatus.toLowerCase().replace(/_/g, ' ')}` : 'Working out what this needs…'}
+            {preview
+              ? `${preview.businessName} — currently ${preview.currentStatus.toLowerCase().replace(/_/g, ' ')}`
+              : loadError
+                ? 'This cannot be done from here.'
+                : 'Working out what this needs…'}
           </p>
         </div>
 
         <div style={{ padding: '18px 24px 24px', display: 'grid', gap: 16 }}>
           {loadError ? (
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{loadError}</div>
+            <>
+              <div role="alert" style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{loadError}</div>
+              {/* Admin audit 2026-10-09 — this state had no button at all: a business that already has an open
+                  subscription (the list still offers Re-enrol on its old row) left the admin with only Escape or a
+                  click outside, neither of which is visible. */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <SecondaryButton onClick={onClose}>Close</SecondaryButton>
+              </div>
+            </>
           ) : !preview ? (
             <div style={{ fontSize: 13.5, color: oklch.textMuted }}>Loading…</div>
           ) : (
