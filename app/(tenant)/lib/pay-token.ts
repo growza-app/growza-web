@@ -36,3 +36,22 @@ export function payVisitHref(
   if (from) q.set('from', from);
   return `/appointments/new?${q.toString()}`;
 }
+
+/**
+ * Owner, 2026-10-10 — "Fix a mistake" on the done screen: the visit that was just settled, OPEN.
+ *
+ * It was a bare link to `/appointments`, which on a busy day is twenty-five rows and a hunt for the one the
+ * desk has this second got wrong. `?open=` opens a booking by id — Search already uses it, and it looks
+ * through the whole day before any filter, so the status segment cannot hide the row.
+ *
+ * `date`/`to` ride along because the list shows today: a visit settled just after midnight, or a booking
+ * paid ahead of its day, is not in today's list and the sheet would never find it.
+ */
+export function fixVisitHref(appointmentId: string, day?: string | null): string {
+  const q = new URLSearchParams({ open: appointmentId });
+  if (day) {
+    q.set('date', day);
+    q.set('to', day);
+  }
+  return `/appointments?${q.toString()}`;
+}

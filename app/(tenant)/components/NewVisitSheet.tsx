@@ -59,7 +59,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
-import { payVisitHref } from '../lib/pay-token';
+import { fixVisitHref, payVisitHref } from '../lib/pay-token';
 import { ServiceSheet } from './ServiceSheet';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
@@ -3310,6 +3310,7 @@ export function NewVisitSheet({
     stage.step === 'paid' ? (
       <PaymentDone
         appointmentId={stage.result.appointmentId}
+        fixHref={fixVisitHref(stage.result.appointmentId, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(stage.result.startAt)))}
         totalMinor={stage.totalMinor}
         mode={stage.mode}
         modeLabel={PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode}

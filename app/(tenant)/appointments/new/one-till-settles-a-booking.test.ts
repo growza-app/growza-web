@@ -103,6 +103,24 @@ describe('one till settles a booking too', () => {
     expect(flow).toMatch(/phone: token\?\.customerPhone \?\? visit\?\.appointment\.customerPhone \?\? \(client\.kind === 'existing' \? client\.phone : null\)/);
   });
 
+  it('opens the settled booking from "Fix a mistake", not the list it is somewhere in', () => {
+    /*
+     * It was a bare `<Link href="/appointments">`: on a busy day, twenty-five rows and a hunt for the one
+     * the desk has this second got wrong. `?open=` opens a booking by id (Search already uses it) and looks
+     * through the whole day before any filter, so the status segment cannot hide a just-completed row.
+     */
+    const done = strip(readFileSync(resolve(here, '../../components/PaymentDone.tsx'), 'utf8'));
+    expect(done).toMatch(/<Link href=\{fixHref\}/);
+    expect(done).toMatch(/fixHref = '\/appointments',/);
+    const lib = strip(readFileSync(resolve(here, '../../lib/pay-token.ts'), 'utf8'));
+    expect(lib).toMatch(/export function fixVisitHref\(appointmentId: string, day\?: string \| null\)/);
+    // The day goes too: a visit settled just after midnight is not in today's list.
+    expect(lib).toMatch(/q\.set\('date', day\);\s*\n\s*q\.set\('to', day\);/);
+    // Both done screens name the visit; neither is left on the bare list.
+    expect(flow).toMatch(/fixHref=\{fixVisitHref\(sale\.appointmentId, sale\.day\)\}/);
+    expect(sheet).toMatch(/fixHref=\{fixVisitHref\(stage\.result\.appointmentId,/);
+  });
+
   it('builds that address in one place, so three doors cannot drift', () => {
     const lib = strip(readFileSync(resolve(here, '../../lib/pay-token.ts'), 'utf8'));
     expect(lib).toMatch(/export function payVisitHref\(/);

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
+import { fixVisitHref } from '../../lib/pay-token';
 import type { Appointment, PaymentMode, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
@@ -52,6 +53,8 @@ interface Sale {
   bill: ReceiptRow[];
   phone: string | null;
   summary: string;
+  /** The visit's own day in the salon's zone — what "Fix a mistake" needs to find it in the list. */
+  day: string;
 }
 
 /**
@@ -475,6 +478,7 @@ export function PayFlow({
          */
         phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
         summary: [tokenNo !== null ? nv.token(tokenNo) : null, modeWord(mode), names, stylist].filter(Boolean).join(' · '),
+        day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
       });
       setStep('done');
     } catch (e) {
@@ -562,6 +566,7 @@ export function PayFlow({
     return (
       <PaymentDone
         appointmentId={sale.appointmentId}
+        fixHref={fixVisitHref(sale.appointmentId, sale.day)}
         totalMinor={sale.totalMinor}
         mode={sale.mode}
         modeLabel={modeWord(sale.mode)}
