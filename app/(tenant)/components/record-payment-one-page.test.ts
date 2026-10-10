@@ -18,7 +18,8 @@ const css = readFileSync(resolve(here, '../styles/72-walk-in-sheet.css'), 'utf8'
 describe('Record payment fits one phone screen', () => {
   it('never asks for a date or a time — the header says when instead', () => {
     // The whole `wi-when` row is skipped, rather than rendered with both controls disabled.
-    expect(sheet).toMatch(/Record payment never asks[\s\S]{0,120}\{forPayment \? null : \(/);
+    // `bookForm` joined it 2026-10-10 — New booking asks the same question once, inside its When row.
+    expect(sheet).toMatch(/Record payment never asks[\s\S]{0,400}\{forPayment \|\| bookForm \? null : \(/);
     expect(sheet).toMatch(/<span className="wi-head-now">\{nowLabel\}<\/span>/);
     // And the clock is kept true: `nowLabel` is only as fresh as the last render, and a till may sit idle for minutes.
     expect(sheet).toMatch(/setInterval\(\(\) => setMinute\(\(n\) => n \+ 1\), 30_000\)/);
@@ -59,7 +60,10 @@ describe('Record payment fits one phone screen', () => {
     // One column: three photo cards were ~100px wide at 344px and cut "Anti-Ageing Facial" to "Anti-Ageing F…".
     expect(css).toMatch(/\.wi-card-main \{[^}]*grid-template-columns: 2\.75rem minmax\(0, 1fr\) 1\.5rem;/);
     expect(css).toMatch(/\.wi-card-main \{[^}]*min-height: 3\.5rem;/);
-    expect(css).not.toMatch(/repeat\(3, minmax\(0, 1fr\)\)/);
+    // The menu's OWN rule, not the file: New booking's "what happens now" is three equal boxes and is allowed
+    // to be a 3-up grid. What must never come back is a three-across MENU.
+    const list = css.slice(css.indexOf('.wi-service-list {'));
+    expect(list.slice(0, list.indexOf('}'))).not.toMatch(/repeat\(3, minmax\(0, 1fr\)\)/);
     // A SHEET alone keeps hiding the untyped list; both pages list the menu (owner, 2026-10-07 — align the two).
     expect(sheet).toMatch(/!onPage && services !== null && services\.length > 0/);
   });

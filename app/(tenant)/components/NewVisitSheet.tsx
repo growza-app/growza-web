@@ -59,6 +59,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
+import { ServiceSheet } from './ServiceSheet';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
 import { PaymentDone } from './PaymentDone';
@@ -67,8 +68,10 @@ import {
   IconArrowLeft,
   IconCheck,
   IconChevronDown,
+  IconChevronRight,
   IconClose,
   IconMapPin,
+  IconScissors,
   IconMinus,
   IconPayCard,
   IconPayCash,
@@ -76,6 +79,7 @@ import {
   IconPayUpi,
   IconPlus,
   IconSearch,
+  IconUser,
 } from './icons';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -346,6 +350,21 @@ export function NewVisitSheet({
   const pageForm = presentation === 'page' && !token;
   /** Record payment on its own routed page — the one-screen till the mock draws, not the New booking form. */
   const payPage = forPayment && presentation === 'page';
+  /*
+   * New booking's own page, and ONLY it (owner, 2026-10-10).
+   *
+   * `pageForm` is true on Record payment too, so every gate below has to say `!forPayment` as well or the till
+   * loses the menu it was deliberately given. The two screens do different jobs: the till rings up what has
+   * already happened and wants its catalogue in front of it; New booking records a decision that has not been
+   * made yet, and a catalogue there is 52 services asked of someone who already knows which one they want.
+   *
+   * What this flag turns off: the browsable menu (kinds, photos, pager), the stylist row, and the Booking date
+   * and time pair. Each becomes ONE line saying its answer, which opens the full control. Three questions, each
+   * asked once, instead of eleven controls two of which could contradict each other.
+   */
+  const bookForm = pageForm && !forPayment;
+  /** Which question is open over the form. `null` is the form itself. */
+  const [asking, setAsking] = useState<'services' | null>(null);
   /**
    * Both routed pages — New booking and Record payment — pick services the same way (owner, 2026-10-07).
    *
@@ -1261,6 +1280,34 @@ export function NewVisitSheet({
     };
   }, [later, stage.step, onForm, pageForm, day, picked, extras, schedulableId, listBranch, timezone]);
 
+  /**
+   * The Booking time, against what is actually free.
+   *
+   * `askedMatch` is the slot the grid should land on for the time asked for: that time if it is free, else
+   * the first free one after it, else nothing. The fetch effect above seeds a slot ONCE per load from
+   * `timeWantedRef`; this is what makes CHANGING the select move the grid, which it did not do when the
+   * control was last on this screen — the reason it was taken off.
+   *
+   * Up here with the other hooks, NOT beside the markup that reads it: `if (checkoutRows…) return` above
+   * renders the till instead of the form, so a hook below it runs on some renders and not others. React
+   * counts hooks, and "Take payment now" took the whole screen down with "Rendered fewer hooks than
+   * expected" the first time the till opened.
+   */
+  const slotList = useMemo(() => (slots ? slots.sections.flatMap((sec) => sec.slots) : []), [slots]);
+  const askedMatch = useMemo(() => {
+    if (!timeWanted || slotList.length === 0) return null;
+    const hm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const at = (utc: string) => hm.format(new Date(utc));
+    const exact = slotList.find((sl) => at(sl.utc) === timeWanted);
+    return { exact: Boolean(exact), slot: exact ?? slotList.find((sl) => at(sl.utc) > timeWanted) ?? null };
+  }, [timeWanted, slotList, timezone]);
+
+  // Asking for a time moves the grid to it. Keyed on the ASK, so a slot tapped by hand afterwards is left alone.
+  useEffect(() => {
+    if (!timeWanted || !askedMatch) return;
+    setSlotUtc(askedMatch.slot?.utc ?? null);
+  }, [timeWanted, askedMatch]);
+
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
    *
@@ -1364,6 +1411,8 @@ export function NewVisitSheet({
   const noChairFree = freeCount === 0 || noStaffHere || noOneCanDoIt;
   /** Hoisted out of the tray: the chips above the button and the button itself have to agree about this. */
   const queueOffered = !later && !reclaim && !forPayment;
+  /** The same question with the time taken out of it: may this visit wait at all, whatever it is set to now? */
+  const canQueue = onPage && !reclaim && !forPayment;
   /** A page decides the outcome with chips; the sheet still decides it by which of two buttons is pressed. */
   const pageOutcome = onPage && queueOffered;
   const outcome = outcomeWanted ?? (noChairFree ? 'queue' : 'start');
@@ -2298,7 +2347,8 @@ export function NewVisitSheet({
    * offered what the branch could not do, and GRW-456 disabled it outright at a branch with nobody on. Chips
    * have no such problem: with no chair free, "Waiting" is simply the chip that arrives chosen.
    */
-  const outcomeChips = pageOutcome ? (
+  // New booking asks this as the first option in the When sheet, so the chips are Record payment's alone.
+  const outcomeChips = pageOutcome && !bookForm ? (
     <div className="wi-pay-modes" role="radiogroup" aria-label={nv.whatNow}>
       <span className="wi-pay-modes-label">{nv.whatNow}</span>
       <div className="wi-chips">
@@ -2825,6 +2875,365 @@ export function NewVisitSheet({
     </>
   );
 
+  /*
+   * ── New booking, one question per line (owner, 2026-10-10) ────────────────────────────────────────────────
+   *
+   * The screen carried eleven controls: a client box, a date, a time, a sideways row of stylists, a service box,
+   * a sideways row of kinds, three photo rows, a pager, and a Waiting/Starting pair. Two sideways scrollers
+   * stacked on each other, two pagers' worth of browsing, and a menu of fifty-two offered to someone who already
+   * knows what they want. It did not fit a 344px phone, and two pairs of controls could contradict each other:
+   *
+   *   · the Booking time and the free-slot grid both set when the visit starts, and the grid silently moved the
+   *     time to "the first free one after it" — the desk promised 2:00 and the salon booked 2:30;
+   *   · a stylist and a time could both be chosen and then thrown away by Add to waiting queue, which sends
+   *     neither (`queueIt`): Priya was picked, and nothing said she had been dropped.
+   *
+   * So each question is asked once, on one line, and the line opens the control that answers it. Waiting stops
+   * being a chip beside Starting and becomes the FIRST thing the When sheet offers, because a token is simply the
+   * answer with no time in it. Record payment keeps its menu untouched — see `bookForm`.
+   */
+  /**
+   * The three answers to "when", and the real times under the third.
+   *
+   * Waiting first: it is the only answer with no time in it, and a desk with every chair busy wants it before it
+   * wants a clock. "Now" is the walk-in. "Pick a time" is what both `dateChosen` and the old Booking time select
+   * meant, and it leads to the free-slot grid — the ONE list that knows what is actually free. The quarter-hour
+   * select that used to sit above that grid is gone: it did not know, and the grid quietly overruled it.
+   */
+  const pickWhen = (what: 'queue' | 'now' | 'pick') => {
+    setOutcomeWanted(what === 'queue' ? 'queue' : 'start');
+    if (what === 'pick') {
+      setDateChosen(true);
+      return;
+    }
+    setDateChosen(false);
+    setTimeWanted('');
+    setSlotUtc(null);
+  };
+  const whenChoice = (value: 'queue' | 'now' | 'pick', on: boolean, label: string, off = false) => (
+    <button
+      key={value}
+      type="button"
+      role="radio"
+      aria-checked={on}
+      className={`wi-when-opt ${on ? 'wi-when-opt-on' : ''}`}
+      onClick={() => pickWhen(value)}
+      disabled={busy || off}
+    >
+      {label}
+    </button>
+  );
+  /**
+   * What became of the time the desk was given, in one line.
+   *
+   * Nothing when none was asked for, or when it was free and taken. Otherwise the nearest free time it moved
+   * to, or that the day holds nothing after it — the two silences this control used to keep, which are how a
+   * desk promised 2:00 and the salon booked 2:30.
+   */
+  const timeMoved = (() => {
+    if (!timeWanted || loadingSlots || !askedMatch || askedMatch.exact) return null;
+    const asked = timeOptions.find((o) => o.value === timeWanted)?.label ?? timeWanted;
+    return askedMatch.slot ? nv.timeMoved(asked, clockTime(askedMatch.slot.utc)) : nv.timeNoneAfter(asked);
+  })();
+
+  const whenChoices = (
+    <>
+      <h2 className="wi-section-label" id="wi-whatnow">{nv.whatNow}</h2>
+      <div className="wi-when-list" role="radiogroup" aria-labelledby="wi-whatnow">
+        {/*
+          Offered whatever `later` currently is, which `queueOffered` is not: it goes false the moment a time is
+          being picked, so choosing "Pick a time", finding the day full and wanting to queue them instead left
+          the desk with no way back to Waiting. Tapping it is what UNDOES the time, so it has to outlive it.
+        */}
+        {canQueue ? whenChoice('queue', queueing, nv.whenWaiting) : null}
+        {/* Jira GRW-456 — nobody on the branch, or nobody who does this: starting is the one it cannot honour. */}
+        {whenChoice('now', !queueing && !later, nv.whenNow, noStaffHere || noOneCanDoIt)}
+        {whenChoice('pick', !queueing && later, nv.whenPick)}
+      </div>
+
+      {!queueing && later ? (
+        <>
+          {/* Jira GRW-529 — the day and the time share one row, as they always did on this screen. */}
+          <div className="wi-when wi-when-date">
+            <div className="field wi-date-field">
+              <label htmlFor="wi-date">{nv.bookingDate}</label>
+              <input
+                id="wi-date"
+                type="date"
+                min={todayIso}
+                value={day}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  const next = !v || v < todayIso ? todayIso : v;
+                  setDay(next);
+                  // Never back to a walk-in from in here: "Pick a time" is the answer being given, and today's
+                  // date is "later today". Clearing it is what the Starts now box above is for.
+                  setDateChosen(true);
+                  // Jira GRW-535 — a morning time chosen for tomorrow is dropped when the date comes back to
+                  // today and it has passed. Only here: a clock tick never clears a time just picked.
+                  if (next === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
+                }}
+              />
+            </div>
+
+            {/*
+              Jira GRW-527 · GRW-533, back by the owner's ask (2026-10-10) — the time the desk was GIVEN.
+              A quarter-hour list, never a typed box, so a time that has passed is not in it.
+
+              It is a wish, not the answer: the answer is `slotUtc`, picked from what is actually free. This
+              control used to be removed precisely because the grid moved the wish on to "the first free one
+              after it" and said nothing, so the desk promised 2:00 and the salon booked 2:30. It keeps its job
+              — jump the grid to the time asked for — and the line under the grid now says when it could not.
+            */}
+            <div className="field wi-date-field">
+              <label htmlFor="wi-time">{nv.bookingTime}</label>
+              <select id="wi-time" value={timeWanted} onChange={(e) => setTimeWanted(e.target.value)} disabled={busy}>
+                <option value="">{nv.anyTime}</option>
+                {timeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {/* The grid needs a duration to fit, so it waits for the first service — and says so rather than sitting empty. */}
+          {picked.length === 0 ? (
+            <div className="empty">{nv.servicesMissing}</div>
+          ) : (
+            <>
+              {slotError && <div role="alert" className="wi-error">{slotError}</div>}
+              <h3 className="wi-section-label">{nv.whichTime}</h3>
+              {loadingSlots ? (
+                <div className="empty">{nv.loadingTimes}</div>
+              ) : !slots || slots.slotCount === 0 ? (
+                <div className="empty" id="wi-no-times">
+                  {nv.noTimes}
+                </div>
+              ) : timeMoved ? (
+                <div className="wi-time-moved" role="status" id="wi-time-moved">
+                  {timeMoved}
+                </div>
+              ) : null}
+              {!loadingSlots && slots && slots.slotCount > 0 ? (
+                <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
+                  {slots.sections.flatMap((sec) =>
+                    sec.slots.map((slot) => (
+                      <button
+                        key={slot.utc}
+                        type="button"
+                        aria-pressed={slotUtc === slot.utc}
+                        className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
+                        onClick={() => setSlotUtc(slot.utc)}
+                        disabled={busy}
+                      >
+                        {slot.local}
+                      </button>
+                    )),
+                  )}
+                </div>
+              ) : null}
+            </>
+          )}
+        </>
+      ) : null}
+    </>
+  );
+
+  /*
+   * What the visit comes to at the MENU's prices.
+   *
+   * Not `billTotalMinor`: that is Record payment's total, the sum of the amounts typed into each line at the
+   * till, and nothing is typed on this screen — the Services row read "1 service · ₹0" beside a line saying
+   * ₹300. A booking is quoted at list price, and a combo at the combo's price, which is what `totalMinor` does.
+   */
+  const bookTotalMinor = totalMinor(everything, comboActive ? comboPriceMinor : null);
+
+  /** What the stylist row says: a person and what they are doing, or whoever is free and how many that is. */
+  const stylistAnswer = (() => {
+    if (noStylist) return noProviderWord;
+    const chosen = schedulableId ? ableProviders.find((p) => p.id === schedulableId) : null;
+    if (chosen) {
+      const line = chairLine(chosen.id);
+      return line ? `${chosen.displayName} · ${line}` : chosen.displayName;
+    }
+    return !later && freeCount !== null ? `${nv.whoeverIsFree} · ${nv.freeCount(freeCount)}` : nv.whoeverIsFree;
+  })();
+
+  /*
+   * A picture in front of every row (owner, 2026-10-10).
+   *
+   * The screen this replaces had three service photographs on it, and a receptionist who is not a confident
+   * reader worked it by recognising them. Folding the menu into a sheet took that away and left two words to
+   * read where a picture had been, which is a worse screen for the person who needs the most help — the words
+   * got shorter and there were fewer of them, but the one thing that needed no reading at all was gone.
+   *
+   * So each row opens with a 36px tile in the same place: the service's own photograph once one is chosen, the
+   * stylist's face once there is one, and otherwise the icon for what the row is about. The tile is
+   * `aria-hidden` — it repeats the answer beside it, and a screen reader does not want it twice.
+   */
+  const rowPhoto = (src: string | null, icon: ReactNode) => (
+    <span className="wi-row-photo" aria-hidden="true">
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          width={36}
+          height={36}
+          /* A photo that does not load leaves the browser's torn-page glyph where a face should be. */
+          onError={(e) => {
+            e.currentTarget.hidden = true;
+          }}
+        />
+      ) : (
+        <span className="wi-row-icon">{icon}</span>
+      )}
+    </span>
+  );
+
+  /** The first service on the visit, as a picture: what the row shows once there is something on it. */
+  const firstPickedPhoto = (() => {
+    const first = everything[0];
+    const service = first ? serviceById.get(first.serviceId) : undefined;
+    return service ? servicePhotoUrl(service) : null;
+  })();
+  /** The chosen stylist's own face, when the salon has photographed them. */
+  const chosenStylistPhoto = (schedulableId && ableProviders.find((p) => p.id === schedulableId)?.photoUrl) || null;
+
+  /** One line: a picture, what it asks, what it has been answered with, and a chevron saying it opens. */
+  const bookRow = (
+    key: 'services',
+    label: string,
+    answer: string,
+    photo: ReactNode,
+    empty = false,
+  ) => (
+    <button
+      type="button"
+      className={`wi-row-btn ${empty ? '' : 'wi-row-done'}`}
+      onClick={() => setAsking(key)}
+      disabled={busy}
+    >
+      {photo}
+      <span className="wi-row-text">
+        <span className="wi-row-label">{label}</span>
+        <span className={`wi-row-answer ${empty ? 'wi-row-empty' : ''}`}>{answer}</span>
+      </span>
+      <span className="wi-row-chevron" aria-hidden="true">
+        <IconChevronRight />
+      </span>
+    </button>
+  );
+
+  /*
+   * The stylist is a dropdown, not a door to a sheet (owner, 2026-10-10).
+   *
+   * Services and When are lists worth a screen — fifty-two of one, a date and a free-slot grid of the other. A
+   * salon's people are three or four names, and GRW-524 already settled that shape for the till: a sheet to
+   * choose between four things is a screen's worth of ceremony for one tap.
+   *
+   * Drawn as the row beside it so the three line up, with a real `<select>` laid over the whole thing at
+   * `opacity: 0` — the same trick the branch picker in the header uses. What it costs: nothing. What it buys:
+   * the phone's own wheel, which a receptionist has used ten thousand times, instead of ours.
+   */
+  /* Always answered — "Anyone free" is a real answer, not an empty row — so `wi-row-done` is unconditional. */
+  const stylistRow = (
+    <div className={`wi-row-btn wi-row-select wi-row-done ${busy ? 'wi-row-off' : ''}`}>
+      {rowPhoto(chosenStylistPhoto, <IconUser />)}
+      <span className="wi-row-text" aria-hidden="true">
+        <span className="wi-row-label">{providerNoun}</span>
+        <span className="wi-row-answer">{stylistAnswer}</span>
+      </span>
+      <span className="wi-row-chevron" aria-hidden="true">
+        <IconChevronDown />
+      </span>
+      <select
+        id="wi-stylist"
+        aria-label={nv.withWhom(providerNoun.toLowerCase())}
+        value={stylistValue}
+        onChange={(e) => pickStylist(e.target.value)}
+        disabled={busy}
+      >
+        {offersWhoever && (
+          <option value={WI_WHOEVER}>
+            {!later && freeCount !== null ? `${nv.whoeverIsFree} · ${nv.freeCount(freeCount)}` : nv.whoeverIsFree}
+          </option>
+        )}
+        {/* What each chair is doing, in the option's own words (GRW-198): the desk's real question is who can take this person. */}
+        {ableProviders.map((p) => {
+          const line = chairLine(p.id);
+          return (
+            <option key={p.id} value={p.id}>
+              {line ? `${p.displayName} · ${line}` : p.displayName}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  );
+
+  const bookRows = (
+    <div className="wi-rows">
+      {bookRow(
+        'services',
+        servicesNoun,
+        billCount > 0 ? nv.rowPicked(billCount, formatMoney(bookTotalMinor)) : nv.rowAddService,
+        rowPhoto(firstPickedPhoto, <IconScissors />),
+        billCount === 0,
+      )}
+      {/* What is on the visit, under the row that chose it: the bill assembling itself where it was asked for. */}
+      {billCount > 0 ? (
+        <div className="wi-row-lines">
+          {everything.map((p, i) => (
+            <div key={`${p.serviceId}-${i}`} className="wi-row-line">
+              <span className="wi-row-line-name">{numberedName(everything, i)}</span>
+              <span className="wi-row-line-price">{formatMoney(p.priceMinor ?? '0')}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {/*
+        A token has no stylist: `queueIt` posts the client, the services and the branch, and nothing else. The row
+        was answerable and the answer was silently dropped, so while Waiting is the answer the row is not there.
+      */}
+      {queueing ? null : stylistRow}
+      {/*
+        When is not a row (owner, 2026-10-10). It was, and putting the queue behind it was the mistake: adding
+        somebody to the waiting list is the commonest thing a busy desk does, and it had become two taps down
+        inside a line reading "Now · 9:14 PM" — which also said the time twice, once as a word and once as a
+        clock nobody needed. Three answers deserve three boxes, the same argument the stylist dropdown won on,
+        and they sit directly above the button they name so the two can never read differently.
+      */}
+      {whenChoices}
+    </div>
+  );
+
+  /** The question that is open, over the form it was opened from. */
+  const askSheet = (() => {
+    if (!bookForm || !asking) return null;
+    /*
+     * Services is the till's own search (owner, 2026-10-10) — `ServiceSheet`, the sheet Record payment's simple
+     * flow opens from its search box, not the full form's paged photo menu. One box, the kinds beside it, one
+     * list of rows with a count on each. The desk already knows it; it is the same catalogue; and a visit is
+     * often two or three services, so `onPick` here does NOT close — the count goes up and the next one is a
+     * tap away, where the till closes because its tiles are the main path back.
+     */
+    if (asking === 'services' && services) {
+      return (
+        <ServiceSheet
+          services={services}
+          counts={new Map(services.map((x) => [x.id, countOnBill(x.id)]))}
+          onPick={addOneMore}
+          packages={combos}
+          packageOnBillId={offerId}
+          onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
+          onClose={() => setAsking(null)}
+        />
+      );
+    }
+    return null;
+  })();
+
   const asPage = presentation === 'page';
   /** A token being paid stays the token being paid when the form is switched, so its id rides in the address. */
   const payTokenQuery = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
@@ -2924,6 +3333,8 @@ export function NewVisitSheet({
     <>
       {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
       {largeAmountDialog}
+      {/* New booking's open question, over the form: the menu, the people, or when. */}
+      {askSheet}
       {!asPage && <div className="sheet-backdrop" onClick={busy || picked.length > 0 || newName.trim() || newPhone.trim() || stage.step !== 'client' ? undefined : onClose} />}
       <div
         className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
@@ -3254,7 +3665,8 @@ export function NewVisitSheet({
             */}
             {/* Jira GRW-529 — date and time share one row. */}
             {/* Record payment never asks: both controls were `disabled` here, and the header says "Now 10:51 PM" instead. */}
-            {forPayment ? null : (
+            {/* New booking asks it once, inside the When row, where the free-slot grid is there to answer it properly. */}
+            {forPayment || bookForm ? null : (
             <div className="wi-when">
             <div className="field wi-date-field">
               <label htmlFor="wi-date">
@@ -3302,10 +3714,10 @@ export function NewVisitSheet({
 
             {pageForm ? (
               <>
-                {servicesAndStylist}
+                {bookForm ? bookRows : servicesAndStylist}
 
                 {/* Free times for what was chosen, once there is something to fit: the booking time asked for above is picked if it is free. */}
-                {later && picked.length > 0 ? (
+                {later && picked.length > 0 && !bookForm ? (
                   <>
                     {slotError && <div role="alert" className="wi-error">{slotError}</div>}
                     <h2 className="wi-section-label">{nv.whichTime}</h2>
@@ -3381,7 +3793,9 @@ export function NewVisitSheet({
                           : forPayment
                             ? nv.markDone
                             : later
-                              ? nv.bookIt
+                              ? bookForm && slotUtc
+                                ? nv.bookAt(clockTime(slotUtc))
+                                : nv.bookIt
                               : queueing
                                 ? nv.addToQueue
                                 : nv.start}

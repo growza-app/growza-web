@@ -160,6 +160,28 @@ export function useNewVisitCopy() {
     outcomeWaiting: t('outcomeWaiting'),
     outcomeStart: t('outcomeStart'),
     /**
+     * New booking's rows, and the one question each opens (owner, 2026-10-10).
+     *
+     * Services, When and the stylist are a line apiece saying their answer. "What now?" is gone: Waiting is the
+     * first thing the When sheet offers, because a token is the one answer with no time in it, and two controls
+     * that could disagree about when a visit starts were two controls too many.
+     */
+    rowAddService: t('rowAddService'),
+    rowPicked: (n: number, total: string) => t('rowPicked', { n, total }),
+    /** The three answers to "what happens now", as the boxes above the button say them. */
+    whenWaiting: t('whenWaiting'),
+    whenNow: t('whenNow'),
+    whenPick: t('whenPick'),
+    bookAt: (time: string) => t('bookAt', { time }),
+    /**
+     * What the free-slot grid did with the time that was asked for.
+     *
+     * The Booking time is a wish, and the grid is what is actually free. It used to move the wish to "the first
+     * free one after it" and say nothing, so a desk promised 2:00 and the salon booked 2:30. Now it says so.
+     */
+    timeMoved: (asked: string, got: string) => t('timeMoved', { asked, got }),
+    timeNoneAfter: (asked: string) => t('timeNoneAfter', { asked }),
+    /**
      * The confirmation a client is sent after a booking or a queue token (owner, 2026-10-07) — the same
      * `wa.me` link as the bill, with facts a booking is read back from. It never says "paid".
      */

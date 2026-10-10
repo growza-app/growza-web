@@ -12,7 +12,9 @@ const flow = readFileSync(resolve(here, 'PayFlow.tsx'), 'utf8');
 const keypad = readFileSync(resolve(here, 'Keypad.tsx'), 'utf8');
 const wrapper = readFileSync(resolve(here, 'NewBookingClient.tsx'), 'utf8');
 const client = readFileSync(resolve(here, 'ClientSheet.tsx'), 'utf8');
-const menu = readFileSync(resolve(here, 'ServiceSheet.tsx'), 'utf8');
+// Moved to components/ 2026-10-10: New booking's Services row opens this same search, and a component two
+// screens share does not live inside one of them.
+const menu = readFileSync(resolve(here, '../../components/ServiceSheet.tsx'), 'utf8');
 const bill = readFileSync(resolve(here, 'BillCard.tsx'), 'utf8');
 const page = readFileSync(resolve(here, 'page.tsx'), 'utf8');
 const css = readFileSync(resolve(here, '../../styles/73-pay-flow.css'), 'utf8');
