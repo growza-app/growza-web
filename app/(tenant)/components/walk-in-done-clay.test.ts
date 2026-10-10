@@ -10,9 +10,9 @@ const css = here('../styles/72-walk-in-sheet.css');
 const clay = here('../styles/101-clay-app.css');
 
 describe('the walk-in confirmation', () => {
-  it('every Done is the finish button, in all three end states', () => {
-    // After a payment its bill's Send on WhatsApp is the filled action, so that Done is the quiet variant (2026-10-07).
-    expect(sheet).toMatch(/className="sheet-item wi-finish wi-finish-quiet" onClick=\{onClose\}/);
+  it('every Done is the finish button, in both visit end states', () => {
+    // After a payment the form ends on the shared payment screen (owner, 2026-10-10), whose Done is its own.
+    expect(sheet).not.toMatch(/className="sheet-item wi-finish wi-finish-quiet" onClick=\{onClose\}/);
     // Queued and booked took the same shape: quiet only while there is a message above them to send.
     expect(sheet.match(/className=\{`sheet-item wi-finish \$\{stage\.confirm \? 'wi-finish-quiet' : ''\}`\} onClick=\{onClose\}/g)).toHaveLength(2);
   });

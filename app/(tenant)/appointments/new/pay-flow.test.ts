@@ -21,6 +21,9 @@ const routes = readFileSync(resolve(here, '../../lib/branch-routes.ts'), 'utf8')
 const viewportHeight = readFileSync(resolve(here, '../../components/ViewportHeight.tsx'), 'utf8');
 const modeSwitch = readFileSync(resolve(here, 'FormModeSwitch.tsx'), 'utf8');
 const visitSheet = readFileSync(resolve(here, '../../components/NewVisitSheet.tsx'), 'utf8');
+/** Owner, 2026-10-10 — the done screen both Record payment forms end on, and what it sounds like. */
+const done = readFileSync(resolve(here, '../../components/PaymentDone.tsx'), 'utf8');
+const feedback = readFileSync(resolve(here, '../../lib/pay-feedback.ts'), 'utf8');
 const receipt = readFileSync(resolve(here, '../../components/ReceiptShare.tsx'), 'utf8');
 const walkInCss = readFileSync(resolve(here, '../../styles/72-walk-in-sheet.css'), 'utf8');
 
@@ -29,6 +32,30 @@ const walkInCss = readFileSync(resolve(here, '../../styles/72-walk-in-sheet.css'
  * well: pictures where there were words, one question per screen, nothing typed. These pin the shape, so a later
  * change cannot quietly put a text box back or make the tiles small.
  */
+describe('one done screen for both Record payment forms (owner, 2026-10-10)', () => {
+  it('the three-tap flow and the one-page form both end on PaymentDone, and nothing else', () => {
+    expect(flow).toMatch(/import \{ PaymentDone \} from '\.\.\/\.\.\/components\/PaymentDone';/);
+    expect(visitSheet).toMatch(/import \{ PaymentDone \} from '\.\/PaymentDone';/);
+    expect(visitSheet).toMatch(/stage\.step === 'paid' \? \(\s*<PaymentDone/);
+    // On the page it is the whole page — no form header or card around it, as the three-tap flow ends.
+    expect(visitSheet).toMatch(/if \(paidScreen && presentation === 'page'\) return paidScreen;/);
+    // A desk always ends on it too, in the phone's column rather than across the whole page.
+    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.pf-done-page \{\s*width: 100%;\s*max-width: 30rem;\s*margin-inline: auto;/);
+    // The one-page form's old paid screen — "Paid", the bill, a lone Done — is gone, not kept beside it.
+    expect(visitSheet).not.toMatch(/nv\.paid\(/);
+    // Next customer opens a fresh one-page form.
+    expect(visitSheet).toMatch(/onNextCustomer=\{onAnother \?\? onClose\}/);
+    expect(wrapper).toMatch(/key=\{run\}\s*onAnother=\{purpose === 'payment' \? another : undefined\}/);
+  });
+
+  it('says the exact amount, paise and all', async () => {
+    const { spokenAmount } = await import('../../components/PaymentDone');
+    expect(spokenAmount(45000, 'en')).toBe('450');
+    expect(spokenAmount(64950, 'en')).toBe('649.50');
+    expect(spokenAmount(150000, 'en')).toBe('1,500');
+  });
+});
+
 describe('Record payment in three taps', () => {
   it('is the phone flow only; a desk and ?full=1 keep the one-page form', () => {
     expect(wrapper).toMatch(/const quick = purpose === 'payment' && !full;/);
@@ -64,7 +91,8 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/useState<'what' \| 'how' \| 'done'>\('what'\)/);
     expect(flow).toMatch(/\{t\('whatTitle'\)\}/);
     expect(flow).toMatch(/\{t\('howTitle'\)\}/);
-    expect(flow).toMatch(/\{t\('doneTitle', \{ amount: money\(sale\.totalMinor\) \}\)\}/);
+    expect(flow).toMatch(/<PaymentDone\s/);
+    expect(done).toMatch(/\{t\('doneTitle', \{ amount: formatMoney\(String\(totalMinor\)\) \}\)\}/);
   });
 
   it('draws the menu as photo tiles two across, each the height of a thumb and a half', () => {
@@ -312,17 +340,19 @@ describe('Record payment in three taps', () => {
   });
 
   it('says the amount out loud on the done screen, and can be told not to', () => {
-    expect(flow).toMatch(/new SpeechSynthesisUtterance\(line\)/);
-    expect(flow).toMatch(/u\.lang = locale === 'hi' \? 'hi-IN' : 'en-IN';/);
-    expect(flow).toMatch(/if \(step !== 'done' \|\| !sale \|\| !sound\) return;/);
-    expect(flow).toMatch(/aria-pressed=\{sound\} onClick=\{toggleSound\}/);
+    expect(done).toMatch(/new SpeechSynthesisUtterance\(t\('spoken', \{ amount: spokenAmount\(totalMinor, locale\), mode: modeLabel \}\)\)/);
+    expect(done).toMatch(/u\.lang = locale === 'hi' \? 'hi-IN' : 'en-IN';/);
+    expect(done).toMatch(/if \(!\(soundProp \?\? soundIsOn\(\)\)\) return;/);
+    expect(done).toMatch(/aria-pressed=\{sound\} onClick=\{toggleSound\}/);
+    // One setting for both forms: PayFlow passes its own, the one-page form lets the screen read it.
+    expect(flow).toMatch(/sound=\{sound\}\s*onToggleSound=\{toggleSound\}/);
     // Reduced motion stills the tick; the sound is the person's own switch.
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.pf-done-check \{\s*animation: none;/);
   });
 
   it('fits the done screen on one phone: the bill is shown, capped, and scrolls in place', () => {
     // 232px of tick-above-amount plus 284px of bill put Next customer — pressed after every sale — below the fold.
-    expect(flow).toMatch(/<ReceiptShare bill=\{sale\.bill\} phone=\{sale\.phone\} compactPreview/);
+    expect(done).toMatch(/<ReceiptShare bill=\{bill\} phone=\{phone\} compactPreview/);
     expect(receipt).toMatch(/compactPreview \? 'wi-receipt-paper-short' : ''/);
     expect(walkInCss).toMatch(/\.wi-receipt-paper-short \{[\s\S]{0,120}max-height: 12rem;[\s\S]{0,60}overflow-y: auto;/);
     // Still shown, never folded away: the desk reads the bill before it sends it.
@@ -379,37 +409,39 @@ describe('Record payment in three taps', () => {
   it('buzzes the taps that change the bill, and only those', () => {
     // A tick on the way up, nothing on the way down: the two must not feel the same.
     expect(flow).toMatch(/felt\(BUZZ\.added\);\s*setLines\(\(prev\) => \[\.\.\.prev, toLine\(s\)\]\);/);
-    expect(flow).toMatch(/added: 10,/);
+    expect(feedback).toMatch(/added: 10,/);
     expect(flow).not.toMatch(/const oneLess = [\s\S]{0,200}felt\(/);
     // The refusal at twelve lines has its own pattern, so it cannot be mistaken for a success.
     expect(flow).toMatch(/if \(full\) \{\s*felt\(BUZZ\.tooMany\);\s*return;/);
-    expect(flow).toMatch(/tooMany: \[20, 40, 20\],/);
+    expect(feedback).toMatch(/tooMany: \[20, 40, 20\],/);
     // …and the + can still answer at the limit, which a `disabled` button could not.
     expect(flow).toMatch(/onClick=\{\(\) => addOne\(s\)\} aria-disabled=\{full \|\| undefined\}/);
     expect(css).toMatch(/\.pf-qty-btn\[aria-disabled='true'\] \{/);
     // The tap that writes the sale, and the screen that confirms it.
     expect(flow).toMatch(/if \(saving \|\| lines\.length === 0\) return;\s*felt\(BUZZ\.paid\);/);
-    expect(flow).toMatch(/if \(step !== 'done' \|\| !sale \|\| !sound\) return;\s*buzz\(BUZZ\.done\);/);
+    expect(done).toMatch(/if \(!\(soundProp \?\? soundIsOn\(\)\)\) return;\s*buzz\(BUZZ\.done\);/);
+    expect(done).toMatch(/if \(said\.current === appointmentId\) return;/);
     // The person's own switch covers touch as well as sound; and a phone without `vibrate` is not an error.
     expect(flow).toMatch(/const felt = \(pattern: number \| readonly number\[\]\) => \{\s*if \(sound\) buzz\(pattern\);/);
-    expect(flow).toMatch(/navigator\.vibrate\?\.\(/);
+    expect(feedback).toMatch(/navigator\.vibrate\?\.\(/);
     // Never from an effect: a fast pair of taps re-renders more often than it adds.
     expect(flow).not.toMatch(/useEffect\([\s\S]{0,120}buzz\(BUZZ\.(added|tooMany|paid)\)/);
   });
 
   it('keeps the client from the number given for the bill, and never from a prefilled one', () => {
     // ① still asks nobody for a name; the capture is on ③, where the client wants something for the number.
-    expect(flow).toMatch(/onNumberGiven=\{sale\.phone \? undefined : keepClient\}/);
-    expect(flow).toMatch(/api\s*\.assignClientToSale\(sale\.appointmentId, \{ phone \}\)/);
+    expect(done).toMatch(/onNumberGiven=\{givenPhone \? undefined : keepClient\}/);
+    expect(done).toMatch(/api\s*\.assignClientToSale\(appointmentId, \{ phone: typed \}\)/);
     // A token's client and a client picked on ① are already attached, so their number arrives prefilled.
     expect(flow).toMatch(/phone: token\?\.customerPhone \?\? \(client\.kind === 'existing' \? client\.phone : null\)/);
     expect(receipt).toMatch(/const \[editing, setEditing\] = useState\(!phone\)/);
     // "Change" on a client's own bill sends THIS bill elsewhere; it must never re-point their record.
     expect(receipt).toMatch(/if \(onNumberGiven && !phone\) onNumberGiven\(toStoredPhone\(typed\)!\);/);
     // The bill never waits on it, and a failure says so without taking the screen.
-    expect(flow).toMatch(/\.catch\(\(\) => setKept\('failed'\)\)/);
-    expect(flow).toMatch(/kept === 'failed' \? t\('clientNotKept'\)/);
-    expect(flow).toMatch(/const nextCustomer = \(\) => \{\s*setKept\(null\);/);
+    expect(done).toMatch(/\.catch\(\(\) => setKept\('failed'\)\)/);
+    expect(done).toMatch(/kept === 'failed' \? t\('clientNotKept'\)/);
+    // Each sale's screen is a fresh mount, so its kept state cannot carry into the next sale.
+    expect(flow).toMatch(/appointmentId=\{sale\.appointmentId\}/);
     const en = enMessages.payFlow as unknown as Record<string, string>;
     expect(en.clientKept).toBeTruthy();
     expect(en.clientNotKept).toBeTruthy();
