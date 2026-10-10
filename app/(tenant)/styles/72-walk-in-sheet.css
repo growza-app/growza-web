@@ -1748,6 +1748,20 @@ input.wi-search-input-plain {
   margin: 0;
 }
 
+/*
+ * The bill, capped and scrollable (`compactPreview`).
+ *
+ * The three-tap done screen shows the bill rather than hiding it — the desk reads it before pressing send — but
+ * at full height its 284px put every button below the fold. Twelve rem shows the business, the date, the token
+ * and the first services; the rest is a scroll inside the slip, not a scroll of the whole screen.
+ */
+.wi-receipt-paper-short {
+  max-height: 12rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+
 /* The bill as the client will read it: a slip of paper, the chat's own bold and italic, the text's own line breaks. */
 .wi-receipt-paper {
   padding: var(--sp-4);

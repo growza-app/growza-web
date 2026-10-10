@@ -40,6 +40,8 @@ export function ReceiptShare({
   bill,
   phone,
   kind = 'bill',
+  onNumberGiven,
+  compactPreview = false,
 }: {
   bill: ReceiptRow[];
   phone: string | null;
@@ -49,6 +51,22 @@ export function ReceiptShare({
    * `wa.me` link, Share, Print — is the same act.
    */
   kind?: 'bill' | 'confirm';
+  /**
+   * A number typed here, for a visit that had nobody on it (owner, 2026-10-10).
+   *
+   * Called with the stored number when Send is pressed, so the screen above can keep the person as a client. Only
+   * ever passed when `phone` is null: a Change on a client's own bill sends THIS bill somewhere else — a parent's
+   * phone — and must not touch their record, which is the rule this component already held.
+   */
+  onNumberGiven?: (storedPhone: string) => void;
+  /**
+   * Cap the bill's height and let it scroll (owner, 2026-10-10).
+   *
+   * Full height everywhere it has always been full height. The three-tap done screen caps it: 284px of paper
+   * pushed Next customer — the button pressed after every single sale — off the bottom of the screen. Capped,
+   * the bill is still THERE, still read without a tap, and the rest of the screen fits above the fold.
+   */
+  compactPreview?: boolean;
 }) {
   const text = useMemo(() => rowsToText(bill), [bill]);
   const nv = useNewVisitCopy();
@@ -93,7 +111,8 @@ export function ReceiptShare({
   return (
     <section className="wi-receipt-share" aria-label={words.preview}>
       <h2 className="wi-section-label">{words.preview}</h2>
-      <div className="wi-receipt-paper">
+      {/* `tabIndex` when it scrolls: a scrollable region a mouse can reach has to be reachable by keyboard too. */}
+      <div className={`wi-receipt-paper ${compactPreview ? 'wi-receipt-paper-short' : ''}`} tabIndex={compactPreview ? 0 : undefined} role={compactPreview ? 'group' : undefined}>
         {bill.map((row, i) => (
           <Row key={i} row={row} />
         ))}
@@ -145,7 +164,20 @@ export function ReceiptShare({
       )}
 
       {digits ? (
-        <a className="btn wi-receipt-send" href={whatsappHref(digits, text)} target="_blank" rel="noopener noreferrer">
+        <a
+          className="btn wi-receipt-send"
+          href={whatsappHref(digits, text)}
+          target="_blank"
+          rel="noopener noreferrer"
+          /*
+           * Pressing Send is when a typed number becomes real: the client asked for their bill on it. Fired
+           * alongside the link rather than before it — WhatsApp opens in its own tab either way, and keeping a
+           * client must never be something the bill waits on.
+           */
+          onClick={() => {
+            if (onNumberGiven && !phone) onNumberGiven(toStoredPhone(typed)!);
+          }}
+        >
           <IconWhatsApp />
           {words.send}
         </a>

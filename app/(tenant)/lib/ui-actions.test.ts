@@ -191,6 +191,13 @@ describe('2b — the controls, each behind its own action', () => {
  * gated one by one; on a screen a role IS offered, every write must be theirs.
  */
 const SCREEN_WRITES: Record<string, readonly string[]> = {
+  /*
+   * Record payment's done screen keeps the number a client gives for their bill. Classified by its screen rather
+   * than by `visit.recordPayment`, which is where it belongs: that action is declared in `@growza-app/shared`, and
+   * this route is newer than the installed 1.0.4. Same answer either way — the screen's own gate IS `visit.new`,
+   * which owner and front desk hold and a stylist does not. Move it into the action when shared next ships.
+   */
+  '/appointments/new': ['POST /api/v1/counter-sales/:id/assign-client'],
   '/services': [
     'POST /api/v1/services',
     'PATCH /api/v1/services/:id',

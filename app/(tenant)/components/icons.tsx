@@ -605,25 +605,36 @@ export const IconScissors = () => (
 
 /* ---------- how they paid: the four tiles on Record payment, drawn to the design's mock ---------- */
 
+/*
+ * The three ways money arrives, drawn as the things themselves (owner, 2026-10-10).
+ *
+ * The old set was abstract: a rectangle with a dot, a rectangle with a line, a phone with an arrow. Tested
+ * against the people who use this screen, none of the three said what it was. These say it — a note with ₹ on
+ * it, the QR standee that stands on every counter in India, a card with its chip and stripe. The QR is the big
+ * one: nobody recognises "phone with arrow", and everybody has pointed a camera at that square.
+ */
 export const IconPayCash = () => (
   <svg {...base}>
-    <rect x="2" y="6" width="20" height="12" rx="2.5" />
-    <circle cx="12" cy="12" r="2.8" />
+    <rect x="2" y="5.5" width="20" height="13" rx="2" />
+    {/* ₹, drawn rather than set as text: two bars, the bowl, the leg. */}
+    <path d="M9 9h6M9 11.6h6M12.6 9c0 2.9-1.4 4-3.6 4h1.1l4.9 4" strokeWidth="1.7" />
   </svg>
 );
 
 export const IconPayCard = () => (
   <svg {...base}>
-    <rect x="2" y="5" width="20" height="14" rx="3" />
-    <path d="M2 10h20" />
+    <rect x="2" y="5" width="20" height="14" rx="2.5" />
+    <path d="M2 9.6h20" />
+    <rect x="5.2" y="12.6" width="4.6" height="3.2" rx="0.8" strokeWidth="1.5" />
   </svg>
 );
 
 export const IconPayUpi = () => (
   <svg {...base}>
-    <rect x="6" y="2" width="12" height="20" rx="3" />
-    <path d="M10.5 18.5h3" />
-    <path d="M9 9.5l3-2.5 3 2.5" />
+    <rect x="3" y="3" width="7" height="7" rx="1.2" />
+    <rect x="14" y="3" width="7" height="7" rx="1.2" />
+    <rect x="3" y="14" width="7" height="7" rx="1.2" />
+    <path d="M14 14h3.2v3.2H14zM20 14h1M14 20h1M17.8 17.8H21V21h-3.2z" strokeWidth="1.6" />
   </svg>
 );
 

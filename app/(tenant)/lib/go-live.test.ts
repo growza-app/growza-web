@@ -81,9 +81,9 @@ describe('the nav chokepoint', () => {
 });
 
 describe('the session carries it', () => {
-  const probe = () => createElement('span', null, String(useLive()));
+  const Probe = () => createElement('span', null, String(useLive()));
   const render = (live?: boolean) =>
-    renderToStaticMarkup(createElement(SessionProvider, { session: { initial: 'S', role: 'owner', phone: null, businessName: 'S', ...(live === undefined ? {} : { live }) }, children: createElement(probe) }));
+    renderToStaticMarkup(createElement(SessionProvider, { session: { initial: 'S', role: 'owner', phone: null, businessName: 'S', ...(live === undefined ? {} : { live }) }, children: createElement(Probe) }));
 
   it('false while being set up, true otherwise, and true when nothing says', () => {
     expect(render(false)).toContain('false');

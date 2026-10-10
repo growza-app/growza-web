@@ -65,9 +65,27 @@ export function ViewportHeight() {
      */
     const MIN_PLAUSIBLE_PX = 200;
 
+    /*
+     * How much of the window the soft keyboard is covering, as `--kb`.
+     *
+     * A bottom sheet is `position: fixed; bottom: 0`, which means the LAYOUT viewport — and the keyboard does
+     * not shrink that one. So on a phone the keyboard slides up over the sheet and hides the very field that
+     * asked for it (owner, 2026-10-10: "the keyboard is hiding the form"). The visual viewport is the part
+     * actually on screen, so the difference between the two IS the keyboard, and a sheet padded by it sits
+     * back on top.
+     *
+     * The 80px floor is because this number is never quite zero: the URL bar collapsing, a rotation mid-frame
+     * and Android's gesture bar all move the visual viewport by a few pixels, and lifting a sheet 12px for no
+     * reason looks like a bug. No keyboard is that short.
+     */
+    const KEYBOARD_MIN_PX = 80;
+
     const sync = () => {
       const h = window.innerHeight;
       if (h >= MIN_PLAUSIBLE_PX) root.style.setProperty('--app-h', `${h}px`);
+      const seen = window.visualViewport;
+      const covered = seen ? Math.max(0, h - (seen.height + seen.offsetTop)) : 0;
+      root.style.setProperty('--kb', `${covered >= KEYBOARD_MIN_PX ? Math.round(covered) : 0}px`);
       if (!debug) return;
       const vv = window.visualViewport;
       const shell = document.querySelector('.shell')?.getBoundingClientRect();
@@ -75,7 +93,7 @@ export function ViewportHeight() {
       const standalone = matchMedia('(display-mode: standalone)').matches;
       setReport(
         [
-          `inner ${window.innerWidth}x${window.innerHeight}  vv ${Math.round(vv?.height ?? 0)}  clientH ${root.clientHeight}`,
+          `inner ${window.innerWidth}x${window.innerHeight}  vv ${Math.round(vv?.height ?? 0)}  clientH ${root.clientHeight}  kb ${root.style.getPropertyValue('--kb')}`,
           `dvh ${probe('height:100dvh')}  svh ${probe('height:100svh')}  lvh ${probe('height:100lvh')}  vh ${probe('height:100vh')}`,
           `screen ${screen.width}x${screen.height}  avail ${screen.availHeight}  dpr ${window.devicePixelRatio}`,
           `inset t${probe('height:env(safe-area-inset-top)')} b${probe('height:env(safe-area-inset-bottom)')}  ${standalone ? 'standalone' : 'browser tab'}`,
@@ -93,6 +111,7 @@ export function ViewportHeight() {
       window.removeEventListener('orientationchange', sync);
       window.visualViewport?.removeEventListener('resize', sync);
       root.style.removeProperty('--app-h');
+      root.style.removeProperty('--kb');
     };
   }, []);
 

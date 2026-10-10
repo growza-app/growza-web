@@ -51,6 +51,7 @@ import { useBranch } from './BranchProvider';
 import { useSession } from './SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { PhoneField } from './PhoneField';
+import { FormModeSwitch } from '../appointments/new/FormModeSwitch';
 import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
 import type { FreeTime } from '../lib/book-again';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
@@ -2821,6 +2822,8 @@ export function NewVisitSheet({
   );
 
   const asPage = presentation === 'page';
+  /** A token being paid stays the token being paid when the form is switched, so its id rides in the address. */
+  const payTokenQuery = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   // Jira GRW-520 — every row the dropdown can show, in order: this branch's matches, then the other branches'.
   const comboOptions = [
     ...results.map((c) => ({ c, bring: false })),
@@ -2920,6 +2923,7 @@ export function NewVisitSheet({
             {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
             {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
             {pageHead ? null : <div className="sheet-sub">{headSub}</div>}
+
           </div>
           {/*
             One way out, not two (owner, 2026-10-09). A pop-up is closed by its ✕; a page is left by its back
@@ -2927,7 +2931,17 @@ export function NewVisitSheet({
             whatever opened the page, ✕ always Home — with nothing on either to say which. The ✕ stays on the
             steps where there is nowhere to go back to, so a page is never left with no exit at all.
           */}
-          {asPage && goBack ? (
+          {/*
+            The way back to the three-tap screen (owner, 2026-10-10).
+            This page is reached by `?full=1` from it, and until now the only way out was the browser's own
+            Back — a one-way door. The same switch stands on both sides, and in the same corner on both.
+            It takes the slot the ✕ would use, which on this page is an empty 44px span anyway because the
+            back arrow is the way out. Phones only (CSS): at a desk this IS the form for Record payment, so
+            there is nothing to switch to.
+          */}
+          {forPayment && asPage && goBack ? (
+            <FormModeSwitch now="advanced" simpleHref={`/appointments/new?purpose=payment${payTokenQuery}`} advancedHref={`/appointments/new?purpose=payment&full=1${payTokenQuery}`} />
+          ) : asPage && goBack ? (
             <span className="wi-close-gap" aria-hidden="true" />
           ) : (
             <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
