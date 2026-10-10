@@ -173,6 +173,8 @@ export function useNewVisitCopy() {
     whenNow: t('whenNow'),
     whenPick: t('whenPick'),
     bookAt: (time: string) => t('bookAt', { time }),
+    /** The address named a booking that cannot be settled — already paid, moved, cancelled. */
+    visitGone: t('visitGone'),
     /**
      * What the free-slot grid did with the time that was asked for.
      *

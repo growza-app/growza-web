@@ -13,7 +13,7 @@ import { servicePhotoUrl } from '../../lib/service-photos';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useBranch } from '../../components/BranchProvider';
 import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
-import { PAYMENT_MODES } from '../../components/CheckoutSheet';
+import { PAYMENT_MODES } from '../../lib/payment-modes';
 import { useLabel } from '../../components/LabelsProvider';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
 import { useSession } from '../../components/SessionProvider';
@@ -149,7 +149,14 @@ export function PayFlow({
   const { guard, dialog } = useLargeAmountGuard();
 
   // The branch this sale lands at: the token's, else the one the header has chosen, else the only one.
-  const location = token?.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
+  /*
+   * The branch this payment belongs to: the token's, the BOOKING's, then whatever the header is showing.
+   *
+   * Jira GRW-380 — a visit is settled at its own branch's menu, at its own branch's prices. The booking's
+   * branch was missing from this chain when bookings started settling here (owner, 2026-10-10): a desk with
+   * the header on MG Road, settling an Indiranagar booking, would have added extras from the wrong menu.
+   */
+  const location = token?.locationId ?? visit?.appointment.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
   const branchName = (session?.branches?.length ?? 0) > 1 ? (session?.branches?.find((b) => b.id === location)?.name ?? null) : null;
 
   const [step, setStep] = useState<'what' | 'how' | 'done'>('what');
@@ -726,6 +733,16 @@ export function PayFlow({
       {tokenGone ? (
         <div role="alert" className="pf-error">
           {nv.tokenGone}
+        </div>
+      ) : null}
+      {/*
+        The booking named in the address is not settleable — paid on another phone, moved, cancelled. Said
+        here for the same reason a stale token is (Jira GRW-403): the screen that follows looks like an
+        ordinary sale, and the money would go in a second time against nothing.
+      */}
+      {visitGone ? (
+        <div role="alert" className="pf-error">
+          {nv.visitGone}
         </div>
       ) : null}
       {who}

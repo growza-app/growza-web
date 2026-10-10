@@ -38,8 +38,15 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 
-/** The words are `chrome.pay.<value>`; `value` is what the API stores. */
-export const PAYMENT_MODES: Array<{ value: PaymentMode }> = [{ value: 'cash' }, { value: 'card' }, { value: 'upi' }, { value: 'other' }];
+/*
+ * Moved to `lib/payment-modes.ts` (owner, 2026-10-11) and re-exported here for this file's own tests.
+ *
+ * Nothing renders `CheckoutSheet` any more — every till in the app is the Record payment flow now — but the
+ * component and its tests are still here, because taking them out properly means accounting for five test
+ * files' worth of coverage and that is not this change.
+ */
+export { PAYMENT_MODES } from '../lib/payment-modes';
+import { PAYMENT_MODES } from '../lib/payment-modes';
 
 /** One line in the services list — the original booking or an added extra, same look either way. */
 function ServiceRow({

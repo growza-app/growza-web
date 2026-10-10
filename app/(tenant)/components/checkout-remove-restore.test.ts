@@ -64,9 +64,14 @@ describe('adding a combo', () => {
     expect(sheet).toMatch(/comboPriceMinor: Number\(offer\.comboPriceMinor\)/);
   });
 
-  it('the place that still opens the till hands it the offers', () => {
-    // BookingSheet's Mark as done left for Record payment on 2026-10-10, which carries the combos itself.
-    expect(code('NewVisitSheet.tsx')).toMatch(/offers=\{offers \?\? \[\]\}/);
+  it('the flow that replaced the till carries the combos itself', () => {
+    /*
+     * Owner, 2026-10-10/11 — both openers have gone to Record payment, so nothing hands `CheckoutSheet`
+     * offers any more. The combos ride into the flow that replaced it: `ServiceSheet` takes them as a chip
+     * beside the kinds of service, which is where a combo is added at the till now.
+     */
+    expect(code('NewVisitSheet.tsx')).toMatch(/packages=\{combos\}/);
+    expect(code('NewVisitSheet.tsx')).not.toMatch(/<CheckoutSheet/);
   });
 });
 

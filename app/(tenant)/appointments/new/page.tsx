@@ -92,7 +92,15 @@ export default async function NewBookingPage({
   if (paying && params.visit && params.on) {
     try {
       const day = await api.appointments(params.on, params.on);
-      const one = day.find((a) => a.id === params.visit);
+      /*
+       * Still settleable, or not at all.
+       *
+       * `confirmed` is the only state with money still to take: a `completed` row has been paid, and a
+       * cancelled or no-show one never will be. Matching on the id alone found a settled booking perfectly
+       * well and opened the flow on it — a stale "Mark as done" link, or a back button after paying, and the
+       * salon takes the money a second time. Falling through to `visitGone` is what says so.
+       */
+      const one = day.find((a) => a.id === params.visit && a.status === 'confirmed');
       // The combo's other still-booked legs settle in the same payment, as the till they replace did.
       const legs = one?.bookingGroupId
         ? day.filter((a) => a.bookingGroupId === one.bookingGroupId && a.id !== one.id && a.status === 'confirmed')

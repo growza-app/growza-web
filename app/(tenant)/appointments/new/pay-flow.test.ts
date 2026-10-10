@@ -63,7 +63,17 @@ describe('Record payment in three taps', () => {
     expect(wrapper).toMatch(/const quick = purpose === 'payment' && !full;/);
     expect(wrapper).toMatch(/window\.matchMedia\('\(max-width: 860px\)'\)\.matches \? 'phone' : 'desk'/);
     // Nothing is drawn until the browser has said which — not a form that flashes up and is replaced.
-    expect(wrapper).toMatch(/if \(quick && layout === 'unknown'\) return <div className="pf" aria-busy="true" \/>;/);
+    expect(wrapper).toMatch(/if \(quick && !settlingBooking && layout === 'unknown'\) return <div className="pf" aria-busy="true" \/>;/);
+    /*
+     * Owner, 2026-10-11 — settling a BOOKING is this flow at every width, and beats `?full=1`.
+     *
+     * The width rule above is about ringing up a walk-in: a desk has room for the one-page form. A booking
+     * asks nothing that form is better at, and teaching it to settle one would mean a second copy of the
+     * `checkout` branch. `?full=1` loses because the one-page form writes a counter SALE, which for a
+     * booking leaves it confirmed for ever beside a duplicate visit.
+     */
+    expect(wrapper).toMatch(/const settlingBooking = purpose === 'payment' && \(Boolean\(visit\) \|\| visitGone\);/);
+    expect(wrapper).toMatch(/if \(settlingBooking \|\| \(quick && layout === 'phone'\)\) \{/);
     expect(page).toMatch(/full=\{params\.full === '1'\}/);
     // The way back to the full form is on the screen itself, for the sale this cannot write.
     expect(flow).toMatch(/const fullForm = `\/appointments\/new\?purpose=payment&full=1/);

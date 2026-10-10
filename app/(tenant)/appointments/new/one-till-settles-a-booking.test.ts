@@ -30,7 +30,11 @@ describe('one till settles a booking too', () => {
     // No read for one appointment by id — the day's list is, and the visit's other legs come back with it.
     expect(page).toMatch(/if \(paying && params\.visit && params\.on\) \{/);
     expect(page).toMatch(/const day = await api\.appointments\(params\.on, params\.on\);/);
-    expect(page).toMatch(/const one = day\.find\(\(a\) => a\.id === params\.visit\);/);
+    // Still settleable, or not at all: a `completed` row opened the flow perfectly well and would have
+    // taken the money a second time. `visitGone` is what says so.
+    expect(page).toMatch(/const one = day\.find\(\(a\) => a\.id === params\.visit && a\.status === 'confirmed'\);/);
+    expect(flow).toMatch(/\{visitGone \? \(/);
+    expect(flow).toMatch(/\{nv\.visitGone\}/);
     expect(client).toMatch(/<PayFlow token=\{token\}[^>]*visit=\{visit\}/);
   });
 
@@ -119,6 +123,19 @@ describe('one till settles a booking too', () => {
     // Both done screens name the visit; neither is left on the bare list.
     expect(flow).toMatch(/fixHref=\{fixVisitHref\(sale\.appointmentId, sale\.day\)\}/);
     expect(sheet).toMatch(/fixHref=\{fixVisitHref\(stage\.result\.appointmentId,/);
+  });
+
+  it("settles a booking at its OWN branch's menu and prices", () => {
+    /*
+     * Jira GRW-380, carried over from the till this replaces — `checkout-branch-menu.test.ts` rendered
+     * `CheckoutSheet` to prove it, and went with the component. The behaviour did not: a desk with the
+     * header on MG Road, settling an Indiranagar booking, must not be adding extras from the wrong menu.
+     * The booking's branch was missing from this chain when bookings first started settling here.
+     */
+    expect(flow).toMatch(/const location = token\?\.locationId \?\? visit\?\.appointment\.locationId \?\? branch\.choice/);
+    // And everything the screen loads is keyed on it.
+    expect(flow).toMatch(/api\s*\.services\(location \?\? undefined\)/);
+    expect(flow).toMatch(/api\s*\.providers\(\{ location \}\)/);
   });
 
   it('builds that address in one place, so three doors cannot drift', () => {

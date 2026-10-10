@@ -55,7 +55,9 @@ describe('New booking asks one question per line', () => {
      * This component has one early return and a very long body, so the rule is worth holding mechanically:
      * no hook after it. The check is deliberately dumb — any `useX(` at the component's own indentation.
      */
-    const cut = code.indexOf('  if (checkoutRows && checkoutRows.length > 0 && services && providers) {');
+    // Was the till's own `if (checkoutRows…) return`. That till is gone — every payment is the Record
+    // payment flow now — and `paidScreen`'s is the early return this component still has.
+    const cut = code.indexOf('  if (paidScreen && presentation === \'page\') return paidScreen;');
     expect(cut, 'the early return moved; point this test at the new one').toBeGreaterThan(0);
     const after = code.slice(cut).split('\n');
     const late = after
