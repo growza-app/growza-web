@@ -59,6 +59,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
+import { payVisitHref } from '../lib/pay-token';
 import { ServiceSheet } from './ServiceSheet';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
@@ -4177,11 +4178,7 @@ export function NewVisitSheet({
                 <button
                   type="button"
                   className="sheet-item wi-take-payment"
-                  onClick={() =>
-                    router.push(
-                      `/appointments/new?purpose=payment&visit=${encodeURIComponent(stage.result.appointmentId)}&on=${new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(stage.result.startAt))}`,
-                    )
-                  }
+                  onClick={() => router.push(payVisitHref(stage.result, timezone))}
                 >
                   {nv.takePayment}
                 </button>

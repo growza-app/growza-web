@@ -5,13 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { formatMoney, formatTime, type Provider, type QueueEntry, type TokenRow } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
-import { payTokenHref } from '../../lib/pay-token';
+import { payTokenHref, payVisitHref } from '../../lib/pay-token';
 import { IconStopwatch } from '../icons';
 import { useMayUse } from '../SessionProvider';
 import { GiveToStaffSheet } from './GiveToStaffSheet';
 import { SHOW_STEP, useVisibleRows } from './use-visible-rows';
 import { usePhoneLayout } from './use-phone-layout';
-import { VisitTill } from './VisitTill';
 import type { TokenWords } from './token-words';
 
 /**
@@ -111,7 +110,7 @@ export function TokenBoard({
   const [giving, setGiving] = useState<TokenRow | null>(null);
   // Owner, 2026-10-07 — paying a token opens the Record payment page, not an overlay of the old form.
   const router = useRouter();
-  const [till, setTill] = useState<TokenRow | null>(null);
+
   /**
    * Jira GRW-409 — a row's buttons, each asked of the shared rule. A role the API would refuse is shown the token
    * and what it is waiting for, and no button that can only answer 403.
@@ -151,7 +150,7 @@ export function TokenBoard({
    */
   useEffect(() => {
     const want = restore.current;
-    if (!want || giving || till) return;
+    if (!want || giving) return;
     const panel = document.getElementById(`tb-col-${want.col}`);
     const active = document.activeElement;
     const next = afterSheet({
@@ -165,7 +164,7 @@ export function TokenBoard({
     const row = rows[Math.min(want.index, rows.length - 1)];
     const target = row?.querySelector<HTMLElement>('button') ?? (phone ? tabRefs.current[want.col] : panel?.querySelector<HTMLElement>('h2'));
     target?.focus();
-  }, [tokens, giving, till, phone]);
+  }, [tokens, giving, phone]);
 
   const open = (col: Column, index: number, set: (x: TokenRow) => void, x: TokenRow) => {
     restore.current = { id: x.id, col, index };
@@ -235,8 +234,22 @@ export function TokenBoard({
         </span>
       ) : col === 'with_stylist' ? (
         <span className="tb-actions">
-          {mayCheckout ? (
-            <button type="button" className="hm-give tb-pay" aria-label={w.payFor(x.tokenNo, nameOf(x))} onClick={() => open(col, index, setTill, x)}>
+          {/*
+            Owner, 2026-10-10 — the same Record payment page the waiting column already goes to, with the
+            visit in the address instead of a token. It used to open a till of its own over the board, which
+            made three money screens in one product; `payVisitHref` is the one address all three doors use.
+
+            A visit in this column always has its legs and a start — it is with a stylist — but the row is
+            typed from the API, so the button is simply not drawn if either is missing rather than pushing an
+            address with `undefined` in it.
+          */}
+          {mayCheckout && x.legIds[0] && x.visitStartAt ? (
+            <button
+              type="button"
+              className="hm-give tb-pay"
+              aria-label={w.payFor(x.tokenNo, nameOf(x))}
+              onClick={() => router.push(payVisitHref({ appointmentId: x.legIds[0]!, startAt: x.visitStartAt! }, timezone))}
+            >
               {w.recordPayment}
             </button>
           ) : null}
@@ -306,9 +319,6 @@ export function TokenBoard({
       </div>
 
       {giving ? <GiveToStaffSheet t={t} entry={asEntry(giving)} providers={providers} busy={busy} onClose={() => setGiving(null)} /> : null}
-      {till ? (
-        <VisitTill legIds={till.legIds} customerId={till.customerId} locationId={till.locationId} timezone={timezone} onClose={() => setTill(null)} />
-      ) : null}
     </div>
   );
 }

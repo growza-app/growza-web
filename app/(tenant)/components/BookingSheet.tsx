@@ -9,6 +9,7 @@ import { formatDuration, summarizeServices } from '../lib/appointment-display';
 import { MoveBookingSheet } from './MoveBookingSheet';
 import { IconCheck, IconClose, IconMoveTime, IconPhone, IconWhatsApp } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { payVisitHref } from '../lib/pay-token';
 import { useMayUse } from './SessionProvider';
 
 /**
@@ -159,11 +160,7 @@ export function BookingSheet({
    * The booking's own day rides in the address because there is no read for one appointment by id; `from`
    * sends Done back to Bookings rather than Home.
    */
-  const markDone = () =>
-    router.push(
-      `/appointments/new?purpose=payment&visit=${encodeURIComponent(appointment.id)}` +
-        `&on=${new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(appointment.startAt))}&from=bookings`,
-    );
+  const markDone = () => router.push(payVisitHref({ appointmentId: appointment.id, startAt: appointment.startAt }, timezone, 'bookings'));
 
   if (moving) {
     return (

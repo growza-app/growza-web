@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -75,18 +75,32 @@ describe('one till settles a booking too', () => {
 
   it('sends Mark as done to that flow, and takes the till out of the booking sheet', () => {
     const book = strip(readFileSync(resolve(here, '../../components/BookingSheet.tsx'), 'utf8'));
-    expect(book).toMatch(/const markDone = \(\) =>/);
-    expect(book).toMatch(/purpose=payment&visit=\$\{encodeURIComponent\(appointment\.id\)\}/);
+    expect(book).toMatch(/const markDone = \(\) => router\.push\(payVisitHref\(/);
     // Done goes back to Bookings, not Home: that is where the person was.
-    expect(book).toMatch(/&from=bookings/);
+    expect(book).toMatch(/timezone, 'bookings'\)\)/);
     // The till it replaces is gone from here, and so is everything it was loaded for.
     expect(book).not.toMatch(/CheckoutSheet/);
     expect(book).not.toMatch(/setCheckingOut|openCheckout|setOffers|loadServicesFailed/);
   });
 
   it('sends Take payment now to that flow, not to a till of its own', () => {
-    expect(sheet).toMatch(/\/appointments\/new\?purpose=payment&visit=\$\{encodeURIComponent\(stage\.result\.appointmentId\)\}&on=\$\{/);
-    // The visit's own day, in the salon's timezone — not the browser's.
-    expect(sheet).toMatch(/new Intl\.DateTimeFormat\('en-CA', \{ timeZone: timezone \}\)\.format\(new Date\(stage\.result\.startAt\)\)/);
+    expect(sheet).toMatch(/onClick=\{\(\) => router\.push\(payVisitHref\(stage\.result, timezone\)\)\}/);
+  });
+
+  it('sends the token board there too, and the last till on Home is gone', () => {
+    const board = strip(readFileSync(resolve(here, '../../components/home/TokenBoard.tsx'), 'utf8'));
+    expect(board).toMatch(/payVisitHref\(\{ appointmentId: x\.legIds\[0\]!, startAt: x\.visitStartAt! \}, timezone\)/);
+    // `VisitTill` existed only to find the visit's rows before opening a till; the page does that now.
+    expect(board).not.toMatch(/VisitTill|setTill/);
+    expect(existsSync(resolve(here, '../../components/home/VisitTill.tsx'))).toBe(false);
+    // Its focus-restore wish no longer has a till to wait on.
+    expect(board).toMatch(/if \(!want \|\| giving\) return;/);
+  });
+
+  it('builds that address in one place, so three doors cannot drift', () => {
+    const lib = strip(readFileSync(resolve(here, '../../lib/pay-token.ts'), 'utf8'));
+    expect(lib).toMatch(/export function payVisitHref\(/);
+    // The SALON's day: an 11:40pm visit is still today in Bengaluru when the laptop has rolled over.
+    expect(lib).toMatch(/new Intl\.DateTimeFormat\('en-CA', \{ timeZone: timezone \}\)\.format\(new Date\(visit\.startAt\)\)/);
   });
 });

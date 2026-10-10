@@ -10,3 +10,29 @@ export function payTokenHref(token: { id: string; locationId?: string | null }, 
   if (from) q.set('from', from);
   return `/appointments/new?${q.toString()}`;
 }
+
+/**
+ * Owner, 2026-10-10 — where settling a BOOKING goes: the same Record payment page, with the visit in the
+ * address instead of a token.
+ *
+ * `on` is the visit's own day, and it is here because there is no read for one appointment by id — the day's
+ * list is, and the visit's other legs come back with it. Without it a booking for next Tuesday could not be
+ * found at all. The day is the SALON's, not the browser's: a 11:40pm visit is still today in Bengaluru when
+ * the laptop has rolled over.
+ *
+ * One helper for all three doors into it — the walk-in's done screen, Mark as done, and the token board's
+ * with-a-stylist column — so they cannot drift the way the tills they replaced had.
+ */
+export function payVisitHref(
+  visit: { appointmentId: string; startAt: string },
+  timezone: string,
+  from?: 'bookings',
+): string {
+  const q = new URLSearchParams({
+    purpose: 'payment',
+    visit: visit.appointmentId,
+    on: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(visit.startAt)),
+  });
+  if (from) q.set('from', from);
+  return `/appointments/new?${q.toString()}`;
+}
