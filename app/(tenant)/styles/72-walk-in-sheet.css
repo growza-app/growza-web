@@ -2165,3 +2165,13 @@ input.wi-search-input-plain {
 .wi-when-date {
   margin-top: var(--sp-3, 12px);
 }
+
+/* What the grid did with the time the desk was given, when it could not honour it exactly. */
+.wi-time-moved {
+  margin: var(--sp-2, 8px) 0 0;
+  padding: var(--sp-2, 8px) var(--sp-3, 12px);
+  border-radius: var(--radius-sm, 12px);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.9375rem;
+}

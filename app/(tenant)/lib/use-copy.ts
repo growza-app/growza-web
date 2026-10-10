@@ -174,6 +174,14 @@ export function useNewVisitCopy() {
     whenPick: t('whenPick'),
     bookAt: (time: string) => t('bookAt', { time }),
     /**
+     * What the free-slot grid did with the time that was asked for.
+     *
+     * The Booking time is a wish, and the grid is what is actually free. It used to move the wish to "the first
+     * free one after it" and say nothing, so a desk promised 2:00 and the salon booked 2:30. Now it says so.
+     */
+    timeMoved: (asked: string, got: string) => t('timeMoved', { asked, got }),
+    timeNoneAfter: (asked: string) => t('timeNoneAfter', { asked }),
+    /**
      * The confirmation a client is sent after a booking or a queue token (owner, 2026-10-07) — the same
      * `wa.me` link as the bill, with facts a booking is read back from. It never says "paid".
      */

@@ -2895,6 +2895,42 @@ export function NewVisitSheet({
       {label}
     </button>
   );
+  /**
+   * The Booking time, against what is actually free.
+   *
+   * `wanted` is the slot the grid should land on for the time asked for: that time if it is free, else the
+   * first free one after it, else nothing. The fetch effect above seeds this ONCE per load from
+   * `timeWantedRef`; this is what makes CHANGING the select move the grid, which it did not do when the
+   * control was last on this screen — the reason it was taken off.
+   */
+  const slotList = useMemo(() => (slots ? slots.sections.flatMap((sec) => sec.slots) : []), [slots]);
+  const askedMatch = useMemo(() => {
+    if (!timeWanted || slotList.length === 0) return null;
+    const hm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const at = (utc: string) => hm.format(new Date(utc));
+    const exact = slotList.find((sl) => at(sl.utc) === timeWanted);
+    return { exact: Boolean(exact), slot: exact ?? slotList.find((sl) => at(sl.utc) > timeWanted) ?? null };
+  }, [timeWanted, slotList, timezone]);
+
+  // Asking for a time moves the grid to it. Keyed on the ASK, so a slot tapped by hand afterwards is left alone.
+  useEffect(() => {
+    if (!timeWanted || !askedMatch) return;
+    setSlotUtc(askedMatch.slot?.utc ?? null);
+  }, [timeWanted, askedMatch]);
+
+  /**
+   * What became of the time the desk was given, in one line.
+   *
+   * Nothing when none was asked for, or when it was free and taken. Otherwise the nearest free time it moved
+   * to, or that the day holds nothing after it — the two silences this control used to keep, which are how a
+   * desk promised 2:00 and the salon booked 2:30.
+   */
+  const timeMoved = (() => {
+    if (!timeWanted || loadingSlots || !askedMatch || askedMatch.exact) return null;
+    const asked = timeOptions.find((o) => o.value === timeWanted)?.label ?? timeWanted;
+    return askedMatch.slot ? nv.timeMoved(asked, clockTime(askedMatch.slot.utc)) : nv.timeNoneAfter(asked);
+  })();
+
   const whenChoices = (
     <>
       <h2 className="wi-section-label" id="wi-whatnow">{nv.whatNow}</h2>
@@ -2912,25 +2948,49 @@ export function NewVisitSheet({
 
       {!queueing && later ? (
         <>
-          <div className="field wi-when-date">
-            <label htmlFor="wi-date">{nv.bookingDate}</label>
-            <input
-              id="wi-date"
-              type="date"
-              min={todayIso}
-              value={day}
-              onChange={(e) => {
-                const v = e.target.value;
-                const next = !v || v < todayIso ? todayIso : v;
-                setDay(next);
-                // Never back to a walk-in from in here: "Pick a time" is the answer being given, and today's
-                // date is "later today". Clearing it is what the Now option above is for.
-                setDateChosen(true);
-                // Jira GRW-535 — a morning time chosen for tomorrow is dropped when the date comes back to today
-                // and it has passed. Only here: a clock tick never clears a time the person has just picked.
-                if (next === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
-              }}
-            />
+          {/* Jira GRW-529 — the day and the time share one row, as they always did on this screen. */}
+          <div className="wi-when wi-when-date">
+            <div className="field wi-date-field">
+              <label htmlFor="wi-date">{nv.bookingDate}</label>
+              <input
+                id="wi-date"
+                type="date"
+                min={todayIso}
+                value={day}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  const next = !v || v < todayIso ? todayIso : v;
+                  setDay(next);
+                  // Never back to a walk-in from in here: "Pick a time" is the answer being given, and today's
+                  // date is "later today". Clearing it is what the Starts now box above is for.
+                  setDateChosen(true);
+                  // Jira GRW-535 — a morning time chosen for tomorrow is dropped when the date comes back to
+                  // today and it has passed. Only here: a clock tick never clears a time just picked.
+                  if (next === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
+                }}
+              />
+            </div>
+
+            {/*
+              Jira GRW-527 · GRW-533, back by the owner's ask (2026-10-10) — the time the desk was GIVEN.
+              A quarter-hour list, never a typed box, so a time that has passed is not in it.
+
+              It is a wish, not the answer: the answer is `slotUtc`, picked from what is actually free. This
+              control used to be removed precisely because the grid moved the wish on to "the first free one
+              after it" and said nothing, so the desk promised 2:00 and the salon booked 2:30. It keeps its job
+              — jump the grid to the time asked for — and the line under the grid now says when it could not.
+            */}
+            <div className="field wi-date-field">
+              <label htmlFor="wi-time">{nv.bookingTime}</label>
+              <select id="wi-time" value={timeWanted} onChange={(e) => setTimeWanted(e.target.value)} disabled={busy}>
+                <option value="">{nv.anyTime}</option>
+                {timeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           {/* The grid needs a duration to fit, so it waits for the first service — and says so rather than sitting empty. */}
           {picked.length === 0 ? (
@@ -2945,7 +3005,12 @@ export function NewVisitSheet({
                 <div className="empty" id="wi-no-times">
                   {nv.noTimes}
                 </div>
-              ) : (
+              ) : timeMoved ? (
+                <div className="wi-time-moved" role="status" id="wi-time-moved">
+                  {timeMoved}
+                </div>
+              ) : null}
+              {!loadingSlots && slots && slots.slotCount > 0 ? (
                 <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
                   {slots.sections.flatMap((sec) =>
                     sec.slots.map((slot) => (
@@ -2962,7 +3027,7 @@ export function NewVisitSheet({
                     )),
                   )}
                 </div>
-              )}
+              ) : null}
             </>
           )}
         </>

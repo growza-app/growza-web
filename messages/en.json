@@ -1875,7 +1875,9 @@
     "whenWaiting": "Waiting",
     "whenPick": "Pick a time",
     "bookAt": "Book {time}",
-    "whenNow": "Starts now"
+    "whenNow": "Starts now",
+    "timeMoved": "{asked} is taken. Nearest free is {got}.",
+    "timeNoneAfter": "Nothing free after {asked} that day."
   },
   "moveBooking": {
     "title": "Move this booking",

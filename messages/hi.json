@@ -1875,7 +1875,9 @@
     "whenWaiting": "इंतज़ार",
     "whenPick": "समय चुनें",
     "bookAt": "{time} बुक करें",
-    "whenNow": "अभी शुरू"
+    "whenNow": "अभी शुरू",
+    "timeMoved": "{asked} भरा है। सबसे पास खाली {got} है।",
+    "timeNoneAfter": "उस दिन {asked} के बाद कुछ खाली नहीं।"
   },
   "moveBooking": {
     "title": "यह बुकिंग बदलें",

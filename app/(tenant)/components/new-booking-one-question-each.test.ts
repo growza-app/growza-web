@@ -45,6 +45,25 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/wi-slot-grid/);
   });
 
+  it('takes a time, and says out loud when it could not honour it', () => {
+    /*
+     * Owner, 2026-10-10 — the Booking time is back beside the date. It was taken off because it was a second
+     * answer to "when" that the free-slot grid silently overruled: the grid moved the ask on to "the first
+     * free one after it", so a desk promised 2:00 and the salon booked 2:30.
+     *
+     * It is now an input to the search, not an answer. Changing it moves the grid, and when the exact time is
+     * not free the screen SAYS where it went. `slotUtc` is still the single answer.
+     */
+    expect(code).toMatch(/<select id="wi-time" value=\{timeWanted\}/);
+    expect(code).toMatch(/const askedMatch = useMemo\(\(\) => \{/);
+    expect(code).toMatch(/exact: Boolean\(exact\), slot: exact \?\? slotList\.find\(\(sl\) => at\(sl\.utc\) > timeWanted\) \?\? null/);
+    // Keyed on the ASK, so a slot tapped by hand afterwards is not snatched back.
+    expect(code).toMatch(/setSlotUtc\(askedMatch\.slot\?\.utc \?\? null\);\s*\n\s*\}, \[timeWanted, askedMatch\]\);/);
+    // Silent only when it was honoured exactly.
+    expect(code).toMatch(/if \(!timeWanted \|\| loadingSlots \|\| !askedMatch \|\| askedMatch\.exact\) return null;/);
+    expect(code).toMatch(/askedMatch\.slot \? nv\.timeMoved\(asked, clockTime\(askedMatch\.slot\.utc\)\) : nv\.timeNoneAfter\(asked\)/);
+  });
+
   it('puts the queue on the screen, not two taps inside a row', () => {
     /*
      * Owner, 2026-10-10 — when WAS a row, and hiding the queue behind it was the mistake: adding somebody to
