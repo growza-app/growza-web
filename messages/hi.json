@@ -42,7 +42,14 @@
         "cancelled": "रद्द",
         "rescheduled": "समय बदला",
         "billing": "बिलिंग",
-        "handoff": "किसी से बात"
+        "handoff": "किसी से बात",
+        "walkIn": "वॉक-इन",
+        "completed": "हो गया",
+        "noShow": "नहीं आए",
+        "invoice": "बिल",
+        "payment": "भुगतान",
+        "discount": "छूट",
+        "autopay": "AutoPay"
       },
       "title": "{topic} — {services}",
       "customer": "ग्राहक",
@@ -53,7 +60,31 @@
       "billUp": "बिल बढ़ने वाला है",
       "billDown": "बिल घटने वाला है",
       "billSub": "{day} से: {next} प्रति माह (अभी {current}), {count, plural, one {# ब्रांच} other {# ब्रांच}} के लिए।",
-      "handoffTitle": "किसी से बात करना चाहते हैं"
+      "handoffTitle": "किसी से बात करना चाहते हैं",
+      "by": "{who} द्वारा",
+      "roles": {
+        "owner": "मालिक",
+        "manager": "मैनेजर",
+        "receptionist": "फ्रंट डेस्क",
+        "staff": "स्टाफ़"
+      },
+      "billingSub": "अपना बिल देखने के लिए टैप करें",
+      "invoiceTitle": "आपका {month} का बिल तैयार है: {amount}",
+      "paymentTitle": "{amount} मिल गए — धन्यवाद",
+      "discountOn": "छूट लागू: हर महीने {amount} कम",
+      "discountOff": "छूट हटा दी गई",
+      "autopayHalted": "AutoPay रुक गया है — लिंक से भुगतान करें, या फिर से मंज़ूरी दें",
+      "status": {
+        "PAYMENT_FAILED": "इस महीने का भुगतान अभी नहीं हुआ",
+        "GRACE_PERIOD": "भुगतान बकाया है",
+        "PAST_DUE": "भुगतान बकाया — जल्द ही पहुंच सीमित होगी",
+        "SUSPENDED": "बिल चुकाने तक खाता सीमित",
+        "ACTIVE": "भुगतान मिल गया — सब ठीक",
+        "PAUSED": "सब्सक्रिप्शन रोका गया",
+        "CANCELLED": "सब्सक्रिप्शन रद्द",
+        "EXPIRED": "सब्सक्रिप्शन खत्म",
+        "OTHER": "बिलिंग अपडेट"
+      }
     },
     "bellUnread": "सूचनाएं, {count} नई"
   },

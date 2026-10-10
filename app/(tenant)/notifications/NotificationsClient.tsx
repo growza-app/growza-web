@@ -131,13 +131,19 @@ export function NotificationsClient() {
             {visibleEvents.length === 0 ? (
               <div className="notif-empty">{n('empty')}</div>
             ) : (
-              visibleEvents.map((e) => {
+              visibleEvents.map((e, i) => {
                 const meta = TOPIC_META[e.topic];
                 const Icon = meta.icon;
                 const line = eventLine(e, timezone, nf, locale, feed.showBranch);
                 const unread = Number(e.id) > lastSeenId;
+                // Jira GRW-562 — a billing row opens the bill; the key adds the position because `id` is a timestamp.
+                const toBilling = e.topic.startsWith('billing.');
                 return (
-                  <div key={e.id} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>
+                  <div
+                    key={`${e.id}-${i}`}
+                    className={`notif-item ${unread ? 'notif-item-unread' : ''}`}
+                    {...(toBilling ? { role: 'link', tabIndex: 0, style: { cursor: 'pointer' }, onClick: () => router.push('/settings/billing'), onKeyDown: (ev: React.KeyboardEvent) => { if (ev.key === 'Enter') router.push('/settings/billing'); } } : {})}
+                  >
                     <span className={`notif-icon ${meta.cls}`}>
                       <Icon />
                     </span>

@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react';
 import { DateTime } from 'luxon';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
-import { IconBell, IconCalendarPlus, IconChat, IconClose, IconMoveTime, IconReceipt } from './icons';
+import { IconAlert, IconBan, IconBell, IconCalendarPlus, IconChat, IconClipboardCheck, IconClose, IconMoveTime, IconPercent, IconReceipt, IconRepeat, IconRupee, IconUserPlus } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useBranch } from './BranchProvider';
 
@@ -60,10 +60,23 @@ export function countUnread(events: ReadonlyArray<{ id: string | number }>, last
 }
 
 /** The words are `notifications.feed.topics.<key>`; only the icon and class live here. */
-export const TOPIC_META: Record<ActivityEvent['topic'], { key: 'newBooking' | 'cancelled' | 'rescheduled' | 'billing' | 'handoff'; icon: ComponentType; cls: string }> = {
+export type TopicKey =
+  | 'newBooking' | 'cancelled' | 'rescheduled' | 'walkIn' | 'completed' | 'noShow'
+  | 'billing' | 'invoice' | 'payment' | 'discount' | 'autopay' | 'handoff';
+export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: ComponentType; cls: string }> = {
   'appointment.confirmed': { key: 'newBooking', icon: IconCalendarPlus, cls: 'notif-new' },
   'appointment.cancelled': { key: 'cancelled', icon: IconClose, cls: 'notif-cancel' },
   'appointment.rescheduled': { key: 'rescheduled', icon: IconMoveTime, cls: 'notif-reschedule' },
+  // Jira GRW-562 — what somebody else at the salon did in the dashboard.
+  'appointment.walk_in': { key: 'walkIn', icon: IconUserPlus, cls: 'notif-new' },
+  'appointment.completed': { key: 'completed', icon: IconClipboardCheck, cls: 'notif-done' },
+  'appointment.no_show': { key: 'noShow', icon: IconBan, cls: 'notif-cancel' },
+  // Jira GRW-562 — the bill, for the owner and manager.
+  'billing.invoice': { key: 'invoice', icon: IconReceipt, cls: 'notif-billing' },
+  'billing.payment': { key: 'payment', icon: IconRupee, cls: 'notif-done' },
+  'billing.status': { key: 'billing', icon: IconAlert, cls: 'notif-billing' },
+  'billing.discount': { key: 'discount', icon: IconPercent, cls: 'notif-billing' },
+  'billing.autopay_halted': { key: 'autopay', icon: IconRepeat, cls: 'notif-cancel' },
   // Jira GRW-301 — replaces the old top-of-page BillChangeBanner, which had
   // no dismiss and no read state; this is a normal feed entry now.
   'billing.change_pending': { key: 'billing', icon: IconReceipt, cls: 'notif-billing' },
@@ -88,7 +101,7 @@ export function timeAgo(iso: string, now: Date, t: FeedT): string {
  * permanent banner, now one feed entry: "Bill going down · from 1 Oct:
  * ₹798/month (now ₹998), for 2 branches."
  */
-function billingLine(billing: NonNullable<ActivityEvent['billing']>, t: FeedT, locale: string): { title: string; subtitle: string } {
+function billingLine(billing: { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number }, t: FeedT, locale: string): { title: string; subtitle: string } {
   const [y, m, d] = billing.effectiveFrom.split('-').map(Number);
   const day = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(`${locale}-IN`, { day: 'numeric', month: 'short', timeZone: 'UTC' });
   const up = billing.nextMonthlyMinor > billing.currentMonthlyMinor;
@@ -113,6 +126,41 @@ export function useFeedBranch(): { location: string | null; showBranch: boolean 
   return { location: free ? b.choice : null, showBranch: free && !b.choice };
 }
 
+/** Jira GRW-562 — a billing row's words. `t` keys are `notifications.feed.*`; the status words match the banner's. */
+function billingRow(e: ActivityEvent, t: FeedT, locale: string): { title: string; subtitle: string } | null {
+  const b = e.billing as Record<string, unknown> | null;
+  if (!b) return null;
+  const money = (minor: unknown) => formatMoney(String(Number(minor ?? 0)), String(b.currency ?? 'INR'));
+  const sub = t('billingSub');
+  switch (e.topic) {
+    case 'billing.invoice': {
+      const [y, m] = String(b.periodStart ?? '').split('-').map(Number);
+      const month = y && m ? new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(`${locale}-IN`, { month: 'long', timeZone: 'UTC' }) : '';
+      return { title: t('invoiceTitle', { month, amount: money(b.totalMinor) }), subtitle: sub };
+    }
+    case 'billing.payment':
+      return { title: t('paymentTitle', { amount: money(b.amountMinor) }), subtitle: sub };
+    case 'billing.discount':
+      return { title: Number(b.discountAmountMinor ?? 0) > 0 ? t('discountOn', { amount: money(b.discountAmountMinor) }) : t('discountOff'), subtitle: sub };
+    case 'billing.autopay_halted':
+      return { title: t('autopayHalted'), subtitle: sub };
+    case 'billing.status': {
+      const status = String(b.status ?? '');
+      const known = ['PAYMENT_FAILED', 'GRACE_PERIOD', 'PAST_DUE', 'SUSPENDED', 'ACTIVE', 'PAUSED', 'CANCELLED', 'EXPIRED'];
+      return { title: t(`status.${known.includes(status) ? status : 'OTHER'}` as never), subtitle: sub };
+    }
+    default:
+      return null;
+  }
+}
+
+/** Jira GRW-562 — "by Priya" / "by Front desk": who at the salon did it, when somebody did. */
+export function byWhom(e: Pick<ActivityEvent, 'actorName' | 'actorRole'>, t: FeedT): string | null {
+  if (e.actorName) return t('by', { who: e.actorName });
+  if (e.actorRole) return t('by', { who: t(`roles.${e.actorRole}`) });
+  return null;
+}
+
 export function eventLine(
   e: ActivityEvent,
   timezone: string,
@@ -120,7 +168,9 @@ export function eventLine(
   locale: string,
   showBranch = false,
 ): { title: string; subtitle: string } {
-  if (e.topic === 'billing.change_pending' && e.billing) return billingLine(e.billing, t, locale);
+  if (e.topic === 'billing.change_pending' && e.billing) return billingLine(e.billing as NonNullable<Parameters<typeof billingLine>[0]>, t, locale);
+  const billing = billingRow(e, t, locale);
+  if (billing) return billing;
   if (e.topic === 'conversation.handoff') {
     const who = e.customerName ?? t('customer');
     return { title: t('handoffTitle'), subtitle: [who, showBranch ? e.branchName : null].filter(Boolean).join(' · ') };
@@ -130,7 +180,7 @@ export function eventLine(
   const customer = e.customerName ?? t('customer');
   return {
     title: t('title', { topic: t(`topics.${TOPIC_META[e.topic].key}`), services }),
-    subtitle: [customer, local, showBranch ? e.branchName : null].filter(Boolean).join(' · '),
+    subtitle: [customer, local, byWhom(e, t), showBranch ? e.branchName : null].filter(Boolean).join(' · '),
   };
 }
 
@@ -298,13 +348,14 @@ export function NotificationBell() {
               <div className="notif-empty">{t('empty')}</div>
             ) : (
               <div className="notif-list">
-                {visibleEvents.map((e) => {
+                {visibleEvents.map((e, i) => {
                   const meta = TOPIC_META[e.topic];
                   const Icon = meta.icon;
                   const line = eventLine(e, timezone, tf, locale, feed.showBranch);
                   const unread = Number(e.id) > lastSeenId;
+                  // `id` is a timestamp (GRW-562): two rows written in one transaction share it, so the key adds the position.
                   return (
-                    <div key={e.id} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>
+                    <div key={`${e.id}-${i}`} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>
                       <span className={`notif-icon ${meta.cls}`}>
                         <Icon />
                       </span>
