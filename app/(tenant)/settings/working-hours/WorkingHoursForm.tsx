@@ -17,10 +17,8 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
   const [rows, setRows] = useState(() => toWeekdayRows(initial.workingHours));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [grace, setGrace] = useState(String(initial.booking.attendanceLateGraceMin));
   const [graceError, setGraceError] = useState<string | null>(null);
-  const [graceSaved, setGraceSaved] = useState(false);
 
   const graceNum = Number(grace);
   /** The first minute that IS late, in the example's own clock. */
@@ -38,10 +36,8 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
     }
     setBusy(true);
     setGraceError(null);
-    setGraceSaved(false);
     try {
       await api.updateBookingRules({ attendanceLateGraceMin: graceNum }, branchId);
-      setGraceSaved(true);
       closeForm();
     } catch {
       setGraceError(t('errors.saveFailed'));
@@ -62,13 +58,11 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
     }
     setBusy(true);
     setError(null);
-    setSaved(false);
     try {
       await api.updateOrgWorkingHours(
         open.map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime })),
         branchId,
       );
-      setSaved(true);
       closeForm();
     } catch {
       setError(t('errors.saveFailed'));
@@ -96,11 +90,9 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
         <SettingsSaveBar
           pinned={false}
           busy={busy}
-          saved={saved}
           onSave={save}
           saveLabel={t('saveHours')}
           savingLabel={t('saving')}
-          savedLabel={t('saved')}
         />
       </div>
     </div>
@@ -136,7 +128,6 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
             onChange={(e) => {
               setGrace(e.target.value);
               setGraceError(null);
-              setGraceSaved(false);
             }}
           />
           <span className="field-hint" style={{ margin: 0 }}>{t('minutes')}</span>
@@ -150,11 +141,9 @@ export function WorkingHoursForm({ initial, branchName = null }: { initial: Sett
         <SettingsSaveBar
           pinned={false}
           busy={busy}
-          saved={graceSaved}
           onSave={saveGrace}
           saveLabel={t('saveAttendance')}
           savingLabel={t('saving')}
-          savedLabel={t('saved')}
         />
       </div>
     </div>

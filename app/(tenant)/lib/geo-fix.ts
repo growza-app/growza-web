@@ -64,6 +64,26 @@ export function pinFromText(text: string): { lat: number; lng: number } | null {
   return null;
 }
 
+/**
+ * A share link that carries no place, only an id the maps provider resolves on its own servers.
+ *
+ * This is what the Share button on a phone hands you — `maps.app.goo.gl/AbC123`, `goo.gl/maps/…`,
+ * `maps.apple.com/p/…` — so the hint on Settings › Phone check-in ("Share the branch from Google Maps …
+ * and paste the link here") named the one thing `pinFromText` cannot read, and the owner got "Could not
+ * find a place in that link." for following it. Nothing on this side can turn one into a pin: it takes a
+ * request to Google or Apple to follow the redirect. Until something makes that request, the screen
+ * recognises the link for what it is and says what to do instead of leaving the owner to guess which
+ * half of the instruction was wrong.
+ */
+export function isShortMapsLink(text: string): boolean {
+  return /maps\.app\.goo\.gl|goo\.gl\/maps|maps\.apple\.com\/p\//i.test(text);
+}
+
+/** Somewhere the owner can look at the pin and recognise their own street. Numbers alone cannot be checked. */
+export function mapsHref(pin: { lat: number; lng: number }): string {
+  return `https://www.google.com/maps/search/?api=1&query=${pin.lat},${pin.lng}`;
+}
+
 /** "about 2 shops away" is for the owner; the register wants metres. */
 export function metresLabel(m: number | null | undefined): string | null {
   if (m == null) return null;

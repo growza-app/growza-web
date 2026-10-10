@@ -55,12 +55,10 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
   const [cancellationCutoffMin, setCancellationCutoffMin] = useState(initial.booking.cancellationCutoffMin);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   const save = async () => {
     setBusy(true);
     setError(null);
-    setSaved(false);
     try {
       const b = initial.booking;
       if (branchId) {
@@ -93,7 +91,6 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
         });
         setOwn(fromSaved(after.booking.closedDates ?? []));
       }
-      setSaved(true);
       closeForm();
     } catch (e) {
       // The server's own words ("Minimum notice must be shorter than…", "20 Sep 2026 has already passed").
@@ -114,7 +111,6 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
       setOwn(withDay(own, newClosed));
     }
     setNewClosed('');
-    setSaved(false);
   };
 
   return (
@@ -252,7 +248,6 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
                   aria-label={t('removeAria', { day: day(d) })}
                   onClick={() => {
                     setOwn(withoutDay(own, d));
-                    setSaved(false);
                   }}
                 >
                   ×
@@ -268,7 +263,6 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
                       aria-label={t('removeAllAria', { day: day(d) })}
                       onClick={() => {
                         setBusiness(withoutDay(business, d));
-                        setSaved(false);
                       }}
                     >
                       ×
@@ -291,11 +285,9 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
     </div>
     <SettingsSaveBar
       busy={busy}
-      saved={saved}
       onSave={save}
       saveLabel={t('save')}
       savingLabel={t('saving')}
-      savedLabel={t('saved')}
     />
     </>
   );

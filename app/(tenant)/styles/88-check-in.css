@@ -124,6 +124,32 @@
 }
 
 /* ---------- Settings › Phone check-in ---------- */
+
+/*
+ * `.field` carries no layout of its own. Every screen that uses it either scopes its own
+ * (`.bp-form .field`, `.edit-grid .field`, `.filters-inline .field` all set this same column) or writes
+ * a `<div>`, which stacks because a div is block. This card did neither: its two fields are `<label>`s,
+ * which are INLINE, so "Or paste a maps link" and its box shared a line, the box ran off toward the card
+ * edge, and nothing separated one field from the next (all three measured `margin: 0px`).
+ *
+ * Said here rather than on a bare `.field`, which would land on four other screens that already answer
+ * the question for themselves — a shared default underneath four overrides is not the simpler thing.
+ */
+.ci-settings .field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ci-settings .field + .field,
+.ci-settings .field + .ci-switch-row {
+  margin-top: var(--sp-4);
+}
+/* `min-width: 180px` on the shared control is a floor for a toolbar, not a width for a form field. */
+.ci-settings .field > input,
+.ci-settings .field > select {
+  width: 100%;
+}
+
 .ci-settings-intro {
   margin: 0 0 var(--sp-4);
 }
@@ -136,13 +162,33 @@
   color: #166534;
   font-weight: 650;
 }
+/* Two five-decimal numbers are not something an owner can check. This is. */
+.ci-pin-check {
+  display: inline-block;
+  margin-bottom: var(--sp-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+/* The phone's own "I am only this sure", when it is wider than the fence the owner picked. */
+.ci-pin-rough {
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: #fdf6ec;
+  color: #8a5a0f;
+  font-size: 0.84375rem;
+  line-height: 1.45;
+}
 .ci-pin-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
   margin-bottom: var(--sp-2);
 }
-.ci-here {
+/* Both, not just the green one: side by side, two different heights read as a mistake. */
+.ci-pin-actions .btn,
+.ci-pin-actions .btn-ghost {
   min-height: 48px;
 }
 .ci-switch-row {

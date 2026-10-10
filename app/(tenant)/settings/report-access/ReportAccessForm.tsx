@@ -46,12 +46,10 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
   const [granted, setGranted] = useState<Record<string, string[]>>(() => ({ ...initial.reportAccess }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   const has = (role: string, tab: string) => (granted[role] ?? []).includes(tab);
 
   const toggle = (role: string, tab: string) => {
-    setSaved(false);
     setGranted((prev) => {
       const current = prev[role] ?? [];
       const next = current.includes(tab) ? current.filter((t) => t !== tab) : [...current, tab];
@@ -62,7 +60,6 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
   const save = async () => {
     setBusy(true);
     setError(null);
-    setSaved(false);
     try {
       // Only the roles this form offers: a key left over from before (a stored `staff`) would fail the save.
       const reportAccess = Object.fromEntries(ROLES.map((role) => [role, granted[role] ?? []]));
@@ -70,7 +67,6 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
       // Taken from the server's answer rather than kept locally: it drops a
       // role granted nothing, and the screen should show what was stored.
       setGranted({ ...fresh.reportAccess });
-      setSaved(true);
       closeForm();
     } catch (e) {
       setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.saveFailed'));
@@ -126,11 +122,9 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
     </div>
     <SettingsSaveBar
       busy={busy}
-      saved={saved}
       onSave={save}
       saveLabel={t('save')}
       savingLabel={t('saving')}
-      savedLabel={t('saved')}
     />
     </>
   );

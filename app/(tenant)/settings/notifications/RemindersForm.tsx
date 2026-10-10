@@ -66,7 +66,6 @@ export function RemindersForm({
   ]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   const updateRow = (i: number, patch: Partial<ReminderRow>) => {
     setRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)));
@@ -81,13 +80,11 @@ export function RemindersForm({
     }
     setBusy(true);
     setError(null);
-    setSaved(false);
     try {
       const reminderRules = rows
         .filter((r) => r.enabled)
         .map((r) => ({ ruleKey: r.key, offsetMin: -(r.hours * 60), template: r.template }));
       await api.updateReminders(reminderRules, initial.scope.locationId);
-      setSaved(true);
       closeForm();
     } catch (err) {
       // The server's reason — "your plan allows 1 reminder", "two reminders cannot go out at the same time".
@@ -151,11 +148,9 @@ export function RemindersForm({
         */}
         <SettingsSaveBar
           busy={busy}
-          saved={saved}
           onSave={save}
           saveLabel={t('save')}
           savingLabel={t('saving')}
-          savedLabel={t('saved')}
         />
       </div>
     </div>

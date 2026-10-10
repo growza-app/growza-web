@@ -94,6 +94,12 @@ input[type='number'],
    next to a styled phone field. Added to the shared rule rather than patched
    on that one screen, so the next password field inherits it too. */
 input[type='password'],
+/* And `url`, which was the one input type this list had never enumerated. Settings › Phone check-in
+   found that out: its maps field drew a square 1px-grey browser box with 2px of padding beside a select
+   with the app's 14px corners. That field is `text` now (it mostly takes typed coordinates), so nothing
+   currently relies on this line — it is here so the list is the complete answer to "what does an input
+   in this app look like", which is the only reason the password line above had to be added separately. */
+input[type='url'],
 textarea {
   padding: 9px 12px;
   border: 1px solid var(--border);

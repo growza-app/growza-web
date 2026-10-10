@@ -502,7 +502,6 @@
     "saveHours": "Save hours",
     "saveAttendance": "Save attendance",
     "saving": "Saving…",
-    "saved": "Saved",
     "attendance": "Attendance",
     "attendanceHint": "How many minutes late someone can arrive before they are marked late. It counts from each person’s own start time.",
     "graceLabel": "Can arrive late by",
@@ -541,7 +540,6 @@
     "closedNote": "Nobody can book on these days. Bookings already made are not cancelled.",
     "save": "Save changes",
     "saving": "Saving…",
-    "saved": "Saved",
     "errors": {
       "saveFailed": "Could not save. Please try again."
     },
@@ -559,7 +557,6 @@
     "hoursBefore": "hours before the booking",
     "save": "Save changes",
     "saving": "Saving…",
-    "saved": "Saved",
     "errors": {
       "hoursRange": "Use a whole number of hours, from 1 to 168",
       "saveFailed": "Could not save. Please try again."
@@ -638,9 +635,9 @@
     "finding": "Finding you…",
     "clearPin": "Clear",
     "useHereHint": "Stand inside the branch and tap. Your phone must allow location.",
-    "linkLabel": "Or paste a maps link",
-    "linkPlaceholder": "https://maps.google.com/…",
-    "linkHint": "Share the branch from Google Maps or Apple Maps and paste the link here.",
+    "linkLabel": "Or paste where it is",
+    "linkPlaceholder": "12.97123, 77.59456",
+    "linkHint": "In Google Maps, press and hold on your shop until a red pin drops, tap the numbers that appear, and paste them here. A map link copied on a computer works too.",
     "radiusLabel": "How close counts",
     "radiusOption": "Within {m} m",
     "radiusHint": "50 m is one shop. 500 m is the whole street.",
@@ -651,13 +648,15 @@
     "deskApprovesHint": "Normally only you decide. Turn this on if your receptionist should too.",
     "save": "Save",
     "saving": "Saving…",
-    "savedLabel": "Saved",
     "errors": {
-      "noFix": "Could not find your location. Check location is on for this site and try again, or paste a maps link.",
-      "noPlaceInLink": "Could not find a place in that link.",
+      "noFix": "Could not find your location. Check location is on for this site and try again, or paste where the branch is.",
+      "noPlaceInLink": "Could not find a place in that. Paste the numbers Google Maps shows under a dropped pin, like 12.97123, 77.59456.",
       "pinFirst": "Set where this branch is before turning it on.",
-      "saveFailed": "Could not save. Please try again."
-    }
+      "saveFailed": "Could not save. Please try again.",
+      "shortLink": "A shared link does not carry the place. In Google Maps, press and hold on your shop until a red pin drops, then copy the numbers it shows and paste those instead."
+    },
+    "seeOnMap": "See this place on a map",
+    "pinRough": "Your phone was only sure of this to about {m} m, which is wider than the {radius} m you chose. Staff standing inside may still be counted as away. Step near a door or window and tap again."
   },
   "settingsTeam": {
     "title": "Team access",

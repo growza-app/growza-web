@@ -98,10 +98,10 @@ describe('Settings per branch, as the QA pass left it', () => {
   it('a save redraws: forms are keyed by branch only, and saving closes back to Settings (which refreshes) or refreshes in place', () => {
     expect(src('scope.ts')).toMatch(/return settings\.scope\.locationId \?\? 'all';/);
     // Jira GRW-556 (follow-up) — Save closes the form; `useCloseAfterSave` pushes the list and refreshes.
-    expect(src('working-hours/WorkingHoursForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
+    expect(src('working-hours/WorkingHoursForm.tsx')).toMatch(/closeForm\(\);/);
     expect(src('../lib/close-after-save.ts')).toMatch(/router\.push\([\s\S]*?\);\s*router\.refresh\(\);/);
     // Drawn only while WhatsApp booking is on (owner, 2026-10-10), so it always closes on Save like the others.
-    expect(src('notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
+    expect(src('notifications/RemindersForm.tsx')).toMatch(/closeForm\(\);/);
   });
 
   it('"Use business settings" redraws the form from the start; the note is keyed by branch', () => {

@@ -16,6 +16,11 @@
  * desktop" costs nothing to honour: the pinning lives entirely in a `max-width: 860px` block in
  * 85-settings-fit.css.
  *
+ * No "Saved" note. It had one, and it could never appear: GRW-556 made every one of these forms close on a
+ * successful save (`useCloseAfterSave`), so the screen is already on its way to the Settings list — which
+ * says "Saved" itself, with `SavedToast`. Five forms were each keeping a `saved` boolean and a `savedLabel`
+ * string for a span that is unreachable; they are gone with it.
+ *
  * Deliberately NOT tracking dirty state. Business profile's bar disables Save until something changes,
  * these two forms never have, and teaching them would change what the button does rather than where it
  * is. The ticket's Validations line about a disabled Save describes Business profile's behaviour, not a
@@ -23,19 +28,15 @@
  */
 export function SettingsSaveBar({
   busy,
-  saved,
   onSave,
   saveLabel,
   savingLabel,
-  savedLabel,
   pinned = true,
 }: {
   busy: boolean;
-  saved: boolean;
   onSave: () => void;
   saveLabel: string;
   savingLabel: string;
-  savedLabel: string;
   /**
    * Whether this bar sticks to the bottom of a phone's screen (design review, 2026-10-07).
    *
@@ -50,7 +51,6 @@ export function SettingsSaveBar({
       <button className="btn settings-savebar-btn" disabled={busy} onClick={onSave}>
         {busy ? savingLabel : saveLabel}
       </button>
-      {saved && !busy && <span className="settings-savebar-note">{savedLabel}</span>}
     </div>
   );
 }
