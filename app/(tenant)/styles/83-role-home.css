@@ -1207,6 +1207,35 @@
   border-top: 1px solid var(--hm-line-soft);
   min-width: 0;
 }
+
+/*
+ * The row opens its booking (owner, 2026-10-11), so the LINK carries the layout and the `<li>` keeps only
+ * the rule above it. Inheriting the flex rather than restating it: two copies of one row's geometry is how
+ * the desk list and this one would drift apart.
+ */
+.hm-row-link {
+  display: flex;
+  align-items: center;
+  gap: inherit;
+  flex: 1;
+  min-width: 0;
+  /* The whole row is the target, including the padding the `<li>` draws. */
+  margin: calc(var(--sp-2) * -1) 0;
+  padding: var(--sp-2) 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hm-row-link:hover .hm-row-name {
+  text-decoration: underline;
+}
+
+/* Focus belongs to the whole row, not the text inside it. */
+.hm-row-link:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 12px);
+}
 .hm-row-button {
   padding: 0;
 }

@@ -1,5 +1,8 @@
 'use client';
 
+import Link from 'next/link';
+import { openBookingHref } from '../../lib/pay-token';
+
 import type { ReactNode } from 'react';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
@@ -315,23 +318,40 @@ export function avatarKey(g: BookingGroup): string {
   return g.customerName !== undefined ? (g.customerPhone ?? g.customerName ?? g.key) : g.key;
 }
 
-/** The compact list rows every Home uses: time, who, what, where it stands. */
+/**
+ * The compact list rows every Home uses: time, who, what, where it stands.
+ *
+ * Each one opens that booking (owner, 2026-10-11). They were plain `<li>`s — no link, no handler — while
+ * naming a client, a service, a stylist and a status, and looking exactly like the rows that DO open
+ * everywhere else in the app. A desk that taps "Divya Rao" and gets nothing has learned the card is dead,
+ * and stops trying. "View all" was the only way in.
+ *
+ * A link, not the booking sheet in place: the sheet needs the services, providers and offers Home does not
+ * load, and `?open=` already puts the whole sheet — Move, Mark as done, Cancel — one tap away on the screen
+ * built for it. The row's own day goes in the address, because this list shows TOMORROW's bookings once
+ * today's are done.
+ */
 export function BookingRows({ t, groups, timezone, now, empty, showStaff = true }: { t: HomeCopy; groups: BookingGroup[]; timezone: string; now: Date; empty: string; showStaff?: boolean }) {
   if (groups.length === 0) return <p className="hm-empty">{empty}</p>;
+  const dayOf = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(iso));
   return (
     <ul className="hm-rows">
       {groups.map((g) => {
         const name = clientNameLabel(g);
         const services = summarizeServices(g.serviceNames, t.lang);
+        const sub = showStaff && g.providerNames.length ? `${services} · ${g.providerNames.join(', ')}` : services;
         return (
           <li key={g.key} className="hm-row">
-            <span className="hm-row-time">{formatTime(g.startAt, timezone)}</span>
-            <Avatar name={name} id={avatarKey(g)} size={34} />
-            <span className="hm-row-main">
-              <span className="hm-row-name">{name ?? services}</span>
-              <span className="hm-row-sub">{showStaff && g.providerNames.length ? `${services} · ${g.providerNames.join(', ')}` : services}</span>
-            </span>
-            <StatusPill t={t} group={g} now={now} />
+            {/* The link is the whole row, so the status pill is not a second target beside it. */}
+            <Link className="hm-row-link" href={openBookingHref(g.appointments[0]!.id, dayOf(g.startAt))}>
+              <span className="hm-row-time">{formatTime(g.startAt, timezone)}</span>
+              <Avatar name={name} id={avatarKey(g)} size={34} />
+              <span className="hm-row-main">
+                <span className="hm-row-name">{name ?? services}</span>
+                <span className="hm-row-sub">{sub}</span>
+              </span>
+              <StatusPill t={t} group={g} now={now} />
+            </Link>
           </li>
         );
       })}

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
-import { fixVisitHref } from '../../lib/pay-token';
+import { openBookingHref } from '../../lib/pay-token';
 import type { Appointment, PaymentMode, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
@@ -573,7 +573,7 @@ export function PayFlow({
     return (
       <PaymentDone
         appointmentId={sale.appointmentId}
-        fixHref={fixVisitHref(sale.appointmentId, sale.day)}
+        fixHref={openBookingHref(sale.appointmentId, sale.day)}
         totalMinor={sale.totalMinor}
         mode={sale.mode}
         modeLabel={modeWord(sale.mode)}

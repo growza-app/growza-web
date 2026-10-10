@@ -117,12 +117,12 @@ describe('one till settles a booking too', () => {
     expect(done).toMatch(/<Link href=\{fixHref\}/);
     expect(done).toMatch(/fixHref = '\/appointments',/);
     const lib = strip(readFileSync(resolve(here, '../../lib/pay-token.ts'), 'utf8'));
-    expect(lib).toMatch(/export function fixVisitHref\(appointmentId: string, day\?: string \| null\)/);
+    expect(lib).toMatch(/export function openBookingHref\(appointmentId: string, day\?: string \| null\)/);
     // The day goes too: a visit settled just after midnight is not in today's list.
     expect(lib).toMatch(/q\.set\('date', day\);\s*\n\s*q\.set\('to', day\);/);
     // Both done screens name the visit; neither is left on the bare list.
-    expect(flow).toMatch(/fixHref=\{fixVisitHref\(sale\.appointmentId, sale\.day\)\}/);
-    expect(sheet).toMatch(/fixHref=\{fixVisitHref\(stage\.result\.appointmentId,/);
+    expect(flow).toMatch(/fixHref=\{openBookingHref\(sale\.appointmentId, sale\.day\)\}/);
+    expect(sheet).toMatch(/fixHref=\{openBookingHref\(stage\.result\.appointmentId,/);
   });
 
   it("settles a booking at its OWN branch's menu and prices", () => {

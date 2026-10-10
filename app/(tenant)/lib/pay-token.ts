@@ -38,16 +38,19 @@ export function payVisitHref(
 }
 
 /**
- * Owner, 2026-10-10 — "Fix a mistake" on the done screen: the visit that was just settled, OPEN.
+ * One booking, open, by address.
  *
- * It was a bare link to `/appointments`, which on a busy day is twenty-five rows and a hunt for the one the
- * desk has this second got wrong. `?open=` opens a booking by id — Search already uses it, and it looks
- * through the whole day before any filter, so the status segment cannot hide the row.
+ * `?open=` opens a booking by id — Search already uses it, and it looks through the whole day BEFORE any
+ * filter, so the status segment cannot hide the row. `date`/`to` ride along because the list shows today: a
+ * visit settled just after midnight, or tomorrow's booking read from Home, is not in today's list and the
+ * sheet would never find it.
  *
- * `date`/`to` ride along because the list shows today: a visit settled just after midnight, or a booking
- * paid ahead of its day, is not in today's list and the sheet would never find it.
+ * Two screens want this. "Fix a mistake" on the done screen (owner, 2026-10-10) — it was a bare link to
+ * `/appointments`, which on a busy day is twenty-five rows and a hunt for the one the desk has this second
+ * got wrong. And Home's "Bookings today" rows (owner, 2026-10-11), which named a client, a service, a
+ * stylist and a status, looked exactly like rows that open everywhere else in the app, and did nothing.
  */
-export function fixVisitHref(appointmentId: string, day?: string | null): string {
+export function openBookingHref(appointmentId: string, day?: string | null): string {
   const q = new URLSearchParams({ open: appointmentId });
   if (day) {
     q.set('date', day);
