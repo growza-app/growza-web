@@ -61,6 +61,8 @@ interface UsageRow {
 interface UsagePage {
   rows: UsageRow[];
   total: number;
+  /** How many rows are ranked by share of their limit; past it, by bookings used (audit L8). Absent from older APIs. */
+  rankedCount?: number;
 }
 
 // Jira GRW-288 — the columns live in lib/list-columns.ts, where a test holds
@@ -124,9 +126,11 @@ export default function AdminUsagePage() {
   // Totals across what is LOADED, and labelled as such. "Across the 20
   // businesses shown" is true; "across the platform" would not be.
   const bookingsTotal = rows.reduce((sum, r) => sum + (bookingsOf(r)?.used ?? 0), 0);
+  // Audit L8 — a limit of 0 is a business that may take no bookings at all (suspended, or set to 0): the most
+  // capped-out row there is. The API ranks it first; this count used to leave it out.
   const atOrOverCap = rows.filter((r) => {
     const b = bookingsOf(r);
-    return b && b.limit !== null && b.limit > 0 && b.used >= b.limit;
+    return b && b.limit !== null && b.used >= b.limit;
   }).length;
 
   return (
@@ -234,6 +238,14 @@ export default function AdminUsagePage() {
               })}
             />
             <Pagination total={page?.total ?? 0} loaded={rows.length} state={paging} onChange={setPaging} />
+            {/* Audit L8 — the API ranks the busiest rows by share of their limit and pages the rest by bookings
+                used. Said here, so an admin past that point does not read the order as "nobody below is close". */}
+            {page?.rankedCount !== undefined && page.total > page.rankedCount ? (
+              <div style={{ marginTop: 10, fontSize: 12.5, color: oklch.textFaint }}>
+                The busiest {page.rankedCount.toLocaleString('en-IN')} are in order of how close they are to their limit. The other{' '}
+                {(page.total - page.rankedCount).toLocaleString('en-IN')} follow in order of bookings used.
+              </div>
+            ) : null}
           </>
         )}
       </Card>

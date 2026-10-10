@@ -53,6 +53,8 @@ export interface SubscriptionPanelSubscription {
   branchesIncluded?: number;
   branchAddonOverrideMinor?: number | null;
   branchAddonOverrideReason?: string | null;
+  /** Admin audit 2026-10-09 (M3) — what is owed NOW across every unpaid bill. Absent from an API older than batch E. */
+  owedMinor?: number;
   /** Jira GRW-161 — the next invoice on today's open branches, worked out by the invoice generator's own pricing. */
   nextBill?: {
     basePriceMinor: number;
@@ -483,10 +485,14 @@ export function SubscriptionPanel({
           // Same reasoning as the payment note: a part payment that did NOT
           // restore the subscription is a state the admin has to act on, and
           // must not vanish with a toast.
+          // M5 — "Recorded" only when something was: the dialog now refuses a no-payment request that could change
+          // nothing, but an API answer without a payment must still not claim one.
           setRecordedNote(
             result.trading
               ? null
-              : `Recorded, but ${formatMoneyMinor(result.outstandingMinor)} is still outstanding — the subscription stays as it is until the balance is cleared.`,
+              : result.payment
+                ? `Recorded, but ${formatMoneyMinor(result.outstandingMinor)} is still outstanding — the subscription stays as it is until the balance is cleared.`
+                : `Nothing changed — ${formatMoneyMinor(result.outstandingMinor)} is still owed, and the subscription stays as it is until it is paid.`,
           );
         }}
       />

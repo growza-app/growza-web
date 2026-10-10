@@ -20,7 +20,9 @@ import {
   ACTION_TINTS,
   countDelta,
   initials,
+  lastMonthFigure,
   percentDelta,
+  SINCE_THE_FIRST,
   tintFor,
   type AttentionRow,
 } from './components/DashboardParts';
@@ -62,10 +64,10 @@ interface DashboardResponse {
   totalBusinesses: number;
   totalAtPeriodStart: number;
   byStatus: StatusCount[];
-  newBusinesses: { count: number; previous: number; period: { from: string; to: string } };
+  newBusinesses: { count: number; previous: number; previousToDate?: number; period: { from: string; to: string } };
   attention: AttentionRow[];
   recentSignups: RecentSignup[];
-  revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; months: RevenueMonth[] } | null;
+  revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; previousToDateMinor?: number; months: RevenueMonth[] } | null;
   /** GRW-280 — visits booked across every business, counted as visits rather than rows. */
   bookings: PlatformBookings;
 }
@@ -164,6 +166,9 @@ export default function AdminDashboardPage() {
   // Computed across the whole breakdown at once, so the four shares total 100
   // rather than each rounding independently — see `wholePercentages`.
   const statusPercentages = wholePercentages(data.byStatus.map((s) => s.count));
+  // Audit M11 — this month so far against last month up to the same day.
+  const newLast = lastMonthFigure(data.newBusinesses.previousToDate, data.newBusinesses.previous);
+  const revenueLast = data.revenue ? lastMonthFigure(data.revenue.previousToDateMinor, data.revenue.previousMonthMinor) : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -183,7 +188,7 @@ export default function AdminDashboardPage() {
           value={data.totalBusinesses}
           href="/admin/businesses"
           tint={STAT_TINTS.green}
-          delta={percentDelta(data.totalBusinesses, data.totalAtPeriodStart)}
+          delta={percentDelta(data.totalBusinesses, data.totalAtPeriodStart, SINCE_THE_FIRST)}
         />
         <StatCard
           icon="trend"
@@ -191,7 +196,7 @@ export default function AdminDashboardPage() {
           value={data.newBusinesses.count}
           href={`/admin/businesses?createdFrom=${encodeURIComponent(data.newBusinesses.period.from)}`}
           tint={STAT_TINTS.blue}
-          delta={countDelta(data.newBusinesses.count, data.newBusinesses.previous)}
+          delta={countDelta(data.newBusinesses.count, newLast.previous, newLast.against)}
         />
         {/* The reference's bottom two cards are attention-flavoured (warm tint,
             chevron). These are the two attention rows that already have a real
@@ -275,7 +280,7 @@ export default function AdminDashboardPage() {
             className="admin-dash-revenue"
             months={data.revenue.months}
             thisMonthMinor={data.revenue.thisMonthMinor}
-            delta={percentDelta(data.revenue.thisMonthMinor, data.revenue.previousMonthMinor)}
+            delta={revenueLast ? percentDelta(data.revenue.thisMonthMinor, revenueLast.previous, revenueLast.against) : undefined}
           />
         ) : null}
 

@@ -206,8 +206,10 @@ function WorkerSection({ data, onRetry, loading }: SectionProps) {
           live
           label="Failing"
           value={w.failing.toLocaleString('en-IN')}
-          bad={w.failing > 0}
-          note={w.givenUp > 0 ? `${w.givenUp} given up` : undefined}
+          // Audit M12 — given-up rows are no longer counted as failing (nor as pending), so they need the red here
+          // themselves: nothing will retry them, which makes them the worse of the two.
+          bad={w.failing > 0 || w.givenUp > 0}
+          note={w.givenUp > 0 ? `${w.givenUp} given up — will not be retried` : undefined}
         />
       </div>
       <Bars buckets={w.processed} caption={`${w.processedTotal.toLocaleString('en-IN')} processed in ${RANGE_WORDS[data.range]}`} />
