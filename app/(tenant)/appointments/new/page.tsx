@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 export default async function NewBookingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string; purpose?: string; token?: string; location?: string; from?: string }>;
+  searchParams: Promise<{ mode?: string; purpose?: string; token?: string; location?: string; from?: string; full?: string }>;
 }) {
   // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
   await guardLive('/appointments/new');
@@ -77,7 +77,17 @@ export default async function NewBookingPage({
 
   return (
     <div className="page-body">
-      <NewBookingClient mode={mode} purpose={paying ? 'payment' : 'visit'} token={token} tokenGone={tokenGone} backTo={params.from === 'bookings' ? '/appointments' : undefined} timezone={me.tenant?.timezone ?? 'Asia/Kolkata'} />
+      {/* Owner, 2026-10-09 — on a phone, Record payment is three screens (`PayFlow`); `?full=1` keeps the one-page form there. */}
+      <NewBookingClient
+        mode={mode}
+        purpose={paying ? 'payment' : 'visit'}
+        token={token}
+        tokenGone={tokenGone}
+        backTo={params.from === 'bookings' ? '/appointments' : undefined}
+        timezone={me.tenant?.timezone ?? 'Asia/Kolkata'}
+        full={params.full === '1'}
+        providerId={me.member?.providerId ?? null}
+      />
     </div>
   );
 }

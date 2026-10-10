@@ -1,0 +1,1533 @@
+/* ---------- Record payment in three taps (owner, 2026-10-09) ---------- */
+
+/*
+ * Phones only (`PayFlow` is never rendered wider than 860px), laid out at 344px first. Everything on it is
+ * either a number, a picture or a label under one. Every TARGET is 44px or more — the tiles and the three ways
+ * of paying far more — and where a label is smaller than 1rem it is because the box measured short at 344px
+ * and a clipped word costs more than a small one: the form switch (13px), the branch (14px) and a tile's name
+ * (14px). This is a screen used with one thumb, at a counter, by somebody who may not read the words.
+ */
+.pf {
+  --pf-modes-w: 6.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  /* Room under the pinned tray; the tray itself clears the home indicator. */
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.page-body:has(> .pf) {
+  padding-top: var(--sp-2);
+}
+
+.pf-head {
+  display: grid;
+  /* Back, title, and whatever the screen puts in the corner: the form switch on ①, a spacer elsewhere. */
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pf-back {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--slate-soft);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.pf-back svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/*
+ * Title over branch, in the header's middle column. The branch picker's own button is ~26px of paint, so it
+ * takes the same ::after the form switch does to reach a 44px target — the only thing it would overlap is
+ * the title above it, which is not a control.
+ */
+.pf-head-stack {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  justify-items: start;
+}
+
+.pf-head-stack .hbp,
+.pf-head-stack .hbp-line {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pf-head-stack .hbp-line .sbp-btn {
+  position: relative;
+}
+
+.pf-head-stack .hbp-line .sbp-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2.75rem;
+  transform: translateY(-50%);
+}
+
+.pf-title {
+  margin: 0;
+  /*
+   * Left of the row, not centred: the switch now holds the corner, so a centred title would sit visibly off
+   * the page's axis. 1.125rem keeps "Record payment" (138px) inside the 156px the row has left at 344px once
+   * the back button and the 6.5rem switch are paid for; it ellipsises rather than wraps if type is scaled up.
+   */
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-full {
+  text-decoration: none;
+  justify-self: end;
+}
+
+.pf-head-gap {
+  width: 2.75rem;
+}
+
+.pf-at,
+.pf-who-token {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* In the header's stack it is the picker's twin, so it reads at the picker's size. */
+.pf-head-stack .pf-at {
+  font-size: 0.875rem;
+}
+
+/*
+ * Simple ⇄ Advanced: two labelled halves, not a ☰ (owner, 2026-10-10).
+ *
+ * Centred under the dots, on the same axis as the title and the branch. It is a link on each side, so it reads
+ * the same from either form and the browser's Back does the right thing.
+ */
+/*
+ * One line for the three things that are not the sale: which branch, which step, which form.
+ *
+ * Branch left, dots centred, switch right. The dots are only truly centred when the two sides weigh the same,
+ * which they do not — so the middle column takes the slack and the dots centre within it. Close enough at a
+ * glance, and a row saved is worth more here than a dot on the exact axis.
+ */
+/*
+ * A knob in a channel, in the app's own clay idiom (owner, 2026-10-10: "should look like a switch").
+ *
+ * It was a raised white chip on a FLAT field, and that is why it read as two words with one of them boxed:
+ * white on --slate-soft is 1.16:1, so the chip was carried by its shadow and by the green word alone. Clay
+ * already has both missing halves — PRESSED is a channel cut into the page, GREEN is a raised coloured piece
+ * (101-clay-app.css) — so the track takes --clay-press and the knob is filled. Groove under, solid knob over:
+ * the shape and the block of colour both say switch before the words do, which is what somebody who does not
+ * read the two words needs.
+ */
+.pf-modes {
+  width: var(--pf-modes-w, 6.5rem);
+  justify-self: end;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--slate-soft);
+  box-shadow: var(--clay-press);
+}
+
+.pf-mode {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 1.75rem;
+  border-radius: 999px;
+  /* 0.75rem was the smallest type on the screen and the only thing left shouting at weight 700. */
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The knob is 28px of paint; the thumb that hits it gets the header row's full 44px. */
+.pf-mode::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2.75rem;
+  transform: translateY(-50%);
+}
+
+/*
+ * A filled knob, the same move Home's own switch makes (`.hm-seg button.is-on`, 83-role-home.css): the
+ * selected half is a solid block of colour, not a white chip on a near-white track. White on --accent-deep
+ * is 7.1:1 and the knob is 6.1:1 against its own channel, so the switch survives a bright counter, a cheap
+ * screen and colour blindness — none of which a 1.16:1 white-on-grey chip did.
+ */
+.pf-mode-on {
+  background: var(--accent-deep);
+  color: var(--surface);
+  font-weight: 700;
+  box-shadow: var(--clay-green);
+}
+
+/*
+ * On the full form the switch hangs under the title, and only on a phone: at a desk this IS the form for
+ * Record payment — the three-tap screen is never drawn there — so there would be nothing to switch to.
+ */
+/*
+ * The full form's header is a flex row that is already full at 344px: back button, title, switch and the
+ * "10:29 AM" line beneath. At the three-tap screen's 6.5rem the switch left the title 106px of the 119px
+ * "Record payment" needs, and it wrapped onto a second line. Narrower here, with the smaller label it had
+ * before, so the title keeps one line — the switch is the same control, just not the same width.
+ */
+.sheet-head .pf-modes {
+  --pf-modes-w: 5.5rem;
+  justify-self: end;
+}
+
+.sheet-head .pf-mode {
+  font-size: 0.75rem;
+}
+
+@media (min-width: 861px) {
+  .sheet-head .pf-modes {
+    display: none;
+  }
+}
+
+/* The token's own "At MG Road" line: a token's branch is the token's, so there is nothing to pick. */
+
+/*
+ * Context, not an action (owner, 2026-10-10).
+ *
+ * `hbp-line` draws the branch in accent green at 650 weight, which is right in a header bar where it is the
+ * only thing on the line. Here, under the title, it made the branch the third-loudest thing on a screen whose
+ * job is Who / what / how much — and it is a control an owner touches about once a day and a receptionist,
+ * pinned to a branch, never. So: the words go muted and regular, and the accent stays on the pin and the
+ * chevron, which is enough to say "this can be changed" without competing with Next.
+ */
+.pf-head-stack .hbp-line .sbp-btn,
+.pf-head-stack .hbp-line .sbp-btn.is-branch {
+  /* Out-specifies `94-header-branch-picker.css`, which loads later and sets the accent + 700 for a header bar. */
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pf-head-stack .hbp-line .sbp-btn > svg {
+  color: var(--accent-deep);
+}
+
+.pf-who-token {
+  color: var(--text);
+}
+
+/* Who, and who did it: one line each, chips that scroll sideways rather than wrap into a wall. */
+/*
+ * The label sits BESIDE its control, at every width (owner, 2026-10-10: "it's coming in diff lines").
+ *
+ * One row, no breakpoint. Stacking below 360px and sitting beside above it meant the commonest Android width
+ * there is got a different screen from the laptop it was drawn on, which is what the owner was seeing.
+ *
+ * Side by side only works if what goes in the bar fits the narrowest phone: at 344px the label column and the
+ * + leave about 185px, which is why the gap is `--sp-2` rather than `--sp-3` and why the service bar says
+ * "Search services" rather than naming the count. The 4rem floor under the label squares the two bars up —
+ * "Who?" is 42px and "Services" is 63px, and without it they started 20px apart.
+ */
+.pf-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pf-row-label {
+  min-width: 4rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.pf-chips {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  margin: -2px;
+}
+
+.pf-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.pf-chip {
+  flex: none;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: var(--clay-raise-soft);
+}
+
+.pf-chip-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+  box-shadow: var(--clay-green);
+}
+
+.pf-chip-link {
+  color: var(--accent-deep);
+}
+
+.pf-chip-link svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pf-face {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-left: calc(-1 * var(--sp-2));
+}
+
+/* A photo that fails to load hides itself (`hidden`), and `display: grid` above must not bring it back. */
+.pf-face[hidden] {
+  display: none;
+}
+
+.pf-chip-on .pf-face {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+/* The menu as pictures: two across at 344px, each the height of a thumb and a half. */
+.pf-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+@media (min-width: 560px) {
+  .pf-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.pf-tile {
+  position: relative;
+  min-height: 9.5rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 2px solid transparent;
+  box-shadow: var(--clay-raise-soft);
+  overflow: hidden;
+}
+
+.pf-tile-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.pf-tile-wait {
+  background: var(--slate-soft);
+  box-shadow: none;
+}
+
+.pf-tile-tap {
+  width: 100%;
+  min-height: inherit;
+  padding: 0 0 var(--sp-3);
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pf-tile-photo {
+  width: 100%;
+  /*
+   * A band, not a picture (owner, 2026-10-10). At 16/10 the photo was more than half the tile and four tiles
+   * filled the screen; the point of the photo is to be recognised at a glance, which a 2:1 strip does as well as
+   * a square does. The pack is framed tight (320px square, readable at 44px), so cropping to a band still lands
+   * on the subject.
+   */
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  background: var(--slate-soft);
+  margin-bottom: var(--sp-2);
+}
+
+/*
+ * One line, reserved whether the name fills it or not.
+ *
+ * It was two (the clamp capped a long name there, the min-height held the space so rows stayed level and the
+ * prices did not step down the page). Two lines cost 20px on EVERY tile to spell out the four names in the
+ * catalogue long enough to need them, and 20px a row is a third row of services on an 882px screen. A name
+ * too long now ellipsises — the photo and the price carry a tile that an owner may not be reading anyway.
+ */
+.pf-tile-name {
+  padding: 0 var(--sp-3);
+  /*
+   * 14px, not 16: at 16 the box held 122px and "Anti-Ageing Facial" needed 134, so it clipped to
+   * "Anti-Ageing…" two tiles from a plain "Facial" at ₹800 — the word that told them apart was the word
+   * that went. 14px fits it, and the four-word names that still clip are ones no price sits beside.
+   */
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  min-height: 1.25em;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pf-tile-price {
+  padding: 0 var(--sp-3);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+
+.pf-tile-on .pf-tile-price {
+  color: var(--accent-deep);
+}
+
+
+
+
+/* The total and Next, pinned where the thumb is. */
+ /* − n + over the photo: how many are on the bill, and both ways to change it. */
+.pf-tile-qty {
+  position: absolute;
+  top: var(--sp-2);
+  left: var(--sp-2);
+  right: var(--sp-2);
+  height: 2.75rem;
+  border-radius: 999px;
+  background: var(--surface);
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  box-shadow: var(--clay-raise);
+}
+
+.pf-qty-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+/*
+ * `aria-disabled`, not `disabled`, on the + at the twelve-line limit: a truly disabled button fires no click, so
+ * the one control a first-timer presses could not answer at all. It looks and reads the same; it just still gets
+ * to buzz its refusal and raise the alert.
+ */
+.pf-qty-btn:disabled,
+.pf-qty-btn[aria-disabled='true'] {
+  color: var(--muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pf-qty-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pf-qty-n {
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-tray {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  /* The label across the top, then the figure and the button side by side on one centre line. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--sp-3);
+  row-gap: 2px;
+  padding: var(--sp-2) var(--page-pad-x) calc(var(--sp-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.pf-total {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  /* The figure is 35px of type; the button that opens the keypad is 44, like every other target on the screen. */
+  align-items: center;
+  min-height: 2.75rem;
+  min-width: 0;
+}
+
+.pf-total:disabled {
+  cursor: default;
+}
+
+.pf-total-label {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  /* 44px, because the whole row is the control that opens the bill. */
+  min-height: 2.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.pf-total-label-tap {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Only the words give way when the line is long; "View details" never ellipsises into nothing. */
+.pf-total-words {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-total-figure {
+  font-size: 2rem;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+/* Tapping the figure opens the keypad: a dotted underline says it can be changed. */
+.pf-total:not(:disabled) .pf-total-figure {
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 0.2em;
+}
+
+.pf-go {
+  min-height: 3.5rem;
+  padding: 0 var(--sp-6);
+  font-size: 1.125rem;
+  justify-content: center;
+}
+
+.pf-go[aria-disabled='true'] {
+  opacity: 0.55;
+}
+
+.pf-error {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-sm);
+  background: #fdecec;
+  color: #991b1b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/*
+ * A missing answer is marked where the answer goes (owner, 2026-10-10).
+ *
+ * One sentence in the tray could only ever name one thing, and it named it a thumb's length from the control
+ * that would fix it. These sit against their own control, so Next can refuse for two reasons at once and both
+ * are read in one look. The word carries the meaning — the colour only finds it.
+ */
+.pf-miss {
+  grid-column: 2;
+  margin-top: calc(var(--sp-1) * -1);
+  color: #991b1b;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Above the tiles, which are the full width of the page and have no label column to sit beside. */
+.pf-miss-wide {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+/* The control itself, so the eye finds it from the far end of a long screen. */
+.pf-bad .pf-who-search,
+.pf-bad .pf-who-add {
+  box-shadow: inset 0 0 0 2px #991b1b;
+}
+
+.pf-error-tray {
+  position: fixed;
+  left: var(--page-pad-x);
+  right: var(--page-pad-x);
+  bottom: calc(6.25rem + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+}
+
+/* ---------- ② how did they pay ---------- */
+/* The amount, on a ground of its own, so the question above it and the four answers below do not crowd it. */
+.pf-how-total {
+  margin: 0;
+  padding: var(--sp-4);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  text-align: center;
+}
+
+.pf-how-total-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pf-how-total strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 3.25rem;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.pf-pay {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+/*
+ * A tinted card, not a coloured slab.
+ *
+ * Colour belongs on the icon: these are four instances of one thing (money in), and three full-saturation
+ * backgrounds made the screen read as a toy while telling a colour-blind owner nothing. The pale ground still
+ * separates them at a glance, and the label now has somewhere to sit at a readable weight on a light surface.
+ */
+.pf-pay-tile {
+  position: relative;
+  padding: var(--sp-4) var(--sp-7) var(--sp-4) var(--sp-4);
+  border: 1px solid;
+  border-radius: var(--radius);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  display: block;
+}
+
+/* The chevron rides level with the label, as it does on every other row in the app. */
+.pf-pay-tile::after {
+  content: '\203A';
+  position: absolute;
+  right: var(--sp-3);
+  top: var(--sp-6);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.pf-pay-tile:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pf-pay-tile:active:not(:disabled) {
+  box-shadow: var(--clay-press);
+}
+
+.pf-pay-cash {
+  background: #eef7f1;
+  border-color: #d6ebdf;
+}
+
+.pf-pay-upi {
+  background: #f5f1fe;
+  border-color: #e4dafb;
+}
+
+.pf-pay-card {
+  background: #eef3fd;
+  border-color: #d9e4fa;
+}
+
+.pf-pay-other {
+  background: #fdf5e9;
+  border-color: #f7e3c4;
+}
+
+.pf-pay-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: var(--sp-3);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.pf-pay-cash .pf-pay-icon {
+  background: #d7edde;
+  color: var(--accent-deep);
+}
+
+.pf-pay-upi .pf-pay-icon {
+  background: #e8ddfc;
+  color: var(--purple-deep);
+}
+
+.pf-pay-card .pf-pay-icon {
+  background: #dbe6fb;
+  color: var(--blue);
+}
+
+.pf-pay-other .pf-pay-icon {
+  background: #fae3c2;
+  color: #c2650a;
+}
+
+.pf-pay-icon svg {
+  width: 1.875rem;
+  height: 1.875rem;
+}
+
+.pf-pay-word {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/*
+ * Under the word, never instead of it: a second way in for somebody unsure which of the four is theirs.
+ *
+ * Two lines, always — reserved whether the wording needs them or not. A third line on one card (Hindi, or a
+ * longer phrase at 344px) makes that whole grid row taller than the one above it, which is the same stepped
+ * edge the service tiles had. The clamp caps it; the min-height holds the space.
+ */
+.pf-pay-sub {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 2px;
+  min-height: 2.6em;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+/* ---------- ③ done ---------- */
+.pf-done-page {
+  padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+}
+
+/*
+ * The tick beside the amount, not above it (owner, 2026-10-10).
+ *
+ * Stacked — a 96px tick, then the figure, then the line under it — this band was 232px, and with the bill open
+ * beneath it the screen ran to 1051px on an 812px phone: Next customer, the button pressed after every single
+ * sale, was never once on screen. Side by side it is 110px and says exactly the same thing. The tick is still
+ * the first thing the eye lands on; it just no longer needs its own floor.
+ */
+.pf-done {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--sp-4);
+  row-gap: 2px;
+  padding: var(--sp-4);
+  border-radius: var(--radius);
+  background: var(--accent-deep);
+  color: #fff;
+  box-shadow: var(--clay-green);
+}
+
+.pf-done-check {
+  grid-row: span 2;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--accent-deep);
+  display: grid;
+  place-items: center;
+  animation: pf-pop 320ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.pf-done-check svg {
+  width: 2rem;
+  height: 2rem;
+  stroke-width: 3;
+}
+
+@keyframes pf-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-done-check {
+    animation: none;
+  }
+}
+
+.pf-done-title {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.pf-done-sub {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/*
+ * What happened to the number, under the Send button that took it. Quiet by design: the bill is the thing the
+ * person at the counter asked for, and keeping the client is a good side effect, not an event.
+ */
+.pf-kept {
+  margin: calc(var(--sp-2) * -1) 0 var(--sp-4);
+  font-size: 0.875rem;
+  color: var(--accent-deep);
+  text-align: center;
+}
+
+.pf-error.pf-kept {
+  color: inherit;
+  text-align: center;
+}
+
+/* "I'm done" and "Fix it in Bookings" share a row: neither is the thing pressed after a sale. */
+.pf-done-minor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.pf-done-minor .pf-go-alt {
+  font-size: 0.9375rem;
+  text-align: center;
+  justify-content: center;
+  /* One of the two is a link; in a row of buttons it must not be the only underlined thing. */
+  text-decoration: none;
+}
+
+.pf-done-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+
+.pf-go-alt {
+  min-height: 3rem;
+  justify-content: center;
+}
+
+.pf-mistake {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.pf-sound {
+  min-height: 2.75rem;
+  align-self: center;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* ---------- the keypad ---------- */
+.pf-keypad-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(20, 32, 27, 0.45);
+  display: flex;
+  align-items: flex-end;
+  /*
+   * Sit the sheet on top of the keyboard rather than under it (owner, 2026-10-10).
+   *
+   * `position: fixed` is pinned to the LAYOUT viewport, which a soft keyboard does not shrink, so a sheet at
+   * `bottom: 0` ends up behind the keyboard — including the field that opened it. `--kb` (ViewportHeight) is
+   * how much of the window the keyboard is covering; padding by it puts the sheet's bottom edge on the
+   * keyboard's top edge. It is 0 whenever no keyboard is up, so nothing moves the rest of the time.
+   */
+  padding-bottom: var(--kb, 0px);
+}
+
+.pf-keypad {
+  width: 100%;
+  max-width: 480px;
+  /*
+   * And it must fit in what is left. With the keyboard up there may be only ~360px of window, less than the
+   * client sheet's own height, so the sheet scrolls inside itself instead of growing off the top of the
+   * screen. `--app-h` caps it where a phone's `dvh` over-reports (see ViewportHeight).
+   */
+  max-height: calc(min(100dvh, var(--app-h, 100dvh)) - var(--kb, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0 auto;
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  outline: none;
+}
+
+.pf-keypad-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pf-keypad-title {
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.pf-keypad-clear {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.pf-keypad-figure {
+  display: block;
+  text-align: center;
+  font-size: 2.75rem;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.pf-keypad-hint {
+  margin: calc(-1 * var(--sp-2)) 0 0;
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pf-keys {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.pf-key {
+  min-height: 4rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--slate-soft);
+  font: inherit;
+  font-size: 1.75rem;
+  font-weight: 650;
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--clay-raise-soft);
+}
+
+.pf-key:active {
+  box-shadow: var(--clay-press);
+}
+
+.pf-key-quiet {
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.pf-key-go {
+  background: var(--accent-deep);
+  color: #fff;
+  box-shadow: var(--clay-green);
+}
+
+/* ---------- who is paying: the client, by number ---------- */
+/* Its own `max-height: calc(100dvh - 2rem)` is gone: `.pf-keypad` caps every sheet now, and this one, being
+   later in the file, was quietly winning and leaving the sheet 780px tall with the keyboard up. */
+
+.pf-client-figure {
+  min-height: 3rem;
+  font-size: 2rem;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-client-blank {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.pf-client-note {
+  margin: 0;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pf-client-matches {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pf-client-match {
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--sp-3);
+  align-items: center;
+  box-shadow: var(--clay-raise-soft);
+}
+
+.pf-client-match .pf-face {
+  grid-row: 1 / span 2;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.pf-client-match-name {
+  font-size: 1rem;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-client-match-sub {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.pf-client-add {
+  gap: var(--sp-2);
+}
+
+.pf-client-add svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pf-client-links {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-4);
+}
+
+.pf-client-links .pf-mistake,
+.pf-client .pf-mistake {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  gap: var(--sp-2);
+}
+
+.pf-client-links svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/*
+ * Both fields in the add row are the app's own `.field`; only their size here is the sheet's. The width is
+ * explicit because a bare `<input>` falls back to its `size` attribute — about 186px — while the number beside
+ * it, wrapped in `.phone-field`, fills the row. Two boxes of different lengths read as two different questions.
+ */
+.pf-client-add-row .field input {
+  width: 100%;
+  min-height: 3rem;
+  font-size: 16px; /* iOS zooms the page on focus below 16px. */
+}
+
+.pf-client-contacts {
+  align-self: center;
+}
+
+.pf-client-contacts svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* The one box on Record payment: name or number, opened by a tap on "Find client". */
+.pf-client-box {
+  position: relative;
+}
+
+.pf-client-box svg {
+  position: absolute;
+  left: var(--sp-3);
+  top: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.pf-client-box input {
+  width: 100%;
+  min-height: 3.25rem;
+  padding-left: 2.75rem;
+  font-size: 16px; /* iOS zooms the page on focus below 16px. */
+}
+
+.pf-client-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pf-client-links .pf-client-add,
+.pf-client-links .pf-client-save {
+  gap: var(--sp-2);
+}
+
+.pf-client-links .btn {
+  flex: 1 1 auto;
+}
+
+/*
+ * Save stays on the screen while the fields scroll behind it (owner, 2026-10-10).
+ *
+ * With a tall keyboard up the sheet is capped at ~290px and has to scroll, and Save — the last thing in it —
+ * sat 62px past the visible bottom edge. Nothing was cut off; you simply could not see the button you were
+ * reaching for without scrolling first, which on a counter reads as "it didn't work".
+ *
+ * Sticky at the scrollport's bottom, so it owns the sheet's bottom padding (hence the negative margin that
+ * cancels it) and carries the safe-area inset itself. The hairline above it says the content goes on behind.
+ */
+.pf-client-links {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: calc((var(--sp-4) + env(safe-area-inset-bottom, 0px)) * -1);
+  padding-top: var(--sp-3);
+  padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  box-shadow: 0 -1px 0 var(--border);
+}
+
+/* ---------- the whole menu, in the flow ---------- */
+.pf-menu {
+  height: calc(100dvh - 2rem);
+}
+
+.pf-menu-kinds {
+  flex: none;
+}
+
+.pf-menu-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pf-menu-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.pf-menu-row-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.pf-menu-photo {
+  grid-row: 1 / span 2;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--slate-soft);
+}
+
+.pf-menu-row .pf-client-match-sub {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+
+.pf-menu-count {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+/* ---------- who: a search bar and a plus ---------- */
+.pf-who-bar {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  min-width: 0;
+}
+
+/*
+ * A shaded well, not a white pill (owner, 2026-10-10).
+ *
+ * These two bars — the client search and the service search — were white with a 1px `--border` edge, which is
+ * #e8eaea on an #eef1ef page: about 1.03:1, invisible at arm's length on a counter. They read as areas of
+ * nothing rather than as something to tap, and an inset shadow alone was still too quiet.
+ *
+ * So: white inside, green edge (owner's call, 2026-10-10). White against the grey page is what makes the box
+ * a box, and the accent border is what makes the edge visible from arm's length — a grey hairline at 1.03:1
+ * was not. The green also ties the bar to the search icon already sitting in it. The fill stays white rather
+ * than tinted because green FILL already means "chosen" on this screen (`--accent-soft` on a picked tile), and
+ * one colour should not mean two things.
+ */
+.pf-who-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 3rem;
+  padding: 0 var(--sp-4);
+  border: 1.5px solid var(--accent-deep);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: var(--clay-raise-soft);
+}
+
+.pf-who-search svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  color: var(--accent-deep);
+}
+
+.pf-who-add {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent-deep);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: var(--clay-green);
+}
+
+.pf-who-add svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.pf-who-picked {
+  min-height: 3rem;
+  padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-3);
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: var(--sp-3);
+  align-items: center;
+  box-shadow: var(--clay-green);
+}
+
+.pf-who-picked .pf-face {
+  grid-row: 1 / span 2;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.pf-who-picked-name {
+  font-size: 1rem;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A client with no number on file has no second line; the name takes both rows rather than sitting high. */
+.pf-who-picked:not(:has(.pf-who-picked-sub)) .pf-who-picked-name {
+  grid-row: 1 / span 2;
+}
+
+.pf-who-picked-sub {
+  grid-column: 2;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.pf-who-clear {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.pf-who-clear svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* The menu's search bar: the same bar as the client's, spanning the row on its own. */
+.pf-find-service {
+  width: 100%;
+}
+
+/* The + column, kept open on the Services row so both search bars start and end at the same x. */
+.pf-who-gap {
+  background: none;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* The add row, opened in place under the matches — not a second screen. */
+.pf-client-add-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- what is on the bill ---------- */
+/* The green words at the end of the row. Not a control of its own any more — the row around it is. */
+.pf-view-bill {
+  flex: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  white-space: nowrap;
+}
+
+.pf-bill-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 45dvh;
+  overflow-y: auto;
+}
+
+.pf-bill-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.pf-bill-name {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pf-bill-times {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.pf-bill-amount {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-bill-less {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.pf-bill-less svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pf-bill-sums {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pf-bill-sums div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.pf-bill-sums dt,
+.pf-bill-sums dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pf-bill-sums dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-bill-off dt,
+.pf-bill-off dd {
+  color: var(--accent-deep);
+}
+
+.pf-bill-total dt,
+.pf-bill-total dd {
+  font-size: 1.375rem;
+  font-weight: 750;
+  color: var(--text);
+}

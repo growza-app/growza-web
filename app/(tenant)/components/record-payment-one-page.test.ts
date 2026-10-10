@@ -208,7 +208,10 @@ describe('Record payment fits one phone screen', () => {
   it('offers one way out of the page, not two that go to different places', () => {
     // ← is history (whatever opened the page); ✕ is Home. Drawn together they were an unmarked choice between
     // two destinations. On a page the ✕ is drawn only where there is no back arrow, so there is always exactly one.
-    expect(sheet).toMatch(/\{asPage && goBack \? \(\s*<span className="wi-close-gap"/);
+    // The payment page now puts the Simple/Full switch in that same slot (its ← is still the way out), so the
+    // rule is unchanged in substance: the ✕ appears only where there is no back arrow.
+    expect(sheet).toMatch(/\) : asPage && goBack \? \(\s*<span className="wi-close-gap"/);
+    expect(sheet).toMatch(/\{forPayment && asPage && goBack \? \(\s*<FormModeSwitch now="advanced"/);
     // Its seat stays, or the centred title slides into it.
     expect(css).toMatch(/\.wi-close-gap \{/);
   });
