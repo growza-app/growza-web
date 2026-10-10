@@ -73,6 +73,17 @@ describe('one till settles a booking too', () => {
     expect(flow).toMatch(/api\.recordCounterSale\(/);
   });
 
+  it('sends Mark as done to that flow, and takes the till out of the booking sheet', () => {
+    const book = strip(readFileSync(resolve(here, '../../components/BookingSheet.tsx'), 'utf8'));
+    expect(book).toMatch(/const markDone = \(\) =>/);
+    expect(book).toMatch(/purpose=payment&visit=\$\{encodeURIComponent\(appointment\.id\)\}/);
+    // Done goes back to Bookings, not Home: that is where the person was.
+    expect(book).toMatch(/&from=bookings/);
+    // The till it replaces is gone from here, and so is everything it was loaded for.
+    expect(book).not.toMatch(/CheckoutSheet/);
+    expect(book).not.toMatch(/setCheckingOut|openCheckout|setOffers|loadServicesFailed/);
+  });
+
   it('sends Take payment now to that flow, not to a till of its own', () => {
     expect(sheet).toMatch(/\/appointments\/new\?purpose=payment&visit=\$\{encodeURIComponent\(stage\.result\.appointmentId\)\}&on=\$\{/);
     // The visit's own day, in the salon's timezone — not the browser's.

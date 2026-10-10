@@ -64,8 +64,8 @@ describe('adding a combo', () => {
     expect(sheet).toMatch(/comboPriceMinor: Number\(offer\.comboPriceMinor\)/);
   });
 
-  it('both places that open the till hand it the offers', () => {
-    expect(code('BookingSheet.tsx')).toMatch(/offers=\{offers\}/);
+  it('the place that still opens the till hands it the offers', () => {
+    // BookingSheet's Mark as done left for Record payment on 2026-10-10, which carries the combos itself.
     expect(code('NewVisitSheet.tsx')).toMatch(/offers=\{offers \?\? \[\]\}/);
   });
 });

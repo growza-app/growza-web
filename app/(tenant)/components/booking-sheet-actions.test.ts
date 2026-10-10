@@ -44,7 +44,8 @@ function gatedBlocks(src: string, flag: string): string[] {
 }
 
 const GATES: Array<[flag: string, action: string, control: string]> = [
-  ['mayCheckout', 'booking.checkout', 'onClick={openCheckout}'],
+  // Owner, 2026-10-10 — Mark as done leaves for Record payment now; the gate on it is unchanged.
+  ['mayCheckout', 'booking.checkout', 'onClick={markDone}'],
   ['maySetStatus', 'booking.setStatus', "onClick={() => setAsking('no_show')}"],
   ['maySetStatus', 'booking.setStatus', "onClick={() => setAsking('cancelled')}"],
   ['mayMove', 'booking.reschedule', 'onClick={() => setMoving(true)}'],
