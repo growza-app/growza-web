@@ -89,15 +89,32 @@ export function BookingSheet({
   const [checkingOut, setCheckingOut] = useState(false);
   const [moving, setMoving] = useState(false);
   /*
-   * Owner-app audit, 2026-10-10 — Cancel acted on one tap, and a cancelled booking cannot be put back (a settled
-   * booking is final, Jira GRW-467). It sits under the thumb at the bottom of the sheet, so the first tap asks and
-   * the second does it. "Keep the booking" takes the focus, so Enter or a stray second tap keeps it.
+   * Owner-app audit, 2026-10-10 — Cancel and "Client didn't come" each acted on one tap, and both are final: a settled
+   * booking cannot be put back (Jira GRW-467). Cancel sits at the bottom under the thumb; didn't-come sits one row
+   * above Move, the button a client ringing usually wants. So the first tap asks and the second does it. "Keep the
+   * booking" takes the focus, so Enter or a stray second tap keeps it.
    */
-  const [askingCancel, setAskingCancel] = useState(false);
+  const [asking, setAsking] = useState<'cancelled' | 'no_show' | null>(null);
   const keepRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (askingCancel) keepRef.current?.focus();
-  }, [askingCancel]);
+    if (asking) keepRef.current?.focus();
+  }, [asking]);
+  /** The question in place of the button: what happens, Keep (focused), and Yes. */
+  const askFirst = (status: 'cancelled' | 'no_show', question: string, yes: string) => (
+    <div className="bk-cancel-ask" role="group" aria-labelledby={`bk-ask-${status}`}>
+      <p id={`bk-ask-${status}`} className="bk-cancel-q">
+        {question}
+      </p>
+      <button ref={keepRef} type="button" className="sheet-item" disabled={busy} onClick={() => setAsking(null)}>
+        <IconCheck />
+        {bk.cancelKeep}
+      </button>
+      <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setStatus(status)}>
+        <IconClose />
+        {yes}
+      </button>
+    </div>
+  );
   const [services, setServices] = useState<Service[] | null>(null);
   const [providers, setProviders] = useState<Provider[] | null>(null);
   // Jira GRW-314 — the combos that can be added at the till; a failed read just means none are offered.
@@ -245,15 +262,16 @@ export function BookingSheet({
                 </button>
               )}
               {maySetStatus && (
-                <button
-                  type="button"
-                  className="sheet-item sheet-neutral"
-                  disabled={busy}
-                  onClick={() => setStatus('no_show')}
-                >
-                  <IconClose />
-                  {bk.markMissed}
-                </button>
+                <>
+                  {asking === 'no_show' ? (
+                    askFirst('no_show', bk.noShowAsk, bk.noShowYes)
+                  ) : (
+                    <button type="button" className="sheet-item sheet-neutral" disabled={busy} onClick={() => setAsking('no_show')}>
+                      <IconClose />
+                      {bk.markMissed}
+                    </button>
+                  )}
+                </>
               )}
               {/*
                 GRW-219 — the words `bk.reschedule` has carried since
@@ -270,22 +288,10 @@ export function BookingSheet({
               )}
               {maySetStatus && (
                 <>
-                  {askingCancel ? (
-                    <div className="bk-cancel-ask" role="group" aria-labelledby="bk-cancel-ask-q">
-                      <p id="bk-cancel-ask-q" className="bk-cancel-q">
-                        {bk.cancelAsk}
-                      </p>
-                      <button ref={keepRef} type="button" className="sheet-item" disabled={busy} onClick={() => setAskingCancel(false)}>
-                        <IconCheck />
-                        {bk.cancelKeep}
-                      </button>
-                      <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setStatus('cancelled')}>
-                        <IconClose />
-                        {bk.cancelYes}
-                      </button>
-                    </div>
+                  {asking === 'cancelled' ? (
+                    askFirst('cancelled', bk.cancelAsk, bk.cancelYes)
                   ) : (
-                    <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setAskingCancel(true)}>
+                    <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setAsking('cancelled')}>
                       <IconClose />
                       {bk.cancel}
                     </button>

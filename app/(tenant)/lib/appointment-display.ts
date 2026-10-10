@@ -1,12 +1,14 @@
 import type { Appointment } from './api';
 
 /** The `status` message group's keys — the label is looked up where the chip is shown. */
-export type StatusKey = 'done' | 'didNotCome' | 'cancelled' | 'reminded' | 'walkIn' | 'confirmed';
+export type StatusKey = 'done' | 'didNotCome' | 'cancelled' | 'moved' | 'reminded' | 'walkIn' | 'confirmed';
 
 /** Shared with the dashboard's "today" list so a booking's status reads identically everywhere it appears. */
-export function statusChip(appt: Pick<Appointment, 'status'> & Partial<Pick<Appointment, 'reminderSent' | 'createdVia'>>) {
+export function statusChip(appt: Pick<Appointment, 'status'> & Partial<Pick<Appointment, 'reminderSent' | 'createdVia' | 'movedTo'>>) {
   if (appt.status === 'completed') return { cls: 'chip-completed', key: 'done' as StatusKey };
   if (appt.status === 'no_show') return { cls: 'chip-no_show', key: 'didNotCome' as StatusKey };
+  // Owner-app audit, 2026-10-10 — a move retires the old slot as cancelled; it was moved, not called off.
+  if (appt.status === 'cancelled' && appt.movedTo) return { cls: 'chip-moved', key: 'moved' as StatusKey };
   if (appt.status === 'cancelled') return { cls: 'chip-cancelled', key: 'cancelled' as StatusKey };
   // A confirmed booking whose reminder already went out shows that instead —
   // a derived display state, never a DB status (07-product-surfaces.md §1.2).
@@ -113,6 +115,8 @@ export interface BookingGroup {
   isCombo: boolean;
   /** The offer/combo package's name, if the customer booked one — null for plain (multi-)service bookings. This is what marks a booking as a real "combo". */
   offerTitle: string | null;
+  /** Where a moved visit is now: set only when every leg was retired by a move (owner-app audit, 2026-10-10). */
+  movedTo: string | null;
 }
 
 /**
@@ -173,6 +177,8 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
       priceMinor: sorted.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0),
       isCombo: sorted.length > 1,
       offerTitle: sorted.find((a) => a.offerTitle)?.offerTitle ?? null,
+      // The legs move together, so the first leg's new start is the visit's.
+      movedTo: sorted.every((a) => a.status === 'cancelled' && a.movedTo) ? first.movedTo! : null,
     };
   });
 
