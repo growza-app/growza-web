@@ -9,6 +9,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { oklch } from '../tokens';
 import { AddAdminModal, type RoleOption } from './AddAdminModal';
 import { useAdminMe } from '../components/AdminMeContext';
+import { ChangePasswordDialog } from '../components/ChangePasswordDialog';
 
 /**
  * GRW-133 — who can administer Growza, as a page rather than a query.
@@ -57,6 +58,7 @@ export default function AdminUsersPage() {
    * Admin from the dropdown, type a reason, and be refused.
    */
   const { can, holdsAll } = useAdminMe();
+  const [changingOwnPassword, setChangingOwnPassword] = useState(false);
   const canManage = can('admin.user.manage');
   const [changeError, setChangeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -258,12 +260,14 @@ export default function AdminUsersPage() {
 
                   <div style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                     {/*
-                      GRW-165 — offered on ACTIVE administrators only, including
-                      yourself: resetting your own password is a legitimate
-                      thing to do, unlike deactivating yourself, so the `locked`
-                      guard above does not apply to it.
+                      GRW-165 — offered on ACTIVE administrators only.
+                      Admin audit 2026-10-09, L3 — and not on your own row, which gets Change password instead: a reset
+                      sets a password without asking for the current one, so on yourself it was a way round the one
+                      check Change password makes. The API refuses it too.
                     */}
-                    {canManage && user.status === 'active' && (isSelf || roleInReach(user.roleId)) ? (
+                    {isSelf ? (
+                      <SecondaryButton onClick={() => setChangingOwnPassword(true)}>Change password</SecondaryButton>
+                    ) : canManage && user.status === 'active' && roleInReach(user.roleId) ? (
                       <SecondaryButton onClick={() => resetPassword(user)}>Reset password</SecondaryButton>
                     ) : null}
                     {!canManage ? null : locked ? (
@@ -285,6 +289,7 @@ export default function AdminUsersPage() {
 
       {/* Only roles within reach: the server refuses to add someone to a role with a permission you do not hold. */}
       <AddAdminModal open={addOpen} roles={rolesInReach} onClose={() => setAddOpen(false)} onAdded={() => void load()} />
+      {changingOwnPassword ? <ChangePasswordDialog onClose={() => setChangingOwnPassword(false)} /> : null}
 
       <ConfirmDialog
         open={resetting !== null}
