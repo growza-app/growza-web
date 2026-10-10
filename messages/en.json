@@ -42,7 +42,14 @@
         "cancelled": "Cancelled",
         "rescheduled": "Rescheduled",
         "billing": "Billing",
-        "handoff": "Asked for a person"
+        "handoff": "Asked for a person",
+        "walkIn": "Walk-in",
+        "completed": "Done",
+        "noShow": "Didn't come",
+        "invoice": "Bill",
+        "payment": "Payment",
+        "discount": "Discount",
+        "autopay": "AutoPay"
       },
       "title": "{topic} — {services}",
       "customer": "Client",
@@ -53,7 +60,31 @@
       "billUp": "Bill going up",
       "billDown": "Bill going down",
       "billSub": "From {day}: {next} a month (now {current}), for {count, plural, one {# branch} other {# branches}}.",
-      "handoffTitle": "Wants to talk to someone"
+      "handoffTitle": "Wants to talk to someone",
+      "by": "by {who}",
+      "roles": {
+        "owner": "Owner",
+        "manager": "Manager",
+        "receptionist": "Front desk",
+        "staff": "Staff"
+      },
+      "billingSub": "Tap to see your bill",
+      "invoiceTitle": "Your {month} bill is ready: {amount}",
+      "paymentTitle": "{amount} received — thank you",
+      "discountOn": "Discount applied: {amount} off each month",
+      "discountOff": "Discount removed",
+      "autopayHalted": "AutoPay has stopped — pay by link, or approve it again",
+      "status": {
+        "PAYMENT_FAILED": "This month is not paid yet",
+        "GRACE_PERIOD": "Payment is overdue",
+        "PAST_DUE": "Payment overdue — access will be restricted soon",
+        "SUSPENDED": "Account restricted until the bill is paid",
+        "ACTIVE": "Payment received — all good",
+        "PAUSED": "Subscription paused",
+        "CANCELLED": "Subscription cancelled",
+        "EXPIRED": "Subscription ended",
+        "OTHER": "Billing update"
+      }
     },
     "bellUnread": "Notifications, {count} unread"
   },

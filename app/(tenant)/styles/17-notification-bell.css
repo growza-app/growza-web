@@ -86,6 +86,8 @@
 .notif-cancel { background: #fde3e3; color: #c0362c; }
 .notif-reschedule { background: #fdf3e3; color: #8a5a10; }
 .notif-billing { background: #e3ecfd; color: #2952cc; }
+/* Jira GRW-562 — a visit done, a payment in. */
+.notif-done { background: #e6f4ea; color: #1e7b3a; }
 /* Jira GRW-479 — a client waiting for a person. */
 .notif-handoff { background: #fdf0d5; color: #92400e; }
 .notif-item-body { flex: 1; min-width: 0; }
