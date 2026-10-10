@@ -235,6 +235,9 @@ export function useBookingCopy() {
     markMissed: t('markMissed'),
     reschedule: t('reschedule'),
     cancel: t('cancel'),
+    cancelAsk: t('cancelAsk'),
+    cancelYes: t('cancelYes'),
+    cancelKeep: t('cancelKeep'),
     reference: t('reference'),
   }), [t, tn, locale]);
 }

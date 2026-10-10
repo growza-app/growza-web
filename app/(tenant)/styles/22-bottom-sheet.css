@@ -149,6 +149,22 @@ h1.sheet-title {
 .bk-sheet-actions .sheet-danger svg {
   background: #fdecec;
 }
+/* Owner-app audit, 2026-10-10 — Cancel asks first: the question, then Keep (focused) and Yes. */
+.bk-cancel-ask {
+  border-top: 1px solid var(--border);
+}
+.bk-cancel-q {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4) var(--sp-2);
+  font-weight: 600;
+  color: #b91c1c;
+}
+.bk-cancel-ask .sheet-item {
+  border-top: 1px solid var(--border);
+}
+.bk-sheet-actions .sheet-item + .bk-cancel-ask .sheet-item:first-of-type {
+  border-top: 1px solid var(--border);
+}
 /* A settled booking with no number to dial has no actions: no empty card. */
 .bk-sheet-actions:empty {
   display: none;
