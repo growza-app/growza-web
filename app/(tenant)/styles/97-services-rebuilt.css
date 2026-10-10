@@ -50,7 +50,17 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  /* Owner-app audit 2026-10-10 — `break-word`, not `anywhere`. With `anywhere` the flex algorithm takes the
+     name's minimum width to be one letter, so on a 320–363px phone the price column won and the name shrank to
+     "W / o." and "Wome / n's H…". `break-word` keeps whole words as the minimum and only splits a word that
+     cannot fit on a line by itself; the floor below keeps a third of the row for the name regardless. */
+  overflow-wrap: break-word;
+}
+
+/* Owner-app audit 2026-10-10 — the name takes what the thumbnail leaves. `flex: 0 1 auto` let it shrink to the
+   width of its longest word while the price column kept every pixel it asked for. */
+.svc-name-text {
+  flex: 1 1 auto;
 }
 
 .svc-retired-chip,
@@ -178,23 +188,55 @@
 
 .svc-card-right {
   margin-left: auto;
-  flex: none;
+  /* Owner-app audit 2026-10-10 — the price column may give way, the name may not. `flex: none` with `nowrap` made
+     "1 hr 30 min · +15 cleanup" 143px wide on a 331px row, and the name beside it 54px ("Wome / n's H…"). The price
+     stays on one line; the duration is allowed to wrap onto a second; the column never takes more than two fifths. */
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 36%;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
   text-align: right;
+}
+
+.svc-card-right .svc-price {
   white-space: nowrap;
 }
 
 .svc-card-right .svc-time {
   font-size: 0.8125rem;
+  text-wrap: balance;
+}
+
+/* Owner-app audit 2026-10-10 — an iPhone SE and a folded Z Fold (320–344px): a smaller thumbnail, so the name keeps
+   room for "Women's" and "Haircut" whole. */
+@media (max-width: 344px) {
+  .svc-swipe-face .svc-thumb {
+    width: 34px;
+    height: 34px;
+  }
+  .svc-swipe-face .svc-name-cell {
+    gap: 8px;
+  }
 }
 
 .svc-swipe-actions {
   position: absolute;
   inset: 0 0 0 auto;
   display: flex;
+  /* Owner-app QA 2026-10-10 — painted only while the row is swiped open. At rest the face covers them exactly,
+     but rows sit on fractional pixel edges (291.39px), and the red and amber anti-aliased through as a hairline
+     along the right half of every row. Hidden after the face has slid back (the 180ms below), so closing never
+     flashes the buttons away before the face covers them. */
+  visibility: hidden;
+  transition: visibility 0s linear 180ms;
+}
+
+.svc-swipe.is-open .svc-swipe-actions {
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .svc-swipe-actions button {

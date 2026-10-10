@@ -1,4 +1,5 @@
 import { screenTitle } from '../../lib/page-title';
+import { formatMoney } from '../../lib/format';
 import { api } from '../../lib/api';
 import { serverLang } from '../../lib/lang';
 import { billingCopy } from '../../lib/billing-copy';
@@ -22,11 +23,7 @@ export default async function BillingSettingsPage() {
   const onAccountText =
     onAccount > 0
       ? tm('onAccount', {
-          amount: new Intl.NumberFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', {
-            style: 'currency',
-            currency: billing.subscription?.currency ?? 'INR',
-            maximumFractionDigits: onAccount % 100 === 0 ? 0 : 2,
-          }).format(onAccount / 100),
+          amount: formatMoney(onAccount, billing.subscription?.currency ?? 'INR', lang),
         })
       : null;
   return <BillingSummary billing={billing} lang={lang} canPayOnline={me?.payments?.online ?? false} onAccountText={onAccountText} />;

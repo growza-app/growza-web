@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { formatMoney } from '../../lib/format';
 import type { OwnerBilling } from '../../lib/api-types';
 import { billingCopy } from '../../lib/billing-copy';
 import type { Lang } from '../../lib/lang';
@@ -51,12 +52,7 @@ export function AutoPayCard({
   // a control an owner can never use is worse than no control (AC-05).
   if (paidBy === 'offline') return null;
 
-  const money = (minor: number) =>
-    new Intl.NumberFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: minor % 100 === 0 ? 0 : 2,
-    }).format(minor / 100);
+  const money = (minor: number) => formatMoney(minor, currency, lang);
 
   const day = (iso: string) =>
     new Date(iso).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' });

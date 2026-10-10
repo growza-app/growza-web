@@ -12,8 +12,8 @@
  * option sets — Home dropped the year and added a comma, Clients used a
  * zero-padded day, Offers an unpadded one. Same fact, three renderings.
  *
- * Money and time live in `lib/api.ts` (formatMoney / formatTime) alongside
- * the types they format; these are the ones that had no home.
+ * Money is here too since the owner-app audit of 2026-10-10 (`formatMoney`); time still lives in `lib/api.ts`
+ * (formatTime) beside the types it formats.
  */
 
 /**
@@ -161,4 +161,31 @@ export function chartBucketLabel(startISO: string, unit: 'day' | 'week' | 'month
  */
 export function heatmapHourLabel(hour: number, apiLabel: string, locale: string = 'en'): string {
   return locale === 'hi' ? String(hour) : apiLabel;
+}
+
+/**
+ * `₹300` · `₹499.50` · `₹1,100` — one rounding rule for every rupee figure on the screen.
+ *
+ * Owner-app audit 2026-10-10 — there were two. `lib/api.ts`'s formatMoney (78 call sites) used
+ * `maximumFractionDigits: 0`, so a ₹499.50 service read "₹500" on the booking, checkout and report screens, while
+ * nine billing components each inlined their own `Intl.NumberFormat` with "paise only when there are paise" and
+ * showed "₹499.50" on the bill. Same number, two readings, and the Hindi UI got English digit grouping in the 78.
+ * This is the billing rule, applied everywhere: whole rupees show none, anything else shows two.
+ *
+ * `minor` is paise, as a string (the API's bigint-safe form) or a number. Nothing (null, undefined, '') renders as
+ * an em dash, which is what the 78 callers relied on. `locale` is a dashboard language (`en`, `hi`) or a full tag
+ * (`en-IN`, `hi-IN`); the 78 callers pass none yet and keep English.
+ */
+export function formatMoney(minor: string | number | null | undefined, currency = 'INR', locale: string = 'en'): string {
+  if (minor === null || minor === undefined || minor === '') return '—';
+  const paise = typeof minor === 'number' ? minor : Number(minor);
+  if (!Number.isFinite(paise)) return '—';
+  const tag = locale.includes('-') ? locale : intlLocale(locale);
+  const whole = Math.round(paise) % 100 === 0;
+  return new Intl.NumberFormat(tag, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  }).format(paise / 100);
 }
