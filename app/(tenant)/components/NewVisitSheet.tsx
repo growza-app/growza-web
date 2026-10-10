@@ -69,7 +69,6 @@ import {
   IconCheck,
   IconChevronDown,
   IconChevronRight,
-  IconClock,
   IconClose,
   IconMapPin,
   IconScissors,
@@ -365,7 +364,7 @@ export function NewVisitSheet({
    */
   const bookForm = pageForm && !forPayment;
   /** Which question is open over the form. `null` is the form itself. */
-  const [asking, setAsking] = useState<'services' | 'when' | null>(null);
+  const [asking, setAsking] = useState<'services' | null>(null);
   /**
    * Both routed pages — New booking and Record payment — pick services the same way (owner, 2026-10-07).
    *
@@ -2883,13 +2882,7 @@ export function NewVisitSheet({
     setTimeWanted('');
     setSlotUtc(null);
   };
-  const whenChoice = (
-    value: 'queue' | 'now' | 'pick',
-    on: boolean,
-    label: string,
-    under: string,
-    off = false,
-  ) => (
+  const whenChoice = (value: 'queue' | 'now' | 'pick', on: boolean, label: string, off = false) => (
     <button
       key={value}
       type="button"
@@ -2899,27 +2892,27 @@ export function NewVisitSheet({
       onClick={() => pickWhen(value)}
       disabled={busy || off}
     >
-      <span className="wi-when-opt-label">{label}</span>
-      <span className="wi-when-opt-under">{under}</span>
+      {label}
     </button>
   );
   const whenChoices = (
     <>
-      <div className="wi-when-list" role="radiogroup" aria-label={nv.rowWhen}>
+      <h2 className="wi-section-label" id="wi-whatnow">{nv.whatNow}</h2>
+      <div className="wi-when-list" role="radiogroup" aria-labelledby="wi-whatnow">
         {/*
           Offered whatever `later` currently is, which `queueOffered` is not: it goes false the moment a time is
-          being picked, so choosing "Pick a time", finding the day full and wanting to queue them instead left the
-          sheet with no way back to Waiting. Tapping it is what UNDOES the time, so it has to outlive it.
+          being picked, so choosing "Pick a time", finding the day full and wanting to queue them instead left
+          the desk with no way back to Waiting. Tapping it is what UNDOES the time, so it has to outlive it.
         */}
-        {canQueue ? whenChoice('queue', queueing, nv.whenWaiting, nv.whenWaitingUnder) : null}
+        {canQueue ? whenChoice('queue', queueing, nv.whenWaiting) : null}
         {/* Jira GRW-456 — nobody on the branch, or nobody who does this: starting is the one it cannot honour. */}
-        {whenChoice('now', !queueing && !later, nv.timeNow(nowLabel), nv.whenNowUnder, noStaffHere || noOneCanDoIt)}
-        {whenChoice('pick', !queueing && later, nv.whenPick, nv.whenPickUnder)}
+        {whenChoice('now', !queueing && !later, nv.whenNow, noStaffHere || noOneCanDoIt)}
+        {whenChoice('pick', !queueing && later, nv.whenPick)}
       </div>
 
       {!queueing && later ? (
         <>
-          <div className="field wi-ask-date">
+          <div className="field wi-when-date">
             <label htmlFor="wi-date">{nv.bookingDate}</label>
             <input
               id="wi-date"
@@ -2986,16 +2979,6 @@ export function NewVisitSheet({
    */
   const bookTotalMinor = totalMinor(everything, comboActive ? comboPriceMinor : null);
 
-  /** The day a chosen slot falls on, said the way the confirmation says it; nothing when it is today. */
-  const slotDay = slotUtc && day !== todayIso ? `${formatDateWithWeekday(slotUtc, timezone, { withYear: false, locale })} · ` : '';
-  /** What the When row says it has been answered with. */
-  const whenAnswer = queueing
-    ? nv.whenWaitingRow
-    : later
-      ? slotUtc
-        ? `${slotDay}${clockTime(slotUtc)}`
-        : nv.whenNoneYet
-      : nv.timeNow(nowLabel);
   /** What the stylist row says: a person and what they are doing, or whoever is free and how many that is. */
   const stylistAnswer = (() => {
     if (noStylist) return noProviderWord;
@@ -3049,7 +3032,7 @@ export function NewVisitSheet({
 
   /** One line: a picture, what it asks, what it has been answered with, and a chevron saying it opens. */
   const bookRow = (
-    key: 'services' | 'when',
+    key: 'services',
     label: string,
     answer: string,
     photo: ReactNode,
@@ -3139,12 +3122,19 @@ export function NewVisitSheet({
           ))}
         </div>
       ) : null}
-      {bookRow('when', nv.rowWhen, whenAnswer, rowPhoto(null, <IconClock />), later && !slotUtc)}
       {/*
         A token has no stylist: `queueIt` posts the client, the services and the branch, and nothing else. The row
         was answerable and the answer was silently dropped, so while Waiting is the answer the row is not there.
       */}
       {queueing ? null : stylistRow}
+      {/*
+        When is not a row (owner, 2026-10-10). It was, and putting the queue behind it was the mistake: adding
+        somebody to the waiting list is the commonest thing a busy desk does, and it had become two taps down
+        inside a line reading "Now · 9:14 PM" — which also said the time twice, once as a word and once as a
+        clock nobody needed. Three answers deserve three boxes, the same argument the stylist dropdown won on,
+        and they sit directly above the button they name so the two can never read differently.
+      */}
+      {whenChoices}
     </div>
   );
 
@@ -3171,29 +3161,7 @@ export function NewVisitSheet({
         />
       );
     }
-    const title = nv.rowWhen;
-    return (
-      <>
-        <div className="sheet-backdrop" onClick={() => setAsking(null)} />
-        <div className="sheet wi-ask" role="dialog" aria-modal="true" aria-label={title}>
-          <div className="sheet-grab" />
-          <div className="sheet-head wi-ask-head">
-            <button type="button" className="wi-back" aria-label={nv.backToForm} onClick={() => setAsking(null)}>
-              <IconArrowLeft />
-            </button>
-            <h2 className="sheet-title">{title}</h2>
-          </div>
-          <div className="wi-ask-body">
-            {whenChoices}
-          </div>
-          <div className="wi-ask-foot">
-            <button type="button" className="btn" onClick={() => setAsking(null)}>
-              {nv.done}
-            </button>
-          </div>
-        </div>
-      </>
-    );
+    return null;
   })();
 
   const asPage = presentation === 'page';

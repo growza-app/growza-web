@@ -1870,19 +1870,12 @@
     "whoDoesWhat": "Who does what",
     "addOrCopyServices": "Add or copy {services}",
     "amountNotSaved": "Not saved. Check the amount, then try again.",
-    "rowWhen": "When",
     "rowAddService": "Add service",
     "rowPicked": "{n, plural, one {1 service} other {# services}} · {total}",
-    "whenWaitingRow": "Waiting · no fixed time",
     "whenWaiting": "Waiting",
-    "whenWaitingUnder": "no time given",
-    "whenNowUnder": "goes in now",
     "whenPick": "Pick a time",
-    "whenPickUnder": "today or later",
-    "whenNoneYet": "Pick a time",
     "bookAt": "Book {time}",
-    "backToForm": "Back",
-    "freeAt": "free at {time}"
+    "whenNow": "Starts now"
   },
   "moveBooking": {
     "title": "Move this booking",

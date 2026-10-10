@@ -31,12 +31,10 @@ describe('New booking asks one question per line', () => {
 
   it('shows rows instead of the open controls, and the rows open a sheet', () => {
     expect(code).toMatch(/\{bookForm \? bookRows : servicesAndStylist\}/);
-    // Two questions open a sheet. The stylist is a dropdown in the row itself — see below.
-    expect(code).toMatch(/const \[asking, setAsking\] = useState<'services' \| 'when' \| null>\(null\);/);
+    // One question opens a sheet. The stylist is a dropdown in its row, and when is three boxes — see below.
+    expect(code).toMatch(/const \[asking, setAsking\] = useState<'services' \| null>\(null\);/);
     expect(code).toMatch(/onClick=\{\(\) => setAsking\(key\)\}/);
-    // Services opens the till's own search (below); When opens the one built here.
     expect(code).toMatch(/if \(asking === 'services' && services\) \{/);
-    expect(code).toMatch(/<div className="wi-ask-body">\s*\n\s*\{whenChoices\}/);
   });
 
   it('asks when exactly once: no Booking time select, no second slot grid', () => {
@@ -47,11 +45,19 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/wi-slot-grid/);
   });
 
-  it('offers Waiting as an answer to when, not a chip beside Starting', () => {
+  it('puts the queue on the screen, not two taps inside a row', () => {
+    /*
+     * Owner, 2026-10-10 — when WAS a row, and hiding the queue behind it was the mistake: adding somebody to
+     * the waiting list is the commonest thing a busy desk does. Three boxes, visible, directly above the
+     * button they name. The till keeps its own two-chip version, which is why `outcomeChips` is still gated.
+     */
     expect(code).toMatch(/const outcomeChips = pageOutcome && !bookForm \? \(/);
-    expect(code).toMatch(/whenChoice\('queue', queueing, nv\.whenWaiting, nv\.whenWaitingUnder\)/);
-    expect(code).toMatch(/whenChoice\('now', !queueing && !later, nv\.timeNow\(nowLabel\), nv\.whenNowUnder, noStaffHere \|\| noOneCanDoIt\)/);
-    expect(code).toMatch(/whenChoice\('pick', !queueing && later, nv\.whenPick, nv\.whenPickUnder\)/);
+    expect(code).toMatch(/whenChoice\('queue', queueing, nv\.whenWaiting\)/);
+    expect(code).toMatch(/whenChoice\('now', !queueing && !later, nv\.whenNow, noStaffHere \|\| noOneCanDoIt\)/);
+    expect(code).toMatch(/whenChoice\('pick', !queueing && later, nv\.whenPick\)/);
+    // Rendered in the form, after the stylist — not behind anything.
+    expect(code).toMatch(/\{queueing \? null : stylistRow\}[\s\S]{0,600}\{whenChoices\}/);
+    expect(css).toMatch(/\.wi-when-list \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
   });
 
   it('hides the stylist row while the answer is Waiting, because a token has no stylist', () => {
@@ -101,7 +107,6 @@ describe('New booking asks one question per line', () => {
     // not a confident reader worked it. Each row opens with one: the service, the stylist's face, or an icon.
     expect(code).toMatch(/const rowPhoto = \(src: string \| null, icon: ReactNode\)/);
     expect(code).toMatch(/rowPhoto\(firstPickedPhoto, <IconScissors \/>\)/);
-    expect(code).toMatch(/rowPhoto\(null, <IconClock \/>\)/);
     expect(code).toMatch(/rowPhoto\(chosenStylistPhoto, <IconUser \/>\)/);
     // The stylist is a dropdown, not a sheet: three or four names do not need a screen (GRW-524 settled this
     // for the till). A real select lies over the row at opacity 0, so the phone's own wheel opens.
@@ -121,22 +126,22 @@ describe('New booking asks one question per line', () => {
     // Owner, 2026-10-10 — the plainer word wins, and changes everywhere at once. "Whoever is free" was the
     // hardest word on the screen, sitting in the one row a desk reads fifty times a day.
     expect(en.whoeverIsFree).toBe('Anyone free');
-    expect(en.whenWaitingUnder).toBe('no time given');
-    expect(en.whenNowUnder).toBe('goes in now');
-    expect(en.whenPickUnder).toBe('today or later');
     expect(en.servicesMissing).toBe('Choose a service first.');
+    // No clock on the box: "Starts now" is the whole fact, and "Now · 9:14 PM" said it twice.
+    expect(en.whenNow).toBe('Starts now');
+    expect(en.whenNow).not.toMatch(/\{time\}/);
     // Nothing on these rows runs past four words: at 344px a fifth wraps under the tile.
-    for (const k of ['whenWaiting', 'whenWaitingUnder', 'whenNowUnder', 'whenPick', 'whenPickUnder', 'rowWhen', 'rowAddService']) {
+    for (const k of ['whenWaiting', 'whenNow', 'whenPick', 'rowAddService']) {
       expect(String(en[k]).split(' ').length, `${k} is too long to read at a glance`).toBeLessThanOrEqual(4);
     }
   });
 
-  it('styles the rows and the sheet, with one scrolling region in it', () => {
+  it('styles the rows, and every target clears the 44px floor', () => {
     expect(css).toMatch(/\.wi-rows \{/);
     expect(css).toMatch(/\.wi-row-btn \{/);
     expect(css).toMatch(/\.wi-when-opt \{/);
-    const body = css.slice(css.indexOf('.wi-ask-body {'), css.indexOf('.wi-ask-body {') + 220);
-    expect(body).toMatch(/overflow-y: auto;/);
+    const opt = css.slice(css.indexOf('.wi-when-opt {'), css.indexOf('.wi-when-opt {') + 400);
+    expect(Number(/min-height: ([\d.]+)rem;/.exec(opt)?.[1]) * 16).toBeGreaterThanOrEqual(44);
     // A row is a tap target before it is a layout: 44px is the app's floor and this clears it.
     const row = css.slice(css.indexOf('.wi-row-btn {'), css.indexOf('.wi-row-btn {') + 400);
     expect(Number(/min-height: (\d+)px;/.exec(row)?.[1])).toBeGreaterThanOrEqual(44);

@@ -1870,19 +1870,12 @@
     "whoDoesWhat": "कौन क्या करता है",
     "addOrCopyServices": "{services} जोड़ें या कॉपी करें",
     "amountNotSaved": "सेव नहीं हुआ। रकम देखकर फिर कोशिश करें।",
-    "rowWhen": "कब",
     "rowAddService": "सेवा जोड़ें",
     "rowPicked": "{n, plural, one {1 सेवा} other {# सेवाएँ}} · {total}",
-    "whenWaitingRow": "इंतज़ार · समय तय नहीं",
     "whenWaiting": "इंतज़ार",
-    "whenWaitingUnder": "समय नहीं दिया",
-    "whenNowUnder": "अभी जाएँगे",
     "whenPick": "समय चुनें",
-    "whenPickUnder": "आज या बाद में",
-    "whenNoneYet": "समय चुनें",
     "bookAt": "{time} बुक करें",
-    "backToForm": "वापस",
-    "freeAt": "{time} बजे खाली"
+    "whenNow": "अभी शुरू"
   },
   "moveBooking": {
     "title": "यह बुकिंग बदलें",
