@@ -2,8 +2,7 @@ import { screenTitle } from '../../lib/page-title';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadScopedSettings, scopeKey } from '../scope';
 import { BookingRulesForm } from './BookingRulesForm';
-import { BranchScopeNote } from '../BranchScopeNote';
-import { BOOKING_RULE_KEYS } from '../branch-keys';
+import { BookingScopeNote } from './BookingScopeNote';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,10 +15,10 @@ export default async function BookingSettingsPage({ searchParams }: { searchPara
       <BookingRulesForm key={scopeKey(settings)} initial={settings} branchName={branchName} />
       {/* Below the settings, not above them (design review, 2026-10-07): the rules are what
           this screen is for, and whether to push them to every branch is decided after reading them. */}
-      <BranchScopeNote key={`note:${scopeKey(settings)}`} settings={settings} branchName={branchName} keys={BOOKING_RULE_KEYS} topic="bookingRules" />
+      <BookingScopeNote key={`note:${scopeKey(settings)}`} settings={settings} branchName={branchName} />
     </>
   );
 }
 
 // Jira GRW-192 — the tab says which screen this is.
-export const metadata = screenTitle('Booking rules');
+export const metadata = screenTitle('Booking settings');

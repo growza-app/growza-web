@@ -194,11 +194,6 @@
   gap: var(--sp-4);
   min-width: 0;
 }
-.bp-branches {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-4);
-}
 /* A lone field (Contact's phone) takes the whole card, not half of it. */
 .bp-grid > .field:only-child {
   grid-column: 1 / -1;
@@ -219,10 +214,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
   }
-  .bp-branches {
-    /* 320px: two branches side by side even in a 1280px window's ~700px column. */
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  }
 }
 
 /* Laptop fit: the profile's cards trim their padding so two columns fit 13". */
@@ -231,8 +222,7 @@
     gap: 12px;
   }
   .settings-page .bp-columns,
-  .settings-page .bp-col,
-  .settings-page .bp-branches {
+  .settings-page .bp-col {
     gap: 12px;
   }
   .settings-page .bp-card {
@@ -257,10 +247,6 @@
   }
   .settings-page .bp-savebar {
     padding: 10px 14px;
-  }
-  .settings-page .bp-card-actions {
-    margin-top: 12px;
-    padding-top: 12px;
   }
 }
 
@@ -649,7 +635,7 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-/* Jira GRW-396 — "Close every branch": its own line under the date, so the date field keeps its width on a phone. */
+/* Jira GRW-396 — "Add for all branches" (was "Close every branch"): its own line under the date, so the date field keeps its width on a phone. */
 /* `.closed-days .closed-days-every`: it is a label inside `.field`, whose labels spread their two ends apart. */
 .closed-days .closed-days-every {
   display: inline-flex;
@@ -699,12 +685,6 @@
 
 /* ---------- Jira GRW-246 — Make main / Close branch on a branch card ---------- */
 .bp-card-head {
-  flex-wrap: wrap;
-}
-.bp-branch-actions {
-  display: flex;
-  gap: 6px;
-  margin-left: auto;
   flex-wrap: wrap;
 }
 .bp-action-btn {

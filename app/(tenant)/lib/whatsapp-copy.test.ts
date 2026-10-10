@@ -28,7 +28,8 @@ const tryIsADemo = en.tryWhatsApp.tryIsADemo;
  * likelier regression: somebody tidying the copy back to the confident version
  * because it reads better.
  */
-const CRM_ONLY = [reminders.notLive, tryIsADemo, offers.subtitleCrmOnly, packages.subtitleCrmOnly];
+// Not the reminders notice any more: without WhatsApp the reminders screen is not shown at all (owner, 2026-10-10).
+const CRM_ONLY = [tryIsADemo, offers.subtitleCrmOnly, packages.subtitleCrmOnly];
 
 /** Present-tense claims that WhatsApp is working right now. */
 const ASSERTS_IT_WORKS = [
@@ -43,19 +44,15 @@ describe('while WhatsApp is off, no copy claims it works', () => {
     for (const pattern of ASSERTS_IT_WORKS) expect(text).not.toMatch(pattern);
   });
 
-  it('tells the owner it is coming, not that something is broken', () => {
-    // BR-02 — coming soon, not hidden and not an error. The owner is being
-    // sold this; the product should sound like the sales conversation.
-    expect(reminders.notLiveTitle).toMatch(/coming soon/i);
-    expect(reminders.notLive).toMatch(/will start sending|start sending/i);
-  });
-
-  it('promises that setting reminders up now is not wasted work (BR-03)', () => {
-    // The rules are stored whatever the flag says, so an owner who configures
-    // them in month one has them working the day the switch is flipped. If
-    // that ever stops being true, this sentence becomes a lie and the test
-    // should be deleted along with the promise.
-    expect(reminders.notLive.toLowerCase()).toContain('nothing to redo');
+  it('does not offer reminders at all while they cannot be sent', () => {
+    /*
+     * BR-02 used to be "coming soon, not hidden": the screen drew with a notice saying the times would start
+     * sending later. Superseded (owner, 2026-10-10) — a screen of settings that change nothing is still clutter,
+     * so the row is hidden and the page sends anyone without WhatsApp booking back to Settings. Its notice went
+     * with it; if it ever comes back, it must not claim reminders are going out.
+     */
+    expect((reminders as Record<string, unknown>).notLive).toBeUndefined();
+    expect((reminders as Record<string, unknown>).savedNotLive).toBeUndefined();
   });
 
   it('says plainly that customers cannot use the simulator', () => {

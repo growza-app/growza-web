@@ -98,7 +98,8 @@ describe('the screen leads with what it is for', () => {
   it('puts the branch-scope note under the settings it applies to', () => {
     for (const p of ['booking/page.tsx', 'notifications/page.tsx', 'report-access/page.tsx', 'working-hours/page.tsx']) {
       const src = read(p);
-      const note = src.indexOf('<BranchScopeNote');
+      // Booking draws it through `BookingScopeNote`, which picks its keys by WhatsApp (2026-10-10).
+      const note = src.search(/<(BranchScopeNote|BookingScopeNote)/);
       const form = src.search(/<(BookingRulesForm|RemindersForm|ReportAccessForm|WorkingHoursForm)/);
       expect(note, p).toBeGreaterThan(-1);
       expect(form, p).toBeGreaterThan(-1);

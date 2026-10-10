@@ -34,11 +34,11 @@ describe('the branch note on Working hours', () => {
   it('says the branch has no hours yet when neither it nor the business has any', () => {
     const html = note(settings({}));
     expect(html).toContain('has no opening hours yet');
-    expect(html).not.toContain('uses the business');
+    expect(html).not.toContain('uses your usual');
   });
 
   it('still says it uses the business hours when the business has some', () => {
-    expect(note(settings({ workingHours: [day] }))).toContain('uses the business');
+    expect(note(settings({ workingHours: [day] }))).toContain('uses your usual');
   });
 
   it('a branch with its own hours is unchanged', () => {
@@ -46,10 +46,10 @@ describe('the branch note on Working hours', () => {
   });
 
   it('only the hours tab: other tabs keep their wording', () => {
-    expect(note(settings({}), 'en', 'bookingRules')).toContain('uses the business');
+    expect(note(settings({}), 'en', 'bookingRules')).toContain('uses your usual');
   });
 
   it('reads in Hindi', () => {
-    expect(note(settings({}), 'hi')).toContain('खुलने के घंटे तय नहीं हैं');
+    expect(note(settings({}), 'hi')).toContain('खुलने के घंटे अभी तय नहीं हैं');
   });
 });
