@@ -56,9 +56,10 @@ import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
 import type { FreeTime } from '../lib/book-again';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
-import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
+import { PAYMENT_MODES } from '../lib/payment-modes';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
+import { fixVisitHref, payVisitHref } from '../lib/pay-token';
 import { ServiceSheet } from './ServiceSheet';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
@@ -696,19 +697,6 @@ export function NewVisitSheet({
    * A walk-in's whole point is capturing the money, so a till that opens at ₹0
    * and settles a third of the visit is worse than not offering it.
    */
-  const [checkoutRows, setCheckoutRows] = useState<Appointment[] | null>(null);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  /*
-   * Jira GRW-289 — Record payment's till was closed without saving.
-   *
-   * Cancel, the close button and a tap on the backdrop all called the same
-   * `onClose`, which shut the whole sheet: the visit had been recorded by
-   * Finish, nothing had been paid, and nothing on screen said so. The owner
-   * believed the money was in. Now the sheet steps back to the done screen and
-   * says it plainly — "Take payment now" is right there, and "Done" still
-   * leaves. Telling, not blocking.
-   */
-  const [tillClosedUnpaid, setTillClosedUnpaid] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -1435,76 +1423,6 @@ export function NewVisitSheet({
     };
   }, [later, stage.step, onForm, pageForm]);
 
-  const [loadingCheckout, setLoadingCheckout] = useState(false);
-
-  /**
-   * Fetch the visit's real rows, then open the till.
-   *
-   * `api.appointments` is scoped to this client and today, then narrowed to the
-   * exact leg ids this walk-in created — a client who already had a booking
-   * earlier today must not have it swept into this checkout.
-   *
-   * Ordered by the legs' own order, not the API's, because the first row is the
-   * one checkout settles and the others ride along as group members.
-   */
-  const openCheckout = async (result: WalkInDone) => {
-    setLoadingCheckout(true);
-    setCheckoutError(null);
-    setTillClosedUnpaid(false);
-    try {
-      /*
-       * Today AND tomorrow — a late visit runs past midnight.
-       *
-       * This asked for `today, today`, and QA found what that costs: a walk-in
-       * recorded at 22:02 for Balayage + Haircut + Beard Trim put two of its
-       * three legs after local midnight, so the fetch returned one row and the
-       * till opened on the Balayage alone. ₹450 was never charged and those two
-       * legs stayed `confirmed` forever — ghost bookings on tomorrow's calendar.
-       *
-       * It failed SILENTLY, which is the worse half: the guard below only fired
-       * on an EMPTY result, so a partial one read as success.
-       */
-      const zoned = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(d);
-      const now = new Date();
-      const all = await api.appointments(
-        zoned(now),
-        zoned(new Date(now.getTime() + 24 * 60 * 60 * 1000)),
-        undefined,
-        result.customerId,
-      );
-      const byId = new Map(all.map((a) => [a.id, a]));
-      const rows = result.legIds.map((id) => byId.get(id)).filter((a): a is Appointment => Boolean(a));
-
-      /*
-       * Every leg, or none — a partial till is worse than no till.
-       *
-       * Settling 1 of 3 legs takes a third of the money and leaves the rest
-       * uncompleted with nothing on screen to say so. Refusing sends the
-       * receptionist to Bookings, where the whole visit is visible and
-       * settleable.
-       */
-      if (rows.length !== result.legIds.length) throw new Error(nv.tillFailed);
-      setCheckoutRows(rows);
-    } catch (error) {
-      /*
-       * Jira GRW-289 — only a sentence the API wrote reaches the screen.
-       *
-       * This passed on the message of ANY `Error`, and a dropped
-       * connection IS an Error, so QA read the browser's raw "Failed to fetch"
-       * instead of the copy below — the same mistake `submit` documents fixing
-       * for the walk-in save. A 5xx, or a 4xx with no body, carries only
-       * "/api/v1/appointments failed: 500", which is not for a receptionist
-       * either. The "every leg, or none" guard above throws `tillFailed` itself,
-       * so it lands here too.
-       */
-      setCheckoutError(
-        error instanceof ApiError && error.status < 500 && error.code ? error.message : nv.tillFailed,
-      );
-    } finally {
-      setLoadingCheckout(false);
-    }
-  };
-
   /**
    * Jira GRW-222 — into the waiting queue instead of a chair.
    *
@@ -1514,9 +1432,12 @@ export function NewVisitSheet({
    * line.
    */
   /**
-   * Jira GRW-290 — this visit's rows as the API has them now. The fetch
-   * window is today and tomorrow for the same reason `openCheckout` gives: a
-   * late visit's legs can run past local midnight.
+   * Jira GRW-290 — this visit's rows as the API has them now.
+   *
+   * Today AND tomorrow, because a late visit's legs can run past local midnight: a walk-in recorded at 22:02
+   * for three services put two of them after midnight, and a one-day read returned one row. (The till that
+   * taught us this is gone — `openCheckout`, which this comment used to point at — but the window is the
+   * same, and `appointments/new/page.tsx` asks the same question of one day with the same care.)
    */
   const visitRows = async (visit: WalkInDone): Promise<Appointment[]> => {
     const zoned = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(d);
@@ -1907,7 +1828,6 @@ export function NewVisitSheet({
         setSlotUtc(null);
         setSlots(null);
         setStage(pageForm ? { step: 'client' } : { step: 'when', client });
-        setCheckoutError(null);
         setSlotError(nv.slotTaken);
         return;
       }
@@ -1918,56 +1838,6 @@ export function NewVisitSheet({
       });
     }
   };
-
-  if (checkoutRows && checkoutRows.length > 0 && services && providers) {
-    /*
-     * Straight into the existing till. Revenue is the owner's third outcome and
-     * `CheckoutSheet` is the only money-entry UI in the app — inventing a
-     * second one inside this sheet would be two save models for one number.
-     *
-     * The first leg is the appointment being settled and the rest are its
-     * group members, exactly the shape a combo booked through WhatsApp arrives
-     * in, so checkout needs no idea a walk-in is different.
-     */
-    const [first, ...rest] = checkoutRows;
-    return (
-      <CheckoutSheet
-        appointment={first!}
-        services={services}
-        // Jira GRW-392 (review) — this visit's branch's people: another branch's stylist is refused at the till.
-        providers={branchProviders}
-        offers={offers ?? []}
-        groupMembers={rest}
-        timezone={timezone}
-        onBack={() => {
-          setCheckoutRows(null);
-          setTillClosedUnpaid(true);
-        }}
-        onSaved={() => {
-          setCheckoutRows(null);
-          onClose();
-        }}
-        onClose={() => {
-          setCheckoutRows(null);
-          /*
-           * Jira GRW-289 — Record payment exists to take the money; leaving the
-           * till unsaved must not look like it did. Back to the done screen.
-           *
-           * Jira GRW-451 — unconditionally, because the condition had it backwards.
-           * The till is only ever opened from the `done` screen's "Take payment
-           * now", and `done` is only ever reached when `forPayment` is FALSE
-           * (Record payment settles inline through `payFor` and ends on `paid`).
-           * So `if (forPayment)` was dead, and the one purpose that does reach
-           * the till — plain Walk-in now — took the `else`: cancelling closed
-           * the whole sheet onto Bookings with a visit recorded, nothing paid
-           * and nothing saying so. "Done" is still right here; this tells
-           * rather than blocks, which is what GRW-289 decided.
-           */
-          setTillClosedUnpaid(true);
-        }}
-      />
-    );
-  }
 
   /*
    * Owner, 2026-10-07 — the WhatsApp bill, from what Mark done recorded: singles at what was charged, a package at
@@ -3309,6 +3179,7 @@ export function NewVisitSheet({
     stage.step === 'paid' ? (
       <PaymentDone
         appointmentId={stage.result.appointmentId}
+        fixHref={fixVisitHref(stage.result.appointmentId, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(stage.result.startAt)))}
         totalMinor={stage.totalMinor}
         mode={stage.mode}
         modeLabel={PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode}
@@ -4165,15 +4036,19 @@ export function NewVisitSheet({
             */}
             {!later && (
               <>
-                {tillClosedUnpaid && <div className="wi-overlap" role="status">{nv.notPaidYet}</div>}
-                {checkoutError && <div role="alert" className="wi-error">{checkoutError}</div>}
+                {/*
+                  Owner, 2026-10-10 — Record payment, not a till of its own.
+                  Taking money is one job, and the desk should meet one screen doing it whether the person
+                  walked in or was booked. The visit's own day rides in the address because there is no read
+                  for one appointment by id; `?visit=` fills the flow in from it and settles it with
+                  `checkout`, never a second sale.
+                */}
                 <button
                   type="button"
                   className="sheet-item wi-take-payment"
-                  disabled={loadingCheckout}
-                  onClick={() => void openCheckout(stage.result)}
+                  onClick={() => router.push(payVisitHref(stage.result, timezone))}
                 >
-                  {loadingCheckout ? nv.openingTill : nv.takePayment}
+                  {nv.takePayment}
                 </button>
               </>
             )}

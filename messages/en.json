@@ -1877,7 +1877,8 @@
     "bookAt": "Book {time}",
     "whenNow": "Starts now",
     "timeMoved": "{asked} is taken. Nearest free is {got}.",
-    "timeNoneAfter": "Nothing free after {asked} that day."
+    "timeNoneAfter": "Nothing free after {asked} that day.",
+    "visitGone": "This booking is not open any more. It may already be settled. Check Bookings before taking money again."
   },
   "moveBooking": {
     "title": "Move this booking",

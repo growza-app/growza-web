@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { guardLive } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
+import type { Appointment } from '../../lib/api-types';
 import type { VisitMode } from '../../components/NewVisitSheet';
 import type { QueueEntry } from '../../lib/home-types';
 import { NewBookingClient } from './NewBookingClient';
@@ -22,7 +23,7 @@ export const dynamic = 'force-dynamic';
 export default async function NewBookingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string; purpose?: string; token?: string; location?: string; from?: string; full?: string }>;
+  searchParams: Promise<{ mode?: string; purpose?: string; token?: string; location?: string; from?: string; full?: string; visit?: string; on?: string }>;
 }) {
   // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
   await guardLive('/appointments/new');
@@ -75,6 +76,43 @@ export default async function NewBookingPage({
   }
   const tokenGone = Boolean(paying && params.token && !token);
 
+  /*
+   * Owner, 2026-10-10 — settling a BOOKING is this page too (`&visit=<id>&on=<date>`), not a till of its own.
+   *
+   * Taking money is one job and the desk should meet one screen doing it, whether the person walked in or was
+   * booked. What differs is underneath: a walk-in's payment CREATES the visit (a counter sale), a booking's
+   * payment COMPLETES rows that already exist (`POST /appointments/:id/checkout`). Writing a sale for a booking
+   * would leave the booking `confirmed` for ever beside a second visit for the same work.
+   *
+   * `on` is the booking's own day, carried by whoever opened this, because there is no read for one appointment
+   * by id — the day's list is, and the visit's other legs come back with it. Without it a booking for next
+   * Tuesday could not be found at all.
+   */
+  let visit: { appointment: Appointment; legs: Appointment[] } | undefined;
+  if (paying && params.visit && params.on) {
+    try {
+      const day = await api.appointments(params.on, params.on);
+      /*
+       * Still settleable, or not at all.
+       *
+       * `confirmed` is the only state with money still to take: a `completed` row has been paid, and a
+       * cancelled or no-show one never will be. Matching on the id alone found a settled booking perfectly
+       * well and opened the flow on it — a stale "Mark as done" link, or a back button after paying, and the
+       * salon takes the money a second time. Falling through to `visitGone` is what says so.
+       */
+      const one = day.find((a) => a.id === params.visit && a.status === 'confirmed');
+      // The combo's other still-booked legs settle in the same payment, as the till they replace did.
+      const legs = one?.bookingGroupId
+        ? day.filter((a) => a.bookingGroupId === one.bookingGroupId && a.id !== one.id && a.status === 'confirmed')
+        : [];
+      if (one) visit = { appointment: one, legs };
+    } catch {
+      visit = undefined;
+    }
+  }
+  // Named a booking that is not there (settled on another phone, moved, cancelled): say so rather than take the money twice.
+  const visitGone = Boolean(paying && params.visit && !visit);
+
   return (
     <div className="page-body">
       {/* Owner, 2026-10-09 — on a phone, Record payment is three screens (`PayFlow`); `?full=1` keeps the one-page form there. */}
@@ -83,6 +121,8 @@ export default async function NewBookingPage({
         purpose={paying ? 'payment' : 'visit'}
         token={token}
         tokenGone={tokenGone}
+        visit={visit}
+        visitGone={visitGone}
         backTo={params.from === 'bookings' ? '/appointments' : undefined}
         timezone={me.tenant?.timezone ?? 'Asia/Kolkata'}
         full={params.full === '1'}

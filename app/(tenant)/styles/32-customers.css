@@ -2893,3 +2893,42 @@ button.bk-waiting-row:focus-visible {
   white-space: nowrap;
 }
 
+
+/*
+ * The booking a waiting token has just become (owner, 2026-10-10).
+ *
+ * Giving a token to a stylist moved the person from the Waiting strip into To do and said nothing about it;
+ * the list now goes to the row and lights it. A ring rather than a background, so the card's own status
+ * colour and staff rail still read, and it fades on its own — a mark left on permanently is a mark nobody
+ * sees. `scroll-margin` keeps it clear of the sticky filters the smooth scroll would otherwise park it under.
+ */
+.bk-card-just-given {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+  scroll-margin: 96px 0;
+  animation: bk-just-given 2.6s ease-out forwards;
+}
+
+@keyframes bk-just-given {
+  0%,
+  70% {
+    outline-color: var(--accent-deep);
+  }
+  100% {
+    outline-color: transparent;
+  }
+}
+
+/* The scroll still happens; only the flashing stops. */
+@media (prefers-reduced-motion: reduce) {
+  .bk-card-just-given {
+    animation: none;
+    outline-color: var(--accent-deep);
+  }
+}
+
+/* It takes focus so a keyboard hears about it too, but it is not a control — no second ring on top. */
+.bk-card-just-given:focus {
+  outline: 2px solid var(--accent-deep);
+}
