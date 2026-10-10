@@ -20,7 +20,7 @@ import { IconArrowLeft, IconClose, IconMinus, IconPayCard, IconPayCash, IconPayO
 import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
-import { ServiceSheet } from './ServiceSheet';
+import { ServiceSheet } from '../../components/ServiceSheet';
 import { BillCard, type BillLine as Line } from './BillCard';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';

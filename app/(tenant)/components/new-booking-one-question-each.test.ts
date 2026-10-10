@@ -33,8 +33,7 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/\{bookForm \? bookRows : servicesAndStylist\}/);
     expect(code).toMatch(/const \[asking, setAsking\] = useState<'services' \| 'stylist' \| 'when' \| null>\(null\);/);
     expect(code).toMatch(/onClick=\{\(\) => setAsking\(key\)\}/);
-    // The sheet renders the SAME controls the page used to show inline — one picker, not a second one written twice.
-    expect(code).toMatch(/asking === 'services' \? serviceSearch : asking === 'stylist' \? stylistField : whenChoices/);
+    expect(code).toMatch(/asking === 'stylist' \? stylistField : whenChoices/);
   });
 
   it('asks when exactly once: no Booking time select, no second slot grid', () => {
@@ -67,13 +66,31 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/bookForm && slotUtc\s*\n?\s*\? nv\.bookAt\(clockTime\(slotUtc\)\)/);
   });
 
-  it('picks services exactly as Record payment does — the same menu, not a second one', () => {
-    // Owner, 2026-10-10 — the till's picker IS the picker: photographs, kinds of service and the pager, moved
-    // into the sheet rather than replaced by a plain list. The receptionist who rings a visit up is the one who
-    // booked it an hour earlier, and two pickers over one catalogue is the drift GRW-297 already undid once.
-    expect(code).toMatch(/\{onPage && categories\.length/);
-    expect(code).toMatch(/\{onPage \? \(\s*\n\s*<Pagination/);
-    expect(code).toMatch(/<img\s*\n?\s*src=\{servicePhotoUrl\(s\)\}/);
+  it("picks services with Record payment's own search, not a second one", () => {
+    /*
+     * Owner, 2026-10-10 — the search the till's SIMPLE flow opens, `ServiceSheet`: one box, the kinds beside
+     * it, one list of rows with a count on each. Not the full form's paged photo menu, and not a third list
+     * written here. The receptionist who rings a visit up is the one who booked it an hour earlier.
+     */
+    expect(code).toMatch(/import \{ ServiceSheet \} from '\.\/ServiceSheet';/);
+    expect(code).toMatch(/if \(asking === 'services' && services\) \{/);
+    expect(code).toMatch(/counts=\{new Map\(services\.map\(\(x\) => \[x\.id, countOnBill\(x\.id\)\]\)\)\}/);
+    // `addOneMore`, not `addService`: picking does not close here, so the next tap is the next service.
+    expect(code).toMatch(/onPick=\{addOneMore\}/);
+    // And nothing is lost by sharing it — New booking sells combos, so they ride along as one more chip.
+    expect(code).toMatch(/packages=\{combos\}/);
+    expect(code).toMatch(/onPickPackage=\{\(o\) => \(offerId === o\.id \? removeCombo\(\) : applyCombo\(o\)\)\}/);
+  });
+
+  it('leaves Record payment with the search it already had', () => {
+    const till = readFileSync(resolve(__dirname, 'ServiceSheet.tsx'), 'utf8');
+    // Every New booking addition is optional, so the till's call site renders exactly what it rendered before.
+    expect(till).toMatch(/packages\?: Offer\[\];/);
+    expect(till).toMatch(/packageOnBillId\?: string \| null;/);
+    expect(till).toMatch(/const offers = packages \?\? \[\];/);
+    const pay = readFileSync(resolve(__dirname, '../appointments/new/PayFlow.tsx'), 'utf8');
+    expect(pay).toMatch(/import \{ ServiceSheet \} from '\.\.\/\.\.\/components\/ServiceSheet';/);
+    expect(pay).not.toMatch(/packages=\{/);
   });
 
   it('keeps a picture on every row, so the screen can be worked without reading it', () => {

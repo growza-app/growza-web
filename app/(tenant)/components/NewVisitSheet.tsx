@@ -59,6 +59,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
+import { ServiceSheet } from './ServiceSheet';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
 import { PaymentDone } from './PaymentDone';
@@ -3103,7 +3104,27 @@ export function NewVisitSheet({
   /** The question that is open, over the form it was opened from. */
   const askSheet = (() => {
     if (!bookForm || !asking) return null;
-    const title = asking === 'services' ? servicesNoun : asking === 'when' ? nv.rowWhen : providerNoun;
+    /*
+     * Services is the till's own search (owner, 2026-10-10) — `ServiceSheet`, the sheet Record payment's simple
+     * flow opens from its search box, not the full form's paged photo menu. One box, the kinds beside it, one
+     * list of rows with a count on each. The desk already knows it; it is the same catalogue; and a visit is
+     * often two or three services, so `onPick` here does NOT close — the count goes up and the next one is a
+     * tap away, where the till closes because its tiles are the main path back.
+     */
+    if (asking === 'services' && services) {
+      return (
+        <ServiceSheet
+          services={services}
+          counts={new Map(services.map((x) => [x.id, countOnBill(x.id)]))}
+          onPick={addOneMore}
+          packages={combos}
+          packageOnBillId={offerId}
+          onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
+          onClose={() => setAsking(null)}
+        />
+      );
+    }
+    const title = asking === 'when' ? nv.rowWhen : providerNoun;
     return (
       <>
         <div className="sheet-backdrop" onClick={() => setAsking(null)} />
@@ -3116,7 +3137,7 @@ export function NewVisitSheet({
             <h2 className="sheet-title">{title}</h2>
           </div>
           <div className="wi-ask-body">
-            {asking === 'services' ? serviceSearch : asking === 'stylist' ? stylistField : whenChoices}
+            {asking === 'stylist' ? stylistField : whenChoices}
           </div>
           <div className="wi-ask-foot">
             <button type="button" className="btn" onClick={() => setAsking(null)}>
