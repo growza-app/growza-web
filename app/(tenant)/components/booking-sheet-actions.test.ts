@@ -83,3 +83,34 @@ describe('the Bookings list', () => {
     expect(list).not.toMatch(/canSettle=/);
   });
 });
+
+/**
+ * Owner-app audit, 2026-10-10 — Cancel asks first.
+ *
+ * A cancelled booking is final (Jira GRW-467), and the button sat at the bottom of the sheet under the thumb, acting
+ * on one tap. The first tap now opens the question; only the second, on "Yes, cancel it", cancels — and "Keep the
+ * booking" takes the focus, so Enter or a hurried second tap keeps it.
+ */
+describe('Cancel this booking asks first', () => {
+  it('the first tap only asks', () => {
+    expect(source).toMatch(/onClick=\{\(\) => setAskingCancel\(true\)\}>\s*<IconClose \/>\s*\{bk\.cancel\}/);
+  });
+
+  it('only the Yes button cancels, and it is drawn only while asking', () => {
+    const asking = source.slice(source.indexOf('{askingCancel ? ('), source.indexOf(') : ('));
+    expect(asking).toContain("onClick={() => setStatus('cancelled')}");
+    expect(asking).toContain('{bk.cancelYes}');
+    expect(asking).toMatch(/ref=\{keepRef\}[^>]*onClick=\{\(\) => setAskingCancel\(false\)\}/);
+  });
+
+  it('Keep the booking takes the focus', () => {
+    expect(source).toMatch(/if \(askingCancel\) keepRef\.current\?\.focus\(\)/);
+  });
+
+  it('says it in both languages', () => {
+    for (const lang of ['en', 'hi']) {
+      const sheet = JSON.parse(readFileSync(fromDashboard(`messages/${lang}.json`), 'utf-8')).bookingSheet;
+      for (const key of ['cancelAsk', 'cancelYes', 'cancelKeep']) expect(sheet[key], `${lang}.${key}`).toBeTruthy();
+    }
+  });
+});

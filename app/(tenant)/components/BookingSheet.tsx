@@ -2,7 +2,7 @@
 
 import { useBookingCopy } from '../lib/use-copy';
 import { useTranslations, useLocale } from 'next-intl';
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatTime, type Appointment, type AppointmentStatus, type Offer, type Provider, type Service } from '../lib/api';
 import { formatDuration, summarizeServices } from '../lib/appointment-display';
@@ -88,6 +88,16 @@ export function BookingSheet({
   const [error, setError] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [moving, setMoving] = useState(false);
+  /*
+   * Owner-app audit, 2026-10-10 — Cancel acted on one tap, and a cancelled booking cannot be put back (a settled
+   * booking is final, Jira GRW-467). It sits under the thumb at the bottom of the sheet, so the first tap asks and
+   * the second does it. "Keep the booking" takes the focus, so Enter or a stray second tap keeps it.
+   */
+  const [askingCancel, setAskingCancel] = useState(false);
+  const keepRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (askingCancel) keepRef.current?.focus();
+  }, [askingCancel]);
   const [services, setServices] = useState<Service[] | null>(null);
   const [providers, setProviders] = useState<Provider[] | null>(null);
   // Jira GRW-314 — the combos that can be added at the till; a failed read just means none are offered.
@@ -259,15 +269,28 @@ export function BookingSheet({
                 </button>
               )}
               {maySetStatus && (
-                <button
-                  type="button"
-                  className="sheet-item sheet-danger"
-                  disabled={busy}
-                  onClick={() => setStatus('cancelled')}
-                >
-                  <IconClose />
-                  {bk.cancel}
-                </button>
+                <>
+                  {askingCancel ? (
+                    <div className="bk-cancel-ask" role="group" aria-labelledby="bk-cancel-ask-q">
+                      <p id="bk-cancel-ask-q" className="bk-cancel-q">
+                        {bk.cancelAsk}
+                      </p>
+                      <button ref={keepRef} type="button" className="sheet-item" disabled={busy} onClick={() => setAskingCancel(false)}>
+                        <IconCheck />
+                        {bk.cancelKeep}
+                      </button>
+                      <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setStatus('cancelled')}>
+                        <IconClose />
+                        {bk.cancelYes}
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setAskingCancel(true)}>
+                      <IconClose />
+                      {bk.cancel}
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}

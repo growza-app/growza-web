@@ -1896,6 +1896,9 @@
     "markMissed": "Client didn't come",
     "reschedule": "Move to another time",
     "cancel": "Cancel this booking",
+    "cancelAsk": "Cancel this booking? You can't undo this.",
+    "cancelYes": "Yes, cancel it",
+    "cancelKeep": "Keep the booking",
     "reference": "Booking ID"
   },
   "clientCard": {
