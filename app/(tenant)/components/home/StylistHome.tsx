@@ -8,6 +8,7 @@ import type { Lang } from '../../lib/lang';
 import { currentAndNext, liveState, minutesBetween } from '../../lib/live-state';
 import { IconChevronRight } from '../icons';
 import { Avatar, CardError, HomeHeader } from './parts';
+import { CheckInCard } from './CheckInCard';
 
 /**
  * Jira GRW-222 — a stylist's Home, as the design draws it: who is with me, who
@@ -114,6 +115,9 @@ export function StylistHome(p: StylistHomeProps) {
 
       <div className="page-body hm-page hm-stylist">
         {p.appointments === null ? <CardError t={t} /> : null}
+
+        {/* Jira GRW-563 — her own "I'm in", first, where the thumb is; drawn only where her branch offers it. */}
+        <CheckInCard today={p.attendanceMonth?.rows.find((r) => r.onDate === p.attendanceMonth!.today) ?? null} timezone={p.timezone} />
 
         <div className="hm-stylist-pair">
           <section className="hm-block">

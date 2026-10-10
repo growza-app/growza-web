@@ -113,6 +113,11 @@ export interface Me {
    */
   /** `demo` — Jira GRW-266 · GRW-271: whether this server has the Try WhatsApp simulator at all (off in production). */
   whatsapp?: { booking: boolean; demo?: boolean };
+  /**
+   * Jira GRW-563 — `pending`: marks waiting for a Yes / No at the branches this person sees (0 for a stylist).
+   * `selfCheckIn`: whether a stylist's own branch offers phone check-in. Optional: the API may be a deploy behind.
+   */
+  attendance?: { pending: number; selfCheckIn: boolean };
   capabilities: {
     walkIn: boolean;
     /** GRW-219 — may a booking be moved to another time. Read by `BookingSheet`. */
@@ -664,6 +669,34 @@ export interface AttendanceRow {
   rostered: boolean;
   /** Their own shift start that day as "HH:mm", or null on a day off — what "came late" is measured against. */
   shiftStart: string | null;
+  /*
+   * Jira GRW-563 — phone check-in. All OPTIONAL for the same reason `photoUrl` is: the API may be a deploy behind.
+   * `approval`: auto (verified, or from the register), pending (self-marked, the phone could not place her),
+   * approved, rejected. `id` is the row's, for the Yes / No route.
+   */
+  id?: string | null;
+  approval?: 'auto' | 'pending' | 'approved' | 'rejected' | null;
+  source?: 'register' | 'self' | 'self_unverified' | null;
+  inDistanceM?: number | null;
+  inAccuracyM?: number | null;
+  outDistanceM?: number | null;
+  rejectReason?: 'not_at_branch' | 'wrong_time' | 'other' | null;
+}
+
+/** Jira GRW-563 — one mark waiting for the owner's Yes or No. */
+export interface PendingAttendanceRow {
+  id: string;
+  providerId: string;
+  displayName: string;
+  photoUrl: string | null;
+  locationId: string;
+  onDate: string;
+  inAt: string | null;
+  outAt: string | null;
+  inDistanceM: number | null;
+  inAccuracyM: number | null;
+  outDistanceM: number | null;
+  markedAt: string;
 }
 
 export interface AttendanceRegister {

@@ -19,7 +19,7 @@ import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
 import { useBranch } from '../BranchProvider';
-import { useWritable } from '../SessionProvider';
+import { usePendingAttendance, useWritable } from '../SessionProvider';
 import { homeCopy } from '../../lib/home-copy';
 import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
@@ -209,6 +209,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   // Jira GRW-409 — the shared rule, not `role !== 'staff'`: each button is drawn for a role that may make its calls.
   // Jira GRW-556 (follow-up) — and the business being allowed to write: a suspended one sees Home but starts nothing.
   const writable = useWritable();
+  // Jira GRW-563 — the approval queue at the branches this owner sees, from `/me`.
+  const pendingAttendance = usePendingAttendance();
   const mayBook = mayUse(p.role, 'visit.new', writable);
   const mayRecordPayment = mayUse(p.role, 'visit.recordPayment', writable);
 
@@ -428,6 +430,20 @@ export function OwnerHome(p: OwnerHomeProps) {
           href: `/appointments?status=cancelled${branch ? `&location=${encodeURIComponent(branch)}` : ''}`,
           icon: <IconBan />,
         },
+        // Jira GRW-563 — self-marked days the phone could not place, waiting for the owner's Yes / No.
+        ...(pendingAttendance > 0
+          ? [
+              {
+                key: 'approve',
+                count: pendingAttendance,
+                label: t.attendanceToApprove,
+                sub: t.attendanceWord,
+                tone: 'amber' as const,
+                href: '/attendance',
+                icon: <IconClipboardCheck />,
+              },
+            ]
+          : []),
         ...(p.staffNotMarkedIn !== null
           ? [
               {

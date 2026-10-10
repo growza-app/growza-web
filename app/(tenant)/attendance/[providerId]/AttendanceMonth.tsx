@@ -73,6 +73,7 @@ export function AttendanceMonth({
   const ta = useTranslations('attendance');
   const ts = useTranslations('attendance.status');
   const tss = useTranslations('attendance.statusShort');
+  const tc = useTranslations('attendance.checkIn');
   const locale = useLocale();
   const dow = weekdayNames(locale).short; // Sunday-first, matching `working_hours.weekday` (0=Sun) and the weekday editor
   const hhmm = (mins: number) => ta('hoursFormat', { hours: Math.floor(mins / 60), minutes: String(mins % 60).padStart(2, '0') });
@@ -252,6 +253,10 @@ export function AttendanceMonth({
               </span>
             )}
             {chosenMins !== null && <span className="am-hours">{hhmm(chosenMins)}</span>}
+            {/* Jira GRW-563 — a self-marked day says where it stands. */}
+            {chosen.approval === 'pending' ? <span className="att-chip att-chip-late">{tc('chipWaiting')}</span> : null}
+            {chosen.approval === 'approved' ? <span className="att-chip att-chip-present">{tc('chipApproved')}</span> : null}
+            {chosen.approval === 'rejected' ? <span className="att-chip att-chip-absent">{tc('chipRejected', { reason: tc(`reasons.${chosen.rejectReason ?? 'other'}`) })}</span> : null}
             {chosen.shiftStart && <span className="am-detail-shift">{t('shiftFrom', { time: chosen.shiftStart })}</span>}
           </div>
           {chosen.note && <p className="am-note">{chosen.note}</p>}

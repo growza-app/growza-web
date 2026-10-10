@@ -1,0 +1,160 @@
+/*
+ * Jira GRW-563 — phone check-in: the stylist's "I'm in" card, the register's Yes / No row, and the
+ * Settings › Phone check-in form. Laid out at 344px first.
+ */
+
+/* ---------- the stylist's card ---------- */
+.ci-card .hm-card-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ci-card .hm-card-head h2 svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.ci-button {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  border-radius: 16px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 120ms ease;
+}
+.ci-button:active {
+  transform: scale(0.98);
+}
+.ci-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.ci-in {
+  background: #1f8f4e;
+}
+.ci-out {
+  background: #475569;
+}
+.ci-state {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+.ci-state-green { color: #166534; }
+.ci-state-amber { color: #8a5a0f; }
+.ci-state-rose { color: #b91c1c; }
+.ci-state-slate { color: var(--hm-faint, #64748b); }
+.ci-hint {
+  margin: var(--sp-1) 0 0;
+  font-size: 0.8125rem;
+  color: var(--hm-faint, #64748b);
+}
+.ci-error {
+  margin: var(--sp-2) 0 0;
+  font-size: 0.875rem;
+  color: #b91c1c;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ci-button { transition: none; }
+}
+
+/* ---------- the register's row ---------- */
+.ci-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: #f5f7f6;
+}
+.ci-row-pending { background: #fdf6ec; }
+.ci-row-rejected { background: #fdf1f1; }
+.ci-row-approved { background: #eef8f1; }
+.ci-row-text {
+  flex: 1 1 100%;
+  font-weight: 600;
+}
+.ci-decide,
+.ci-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.ci-yes,
+.ci-no {
+  min-width: 88px;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border-radius: 11px;
+  border: 1px solid transparent;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.ci-yes {
+  background: #1f8f4e;
+  color: #fff;
+}
+.ci-no {
+  background: #fff;
+  color: #b91c1c;
+  border-color: #f0c2c2;
+}
+.ci-reasons .btn-ghost {
+  min-height: 44px;
+}
+.ci-needs-moving {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  background: #fdf6ec;
+  color: #8a5a0f;
+}
+.ci-needs-moving a {
+  font-weight: 700;
+  color: inherit;
+}
+
+/* ---------- Settings › Phone check-in ---------- */
+.ci-settings-intro {
+  margin: 0 0 var(--sp-4);
+}
+.ci-pin {
+  margin: var(--sp-1) 0 var(--sp-2);
+  font-size: 0.9375rem;
+  color: var(--hm-faint, #64748b);
+}
+.ci-pin.is-set {
+  color: #166534;
+  font-weight: 650;
+}
+.ci-pin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.ci-here {
+  min-height: 48px;
+}
+.ci-switch-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.ci-switch-row .switch {
+  margin-top: 2px;
+}
+.ci-switch-title {
+  font-weight: 620;
+  font-size: 0.9375rem;
+}

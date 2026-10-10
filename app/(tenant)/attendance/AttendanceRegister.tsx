@@ -3,7 +3,8 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type AttendanceRegister as Register, type AttendanceRow } from '../lib/api';
-import { useWritable } from '../components/SessionProvider';
+import { useMayUse, useWritable } from '../components/SessionProvider';
+import { metresLabel } from '../lib/geo-fix';
 import { pickNoun } from '../lib/nouns';
 import { intlLocale } from './[providerId]/month';
 import { useBranch } from '../components/BranchProvider';
@@ -116,6 +117,11 @@ export function AttendanceRegister({
   // Jira GRW-556 (follow-up) — a business suspended for non-payment reads the register: who was in, when, and the
   // notes, with every way of marking someone left inert. The date and branch controls above are reads and stay live.
   const writable = useWritable();
+  // Jira GRW-563 — Yes / No on a self-marked day the phone could not place: the owner's, a desk's where allowed.
+  const mayApprove = useMayUse('attendance.approve');
+  const tc = useTranslations('attendance.checkIn');
+  const [decidingNo, setDecidingNo] = useState<string | null>(null);
+  const [needsMoving, setNeedsMoving] = useState<{ count: number; date: string } | null>(null);
   const t = useTranslations('attendance.register');
   const ts2 = useTranslations('attendance');
   const ts = useTranslations('attendance.status');
@@ -282,6 +288,23 @@ export function AttendanceRegister({
     }
   }
 
+  /** Jira GRW-563 — the owner's decision. Rejected is absent, and the diary closes for the day; bookings inside it are counted back. */
+  async function decide(row: AttendanceRow, decision: 'approved' | 'rejected', reason?: 'not_at_branch' | 'wrong_time' | 'other') {
+    if (!row.id) return;
+    setBusy(true);
+    setError(null);
+    setDecidingNo(null);
+    try {
+      const result = await api.decideAttendance(row.id, decision, reason);
+      if (result.needsMoving > 0) setNeedsMoving({ count: result.needsMoving, date });
+      await load(date);
+      if (liveRef.current) liveRef.current.textContent = decision === 'approved' ? tc('approvedLive', { name: row.displayName }) : tc('rejectedLive', { name: row.displayName });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.save'));
+      setBusy(false);
+    }
+  }
+
   const counts = useMemo(() => {
     const c: Record<StatusKey, number> = { present: 0, late: 0, half_day: 0, leave: 0, absent: 0 };
     for (const r of rows) if (r.status) c[r.status as StatusKey]++;
@@ -290,11 +313,13 @@ export function AttendanceRegister({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((r) => {
+    const kept = rows.filter((r) => {
       if (filter !== 'all' && r.status !== filter) return false;
       if (q && !(r.displayName.toLowerCase().includes(q) || (r.title ?? '').toLowerCase().includes(q))) return false;
       return true;
     });
+    // Jira GRW-563 — a day waiting for a decision floats to the top: it is the one row that needs the owner.
+    return [...kept.filter((r) => r.approval === 'pending'), ...kept.filter((r) => r.approval !== 'pending')];
   }, [rows, search, filter]);
 
   const marked = rows.filter((r) => r.status !== null).length;
@@ -407,6 +432,15 @@ export function AttendanceRegister({
       </div>
 
       {error && <div role="alert" className="banner banner-error att-error">{error}</div>}
+      {needsMoving ? (
+        <div role="status" className="banner att-error ci-needs-moving">
+          {tc('needsMoving', { count: needsMoving.count })}{' '}
+          <a href={`/appointments?date=${encodeURIComponent(needsMoving.date)}`}>{tc('needsMovingLink')}</a>
+          <button type="button" className="btn-ghost" onClick={() => setNeedsMoving(null)}>
+            {tc('dismiss')}
+          </button>
+        </div>
+      ) : null}
 
       <div className="att-list">
         {filtered.length === 0 ? (
@@ -578,6 +612,44 @@ export function AttendanceRegister({
                     {row.note ? <IconNote /> : <IconPlus />}
                   </button>
                 </div>
+
+                {/* Jira GRW-563 — marked from her own phone: what it said, and the Yes / No when it could not place her. */}
+                {row.source === 'self' || row.source === 'self_unverified' || row.approval === 'pending' || row.approval === 'approved' || row.approval === 'rejected' ? (
+                  <div className={`ci-row ci-row-${row.approval ?? 'auto'}`}>
+                    <span className="ci-row-text">
+                      {row.approval === 'pending'
+                        ? tc('pendingRow', { where: row.inDistanceM == null ? tc('noLocation') : tc('away', { m: metresLabel(row.inDistanceM) ?? '' }) })
+                        : row.approval === 'rejected'
+                          ? tc('rejectedRow', { reason: tc(`reasons.${row.rejectReason ?? 'other'}`) })
+                          : row.approval === 'approved'
+                            ? tc('approvedRow')
+                            : tc('fromPhone', { m: metresLabel(row.inDistanceM) ?? '' })}
+                    </span>
+                    {row.approval === 'pending' && mayApprove && writable ? (
+                      decidingNo === row.providerId ? (
+                        <span className="ci-reasons" role="group" aria-label={tc('whyNo')}>
+                          {(['not_at_branch', 'wrong_time', 'other'] as const).map((r) => (
+                            <button key={r} type="button" className="btn-ghost" disabled={busy} onClick={() => void decide(row, 'rejected', r)}>
+                              {tc(`reasons.${r}`)}
+                            </button>
+                          ))}
+                          <button type="button" className="btn-ghost" disabled={busy} onClick={() => setDecidingNo(null)}>
+                            {tc('back')}
+                          </button>
+                        </span>
+                      ) : (
+                        <span className="ci-decide">
+                          <button type="button" className="ci-yes" disabled={busy} onClick={() => void decide(row, 'approved')}>
+                            {tc('yes')}
+                          </button>
+                          <button type="button" className="ci-no" disabled={busy} onClick={() => setDecidingNo(row.providerId)}>
+                            {tc('no')}
+                          </button>
+                        </span>
+                      )
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {(noteFor === row.providerId || (row.note && noteFor === null)) && (
                   <div className="att-noterow">

@@ -26,6 +26,7 @@ export type SettingsRowKey =
   | 'payments'
   | 'whatsapp'
   | 'notifications'
+  | 'checkIn'
   | 'appearance'
   | 'privacy'
   | 'reportAccess'
@@ -103,6 +104,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        */
       { href: '/settings/booking', key: 'bookingSettings', icon: IconCalendarPlus },
       { href: '/settings/notifications', key: 'notifications', icon: IconBell, whatsappOnly: true },
+      // Jira GRW-563 — where this branch is, for a stylist's "I'm in" from her phone.
+      { href: '/settings/check-in', key: 'checkIn', icon: IconMapPin },
     ],
   },
   {

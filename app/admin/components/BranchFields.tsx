@@ -26,9 +26,11 @@ export interface Branch {
   city: string;
   /** Jira GRW-557 — how many stylists this branch may have, as typed; starts at the plan's number. */
   stylists: string;
+  /** Jira GRW-563 — a maps link or "lat, lng", as typed; optional. The owner finds the pin pre-filled in Settings. */
+  geo: string;
 }
 
-export const emptyBranch = (stylists = ''): Branch => ({ name: '', line1: '', city: '', stylists });
+export const emptyBranch = (stylists = ''): Branch => ({ name: '', line1: '', city: '', stylists, geo: '' });
 
 export function BranchFields({
   branches,
@@ -122,6 +124,20 @@ export function BranchFields({
               />
             </Field>
           </div>
+
+          {/* Jira GRW-563 — where the branch is, for staff phone check-in. Optional; the owner can set it later. */}
+          <Field
+            label="Location (optional)"
+            hint="Paste a Google or Apple Maps link, or lat, lng. Pre-fills the owner's Phone check-in setting."
+            error={errorFor(`branch.${index}.geo`)}
+          >
+            <TextInput
+              value={branch.geo}
+              invalid={!!errorFor(`branch.${index}.geo`)}
+              onChange={(e) => onChange(index, { geo: e.target.value }, 'geo')}
+              placeholder="https://maps.google.com/… or 12.9716, 77.5946"
+            />
+          </Field>
 
           {/* Jira GRW-557 — each branch's own number: a few for a small branch, more for a large one. */}
           <Field
