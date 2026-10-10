@@ -68,8 +68,10 @@ import {
   IconCheck,
   IconChevronDown,
   IconChevronRight,
+  IconClock,
   IconClose,
   IconMapPin,
+  IconScissors,
   IconMinus,
   IconPayCard,
   IconPayCash,
@@ -77,6 +79,7 @@ import {
   IconPayUpi,
   IconPlus,
   IconSearch,
+  IconUser,
 } from './icons';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -892,12 +895,10 @@ export function NewVisitSheet({
   const shownCount = packageMode ? shownPackages.length : shownServices.length;
   const serviceLastPage = Math.max(1, Math.ceil(shownCount / SERVICES_PER_PAGE));
   const serviceAt = Math.min(servicePage, serviceLastPage);
-  // New booking's menu is a sheet of its own with nothing under it to keep on screen, so it scrolls whole.
-  const paging = onPage && !bookForm;
-  const pagedServices = paging
+  const pagedServices = onPage
     ? shownServices.slice((serviceAt - 1) * SERVICES_PER_PAGE, serviceAt * SERVICES_PER_PAGE)
     : shownServices;
-  const pagedPackages = paging ? shownPackages.slice((serviceAt - 1) * SERVICES_PER_PAGE, serviceAt * SERVICES_PER_PAGE) : shownPackages;
+  const pagedPackages = shownPackages.slice((serviceAt - 1) * SERVICES_PER_PAGE, serviceAt * SERVICES_PER_PAGE);
   useEffect(() => setServicePage(1), [serviceCategory, serviceTerm]);
 
   /*
@@ -2071,7 +2072,7 @@ export function NewVisitSheet({
               </div>
             ) : null}
             {/* Kinds of service, one tap each: Hair, Skin, Nails. Only when there is something to choose between. */}
-            {onPage && !bookForm && categories.length + (combos.length > 0 ? 1 : 0) > 1 ? (
+            {onPage && categories.length + (combos.length > 0 ? 1 : 0) > 1 ? (
               <div className="wi-chips wi-category-chips" role="group" aria-label={nv.serviceKinds}>
                 {['', ...categories, ...(combos.length > 0 ? [PACKAGES_CHIP] : [])].map((c) => (
                   <button
@@ -2283,8 +2284,7 @@ export function NewVisitSheet({
                 />
               );
             })()}
-            {/* The pager bounds the till's menu. In New booking's sheet the list is the whole point, so it scrolls. */}
-            {onPage && !bookForm ? (
+            {onPage ? (
               <Pagination
                 page={serviceAt}
                 total={shownCount}
@@ -3006,11 +3006,65 @@ export function NewVisitSheet({
     return !later && freeCount !== null ? `${nv.whoeverIsFree} · ${nv.freeCount(freeCount)}` : nv.whoeverIsFree;
   })();
 
-  /** One line: what it asks, what it has been answered with, and a chevron saying it opens. */
-  const bookRow = (key: 'services' | 'stylist' | 'when', label: string, answer: string, empty = false) => (
-    <button type="button" className="wi-row-btn" onClick={() => setAsking(key)} disabled={busy}>
-      <span className="wi-row-label">{label}</span>
-      <span className={`wi-row-answer ${empty ? 'wi-row-empty' : ''}`}>{answer}</span>
+  /*
+   * A picture in front of every row (owner, 2026-10-10).
+   *
+   * The screen this replaces had three service photographs on it, and a receptionist who is not a confident
+   * reader worked it by recognising them. Folding the menu into a sheet took that away and left two words to
+   * read where a picture had been, which is a worse screen for the person who needs the most help — the words
+   * got shorter and there were fewer of them, but the one thing that needed no reading at all was gone.
+   *
+   * So each row opens with a 36px tile in the same place: the service's own photograph once one is chosen, the
+   * stylist's face once there is one, and otherwise the icon for what the row is about. The tile is
+   * `aria-hidden` — it repeats the answer beside it, and a screen reader does not want it twice.
+   */
+  const rowPhoto = (src: string | null, icon: ReactNode) => (
+    <span className="wi-row-photo" aria-hidden="true">
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          width={36}
+          height={36}
+          /* A photo that does not load leaves the browser's torn-page glyph where a face should be. */
+          onError={(e) => {
+            e.currentTarget.hidden = true;
+          }}
+        />
+      ) : (
+        <span className="wi-row-icon">{icon}</span>
+      )}
+    </span>
+  );
+
+  /** The first service on the visit, as a picture: what the row shows once there is something on it. */
+  const firstPickedPhoto = (() => {
+    const first = everything[0];
+    const service = first ? serviceById.get(first.serviceId) : undefined;
+    return service ? servicePhotoUrl(service) : null;
+  })();
+  /** The chosen stylist's own face, when the salon has photographed them. */
+  const chosenStylistPhoto = (schedulableId && ableProviders.find((p) => p.id === schedulableId)?.photoUrl) || null;
+
+  /** One line: a picture, what it asks, what it has been answered with, and a chevron saying it opens. */
+  const bookRow = (
+    key: 'services' | 'stylist' | 'when',
+    label: string,
+    answer: string,
+    photo: ReactNode,
+    empty = false,
+  ) => (
+    <button
+      type="button"
+      className={`wi-row-btn ${empty ? '' : 'wi-row-done'}`}
+      onClick={() => setAsking(key)}
+      disabled={busy}
+    >
+      {photo}
+      <span className="wi-row-text">
+        <span className="wi-row-label">{label}</span>
+        <span className={`wi-row-answer ${empty ? 'wi-row-empty' : ''}`}>{answer}</span>
+      </span>
       <span className="wi-row-chevron" aria-hidden="true">
         <IconChevronRight />
       </span>
@@ -3023,6 +3077,7 @@ export function NewVisitSheet({
         'services',
         servicesNoun,
         billCount > 0 ? nv.rowPicked(billCount, formatMoney(bookTotalMinor)) : nv.rowAddService,
+        rowPhoto(firstPickedPhoto, <IconScissors />),
         billCount === 0,
       )}
       {/* What is on the visit, under the row that chose it: the bill assembling itself where it was asked for. */}
@@ -3036,12 +3091,12 @@ export function NewVisitSheet({
           ))}
         </div>
       ) : null}
-      {bookRow('when', nv.rowWhen, whenAnswer, later && !slotUtc)}
+      {bookRow('when', nv.rowWhen, whenAnswer, rowPhoto(null, <IconClock />), later && !slotUtc)}
       {/*
         A token has no stylist: `queueIt` posts the client, the services and the branch, and nothing else. The row
         was answerable and the answer was silently dropped, so while Waiting is the answer the row is not there.
       */}
-      {queueing ? null : bookRow('stylist', providerNoun, stylistAnswer)}
+      {queueing ? null : bookRow('stylist', providerNoun, stylistAnswer, rowPhoto(chosenStylistPhoto, <IconUser />))}
     </div>
   );
 

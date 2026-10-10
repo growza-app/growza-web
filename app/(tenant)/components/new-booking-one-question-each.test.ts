@@ -53,7 +53,7 @@ describe('New booking asks one question per line', () => {
   });
 
   it('hides the stylist row while the answer is Waiting, because a token has no stylist', () => {
-    expect(code).toMatch(/\{queueing \? null : bookRow\('stylist', providerNoun, stylistAnswer\)\}/);
+    expect(code).toMatch(/\{queueing \? null : bookRow\('stylist', providerNoun, stylistAnswer, rowPhoto\(/);
     // The reason it must be hidden: the token posts the client, the services and the branch, and nothing else.
     const post = code.slice(code.indexOf('await api.addToQueue({'));
     const payload = post.slice(0, post.indexOf('});'));
@@ -67,11 +67,40 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/bookForm && slotUtc\s*\n?\s*\? nv\.bookAt\(clockTime\(slotUtc\)\)/);
   });
 
-  it('browses nothing on the form: no kinds, no pager, no photo menu', () => {
-    expect(code).toMatch(/\{onPage && !bookForm && categories\.length/);
-    expect(code).toMatch(/\{onPage && !bookForm \? \(\s*\n\s*<Pagination/);
-    // Inside the sheet the menu is the point, so it scrolls whole rather than three rows at a time.
-    expect(code).toMatch(/const paging = onPage && !bookForm;/);
+  it('picks services exactly as Record payment does — the same menu, not a second one', () => {
+    // Owner, 2026-10-10 — the till's picker IS the picker: photographs, kinds of service and the pager, moved
+    // into the sheet rather than replaced by a plain list. The receptionist who rings a visit up is the one who
+    // booked it an hour earlier, and two pickers over one catalogue is the drift GRW-297 already undid once.
+    expect(code).toMatch(/\{onPage && categories\.length/);
+    expect(code).toMatch(/\{onPage \? \(\s*\n\s*<Pagination/);
+    expect(code).toMatch(/<img\s*\n?\s*src=\{servicePhotoUrl\(s\)\}/);
+  });
+
+  it('keeps a picture on every row, so the screen can be worked without reading it', () => {
+    // The menu moving into a sheet took the photographs off the screen, and they are how a receptionist who is
+    // not a confident reader worked it. Each row opens with one: the service, the stylist's face, or an icon.
+    expect(code).toMatch(/const rowPhoto = \(src: string \| null, icon: ReactNode\)/);
+    expect(code).toMatch(/rowPhoto\(firstPickedPhoto, <IconScissors \/>\)/);
+    expect(code).toMatch(/rowPhoto\(null, <IconClock \/>\)/);
+    expect(code).toMatch(/rowPhoto\(chosenStylistPhoto, <IconUser \/>\)/);
+    // Answered reads as colour, not only as weight: bold alone is invisible to someone scanning, not reading.
+    expect(code).toMatch(/className=\{`wi-row-btn \$\{empty \? '' : 'wi-row-done'\}`\}/);
+    expect(css).toMatch(/\.wi-row-done \.wi-row-photo \{[^}]*background: var\(--accent-soft\);/);
+  });
+
+  it('says it in words a hurried reader gets first time', () => {
+    const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).newVisit;
+    // Owner, 2026-10-10 — the plainer word wins, and changes everywhere at once. "Whoever is free" was the
+    // hardest word on the screen, sitting in the one row a desk reads fifty times a day.
+    expect(en.whoeverIsFree).toBe('Anyone free');
+    expect(en.whenWaitingUnder).toBe('no time given');
+    expect(en.whenNowUnder).toBe('goes in now');
+    expect(en.whenPickUnder).toBe('today or later');
+    expect(en.servicesMissing).toBe('Choose a service first.');
+    // Nothing on these rows runs past four words: at 344px a fifth wraps under the tile.
+    for (const k of ['whenWaiting', 'whenWaitingUnder', 'whenNowUnder', 'whenPick', 'whenPickUnder', 'rowWhen', 'rowAddService']) {
+      expect(String(en[k]).split(' ').length, `${k} is too long to read at a glance`).toBeLessThanOrEqual(4);
+    }
   });
 
   it('styles the rows and the sheet, with one scrolling region in it', () => {

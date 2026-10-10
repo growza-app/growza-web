@@ -83,8 +83,7 @@ describe('Record payment fits one phone screen', () => {
     // Without a term the till shows every service (New booking shows the first six): 46 of 52 were unreachable.
     expect(sheet).toMatch(/const pool = typed \? filteredServices : \(services \?\? \[\]\);/);
     expect(sheet).toMatch(/serviceCategory \? pool\.filter\(\(s\) => s\.categoryName === serviceCategory\) : pool/);
-    // `!bookForm` joined it 2026-10-10: New booking's menu moved into a sheet of its own, the till's did not.
-    expect(sheet).toMatch(/onPage && !bookForm && categories\.length \+ \(combos\.length > 0 \? 1 : 0\) > 1/);
+    expect(sheet).toMatch(/onPage && categories\.length \+ \(combos\.length > 0 \? 1 : 0\) > 1/);
     expect(css).toMatch(/\.wi-category-chips \.wi-chip \{[^}]*min-height: 2\.75rem;/);
   });
 
