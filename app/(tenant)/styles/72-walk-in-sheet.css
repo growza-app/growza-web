@@ -1920,3 +1920,188 @@ input.wi-search-input-plain {
   line-height: 1.25;
   min-width: 0;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   New booking: one question per line (owner, 2026-10-10)
+
+   Services, When and the stylist are a row apiece — what is asked on the left,
+   the answer on the right, a chevron saying it opens. The controls that used to
+   sit open on this screen (the kinds of service, the photo menu, its pager, the
+   sideways row of stylists, the Booking date and time pair) moved into `.wi-ask`,
+   the sheet a row opens. Record payment keeps all of them inline and is not
+   touched by anything below: every rule here is reached only through `bookForm`.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.wi-rows {
+  display: flex;
+  flex-direction: column;
+  margin: var(--sp-3, 12px) 0 0;
+  border-top: 1px solid var(--border);
+}
+
+.wi-row-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 8px);
+  width: 100%;
+  /* 44px of tap target, the app's floor, without a fixed height that a long answer would break out of. */
+  min-height: 52px;
+  padding: var(--sp-3, 12px) 2px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.wi-row-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.wi-row-label {
+  flex: none;
+  min-width: 72px;
+  color: var(--muted);
+}
+
+/* The answer takes the rest of the row and wraps rather than truncating: "Sat 11 Oct · 2:00 pm"
+   is the thing the desk is about to promise, and half of it is worse than two lines of it. */
+.wi-row-answer {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+/* Nothing chosen yet. Muted and unbolded so the row reads as a prompt, not an answer. */
+.wi-row-empty {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.wi-row-chevron {
+  flex: none;
+  display: inline-flex;
+  color: var(--muted);
+}
+
+/* What is on the visit, listed under the row that chose it. */
+.wi-row-lines {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2, 8px) 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wi-row-line {
+  display: flex;
+  gap: var(--sp-2, 8px);
+  padding: 3px 0 3px 72px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.wi-row-line-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.wi-row-line-price {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- the sheet a row opens ---------- */
+
+.wi-ask {
+  display: flex;
+  flex-direction: column;
+  /* Tall enough that the menu is worth scrolling, short enough that the form behind it is still visible
+     above — the person can see what they are answering FOR. */
+  max-height: 86dvh;
+}
+
+.wi-ask-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 8px);
+}
+
+/* The one scrolling region. Nothing nests inside it, so there is never a scroller within a scroller. */
+.wi-ask-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--sp-4, 16px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.wi-ask-foot {
+  flex: none;
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  padding-bottom: calc(var(--sp-3, 12px) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+
+.wi-ask-foot .btn {
+  width: 100%;
+}
+
+.wi-ask-date {
+  margin-top: var(--sp-4, 16px);
+}
+
+/* ---------- the three answers to "when" ---------- */
+
+.wi-when-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2, 8px);
+  margin: var(--sp-2, 8px) 0 0;
+}
+
+/*
+ * Full-width rows, not chips. The three are read in order — waiting, now, a time — and a wrapped row of
+ * pills put them in whatever order the words happened to be long enough for.
+ */
+.wi-when-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 56px;
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 12px);
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.wi-when-opt:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wi-when-opt-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.wi-when-opt-label {
+  font-weight: 600;
+}
+
+.wi-when-opt-under {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.wi-when-opt-on .wi-when-opt-under {
+  color: var(--accent-ink);
+}

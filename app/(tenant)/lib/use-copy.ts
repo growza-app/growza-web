@@ -160,6 +160,26 @@ export function useNewVisitCopy() {
     outcomeWaiting: t('outcomeWaiting'),
     outcomeStart: t('outcomeStart'),
     /**
+     * New booking's rows, and the one question each opens (owner, 2026-10-10).
+     *
+     * Services, When and the stylist are a line apiece saying their answer. "What now?" is gone: Waiting is the
+     * first thing the When sheet offers, because a token is the one answer with no time in it, and two controls
+     * that could disagree about when a visit starts were two controls too many.
+     */
+    rowWhen: t('rowWhen'),
+    rowAddService: t('rowAddService'),
+    rowPicked: (n: number, total: string) => t('rowPicked', { n, total }),
+    whenWaitingRow: t('whenWaitingRow'),
+    whenWaiting: t('whenWaiting'),
+    whenWaitingUnder: t('whenWaitingUnder'),
+    whenNowUnder: t('whenNowUnder'),
+    whenPick: t('whenPick'),
+    whenPickUnder: t('whenPickUnder'),
+    whenNoneYet: t('whenNoneYet'),
+    bookAt: (time: string) => t('bookAt', { time }),
+    backToForm: t('backToForm'),
+    freeAt: (time: string) => t('freeAt', { time }),
+    /**
      * The confirmation a client is sent after a booking or a queue token (owner, 2026-10-07) — the same
      * `wa.me` link as the bill, with facts a booking is read back from. It never says "paid".
      */

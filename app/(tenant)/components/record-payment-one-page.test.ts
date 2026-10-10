@@ -18,7 +18,8 @@ const css = readFileSync(resolve(here, '../styles/72-walk-in-sheet.css'), 'utf8'
 describe('Record payment fits one phone screen', () => {
   it('never asks for a date or a time — the header says when instead', () => {
     // The whole `wi-when` row is skipped, rather than rendered with both controls disabled.
-    expect(sheet).toMatch(/Record payment never asks[\s\S]{0,120}\{forPayment \? null : \(/);
+    // `bookForm` joined it 2026-10-10 — New booking asks the same question once, inside its When row.
+    expect(sheet).toMatch(/Record payment never asks[\s\S]{0,400}\{forPayment \|\| bookForm \? null : \(/);
     expect(sheet).toMatch(/<span className="wi-head-now">\{nowLabel\}<\/span>/);
     // And the clock is kept true: `nowLabel` is only as fresh as the last render, and a till may sit idle for minutes.
     expect(sheet).toMatch(/setInterval\(\(\) => setMinute\(\(n\) => n \+ 1\), 30_000\)/);
@@ -82,7 +83,8 @@ describe('Record payment fits one phone screen', () => {
     // Without a term the till shows every service (New booking shows the first six): 46 of 52 were unreachable.
     expect(sheet).toMatch(/const pool = typed \? filteredServices : \(services \?\? \[\]\);/);
     expect(sheet).toMatch(/serviceCategory \? pool\.filter\(\(s\) => s\.categoryName === serviceCategory\) : pool/);
-    expect(sheet).toMatch(/onPage && categories\.length \+ \(combos\.length > 0 \? 1 : 0\) > 1/);
+    // `!bookForm` joined it 2026-10-10: New booking's menu moved into a sheet of its own, the till's did not.
+    expect(sheet).toMatch(/onPage && !bookForm && categories\.length \+ \(combos\.length > 0 \? 1 : 0\) > 1/);
     expect(css).toMatch(/\.wi-category-chips \.wi-chip \{[^}]*min-height: 2\.75rem;/);
   });
 

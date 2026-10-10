@@ -1869,7 +1869,20 @@
     "noOneDoes": "Nobody here does {service}, so there is no {provider} to put this with.",
     "whoDoesWhat": "Who does what",
     "addOrCopyServices": "Add or copy {services}",
-    "amountNotSaved": "Not saved. Check the amount, then try again."
+    "amountNotSaved": "Not saved. Check the amount, then try again.",
+    "rowWhen": "When",
+    "rowAddService": "Add service",
+    "rowPicked": "{n, plural, one {1 service} other {# services}} · {total}",
+    "whenWaitingRow": "Waiting · no fixed time",
+    "whenWaiting": "Waiting",
+    "whenWaitingUnder": "no fixed time",
+    "whenNowUnder": "starts straight away",
+    "whenPick": "Pick a time",
+    "whenPickUnder": "Later today, or another day",
+    "whenNoneYet": "Pick a time",
+    "bookAt": "Book {time}",
+    "backToForm": "Back",
+    "freeAt": "free at {time}"
   },
   "moveBooking": {
     "title": "Move this booking",

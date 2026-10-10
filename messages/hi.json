@@ -1869,7 +1869,20 @@
     "noOneDoes": "यहाँ {service} कोई नहीं करता, इसलिए इसे किसी {provider} के साथ नहीं रखा जा सकता।",
     "whoDoesWhat": "कौन क्या करता है",
     "addOrCopyServices": "{services} जोड़ें या कॉपी करें",
-    "amountNotSaved": "सेव नहीं हुआ। रकम देखकर फिर कोशिश करें।"
+    "amountNotSaved": "सेव नहीं हुआ। रकम देखकर फिर कोशिश करें।",
+    "rowWhen": "कब",
+    "rowAddService": "सेवा जोड़ें",
+    "rowPicked": "{n, plural, one {1 सेवा} other {# सेवाएँ}} · {total}",
+    "whenWaitingRow": "इंतज़ार · समय तय नहीं",
+    "whenWaiting": "इंतज़ार",
+    "whenWaitingUnder": "समय तय नहीं",
+    "whenNowUnder": "अभी शुरू होगा",
+    "whenPick": "समय चुनें",
+    "whenPickUnder": "आज बाद में, या किसी और दिन",
+    "whenNoneYet": "समय चुनें",
+    "bookAt": "{time} बुक करें",
+    "backToForm": "वापस",
+    "freeAt": "{time} बजे खाली"
   },
   "moveBooking": {
     "title": "यह बुकिंग बदलें",
