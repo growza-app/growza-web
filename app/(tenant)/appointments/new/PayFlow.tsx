@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -16,14 +15,15 @@ import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
 import { PAYMENT_MODES } from '../../components/CheckoutSheet';
 import { useLabel } from '../../components/LabelsProvider';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
-import { ReceiptShare } from '../../components/ReceiptShare';
 import { useSession } from '../../components/SessionProvider';
-import { IconArrowLeft, IconCheck, IconClose, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
+import { IconArrowLeft, IconClose, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
 import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
 import { ServiceSheet } from './ServiceSheet';
 import { BillCard, type BillLine as Line } from './BillCard';
+import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
+import { PaymentDone } from '../../components/PaymentDone';
 
 /**
  * Record payment in three taps (owner, 2026-10-09).
@@ -74,7 +74,6 @@ const TILES = 8;
 const MAX_LINES = 12;
 /** The phone remembers two things for the next sale: who did it, and whether the done screen speaks. */
 const STYLIST_KEY = 'growza.pay.stylist';
-const SOUND_KEY = 'growza.pay.sound';
 
 const PAY_ICONS: Record<PaymentMode, ReactNode> = {
   cash: <IconPayCash />,
@@ -89,22 +88,6 @@ function newAttemptKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-function remembered(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function remember(key: string, value: string | null) {
-  try {
-    if (value === null) window.localStorage.removeItem(key);
-    else window.localStorage.setItem(key, value);
-  } catch {
-    /* private mode: the next sale just asks again */
-  }
-}
 
 /**
  * A changed total, spread over the lines in proportion to their list prices, the last line taking the rounding.
@@ -121,66 +104,6 @@ export function spread(lines: readonly { priceMinor: number }[], totalMinor: num
   });
 }
 
-/**
- * How long each buzz lasts, in milliseconds (owner, 2026-10-10).
- *
- * A tick is the one confirmation that reaches somebody who is not reading the count on the tile: it says the tap
- * landed, without a word. So the taps made all day get the shortest buzz there is, and only the taps that CHANGE
- * something get one at all — a buzz on both adding and removing makes the two indistinguishable by feel, which is
- * worse than silence. The refusal is two short ones, because a disabled button has no other way to say no.
- */
-const BUZZ = {
-  /** One more on the bill. 10ms: felt, not noticed. */
-  added: 10,
-  /** The bill is full. The only pattern, because a refusal must not feel like a success. */
-  tooMany: [20, 40, 20],
-  /** The tender tile — the tap that writes the sale and cannot be undone. */
-  paid: 30,
-  /** ③, beside the chime and the spoken amount. */
-  done: 60,
-} as const;
-
-/**
- * A short buzz, where the phone has one.
- *
- * Android only: iOS Safari has never shipped `navigator.vibrate`, so about half the phones feel nothing. Nothing
- * here is ever the only signal — the tile still turns green, the count still changes, the total still moves.
- */
-function buzz(pattern: number | readonly number[]) {
-  try {
-    navigator.vibrate?.(pattern as number | number[]);
-  } catch {
-    /* a phone that refuses, or a browser without it: the screen still says it */
-  }
-}
-
-/** Two short rising tones, drawn rather than loaded: the "payment received" of a sound box, without the box. */
-function chime() {
-  try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const at = ctx.currentTime;
-    for (const [hz, start, len] of [
-      [880, 0, 0.09],
-      [1318, 0.1, 0.16],
-    ] as const) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = hz;
-      gain.gain.setValueAtTime(0.0001, at + start);
-      gain.gain.exponentialRampToValueAtTime(0.25, at + start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, at + start + len);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(at + start);
-      osc.stop(at + start + len + 0.05);
-    }
-    setTimeout(() => void ctx.close(), 600);
-  } catch {
-    /* no audio: the screen still says it */
-  }
-}
 
 export function PayFlow({
   token,
@@ -228,8 +151,6 @@ export function PayFlow({
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
   const [sale, setSale] = useState<Sale | null>(null);
-  /** Whether the number typed on ③ has been kept as a client: null until one is given at all. */
-  const [kept, setKept] = useState<'saving' | 'done' | 'failed' | null>(null);
   const [sound, setSound] = useState(true);
   const [attemptKey, setAttemptKey] = useState(newAttemptKey);
   const tokenFilled = useRef(false);
@@ -450,49 +371,9 @@ export function PayFlow({
     }
   };
 
-  // ③ — said, chimed and felt, once, as the screen arrives. The sound box owners trust says the amount; so does this.
-  useEffect(() => {
-    if (step !== 'done' || !sale || !sound) return;
-    buzz(BUZZ.done);
-    chime();
-    try {
-      const line = t('spoken', { amount: Math.round(sale.totalMinor / 100).toLocaleString(locale === 'hi' ? 'hi-IN' : 'en-IN'), mode: modeWord(sale.mode) });
-      const u = new SpeechSynthesisUtterance(line);
-      u.lang = locale === 'hi' ? 'hi-IN' : 'en-IN';
-      window.speechSynthesis?.cancel();
-      window.speechSynthesis?.speak(u);
-    } catch {
-      /* no voices: the screen still says it */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
 
-  /*
-   * ③ — the sale keeps the person, not just the number (owner, 2026-10-10).
-   *
-   * ① never asks for a client: a walk-in haircut has nobody to look up, and a required name on a counter whose
-   * owner does not read well buys "x" and "aa". The cost was that the business never learned who came — no bill
-   * on WhatsApp next time, no visit history, nobody to bring back. This is where it is paid instead: the client
-   * has just asked for their bill on a number, which is the one moment they WANT to give it.
-   *
-   * Never in the bill's way. The `wa.me` tab is already opening when this runs, and a failure says so quietly
-   * rather than taking the screen — the bill went, which is what the person at the counter was asking for.
-   */
-  const keepClient = (phone: string) => {
-    if (!sale || kept) return;
-    setKept('saving');
-    void api
-      .assignClientToSale(sale.appointmentId, { phone })
-      .then(() => {
-        setKept('done');
-        setSale((s) => (s ? { ...s, phone } : s));
-        router.refresh();
-      })
-      .catch(() => setKept('failed'));
-  };
 
   const nextCustomer = () => {
-    setKept(null);
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
@@ -562,49 +443,22 @@ export function PayFlow({
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
 
   /* ---------- ③ Done ---------- */
+  // The same screen the one-page form ends on (owner, 2026-10-10): `PaymentDone`, sound, Next customer and all.
   if (step === 'done' && sale) {
     return (
-      <div className="pf pf-done-page">
-        <div className="pf-done">
-          <span className="pf-done-check" aria-hidden="true">
-            <IconCheck />
-          </span>
-          <h1 className="pf-done-title" aria-live="assertive">
-            {t('doneTitle', { amount: money(sale.totalMinor) })}
-          </h1>
-          <p className="pf-done-sub">{sale.summary}</p>
-        </div>
-        <ReceiptShare bill={sale.bill} phone={sale.phone} compactPreview onNumberGiven={sale.phone ? undefined : keepClient} />
-        {kept ? (
-          <p className={kept === 'failed' ? 'pf-error pf-kept' : 'pf-kept'} role="status">
-            {kept === 'failed' ? t('clientNotKept') : kept === 'saving' ? t('keepingClient') : t('clientKept')}
-          </p>
-        ) : null}
-        <div className="pf-done-actions">
-          <button type="button" className="btn pf-go" onClick={nextCustomer}>
-            {t('nextCustomer')}
-          </button>
-          {/*
-            Next customer is the button of the three that gets pressed after every sale, so it keeps the width.
-            The other two go side by side: finishing for now, and the way back to a sale that went in wrong.
-          */}
-          <div className="pf-done-minor">
-            <button type="button" className="btn btn-ghost pf-go-alt" onClick={leave}>
-              {nv.done}
-            </button>
-            <Link href="/appointments" className="btn btn-ghost pf-go-alt">
-              {t('mistake')}
-            </Link>
-          </div>
-          <button type="button" className="pf-sound" aria-pressed={sound} onClick={toggleSound}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M11 5 6 9H2v6h4l5 4z" />
-              {sound ? <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14" /> : <path d="m23 9-6 6M17 9l6 6" />}
-            </svg>
-            {sound ? t('soundOn') : t('soundOff')}
-          </button>
-        </div>
-      </div>
+      <PaymentDone
+        appointmentId={sale.appointmentId}
+        totalMinor={sale.totalMinor}
+        mode={sale.mode}
+        modeLabel={modeWord(sale.mode)}
+        summary={sale.summary}
+        bill={sale.bill}
+        phone={sale.phone}
+        onNextCustomer={nextCustomer}
+        onDone={leave}
+        sound={sound}
+        onToggleSound={toggleSound}
+      />
     );
   }
 

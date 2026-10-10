@@ -783,6 +783,19 @@
 }
 
 /*
+ * The same screen on a desk (owner, 2026-10-10 — both Record payment forms end on it, and a desk always uses the
+ * one-page form). Drawn for a phone, it stretched to 1,066px of content area there: a bill as wide as the page and
+ * a Next customer bar a metre long. It keeps the phone's column instead, centred.
+ */
+@media (min-width: 861px) {
+  .pf-done-page {
+    width: 100%;
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+}
+
+/*
  * The tick beside the amount, not above it (owner, 2026-10-10).
  *
  * Stacked — a 96px tick, then the figure, then the line under it — this band was 232px, and with the bill open

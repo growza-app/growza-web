@@ -44,12 +44,24 @@ export function NewBookingClient({
     setLayout(window.matchMedia('(max-width: 860px)').matches ? 'phone' : 'desk');
   }, [quick]);
 
+  /*
+   * Next customer on the payment done screen (owner, 2026-10-10 — the one-page form ends on the same screen as the
+   * three-tap flow). A fresh form is a fresh mount; a token that was just paid is gone, so the address drops it.
+   */
+  const [run, setRun] = useState(0);
+  const another = () => {
+    setRun((n) => n + 1);
+    if (token) router.replace(`/appointments/new?purpose=payment${full ? '&full=1' : ''}`);
+  };
+
   if (quick && layout === 'unknown') return <div className="pf" aria-busy="true" />;
   if (quick && layout === 'phone') {
     return <PayFlow token={token} tokenGone={tokenGone} providerId={providerId} timezone={timezone} backTo={backTo} />;
   }
   return (
     <NewVisitSheet
+      key={run}
+      onAnother={purpose === 'payment' ? another : undefined}
       presentation="page"
       mode={mode}
       purpose={purpose}
