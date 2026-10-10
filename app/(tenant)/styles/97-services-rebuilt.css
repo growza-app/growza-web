@@ -226,6 +226,17 @@
   position: absolute;
   inset: 0 0 0 auto;
   display: flex;
+  /* Owner-app QA 2026-10-10 — painted only while the row is swiped open. At rest the face covers them exactly,
+     but rows sit on fractional pixel edges (291.39px), and the red and amber anti-aliased through as a hairline
+     along the right half of every row. Hidden after the face has slid back (the 180ms below), so closing never
+     flashes the buttons away before the face covers them. */
+  visibility: hidden;
+  transition: visibility 0s linear 180ms;
+}
+
+.svc-swipe.is-open .svc-swipe-actions {
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .svc-swipe-actions button {
