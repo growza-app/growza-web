@@ -219,7 +219,7 @@ export function BookingSheet({
                 <span className="trail">{appointment.customerPhone}</span>
               </a>
 
-              <a className="sheet-item" href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer">
+              <a className="sheet-item" href={`https://wa.me/${waDigits(appointment.customerPhone)}`} target="_blank" rel="noopener noreferrer">
                 <IconWhatsApp />
                 {bk.message}
               </a>

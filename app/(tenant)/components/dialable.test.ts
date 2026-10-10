@@ -26,8 +26,13 @@ describe('tel: and wa.me numbers', () => {
 
   it('no wa.me link is built from dialable, and no tel: link from waDigits', () => {
     const read = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
-    for (const file of ['../customers/CustomersClient.tsx', './ReceiptShare.tsx', './BookingSheet.tsx']) {
-      expect(read(file)).not.toMatch(/wa\.me\/\$\{dialable\(/);
+    // Every wa.me link in the app is built from waDigits — not from dialable, and not from a variable that might
+    // hold dialable's output (the booking sheet's `digits` did, and the first version of this test missed it).
+    const all = ['../customers/CustomersClient.tsx', './ReceiptShare.tsx', './BookingSheet.tsx', './BookingSummary.tsx', './DaySchedule.tsx', './CheckoutSheet.tsx', '../appointments/BookingsList.tsx', '../search/SearchClient.tsx'];
+    for (const file of all) {
+      for (const m of read(file).matchAll(/wa\.me\/\$\{([^}]*)\}/g)) {
+        expect(m[1], `${file}: wa.me/\${${m[1]}}`).toMatch(/^waDigits\(/);
+      }
     }
     for (const file of ['./BookingSheet.tsx', './BookingSummary.tsx', './DaySchedule.tsx', './CheckoutSheet.tsx', '../appointments/BookingsList.tsx', '../search/SearchClient.tsx']) {
       expect(read(file)).toMatch(/tel:\$\{(dialable\(|digits)/);
