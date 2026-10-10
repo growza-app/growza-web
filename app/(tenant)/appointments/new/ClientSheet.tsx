@@ -69,6 +69,51 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
     else if (!opensSoftKeyboard()) focusPhone();
   }, [startAdding]);
 
+  /*
+   * The field being typed in stays above Save client (owner's bug report, 2026-10-10).
+   *
+   * Save sits in a bar stuck to the bottom of this sheet (`.pf-client-links`), so it is on screen while the keyboard
+   * is up. But a browser scrolling a focused field into view only keeps it inside the sheet — it does not know the
+   * bar is covering the sheet's bottom — so the phone box landed half under Save, with its countdown and any error
+   * under the box hidden completely.
+   *
+   * Two halves: the bar's height is written to `--pf-bar-h`, which the sheet's `scroll-padding-bottom` reads, so
+   * every scroll into view stops above the bar; and the focused field is scrolled into view again when it takes
+   * focus and whenever the sheet changes size — the keyboard opening after the tap is the case that hid it, because
+   * the sheet shrinks AFTER the browser has already placed the field.
+   */
+  useEffect(() => {
+    const sheet = ref.current;
+    if (!sheet) return;
+    const measure = () => {
+      const bar = sheet.querySelector<HTMLElement>('.pf-client-links');
+      sheet.style.setProperty('--pf-bar-h', `${bar?.offsetHeight ?? 0}px`);
+    };
+    const reveal = () => {
+      measure();
+      const el = document.activeElement;
+      if (!(el instanceof HTMLElement) || !sheet.contains(el) || el === sheet || el.closest('.pf-client-links')) return;
+      // The whole field — label, box and the line under it — not only the input.
+      (el.closest<HTMLElement>('.field') ?? el).scrollIntoView({ block: 'nearest' });
+    };
+    // After the browser's own focus scroll, not instead of it. A timer rather than an animation frame: frames are
+    // paused in a background tab, and the keyboard can finish opening while the page is still settling.
+    const onFocus = () => setTimeout(reveal, 0);
+    measure();
+    sheet.addEventListener('focusin', onFocus);
+    window.visualViewport?.addEventListener('resize', onFocus);
+    // A resize callback already runs after layout, so it reveals at once.
+    const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(reveal);
+    watch?.observe(sheet);
+    const bar = sheet.querySelector('.pf-client-links');
+    if (bar) watch?.observe(bar);
+    return () => {
+      sheet.removeEventListener('focusin', onFocus);
+      window.visualViewport?.removeEventListener('resize', onFocus);
+      watch?.disconnect();
+    };
+  }, [adding]);
+
   useEffect(() => {
     setHasPicker(typeof navigator !== 'undefined' && 'contacts' in navigator && typeof (navigator as ContactsNavigator).contacts?.select === 'function');
   }, []);

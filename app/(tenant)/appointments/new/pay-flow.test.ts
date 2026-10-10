@@ -212,6 +212,19 @@ describe('Record payment in three taps', () => {
     // Save stays on screen while the fields scroll behind it: at ~290px of sheet it sat 62px past the edge.
     expect(css).toMatch(/\.pf-client-links \{[\s\S]{0,200}position: sticky;\s*bottom: 0;/);
     expect(css).toMatch(/\.pf-client-links \{[\s\S]{0,400}margin-bottom: calc\(\(var\(--sp-4\) \+ env\(safe-area-inset-bottom, 0px\)\) \* -1\);/);
+    // …and what scrolls behind it is never left UNDER it (owner's bug report, 2026-10-10: the phone box sat half
+    // under Save client). The sheet's scroll padding is the bar's measured height, and the focused field is scrolled
+    // back into view when it takes focus and whenever the keyboard resizes the sheet.
+    expect(css).toMatch(/\.pf-keypad\.pf-client \{\s*scroll-padding-bottom: calc\(var\(--pf-bar-h, 0px\) \+ var\(--sp-2\)\);/);
+    // At rest too: the negative margin that cancelled the sheet's padding let Chrome push the bar 16px up over the
+    // phone box. Now the sheet drops its own bottom padding while the bar is there, and the bar's margin is 0.
+    expect(css).toMatch(/\.pf-keypad\.pf-client:has\(\.pf-client-links\) \{\s*padding-bottom: 0;/);
+    expect(css).toMatch(/\.pf-keypad\.pf-client \.pf-client-links \{\s*margin-bottom: 0;/);
+    expect(client).toMatch(/sheet\.style\.setProperty\('--pf-bar-h', `\$\{bar\?\.offsetHeight \?\? 0\}px`\)/);
+    expect(client).toMatch(/sheet\.addEventListener\('focusin', onFocus\)/);
+    expect(client).toMatch(/window\.visualViewport\?\.addEventListener\('resize', onFocus\)/);
+    expect(client).toMatch(/new ResizeObserver\(reveal\)/);
+    expect(client).toMatch(/\(el\.closest<HTMLElement>\('\.field'\) \?\? el\)\.scrollIntoView\(\{ block: 'nearest' \}\)/);
   });
 
   it('lets the counter pick its branch, and empties the bill when it changes', () => {
