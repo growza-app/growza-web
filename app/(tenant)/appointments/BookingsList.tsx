@@ -309,7 +309,9 @@ export function BookingsList({
       f.toLowerCase().includes(q),
     );
   const matchesStaff = (b: BookingGroup) => staffFilter === 'Everyone' || b.providerNames.includes(staffFilter);
-  const matchesStatus = (b: BookingGroup) => !statusFilter || b.status === statusFilter;
+  // Owner-app audit, 2026-10-10 — "Cancelled" means called off; a moved booking's old slot is not one.
+  const matchesStatus = (b: BookingGroup) =>
+    !statusFilter || (b.status === statusFilter && !(statusFilter === 'cancelled' && b.movedTo));
   // What the tiles count: everything that matches the search and the staff chips, before the
   // status is applied (the status is what the segmented control chooses between).
   const inView = bookings.filter((b) => matchesStaff(b) && matchesQuery(b));
@@ -518,6 +520,16 @@ export function BookingsList({
       </button>
     );
 
+  /** Where a moved booking is now: the time alone on the same day, the date too when it moved to another. */
+  const movedLine = (movedTo: string, from: string) => {
+    const time = formatTime(movedTo, timezone);
+    const sameDay =
+      formatDateWithWeekday(movedTo, timezone, { locale }) === formatDateWithWeekday(from, timezone, { locale });
+    return sameDay
+      ? ts('movedNowAt', { time })
+      : ts('movedNowOn', { date: formatDateWithWeekday(movedTo, timezone, { withYear: false, locale }), time });
+  };
+
   const cardInner = (b: BookingGroup) => {
     const chip = statusChip(b);
     // First provider only, even for a multi-staff combo — one rail colour per
@@ -565,6 +577,7 @@ export function BookingsList({
             </div>
           )}
           <div className="bk-card-services">{summarizeServices(b.serviceNames, locale)}</div>
+          {b.movedTo ? <div className="bk-card-moved">{movedLine(b.movedTo, b.startAt)}</div> : null}
           {b.customerPhone ? (
             <div className="bk-card-phone">
               <IconPhone />

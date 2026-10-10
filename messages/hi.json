@@ -95,7 +95,10 @@
     "walkIn": "वॉक-इन",
     "didNotCome": "नहीं आए",
     "didNotComeCount": "नहीं आए",
-    "cancelled": "रद्द"
+    "cancelled": "रद्द",
+    "moved": "समय बदला",
+    "movedNowAt": "अब {time} पर",
+    "movedNowOn": "अब {date}, {time} पर"
   },
   "bookings": {
     "none": "उस दिन कोई बुकिंग नहीं।",
@@ -1899,6 +1902,8 @@
     "cancelAsk": "यह बुकिंग रद्द करें? इसे वापस नहीं किया जा सकता।",
     "cancelYes": "हाँ, रद्द करें",
     "cancelKeep": "बुकिंग रहने दें",
+    "noShowAsk": "ग्राहक नहीं आया? इसे वापस नहीं किया जा सकता।",
+    "noShowYes": "हाँ, नहीं आया",
     "reference": "बुकिंग आईडी"
   },
   "clientCard": {

@@ -238,6 +238,8 @@ export function useBookingCopy() {
     cancelAsk: t('cancelAsk'),
     cancelYes: t('cancelYes'),
     cancelKeep: t('cancelKeep'),
+    noShowAsk: t('noShowAsk'),
+    noShowYes: t('noShowYes'),
     reference: t('reference'),
   }), [t, tn, locale]);
 }

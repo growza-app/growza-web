@@ -45,8 +45,8 @@ function gatedBlocks(src: string, flag: string): string[] {
 
 const GATES: Array<[flag: string, action: string, control: string]> = [
   ['mayCheckout', 'booking.checkout', 'onClick={openCheckout}'],
-  ['maySetStatus', 'booking.setStatus', "onClick={() => setStatus('no_show')}"],
-  ['maySetStatus', 'booking.setStatus', "onClick={() => setStatus('cancelled')}"],
+  ['maySetStatus', 'booking.setStatus', "onClick={() => setAsking('no_show')}"],
+  ['maySetStatus', 'booking.setStatus', "onClick={() => setAsking('cancelled')}"],
   ['mayMove', 'booking.reschedule', 'onClick={() => setMoving(true)}'],
 ];
 
@@ -85,32 +85,34 @@ describe('the Bookings list', () => {
 });
 
 /**
- * Owner-app audit, 2026-10-10 — Cancel asks first.
+ * Owner-app audit, 2026-10-10 — Cancel and "Client didn't come" ask first.
  *
- * A cancelled booking is final (Jira GRW-467), and the button sat at the bottom of the sheet under the thumb, acting
- * on one tap. The first tap now opens the question; only the second, on "Yes, cancel it", cancels — and "Keep the
- * booking" takes the focus, so Enter or a hurried second tap keeps it.
+ * Both are final (Jira GRW-467), and both acted on one tap: Cancel from the bottom of the sheet under the thumb,
+ * didn't-come from the row above Move. The first tap now opens the question; only the second, on Yes, settles the
+ * booking — and "Keep the booking" takes the focus, so Enter or a hurried second tap keeps it.
  */
-describe('Cancel this booking asks first', () => {
+describe('the two final actions ask first', () => {
   it('the first tap only asks', () => {
-    expect(source).toMatch(/onClick=\{\(\) => setAskingCancel\(true\)\}>\s*<IconClose \/>\s*\{bk\.cancel\}/);
+    expect(source).toMatch(/onClick=\{\(\) => setAsking\('cancelled'\)\}>\s*<IconClose \/>\s*\{bk\.cancel\}/);
+    expect(source).toMatch(/onClick=\{\(\) => setAsking\('no_show'\)\}>\s*<IconClose \/>\s*\{bk\.markMissed\}/);
   });
 
-  it('only the Yes button cancels, and it is drawn only while asking', () => {
-    const asking = source.slice(source.indexOf('{askingCancel ? ('), source.indexOf(') : ('));
-    expect(asking).toContain("onClick={() => setStatus('cancelled')}");
-    expect(asking).toContain('{bk.cancelYes}');
-    expect(asking).toMatch(/ref=\{keepRef\}[^>]*onClick=\{\(\) => setAskingCancel\(false\)\}/);
+  it('only the Yes inside the question settles the booking', () => {
+    const ask = source.slice(source.indexOf('const askFirst ='), source.indexOf('</div>', source.indexOf('const askFirst =')));
+    expect(ask).toContain('onClick={() => setStatus(status)}');
+    expect(ask).toMatch(/ref=\{keepRef\}[^>]*onClick=\{\(\) => setAsking\(null\)\}/);
+    expect(source).toContain("askFirst('cancelled', bk.cancelAsk, bk.cancelYes)");
+    expect(source).toContain("askFirst('no_show', bk.noShowAsk, bk.noShowYes)");
   });
 
   it('Keep the booking takes the focus', () => {
-    expect(source).toMatch(/if \(askingCancel\) keepRef\.current\?\.focus\(\)/);
+    expect(source).toMatch(/if \(asking\) keepRef\.current\?\.focus\(\)/);
   });
 
   it('says it in both languages', () => {
     for (const lang of ['en', 'hi']) {
       const sheet = JSON.parse(readFileSync(fromDashboard(`messages/${lang}.json`), 'utf-8')).bookingSheet;
-      for (const key of ['cancelAsk', 'cancelYes', 'cancelKeep']) expect(sheet[key], `${lang}.${key}`).toBeTruthy();
+      for (const key of ['cancelAsk', 'cancelYes', 'cancelKeep', 'noShowAsk', 'noShowYes']) expect(sheet[key], `${lang}.${key}`).toBeTruthy();
     }
   });
 });

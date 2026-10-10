@@ -351,6 +351,11 @@ export interface Appointment {
   providerName: string | null;
   reminderSent: boolean;
   /** True when this customer had no booking before this day — a first-time (new) customer. */
+  /**
+   * Owner-app audit, 2026-10-10 — set on a booking a move retired: where it is NOW (the last move's new start).
+   * The row itself reads `cancelled`; this is what makes it "Moved" on the list instead.
+   */
+  movedTo?: string | null;
   customerIsNew: boolean;
   /** Ties the legs of one combo/multi-service booking together — null for a plain single-service booking. */
   bookingGroupId: string | null;

@@ -95,7 +95,10 @@
     "walkIn": "Walk-in",
     "didNotCome": "Didn't come",
     "didNotComeCount": "didn't come",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "moved": "Moved",
+    "movedNowAt": "Now at {time}",
+    "movedNowOn": "Now on {date}, {time}"
   },
   "bookings": {
     "none": "No bookings that day.",
@@ -1899,6 +1902,8 @@
     "cancelAsk": "Cancel this booking? You can't undo this.",
     "cancelYes": "Yes, cancel it",
     "cancelKeep": "Keep the booking",
+    "noShowAsk": "They didn't come? You can't undo this.",
+    "noShowYes": "Yes, they didn't come",
     "reference": "Booking ID"
   },
   "clientCard": {
