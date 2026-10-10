@@ -9,7 +9,7 @@ import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { Pagination, type PaginationState } from '../components/Pagination';
 import { VerticalFilterSheet } from '../components/VerticalFilterSheet';
-import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
+import { INITIAL_PAGING, applyPageParams, mergeRows, reloadFromFirstPage } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch, STATUS_COLORS, typeColor } from '../tokens';
 import { useAdminMe } from '../components/AdminMeContext';
@@ -80,8 +80,7 @@ function AdminBusinessesInner() {
   const { query: search } = useAdminSearch();
   const [vertical, setVertical] = useState('All');
   // GRW-104's dashboard drill-through (`?status=suspended`) lands here
-  // already filtered — read once on mount rather than staying synced to the
-  // URL, since nothing on this page itself needs to write it back.
+  // already filtered — read once on mount, and written back below.
   const [status, setStatus] = useState(() => {
     const fromUrl = searchParams.get('status');
     return fromUrl && STATUS_OPTIONS.includes(fromUrl) ? fromUrl : 'All';
@@ -89,6 +88,19 @@ function AdminBusinessesInner() {
   const [createdFrom] = useState(() => searchParams.get('createdFrom'));
   const [createdFromCleared, setCreatedFromCleared] = useState(false);
   const activeCreatedFrom = createdFromCleared ? null : createdFrom;
+
+  /*
+   * Admin audit 2026-10-09, L10 — the URL follows the filters it was read from. It was read once and never written,
+   * so an admin who opened "Suspended" from the dashboard, set the list back to All and reloaded was shown Suspended
+   * again — a filter they had cleared, with nothing on screen saying why the list was short.
+   */
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (status !== 'All') params.set('status', status);
+    if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    const next = params.size > 0 ? `/admin/businesses?${params}` : '/admin/businesses';
+    if (`${window.location.pathname}${window.location.search}` !== next) router.replace(next, { scroll: false });
+  }, [status, activeCreatedFrom, router]);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<BusinessPage | null>(null);
   /**
@@ -317,7 +329,7 @@ function AdminBusinessesInner() {
             // locally: the list carries figures this screen does not compute
             // (branches, users, plan), and a hand-made row would be the one
             // row on the page that is a guess.
-            setPaging((p) => ({ ...p }));
+            setPaging(reloadFromFirstPage);
           }}
         />
       ) : null}

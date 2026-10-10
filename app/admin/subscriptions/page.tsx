@@ -10,7 +10,7 @@ import { SUBSCRIPTION_STATUS_VALUES, SUBSCRIPTION_VIEWS, subscriptionStatusLabel
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
 import { SUBSCRIPTION_COLUMNS } from '../lib/list-columns';
 import { Pagination, type PaginationState } from '../components/Pagination';
-import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
+import { INITIAL_PAGING, applyPageParams, mergeRows, reloadFromFirstPage } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { Icon, TypeIcon } from '../icons';
 import { oklch, typeColor } from '../tokens';
@@ -77,14 +77,6 @@ function SubscriptionsList() {
   /** The subscription the re-enrol dialog is open for, or null (GRW-148). */
   const [reenrolFor, setReenrolFor] = useState<string | null>(null);
   const canManage = useAdminMe().can('admin.subscription.manage');
-  /**
-   * Bumped to refetch the list after an action that changed a row.
-   *
-   * The list has no imperative `load()` — it refetches from an effect keyed on
-   * the filters — so this is the one dependency that means "nothing about the
-   * query changed, but the answer did".
-   */
-  const [reloadToken, setReloadToken] = useState(0);
   const [discountedOnly, setDiscountedOnly] = useState(false);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   /**
@@ -137,7 +129,7 @@ function SubscriptionsList() {
 
     return () => controller.abort();
      
-  }, [trimmedSearch, status, discountedOnly, view, paging, searchTooShort, reloadToken]);
+  }, [trimmedSearch, status, discountedOnly, view, paging, searchTooShort]);
 
   const hasActiveFilters = status !== 'All' || discountedOnly || trimmedSearch.length >= 2 || view !== null;
 
@@ -354,8 +346,9 @@ function SubscriptionsList() {
         // The list is the one screen that must not keep showing a Cancelled
         // pill next to a subscription that has just been re-enrolled — that is
         // the "the button did nothing" reading this product has already been
-        // bitten by once.
-        onDone={() => setReloadToken((n) => n + 1)}
+        // bitten by once. From page 1 (audit M13): a reload token refetched the page in whatever mode it was in,
+        // so after "Load more" it appended that page a second time.
+        onDone={() => setPaging(reloadFromFirstPage)}
       />
     </div>
   );
