@@ -223,6 +223,8 @@ export interface ServiceInput {
   bufferAfterMin?: number;
   priceMinor?: number | null;
   active?: boolean;
+  /** A picture picked from the pack, or null to go back to matching on the name. Update only. */
+  catalogKey?: string | null;
 }
 
 export interface Provider {

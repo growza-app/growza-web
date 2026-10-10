@@ -7,6 +7,7 @@ import { formatDateTime } from '../lib/format';
 import { Icon } from '../icons';
 import { Card, EmptyState, Pill, PrimaryButton, SecondaryButton, SectionTitle } from '../components/primitives';
 import { oklch } from '../tokens';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * Jira GRW-90 · GRW-137 — the Impersonation screen, no longer a mock.
@@ -19,6 +20,8 @@ import { oklch } from '../tokens';
  */
 interface SessionRow {
   id: string;
+  /** Who started it — absent from an API older than batch I, which then offers no End button. */
+  adminId?: string;
   adminName: string | null;
   adminPhone: string | null;
   tenantId: string;
@@ -30,8 +33,15 @@ interface SessionRow {
   endedReason: string | null;
 }
 
+/**
+ * Admin audit 2026-10-09, M14 — still running. A deactivated administrator's session has no end time but is over:
+ * the guard refuses their grant, and it read "Active now" with a duration that kept growing.
+ */
+const isActive = (row: SessionRow) => row.endedAt === null && row.endedReason === null;
+
 /** How long it ran, or how long it has been running. Whole minutes — a support session is not timed to the second. */
 function duration(row: SessionRow): string {
+  if (row.endedAt === null && !isActive(row)) return '—';
   const from = new Date(row.startedAt).getTime();
   const to = row.endedAt ? new Date(row.endedAt).getTime() : Date.now();
   const minutes = Math.max(0, Math.round((to - from) / 60000));
@@ -46,6 +56,27 @@ export default function AdminImpersonationPage() {
   const [rows, setRows] = useState<SessionRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
+  const { me, can } = useAdminMe();
+  const [ending, setEnding] = useState<string | null>(null);
+  const [endError, setEndError] = useState<string | null>(null);
+
+  /**
+   * Admin audit M14 — End, for the admin's own open sessions. Each "Impersonate owner" starts a new one, and the
+   * earlier ones stayed "Active now" for their full 30 minutes with nothing here to stop them. Only your own: the API
+   * refuses ending a colleague's (it would cut off their support call).
+   */
+  async function endSession(id: string) {
+    setEnding(id);
+    setEndError(null);
+    try {
+      await adminFetch(`/impersonation/${id}/end`, { method: 'POST' });
+      setRetryToken((n) => n + 1);
+    } catch (err) {
+      setEndError(err instanceof AdminApiError ? err.message : 'Could not end that session.');
+    } finally {
+      setEnding(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +127,11 @@ export default function AdminImpersonationPage() {
 
       <Card>
         <SectionTitle title="Recent sessions" />
+        {endError ? (
+          <div role="alert" style={{ marginBottom: 10, fontSize: 13, fontWeight: 600, color: 'oklch(0.5 0.16 25)' }}>
+            {endError}
+          </div>
+        ) : null}
         {error ? (
           <div style={{ textAlign: 'center', padding: '20px 12px' }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
@@ -133,9 +169,20 @@ export default function AdminImpersonationPage() {
                     field that makes the row reviewable, so it is not a tooltip. */}
                 <div style={{ fontSize: 13, color: 'oklch(0.45 0.02 155)', fontWeight: 600 }}>{row.reason}</div>
                 <div style={{ fontSize: 13, color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{duration(row)}</div>
-                <div>
-                  {row.endedAt === null ? (
-                    <Pill text="Active now" fg="oklch(0.5 0.16 25)" bg={oklch.dangerBg} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  {isActive(row) ? (
+                    <>
+                      <Pill text="Active now" fg="oklch(0.5 0.16 25)" bg={oklch.dangerBg} />
+                      {row.adminId && row.adminId === me?.admin.id && can('admin.impersonation.start') ? (
+                        <SecondaryButton onClick={() => void endSession(row.id)} disabled={ending !== null}>
+                          {ending === row.id ? 'Ending…' : 'End'}
+                        </SecondaryButton>
+                      ) : null}
+                    </>
+                  ) : row.endedReason === 'admin_deactivated' ? (
+                    <span style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
+                      {formatDateTime(row.startedAt)} · ended — administrator deactivated
+                    </span>
                   ) : (
                     <span style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
                       {formatDateTime(row.startedAt)}

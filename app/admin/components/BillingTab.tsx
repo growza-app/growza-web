@@ -9,6 +9,7 @@ import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill } from './p
 import { InvoiceBreakdown } from './InvoiceBreakdown';
 import { AutopayPanel } from './AutopayPanel';
 import { oklch } from '../tokens';
+import { useAdminMe } from './AdminMeContext';
 
 /**
  * GRW-119 — business detail's Billing tab, replacing the placeholder GRW-102
@@ -61,6 +62,10 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
   const [invoices, setInvoices] = useState<InvoiceRow[] | null>(null);
   const [payments, setPayments] = useState<PaymentRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Batch D — the tab is shown to `admin.invoice.view`; payments need `admin.payment.view` too. Both were loaded in
+  // one Promise.all, so a role holding only the first saw the whole tab as an error. Payments are now asked for only
+  // when this admin may see them.
+  const canSeePayments = useAdminMe().can('admin.payment.view');
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -73,7 +78,9 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
         // On a screen support works refunds and disputes from, that is the
         // wrong customer's money.
         adminFetch<{ rows: InvoiceRow[] }>(`/invoices?businessId=${encodeURIComponent(businessId)}&pageSize=50`, { signal }),
-        adminFetch<{ rows: PaymentRow[] }>(`/payments?businessId=${encodeURIComponent(businessId)}&pageSize=50`, { signal }),
+        canSeePayments
+          ? adminFetch<{ rows: PaymentRow[] }>(`/payments?businessId=${encodeURIComponent(businessId)}&pageSize=50`, { signal })
+          : Promise.resolve({ rows: [] as PaymentRow[] }),
       ])
         .then(([inv, pay]) => {
           setInvoices(inv.rows);
@@ -84,7 +91,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
           if (signal?.aborted) return;
           setError(err instanceof AdminApiError ? err.message : 'Could not load billing history.');
         }),
-    [businessId],
+    [businessId, canSeePayments],
   );
 
   useEffect(() => {
@@ -179,6 +186,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
         )}
       </Card>
 
+      {canSeePayments ? (
       <Card>
         <SectionTitle title={`Payments (${payments.length})`} />
         {payments.length === 0 ? (
@@ -240,6 +248,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
           </div>
         )}
       </Card>
+      ) : null}
 
       {invoices.length === 0 && payments.length === 0 ? (
         <EmptyState icon="invoices" title="Nothing billed yet" sub="Invoices and payments appear here once this business has been through a billing period." />

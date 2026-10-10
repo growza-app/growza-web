@@ -2,10 +2,12 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { PasswordInput } from './PasswordInput';
 import { PhoneField } from '../../(tenant)/components/PhoneField';
 import { toStoredPhone } from '../../(tenant)/lib/phone';
 import { rememberLang, type Lang } from '../../(tenant)/lib/lang';
 import { localiseApiMessage } from '../../(tenant)/lib/api-messages';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * Jira GRW-66 · GRW-160 — where a salon owner signs in.
@@ -161,9 +163,8 @@ export default function LoginPage() {
 
           <div className="field">
             <label htmlFor="login-new-password">{t('choose.newPassword')}</label>
-            <input
+            <PasswordInput
               id="login-new-password"
-              type="password"
               autoComplete="new-password"
               value={newPassword}
               onChange={(e) => {
@@ -171,14 +172,13 @@ export default function LoginPage() {
                 setError(null);
               }}
               disabled={loading}
-              autoFocus
+              autoFocus={autoFocusField()}
             />
           </div>
           <div className="field">
             <label htmlFor="login-confirm-password">{t('choose.again')}</label>
-            <input
+            <PasswordInput
               id="login-confirm-password"
-              type="password"
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => {
@@ -238,10 +238,9 @@ export default function LoginPage() {
 
         <div className="field">
           <label htmlFor="login-password">{t('password')}</label>
-          <input
+          <PasswordInput
             id="login-password"
             name="password"
-            type="password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

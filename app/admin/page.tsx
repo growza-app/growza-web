@@ -20,13 +20,16 @@ import {
   ACTION_TINTS,
   countDelta,
   initials,
+  lastMonthFigure,
   percentDelta,
+  SINCE_THE_FIRST,
   tintFor,
   type AttentionRow,
 } from './components/DashboardParts';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
 import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL } from './dashboard-config';
+import { useAdminMe } from './components/AdminMeContext';
 
 /**
  * GRW-104's platform dashboard. GRW-020 — "Two Home labels that were not
@@ -61,10 +64,10 @@ interface DashboardResponse {
   totalBusinesses: number;
   totalAtPeriodStart: number;
   byStatus: StatusCount[];
-  newBusinesses: { count: number; previous: number; period: { from: string; to: string } };
+  newBusinesses: { count: number; previous: number; previousToDate?: number; period: { from: string; to: string } };
   attention: AttentionRow[];
   recentSignups: RecentSignup[];
-  revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; months: RevenueMonth[] } | null;
+  revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; previousToDateMinor?: number; months: RevenueMonth[] } | null;
   /** GRW-280 — visits booked across every business, counted as visits rather than rows. */
   bookings: PlatformBookings;
 }
@@ -88,6 +91,8 @@ export default function AdminDashboardPage() {
    * screen their permissions actually open.
    */
   const router = useRouter();
+  const { can } = useAdminMe();
+  const quickActions = QUICK_ACTIONS.filter((action) => can(action.permission));
   const [noWayIn, setNoWayIn] = useState(false);
 
   useEffect(() => {
@@ -161,6 +166,9 @@ export default function AdminDashboardPage() {
   // Computed across the whole breakdown at once, so the four shares total 100
   // rather than each rounding independently — see `wholePercentages`.
   const statusPercentages = wholePercentages(data.byStatus.map((s) => s.count));
+  // Audit M11 — this month so far against last month up to the same day.
+  const newLast = lastMonthFigure(data.newBusinesses.previousToDate, data.newBusinesses.previous);
+  const revenueLast = data.revenue ? lastMonthFigure(data.revenue.previousToDateMinor, data.revenue.previousMonthMinor) : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -180,7 +188,7 @@ export default function AdminDashboardPage() {
           value={data.totalBusinesses}
           href="/admin/businesses"
           tint={STAT_TINTS.green}
-          delta={percentDelta(data.totalBusinesses, data.totalAtPeriodStart)}
+          delta={percentDelta(data.totalBusinesses, data.totalAtPeriodStart, SINCE_THE_FIRST)}
         />
         <StatCard
           icon="trend"
@@ -188,7 +196,7 @@ export default function AdminDashboardPage() {
           value={data.newBusinesses.count}
           href={`/admin/businesses?createdFrom=${encodeURIComponent(data.newBusinesses.period.from)}`}
           tint={STAT_TINTS.blue}
-          delta={countDelta(data.newBusinesses.count, data.newBusinesses.previous)}
+          delta={countDelta(data.newBusinesses.count, newLast.previous, newLast.against)}
         />
         {/* The reference's bottom two cards are attention-flavoured (warm tint,
             chevron). These are the two attention rows that already have a real
@@ -220,6 +228,7 @@ export default function AdminDashboardPage() {
           leaving the cell empty. */}
       <div className="admin-dash-cols" data-has-revenue={data.revenue ? 'true' : 'false'}>
         {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}
+        {quickActions.length > 0 ? (
         <Card className="admin-dash-quick">
           <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
           {/* Fixed 5-column grid, not auto-fit/minmax — same reasoning as the KPI
@@ -229,7 +238,7 @@ export default function AdminDashboardPage() {
             style used elsewhere, on purpose — 5 short labels read better
             stacked than they did squeezed into a 2-up bordered row. */}
           <div className="admin-quick-grid">
-            {QUICK_ACTIONS.map((action) => {
+            {quickActions.map((action) => {
               const tint = ACTION_TINTS[action.tint];
               return (
                 // The reference tints the whole tile, not just an icon badge —
@@ -261,6 +270,7 @@ export default function AdminDashboardPage() {
             })}
           </div>
         </Card>
+        ) : null}
 
         {/* GRW-276 — collected revenue, from settled `payment` rows. Absent
           entirely (not zeroed) for an admin without `admin.payment.view`:
@@ -270,7 +280,7 @@ export default function AdminDashboardPage() {
             className="admin-dash-revenue"
             months={data.revenue.months}
             thisMonthMinor={data.revenue.thisMonthMinor}
-            delta={percentDelta(data.revenue.thisMonthMinor, data.revenue.previousMonthMinor)}
+            delta={revenueLast ? percentDelta(data.revenue.thisMonthMinor, revenueLast.previous, revenueLast.against) : undefined}
           />
         ) : null}
 

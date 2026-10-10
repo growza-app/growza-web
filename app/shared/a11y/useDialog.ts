@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, type RefObject } from 'react';
 
+import { opensSoftKeyboard, takesTyping } from './soft-keyboard';
+
 /**
  * Jira GRW-342 — what every modal dialog owes a keyboard and a screen reader, in one place.
  *
@@ -62,7 +64,10 @@ export function useDialog(
     const controls = () => Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(isShown);
 
     if (!root.contains(document.activeElement)) {
-      const first = initialFocus === 'first' ? controls()[0] : undefined;
+      let first = initialFocus === 'first' ? controls()[0] : undefined;
+      // On a phone, landing in the sheet's first field raises the keyboard over the sheet. Focus the dialog
+      // itself instead: the screen reader still announces it, and the person sees what they opened.
+      if (first && takesTyping(first) && opensSoftKeyboard()) first = undefined;
       const target = first ?? root;
       if (target === root && !root.hasAttribute('tabindex')) root.tabIndex = -1;
       target.focus({ preventScroll: true });

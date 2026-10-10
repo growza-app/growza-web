@@ -28,7 +28,7 @@ describe('a branch with nobody on its team', () => {
 
   it('does not offer "Whoever is free", because nobody can be free', () => {
     // GRW-461 added a second reason there can be nobody to be free: staff here, none who do this service.
-    expect(code).toMatch(/const offersWhoever = !paysToken && !noStaffHere && !noOneCanDoIt;/);
+    expect(code).toMatch(/const offersWhoever = !forPayment && !paysToken && !noStaffHere && !noOneCanDoIt;/);
   });
 
   it('settles Record payment with no stylist instead', () => {

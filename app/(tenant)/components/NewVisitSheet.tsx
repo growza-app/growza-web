@@ -51,6 +51,7 @@ import { useBranch } from './BranchProvider';
 import { useSession } from './SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { PhoneField } from './PhoneField';
+import { FormModeSwitch } from '../appointments/new/FormModeSwitch';
 import { BookAgainCard, type BookAgainPlan } from './BookAgainCard';
 import type { FreeTime } from '../lib/book-again';
 import { fromStoredPhone, toStoredPhone } from '../lib/phone';
@@ -58,6 +59,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { CheckoutSheet, PAYMENT_MODES } from './CheckoutSheet';
 import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
+import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
 import { confirmRows, receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import {
@@ -101,6 +103,11 @@ import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
  * 9999999999, which collides, so every anonymous walk-in merges into one
  * fictional client.
  */
+
+/** Only digits and the marks a number is written with, and at least one digit: what a phone number looks like as it is typed. */
+export function isNumberLike(value: string): boolean {
+  return /^[+\d\s()-]+$/.test(value) && /\d/.test(value);
+}
 
 function digitsOf(value: string): string {
   return value.replace(/[^0-9]/g, '');
@@ -401,6 +408,9 @@ export function NewVisitSheet({
 
   // Stage 1 — find them
   const [term, setTerm] = useState('');
+  // On the New booking and Record payment PAGES this box is part of the server's HTML, so the keyboard question is
+  // asked after hydration through this ref rather than through `autoFocus`, which the two sides would disagree on.
+  const searchRef = useAutoFocusField<HTMLInputElement>();
   // Jira GRW-520 — the matches are a dropdown under the box: open while typing, closed by a pick, Escape or
   // tapping elsewhere; `activeIdx` is the row the arrow keys are on (-1: none).
   const [comboOpen, setComboOpen] = useState(true);
@@ -499,7 +509,9 @@ export function NewVisitSheet({
    * exactly as before, so this can only ever be true when `forPayment` is.
    */
   // Jira GRW-403 — a token's visit has happened: nobody, unless the desk names who did it.
-  const [noStylist, setNoStylist] = useState(Boolean(token && forPayment));
+  // Record payment is the same everywhere (owner, 2026-10-09): the work is done, so nobody is the answer until a name
+  // is tapped, and "Whoever is free" and "No stylist" are no longer chips to pick between.
+  const [noStylist, setNoStylist] = useState(forPayment);
   // GRW-198 — the booking in the chosen chair whose client never turned up. Declared here: a branch change clears it.
   const [reclaim, setReclaim] = useState<string | null>(null);
   // Jira GRW-290 — Record payment: how they paid, and the visit once it exists.
@@ -2372,7 +2384,7 @@ export function NewVisitSheet({
     }
   };
   const stylistValue = noStylist ? WI_NO_STYLIST : (schedulableId ?? WI_WHOEVER);
-  const offersWhoever = !paysToken && !noStaffHere && !noOneCanDoIt;
+  const offersWhoever = !forPayment && !paysToken && !noStaffHere && !noOneCanDoIt;
   /*
    * Record payment: the people as a row of names, one tap each (owner, 2026-10-07), where GRW-524 had made it a
    * dropdown — two taps, and every name hidden until it opened. That dropdown carried what each chair was doing
@@ -2447,7 +2459,6 @@ export function NewVisitSheet({
                       ]
                     : []),
                   ...ableProviders.map((p) => ({ value: p.id, label: p.displayName, under: chairLine(p.id), photoUrl: p.photoUrl })),
-                  ...(forPayment ? [{ value: WI_NO_STYLIST, label: noProviderWord, under: null, photoUrl: null }] : []),
                 ].map((o) => (
                   <button
                     key={o.value}
@@ -2455,7 +2466,8 @@ export function NewVisitSheet({
                     role="radio"
                     aria-checked={stylistValue === o.value}
                     className={`wi-chip ${o.under ? 'wi-chip-two' : ''} ${o.photoUrl ? 'wi-chip-faced' : ''} ${stylistValue === o.value ? 'wi-chip-on' : ''}`}
-                    onClick={() => pickStylist(o.value)}
+                    // On Record payment a second tap on the chosen name puts it back to nobody; there is no chip for that any more.
+                    onClick={() => pickStylist(forPayment && stylistValue === o.value ? WI_NO_STYLIST : o.value)}
                     disabled={busy || linesLocked}
                   >
                     {/*
@@ -2470,7 +2482,19 @@ export function NewVisitSheet({
                     */}
                     {o.photoUrl ? (
                       <>
-                        <img className="wi-chip-face" src={o.photoUrl} alt="" />
+                        {/*
+                          A photo that does not load leaves the browser's broken-image glyph in front of the
+                          name — a torn page where a face should be, on every chip, for as long as the file is
+                          missing. The chip then reads as the photoless one it already knows how to be.
+                        */}
+                        <img
+                          className="wi-chip-face"
+                          src={o.photoUrl}
+                          alt=""
+                          onError={(e) => {
+                            e.currentTarget.hidden = true;
+                          }}
+                        />
                         <span className="wi-chip-lines">
                           {o.label}
                           {o.under ? <span className="wi-chip-under">{o.under}</span> : null}
@@ -2798,6 +2822,8 @@ export function NewVisitSheet({
   );
 
   const asPage = presentation === 'page';
+  /** A token being paid stays the token being paid when the form is switched, so its id rides in the address. */
+  const payTokenQuery = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   // Jira GRW-520 — every row the dropdown can show, in order: this branch's matches, then the other branches'.
   const comboOptions = [
     ...results.map((c) => ({ c, bring: false })),
@@ -2897,10 +2923,31 @@ export function NewVisitSheet({
             {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
             {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
             {pageHead ? null : <div className="sheet-sub">{headSub}</div>}
+
           </div>
-          <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
-            <IconClose />
-          </button>
+          {/*
+            One way out, not two (owner, 2026-10-09). A pop-up is closed by its ✕; a page is left by its back
+            arrow. On the routed page both were drawn, 250px apart, and they went to DIFFERENT places — ← to
+            whatever opened the page, ✕ always Home — with nothing on either to say which. The ✕ stays on the
+            steps where there is nowhere to go back to, so a page is never left with no exit at all.
+          */}
+          {/*
+            The way back to the three-tap screen (owner, 2026-10-10).
+            This page is reached by `?full=1` from it, and until now the only way out was the browser's own
+            Back — a one-way door. The same switch stands on both sides, and in the same corner on both.
+            It takes the slot the ✕ would use, which on this page is an empty 44px span anyway because the
+            back arrow is the way out. Phones only (CSS): at a desk this IS the form for Record payment, so
+            there is nothing to switch to.
+          */}
+          {forPayment && asPage && goBack ? (
+            <FormModeSwitch now="advanced" simpleHref={`/appointments/new?purpose=payment${payTokenQuery}`} advancedHref={`/appointments/new?purpose=payment&full=1${payTokenQuery}`} />
+          ) : asPage && goBack ? (
+            <span className="wi-close-gap" aria-hidden="true" />
+          ) : (
+            <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
+              <IconClose />
+            </button>
+          )}
           {/*
             A row of its own, not the middle cell's sub-line: `.sheet-head` is `1fr auto 1fr`, so between a back
             arrow and a ✕ the middle cell is about 230px at 375 and the branch name came out as "MG Road…".
@@ -2944,7 +2991,7 @@ export function NewVisitSheet({
                   aria-required={pageForm || forPayment ? true : undefined}
                   aria-label={nv.searchPlaceholder}
                   value={term}
-                  autoFocus
+                  ref={searchRef}
                   onFocus={() => setComboOpen(true)}
                   onKeyDown={(e) => {
                     if (!showDrop) return;
@@ -2973,10 +3020,14 @@ export function NewVisitSheet({
                     setActiveIdx(-1);
                     // Jira GRW-514 — seed the add block below, unless the desk has typed in it.
                     const typed = v.trim();
-                    if (digitsOf(typed).length >= 7) {
-                      if (!phoneEdited.current) setNewPhone(typed);
+                    // A number is never a name: its first digits used to land in Name and stay there once the rest
+                    // arrived (9599420200 left "959942" in Name), so a numeric search clears a name it seeded.
+                    if (isNumberLike(typed)) {
+                      if (!nameEdited.current) setNewName('');
+                      if (!phoneEdited.current) setNewPhone(digitsOf(typed).length >= 7 ? typed : '');
                     } else if (!nameEdited.current) {
                       setNewName(typed);
+                      if (!phoneEdited.current) setNewPhone('');
                     }
                   }}
                 />
@@ -3083,7 +3134,7 @@ export function NewVisitSheet({
                         if (pickedPhoneError) setPickedPhoneError(null);
                       }}
                       error={pickedPhoneError}
-                      autoFocus={addingPhone && !pickedPhone}
+                      autoFocus={autoFocusField(addingPhone && !pickedPhone)}
                       /* Not `busy`: that includes saving this number, and a field disabled while its own save fails
                          cannot take the focus that is sent back to it with the reason. */
                       disabled={stage.step === 'saving'}

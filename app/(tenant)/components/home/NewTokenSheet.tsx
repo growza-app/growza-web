@@ -11,6 +11,7 @@ import { useDialog } from '../../../shared/a11y/useDialog';
 import { PhoneField } from '../PhoneField';
 import { IconCheck, IconClose } from '../icons';
 import type { TokenWords } from './token-words';
+import { autoFocusField } from '../../../shared/a11y/soft-keyboard';
 
 /** One key per sheet, reused on every retry: a lost response and a second tap are one place in line (GRW-204). */
 function newAttemptKey(): string {
@@ -139,7 +140,7 @@ export function NewTokenSheet({
               <input
                 id="tb-new-name"
                 type="text"
-                autoFocus
+                autoFocus={autoFocusField()}
                 autoComplete="off"
                 className={nameError ? 'field-invalid' : undefined}
                 aria-invalid={nameError}

@@ -7,6 +7,7 @@ import { api } from '../lib/api';
 import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
 import { IconPlus } from '../components/icons';
 import { useWritable } from '../components/SessionProvider';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 const OFFER_TITLE_MAX = 60;
 const OFFER_DESCRIPTION_MAX = 120;
@@ -91,7 +92,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
             type="text"
             value={title}
             maxLength={OFFER_TITLE_MAX}
-            autoFocus
+            autoFocus={autoFocusField()}
             placeholder={t('titlePlaceholder')}
             className={titleError ? 'field-invalid' : undefined}
             onChange={(e) => {

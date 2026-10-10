@@ -8,6 +8,7 @@ import { pickNoun } from '../lib/nouns';
 import { intlLocale } from './[providerId]/month';
 import { useBranch } from '../components/BranchProvider';
 import { IconNote, IconPlus } from '../components/icons';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
  * Jira GRW-63 · GRW-170 — the attendance register, built to Attendance.dc.html.
@@ -584,7 +585,7 @@ export function AttendanceRegister({
                       <input
                         type="text"
                         maxLength={200}
-                        autoFocus
+                        autoFocus={autoFocusField()}
                         defaultValue={row.note ?? ''}
                         placeholder={t('notePlaceholder')}
                         disabled={busy || !view.status || !writable}

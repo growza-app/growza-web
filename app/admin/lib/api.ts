@@ -72,9 +72,22 @@ async function unwrap<T>(res: Response, path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/**
+ * A 401 that is about what was TYPED, not about the session.
+ *
+ * Change password answers a wrong current password with 401 `invalid_credentials`. Read as an expired session it
+ * was renewed, replayed — a second failed attempt against the sign-in throttle for one typo — and the admin was
+ * signed out mid-dialog. The session is fine; the password was wrong. Peeked from a clone so `unwrap` can still
+ * read the body for the message.
+ */
+async function isRefusedCredential(res: Response): Promise<boolean> {
+  const body = (await res.clone().json().catch(() => null)) as { error?: string } | null;
+  return body?.error === 'invalid_credentials';
+}
+
 export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await send(path, init);
-  if (res.status !== 401) return unwrap<T>(res, path);
+  if (res.status !== 401 || (await isRefusedCredential(res))) return unwrap<T>(res, path);
 
   // Jira GRW-417 — renew, then replay. Once: a second 401 with a token the
   // server has just minted is not an expiry problem, and retrying further

@@ -100,6 +100,10 @@ export interface ReenrolResult {
   created: boolean;
   trading: boolean;
   outstandingMinor: number;
+  /** The payment this request recorded, or null when it recorded none. */
+  payment: unknown | null;
+  /** The subscription the business is on now — a NEW one when `created`, which is what re-enrolling a cancelled one does. */
+  subscription: { id: string };
 }
 
 function localDateTimeValue(d: Date): string {
@@ -138,11 +142,13 @@ export function ReenrolModal({
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
-  useDialog(dialogRef, { onClose: saving ? undefined : onClose });
+  const open = subscriptionId !== null;
+  // `active: open`, as RecordPaymentModal passes: this modal is always mounted and renders nothing while closed, so a
+  // hook armed once at mount found no dialog and never armed again — Escape did nothing and Tab left the dialog.
+  useDialog(dialogRef, { onClose: saving ? undefined : onClose, active: open });
   const [error, setError] = useState<string | null>(null);
   const ids = useId();
 
-  const open = subscriptionId !== null;
   const openedFor = useRef<string | null>(null);
   /** Stands in for the reference of a cash payment that has none, so a resend is not a second payment. One per opening. */
   const attemptKey = useRef(newAttemptKey());
@@ -199,12 +205,23 @@ export function ReenrolModal({
   const paidAtValid = paidAtDate !== null && !Number.isNaN(paidAtDate.getTime());
   const future = paidAtValid && paidAtDate.getTime() > Date.now();
 
+  /*
+   * Admin audit 2026-10-09 (M5) — Reactivate and Resume keep the same subscription and trade again only once nothing
+   * is owed (reenrol.ts). Without a payment, that request changed nothing: a 200, an audit row for a no-op, and a
+   * note saying "Recorded, but…" about money nobody recorded. Refused here instead, saying what it needs. Re-enrol
+   * starts a NEW subscription regardless of the old bill, so it is not held to this.
+   */
+  const settlesFirst = !!preview && preview.action !== 'reenrol' && preview.outstandingMinor > 0;
   const blocker = !preview
     ? 'Loading…'
     : preview.planRetired
       ? `${preview.planName ?? preview.planCode} has been retired, so it cannot be sold again. Create a subscription on a current plan from the business page instead.`
       : reason.trim() === ''
       ? 'Enter a reason — it is recorded against your name.'
+      : !withPayment && settlesFirst
+        ? preview.mayRecordPayment
+          ? `${formatMoneyMinor(preview.outstandingMinor)} is still owed. Tick "Record a payment" and record what arrived — it cannot ${preview.action === 'resume' ? 'resume' : 'be reactivated'} until the bill is paid.`
+          : `${formatMoneyMinor(preview.outstandingMinor)} is still owed, and it cannot ${preview.action === 'resume' ? 'resume' : 'be reactivated'} until the bill is paid. Recording the payment needs someone who can record payments.`
       : !withPayment
         ? null
         : !parsedAmount.ok
@@ -299,13 +316,25 @@ export function ReenrolModal({
             {copy?.title ?? 'Continue this subscription'}
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
-            {preview ? `${preview.businessName} — currently ${preview.currentStatus.toLowerCase().replace(/_/g, ' ')}` : 'Working out what this needs…'}
+            {preview
+              ? `${preview.businessName} — currently ${preview.currentStatus.toLowerCase().replace(/_/g, ' ')}`
+              : loadError
+                ? 'This cannot be done from here.'
+                : 'Working out what this needs…'}
           </p>
         </div>
 
         <div style={{ padding: '18px 24px 24px', display: 'grid', gap: 16 }}>
           {loadError ? (
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{loadError}</div>
+            <>
+              <div role="alert" style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{loadError}</div>
+              {/* Admin audit 2026-10-09 — this state had no button at all: a business that already has an open
+                  subscription (the list still offers Re-enrol on its old row) left the admin with only Escape or a
+                  click outside, neither of which is visible. */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <SecondaryButton onClick={onClose}>Close</SecondaryButton>
+              </div>
+            </>
           ) : !preview ? (
             <div style={{ fontSize: 13.5, color: oklch.textMuted }}>Loading…</div>
           ) : (

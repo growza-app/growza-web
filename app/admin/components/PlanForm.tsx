@@ -8,6 +8,7 @@ import { Card, Field, PrimaryButton, SecondaryButton, SectionTitle, StatusPill, 
 import { ConfirmDialog } from './ConfirmDialog';
 import { EntitlementEditor } from './EntitlementEditor';
 import { inr, oklch } from '../tokens';
+import { useAdminMe } from './AdminMeContext';
 
 /**
  * GRW-108 — the real plan editor: details, pricing (via GRW-106's
@@ -82,17 +83,30 @@ export function PlanForm({
   onPlanUpdated: (plan: PlanDetail) => void;
   onVersionCreated: () => void;
 }) {
+  /*
+   * Batch D — every change on this screen needs `admin.plan.manage`; the screen itself is open to `admin.plan.view`.
+   * A viewer was shown Save details, Change price, Retire plan and the entitlement editor, typed a reason, and got a
+   * 403. One disabled fieldset turns every control below read-only at once, so none can be missed.
+   */
+  const canManage = useAdminMe().can('admin.plan.manage');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <PlanDetailsCard plan={plan} onSaved={onPlanUpdated} />
-      <PricingCard plan={plan} onVersionCreated={onVersionCreated} />
-      <StatusCard plan={plan} otherActivePlansCount={otherActivePlansCount} onSaved={onPlanUpdated} />
-      <EntitlementEditor
-        planCode={plan.code}
-        limits={plan.limits}
-        capabilityGrants={plan.capabilityGrants}
-        onSaved={(updated) => onPlanUpdated({ ...plan, ...updated })}
-      />
+      {canManage ? null : (
+        <div role="note" style={{ fontSize: 13, fontWeight: 600, color: oklch.textMuted }}>
+          View only — changing plans needs Manage plans.
+        </div>
+      )}
+      <fieldset disabled={!canManage} className="admin-view-only" style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <PlanDetailsCard plan={plan} onSaved={onPlanUpdated} />
+        <PricingCard plan={plan} onVersionCreated={onVersionCreated} />
+        <StatusCard plan={plan} otherActivePlansCount={otherActivePlansCount} onSaved={onPlanUpdated} />
+        <EntitlementEditor
+          planCode={plan.code}
+          limits={plan.limits}
+          capabilityGrants={plan.capabilityGrants}
+          onSaved={(updated) => onPlanUpdated({ ...plan, ...updated })}
+        />
+      </fieldset>
       <VersionHistoryCard versions={versions} currentVersion={plan.currentVersion} />
     </div>
   );

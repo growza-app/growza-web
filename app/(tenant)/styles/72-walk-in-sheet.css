@@ -321,6 +321,23 @@ input.wi-search-input-plain {
   cursor: pointer;
 }
 
+/*
+ * Jira GRW-478's rule, which this button was written before: 26px is a thumb's width short of Apple's minimum, and
+ * on Record payment it is how a line comes off the bill. The TAP area grows to 44px and nothing moves — the same
+ * invisible ring the pager and the kebab carry (99-screen-states.css).
+ */
+@media (max-width: 860px) {
+  .wi-remove {
+    position: relative;
+  }
+
+  .wi-remove::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
+  }
+}
+
 .wi-remove svg {
   width: 0.8125rem;
   height: 0.8125rem;
@@ -686,6 +703,14 @@ input.wi-search-input-plain {
 }
 
 .sheet-head:has(.wi-back, .wi-back-gap) .wi-close {
+  justify-self: end;
+}
+
+/* The ✕'s own seat, held open on the page, where the back arrow is the way out and the ✕ is not drawn: without
+   it the title loses its middle cell and slides right. */
+.wi-close-gap {
+  width: 44px;
+  height: 44px;
   justify-self: end;
 }
 
@@ -1722,6 +1747,20 @@ input.wi-search-input-plain {
 .wi-receipt-share .wi-section-label {
   margin: 0;
 }
+
+/*
+ * The bill, capped and scrollable (`compactPreview`).
+ *
+ * The three-tap done screen shows the bill rather than hiding it — the desk reads it before pressing send — but
+ * at full height its 284px put every button below the fold. Twelve rem shows the business, the date, the token
+ * and the first services; the rest is a scroll inside the slip, not a scroll of the whole screen.
+ */
+.wi-receipt-paper-short {
+  max-height: 12rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 
 /* The bill as the client will read it: a slip of paper, the chat's own bold and italic, the text's own line breaks. */
 .wi-receipt-paper {

@@ -9,8 +9,12 @@
  * Screens that can only ever show ONE branch: a branch's menu, a branch's free times and a branch's settings
  * (Jira GRW-396 — Settings has no "all"). The picker offers no "All" on them and shows the branch they are
  * showing.
+ *
+ * Record payment joins them (owner, 2026-10-10). A sale is taken at a counter, and a counter is at one branch:
+ * its services, its stylists and its till all belong to that branch, so "All branches" would name no till the
+ * money could go into.
  */
-const ONE_BRANCH_ONLY = ['/services', '/availability', '/settings'];
+const ONE_BRANCH_ONLY = ['/services', '/availability', '/settings', '/appointments/new'];
 
 /**
  * Screens the server draws from `?branch=` (with `BranchUrlSync`). A new pick is written into their address so

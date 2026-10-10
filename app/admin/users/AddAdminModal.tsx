@@ -25,6 +25,8 @@ export interface RoleOption {
   id: string;
   name: string;
   isBuiltin: boolean;
+  /** Every permission the role grants — all of them for the built-in role. The API always sent it; batch D reads it. */
+  permissions: string[];
 }
 
 const REQUEST_TIMEOUT_MS = 30_000;

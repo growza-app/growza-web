@@ -935,6 +935,20 @@ body.admin-body {
   opacity: 0.6;
 }
 
+/*
+ * Batch D — a read-only screen (one disabled <fieldset>, see PlanForm). The buttons inside set their own opacity and
+ * cursor inline from their `disabled` prop, which a fieldset does not pass down, so "Change price" kept looking live
+ * while doing nothing. !important is the only way past an inline style. Fields keep full-strength text: they are
+ * there to be read.
+ */
+.admin-view-only :is(button, input, select, textarea):disabled {
+  cursor: not-allowed !important;
+}
+
+.admin-view-only button:disabled {
+  opacity: 0.5 !important;
+}
+
 @media (max-width: 860px) {
   /* Both take the full line: a three-segment picker plus a button is wider
      than the room left beside the freshness text at 360px, and wrapping them

@@ -929,6 +929,16 @@ export const api = {
       legs: { appointmentId: string; serviceId: string; paidAmountMinor: number; startAt: string; endAt: string }[];
     }>('/api/v1/counter-sales', input),
   /**
+   * The number the client gave when the bill was handed over, kept.
+   *
+   * A counter sale is recordable with nobody attached — the three-tap screen defaults to the branch's anonymous
+   * `Walk-in` row rather than demand a name. This is how it stops being anonymous: at "Send bill on WhatsApp", the
+   * one moment somebody actually wants to give a number. Anonymous to named only; a visit that already has a named
+   * client comes back 409.
+   */
+  assignClientToSale: (appointmentId: string, input: { customerId?: string; phone?: string; name?: string }) =>
+    post<{ appointmentIds: string[]; customerId: string }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
+  /**
    * Jira GRW-199 — an advance booking, in one request.
    *
    * The two-step `createHold` + `confirmAppointment` pair stays for the
