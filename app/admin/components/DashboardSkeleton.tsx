@@ -63,7 +63,7 @@ function FigureLines({ figure }: { figure: string }) {
         <Ghost>{figure}</Ghost>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: 12 }}>
-        <Ghost>↑ 00% vs last month</Ghost>
+        <Ghost>↑ 00% vs same day last month</Ghost>
       </div>
     </>
   );
@@ -93,7 +93,7 @@ export function DashboardSkeleton() {
               <Ghost>000</Ghost>
             </div>
             <div className="admin-stat-delta">
-              <Ghost>↑ 00% vs last month</Ghost>
+              <Ghost>↑ 00% vs same day last month</Ghost>
             </div>
           </div>
         ))}

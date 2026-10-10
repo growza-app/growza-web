@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
-import { adminFetch, AdminApiError } from '../lib/api';
+import { adminFetch } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
 import { BROWSER_BACK, NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
@@ -12,12 +12,8 @@ import { NotificationBell } from './NotificationBell';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
 import { useAdminSearch } from './SearchContext';
+import { useAdminMe } from './AdminMeContext';
 
-interface Me {
-  /** GRW-202 — `phone` and `roleName` so the account panel can name the role and the credential. */
-  admin: { id: string; name: string; phone: string | null; roleName: string | null };
-  permissions: string[];
-}
 
 function initialsOf(name: string): string {
   return name
@@ -38,13 +34,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [navOpen, setNavOpen] = useState(false);
-  const [me, setMe] = useState<Me['admin'] | null>(null);
+  // Batch D — /me comes from AdminMeProvider (SessionGate), shared with every screen, instead of a fetch of its own.
+  const { state: meState } = useAdminMe();
+  const me = meState.status === 'ready' ? meState.me.admin : null;
   // Null until /me answers — the nav renders nothing rather than flashing
   // items the admin may not be allowed to see.
-  const [permissions, setPermissions] = useState<string[] | null>(null);
-  const [meError, setMeError] = useState(false);
+  const permissions = meState.status === 'ready' ? meState.me.permissions : null;
+  // A 401 is handled by adminFetch's own sign-out; any other failure shows the whole nav (see below).
+  const meError = meState.status === 'error' && !meState.unauthorised;
   const [changingPassword, setChangingPassword] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
   const { query, setQuery } = useAdminSearch();
   const meta = resolveRouteMeta(pathname);
@@ -84,48 +84,32 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // leave it hanging open behind the new screen.
   useEffect(() => setNavOpen(false), [pathname]);
 
-  // GRW-93: the identity shown here is the admin actually signed in, not
-  // the design canvas's fixed mock person — a stale name next to a real
-  // sign-out control would be its own small QA finding.
-  useEffect(() => {
-    let cancelled = false;
-    adminFetch<Me>('/me')
-      .then((result) => {
-        if (cancelled) return;
-        setMe(result.admin);
-        setPermissions(result.permissions);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        // A 401 is genuinely handled elsewhere — SessionGate guarantees a
-        // session before this mounts, and adminFetch redirects on expiry. Any
-        // OTHER failure used to be swallowed entirely, which left the sidebar
-        // stuck on "Loading…" with blank initials and no explanation. That
-        // matters more now the nav itself is built from this response: a
-        // network blip would render an empty portal that looks like a
-        // permissions problem.
-        if (err instanceof AdminApiError && err.status === 401) return;
-        setMeError(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // GRW-93: the identity shown here is the admin actually signed in, not the design canvas's fixed mock person. A
+  // non-401 /me failure used to be swallowed, leaving the sidebar stuck on "Loading…"; the provider now records it
+  // as `error`, and the nav shows everything rather than nothing (see above).
 
+  /**
+   * Admin audit 2026-10-09, M9 — sign-out has to reach the server, or it has not happened.
+   *
+   * This used to clear the screen whatever the request did, on the reasoning that there was no server session to
+   * end. There is (GRW-480 stamps the sign-out and revokes the refresh token) and, more to the point, the refresh
+   * cookie is HttpOnly — only the server's reply can clear it. A logout that never arrived left it in the browser,
+   * and the next visit to /admin renewed from it without asking: "signed out" on a shared computer, still signed
+   * in. So a failure now says so and leaves the admin where they are, able to try again.
+   */
   async function signOut() {
     if (signingOut) return;
     setSigningOut(true);
+    setSignOutError(null);
     try {
       await adminFetch('/auth/logout', { method: 'POST' });
     } catch {
-      // Sign out client-side regardless — there is no server-side session
-      // to fail to clear (stateless bearer tokens; see the route's own
-      // comment), so a failed request here is never a reason to leave the
-      // admin stuck signed in.
-    } finally {
-      clearAdminSession();
-      router.push('/admin/login');
+      setSignOutError('Could not sign you out — you are still signed in. Check your connection and try again.');
+      setSigningOut(false);
+      return;
     }
+    clearAdminSession();
+    router.push('/admin/login');
   }
 
   return (
@@ -378,6 +362,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Icon name="logout" size={16} />
           </button>
         </div>
+        {signOutError ? (
+          <div role="alert" style={{ marginTop: 8, padding: '0 4px', fontSize: 12, lineHeight: 1.45, fontWeight: 600, color: 'oklch(0.86 0.09 40)' }}>
+            {signOutError}
+          </div>
+        ) : null}
       </aside>
 
       {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}

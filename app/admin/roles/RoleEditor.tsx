@@ -5,6 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
 import { FieldLabel, PrimaryButton, SecondaryButton, TextInput } from '../components/primitives';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-135 — creating and editing a platform role.
@@ -61,6 +62,7 @@ export function RoleEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { can } = useAdminMe();
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reason, setReason] = useState('');
@@ -202,10 +204,15 @@ export function RoleEditor({
                           type="checkbox"
                           checked={selected.has(option.key)}
                           onChange={() => toggle(option.key)}
-                          disabled={saving}
+                          // Batch D — the server refuses a role carrying a permission you do not hold
+                          // (`beyond_your_permissions`), so it is not offered. Already-ticked ones stay ticked.
+                          disabled={saving || !can(option.key)}
                           style={{ marginTop: 2 }}
                         />
-                        <span>{option.label}</span>
+                        <span style={can(option.key) ? undefined : { color: oklch.textFaint }}>
+                          {option.label}
+                          {can(option.key) ? null : <span style={{ fontSize: 11.5 }}> — you do not hold this</span>}
+                        </span>
                       </label>
                     ))}
                   </div>

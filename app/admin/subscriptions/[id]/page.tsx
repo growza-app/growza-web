@@ -1,11 +1,12 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { adminFetch, AdminApiError } from '../../lib/api';
+import { adminFetch } from '../../lib/api';
 import { Card, SecondaryButton } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
 import { oklch } from '../../tokens';
+import { useAdminMe } from '../../components/AdminMeContext';
 
 /**
  * GRW-112's subscription detail. The screen itself is `SubscriptionPanel`,
@@ -13,9 +14,6 @@ import { oklch } from '../../tokens';
  * the two things the panel cannot know on its own — who is looking (the
  * manage permission), and what the business is called.
  */
-interface Me {
-  permissions: string[];
-}
 
 interface BusinessDetailResponse {
   business: { name: string; planName: string };
@@ -23,24 +21,13 @@ interface BusinessDetailResponse {
 
 export default function SubscriptionDetailPage() {
   const params = useParams<{ id: string }>();
-  const [me, setMe] = useState<Me | null>(null);
-  const [meError, setMeError] = useState<string | null>(null);
+  const router = useRouter();
+  // Batch D — the shared /me (`useAdminMe`). Without it there is no way to know whether this admin may manage
+  // subscriptions: defaulting to "yes" would offer controls the server refuses, "no" silently would look like a
+  // permission they lack — so a failure is said, as before.
+  const { state: meState, me } = useAdminMe();
+  const meError = meState.status === 'error' && !meState.unauthorised ? meState.message : null;
   const [business, setBusiness] = useState<{ name: string; planName: string } | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    adminFetch<Me>('/me', { signal: controller.signal })
-      .then(setMe)
-      .catch((err) => {
-        if (controller.signal.aborted) return;
-        // Without /me there is no way to know whether this admin may manage
-        // subscriptions. Defaulting to "yes" would offer controls the server
-        // then refuses; defaulting to "no" silently would look like a
-        // permission they do not have. Say what happened instead.
-        setMeError(err instanceof AdminApiError ? err.message : 'Could not check your permissions.');
-      });
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -82,6 +69,9 @@ export default function SubscriptionDetailPage() {
       canDiscount={me.permissions.includes('admin.discount.manage')}
       businessName={business?.name}
       planName={business?.planName}
+      // Re-enrolling a cancelled subscription creates a new one: this page moves to it, so the admin sees the result
+      // instead of the row they re-enrolled from.
+      onReplaced={(id) => router.replace(`/admin/subscriptions/${id}`)}
     />
   );
 }

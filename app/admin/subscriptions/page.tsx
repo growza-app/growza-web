@@ -1,19 +1,20 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { isTerminalSubscriptionStatus } from '../lib/subscription-status';
 import { ReenrolModal, reenrolActionLabel } from '../components/ReenrolModal';
 import { formatDateOnly, formatMoneyMinor } from '../lib/format';
-import { SUBSCRIPTION_STATUS_VALUES, subscriptionStatusLabel } from '../lib/subscription-status';
+import { SUBSCRIPTION_STATUS_VALUES, SUBSCRIPTION_VIEWS, subscriptionStatusLabel } from '../lib/subscription-status';
 import { Card, EmptyState, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
 import { SUBSCRIPTION_COLUMNS } from '../lib/list-columns';
 import { Pagination, type PaginationState } from '../components/Pagination';
-import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
+import { INITIAL_PAGING, applyPageParams, mergeRows, reloadFromFirstPage } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { Icon, TypeIcon } from '../icons';
 import { oklch, typeColor } from '../tokens';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-111's Subscriptions list, wired to real `subscription` rows (GRW-109)
@@ -57,20 +58,25 @@ interface SubscriptionPage {
   total: number;
 }
 
+// `useSearchParams` needs a Suspense boundary, as on Businesses.
 export default function AdminSubscriptionsPage() {
+  return (
+    <Suspense>
+      <SubscriptionsList />
+    </Suspense>
+  );
+}
+
+function SubscriptionsList() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { query: search } = useAdminSearch();
   const [status, setStatus] = useState('All');
+  const viewParam = searchParams.get('view');
+  const view = viewParam && Object.hasOwn(SUBSCRIPTION_VIEWS, viewParam) ? viewParam : null;
   /** The subscription the re-enrol dialog is open for, or null (GRW-148). */
   const [reenrolFor, setReenrolFor] = useState<string | null>(null);
-  /**
-   * Bumped to refetch the list after an action that changed a row.
-   *
-   * The list has no imperative `load()` — it refetches from an effect keyed on
-   * the filters — so this is the one dependency that means "nothing about the
-   * query changed, but the answer did".
-   */
-  const [reloadToken, setReloadToken] = useState(0);
+  const canManage = useAdminMe().can('admin.subscription.manage');
   const [discountedOnly, setDiscountedOnly] = useState(false);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   /**
@@ -93,7 +99,7 @@ export default function AdminSubscriptionsPage() {
     // below twice for one filter click (the double-request bug traced on
     // Businesses).
     setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
-  }, [status, discountedOnly, trimmedSearch]);
+  }, [status, discountedOnly, trimmedSearch, view]);
 
   useEffect(() => {
     if (searchTooShort) return;
@@ -105,6 +111,7 @@ export default function AdminSubscriptionsPage() {
     if (trimmedSearch) params.set('search', trimmedSearch);
     if (status !== 'All') params.set('status', status);
     if (discountedOnly) params.set('discounted', 'true');
+    if (view) params.set('view', view);
     applyPageParams(params, paging);
 
     adminFetch<SubscriptionPage>(`/subscriptions?${params}`, { signal: controller.signal })
@@ -122,9 +129,9 @@ export default function AdminSubscriptionsPage() {
 
     return () => controller.abort();
      
-  }, [trimmedSearch, status, discountedOnly, paging, searchTooShort, reloadToken]);
+  }, [trimmedSearch, status, discountedOnly, view, paging, searchTooShort]);
 
-  const hasActiveFilters = status !== 'All' || discountedOnly || trimmedSearch.length >= 2;
+  const hasActiveFilters = status !== 'All' || discountedOnly || trimmedSearch.length >= 2 || view !== null;
 
   return (
     <div>
@@ -157,6 +164,33 @@ export default function AdminSubscriptionsPage() {
         >
           Discounted only
         </button>
+        {view ? (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              height: 38,
+              padding: '0 8px 0 14px',
+              borderRadius: 10,
+              background: oklch.surfaceSubtle,
+              border: `1px solid ${oklch.borderStrong}`,
+              fontSize: 13.5,
+              fontWeight: 700,
+              color: oklch.textStrong,
+            }}
+          >
+            {SUBSCRIPTION_VIEWS[view]}
+            <button
+              type="button"
+              onClick={() => router.replace('/admin/subscriptions')}
+              aria-label={`Show all subscriptions, not only ${SUBSCRIPTION_VIEWS[view]!.toLowerCase()}`}
+              style={{ height: 28, padding: '0 10px', borderRadius: 8, border: 'none', background: 'white', color: oklch.accentText, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Show all
+            </button>
+          </span>
+        ) : null}
       </div>
 
       {searchTooShort ? (
@@ -177,7 +211,11 @@ export default function AdminSubscriptionsPage() {
           </div>
         </Card>
       ) : !page || page.total === 0 ? (
-        hasActiveFilters ? (
+        view && status === 'All' && !discountedOnly && trimmedSearch.length < 2 ? (
+          // A dashboard tile can be opened after its count has gone to 0 — that is good news, not a failed search.
+          // Only on the view alone (review fix): with a status or search on top, the empty list is theirs.
+          <EmptyState icon="subs" title="None right now" sub={`No subscriptions are in “${SUBSCRIPTION_VIEWS[view]}” at the moment.`} />
+        ) : hasActiveFilters ? (
           <EmptyState icon="subs" title="No subscriptions match" sub="Try a different status or search term." />
         ) : (
           <EmptyState icon="subs" title="No subscriptions yet" sub="A business gets one when it is put on a plan." />
@@ -247,7 +285,9 @@ export default function AdminSubscriptionsPage() {
                     {/* FR-01 — labelled with the action it will actually
                         perform, and absent entirely on a subscription that is
                         already trading normally (FR-05). */}
-                    {reenrolActionLabel(s.status) ? (
+                    {/* Batch D — re-enrol, reactivate and resume need `admin.subscription.manage`; the list is open to
+                        `admin.subscription.view`, and its dialog's first request answered a viewer with a 403. */}
+                    {canManage && reenrolActionLabel(s.status) ? (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -306,8 +346,9 @@ export default function AdminSubscriptionsPage() {
         // The list is the one screen that must not keep showing a Cancelled
         // pill next to a subscription that has just been re-enrolled — that is
         // the "the button did nothing" reading this product has already been
-        // bitten by once.
-        onDone={() => setReloadToken((n) => n + 1)}
+        // bitten by once. From page 1 (audit M13): a reload token refetched the page in whatever mode it was in,
+        // so after "Load more" it appended that page a second time.
+        onDone={() => setPaging(reloadFromFirstPage)}
       />
     </div>
   );

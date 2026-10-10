@@ -9,9 +9,10 @@ import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { Pagination, type PaginationState } from '../components/Pagination';
 import { VerticalFilterSheet } from '../components/VerticalFilterSheet';
-import { INITIAL_PAGING, applyPageParams, mergeRows } from '../lib/paging';
+import { INITIAL_PAGING, applyPageParams, mergeRows, reloadFromFirstPage } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch, STATUS_COLORS, typeColor } from '../tokens';
+import { useAdminMe } from '../components/AdminMeContext';
 
 /**
  * GRW-101's Businesses list, wired to GRW-100's real read layer in place of
@@ -79,8 +80,7 @@ function AdminBusinessesInner() {
   const { query: search } = useAdminSearch();
   const [vertical, setVertical] = useState('All');
   // GRW-104's dashboard drill-through (`?status=suspended`) lands here
-  // already filtered — read once on mount rather than staying synced to the
-  // URL, since nothing on this page itself needs to write it back.
+  // already filtered — read once on mount, and written back below.
   const [status, setStatus] = useState(() => {
     const fromUrl = searchParams.get('status');
     return fromUrl && STATUS_OPTIONS.includes(fromUrl) ? fromUrl : 'All';
@@ -88,6 +88,19 @@ function AdminBusinessesInner() {
   const [createdFrom] = useState(() => searchParams.get('createdFrom'));
   const [createdFromCleared, setCreatedFromCleared] = useState(false);
   const activeCreatedFrom = createdFromCleared ? null : createdFrom;
+
+  /*
+   * Admin audit 2026-10-09, L10 — the URL follows the filters it was read from. It was read once and never written,
+   * so an admin who opened "Suspended" from the dashboard, set the list back to All and reloaded was shown Suspended
+   * again — a filter they had cleared, with nothing on screen saying why the list was short.
+   */
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (status !== 'All') params.set('status', status);
+    if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    const next = params.size > 0 ? `/admin/businesses?${params}` : '/admin/businesses';
+    if (`${window.location.pathname}${window.location.search}` !== next) router.replace(next, { scroll: false });
+  }, [status, activeCreatedFrom, router]);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<BusinessPage | null>(null);
   /**
@@ -149,23 +162,20 @@ function AdminBusinessesInner() {
   /**
    * The verticals that exist, and whether this admin may add a business.
    *
-   * `/me` is the same source `AdminShell` filters the nav from — one answer
-   * about permissions in the frontend, not two that can disagree. AC-02: the
-   * control is not rendered for an admin who cannot use it, and the route
-   * refuses them regardless.
+   * AC-02: the control is not rendered for an admin who cannot use it, and the route refuses them regardless.
+   *
+   * Batch D — permissions come from the shared `/me` (`useAdminMe`) instead of a second read here, and Add business
+   * needs `admin.plan.view` as well: the form's plan picker loads `/plans`, so a role that could create but not see
+   * plans was offered a form that only ever showed a load error.
    */
   const [verticalNames, setVerticalNames] = useState<string[]>([]);
-  const [canCreate, setCanCreate] = useState(false);
+  const { can } = useAdminMe();
+  const canCreate = can('admin.business.create') && can('admin.plan.view');
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([
-      adminFetch<{ code: string; name: string }[]>('/business-types', { signal: controller.signal }),
-      adminFetch<{ permissions: string[] }>('/me', { signal: controller.signal }),
-    ])
-      .then(([types, me]) => {
-        if (controller.signal.aborted) return;
-        setVerticalNames(types.map((t) => t.name));
-        setCanCreate(me.permissions.includes('admin.business.create'));
+    adminFetch<{ code: string; name: string }[]>('/business-types', { signal: controller.signal })
+      .then((types) => {
+        if (!controller.signal.aborted) setVerticalNames(types.map((t) => t.name));
       })
       .catch(() => {
         // A filter list that failed to load is a narrower page, not a broken
@@ -319,7 +329,7 @@ function AdminBusinessesInner() {
             // locally: the list carries figures this screen does not compute
             // (branches, users, plan), and a hand-made row would be the one
             // row on the page that is a guess.
-            setPaging((p) => ({ ...p }));
+            setPaging(reloadFromFirstPage);
           }}
         />
       ) : null}

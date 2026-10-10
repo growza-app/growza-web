@@ -62,11 +62,31 @@ export const ACTION_TINTS = {
  * compare against (a first month, where "↑ 100%" would be noise rather than
  * information).
  */
-export function percentDelta(current: number, previous: number): { direction: 'up' | 'down' | 'flat'; text: string } | undefined {
+export function percentDelta(
+  current: number,
+  previous: number,
+  /**
+   * What `previous` is. Admin audit 2026-10-09, M11: this month so far is compared with last month up to the same
+   * day, so the words say so — "vs last month" against a whole month read ~95% down on every card on the 2nd.
+   */
+  against: string = SAME_DAY_LAST_MONTH,
+): { direction: 'up' | 'down' | 'flat'; text: string } | undefined {
   if (previous === 0) return undefined;
   const pct = Math.round(((current - previous) / previous) * 100);
-  if (pct === 0) return { direction: 'flat', text: 'no change vs last month' };
-  return { direction: pct > 0 ? 'up' : 'down', text: `${Math.abs(pct)}% vs last month` };
+  if (pct === 0) return { direction: 'flat', text: `no change ${against}` };
+  return { direction: pct > 0 ? 'up' : 'down', text: `${Math.abs(pct)}% ${against}` };
+}
+
+export const SAME_DAY_LAST_MONTH = 'vs same day last month';
+/** Total businesses is a count at an instant, compared with the count when the month began. */
+export const SINCE_THE_FIRST = 'since the 1st';
+
+/**
+ * Audit M11 — what to compare this month with, and the words for it: last month up to the same day from an API
+ * that sends it, otherwise the whole of last month, labelled as exactly that (the dashboard can ship first).
+ */
+export function lastMonthFigure(sameSpan: number | undefined, wholeMonth: number): { previous: number; against: string } {
+  return sameSpan === undefined ? { previous: wholeMonth, against: 'vs last month' } : { previous: sameSpan, against: SAME_DAY_LAST_MONTH };
 }
 
 /**
@@ -125,10 +145,14 @@ export function shareLabel(count: number, total: number, pct: number): string {
 export const PLATFORM_EMPTY_COPY = 'No businesses on the platform yet.';
 
 /** The same idea in whole businesses rather than a percentage — what "12 more than last month" actually means. */
-export function countDelta(current: number, previous: number): { direction: 'up' | 'down' | 'flat'; text: string } {
+export function countDelta(
+  current: number,
+  previous: number,
+  against: string = SAME_DAY_LAST_MONTH,
+): { direction: 'up' | 'down' | 'flat'; text: string } {
   const diff = current - previous;
-  if (diff === 0) return { direction: 'flat', text: 'same as last month' };
-  return { direction: diff > 0 ? 'up' : 'down', text: `${Math.abs(diff)} vs last month` };
+  if (diff === 0) return { direction: 'flat', text: `no change ${against}` };
+  return { direction: diff > 0 ? 'up' : 'down', text: `${Math.abs(diff)} ${against}` };
 }
 
 /**
@@ -357,6 +381,8 @@ export type BookingOutcome = 'confirmed' | 'completed' | 'no_show' | 'cancelled'
 export interface PlatformBookings {
   thisMonth: number;
   previousMonth: number;
+  /** Last month up to the same point (audit M11). Absent from an API older than batch G. */
+  previousToDate?: number;
   outcomes: Array<{ status: BookingOutcome; count: number }>;
 }
 
@@ -402,7 +428,8 @@ export function BookingsCard({
   platformEmpty: boolean;
   className?: string;
 }) {
-  const delta = percentDelta(bookings.thisMonth, bookings.previousMonth);
+  const last = lastMonthFigure(bookings.previousToDate, bookings.previousMonth);
+  const delta = percentDelta(bookings.thisMonth, last.previous, last.against);
   const deltaColor =
     delta?.direction === 'up' ? 'oklch(0.5 0.13 150)' : delta?.direction === 'down' ? 'oklch(0.53 0.16 25)' : oklch.textFaint;
   // BR-04 — one call across every outcome, so the shares total exactly 100.

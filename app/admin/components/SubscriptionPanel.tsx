@@ -53,6 +53,8 @@ export interface SubscriptionPanelSubscription {
   branchesIncluded?: number;
   branchAddonOverrideMinor?: number | null;
   branchAddonOverrideReason?: string | null;
+  /** Admin audit 2026-10-09 (M3) — what is owed NOW across every unpaid bill. Absent from an API older than batch E. */
+  owedMinor?: number;
   /** Jira GRW-161 — the next invoice on today's open branches, worked out by the invoice generator's own pricing. */
   nextBill?: {
     basePriceMinor: number;
@@ -83,6 +85,7 @@ export function SubscriptionPanel({
   businessName,
   planName,
   onChanged,
+  onReplaced,
 }: {
   subscriptionId: string;
   canManage: boolean;
@@ -103,6 +106,11 @@ export function SubscriptionPanel({
   planName?: string;
   /** Called after a status change, so a host showing the same status elsewhere can refresh it. */
   onChanged?: () => void;
+  /**
+   * Re-enrolling a cancelled subscription creates a NEW one. The host decides where that leads — the subscription
+   * page moves to it; the business page needs nothing, because its own refetch (`onChanged`) already picks it up.
+   */
+  onReplaced?: (subscriptionId: string) => void;
 }) {
   const [subscription, setSubscription] = useState<SubscriptionPanelSubscription | null>(null);
   const [missing, setMissing] = useState(false);
@@ -457,8 +465,10 @@ export function SubscriptionPanel({
         subscription={discountOpen ? s : null}
         currentDiscount={discountOpen ? currentDiscount : null}
         onClose={() => setDiscountOpen(false)}
-        onSaved={(updated) => {
-          setSubscription((prev) => (prev ? { ...prev, ...updated } : prev));
+        onSaved={() => {
+          // Re-read, as every other save on this panel does. Merging the reply kept the stale `nextBill`, which the
+          // price card reads first — so the old discount, the old total and "Add discount" stayed on screen.
+          void load();
           onChanged?.();
         }}
       />
@@ -467,15 +477,22 @@ export function SubscriptionPanel({
         subscriptionId={reenrolOpen ? subscriptionId : null}
         onClose={() => setReenrolOpen(false)}
         onDone={(result) => {
-          void load();
+          // Reloading THIS id after a re-enrol showed the old subscription, still Cancelled with Re-enrol live — so it
+          // looked as if nothing happened, and a second press got 409 subscription_exists.
+          if (onReplaced && result.created && result.subscription.id !== subscriptionId) onReplaced(result.subscription.id);
+          else void load();
           onChanged?.();
           // Same reasoning as the payment note: a part payment that did NOT
           // restore the subscription is a state the admin has to act on, and
           // must not vanish with a toast.
+          // M5 — "Recorded" only when something was: the dialog now refuses a no-payment request that could change
+          // nothing, but an API answer without a payment must still not claim one.
           setRecordedNote(
             result.trading
               ? null
-              : `Recorded, but ${formatMoneyMinor(result.outstandingMinor)} is still outstanding — the subscription stays as it is until the balance is cleared.`,
+              : result.payment
+                ? `Recorded, but ${formatMoneyMinor(result.outstandingMinor)} is still outstanding — the subscription stays as it is until the balance is cleared.`
+                : `Nothing changed — ${formatMoneyMinor(result.outstandingMinor)} is still owed, and the subscription stays as it is until it is paid.`,
           );
         }}
       />

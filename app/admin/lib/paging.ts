@@ -98,6 +98,18 @@ export function mergeRows<T>(previous: readonly T[], incoming: readonly T[], int
   return intent === 'append' ? [...previous, ...incoming] : [...incoming];
 }
 
+/**
+ * Admin audit 2026-10-09, M13 — the state to reload a list in after a save changed it: page 1, replacing.
+ *
+ * Refetching with the state as it was (`{ ...p }`) kept `append` after a "Load more", so the page was fetched again
+ * and added again — every row on it twice — and a new row, which sorts first, was not on that page at all. A save
+ * can move rows across pages, so the only page that is certainly right afterwards is the first, on its own. Always
+ * a new object, so the list's effect runs even when it was already on page 1.
+ */
+export function reloadFromFirstPage<S extends PagingState>(state: S): S {
+  return { ...state, page: 1, intent: 'replace' };
+}
+
 export function totalPages(total: number, pageSize: number): number {
   if (!Number.isFinite(total) || total <= 0) return 1;
   return Math.max(1, Math.ceil(total / Math.max(pageSize, 1)));

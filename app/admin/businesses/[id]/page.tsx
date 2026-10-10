@@ -19,6 +19,7 @@ import { BillingTab } from '../../components/BillingTab';
 import { PaymentsCard, type BusinessPayments } from '../../components/PaymentsCard';
 import { subscriptionStatusLabel } from '../../lib/subscription-status';
 import { inr, oklch, typeColor } from '../../tokens';
+import { useAdminMe } from '../../components/AdminMeContext';
 
 /**
  * GRW-102's business detail — the one screen support lives in. This story
@@ -87,9 +88,6 @@ interface DetailResponse {
   payments?: BusinessPayments;
 }
 
-interface Me {
-  permissions: string[];
-}
 
 interface AuditRow {
   id: string;
@@ -142,7 +140,7 @@ function BusinessDetailInner() {
   const searchParams = useSearchParams();
 
   const [data, setData] = useState<DetailResponse | null>(null);
-  const [me, setMe] = useState<Me | null>(null);
+  const { me, can } = useAdminMe();
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -179,11 +177,11 @@ function BusinessDetailInner() {
     setError(null);
     setNotFound(false);
 
-    Promise.all([adminFetch<DetailResponse>(`/businesses/${params.id}`), adminFetch<Me>('/me')])
-      .then(([detail, meResult]) => {
+    // Batch D — permissions come from the shared /me (`useAdminMe`), not a second read with every page load.
+    adminFetch<DetailResponse>(`/businesses/${params.id}`)
+      .then((detail) => {
         if (cancelled) return;
         setData(detail);
-        setMe(meResult);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -381,8 +379,8 @@ function BusinessDetailInner() {
         title={pendingAction === 'suspend' ? `Suspend ${business.name}?` : `Reactivate ${business.name}?`}
         description={
           pendingAction === 'suspend'
-            ? 'Its dashboard users will not be able to sign in and no proactive WhatsApp messages will be sent on its behalf. Its bookings, customers, services and WhatsApp number are untouched — this can be reversed at any time.'
-            : 'Dashboard sign-in and proactive WhatsApp messages resume immediately. Nothing else about the business changes.'
+            ? 'Its dashboard users can still sign in and look at everything, but cannot change anything except pay the bill, and no proactive WhatsApp messages will be sent on its behalf. Its bookings, customers, services and WhatsApp number are untouched — this can be reversed at any time.'
+            : 'Its dashboard users can change things again and proactive WhatsApp messages resume immediately. Nothing else about the business changes.'
         }
         confirmLabel={pendingAction === 'suspend' ? 'Suspend business' : 'Reactivate business'}
         danger={pendingAction === 'suspend'}
@@ -663,8 +661,13 @@ function SuspendedBanner({ reason }: { reason: string | null }) {
 function OverviewTab({ business }: { business: BusinessDetail }) {
   const [activity, setActivity] = useState<AuditRow[] | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
+  // Batch D — Recent activity reads `/audit`, which needs `admin.audit.view`; the Overview tab needs nothing. Without
+  // this an admin who could see the business got a permission error in the card, and "View all" led to a tab hidden
+  // from them, which fell back to Overview.
+  const canAudit = useAdminMe().can('admin.audit.view');
 
   useEffect(() => {
+    if (!canAudit) return;
     let cancelled = false;
     adminFetch<{ rows: AuditRow[] }>(`/audit?tenantId=${business.tenantId}&pageSize=5`)
       .then((r) => {
@@ -676,7 +679,7 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
     return () => {
       cancelled = true;
     };
-  }, [business.tenantId]);
+  }, [business.tenantId, canAudit]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -691,6 +694,7 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
         </div>
       </Card>
 
+      {canAudit ? (
       <Card>
         <SectionTitle
           title="Recent activity"
@@ -727,6 +731,7 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
           </div>
         )}
       </Card>
+      ) : null}
     </div>
   );
 }

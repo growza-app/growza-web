@@ -68,13 +68,18 @@ export const QUICK_ACTIONS: Array<{
   tint: keyof typeof ACTION_TINTS;
   /** Admin mobile dashboard only — desktop still shows all five in one row. */
   hideOnMobile?: boolean;
+  /**
+   * Batch D — what the action needs. Shown only to an admin who holds it: these tiles were offered to every role
+   * that could open the dashboard, and each led a role without it to a 403 page. The sidebar was already filtered.
+   */
+  permission: string;
 }> = [
-  { icon: 'businesses', label: 'Add business', href: '/admin/businesses', tint: 'businesses' },
-  { icon: 'users', label: 'Invite admin', href: '/admin/users', tint: 'users' },
-  { icon: 'plans', label: 'Create plan', href: '/admin/plans/new', tint: 'plans' },
-  { icon: 'usage', label: 'View usage', href: '/admin/usage', tint: 'usage' },
+  { icon: 'businesses', label: 'Add business', href: '/admin/businesses', tint: 'businesses', permission: 'admin.business.create' },
+  { icon: 'users', label: 'Invite admin', href: '/admin/users', tint: 'users', permission: 'admin.user.manage' },
+  { icon: 'plans', label: 'Create plan', href: '/admin/plans/new', tint: 'plans', permission: 'admin.plan.manage' },
+  { icon: 'usage', label: 'View usage', href: '/admin/usage', tint: 'usage', permission: 'admin.usage.view' },
   // Least likely of the five to be reached for from a phone mid-task — kept
   // on desktop, dropped from the mobile grid so the remaining four sit in one
   // even 4-up row instead of a lone tile on its own second line.
-  { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit', hideOnMobile: true },
+  { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit', hideOnMobile: true, permission: 'admin.audit.view' },
 ];

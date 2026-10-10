@@ -52,6 +52,8 @@ export const STATUS_COLORS: Record<string, [fg: string, bg: string]> = {
   // 'Pending' and 'Paid' already exist above and are reused deliberately —
   // one colour per meaning, across every screen.
   Unpaid: ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
+  // Still owed, like Unpaid — the same amber, not Paid's green.
+  'Part paid': ['oklch(0.52 0.13 65)', 'oklch(0.96 0.05 80)'],
   Refunded: ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],
   'Part refunded': ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],
   Issued: ['oklch(0.5 0.02 155)', 'oklch(0.95 0.006 150)'],

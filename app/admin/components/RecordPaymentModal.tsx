@@ -39,6 +39,23 @@ const REQUEST_TIMEOUT_MS = 30_000;
 export interface RecordPaymentSubscription {
   id: string;
   finalPriceMinor: number;
+  /** Admin audit 2026-10-09 (M3) — what is owed NOW across every unpaid bill (the API's `stillOwedMinor`). */
+  owedMinor?: number;
+  /** The next bill on today's branches — base price, extra branches, less the discount. */
+  nextBill?: { finalPriceMinor: number };
+}
+
+/**
+ * Admin audit 2026-10-09 (M3) — the figure to record against.
+ *
+ * It was `finalPriceMinor`: the base price less the discount, with no extra-branch charge and no earlier month. An
+ * admin recorded that, the invoice went part-paid, and the subscription was not restored, because restoring is
+ * decided by what is owed reaching zero. What is owed now wins; with nothing owed, the next bill — branches included.
+ */
+export function amountToRecord(s: RecordPaymentSubscription): { minor: number; owedNow: boolean; nextBillMinor: number } {
+  const nextBillMinor = s.nextBill?.finalPriceMinor ?? s.finalPriceMinor;
+  const owed = s.owedMinor ?? 0;
+  return owed > 0 ? { minor: owed, owedNow: true, nextBillMinor } : { minor: nextBillMinor, owedNow: false, nextBillMinor };
 }
 
 /** The 201 body: the payment row, plus what recording it actually did. */
@@ -139,12 +156,15 @@ export function RecordPaymentModal({
     if (openedFor.current === subscription.id) return;
     openedFor.current = subscription.id;
     attemptKey.current = newAttemptKey();
-    setAmount(String(subscription.finalPriceMinor / 100));
+    setAmount(String(amountToRecord(subscription).minor / 100));
     setMethod('bank_transfer');
     setReference('');
     setPaidAt(localDateTimeValue(new Date()));
     setReason('');
     setError(null);
+    // Jira GRW-475 — a confirmation answers one figure. Left set, reopening showed "The amount is right — record it"
+    // with no warning above it, ready to send an unchecked amount pre-confirmed.
+    setNeedsConfirm(false);
   }, [open, subscription]);
 
   // Escape closes it, focus stays inside, and goes back to the button that opened it (Jira GRW-342). Not while a
@@ -155,7 +175,8 @@ export function RecordPaymentModal({
   if (!open) return null;
 
   const parsedAmount = parseRupees(amount);
-  const owed = subscription.finalPriceMinor;
+  const { minor: owed, owedNow, nextBillMinor } = amountToRecord(subscription);
+  const owedWord = owedNow ? 'owed' : 'charged';
   const partial = parsedAmount.ok && parsedAmount.minor < owed;
   const overpaid = parsedAmount.ok && parsedAmount.minor > owed;
   const paidAtDate = paidAt === '' ? null : new Date(paidAt);
@@ -290,7 +311,12 @@ export function RecordPaymentModal({
               border: `1px solid ${oklch.border}`,
             }}
           >
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>What they are charged</span>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>
+              {owedNow ? 'Owed now' : 'Their next bill'}
+              {owedNow && nextBillMinor !== owed ? (
+                <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: oklch.textMuted }}>Next bill {inr(nextBillMinor / 100)}</span>
+              ) : null}
+            </span>
             <span style={{ fontSize: 16, fontWeight: 800, color: oklch.text }}>{inr(owed / 100)}</span>
           </div>
 
@@ -336,7 +362,11 @@ export function RecordPaymentModal({
                 inputMode="decimal"
                 disabled={saving}
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  // A changed amount has not been confirmed: it goes back through the server's check (GRW-475).
+                  setNeedsConfirm(false);
+                }}
                 style={{ marginTop: 7, fontSize: 15, fontWeight: 700 }}
               />
             </div>
@@ -397,11 +427,11 @@ export function RecordPaymentModal({
           {blocker && amount !== '' ? <Note tone="danger">{blocker}</Note> : null}
           {partial ? (
             <Note tone="muted">
-              Less than the {inr(owed / 100)} charged. It is recorded as exactly what arrived — the rest stays owed, and the subscription is
+              Less than the {inr(owed / 100)} {owedWord}. It is recorded as exactly what arrived — the rest stays owed, and the subscription is
               not restored until the balance is paid.
             </Note>
           ) : null}
-          {overpaid ? <Note tone="muted">More than the {inr(owed / 100)} charged. Recorded as received; nothing is refunded here.</Note> : null}
+          {overpaid ? <Note tone="muted">More than the {inr(owed / 100)} {owedWord}. Recorded as received; nothing is refunded here.</Note> : null}
 
           <div
             style={{
