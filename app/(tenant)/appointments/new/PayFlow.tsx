@@ -466,7 +466,14 @@ export function PayFlow({
         totalMinor: paidMinor,
         mode,
         bill,
-        phone: token?.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
+        /*
+         * Whose number the receipt is sent to.
+         *
+         * A booking's client is held as `named` — `Appointment` carries no `customerId`, and the write does
+         * not need one — so asking `client` for a phone gives nothing and the done screen's WhatsApp box came
+         * up empty for a client who has a number on file. The booking has it; take it from there.
+         */
+        phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
         summary: [tokenNo !== null ? nv.token(tokenNo) : null, modeWord(mode), names, stylist].filter(Boolean).join(' · '),
       });
       setStep('done');

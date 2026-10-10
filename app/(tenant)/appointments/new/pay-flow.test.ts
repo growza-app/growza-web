@@ -434,8 +434,12 @@ describe('Record payment in three taps', () => {
     // ① still asks nobody for a name; the capture is on ③, where the client wants something for the number.
     expect(done).toMatch(/onNumberGiven=\{givenPhone \? undefined : keepClient\}/);
     expect(done).toMatch(/api\s*\.assignClientToSale\(appointmentId, \{ phone: typed \}\)/);
-    // A token's client and a client picked on ① are already attached, so their number arrives prefilled.
-    expect(flow).toMatch(/phone: token\?\.customerPhone \?\? \(client\.kind === 'existing' \? client\.phone : null\)/);
+    // A token's client, a BOOKING's client (2026-10-10) and a client picked on ① are already attached, so
+    // their number arrives prefilled — which is what switches the capture above off. A booking whose client
+    // gave no number has none to prefill, and is offered the capture like any other sale.
+    expect(flow).toMatch(
+      /phone: token\?\.customerPhone \?\? visit\?\.appointment\.customerPhone \?\? \(client\.kind === 'existing' \? client\.phone : null\)/,
+    );
     expect(receipt).toMatch(/const \[editing, setEditing\] = useState\(!phone\)/);
     // "Change" on a client's own bill sends THIS bill elsewhere; it must never re-point their record.
     expect(receipt).toMatch(/if \(onNumberGiven && !phone\) onNumberGiven\(toStoredPhone\(typed\)!\);/);

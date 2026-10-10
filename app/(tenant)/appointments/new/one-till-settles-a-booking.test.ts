@@ -97,6 +97,12 @@ describe('one till settles a booking too', () => {
     expect(board).toMatch(/if \(!want \|\| giving\) return;/);
   });
 
+  it("sends the receipt to the booking's own number", () => {
+    // A booking's client is held as `named` (there is no `customerId` on an Appointment), so asking `client`
+    // for a phone gives nothing — and the done screen's WhatsApp box came up empty for Paul, who has one.
+    expect(flow).toMatch(/phone: token\?\.customerPhone \?\? visit\?\.appointment\.customerPhone \?\? \(client\.kind === 'existing' \? client\.phone : null\)/);
+  });
+
   it('builds that address in one place, so three doors cannot drift', () => {
     const lib = strip(readFileSync(resolve(here, '../../lib/pay-token.ts'), 'utf8'));
     expect(lib).toMatch(/export function payVisitHref\(/);
