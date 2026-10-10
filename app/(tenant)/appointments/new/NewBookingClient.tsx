@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NewVisitSheet, type VisitMode, type VisitPurpose } from '../../components/NewVisitSheet';
 import type { QueueEntry } from '../../lib/home-types';
+import type { Appointment } from '../../lib/api-types';
 import { PayFlow } from './PayFlow';
 
 /** Jira GRW-297 — `onClose` on a page presentation navigates back rather than unmounting an overlay. */
@@ -16,6 +17,8 @@ export function NewBookingClient({
   timezone,
   full = false,
   providerId = null,
+  visit,
+  visitGone = false,
 }: {
   mode: VisitMode;
   purpose?: VisitPurpose;
@@ -30,6 +33,10 @@ export function NewBookingClient({
   full?: boolean;
   /** The signed-in person's own chair, if they have one — the stylist the three-tap flow starts on. */
   providerId?: string | null;
+  /** A booking being settled: its client, stylist and services are the answer to ①, and it is COMPLETED, not sold. */
+  visit?: { appointment: Appointment; legs: Appointment[] };
+  /** The address named a booking that is no longer settleable: the screen says so instead of taking the money twice. */
+  visitGone?: boolean;
 }) {
   const router = useRouter();
   /*
@@ -56,7 +63,7 @@ export function NewBookingClient({
 
   if (quick && layout === 'unknown') return <div className="pf" aria-busy="true" />;
   if (quick && layout === 'phone') {
-    return <PayFlow token={token} tokenGone={tokenGone} providerId={providerId} timezone={timezone} backTo={backTo} />;
+    return <PayFlow token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} />;
   }
   return (
     <NewVisitSheet

@@ -4167,13 +4167,23 @@ export function NewVisitSheet({
               <>
                 {tillClosedUnpaid && <div className="wi-overlap" role="status">{nv.notPaidYet}</div>}
                 {checkoutError && <div role="alert" className="wi-error">{checkoutError}</div>}
+                {/*
+                  Owner, 2026-10-10 — Record payment, not a till of its own.
+                  Taking money is one job, and the desk should meet one screen doing it whether the person
+                  walked in or was booked. The visit's own day rides in the address because there is no read
+                  for one appointment by id; `?visit=` fills the flow in from it and settles it with
+                  `checkout`, never a second sale.
+                */}
                 <button
                   type="button"
                   className="sheet-item wi-take-payment"
-                  disabled={loadingCheckout}
-                  onClick={() => void openCheckout(stage.result)}
+                  onClick={() =>
+                    router.push(
+                      `/appointments/new?purpose=payment&visit=${encodeURIComponent(stage.result.appointmentId)}&on=${new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(stage.result.startAt))}`,
+                    )
+                  }
                 >
-                  {loadingCheckout ? nv.openingTill : nv.takePayment}
+                  {nv.takePayment}
                 </button>
               </>
             )}

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
-import type { PaymentMode, Provider, Service } from '../../lib/api-types';
+import type { Appointment, PaymentMode, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
@@ -108,6 +108,8 @@ export function spread(lines: readonly { priceMinor: number }[], totalMinor: num
 export function PayFlow({
   token,
   tokenGone,
+  visit,
+  visitGone = false,
   providerId,
   timezone,
   backTo,
@@ -115,6 +117,19 @@ export function PayFlow({
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
   tokenGone: boolean;
+  /**
+   * Owner, 2026-10-10 — a BOOKING being settled, in place of the till that used to open over it.
+   *
+   * Everything on ① is filled in from it: who it is, who did it, what they had and what it was booked at. All
+   * of it stays editable, because what was booked and what happened are different things often enough.
+   *
+   * The write is the difference and it is not cosmetic. A walk-in's payment CREATES the visit; a booking's
+   * payment COMPLETES rows that already exist. Recording a sale here would leave the booking `confirmed` for
+   * ever beside a second visit for the same work — the money right and the calendar wrong.
+   */
+  visit?: { appointment: Appointment; legs: Appointment[] };
+  /** The booking named is no longer settleable — settled elsewhere, moved, cancelled. */
+  visitGone?: boolean;
   /** The signed-in person's own chair, when they have one: the stylist ① starts on. */
   providerId: string | null;
   timezone: string;
@@ -192,12 +207,20 @@ export function PayFlow({
     };
   }, [location, token]);
 
-  // Who did it: the phone's last answer, else the signed-in stylist's own chair; and whether the done screen speaks.
+  /*
+   * Who did it: the booking's own stylist, else the phone's last answer, else the signed-in person's chair.
+   *
+   * The booking is decided HERE rather than in the prefill effect below, which guards itself with a ref. In
+   * development React mounts, unmounts and mounts again; the ref survives that, so the prefill's second pass
+   * returns early while this effect runs a second time — and the remembered stylist quietly replaced the one
+   * who is actually doing the work. One effect owns this state, so there is nothing to race.
+   */
   useEffect(() => {
+    const booked = visit?.appointment.providerId ?? null;
     const last = remembered(STYLIST_KEY);
-    setStylistId(last === 'nobody' ? null : (last ?? providerId));
+    setStylistId(booked ?? (last === 'nobody' ? null : (last ?? providerId)));
     setSound(remembered(SOUND_KEY) !== 'off');
-  }, [providerId]);
+  }, [providerId, visit]);
 
   // A token's services are the bill, once the menu is here to name them.
   useEffect(() => {
@@ -208,6 +231,31 @@ export function PayFlow({
   }, [token, services]);
 
   const toLine = (s: Service): Line => ({ serviceId: s.id, name: s.name, priceMinor: Number(s.priceMinor ?? 0) });
+
+  /*
+   * A booking fills ① in completely: the client, who it is with, and every leg at what it was BOOKED at.
+   *
+   * Booked, not catalogue: a price that has gone up since does not change what the client was quoted. The
+   * booking carries its own name and price for exactly this reason, so the row's `priceMinor` is the quote.
+   *
+   * The client is shown, never sent: in this mode the write is `checkout(appointmentId)`, which already knows
+   * whose visit it is. `Appointment` carries no `customerId`, only the name and number, and that is enough to
+   * put a name at the top of the screen.
+   */
+  const visitFilled = useRef(false);
+  useEffect(() => {
+    if (!visit || visitFilled.current) return;
+    visitFilled.current = true;
+    const legs = [visit.appointment, ...visit.legs];
+    setLines(
+      legs.map((a) => ({
+        serviceId: a.serviceId ?? '',
+        name: a.serviceName ?? '',
+        priceMinor: Number(a.priceMinor ?? 0),
+      })),
+    );
+    setClient({ kind: 'named', name: visit.appointment.customerName ?? '' });
+  }, [visit]);
 
   /*
    * The grid does not move once it is drawn (owner, 2026-10-10).
@@ -297,23 +345,82 @@ export function PayFlow({
     const amounts = spread(lines, totalMinor);
     const legs = lines.map((l, i) => ({ serviceId: l.serviceId, paidAmountMinor: amounts[i]! }));
     try {
-      const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : { customerName: (client as { name: string }).name };
-      const common = {
-        ...who,
-        services: legs,
-        paymentMode: mode,
-        idempotencyKey: attemptKey,
-        ...(token || !location ? {} : { location }),
-      };
-      const result = await guard((confirmed) =>
-        api.recordCounterSale(
-          stylistId
-            ? { ...common, schedulableId: stylistId, ...(confirmed ? { confirmLargeAmount: true } : {}) }
-            : { ...common, noStylist: true, ...(confirmed ? { confirmLargeAmount: true } : {}) },
-        ),
-      );
+      /*
+       * Two writes, chosen by what is being paid for — the whole reason this screen can serve both.
+       *
+       * A walk-in's payment CREATES the visit: `recordCounterSale`. A booking's payment COMPLETES rows that
+       * already exist: `checkout`. Sending a sale for a booking would take the money correctly and leave the
+       * booking `confirmed` for ever beside a duplicate visit, which is the one mistake worth the branch.
+       *
+       * `checkout` takes the ORIGINAL leg's amount directly and everything else as `extraServices`; a leg of
+       * the booking the client did not have is `cancelMemberIds`, which releases its chair. The booked legs
+       * still on the bill are matched by service, so a line the desk removed cancels rather than lingering.
+       */
+      const settled = visit
+        ? await (async () => {
+            const booked = [visit.appointment, ...visit.legs];
+            const left = new Map<string, string[]>();
+            for (const a of booked) left.set(a.serviceId ?? '', [...(left.get(a.serviceId ?? '') ?? []), a.id]);
+            const take = (serviceId: string) => left.get(serviceId)?.shift() ?? null;
+            // The leg the checkout is addressed to keeps its own amount; anything matched after it rides as a group member.
+            const originalIdx = lines.findIndex((l) => l.serviceId === visit.appointment.serviceId);
+            if (originalIdx >= 0) take(visit.appointment.serviceId ?? '');
+            const groupMembers: Array<{ appointmentId: string; paidAmountMinor: number; schedulableId?: string }> = [];
+            const extraServices: Array<{ serviceId: string; paidAmountMinor: number; schedulableId?: string }> = [];
+            lines.forEach((l, i) => {
+              if (i === originalIdx) return;
+              const id = take(l.serviceId);
+              if (id) groupMembers.push({ appointmentId: id, paidAmountMinor: amounts[i]!, ...(stylistId ? { schedulableId: stylistId } : {}) });
+              else extraServices.push({ serviceId: l.serviceId, paidAmountMinor: amounts[i]!, ...(stylistId ? { schedulableId: stylistId } : {}) });
+            });
+            // Whatever of the booking nobody claimed: the client did not have it.
+            const cancelMemberIds = [...left.values()].flat().filter((id) => id !== visit.appointment.id);
+            const r = await guard((confirmed) =>
+              api.checkout(visit.appointment.id, {
+                ...(originalIdx >= 0 ? { paidAmountMinor: amounts[originalIdx]! } : {}),
+                ...(stylistId ? { schedulableId: stylistId } : {}),
+                paymentMode: mode,
+                ...(extraServices.length ? { extraServices } : {}),
+                ...(groupMembers.length ? { groupMembers } : {}),
+                ...(cancelMemberIds.length ? { cancelMemberIds } : {}),
+                ...(confirmed ? { confirmLargeAmount: true } : {}),
+              }),
+            );
+            return {
+              appointmentId: r.appointmentId,
+              paidMinor: totalMinor,
+              schedulableId: stylistId,
+              startAt: visit.appointment.startAt,
+              tokenNo: null as number | null,
+            };
+          })()
+        : await (async () => {
+            const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : { customerName: (client as { name: string }).name };
+            const common = {
+              ...who,
+              services: legs,
+              paymentMode: mode,
+              idempotencyKey: attemptKey,
+              ...(token || !location ? {} : { location }),
+            };
+            const r = await guard((confirmed) =>
+              api.recordCounterSale(
+                stylistId
+                  ? { ...common, schedulableId: stylistId, ...(confirmed ? { confirmLargeAmount: true } : {}) }
+                  : { ...common, noStylist: true, ...(confirmed ? { confirmLargeAmount: true } : {}) },
+              ),
+            );
+            return {
+              appointmentId: r.appointmentId,
+              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
+              schedulableId: r.schedulableId,
+              startAt: r.startAt,
+              tokenNo: r.tokenNo ?? null,
+            };
+          })();
+      const result = settled;
       router.refresh();
-      const paidMinor = result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0);
+      const paidMinor = result.paidMinor;
       const stylist = result.schedulableId ? (providers.find((p) => p.id === result.schedulableId)?.displayName ?? null) : null;
       const when = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
         timeZone: timezone,
