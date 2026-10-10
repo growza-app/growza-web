@@ -365,7 +365,7 @@ export function NewVisitSheet({
    */
   const bookForm = pageForm && !forPayment;
   /** Which question is open over the form. `null` is the form itself. */
-  const [asking, setAsking] = useState<'services' | 'stylist' | 'when' | null>(null);
+  const [asking, setAsking] = useState<'services' | 'when' | null>(null);
   /**
    * Both routed pages — New booking and Record payment — pick services the same way (owner, 2026-10-07).
    *
@@ -3049,7 +3049,7 @@ export function NewVisitSheet({
 
   /** One line: a picture, what it asks, what it has been answered with, and a chevron saying it opens. */
   const bookRow = (
-    key: 'services' | 'stylist' | 'when',
+    key: 'services' | 'when',
     label: string,
     answer: string,
     photo: ReactNode,
@@ -3070,6 +3070,53 @@ export function NewVisitSheet({
         <IconChevronRight />
       </span>
     </button>
+  );
+
+  /*
+   * The stylist is a dropdown, not a door to a sheet (owner, 2026-10-10).
+   *
+   * Services and When are lists worth a screen — fifty-two of one, a date and a free-slot grid of the other. A
+   * salon's people are three or four names, and GRW-524 already settled that shape for the till: a sheet to
+   * choose between four things is a screen's worth of ceremony for one tap.
+   *
+   * Drawn as the row beside it so the three line up, with a real `<select>` laid over the whole thing at
+   * `opacity: 0` — the same trick the branch picker in the header uses. What it costs: nothing. What it buys:
+   * the phone's own wheel, which a receptionist has used ten thousand times, instead of ours.
+   */
+  /* Always answered — "Anyone free" is a real answer, not an empty row — so `wi-row-done` is unconditional. */
+  const stylistRow = (
+    <div className={`wi-row-btn wi-row-select wi-row-done ${busy ? 'wi-row-off' : ''}`}>
+      {rowPhoto(chosenStylistPhoto, <IconUser />)}
+      <span className="wi-row-text" aria-hidden="true">
+        <span className="wi-row-label">{providerNoun}</span>
+        <span className="wi-row-answer">{stylistAnswer}</span>
+      </span>
+      <span className="wi-row-chevron" aria-hidden="true">
+        <IconChevronDown />
+      </span>
+      <select
+        id="wi-stylist"
+        aria-label={nv.withWhom(providerNoun.toLowerCase())}
+        value={stylistValue}
+        onChange={(e) => pickStylist(e.target.value)}
+        disabled={busy}
+      >
+        {offersWhoever && (
+          <option value={WI_WHOEVER}>
+            {!later && freeCount !== null ? `${nv.whoeverIsFree} · ${nv.freeCount(freeCount)}` : nv.whoeverIsFree}
+          </option>
+        )}
+        {/* What each chair is doing, in the option's own words (GRW-198): the desk's real question is who can take this person. */}
+        {ableProviders.map((p) => {
+          const line = chairLine(p.id);
+          return (
+            <option key={p.id} value={p.id}>
+              {line ? `${p.displayName} · ${line}` : p.displayName}
+            </option>
+          );
+        })}
+      </select>
+    </div>
   );
 
   const bookRows = (
@@ -3097,7 +3144,7 @@ export function NewVisitSheet({
         A token has no stylist: `queueIt` posts the client, the services and the branch, and nothing else. The row
         was answerable and the answer was silently dropped, so while Waiting is the answer the row is not there.
       */}
-      {queueing ? null : bookRow('stylist', providerNoun, stylistAnswer, rowPhoto(chosenStylistPhoto, <IconUser />))}
+      {queueing ? null : stylistRow}
     </div>
   );
 
@@ -3124,7 +3171,7 @@ export function NewVisitSheet({
         />
       );
     }
-    const title = asking === 'when' ? nv.rowWhen : providerNoun;
+    const title = nv.rowWhen;
     return (
       <>
         <div className="sheet-backdrop" onClick={() => setAsking(null)} />
@@ -3137,7 +3184,7 @@ export function NewVisitSheet({
             <h2 className="sheet-title">{title}</h2>
           </div>
           <div className="wi-ask-body">
-            {asking === 'stylist' ? stylistField : whenChoices}
+            {whenChoices}
           </div>
           <div className="wi-ask-foot">
             <button type="button" className="btn" onClick={() => setAsking(null)}>

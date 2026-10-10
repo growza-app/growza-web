@@ -2040,6 +2040,48 @@ input.wi-search-input-plain {
   font-weight: 400;
 }
 
+/*
+ * The stylist row: the same row, with a real `<select>` laid over the whole of it.
+ *
+ * Everything visible is `aria-hidden` and the select carries the label, so a screen reader hears one control
+ * rather than a row and a menu that say the same thing. `appearance: none` and no background, because what is
+ * drawn underneath is the control — this is only the hit area and the phone's own wheel.
+ */
+.wi-row-select {
+  position: relative;
+  cursor: pointer;
+}
+
+.wi-row-select select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* The row is what shows focus, so the invisible select must not draw a second ring beside it. */
+.wi-row-select select:focus-visible {
+  outline: 0 !important;
+}
+
+.wi-row-select:focus-within {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm, 12px);
+}
+
+.wi-row-off {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .wi-row-chevron {
   flex: none;
   display: inline-flex;

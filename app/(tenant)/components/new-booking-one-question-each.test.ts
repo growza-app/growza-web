@@ -31,9 +31,12 @@ describe('New booking asks one question per line', () => {
 
   it('shows rows instead of the open controls, and the rows open a sheet', () => {
     expect(code).toMatch(/\{bookForm \? bookRows : servicesAndStylist\}/);
-    expect(code).toMatch(/const \[asking, setAsking\] = useState<'services' \| 'stylist' \| 'when' \| null>\(null\);/);
+    // Two questions open a sheet. The stylist is a dropdown in the row itself — see below.
+    expect(code).toMatch(/const \[asking, setAsking\] = useState<'services' \| 'when' \| null>\(null\);/);
     expect(code).toMatch(/onClick=\{\(\) => setAsking\(key\)\}/);
-    expect(code).toMatch(/asking === 'stylist' \? stylistField : whenChoices/);
+    // Services opens the till's own search (below); When opens the one built here.
+    expect(code).toMatch(/if \(asking === 'services' && services\) \{/);
+    expect(code).toMatch(/<div className="wi-ask-body">\s*\n\s*\{whenChoices\}/);
   });
 
   it('asks when exactly once: no Booking time select, no second slot grid', () => {
@@ -52,7 +55,7 @@ describe('New booking asks one question per line', () => {
   });
 
   it('hides the stylist row while the answer is Waiting, because a token has no stylist', () => {
-    expect(code).toMatch(/\{queueing \? null : bookRow\('stylist', providerNoun, stylistAnswer, rowPhoto\(/);
+    expect(code).toMatch(/\{queueing \? null : stylistRow\}/);
     // The reason it must be hidden: the token posts the client, the services and the branch, and nothing else.
     const post = code.slice(code.indexOf('await api.addToQueue({'));
     const payload = post.slice(0, post.indexOf('});'));
@@ -100,6 +103,14 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/rowPhoto\(firstPickedPhoto, <IconScissors \/>\)/);
     expect(code).toMatch(/rowPhoto\(null, <IconClock \/>\)/);
     expect(code).toMatch(/rowPhoto\(chosenStylistPhoto, <IconUser \/>\)/);
+    // The stylist is a dropdown, not a sheet: three or four names do not need a screen (GRW-524 settled this
+    // for the till). A real select lies over the row at opacity 0, so the phone's own wheel opens.
+    expect(code).toMatch(/const stylistRow = \(/);
+    expect(code).toMatch(/className=\{`wi-row-btn wi-row-select/);
+    expect(css).toMatch(/\.wi-row-select select \{[^}]*opacity: 0;/);
+    // One control to a screen reader: what is drawn is hidden from it, and the select carries the label.
+    expect(code).toMatch(/<span className="wi-row-text" aria-hidden="true">/);
+    expect(code).toMatch(/aria-label=\{nv\.withWhom\(providerNoun\.toLowerCase\(\)\)\}/);
     // Answered reads as colour, not only as weight: bold alone is invisible to someone scanning, not reading.
     expect(code).toMatch(/className=\{`wi-row-btn \$\{empty \? '' : 'wi-row-done'\}`\}/);
     expect(css).toMatch(/\.wi-row-done \.wi-row-photo \{[^}]*background: var\(--accent-soft\);/);
