@@ -25,7 +25,7 @@ export function billingCopy(lang: Lang) {
     amount: S('Amount', 'राशि'),
     paidBy: S('How it is paid', 'भुगतान कैसे होता है'),
     paidOnline: S('Pay online when the bill arrives, with Pay now.', 'बिल आने पर "अभी भुगतान करें" से ऑनलाइन भुगतान करें।'),
-    paidOffline: S('Pay Growza by UPI; we record it for you.', 'UPI से Growza को भुगतान करें; हम उसे दर्ज करते हैं।'),
+    paidOffline: S('Pay Growza by UPI. We mark it as paid.', 'UPI से Growza को भुगतान करें। हम इसे भुगतान हुआ मार्क कर देंगे।'),
     /*
      * Jira GRW-241 — UPI AutoPay, in the plainest words available.
      *

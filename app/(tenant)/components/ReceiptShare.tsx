@@ -6,7 +6,7 @@ import { useNewVisitCopy } from '../lib/use-copy';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { displayPhone, fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { rowsToText, whatsappHref, type ReceiptRow } from '../lib/receipt-text';
-import { dialable } from './BookingSheet';
+import { waDigits } from './BookingSheet';
 import { PhoneField } from './PhoneField';
 import { IconPrint, IconShare, IconWhatsApp } from './icons';
 
@@ -105,7 +105,7 @@ export function ReceiptShare({
   };
 
   const problem = checkPhone(typed, { required: true });
-  const digits = problem ? '' : dialable(toStoredPhone(typed));
+  const digits = problem ? '' : waDigits(toStoredPhone(typed));
   const shownProblem = touched ? problem : null;
 
   return (

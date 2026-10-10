@@ -107,6 +107,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     cancelledTodayShort: S('Cancelled today', 'आज रद्द हुए'),
     todayWord: S('Today', 'आज'),
     staffNotMarkedIn: S('Staff not marked in', 'स्टाफ़ की हाज़िरी बाकी'),
+    /** Jira GRW-563 — self-marked days the phone could not place; the owner says yes or no. */
+    attendanceToApprove: S('Attendance to approve', 'हाज़िरी मंज़ूर करनी है'),
     attendanceWord: S('Attendance', 'हाज़िरी'),
 
     quickLinks: S('Quick links', 'शॉर्टकट'),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatMoney } from '../lib/format';
 import { billingCopy } from '../lib/billing-copy';
 import { IconCheck, IconClose } from './icons';
 import type { Lang } from '../lib/lang';
@@ -50,11 +51,7 @@ type Payment = { amountMinor: number; currency: string; paidOn: string };
 export function PaymentReceivedNotice({ payment, lang, onClose }: { payment: Payment; lang: Lang; onClose: () => void }) {
   const t = billingCopy(lang);
   const locale = lang === 'hi' ? 'hi-IN' : 'en-IN';
-  const amount = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: payment.currency,
-    maximumFractionDigits: payment.amountMinor % 100 === 0 ? 0 : 2,
-  }).format(payment.amountMinor / 100);
+  const amount = formatMoney(payment.amountMinor, payment.currency, locale);
   const [y, m, d] = payment.paidOn.split('-').map(Number);
   const date = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
   return (

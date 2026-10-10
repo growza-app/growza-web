@@ -113,6 +113,11 @@ export interface Me {
    */
   /** `demo` — Jira GRW-266 · GRW-271: whether this server has the Try WhatsApp simulator at all (off in production). */
   whatsapp?: { booking: boolean; demo?: boolean };
+  /**
+   * Jira GRW-563 — `pending`: marks waiting for a Yes / No at the branches this person sees (0 for a stylist).
+   * `selfCheckIn`: whether a stylist's own branch offers phone check-in. Optional: the API may be a deploy behind.
+   */
+  attendance?: { pending: number; selfCheckIn: boolean };
   capabilities: {
     walkIn: boolean;
     /** GRW-219 — may a booking be moved to another time. Read by `BookingSheet`. */
@@ -394,18 +399,45 @@ export interface SettingsSummary {
   workingHours: Array<{ weekday: number; startTime: string; endTime: string }>;
 }
 
+export type ActivityTopic =
+  | 'appointment.confirmed'
+  | 'appointment.cancelled'
+  | 'appointment.rescheduled'
+  | 'appointment.walk_in'
+  | 'appointment.completed'
+  | 'appointment.no_show'
+  | 'billing.change_pending'
+  | 'billing.invoice'
+  | 'billing.payment'
+  | 'billing.status'
+  | 'billing.discount'
+  | 'billing.autopay_halted'
+  | 'conversation.handoff';
+
+/** Jira GRW-562 — the billing half of a feed row, by topic; `change_pending` keeps GRW-301's shape. */
+export type ActivityBilling =
+  | { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number }
+  | { invoiceNumber: string; totalMinor: number; currency: string; periodStart: string; periodEnd: string }
+  | { amountMinor: number; currency: string }
+  | { status: string }
+  | { discountAmountMinor: number; currency: string }
+  | { mandateStatus: string };
+
 export interface ActivityEvent {
+  /** Jira GRW-562 — the row's creation time in epoch ms: monotonic across every source, which the read cursor needs. */
   id: string;
-  topic: 'appointment.confirmed' | 'appointment.cancelled' | 'appointment.rescheduled' | 'billing.change_pending' | 'conversation.handoff';
+  topic: ActivityTopic;
   createdAt: string;
-  /** Booking topics only — null for `billing.change_pending`. */
+  /** Booking topics only — null for a billing row. */
   customerName: string | null;
   /** Jira GRW-477 — where the booking is; shown on "All branches". Null for billing rows. */
   branchName: string | null;
   startAt: string | null;
   serviceNames: string[] | null;
-  /** Jira GRW-301 — `billing.change_pending` only. */
-  billing: { currency: string; currentMonthlyMinor: number; nextMonthlyMinor: number; effectiveFrom: string; openBranches: number } | null;
+  billing: ActivityBilling | null;
+  /** Jira GRW-562 — who at the salon did it (a stylist's name), for a dashboard action; null for WhatsApp and billing. */
+  actorName: string | null;
+  actorRole: 'owner' | 'manager' | 'staff' | 'receptionist' | null;
 }
 
 export interface ProviderDay {
@@ -637,6 +669,34 @@ export interface AttendanceRow {
   rostered: boolean;
   /** Their own shift start that day as "HH:mm", or null on a day off — what "came late" is measured against. */
   shiftStart: string | null;
+  /*
+   * Jira GRW-563 — phone check-in. All OPTIONAL for the same reason `photoUrl` is: the API may be a deploy behind.
+   * `approval`: auto (verified, or from the register), pending (self-marked, the phone could not place her),
+   * approved, rejected. `id` is the row's, for the Yes / No route.
+   */
+  id?: string | null;
+  approval?: 'auto' | 'pending' | 'approved' | 'rejected' | null;
+  source?: 'register' | 'self' | 'self_unverified' | null;
+  inDistanceM?: number | null;
+  inAccuracyM?: number | null;
+  outDistanceM?: number | null;
+  rejectReason?: 'not_at_branch' | 'wrong_time' | 'other' | null;
+}
+
+/** Jira GRW-563 — one mark waiting for the owner's Yes or No. */
+export interface PendingAttendanceRow {
+  id: string;
+  providerId: string;
+  displayName: string;
+  photoUrl: string | null;
+  locationId: string;
+  onDate: string;
+  inAt: string | null;
+  outAt: string | null;
+  inDistanceM: number | null;
+  inAccuracyM: number | null;
+  outDistanceM: number | null;
+  markedAt: string;
 }
 
 export interface AttendanceRegister {

@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { SettingsSaveBar } from '../SettingsSaveBar';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { useCloseAfterSave } from '../../lib/close-after-save';
@@ -21,28 +20,24 @@ const REMINDER_DEFS = [
   { key: 'reminder_-2h', template: 'reminder_2h', nameKey: 'second', defaultHours: 2 },
 ] as const;
 
+/**
+ * Drawn only while WhatsApp booking is on (owner, 2026-10-10 — `page.tsx` sends anyone else back to Settings).
+ *
+ * It used to draw for everybody, with a "WhatsApp is coming soon" banner and a "Saved — not sending yet" label for
+ * a business that could not send (Jira GRW-158 · GRW-165). That was honest, but it was still a screen of settings
+ * that did nothing, and the row that opened it is now hidden for the same reason.
+ */
 export function RemindersForm({
   initial,
-  whatsappLive,
   branchName = null,
 }: {
   initial: SettingsSummary;
   /** Jira GRW-230 — set when a branch is picked: these are that branch's reminders. */
   branchName?: string | null;
-  /**
-   * Jira GRW-158 · GRW-165 — whether anything on this screen actually sends.
-   *
-   * Until WhatsApp is switched on for this business, nothing does. The rules
-   * are still stored and still expand into `scheduled_message` rows on every
-   * booking; there is simply no sender yet. An owner who sets these up and is
-   * not told that is an owner who believes their no-shows are about to drop.
-   */
-  whatsappLive?: boolean;
 }) {
   const t = useTranslations('settingsReminders');
   // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
   const closeForm = useCloseAfterSave('/settings');
-  const router = useRouter();
   /*
    * Jira GRW-474 — every saved rule is a row, not only the two this screen knows. It was built from two hard-coded
    * keys, so a business on another vertical's defaults (a clinic's 48-hour reminder) saw it as "off", and pressing
@@ -93,11 +88,7 @@ export function RemindersForm({
         .map((r) => ({ ruleKey: r.key, offsetMin: -(r.hours * 60), template: r.template }));
       await api.updateReminders(reminderRules, initial.scope.locationId);
       setSaved(true);
-      // Closes like every Settings form — unless WhatsApp is not live, when the saved message is also the news that
-      // nothing will be sent yet (`savedNotLive`), which the owner must read here.
-      if (whatsappLive) closeForm();
-      // Jira GRW-396 — the note above the form says whether this branch now has its own reminders.
-      else router.refresh();
+      closeForm();
     } catch (err) {
       // The server's reason — "your plan allows 1 reminder", "two reminders cannot go out at the same time".
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('errors.saveFailed'));
@@ -111,19 +102,9 @@ export function RemindersForm({
     <div className="card">
       <div className="card-head">{initial.scope.locationId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : t('title')}</div>
       <div className="card-body">
-        {whatsappLive ? (
-          <p className="field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
-            {t('liveHint')}
-          </p>
-        ) : (
-          /* Above the switches, not below them — an owner who has already
-             toggled a reminder and pressed Save has been misled, and a note
-             underneath arrives too late to stop that. */
-          <div className="banner banner-info" style={{ marginTop: 0, marginBottom: 16 }}>
-            <strong>{t('notLiveTitle')}</strong>
-            <div style={{ marginTop: 4 }}>{t('notLive')}</div>
-          </div>
-        )}
+        <p className="field-hint" style={{ marginTop: 0, marginBottom: 14 }}>
+          {t('liveHint')}
+        </p>
         {rows.map((row, i) => (
           <div
             key={row.key}
@@ -174,8 +155,7 @@ export function RemindersForm({
           onSave={save}
           saveLabel={t('save')}
           savingLabel={t('saving')}
-          // "Saved" alone would read as "done, it's working now". It is saved; it is not sending. Say both.
-          savedLabel={whatsappLive ? t('saved') : t('savedNotLive')}
+          savedLabel={t('saved')}
         />
       </div>
     </div>

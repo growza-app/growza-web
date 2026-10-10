@@ -67,6 +67,7 @@ import type {
   AppointmentStatus,
   AttendanceRegister,
   AttendanceRow,
+  PendingAttendanceRow,
   BookingCorrection,
   AvailabilityResponse,
   Capacity,
@@ -105,6 +106,15 @@ import type {
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
+import type { GeoFix } from './geo-fix';
+
+/** Jira GRW-563 — what the self check-in route answers. */
+export interface SelfMarkResult {
+  row: AttendanceRow;
+  /** Inside the fence: counted by itself. Otherwise the row waits for the owner. */
+  placed: boolean;
+  distanceM: number | null;
+}
 import type { AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import { downscaleImage } from './downscale';
 import type {
@@ -478,6 +488,17 @@ export const api = {
   }) => put<AttendanceRow>('/api/v1/attendance', input),
   clearAttendance: (providerId: string, date: string) =>
     del<{ ok: true }>(`/api/v1/attendance?providerId=${encodeURIComponent(providerId)}&date=${encodeURIComponent(date)}`),
+  /*
+   * Jira GRW-563 — a stylist's own day from her own phone. The body is only what the phone said; `{}` when it
+   * said nothing. No provider and no branch: both come from the session, and the fence is her own branch's.
+   */
+  selfCheckIn: (fix: GeoFix | null) => post<SelfMarkResult>('/api/v1/attendance/self/in', fix ?? {}),
+  selfCheckOut: (fix: GeoFix | null) => post<SelfMarkResult>('/api/v1/attendance/self/out', fix ?? {}),
+  /** Jira GRW-563 — marks waiting for a decision; a desk's own branch, the owner's picked one (null: every branch). */
+  pendingAttendance: (location?: string | null) =>
+    get<{ count: number; rows: PendingAttendanceRow[] }>(`/api/v1/attendance/pending${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  decideAttendance: (id: string, decision: 'approved' | 'rejected', reason?: 'not_at_branch' | 'wrong_time' | 'other') =>
+    post<{ row: AttendanceRow; needsMoving: number; pending: number }>(`/api/v1/attendance/${encodeURIComponent(id)}/approval`, { decision, ...(reason ? { reason } : {}) }),
   /**
    * GRW-168 — the roster's rostered minutes over a day range, already scoped
    * to the caller. The "busy" figure's denominator; see the route for why it
@@ -568,7 +589,20 @@ export const api = {
   branchClosePreview: (id: string) => get<BranchClosePreview>(`/api/v1/settings/branches/${id}/close-preview`),
   closeBranch: (id: string, reason: string) => post<{ branches: BranchSettings[] }>(`/api/v1/settings/branches/${id}/close`, { reason }),
   makeMainBranch: (id: string, reason: string) => post<{ branches: BranchSettings[] }>(`/api/v1/settings/branches/${id}/make-main`, { reason }),
-  updateBranch: (id: string, body: { name?: string; addressLine1?: string; addressCity?: string }) =>
+  updateBranch: (
+    id: string,
+    body: {
+      name?: string;
+      addressLine1?: string;
+      addressCity?: string;
+      /** Jira GRW-563 — the attendance fence: a pin (null clears it), or a pasted maps link; radius and the switches. */
+      geoPin?: { lat: number; lng: number } | null;
+      geoLink?: string;
+      geoRadiusM?: number;
+      geoEnabled?: boolean;
+      geoDeskApproves?: boolean;
+    },
+  ) =>
     patch<{ branch: BranchSettings }>(`/api/v1/settings/branches/${id}`, body),
   uploadBusinessLogo: (file: File) => uploadFile<SettingsSummary>('/api/v1/settings/logo', 'logo', file),
   updateBookingRules: (body: {
@@ -987,11 +1021,9 @@ export const api = {
 
 };
 
-export function formatMoney(minor: string | null, currency = 'INR'): string {
-  if (!minor) return '—';
-  const amount = Number(minor) / 100;
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
-}
+// Owner-app audit 2026-10-10 — moved to `lib/format.ts` with the billing screens' rounding rule; re-exported so the
+// 78 call sites keep importing it from here.
+export { formatMoney } from './format';
 
 export function formatTime(iso: string, timezone: string): string {
   return new Intl.DateTimeFormat('en-IN', {

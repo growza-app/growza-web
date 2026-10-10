@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { formatMoney } from '../../../lib/format';
 import { Pagination } from '../../../components/Pagination';
 import type { OwnerBillPage } from '../../../lib/api-types';
 import { billingCopy } from '../../../lib/billing-copy';
@@ -10,8 +11,7 @@ import type { Lang } from '../../../lib/lang';
 export function BillsList({ data, lang }: { data: OwnerBillPage; lang: Lang }) {
   const router = useRouter();
   const t = billingCopy(lang);
-  const money = (minor: number, currency: string) =>
-    new Intl.NumberFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', { style: 'currency', currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+  const money = (minor: number, currency: string) => formatMoney(minor, currency, lang);
   const month = (iso: string) => {
     const [y, m, d] = iso.split('-').map(Number);
     return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });

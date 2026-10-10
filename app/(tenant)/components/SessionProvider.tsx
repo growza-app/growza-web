@@ -42,6 +42,16 @@ export interface SessionInfo {
    * refusal (`requireFeature('booking.walk_in')`). Absent reads as on: only an explicit `false` hides a control.
    */
   walkIn?: boolean;
+  /**
+   * `me.whatsapp.booking` — whether clients book and cancel through WhatsApp at this business. Settings that only
+   * bind a client booking by WhatsApp are left undrawn while it is off (owner, 2026-10-10). Absent reads as OFF, the
+   * honest direction: an unknown answer must not offer a setting that would do nothing.
+   */
+  whatsappLive?: boolean;
+  /** Jira GRW-563 — marks waiting for a Yes / No at the branches this person sees. Absent reads as none. */
+  pendingAttendance?: number;
+  /** Jira GRW-563 — whether a stylist's own branch offers phone check-in. Absent reads as not offered. */
+  selfCheckIn?: boolean;
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);
@@ -79,7 +89,22 @@ export function useWritable(): boolean {
   return useSession()?.writable ?? true;
 }
 
+/** Do clients book through WhatsApp here? False when unknown — see `whatsappLive` above. */
+export function useWhatsappLive(): boolean {
+  return useSession()?.whatsappLive ?? false;
+}
+
 /** Jira GRW-556 — is the business live? False only while it is being set up, when only the setup screens are offered. */
 export function useLive(): boolean {
   return useSession()?.live ?? true;
+}
+
+/** Jira GRW-563 — how many self-marked days wait for a decision; 0 when unknown. */
+export function usePendingAttendance(): number {
+  return useSession()?.pendingAttendance ?? 0;
+}
+
+/** Jira GRW-563 — does this stylist's branch offer "I'm in" from her phone? False when unknown. */
+export function useSelfCheckIn(): boolean {
+  return useSession()?.selfCheckIn ?? false;
 }

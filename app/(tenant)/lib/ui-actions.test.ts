@@ -72,6 +72,8 @@ describe('1 — the matrix, typed out', () => {
     'client.edit': true,
     'client.delete': false, // GRW-477 — the desk may correct a client, not delete one (the owner's rule)
     'attendance.mark': true,
+    'attendance.self': false, // GRW-563 — a stylist's own phone; the desk marks from the register
+    'attendance.approve': true, // GRW-563 — the route is open; the API refuses unless the owner switched the branch on
     'billing.payNow': false, // the account's bill is the owner's
   };
   const STAFF: Record<UiAction, boolean> = {
@@ -89,6 +91,8 @@ describe('1 — the matrix, typed out', () => {
     'client.edit': false,
     'client.delete': false,
     'attendance.mark': false, // GRW-200 — their own record, read-only
+    'attendance.self': true, // GRW-563 — their own day, from their own phone, against their own branch's fence
+    'attendance.approve': false,
     'billing.payNow': false,
   };
 
@@ -191,13 +195,7 @@ describe('2b — the controls, each behind its own action', () => {
  * gated one by one; on a screen a role IS offered, every write must be theirs.
  */
 const SCREEN_WRITES: Record<string, readonly string[]> = {
-  /*
-   * Record payment's done screen keeps the number a client gives for their bill. Classified by its screen rather
-   * than by `visit.recordPayment`, which is where it belongs: that action is declared in `@growza-app/shared`, and
-   * this route is newer than the installed 1.0.4. Same answer either way — the screen's own gate IS `visit.new`,
-   * which owner and front desk hold and a stylist does not. Move it into the action when shared next ships.
-   */
-  '/appointments/new': ['POST /api/v1/counter-sales/:id/assign-client'],
+  // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',
     'PATCH /api/v1/services/:id',
@@ -394,6 +392,6 @@ describe('the reverse — nothing a limited role may do is left without a contro
   }
 
   it('and every listed gap is still a real grant', () => {
-    for (const key of Object.keys(GRANTED_NOT_OFFERED)) expect(RECEPTIONIST_ALLOWED.has(key), key).toBe(true);
+    for (const key of Object.keys(GRANTED_NOT_OFFERED)) expect(RECEPTIONIST_ALLOWED.has(key) || STAFF_ALLOWED.has(key), key).toBe(true);
   });
 });

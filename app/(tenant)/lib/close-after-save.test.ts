@@ -24,7 +24,7 @@ describe('every full-page form closes on Save', () => {
     ['settings/working-hours/WorkingHoursForm.tsx', '/settings'],
     ['settings/notifications/RemindersForm.tsx', '/settings'],
     ['settings/report-access/ReportAccessForm.tsx', '/settings'],
-    ['settings/branches/BranchesForm.tsx', '/settings'],
+    // Not Branches: it has no Save any more — each branch is a row that opens its Branch profile (owner, 2026-10-10).
     ['providers/[id]/StaffEditClient.tsx', '/providers'],
   ];
   for (const [file, parent] of FORMS) {
@@ -40,7 +40,8 @@ describe('every full-page form closes on Save', () => {
   });
 
   it('stays open only where the save has more to say: WhatsApp not live, skills left to set after a branch move', () => {
-    expect(code('settings/notifications/RemindersForm.tsx')).toMatch(/if \(whatsappLive\) closeForm\(\);/);
+    // No exception for a business without WhatsApp: the page is not shown to one (owner, 2026-10-10).
+    expect(code('settings/notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
     expect(code('providers/[id]/StaffEditClient.tsx')).toMatch(/if \(moved\?\.unmatchedSkills\?\.length\) router\.refresh\(\);\s*else closeForm\(\);/);
   });
 

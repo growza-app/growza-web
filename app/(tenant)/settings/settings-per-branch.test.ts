@@ -77,9 +77,12 @@ describe('the note on a branch tab', () => {
   it('offers "Apply to all branches", rendered by the page so a remounted form does not take it with it', () => {
     const note = src('BranchScopeNote.tsx');
     expect(note).toMatch(/api\.applyBranchSettingsToAll\(branchId, keys\)/);
-    for (const page of ['working-hours/page.tsx', 'booking/page.tsx', 'notifications/page.tsx']) {
+    for (const page of ['working-hours/page.tsx', 'notifications/page.tsx']) {
       expect(src(page)).toMatch(/<BranchScopeNote key=\{`note:\$\{scopeKey\(settings\)\}`\} settings=\{settings\} branchName=\{branchName\} keys=\{[A-Z_]+\}/);
     }
+    // Booking's note picks its keys by WhatsApp, from the session the form reads (2026-10-10) — still drawn by the page.
+    expect(src('booking/page.tsx')).toMatch(/<BookingScopeNote key=\{`note:\$\{scopeKey\(settings\)\}`\} settings=\{settings\} branchName=\{branchName\} \/>/);
+    expect(src('booking/BookingScopeNote.tsx')).toMatch(/<BranchScopeNote settings=\{settings\} branchName=\{branchName\} keys=\{bookingRuleKeys\(whatsappLive\)\}/);
     for (const form of ['working-hours/WorkingHoursForm.tsx', 'booking/BookingRulesForm.tsx', 'notifications/RemindersForm.tsx', 'profile/ProfileForm.tsx']) {
       expect(src(form)).not.toMatch(/BranchScopeNote/);
     }
@@ -97,14 +100,16 @@ describe('Settings per branch, as the QA pass left it', () => {
     // Jira GRW-556 (follow-up) — Save closes the form; `useCloseAfterSave` pushes the list and refreshes.
     expect(src('working-hours/WorkingHoursForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
     expect(src('../lib/close-after-save.ts')).toMatch(/router\.push\([\s\S]*?\);\s*router\.refresh\(\);/);
-    expect(src('notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);[\s\S]{0,400}if \(whatsappLive\) closeForm\(\);[\s\S]{0,160}else router\.refresh\(\);/);
+    // Drawn only while WhatsApp booking is on (owner, 2026-10-10), so it always closes on Save like the others.
+    expect(src('notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
   });
 
   it('"Use business settings" redraws the form from the start; the note is keyed by branch', () => {
     expect(src('BranchScopeNote.tsx')).toMatch(/await api\.resetBranchSettings\(branchId, own\);[\s\S]{0,160}window\.location\.reload\(\);/);
-    for (const page of ['working-hours/page.tsx', 'booking/page.tsx', 'notifications/page.tsx']) {
+    for (const page of ['working-hours/page.tsx', 'notifications/page.tsx']) {
       expect(src(page)).toMatch(/<BranchScopeNote key=\{`note:\$\{scopeKey\(settings\)\}`\}/);
     }
+    expect(src('booking/page.tsx')).toMatch(/<BookingScopeNote key=\{`note:\$\{scopeKey\(settings\)\}`\}/);
   });
 
   it('focus goes to the question when it opens, and back to "Apply to all branches" when it closes', () => {

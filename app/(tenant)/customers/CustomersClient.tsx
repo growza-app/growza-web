@@ -16,7 +16,7 @@ import {
 } from '../lib/api';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { initials } from '../lib/appointment-display';
-import { dialable } from '../components/BookingSheet';
+import { waDigits } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
 import { useWritable } from '../components/SessionProvider';
 import { PaginatedTable } from '../components/PaginatedTable';
@@ -548,7 +548,7 @@ export function CustomersClient({
                       {c.waPhone && (
                         <a
                           className="cust-phone"
-                          href={`https://wa.me/${dialable(c.waPhone)}`}
+                          href={`https://wa.me/${waDigits(c.waPhone)}`}
                           target="_blank"
                           rel="noreferrer"
                           onClick={(e) => e.stopPropagation()}
@@ -592,7 +592,7 @@ export function CustomersClient({
                     {c.waPhone ? (
                       <a
                         className="cust-phone"
-                        href={`https://wa.me/${dialable(c.waPhone)}`}
+                        href={`https://wa.me/${waDigits(c.waPhone)}`}
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => e.stopPropagation()}

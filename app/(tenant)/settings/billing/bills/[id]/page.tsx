@@ -1,4 +1,5 @@
 import { screenTitle } from '../../../../lib/page-title';
+import { formatMoney } from '../../../../lib/format';
 import { api, ApiError } from '../../../../lib/api';
 import { serverLang } from '../../../../lib/lang';
 import { billingCopy } from '../../../../lib/billing-copy';
@@ -21,8 +22,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
   if (!bill) return <div className="banner">{t.loadError}</div>;
 
   const locale = lang === 'hi' ? 'hi-IN' : 'en-IN';
-  const money = (minor: number) =>
-    new Intl.NumberFormat(locale, { style: 'currency', currency: bill.currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+  const money = (minor: number) => formatMoney(minor, bill.currency, locale);
   const date = (iso: string, opts: Intl.DateTimeFormatOptions) => {
     const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
     return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { ...opts, timeZone: 'UTC' });

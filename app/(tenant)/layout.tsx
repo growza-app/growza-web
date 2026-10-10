@@ -179,6 +179,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let branches: Array<{ id: string; name: string }> = [];
   /** Jira GRW-377 — the member's own branch; fixes a receptionist or stylist to it everywhere. */
   let memberLocationId: string | null = null;
+  /** Jira GRW-563 — the owner's approval queue, and whether a stylist is offered phone check-in. */
+  let pendingAttendance = 0;
+  let selfCheckIn = false;
   /** Jira GRW-310 — what LiveRefresh treats as "unchanged" until it sees a different one. */
   let liveVersionAtRender: string | null = null;
   /** Jira GRW-329 — the language on the person's account; the cookie is a cache of it. */
@@ -203,6 +206,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     walkIn = me.capabilities?.walkIn !== false;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
+    pendingAttendance = me.attendance?.pending ?? 0;
+    selfCheckIn = me.attendance?.selfCheckIn ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     // Jira GRW-409 — the banner's words are for everyone at the salon; "Pay now" only for a role the payment-link
     // route serves. A receptionist tapping it got "forbidden" in the middle of a warning about the account.
@@ -299,6 +304,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             live,
             writable,
             walkIn,
+            whatsappLive,
+            pendingAttendance,
+            selfCheckIn,
           }}
         >
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>

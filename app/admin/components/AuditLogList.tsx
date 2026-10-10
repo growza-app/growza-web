@@ -107,6 +107,9 @@ export const KNOWN_ACTIONS = [
   // Jira GRW-477 — a day on the attendance register recorded, corrected or removed.
   'attendance.marked',
   'attendance.cleared',
+  // Jira GRW-563 — the owner's decision on a self-marked day.
+  'attendance.approved',
+  'attendance.rejected',
 ] as const;
 
 interface AuditLogRow {

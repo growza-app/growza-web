@@ -7,6 +7,8 @@ import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { changeOf, daysOf, fromSaved, withDay, withoutDay } from './day-edits';
 import { SettingsSaveBar } from '../SettingsSaveBar';
 import { useCloseAfterSave } from '../../lib/close-after-save';
+import { useWhatsappLive } from '../../components/SessionProvider';
+import { showsBookingRule } from '../branch-keys';
 
 /** "Mon, 20 Oct" for a stored "2026-10-20" — read as a calendar date, never shifted by the browser's timezone. */
 function dayLabel(iso: string, locale: string): string {
@@ -20,6 +22,8 @@ const SLOT_CHOICES = [10, 15, 20, 30, 45, 60];
 export function BookingRulesForm({ initial, branchName = null }: { initial: SettingsSummary; branchName?: string | null }) {
   const router = useRouter();
   const t = useTranslations('settingsBooking');
+  const whatsappLive = useWhatsappLive();
+  const shows = (key: string) => showsBookingRule(key, whatsappLive);
   // The same "{count} min" the menu and the free-times screen use, so one duration is written one way.
   const tmin = useTranslations('services');
   // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
@@ -145,7 +149,8 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
                 </option>
               ))}
           </select>
-          <span className="field-hint">{t('slotHint', { count: slotGranularityMin || 0 })}</span>
+          {/* "Right after other bookings" ignores the interval (`computeCandidateStarts`), so say that, not a spacing. */}
+          <span className="field-hint">{slotPolicy === 'gap_packed' ? t('slotHintGap') : t('slotHint', { count: slotGranularityMin || 0 })}</span>
         </div>
 
         <div style={{ marginTop: 18 }}>
@@ -176,6 +181,13 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
           * 371px and the card fits. The reading order is unchanged — a two-column form is read down
           * then across, so this field still comes after the slot pattern and before the horizon.
           */}
+        {/*
+          Minimum notice, how far ahead and the cancel cutoff bind a CLIENT booking or cancelling by WhatsApp, and
+          nobody else: the desk books with no notice (`bookingWindowFor` gives staff 0) and cancels at any time
+          (`cancel.ts` checks only `cancelledVia === 'whatsapp'`). With WhatsApp off they changed nothing an owner
+          could see, so they are not drawn (owner, 2026-10-10). Their values are kept and come back with it.
+        */}
+        {shows('min_notice_min') ? (
         <div className="field" style={{ marginTop: 14 }}>
           <label htmlFor="rule-notice">
             <span>{t('minNotice')}</span>
@@ -183,9 +195,11 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
           <input id="rule-notice" type="number" min={0} max={2880} step={5} value={minNoticeMin} onChange={(e) => setMinNoticeMin(Number(e.target.value))} />
           <span className="field-hint">{t('noticeHint', { count: minNoticeMin || 0 })}</span>
         </div>
+        ) : null}
 
         </div>
         <div className="rules-col">
+        {shows('booking_horizon_days') ? (
         <div className="field">
           <label htmlFor="rule-horizon">
             <span>{t('horizon')}</span>
@@ -193,8 +207,10 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
           <input id="rule-horizon" type="number" min={1} max={365} value={bookingHorizonDays} onChange={(e) => setBookingHorizonDays(Number(e.target.value))} />
           <span className="field-hint">{t('horizonHint', { count: bookingHorizonDays || 0 })}</span>
         </div>
+        ) : null}
 
-        <div className="field" style={{ marginTop: 14 }}>
+        {shows('cancellation_cutoff_min') ? (
+        <div className="field" style={shows('booking_horizon_days') ? { marginTop: 14 } : undefined}>
           <label htmlFor="rule-cutoff">
             <span>{t('cutoff')}</span>
           </label>
@@ -208,9 +224,10 @@ export function BookingRulesForm({ initial, branchName = null }: { initial: Sett
           />
           <span className="field-hint">{t('cutoffHint', { count: cancellationCutoffMin || 0 })}</span>
         </div>
+        ) : null}
 
         {/* Jira GRW-248 — days nobody can book: the business's, or with a branch picked, that branch's own. */}
-        <div className="field closed-days" style={{ marginTop: 14 }}>
+        <div className="field closed-days" style={shows('booking_horizon_days') || shows('cancellation_cutoff_min') ? { marginTop: 14 } : undefined}>
           <label htmlFor="closed-day-new">
             <span>{branchId ? (branchName ? t('closedBranchNamed', { name: branchName }) : t('closedBranchUnnamed')) : t('closedBusiness')}</span>
           </label>

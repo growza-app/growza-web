@@ -118,7 +118,8 @@ describe('the screen after Mark done offers the bill', () => {
     // The page refreshes after every payment and a paid token leaves the route's props; a bill rebuilt per render moved.
     expect(sheet.match(/setStage\(withBill\(\{\s*step: 'paid'/g)).toHaveLength(3);
     expect(sheet).not.toMatch(/setStage\(\{\s*step: 'paid'/);
-    expect(sheet).toMatch(/<ReceiptShare bill=\{stage\.bill\} phone=\{stage\.client\.phone \|\| null\} \/>/);
+    // Owner, 2026-10-10 — shown by the shared done screen (`PaymentDone`), which the three-tap flow ends on too.
+    expect(sheet).toMatch(/bill=\{stage\.bill\}\s*phone=\{stage\.client\.phone \|\| null\}/);
   });
 
   it('never puts the client’s name on it', () => {
@@ -126,8 +127,12 @@ describe('the screen after Mark done offers the bill', () => {
     expect(builder).not.toMatch(/clientName|client\.name|newName/);
   });
 
-  it('Send is the one filled action after a payment; Done steps back', () => {
-    expect(sheet).toMatch(/<ReceiptShare bill=\{stage\.bill\}[^\n]*\n\s*<button type="button" className="sheet-item wi-finish wi-finish-quiet"/);
+  it('after a payment, the shared done screen: Next customer, then Done and Fix a mistake', () => {
+    // Owner, 2026-10-10 — the one-page form ends on the three-tap flow's screen, not a lone quiet Done.
+    const done = readFileSync(new URL('../components/PaymentDone.tsx', import.meta.url), 'utf8');
+    expect(sheet).toMatch(/<PaymentDone/);
+    expect(done).toMatch(/className="btn pf-go" onClick=\{onNextCustomer\}/);
+    expect(done).toMatch(/className="btn btn-ghost pf-go-alt" onClick=\{onDone\}/);
   });
 
   it('prints the bill alone, with the rest of the page taken out rather than hidden', () => {

@@ -783,6 +783,19 @@
 }
 
 /*
+ * The same screen on a desk (owner, 2026-10-10 — both Record payment forms end on it, and a desk always uses the
+ * one-page form). Drawn for a phone, it stretched to 1,066px of content area there: a bill as wide as the page and
+ * a Next customer bar a metre long. It keeps the phone's column instead, centred.
+ */
+@media (min-width: 861px) {
+  .pf-done-page {
+    width: 100%;
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+}
+
+/*
  * The tick beside the amount, not above it (owner, 2026-10-10).
  *
  * Stacked — a 96px tick, then the figure, then the line under it — this band was 232px, and with the bill open
@@ -1227,6 +1240,32 @@
   padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
   box-shadow: 0 -1px 0 var(--border);
+}
+
+/*
+ * …and what scrolls behind it is never left under it (owner's bug report, 2026-10-10). A field scrolled into view —
+ * by the browser on focus, or by ClientSheet when the keyboard shrinks the sheet — stops above the bar instead of
+ * at the sheet's bottom edge, where the bar covered half the phone box and all of the line under it.
+ * `--pf-bar-h` is the bar's measured height (ClientSheet), because it wraps to two rows when "From contacts" is there.
+ */
+.pf-keypad.pf-client {
+  scroll-padding-bottom: calc(var(--pf-bar-h, 0px) + var(--sp-2));
+}
+
+/*
+ * …and at rest it sits BELOW the last field, not over it. The bar cancelled the sheet's bottom padding with a
+ * negative margin, but Chrome pins a sticky box inside the scroll container's padding, so the bar was pushed back
+ * up by that padding (16px) and lapped over the phone box even with nothing scrolled. Instead: while the bar is
+ * there the sheet has no bottom padding of its own, and the bar's own `padding-bottom` (with the safe-area inset)
+ * is the sheet's bottom edge. The `margin-bottom: 0` alone is enough to stop the overlap anywhere `:has()` is
+ * missing — such a browser keeps the sheet's padding as a little space under Save.
+ */
+.pf-keypad.pf-client:has(.pf-client-links) {
+  padding-bottom: 0;
+}
+
+.pf-keypad.pf-client .pf-client-links {
+  margin-bottom: 0;
 }
 
 /* ---------- the whole menu, in the flow ---------- */

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
+import { formatMoney } from '../lib/format';
 import type { AutopayRenewal } from '../lib/api-types';
 import type { Lang } from '../lib/lang';
 
@@ -49,8 +50,7 @@ export function AutopayRenewalNotice({
   if (renewal.direction === 'down' && place === 'home') return null;
 
   const locale = lang === 'hi' ? 'hi-IN' : 'en-IN';
-  const money = (minor: number) =>
-    new Intl.NumberFormat(locale, { style: 'currency', currency: renewal.currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+  const money = (minor: number) => formatMoney(minor, renewal.currency, locale);
   const [y, m, d] = renewal.dueDate.split('-').map(Number);
   const date = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
   const args = { amount: money(renewal.toAmountMinor), old: money(renewal.fromAmountMinor), date, days: Math.max(renewal.daysLeft, 0) };

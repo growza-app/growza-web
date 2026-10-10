@@ -33,23 +33,10 @@ import {
 import { IconCheck, IconEdit, IconPhone, IconTrash, IconWallet } from './icons';
 import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useLabel } from './LabelsProvider';
+import { dialable } from './BookingSheet';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
-/**
- * Digits only — `tel:` chokes on spaces and punctuation. Duplicated from
- * BookingSheet.tsx rather than imported, to avoid a circular import
- * (BookingSheet renders CheckoutSheet).
- *
- * GRW-199 — and the duplication cost something the moment a walk-in was allowed
- * without a phone: the copy here still took a plain `string`, so a no-number
- * client crashed the whole page with "Cannot read properties of null (reading
- * 'replace')" while the original had already been made safe. Two copies of a
- * function are two places to remember.
- */
-function dialable(phone: string | null | undefined): string {
-  return (phone ?? '').replace(/[^0-9]/g, '');
-}
 
 /** The words are `chrome.pay.<value>`; `value` is what the API stores. */
 export const PAYMENT_MODES: Array<{ value: PaymentMode }> = [{ value: 'cash' }, { value: 'card' }, { value: 'upi' }, { value: 'other' }];

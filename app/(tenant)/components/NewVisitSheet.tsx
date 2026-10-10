@@ -61,6 +61,7 @@ import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
+import { PaymentDone } from './PaymentDone';
 import { confirmRows, receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import {
   IconArrowLeft,
@@ -278,6 +279,7 @@ function clientOfToken(token: QueueEntry): PickedClient {
 
 export function NewVisitSheet({
   onClose,
+  onAnother,
   timezone,
   mode: initialMode = 'now',
   purpose = 'visit',
@@ -286,6 +288,8 @@ export function NewVisitSheet({
   tokenGone = false,
 }: {
   onClose: () => void;
+  /** Next customer on the payment done screen: a fresh form. Without it, Next customer closes like Done. */
+  onAnother?: () => void;
   timezone: string;
   mode?: VisitMode;
   purpose?: VisitPurpose;
@@ -2888,6 +2892,34 @@ export function NewVisitSheet({
     return null;
   })();
 
+  /*
+   * Owner, 2026-10-10 — after a payment the page IS the done screen, exactly as the three-tap flow ends: no form
+   * header, no card, no close cross around it. Only a sheet (an overlay somewhere else) keeps its frame.
+   */
+  const paidScreen =
+    stage.step === 'paid' ? (
+      <PaymentDone
+        appointmentId={stage.result.appointmentId}
+        totalMinor={stage.totalMinor}
+        mode={stage.mode}
+        modeLabel={PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode}
+        summary={[
+          // Jira GRW-403 — the token this payment closed, or the one it was given.
+          stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
+          PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode,
+          everythingNamed,
+          providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        bill={stage.bill}
+        phone={stage.client.phone || null}
+        onNextCustomer={onAnother ?? onClose}
+        onDone={onClose}
+      />
+    ) : null;
+  if (paidScreen && presentation === 'page') return paidScreen;
+
   return (
     <>
       {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
@@ -3664,36 +3696,11 @@ export function NewVisitSheet({
         )}
 
         {/* ---------- Stage 3p: paid (Jira GRW-290) ---------- */}
-        {stage.step === 'paid' && (
-          <div className="wi-body">
-            <div className="wi-done">
-              <IconCheck />
-              <div>
-                <div className="wi-done-title">
-                  {nv.paid(
-                    formatMoney(String(stage.totalMinor)),
-                    (PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode),
-                  )}
-                </div>
-                <div className="wi-done-sub">
-                  {[
-                    // Jira GRW-403 — the token this payment closed, or the one it was given.
-                    stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
-                    clientName(stage.client),
-                    everythingNamed,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </div>
-              </div>
-            </div>
-            {/* Owner, 2026-10-07 — the bill, to send the client on WhatsApp (the design's "Mobile · 2"). */}
-            <ReceiptShare bill={stage.bill} phone={stage.client.phone || null} />
-            <button type="button" className="sheet-item wi-finish wi-finish-quiet" onClick={onClose}>
-              {nv.done}
-            </button>
-          </div>
-        )}
+        {/*
+          Owner, 2026-10-10 — the SAME done screen as the three-tap flow, not a look-alike: the amount said out loud,
+          the chime, Next customer, keeping a number typed here. `PaymentDone` is that screen; both forms render it.
+        */}
+        {stage.step === 'paid' && presentation !== 'page' ? paidScreen : null}
 
         {/* ---------- Stage 3: recorded ---------- */}
         {stage.step === 'done' && (

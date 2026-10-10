@@ -42,7 +42,14 @@
         "cancelled": "Cancelled",
         "rescheduled": "Rescheduled",
         "billing": "Billing",
-        "handoff": "Asked for a person"
+        "handoff": "Asked for a person",
+        "walkIn": "Walk-in",
+        "completed": "Done",
+        "noShow": "Didn't come",
+        "invoice": "Bill",
+        "payment": "Payment",
+        "discount": "Discount",
+        "autopay": "AutoPay"
       },
       "title": "{topic} — {services}",
       "customer": "Client",
@@ -53,7 +60,31 @@
       "billUp": "Bill going up",
       "billDown": "Bill going down",
       "billSub": "From {day}: {next} a month (now {current}), for {count, plural, one {# branch} other {# branches}}.",
-      "handoffTitle": "Wants to talk to someone"
+      "handoffTitle": "Wants to talk to someone",
+      "by": "by {who}",
+      "roles": {
+        "owner": "Owner",
+        "manager": "Manager",
+        "receptionist": "Front desk",
+        "staff": "Staff"
+      },
+      "billingSub": "Tap to see your bill",
+      "invoiceTitle": "Your {month} bill is ready: {amount}",
+      "paymentTitle": "{amount} received — thank you",
+      "discountOn": "Discount applied: {amount} off each month",
+      "discountOff": "Discount removed",
+      "autopayHalted": "AutoPay has stopped — pay by link, or approve it again",
+      "status": {
+        "PAYMENT_FAILED": "This month is not paid yet",
+        "GRACE_PERIOD": "Payment is overdue",
+        "PAST_DUE": "Payment overdue — access will be restricted soon",
+        "SUSPENDED": "Account restricted until the bill is paid",
+        "ACTIVE": "Payment received — all good",
+        "PAUSED": "Subscription paused",
+        "CANCELLED": "Subscription cancelled",
+        "EXPIRED": "Subscription ended",
+        "OTHER": "Billing update"
+      }
     },
     "bellUnread": "Notifications, {count} unread"
   },
@@ -296,19 +327,15 @@
       },
       "workingHours": {
         "label": "Working hours",
-        "sub": "Manage open hours and days"
+        "sub": "When you are open"
       },
       "bookingSettings": {
         "label": "Booking settings",
-        "sub": "Times shown, notice, how far ahead"
+        "sub": "Booking times and closed days"
       },
       "payments": {
         "label": "Payments",
         "sub": "Manage UPI and payouts"
-      },
-      "cancellationPolicy": {
-        "label": "Cancellation policy",
-        "sub": "Set rules for cancellations"
       },
       "whatsapp": {
         "label": "WhatsApp settings",
@@ -317,6 +344,10 @@
       "notifications": {
         "label": "Notifications",
         "sub": "Manage alerts and reminders"
+      },
+      "checkIn": {
+        "label": "Phone check-in",
+        "sub": "Staff mark themselves in from their phone"
       },
       "appearance": {
         "label": "Appearance",
@@ -332,11 +363,11 @@
       },
       "teamAccess": {
         "label": "Team access",
-        "sub": "Invite people who can sign in"
+        "sub": "Who can use the app"
       },
       "billing": {
         "label": "Billing",
-        "sub": "Plan, branches and bills"
+        "sub": "What you pay Growza"
       },
       "account": {
         "label": "Account",
@@ -368,24 +399,24 @@
   "branchScope": {
     "topics": {
       "hours": "hours",
-      "bookingRules": "booking rules",
+      "bookingRules": "booking settings",
       "teamAccess": "team access",
       "reportAccess": "who sees Reports",
       "reminders": "reminders"
     },
-    "sameForAll": "<b>Same for every branch.</b> Changes to {what} here apply to all {count} branches.",
-    "usesBusiness": "<b>{branch}</b> uses the business’s {what}. Change anything here to give {branch} its own.",
-    "noHoursYet": "<b>{branch}</b> has no opening hours yet. Set them below, then use Apply to all branches to give every branch the same.",
+    "sameForAll": "<b>All {count} branches use this.</b> A change here changes every branch.",
+    "usesBusiness": "<b>{branch}</b> uses your usual {what}. Change something here and only {branch} changes.",
+    "noHoursYet": "<b>{branch}</b> has no opening hours yet. Set them below. To use the same hours at every branch, tap Copy to all branches.",
     "hasOwn": "<b>{branch}</b> has its own {what}.",
     "resetting": "Resetting…",
-    "resetFailed": "Could not reset — try again",
-    "useBusiness": "Use business settings",
-    "applyAll": "Apply to all branches",
-    "applyConfirm": "Give all {count} branches <b>{branch}</b>’s saved {what}? Changes not saved yet are left out.",
-    "apply": "Apply",
+    "resetFailed": "Could not change it back. Try again.",
+    "useBusiness": "Use the usual settings",
+    "applyAll": "Copy to all branches",
+    "applyConfirm": "Copy <b>{branch}</b>’s {what} to all {count} branches? Only what is saved is copied.",
+    "apply": "Copy",
     "cancel": "Cancel",
-    "applying": "Applying…",
-    "applyFailed": "Could not apply — try again",
+    "applying": "Copying…",
+    "applyFailed": "Could not copy. Try again.",
     "applied": "<b>All {count} branches</b> now have these {what}."
   },
   "settingsProfile": {
@@ -419,17 +450,17 @@
     },
     "logo": {
       "title": "Business logo",
-      "hint": "Square works best. JPG, PNG or WEBP, up to 5 MB.",
+      "hint": "A square picture works best. Up to 5 MB.",
       "uploading": "Uploading…",
       "change": "Change logo",
       "upload": "Upload logo"
     },
-    "addressesHint": "You have {count} branches. Each one’s address, phone and description are on its Branch profile.",
+    "addressesHint": "You have {count} branches. Change each branch’s address and phone in its Branch profile.",
     "errors": {
-      "saveFailed": "Could not save — check the server is running.",
+      "saveFailed": "Could not save. Please try again.",
       "nameEmpty": "Business name cannot be empty",
       "branchNameEmpty": "Branch name cannot be empty",
-      "logoFailed": "Could not upload logo — check the server is running."
+      "logoFailed": "Could not upload the logo. Please try again."
     },
     "bar": {
       "saved": "Saved",
@@ -461,40 +492,41 @@
     "title": "Working hours",
     "branchTitleNamed": "{name} hours",
     "branchTitleUnnamed": "Branch hours",
-    "hintBusiness": "Your business's default open hours. Staff can follow these automatically from their own profile, or set their own instead.",
-    "hintBranchNamed": "When {name} is open. Staff at {name} who follow the salon's hours follow these.",
-    "hintBranchUnnamed": "When this branch is open. Staff at this branch who follow the salon's hours follow these.",
+    "hintBusiness": "When your salon is open. Staff work these hours unless you give them their own.",
+    "hintBranchNamed": "When {name} is open. Staff at {name} work these hours unless you give them their own.",
+    "hintBranchUnnamed": "When this branch is open. Its staff work these hours unless you give them their own.",
     "save": "Save changes",
     "saveHours": "Save hours",
     "saveAttendance": "Save attendance",
     "saving": "Saving…",
     "saved": "Saved",
     "attendance": "Attendance",
-    "attendanceHint": "Lateness is measured against each person's own shift start, not one time for the whole business. This is how long after it somebody can arrive before the register marks them late.",
-    "graceLabel": "Allow arriving late by",
+    "attendanceHint": "How many minutes late someone can arrive before they are marked late. It counts from each person’s own start time.",
+    "graceLabel": "Can arrive late by",
     "minutes": "minutes",
     "lateFrom": "Someone on a 10:00 shift is late from {time}.",
     "errors": {
-      "graceRange": "Enter a whole number of minutes between 0 and 120",
-      "startBeforeEnd": "Start time must be before end time",
-      "saveFailed": "Could not save — check the server is running."
+      "graceRange": "Enter minutes from 0 to 120",
+      "startBeforeEnd": "Opening time must be before closing time",
+      "saveFailed": "Could not save. Please try again."
     }
   },
   "settingsBooking": {
     "title": "Booking settings",
     "slotLength": "Show booking times every",
-    "slotHint": "Bookable times are shown every {count, plural, one {# minute} other {# minutes}}.",
-    "slotPattern": "How times are offered",
-    "fixedGrid": "At regular times",
-    "fixedGridSub": "Times always land on the gap above — e.g. 9:00, 9:30, 10:00.",
-    "gapPacked": "Fill the gaps",
-    "gapPackedSub": "Times fill the gaps between existing bookings as tightly as possible.",
-    "minNotice": "Minimum notice",
+    "slotHint": "Booking times are {count, plural, one {# minute} other {# minutes}} apart.",
+    "slotHintGap": "Only used with Same times every day.",
+    "slotPattern": "Which times to show",
+    "fixedGrid": "Same times every day",
+    "fixedGridSub": "For example 9:00, 9:30, 10:00.",
+    "gapPacked": "Right after other bookings",
+    "gapPackedSub": "The next time starts when the last booking ends, so no time is wasted.",
+    "minNotice": "How soon clients can book",
     "noticeHint": "Clients must book at least {count, plural, one {# minute} other {# minutes}} ahead.",
     "horizon": "How far ahead people can book",
     "horizonHint": "Clients can book up to {count, plural, one {# day} other {# days}} ahead.",
     "cutoff": "Last time to cancel",
-    "cutoffHint": "Clients can't cancel within {count, plural, one {# minute} other {# minutes}} of the start time.",
+    "cutoffHint": "Clients can't cancel in the last {count, plural, one {# minute} other {# minutes}} before it starts.",
     "closedBusiness": "Days you are closed",
     "closedBranchNamed": "Days {name} is closed",
     "closedBranchUnnamed": "Days this branch is closed",
@@ -508,9 +540,9 @@
     "saving": "Saving…",
     "saved": "Saved",
     "errors": {
-      "saveFailed": "Could not save — check the server is running."
+      "saveFailed": "Could not save. Please try again."
     },
-    "everyBranch": "Close every branch",
+    "everyBranch": "Add for all branches",
     "removeAllAria": "Open every branch again on {day}"
   },
   "settingsReminders": {
@@ -519,31 +551,24 @@
     "branchTitleNamed": "{name} reminders",
     "branchTitleUnnamed": "Branch reminders",
     "liveHint": "Send an automatic WhatsApp reminder before a booking.",
-    "notLiveTitle": "WhatsApp is coming soon",
-    "notLive": "Reminders are not going out yet — WhatsApp is still being set up for you. Choose your times now and they will start sending the day it goes live. Nothing to redo.",
     "first": "First reminder",
     "second": "Second reminder",
     "hoursBefore": "hours before the booking",
     "save": "Save changes",
     "saving": "Saving…",
     "saved": "Saved",
-    "savedNotLive": "Saved — these start sending when WhatsApp goes live",
     "errors": {
       "hoursRange": "Use a whole number of hours, from 1 to 168",
-      "saveFailed": "Could not save — check the server is running."
+      "saveFailed": "Could not save. Please try again."
     }
   },
   "settingsReports": {
     "title": "Who can see Reports",
-    "hint": "You and your managers always see every report. Choose what anyone else gets. Tick nothing and Reports stays hidden from them entirely.",
+    "hint": "You, and any managers, always see every report. Tick what each person can see. Tick nothing and they can’t open Reports.",
     "roles": {
       "receptionist": {
         "label": "Receptionist",
         "sub": "Runs the front desk"
-      },
-      "staff": {
-        "label": "Stylists",
-        "sub": "See only their own day elsewhere"
       }
     },
     "tabs": {
@@ -559,45 +584,34 @@
     "saving": "Saving…",
     "saved": "Saved",
     "errors": {
-      "saveFailed": "Could not save — check the server is running."
+      "saveFailed": "Could not save. Please try again."
     },
     "contactTitle": "Client phone numbers",
     "staffSees": "Staff can see client name and number",
     "staffSeesOn": "Your team sees who each booking is for, and can call them.",
-    "staffSeesOff": "Your team sees the booking, the service and the time — but not who it is for. You and your managers still see everything."
+    "staffSeesOff": "Your team sees the time and the service, but not the client’s name or number. You, and any managers, still see everything."
   },
   "settingsBranches": {
     "title": "Branches",
-    "intro": "Your {count} branches. Opening hours are the same for all of them — change them in Working hours.",
+    "intro": "Your {count} branches. Tap one to change its name, address or phone.",
     "foot": "To add a branch, or open a closed one again, contact Growza support.",
+    "errors": {
+      "saveFailed": "Could not save. Please try again."
+    },
     "main": "Main",
     "staff": "{count, plural, one {# staff member} other {# staff}}",
     "makeMain": "Make main",
     "closeBranch": "Close branch",
-    "fields": {
-      "branchName": "Branch name",
-      "city": "City",
-      "address": "Address"
-    },
-    "addressPlaceholder": "Shop number, street, area",
-    "nameEmpty": "Branch name cannot be empty",
-    "unsaved": "Unsaved changes",
-    "saved": "Saved",
-    "saving": "Saving…",
-    "saveBranch": "Save branch",
-    "errors": {
-      "saveFailed": "Could not save — check the server is running."
-    },
     "dialog": {
       "closeTitle": "Close {name}?",
       "makeMainTitle": "Make {name} your main branch?",
       "closeBody": "It disappears from your branches, the booking sheet and Home. Its past bookings stay in Reports. To open it again later, ask Growza support.",
-      "makeMainBody": "It moves to the top of your branches, and Business profile edits its address and phone. Nothing else about your other branches changes.",
+      "makeMainBody": "It moves to the top of your branches. Nothing changes at your other branches.",
       "billDown": "Your bill goes down from {date}: {after} a month (now {before}). Nothing to approve.",
       "why": "Why?",
       "whyClosePlaceholder": "For example: lease ended",
-      "whyMakeMainPlaceholder": "For example: the new flagship",
-      "sayWhy": "Say why.",
+      "whyMakeMainPlaceholder": "For example: our biggest branch",
+      "sayWhy": "Please write why.",
       "cancel": "Cancel",
       "working": "Working…"
     },
@@ -605,10 +619,42 @@
     "bookingLinkAria": "Booking link for {name}",
     "copy": "Copy",
     "copied": "Copied",
-    "bookingLinkNoNumber": "Add a mobile number that is on WhatsApp as the business phone in Business name and logo to get a link.",
-    "bookingLinkHint": "Put it on this branch’s QR code or Instagram: whoever opens it is booked here without being asked which branch.",
+    "bookingLinkNoNumber": "To get a link, add your WhatsApp number as the Business phone in Business name and logo.",
+    "bookingLinkHint": "Share it on Instagram or a QR code. Clients who open it book at this branch.",
     "tryIt": "Try it",
-    "bookingLinkNumber": "It opens WhatsApp at {number}, the business phone in Business name and logo. That number must be on WhatsApp."
+    "bookingLinkNumber": "It opens a WhatsApp chat with {number}."
+  },
+  "settingsCheckIn": {
+    "title": "Phone check-in",
+    "titleBranch": "Phone check-in · {name}",
+    "intro": "Your staff can mark themselves in from their phone. It counts by itself when the phone is at this branch. If the phone cannot say where it is, you say yes or no.",
+    "pinLabel": "Where this branch is",
+    "pinSet": "Set · {lat}, {lng}",
+    "pinNotSet": "Not set yet",
+    "useHere": "Use where I am now",
+    "finding": "Finding you…",
+    "clearPin": "Clear",
+    "useHereHint": "Stand inside the branch and tap. Your phone must allow location.",
+    "linkLabel": "Or paste a maps link",
+    "linkPlaceholder": "https://maps.google.com/…",
+    "linkHint": "Share the branch from Google Maps or Apple Maps and paste the link here.",
+    "radiusLabel": "How close counts",
+    "radiusOption": "Within {m} m",
+    "radiusHint": "50 m is one shop. 500 m is the whole street.",
+    "enabled": "Staff can mark themselves in",
+    "enabledOn": "On. Each stylist at this branch sees “I’m in” on their Home.",
+    "enabledOff": "Off. Attendance is marked from the register only.",
+    "deskApproves": "The front desk can also say yes or no",
+    "deskApprovesHint": "Normally only you decide. Turn this on if your receptionist should too.",
+    "save": "Save",
+    "saving": "Saving…",
+    "savedLabel": "Saved",
+    "errors": {
+      "noFix": "Could not find your location. Check location is on for this site and try again, or paste a maps link.",
+      "noPlaceInLink": "Could not find a place in that link.",
+      "pinFirst": "Set where this branch is before turning it on.",
+      "saveFailed": "Could not save. Please try again."
+    }
   },
   "settingsTeam": {
     "title": "Team access",
@@ -617,22 +663,23 @@
     "role": "Role",
     "roleStaff": "Stylist — their own bookings only",
     "roleReceptionist": "Receptionist — bookings, clients, payments, attendance",
-    "whoseCalendar": "Whose calendar",
+    "whoseCalendar": "Which stylist",
     "noStaff": "No staff on the roster yet — add someone under Staff first, then invite them here.",
     "chooseStylist": "Choose a stylist…",
     "whichBranch": "Which branch",
     "chooseBranch": "Choose a branch…",
+    "everyBranch": "Every branch — choose one",
     "creating": "Creating…",
     "createInvite": "Create invite",
     "errors": {
       "chooseStylistFirst": "Choose which stylist this login is for.",
       "chooseBranchFirst": "Choose which branch this receptionist works at.",
-      "loadError": "Could not reach the server. Try again in a moment."
+      "loadError": "Something went wrong. Please try again."
     },
     "newLink": "New link created",
     "ready": "Invite ready",
-    "sendTo": "Send this link to {phone}. It is shown only now — we do not keep a copy.",
-    "resentNote": "Their previous link has stopped working.",
+    "sendTo": "Send this link to {phone}. Copy it now — you won’t see it again.",
+    "resentNote": "Their old link no longer works.",
     "copied": "Copied",
     "copyLink": "Copy link",
     "copyFailed": "Could not copy automatically. Tap the link above to select it, then copy it.",
@@ -641,10 +688,7 @@
     "expiresToday": "Expires today",
     "expiresIn": "Expires in {days, plural, one {# day} other {# days}}",
     "cancel": "Cancel",
-    "receptionists": "Receptionists",
     "receptionist": "Receptionist",
-    "worksAt": "Works at {branch}",
-    "everyBranch": "Every branch — choose one",
     "branchFor": "Branch for {phone}",
     "branchForUnnamed": "Branch for receptionist",
     "canSignIn": "Who can sign in",
@@ -1388,6 +1432,43 @@
       "absent": "A"
     },
     "hoursFormat": "{hours}h {minutes}m",
+    "checkIn": {
+      "title": "My attendance today",
+      "imIn": "I’m in",
+      "imOut": "I’m out",
+      "finding": "Finding you…",
+      "markedIn": "Marked in at {time}.",
+      "inAndOut": "In at {in}, out at {out}.",
+      "waiting": "Marked at {time} · waiting for the owner",
+      "approved": "In at {time} · approved",
+      "rejected": "Not approved · {reason}",
+      "noPlaceHint": "Your phone could not say where you are. The owner will confirm.",
+      "distance": "Phone was {m} from the branch.",
+      "failed": "Could not save. Please try again.",
+      "reasons": {
+        "not_at_branch": "Not at branch",
+        "wrong_time": "Wrong time",
+        "other": "Other"
+      },
+      "pendingRow": "Marked from phone · {where} · waiting for you",
+      "noLocation": "no location",
+      "away": "{m} away",
+      "fromPhone": "Marked from phone · {m} from the branch",
+      "approvedRow": "Marked from phone · approved",
+      "rejectedRow": "Not approved · {reason}",
+      "yes": "Yes",
+      "no": "No",
+      "whyNo": "Why not?",
+      "back": "Back",
+      "approvedLive": "{name} approved.",
+      "rejectedLive": "{name} not approved.",
+      "needsMoving": "{count, plural, one {# booking needs} other {# bookings need}} moving to another time or person.",
+      "needsMovingLink": "Open bookings",
+      "dismiss": "Dismiss",
+      "chipWaiting": "Waiting for owner",
+      "chipApproved": "Approved",
+      "chipRejected": "Not approved · {reason}"
+    },
     "register": {
       "heading": "Staff attendance",
       "sub": "Mark in-time, out-time and daily status for your team.",
