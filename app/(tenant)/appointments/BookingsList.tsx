@@ -205,6 +205,15 @@ export function BookingsList({
    * one render both are set and the overlay never blinks out between them.
    */
   const [giving, setGiving] = useState<QueueEntry | null>(null);
+  /**
+   * Owner, 2026-10-10 — the row a waiting token has just become.
+   *
+   * Giving a token to a stylist takes it out of the Waiting strip and puts it in To do, and the screen said
+   * nothing: the person vanished off the top of the page and the desk had no idea where they had gone. So
+   * the list goes to where they went — To do, scrolled to the row, with it lit for a moment — rather than
+   * leaving them to be looked for.
+   */
+  const [justGiven, setJustGiven] = useState<string | null>(null);
   // On a phone the waiting list draws ten rows and "Show more" adds ten at a time; a laptop draws them all.
   const phone = usePhoneLayout();
   const [waitingShown, setWaitingShown] = useState(SHOW_STEP);
@@ -310,6 +319,26 @@ export function BookingsList({
     );
   const matchesStaff = (b: BookingGroup) => staffFilter === 'Everyone' || b.providerNames.includes(staffFilter);
   // Owner-app audit, 2026-10-10 — "Cancelled" means called off; a moved booking's old slot is not one.
+  /*
+   * `router.refresh()` is what brings the new row back, so it is not on screen the moment the sheet closes —
+   * this waits for the list to arrive with it, then takes the eye there and lets go.
+   *
+   * Keyed on the list, NOT left without a dependency array: a timer re-armed on every render is a timer that
+   * never fires on a screen that re-renders (a clock tick, a filter, a typed character), and the row would
+   * have stayed lit for the rest of the day.
+   */
+  useEffect(() => {
+    if (!justGiven) return;
+    const row = document.querySelector<HTMLElement>(`[data-appt~="${justGiven}"]`);
+    if (!row) return;
+    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // Taking focus as well as the eye: the desk may be on a keyboard, and a scroll alone says nothing there.
+    row.tabIndex = -1;
+    row.focus({ preventScroll: true });
+    const done = window.setTimeout(() => setJustGiven(null), 2600);
+    return () => window.clearTimeout(done);
+  }, [justGiven, appointments]);
+
   const matchesStatus = (b: BookingGroup) =>
     !statusFilter || (b.status === statusFilter && !(statusFilter === 'cancelled' && b.movedTo));
   // What the tiles count: everything that matches the search and the staff chips, before the
@@ -541,7 +570,14 @@ export function BookingsList({
       : undefined;
     const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
     return (
-      <div className="bk-card" style={railStyle} onClick={() => openBooking(b)} key={b.key}>
+      <div
+        className={`bk-card ${b.appointments.some((a) => a.id === justGiven) ? 'bk-card-just-given' : ''}`}
+        /* Which bookings this card is: how the effect below finds the row a token just became. */
+        data-appt={b.appointments.map((a) => a.id).join(' ')}
+        style={railStyle}
+        onClick={() => openBooking(b)}
+        key={b.key}
+      >
         <div className="bk-card-left">
           {/* Mobile only: mobile drops the timeline's left gutter entirely
               (no room for it on a phone), so the card has to carry its own
@@ -1101,6 +1137,19 @@ export function BookingsList({
           providers={providers}
           busy={busy}
           onClose={() => setGiving(null)}
+          onGiven={(appointmentId) => {
+            setGiving(null);
+            /*
+             * Everything that could hide the row it is about to point at. A search for the token's number, a
+             * single stylist, "not marked yet" — each of them would leave the desk looking at a list the new
+             * booking is not in, which is the problem this is here to fix rather than a smaller version of it.
+             */
+            setStatusFilter('confirmed');
+            setQuery('');
+            setStaffFilter('Everyone');
+            setUnmarkedOnly(false);
+            setJustGiven(appointmentId);
+          }}
           onRecordPayment={
             mayRecordPayment
               ? () => {

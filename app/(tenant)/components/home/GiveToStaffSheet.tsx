@@ -32,6 +32,7 @@ export function GiveToStaffSheet({
   providers,
   busy,
   onClose,
+  onGiven,
   onRecordPayment,
 }: {
   t: HomeCopy;
@@ -40,6 +41,14 @@ export function GiveToStaffSheet({
   /** providerId → who is in their chair and for how long. */
   busy: Map<string, { client: string; min: number }>;
   onClose: () => void;
+  /**
+   * Owner, 2026-10-10 — the token has become a booking, and this is its id.
+   *
+   * Called INSTEAD of `onClose` when the caller wants to say where the person went. A board that shows the
+   * queue beside the bookings can take the eye to the row that just appeared; a caller with nowhere to point
+   * leaves this off and the sheet simply closes, as it always did.
+   */
+  onGiven?: (appointmentId: string) => void;
   /**
    * Jira GRW-489 — the third thing a waiting token can be: paid where it stands.
    *
@@ -110,9 +119,10 @@ export function GiveToStaffSheet({
     setSaving(providerId);
     setError(null);
     try {
-      await api.giveToStaff(entry.id, providerId, needsServices ? picked : undefined);
+      const given = await api.giveToStaff(entry.id, providerId, needsServices ? picked : undefined);
       router.refresh();
-      onClose();
+      if (onGiven) onGiven(given.appointmentId);
+      else onClose();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t.couldNotGive);
       setSaving(null);
