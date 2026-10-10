@@ -5,6 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
 import { ERROR_COLOR, Field, PrimaryButton, SecondaryButton, Select, TextInput } from './primitives';
 import { BranchFields, emptyBranch, type Branch } from './BranchFields';
+import { pinFromText } from '../lib/geo-link';
 import { DIAL_CODES, validate } from '../lib/enrol-validation';
 import { useDialog } from '../../shared/a11y/useDialog';
 
@@ -39,7 +40,7 @@ const FIELD_FOR_ERROR: Record<string, string> = {
 };
 
 /** Every error key this form draws against a field; anything else would be set and never seen. */
-const SHOWN_FIELD = /^(name|country|businessTypeCode|planCode|owner\.phone|reason|branch\.\d+\.(name|line1|city|stylists))$/;
+const SHOWN_FIELD = /^(name|country|businessTypeCode|planCode|owner\.phone|reason|branch\.\d+\.(name|line1|city|stylists|geo))$/;
 
 export interface CreatedBusiness {
   id: string;
@@ -183,6 +184,8 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
                 : undefined,
             // Jira GRW-557 — validated above, so a whole number 1–999.
             maxProviders: Number(branch.stylists.trim()),
+            // Jira GRW-563 — the pin, when support has it; validated above.
+            ...(branch.geo.trim() ? { geo: pinFromText(branch.geo) } : {}),
           })),
           /**
            * Composed here, so what the route receives is always E.164 and the

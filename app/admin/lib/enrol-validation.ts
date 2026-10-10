@@ -1,3 +1,4 @@
+import { GEO_PROBLEM, pinFromText } from './geo-link';
 /**
  * Jira GRW-138 · GRW-175 — the Add Business form's rules, as pure functions.
  *
@@ -69,7 +70,7 @@ export function validate(values: {
   country: string;
   typeCode: string;
   planCode: string;
-  branches: { name: string; line1: string; city: string; stylists: string }[];
+  branches: { name: string; line1: string; city: string; stylists: string; geo?: string }[];
   nationalNumber: string;
   dialCode: string | null;
   reason: string;
@@ -106,6 +107,8 @@ export function validate(values: {
     if (branch.city.trim().length > 80) errors[`branch.${i}.city`] = 'City is too long (80 characters maximum)';
     const stylists = stylistsProblem(branch.stylists);
     if (stylists) errors[`branch.${i}.stylists`] = stylists;
+    // Jira GRW-563 — empty is fine; something typed has to be a place.
+    if (branch.geo?.trim() && !pinFromText(branch.geo)) errors[`branch.${i}.geo`] = GEO_PROBLEM;
   });
 
   if (values.branches.length === 0) errors['branch.0.name'] = 'Add at least one branch';

@@ -314,6 +314,10 @@
         "label": "Notifications",
         "sub": "Manage alerts and reminders"
       },
+      "checkIn": {
+        "label": "Phone check-in",
+        "sub": "Staff mark themselves in from their phone"
+      },
       "appearance": {
         "label": "Appearance",
         "sub": "Theme, language"
@@ -588,6 +592,38 @@
     "bookingLinkHint": "Share it on Instagram or a QR code. Clients who open it book at this branch.",
     "tryIt": "Try it",
     "bookingLinkNumber": "It opens a WhatsApp chat with {number}."
+  },
+  "settingsCheckIn": {
+    "title": "Phone check-in",
+    "titleBranch": "Phone check-in · {name}",
+    "intro": "Your staff can mark themselves in from their phone. It counts by itself when the phone is at this branch. If the phone cannot say where it is, you say yes or no.",
+    "pinLabel": "Where this branch is",
+    "pinSet": "Set · {lat}, {lng}",
+    "pinNotSet": "Not set yet",
+    "useHere": "Use where I am now",
+    "finding": "Finding you…",
+    "clearPin": "Clear",
+    "useHereHint": "Stand inside the branch and tap. Your phone must allow location.",
+    "linkLabel": "Or paste a maps link",
+    "linkPlaceholder": "https://maps.google.com/…",
+    "linkHint": "Share the branch from Google Maps or Apple Maps and paste the link here.",
+    "radiusLabel": "How close counts",
+    "radiusOption": "Within {m} m",
+    "radiusHint": "50 m is one shop. 500 m is the whole street.",
+    "enabled": "Staff can mark themselves in",
+    "enabledOn": "On. Each stylist at this branch sees “I’m in” on their Home.",
+    "enabledOff": "Off. Attendance is marked from the register only.",
+    "deskApproves": "The front desk can also say yes or no",
+    "deskApprovesHint": "Normally only you decide. Turn this on if your receptionist should too.",
+    "save": "Save",
+    "saving": "Saving…",
+    "savedLabel": "Saved",
+    "errors": {
+      "noFix": "Could not find your location. Check location is on for this site and try again, or paste a maps link.",
+      "noPlaceInLink": "Could not find a place in that link.",
+      "pinFirst": "Set where this branch is before turning it on.",
+      "saveFailed": "Could not save. Please try again."
+    }
   },
   "settingsTeam": {
     "title": "Team access",
@@ -1365,6 +1401,43 @@
       "absent": "A"
     },
     "hoursFormat": "{hours}h {minutes}m",
+    "checkIn": {
+      "title": "My attendance today",
+      "imIn": "I’m in",
+      "imOut": "I’m out",
+      "finding": "Finding you…",
+      "markedIn": "Marked in at {time}.",
+      "inAndOut": "In at {in}, out at {out}.",
+      "waiting": "Marked at {time} · waiting for the owner",
+      "approved": "In at {time} · approved",
+      "rejected": "Not approved · {reason}",
+      "noPlaceHint": "Your phone could not say where you are. The owner will confirm.",
+      "distance": "Phone was {m} from the branch.",
+      "failed": "Could not save. Please try again.",
+      "reasons": {
+        "not_at_branch": "Not at branch",
+        "wrong_time": "Wrong time",
+        "other": "Other"
+      },
+      "pendingRow": "Marked from phone · {where} · waiting for you",
+      "noLocation": "no location",
+      "away": "{m} away",
+      "fromPhone": "Marked from phone · {m} from the branch",
+      "approvedRow": "Marked from phone · approved",
+      "rejectedRow": "Not approved · {reason}",
+      "yes": "Yes",
+      "no": "No",
+      "whyNo": "Why not?",
+      "back": "Back",
+      "approvedLive": "{name} approved.",
+      "rejectedLive": "{name} not approved.",
+      "needsMoving": "{count, plural, one {# booking needs} other {# bookings need}} moving to another time or person.",
+      "needsMovingLink": "Open bookings",
+      "dismiss": "Dismiss",
+      "chipWaiting": "Waiting for owner",
+      "chipApproved": "Approved",
+      "chipRejected": "Not approved · {reason}"
+    },
     "register": {
       "heading": "Staff attendance",
       "sub": "Mark in-time, out-time and daily status for your team.",

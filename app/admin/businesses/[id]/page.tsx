@@ -4,6 +4,7 @@ import { BranchBillPreview } from '../../components/BranchBillPreview';
 import { BranchRowActions } from '../../components/BranchRowActions';
 import { BranchPlaces } from '../../components/BranchPlaces';
 import { stylistsProblem } from '../../lib/enrol-validation';
+import { GEO_PROBLEM, pinFromText } from '../../lib/geo-link';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -51,6 +52,9 @@ interface BusinessDetail {
     name: string;
     active: boolean;
     isMain: boolean;
+    /** Jira GRW-563 — the attendance pin, null until somebody sets it. */
+    geoLat?: number | null;
+    geoLng?: number | null;
     /** Jira GRW-557 — the branch's own number of stylists; null while it uses the plan's. */
     maxProviders: number | null;
     activeStylists: number;
@@ -797,6 +801,8 @@ function BranchesTab({
   const [stylists, setStylists] = useState('');
   const [line1, setLine1] = useState('');
   const [city, setCity] = useState('');
+  /** Jira GRW-563 — a maps link or "lat, lng"; optional. */
+  const [geo, setGeo] = useState('');
   /**
    * Jira GRW-384 — how the new branch's menu starts: a copy of an open branch's (the main one first), the
    * vertical's ready-made catalogue, or empty. "copy:<branch id>", "catalogue" or "empty".
@@ -819,6 +825,10 @@ function BranchesTab({
       setError(stylistsError);
       return;
     }
+    if (geo.trim() && !pinFromText(geo)) {
+      setError(GEO_PROBLEM);
+      return;
+    }
     setBusy(true);
     setError(null);
     adminFetch(`/businesses/${businessId}/branches`, {
@@ -828,6 +838,7 @@ function BranchesTab({
         address: { line1: line1.trim(), city: city.trim() },
         reason,
         maxProviders: Number(stylists.trim()),
+        ...(geo.trim() ? { geoLink: geo.trim() } : {}),
         ...(menu.startsWith('copy:') ? { menu: 'copy', copyFrom: menu.slice(5) } : { menu }),
       }),
     })
@@ -836,6 +847,7 @@ function BranchesTab({
         setName('');
         setLine1('');
         setCity('');
+        setGeo('');
         onChanged();
       })
       .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not add the branch.'))
@@ -886,6 +898,10 @@ function BranchesTab({
                 {l.isMain ? (
                   <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 800, color: oklch.textMuted }}>MAIN</span>
                 ) : null}
+                {/* Jira GRW-563 — whether the branch has a pin for phone check-in. */}
+                <div style={{ fontSize: 11.5, fontWeight: 500, color: oklch.textMuted, marginTop: 2 }}>
+                  {l.geoLat != null && l.geoLng != null ? `Pin ${l.geoLat.toFixed(4)}, ${l.geoLng.toFixed(4)}` : 'No pin yet'}
+                </div>
               </div>
               <div>
                 <StatusPill status={l.active ? 'Active' : 'Closed'} />
@@ -938,6 +954,13 @@ function BranchesTab({
             City (optional)
           </label>
           <TextInput id="add-branch-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Bengaluru" />
+          <label htmlFor="add-branch-geo" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+            Location (optional)
+          </label>
+          <TextInput id="add-branch-geo" value={geo} onChange={(e) => setGeo(e.target.value)} placeholder="https://maps.google.com/… or 12.9716, 77.5946" />
+          <span style={{ fontSize: 12.5, color: oklch.textMuted }}>
+            A Google or Apple Maps link, or lat, lng. Pre-fills the owner&rsquo;s Phone check-in setting; they switch it on.
+          </span>
           <label htmlFor="add-branch-stylists" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
             Stylists at most
           </label>
