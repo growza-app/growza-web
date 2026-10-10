@@ -48,3 +48,13 @@ export function subscriptionStatusLabel(status: string): string {
 export function isTerminalSubscriptionStatus(status: string): boolean {
   return status === 'CANCELLED' || status === 'EXPIRED';
 }
+
+/**
+ * Admin audit 2026-10-09, M10 — the dashboard tiles that open this list. Each names a `view` the API filters by
+ * with the same predicate the tile counted with; before, both tiles linked to the whole list on "All", and
+ * "3 billing periods with no invoice" opened every subscription on the platform.
+ */
+export const SUBSCRIPTION_VIEWS: Record<string, string> = {
+  uninvoiced: 'Billing periods with no invoice',
+  cancelled_this_month: 'Cancelled this month',
+};
