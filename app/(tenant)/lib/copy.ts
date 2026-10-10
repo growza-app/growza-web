@@ -50,7 +50,6 @@ export const copy = {
      */
     navLabelDemo: 'WhatsApp',
     comingSoonPill: 'Coming soon',
-    // The Notifications screen's "WhatsApp is coming soon" notice lives in messages (settingsReminders.notLive*).
     // The Try WhatsApp page's "practice run" notice lives in messages (tryWhatsApp.tryIsADemo).
   },
 

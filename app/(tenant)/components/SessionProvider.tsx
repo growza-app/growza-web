@@ -42,6 +42,12 @@ export interface SessionInfo {
    * refusal (`requireFeature('booking.walk_in')`). Absent reads as on: only an explicit `false` hides a control.
    */
   walkIn?: boolean;
+  /**
+   * `me.whatsapp.booking` — whether clients book and cancel through WhatsApp at this business. Settings that only
+   * bind a client booking by WhatsApp are left undrawn while it is off (owner, 2026-10-10). Absent reads as OFF, the
+   * honest direction: an unknown answer must not offer a setting that would do nothing.
+   */
+  whatsappLive?: boolean;
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);
@@ -77,6 +83,11 @@ const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
 /** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. */
 export function useWritable(): boolean {
   return useSession()?.writable ?? true;
+}
+
+/** Do clients book through WhatsApp here? False when unknown — see `whatsappLive` above. */
+export function useWhatsappLive(): boolean {
+  return useSession()?.whatsappLive ?? false;
 }
 
 /** Jira GRW-556 — is the business live? False only while it is being set up, when only the setup screens are offered. */

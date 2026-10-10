@@ -8,7 +8,6 @@ import {
   IconLogout,
   IconMapPin,
   IconPalette,
-  IconShield,
   IconShop,
   IconUser,
   IconUserPlus,
@@ -25,7 +24,6 @@ export type SettingsRowKey =
   | 'workingHours'
   | 'bookingSettings'
   | 'payments'
-  | 'cancellationPolicy'
   | 'whatsapp'
   | 'notifications'
   | 'appearance'
@@ -52,6 +50,11 @@ interface SettingsRowBase {
    * screen with a single card would be the same form twice.
    */
   multiBranchOnly?: boolean;
+  /**
+   * Listed only while clients book through WhatsApp (`me.whatsapp.booking`). Reminders go out by WhatsApp and by
+   * nothing else, so with it off the screen sets times for a message that is never sent (owner, 2026-10-10).
+   */
+  whatsappOnly?: boolean;
   /**
    * Jira GRW-396 — the row's words at a business with more than one branch, when they differ: there,
    * "Business profile" is one branch's profile.
@@ -94,9 +97,12 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     rows: [
       { href: '/settings/profile', key: 'profile', multiBranchKey: 'branchProfile', icon: IconShop },
       { href: '/settings/working-hours', key: 'workingHours', icon: IconClock },
+      /*
+       * "Cancellation policy" used to be a second row here opening this same page, for the one field on it that
+       * names a cancel (owner, 2026-10-10). Two rows, one destination, and the owner tapped both to find out.
+       */
       { href: '/settings/booking', key: 'bookingSettings', icon: IconCalendarPlus },
-      { href: '/settings/booking', key: 'cancellationPolicy', icon: IconShield },
-      { href: '/settings/notifications', key: 'notifications', icon: IconBell },
+      { href: '/settings/notifications', key: 'notifications', icon: IconBell, whatsappOnly: true },
     ],
   },
   {

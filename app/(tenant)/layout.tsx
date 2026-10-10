@@ -299,6 +299,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             live,
             writable,
             walkIn,
+            whatsappLive,
           }}
         >
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>

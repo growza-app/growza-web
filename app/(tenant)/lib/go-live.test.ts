@@ -163,7 +163,8 @@ describe('every surface that offers a destination follows the flag', () => {
     const layout = code('layout.tsx');
     expect(layout).toMatch(/live = isLive\(me\.tenant\?\.status\);/);
     // `writable` and `walkIn` ride beside it (Jira GRW-556 follow-up), so `live` is no longer last.
-    expect(layout).toMatch(/\blive,\n\s*writable,\n\s*walkIn,\n\s*\}\}/);
+    // `whatsappLive` rides last now (owner, 2026-10-10): Settings hides what only binds a WhatsApp booking.
+    expect(layout).toMatch(/\blive,\n\s*writable,\n\s*walkIn,\n\s*whatsappLive,\n\s*\}\}/);
   });
 
   it('the sidebar, the tab bar and the More menu ask with the flag', () => {

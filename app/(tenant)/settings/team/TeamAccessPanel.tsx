@@ -377,51 +377,6 @@ export function TeamAccessPanel({
           )}
         </div>
 
-        {/* Jira GRW-237 — each branch has its own front desk. Only with more than one
-            branch: one branch has nothing to choose, and the screen stays as it was. */}
-        {multiBranch && members.some((m) => m.role === 'receptionist') && (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontWeight: 620, fontSize: 14.5, marginBottom: 8 }}>{t('receptionists')}</div>
-            {members
-              .filter((m) => m.role === 'receptionist')
-              .map((m, i) => (
-                <div
-                  key={m.userId}
-                  className="team-member-row"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: 12,
-                    padding: '12px 0',
-                    borderTop: i > 0 ? '1px solid var(--border)' : 'none',
-                  }}
-                >
-                  <div style={{ flex: '1 1 160px', minWidth: 0 }}>
-                    <div style={{ fontWeight: 620, fontSize: 14.5 }}>{m.phone ?? t('receptionist')}</div>
-                    <div className="field-hint" style={{ margin: 0 }}>
-                      {m.locationId ? t('worksAt', { branch: m.locationName ?? branchName(m.locationId) ?? '' }) : t('everyBranch')}
-                    </div>
-                  </div>
-                  <select
-                    aria-label={m.phone ? t('branchFor', { phone: m.phone }) : t('branchForUnnamed')}
-                    value={m.locationId ?? ''}
-                    disabled={savingMember === m.userId}
-                    onChange={(e) => void moveMember(m.userId, e.target.value)}
-                    style={{ flex: '0 1 260px', minWidth: 0 }}
-                  >
-                    {!m.locationId && <option value="">{t('chooseBranch')}</option>}
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-          </div>
-        )}
-
         {/* Jira GRW-470 — everybody who can sign in, and the way to stop them. The owner is not listed: a business
             keeps its owner. */}
         {loginHolders.length > 0 && (
@@ -434,6 +389,7 @@ export function TeamAccessPanel({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  flexWrap: 'wrap',
                   gap: 12,
                   padding: '12px 0',
                   borderTop: i > 0 ? '1px solid var(--border)' : 'none',
@@ -446,6 +402,30 @@ export function TeamAccessPanel({
                     {m.phone && m.providerName ? ` · ${m.phone}` : ''}
                   </div>
                 </div>
+                {/*
+                  Jira GRW-237 — each branch has its own front desk, so a receptionist's branch is chosen on their own
+                  row. It used to be a second list ("Receptionists") above this one, naming the same people twice
+                  (owner, 2026-10-10). Only with more than one branch: one branch has nothing to choose.
+                */}
+                {multiBranch && m.role === 'receptionist' ? (
+                  <select
+                    aria-label={m.phone ? t('branchFor', { phone: m.phone }) : t('branchForUnnamed')}
+                    value={m.locationId ?? ''}
+                    disabled={savingMember === m.userId}
+                    onChange={(e) => void moveMember(m.userId, e.target.value)}
+                    // Its own line under the name, after Remove: the name and Remove keep one line between them at 344px.
+                    style={{ order: 3, flex: '1 1 100%', maxWidth: 260, minWidth: 0 }}
+                  >
+                    {/* No branch means every branch — say so, as the line under the name used to, rather than a
+                        blank that reads as missing (and invites pinning them to one without knowing that's a change). */}
+                    {!m.locationId && <option value="">{t('everyBranch')}</option>}
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
                 <button
                   type="button"
                   className="btn btn-ghost btn-danger"
