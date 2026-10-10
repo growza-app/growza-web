@@ -143,6 +143,10 @@ export const copy = {
     /** Plural, for counts: "3 didn't come". */
     didNotComeCount: "didn't come",
     cancelled: 'Cancelled',
+    // Owner-app audit, 2026-10-10 — a moved booking's old slot, and where the booking is now.
+    moved: 'Moved',
+    movedNowAt: 'Now at {time}',
+    movedNowOn: 'Now on {date}, {time}',
   },
 
   today: {
