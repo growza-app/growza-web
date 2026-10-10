@@ -1280,6 +1280,34 @@ export function NewVisitSheet({
     };
   }, [later, stage.step, onForm, pageForm, day, picked, extras, schedulableId, listBranch, timezone]);
 
+  /**
+   * The Booking time, against what is actually free.
+   *
+   * `askedMatch` is the slot the grid should land on for the time asked for: that time if it is free, else
+   * the first free one after it, else nothing. The fetch effect above seeds a slot ONCE per load from
+   * `timeWantedRef`; this is what makes CHANGING the select move the grid, which it did not do when the
+   * control was last on this screen — the reason it was taken off.
+   *
+   * Up here with the other hooks, NOT beside the markup that reads it: `if (checkoutRows…) return` above
+   * renders the till instead of the form, so a hook below it runs on some renders and not others. React
+   * counts hooks, and "Take payment now" took the whole screen down with "Rendered fewer hooks than
+   * expected" the first time the till opened.
+   */
+  const slotList = useMemo(() => (slots ? slots.sections.flatMap((sec) => sec.slots) : []), [slots]);
+  const askedMatch = useMemo(() => {
+    if (!timeWanted || slotList.length === 0) return null;
+    const hm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const at = (utc: string) => hm.format(new Date(utc));
+    const exact = slotList.find((sl) => at(sl.utc) === timeWanted);
+    return { exact: Boolean(exact), slot: exact ?? slotList.find((sl) => at(sl.utc) > timeWanted) ?? null };
+  }, [timeWanted, slotList, timezone]);
+
+  // Asking for a time moves the grid to it. Keyed on the ASK, so a slot tapped by hand afterwards is left alone.
+  useEffect(() => {
+    if (!timeWanted || !askedMatch) return;
+    setSlotUtc(askedMatch.slot?.utc ?? null);
+  }, [timeWanted, askedMatch]);
+
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.
    *
@@ -2895,29 +2923,6 @@ export function NewVisitSheet({
       {label}
     </button>
   );
-  /**
-   * The Booking time, against what is actually free.
-   *
-   * `wanted` is the slot the grid should land on for the time asked for: that time if it is free, else the
-   * first free one after it, else nothing. The fetch effect above seeds this ONCE per load from
-   * `timeWantedRef`; this is what makes CHANGING the select move the grid, which it did not do when the
-   * control was last on this screen — the reason it was taken off.
-   */
-  const slotList = useMemo(() => (slots ? slots.sections.flatMap((sec) => sec.slots) : []), [slots]);
-  const askedMatch = useMemo(() => {
-    if (!timeWanted || slotList.length === 0) return null;
-    const hm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-    const at = (utc: string) => hm.format(new Date(utc));
-    const exact = slotList.find((sl) => at(sl.utc) === timeWanted);
-    return { exact: Boolean(exact), slot: exact ?? slotList.find((sl) => at(sl.utc) > timeWanted) ?? null };
-  }, [timeWanted, slotList, timezone]);
-
-  // Asking for a time moves the grid to it. Keyed on the ASK, so a slot tapped by hand afterwards is left alone.
-  useEffect(() => {
-    if (!timeWanted || !askedMatch) return;
-    setSlotUtc(askedMatch.slot?.utc ?? null);
-  }, [timeWanted, askedMatch]);
-
   /**
    * What became of the time the desk was given, in one line.
    *

@@ -45,6 +45,26 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/wi-slot-grid/);
   });
 
+  it('declares every hook above the early return the till takes', () => {
+    /*
+     * "Take payment now" went to the error boundary with "Rendered fewer hooks than expected", because the
+     * Booking time's `useMemo`s were written beside the markup that reads them — a thousand lines below
+     * `if (checkoutRows…) return`, which renders the till INSTEAD of the form. React counts hooks per render,
+     * so opening the till ran fewer of them and took the screen down.
+     *
+     * This component has one early return and a very long body, so the rule is worth holding mechanically:
+     * no hook after it. The check is deliberately dumb — any `useX(` at the component's own indentation.
+     */
+    const cut = code.indexOf('  if (checkoutRows && checkoutRows.length > 0 && services && providers) {');
+    expect(cut, 'the early return moved; point this test at the new one').toBeGreaterThan(0);
+    const after = code.slice(cut).split('\n');
+    const late = after
+      .map((line, i) => ({ line, i }))
+      .filter(({ line }) => /^ {2}(?:const |let )?[A-Za-z[{][^=]*=\s*use[A-Z]\w*\(|^ {2}use[A-Z]\w*\(/.test(line))
+      .map(({ line }) => line.trim().slice(0, 72));
+    expect(late, 'these hooks run only when the till is NOT open — move them up with the others').toEqual([]);
+  });
+
   it('takes a time, and says out loud when it could not honour it', () => {
     /*
      * Owner, 2026-10-10 — the Booking time is back beside the date. It was taken off because it was a second
