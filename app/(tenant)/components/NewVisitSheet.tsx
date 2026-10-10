@@ -2899,24 +2899,24 @@ export function NewVisitSheet({
   const paidScreen =
     stage.step === 'paid' ? (
       <PaymentDone
-      appointmentId={stage.result.appointmentId}
-      totalMinor={stage.totalMinor}
-      mode={stage.mode}
-      modeLabel={PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode}
-      summary={[
-        // Jira GRW-403 — the token this payment closed, or the one it was given.
-        stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
-        PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode,
-        everythingNamed,
-        providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? null,
-      ]
-        .filter(Boolean)
-        .join(' · ')}
-      bill={stage.bill}
-      phone={stage.client.phone || null}
-      onNextCustomer={onAnother ?? onClose}
-      onDone={onClose}
-    />
+        appointmentId={stage.result.appointmentId}
+        totalMinor={stage.totalMinor}
+        mode={stage.mode}
+        modeLabel={PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode}
+        summary={[
+          // Jira GRW-403 — the token this payment closed, or the one it was given.
+          stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
+          PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode,
+          everythingNamed,
+          providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        bill={stage.bill}
+        phone={stage.client.phone || null}
+        onNextCustomer={onAnother ?? onClose}
+        onDone={onClose}
+      />
     ) : null;
   if (paidScreen && presentation === 'page') return paidScreen;
 
