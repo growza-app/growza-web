@@ -44,8 +44,16 @@ export function shouldPoll(pathname: string): boolean {
   return LIVE_ROUTES.includes(pathname);
 }
 
-/** Every this-many ticks, redraw regardless: a minute, for time-driven state no change signal announces. */
-export const FORCE_EVERY_TICKS = 4;
+/**
+ * Every this-many ticks, redraw regardless, for time-driven state no change signal announces ("running late",
+ * "next up").
+ *
+ * Owner-app audit 2026-10-10 — forty, not four. Every fourth tick was a full server render of Home every minute
+ * — ten API calls, the headline grouping three times over — for every open tab, whether or not anything had
+ * happened. The change signal (`/live-version`) already covers every booking, hold and payment; what the forced
+ * tick keeps moving is wording that changes by the quarter hour, and ten minutes is soon enough for that.
+ */
+export const FORCE_EVERY_TICKS = 40;
 
 /**
  * Jira GRW-310 — what a timer tick does.

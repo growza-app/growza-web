@@ -987,11 +987,9 @@ export const api = {
 
 };
 
-export function formatMoney(minor: string | null, currency = 'INR'): string {
-  if (!minor) return '—';
-  const amount = Number(minor) / 100;
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
-}
+// Owner-app audit 2026-10-10 — moved to `lib/format.ts` with the billing screens' rounding rule; re-exported so the
+// 78 call sites keep importing it from here.
+export { formatMoney } from './format';
 
 export function formatTime(iso: string, timezone: string): string {
   return new Intl.DateTimeFormat('en-IN', {

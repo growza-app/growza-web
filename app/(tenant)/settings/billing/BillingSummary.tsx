@@ -1,4 +1,5 @@
 import type { OwnerBilling } from '../../lib/api-types';
+import { formatMoney } from '../../lib/format';
 import { billingCopy } from '../../lib/billing-copy';
 import type { Lang } from '../../lib/lang';
 import { PayCard } from '../../components/PayCard';
@@ -27,8 +28,7 @@ export function BillingSummary({
   const t = billingCopy(lang);
   const sub = billing.subscription;
   const currency = sub?.currency ?? 'INR';
-  const money = (minor: number) =>
-    new Intl.NumberFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', { style: 'currency', currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+  const money = (minor: number) => formatMoney(minor, currency, lang);
   const day = (iso: string) => {
     const [y, m, d] = iso.split('-').map(Number);
     return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });

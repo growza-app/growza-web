@@ -65,12 +65,14 @@ describe('what a tick does', () => {
     expect(tick(2, 'b', 'a')).toEqual({ refresh: true, baseline: 'b' });
   });
 
-  it('every fourth tick redraws regardless, so clock-driven state still moves', () => {
-    expect(FORCE_EVERY_TICKS).toBe(4);
-    expect(tick(4, 'a', 'a')).toEqual({ refresh: true, baseline: 'a' });
-    expect(tick(8, 'a', 'a').refresh).toBe(true);
+  it('every fortieth tick — ten minutes — redraws regardless, so clock-driven state still moves', () => {
+    // Owner-app audit 2026-10-10 — it was every fourth (a minute), a full Home render per tab per minute.
+    expect(FORCE_EVERY_TICKS).toBe(40);
+    expect(tick(4, 'a', 'a')).toEqual({ refresh: false, baseline: 'a' });
+    expect(tick(40, 'a', 'a')).toEqual({ refresh: true, baseline: 'a' });
+    expect(tick(80, 'a', 'a').refresh).toBe(true);
     // ...and it re-baselines on what it saw.
-    expect(tick(4, 'b', 'a')).toEqual({ refresh: true, baseline: 'b' });
+    expect(tick(40, 'b', 'a')).toEqual({ refresh: true, baseline: 'b' });
   });
 
   it('a failed check (rate limited, offline) redraws nothing and keeps the baseline', () => {
@@ -79,10 +81,10 @@ describe('what a tick does', () => {
   });
 
   it('a failed check on a forced tick still redraws once, keeping the baseline', () => {
-    expect(tick(4, null, 'a')).toEqual({ refresh: true, baseline: 'a' });
+    expect(tick(40, null, 'a')).toEqual({ refresh: true, baseline: 'a' });
   });
 
-  it('over a quiet minute that is one redraw in four ticks, not four', () => {
+  it('over ten quiet minutes that is one redraw in forty ticks, not forty', () => {
     let baseline: string | null = null;
     let redraws = 0;
     for (let n = 1; n <= FORCE_EVERY_TICKS; n += 1) {

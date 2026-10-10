@@ -13,13 +13,25 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { useMayUse } from './SessionProvider';
 
 /**
- * Digits only — `tel:` and `wa.me` both choke on spaces and punctuation.
+ * A `tel:` number — `+` and digits, nothing else: `tel:` chokes on spaces and punctuation.
+ *
+ * Owner-app audit 2026-10-10 — the `+` stays. This stripped it, so the booking card and the action sheet dialled
+ * `tel:919876543207` while the client profile dialled `tel:+919876543207`; without the `+` a handset treats the
+ * twelve digits as a local number and the call does not connect. `wa.me` wants the digits alone — that is
+ * `waDigits` below, and the two are named for the link they build so nobody swaps them again.
  *
  * GRW-199 — accepts null, because a walk-in may have given no number at all.
  * Returns an empty string, which callers test to decide whether to render a
  * call button; a `tel:` link built from nothing is a button that does nothing.
  */
 export function dialable(phone: string | null | undefined): string {
+  const digits = waDigits(phone);
+  if (!digits) return '';
+  return (phone ?? '').trim().startsWith('+') ? `+${digits}` : digits;
+}
+
+/** The digits a `wa.me/` link wants — no `+`, no spaces. */
+export function waDigits(phone: string | null | undefined): string {
   return (phone ?? '').replace(/[^0-9]/g, '');
 }
 

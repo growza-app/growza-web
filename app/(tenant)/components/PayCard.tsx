@@ -1,4 +1,5 @@
 import type { OwnerBilling } from '../lib/api-types';
+import { formatMoney } from '../lib/format';
 import { billingCopy } from '../lib/billing-copy';
 import type { Lang } from '../lib/lang';
 import { PayNowButton } from './PayNowButton';
@@ -37,8 +38,7 @@ export function PayCard({
 }) {
   const t = billingCopy(lang);
   const locale = lang === 'hi' ? 'hi-IN' : 'en-IN';
-  const money = (minor: number) =>
-    new Intl.NumberFormat(locale, { style: 'currency', currency: due.currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+  const money = (minor: number) => formatMoney(minor, due.currency, locale);
   const [y, m, d] = due.periodStart.split('-').map(Number);
   const month = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
   const phone = payHow?.supportPhone;

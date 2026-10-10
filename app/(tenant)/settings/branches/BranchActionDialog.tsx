@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, api, type BranchClosePreview } from '../../lib/api';
+import { formatMoney } from '../../lib/format';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { opensSoftKeyboard } from '../../../shared/a11y/soft-keyboard';
 
@@ -43,8 +44,7 @@ export function BranchActionDialog({
     if (action === 'close') api.branchClosePreview(branch.id).then(setPreview).catch(() => setPreview(null));
   }, [action, branch.id]);
 
-  const money = (currency: string, minor: number) =>
-    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100);
+  const money = (currency: string, minor: number) => formatMoney(minor, currency, locale);
   const day = (iso: string) => {
     const [y, m, d] = iso.split('-').map(Number);
     return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
