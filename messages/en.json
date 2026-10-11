@@ -784,6 +784,7 @@
         "title": "Choose a photo",
         "choose": "Choose from our photos",
         "hint": "Pick the closest one. You can still upload your own.",
+        "upload": "Upload your own photo",
         "done": "Done",
         "labels": {
           "anti-acne-facial": "Anti-acne facial",

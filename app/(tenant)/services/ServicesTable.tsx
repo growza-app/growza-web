@@ -13,6 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
 import { ServiceForm } from './ServiceForm';
+import { PackPhotoSheet } from './PackPhotoSheet';
 import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
@@ -129,6 +130,14 @@ export function ServicesTable({
    */
   const photoInput = useRef<HTMLInputElement | null>(null);
   const [photoFor, setPhotoFor] = useState<ServiceAdmin | null>(null);
+  /**
+   * Owner, 2026-10-11 — the service whose picture is being chosen from the list.
+   *
+   * The ··· menu's photo item used to click the file input directly, so the forty supplied pictures existed and
+   * an owner working from the Services list never met them: the only thing that ever happened was a file dialog.
+   * Now the menu opens the pack, and the upload is a button inside it.
+   */
+  const [packFor, setPackFor] = useState<ServiceAdmin | null>(null);
 
   const replace = (saved: ServiceAdmin) => {
     setServices((prev) => (prev.some((s) => s.id === saved.id) ? prev.map((s) => (s.id === saved.id ? saved : s)) : [saved, ...prev]));
@@ -169,9 +178,27 @@ export function ServicesTable({
     }
   };
 
-  const askPhoto = (service: ServiceAdmin) => {
-    setPhotoFor(service);
-    photoInput.current?.click();
+  /** The ··· menu's photo item: the supplied pictures, with "upload your own" inside them. */
+  const askPhoto = (service: ServiceAdmin) => setPackFor(service);
+
+  /** Chosen from the pack. One field, saved at once — there is nothing else on this sheet to save with it. */
+  const pickFromPack = async (service: ServiceAdmin, catalogKey: string) => {
+    setPackFor(null);
+    setError(null);
+    setBusyId(service.id);
+    try {
+      const updated = await api.updateService(service.id, { catalogKey });
+      // The row's thumbnail reads `catalogKey`, so it has to change here too or the list keeps the old picture
+      // until a reload. Taken from the API's answer rather than assumed, as the upload path does.
+      setServices((prev) => prev.map((x) => (x.id === service.id ? { ...x, catalogKey: updated.catalogKey ?? catalogKey } : x)));
+      router.refresh();
+    } catch (err) {
+      // Not `uploadFailed`: nothing was uploaded, and an owner told "Upload failed" after choosing a picture
+      // from a grid would go looking for a file they never picked.
+      setError(err instanceof Error && err.message ? err.message : t('errors.saveFailed'));
+    } finally {
+      setBusyId(null);
+    }
   };
 
   /**
@@ -616,6 +643,22 @@ export function ServicesTable({
           onClose={() => setManaging(null)}
           // A rename shows on every row of the list, and a delete frees services it lists: reload, don't patch.
           onChanged={() => void reload()}
+        />
+      )}
+
+      {packFor && (
+        <PackPhotoSheet
+          current={packFor.catalogKey ?? null}
+          onPick={(key) => void pickFromPack(packFor, key)}
+          onUpload={() => {
+            // The sheet closes first: the file dialog is the OS's, and leaving a modal open behind it strands
+            // the owner on a sheet they cannot see the point of when they come back.
+            const service = packFor;
+            setPackFor(null);
+            setPhotoFor(service);
+            photoInput.current?.click();
+          }}
+          onClose={() => setPackFor(null)}
         />
       )}
 

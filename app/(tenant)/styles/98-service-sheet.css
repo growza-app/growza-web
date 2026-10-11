@@ -506,6 +506,19 @@
 
 /* ── Choosing a picture from the pack ─────────────────────────────────────── */
 
+/*
+ * "Upload your own photo", above the grid (owner, 2026-10-11).
+ *
+ * Full width and quiet: an owner with their own photograph of this service wants it and nothing on the grid,
+ * so it has to be findable without competing with forty pictures for the eye. 44px is the floor for a target.
+ */
+.pack-photo-upload {
+  display: block;
+  width: calc(100% - 28px);
+  margin: 0 14px 12px;
+  min-height: 44px;
+}
+
 .pack-photo-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

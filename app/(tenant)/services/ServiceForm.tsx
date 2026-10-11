@@ -312,7 +312,8 @@ export function ServiceForm({
               }}
             />
             <button type="button" className="sheet-photo-text" onClick={() => photoRef.current?.click()}>
-              <span className="sheet-photo-action">{photo || imageUrl ? t('changePhoto') : t('addPhoto')}</span>
+              {/* A pack picture counts: this said "Add a photo" beside the photo it was showing. */}
+              <span className="sheet-photo-action">{photo || imageUrl || shownKey ? t('changePhoto') : t('addPhoto')}</span>
               <span className="sheet-photo-why">{t('photoHint')}</span>
             </button>
             <button type="button" className="sheet-photo-choose" onClick={() => setPicking(true)}>
