@@ -456,6 +456,13 @@ export interface ActivityEvent {
   branchName: string | null;
   startAt: string | null;
   serviceNames: string[] | null;
+  /**
+   * Jira GRW-562 — the booking behind the row, so tapping it opens that booking rather than the day it
+   * falls on. The earliest leg, the one `startAt` reports, so the id and the time name the same visit.
+   * Null for billing and handoff rows — and absent from an API older than this field, which is why the
+   * dashboard falls back to the day (NotificationBell's `notifHref`) instead of refusing to link.
+   */
+  appointmentId?: string | null;
   billing: ActivityBilling | null;
   /** Jira GRW-562 — who at the salon did it (a stylist's name), for a dashboard action; null for WhatsApp and billing. */
   actorName: string | null;
@@ -730,6 +737,13 @@ export interface AttendanceRegister {
   lateGraceMin: number;
   /** Jira GRW-230 — staff whose branch has its own grace; anyone absent uses `lateGraceMin`. */
   lateGraceByProvider?: Record<string, number>;
+  /**
+   * Jira GRW-563 — a row this viewer writes will be measured against the branch's fence, so the register has
+   * to send the phone's fix with it or the row lands in the owner's queue. True only for a branch's own desk
+   * at a branch with the pin set and the switch on; an owner is never fenced. Absent from an older API, which
+   * reads as false — the same rows, approved as they always were.
+   */
+  fenceApplies?: boolean;
   rows: AttendanceRow[];
 }
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { ActivityEvent } from '../lib/api';
-import { byWhom, eventLine, timeAgo, TOPIC_META, type FeedT } from './NotificationBell';
+import { byWhom, eventLine, notifHref, timeAgo, TOPIC_META, type FeedT } from './NotificationBell';
 
 /** Jira GRW-360 — a notification reads in the owner's language: the row's title, its time and its age. */
 const feed = (locale: 'en' | 'hi') =>
@@ -85,5 +85,55 @@ describe('GRW-562 — the feed says who did it, and what the bill is doing', () 
       expect(feed('en')(`topics.${meta.key}` as never)).not.toMatch(/topics\./);
       expect(feed('hi')(`topics.${meta.key}` as never)).not.toMatch(/topics\./);
     }
+  });
+});
+
+/**
+ * Jira GRW-562 — a notification that reads like news has to go somewhere. Every
+ * booking row used to be a bare <div>, on the bell and on the phone page both.
+ */
+describe('where a notification row goes', () => {
+  const at = (startAt: string | null, topic: ActivityEvent['topic'] = 'appointment.confirmed') =>
+    notifHref({ ...booking, topic, startAt } as ActivityEvent, 'Asia/Kolkata');
+
+  it('a booking opens that booking, on its own day', () => {
+    const id = '9f1c4e2a-0000-4000-8000-000000000001';
+    const href = (startAt: string | null) => notifHref({ ...booking, appointmentId: id, startAt } as ActivityEvent, 'Asia/Kolkata');
+    // Both, like Search (SearchClient's bookingHref): the sheet is found among the day's loaded
+    // bookings, so `open` without `date` opens nothing for anything that is not today.
+    expect(href('2026-09-21T05:30:00.000Z')).toBe(`/appointments?date=2026-09-21&open=${id}`);
+    // And the day is still the salon's, not UTC's.
+    expect(href('2026-09-21T20:30:00.000Z')).toBe(`/appointments?date=2026-09-22&open=${id}`);
+    // An id with no time to place it: open it anyway rather than refuse.
+    expect(href(null)).toBe(`/appointments?open=${id}`);
+  });
+
+  // An API older than the `appointmentId` field — the two repos deploy separately.
+  it('falls back to the booking\'s day, read in the salon\'s zone', () => {
+    // 05:30Z is 11:00 on the 21st in Kolkata — same day either way.
+    expect(at('2026-09-21T05:30:00.000Z')).toBe('/appointments?date=2026-09-21');
+    // 20:30Z is 02:00 on the 22nd in Kolkata: the UTC date would open the wrong, empty day.
+    expect(at('2026-09-21T20:30:00.000Z')).toBe('/appointments?date=2026-09-22');
+  });
+
+  it('every booking topic is tappable, not just new ones', () => {
+    for (const topic of Object.keys(TOPIC_META) as Array<ActivityEvent['topic']>) {
+      if (!topic.startsWith('appointment.')) continue;
+      expect(at('2026-09-21T05:30:00.000Z', topic), topic).toBe('/appointments?date=2026-09-21');
+    }
+  });
+
+  it('a bill opens the bill — what its own subtitle promises', () => {
+    for (const topic of Object.keys(TOPIC_META) as Array<ActivityEvent['topic']>) {
+      if (!topic.startsWith('billing.')) continue;
+      expect(at(null, topic), topic).toBe('/settings/billing');
+    }
+  });
+
+  it('goes nowhere rather than somewhere wrong', () => {
+    // A booking row with no time to anchor it, and a handoff, which has no screen yet.
+    expect(at(null)).toBeNull();
+    expect(at('not-a-date')).toBeNull();
+    expect(at('2026-09-21T05:30:00.000Z', 'conversation.handoff')).toBeNull();
   });
 });

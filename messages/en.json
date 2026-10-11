@@ -1484,10 +1484,12 @@
         "other": "Other"
       },
       "pendingRow": "Marked from phone · {where} · waiting for you",
+      "pendingDesk": "Added at the desk · {where} · waiting for you",
       "noLocation": "no location",
       "away": "{m} away",
       "fromPhone": "Marked from phone · {m} from the branch",
       "approvedRow": "Marked from phone · approved",
+      "approvedDesk": "Added at the desk · approved",
       "rejectedRow": "Not approved · {reason}",
       "yes": "Yes",
       "no": "No",
