@@ -491,6 +491,14 @@ export const api = {
     inTime?: string | null;
     outTime?: string | null;
     note?: string | null;
+    /**
+     * Jira GRW-563 — where the desk's own device is, when its branch is fenced (`fenceApplies`).
+     * The API has always read these; nothing sent them, so every row a fenced branch's desk typed was
+     * written `pending` and waited for the owner — including each one of a "Mark everyone present".
+     */
+    lat?: number;
+    lng?: number;
+    accuracyM?: number | null;
   }) => put<AttendanceRow>('/api/v1/attendance', input),
   clearAttendance: (providerId: string, date: string) =>
     del<{ ok: true }>(`/api/v1/attendance?providerId=${encodeURIComponent(providerId)}&date=${encodeURIComponent(date)}`),

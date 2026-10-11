@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type AttendanceRegister as Register, type AttendanceRow } from '../lib/api';
 import { useMayUse, useWritable } from '../components/SessionProvider';
-import { metresLabel } from '../lib/geo-fix';
+import { getFix, metresLabel, type GeoFix } from '../lib/geo-fix';
 import { pickNoun } from '../lib/nouns';
 import { intlLocale } from './[providerId]/month';
 import { useBranch } from '../components/BranchProvider';
@@ -47,6 +47,16 @@ type StatusKey = keyof typeof STATUS;
 
 /** The design's own order, top to bottom, in both the summary tiles and the status menu. */
 const ORDER: StatusKey[] = ['present', 'late', 'half_day', 'leave', 'absent'];
+
+/**
+ * Jira GRW-563 — did a stylist's own phone write this row, or did somebody type it here?
+ *
+ * The only honest answer is `source`: `self` / `self_unverified` are hers, `register` is the desk's. An older
+ * API that sends no source reads as the desk's, which is what the register was before phone check-in existed.
+ */
+function fromPhone(row: { source?: string | null }): boolean {
+  return row.source === 'self' || row.source === 'self_unverified';
+}
 
 /** Statuses that mean the person was not there, so they carry no times. Mirrors the schema's `attendance_away_has_no_times`. */
 const AWAY = new Set<StatusKey>(['leave', 'absent']);
@@ -142,6 +152,32 @@ export function AttendanceRegister({
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const liveRef = useRef<HTMLParagraphElement>(null);
 
+  /**
+   * Jira GRW-563 — where this device is, for a row the branch's fence will measure.
+   *
+   * The API has always checked a branch-scoped viewer's write against the fence, and nothing here ever sent
+   * a fix: every row a fenced branch's desk typed was written `pending` and sat in the owner's queue — one
+   * per person, so "Mark everyone present" filled it in a single tap.
+   *
+   * Asked only when the API says the fence applies (`fenceApplies`), so an owner, or a desk at a branch with
+   * no pin, is never prompted for a location nobody is going to read. Cached for five minutes: one permission
+   * prompt and one fix serve a morning of marking, and a refusal is remembered rather than asked again on
+   * every row. No fix is still a saved row — it just waits for the owner, which is what used to happen to all
+   * of them.
+   */
+  const fixRef = useRef<{ at: number; fix: GeoFix | null } | null>(null);
+  const FIX_TTL_MS = 5 * 60_000;
+  async function deskFix(): Promise<{ lat?: number; lng?: number; accuracyM?: number | null }> {
+    if (!register.fenceApplies) return {};
+    const cached = fixRef.current;
+    let fix = cached && Date.now() - cached.at < FIX_TTL_MS ? cached.fix : undefined;
+    if (fix === undefined) {
+      fix = await getFix();
+      fixRef.current = { at: Date.now(), fix };
+    }
+    return fix ? { lat: fix.lat, lng: fix.lng, accuracyM: fix.accuracyM } : {};
+  }
+
   const rows = register.rows;
   const tz = register.timezone;
 
@@ -213,6 +249,7 @@ export function AttendanceRegister({
         inTime: away ? null : next.inTime || null,
         outTime: away ? null : next.outTime || null,
         note: row.note,
+        ...(await deskFix()),
       });
       const fresh = await api.attendance(date, undefined, undefined, branch);
       setRegister(fresh);
@@ -268,6 +305,8 @@ export function AttendanceRegister({
     setBusy(true);
     setError(null);
     try {
+      // One fix for the whole batch — the desk has not moved between the first row and the eighth.
+      const fix = await deskFix();
       for (const row of unmarked) {
         await api.markAttendance({
           providerId: row.providerId,
@@ -278,6 +317,7 @@ export function AttendanceRegister({
           inTime: row.shiftStart,
           outTime: null,
           note: row.note,
+          ...fix,
         });
       }
       await load(date);
@@ -613,16 +653,24 @@ export function AttendanceRegister({
                   </button>
                 </div>
 
-                {/* Jira GRW-563 — marked from her own phone: what it said, and the Yes / No when it could not place her. */}
+                {/*
+                  * Jira GRW-563 — where this row came from, and the Yes / No when the fence could not place it.
+                  *
+                  * `source`, not `approval`, decides the words. A row the DESK typed is `source: 'register'`,
+                  * and reading only the approval told the owner "Marked from phone · no location" about a row
+                  * nobody's phone had touched — a false sentence on a pay-adjacent record.
+                  */}
                 {row.source === 'self' || row.source === 'self_unverified' || row.approval === 'pending' || row.approval === 'approved' || row.approval === 'rejected' ? (
                   <div className={`ci-row ci-row-${row.approval ?? 'auto'}`}>
                     <span className="ci-row-text">
                       {row.approval === 'pending'
-                        ? tc('pendingRow', { where: row.inDistanceM == null ? tc('noLocation') : tc('away', { m: metresLabel(row.inDistanceM) ?? '' }) })
+                        ? tc(fromPhone(row) ? 'pendingRow' : 'pendingDesk', {
+                            where: row.inDistanceM == null ? tc('noLocation') : tc('away', { m: metresLabel(row.inDistanceM) ?? '' }),
+                          })
                         : row.approval === 'rejected'
                           ? tc('rejectedRow', { reason: tc(`reasons.${row.rejectReason ?? 'other'}`) })
                           : row.approval === 'approved'
-                            ? tc('approvedRow')
+                            ? tc(fromPhone(row) ? 'approvedRow' : 'approvedDesk')
                             : tc('fromPhone', { m: metresLabel(row.inDistanceM) ?? '' })}
                     </span>
                     {row.approval === 'pending' && mayApprove && writable ? (
@@ -667,15 +715,18 @@ export function AttendanceRegister({
                           if (e.key !== 'Enter' || !view.status) return;
                           const text = (e.target as HTMLInputElement).value.trim();
                           setNoteFor(null);
-                          void api
-                            .markAttendance({
-                              providerId: row.providerId,
-                              date,
-                              status: view.status,
-                              inTime: away ? null : view.inTime || null,
-                              outTime: away ? null : view.outTime || null,
-                              note: text || null,
-                            })
+                          void deskFix()
+                            .then((fix) =>
+                              api.markAttendance({
+                                providerId: row.providerId,
+                                date,
+                                status: view.status!,
+                                inTime: away ? null : view.inTime || null,
+                                outTime: away ? null : view.outTime || null,
+                                note: text || null,
+                                ...fix,
+                              }),
+                            )
                             .then(() => load(date))
                             .catch(() => setError(t('errors.note')));
                         }}
