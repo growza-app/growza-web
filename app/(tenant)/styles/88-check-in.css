@@ -163,14 +163,17 @@
  * How close counts — a number the owner types, with the unit welded on.
  *
  * It was a list of six radii (owner, 2026-10-11): a guess at the salons that
- * exist, and a shop that needed 80 m had to take 100. The `m` is part of the
+ * exist, and a shop that needed 80 m had to take 100. The unit is part of the
  * control rather than a word beside it, so there is nothing to wonder about
- * typing — the same trick the phone field plays with its dial code.
+ * typing — the same trick the phone field plays with its dial code. Spelt out
+ * ("meters", not "m"): an owner who is not a confident reader should not have
+ * to decode an abbreviation to know what they are typing.
  */
 .ci-radius {
   display: flex;
   align-items: stretch;
-  max-width: 11rem;
+  /* Wide enough for three digits and the word, and no wider — this is not a field to fill. */
+  max-width: 13rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;

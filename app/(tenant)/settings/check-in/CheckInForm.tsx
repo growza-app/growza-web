@@ -142,7 +142,7 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
               }}
             />
             <span className="ci-radius-unit" aria-hidden="true">
-              m
+              {t('radiusUnit')}
             </span>
           </span>
           <span className="field-hint" id="ci-radius-hint">
