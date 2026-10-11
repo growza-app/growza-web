@@ -1,6 +1,6 @@
 /*
  * Jira GRW-563 — phone check-in: the stylist's "I'm in" card, the register's Yes / No row, and the
- * Settings › Phone check-in form. Laid out at 344px first.
+ * Settings › Location check-in form. Laid out at 344px first.
  */
 
 /* ---------- the stylist's card ---------- */
@@ -42,6 +42,10 @@
   margin: var(--sp-3) 0 0;
   font-size: 0.9375rem;
   font-weight: 650;
+}
+/* The live region stands in the page with nothing in it, so it must not stand in the layout too. */
+.ci-state:empty {
+  display: none;
 }
 .ci-state-green { color: #166534; }
 .ci-state-amber { color: #8a5a0f; }
@@ -123,12 +127,27 @@
   color: inherit;
 }
 
-/* ---------- Settings › Phone check-in ---------- */
+/* ---------- Settings › Location check-in ---------- */
 .ci-settings-intro {
   margin: 0 0 var(--sp-4);
 }
+/*
+ * Two of this form's three fields are <label>s, and a label is inline: without a display here the
+ * "Or paste a maps link" caption sat BESIDE its box, and the box kept its 168px default instead of
+ * filling the card — on a 375px phone the two collided and clipped the placeholder mid-word.
+ */
+.ci-settings .field {
+  display: block;
+}
+.ci-settings .field-label {
+  display: block;
+}
+.ci-settings .field > input {
+  width: 100%;
+}
+
 .ci-pin {
-  margin: var(--sp-1) 0 var(--sp-2);
+  margin: var(--sp-1) 0 0;
   font-size: 0.9375rem;
   color: var(--hm-faint, #64748b);
 }
@@ -136,11 +155,33 @@
   color: #166534;
   font-weight: 650;
 }
+/* The numbers an owner cannot check by reading: kept, at the hint's size, under the line that can be read. */
+.ci-pin-coords {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--sp-3);
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/*
+ * The one way to check a pin. A link rather than a third button — three buttons wrap at 344px and leave
+ * Clear, the destructive one, alone on a row of its own — but given a button's height to tap.
+ */
+.ci-map {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent-deep);
+  font-weight: 650;
+}
 .ci-pin-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  margin-bottom: var(--sp-2);
+  margin: var(--sp-2) 0;
 }
 .ci-here {
   min-height: 48px;
@@ -157,4 +198,57 @@
 .ci-switch-title {
   font-weight: 620;
   font-size: 0.9375rem;
+}
+
+/*
+ * How close counts — a number the owner types, with the unit welded on.
+ *
+ * It was a list of six radii (owner, 2026-10-11): a guess at the salons that
+ * exist, and a shop that needed 80 m had to take 100. The unit is part of the
+ * control rather than a word beside it, so there is nothing to wonder about
+ * typing — the same trick the phone field plays with its dial code. Spelt out
+ * ("meters", not "m"): an owner who is not a confident reader should not have
+ * to decode an abbreviation to know what they are typing.
+ */
+.ci-radius {
+  display: flex;
+  align-items: stretch;
+  /* Wide enough for three digits and the word, and no wider — this is not a field to fill. */
+  max-width: 13rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.ci-radius:focus-within {
+  border-color: var(--accent);
+}
+
+.ci-radius input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  /* 16px exactly: anything smaller and iOS zooms the page when the field takes focus. */
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  padding: 0 var(--sp-3);
+  min-height: 2.75rem;
+  color: var(--text);
+}
+
+.ci-radius-unit {
+  display: grid;
+  place-items: center;
+  flex: none;
+  padding: 0 var(--sp-3);
+  background: var(--slate-soft);
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  user-select: none;
 }

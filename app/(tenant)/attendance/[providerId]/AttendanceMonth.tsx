@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { AttendanceRegister, AttendanceRow } from '../../lib/api';
+import { formatTime, type AttendanceRegister, type AttendanceRow } from '../../lib/api';
 import { intlLocale, isFutureMonth, monthLabel, shiftMonth } from './month';
 import { weekdayNames } from '../../lib/weekday-names';
 
@@ -33,11 +33,13 @@ const STATUS = {
 type StatusKey = keyof typeof STATUS;
 const ORDER: StatusKey[] = ['present', 'late', 'half_day', 'leave', 'absent'];
 
+/*
+ * Read, not typed — so it reads like every other clock in the product ("9:15 am"), not like the HH:mm the
+ * register's own time inputs must hold. `formatTime` is that one rendering.
+ */
 function toLocalTime(iso: string | null, timezone: string): string {
   if (!iso) return '';
-  return new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false }).format(
-    new Date(iso),
-  );
+  return formatTime(iso, timezone);
 }
 
 function workedMinutes(row: AttendanceRow): number | null {

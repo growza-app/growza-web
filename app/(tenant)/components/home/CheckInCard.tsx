@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { api, ApiError, type AttendanceRow } from '../../lib/api';
+import { api, ApiError, formatTime, type AttendanceRow } from '../../lib/api';
 import { getFix, metresLabel } from '../../lib/geo-fix';
 import { useMayUse, useSelfCheckIn } from '../SessionProvider';
 import { IconClipboardCheck } from '../icons';
@@ -31,7 +31,8 @@ export function CheckInCard({ today, timezone }: { today: AttendanceRow | null; 
   const inAt = today?.inAt ?? null;
   const outAt = today?.outAt ?? null;
   const approval = today?.approval ?? null;
-  const time = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
+  /* `formatTime`, like every other clock the owner reads: Home says "2:30 pm", so this card cannot say "14:30". */
+  const time = (iso: string) => formatTime(iso, timezone);
 
   const mark = async (kind: 'in' | 'out') => {
     setBusy(kind);
@@ -77,7 +78,18 @@ export function CheckInCard({ today, timezone }: { today: AttendanceRow | null; 
           {busy === 'out' ? t('finding') : t('imOut')}
         </button>
       ) : null}
-      {state ? <p className={`ci-state ci-state-${state.tone}`}>{state.text}</p> : null}
+      {/*
+       * The one line that says what the tap did, so it is announced: the button's own label only goes back to
+       * "I'm out", and a stylist using a screen reader was otherwise told nothing at all. Polite, not assertive —
+       * `router.refresh()` lands it a moment later and nothing waits on it. The error below is `role="alert"`,
+       * which is right for a refusal and wrong for this.
+       *
+       * Always drawn, never conditional: a live region has to be in the page BEFORE the text arrives, or the
+       * change is into a brand-new node and most screen readers say nothing. `:empty` takes its box away.
+       */}
+      <p className={`ci-state ci-state-${state?.tone ?? 'slate'}`} aria-live="polite">
+        {state?.text ?? ''}
+      </p>
       {justPlaced === false && approval === 'pending' ? <p className="ci-hint">{t('noPlaceHint')}</p> : null}
       {today?.inDistanceM != null && approval !== 'pending' ? <p className="ci-hint">{t('distance', { m: metresLabel(today.inDistanceM) ?? '' })}</p> : null}
       {error ? (

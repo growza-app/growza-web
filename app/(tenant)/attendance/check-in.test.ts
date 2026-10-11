@@ -37,7 +37,7 @@ describe('phone check-in', () => {
     expect(read('../layout.tsx')).toMatch(/pendingAttendance = me\.attendance\?\.pending \?\? 0/);
   });
 
-  it('Settings lists Phone check-in once, in the branch group, and its words reach the browser', () => {
+  it('Settings lists Location check-in once, in the branch group, and its words reach the browser', () => {
     const rows = SETTINGS_GROUPS.flatMap((g) => g.rows.map((r) => ({ ...r, group: g.key })));
     const row = rows.filter((r) => r.key === 'checkIn');
     expect(row).toHaveLength(1);

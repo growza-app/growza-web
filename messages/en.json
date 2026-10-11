@@ -349,7 +349,7 @@
         "sub": "Manage alerts and reminders"
       },
       "checkIn": {
-        "label": "Phone check-in",
+        "label": "Location check-in",
         "sub": "Staff mark themselves in from their phone"
       },
       "appearance": {
@@ -654,22 +654,24 @@
     "bookingLinkNumber": "It opens a WhatsApp chat with {number}."
   },
   "settingsCheckIn": {
-    "title": "Phone check-in",
-    "titleBranch": "Phone check-in · {name}",
+    "title": "Location check-in",
+    "titleBranch": "Location check-in · {name}",
     "intro": "Your staff can mark themselves in from their phone. It counts by itself when the phone is at this branch. If the phone cannot say where it is, you say yes or no.",
     "pinLabel": "Where this branch is",
-    "pinSet": "Set · {lat}, {lng}",
+    "pinSaved": "Saved — this is the branch",
+    "pinCoords": "{lat}, {lng}",
     "pinNotSet": "Not set yet",
     "useHere": "Use where I am now",
     "finding": "Finding you…",
     "clearPin": "Clear",
+    "seeOnMap": "See on map",
     "useHereHint": "Stand inside the branch and tap. Your phone must allow location.",
     "linkLabel": "Or paste a maps link",
     "linkPlaceholder": "https://maps.google.com/…",
     "linkHint": "Share the branch from Google Maps or Apple Maps and paste the link here.",
     "radiusLabel": "How close counts",
-    "radiusOption": "Within {m} m",
-    "radiusHint": "50 m is one shop. 500 m is the whole street.",
+    "radiusUnit": "meters",
+    "radiusHint": "50 meters is one shop. 500 meters is the whole street.",
     "enabled": "Staff can mark themselves in",
     "enabledOn": "On. Each stylist at this branch sees “I’m in” on their Home.",
     "enabledOff": "Off. Attendance is marked from the register only.",
@@ -682,7 +684,8 @@
       "noFix": "Could not find your location. Check location is on for this site and try again, or paste a maps link.",
       "noPlaceInLink": "Could not find a place in that link.",
       "pinFirst": "Set where this branch is before turning it on.",
-      "saveFailed": "Could not save. Please try again."
+      "saveFailed": "Could not save. Please try again.",
+      "badRadius": "Type a number between {min} and {max}."
     }
   },
   "settingsTeam": {
