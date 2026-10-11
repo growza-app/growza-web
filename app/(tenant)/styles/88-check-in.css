@@ -43,6 +43,10 @@
   font-size: 0.9375rem;
   font-weight: 650;
 }
+/* The live region stands in the page with nothing in it, so it must not stand in the layout too. */
+.ci-state:empty {
+  display: none;
+}
 .ci-state-green { color: #166534; }
 .ci-state-amber { color: #8a5a0f; }
 .ci-state-rose { color: #b91c1c; }
