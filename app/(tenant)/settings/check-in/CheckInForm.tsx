@@ -93,8 +93,11 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
   };
 
   const fmt = (n: number) => n.toFixed(5);
+  /** Opens wherever the phone sends maps links — Google Maps' documented search URL, no key, no embed. */
+  const mapsUrl = (p: { lat: number; lng: number }) => `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
 
   return (
+    <>
     <div className="card ci-settings">
       <div className="card-head">{branchCount > 1 && branchName ? t('titleBranch', { name: branchName }) : t('title')}</div>
       <div className="card-body">
@@ -102,9 +105,22 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
 
         <div className="field">
           <span className="field-label">{t('pinLabel')}</span>
-          <p className={`ci-pin ${pin ? 'is-set' : ''}`} aria-live="polite">
-            {pin ? t('pinSet', { lat: fmt(pin.lat), lng: fmt(pin.lng) }) : t('pinNotSet')}
-          </p>
+          {/*
+           * Words first, numbers second. Latitude and longitude are the one thing on this screen an owner
+           * cannot check by reading it, so the line that matters says the pin is saved and the numbers sit
+           * under it in the hint's size — and "See on map" is what actually lets them check it.
+           */}
+          <div aria-live="polite">
+            <p className={`ci-pin ${pin ? 'is-set' : ''}`}>{pin ? t('pinSaved') : t('pinNotSet')}</p>
+            {pin ? (
+              <p className="ci-pin-coords">
+                {t('pinCoords', { lat: fmt(pin.lat), lng: fmt(pin.lng) })}
+                <a className="ci-map" href={mapsUrl(pin)} target="_blank" rel="noreferrer">
+                  {t('seeOnMap')}
+                </a>
+              </p>
+            ) : null}
+          </div>
           <div className="ci-pin-actions">
             <button type="button" className="btn ci-here" disabled={locating || busy || !writable} onClick={() => void useHere()}>
               {locating ? t('finding') : t('useHere')}
@@ -181,8 +197,15 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
             {error}
           </div>
         ) : null}
-        <SettingsSaveBar busy={busy} saved={saved} onSave={() => void save()} saveLabel={t('save')} savingLabel={t('saving')} savedLabel={t('savedLabel')} />
       </div>
     </div>
+    {/*
+     * Outside the card, as every other settings form has it (BookingRulesForm). `.card` clips its rounded
+     * corners with `overflow: hidden`, and that cancels the bar's `position: sticky` — inside the card it
+     * never pinned, it just sat at the end of the form, underneath the floating bottom nav. Measured at
+     * 344x882: the nav, not the button, answered a tap at the centre of Save.
+     */}
+    <SettingsSaveBar busy={busy} saved={saved} onSave={() => void save()} saveLabel={t('save')} savingLabel={t('saving')} savedLabel={t('savedLabel')} />
+    </>
   );
 }

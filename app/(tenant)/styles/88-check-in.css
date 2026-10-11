@@ -127,8 +127,23 @@
 .ci-settings-intro {
   margin: 0 0 var(--sp-4);
 }
+/*
+ * Two of this form's three fields are <label>s, and a label is inline: without a display here the
+ * "Or paste a maps link" caption sat BESIDE its box, and the box kept its 168px default instead of
+ * filling the card — on a 375px phone the two collided and clipped the placeholder mid-word.
+ */
+.ci-settings .field {
+  display: block;
+}
+.ci-settings .field-label {
+  display: block;
+}
+.ci-settings .field > input {
+  width: 100%;
+}
+
 .ci-pin {
-  margin: var(--sp-1) 0 var(--sp-2);
+  margin: var(--sp-1) 0 0;
   font-size: 0.9375rem;
   color: var(--hm-faint, #64748b);
 }
@@ -136,11 +151,33 @@
   color: #166534;
   font-weight: 650;
 }
+/* The numbers an owner cannot check by reading: kept, at the hint's size, under the line that can be read. */
+.ci-pin-coords {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--sp-3);
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/*
+ * The one way to check a pin. A link rather than a third button — three buttons wrap at 344px and leave
+ * Clear, the destructive one, alone on a row of its own — but given a button's height to tap.
+ */
+.ci-map {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent-deep);
+  font-weight: 650;
+}
 .ci-pin-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  margin-bottom: var(--sp-2);
+  margin: var(--sp-2) 0;
 }
 .ci-here {
   min-height: 48px;
