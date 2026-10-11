@@ -96,15 +96,54 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That visit was not today — only an owner can put a stylist on it now': 'वह विज़िट आज की नहीं थी — अब सिर्फ़ मालिक ही उसमें स्टाइलिस्ट जोड़ सकता है',
   'This stylist is not shown their own takings': 'इस स्टाइलिस्ट को अपनी कमाई नहीं दिखती',
   // ---- payment
-  'Online payment is not set up yet. Please pay by UPI and we will record it.': 'ऑनलाइन भुगतान अभी शुरू नहीं हुआ है। कृपया UPI से भुगतान करें, हम उसे दर्ज कर लेंगे।',
-  'Automatic payment is not set up yet. Please pay by UPI and we will record it.': 'ऑटोमैटिक भुगतान अभी शुरू नहीं हुआ है। कृपया UPI से भुगतान करें, हम उसे दर्ज कर लेंगे।',
+  'Online payment is not set up yet. Please call Growza support to pay.': 'ऑनलाइन भुगतान अभी शुरू नहीं हुआ है। भुगतान के लिए कृपया Growza सपोर्ट को कॉल करें।',
+  'Automatic payment is not set up yet. Please call Growza support.': 'ऑटोमैटिक भुगतान अभी शुरू नहीं हुआ है। कृपया Growza सपोर्ट को कॉल करें।',
   'We could not reach the payment service just now. Please try again in a few minutes.': 'अभी भुगतान सेवा तक नहीं पहुंच सके। कृपया कुछ मिनट में फिर कोशिश करें।',
-  'We could not start the payment just now. Please try again in a few minutes, or pay by UPI and we will record it.': 'अभी भुगतान शुरू नहीं हो सका। कृपया कुछ मिनट में फिर कोशिश करें, या UPI से भुगतान करें, हम उसे दर्ज कर लेंगे।',
+  'We could not start the payment just now. Please try again in a few minutes, or call Growza support to pay.': 'अभी भुगतान शुरू नहीं हो सका। कृपया कुछ मिनट में फिर कोशिश करें, या भुगतान के लिए Growza सपोर्ट को कॉल करें।',
   'AutoPay is already set up.': 'ऑटोपे पहले से चालू है।',
   'There is nothing to pay right now.': 'अभी चुकाने के लिए कुछ नहीं है।',
   'There is no active plan on this account.': 'इस अकाउंट पर कोई चालू प्लान नहीं है।',
   'Online payment is not available for this account.': 'इस अकाउंट के लिए ऑनलाइन भुगतान उपलब्ध नहीं है।',
   'Automatic payment is not available for this account.': 'इस अकाउंट के लिए ऑटोमैटिक भुगतान उपलब्ध नहीं है।',
+  // ---- review, 2026-10-11 — every other sentence a salon screen can show. The thirty below were the whole
+  // remainder: scanned out of the tenant routes and the modules behind them, they are what an owner reading
+  // Hindi still met in English. The admin portal is English by decision and is not here; neither are the
+  // billing notes nobody outside Growza reads, nor the chat replies, which are not the dashboard.
+  // ---- phone check-in (Jira GRW-563)
+  'Mark yourself in first.': 'पहले अपनी हाज़िरी लगाएँ।',
+  'You are already marked in today.': 'आज आपकी हाज़िरी पहले ही लग चुकी है।',
+  'You are already marked out today.': 'आज आपका जाना पहले ही दर्ज हो चुका है।',
+  'Only a staff member marks their own day.': 'अपना दिन सिर्फ़ स्टाफ़ सदस्य ही दर्ज करता है।',
+  'Your branch has not set up phone check-in yet.': 'आपकी ब्रांच में अभी फ़ोन से हाज़िरी शुरू नहीं हुई है।',
+  'The owner decides attendance at this branch.': 'इस ब्रांच में हाज़िरी का फ़ैसला मालिक करते हैं।',
+  'The owner has already decided today. Ask them to correct it.': 'मालिक आज का फ़ैसला कर चुके हैं। उनसे ठीक करवाने को कहें।',
+  'This day has already been decided.': 'इस दिन का फ़ैसला हो चुका है।',
+  // ---- bookings and the till
+  'A phone number is needed so they can be reminded': 'रिमाइंडर भेजने के लिए फ़ोन नंबर चाहिए',
+  'Say which chair is being taken over': 'बताएँ कि कौन सी कुर्सी ली जा रही है',
+  'Say whether somebody is taking this, or nobody is': 'बताएँ कि इसे कोई ले रहा है या कोई नहीं',
+  'Those services are sold at different branches. Book them separately.': 'ये सेवाएँ अलग-अलग ब्रांच में दी जाती हैं। इन्हें अलग-अलग बुक करें।',
+  'This booking is already closed, so it can\'t be changed.': 'यह बुकिंग बंद हो चुकी है, इसलिए इसे बदला नहीं जा सकता।',
+  'This visit is already against a client': 'यह विज़िट पहले से किसी ग्राहक के नाम है',
+  'That request key was already used for another visit. Try again.': 'यह अनुरोध किसी दूसरी विज़िट के लिए पहले ही इस्तेमाल हो चुका है। फिर कोशिश करें।',
+  'That amount is far more than this visit usually costs. Check it, or confirm it is right.': 'यह रकम इस विज़िट की आम कीमत से कहीं ज़्यादा है। इसे देख लें, या सही होने की पुष्टि करें।',
+  'Only a finished booking can be corrected': 'सिर्फ़ पूरी हो चुकी बुकिंग ही ठीक की जा सकती है',
+  'Only the owner can change a finished booking': 'पूरी हो चुकी बुकिंग सिर्फ़ मालिक बदल सकते हैं',
+  'A service in a package cannot be swapped — fix its amount, or take the package off and add the service': 'पैकेज की सेवा बदली नहीं जा सकती — उसकी रकम ठीक करें, या पैकेज हटाकर सेवा जोड़ें',
+  // ---- clients, menu and branches
+  'A name must be 80 characters or fewer': 'नाम 80 अक्षरों से ज़्यादा का नहीं हो सकता',
+  'A name must be text': 'नाम टेक्स्ट होना चाहिए',
+  'That client belongs to another branch. Search for them here, or add them as a client of this branch.': 'वह ग्राहक दूसरी ब्रांच का है। उन्हें यहाँ खोजें, या इस ब्रांच के ग्राहक के तौर पर जोड़ें।',
+  'That category belongs to another branch': 'वह श्रेणी दूसरी ब्रांच की है',
+  'Could not find a location in that link.': 'उस लिंक में कोई जगह नहीं मिली।',
+  // ---- team, invites and the session
+  'That number is already on this team.': 'यह नंबर पहले से इस टीम में है।',
+  'This business cannot add people right now. Ask whoever invited you to contact Growza support.': 'यह बिज़नेस अभी लोग नहीं जोड़ सकता। जिसने आपको बुलाया है, उनसे Growza सपोर्ट से बात करने को कहें।',
+  'This number already belongs to another business on Growza, and one account cannot be in two businesses yet. Ask whoever invited you to send an invite to a different number.': 'यह नंबर Growza पर पहले से किसी दूसरे बिज़नेस का है, और एक अकाउंट अभी दो बिज़नेस में नहीं रह सकता। जिसने आपको बुलाया है, उनसे किसी दूसरे नंबर पर न्योता भेजने को कहें।',
+  'Could not reach the sign-in service. This is not a problem with your details — please try again shortly.': 'साइन इन सेवा तक नहीं पहुंच सके। यह आपकी जानकारी की गड़बड़ी नहीं है — कृपया थोड़ी देर में फिर कोशिश करें।',
+  'Could not reach the sign-in service. This is not a problem with your session — please try again shortly.': 'साइन इन सेवा तक नहीं पहुंच सके। यह आपके सेशन की गड़बड़ी नहीं है — कृपया थोड़ी देर में फिर कोशिश करें।',
+  'This is an impersonated support session. It can view this account but not change it.': 'यह सपोर्ट का देखने वाला सेशन है। यह इस अकाउंट को देख सकता है, बदल नहीं सकता।',
+  'This is not an impersonated session.': 'यह सपोर्ट का सेशन नहीं है।',
 };
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */

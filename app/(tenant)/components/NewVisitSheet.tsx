@@ -1197,6 +1197,9 @@ export function NewVisitSheet({
   const [slots, setSlots] = useState<AvailabilityResponse | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotUtc, setSlotUtc] = useState<string | null>(null);
+  /** The current choice, readable from inside the fetch effect without re-running it on every tap. */
+  const slotUtcRef = useRef<string | null>(null);
+  slotUtcRef.current = slotUtc;
   const [slotError, setSlotError] = useState<string | null>(null);
 
   /**
@@ -1233,6 +1236,16 @@ export function NewVisitSheet({
   useEffect(() => {
     if (!later || !(pageForm ? onForm : stage.step === 'when') || picked.length === 0) return;
     let cancelled = false;
+    /*
+     * The slot the desk had already picked, remembered across the refetch (review, 2026-10-11).
+     *
+     * This effect clears the choice while the new list loads and then re-seeded it from the Booking time
+     * select, so ANY refetch — a stylist swapped, a service added, the day changed — threw the hand-picked
+     * slot away and silently put the asked-for one back. A desk that asked for 2:00, was moved to 2:30, tapped
+     * 4:00 and then switched stylist had 2:30 again, with nothing on screen to say so. If the picked slot is
+     * still free in the new list it is kept; only when it is gone does the ask get to choose again.
+     */
+    const hadPicked = slotUtcRef.current;
     setLoadingSlots(true);
     setSlotUtc(null);
     setSlotError(null);
@@ -1246,7 +1259,7 @@ export function NewVisitSheet({
         setSlots(r);
         // Jira GRW-341 — a time picked on the Book again card. This effect clears the choice when it starts, so it
         // is put back here, once, and only if that time is still on the list.
-        const wanted = pendingSlot.current;
+        const wanted = pendingSlot.current ?? hadPicked;
         pendingSlot.current = null;
         if (wanted && r.sections.some((sec) => sec.slots.some((sl) => sl.utc === wanted))) setSlotUtc(wanted);
         // Jira GRW-527 — the time asked for on the first screen: that slot if it is free, else the first free one
@@ -1290,11 +1303,27 @@ export function NewVisitSheet({
     return { exact: Boolean(exact), slot: exact ?? slotList.find((sl) => at(sl.utc) > timeWanted) ?? null };
   }, [timeWanted, slotList, timezone]);
 
-  // Asking for a time moves the grid to it. Keyed on the ASK, so a slot tapped by hand afterwards is left alone.
+  /*
+   * Asking for a time moves the grid to it — ONCE per ask, which the ask itself has to remember (review,
+   * 2026-10-11).
+   *
+   * `askedMatch` is recomputed every time the free-slot list is refetched, and the list is refetched whenever
+   * the stylist, the services or the day change. Keyed on `askedMatch` alone, the effect therefore ran again
+   * on each of those: a desk that asked for 2:00, was moved to 2:30, tapped 4:00 by hand and then switched
+   * stylist had its 4:00 silently put back to 2:30. So the ask (the day and the time together) is recorded
+   * once applied, and only a NEW ask moves the grid again.
+   */
+  const askApplied = useRef<string | null>(null);
   useEffect(() => {
-    if (!timeWanted || !askedMatch) return;
+    if (!timeWanted) {
+      askApplied.current = null;
+      return;
+    }
+    const ask = `${day}|${timeWanted}`;
+    if (!askedMatch || askApplied.current === ask) return;
+    askApplied.current = ask;
     setSlotUtc(askedMatch.slot?.utc ?? null);
-  }, [timeWanted, askedMatch]);
+  }, [timeWanted, askedMatch, day]);
 
   /*
    * GRW-198 — who is in each chair, refreshed while the sheet is open.

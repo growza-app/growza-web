@@ -87,11 +87,20 @@ export default async function NewBookingPage({
    * `on` is the booking's own day, carried by whoever opened this, because there is no read for one appointment
    * by id — the day's list is, and the visit's other legs come back with it. Without it a booking for next
    * Tuesday could not be found at all.
+   *
+   * The read is that day AND the one after it, which is not tidiness (Jira GRW-290, re-found on review
+   * 2026-10-11). A late visit's legs run past local midnight: a walk-in rung up at 22:40 for a Balayage and a
+   * Haircut has its second leg dated tomorrow, and a one-day read came back without it — so the bill was short,
+   * the money was short, and that leg stayed `confirmed` for ever on tomorrow's calendar. The till this
+   * replaced read both days for exactly this reason.
    */
   let visit: { appointment: Appointment; legs: Appointment[] } | undefined;
   if (paying && params.visit && params.on) {
     try {
-      const day = await api.appointments(params.on, params.on);
+      /* The day after `on`, in plain calendar terms — `on` is a salon-local YYYY-MM-DD, never an instant. */
+      const nextDay = new Date(`${params.on}T00:00:00Z`);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      const day = await api.appointments(params.on, nextDay.toISOString().slice(0, 10));
       /*
        * Still settleable, or not at all.
        *

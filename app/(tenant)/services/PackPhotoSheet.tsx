@@ -13,15 +13,24 @@ import { PACK_KEY_LIST, packPhotoUrl } from '../lib/service-photos';
  * picture themselves. Same files the list already shows, so this costs no extra image weight.
  *
  * A tap picks and closes: there is nothing else to decide here.
+ *
+ * Owner, 2026-10-11 — `onUpload` makes this the ONE door to a service's picture rather than the second one.
+ * The Services list used to go straight to the file chooser, so an owner working from the list (which is where
+ * an owner works) only ever met "upload your own" and never learnt these forty existed. Opening this instead,
+ * with the upload offered inside it, puts both answers in one place. The edit form leaves it off: it has the
+ * upload on the row above, and a second one here would be the same button twice.
  */
 export function PackPhotoSheet({
   current,
   onPick,
+  onUpload,
   onClose,
 }: {
   /** The key now in force, ticked in the grid. */
   current: string | null;
   onPick: (key: string) => void;
+  /** Offered only where this sheet is the only door — see the note above. */
+  onUpload?: () => void;
   onClose: () => void;
 }) {
   const t = useTranslations('services.form.pack');
@@ -54,6 +63,12 @@ export function PackPhotoSheet({
         </div>
         <div className="sheet-body">
           <div className="sheet-foot">{t('hint')}</div>
+          {/* Above the grid, because an owner who has their own photograph of this service wants it and nothing else. */}
+          {onUpload ? (
+            <button type="button" className="btn btn-ghost pack-photo-upload" onClick={onUpload}>
+              {t('upload')}
+            </button>
+          ) : null}
           <div className="pack-photo-grid">
             {PACK_KEY_LIST.map((key) => (
               <button

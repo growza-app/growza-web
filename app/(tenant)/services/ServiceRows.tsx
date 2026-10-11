@@ -109,8 +109,13 @@ export function ServiceRowMenu({ service, actions, t }: { service: ServiceAdmin;
           <button type="button" className="dropdown-item dropdown-item-plain" onClick={run(actions.onEdit)}>
             {t('menu.edit')}
           </button>
+          {/*
+            "Change", not "Add", whenever a picture is already showing — and for most services one is, because
+            the supplied pack answers for the service's concept without anybody uploading anything (GRW-560).
+            Keyed on `imageUrl` alone, this row offered to ADD a photo beside a row that was displaying one.
+          */}
           <button type="button" className="dropdown-item dropdown-item-plain" onClick={run(actions.onPhoto)}>
-            {service.imageUrl ? t('menu.changePhoto') : t('menu.addPhoto')}
+            {hasServicePhoto(service) ? t('menu.changePhoto') : t('menu.addPhoto')}
           </button>
           {service.imageUrl && (
             /* The old table had a Remove button in the photo cell. The cell is gone; the capability is not. */
