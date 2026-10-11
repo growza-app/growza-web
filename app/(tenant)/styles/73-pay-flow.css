@@ -1570,3 +1570,43 @@
   font-weight: 750;
   color: var(--text);
 }
+
+/* ---------- ②b the salon's own QR ---------- */
+/*
+ * As big as the phone will draw it, because a camera has to read it off the glass.
+ *
+ * `min(…)` rather than a breakpoint: the code is square, so its size is whichever runs out first — the width of
+ * the screen, or what is left of the height once the amount and the button have theirs. On a 344px phone that is
+ * the width; on a tablet it is the height, and the code stays a code rather than becoming a poster.
+ */
+.pf-qr {
+  display: grid;
+  place-items: center;
+  padding: var(--sp-3);
+  border-radius: var(--radius);
+  /* White, whatever the surface is: a QR is read dark-on-light and the quiet zone is part of the code. */
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+.pf-qr-code {
+  display: block;
+  width: min(100%, 24rem, 52vh);
+  aspect-ratio: 1;
+  /* `contain`, never `cover`: a cropped QR has lost a finder pattern and scans as nothing. */
+  object-fit: contain;
+}
+
+.pf-qr-hint {
+  margin: var(--sp-3) 0 0;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* The one button on the screen, and the tap that records the money. */
+.pf-qr-paid {
+  width: 100%;
+  margin-top: var(--sp-3);
+}

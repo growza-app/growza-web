@@ -13,6 +13,8 @@
 export interface BranchRef {
   id: string;
   name: string;
+  /** The QR to show at this branch's till (its own, else the business's). Absent where the role is not sent one. */
+  paymentQrUrl?: string | null;
 }
 
 export interface BranchState {

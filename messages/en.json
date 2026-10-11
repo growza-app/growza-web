@@ -338,7 +338,7 @@
       },
       "payments": {
         "label": "Payments",
-        "sub": "Manage UPI and payouts"
+        "sub": "The QR you show at the till"
       },
       "whatsapp": {
         "label": "WhatsApp settings",
@@ -380,6 +380,29 @@
         "label": "Log out",
         "sub": "Sign out from this device"
       }
+    }
+  },
+  "settingsPayments": {
+    "lede": "Upload the QR your customers scan. It shows up on Record payment when you tap UPI.",
+    "upload": "Upload QR",
+    "change": "Change QR",
+    "remove": "Remove",
+    "uploading": "Uploading…",
+    "none": "No QR yet",
+    "alt": "Payment QR for {what}",
+    "business": {
+      "title": "Your payment QR",
+      "sub": "A photo or screenshot of the QR from your UPI app.",
+      "titleMulti": "QR for the whole business",
+      "subMulti": "Every branch shows this one unless it has its own."
+    },
+    "branch": {
+      "own": "Shows its own QR.",
+      "usingBusiness": "Showing the business QR.",
+      "nothing": "No QR to show yet."
+    },
+    "errors": {
+      "failed": "That did not save. Please try again."
     }
   },
   "common": {
@@ -2306,6 +2329,10 @@
     "next": "Next",
     "pickOne": "Select a service",
     "other": "Other",
+    "qrTitle": "Let them scan",
+    "qrAlt": "The salon's payment QR code",
+    "qrHint": "They type the amount in their own app.",
+    "qrPaid": "Money received",
     "saving": "Saving…",
     "spoken": "{amount} rupees received. {mode}.",
     "nextCustomer": "Next customer",

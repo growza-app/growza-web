@@ -8,6 +8,7 @@ import {
   IconLogout,
   IconMapPin,
   IconPalette,
+  IconPayUpi,
   IconShop,
   IconUser,
   IconUserPlus,
@@ -57,6 +58,17 @@ interface SettingsRowBase {
    */
   whatsappOnly?: boolean;
   /**
+   * Listed only once the business is live.
+   *
+   * Payments is the one row like this. Settings is open before go-live so an
+   * owner can set the salon up, but the QR is for taking money from a customer
+   * at the till, which a business that has not gone live is not doing — and the
+   * API classifies its four writes as live-day for exactly that reason
+   * (`permission-matrix`), so a row shown earlier would open a screen whose
+   * every button 403s.
+   */
+  liveOnly?: boolean;
+  /**
    * Jira GRW-396 — the row's words at a business with more than one branch, when they differ: there,
    * "Business profile" is one branch's profile.
    */
@@ -75,10 +87,8 @@ export interface SettingsGroup {
 /**
  * The single source of truth for what the Settings hub lists — shared by
  * the mobile hub page and the desktop sub-nav pane so the two can never
- * drift apart. Rows without `href` are real, named destinations from the
- * product's own design that nothing has been built for yet (payments,
- * WhatsApp auto-replies, theming, real auth/login) — shown so the map of
- * what's coming is honest, not hidden.
+ * drift apart. Every row names a page that exists — the union above makes a
+ * row without one unspellable.
  *
  * Jira GRW-396 — two groups an owner can tell apart at a glance:
  * - `branch`: what can differ from branch to branch (its profile, hours,
@@ -113,6 +123,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     rows: [
       { href: '/settings/business', key: 'business', icon: IconShop, multiBranchOnly: true },
       { href: '/settings/branches', key: 'branches', icon: IconMapPin, multiBranchOnly: true },
+      // The QR the till shows a customer. Live-day: see `liveOnly` above.
+      { href: '/settings/payments', key: 'payments', icon: IconPayUpi, liveOnly: true },
       { href: '/settings/team', key: 'teamAccess', icon: IconUserPlus },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
@@ -120,7 +132,9 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     ],
   },
   /*
-   * Gone: Payments, WhatsApp settings, Appearance, Privacy and Account (owner, 2026-10-04).
+   * Gone: WhatsApp settings, Appearance, Privacy and Account (owner, 2026-10-04).
+   * Payments came back on 2026-10-11, when it became a screen that does something:
+   * the QR the till shows. It sits in the business group above.
    *
    * Five rows with no href, drawn greyed out with a "Coming soon" pill — a third of this screen
    * promising things that do not exist, on the one screen an owner opens when something is already

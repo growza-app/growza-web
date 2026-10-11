@@ -15,8 +15,15 @@
 export interface Me {
   /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
   tenant: { id: string; name: string; timezone: string; locationName: string | null; branchCount?: number; status?: string } | null;
-  /** Jira GRW-235 — open branches, main first. */
-  branches?: Array<{ id: string; name: string }>;
+  /**
+   * Jira GRW-235 — open branches, main first.
+   *
+   * `paymentQrUrl` is the EFFECTIVE QR for that branch — its own, else the
+   * business's, resolved by the API. Absent for a stylist (who does not hold
+   * the salon's QR up to a customer) and from an API a deploy behind, which is
+   * why the till treats it as "no QR" rather than as an error.
+   */
+  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null }>;
   /**
    * The owner's own billing state, or null when there is nothing to say
    * (GRW-122). Null is the healthy case AND the case where the state could

@@ -1,0 +1,112 @@
+/*
+ * Settings › Payments — the QR the till shows (owner, 2026-10-11).
+ *
+ * One card for the business and one per branch, each the same shape: the
+ * picture on the left, what it is and the one button on the right. Laid out at
+ * 344px first, where the picture and the text sit one above the other.
+ */
+.pq {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.pq-lede {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.pq-error {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-sm);
+  background: #fdecec;
+  color: #991b1b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pq-card {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pq-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 750;
+  color: var(--text);
+}
+
+.pq-sub {
+  margin: 2px 0 0;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.pq-body {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+/* Square, white and bordered: the frame says "a QR goes here" while it is empty. */
+.pq-preview {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 11rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+}
+
+.pq-preview img {
+  width: 100%;
+  height: 100%;
+  /* Never `cover`: a cropped QR has lost a finder pattern and scans as nothing. */
+  object-fit: contain;
+}
+
+.pq-none {
+  padding: 0 var(--sp-3);
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.pq-btn {
+  min-height: 2.75rem;
+}
+
+/* Remove is a plain word, not a second button: it is the rarer act of the two. */
+.pq-remove {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--danger, #991b1b);
+  cursor: pointer;
+}
+
+.pq-remove:disabled,
+.pq-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Side by side once there is room for the picture and the words to share a line. */
+@media (min-width: 560px) {
+  .pq-body {
+    grid-template-columns: 11rem minmax(0, 1fr);
+  }
+}

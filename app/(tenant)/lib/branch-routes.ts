@@ -24,9 +24,13 @@ const BRANCH_IN_ADDRESS = ['/customers', '/services', '/reports', '/availability
 
 /**
  * Jira GRW-396 — the parts of Settings that exist once for the whole business: its name and logo, its
- * branches, who can sign in, who sees what, and the bill. No branch is being looked at, so no picker.
+ * branches, who can sign in, who sees what, the bill, and the payment QRs. No branch is being looked at, so
+ * no picker.
+ *
+ * Payments is here although a QR can be a branch's: the screen shows the business's and EVERY branch's at
+ * once, so it is not looking at one branch and a picker would narrow nothing.
  */
-const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/team', '/settings/report-access', '/settings/billing'];
+const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/payments', '/settings/team', '/settings/report-access', '/settings/billing'];
 
 function matches(pathname: string, route: string): boolean {
   return pathname === route || pathname.startsWith(`${route}/`);
