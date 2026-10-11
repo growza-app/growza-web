@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react';
+import Link from 'next/link';
 import { DateTime } from 'luxon';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
 import { IconAlert, IconBan, IconBell, IconCalendarPlus, IconChat, IconClipboardCheck, IconClose, IconMoveTime, IconPercent, IconReceipt, IconRepeat, IconRupee, IconUserPlus } from './icons';
@@ -184,6 +185,90 @@ export function eventLine(
   };
 }
 
+/**
+ * Jira GRW-562 — where a feed row goes when it is tapped, or null when there is
+ * nowhere honest to send it.
+ *
+ * A booking row opens that booking: the Bookings screen on its day with the
+ * sheet open — the same `?date=&open=` shape Search uses (GRW-307,
+ * SearchClient's `bookingHref`). BOTH parameters, not just `open`: the sheet
+ * is found among the bookings the screen has already loaded
+ * (BookingsList.tsx:295), and that screen defaults to today, so `?open=` on
+ * its own silently opens nothing for any booking on another day.
+ *
+ * The day alone is the fallback, for an API older than `appointmentId` — the
+ * two repos deploy separately, and a row that cannot open the booking should
+ * still open the right list rather than nothing.
+ *
+ * Either way the day is the salon's: `startAt` is a UTC instant, and a 9 pm
+ * booking in India is already tomorrow in UTC, so slicing the raw string would
+ * open an empty day for every evening booking.
+ */
+export function notifHref(event: ActivityEvent, timezone: string): string | null {
+  if (event.topic.startsWith('billing.')) return '/settings/billing';
+  if (event.topic.startsWith('appointment.')) {
+    const day = event.startAt ? DateTime.fromISO(event.startAt).setZone(timezone) : null;
+    // `?date=` alone is exactly one day — the Bookings screen defaults `to` to it.
+    const date = day?.isValid ? `date=${day.toISODate()}` : null;
+    const open = event.appointmentId ? `open=${event.appointmentId}` : null;
+    const params = [date, open].filter(Boolean).join('&');
+    return params ? `/appointments?${params}` : null;
+  }
+  // conversation.handoff has no screen of its own yet; a row that goes nowhere
+  // stays a plain row rather than a link that lands somewhere unrelated.
+  return null;
+}
+
+/**
+ * Jira GRW-562 — one feed row, shared by the desktop bell and the phone's
+ * Notifications page so the two cannot drift again: every booking row was a
+ * bare `<div>` on both, and only the page's billing rows had a handler.
+ *
+ * A real `<a>`, not a div with `role="link"` and an Enter-only `onKeyDown`:
+ * that handled neither Space nor middle-click nor open-in-new-tab, and the
+ * billing row's own subtitle already says "Tap to see your bill".
+ */
+export function NotifRow({
+  event,
+  unread,
+  line,
+  timezone,
+  t,
+  onNavigate,
+}: {
+  event: ActivityEvent;
+  unread: boolean;
+  line: { title: string; subtitle: string };
+  timezone: string;
+  t: FeedT;
+  onNavigate?: () => void;
+}) {
+  const meta = TOPIC_META[event.topic];
+  const Icon = meta.icon;
+  const href = notifHref(event, timezone);
+  const className = `notif-item ${unread ? 'notif-item-unread' : ''}`;
+  const inner = (
+    <>
+      <span className={`notif-icon ${meta.cls}`}>
+        <Icon />
+      </span>
+      <div className="notif-item-body">
+        <div className="notif-item-title">{line.title}</div>
+        <div className="notif-item-sub">
+          {line.subtitle} · {timeAgo(event.createdAt, new Date(), t)}
+        </div>
+      </div>
+      {unread && <span className="notif-dot" />}
+    </>
+  );
+  if (!href) return <div className={className}>{inner}</div>;
+  return (
+    <Link href={href} className={`${className} notif-item-link`} onClick={onNavigate}>
+      {inner}
+    </Link>
+  );
+}
+
 function Toast({ event, timezone }: { event: ActivityEvent; timezone: string }) {
   const t = useTranslations('notifications.feed');
   const locale = useLocale();
@@ -348,27 +433,19 @@ export function NotificationBell() {
               <div className="notif-empty">{t('empty')}</div>
             ) : (
               <div className="notif-list">
-                {visibleEvents.map((e, i) => {
-                  const meta = TOPIC_META[e.topic];
-                  const Icon = meta.icon;
-                  const line = eventLine(e, timezone, tf, locale, feed.showBranch);
-                  const unread = Number(e.id) > lastSeenId;
+                {visibleEvents.map((e, i) => (
                   // `id` is a timestamp (GRW-562): two rows written in one transaction share it, so the key adds the position.
-                  return (
-                    <div key={`${e.id}-${i}`} className={`notif-item ${unread ? 'notif-item-unread' : ''}`}>
-                      <span className={`notif-icon ${meta.cls}`}>
-                        <Icon />
-                      </span>
-                      <div className="notif-item-body">
-                        <div className="notif-item-title">{line.title}</div>
-                        <div className="notif-item-sub">
-                          {line.subtitle} · {timeAgo(e.createdAt, new Date(), tf)}
-                        </div>
-                      </div>
-                      {unread && <span className="notif-dot" />}
-                    </div>
-                  );
-                })}
+                  <NotifRow
+                    key={`${e.id}-${i}`}
+                    event={e}
+                    unread={Number(e.id) > lastSeenId}
+                    line={eventLine(e, timezone, tf, locale, feed.showBranch)}
+                    timezone={timezone}
+                    t={tf}
+                    // The bell lives in the header and survives the navigation, so it has to shut itself.
+                    onNavigate={() => setOpen(false)}
+                  />
+                ))}
               </div>
             )}
           </div>
