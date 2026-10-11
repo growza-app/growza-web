@@ -1,5 +1,4 @@
 import './admin.css';
-import { Hanken_Grotesk } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { headers } from 'next/headers';
@@ -9,6 +8,8 @@ import { SessionGate } from './components/SessionGate';
 import { PwaRegister } from '../(tenant)/components/PwaRegister';
 import { InstallBanner } from '../shared/install/InstallBanner';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
+import { hanken } from '../fonts';
+import { APP_ICONS } from '../icons.generated';
 
 /**
  * The platform plane's own root layout (GRW-93, GRW-95, ADR-14).
@@ -20,11 +21,7 @@ import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
  * GRW-94's guard are the structural separation; this is what makes it
  * visually unmistakable too.
  */
-const hanken = Hanken_Grotesk({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  display: 'swap',
-});
+
 
 /**
  * Jira GRW-265 · GRW-270 — installable, as its own app.
@@ -37,7 +34,7 @@ export const metadata: Metadata = {
   title: 'Growza Admin',
   description: 'Platform administration — businesses, billing, usage and control.',
   manifest: '/admin-manifest.json',
-  icons: { icon: '/icon.png', apple: '/icons/apple-touch-icon.png' },
+  icons: { icon: '/icon.png', apple: APP_ICONS.appleTouch },
   appleWebApp: {
     capable: true,
     // Not black-translucent: that draws the page under the status bar, which

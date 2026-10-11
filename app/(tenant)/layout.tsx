@@ -1,5 +1,4 @@
 import './globals.css';
-import { Figtree, Noto_Sans_Devanagari } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { api } from './lib/api';
@@ -34,17 +33,17 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { pickNamespaces, type Messages } from '../../i18n/messages';
 import { CLIENT_MESSAGES } from '../../i18n/client-messages';
+import { devanagari, figtree } from '../fonts';
+import { APP_ICONS } from '../icons.generated';
 
 /**
  * Jira GRW-222 — the Home redesign's typeface, and the Devanagari one Hindi needs.
  *
- * Through `next/font`, which downloads the files at build time and serves them
- * from this origin: no request to Google from an owner's phone, and nothing
- * that breaks when the PWA is offline. Exposed as CSS variables so 00-base.css
- * keeps owning the stack and its system-font fallback.
+ * Served from this origin, so an owner's phone never asks Google and nothing breaks when the PWA is
+ * offline. The files are in the repository (`app/fonts`) rather than downloaded at build time — see the
+ * note there for the deploy that could not be built. Exposed as CSS variables so 00-base.css keeps
+ * owning the stack and its system-font fallback.
  */
-const figtree = Figtree({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap', variable: '--font-figtree' });
-const devanagari = Noto_Sans_Devanagari({ subsets: ['devanagari'], weight: ['400', '500', '600', '700'], display: 'swap', variable: '--font-devanagari' });
 const fontClass = `${figtree.variable} ${devanagari.variable}`;
 
 /**
@@ -89,7 +88,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // i18n-ok: the page's meta description (search / install prompt), not read on a screen by an owner
     description: 'Manage bookings, staff, services, and offers.',
     manifest: '/manifest.json',
-    icons: { icon: '/icon.png', apple: '/icons/apple-touch-icon.png' },
+    icons: { icon: '/icon.png', apple: APP_ICONS.appleTouch },
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',

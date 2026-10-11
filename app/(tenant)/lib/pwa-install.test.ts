@@ -141,3 +141,48 @@ describe('the install banner is on every sign-in and dashboard page (Jira GRW-26
     }
   });
 });
+
+/**
+ * A new icon has to be a new URL.
+ *
+ * #184 replaced the mark and kept the filenames, so nothing noticed: `/icons/` is stale-while-revalidate in
+ * the service worker, the browser had its own copy, and an installed app keeps the icon it captured on the
+ * day it was added. The owner's home screen still showed the old one after the release.
+ */
+describe('the icon URLs carry a content hash', () => {
+  const HASHED = /^\/icons\/[a-z0-9-]+\.[0-9a-f]{8}\.png$/;
+  const adminManifest = JSON.parse(read('public/admin-manifest.json')) as typeof manifest;
+
+  it('every icon both manifests list is hashed, and on disk', () => {
+    for (const [name, m] of [['manifest', manifest], ['admin-manifest', adminManifest]] as const) {
+      expect(m.icons.length, name).toBeGreaterThan(0);
+      for (const { src } of m.icons) {
+        expect(src, `${name}: ${src}`).toMatch(HASHED);
+        expect(existsSync(web(`public${src}`)), `${name}: ${src} is shipped`).toBe(true);
+      }
+    }
+  });
+
+  it('the generated module names files that exist, and is what the app imports', () => {
+    const generated = read('app/icons.generated.ts');
+    const urls = [...generated.matchAll(/'(\/icons\/[^']+)'/g)].map((m) => m[1]!);
+    expect(urls.length).toBe(5);
+    for (const url of urls) {
+      expect(url).toMatch(HASHED);
+      expect(existsSync(web(`public${url}`)), url).toBe(true);
+    }
+    // The three layouts and the install banner read it rather than typing a path that will go stale.
+    for (const file of ['app/(tenant)/layout.tsx', 'app/(auth)/layout.tsx', 'app/admin/layout.tsx', 'app/shared/install/InstallBanner.tsx']) {
+      expect(read(file), file).toMatch(/APP_ICONS/);
+    }
+  });
+
+  it('nothing anywhere still points at an unhashed icon', () => {
+    for (const file of [
+      'app/(tenant)/layout.tsx', 'app/(auth)/layout.tsx', 'app/admin/layout.tsx',
+      'app/shared/install/InstallBanner.tsx', 'public/manifest.json', 'public/admin-manifest.json',
+    ]) {
+      expect(read(file), file).not.toMatch(/\/icons\/[a-z0-9-]+\.png/);
+    }
+  });
+});

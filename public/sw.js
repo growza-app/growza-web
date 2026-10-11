@@ -20,9 +20,9 @@
 // Only an OK, non-redirected response is ever stored, and every write is held
 // open with event.waitUntil so the worker cannot be stopped mid-write.
 
-// v5 — bumping this is what deletes the logged-in pages the earlier versions
+// v6 — bumping this is what deletes the logged-in pages the earlier versions
 // left on people's devices: `activate` removes every cache but the current one.
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const CACHE_NAME = `booking-dashboard-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
