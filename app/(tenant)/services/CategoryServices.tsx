@@ -31,7 +31,17 @@ export function CategoryServices({
   onChanged: (gone: boolean) => void;
 }) {
   const t = useTranslations('services.categories');
-  const [deleting, setDeleting] = useState(false);
+  /**
+   * Jira GRW-590 — which of the two the owner asked for, or null.
+   *
+   * `'all'` opens the card with everything ticked; `'some'` opens it with nothing ticked, to be chosen. They
+   * are two buttons because they are two intentions, and one of them used to be reachable only by noticing a
+   * tick called "Select all" sitting in a list of services and looking exactly like them. Owners reported
+   * they could not delete a category at all and were removing services one at a time — the honest reading of
+   * a control that was there but invisible.
+   */
+  const [deleting, setDeleting] = useState<'all' | 'some' | null>(null);
+  const empty = services.length === 0;
 
   return (
     <>
@@ -40,9 +50,7 @@ export function CategoryServices({
           <span aria-hidden="true">‹</span> {t('back')}
         </button>
         <div className="svc-cat-head-name">{category.name}</div>
-        <button type="button" className="btn btn-ghost btn-danger svc-cat-head-delete" onClick={() => setDeleting(true)}>
-          {t('delete')}
-        </button>
+
       </div>
 
       <div className="modal-body">
@@ -65,9 +73,22 @@ export function CategoryServices({
         )}
       </div>
 
-      <div className="modal-actions">
+      {/*
+        Jira GRW-590 — both ways out of a category, said plainly and in the order they are wanted. The whole
+        category first, because that is what the owner comes here to do; picking a few is the quieter one.
+        Neither does anything yet: each opens the card that lists what goes and asks.
+      */}
+      <div className="modal-actions svc-cat-ways">
         <button type="button" className="btn btn-ghost" onClick={onBack}>
           {t('back')}
+        </button>
+        {!empty && (
+          <button type="button" className="btn btn-ghost" onClick={() => setDeleting('some')}>
+            {t('removeSome')}
+          </button>
+        )}
+        <button type="button" className="btn btn-ghost btn-danger" onClick={() => setDeleting('all')}>
+          {empty ? t('deleteEmptyAction') : t('deleteWholeCategory', { count: services.length })}
         </button>
       </div>
 
@@ -76,9 +97,10 @@ export function CategoryServices({
           branchId={branchId}
           category={category}
           services={services}
-          onClose={() => setDeleting(false)}
+          preselect={deleting === 'all' ? 'all' : 'none'}
+          onClose={() => setDeleting(null)}
           onDone={(gone) => {
-            setDeleting(false);
+            setDeleting(null);
             onChanged(gone);
           }}
           // A delete that left some services behind keeps the card open; the list behind it still has to reload.

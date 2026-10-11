@@ -207,3 +207,91 @@ describe('the delete card', () => {
     for (const s of ['Select all', 'Pick what to take off the menu']) expect(html, s).not.toContain(s);
   });
 });
+
+
+/**
+ * Jira GRW-590 — getting rid of a whole category.
+ *
+ * It took five taps and the one control that did it was invisible: Categories, the row, Delete, then a tick
+ * called "Select all" sitting in a list of services looking exactly like them, then confirm. Owners reported
+ * they had no way to delete a category at all and were removing services one at a time — the honest reading
+ * of a path that long.
+ *
+ * The list row is still not where this happens (the owner's call, 2026-10-02, and the test above still holds
+ * it). What changed is that the category's own screen now names both things it can do, and asking for the
+ * whole category opens the card with the whole category already ticked.
+ */
+describe('the two ways out of a category', () => {
+  const detailOf = (locale: 'en' | 'hi', services: ServiceAdmin[]) =>
+    wrap(
+      locale,
+      createElement(CategoryServices, {
+        branchId: 'b1',
+        category: cat({ id: 'a', name: 'Hair', serviceCount: services.length, activeCount: services.length }),
+        services,
+        onBack: () => {},
+        onChanged: () => {},
+      }),
+    );
+
+  const cardOf = (locale: 'en' | 'hi', services: ServiceAdmin[], preselect?: 'all' | 'none') =>
+    wrap(
+      locale,
+      createElement(CategoryDeleteCard, {
+        branchId: 'b1',
+        category: cat({ id: 'a', name: 'Hair', serviceCount: services.length, activeCount: services.length }),
+        services,
+        ...(preselect ? { preselect } : {}),
+        onClose: () => {},
+        onDone: () => {},
+        onChanged: () => {},
+      }),
+    );
+
+  const three = [svc({}), svc({ id: 's2', name: 'Keratin' }), svc({ id: 's3', name: 'Hair spa' })];
+
+  it('names the whole-category action, and says how much it takes', () => {
+    const html = detailOf('en', three);
+    expect(html).toContain('Delete this category and all 3 services');
+  });
+
+  it('offers picking a few as the quieter second action', () => {
+    expect(detailOf('en', three)).toContain('Remove some services');
+  });
+
+  it('does not offer "remove some" when there is nothing to remove', () => {
+    const html = detailOf('en', []);
+    expect(html).not.toContain('Remove some services');
+    // And the wording drops the count rather than reading "and all 0 services".
+    expect(html).not.toContain('and all 0');
+  });
+
+  it('opens the card with the whole category already ticked', () => {
+    const html = cardOf('en', three, 'all');
+    // Three services and the "Select all" row itself.
+    expect(html.match(/aria-checked="true"/g)).toHaveLength(4);
+    expect(html).not.toContain('aria-checked="false"');
+  });
+
+  it('that card already says what it will do, instead of asking', () => {
+    const html = cardOf('en', three, 'all');
+    expect(html).not.toContain('Pick what to take off the menu');
+    expect(html).toContain('Delete Hair and all 3');
+  });
+
+  it('leaves the card untouched on the path in from "remove some"', () => {
+    const html = cardOf('en', three, 'none');
+    expect(html).not.toContain('aria-checked="true"');
+    expect(html).toContain('Pick what to take off the menu');
+  });
+
+  it('defaults to ticking nothing, so a caller that says nothing is the old behaviour', () => {
+    expect(cardOf('en', three)).not.toContain('aria-checked="true"');
+  });
+
+  it('is translated, not left in English', () => {
+    const html = detailOf('hi', three);
+    expect(html).not.toContain('Remove some services');
+    expect(html).not.toContain('Delete this category and all');
+  });
+});

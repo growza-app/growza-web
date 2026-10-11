@@ -1014,6 +1014,8 @@
       "cancel": "Cancel",
       "done": "Done",
       "delete": "Delete",
+      "removeSome": "Remove some services",
+      "deleteWholeCategory": "Delete this category and all {count, plural, one {# service} other {# services}}",
       "empty": "No services yet",
       "count": "{count, plural, one {# service} other {# services}}",
       "countWithRetired": "{count, plural, one {# service} other {# services}} · {retired} retired",

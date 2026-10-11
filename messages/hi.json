@@ -1014,6 +1014,8 @@
       "cancel": "रद्द करें",
       "done": "हो गया",
       "delete": "हटाएँ",
+      "removeSome": "कुछ सेवाएँ हटाएँ",
+      "deleteWholeCategory": "यह श्रेणी और इसकी सभी {count, plural, one {# सेवा} other {# सेवाएँ}} हटाएँ",
       "empty": "अभी कोई सेवा नहीं",
       "count": "{count, plural, one {# सेवा} other {# सेवाएँ}}",
       "countWithRetired": "{count, plural, one {# सेवा} other {# सेवाएँ}} · {retired} हटाई गई",
