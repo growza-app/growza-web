@@ -246,6 +246,15 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/settings/branches/:id/make-main',
     'PATCH /api/v1/settings/branches/:id',
     'POST /api/v1/settings/logo',
+    /*
+     * Settings › Payments — the QR the till shows. Owner-only like the rest of
+     * this screen: `canSee('/settings', role)` is false for both limited roles,
+     * so the four of them are gated by the screen rather than by a control.
+     */
+    'POST /api/v1/settings/payment-qr',
+    'DELETE /api/v1/settings/payment-qr',
+    'POST /api/v1/settings/branches/:id/payment-qr',
+    'DELETE /api/v1/settings/branches/:id/payment-qr',
     'PATCH /api/v1/settings/booking',
     'PATCH /api/v1/settings/reminders',
     'PATCH /api/v1/settings/working-hours',

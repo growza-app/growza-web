@@ -12,4 +12,12 @@ export interface BranchSettings {
   geoRadiusM?: number;
   geoEnabled?: boolean;
   geoDeskApproves?: boolean;
+  /**
+   * The QR this branch shows at the till, or null when it shows the business's.
+   *
+   * The branch's OWN pointer, not the effective one: Settings has to be able to
+   * say "its own" apart from "the business's", and only an un-coalesced value
+   * tells those apart. Optional — an API a deploy behind sends none.
+   */
+  paymentQrUrl?: string | null;
 }

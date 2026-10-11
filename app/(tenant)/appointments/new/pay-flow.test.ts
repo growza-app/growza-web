@@ -100,7 +100,8 @@ describe('Record payment in three taps', () => {
   });
 
   it('asks one question per screen, in that order', () => {
-    expect(flow).toMatch(/useState<'what' \| 'how' \| 'done'>\('what'\)/);
+    // `qr` sits between how and done, and only for a UPI payment at a salon that has uploaded one.
+    expect(flow).toMatch(/useState<'what' \| 'how' \| 'qr' \| 'done'>\('what'\)/);
     expect(flow).toMatch(/\{t\('whatTitle'\)\}/);
     expect(flow).toMatch(/\{t\('howTitle'\)\}/);
     expect(flow).toMatch(/<PaymentDone\s/);
@@ -188,7 +189,9 @@ describe('Record payment in three taps', () => {
   });
 
   it('tapping how they paid IS the save — there is no Mark done', () => {
-    expect(flow).toMatch(/onClick=\{\(\) => void pay\(mode\)\}/);
+    // Still the save for three of the four. UPI is the exception, and only when there is a QR to scan first
+    // (the test below): recording the money before anyone has scanned anything would be a lie on the screen.
+    expect(flow).toMatch(/onClick=\{\(\) => \(mode === 'upi' && paymentQr \? setStep\('qr'\) : void pay\(mode\)\)\}/);
     expect(flow).not.toMatch(/markDone/);
     // The one call the full form makes for a sale with no chair (GRW-293) or a token (GRW-403); nothing new.
     expect(flow).toMatch(/api\.recordCounterSale\(/);
@@ -211,6 +214,32 @@ describe('Record payment in three taps', () => {
     expect(css).toMatch(/\.pf-pay-sub \{[\s\S]{0,200}-webkit-line-clamp: 2;/);
     expect(css).toMatch(/\.pf-pay-sub \{[\s\S]{0,260}min-height: 2\.6em;/);
     {
+    }
+  });
+
+  /**
+   * The salon's own QR, between "how did they pay" and the money being recorded (owner, 2026-10-11).
+   *
+   * The owner used to tap UPI and then hold up a printed card or their own phone from beside the till. The QR
+   * is now on the screen the sale is already on — and the tap that records the money moved with it, to AFTER
+   * the customer has scanned, because the other order marks a sale paid before anybody has paid.
+   */
+  it('shows the salon’s own QR for a UPI payment, and records the money only after it', () => {
+    // The effective QR for this branch comes from `/me` — its own, else the business's — so nothing here picks.
+    expect(flow).toMatch(/const paymentQr = branch\.branches\.find\(\(b\) => b\.id === location\)\?\.paymentQrUrl \?\? null;/);
+    // No QR uploaded, or a role the API does not send one to: UPI saves on the tap, exactly as before.
+    expect(flow).toMatch(/if \(step === 'qr' && paymentQr\) \{/);
+    // The amount above the code: a static QR carries no amount, so the customer types it.
+    expect(flow).toMatch(/\{t\('qrTitle'\)\}/);
+    expect(flow).toMatch(/<img className="pf-qr-code" src=\{paymentQr\} alt=\{t\('qrAlt'\)\} \/>/);
+    // One button, and it is the save.
+    expect(flow).toMatch(/className="btn pf-go pf-qr-paid" onClick=\{\(\) => void pay\('upi'\)\}/);
+    // Square, fitted and on white — a cropped or dark-grounded QR does not scan.
+    expect(css).toMatch(/\.pf-qr-code \{[\s\S]{0,200}object-fit: contain;/);
+    expect(css).toMatch(/\.pf-qr \{[\s\S]{0,300}background: #ffffff;/);
+    for (const m of [enMessages, hiMessages]) {
+      const pf = m.payFlow as unknown as Record<string, string>;
+      for (const key of ['qrTitle', 'qrAlt', 'qrHint', 'qrPaid']) expect(pf[key], key).toBeTruthy();
     }
   });
 
