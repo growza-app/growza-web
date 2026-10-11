@@ -48,6 +48,18 @@
   color: #575b59; /* Jira GRW-478 (U-11) — was 4.38:1, now 5.9:1 */
 }
 
+.chip-moved {
+  /* Owner-app audit, 2026-10-10 — a moved booking's old slot: routine, like a cancellation, but not one. */
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.bk-card-moved {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--blue);
+}
+
 .chip-no_show {
   background: #fde4e4;
   color: #b91c1c;

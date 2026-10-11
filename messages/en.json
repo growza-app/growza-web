@@ -95,7 +95,10 @@
     "walkIn": "Walk-in",
     "didNotCome": "Didn't come",
     "didNotComeCount": "didn't come",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "moved": "Moved",
+    "movedNowAt": "Now at {time}",
+    "movedNowOn": "Now on {date}, {time}"
   },
   "bookings": {
     "none": "No bookings that day.",
@@ -781,6 +784,7 @@
         "title": "Choose a photo",
         "choose": "Choose from our photos",
         "hint": "Pick the closest one. You can still upload your own.",
+        "upload": "Upload your own photo",
         "done": "Done",
         "labels": {
           "anti-acne-facial": "Anti-acne facial",
@@ -1744,7 +1748,7 @@
     "bookingTime": "Booking time",
     "anyTime": "Any time",
     "timeNow": "Now · {time}",
-    "servicesMissing": "Pick at least one service.",
+    "servicesMissing": "Choose a service first.",
     "allServices": "All",
     "serviceKinds": "Kinds of service",
     "trayTotal": "Total · {count, plural, one {# service} other {# services}}",
@@ -1809,7 +1813,7 @@
     "comboPrice": "Package price",
     "withWhom": "Which {provider}?",
     "whichBranch": "Which branch?",
-    "whoeverIsFree": "Whoever is free",
+    "whoeverIsFree": "Anyone free",
     "freeCount": "{n, plural, =0 {nobody free} other {# free}}",
     "chairFree": "free now",
     "chairBusy": "with {name} · till {until}",
@@ -1846,7 +1850,7 @@
     "today": "Today",
     "whichTime": "Which time?",
     "loadingTimes": "Finding free times…",
-    "noTimes": "No free times that day. Try another day, or a different stylist.",
+    "noTimes": "Nothing free that day. Try another day.",
     "phoneRequired": "Phone number",
     "phoneMissing": "A phone number is needed so they can be reminded.",
     "next": "Next",
@@ -1866,7 +1870,16 @@
     "noOneDoes": "Nobody here does {service}, so there is no {provider} to put this with.",
     "whoDoesWhat": "Who does what",
     "addOrCopyServices": "Add or copy {services}",
-    "amountNotSaved": "Not saved. Check the amount, then try again."
+    "amountNotSaved": "Not saved. Check the amount, then try again.",
+    "rowAddService": "Add service",
+    "rowPicked": "{n, plural, one {1 service} other {# services}} · {total}",
+    "whenWaiting": "Waiting",
+    "whenPick": "Pick a time",
+    "bookAt": "Book {time}",
+    "whenNow": "Starts now",
+    "timeMoved": "{asked} is taken. Nearest free is {got}.",
+    "timeNoneAfter": "Nothing free after {asked} that day.",
+    "visitGone": "This booking is not open any more. It may already be settled. Check Bookings before taking money again."
   },
   "moveBooking": {
     "title": "Move this booking",
@@ -1896,6 +1909,11 @@
     "markMissed": "Client didn't come",
     "reschedule": "Move to another time",
     "cancel": "Cancel this booking",
+    "cancelAsk": "Cancel this booking? You can't undo this.",
+    "cancelYes": "Yes, cancel it",
+    "cancelKeep": "Keep the booking",
+    "noShowAsk": "They didn't come? You can't undo this.",
+    "noShowYes": "Yes, they didn't come",
     "reference": "Booking ID"
   },
   "clientCard": {

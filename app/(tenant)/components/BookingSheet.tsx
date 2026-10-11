@@ -2,14 +2,14 @@
 
 import { useBookingCopy } from '../lib/use-copy';
 import { useTranslations, useLocale } from 'next-intl';
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, formatTime, type Appointment, type AppointmentStatus, type Offer, type Provider, type Service } from '../lib/api';
+import { api, formatTime, type Appointment, type AppointmentStatus } from '../lib/api';
 import { formatDuration, summarizeServices } from '../lib/appointment-display';
-import { CheckoutSheet } from './CheckoutSheet';
 import { MoveBookingSheet } from './MoveBookingSheet';
 import { IconCheck, IconClose, IconMoveTime, IconPhone, IconWhatsApp } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { payVisitHref } from '../lib/pay-token';
 import { useMayUse } from './SessionProvider';
 
 /**
@@ -86,12 +86,35 @@ export function BookingSheet({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [checkingOut, setCheckingOut] = useState(false);
   const [moving, setMoving] = useState(false);
-  const [services, setServices] = useState<Service[] | null>(null);
-  const [providers, setProviders] = useState<Provider[] | null>(null);
+  /*
+   * Owner-app audit, 2026-10-10 — Cancel and "Client didn't come" each acted on one tap, and both are final: a settled
+   * booking cannot be put back (Jira GRW-467). Cancel sits at the bottom under the thumb; didn't-come sits one row
+   * above Move, the button a client ringing usually wants. So the first tap asks and the second does it. "Keep the
+   * booking" takes the focus, so Enter or a stray second tap keeps it.
+   */
+  const [asking, setAsking] = useState<'cancelled' | 'no_show' | null>(null);
+  const keepRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (asking) keepRef.current?.focus();
+  }, [asking]);
+  /** The question in place of the button: what happens, Keep (focused), and Yes. */
+  const askFirst = (status: 'cancelled' | 'no_show', question: string, yes: string) => (
+    <div className="bk-cancel-ask" role="group" aria-labelledby={`bk-ask-${status}`}>
+      <p id={`bk-ask-${status}`} className="bk-cancel-q">
+        {question}
+      </p>
+      <button ref={keepRef} type="button" className="sheet-item" disabled={busy} onClick={() => setAsking(null)}>
+        <IconCheck />
+        {bk.cancelKeep}
+      </button>
+      <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setStatus(status)}>
+        <IconClose />
+        {yes}
+      </button>
+    </div>
+  );
   // Jira GRW-314 — the combos that can be added at the till; a failed read just means none are offered.
-  const [offers, setOffers] = useState<Offer[]>([]);
   /**
    * Jira GRW-63 · GRW-195 · GRW-409 — which outcome actions this viewer may use, asked of the shared rule.
    *
@@ -127,21 +150,17 @@ export function BookingSheet({
     }
   };
 
-  const openCheckout = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const [svcs, provs, offs] = await Promise.all([services ?? api.services(), providers ?? api.providers(), api.offers().catch(() => [] as Offer[])]);
-      setServices(svcs);
-      setProviders(provs);
-      setOffers(offs);
-      setCheckingOut(true);
-    } catch {
-      setError(tsh('loadServicesFailed'));
-    } finally {
-      setBusy(false);
-    }
-  };
+  /*
+   * Owner, 2026-10-10 — Mark as done is Record payment, filled in from this booking.
+   *
+   * It used to open a till of its own over this sheet, which meant the salon had two screens for taking
+   * money and a desk had to learn both. The flow it goes to settles the booking with `checkout`, never a
+   * second sale, and ends on the same done screen every other payment ends on.
+   *
+   * The booking's own day rides in the address because there is no read for one appointment by id; `from`
+   * sends Done back to Bookings rather than Home.
+   */
+  const markDone = () => router.push(payVisitHref({ appointmentId: appointment.id, startAt: appointment.startAt }, timezone, 'bookings'));
 
   if (moving) {
     return (
@@ -151,30 +170,6 @@ export function BookingSheet({
         timezone={timezone}
         onClose={() => setMoving(false)}
         onMoved={onClose}
-      />
-    );
-  }
-
-  if (checkingOut && services && providers) {
-    // The combo's OTHER still-booked services — completed in the same checkout
-    // so one "Mark as done" finishes the whole booking, not just this leg.
-    const groupMembers = (comboLegs ?? []).filter((a) => a.id !== appointment.id && a.status === 'confirmed');
-    // Jira GRW-392 (review) — the visit's branch's people, plus whoever is already on one of its lines (a stylist
-    // who has since moved branch still did the work). Another branch's stylist would be refused at Mark done.
-    const onVisit = new Set([appointment.providerId, ...groupMembers.map((a) => a.providerId)].filter(Boolean));
-    const tillProviders = providers.filter((p) => !appointment.locationId || !p.locationId || p.locationId === appointment.locationId || onVisit.has(p.id));
-    return (
-      <CheckoutSheet
-        appointment={appointment}
-        services={services}
-        providers={tillProviders}
-        offers={offers}
-        groupMembers={groupMembers}
-        timezone={timezone}
-        onClose={() => {
-          setCheckingOut(false);
-          onClose();
-        }}
       />
     );
   }
@@ -229,21 +224,22 @@ export function BookingSheet({
           {!settled && (
             <>
               {mayCheckout && (
-                <button type="button" className="sheet-item" disabled={busy} onClick={openCheckout}>
+                <button type="button" className="sheet-item" disabled={busy} onClick={markDone}>
                   <IconCheck />
                   {bk.markFinished}
                 </button>
               )}
               {maySetStatus && (
-                <button
-                  type="button"
-                  className="sheet-item sheet-neutral"
-                  disabled={busy}
-                  onClick={() => setStatus('no_show')}
-                >
-                  <IconClose />
-                  {bk.markMissed}
-                </button>
+                <>
+                  {asking === 'no_show' ? (
+                    askFirst('no_show', bk.noShowAsk, bk.noShowYes)
+                  ) : (
+                    <button type="button" className="sheet-item sheet-neutral" disabled={busy} onClick={() => setAsking('no_show')}>
+                      <IconClose />
+                      {bk.markMissed}
+                    </button>
+                  )}
+                </>
               )}
               {/*
                 GRW-219 — the words `bk.reschedule` has carried since
@@ -259,15 +255,16 @@ export function BookingSheet({
                 </button>
               )}
               {maySetStatus && (
-                <button
-                  type="button"
-                  className="sheet-item sheet-danger"
-                  disabled={busy}
-                  onClick={() => setStatus('cancelled')}
-                >
-                  <IconClose />
-                  {bk.cancel}
-                </button>
+                <>
+                  {asking === 'cancelled' ? (
+                    askFirst('cancelled', bk.cancelAsk, bk.cancelYes)
+                  ) : (
+                    <button type="button" className="sheet-item sheet-danger" disabled={busy} onClick={() => setAsking('cancelled')}>
+                      <IconClose />
+                      {bk.cancel}
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}

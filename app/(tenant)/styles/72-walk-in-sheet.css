@@ -1920,3 +1920,258 @@ input.wi-search-input-plain {
   line-height: 1.25;
   min-width: 0;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   New booking: one question per line (owner, 2026-10-10)
+
+   Services, When and the stylist are a row apiece — what is asked on the left,
+   the answer on the right, a chevron saying it opens. The controls that used to
+   sit open on this screen (the kinds of service, the photo menu, its pager, the
+   sideways row of stylists, the Booking date and time pair) moved into `.wi-ask`,
+   the sheet a row opens. Record payment keeps all of them inline and is not
+   touched by anything below: every rule here is reached only through `bookForm`.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.wi-rows {
+  display: flex;
+  flex-direction: column;
+  margin: var(--sp-3, 12px) 0 0;
+  border-top: 1px solid var(--border);
+}
+
+.wi-row-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 8px);
+  width: 100%;
+  /* 44px of tap target, the app's floor, without a fixed height that a long answer would break out of. */
+  min-height: 52px;
+  padding: var(--sp-3, 12px) 2px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.wi-row-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/*
+ * A picture in the same place on every row.
+ *
+ * The menu this screen used to show inline is how a receptionist who is not a confident reader worked it —
+ * they recognised the haircut rather than read it. Putting the menu in a sheet took that away, so the answer
+ * comes back out as a tile: the service's photograph, the stylist's face, or the icon for the question.
+ * Fixed 36px so the three rows line up whether or not a photo has loaded.
+ */
+.wi-row-photo {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--slate-soft);
+}
+
+.wi-row-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wi-row-icon {
+  display: inline-flex;
+  color: var(--muted);
+}
+
+/* rem, not px: the tile and the icon in it grow with the reader's text size, as every icon here does. */
+.wi-row-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* The question above, the answer under it — two short lines beat one long one at 344px. */
+.wi-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.wi-row-label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* The answer wraps rather than truncating: "Sat 11 Oct · 2:00 pm" is the thing the desk is about to
+   promise, and half of it is worse than two lines of it. */
+.wi-row-answer {
+  min-width: 0;
+  font-weight: 600;
+}
+
+/*
+ * Answered, in colour as well as in weight.
+ *
+ * Bold alone is the difference between "Add service" and "1 service · ₹300" to somebody reading the words.
+ * To somebody scanning for what is left to do it is almost nothing, so the tile goes green the moment the
+ * row has an answer and the three rows can be counted without being read.
+ */
+.wi-row-done .wi-row-photo {
+  background: var(--accent-soft);
+}
+
+.wi-row-done .wi-row-icon {
+  color: var(--accent-deep);
+}
+
+/* Nothing chosen yet. Muted and unbolded so the row reads as a prompt, not an answer. */
+.wi-row-empty {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/*
+ * The stylist row: the same row, with a real `<select>` laid over the whole of it.
+ *
+ * Everything visible is `aria-hidden` and the select carries the label, so a screen reader hears one control
+ * rather than a row and a menu that say the same thing. `appearance: none` and no background, because what is
+ * drawn underneath is the control — this is only the hit area and the phone's own wheel.
+ */
+.wi-row-select {
+  position: relative;
+  cursor: pointer;
+}
+
+.wi-row-select select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* The row is what shows focus, so the invisible select must not draw a second ring beside it. */
+.wi-row-select select:focus-visible {
+  outline: 0 !important;
+}
+
+.wi-row-select:focus-within {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm, 12px);
+}
+
+.wi-row-off {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.wi-row-chevron {
+  flex: none;
+  display: inline-flex;
+  color: var(--muted);
+}
+
+/* What is on the visit, listed under the row that chose it. */
+.wi-row-lines {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2, 8px) 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wi-row-line {
+  display: flex;
+  gap: var(--sp-2, 8px);
+  padding: 3px 0 3px 48px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.wi-row-line-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.wi-row-line-price {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- what happens now: three boxes, above the button they name ---------- */
+
+/*
+ * Equal columns, so the three are one control rather than three buttons that happen to be adjacent, and so
+ * "Waiting" is never the small one. `minmax(0, 1fr)` because a two-word box would otherwise push the grid
+ * wider than the card at 344px.
+ */
+.wi-when-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2, 8px);
+  margin: var(--sp-1, 4px) 0 0;
+}
+
+/* Two columns when the queue is not on offer, so the pair still fills the row. */
+.wi-when-list:has(.wi-when-opt:nth-child(2):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wi-when-opt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: var(--sp-2, 8px) var(--sp-1, 4px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 12px);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.wi-when-opt:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wi-when-opt-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* The day and the free times, under the box that asked for them. */
+.wi-when-date {
+  margin-top: var(--sp-3, 12px);
+}
+
+/* What the grid did with the time the desk was given, when it could not honour it exactly. */
+.wi-time-moved {
+  margin: var(--sp-2, 8px) 0 0;
+  padding: var(--sp-2, 8px) var(--sp-3, 12px);
+  border-radius: var(--radius-sm, 12px);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.9375rem;
+}

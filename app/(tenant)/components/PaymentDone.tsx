@@ -48,11 +48,19 @@ export function PaymentDone({
   phone: givenPhone,
   onNextCustomer,
   onDone,
+  fixHref = '/appointments',
   sound: soundProp,
   onToggleSound,
 }: {
   /** The sale, so a number typed on this screen can be kept as its client. */
   appointmentId: string;
+  /**
+   * Where "Fix a mistake" goes — the booking that was just settled, open (`/appointments?open=<id>`).
+   *
+   * Defaulted to the bare list so a caller that cannot name the visit still has a way back, which is what
+   * every caller used to get: twenty-five rows and a hunt for the one that went in wrong.
+   */
+  fixHref?: string;
   totalMinor: number;
   mode: PaymentMode;
   /** How `mode` reads in the current language ("Cash", "UPI"). */
@@ -159,7 +167,13 @@ export function PaymentDone({
           <button type="button" className="btn btn-ghost pf-go-alt" onClick={onDone}>
             {nv.done}
           </button>
-          <Link href="/appointments" className="btn btn-ghost pf-go-alt">
+          {/*
+            Owner, 2026-10-10 — the booking that was just settled, open, not the list it is somewhere in.
+            This was a bare link to `/appointments`, which on a busy day is twenty-five rows and a hunt for
+            the one the desk has this second got wrong. `?open=` already opens a booking by id (Search uses
+            it), and the day goes with it because the list shows today and a late visit may not be.
+          */}
+          <Link href={fixHref} className="btn btn-ghost pf-go-alt">
             {t('mistake')}
           </Link>
         </div>

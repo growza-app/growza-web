@@ -44,9 +44,10 @@ function gatedBlocks(src: string, flag: string): string[] {
 }
 
 const GATES: Array<[flag: string, action: string, control: string]> = [
-  ['mayCheckout', 'booking.checkout', 'onClick={openCheckout}'],
-  ['maySetStatus', 'booking.setStatus', "onClick={() => setStatus('no_show')}"],
-  ['maySetStatus', 'booking.setStatus', "onClick={() => setStatus('cancelled')}"],
+  // Owner, 2026-10-10 — Mark as done leaves for Record payment now; the gate on it is unchanged.
+  ['mayCheckout', 'booking.checkout', 'onClick={markDone}'],
+  ['maySetStatus', 'booking.setStatus', "onClick={() => setAsking('no_show')}"],
+  ['maySetStatus', 'booking.setStatus', "onClick={() => setAsking('cancelled')}"],
   ['mayMove', 'booking.reschedule', 'onClick={() => setMoving(true)}'],
 ];
 
@@ -81,5 +82,38 @@ describe('the Bookings list', () => {
   it('passes only the business capability — the role is the sheet’s own question (Jira GRW-409)', () => {
     expect(list).toMatch(/canMove=\{canReschedule\}/);
     expect(list).not.toMatch(/canSettle=/);
+  });
+});
+
+/**
+ * Owner-app audit, 2026-10-10 — Cancel and "Client didn't come" ask first.
+ *
+ * Both are final (Jira GRW-467), and both acted on one tap: Cancel from the bottom of the sheet under the thumb,
+ * didn't-come from the row above Move. The first tap now opens the question; only the second, on Yes, settles the
+ * booking — and "Keep the booking" takes the focus, so Enter or a hurried second tap keeps it.
+ */
+describe('the two final actions ask first', () => {
+  it('the first tap only asks', () => {
+    expect(source).toMatch(/onClick=\{\(\) => setAsking\('cancelled'\)\}>\s*<IconClose \/>\s*\{bk\.cancel\}/);
+    expect(source).toMatch(/onClick=\{\(\) => setAsking\('no_show'\)\}>\s*<IconClose \/>\s*\{bk\.markMissed\}/);
+  });
+
+  it('only the Yes inside the question settles the booking', () => {
+    const ask = source.slice(source.indexOf('const askFirst ='), source.indexOf('</div>', source.indexOf('const askFirst =')));
+    expect(ask).toContain('onClick={() => setStatus(status)}');
+    expect(ask).toMatch(/ref=\{keepRef\}[^>]*onClick=\{\(\) => setAsking\(null\)\}/);
+    expect(source).toContain("askFirst('cancelled', bk.cancelAsk, bk.cancelYes)");
+    expect(source).toContain("askFirst('no_show', bk.noShowAsk, bk.noShowYes)");
+  });
+
+  it('Keep the booking takes the focus', () => {
+    expect(source).toMatch(/if \(asking\) keepRef\.current\?\.focus\(\)/);
+  });
+
+  it('says it in both languages', () => {
+    for (const lang of ['en', 'hi']) {
+      const sheet = JSON.parse(readFileSync(fromDashboard(`messages/${lang}.json`), 'utf-8')).bookingSheet;
+      for (const key of ['cancelAsk', 'cancelYes', 'cancelKeep', 'noShowAsk', 'noShowYes']) expect(sheet[key], `${lang}.${key}`).toBeTruthy();
+    }
   });
 });

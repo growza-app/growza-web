@@ -13,6 +13,8 @@ import hi from '../../../messages/hi.json';
  */
 const form = readFileSync(fromDashboard('app/(tenant)/services/ServiceForm.tsx'), 'utf-8');
 const sheet = readFileSync(fromDashboard('app/(tenant)/services/PackPhotoSheet.tsx'), 'utf-8');
+const table = readFileSync(fromDashboard('app/(tenant)/services/ServicesTable.tsx'), 'utf-8');
+const rows = readFileSync(fromDashboard('app/(tenant)/services/ServiceRows.tsx'), 'utf-8');
 
 describe('every picture in the pack can be picked, in both languages', () => {
   it.each([
@@ -51,5 +53,47 @@ describe('the picking sheet', () => {
 
   it('does not let a tap inside it reach the form behind', () => {
     expect(sheet).toContain('e.stopPropagation()');
+  });
+});
+
+/**
+ * Owner, 2026-10-11 — the pack is reachable from the Services LIST, which is where an owner works.
+ *
+ * The picker shipped inside Edit service and nowhere else, while the list's ··· menu clicked the file input
+ * directly. So an owner who only ever used the list met one thing, every time: a file dialog. They reported
+ * the pack as missing, and from where they were standing it was.
+ */
+describe('the Services list', () => {
+  it('opens the pack from the row menu, not the file chooser', () => {
+    expect(table).toMatch(/const askPhoto = \(service: ServiceAdmin\) => setPackFor\(service\);/);
+    expect(table).toContain('<PackPhotoSheet');
+    expect(table).toMatch(/current=\{packFor\.catalogKey \?\? null\}/);
+  });
+
+  it('saves the pick against the service and moves the row’s own thumbnail with it', () => {
+    expect(table).toMatch(/await api\.updateService\(service\.id, \{ catalogKey \}\)/);
+    // The thumbnail reads `catalogKey`; without this the list keeps the old picture until a reload.
+    expect(table).toMatch(/catalogKey: updated\.catalogKey \?\? catalogKey/);
+  });
+
+  it('still reaches the owner’s own upload, from inside the sheet', () => {
+    expect(sheet).toMatch(/onUpload\?: \(\) => void;/);
+    expect(sheet).toMatch(/\{t\('upload'\)\}/);
+    // The sheet closes before the OS dialog opens, or the owner comes back to a modal over nothing.
+    expect(table).toMatch(/setPackFor\(null\);\s*\n\s*setPhotoFor\(service\);\s*\n\s*photoInput\.current\?\.click\(\);/);
+  });
+
+  it('says Change, not Add, while a picture is already showing', () => {
+    // Most services show one without any upload: the pack answers for the concept (GRW-560).
+    expect(rows).toMatch(/hasServicePhoto\(service\) \? t\('menu\.changePhoto'\) : t\('menu\.addPhoto'\)/);
+    expect(form).toMatch(/photo \|\| imageUrl \|\| shownKey \? t\('changePhoto'\) : t\('addPhoto'\)/);
+  });
+
+  it('has the upload label in both languages', () => {
+    for (const messages of [en, hi]) {
+      const pack = (messages as { services: { form: { pack: Record<string, unknown> } } }).services.form.pack;
+      expect(typeof pack.upload).toBe('string');
+      expect((pack.upload as string).trim()).not.toBe('');
+    }
   });
 });

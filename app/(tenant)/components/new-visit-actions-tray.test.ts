@@ -91,7 +91,9 @@ describe('a page asks the outcome above one button', () => {
   it('asks it in the slot where Record payment asks how they paid', () => {
     expect(code).toMatch(/const pageOutcome = onPage && queueOffered;/);
     expect(code).toMatch(/const outcome = outcomeWanted \?\? \(noChairFree \? 'queue' : 'start'\);/);
-    expect(code).toMatch(/const outcomeChips = pageOutcome \? \(\s*\n\s*<div className="wi-pay-modes" role="radiogroup" aria-label=\{nv\.whatNow\}>/);
+    // Owner, 2026-10-10 — the chips are Record payment's alone now: New booking offers Waiting as the first
+    // answer in its When sheet, so the visit cannot be told to wait AND given a time.
+    expect(code).toMatch(/const outcomeChips = pageOutcome && !bookForm \? \(\s*\n\s*<div className="wi-pay-modes" role="radiogroup" aria-label=\{nv\.whatNow\}>/);
   });
 
   it('leaves one button, named by the chip above it', () => {
