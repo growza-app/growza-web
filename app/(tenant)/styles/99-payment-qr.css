@@ -1,0 +1,208 @@
+/*
+ * Settings › Payments — the QR the till shows (owner, 2026-10-11).
+ *
+ * One card for the business's QR, then one ROW per branch. Laid out at 344px
+ * first: the thumbnail and the words share a line, and the actions sit under
+ * them rather than in a second column that would squeeze both.
+ */
+.pq {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.pq-card {
+  display: grid;
+  gap: var(--sp-4);
+  /* `.card` is only the surface and the border; every screen pads its own. */
+  padding: var(--sp-4);
+}
+
+/* `.card + .card`'s 18px top margin would sit on top of the grid's own gap. */
+.pq .card + .card {
+  margin-top: 0;
+}
+
+.pq-main {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.pq-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 750;
+  color: var(--text);
+}
+
+.pq-sub,
+.pq-tip {
+  margin: 4px 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.pq-tip {
+  /* Advice, not a link and not a warning: the accent green here read as something to tap. */
+  font-size: 0.875rem;
+}
+
+/*
+ * The picture, on a ground of its own.
+ *
+ * A white frame on a white card read as a hole in the card rather than as a
+ * place a picture goes, so the empty state is tinted and dashed and the filled
+ * one keeps its white — a QR is read dark-on-light and must sit on white.
+ */
+.pq-shot,
+.pq-thumb {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  aspect-ratio: 1;
+}
+
+.pq-shot img,
+.pq-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Never `cover`: a cropped QR has lost a finder pattern and scans as nothing. */
+  object-fit: contain;
+}
+
+.pq-shot-empty,
+.pq-thumb-empty {
+  border-style: dashed;
+  background: var(--slate-soft);
+}
+
+.pq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.pq-btn {
+  min-height: 2.75rem;
+}
+
+/*
+ * Remove and Add are words, not buttons: one is the rarer of two acts on a row,
+ * and a row with two filled buttons on it stops reading as a list.
+ */
+.pq-remove,
+.pq-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  /* 44px of target without 44px of ink. */
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pq-remove {
+  color: #991b1b;
+}
+
+.pq-link {
+  color: var(--accent-deep);
+}
+
+.pq-remove:disabled,
+.pq-link:disabled,
+.pq-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.pq-error {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-sm);
+  background: #fdecec;
+  color: #991b1b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ---------- one row per branch ---------- */
+.pq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.pq-row {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  column-gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border);
+}
+
+.pq-row:first-child {
+  border-top: none;
+}
+
+.pq-row-words {
+  display: grid;
+  min-width: 0;
+}
+
+.pq-row-name {
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--text);
+  /* A long branch name shortens rather than pushing the action off the row. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pq-row-sub {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* Under the words at 344px, where a third column would leave the name two words wide. */
+.pq-row-actions {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* Side by side once the row has the width for a name and its action on one line. */
+@media (min-width: 420px) {
+  .pq-row {
+    grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  }
+
+  .pq-row-actions {
+    grid-column: 3;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 420px) {
+  .pq-main {
+    grid-template-columns: 6rem minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 560px) {
+  .pq-main {
+    grid-template-columns: 8rem minmax(0, 1fr);
+  }
+}

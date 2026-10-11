@@ -48,6 +48,7 @@ input.search-input-bare:focus-visible {
 .att-search:focus-within,
 .wi-amount:focus-within,
 .phone-field:focus-within,
+.ci-radius:focus-within,
 .sheet-row:focus-within {
   outline: 2px solid var(--accent-deep);
   outline-offset: 1px;
@@ -59,6 +60,7 @@ input.search-input-bare:focus-visible {
 .att-search input:focus-visible,
 .wi-amount input:focus-visible,
 .phone-field input:focus-visible,
+.ci-radius input:focus-visible,
 .sheet-row input:focus-visible,
 .sheet-row select:focus-visible {
   outline: 0 !important;

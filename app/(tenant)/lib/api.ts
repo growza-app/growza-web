@@ -106,6 +106,12 @@ import type {
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
+
+/** Where a business stands on payment QRs: the business-wide one, and each branch's own. */
+export interface PaymentQrState {
+  paymentQrUrl: string | null;
+  branches: Array<{ id: string; name: string; isPrimary: boolean; paymentQrUrl: string | null }>;
+}
 import type { GeoFix } from './geo-fix';
 
 /** Jira GRW-563 — what the self check-in route answers. */
@@ -485,6 +491,14 @@ export const api = {
     inTime?: string | null;
     outTime?: string | null;
     note?: string | null;
+    /**
+     * Jira GRW-563 — where the desk's own device is, when its branch is fenced (`fenceApplies`).
+     * The API has always read these; nothing sent them, so every row a fenced branch's desk typed was
+     * written `pending` and waited for the owner — including each one of a "Mark everyone present".
+     */
+    lat?: number;
+    lng?: number;
+    accuracyM?: number | null;
   }) => put<AttendanceRow>('/api/v1/attendance', input),
   clearAttendance: (providerId: string, date: string) =>
     del<{ ok: true }>(`/api/v1/attendance?providerId=${encodeURIComponent(providerId)}&date=${encodeURIComponent(date)}`),
@@ -605,6 +619,17 @@ export const api = {
   ) =>
     patch<{ branch: BranchSettings }>(`/api/v1/settings/branches/${id}`, body),
   uploadBusinessLogo: (file: File) => uploadFile<SettingsSummary>('/api/v1/settings/logo', 'logo', file),
+  /*
+   * The payment QR a salon holds up at the till — the business's, and a branch's own.
+   *
+   * All four answer with the same shape, so one screen state is replaced by one
+   * response and nothing has to be re-fetched after a change.
+   */
+  paymentQr: () => get<PaymentQrState>('/api/v1/settings/payment-qr'),
+  uploadPaymentQr: (file: File) => uploadFile<PaymentQrState>('/api/v1/settings/payment-qr', 'qr', file),
+  removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
+  uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
+  removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
   updateBookingRules: (body: {
     slotGranularityMin?: number;
     slotPolicy?: 'fixed_grid' | 'gap_packed';

@@ -15,8 +15,15 @@
 export interface Me {
   /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
   tenant: { id: string; name: string; timezone: string; locationName: string | null; branchCount?: number; status?: string } | null;
-  /** Jira GRW-235 — open branches, main first. */
-  branches?: Array<{ id: string; name: string }>;
+  /**
+   * Jira GRW-235 — open branches, main first.
+   *
+   * `paymentQrUrl` is the EFFECTIVE QR for that branch — its own, else the
+   * business's, resolved by the API. Absent for a stylist (who does not hold
+   * the salon's QR up to a customer) and from an API a deploy behind, which is
+   * why the till treats it as "no QR" rather than as an error.
+   */
+  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null }>;
   /**
    * The owner's own billing state, or null when there is nothing to say
    * (GRW-122). Null is the healthy case AND the case where the state could
@@ -91,6 +98,16 @@ export interface Me {
    * owner's own dashboard entirely.
    */
   impersonation: { businessName: string; role: string } | null;
+  /**
+   * Jira GRW-564 — how this person reaches a human, for the help screen.
+   *
+   * Every role gets it. The number used to arrive only on `OwnerBilling`, so
+   * a receptionist or a stylist had none anywhere in the product. Optional
+   * because an API a deploy behind sends nothing, and the screen must render
+   * without it rather than crash.
+   */
+  support?: { phone?: string; whatsapp?: string };
+
   /**
    * Jira GRW-87 · GRW-163 — whether this business can be asked to pay online.
    *
@@ -439,6 +456,13 @@ export interface ActivityEvent {
   branchName: string | null;
   startAt: string | null;
   serviceNames: string[] | null;
+  /**
+   * Jira GRW-562 — the booking behind the row, so tapping it opens that booking rather than the day it
+   * falls on. The earliest leg, the one `startAt` reports, so the id and the time name the same visit.
+   * Null for billing and handoff rows — and absent from an API older than this field, which is why the
+   * dashboard falls back to the day (NotificationBell's `notifHref`) instead of refusing to link.
+   */
+  appointmentId?: string | null;
   billing: ActivityBilling | null;
   /** Jira GRW-562 — who at the salon did it (a stylist's name), for a dashboard action; null for WhatsApp and billing. */
   actorName: string | null;
@@ -713,6 +737,13 @@ export interface AttendanceRegister {
   lateGraceMin: number;
   /** Jira GRW-230 — staff whose branch has its own grace; anyone absent uses `lateGraceMin`. */
   lateGraceByProvider?: Record<string, number>;
+  /**
+   * Jira GRW-563 — a row this viewer writes will be measured against the branch's fence, so the register has
+   * to send the phone's fix with it or the row lands in the owner's queue. True only for a branch's own desk
+   * at a branch with the pin set and the switch on; an owner is never fenced. Absent from an older API, which
+   * reads as false — the same rows, approved as they always were.
+   */
+  fenceApplies?: boolean;
   rows: AttendanceRow[];
 }
 

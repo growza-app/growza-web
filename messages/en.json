@@ -337,8 +337,8 @@
         "sub": "Booking times and closed days"
       },
       "payments": {
-        "label": "Payments",
-        "sub": "Manage UPI and payouts"
+        "label": "Payment QR",
+        "sub": "The QR you show at the till"
       },
       "whatsapp": {
         "label": "WhatsApp settings",
@@ -349,7 +349,7 @@
         "sub": "Manage alerts and reminders"
       },
       "checkIn": {
-        "label": "Phone check-in",
+        "label": "Location check-in",
         "sub": "Staff mark themselves in from their phone"
       },
       "appearance": {
@@ -381,6 +381,32 @@
         "sub": "Sign out from this device"
       }
     }
+  },
+  "settingsPayments": {
+    "lede": "Upload the QR your customers scan. It shows up on Record payment when you tap UPI.",
+    "upload": "Upload QR",
+    "change": "Change QR",
+    "remove": "Remove",
+    "uploading": "Uploading…",
+    "none": "No QR yet",
+    "alt": "Payment QR for {what}",
+    "business": {
+      "title": "Your payment QR",
+      "sub": "A photo or screenshot of the QR from your UPI app.",
+      "titleMulti": "QR for the whole business",
+      "subMulti": "Every branch shows this one unless it has its own."
+    },
+    "branch": {
+      "heading": "Branches",
+      "own": "Its own QR",
+      "usingBusiness": "Showing the business QR",
+      "nothing": "No QR to show yet"
+    },
+    "errors": {
+      "failed": "That did not save. Please try again."
+    },
+    "tip": "A close-up of just the QR scans best.",
+    "addOwn": "Add its own"
   },
   "common": {
     "actionFailed": "That didn't work. Please try again.",
@@ -628,22 +654,24 @@
     "bookingLinkNumber": "It opens a WhatsApp chat with {number}."
   },
   "settingsCheckIn": {
-    "title": "Phone check-in",
-    "titleBranch": "Phone check-in · {name}",
+    "title": "Location check-in",
+    "titleBranch": "Location check-in · {name}",
     "intro": "Your staff can mark themselves in from their phone. It counts by itself when the phone is at this branch. If the phone cannot say where it is, you say yes or no.",
     "pinLabel": "Where this branch is",
-    "pinSet": "Set · {lat}, {lng}",
+    "pinSaved": "Saved — this is the branch",
+    "pinCoords": "{lat}, {lng}",
     "pinNotSet": "Not set yet",
     "useHere": "Use where I am now",
     "finding": "Finding you…",
     "clearPin": "Clear",
+    "seeOnMap": "See on map",
     "useHereHint": "Stand inside the branch and tap. Your phone must allow location.",
     "linkLabel": "Or paste a maps link",
     "linkPlaceholder": "https://maps.google.com/…",
     "linkHint": "Share the branch from Google Maps or Apple Maps and paste the link here.",
     "radiusLabel": "How close counts",
-    "radiusOption": "Within {m} m",
-    "radiusHint": "50 m is one shop. 500 m is the whole street.",
+    "radiusUnit": "meters",
+    "radiusHint": "50 meters is one shop. 500 meters is the whole street.",
     "enabled": "Staff can mark themselves in",
     "enabledOn": "On. Each stylist at this branch sees “I’m in” on their Home.",
     "enabledOff": "Off. Attendance is marked from the register only.",
@@ -656,7 +684,8 @@
       "noFix": "Could not find your location. Check location is on for this site and try again, or paste a maps link.",
       "noPlaceInLink": "Could not find a place in that link.",
       "pinFirst": "Set where this branch is before turning it on.",
-      "saveFailed": "Could not save. Please try again."
+      "saveFailed": "Could not save. Please try again.",
+      "badRadius": "Type a number between {min} and {max}."
     }
   },
   "settingsTeam": {
@@ -1455,10 +1484,12 @@
         "other": "Other"
       },
       "pendingRow": "Marked from phone · {where} · waiting for you",
+      "pendingDesk": "Added at the desk · {where} · waiting for you",
       "noLocation": "no location",
       "away": "{m} away",
       "fromPhone": "Marked from phone · {m} from the branch",
       "approvedRow": "Marked from phone · approved",
+      "approvedDesk": "Added at the desk · approved",
       "rejectedRow": "Not approved · {reason}",
       "yes": "Yes",
       "no": "No",
@@ -2306,6 +2337,10 @@
     "next": "Next",
     "pickOne": "Select a service",
     "other": "Other",
+    "qrTitle": "Let them scan",
+    "qrAlt": "The salon's payment QR code",
+    "qrHint": "They type the amount in their own app.",
+    "qrPaid": "Money received",
     "saving": "Saving…",
     "spoken": "{amount} rupees received. {mode}.",
     "nextCustomer": "Next customer",
@@ -2352,5 +2387,23 @@
     "formMode": "Which form",
     "simple": "Simple",
     "advanced": "Full"
+  },
+  "help": {
+    "title": "Help",
+    "lede": "Something not working, or not sure what to do? Tell us and we will sort it out.",
+    "whatsapp": "Message us on WhatsApp",
+    "call": "Call us",
+    "reply": "We reply as soon as we can.",
+    "none": "No support number is set up yet. Ask the salon owner to get in touch with Growza.",
+    "message": {
+      "withDetails": "Hello Growza, I need some help. ({details})",
+      "plain": "Hello Growza, I need some help."
+    },
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "receptionist": "Front desk",
+      "staff": "Stylist"
+    }
   }
 }

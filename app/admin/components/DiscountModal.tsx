@@ -405,6 +405,8 @@ export function DiscountModal({
                   </option>
                 ) : null}
                 {/* With a discount already running these restart from today, and the labels say so. */}
+                <option value="1">{currentDiscount ? '1 month from today' : '1 month'}</option>
+                <option value="2">{currentDiscount ? '2 months from today' : '2 months'}</option>
                 <option value="3">{currentDiscount ? '3 months from today' : '3 months'}</option>
                 <option value="6">{currentDiscount ? '6 months from today' : '6 months'}</option>
                 <option value="12">{currentDiscount ? '12 months from today' : '12 months'}</option>

@@ -11,7 +11,10 @@
  */
 
 /** A path is a setup destination if it IS one, or is below one (`/settings/working-hours`, `/providers/<id>`). */
-const SETUP_ROOTS = ['/services', '/providers', '/settings', '/more', '/not-live-yet'] as const;
+/* Jira GRW-564 — `/help` is a setup destination because the owner most likely
+   to be stuck is the one half way through setting up. Sending them from Help
+   to "not live yet" would send them away from the only way to ask why. */
+const SETUP_ROOTS = ['/services', '/providers', '/settings', '/more', '/not-live-yet', '/help'] as const;
 
 export function isSetupDestination(href: string): boolean {
   if (href === '/' || href === '') return true;

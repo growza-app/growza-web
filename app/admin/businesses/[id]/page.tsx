@@ -959,7 +959,7 @@ function BranchesTab({
           </label>
           <TextInput id="add-branch-geo" value={geo} onChange={(e) => setGeo(e.target.value)} placeholder="https://maps.google.com/… or 12.9716, 77.5946" />
           <span style={{ fontSize: 12.5, color: oklch.textMuted }}>
-            A Google or Apple Maps link, or lat, lng. Pre-fills the owner&rsquo;s Phone check-in setting; they switch it on.
+            A Google or Apple Maps link, or lat, lng. Pre-fills the owner&rsquo;s Location check-in setting; they switch it on.
           </span>
           <label htmlFor="add-branch-stylists" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
             Stylists at most

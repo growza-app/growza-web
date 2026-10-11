@@ -158,11 +158,25 @@ export function PayFlow({
    */
   const location = token?.locationId ?? visit?.appointment.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
   const branchName = (session?.branches?.length ?? 0) > 1 ? (session?.branches?.find((b) => b.id === location)?.name ?? null) : null;
+  /*
+   * The QR to hold up here, if the owner has uploaded one (owner, 2026-10-11).
+   *
+   * `/me` resolves it per branch — this branch's own, else the business-wide one — and sends it only to the
+   * roles that stand at the till, so there is nothing to decide or to hide here: a URL means show the screen,
+   * null means UPI records the payment as it always did. An API a deploy behind sends no field, which reads as
+   * null and leaves the old behaviour in place.
+   *
+   * It is a signed URL minted in a one-hour window (`SIGNING_WINDOW_MS`), so the copy `/me` handed this page is
+   * good for at least an hour and is byte-identical between renders, which is what lets the browser cache it.
+   */
+  const paymentQr = branch.branches.find((b) => b.id === location)?.paymentQrUrl ?? null;
 
-  const [step, setStep] = useState<'what' | 'how' | 'done'>('what');
+  const [step, setStep] = useState<'what' | 'how' | 'qr' | 'done'>('what');
   const [services, setServices] = useState<Service[] | null>(null);
   const [ranked, setRanked] = useState<string[] | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
+  /** Whether the branch's people have come back yet — an empty list means nothing until they have. */
+  const [providersKnown, setProvidersKnown] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [client, setClient] = useState<Client>({ kind: 'none' });
   const [stylistId, setStylistId] = useState<string | null>(null);
@@ -206,12 +220,19 @@ export function PayFlow({
       .catch(() => {
         if (!gone) setRanked([]);
       });
+    setProvidersKnown(false);
     void api
       .providers({ location })
       .then((rows) => {
-        if (!gone) setProviders(rows);
+        if (gone) return;
+        setProviders(rows);
+        setProvidersKnown(true);
       })
-      .catch(() => {});
+      // A failed read leaves no chips on screen, so there is no stylist to hold either: the reconcile below
+      // needs to run for that case too, or the screen keeps one it is not showing.
+      .catch(() => {
+        if (!gone) setProvidersKnown(true);
+      });
     return () => {
       gone = true;
     };
@@ -231,6 +252,37 @@ export function PayFlow({
     setStylistId(booked ?? (last === 'nobody' ? null : (last ?? providerId)));
     setSound(remembered(SOUND_KEY) !== 'off');
   }, [providerId, visit]);
+
+  /*
+   * The people this screen can offer, and the invariant underneath it: THE SCREEN NEVER HOLDS A STYLIST IT IS
+   * NOT SHOWING (owner, 2026-10-11).
+   *
+   * `stylistId` is seeded from the phone's last answer, which is an id in `localStorage` and nothing more. The
+   * chips are this BRANCH's people. When the remembered stylist is not one of them — they have been retired,
+   * deleted, or they work at another branch — no chip lit up, so the desk read "no stylist chosen", and the
+   * sale went out with that id anyway. The API refused it: "That staff member is not available", or "That
+   * stylist works at another branch", on a screen that was not offering either of them.
+   *
+   * One exception, and it is the reason this is a list rather than a plain reset: the stylist who did a BOOKING
+   * may have moved branch since, and they still did the work. The till this flow replaced kept them for exactly
+   * that reason, so they are added to the chips instead of being dropped — shown, therefore holdable.
+   */
+  const shownProviders = useMemo(() => {
+    const booked = visit?.appointment.providerId ?? null;
+    if (!booked || providers.some((p) => p.id === booked)) return providers;
+    return [
+      ...providers,
+      { id: booked, displayName: visit?.appointment.providerName ?? '', photoUrl: null } as Provider,
+    ];
+  }, [providers, visit]);
+
+  useEffect(() => {
+    if (!providersKnown || !stylistId) return;
+    if (shownProviders.some((p) => p.id === stylistId)) return;
+    // Forgotten as well as dropped: left in place it proposes the same impossible stylist on the next sale.
+    setStylistId(null);
+    remember(STYLIST_KEY, 'nobody');
+  }, [providersKnown, stylistId, shownProviders]);
 
   // A token's services are the bill, once the menu is here to name them.
   useEffect(() => {
@@ -431,7 +483,7 @@ export function PayFlow({
       const result = settled;
       router.refresh();
       const paidMinor = result.paidMinor;
-      const stylist = result.schedulableId ? (providers.find((p) => p.id === result.schedulableId)?.displayName ?? null) : null;
+      const stylist = result.schedulableId ? (shownProviders.find((p) => p.id === result.schedulableId)?.displayName ?? null) : null;
       const when = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
         timeZone: timezone,
         day: 'numeric',
@@ -588,6 +640,46 @@ export function PayFlow({
     );
   }
 
+  /* ---------- ②b Let them scan ---------- */
+  /*
+   * The owner's own QR, as big as the phone will draw it (owner, 2026-10-11).
+   *
+   * Three things and nothing else: what to pay, the code, and the one button that says the money arrived. The
+   * amount is above the code because the customer types it into their own app — a static QR carries no amount —
+   * and because an owner holding up a phone should not have to remember the figure.
+   */
+  if (step === 'qr' && paymentQr) {
+    return (
+      <div className="pf">
+        <header className="pf-head">
+          <button type="button" className="pf-back" aria-label={nv.back} onClick={() => setStep('how')} disabled={saving !== null}>
+            <IconArrowLeft />
+          </button>
+          <h1 className="pf-title">{t('qrTitle')}</h1>
+          <span className="pf-head-gap" aria-hidden="true" />
+        </header>
+        <p className="pf-how-total">
+          <span className="pf-how-total-label">{t('total')}</span>
+          <strong>{money(totalMinor)}</strong>
+        </p>
+        {error ? (
+          <div role="alert" className="pf-error">
+            {error}
+          </div>
+        ) : null}
+        <div className="pf-qr">
+          {/* The salon's own picture, not a logo: `alt` says what it is for, since nothing else on screen does. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="pf-qr-code" src={paymentQr} alt={t('qrAlt')} />
+        </div>
+        <p className="pf-qr-hint">{t('qrHint')}</p>
+        <button type="button" className="btn pf-go pf-qr-paid" onClick={() => void pay('upi')} disabled={saving !== null} aria-busy={saving === 'upi'}>
+          {saving === 'upi' ? t('saving') : t('qrPaid')}
+        </button>
+      </div>
+    );
+  }
+
   /* ---------- ② How did they pay? ---------- */
   if (step === 'how') {
     return (
@@ -619,7 +711,22 @@ export function PayFlow({
         */}
         <div className="pf-pay" role="group" aria-label={t('howTitle')}>
           {(['cash', 'upi', 'card', 'other'] as const).map((mode) => (
-            <button key={mode} type="button" className={`pf-pay-tile pf-pay-${mode}`} onClick={() => void pay(mode)} disabled={saving !== null} aria-busy={saving === mode}>
+            <button
+              key={mode}
+              type="button"
+              className={`pf-pay-tile pf-pay-${mode}`}
+              /*
+               * UPI is the one tile that may not be the save.
+               *
+               * With a QR uploaded it opens the QR for the customer to scan, and the money is recorded on the
+               * next screen when it has actually arrived — recording it here would mark a sale paid before
+               * anybody had scanned anything. Every other tile still saves on the tap (the Square model): cash
+               * is in the hand, and the done screen's Fix a mistake is the way back.
+               */
+              onClick={() => (mode === 'upi' && paymentQr ? setStep('qr') : void pay(mode))}
+              disabled={saving !== null}
+              aria-busy={saving === mode}
+            >
               <span className="pf-pay-icon" aria-hidden="true">
                 {PAY_ICONS[mode]}
               </span>
@@ -680,11 +787,11 @@ export function PayFlow({
   );
 
   const stylists =
-    providers.length > 0 ? (
+    shownProviders.length > 0 ? (
       <div className="pf-row" role="group" aria-label={providerNoun}>
         <span className="pf-row-label">{providerNoun}</span>
         <div className="pf-chips">
-          {providers.map((p) => {
+          {shownProviders.map((p) => {
             const on = stylistId === p.id;
             return (
               <button key={p.id} type="button" aria-pressed={on} className={`pf-chip ${on ? 'pf-chip-on' : ''}`} onClick={() => pickStylist(on ? null : p.id)}>

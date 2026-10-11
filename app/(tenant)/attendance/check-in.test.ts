@@ -37,7 +37,7 @@ describe('phone check-in', () => {
     expect(read('../layout.tsx')).toMatch(/pendingAttendance = me\.attendance\?\.pending \?\? 0/);
   });
 
-  it('Settings lists Phone check-in once, in the branch group, and its words reach the browser', () => {
+  it('Settings lists Location check-in once, in the branch group, and its words reach the browser', () => {
     const rows = SETTINGS_GROUPS.flatMap((g) => g.rows.map((r) => ({ ...r, group: g.key })));
     const row = rows.filter((r) => r.key === 'checkIn');
     expect(row).toHaveLength(1);
@@ -52,6 +52,32 @@ describe('phone check-in', () => {
     expect(keys(hiMessages.settingsCheckIn).sort()).toEqual(keys(enMessages.settingsCheckIn).sort());
     expect(keys(hiMessages.attendance.checkIn).sort()).toEqual(keys(enMessages.attendance.checkIn).sort());
     expect(hiMessages.settingsHub.rows.checkIn.label).toBeTruthy();
+  });
+
+  it('the desk sends its own fix, so a fenced branch does not queue every row it types', () => {
+    const register = read('AttendanceRegister.tsx');
+    // The API has always measured a branch-scoped write against the fence; nothing sent a fix, so every row
+    // the desk typed was written `pending`. Asked only where it is read, and only once per five minutes.
+    expect(register).toMatch(/if \(!register\.fenceApplies\) return \{\};/);
+    expect(register).toMatch(/fix = await getFix\(\);/);
+    // Every one of the three writes carries it, the batch included.
+    expect(register.match(/\.\.\.\(await deskFix\(\)\)|\.\.\.fix,/g) ?? []).toHaveLength(3);
+    // One fix for a whole "Mark everyone present", not one prompt per person.
+    expect(register).toMatch(/const fix = await deskFix\(\);\n\s*for \(const row of unmarked\)/);
+    expect(read('../lib/api.ts')).toMatch(/markAttendance: \(input: \{[\s\S]*?accuracyM\?: number \| null;/);
+  });
+
+  it('a row says where it came from — the desk’s typing never reads as a phone mark', () => {
+    const register = read('AttendanceRegister.tsx');
+    // `source`, not `approval`: a desk row is `register`, and the phone wording was a false sentence on it.
+    expect(register).toMatch(/function fromPhone\(row: \{ source\?: string \| null \}\)/);
+    expect(register).toMatch(/source === 'self' \|\| row\.source === 'self_unverified'/);
+    expect(register).toMatch(/tc\(fromPhone\(row\) \? 'pendingRow' : 'pendingDesk'/);
+    expect(register).toMatch(/tc\(fromPhone\(row\) \? 'approvedRow' : 'approvedDesk'\)/);
+    const en = enMessages.attendance.checkIn as unknown as Record<string, string>;
+    expect(en.pendingDesk).not.toMatch(/phone/i);
+    expect(en.approvedDesk).not.toMatch(/phone/i);
+    expect(en.pendingRow).toMatch(/phone/i);
   });
 
   it('a phone that cannot say where it is still sends the mark — the API decides', () => {
