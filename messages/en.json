@@ -337,7 +337,7 @@
         "sub": "Booking times and closed days"
       },
       "payments": {
-        "label": "Payments",
+        "label": "Payment QR",
         "sub": "The QR you show at the till"
       },
       "whatsapp": {

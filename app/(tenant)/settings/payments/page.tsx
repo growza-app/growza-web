@@ -7,7 +7,11 @@ import { PaymentQrForm } from './PaymentQrForm';
 export const dynamic = 'force-dynamic';
 
 /**
- * Settings › Payments — the QR the salon shows at the till (owner, 2026-10-11).
+ * Settings › Payment QR — the QR the salon shows at the till (owner, 2026-10-11).
+ *
+ * The row said "Payments" and the screen holds one thing, so an owner tapping
+ * it went looking for their takings. The address keeps the wider word in case
+ * payouts ever land beside it; the label says what is actually there.
  *
  * One upload for the business, and one per branch for a salon that banks per
  * branch. A branch with none shows the business's, which is the state most
@@ -25,4 +29,4 @@ export default async function PaymentsSettingsPage() {
 }
 
 // Jira GRW-192 — the tab says which screen this is.
-export const metadata = screenTitle('Payments');
+export const metadata = screenTitle('Payment QR');
