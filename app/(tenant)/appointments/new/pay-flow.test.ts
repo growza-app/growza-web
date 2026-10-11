@@ -485,3 +485,44 @@ describe('Record payment in three taps', () => {
     expect(at).toBeLessThan(imports.indexOf("@import './styles/100-clay-tabs.css';"));
   });
 });
+
+/**
+ * Owner, 2026-10-11 — "when stylist is not selected" the sale was refused: "That staff member is not
+ * available".
+ *
+ * `stylistId` is seeded from `localStorage`, which holds an id and nothing else. The chips are this BRANCH's
+ * active people. When the remembered stylist is neither — retired, deleted, or working elsewhere — no chip
+ * lit up, so the desk read "no stylist chosen" and the sale went out carrying that id anyway. The API refused
+ * it (`assertProviderBookable`, which wants an ACTIVE provider of this tenant), on a screen that was not
+ * offering that person at all.
+ *
+ * The invariant that fixes it: the screen never holds a stylist it is not showing.
+ */
+describe('the stylist the screen is holding is one it is showing', () => {
+  it('waits for the branch’s people before judging, so an empty list mid-load drops nobody', () => {
+    expect(flow).toMatch(/const \[providersKnown, setProvidersKnown\] = useState\(false\);/);
+    expect(flow).toMatch(/setProvidersKnown\(false\);\s*\n\s*void api\s*\n?\s*\.providers/);
+    expect(flow).toMatch(/if \(!providersKnown \|\| !stylistId\) return;/);
+  });
+
+  it('drops a remembered stylist the branch does not offer, and forgets them', () => {
+    expect(flow).toMatch(/if \(shownProviders\.some\(\(p\) => p\.id === stylistId\)\) return;/);
+    expect(flow).toMatch(/setStylistId\(null\);\s*\n\s*remember\(STYLIST_KEY, 'nobody'\);/);
+  });
+
+  it('judges a failed read too — no chips on screen is no stylist either', () => {
+    expect(flow).toMatch(/\.catch\(\(\) => \{\s*\n\s*if \(!gone\) setProvidersKnown\(true\);/);
+  });
+
+  it('keeps a BOOKING’s own stylist by showing them, because they may have moved branch since', () => {
+    // The till this flow replaced kept them for the same reason: they still did the work.
+    expect(flow).toMatch(/const booked = visit\?\.appointment\.providerId \?\? null;\s*\n\s*if \(!booked \|\| providers\.some/);
+    expect(flow).toMatch(/displayName: visit\?\.appointment\.providerName \?\? ''/);
+  });
+
+  it('draws the chips from the shown list, so holdable and shown cannot drift apart', () => {
+    expect(flow).toMatch(/shownProviders\.length > 0 \? \(/);
+    expect(flow).toMatch(/\{shownProviders\.map\(\(p\) => \{/);
+    expect(flow).not.toMatch(/\{providers\.map\(\(p\) => \{/);
+  });
+});
