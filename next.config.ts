@@ -78,6 +78,13 @@ const nextConfig: NextConfig = {
    * Next's own inline scripts would need a nonce pipeline, its own story — but framing is refused outright (the
    * clickjacking half of a CSP, `frame-ancestors`), types are not sniffed, the referrer is trimmed, and the
    * device features this app never uses are switched off.
+   *
+   * **`geolocation=(self)`, not `geolocation=()`** (owner, 2026-10-11). An empty list means NOBODY, this page
+   * included, so the browser refused the request before any prompt appeared — "Permissions policy violation:
+   * Geolocation access has been blocked" in the console and nothing on screen. That header shipped with GRW-476
+   * and phone check-in arrived after it (GRW-563), so "Use where I am now" and a stylist's own "I'm in" have
+   * never once been able to ask for a position, on any origin, however the phone's own permission was set.
+   * `(self)` is still the restrictive answer — this document may ask, and no embedded third party can.
    */
   async headers() {
     return [
@@ -88,7 +95,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
         ],
       },
     ];
