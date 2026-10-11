@@ -158,3 +158,53 @@
   font-weight: 620;
   font-size: 0.9375rem;
 }
+
+/*
+ * How close counts — a number the owner types, with the unit welded on.
+ *
+ * It was a list of six radii (owner, 2026-10-11): a guess at the salons that
+ * exist, and a shop that needed 80 m had to take 100. The `m` is part of the
+ * control rather than a word beside it, so there is nothing to wonder about
+ * typing — the same trick the phone field plays with its dial code.
+ */
+.ci-radius {
+  display: flex;
+  align-items: stretch;
+  max-width: 11rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.ci-radius:focus-within {
+  border-color: var(--accent);
+}
+
+.ci-radius input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  /* 16px exactly: anything smaller and iOS zooms the page when the field takes focus. */
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  padding: 0 var(--sp-3);
+  min-height: 2.75rem;
+  color: var(--text);
+}
+
+.ci-radius-unit {
+  display: grid;
+  place-items: center;
+  flex: none;
+  padding: 0 var(--sp-3);
+  background: var(--slate-soft);
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  user-select: none;
+}

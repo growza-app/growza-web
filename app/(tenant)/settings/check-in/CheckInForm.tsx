@@ -8,8 +8,12 @@ import { SettingsSaveBar } from '../SettingsSaveBar';
 import { useCloseAfterSave } from '../../lib/close-after-save';
 import { useWritable } from '../../components/SessionProvider';
 
-/** 50 m is a shop; 500 m is a street. The API refuses anything outside, so the choices stop there too. */
-const RADIUS_CHOICES = [50, 100, 150, 200, 300, 500];
+/**
+ * 50 m is a shop; 500 m is a street. The API refuses anything outside (and so does the column's own CHECK,
+ * migration 0106), so the field says the same two numbers rather than letting a save fail to say them.
+ */
+const RADIUS_MIN_M = 50;
+const RADIUS_MAX_M = 500;
 
 /**
  * Jira GRW-563 — where the branch is, how close counts, and who approves the rest.
@@ -24,7 +28,14 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
   const closeForm = useCloseAfterSave('/settings');
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(branch.geoLat != null && branch.geoLng != null ? { lat: branch.geoLat, lng: branch.geoLng } : null);
   const [link, setLink] = useState('');
-  const [radius, setRadius] = useState(branch.geoRadiusM ?? 100);
+  /*
+   * Typed, not picked from a list (owner, 2026-10-11). The six choices were a guess at the salons that exist,
+   * and a shop that needs 80 m had to take 100. Held as TEXT while the owner types — a number state cannot
+   * hold the empty box between clearing it and typing the first digit, which is what makes a numeric input
+   * fight back on a phone.
+   */
+  const [radiusText, setRadiusText] = useState(String(branch.geoRadiusM ?? 100));
+  const radius = Number(radiusText);
   const [enabled, setEnabled] = useState(branch.geoEnabled ?? false);
   const [deskApproves, setDeskApproves] = useState(branch.geoDeskApproves ?? false);
   const [locating, setLocating] = useState(false);
@@ -56,6 +67,11 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
   const save = async () => {
     if (link.trim() && !pinFromText(link)) {
       setError(t('errors.noPlaceInLink'));
+      return;
+    }
+    // Said here rather than let the API say it: the same two numbers are already on the screen as a hint.
+    if (!Number.isInteger(radius) || radius < RADIUS_MIN_M || radius > RADIUS_MAX_M) {
+      setError(t('errors.badRadius', { min: RADIUS_MIN_M, max: RADIUS_MAX_M }));
       return;
     }
     if (enabled && !pin) {
@@ -110,14 +126,28 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
 
         <label className="field">
           <span className="field-label">{t('radiusLabel')}</span>
-          <select value={radius} disabled={busy || !writable} onChange={(e) => setRadius(Number(e.target.value))}>
-            {RADIUS_CHOICES.map((m) => (
-              <option key={m} value={m}>
-                {t('radiusOption', { m })}
-              </option>
-            ))}
-          </select>
-          <span className="field-hint">{t('radiusHint')}</span>
+          {/* `m` is welded to the box, like the dial code on a phone field: a unit to read, never a thing to type. */}
+          <span className="ci-radius">
+            <input
+              type="text"
+              inputMode="numeric"
+              /* Digits only, and never longer than "500" — the box cannot hold a number the API would refuse. */
+              value={radiusText}
+              maxLength={3}
+              disabled={busy || !writable}
+              aria-describedby="ci-radius-hint"
+              onChange={(e) => {
+                setRadiusText(e.target.value.replace(/\D/g, '').slice(0, 3));
+                setError(null);
+              }}
+            />
+            <span className="ci-radius-unit" aria-hidden="true">
+              m
+            </span>
+          </span>
+          <span className="field-hint" id="ci-radius-hint">
+            {t('radiusHint')}
+          </span>
         </label>
 
         <div className="ci-switch-row">

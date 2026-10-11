@@ -668,7 +668,6 @@
     "linkPlaceholder": "https://maps.google.com/…",
     "linkHint": "Share the branch from Google Maps or Apple Maps and paste the link here.",
     "radiusLabel": "How close counts",
-    "radiusOption": "Within {m} m",
     "radiusHint": "50 m is one shop. 500 m is the whole street.",
     "enabled": "Staff can mark themselves in",
     "enabledOn": "On. Each stylist at this branch sees “I’m in” on their Home.",
@@ -682,7 +681,8 @@
       "noFix": "Could not find your location. Check location is on for this site and try again, or paste a maps link.",
       "noPlaceInLink": "Could not find a place in that link.",
       "pinFirst": "Set where this branch is before turning it on.",
-      "saveFailed": "Could not save. Please try again."
+      "saveFailed": "Could not save. Please try again.",
+      "badRadius": "Type a number between {min} and {max}."
     }
   },
   "settingsTeam": {
