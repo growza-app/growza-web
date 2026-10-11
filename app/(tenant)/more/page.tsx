@@ -8,7 +8,7 @@ import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { isLive } from '../lib/go-live';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconOffers, IconPackages, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconHelp, IconOffers, IconPackages, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 import { SignOutButton } from '../components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
@@ -22,6 +22,7 @@ export const dynamic = 'force-dynamic';
 export default async function MorePage() {
   const ta = await getTranslations('attendance');
   const tn = await getTranslations('nouns');
+  const th = await getTranslations('help');
   let labels: Record<string, string> = {};
   // Jira GRW-66 · GRW-157 — this menu is filtered by the same policy the
   // sidebar and the tab bar use. Three copies of the list is how a stylist
@@ -87,6 +88,14 @@ export default async function MorePage() {
         ]
       : []),
     { href: '/settings', label: nav.nav.settings, icon: <IconSettings /> },
+    /*
+     * Jira GRW-564 — last, so it sits just above Log out, and inside the filter
+     * rather than beside it: `canSee` answers true for `/help` for every role
+     * and every lifecycle state (see nav-policy's ALWAYS_OPEN). A row drawn
+     * outside the filter would be a second mechanism saying the same thing,
+     * which is how the three navs disagreed before GRW-66 consolidated them.
+     */
+    { href: '/help', label: th('title'), icon: <IconHelp /> },
   ];
 
   return (

@@ -27,11 +27,32 @@ export {
   type UiAction,
 } from '@growza-app/shared';
 
+/**
+ * Jira GRW-564 — addresses open to everyone, whatever their role and whatever
+ * state the business is in.
+ *
+ * `/help` is the only one, and it is deliberately ABOVE both gates rather than
+ * added to the role lists in `@growza-app/shared`:
+ *
+ *  - It is not an API route. Shared's lists exist so the API's tests can check
+ *    this nav against the API's own allowlist; there is nothing there to check,
+ *    because the page reads `/me` and nothing else, and every role may call it.
+ *  - The moments somebody needs support most are the ones the gates close:
+ *    a business still being set up, or one suspended for non-payment. Putting
+ *    help behind either of those is putting the way out behind the problem.
+ *
+ * Kept as a set rather than a comparison so the next one is a line, not a
+ * second mechanism.
+ */
+const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
+
+
 /** May this role see this destination — and, until the business is live, is it one of the setup ones? */
 export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true): boolean {
+  if (ALWAYS_OPEN.has(href)) return true;
   return (live || isSetupDestination(href)) && roleCanSee(href, role, reportTabs);
 }
 
 export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null, reportTabs?: readonly string[], live = true): T[] {
-  return roleVisibleItems(items, role, reportTabs).filter((item) => live || isSetupDestination(item.href));
+  return items.filter((item) => canSee(item.href, role, reportTabs, live));
 }

@@ -2352,5 +2352,23 @@
     "formMode": "Which form",
     "simple": "Simple",
     "advanced": "Full"
+  },
+  "help": {
+    "title": "Help",
+    "lede": "Something not working, or not sure what to do? Tell us and we will sort it out.",
+    "whatsapp": "Message us on WhatsApp",
+    "call": "Call us",
+    "reply": "We reply as soon as we can.",
+    "none": "No support number is set up yet. Ask the salon owner to get in touch with Growza.",
+    "message": {
+      "withDetails": "Hello Growza, I need some help. ({details})",
+      "plain": "Hello Growza, I need some help."
+    },
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "receptionist": "Front desk",
+      "staff": "Stylist"
+    }
   }
 }

@@ -332,6 +332,23 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
     // sends a live business Home, since the address means nothing then.
     '/not-live-yet': /isLive\(\(await api\.me\(\)\)\.tenant\?\.status\)\) redirect\('\/'\)/,
+    /*
+     * Jira GRW-564 — open to every role, like `/not-live-yet` above, and the
+     * only screen in the product that reaches a human.
+     *
+     * It is NOT in `@growza-app/shared`'s role lists, deliberately. Those exist
+     * so the API's own tests can check this nav against the API's allowlist,
+     * and `/help` is not an API route: the page reads `/me` — which every role
+     * may already call — and nothing else. Declaring it there would also put
+     * the way out behind the problem, since a role list is the thing that
+     * closes when a business is suspended.
+     *
+     * The regex pins the two things that make it safe to leave out of that
+     * list: it asks `/me` and it renders contacts. A future edit that turns
+     * this into a screen reading anything role-scoped fails here, which is
+     * the moment it would owe shared a proper entry.
+     */
+    '/help': /const me = await api\.me\(\);[\s\S]*me\.support\?\.phone/,
   };
   const offeredToBoth = (href: string) => LIMITED.every((role) => canSee(href, role));
 
