@@ -94,7 +94,12 @@ function makeWorker(network: (url: string) => Response | Promise<Response>) {
 }
 
 const ok = (body = 'ok') => new Response(body, { status: 200 });
-const CURRENT = 'booking-dashboard-v5';
+/*
+ * Read from the worker, not typed here. Bumping CACHE_VERSION is how an icon or a page change reaches a
+ * browser that already has the old one, so it has to be free to bump — a copy of the number in this file
+ * makes every bump fail two unrelated tests and look like a regression.
+ */
+const CURRENT = `booking-dashboard-${/CACHE_VERSION = '([^']+)'/.exec(SOURCE)![1]}`;
 
 /** Everything held in every cache, excluding the offline notice the worker precaches at install. */
 const stored = (w: ReturnType<typeof makeWorker>) =>
