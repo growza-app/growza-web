@@ -1,6 +1,7 @@
 'use client';
 
 import './install-banner.css';
+import { APP_ICONS } from '../../icons.generated';
 import { useEffect, useRef, useState } from 'react';
 import { installBannerCopy } from './install-copy';
 import {
@@ -175,7 +176,7 @@ export function InstallBanner({ app }: { app: InstallApp }) {
         {copy.title}
       </p>
       <div className="install-banner-app">
-        <img className="install-banner-icon" src="/icons/icon-192.png" alt="" width={48} height={48} />
+        <img className="install-banner-icon" src={APP_ICONS.icon192} alt="" width={48} height={48} />
         <div className="install-banner-app-text">
           <p className="install-banner-name">{copy.appName}</p>
           <p className="install-banner-host">{host}</p>

@@ -13,13 +13,22 @@
  * deliberately NOT part of the build: six files that change once a year do not
  * belong in every `next build`.
  *
+ * **The names carry a content hash**, and this script rewrites everything that points at them: both web
+ * manifests and `app/icons.generated.ts`. The first time the mark changed (#184) the bytes changed and the
+ * URLs did not, so nothing anywhere noticed — the service worker serves `/icons/` stale-while-revalidate,
+ * the browser had a long-lived copy, and an installed app keeps whatever icon it captured on the day it was
+ * added. The owner's home screen still showed the old letter after the release. A new icon is a new URL now,
+ * which every cache misses by construction. An iPhone still needs a reinstall: iOS reads the icon once, at
+ * Add to Home Screen, and never again.
+ *
  * `sharp` is not in package.json — it arrives with `next`, which uses it for
  * image optimisation, so a normal `npm install` already has it. If Next ever
  * drops it this script stops resolving; `npm i -D sharp` for the one run, and
  * do not add it to the dependency list for a script nobody runs in CI.
  */
 import sharp from 'sharp';
-import { writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { readFile, readdir, rm, writeFile } from 'node:fs/promises';
 
 const BUBBLE = 'M34 8 H62 A26 26 0 0 1 88 34 V58 A26 26 0 0 1 62 84 H40 L16 95 Q12 96.5 13 92 L17 76 A26 26 0 0 1 8 58 V34 A26 26 0 0 1 34 8 Z';
 const ARC = 'M51.47 26.3 A20 20 0 1 0 67.7 49.47';
@@ -66,19 +75,64 @@ function icon({ size, inset, radius, ring = true, arrowWidth = 7 }) {
 const r = (size) => Math.round(size * 0.23);
 
 const FILES = [
-  // Next.js serves app/icon.png as the favicon.
-  { out: 'app/icon.png', size: 32, inset: 0.86, radius: r(32), ring: false, arrowWidth: 10 },
+  // Next.js serves app/icon.png as the favicon, and fingerprints the URL itself — this one is not hashed here.
+  { key: 'favicon', out: 'app/icon.png', size: 32, inset: 0.86, radius: r(32), ring: false, arrowWidth: 10 },
   // iOS applies its own mask, so this one is square — rounding it here would
   // show the home screen's background through the corners.
-  { out: 'public/icons/apple-touch-icon.png', size: 180, inset: 0.6, radius: 0 },
-  { out: 'public/icons/icon-192.png', size: 192, inset: 0.6, radius: r(192) },
-  { out: 'public/icons/icon-512.png', size: 512, inset: 0.6, radius: r(512) },
-  { out: 'public/icons/icon-maskable-192.png', size: 192, inset: 0.46, radius: 0 },
-  { out: 'public/icons/icon-maskable-512.png', size: 512, inset: 0.46, radius: 0 },
+  { key: 'appleTouch', stem: 'apple-touch-icon', size: 180, inset: 0.6, radius: 0 },
+  { key: 'icon192', stem: 'icon-192', size: 192, inset: 0.6, radius: r(192) },
+  { key: 'icon512', stem: 'icon-512', size: 512, inset: 0.6, radius: r(512) },
+  { key: 'maskable192', stem: 'icon-maskable-192', size: 192, inset: 0.46, radius: 0 },
+  { key: 'maskable512', stem: 'icon-maskable-512', size: 512, inset: 0.46, radius: 0 },
 ];
+
+const ICON_DIR = 'public/icons';
+/* Eight hex characters: enough that two different marks cannot collide, short enough to read in a URL. */
+const hashOf = (buffer) => createHash('sha256').update(buffer).digest('hex').slice(0, 8);
+
+// Every icon this script has ever written goes, so a rename leaves nothing behind to be served for ever.
+for (const name of await readdir(ICON_DIR)) {
+  if (name.endsWith('.png')) await rm(`${ICON_DIR}/${name}`);
+}
+
+/** key -> the URL to serve it at, for the manifests and the generated module. */
+const urls = {};
 
 for (const f of FILES) {
   const png = await sharp(icon(f)).png({ compressionLevel: 9 }).toBuffer();
-  await writeFile(f.out, png);
-  console.log(`${f.out}  ${f.size}px  ${(png.length / 1024).toFixed(1)} kB`);
+  const out = f.out ?? `${ICON_DIR}/${f.stem}.${hashOf(png)}.png`;
+  await writeFile(out, png);
+  if (f.stem) urls[f.key] = out.replace(/^public/, '');
+  console.log(`${out}  ${f.size}px  ${(png.length / 1024).toFixed(1)} kB`);
 }
+
+/*
+ * Rewrite what points at them. Matched on `key`, not on the old filename, so this keeps working when the
+ * hash changes — which is every time the mark does, which is the whole point.
+ */
+const MANIFEST_ICONS = [
+  { key: 'icon192', sizes: '192x192', purpose: 'any' },
+  { key: 'icon512', sizes: '512x512', purpose: 'any' },
+  { key: 'maskable192', sizes: '192x192', purpose: 'maskable' },
+  { key: 'maskable512', sizes: '512x512', purpose: 'maskable' },
+];
+
+for (const manifest of ['public/manifest.json', 'public/admin-manifest.json']) {
+  const json = JSON.parse(await readFile(manifest, 'utf8'));
+  json.icons = MANIFEST_ICONS.map(({ key, sizes, purpose }) => ({ src: urls[key], sizes, type: 'image/png', purpose }));
+  await writeFile(manifest, `${JSON.stringify(json, null, 2)}\n`);
+  console.log(`${manifest}  icons rewritten`);
+}
+
+const generated = 'app/icons.generated.ts';
+await writeFile(
+  generated,
+  `/* Written by tools/make-icons.mjs. Do not edit: the names carry a content hash, so editing one by hand\n` +
+    ` * points it at a file that is not there. Run \`node tools/make-icons.mjs\` instead. */\n` +
+    `export const APP_ICONS = {\n` +
+    Object.entries(urls)
+      .map(([key, url]) => `  ${key}: '${url}',`)
+      .join('\n') +
+    `\n} as const;\n`,
+);
+console.log(`${generated}  written`);

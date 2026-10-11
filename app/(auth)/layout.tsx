@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { AUTH_MESSAGES } from '../../i18n/client-messages';
 import { pickNamespaces, type Messages } from '../../i18n/messages';
 import { serverLang } from '../(tenant)/lib/lang';
+import { APP_ICONS } from '../icons.generated';
 
 /**
  * Jira GRW-66 · GRW-160 — the sign-in screen's own root layout.
@@ -38,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('metaTitle'),
     manifest: '/manifest.json',
-    icons: { icon: '/icon.png', apple: '/icons/apple-touch-icon.png' },
+    icons: { icon: '/icon.png', apple: APP_ICONS.appleTouch },
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',
