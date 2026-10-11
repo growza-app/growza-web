@@ -92,6 +92,16 @@ export interface Me {
    */
   impersonation: { businessName: string; role: string } | null;
   /**
+   * Jira GRW-564 — how this person reaches a human, for the help screen.
+   *
+   * Every role gets it. The number used to arrive only on `OwnerBilling`, so
+   * a receptionist or a stylist had none anywhere in the product. Optional
+   * because an API a deploy behind sends nothing, and the screen must render
+   * without it rather than crash.
+   */
+  support?: { phone?: string; whatsapp?: string };
+
+  /**
    * Jira GRW-87 · GRW-163 — whether this business can be asked to pay online.
    *
    * Separate from `capabilities` because it is a release decision, not a
