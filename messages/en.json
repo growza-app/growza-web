@@ -397,13 +397,16 @@
       "subMulti": "Every branch shows this one unless it has its own."
     },
     "branch": {
-      "own": "Shows its own QR.",
-      "usingBusiness": "Showing the business QR.",
-      "nothing": "No QR to show yet."
+      "heading": "Branches",
+      "own": "Its own QR",
+      "usingBusiness": "Showing the business QR",
+      "nothing": "No QR to show yet"
     },
     "errors": {
       "failed": "That did not save. Please try again."
-    }
+    },
+    "tip": "A close-up of just the QR scans best.",
+    "addOwn": "Add its own"
   },
   "common": {
     "actionFailed": "That didn't work. Please try again.",
