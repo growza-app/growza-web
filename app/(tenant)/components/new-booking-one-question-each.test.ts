@@ -79,8 +79,25 @@ describe('New booking asks one question per line', () => {
     expect(code).toMatch(/<select id="wi-time" value=\{timeWanted\}/);
     expect(code).toMatch(/const askedMatch = useMemo\(\(\) => \{/);
     expect(code).toMatch(/exact: Boolean\(exact\), slot: exact \?\? slotList\.find\(\(sl\) => at\(sl\.utc\) > timeWanted\) \?\? null/);
-    // Keyed on the ASK, so a slot tapped by hand afterwards is not snatched back.
-    expect(code).toMatch(/setSlotUtc\(askedMatch\.slot\?\.utc \?\? null\);\s*\n\s*\}, \[timeWanted, askedMatch\]\);/);
+    /*
+     * Once per ASK, and the ask has to be remembered for that to hold (review, 2026-10-11). `askedMatch` is
+     * recomputed on every refetch of the free-slot list, and the list refetches when the stylist, the services
+     * or the day change — so keying the effect on it alone meant a desk that asked for 2:00, was moved to 2:30,
+     * tapped 4:00 by hand and then switched stylist had its 4:00 silently put back.
+     */
+    expect(code).toMatch(/const askApplied = useRef<string \| null>\(null\);/);
+    expect(code).toMatch(/const ask = `\$\{day\}\|\$\{timeWanted\}`;/);
+    expect(code).toMatch(/if \(!askedMatch \|\| askApplied\.current === ask\) return;/);
+    expect(code).toMatch(/setSlotUtc\(askedMatch\.slot\?\.utc \?\? null\);\s*\n\s*\}, \[timeWanted, askedMatch, day\]\);/);
+
+    /*
+     * And the fetch itself keeps the slot the desk picked (review, 2026-10-11). That effect clears the choice
+     * while the new list loads and re-seeded it from the Booking time select, so a stylist swapped, a service
+     * added or the day changed threw a hand-picked slot away: asked 2:00, moved to 2:30, tapped 4:00, switched
+     * stylist — and 2:30 was back, with nothing on screen saying so.
+     */
+    expect(code).toMatch(/const hadPicked = slotUtcRef\.current;/);
+    expect(code).toMatch(/const wanted = pendingSlot\.current \?\? hadPicked;/);
     // Silent only when it was honoured exactly.
     expect(code).toMatch(/if \(!timeWanted \|\| loadingSlots \|\| !askedMatch \|\| askedMatch\.exact\) return null;/);
     expect(code).toMatch(/askedMatch\.slot \? nv\.timeMoved\(asked, clockTime\(askedMatch\.slot\.utc\)\) : nv\.timeNoneAfter\(asked\)/);

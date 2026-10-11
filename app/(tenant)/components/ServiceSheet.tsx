@@ -96,7 +96,12 @@ export function ServiceSheet({
           <IconSearch />
           <input ref={box} type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder={t('searchServices')} aria-label={t('searchServices')} autoComplete="off" autoCorrect="off" spellCheck={false} />
         </div>
-        {kinds.length + (offers.length > 0 ? 1 : 0) > 1 ? (
+        {/*
+          One chip is no choice, which is why a single category draws none — but a salon with its services
+          uncategorised and combos on sale is exactly one chip plus Packages, and that arithmetic hid the only
+          door to the combos (review, 2026-10-11). Packages earns the row on its own.
+        */}
+        {kinds.length > 1 || offers.length > 0 ? (
           <div className="pf-chips pf-menu-kinds" role="group" aria-label={nv.serviceKinds}>
             {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : [])].map((k) => (
               <button key={k || 'all'} type="button" className={`pf-chip ${kind === k ? 'pf-chip-on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>

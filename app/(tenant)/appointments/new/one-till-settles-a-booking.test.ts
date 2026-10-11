@@ -29,7 +29,15 @@ describe('one till settles a booking too', () => {
   it('reaches the pay flow by address, carrying the booking and its day', () => {
     // No read for one appointment by id — the day's list is, and the visit's other legs come back with it.
     expect(page).toMatch(/if \(paying && params\.visit && params\.on\) \{/);
-    expect(page).toMatch(/const day = await api\.appointments\(params\.on, params\.on\);/);
+    /*
+     * That day AND the one after it (Jira GRW-290, re-found on review 2026-10-11). A late visit's legs run
+     * past local midnight: a walk-in rung up at 22:40 for a Balayage and a Haircut has its second leg dated
+     * tomorrow, and a one-day read came back without it — the bill short, the money short, and that leg left
+     * `confirmed` for ever on tomorrow's calendar. The till this screen replaced read both days for exactly
+     * this reason, and losing that was the whole cost of replacing it.
+     */
+    expect(page).toMatch(/nextDay\.setUTCDate\(nextDay\.getUTCDate\(\) \+ 1\);/);
+    expect(page).toMatch(/await api\.appointments\(params\.on, nextDay\.toISOString\(\)\.slice\(0, 10\)\)/);
     // Still settleable, or not at all: a `completed` row opened the flow perfectly well and would have
     // taken the money a second time. `visitGone` is what says so.
     expect(page).toMatch(/const one = day\.find\(\(a\) => a\.id === params\.visit && a\.status === 'confirmed'\);/);
