@@ -163,6 +163,8 @@ export function PayFlow({
   const [services, setServices] = useState<Service[] | null>(null);
   const [ranked, setRanked] = useState<string[] | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
+  /** Whether the branch's people have come back yet — an empty list means nothing until they have. */
+  const [providersKnown, setProvidersKnown] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [client, setClient] = useState<Client>({ kind: 'none' });
   const [stylistId, setStylistId] = useState<string | null>(null);
@@ -206,12 +208,19 @@ export function PayFlow({
       .catch(() => {
         if (!gone) setRanked([]);
       });
+    setProvidersKnown(false);
     void api
       .providers({ location })
       .then((rows) => {
-        if (!gone) setProviders(rows);
+        if (gone) return;
+        setProviders(rows);
+        setProvidersKnown(true);
       })
-      .catch(() => {});
+      // A failed read leaves no chips on screen, so there is no stylist to hold either: the reconcile below
+      // needs to run for that case too, or the screen keeps one it is not showing.
+      .catch(() => {
+        if (!gone) setProvidersKnown(true);
+      });
     return () => {
       gone = true;
     };
@@ -231,6 +240,37 @@ export function PayFlow({
     setStylistId(booked ?? (last === 'nobody' ? null : (last ?? providerId)));
     setSound(remembered(SOUND_KEY) !== 'off');
   }, [providerId, visit]);
+
+  /*
+   * The people this screen can offer, and the invariant underneath it: THE SCREEN NEVER HOLDS A STYLIST IT IS
+   * NOT SHOWING (owner, 2026-10-11).
+   *
+   * `stylistId` is seeded from the phone's last answer, which is an id in `localStorage` and nothing more. The
+   * chips are this BRANCH's people. When the remembered stylist is not one of them — they have been retired,
+   * deleted, or they work at another branch — no chip lit up, so the desk read "no stylist chosen", and the
+   * sale went out with that id anyway. The API refused it: "That staff member is not available", or "That
+   * stylist works at another branch", on a screen that was not offering either of them.
+   *
+   * One exception, and it is the reason this is a list rather than a plain reset: the stylist who did a BOOKING
+   * may have moved branch since, and they still did the work. The till this flow replaced kept them for exactly
+   * that reason, so they are added to the chips instead of being dropped — shown, therefore holdable.
+   */
+  const shownProviders = useMemo(() => {
+    const booked = visit?.appointment.providerId ?? null;
+    if (!booked || providers.some((p) => p.id === booked)) return providers;
+    return [
+      ...providers,
+      { id: booked, displayName: visit?.appointment.providerName ?? '', photoUrl: null } as Provider,
+    ];
+  }, [providers, visit]);
+
+  useEffect(() => {
+    if (!providersKnown || !stylistId) return;
+    if (shownProviders.some((p) => p.id === stylistId)) return;
+    // Forgotten as well as dropped: left in place it proposes the same impossible stylist on the next sale.
+    setStylistId(null);
+    remember(STYLIST_KEY, 'nobody');
+  }, [providersKnown, stylistId, shownProviders]);
 
   // A token's services are the bill, once the menu is here to name them.
   useEffect(() => {
@@ -431,7 +471,7 @@ export function PayFlow({
       const result = settled;
       router.refresh();
       const paidMinor = result.paidMinor;
-      const stylist = result.schedulableId ? (providers.find((p) => p.id === result.schedulableId)?.displayName ?? null) : null;
+      const stylist = result.schedulableId ? (shownProviders.find((p) => p.id === result.schedulableId)?.displayName ?? null) : null;
       const when = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
         timeZone: timezone,
         day: 'numeric',
@@ -680,11 +720,11 @@ export function PayFlow({
   );
 
   const stylists =
-    providers.length > 0 ? (
+    shownProviders.length > 0 ? (
       <div className="pf-row" role="group" aria-label={providerNoun}>
         <span className="pf-row-label">{providerNoun}</span>
         <div className="pf-chips">
-          {providers.map((p) => {
+          {shownProviders.map((p) => {
             const on = stylistId === p.id;
             return (
               <button key={p.id} type="button" aria-pressed={on} className={`pf-chip ${on ? 'pf-chip-on' : ''}`} onClick={() => pickStylist(on ? null : p.id)}>
