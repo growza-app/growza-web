@@ -349,7 +349,7 @@
         "sub": "Manage alerts and reminders"
       },
       "checkIn": {
-        "label": "Phone check-in",
+        "label": "Location check-in",
         "sub": "Staff mark themselves in from their phone"
       },
       "appearance": {
@@ -654,8 +654,8 @@
     "bookingLinkNumber": "It opens a WhatsApp chat with {number}."
   },
   "settingsCheckIn": {
-    "title": "Phone check-in",
-    "titleBranch": "Phone check-in · {name}",
+    "title": "Location check-in",
+    "titleBranch": "Location check-in · {name}",
     "intro": "Your staff can mark themselves in from their phone. It counts by itself when the phone is at this branch. If the phone cannot say where it is, you say yes or no.",
     "pinLabel": "Where this branch is",
     "pinSaved": "Saved — this is the branch",

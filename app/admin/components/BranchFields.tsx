@@ -128,7 +128,7 @@ export function BranchFields({
           {/* Jira GRW-563 — where the branch is, for staff phone check-in. Optional; the owner can set it later. */}
           <Field
             label="Location (optional)"
-            hint="Paste a Google or Apple Maps link, or lat, lng. Pre-fills the owner's Phone check-in setting."
+            hint="Paste a Google or Apple Maps link, or lat, lng. Pre-fills the owner's Location check-in setting."
             error={errorFor(`branch.${index}.geo`)}
           >
             <TextInput

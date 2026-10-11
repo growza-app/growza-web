@@ -1,6 +1,6 @@
 /*
  * Jira GRW-563 — phone check-in: the stylist's "I'm in" card, the register's Yes / No row, and the
- * Settings › Phone check-in form. Laid out at 344px first.
+ * Settings › Location check-in form. Laid out at 344px first.
  */
 
 /* ---------- the stylist's card ---------- */
@@ -127,7 +127,7 @@
   color: inherit;
 }
 
-/* ---------- Settings › Phone check-in ---------- */
+/* ---------- Settings › Location check-in ---------- */
 .ci-settings-intro {
   margin: 0 0 var(--sp-4);
 }

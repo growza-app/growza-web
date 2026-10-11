@@ -8,7 +8,7 @@ import { CheckInForm } from './CheckInForm';
 export const dynamic = 'force-dynamic';
 
 /**
- * Jira GRW-563 — Settings › Phone check-in: the header branch's pin, radius and the two switches.
+ * Jira GRW-563 — Settings › Location check-in: the header branch's pin, radius and the two switches.
  *
  * The pin is the branch's own (`location.geo_*`), which is also what support may have set at enrolment —
  * so an owner opening this finds it pre-filled, with the fence still off until they switch it on.
@@ -29,4 +29,4 @@ export default async function CheckInSettingsPage({ searchParams }: { searchPara
 }
 
 // Jira GRW-192 — the tab says which screen this is.
-export const metadata = screenTitle('Phone check-in');
+export const metadata = screenTitle('Location check-in');
