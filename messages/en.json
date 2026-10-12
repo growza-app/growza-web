@@ -1059,7 +1059,11 @@
       "unsorted": "Not in a category",
       "unsortedCount": "{count, plural, one {# service} other {# services}} · hidden from clients",
       "unsortedHint": "File these under a category to show them on your booking page.",
-      "reorderFailed": "That order was not saved. Please try again."
+      "reorderFailed": "That order was not saved. Please try again.",
+      "edit": "Edit",
+      "close": "Close",
+      "editHint": "Tap a name to rename it. Use ↑ ↓ to set the order clients see when they book on WhatsApp.",
+      "renameHint": "Tap a name to rename it."
     },
     "delete": "Delete",
     "deleteTitle": "Delete {name}?",

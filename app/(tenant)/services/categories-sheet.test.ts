@@ -6,6 +6,7 @@ import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { ServiceAdmin, ServiceCategoryAdmin } from '../lib/api';
 import { CategoriesSheet } from './CategoriesSheet';
+import { CategoryRow } from './CategoryRow';
 import { CategoryServices } from './CategoryServices';
 import { CategoryDeleteCard } from './CategoryDeleteCard';
 
@@ -35,6 +36,32 @@ const sheet = (locale: 'en' | 'hi', rows: ServiceCategoryAdmin[], services: Serv
   wrap(
     locale,
     createElement(CategoriesSheet, { branchId: 'b1', initial: rows, services, onClose: () => {}, onChanged: () => {} }),
+  );
+
+/**
+ * Jira GRW-591 — one row in either state. The sheet renders the reading state and only a tap on Edit moves
+ * it, which a static render cannot do, so the row is driven directly: it is the component that holds the
+ * difference between the two states anyway.
+ */
+const row = (locale: 'en' | 'hi', over: Partial<ServiceCategoryAdmin>, state: Partial<{ editing: boolean; orderable: boolean; atTop: boolean; atBottom: boolean }> = {}) =>
+  wrap(
+    locale,
+    createElement(CategoryRow, {
+      row: cat(over),
+      editing: state.editing ?? false,
+      orderable: state.orderable ?? true,
+      busy: false,
+      atTop: state.atTop ?? false,
+      atBottom: state.atBottom ?? false,
+      dragging: false,
+      onOpen: () => {},
+      onRename: () => {},
+      onMove: () => {},
+      onDragStart: () => {},
+      onDragEnd: () => {},
+      onDragOver: () => {},
+      onDrop: () => {},
+    }),
   );
 
 const svc = (over: Partial<ServiceAdmin>): ServiceAdmin =>
@@ -90,36 +117,109 @@ describe('the categories sheet', () => {
     expect(html).toContain('New category name');
   });
 
-  /** Reordering is the two arrows; the ends of the list cannot move past themselves. */
-  it('disables the arrow that would move a row off the end', () => {
+  /**
+   * Jira GRW-591 — the list is for reading. A row carries its name, its count and a chevron, and nothing
+   * else: no grip, no arrows, no rename. That is what took the row from 172px to 53px, so this is the
+   * assertion that keeps it there — a control put back on the row is a control that has to earn it.
+   */
+  it('reads as a plain list: no reorder or rename controls until Edit is tapped', () => {
     const html = sheet('en', [cat({ id: 'a', name: 'Hair' }), cat({ id: 'b', name: 'Nails' })]);
-    const up = html.indexOf('Move Hair up');
-    const down = html.indexOf('Move Nails down');
-    expect(up).toBeGreaterThan(-1);
-    expect(down).toBeGreaterThan(-1);
-    // The disabled attribute sits before the label in the rendered button tag.
-    expect(html.slice(Math.max(0, up - 120), up)).toContain('disabled');
-    expect(html.slice(Math.max(0, down - 120), down)).toContain('disabled');
-    expect(html.slice(Math.max(0, html.indexOf('Move Nails up') - 120), html.indexOf('Move Nails up'))).not.toContain('disabled');
+    expect(html).toContain('Hair');
+    expect(html).toContain('10 services');
+    expect(html).toContain('svc-cat-chevron');
+    for (const gone of ['Move Hair up', 'Move Nails down', 'Rename Hair', 'svc-cat-grip', 'svc-cat-actions']) {
+      expect(html, gone).not.toContain(gone);
+    }
+    // And the way in is on the title line, holding the state it will put the sheet into.
+    expect(html).toContain('Edit');
+    expect(html).toContain('aria-pressed="false"');
+  });
+
+  /** One category is still worth renaming, even though there is no order to set. */
+  it('offers Edit for a single category, and the order hint only when there is an order', () => {
+    expect(sheet('en', [cat({ name: 'Hair' })])).toContain('Edit');
+    expect(sheet('en', [])).not.toContain('aria-pressed');
   });
 
   /**
    * Nothing destructive lives on the list row any more (owner's change, 2026-10-02): the row opens the
    * category, and removing services — or the category with them — happens in there against a selection.
+   * Edit mode did not change that — it adds the two arrows and the rename, and no delete.
    */
-  it('offers no delete on the row itself', () => {
-    const html = sheet('en', [cat({ name: 'Hair' })]);
-    expect(html).not.toContain('Delete');
-    expect(html).toContain('Rename Hair');
+  it('offers no delete on the row itself, in either mode', () => {
+    for (const html of [row('en', { name: 'Hair' }), row('en', { name: 'Hair' }, { editing: true })]) {
+      expect(html).not.toContain('Delete');
+    }
+  });
+
+  /** Closing the sheet is not finishing an edit: two buttons saying "Done" would be two different things. */
+  it('closes with Close, leaving Done to mean leaving edit mode', () => {
+    expect(sheet('en', [cat({})])).toContain('Close');
   });
 
   it('reads in Hindi', () => {
     const html = sheet('hi', [cat({ name: 'Hair', serviceCount: 10, activeCount: 10 }), cat({ id: 'z', name: 'Nails', serviceCount: 0, activeCount: 0 })]);
+    expect(html).toContain('बदलें');
     expect(html).toContain('श्रेणियाँ');
     expect(html).toContain('10 सेवाएँ');
     expect(html).toContain('अभी कोई सेवा नहीं');
     expect(html).toContain('नई श्रेणी का नाम');
     for (const s of ['New category name', 'No services yet', '10 services']) expect(html, s).not.toContain(s);
+  });
+});
+
+/** Jira GRW-591 — the two states of a row, which is where the whole redesign lives. */
+describe('a category row', () => {
+  it('reading the list, carries its count and a chevron and nothing to press by accident', () => {
+    const html = row('en', { name: 'Hair', serviceCount: 10, activeCount: 10 });
+    expect(html).toContain('10 services');
+    expect(html).toContain('svc-cat-chevron');
+    for (const gone of ['svc-cat-grip', 'svc-cat-actions', 'svc-cat-pencil', 'Move Hair up', 'Rename Hair']) {
+      expect(html, gone).not.toContain(gone);
+    }
+  });
+
+  it('editing, trades the count and chevron for the grip, the arrows and a rename on the name itself', () => {
+    const html = row('en', { name: 'Hair', serviceCount: 10, activeCount: 10 }, { editing: true });
+    expect(html).toContain('Rename Hair');
+    expect(html).toContain('Move Hair up');
+    expect(html).toContain('Move Hair down');
+    expect(html).toContain('svc-cat-grip');
+    expect(html).toContain('svc-cat-pencil');
+    // The count and the chevron are gone: nothing on this row navigates while it is being edited.
+    expect(html).not.toContain('10 services');
+    expect(html).not.toContain('svc-cat-chevron');
+  });
+
+  /** One category has a name to fix and no position to move it to. */
+  it('editing a list of one, offers the rename and no arrows', () => {
+    const html = row('en', { name: 'Hair' }, { editing: true, orderable: false });
+    expect(html).toContain('Rename Hair');
+    expect(html).not.toContain('Move Hair up');
+    expect(html).not.toContain('svc-cat-grip');
+  });
+
+  it('disables the arrow that would move a row off the end', () => {
+    // The opening tag of the one button carrying this label — not a window of characters before it, which
+    // reaches back into the previous button and reads ITS disabled attribute as this one's.
+    const tag = (html: string, label: string) => {
+      const at = html.indexOf(`aria-label="${label}"`);
+      expect(at, label).toBeGreaterThan(-1);
+      return html.slice(html.lastIndexOf('<button', at), at);
+    };
+    const top = row('en', { name: 'Hair' }, { editing: true, atTop: true });
+    expect(tag(top, 'Move Hair up')).toContain('disabled');
+    expect(tag(top, 'Move Hair down')).not.toContain('disabled');
+
+    const bottom = row('en', { name: 'Hair' }, { editing: true, atBottom: true });
+    expect(tag(bottom, 'Move Hair up')).not.toContain('disabled');
+    expect(tag(bottom, 'Move Hair down')).toContain('disabled');
+  });
+
+  it('reads in Hindi', () => {
+    const html = row('hi', { name: 'Hair' }, { editing: true });
+    expect(html).toContain('Hair का नाम बदलें');
+    expect(html).not.toContain('Rename Hair');
   });
 });
 

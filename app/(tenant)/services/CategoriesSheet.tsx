@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
-import { IconEdit, IconPlus } from '../components/icons';
+import { IconPlus } from '../components/icons';
+import { CategoryRow } from './CategoryRow';
 import { CategoryServices } from './CategoryServices';
 import { movedOrder, unsorted, worthOrdering } from './category-order';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -22,6 +23,13 @@ import { useDialog } from '../../shared/a11y/useDialog';
  * Jira GRW-441 — reordering is a drag OR the ↑/↓ buttons, and the buttons are not a fallback to apologise
  * for: a keyboard reaches them, a thumb does not have to be precise with them, and HTML5 drag does not fire
  * on touch at all. The whole branch's order goes to the server in one call whichever is used.
+ *
+ * Jira GRW-591 — those controls are no longer on screen all the time. A row carried a grip, two arrows and a
+ * rename permanently, which on a phone stacked into three lines: 172px per category, so a salon with 26 of
+ * them saw 2.7 at a time and scrolled 4,472px to reach the last. The list is now one tappable line per
+ * category — name, count, chevron, 53px — and the controls live behind Edit, the way a list that can be
+ * reordered has worked on this platform since the first Settings app. Editing is a state you enter on
+ * purpose, not four targets you have to aim past every time you want to open a category.
  */
 export function CategoriesSheet({
   branchId,
@@ -46,6 +54,8 @@ export function CategoriesSheet({
   const [editingName, setEditingName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Jira GRW-591 — whether the grip, the arrows and the rename are on screen. Off until Edit is tapped. */
+  const [editing, setEditing] = useState(false);
   /** The category opened into its own list of services; the sheet shows one or the other, never both. */
   const [openId, setOpenId] = useState<string | null>(null);
   /** Jira GRW-441 — the row being dragged, by index. Null whenever nothing is in flight. */
@@ -162,9 +172,30 @@ export function CategoriesSheet({
             />
           ) : (
             <>
-          <h3>{t('title')}</h3>
+          {/*
+            Jira GRW-591 — Edit sits on the trailing edge of the sheet's own title, which is where a list
+            that can be reordered has always kept it. It appears whenever there is a row to act on: with a
+            single category there is nothing to order, but there is still a name to fix.
+          */}
+          <div className="svc-cat-title">
+            <h3>{t('title')}</h3>
+            {rows.length > 0 && (
+              <button
+                type="button"
+                className="svc-cat-editbtn"
+                disabled={busy}
+                aria-pressed={editing}
+                onClick={() => {
+                  setEditingId(null);
+                  setEditing((on) => !on);
+                }}
+              >
+                {editing ? t('done') : t('edit')}
+              </button>
+            )}
+          </div>
           {/* Jira GRW-441 — say what the order is FOR. One category is not an order, so the sentence waits. */}
-          <p className="svc-cat-hint">{orderable ? t('orderHint') : t('hint')}</p>
+          <p className="svc-cat-hint">{editing ? (orderable ? t('editHint') : t('renameHint')) : t('hint')}</p>
 
           <div className="modal-body">
             {error && (
@@ -177,20 +208,10 @@ export function CategoriesSheet({
               <p className="svc-cat-meta">{t('none')}</p>
             ) : (
               <ul className="svc-cat-list">
-                {rows.map((row, i) => (
-                  <li
-                    className={`svc-cat-row ${dragFrom === i ? 'is-dragging' : ''}`}
-                    key={row.id}
-                    onDragOver={(e) => {
-                      if (dragFrom !== null) e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (dragFrom !== null) void moveTo(dragFrom, i);
-                      setDragFrom(null);
-                    }}
-                  >
-                    {editingId === row.id ? (
+                {rows.map((row, i) =>
+                  editingId === row.id ? (
+                    /* The rename takes over its own row: the field, Save, Cancel, and no other control. */
+                    <li className="svc-cat-row" key={row.id}>
                       <div className="svc-cat-edit">
                         <input
                           ref={editRef}
@@ -213,76 +234,36 @@ export function CategoriesSheet({
                           {t('cancel')}
                         </button>
                       </div>
-                    ) : (
-                      <>
-                        {/*
-                          The handle, not the whole row, is draggable: the row's own job is to open the
-                          category, and a row that both opens and drags does neither reliably.
-                        */}
-                        {orderable && (
-                          <span
-                            className="svc-cat-grip"
-                            draggable={!busy}
-                            aria-hidden="true"
-                            title={t('dragAria', { name: row.name })}
-                            onDragStart={() => setDragFrom(i)}
-                            onDragEnd={() => setDragFrom(null)}
-                          >
-                            ⠿
-                          </span>
-                        )}
-                        {/* The row opens the category — removing services, and the category itself, happens in there. */}
-                        <button type="button" className="svc-cat-text" disabled={busy} onClick={() => setOpenId(row.id)}>
-                          <span className="svc-cat-name">{row.name}</span>
-                          <span className="svc-cat-meta">
-                            {row.serviceCount === 0
-                              ? t('empty')
-                              : row.serviceCount === row.activeCount
-                                ? t('count', { count: row.serviceCount })
-                                : t('countWithRetired', { count: row.serviceCount, retired: row.serviceCount - row.activeCount })}
-                          </span>
-                          <span className="svc-cat-chevron" aria-hidden="true">›</span>
-                        </button>
-                        <div className="svc-cat-actions">
-                          {orderable && (
-                            <>
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            disabled={busy || i === 0}
-                            aria-label={t('moveUpAria', { name: row.name })}
-                            onClick={() => void move(i, -1)}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            disabled={busy || i === rows.length - 1}
-                            aria-label={t('moveDownAria', { name: row.name })}
-                            onClick={() => void move(i, 1)}
-                          >
-                            ↓
-                          </button>
-                            </>
-                          )}
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            disabled={busy}
-                            aria-label={t('renameAria', { name: row.name })}
-                            onClick={() => {
-                              setEditingId(row.id);
-                              setEditingName(row.name);
-                            }}
-                          >
-                            <IconEdit />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                ))}
+                    </li>
+                  ) : (
+                    <CategoryRow
+                      key={row.id}
+                      row={row}
+                      editing={editing}
+                      orderable={orderable}
+                      busy={busy}
+                      atTop={i === 0}
+                      atBottom={i === rows.length - 1}
+                      dragging={dragFrom === i}
+                      onOpen={() => setOpenId(row.id)}
+                      onRename={() => {
+                        setEditingId(row.id);
+                        setEditingName(row.name);
+                      }}
+                      onMove={(by) => void move(i, by)}
+                      onDragStart={() => setDragFrom(i)}
+                      onDragEnd={() => setDragFrom(null)}
+                      onDragOver={(e) => {
+                        if (dragFrom !== null) e.preventDefault();
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (dragFrom !== null) void moveTo(dragFrom, i);
+                        setDragFrom(null);
+                      }}
+                    />
+                  ),
+                )}
               </ul>
             )}
 
@@ -327,9 +308,14 @@ export function CategoriesSheet({
             )}
           </div>
 
+          {/*
+            Jira GRW-591 — "Close", not "Done". Every write on this sheet has already happened by the time
+            this is pressed, and with Edit's own Done on screen at the same time, two buttons saying the same
+            word meant two different things one above the other.
+          */}
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-              {t('done')}
+              {t('close')}
             </button>
           </div>
             </>

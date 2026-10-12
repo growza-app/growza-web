@@ -66,15 +66,54 @@ tr:last-child td {
  * column. Borrowing those names put four stacked buttons in every row here, which is exactly the kind of
  * accident a prefix exists to prevent.
  *
- * Phone first: a row is two lines — the name, then its controls — and only widens into one line when there is
- * room. The separators sit on the ROWS, not the list, which is what makes six categories read as six things
- * rather than as a table. Every control is 44px, because this is used one-handed at a reception desk, and the
- * destructive one is last, where a thumb reaches it only on purpose.
+ * Phone first: a row is ONE line at every width — name, count, chevron. The separators sit on the ROWS, not
+ * the list, which is what makes six categories read as six things rather than as a table. Every control is
+ * 44px, because this is used one-handed at a reception desk.
+ *
+ * Jira GRW-591 — the row used to be two lines on a phone, stacking a grip, the text and a group of three
+ * 44px buttons: 12 + 12 of padding, two 8px gaps and three 44px blocks is 172px of row for one category. A
+ * salon with 26 of them scrolled 4,472px and saw 2.7 at a time. Those controls moved behind Edit
+ * (`.svc-cat-editbtn`, on the title line), which leaves the row at 53px and eight of them on screen. The
+ * 44px floor did not move: the controls are the same size, they are just not all there at once.
  */
 .svc-cat-hint {
   margin: 0 0 12px;
   font-size: 0.8125rem;
   color: var(--muted);
+}
+
+/* The sheet's own title line: the heading, and Edit at the trailing edge where a list keeps it. */
+.svc-cat-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.svc-cat-title h3 {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
+ * A word, not an icon. "Edit" names the mode and swaps to "Done" to say you are in it; `aria-pressed` is
+ * what carries that to a screen reader, which a changed label on its own does not.
+ */
+.svc-cat-editbtn {
+  flex: none;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 560;
+  cursor: pointer;
+}
+
+.svc-cat-editbtn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .svc-cat-list {
@@ -85,24 +124,24 @@ tr:last-child td {
 
 .svc-cat-row {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: 8px;
-  padding: 12px 0;
+  min-height: 52px;
+  padding: 0;
 }
 
 .svc-cat-row + .svc-cat-row {
   border-top: 1px solid var(--border);
 }
 
-/* The row's text is the control that opens the category — a button, drawn as a row. */
+/* The row's text is the control: reading the list it opens the category, editing it, it renames. */
 .svc-cat-text {
+  flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  min-height: 44px;
+  min-height: 52px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -138,10 +177,29 @@ tr:last-child td {
   white-space: nowrap;
 }
 
+/* Beside the name now, not under it — the count is what the row is scanned for, not a second line of it. */
 .svc-cat-meta {
+  flex: none;
   font-size: 0.75rem;
   color: var(--muted);
-  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/*
+ * Editing: a mark inside the name button, not a 44px target of its own — the button is the target.
+ * In rem, so Jira GRW-484 holds: it grows with the name beside it when Larger Text is on.
+ */
+.svc-cat-pencil {
+  flex: none;
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+
+.svc-cat-pencil svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .svc-cat-actions {
@@ -173,15 +231,23 @@ tr:last-child td {
 
 /* The rename, in place: the field takes the line and its two buttons sit under it when there is no room. */
 .svc-cat-edit {
+  /* The row is a flex line now, so the form has to claim it; the padding is the row's own, back for one row. */
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 6px 0;
   flex-wrap: wrap;
 }
 
+/*
+ * 100px, not 140 — at 140 the field, Save and Cancel came to more than the 291px a phone row has, and
+ * Cancel dropped onto a line of its own below a row that is otherwise one line tall.
+ */
 .svc-cat-edit input {
   flex: 1;
-  min-width: 140px;
+  min-width: 100px;
   min-height: 44px;
   font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
 }
@@ -208,17 +274,18 @@ tr:last-child td {
   font-size: 16px;
 }
 
-/* Wide enough for the name and its controls on one line — a tablet, and the sheet on a desktop. */
+/*
+ * Jira GRW-591 — the 480px rule that turned the row back into one line is gone: the row is one line at 344px
+ * too now, so there is nothing left for the breakpoint to fix. A little more room where there is room.
+ */
 @media (min-width: 480px) {
-  .svc-cat-row {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
+  .svc-cat-row,
+  .svc-cat-text {
     min-height: 56px;
   }
 
-  .svc-cat-text {
-    flex: 1;
+  .svc-cat-row {
+    gap: 10px;
   }
 }
 
