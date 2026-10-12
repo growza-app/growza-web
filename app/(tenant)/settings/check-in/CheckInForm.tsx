@@ -12,7 +12,7 @@ import { useWritable } from '../../components/SessionProvider';
  * 50 m is a shop; 500 m is a street. The API refuses anything outside (and so does the column's own CHECK,
  * migration 0106), so the field says the same two numbers rather than letting a save fail to say them.
  */
-const RADIUS_MIN_M = 50;
+const RADIUS_MIN_M = 0;
 const RADIUS_MAX_M = 500;
 
 /**
@@ -70,7 +70,7 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
       return;
     }
     // Said here rather than let the API say it: the same two numbers are already on the screen as a hint.
-    if (!Number.isInteger(radius) || radius < RADIUS_MIN_M || radius > RADIUS_MAX_M) {
+    if (radiusText.trim() === '' || !Number.isInteger(radius) || radius < RADIUS_MIN_M || radius > RADIUS_MAX_M) {
       setError(t('errors.badRadius', { min: RADIUS_MIN_M, max: RADIUS_MAX_M }));
       return;
     }

@@ -666,7 +666,7 @@
     "linkHint": "Share the branch from Google Maps or Apple Maps and paste the link here.",
     "radiusLabel": "How close counts",
     "radiusUnit": "meters",
-    "radiusHint": "50 meters is one shop. 500 meters is the whole street.",
+    "radiusHint": "0 meters is the shop door only. 500 meters is the whole street.",
     "enabled": "Staff can mark themselves in",
     "enabledOn": "On. Each stylist at this branch sees “I’m in” on their Home.",
     "enabledOff": "Off. Attendance is marked from the register only.",
