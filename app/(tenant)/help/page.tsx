@@ -82,7 +82,6 @@ export default async function HelpPage() {
   const options = helpOptions(support, intro ? t('message.withDetails', { details: intro }) : t('message.plain'));
   /* One option reads exactly as the screen always did — a heading for the only choice would be noise. */
   const numbered = options.length > 1;
-  const firstChat = options.find((o) => o.whatsapp)?.n;
 
   /*
    * The section's keys are built from data (`topics.<id>.main.s1`), which the typed translator cannot check at
@@ -98,30 +97,30 @@ export default async function HelpPage() {
           <p className="help-lede">{t('lede')}</p>
 
           {options.map((o) => (
-            <section key={o.n} className="help-option" aria-labelledby={numbered ? `help-option-${o.n}` : undefined}>
-              {numbered ? (
-                <h2 id={`help-option-${o.n}`} className="help-option-title">
-                  {t('option', { n: o.n })}
-                </h2>
-              ) : null}
+            <section key={o.n} className="help-option" aria-label={numbered ? t('option', { n: o.n }) : undefined}>
+              <div className="help-option-head">
+                {numbered ? <h2 className="help-option-title">{t('option', { n: o.n })}</h2> : null}
+                {o.number ? <span className="help-option-number">{o.number}</span> : null}
+              </div>
               <div className="help-option-actions">
-                {/* One filled button on the screen: the first WhatsApp. Two would be two primary actions. */}
+                {/* The full sentence and the number are the accessible name; the button itself says one word. */}
                 {o.whatsapp ? (
                   <a
-                    className={`help-action${o.n === firstChat ? ' help-action-primary' : ''}`}
+                    className="help-action help-action-chat"
                     href={o.whatsapp}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={o.number ? `${t('whatsapp')} · ${o.number}` : t('whatsapp')}
                   >
                     <IconWhatsApp />
-                    {t('whatsapp')}
+                    {t('whatsappShort')}
                   </a>
                 ) : null}
 
                 {o.tel ? (
-                  <a className="help-action" href={o.tel}>
+                  <a className="help-action" href={o.tel} aria-label={o.number ? `${t('call')} · ${o.number}` : t('call')}>
                     <IconPhone />
-                    {t('call')}
+                    {t('callShort')}
                   </a>
                 ) : null}
               </div>
