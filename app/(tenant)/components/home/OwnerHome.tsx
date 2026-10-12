@@ -13,7 +13,7 @@ import {
   type QueueEntry,
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
-import { clientNameLabel, groupBookings, summarizeServices } from '../../lib/appointment-display';
+import { clientNameLabel, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import { liveState, minutesBetween } from '../../lib/live-state';
 import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
@@ -41,6 +41,7 @@ import {
   IconWallet,
 } from '../icons';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
+import { BookingSummary } from '../BookingSummary';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
@@ -183,6 +184,13 @@ export function OwnerHome(p: OwnerHomeProps) {
   const w = useTokenWords();
   // Jira GRW-351 — moves on once a minute, so an alert appears at its tenth minute without waiting for a reload.
   const now = useMinuteClock(p.nowISO);
+  /*
+   * The booking a row was tapped on (owner, 2026-10-13).
+   *
+   * The same sheet the Bookings screen opens, from the same `BookingGroup` this list is already holding — so
+   * Home needs no fetch of its own and there is one receipt in the product, not a second summary that drifts.
+   */
+  const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
   const [period, setPeriod] = useState<HomePeriod>('today');
   const branchContext = useBranch();
   /*
@@ -617,7 +625,14 @@ export function OwnerHome(p: OwnerHomeProps) {
               {listGroups === null ? (
                 <CardError t={t} />
               ) : (
-                <BookingRows t={t} groups={groups.shown} timezone={p.timezone} now={now} empty={listIsTomorrow ? t.nothingTomorrow : t.nothingToday} />
+                <BookingRows
+                  t={t}
+                  groups={groups.shown}
+                  timezone={p.timezone}
+                  now={now}
+                  empty={listIsTomorrow ? t.nothingTomorrow : t.nothingToday}
+                  onOpen={setOpenBooking}
+                />
               )}
             </div>
           </Card>
@@ -653,6 +668,8 @@ export function OwnerHome(p: OwnerHomeProps) {
 
         </div>
       </div>
+
+      {openBooking ? <BookingSummary booking={openBooking} timezone={p.timezone} onClose={() => setOpenBooking(null)} /> : null}
 
       {summaryOpen ? (
         <DaySummarySheet
