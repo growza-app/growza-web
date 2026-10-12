@@ -275,7 +275,7 @@ export function CategoriesSheet({
     <>
       <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
         <div
-          className="modal modal-fit"
+          className="modal modal-fit svc-cat-modal"
           role="dialog"
           aria-modal="true"
           aria-label={t('title')}

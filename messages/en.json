@@ -1077,8 +1077,7 @@
       "deleteCatsKeeps": "{count, plural, one {The # service} other {The # services}} in {categories, plural, one {it} other {them}} {count, plural, one {stays} other {stay}} on your list, with no category — clients will not see {count, plural, one {it} other {them}} until you file {count, plural, one {it} other {them}} under one again.",
       "deleteCatsEmpty": "Nothing is filed under {count, plural, one {it} other {them}}.",
       "pickToDelete": "Pick what to delete",
-      "pickHint": "Tick the categories you want to delete. The services in them stay on your list.",
-      "deleteOpen": "Delete categories"
+      "pickHint": "Tick the categories you want to delete. The services in them stay on your list."
     },
     "delete": "Delete",
     "deleteTitle": "Delete {name}?",

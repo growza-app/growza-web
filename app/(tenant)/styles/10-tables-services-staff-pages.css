@@ -796,3 +796,18 @@ tr:last-child td {
     display: none;
   }
 }
+
+/*
+ * The shell tightens `.modal`'s side padding from 26px to 22px on a screen under 860px tall, and its own comment
+ * says the body and footer margins must follow — but `.modal-fit .modal-body` (0,2,0) and the checkout sheet's
+ * `.modal-actions` (loaded later) both outrank that rule and kept bleeding 26px. Four pixels past the dialog on
+ * each side, clipped by its `overflow: hidden`, so invisible — until something inside is wider than its box.
+ * Fixed here for this sheet; the shell rule itself touches every modal and is not this ticket's to move.
+ */
+@media (max-height: 860px) {
+  .modal.svc-cat-modal .modal-body,
+  .modal.svc-cat-modal .modal-actions {
+    margin-inline: -22px;
+    padding-inline: 22px;
+  }
+}

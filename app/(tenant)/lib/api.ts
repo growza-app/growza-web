@@ -58,7 +58,7 @@ export * from './branch-types';
 
 // `export *` re-exports for callers but does not bring the names into this
 // file's own scope, and the method table below is typed with them.
-import { bareRefusalMessage, localiseApiMessage } from './api-messages';
+import { bareRefusalMessage, genericFailureMessage, localiseApiMessage } from './api-messages';
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
@@ -240,7 +240,7 @@ async function extractError(
   const lang = typeof document === 'undefined' ? 'en' : document.documentElement.lang;
   // Jira GRW-478 — a bare code with no sentence ("forbidden", "unauthorized") is said in words, never shown raw.
   const bare = !body?.detail && body?.error ? bareRefusalMessage(body.error, lang) : null;
-  const said = bare ?? body?.detail ?? body?.error ?? `${path} failed: ${res.status}`;
+  const said = bare ?? body?.detail ?? body?.error ?? genericFailureMessage(lang);
   // Jira GRW-478 — the guard's 401 means the session is gone. In the browser, go and sign in again rather than
   // leave a button that can only fail; a wrong password elsewhere (sign-in, invites) sends a sentence, not this code.
   if (res.status === 401 && body?.error === 'unauthorized' && typeof window !== 'undefined' && window.location.pathname !== '/login') {
