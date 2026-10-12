@@ -267,7 +267,12 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
 };
 
 /** Every signed-in person's own: the session says whose, and no role can widen it. */
-const EVERY_ROLE = ['POST /api/v1/auth/change-password', 'PUT /api/v1/me/language'];
+const EVERY_ROLE = [
+  'POST /api/v1/auth/change-password',
+  'PUT /api/v1/me/language',
+  // The account menu's "Add your name", offered to every role — a person's name is theirs (shared 1.0.6).
+  'PUT /api/v1/me/name',
+];
 
 /** The writes the dashboard's API client can make, read from the client itself. */
 function clientWrites(): Set<string> {
@@ -283,9 +288,11 @@ function clientWrites(): Set<string> {
       .join('/');
     found.add(`${verb[m[1]!]} ${pattern}`);
   }
-  // The one write made outside the client (lib/lang.ts), so it is read here too.
+  // The two writes made outside the client (lib/lang.ts), so they are read here too.
   expect(read('lib/lang.ts')).toMatch(/fetch\('\/api\/v1\/me\/language', \{\s*method: 'PUT'/);
   found.add('PUT /api/v1/me/language');
+  expect(read('lib/lang.ts')).toMatch(/fetch\('\/api\/v1\/me\/name', \{\s*method: 'PUT'/);
+  found.add('PUT /api/v1/me/name');
   return found;
 }
 
