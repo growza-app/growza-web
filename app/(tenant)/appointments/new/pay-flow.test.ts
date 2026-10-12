@@ -231,7 +231,7 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/if \(step === 'qr' && paymentQr\) \{/);
     // The amount above the code: a static QR carries no amount, so the customer types it.
     expect(flow).toMatch(/\{t\('qrTitle'\)\}/);
-    expect(flow).toMatch(/<img className="pf-qr-code" src=\{paymentQr\} alt=\{t\('qrAlt'\)\} \/>/);
+    expect(flow).toMatch(/<img className="pf-qr-code" src=\{paymentQr\} alt=\{t\('qrAlt'\)\} onError=\{\(\) => setQrBroken\(true\)\} \/>/);
     // One button, and it is the save.
     expect(flow).toMatch(/className="btn pf-go pf-qr-paid" onClick=\{\(\) => void pay\('upi'\)\}/);
     // Square, fitted and on white — a cropped or dark-grounded QR does not scan.
@@ -240,6 +240,31 @@ describe('Record payment in three taps', () => {
     for (const m of [enMessages, hiMessages]) {
       const pf = m.payFlow as unknown as Record<string, string>;
       for (const key of ['qrTitle', 'qrAlt', 'qrHint', 'qrPaid']) expect(pf[key], key).toBeTruthy();
+    }
+  });
+
+  /*
+   * Owner, 2026-10-13: "when the QR is not uploaded and UPI is selected, it's showing blank."
+   *
+   * `/me` had a URL, so the tile opened this screen, and the file behind the URL was gone — a 317px hole with
+   * the hint "they type the amount in their own app" under it, and nothing saying what was wrong. The picture
+   * failing is the only signal a browser gives, so it is the one this listens to.
+   */
+  it('says so, and offers the fix, when the QR will not load', () => {
+    expect(flow).toMatch(/const \[qrBroken, setQrBroken\] = useState\(false\);/);
+    expect(flow).toMatch(/onError=\{\(\) => setQrBroken\(true\)\}/);
+    // The square keeps its size, and what fills it is the reason plus the screen that fixes it.
+    expect(flow).toMatch(/\{qrBroken \? \(/);
+    expect(flow).toMatch(/\{t\('qrMissing'\)\}/);
+    expect(flow).toMatch(/<Link className="btn btn-ghost" href="\/settings\/payments">/);
+    // Advice about a code that is not there is noise.
+    expect(flow).toMatch(/\{!qrBroken && <p className="pf-qr-hint">\{t\('qrHint'\)\}<\/p>\}/);
+    // "Money received" stays: the money may well have arrived by some other UPI route.
+    expect(flow).toMatch(/className="btn pf-go pf-qr-paid"/);
+    expect(css).toMatch(/\.pf-qr-missing \{/);
+    for (const m of [enMessages, hiMessages]) {
+      const pf = m.payFlow as unknown as Record<string, string>;
+      for (const key of ['qrMissing', 'qrAddIt']) expect(pf[key], key).toBeTruthy();
     }
   });
 

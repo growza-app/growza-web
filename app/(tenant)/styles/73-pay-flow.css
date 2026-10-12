@@ -1597,6 +1597,35 @@
   object-fit: contain;
 }
 
+/*
+ * What the till says when the code will not draw (owner, 2026-10-13).
+ *
+ * Same square the QR would have filled, so the screen does not jump between the two states, and the way to fix
+ * it inside that square rather than as a line of small print under it.
+ */
+.pf-qr-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  text-align: center;
+  color: var(--muted);
+}
+
+.pf-qr-missing svg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.pf-qr-missing-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .pf-qr-hint {
   margin: var(--sp-3) 0 0;
   text-align: center;
