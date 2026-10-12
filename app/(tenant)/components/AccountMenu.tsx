@@ -5,8 +5,9 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboard
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
+import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { homeCopy } from '../lib/home-copy';
-import { saveLang, type Lang } from '../lib/lang';
+import { putName, saveLang, type Lang } from '../lib/lang';
 import { useLabels } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { SignOutButton } from './SignOutButton';
@@ -63,6 +64,9 @@ export function AccountMenu() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [naming, setNaming] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [nameError, setNameError] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -87,6 +91,7 @@ export function AccountMenu() {
     setOpen(false);
     triggerRef.current?.focus();
     setChanging(false);
+    setNaming(false);
     setCurrent('');
     setNext('');
     setError(null);
@@ -94,6 +99,20 @@ export function AccountMenu() {
   };
 
   const role: Role = (ROLES as readonly string[]).includes(session?.role ?? '') ? (session!.role as Role) : 'owner';
+
+  const name = session?.name ?? null;
+
+  const saveName = async () => {
+    const value = draft.trim();
+    if (!value || busy) return;
+    setBusy(true);
+    setNameError(false);
+    const ok = await putName(value);
+    setBusy(false);
+    if (!ok) return setNameError(true);
+    setNaming(false);
+    router.refresh();
+  };
 
   const lang: Lang = session?.lang ?? 'en';
   const home = homeCopy(lang, labels);
@@ -165,8 +184,9 @@ export function AccountMenu() {
               <button type="button" className="acct-close acct-phone-only" aria-label={t('closeAccountMenu')} onClick={close}>
                 <IconClose />
               </button>
-              <div className="acct-role">{t(`roles.${role}.name`)}</div>
-              <div className="acct-sub">{t(`roles.${role}.sub`)}</div>
+              {name ? <div className="acct-name">{name}</div> : null}
+              <div className={name ? 'acct-role-line' : 'acct-role'}>{t(`roles.${role}.name`)}</div>
+              {name ? null : <div className="acct-sub">{t(`roles.${role}.sub`)}</div>}
               {/* The number, because it is what they sign in with (GRW-198) —
                   not an email, which this product never uses as a credential. */}
               {session?.phone && <div className="acct-phone">{session.phone}</div>}
@@ -194,6 +214,48 @@ export function AccountMenu() {
                     हिन्दी
                   </button>
                 </div>
+                {naming ? (
+                  <div className="acct-form acct-name-form">
+                    <label htmlFor="acct-name">{t('yourName')}</label>
+                    <input
+                      id="acct-name"
+                      type="text"
+                      autoComplete="name"
+                      maxLength={60}
+                      value={draft}
+                      disabled={busy}
+                      autoFocus={autoFocusField()}
+                      onChange={(e) => {
+                        setDraft(e.target.value);
+                        setNameError(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void saveName();
+                      }}
+                    />
+                    {nameError && <div role="alert" className="field-error">{t('nameFailed')}</div>}
+                    <div className="acct-form-actions">
+                      <button type="button" className="btn" disabled={busy || draft.trim().length === 0} onClick={() => void saveName()}>
+                        {busy ? t('saving') : t('saveName')}
+                      </button>
+                      <button type="button" className="btn-ghost" disabled={busy} onClick={() => setNaming(false)}>
+                        {t('cancel')}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="acct-item"
+                    onClick={() => {
+                      setDraft(name ?? '');
+                      setNameError(false);
+                      setNaming(true);
+                    }}
+                  >
+                    {name ? t('editName') : t('addName')}
+                  </button>
+                )}
                 <button type="button" className="acct-item" onClick={() => setChanging(true)}>
                   {t('changePassword')}
                 </button>

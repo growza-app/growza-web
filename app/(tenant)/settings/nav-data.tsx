@@ -31,7 +31,6 @@ export type SettingsRowKey =
   | 'appearance'
   | 'privacy'
   | 'reportAccess'
-  | 'teamAccess'
   | 'billing'
   | 'account'
   | 'logOut';
@@ -125,7 +124,6 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/branches', key: 'branches', icon: IconMapPin, multiBranchOnly: true },
       // The QR the till shows a customer. Live-day: see `liveOnly` above.
       { href: '/settings/payments', key: 'payments', icon: IconPayUpi, liveOnly: true },
-      { href: '/settings/team', key: 'teamAccess', icon: IconUserPlus },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
       { href: '/settings/billing', key: 'billing', icon: IconWallet },

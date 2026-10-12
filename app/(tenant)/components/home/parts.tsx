@@ -315,16 +315,39 @@ export function avatarKey(g: BookingGroup): string {
   return g.customerName !== undefined ? (g.customerPhone ?? g.customerName ?? g.key) : g.key;
 }
 
-/** The compact list rows every Home uses: time, who, what, where it stands. */
-export function BookingRows({ t, groups, timezone, now, empty, showStaff = true }: { t: HomeCopy; groups: BookingGroup[]; timezone: string; now: Date; empty: string; showStaff?: boolean }) {
+/**
+ * The compact list rows every Home uses: time, who, what, where it stands.
+ *
+ * With `onOpen` the whole row is one button (owner, 2026-10-13: "these are not clickable?"). It is the same
+ * booking the Bookings screen shows, so tapping it opens the same summary rather than teaching a second way to
+ * read a visit; the markup is `GiveToStaffSheet`'s `.hm-row-button` exactly, so a row that can be tapped is a
+ * real button — reachable from a keyboard, and 56px of target either way.
+ */
+export function BookingRows({
+  t,
+  groups,
+  timezone,
+  now,
+  empty,
+  showStaff = true,
+  onOpen,
+}: {
+  t: HomeCopy;
+  groups: BookingGroup[];
+  timezone: string;
+  now: Date;
+  empty: string;
+  showStaff?: boolean;
+  onOpen?: (group: BookingGroup) => void;
+}) {
   if (groups.length === 0) return <p className="hm-empty">{empty}</p>;
   return (
     <ul className="hm-rows">
       {groups.map((g) => {
         const name = clientNameLabel(g);
         const services = summarizeServices(g.serviceNames, t.lang);
-        return (
-          <li key={g.key} className="hm-row">
+        const inside = (
+          <>
             <span className="hm-row-time">{formatTime(g.startAt, timezone)}</span>
             <Avatar name={name} id={avatarKey(g)} size={34} />
             <span className="hm-row-main">
@@ -332,6 +355,17 @@ export function BookingRows({ t, groups, timezone, now, empty, showStaff = true 
               <span className="hm-row-sub">{showStaff && g.providerNames.length ? `${services} · ${g.providerNames.join(', ')}` : services}</span>
             </span>
             <StatusPill t={t} group={g} now={now} />
+          </>
+        );
+        return onOpen ? (
+          <li key={g.key} className="hm-row hm-row-button">
+            <button type="button" onClick={() => onOpen(g)}>
+              {inside}
+            </button>
+          </li>
+        ) : (
+          <li key={g.key} className="hm-row">
+            {inside}
           </li>
         );
       })}

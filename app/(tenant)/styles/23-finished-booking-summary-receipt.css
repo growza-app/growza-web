@@ -11,6 +11,25 @@
   border-bottom: 1px solid var(--border);
 }
 
+/*
+ * The part of the receipt that moves.
+ *
+ * `.sheet` is a fixed-height flex column, so without this the services, the total and the buttons all had to fit
+ * in one screen or be cut off — and a package booking is eight services before the total. The head above and the
+ * buttons below are `flex: none` for the same reason: the one thing that gives way has to be the list.
+ */
+.summary-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.summary-head,
+.sheet .modal-actions.summary-actions {
+  flex: none;
+}
+
 .summary-badge {
   flex-shrink: 0;
   width: 36px;

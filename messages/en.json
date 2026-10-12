@@ -364,10 +364,6 @@
         "label": "Who sees what",
         "sub": "Reports and client numbers"
       },
-      "teamAccess": {
-        "label": "Team access",
-        "sub": "Who can use the app"
-      },
       "billing": {
         "label": "Billing",
         "sub": "What you pay Growza"
@@ -429,7 +425,6 @@
     "topics": {
       "hours": "hours",
       "bookingRules": "booking settings",
-      "teamAccess": "team access",
       "reportAccess": "who sees Reports",
       "reminders": "reminders"
     },
@@ -690,6 +685,18 @@
   },
   "settingsTeam": {
     "title": "Team access",
+    "inviteTitle": "Give someone a login",
+    "inviteSubFor": "A login for {name}, so they see their own bookings.",
+    "closeInvite": "Close",
+    "done": "Done",
+    "frontDesk": "Front desk",
+    "noFrontDesk": "Nobody on the front desk yet. A receptionist signs in to run bookings, clients and payments.",
+    "otherLogins": "Other logins",
+    "chipIn": "Can sign in",
+    "chipInvited": "Invited",
+    "inviteToSignIn": "Invite to sign in",
+    "removeSignIn": "Remove sign-in",
+    "theirName": "Their name",
     "intro": "Invite someone to sign in to this business. They choose their own password.",
     "mobile": "Mobile number",
     "role": "Role",
@@ -704,6 +711,7 @@
     "creating": "Creating…",
     "createInvite": "Create invite",
     "errors": {
+      "nameNeeded": "Enter their name.",
       "chooseStylistFirst": "Choose which stylist this login is for.",
       "chooseBranchFirst": "Choose which branch this receptionist works at.",
       "loadError": "Something went wrong. Please try again."
@@ -714,6 +722,8 @@
     "resentNote": "Their old link no longer works.",
     "copied": "Copied",
     "copyLink": "Copy link",
+    "shareOnWhatsApp": "Send on WhatsApp",
+    "shareText": "Here is your Growza login link: {link}",
     "copyFailed": "Could not copy automatically. Tap the link above to select it, then copy it.",
     "waiting": "Waiting to join",
     "noInvites": "No invites waiting. Anyone you invite shows here until they join.",
@@ -1195,7 +1205,6 @@
       "edit": "Edit",
       "editDetails": "Edit details",
       "workingHours": "Working hours",
-      "servicesSkills": "Services & skills",
       "removeFromTeam": "Remove from team",
       "restoreToTeam": "Restore to team",
       "bookingsCount": "{count, plural, one {# booking} other {# bookings}} today"
@@ -1210,12 +1219,23 @@
   },
   "staffWizard": {
     "title": "Add {label}",
+    "noSeats": "No places left on your plan — you can still add someone to the front desk.",
+    "does": "What do they do?",
+    "kindStaffSub": "They appear in the diary and clients can book them.",
+    "kindReceptionSub": "They run bookings, clients and payments. Never booked themselves.",
+    "loginToggle": "Let them sign in on their phone",
+    "loginToggleSub": "They get a link, choose their own password, and see only what their role allows.",
+    "loginNeeded": "The front desk works from a login — it is the only way they use Growza.",
+    "loginNone": "No login. You can give them one any time from their row.",
+    "loginFailed": "They were added, but the login could not be created. Use “Invite to sign in” on their row.",
+    "addedTitle": "{name} is on the team",
+    "done": "Done",
     "sub": "Name and number are enough — the rest has sensible defaults.",
     "close": "Close",
     "steps": {
       "who": "Who",
-      "hours": "Hours",
-      "services": "Services"
+      "login": "Login",
+      "hours": "Hours"
     },
     "fullName": "Full name",
     "namePlaceholder": "Priya Sharma",
@@ -1232,15 +1252,11 @@
     "warnNoDays": "Nobody can book {name} with no working days. Turn a day on, or switch the salon hours back on above.",
     "warnNoSalonHours": "This business has no opening hours set yet, so nobody can book {name} until it does. Saving is fine — they will pick the hours up automatically. Set them in <b>Settings → Working hours</b>, or turn the switch off above and give {name} their own days.",
     "them": "them",
-    "whatTheyCanDo": "What they can do",
-    "clearAll": "Clear all",
-    "selectAll": "Select all",
-    "noServices": "No services set up yet — add some first and they will pick them all up.",
-    "noneTicked": "With nothing ticked they will not appear in any booking flow. That is allowed — you can set it later.",
     "back": "Back",
     "next": "Next",
     "saving": "Saving…",
     "saveClose": "Save & close",
+    "saveLink": "Save & get link",
     "saveFailed": "Could not save — check the server is running."
   },
   "staffEdit": {
@@ -1272,7 +1288,6 @@
     "sameAsBusiness": "Same as the business",
     "followingHint": "Following the business's default hours (Settings → Working hours). Turn this off to set custom hours.",
     "showAllDays": "Show all 7 days ({count, plural, one {# day} other {# days}} off)",
-    "servicesTitle": "Services this person can take",
     "selectedOf": "{selected} of {total} selected",
     "last30": "Last 30 days",
     "bookings": "Bookings",
@@ -1638,6 +1653,14 @@
     },
     "account": {
       "menuAndAccount": "Menu and account",
+      "yourName": "Your name",
+      "namePromptTitle": "Add your name",
+      "namePromptSub": "What should we call you?",
+      "notNow": "Not now",
+      "addName": "Add your name",
+      "editName": "Change your name",
+      "saveName": "Save name",
+      "nameFailed": "Could not save your name. Try again.",
       "closeAccountMenu": "Close account menu",
       "roles": {
         "owner": {
@@ -1762,7 +1785,7 @@
       "tryAgain": "Try again",
       "invalidTitle": "This link no longer works",
       "notValid": "Invite links stop working after 7 days, or if they have already been used. Ask whoever invited you for a new one.",
-      "askOwner": "They can send you a new link from <b>Settings → Team access</b>. It is the same screen they used the first time.",
+      "askOwner": "They can send you a new link from <b>Staff</b>. It is the same screen they used the first time.",
       "alreadyJoined": "Already joined, or already have an account? <signin>Sign in</signin>.",
       "title": "Join {business}",
       "setPassword": "Set a password for {phone}. You will sign in with that number.",
@@ -2387,6 +2410,8 @@
     "qrTitle": "Let them scan",
     "qrAlt": "The salon's payment QR code",
     "qrHint": "They type the amount in their own app.",
+    "qrMissing": "No QR code here yet.",
+    "qrAddIt": "Add it in Settings → Payment QR",
     "qrPaid": "Money received",
     "saving": "Saving…",
     "spoken": "{amount} rupees received. {mode}.",
@@ -2670,10 +2695,11 @@
         "invite": {
           "title": "Invite a stylist or receptionist",
           "main": {
-            "s1": "Open “Settings” → “Team access”.",
-            "s2": "Choose the role, and the branch if it asks.",
-            "s3": "Type their phone number and tap “Create invite”.",
-            "s4": "Tap “Copy link” and send it to them on WhatsApp. You will not see it again."
+            "s1": "Open “Staff”.",
+            "s2": "Tap “Add staff”, then pick “Stylist” or “Receptionist”.",
+            "s3": "Type their name and mobile number, then tap “Next”.",
+            "s4": "Leave “Let them sign in on their phone” ticked and tap “Save & get link”.",
+            "s5": "Tap “Copy link” or “Send on WhatsApp”. You will not see the link again."
           }
         },
         "bill": {

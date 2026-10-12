@@ -79,6 +79,20 @@ export function setPendingLang(lang: Lang | null): void {
 }
 
 /** One attempt to write the preference to the person's account. `true` only when the server accepted it. */
+/** A person's own name, saved to their membership. False on any failure; the caller keeps the field open. */
+export async function putName(name: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/v1/me/name', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function putLang(lang: Lang): Promise<boolean> {
   try {
     const res = await fetch('/api/v1/me/language', {

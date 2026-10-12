@@ -18,7 +18,7 @@ import {
   type Service,
 } from '../../lib/api';
 import { toWeekdayRows, WeekdayHoursEditor, type WeekdayRow } from '../../components/WeekdayHoursEditor';
-import { IconArrowLeft, IconCheck } from '../../components/icons';
+import { IconArrowLeft } from '../../components/icons';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { pickNoun } from '../../lib/nouns';
 import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
@@ -34,10 +34,6 @@ function rowsEqual(a: WeekdayRow[], b: WeekdayRow[]): boolean {
     a.length === b.length &&
     a.every((r, i) => r.weekday === b[i]!.weekday && r.open === b[i]!.open && (!r.open || (r.startTime === b[i]!.startTime && r.endTime === b[i]!.endTime)))
   );
-}
-
-function setsEqual(a: Set<string>, b: Set<string>): boolean {
-  return a.size === b.size && [...a].every((v) => b.has(v));
 }
 
 function hours(minutes: number): string {
@@ -89,7 +85,6 @@ export function StaffEditClient({
   const [locationId, setLocationId] = useState(detail.locationId ?? '');
   const [active, setActive] = useState(detail.active);
   const [unavailableToday, setUnavailableToday] = useState(detail.unavailableToday);
-  const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set(detail.serviceIds));
   const [hourRows, setHourRows] = useState<WeekdayRow[]>(() => toWeekdayRows(detail.workingHours));
   const [usesOrgHours, setUsesOrgHours] = useState(detail.usesOrgHours);
   /*
@@ -103,8 +98,6 @@ export function StaffEditClient({
    * Jira GRW-386 — a move to another branch: their services there are matched by name (Haircut → that branch's
    * Haircut) or start empty, and after the save the ones with no match are listed, to be set by hand.
    */
-  const [skillsOnMove, setSkillsOnMove] = useState<'match' | 'none'>('match');
-  const [unmatchedSkills, setUnmatchedSkills] = useState<{ branch: string; names: string[] } | null>(null);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +116,6 @@ export function StaffEditClient({
     setLocationId(d.locationId ?? '');
     setActive(d.active);
     setUnavailableToday(d.unavailableToday);
-    setSelectedServiceIds(new Set(d.serviceIds));
     setHourRows(toWeekdayRows(d.workingHours));
     setUsesOrgHours(d.usesOrgHours);
     setSeesOwnRevenue(d.seesOwnRevenue);
@@ -135,36 +127,18 @@ export function StaffEditClient({
     phone !== fromStoredPhone(detail.phone) ||
     locationId !== (detail.locationId ?? '') ||
     active !== detail.active;
-  const skillsDirty = !setsEqual(selectedServiceIds, new Set(detail.serviceIds));
   const moving = branches.length > 1 && Boolean(locationId) && locationId !== detail.locationId;
   const movingTo = branches.find((b) => b.id === locationId)?.name ?? '';
-  /*
-   * Jira GRW-393 (FR-06) · GRW-388 — their saved branch's menu, and only it: every skill is a service of the
-   * stylist's own branch (the release's migration 0087 moved the older ones there, and a move carries them). The
-   * SAVED branch, not the field: while a move is pending the chips are locked, and the new branch's menu is
-   * offered once the move is saved.
-   */
-  const menu = services.filter((s) => !detail.locationId || s.locationId === detail.locationId);
   const orgHoursDirty = usesOrgHours !== detail.usesOrgHours;
   const revenueDirty = seesOwnRevenue !== detail.seesOwnRevenue;
   const availabilityDirty = unavailableToday !== detail.unavailableToday;
   // While "Same as the business" is on the rows are a read-only preview of the org
   // week, so there is nothing of the user's own in them to be dirty about.
   const hoursDirty = !usesOrgHours && !rowsEqual(hourRows, toWeekdayRows(detail.workingHours));
-  const dirty = aboutDirty || skillsDirty || hoursDirty || orgHoursDirty || revenueDirty || availabilityDirty;
+  const dirty = aboutDirty || hoursDirty || orgHoursDirty || revenueDirty || availabilityDirty;
 
   const updateHourRow = (weekday: number, patch: Partial<WeekdayRow>) => {
     setHourRows((prev) => prev.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r)));
-    setSaved(false);
-  };
-
-  const toggleService = (id: string) => {
-    setSelectedServiceIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
     setSaved(false);
   };
 
@@ -205,13 +179,12 @@ export function StaffEditClient({
     setSaved(false);
     try {
       const calls: Array<Promise<unknown>> = [];
-      let profile: Promise<{ unmatchedSkills?: string[] }> | null = null;
       // Jira GRW-216 — `revenueDirty` belongs here too. Without it, flipping
       // only the earnings switch marked the form dirty, enabled Save, sent
       // nothing, and silently reverted on reload.
       if (aboutDirty || orgHoursDirty || revenueDirty) {
         calls.push(
-          (profile = api.updateProviderProfile(detail.id, {
+          api.updateProviderProfile(detail.id, {
             displayName: displayName.trim(),
             // Stored E.164, so the separators a human typed are stripped once
             // here rather than leaving "+91 98765 43210" in the column.
@@ -220,16 +193,11 @@ export function StaffEditClient({
                   active,
             usesOrgHours,
             seesOwnRevenue,
-            ...(moving ? { locationId, skillsOnMove } : {}),
-          })),
+            // The server matches their services by name on a move; there is no longer a choice to send.
+            ...(moving ? { locationId } : {}),
+          }),
         );
       }
-      /*
-       * Jira GRW-386 — never alongside a move. The two used to race: the move could land first and the skills,
-       * picked from the old branch's menu, were then refused, leaving a half-saved card. A move sets their
-       * services itself (matched or none); they are changed after it, from the new branch's menu.
-       */
-      if (skillsDirty && !moving) calls.push(api.updateProviderServices(detail.id, [...selectedServiceIds]));
       if (availabilityDirty) calls.push(api.setProviderAvailabilityToday(detail.id, unavailableToday));
       if (hoursDirty && !usesOrgHours) {
         calls.push(
@@ -240,14 +208,14 @@ export function StaffEditClient({
         );
       }
       await Promise.all(calls);
-      const moved = moving ? await profile : null;
-      setUnmatchedSkills(moved?.unmatchedSkills?.length ? { branch: movingTo, names: moved.unmatchedSkills } : null);
-      setSkillsOnMove('match');
       resetFrom(await api.providerDetail(detail.id));
       setSaved(true);
-      // A branch move that left skills to set by hand is said on THIS page, so it stays open for that one case.
-      if (moved?.unmatchedSkills?.length) router.refresh();
-      else closeForm();
+      /*
+       * Always closes now. It used to stay open for one case — a branch move that left services unmatched at the
+       * new branch, so the owner could set them by hand. Those services decide nothing since 2026-10-12, so there
+       * is nothing left to come back and do.
+       */
+      closeForm();
     } catch (e) {
       // Jira GRW-478 — the server's reason (a branch move refused, a clash of hours), not "save failed".
       setError(reasonOr(e, t('errors.saveFailed')));
@@ -412,25 +380,8 @@ export function StaffEditClient({
                     ) : null}
                   </label>
                 ) : null}
-                {moving ? (
-                  <div className="field edit-move-skills" role="radiogroup" aria-label={t('moveSkillsTitle', { branch: movingTo })}>
-                    <span className="field-label">{t('moveSkillsTitle', { branch: movingTo })}</span>
-                    <label className="rules-option">
-                      <input type="radio" name="skills-on-move" checked={skillsOnMove === 'match'} onChange={() => setSkillsOnMove('match')} />
-                      <div className="rules-option-body">
-                        <div className="rules-option-title">{t('moveSkillsMatch')}</div>
-                        <div className="rules-option-sub">{t('moveSkillsMatchSub', { branch: movingTo })}</div>
-                      </div>
-                    </label>
-                    <label className="rules-option">
-                      <input type="radio" name="skills-on-move" checked={skillsOnMove === 'none'} onChange={() => setSkillsOnMove('none')} />
-                      <div className="rules-option-body">
-                        <div className="rules-option-title">{t('moveSkillsNone')}</div>
-                        <div className="rules-option-sub">{t('moveSkillsNoneSub')}</div>
-                      </div>
-                    </label>
-                  </div>
-                ) : null}
+                {/* The move's "match their services or start with none" question went with the card above: the
+                    server still matches by name, and nothing a client could choose would change a booking. */}
                 <label className="field">
                   <span className="field-label">{t('role')}</span>
                   <input type="text" value={title} placeholder={providerWord} onChange={(e) => (setTitle(e.target.value), setSaved(false))} />
@@ -503,37 +454,12 @@ export function StaffEditClient({
               )}
             </section>
 
-            <section className="card edit-card">
-              <div className="edit-card-head">
-                <div className="edit-card-title">{t('servicesTitle')}</div>
-                <span className="muted edit-count">
-                  {t('selectedOf', { selected: selectedServiceIds.size, total: menu.length })}
-                </span>
-              </div>
-              {moving ? <div className="field-hint">{t('moveSkillsLater', { branch: movingTo })}</div> : null}
-              {unmatchedSkills ? (
-                <div className="field-hint" role="status">
-                  {t('moveUnmatched', { branch: unmatchedSkills.branch, names: unmatchedSkills.names.join(', ') })}
-                </div>
-              ) : null}
-              <div className="edit-chips">
-                {menu.map((s) => {
-                  const on = selectedServiceIds.has(s.id);
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className={`edit-chip ${on ? 'is-on' : ''}`}
-                      aria-pressed={on}
-                      disabled={moving}
-                      onClick={() => toggleService(s.id)}
-                    >
-                      {s.name} {on && <IconCheck />}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
+            {/*
+              The "What they can do" card stood here until 2026-10-12, when the owner dropped the rule it edited:
+              anyone may be booked for anything, so a list of ticked services decided nothing. Removed rather than
+              left read-only — a control that saves something nothing reads is the failure this codebase keeps
+              finding. See `listProvidersForService`.
+            */}
           </div>
 
           <aside className="edit-side">

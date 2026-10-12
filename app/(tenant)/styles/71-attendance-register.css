@@ -1009,6 +1009,18 @@
   font-weight: 700;
 }
 
+.acct-name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.acct-role-line {
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
 .acct-sub {
   font-size: 0.78125rem;
   color: var(--muted);

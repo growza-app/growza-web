@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -171,6 +172,14 @@ export function PayFlow({
    */
   const paymentQr = branch.branches.find((b) => b.id === location)?.paymentQrUrl ?? null;
 
+  /*
+   * A QR that is recorded but will not draw (owner, 2026-10-13: "it's showing blank").
+   *
+   * `/me` says there is one, so the tile opens this screen — and then the picture is a 317px hole: the file
+   * behind the URL is gone, or the phone is offline. An owner holding that up to a customer has nothing to say.
+   * The image tells us by failing, and the screen then says what is wrong and where to fix it.
+   */
+  const [qrBroken, setQrBroken] = useState(false);
   const [step, setStep] = useState<'what' | 'how' | 'qr' | 'done'>('what');
   const [services, setServices] = useState<Service[] | null>(null);
   const [ranked, setRanked] = useState<string[] | null>(null);
@@ -668,11 +677,25 @@ export function PayFlow({
           </div>
         ) : null}
         <div className="pf-qr">
-          {/* The salon's own picture, not a logo: `alt` says what it is for, since nothing else on screen does. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="pf-qr-code" src={paymentQr} alt={t('qrAlt')} />
+          {qrBroken ? (
+            /* Not an error the owner caused, so it is said plainly, with the one screen that fixes it one tap away. */
+            <div className="pf-qr-missing">
+              <IconPayUpi />
+              <p className="pf-qr-missing-title">{t('qrMissing')}</p>
+              <Link className="btn btn-ghost" href="/settings/payments">
+                {t('qrAddIt')}
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* The salon's own picture, not a logo: `alt` says what it is for, since nothing else on screen does. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="pf-qr-code" src={paymentQr} alt={t('qrAlt')} onError={() => setQrBroken(true)} />
+            </>
+          )}
         </div>
-        <p className="pf-qr-hint">{t('qrHint')}</p>
+        {/* "They type the amount in their own app" is advice about a code that is on screen; with no code it is noise. */}
+        {!qrBroken && <p className="pf-qr-hint">{t('qrHint')}</p>}
         <button type="button" className="btn pf-go pf-qr-paid" onClick={() => void pay('upi')} disabled={saving !== null} aria-busy={saving === 'upi'}>
           {saving === 'upi' ? t('saving') : t('qrPaid')}
         </button>

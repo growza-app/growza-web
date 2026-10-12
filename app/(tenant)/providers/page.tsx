@@ -15,6 +15,8 @@ export default async function ProvidersPage() {
   await guardScreen('/providers');
   const tn = await getTranslations('nouns');
   let me, overview, services, settings, branches;
+  // The logins, which used to be their own Settings tab. Loaded beside the roster now; see `TeamLogins`.
+  let invites, members;
   try {
     [me, overview, services, settings, branches] = await Promise.all([
       api.me(),
@@ -29,6 +31,15 @@ export default async function ProvidersPage() {
       api.settings(),
       // Jira GRW-234 — the branches a new person can be placed at (owner only; anybody else gets no picker).
       api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name }))).catch(() => []),
+    ]);
+    /*
+     * After the roster, and each swallowed on its own: a role or a deploy that cannot read the invites must still
+     * get the roster. Both routes are owner-only, which is also who sees this screen (`canSee`), so a refusal here
+     * means something is wrong rather than somebody is nosing around.
+     */
+    [invites, members] = await Promise.all([
+      api.teamInvites().then((r) => r.invites, () => []),
+      api.teamMembers().then((r) => r.members, () => []),
     ]);
   } catch (error) {
     return (
@@ -68,6 +79,8 @@ export default async function ProvidersPage() {
         orgHours={settings.workingHours}
         hoursByBranch={hoursByBranch}
         branches={branches.length > 1 ? branches : []}
+        initialInvites={invites}
+        initialMembers={members}
       />
     </>
   );

@@ -1,14 +1,17 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { useLabels } from '../components/LabelsProvider';
 import { useBranch } from '../components/BranchProvider';
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { api, reasonOr, type ProviderOverviewRow, type Service } from '../lib/api';
+import { api, ApiError, reasonOr, type CreatedInvite, type ProviderOverviewRow, type Service } from '../lib/api';
+import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { pickNoun } from '../lib/nouns';
-import { IconCheck, IconClose, IconPlus } from '../components/icons';
+import { IconCheck, IconClose, IconPlus, IconWhatsApp } from '../components/icons';
+import { waDigits } from '../components/BookingSheet';
 import { WeekdayHoursEditor, toWeekdayRows, type WeekdayRow } from '../components/WeekdayHoursEditor';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
@@ -29,11 +32,10 @@ import { autoFocusField } from '../../shared/a11y/soft-keyboard';
  * out of every "who can do this?" in the product while the roster showed them
  * like everybody else.
  *
- * The engine half of this ticket makes both defaults sane, which is what lets
- * the design's load-bearing sentence be true: **Save & close is live from step
- * 1.** Name and number are enough, because skipping ahead now leaves a stylist
- * who works the salon's hours and can do the salon's services, not a decorative
- * one.
+ * The engine half of this ticket makes both defaults sane: a person saved with nothing but a name and a number
+ * works the salon's hours and can be booked for anything. That used to mean **Save & close was live from step 1**;
+ * since 2026-10-12 the owner wants the form walked instead, so the footer offers Next until the last step. The
+ * defaults have not changed — what changed is that nobody passes the login question without seeing it.
  *
  * `StaffDetailPanel` is deleted with this change, not kept as a fallback. Its
  * own comment already read *"the drawer now only serves Add staff — editing an
@@ -61,9 +63,29 @@ import { autoFocusField } from '../../shared/a11y/soft-keyboard';
  * deliberately rather than stubbed; it belongs with GRW-40's file-storage work.
  */
 
-type Step = 'who' | 'hours' | 'services';
+type Step = 'who' | 'hours' | 'login';
 
-const STEPS: { key: Step }[] = [{ key: 'who' }, { key: 'hours' }, { key: 'services' }];
+/**
+ * What this person does, which decides what the rest of the form asks.
+ *
+ * Adding somebody and giving them a password used to be two screens, so an owner hired a stylist on Staff and then
+ * went looking for Settings to let them sign in — the second half nobody found. One flow, and the login is a step
+ * in it: optional for a stylist (most never sign in), and the whole point for the front desk, who have no diary.
+ */
+type Kind = 'staff' | 'reception';
+
+const STEPS_BY_KIND: Record<Kind, { key: Step }[]> = {
+  /*
+   * No services step (owner, 2026-10-12).
+   *
+   * It asked which of the branch's services this person can do, arrived with every one of them ticked, and
+   * decided nothing: anyone may be booked for anything now. Two hundred pills to scroll past is not a decision.
+   */
+  staff: [{ key: 'who' }, { key: 'hours' }, { key: 'login' }],
+  // No hours and no skills: a receptionist is never booked, so a week and a service list would be two screens of
+  // questions with nothing behind them.
+  reception: [{ key: 'who' }, { key: 'login' }],
+};
 
 export function StaffWizard({
   staffWord,
@@ -73,6 +95,8 @@ export function StaffWizard({
   hoursByBranch = {},
   branches = [],
   fullBranches = [],
+  startAs = 'staff',
+  seatsLeft,
   onClose,
   onCreated,
 }: {
@@ -89,17 +113,54 @@ export function StaffWizard({
   branches?: Array<{ id: string; name: string }>;
   /** Jira GRW-557 — branches with no place left: offered, but not choosable, and never the one it starts on. */
   fullBranches?: string[];
+  /** Which kind the flow opens on. */
+  startAs?: Kind;
+  /**
+   * Places left on the plan. A receptionist takes none, so at zero the Stylist chip is the only thing refused —
+   * the owner can still give the front desk a login, which is why the button that opens this is never disabled.
+   */
+  seatsLeft?: number;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const t = useTranslations('staffWizard');
   const tCommon = useTranslations('common');
   const tn = useTranslations('nouns');
+  // The invite words, kept in the namespace they were written in rather than copied.
+  const tTeam = useTranslations('settingsTeam');
   const checkPhone = usePhoneProblem();
-  const staffLower = pickNoun(useLocale(), staffWord.toLowerCase(), tn('staff'));
+  const locale = useLocale();
+  const staffLower = pickNoun(locale, staffWord.toLowerCase(), tn('staff'));
+  /*
+   * The chip says what this business calls one of these people — "Stylist" at a salon, "Doctor" at a clinic,
+   * "Mechanic" at a garage. `ctx.labels.provider` is the singular the vertical defines (the screen's own title uses
+   * the plural); in another language the vertical labels are not translated yet, so the generic noun stands in,
+   * exactly as every other vertical noun on this screen does.
+   */
+  const labels = useLabels();
+  const providerLabel = pickNoun(locale, labels.provider ?? staffWord, tn('staffTitle'));
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
   const [step, setStep] = useState<Step>('who');
+  const [kind, setKind] = useState<Kind>(seatsLeft === 0 ? 'reception' : startAs);
+  const STEPS = STEPS_BY_KIND[kind];
+  /*
+   * On by default, for everyone (owner, 2026-10-12).
+   *
+   * It used to be off for a stylist, on the reasoning that most of them never sign in. What that produced is the
+   * thing the owner reported: you walk the three steps, press the last button, the sheet closes — and no link was
+   * ever made, because the question on the final screen had already answered itself No. The link is the one thing
+   * this flow produces that cannot be got again later, so the default has to be the one that produces it; the
+   * tick box is still there to turn it off for the stylist who will never sign in. The front desk's cannot be
+   * turned off at all: without a login there is no person to create, only a name nothing would hold.
+   */
+  const [wantsLogin, setWantsLogin] = useState(true);
+  /** The invite that was just created, shown once: no route returns its link again. */
+  const [created, setCreated] = useState<(CreatedInvite & { phone: string }) | null>(null);
+  /** The person was added but their login was not — said plainly rather than swallowed. */
+  const [loginFailed, setLoginFailed] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
@@ -145,16 +206,6 @@ export function StaffWizard({
    * ticked is the only honest way to render a default that generous — an empty
    * picker beside "Save & close" would say the opposite of what happens.
    */
-  // Jira GRW-393 (FR-06) — the chosen branch's menu: the API refuses a new stylist another branch's services.
-  const menu = useMemo(() => services.filter((s) => !branchId || s.locationId === branchId), [services, branchId]);
-  const [skills, setSkills] = useState<Set<string>>(() => new Set(menu.map((s) => s.id)));
-  // Choosing another branch starts its menu over, all ticked, as the first one was. Keyed on WHICH services, not
-  // on the list itself: coming back to the tab refreshes the page's data, hands a new list of the same services,
-  // and re-ticked every skill the owner had unticked (GRW-395 QA).
-  const menuKey = menu.map((s) => s.id).join(',');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => setSkills(new Set(menu.map((s) => s.id))), [menuKey]);
-
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nameInvalid, setNameInvalid] = useState(false);
@@ -169,6 +220,8 @@ export function StaffWizard({
     }
     return [...seen];
   }, [roster]);
+
+  const linkFor = (token: string) => `${typeof window === 'undefined' ? '' : window.location.origin}/join/${token}`;
 
   const phoneProblem = checkPhone(phone);
   const canSave = displayName.trim().length > 0 && phoneProblem === null;
@@ -209,24 +262,52 @@ export function StaffWizard({
     setBusy(true);
     setError(null);
     try {
-      await api.createProvider({
+      /*
+       * The front desk has no provider row to make: a receptionist is a LOGIN and nothing else, which is why the
+       * login cannot be turned off for them. Everything below this branch is the stylist's half.
+       */
+      if (kind === 'reception') {
+        const invite = await api.createTeamInvite({
+          phone: stored,
+          role: 'receptionist',
+          locationId: branches.length > 1 && branchId ? branchId : null,
+          name: displayName.trim(),
+        });
+        setCreated({ ...invite, phone: stored });
+        setBusy(false);
+        setStep('login');
+        onCreated();
+        return;
+      }
+      const person = await api.createProvider({
         displayName: displayName.trim(),
         phone: stored,
         title: title.trim() || null,
         ...(branches.length > 1 && branchId ? { locationId: branchId } : {}),
         /*
          * Omitted, not copied, when the owner has not touched the week — see
-         * `followsSalon` above. And `serviceIds` is only sent when it is not
-         * simply everything, so the common case travels as silence and lands on
-         * the server's own default.
+         * `followsSalon` above. Nothing about services is sent at all: the server gives a new person their
+         * branch's whole menu, which since 2026-10-12 is simply what everyone can be booked for.
          */
         ...(followsSalon
           ? {}
           : { workingHours: hourRows.filter((r) => r.open).map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime })) }),
-        ...(skills.size === menu.length ? {} : { serviceIds: [...skills] }),
       });
       onCreated();
-      onClose();
+      if (!wantsLogin) return onClose();
+      /*
+       * The person exists either way. A login that fails is said on this screen rather than thrown, because the
+       * create it followed is NOT undone — telling the owner "it failed" about a stylist who is now on the roster
+       * is how you get the same person added twice.
+       */
+      try {
+        const invite = await api.createTeamInvite({ phone: stored, role: 'staff', providerId: person.id, name: displayName.trim() });
+        setCreated({ ...invite, phone: stored });
+      } catch (err) {
+        setLoginFailed(err instanceof ApiError ? err.message : t('loginFailed'));
+      }
+      setBusy(false);
+      setStep('login');
     } catch (err) {
       // A plan seat cap is not something retrying fixes, and "check the server
       // is running" sends the owner to look in the wrong place. The API says
@@ -266,7 +347,14 @@ export function StaffWizard({
         <ol className="wiz-steps">
           {STEPS.map((s, i) => (
             <li key={s.key} className={`wiz-step ${i === index ? 'is-on' : ''} ${i < index ? 'is-done' : ''}`}>
-              <button type="button" onClick={() => setStep(s.key)} aria-current={i === index ? 'step' : undefined}>
+              {/*
+                Once the person has been created the steps stop being a way back (owner, 2026-10-12).
+                
+                Everything above has already been saved, so tapping "Who" from the finished screen showed the
+                filled-in form with a Done button under it — a form that looks editable and saves nothing, and
+                the one thing on that last screen that matters (the invite link, shown once) hidden behind it.
+              */}
+              <button type="button" disabled={Boolean(created)} onClick={() => setStep(s.key)} aria-current={i === index ? 'step' : undefined}>
                 <span className="wiz-step-num">{i < index ? <IconCheck /> : i + 1}</span>
                 <span className="wiz-step-label">{t(`steps.${s.key}`)}</span>
               </button>
@@ -277,11 +365,51 @@ export function StaffWizard({
         <div className="wiz-body">
           {step === 'who' && (
             <>
+              {/* First, because it decides what the rest of the form asks — and the roster is mostly stylists, so
+                  it opens on the common answer. */}
+              <div className="wiz-section-label">{t('does')}</div>
+              <div className="wiz-chips" role="radiogroup" aria-label={t('does')}>
+                {(['staff', 'reception'] as const).map((k) => {
+                  const noRoom = k === 'staff' && seatsLeft === 0;
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      role="radio"
+                      aria-checked={kind === k}
+                      className={`wiz-chip ${kind === k ? 'is-on' : ''}`}
+                      disabled={noRoom}
+                      onClick={() => {
+                        setKind(k);
+                        /*
+                         * Turned ON for the front desk, and otherwise left ALONE.
+                         *
+                         * This used to be `setWantsLogin(k === 'reception')`, which quietly undid the default the
+                         * moment an owner tapped the chip that was already selected: Stylist is where the form
+                         * opens, so tapping it is a no-op everywhere except here, where it switched the login —
+                         * and the link — back off.
+                         */
+                        if (k === 'reception') setWantsLogin(true);
+                      }}
+                    >
+                      {k === 'staff' ? providerLabel : tTeam('receptionist')}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="field-hint wiz-kind-sub">
+                {seatsLeft === 0 && kind === 'staff' ? t('noSeats', { label: staffLower }) : kind === 'staff' ? t('kindStaffSub') : t('kindReceptionSub')}
+              </p>
+
               <div className="field">
-                <label htmlFor="wiz-name">{t('fullName')}</label>
+                <label htmlFor="wiz-name">
+                  {t('fullName')}
+                  <span className="field-required" aria-hidden="true"> *</span>
+                </label>
                 <input
                   id="wiz-name"
                   type="text"
+                  required
                   autoFocus={autoFocusField()}
                   value={displayName}
                   placeholder={t('namePlaceholder')}
@@ -307,6 +435,8 @@ export function StaffWizard({
                 }}
               />
 
+              {kind === 'staff' && (
+              <>
               <div className="wiz-section-label">{t('role')}</div>
               <div className="wiz-chips">
                 {roles.map((r) => (
@@ -356,6 +486,8 @@ export function StaffWizard({
                   </button>
                 )}
               </div>
+              </>
+              )}
 
               {/* Jira GRW-234 — where this person works. Their bookings, hours and figures follow it.
                   Jira GRW-395 — asked only on "All": with a branch in the header, they are added to it. */}
@@ -441,58 +573,84 @@ export function StaffWizard({
             </>
           )}
 
-          {step === 'services' && (
-            <>
-              <div className="wiz-section-label">
-                {t('whatTheyCanDo')}
-                <button
-                  type="button"
-                  className="wiz-link"
-                  onClick={() =>
-                    setSkills(skills.size === menu.length ? new Set() : new Set(menu.map((s) => s.id)))
-                  }
-                >
-                  {skills.size === menu.length ? t('clearAll') : t('selectAll')}
-                </button>
+          {step === 'login' &&
+            (created ? (
+              /* Shown once and never again: no route returns an invite's link a second time, only its hash is
+                 stored. So this replaces the step rather than passing as a toast. */
+              <div className="banner banner-info">
+                <strong>{t('addedTitle', { name: displayName.trim() })}</strong>
+                <div style={{ marginTop: 4 }}>{tTeam('sendTo', { phone: created.phone })}</div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <input readOnly value={linkFor(created.token)} style={{ flex: '1 1 240px', minWidth: 0 }} onFocus={(e) => e.target.select()} />
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      void copyToClipboard(linkFor(created.token)).then((ok) => {
+                        setCopied(ok);
+                        setCopyFailed(!ok);
+                      });
+                    }}
+                  >
+                    {copied ? tTeam('copied') : tTeam('copyLink')}
+                  </button>
+                  {/*
+                    Jira GRW-? — handing the link over, in the app the salon already uses.
+                    
+                    A `wa.me` link in a new tab: the owner's own WhatsApp, their own send button. Nothing is sent
+                    by Growza, so this needs no template, no opt-in and no WhatsApp account of the business's —
+                    the same manual share the client list and the bill already offer. Optional beside Copy,
+                    because a salon that does it another way still has the link in front of them.
+                  */}
+                  <a
+                    className="btn btn-ghost"
+                    href={`https://wa.me/${waDigits(created.phone)}?text=${encodeURIComponent(tTeam('shareText', { link: linkFor(created.token) }))}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <IconWhatsApp /> {tTeam('shareOnWhatsApp')}
+                  </a>
+                </div>
+                {copyFailed && (
+                  <div role="alert" className="field-hint" style={{ marginTop: 8 }}>
+                    {tTeam('copyFailed')}
+                  </div>
+                )}
               </div>
-              {menu.length === 0 ? (
-                <div className="field-hint">{t('noServices')}</div>
-              ) : (
-                <div className="skill-picker">
-                  {menu.map((s) => {
-                    const on = skills.has(s.id);
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        className={`skill-pill ${on ? 'active' : ''}`}
-                        onClick={() =>
-                          setSkills((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(s.id)) next.delete(s.id);
-                            else next.add(s.id);
-                            return next;
-                          })
-                        }
-                      >
-                        {on && <IconCheck />}
-                        {s.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {skills.size === 0 && (
-                <div className="field-hint wiz-warn">
-                  {t('noneTicked')}
-                </div>
-              )}
-            </>
-          )}
+            ) : loginFailed ? (
+              <div role="alert" className="banner">
+                {loginFailed}
+              </div>
+            ) : (
+              <>
+                <label className="wiz-toggle">
+                  <input
+                    type="checkbox"
+                    checked={wantsLogin}
+                    // The front desk's is not a choice: without a login there is nobody to create.
+                    disabled={kind === 'reception'}
+                    onChange={(e) => setWantsLogin(e.target.checked)}
+                  />
+                  <span>
+                    {t('loginToggle')}
+                    <span className="wiz-toggle-sub">{kind === 'reception' ? t('loginNeeded') : t('loginToggleSub')}</span>
+                  </span>
+                </label>
+                {!wantsLogin && <p className="field-hint">{t('loginNone')}</p>}
+              </>
+            ))}
         </div>
 
         <div className="wiz-actions">
           {error && <div role="alert" className="field-error wiz-error">{error}</div>}
+          {created || loginFailed ? (
+            <div className="wiz-actions-row">
+              <span className="wiz-spacer" />
+              <button type="button" className="btn" onClick={onClose}>
+                {t('done')}
+              </button>
+            </div>
+          ) : (
           <div className="wiz-actions-row">
             {index > 0 && (
               <button type="button" className="btn btn-ghost" onClick={() => setStep(STEPS[index - 1]!.key)}>
@@ -500,20 +658,26 @@ export function StaffWizard({
               </button>
             )}
             <span className="wiz-spacer" />
-            {index < STEPS.length - 1 && (
-              <button type="button" className="btn btn-ghost" onClick={() => setStep(STEPS[index + 1]!.key)}>
+            {/*
+              One button at a time: Next until the last step, then Save (owner, 2026-10-12).
+              
+              Save used to be live from step 1, because every later step has a sensible default — the salon's
+              hours, and no login. It still has those defaults; what changed is that the owner wants the whole
+              form walked, so that the login question is seen rather than skipped past. Next carries the same
+              guard Save did, so an empty name or a bad number stops here rather than three screens later.
+            */}
+            {index < STEPS.length - 1 ? (
+              <button type="button" className="btn" disabled={!canSave} onClick={() => setStep(STEPS[index + 1]!.key)}>
                 {t('next')}
               </button>
+            ) : (
+              <button type="button" className="btn" disabled={busy || !canSave} onClick={save}>
+                {/* The button says which of the two endings it leads to: the link screen, or a closed sheet. */}
+                {busy ? t('saving') : wantsLogin ? t('saveLink') : t('saveClose')}
+              </button>
             )}
-            {/*
-              Live from step 1, on every step, and never hidden behind Next.
-              The whole point of the defaults is that stopping here is a
-              complete answer.
-            */}
-            <button type="button" className="btn" disabled={busy || !canSave} onClick={save}>
-              {busy ? t('saving') : t('saveClose')}
-            </button>
           </div>
+          )}
         </div>
       </div>
     </>

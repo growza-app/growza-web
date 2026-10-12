@@ -12,7 +12,8 @@ const read = (p: string) => readFileSync(resolve(here, p), 'utf8');
 const navList = read('SettingsNavList.tsx');
 const booking = read('booking/BookingRulesForm.tsx');
 const branches = read('branches/BranchesForm.tsx');
-const team = read('team/TeamAccessPanel.tsx');
+// Team access moved onto Staff; the login rows are `TeamLogins` and the handler behind them is `StaffClient`'s.
+const team = read('../providers/TeamLogins.tsx') + read('../providers/StaffClient.tsx');
 const session = read('../components/SessionProvider.tsx');
 const bookingPage = read('booking/page.tsx');
 const bookingNote = read('booking/BookingScopeNote.tsx');
@@ -84,7 +85,7 @@ describe('Settings, simpler', () => {
 
   it('lists each person who can sign in once, with a receptionist’s branch on their own row', () => {
     expect(team).not.toMatch(/t\('receptionists'\)/);
-    expect(team.match(/onChange=\{\(e\) => void moveMember\(/g)).toHaveLength(1);
+    expect(team.match(/onChange=\{\(e\) => void onMove\(/g)).toHaveLength(1);
     expect(team).toMatch(/\{multiBranch && m\.role === 'receptionist' \? \(\s*<select/);
     // No branch means every branch: the select says so instead of a blank that reads as unassigned.
     expect(team).toMatch(/\{!m\.locationId && <option value="">\{t\('everyBranch'\)\}<\/option>\}/);

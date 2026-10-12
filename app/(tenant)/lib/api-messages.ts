@@ -52,6 +52,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This number already has a Growza account. Sign in with your existing password to join this team.': 'इस नंबर पर पहले से Growza अकाउंट है। इस टीम से जुड़ने के लिए अपने मौजूदा पासवर्ड से साइन इन करें।',
   'Choose which stylist this login is for.': 'चुनें कि यह लॉगिन किस स्टाइलिस्ट के लिए है।',
   'Choose which branch this receptionist works at.': 'इस रिसेप्शनिस्ट की ब्रांच चुनें।',
+  'Enter their name.': 'उनका नाम डालें।',
   'Only a receptionist has a branch of their own. A stylist works where their calendar is.': 'सिर्फ़ रिसेप्शनिस्ट की अपनी ब्रांच होती है। स्टाइलिस्ट वहीं काम करता है जहाँ उसका कैलेंडर है।',
   // ---- branches
   'Choose one of your branches.': 'अपनी किसी एक ब्रांच को चुनें।',
