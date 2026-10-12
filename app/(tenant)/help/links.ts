@@ -55,3 +55,62 @@ export function telHref(phone: string | undefined): string | null {
   const trimmed = phone?.trim();
   return trimmed ? `tel:${trimmed.replace(/\s+/g, '')}` : null;
 }
+
+/** A number reduced to what identifies the handset, so `+91 97735 33899` and `09773533899` compare equal. */
+const digitsOf = (n: string | undefined): string => (n?.replace(/\D/g, '') ?? '').replace(/^0+/, '');
+
+export interface HelpOption {
+  /** Its place in the list the reader sees — contiguous, so a dropped option never leaves "Option 1, Option 3". */
+  n: number;
+  whatsapp: string | null;
+  tel: string | null;
+  /** The number to read on the screen, spaced the way an Indian number is said. Null only if neither is set. */
+  number: string | null;
+}
+
+/**
+ * `+919599420210` -> `+91 95994 20210`, so the reader can see which number they are about to ring.
+ *
+ * Only an Indian mobile number (91 and ten digits) is regrouped; anything else is shown as the operator typed
+ * it, trimmed. Guessing a grouping for a number we do not recognise would print a wrong number confidently.
+ */
+export function displayNumber(raw: string | undefined | null): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) return null;
+  const d = trimmed.replace(/\D/g, '').replace(/^0+/, '');
+  return d.length === 12 && d.startsWith('91') ? `+91 ${d.slice(2, 7)} ${d.slice(7)}` : trimmed;
+}
+
+/**
+ * The options the help screen lists, each with the links that are worth drawing.
+ *
+ * An option is a number to ring and a number to message, answered by whoever holds them. Two things are
+ * decided here rather than in the page, because they are rules with ways to get wrong:
+ *
+ * - **A handset is offered once.** Each option normally has its own number, so each draws its own two
+ *   buttons. But the numbers are configuration, and an operator can name one handset twice; two WhatsApp
+ *   buttons into one conversation is not two choices. The first option to name a handset keeps it; a later
+ *   option that repeats it simply does not draw that button.
+ * - **An option with nothing left to offer is dropped**, and the rest renumber.
+ *
+ * An API older than `options` sends only `phone` and `whatsapp`; that is one option.
+ */
+export function helpOptions(
+  support: { phone?: string; whatsapp?: string; options?: { phone?: string; whatsapp?: string }[] } | undefined,
+  message: string,
+): HelpOption[] {
+  const raw = support?.options?.length ? support.options : [{ phone: support?.phone, whatsapp: support?.whatsapp }];
+  const chats = new Set<string>();
+  const calls = new Set<string>();
+  const out: HelpOption[] = [];
+  for (const o of raw) {
+    const chat = digitsOf(o.whatsapp);
+    const call = digitsOf(o.phone);
+    const whatsapp = chat && !chats.has(chat) ? whatsappHref(o.whatsapp, message) : null;
+    const tel = call && !calls.has(call) ? telHref(o.phone) : null;
+    if (chat) chats.add(chat);
+    if (call) calls.add(call);
+    if (whatsapp || tel) out.push({ n: out.length + 1, whatsapp, tel, number: displayNumber(tel ? o.phone : o.whatsapp) });
+  }
+  return out;
+}

@@ -357,7 +357,9 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
      * this into a screen reading anything role-scoped fails here, which is
      * the moment it would owe shared a proper entry.
      */
-    '/help': /const me = await api\.me\(\);[\s\S]*me\.support\?\.phone/,
+    // `me.support` as a whole since the page lists options (each its own number): it reads the contacts
+    // off /me, which every role may call, and nothing role-scoped.
+    '/help': /const me = await api\.me\(\);[\s\S]*support = me\.support;/,
   };
   const offeredToBoth = (href: string) => LIMITED.every((role) => canSee(href, role));
 
