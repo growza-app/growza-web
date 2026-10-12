@@ -273,6 +273,10 @@ tr:last-child td {
   min-height: 44px;
   padding: 0;
   border: 0;
+  /* The base sheet gives every input an inset (neumorphic) shadow and a radius; inside the wrapper that drew a
+     second, smaller field within the first. The wrapper is the field — the input is only its text. */
+  border-radius: 0;
+  box-shadow: none;
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -756,4 +760,39 @@ tr:last-child td {
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
+}
+
+/*
+ * A phone held sideways (812x375, a Z Fold's cover screen turned over) leaves the sheet ~340px, and the title,
+ * hint, search and a footer of stacked full-width buttons took all but 6px of it in Delete mode: a list of
+ * categories you could not see to tick. Short screens give the height to the rows — the footer's buttons sit
+ * side by side, and the hint goes (the footer button already says how many are ticked). 560px is the height
+ * edge `82-move-booking.css` already uses, so no new breakpoint for the device matrix to learn.
+ */
+@media (max-height: 560px) {
+  .modal-actions.svc-cat-sheet-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .svc-cat-sheet-actions .btn {
+    width: auto;
+    flex: 1 1 0;
+  }
+
+  .svc-cat-sheet-actions .svc-cat-confirm-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .svc-cat-sheet-actions .svc-cat-confirm-body,
+  .svc-cat-sheet-actions .svc-cat-confirm-detail {
+    flex: 1 1 100%;
+  }
+
+  .svc-cat-title + .svc-cat-hint {
+    display: none;
+  }
 }

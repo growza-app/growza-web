@@ -332,6 +332,24 @@
   width: 100%;
 }
 
+/*
+ * The count on this row is a sentence ("52 services · hidden from clients"), not a number, and `.svc-cat-meta` is
+ * `nowrap` with `flex: none` — so on a 320px phone it took 173px of a 236px row and the NAME was left 25px:
+ * "N…". The name keeps its own width here and it is the sentence that wraps, balanced over two lines.
+ */
+.svc-cat-text.svc-cat-unsorted-head > .svc-cat-name {
+  flex: 0 0 auto;
+  max-width: 60%;
+}
+
+.svc-cat-text.svc-cat-unsorted-head > .svc-cat-meta {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: normal;
+  text-align: right;
+  text-wrap: balance;
+}
+
 .svc-cat-unsorted-list {
   margin: 8px 0 0;
   padding-left: 18px;

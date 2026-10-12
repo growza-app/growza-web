@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NextIntlClientProvider } from 'next-intl';
+import { NextIntlClientProvider, createTranslator } from 'next-intl';
 import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
@@ -378,9 +380,22 @@ describe('picking categories to delete', () => {
     expect(html).toContain('is-picked');
   });
 
+  /**
+   * "in it" / "in them" follows the number of CATEGORIES, "stay" / "stays" and "it" / "them" the number of
+   * SERVICES — two different counts in one sentence. Seven services under one category read "in them" for as
+   * long as the plural was keyed on the services alone.
+   */
+  it('agrees "it / them" with the categories and "stay / stays" with the services', () => {
+    const t = createTranslator({ locale: 'en', messages: en, namespace: 'services.categories' });
+    expect(t('deleteCatsKeeps', { count: 7, categories: 1 })).toMatch(/^The 7 services in it stay on your list/);
+    expect(t('deleteCatsKeeps', { count: 1, categories: 3 })).toMatch(/^The 1 service in them stays on your list/);
+    expect(t('deleteCatsKeeps', { count: 1, categories: 3 })).toContain('will not see it until you file it');
+    expect(t('deleteCatsKeeps', { count: 9, categories: 2 })).toContain('will not see them until you file them');
+  });
+
   it('says what a delete costs, and it is not the services', () => {
     const copy = en.services.categories;
-    expect(copy.deleteCatsKeeps).toContain('stay on your list');
+    expect(copy.deleteCatsKeeps).toContain('on your list');
     expect(copy.deleteCatsKeeps).toContain('clients will not see');
     for (const wrong of ['deleted for good', 'cannot be brought back']) {
       expect(copy.deleteCatsKeeps, wrong).not.toContain(wrong);
@@ -470,5 +485,31 @@ describe('the delete card', () => {
     expect(html).toContain('सभी चुनें');
     expect(html).toContain('चुनें कि मेन्यू से क्या हटाना है');
     for (const s of ['Select all', 'Pick what to take off the menu']) expect(html, s).not.toContain(s);
+  });
+});
+
+/**
+ * Found by driving the sheet at 320px, 812x375 and 390px — none of which a static render can see. Each of these
+ * was a real defect on a real viewport, so the rule that fixes it is pinned where the next edit would undo it.
+ */
+describe('the sheet at the sizes it broke on', () => {
+  const css = (file: string) => readFileSync(join(__dirname, '..', 'styles', file), 'utf8');
+  const sheet10 = css('10-tables-services-staff-pages.css');
+  const sheet97 = css('97-services-rebuilt.css');
+
+  it('lets the "not in a category" sentence wrap instead of crushing the name to "N…" at 320px', () => {
+    expect(sheet97).toMatch(/\.svc-cat-text\.svc-cat-unsorted-head > \.svc-cat-meta \{[^}]*white-space: normal/);
+    expect(sheet97).toMatch(/\.svc-cat-text\.svc-cat-unsorted-head > \.svc-cat-name \{[^}]*flex: 0 0 auto/);
+  });
+
+  it('gives the rows the height on a phone held sideways (the list was 6px tall in Delete mode)', () => {
+    const short = sheet10.slice(sheet10.indexOf('@media (max-height: 560px) {\n  .modal-actions.svc-cat-sheet-actions'));
+    expect(short).toContain('flex-direction: row');
+    expect(short).toContain('.svc-cat-title + .svc-cat-hint');
+  });
+
+  it('draws one field for the search, not a second inset one inside it', () => {
+    const block = sheet10.slice(sheet10.indexOf(".svc-cat-filter input[type='search'] {"));
+    expect(block.slice(0, block.indexOf('}'))).toContain('box-shadow: none');
   });
 });

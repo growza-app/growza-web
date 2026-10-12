@@ -10,6 +10,13 @@ import { FILTER_FROM, matchesFilter, movedOrder, unsorted, worthOrdering } from 
 import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
+ * Escape belongs to the field it was pressed in before it belongs to the sheet. `useDialog` listens on `document`
+ * and React 19 mounts at `document` too, so `stopPropagation` — which only stops the event travelling on — does
+ * nothing; the immediate form is what keeps the later listener from firing.
+ */
+const keepFromDialog = (e: { nativeEvent: Event }) => e.nativeEvent.stopImmediatePropagation();
+
+/**
  * Jira GRW-428 — where an owner names, orders and removes their own categories.
  *
  * Until this, `service_category` had a GET and nothing else: a category existed only as a side effect of
@@ -397,7 +404,7 @@ export function CategoriesSheet({
                 onKeyDown={(e) => {
                   // Escape clears a search before it closes a sheet; useDialog listens on the document.
                   if (e.key === 'Escape' && filter !== '') {
-                    e.stopPropagation();
+                    keepFromDialog(e);
                     setFilter('');
                     setConfirming(false);
                   }
@@ -454,7 +461,7 @@ export function CategoriesSheet({
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') void rename(row);
                             if (e.key === 'Escape') {
-                              e.stopPropagation();
+                              keepFromDialog(e);
                               setEditingId(null);
                             }
                           }}
@@ -528,7 +535,7 @@ export function CategoriesSheet({
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') void add();
                           if (e.key === 'Escape') {
-                            e.stopPropagation();
+                            keepFromDialog(e);
                             closeAdd();
                           }
                         }}
@@ -610,7 +617,7 @@ export function CategoriesSheet({
                   {t('deleteCatsTitle', { count: pickedRows.length })}
                 </p>
                 <p id="svc-cat-confirm-detail" className="svc-cat-confirm-detail">
-                  {releasing === 0 ? t('deleteCatsEmpty', { count: pickedRows.length }) : t('deleteCatsKeeps', { count: releasing })}
+                  {releasing === 0 ? t('deleteCatsEmpty', { count: pickedRows.length }) : t('deleteCatsKeeps', { count: releasing, categories: pickedRows.length })}
                 </p>
                 <button type="button" className="btn btn-ghost btn-danger svc-cat-action" disabled={busy} onClick={() => void deletePicked()}>
                   {busy ? t('working') : t('deleteCatsAction', { count: pickedRows.length })}
