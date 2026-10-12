@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { ActivityEvent } from '../lib/api';
-import { byWhom, eventLine, notifHref, timeAgo, TOPIC_META, type FeedT } from './NotificationBell';
+import { byWhom, eventLine, knownEvents, notifHref, timeAgo, TOPIC_META, type FeedT } from './NotificationBell';
 
 /** Jira GRW-360 — a notification reads in the owner's language: the row's title, its time and its age. */
 const feed = (locale: 'en' | 'hi') =>
@@ -135,5 +135,44 @@ describe('where a notification row goes', () => {
     expect(at(null)).toBeNull();
     expect(at('not-a-date')).toBeNull();
     expect(at('2026-09-21T05:30:00.000Z', 'conversation.handoff')).toBeNull();
+  });
+});
+
+describe('a stylist marking in', () => {
+  const mark = (topic: 'attendance.in' | 'attendance.pending', startAt: string | null = '2026-09-21T20:10:00.000Z') =>
+    ({ id: '2', topic, actorName: 'Priya', actorRole: 'staff', branchName: 'MG Road', startAt, customerName: null, serviceNames: null, appointmentId: null }) as unknown as ActivityEvent;
+
+  it('says who is in, and when, in the salon’s clock', () => {
+    const line = eventLine(mark('attendance.in'), 'Asia/Kolkata', feed('en'), 'en', true);
+    expect(line.title).toBe('Priya is in');
+    // 20:10 UTC is 1:40 AM the next day in India — the subtitle must be the salon's time.
+    expect(line.subtitle).toBe('1:40 AM · MG Road');
+  });
+
+  it('says when a mark is waiting for a yes or no', () => {
+    expect(eventLine(mark('attendance.pending'), 'Asia/Kolkata', feed('en'), 'en').title).toBe('Priya marked in — needs a yes or no');
+    expect(eventLine(mark('attendance.pending'), 'Asia/Kolkata', feed('hi'), 'hi').title).toContain('हाँ या नहीं');
+  });
+
+  it('opens the register on the salon’s day', () => {
+    expect(notifHref(mark('attendance.in'), 'Asia/Kolkata')).toBe('/attendance?date=2026-09-22');
+    expect(notifHref(mark('attendance.pending', null), 'Asia/Kolkata')).toBe('/attendance');
+  });
+
+  it('has an icon and words for both topics', () => {
+    for (const topic of ['attendance.in', 'attendance.pending'] as const) {
+      expect(TOPIC_META[topic].icon).toBeTruthy();
+      expect((en.notifications.feed.topics as Record<string, string>)[TOPIC_META[topic].key]).toBeTruthy();
+      expect((hi.notifications.feed.topics as Record<string, string>)[TOPIC_META[topic].key]).toBeTruthy();
+    }
+  });
+});
+
+describe('a topic this dashboard does not know', () => {
+  it('is dropped rather than looked up, so a newer API cannot blank the bell', () => {
+    const future = { ...booking, id: '9', topic: 'something.new' } as unknown as ActivityEvent;
+    expect(knownEvents([booking, future]).map((e) => e.id)).toEqual(['1']);
+    // Inherited keys are not topics either.
+    expect(knownEvents([{ ...booking, topic: 'constructor' } as unknown as ActivityEvent])).toEqual([]);
   });
 });

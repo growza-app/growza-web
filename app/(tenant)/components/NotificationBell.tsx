@@ -63,7 +63,7 @@ export function countUnread(events: ReadonlyArray<{ id: string | number }>, last
 /** The words are `notifications.feed.topics.<key>`; only the icon and class live here. */
 export type TopicKey =
   | 'newBooking' | 'cancelled' | 'rescheduled' | 'walkIn' | 'completed' | 'noShow'
-  | 'billing' | 'invoice' | 'payment' | 'discount' | 'autopay' | 'handoff';
+  | 'billing' | 'invoice' | 'payment' | 'discount' | 'autopay' | 'handoff' | 'attendanceIn' | 'attendancePending';
 export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: ComponentType; cls: string }> = {
   'appointment.confirmed': { key: 'newBooking', icon: IconCalendarPlus, cls: 'notif-new' },
   'appointment.cancelled': { key: 'cancelled', icon: IconClose, cls: 'notif-cancel' },
@@ -83,7 +83,20 @@ export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: C
   'billing.change_pending': { key: 'billing', icon: IconReceipt, cls: 'notif-billing' },
   // Jira GRW-479 (R-5) — a client asked the chat for a person; the bot has gone quiet for them.
   'conversation.handoff': { key: 'handoff', icon: IconChat, cls: 'notif-handoff' },
+  // A stylist marked themselves in from their phone: green when it counted, amber when it waits for a yes or no.
+  'attendance.in': { key: 'attendanceIn', icon: IconClipboardCheck, cls: 'notif-done' },
+  'attendance.pending': { key: 'attendancePending', icon: IconClipboardCheck, cls: 'notif-handoff' },
 };
+
+/**
+ * A topic this dashboard has no row for is dropped, not rendered: the API and the dashboard deploy separately, so a
+ * newer API can send a topic an older (or cached) dashboard does not know, and looking it up in TOPIC_META would
+ * throw and take the bell and the Notifications page down with it. Applied wherever the feed is read, so the
+ * unread count ignores it too — a badge for a row nobody can see is worse than no badge.
+ */
+export function knownEvents(rows: ReadonlyArray<ActivityEvent>): ActivityEvent[] {
+  return rows.filter((e) => Object.prototype.hasOwnProperty.call(TOPIC_META, e.topic));
+}
 
 /** The `notifications.feed` messages, as a translator — these are plain helpers and cannot call hooks. */
 export type FeedT = ReturnType<typeof useTranslations<'notifications.feed'>>;
@@ -176,6 +189,14 @@ export function eventLine(
     const who = e.customerName ?? t('customer');
     return { title: t('handoffTitle'), subtitle: [who, showBranch ? e.branchName : null].filter(Boolean).join(' · ') };
   }
+  if (e.topic === 'attendance.in' || e.topic === 'attendance.pending') {
+    const who = e.actorName ?? t('roles.staff');
+    const at = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('h:mm a') : null;
+    return {
+      title: t(e.topic === 'attendance.in' ? 'attendanceInTitle' : 'attendancePendingTitle', { who }),
+      subtitle: [at, showBranch ? e.branchName : null].filter(Boolean).join(' · '),
+    };
+  }
   const services = (e.serviceNames ?? []).join(' + ');
   const local = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('ccc, h:mm a') : '';
   const customer = e.customerName ?? t('customer');
@@ -213,6 +234,11 @@ export function notifHref(event: ActivityEvent, timezone: string): string | null
     const open = event.appointmentId ? `open=${event.appointmentId}` : null;
     const params = [date, open].filter(Boolean).join('&');
     return params ? `/appointments?${params}` : null;
+  }
+  // The register, on the day it was marked (the salon's day, like a booking's) — where the yes or no is given.
+  if (event.topic.startsWith('attendance.')) {
+    const day = event.startAt ? DateTime.fromISO(event.startAt).setZone(timezone) : null;
+    return day?.isValid ? `/attendance?date=${day.toISODate()}` : '/attendance';
   }
   // conversation.handoff has no screen of its own yet; a row that goes nowhere
   // stays a plain row rather than a link that lands somewhere unrelated.
@@ -332,8 +358,9 @@ export function NotificationBell() {
       // Notifications tab is the way in), and so is its toast; polling for an unseen
       // bell is a request every 15 seconds that nothing can show.
       if (wrapRef.current && getComputedStyle(wrapRef.current).display === 'none') return;
-      const rows = await api.notifications(20, feed.location).catch(() => null);
-      if (!rows) return;
+      const fetched = await api.notifications(20, feed.location).catch(() => null);
+      if (!fetched) return;
+      const rows = knownEvents(fetched);
 
       const newestId = rows.length > 0 ? Number(rows[0]!.id) : 0;
       if (hasLoadedOnce.current && newestId > maxKnownId.current) {

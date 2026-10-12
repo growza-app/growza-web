@@ -12,7 +12,7 @@ import { useWritable } from '../../components/SessionProvider';
  * 50 m is a shop; 500 m is a street. The API refuses anything outside (and so does the column's own CHECK,
  * migration 0106), so the field says the same two numbers rather than letting a save fail to say them.
  */
-const RADIUS_MIN_M = 50;
+const RADIUS_MIN_M = 0;
 const RADIUS_MAX_M = 500;
 
 /**
@@ -70,7 +70,7 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
       return;
     }
     // Said here rather than let the API say it: the same two numbers are already on the screen as a hint.
-    if (!Number.isInteger(radius) || radius < RADIUS_MIN_M || radius > RADIUS_MAX_M) {
+    if (radiusText.trim() === '' || !Number.isInteger(radius) || radius < RADIUS_MIN_M || radius > RADIUS_MAX_M) {
       setError(t('errors.badRadius', { min: RADIUS_MIN_M, max: RADIUS_MAX_M }));
       return;
     }
@@ -92,35 +92,46 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
     }
   };
 
-  const fmt = (n: number) => n.toFixed(5);
   /** Opens wherever the phone sends maps links — Google Maps' documented search URL, no key, no embed. */
   const mapsUrl = (p: { lat: number; lng: number }) => `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
 
+  /*
+   * Ordered by what an owner came to do, so the five things that matter sit above the fold at 344x882:
+   * the switch that turns it on, where the branch is, how close counts, who else decides. The page header
+   * already names the screen and the branch, so there is no card title repeating them, and the maps-link
+   * route is folded away — the button above it is the way almost everyone sets a pin.
+   */
   return (
     <>
     <div className="card ci-settings">
-      <div className="card-head">{branchCount > 1 && branchName ? t('titleBranch', { name: branchName }) : t('title')}</div>
       <div className="card-body">
-        <p className="field-hint ci-settings-intro">{t('intro')}</p>
+        <div className="ci-switch-row ci-switch-first">
+          <label className="switch">
+            <input type="checkbox" aria-labelledby="ci-enabled-label" checked={enabled} disabled={busy || !writable} onChange={() => setEnabled((v) => !v)} />
+            <span className="switch-track">
+              <span className="switch-thumb" />
+            </span>
+          </label>
+          <div>
+            <div id="ci-enabled-label" className="ci-switch-title">{t('enabled')}</div>
+            <span className="field-hint">{enabled ? t('enabledOn') : t('enabledOff')}</span>
+          </div>
+        </div>
 
         <div className="field">
           <span className="field-label">{t('pinLabel')}</span>
           {/*
-           * Words first, numbers second. Latitude and longitude are the one thing on this screen an owner
-           * cannot check by reading it, so the line that matters says the pin is saved and the numbers sit
-           * under it in the hint's size — and "See on map" is what actually lets them check it.
+           * Words, not numbers. Latitude and longitude are the one thing on this screen an owner cannot check
+           * by reading them, so they are not shown: "See on map" is how a pin is actually checked.
            */}
-          <div aria-live="polite">
-            <p className={`ci-pin ${pin ? 'is-set' : ''}`}>{pin ? t('pinSaved') : t('pinNotSet')}</p>
+          <p className={`ci-pin ${pin ? 'is-set' : ''}`} aria-live="polite">
+            {pin ? t('pinSaved') : t('pinNotSet')}
             {pin ? (
-              <p className="ci-pin-coords">
-                {t('pinCoords', { lat: fmt(pin.lat), lng: fmt(pin.lng) })}
-                <a className="ci-map" href={mapsUrl(pin)} target="_blank" rel="noreferrer">
-                  {t('seeOnMap')}
-                </a>
-              </p>
+              <a className="ci-map" href={mapsUrl(pin)} target="_blank" rel="noreferrer">
+                {t('seeOnMap')}
+              </a>
             ) : null}
-          </div>
+          </p>
           <div className="ci-pin-actions">
             <button type="button" className="btn ci-here" disabled={locating || busy || !writable} onClick={() => void useHere()}>
               {locating ? t('finding') : t('useHere')}
@@ -132,13 +143,18 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
             ) : null}
           </div>
           <span className="field-hint">{t('useHereHint')}</span>
-        </div>
 
-        <label className="field">
-          <span className="field-label">{t('linkLabel')}</span>
-          <input type="url" inputMode="url" value={link} placeholder={t('linkPlaceholder')} disabled={busy || !writable} onChange={(e) => linkChanged(e.target.value)} />
-          <span className="field-hint">{t('linkHint')}</span>
-        </label>
+          <details className="ci-link">
+            <summary>
+              <span>{t('linkLabel')}</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </summary>
+            <input type="url" inputMode="url" aria-label={t('linkLabel')} value={link} placeholder={t('linkPlaceholder')} disabled={busy || !writable} onChange={(e) => linkChanged(e.target.value)} />
+            <span className="field-hint">{t('linkHint')}</span>
+          </details>
+        </div>
 
         <label className="field">
           <span className="field-label">{t('radiusLabel')}</span>
@@ -165,19 +181,6 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
             {t('radiusHint')}
           </span>
         </label>
-
-        <div className="ci-switch-row">
-          <label className="switch">
-            <input type="checkbox" aria-labelledby="ci-enabled-label" checked={enabled} disabled={busy || !writable} onChange={() => setEnabled((v) => !v)} />
-            <span className="switch-track">
-              <span className="switch-thumb" />
-            </span>
-          </label>
-          <div>
-            <div id="ci-enabled-label" className="ci-switch-title">{t('enabled')}</div>
-            <span className="field-hint">{enabled ? t('enabledOn') : t('enabledOff')}</span>
-          </div>
-        </div>
 
         <div className="ci-switch-row">
           <label className="switch">

@@ -128,9 +128,6 @@
 }
 
 /* ---------- Settings › Location check-in ---------- */
-.ci-settings-intro {
-  margin: 0 0 var(--sp-4);
-}
 /*
  * Two of this form's three fields are <label>s, and a label is inline: without a display here the
  * "Or paste a maps link" caption sat BESIDE its box, and the box kept its 168px default instead of
@@ -155,16 +152,12 @@
   color: #166534;
   font-weight: 650;
 }
-/* The numbers an owner cannot check by reading: kept, at the hint's size, under the line that can be read. */
-.ci-pin-coords {
+/* The status and its one check, on a single line: the numbers behind it are not shown (nobody can read a pin). */
+.ci-pin {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0 var(--sp-3);
-  margin: 2px 0 0;
-  font-size: 0.8125rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
 }
 /*
  * The one way to check a pin. A link rather than a third button — three buttons wrap at 344px and leave
@@ -192,8 +185,42 @@
   gap: var(--sp-3);
   margin-top: var(--sp-4);
 }
+/* First on the screen: no gap above it, the card's own padding is enough. */
+.ci-switch-first {
+  margin-top: 0;
+  margin-bottom: var(--sp-4);
+}
 .ci-switch-row .switch {
   margin-top: 2px;
+}
+/* The maps-link route, folded: a disclosure row the height of a button, a chevron that turns when open. */
+.ci-link {
+  margin: var(--sp-2) 0 var(--sp-4);
+}
+.ci-link summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 650;
+  font-size: 0.9375rem;
+  color: var(--accent-deep);
+}
+.ci-link summary::-webkit-details-marker {
+  display: none;
+}
+.ci-link summary svg {
+  flex: none;
+  transition: transform 0.15s ease;
+}
+.ci-link[open] summary svg {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ci-link summary svg { transition: none; }
 }
 .ci-switch-title {
   font-weight: 620;
