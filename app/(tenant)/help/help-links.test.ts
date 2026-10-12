@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isHelpRole, supportIntro, telHref, whatsappHref } from './links';
+import { displayNumber, helpOptions, isHelpRole, supportIntro, telHref, whatsappHref } from './links';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 
@@ -72,11 +72,19 @@ describe('the screen itself', () => {
     // The one failure this screen must not have: it is what somebody opens
     // when something is already broken.
     expect(page).toMatch(/} catch \{/);
-    expect(page).toMatch(/\{!waHref && !tel \? <p className="help-none">/);
+    expect(page).toMatch(/\{options\.length === 0 \? <p className="help-none">/);
   });
 
-  it('WhatsApp is the primary action, and opens in its own tab', () => {
-    expect(page).toMatch(/className="help-action help-action-primary"[\s\S]*?rel="noopener noreferrer"/);
+  it('WhatsApp opens in its own tab, and looks the same on every option', () => {
+    expect(page).toMatch(/help-action help-action-chat[\s\S]*?rel="noopener noreferrer"/);
+    // A tinted pair of equals — no option's chat is louder than another's.
+    expect(page).not.toMatch(/firstChat|help-action-primary/);
+  });
+
+  it('the buttons say one word and carry the full sentence and the number as their name', () => {
+    expect(page).toMatch(/t\('whatsappShort'\)/);
+    expect(page).toMatch(/t\('callShort'\)/);
+    expect(page).toMatch(/aria-label=\{o\.number \? `\$\{t\('whatsapp'\)\} · \$\{o\.number\}` : t\('whatsapp'\)\}/);
   });
 
   it('is in the stylesheet order, before the clay layers', () => {
@@ -85,5 +93,105 @@ describe('the screen itself', () => {
     expect(globals.indexOf("@import './styles/99-help.css';")).toBeLessThan(
       globals.indexOf("@import './styles/100-clay-tabs.css';"),
     );
+  });
+});
+
+describe('the options the screen lists', () => {
+  const MSG = 'Hello';
+  const CALL_1 = '+919599420210';
+  const CHAT_1 = '+919599420210';
+  const CALL_2 = '+919773533899';
+  const CHAT_2 = '+919773533899';
+
+  it('the built-in numbers give four buttons: each number rings AND messages', () => {
+    const o = helpOptions({ options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: CALL_2, whatsapp: CHAT_2 }] }, MSG);
+    expect(o).toHaveLength(2);
+    expect(o[0]).toMatchObject({ n: 1, tel: 'tel:+919599420210' });
+    expect(o[0]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919599420210\?text=/);
+    expect(o[1]).toMatchObject({ n: 2, tel: 'tel:+919773533899' });
+    expect(o[1]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919773533899\?text=/);
+  });
+
+  it('an option may message a different number than it rings', () => {
+    const o = helpOptions({ options: [{ phone: '+91 90000 00001', whatsapp: '+91 90000 00002' }] }, MSG);
+    expect(o[0]).toMatchObject({ tel: 'tel:+919000000001' });
+    expect(o[0]!.whatsapp).toMatch(/wa\.me\/919000000002/);
+  });
+
+  it('offers a handset once — an operator who names one chat twice does not get two buttons into it', () => {
+    const o = helpOptions({ options: [{ phone: CALL_1, whatsapp: CHAT_2 }, { phone: CALL_2, whatsapp: CHAT_2 }] }, MSG);
+    expect(o).toHaveLength(2);
+    expect(o[0]!.whatsapp).not.toBeNull();
+    expect(o[1]!.whatsapp).toBeNull();
+    expect(o[1]!.tel).toBe('tel:+919773533899');
+  });
+
+  it('compares numbers, not spellings', () => {
+    const o = helpOptions(
+      { options: [{ phone: '+91 95994 20210', whatsapp: '+91 97735 33899' }, { phone: '0091-95994-20210', whatsapp: '919773533899' }] },
+      MSG,
+    );
+    // Same ring number, same chat handset, written four different ways: nothing left to offer, so it is dropped.
+    // (A bare national `09599420210` is deliberately NOT folded into `+91…`: that would be guessing a country.)
+    expect(o).toHaveLength(1);
+  });
+
+  it('drops an option with nothing left to offer, and renumbers', () => {
+    const o = helpOptions(
+      { options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: CALL_1, whatsapp: CHAT_1 }, { phone: '+91 90000 00009', whatsapp: '' }] },
+      MSG,
+    );
+    expect(o.map((x) => x.n)).toEqual([1, 2]);
+    expect(o[1]!.tel).toBe('tel:+919000000009');
+    expect(o[1]!.whatsapp).toBeNull();
+  });
+
+  it('an API older than `options` is one option made of phone and whatsapp', () => {
+    const o = helpOptions({ phone: CALL_1, whatsapp: CHAT_1 }, MSG);
+    expect(o).toHaveLength(1);
+    expect(o[0]).toMatchObject({ n: 1, tel: 'tel:+919599420210' });
+    expect(o[0]!.whatsapp).toMatch(/wa\.me\/919599420210/);
+  });
+
+  it('nothing configured is no options, which is what shows the plain sentence', () => {
+    expect(helpOptions(undefined, MSG)).toEqual([]);
+    expect(helpOptions({ options: [] }, MSG)).toEqual([]);
+    expect(helpOptions({ options: [{ phone: '  ', whatsapp: '' }] }, MSG)).toEqual([]);
+  });
+});
+
+describe('the options on the screen', () => {
+  const page = readFileSync(resolve(here, 'page.tsx'), 'utf8');
+
+  it('numbers them only when there is more than one, and the words exist in both languages', () => {
+    expect(page).toMatch(/const numbered = options\.length > 1;/);
+    expect(page).toMatch(/t\('option', \{ n: o\.n \}\)/);
+    const en = JSON.parse(readFileSync(resolve(here, '../../../messages/en.json'), 'utf8')).help;
+    const hi = JSON.parse(readFileSync(resolve(here, '../../../messages/hi.json'), 'utf8')).help;
+    expect(en.option).toBe('Option {n}');
+    expect(hi.option).toContain('{n}');
+  });
+});
+
+describe('the number on the screen', () => {
+  it('groups an Indian mobile number the way it is said', () => {
+    expect(displayNumber('+919599420210')).toBe('+91 95994 20210');
+    expect(displayNumber('+91 95994 20210')).toBe('+91 95994 20210');
+    expect(displayNumber('0091-95994-20210')).toBe('+91 95994 20210');
+  });
+
+  it('shows anything else as typed, trimmed — never a confident wrong grouping', () => {
+    expect(displayNumber('  +1 415 555 0100 ')).toBe('+1 415 555 0100');
+    expect(displayNumber('1800-123-456')).toBe('1800-123-456');
+  });
+
+  it('is null for nothing, not an empty string', () => {
+    expect(displayNumber(undefined)).toBeNull();
+    expect(displayNumber('   ')).toBeNull();
+  });
+
+  it('is the number to ring, falling back to the chat number when there is none to ring', () => {
+    expect(helpOptions({ options: [{ phone: '+919599420210', whatsapp: '+919773533899' }] }, 'm')[0]!.number).toBe('+91 95994 20210');
+    expect(helpOptions({ options: [{ phone: '', whatsapp: '+919773533899' }] }, 'm')[0]!.number).toBe('+91 97735 33899');
   });
 });

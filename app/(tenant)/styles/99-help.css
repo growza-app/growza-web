@@ -1,17 +1,16 @@
 /*
  * Jira GRW-564 — the help screen.
  *
- * Two actions and two sentences, laid out at 344px first. The buttons are
- * 56px rather than the 44px minimum because this is the screen somebody opens
- * one-handed while a client waits, and because there are only two of them —
- * the space is free.
+ * Laid out at 344px first, and kept small: this is the first thing on the screen and what comes after it is
+ * the second, so the people to ask take one short card, not the page. Each option is one line that says who
+ * and which number, and the two ways to reach them under it — 44px buttons, side by side, one word each.
  */
 
 .help-card {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-5);
+  padding: var(--sp-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -19,65 +18,91 @@
 
 .help-lede {
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 0.9375rem;
+  line-height: 1.45;
   color: var(--text);
+}
+
+.help-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.help-option + .help-option,
+.help-lede + .help-option {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.help-option-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.help-option-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The number is the thing to read here, so it is the heaviest text in the row. */
+.help-option-number {
+  margin-left: auto;
+  font-size: 1rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.help-option-actions {
+  display: flex;
+  gap: var(--sp-2);
 }
 
 .help-action {
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  min-height: 56px;
-  padding: 0 var(--sp-4);
-  border: 1px solid var(--line);
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  /* A grey tint rather than an outline: on a white card the outline was too faint to read as a button. */
+  background: var(--slate-soft);
   color: var(--text);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 650;
   text-decoration: none;
 }
 
-/* WhatsApp carries the salon, branch and role with it, so it is the one to
-   reach for first — and the only filled button, because two filled buttons
-   side by side is two primary actions and therefore none. */
-.help-action-primary {
-  border-color: transparent;
-  background: var(--accent-deep);
-  color: #fff;
+/* WhatsApp carries the salon, branch and role with it, so it is the one to reach for — tinted green, the
+   same on every option: a calm pair of equals, not a loud button and a quiet one. */
+.help-action-chat {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
 }
 
 .help-action svg {
   /* rem, not px: the icon grows with the words beside it when the reader
      turns their text size up (Jira GRW-481). */
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.125rem;
+  height: 1.125rem;
   flex: none;
 }
 
 .help-reply,
 .help-none {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--muted);
   text-align: center;
-}
-
-/* Wide enough for the two actions to sit side by side; below this they stack,
-   which is the 344px case and the common one. */
-@media (min-width: 560px) {
-  .help-card {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-3);
-  }
-
-  .help-lede,
-  .help-reply,
-  .help-none {
-    grid-column: 1 / -1;
-  }
 }

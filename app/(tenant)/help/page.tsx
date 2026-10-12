@@ -1,9 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
+import type { Me } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
 import { IconPhone, IconWhatsApp } from '../components/icons';
-import { isHelpRole, ROLE_KEY, supportIntro, telHref, whatsappHref } from './links';
+import { helpOptions, isHelpRole, ROLE_KEY, supportIntro } from './links';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,16 +39,14 @@ export default async function HelpPage() {
    */
   const t = await getTranslations('help');
 
-  let phone: string | undefined;
-  let whatsapp: string | undefined;
+  let support: NonNullable<Me['support']> | undefined;
   /** What the pre-filled message names, so support need not ask. Empty when the API cannot say. */
   let salon: string | undefined;
   let branch: string | null | undefined;
   let role: string | undefined;
   try {
     const me = await api.me();
-    phone = me.support?.phone;
-    whatsapp = me.support?.whatsapp;
+    support = me.support;
     salon = me.tenant?.name;
     /*
      * `member.locationName` FIRST, and not behind `branchCount > 1`.
@@ -74,8 +73,14 @@ export default async function HelpPage() {
      The URL rules themselves live in ./links.ts, with their tests. */
   const roleName = isHelpRole(role) ? t(ROLE_KEY[role]) : null;
   const intro = supportIntro({ salon, branch, roleName });
-  const waHref = whatsappHref(whatsapp, intro ? t('message.withDetails', { details: intro }) : t('message.plain'));
-  const tel = telHref(phone);
+  /*
+   * Jira GRW-564 — each option is its own number to ring and its own number to message. The links are decided
+   * in ./links.ts: a handset is offered once however many options name it, and an option with nothing left
+   * to offer is dropped.
+   */
+  const options = helpOptions(support, intro ? t('message.withDetails', { details: intro }) : t('message.plain'));
+  /* One option reads exactly as the screen always did — a heading for the only choice would be noise. */
+  const numbered = options.length > 1;
 
   return (
     <>
@@ -84,23 +89,40 @@ export default async function HelpPage() {
         <div className="help-card">
           <p className="help-lede">{t('lede')}</p>
 
-          {waHref ? (
-            <a className="help-action help-action-primary" href={waHref} target="_blank" rel="noopener noreferrer">
-              <IconWhatsApp />
-              {t('whatsapp')}
-            </a>
-          ) : null}
+          {options.map((o) => (
+            <section key={o.n} className="help-option" aria-label={numbered ? t('option', { n: o.n }) : undefined}>
+              <div className="help-option-head">
+                {numbered ? <h2 className="help-option-title">{t('option', { n: o.n })}</h2> : null}
+                {o.number ? <span className="help-option-number">{o.number}</span> : null}
+              </div>
+              <div className="help-option-actions">
+                {/* The full sentence and the number are the accessible name; the button itself says one word. */}
+                {o.whatsapp ? (
+                  <a
+                    className="help-action help-action-chat"
+                    href={o.whatsapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={o.number ? `${t('whatsapp')} · ${o.number}` : t('whatsapp')}
+                  >
+                    <IconWhatsApp />
+                    {t('whatsappShort')}
+                  </a>
+                ) : null}
 
-          {tel ? (
-            <a className="help-action" href={tel}>
-              <IconPhone />
-              {t('call')}
-            </a>
-          ) : null}
+                {o.tel ? (
+                  <a className="help-action" href={o.tel} aria-label={o.number ? `${t('call')} · ${o.number}` : t('call')}>
+                    <IconPhone />
+                    {t('callShort')}
+                  </a>
+                ) : null}
+              </div>
+            </section>
+          ))}
 
           {/* Nothing configured, or the API is unreachable. Says so plainly
               rather than showing an empty card the reader has to interpret. */}
-          {!waHref && !tel ? <p className="help-none">{t('none')}</p> : null}
+          {options.length === 0 ? <p className="help-none">{t('none')}</p> : null}
 
           <p className="help-reply">{t('reply')}</p>
         </div>

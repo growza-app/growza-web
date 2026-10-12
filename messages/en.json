@@ -2439,6 +2439,9 @@
     "lede": "Something not working, or not sure what to do? Tell us and we will sort it out.",
     "whatsapp": "Message us on WhatsApp",
     "call": "Call us",
+    "whatsappShort": "WhatsApp",
+    "callShort": "Call",
+    "option": "Option {n}",
     "reply": "We reply as soon as we can.",
     "none": "No support number is set up yet. Ask the salon owner to get in touch with Growza.",
     "message": {
