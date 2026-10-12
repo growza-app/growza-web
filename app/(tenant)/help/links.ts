@@ -72,9 +72,10 @@ export interface HelpOption {
  * An option is a number to ring and a number to message, answered by whoever holds them. Two things are
  * decided here rather than in the page, because they are rules with ways to get wrong:
  *
- * - **A handset is offered once.** Option 2's number is often option 1's chat (the built-in defaults are
- *   exactly that), and two WhatsApp buttons into one conversation is not two choices. The first option to
- *   name a handset keeps it; a later option that repeats it simply does not draw that button.
+ * - **A handset is offered once.** Each option normally has its own number, so each draws its own two
+ *   buttons. But the numbers are configuration, and an operator can name one handset twice; two WhatsApp
+ *   buttons into one conversation is not two choices. The first option to name a handset keeps it; a later
+ *   option that repeats it simply does not draw that button.
  * - **An option with nothing left to offer is dropped**, and the rest renumber.
  *
  * An API older than `options` sends only `phone` and `whatsapp`; that is one option.

@@ -93,24 +93,27 @@ describe('the screen itself', () => {
 describe('the options the screen lists', () => {
   const MSG = 'Hello';
   const CALL_1 = '+919599420210';
-  const CHAT_1 = '+919773533899';
+  const CHAT_1 = '+919599420210';
   const CALL_2 = '+919773533899';
+  const CHAT_2 = '+919773533899';
 
-  it('lists each option with its own number to ring and its own number to message', () => {
-    const o = helpOptions(
-      { options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: '+91 90000 00003', whatsapp: '+91 90000 00004' }] },
-      MSG,
-    );
+  it('the built-in numbers give four buttons: each number rings AND messages', () => {
+    const o = helpOptions({ options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: CALL_2, whatsapp: CHAT_2 }] }, MSG);
     expect(o).toHaveLength(2);
     expect(o[0]).toMatchObject({ n: 1, tel: 'tel:+919599420210' });
-    expect(o[0]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919773533899\?text=/);
-    expect(o[1]).toMatchObject({ n: 2, tel: 'tel:+919000000003' });
-    expect(o[1]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919000000004\?text=/);
+    expect(o[0]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919599420210\?text=/);
+    expect(o[1]).toMatchObject({ n: 2, tel: 'tel:+919773533899' });
+    expect(o[1]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919773533899\?text=/);
   });
 
-  it('offers a handset once — option 2 repeating option 1\'s chat does not draw a second button into it', () => {
-    // The built-in defaults: option 2 rings and messages +91 97735 33899, which is also option 1's chat.
-    const o = helpOptions({ options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: CALL_2, whatsapp: CALL_2 }] }, MSG);
+  it('an option may message a different number than it rings', () => {
+    const o = helpOptions({ options: [{ phone: '+91 90000 00001', whatsapp: '+91 90000 00002' }] }, MSG);
+    expect(o[0]).toMatchObject({ tel: 'tel:+919000000001' });
+    expect(o[0]!.whatsapp).toMatch(/wa\.me\/919000000002/);
+  });
+
+  it('offers a handset once — an operator who names one chat twice does not get two buttons into it', () => {
+    const o = helpOptions({ options: [{ phone: CALL_1, whatsapp: CHAT_2 }, { phone: CALL_2, whatsapp: CHAT_2 }] }, MSG);
     expect(o).toHaveLength(2);
     expect(o[0]!.whatsapp).not.toBeNull();
     expect(o[1]!.whatsapp).toBeNull();
@@ -141,7 +144,7 @@ describe('the options the screen lists', () => {
     const o = helpOptions({ phone: CALL_1, whatsapp: CHAT_1 }, MSG);
     expect(o).toHaveLength(1);
     expect(o[0]).toMatchObject({ n: 1, tel: 'tel:+919599420210' });
-    expect(o[0]!.whatsapp).toMatch(/wa\.me\/919773533899/);
+    expect(o[0]!.whatsapp).toMatch(/wa\.me\/919599420210/);
   });
 
   it('nothing configured is no options, which is what shows the plain sentence', () => {
