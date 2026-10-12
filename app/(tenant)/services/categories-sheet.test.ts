@@ -16,7 +16,7 @@ import { CategoryDeleteCard } from './CategoryDeleteCard';
  * Jira GRW-428 — the category sheet, rendered from the real component in both languages.
  *
  * What is worth pinning here is not that it renders: it is the counting, which is the one place this screen can
- * mislead. `serviceCount` includes retired services because it is what a delete sets loose; `activeCount` is
+ * mislead. `serviceCount` includes retired services because it is what a delete takes with it; `activeCount` is
  * what is on the menu. A row that showed only the active count would promise an owner that deleting a category
  * frees three services when it frees five.
  */
@@ -107,7 +107,7 @@ const detail = (locale: 'en' | 'hi', services: ServiceAdmin[]) =>
   );
 
 describe('the categories sheet', () => {
-  it('counts every service a delete would set loose, retired ones included', () => {
+  it('counts every service a delete would take with it, retired ones included', () => {
     const html = sheet('en', [
       cat({ id: 'a', name: 'Hair', serviceCount: 10, activeCount: 10 }),
       cat({ id: 'b', name: 'Bridal', serviceCount: 5, activeCount: 3 }),
@@ -311,6 +311,14 @@ describe('picking categories to delete', () => {
     expect(html).not.toContain('Select all');
   });
 
+  /** Pressing Edit used to take Delete off the title line, which an owner read as the button being gone. */
+  it('keeps Delete on the title line while Edit is on', () => {
+    const html = sheet('en', [cat({ name: 'Hair' }), cat({ id: 'b', name: 'Nails' })], [], 'edit');
+    const title = html.slice(html.indexOf('svc-cat-title'), html.indexOf('modal-body'));
+    expect(title).toContain('>Delete<');
+    expect(title).toContain('>Done<');
+  });
+
   it('offers no Delete and no Edit when there is nothing to act on', () => {
     const html = sheet('en', []);
     expect(html).not.toContain('>Delete<');
@@ -381,25 +389,55 @@ describe('picking categories to delete', () => {
   });
 
   /**
-   * "in it" / "in them" follows the number of CATEGORIES, "stay" / "stays" and "it" / "them" the number of
-   * SERVICES — two different counts in one sentence. Seven services under one category read "in them" for as
-   * long as the plural was keyed on the services alone.
+   * "in it" / "in them" follows the number of CATEGORIES, "is" / "are" and "The 1 service" the number of
+   * SERVICES — two different counts in one sentence.
    */
-  it('agrees "it / them" with the categories and "stay / stays" with the services', () => {
+  it('agrees "it / them" with the categories and "is / are" with the services', () => {
     const t = createTranslator({ locale: 'en', messages: en, namespace: 'services.categories' });
-    expect(t('deleteCatsKeeps', { count: 7, categories: 1 })).toMatch(/^The 7 services in it stay on your list/);
-    expect(t('deleteCatsKeeps', { count: 1, categories: 3 })).toMatch(/^The 1 service in them stays on your list/);
-    expect(t('deleteCatsKeeps', { count: 1, categories: 3 })).toContain('will not see it until you file it');
-    expect(t('deleteCatsKeeps', { count: 9, categories: 2 })).toContain('will not see them until you file them');
+    expect(t('deleteCatsGoes', { count: 7, categories: 1 })).toMatch(/^The 7 services in it are deleted too/);
+    expect(t('deleteCatsGoes', { count: 1, categories: 3 })).toMatch(/^The 1 service in them is deleted too/);
   });
 
-  it('says what a delete costs, and it is not the services', () => {
+  /**
+   * Jira GRW-592 — deleting a category deletes what is in it. The first build kept the services ("they stay
+   * on your list") and the first owner to use it said that was not what delete means. The wording must not
+   * promise the old behaviour, and must say it cannot be undone.
+   */
+  it('says the services go with their category, and that it is final', () => {
     const copy = en.services.categories;
-    expect(copy.deleteCatsKeeps).toContain('on your list');
-    expect(copy.deleteCatsKeeps).toContain('clients will not see');
-    for (const wrong of ['deleted for good', 'cannot be brought back']) {
-      expect(copy.deleteCatsKeeps, wrong).not.toContain(wrong);
+    expect(copy.deleteCatsGoes).toContain('deleted too');
+    expect(copy.deleteCatsGoes).toContain('cannot be undone');
+    expect(copy.pickHint).toContain('deleted too');
+    for (const old of ['stay on your list', 'stays on your list', 'with no category']) {
+      expect(copy.deleteCatsGoes, old).not.toContain(old);
+      expect(copy.pickHint, old).not.toContain(old);
     }
+    const t = createTranslator({ locale: 'en', messages: en, namespace: 'services.categories' });
+    expect(t('deleteCatsWithServices', { categories: 3, count: 14 })).toBe('Delete 3 categories and 14 services');
+    expect(t('deleteCatsWithServices', { categories: 1, count: 1 })).toBe('Delete 1 category and 1 service');
+  });
+
+  /**
+   * Arming the delete has to LOOK different, not just say something: the footer's outline button turns into a
+   * tinted panel that names what goes and a solid red button. A sentence over an unchanged button was read as
+   * a caption, and the owner could not tell anything had happened.
+   */
+  it('turns the arming button into a solid confirm inside a named warning panel', () => {
+    const src = readFileSync(join(__dirname, 'CategoriesSheet.tsx'), 'utf8');
+    const confirm = src.slice(src.indexOf('svc-cat-confirm-group'));
+    expect(confirm).toContain('btn-danger-solid');
+    expect(confirm).toContain('svc-cat-confirm-names');
+    expect(confirm).toContain('<IconAlert />');
+    const t = createTranslator({ locale: 'en', messages: en, namespace: 'services.categories' });
+    expect(t('deleteCatsMore', { count: 2 })).toBe('and 2 more');
+  });
+
+  it('removes the services before the categories, so a held service keeps its category', () => {
+    const src = readFileSync(join(__dirname, 'CategoriesSheet.tsx'), 'utf8');
+    const del = src.slice(src.indexOf('const deletePicked'));
+    expect(del.indexOf('api.deleteServices')).toBeGreaterThan(-1);
+    expect(del.indexOf('api.deleteServices')).toBeLessThan(del.indexOf('api.deleteCategory'));
+    expect(del).toContain('keep.has(c.id)');
   });
 });
 

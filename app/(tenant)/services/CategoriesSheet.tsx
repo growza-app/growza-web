@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
-import { IconCheck, IconChevronRight, IconPlus, IconSearch } from '../components/icons';
+import { IconAlert, IconCheck, IconChevronRight, IconPlus, IconSearch } from '../components/icons';
 import { CategoryRow, type CategoryRowMode } from './CategoryRow';
 import { CategoryServices } from './CategoryServices';
 import { FILTER_FROM, matchesFilter, movedOrder, unsorted, worthOrdering } from './category-order';
@@ -14,6 +14,13 @@ import { useDialog } from '../../shared/a11y/useDialog';
  * and React 19 mounts at `document` too, so `stopPropagation` — which only stops the event travelling on — does
  * nothing; the immediate form is what keeps the later listener from firing.
  */
+/** What `api.deleteServices` reports for a service it would not delete, and why. */
+type BlockedService = {
+  id: string;
+  name: string;
+  blockers: { offers: Array<{ title: string }>; questions: Array<{ label: string }>; waitingInQueue: number };
+};
+
 const keepFromDialog = (e: { nativeEvent: Event }) => e.nativeEvent.stopImmediatePropagation();
 
 /**
@@ -87,6 +94,8 @@ export function CategoriesSheet({
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
   /** Jira GRW-592 — the confirmation, shown inside the sheet rather than on a layer above it. */
   const [confirming, setConfirming] = useState(false);
+  /** Jira GRW-592 — services a delete could not remove (a package or a queue holds them), and so their category stays. */
+  const [blocked, setBlocked] = useState<BlockedService[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLInputElement>(null);
   const addRef = useRef<HTMLInputElement>(null);
@@ -197,34 +206,49 @@ export function CategoriesSheet({
   const move = (index: number, by: -1 | 1) => moveTo(index, index + by);
 
   /**
-   * Jira GRW-592 — deletes the ticked categories, one call each, and keeps whichever ones succeeded.
+   * Jira GRW-592 — deletes the ticked categories AND the services filed under them.
    *
-   * Sequential and not `Promise.all`: these are deletes, and a half-failed batch has to leave the screen
-   * showing exactly what is still there. The first failure stops the run and says so; the rows that went
-   * are already gone from the list, so a second press retries only the rest.
+   * Deleting a category deletes what is in it: an owner who picks "Hair" off the list does not want eighteen
+   * hair services left behind in a "Not in a category" pile they then have to clear one by one. (The first
+   * build released them instead, and the first person to use it said so within the hour.)
+   *
+   * Services first, then categories. A service a package or a waiting queue still holds is not deleted — the
+   * server reports it as `blocked` — and its category is then NOT empty, so it stays and the sheet says why,
+   * exactly as the single-category card does. Everything else goes. Categories are removed one call at a
+   * time and not in parallel: these are deletes, and a half-failed batch has to leave the screen showing
+   * what is still there.
    */
   const deletePicked = async () => {
     // Only what is ticked AND on screen: the confirmation named that count, and nothing hidden is deleted.
-    const ids = pickedRows.map((c) => c.id);
-    if (ids.length === 0) return;
+    const picks = pickedRows;
+    if (picks.length === 0) return;
+    const pickedIds = new Set(picks.map((c) => c.id));
+    const serviceIds = services.filter((sv) => sv.categoryId && pickedIds.has(sv.categoryId)).map((sv) => sv.id);
     setBusy(true);
     setError(null);
+    setBlocked([]);
     const gone: string[] = [];
+    let stuck: BlockedService[] = [];
     try {
-      for (const id of ids) {
-        await api.deleteCategory(branchId, id);
-        gone.push(id);
+      if (serviceIds.length > 0) stuck = (await api.deleteServices(branchId, serviceIds)).blocked;
+      const stuckIds = new Set(stuck.map((b) => b.id));
+      const keep = new Set(services.filter((sv) => stuckIds.has(sv.id)).map((sv) => sv.categoryId));
+      for (const c of picks) {
+        if (keep.has(c.id)) continue;
+        await api.deleteCategory(branchId, c.id);
+        gone.push(c.id);
       }
-      setMode('read');
+      if (stuck.length > 0) setBlocked(stuck);
+      else setMode('read');
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t('errors.failed'));
     } finally {
+      // Services may already be gone even if a later call failed: the list behind must reload either way.
       if (gone.length > 0) {
         setRows((prev) => prev.filter((c) => !gone.includes(c.id)));
         setPicked((prev) => new Set([...prev].filter((id) => !gone.includes(id))));
-        // The services they held are loose now, and the sheet is the only screen that says so.
-        onChanged();
       }
+      if (gone.length > 0 || serviceIds.length > 0) onChanged();
       setConfirming(false);
       setBusy(false);
     }
@@ -233,6 +257,7 @@ export function CategoriesSheet({
   /** Back to the list, with nothing half-done left behind it. */
   const toRead = () => {
     setError(null);
+    setBlocked([]);
     setMode('read');
     setEditingId(null);
     setPicked(new Set());
@@ -268,8 +293,14 @@ export function CategoriesSheet({
    * confirmation and not deleted — what the owner can see ticked is exactly what goes.
    */
   const pickedRows = shown.filter((c) => picked.has(c.id));
-  /** What the confirmation has to promise: the services that come loose, not ones that are deleted. */
-  const releasing = pickedRows.reduce((n, c) => n + c.serviceCount, 0);
+  /** What the confirmation has to promise: the services that go with them. */
+  const pickedIds = new Set(pickedRows.map((c) => c.id));
+  const goingCount = services.filter((sv) => sv.categoryId && pickedIds.has(sv.categoryId)).length;
+  /** The one label the footer and the confirmation both use, so what is pressed is what was read. */
+  const deleteLabel =
+    goingCount > 0
+      ? t('deleteCatsWithServices', { categories: pickedRows.length, count: goingCount })
+      : t('deleteCatsAction', { count: pickedRows.length });
 
   return (
     <>
@@ -334,23 +365,24 @@ export function CategoriesSheet({
             ) : (
               rows.length > 0 && (
                 <>
-                  {/* Jira GRW-592 — the way into picking, beside Edit, where an owner looks for an action. */}
-                  {!editing && (
-                    <button
-                      type="button"
-                      ref={deleteRef}
-                      className="svc-cat-editbtn is-danger"
-                      disabled={busy}
-                      onClick={() => {
-                        setError(null);
-                        setEditingId(null);
-                        setPicked(new Set());
-                        setMode('pick');
-                      }}
+                  {/* Jira GRW-592 — the way into picking, beside Edit, where an owner looks for an action.
+                      It stays while Edit is on: an action that disappears the moment you open the other one reads
+                      as a bug ("the delete button is gone"), and pressing it from Edit just changes the mode. */}
+                  <button
+                    type="button"
+                    ref={deleteRef}
+                    className="svc-cat-editbtn is-danger"
+                    disabled={busy}
+                    onClick={() => {
+                      setError(null);
+                      setBlocked([]);
+                      setEditingId(null);
+                      setPicked(new Set());
+                      setMode('pick');
+                    }}
                     >
-                      {t('delete')}
+                    {t('delete')}
                     </button>
-                  )}
                   <button
                     type="button"
                     className="svc-cat-editbtn"
@@ -417,6 +449,25 @@ export function CategoriesSheet({
             {error && (
               <div role="alert" className="field-error" style={{ marginBottom: 10 }}>
                 {error}
+              </div>
+            )}
+
+            {blocked.length > 0 && (
+              <div role="alert" className="svc-cat-blocked">
+                <p className="svc-cat-blocked-head">{t('blockedHead', { count: blocked.length })}</p>
+                <ul>
+                  {blocked.map((b) => (
+                    <li key={b.id}>
+                      <b>{b.name}</b> —{' '}
+                      {b.blockers.offers.length > 0
+                        ? t('blockedByOffer', { offers: b.blockers.offers.map((o) => o.title).join(', ') })
+                        : b.blockers.questions.length > 0
+                          ? t('blockedByQuestion', { questions: b.blockers.questions.map((q) => q.label).join(', ') })
+                          : t('blockedByQueue')}
+                    </li>
+                  ))}
+                </ul>
+                <p className="svc-cat-blocked-foot">{t('blockedFoot')}</p>
               </div>
             )}
 
@@ -613,14 +664,31 @@ export function CategoriesSheet({
             */}
             {confirming ? (
               <div className="svc-cat-confirm-group" role="alertdialog" aria-labelledby="svc-cat-confirm-title" aria-describedby="svc-cat-confirm-detail">
-                <p id="svc-cat-confirm-title" className="svc-cat-confirm-body">
-                  {t('deleteCatsTitle', { count: pickedRows.length })}
+                {/*
+                  The state change has to be seen, not just read: a tinted panel with its own icon, the
+                  categories NAMED (the list behind may have scrolled them out of view), and the one button
+                  that does it drawn solid. The arming button in the footer was an outline; this is what
+                  pressing it turns into, so the two cannot be mistaken for each other.
+                */}
+                <div className="svc-cat-confirm-head">
+                  <span className="svc-cat-confirm-icon" aria-hidden="true">
+                    <IconAlert />
+                  </span>
+                  <p id="svc-cat-confirm-title" className="svc-cat-confirm-body">
+                    {t('deleteCatsTitle', { count: pickedRows.length })}
+                  </p>
+                </div>
+                <p className="svc-cat-confirm-names">
+                  {pickedRows.slice(0, 3).map((c) => c.name).join(', ')}
+                  {pickedRows.length > 3 ? ` ${t('deleteCatsMore', { count: pickedRows.length - 3 })}` : ''}
                 </p>
                 <p id="svc-cat-confirm-detail" className="svc-cat-confirm-detail">
-                  {releasing === 0 ? t('deleteCatsEmpty', { count: pickedRows.length }) : t('deleteCatsKeeps', { count: releasing, categories: pickedRows.length })}
+                  {goingCount === 0
+                    ? t('deleteCatsEmpty', { count: pickedRows.length })
+                    : t('deleteCatsGoes', { count: goingCount, categories: pickedRows.length })}
                 </p>
-                <button type="button" className="btn btn-ghost btn-danger svc-cat-action" disabled={busy} onClick={() => void deletePicked()}>
-                  {busy ? t('working') : t('deleteCatsAction', { count: pickedRows.length })}
+                <button type="button" className="btn btn-danger-solid svc-cat-action" disabled={busy} onClick={() => void deletePicked()}>
+                  {busy ? t('working') : deleteLabel}
                 </button>
                 <button
                   type="button"
@@ -651,7 +719,7 @@ export function CategoriesSheet({
                     disabled={busy || pickedRows.length === 0}
                     onClick={() => setConfirming(true)}
                   >
-                    {pickedRows.length === 0 ? t('pickToDelete') : t('deleteCatsAction', { count: pickedRows.length })}
+                    {pickedRows.length === 0 ? t('pickToDelete') : deleteLabel}
                   </button>
                 )}
                 <button type="button" className="btn btn-ghost svc-cat-action" disabled={busy} onClick={picking ? toRead : onClose}>

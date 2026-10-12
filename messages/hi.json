@@ -1076,10 +1076,12 @@
       "pickedCount": "{count, plural, one {{total} में से # चुनी गई} other {{total} में से # चुनी गईं}}",
       "deleteCatsAction": "{count, plural, one {# श्रेणी हटाएँ} other {# श्रेणियाँ हटाएँ}}",
       "deleteCatsTitle": "{count, plural, one {# श्रेणी हटाएँ?} other {# श्रेणियाँ हटाएँ?}}",
-      "deleteCatsKeeps": "{categories, plural, one {उसमें} other {उनमें}} की {count} सेवाएँ आपकी सूची में बनी रहेंगी, पर बिना श्रेणी के — जब तक आप उन्हें किसी श्रेणी में नहीं डालते, ग्राहक उन्हें नहीं देखेंगे।",
+      "deleteCatsMore": "और {count}",
+      "deleteCatsGoes": "{categories, plural, one {उसमें} other {उनमें}} की {count} सेवाएँ भी हट जाएँगी। इसे वापस नहीं किया जा सकता — बनी हुई बुकिंग में सेवा का नाम और कीमत वैसी ही रहती है।",
+      "deleteCatsWithServices": "{categories, plural, one {# श्रेणी} other {# श्रेणियाँ}} और {count, plural, one {# सेवा} other {# सेवाएँ}} हटाएँ",
       "deleteCatsEmpty": "{count, plural, one {उसमें} other {उनमें}} कुछ भी दर्ज नहीं है।",
       "pickToDelete": "चुनें कि क्या हटाना है",
-      "pickHint": "जिन श्रेणियों को हटाना है उन्हें टिक करें। उनकी सेवाएँ आपकी सूची में बनी रहेंगी।"
+      "pickHint": "जिन श्रेणियों को हटाना है उन्हें टिक करें। उनकी सेवाएँ भी हट जाएँगी।"
     },
     "delete": "मिटाएँ",
     "deleteTitle": "{name} मिटाएँ?",

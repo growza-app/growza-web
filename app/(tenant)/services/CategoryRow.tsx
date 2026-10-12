@@ -133,8 +133,8 @@ export function CategoryRow({
         ) : (
           <>
             {/*
-              `serviceCount` and not `activeCount`: it is what a delete sets loose, and a row promising
-              three when it would free five is the one way this screen can mislead. Which is exactly why
+              `serviceCount` and not `activeCount`: it is what a delete takes with it, and a row promising
+              three when it would remove five is the one way this screen can mislead. Which is exactly why
               it stays on screen in `pick`, where that number is the consequence being decided.
             */}
             <span className="svc-cat-meta">
