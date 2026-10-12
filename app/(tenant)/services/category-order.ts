@@ -39,3 +39,28 @@ export function worthOrdering(rows: readonly unknown[]): boolean {
 export function unsorted<T extends { categoryId: string | null }>(services: readonly T[]): T[] {
   return services.filter((s) => s.categoryId === null);
 }
+
+/**
+ * Jira GRW-591 — how many categories it takes before the list stops being scannable and earns a search
+ * field. Twelve is roughly a phone screen and a half of 53px rows: below it, looking is faster than typing.
+ */
+export const FILTER_FROM = 12;
+
+/**
+ * Whether a category's name matches what the owner typed.
+ *
+ * Case-insensitive, accent-insensitive and on any WORD of the name, not just its start: a salon looking for
+ * "Men's Hair Keratin" types "keratin", and one looking for "Facial" should not have to know whether the
+ * owner who imported the menu called it "Facial" or "Fruit facial". Spaces in the term are each matched in
+ * turn, so "men ker" finds it too.
+ */
+export function matchesFilter(name: string, term: string): boolean {
+  const fold = (s: string) =>
+    s
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase();
+  const hay = fold(name);
+  const words = fold(term).split(/\s+/).filter(Boolean);
+  return words.length > 0 && words.every((w) => hay.includes(w));
+}

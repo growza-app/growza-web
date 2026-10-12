@@ -43,7 +43,11 @@ const sheet = (locale: 'en' | 'hi', rows: ServiceCategoryAdmin[], services: Serv
  * it, which a static render cannot do, so the row is driven directly: it is the component that holds the
  * difference between the two states anyway.
  */
-const row = (locale: 'en' | 'hi', over: Partial<ServiceCategoryAdmin>, state: Partial<{ editing: boolean; orderable: boolean; atTop: boolean; atBottom: boolean }> = {}) =>
+const row = (
+  locale: 'en' | 'hi',
+  over: Partial<ServiceCategoryAdmin>,
+  state: Partial<{ editing: boolean; orderable: boolean; atTop: boolean; atBottom: boolean; selected: boolean }> = {},
+) =>
   wrap(
     locale,
     createElement(CategoryRow, {
@@ -54,6 +58,8 @@ const row = (locale: 'en' | 'hi', over: Partial<ServiceCategoryAdmin>, state: Pa
       atTop: state.atTop ?? false,
       atBottom: state.atBottom ?? false,
       dragging: false,
+      selected: state.selected ?? false,
+      onToggle: () => {},
       onOpen: () => {},
       onRename: () => {},
       onMove: () => {},
@@ -114,7 +120,6 @@ describe('the categories sheet', () => {
   it('offers to add a category when the branch has none', () => {
     const html = sheet('en', []);
     expect(html).toContain('You have no categories yet');
-    expect(html).toContain('New category name');
   });
 
   /**
@@ -163,8 +168,51 @@ describe('the categories sheet', () => {
     expect(html).toContain('श्रेणियाँ');
     expect(html).toContain('10 सेवाएँ');
     expect(html).toContain('अभी कोई सेवा नहीं');
-    expect(html).toContain('नई श्रेणी का नाम');
     for (const s of ['New category name', 'No services yet', '10 services']) expect(html, s).not.toContain(s);
+  });
+});
+
+/** Jira GRW-591 — what a sheet with a real salon's worth of categories shows, and what it no longer does. */
+describe('a long list of categories', () => {
+  const many = (n: number) => Array.from({ length: n }, (_, i) => cat({ id: `c${i}`, name: `Category ${i}` }));
+
+  it('offers a search field once there are a dozen, and not before', () => {
+    expect(sheet('en', many(11))).not.toContain('Find a category');
+    expect(sheet('en', many(12))).toContain('Find a category');
+  });
+
+  /** By a dozen the owner knows what a category is, and the line is in the way of the field that finds one. */
+  it('drops the subtitle when the search field arrives', () => {
+    expect(sheet('en', many(11))).toContain('The groups your services are listed under');
+    expect(sheet('en', many(12))).not.toContain('The groups your services are listed under');
+  });
+
+  it('adds from a row at the foot of the list, not a field standing open under it', () => {
+    const html = sheet('en', many(3));
+    expect(html).toContain('svc-cat-addrow');
+    expect(html).toContain('New category');
+    // The field, its Add button and the footnote about empty categories are all behind that row now.
+    expect(html).not.toContain('New category name');
+    expect(html).not.toContain('stays hidden from clients');
+  });
+});
+
+/** Jira GRW-591 — the services filed under nothing: one row, and a list only when it is asked for. */
+describe('the services in no category', () => {
+  const loose = [svc({ id: 'l1', name: 'Head massage', categoryId: null }), svc({ id: 'l2', name: 'Threading', categoryId: null })];
+
+  it('is one row that says how many and that clients cannot see them', () => {
+    const html = sheet('en', [cat({})], loose);
+    expect(html).toContain('Not in a category');
+    expect(html).toContain('2 services · hidden from clients');
+    expect(html).toContain('aria-expanded="false"');
+    // Closed: it does not print every loose service under the list it is already longer than.
+    expect(html).not.toContain('Head massage');
+    expect(html).not.toContain('File these under a category');
+  });
+
+  it('is not there at all when every service has a category', () => {
+    expect(sheet('en', [cat({})], [svc({})])).not.toContain('Not in a category');
   });
 });
 
@@ -220,6 +268,48 @@ describe('a category row', () => {
     const html = row('hi', { name: 'Hair' }, { editing: true });
     expect(html).toContain('Hair का नाम बदलें');
     expect(html).not.toContain('Rename Hair');
+  });
+});
+
+/**
+ * Jira GRW-592 — deleting categories in bulk.
+ *
+ * The one thing this screen must not get wrong: deleting a category does NOT delete the services in it.
+ * The server releases them — they stay on the owner's list with no category, which hides them from clients
+ * until they are filed again. A confirmation that said "deleted for good" would cost an owner a menu they
+ * still have, so the wording is pinned here, not just the buttons.
+ */
+describe('picking categories to delete', () => {
+  it('shows no tick and no delete until Edit is tapped', () => {
+    const html = sheet('en', [cat({ name: 'Hair' }), cat({ id: 'b', name: 'Nails' })]);
+    expect(html).not.toContain('svc-cat-tick');
+    expect(html).not.toContain('Select all');
+    expect(html).not.toContain('Delete');
+    expect(html).toContain('Close');
+  });
+
+  it('gives a row its own tick, separate from the name that renames it', () => {
+    const html = row('en', { name: 'Hair' }, { editing: true });
+    expect(html).toContain('Select Hair');
+    expect(html).toContain('role="checkbox"');
+    expect(html).toContain('aria-checked="false"');
+    // The tick and the rename are two targets, not one: a tap meant for a typo must not delete anything.
+    expect(html).toContain('Rename Hair');
+  });
+
+  it('marks a ticked row by more than colour', () => {
+    const html = row('en', { name: 'Hair' }, { editing: true, selected: true });
+    expect(html).toContain('aria-checked="true"');
+    expect(html).toContain('is-picked');
+  });
+
+  it('says what a delete costs, and it is not the services', () => {
+    const copy = en.services.categories;
+    expect(copy.deleteCatsKeeps).toContain('stay on your list');
+    expect(copy.deleteCatsKeeps).toContain('clients will not see');
+    for (const wrong of ['deleted for good', 'cannot be brought back']) {
+      expect(copy.deleteCatsKeeps, wrong).not.toContain(wrong);
+    }
   });
 });
 

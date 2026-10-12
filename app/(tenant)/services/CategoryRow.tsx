@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import type { DragEvent } from 'react';
 import type { ServiceCategoryAdmin } from '../lib/api';
-import { IconEdit } from '../components/icons';
+import { IconArrowDown, IconArrowUp, IconCheck, IconChevronRight, IconEdit, IconGrip } from '../components/icons';
 
 /**
  * Jira GRW-591 — one category, in one of the two states the sheet can be in.
@@ -23,6 +23,8 @@ export function CategoryRow({
   atTop,
   atBottom,
   dragging,
+  selected,
+  onToggle,
   onOpen,
   onRename,
   onMove,
@@ -40,6 +42,9 @@ export function CategoryRow({
   atTop: boolean;
   atBottom: boolean;
   dragging: boolean;
+  /** Jira GRW-592 — ticked for deletion. Only ever true in edit mode. */
+  selected: boolean;
+  onToggle: () => void;
   onOpen: () => void;
   onRename: () => void;
   onMove: (by: -1 | 1) => void;
@@ -52,10 +57,36 @@ export function CategoryRow({
   const controls = editing && orderable;
 
   return (
-    <li className={`svc-cat-row ${dragging ? 'is-dragging' : ''}`} onDragOver={onDragOver} onDrop={onDrop}>
+    <li className={`svc-cat-row ${dragging ? 'is-dragging' : ''} ${selected ? 'is-picked' : ''}`} onDragOver={onDragOver} onDrop={onDrop}>
+      {/*
+        Jira GRW-592 — the tick, at the leading edge, which is where a list that can be emptied puts it.
+        Its own 44px target: the name beside it is the rename, and a row where the same tap did both would
+        delete a category every time somebody meant to fix a typo in it.
+      */}
+      {editing && (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={selected}
+          className="svc-cat-tick"
+          disabled={busy}
+          aria-label={t('pickAria', { name: row.name })}
+          onClick={onToggle}
+        >
+          <span className="svc-cat-tick-box" aria-hidden="true">
+            {selected ? <IconCheck /> : null}
+          </span>
+        </button>
+      )}
+
       {/*
         The handle, not the whole row, is draggable: the row's own job is to open the category, and a row
         that both opens and drags does neither reliably.
+
+        Jira GRW-592 — and it is the one control that gives way when the tick arrives. A phone row has 291px
+        and five controls do not fit in it; the handle is the one that can go, because HTML5 drag does not
+        fire on touch anyway (GRW-441) — the arrows beside it are what a thumb actually reorders with. On a
+        pointer, where the width is there and drag works, `.svc-cat-grip` comes back at 480px.
       */}
       {controls && (
         <span
@@ -66,7 +97,7 @@ export function CategoryRow({
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
         >
-          ⠿
+          <IconGrip />
         </span>
       )}
 
@@ -101,7 +132,7 @@ export function CategoryRow({
                   : t('countWithRetired', { count: row.serviceCount, retired: row.serviceCount - row.activeCount })}
             </span>
             <span className="svc-cat-chevron" aria-hidden="true">
-              ›
+              <IconChevronRight />
             </span>
           </>
         )}
@@ -120,7 +151,7 @@ export function CategoryRow({
             aria-label={t('moveUpAria', { name: row.name })}
             onClick={() => onMove(-1)}
           >
-            ↑
+            <IconArrowUp />
           </button>
           <button
             type="button"
@@ -129,7 +160,7 @@ export function CategoryRow({
             aria-label={t('moveDownAria', { name: row.name })}
             onClick={() => onMove(1)}
           >
-            ↓
+            <IconArrowDown />
           </button>
         </div>
       )}
