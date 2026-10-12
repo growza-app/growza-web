@@ -1152,6 +1152,20 @@
   flex-shrink: 0;
 }
 
+/* Help is a link, not a button: no underline, and the same icon-then-word row Sign out has. */
+.acct-help {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.acct-help svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
 .acct-close {
   display: none;
 }

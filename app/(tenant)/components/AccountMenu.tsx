@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 import { homeCopy } from '../lib/home-copy';
@@ -9,7 +10,7 @@ import { saveLang, type Lang } from '../lib/lang';
 import { useLabels } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { SignOutButton } from './SignOutButton';
-import { IconClose, IconLogout } from './icons';
+import { IconClose, IconHelp, IconLogout } from './icons';
 
 /**
  * Jira GRW-63 · GRW-202 — the avatar in the header, which did nothing.
@@ -174,6 +175,16 @@ export function AccountMenu() {
 
             {!changing ? (
               <div className="acct-actions">
+                {/*
+                  * The one way to Help on a desktop. It was only on the phone's More tab, and the sidebar
+                  * never got the matching row, so the screen existed for every role and had no link here.
+                  * First, above the language switch: it is the thing somebody opens this menu for when they
+                  * are stuck, and the switch is a setting changed once.
+                  */}
+                <Link href="/help" className="acct-item acct-help" onClick={close}>
+                  <IconHelp />
+                  {t('help')}
+                </Link>
                 <div className="acct-lang" role="group" aria-label={home.langToggleLabel}>
                   <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => chooseLang('en')}>
                     {/* i18n-ok: a language is named in its own language */}

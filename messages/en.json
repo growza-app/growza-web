@@ -1658,6 +1658,7 @@
         }
       },
       "changePassword": "Change password",
+      "help": "Help",
       "currentPassword": "Current password",
       "newPassword": "New password",
       "atLeast8": "At least 8 characters.",
