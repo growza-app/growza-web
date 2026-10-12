@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { movedOrder, unsorted, worthOrdering } from './category-order';
+import { FILTER_FROM, matchesFilter, movedOrder, unsorted, worthOrdering } from './category-order';
 
 const rows = ['Hair', 'Skin', 'Nails', 'Spa'];
 
@@ -78,5 +78,38 @@ describe('the services filed under nothing', () => {
 
   it('a branch with no services at all has none', () => {
     expect(unsorted([])).toEqual([]);
+  });
+});
+
+/** Jira GRW-591 — finding one category among twenty-six. */
+describe('matching a category by what the owner typed', () => {
+  it('matches a word anywhere in the name, not only its start', () => {
+    expect(matchesFilter("Men's Hair Keratin", 'keratin')).toBe(true);
+    expect(matchesFilter('Fruit facial', 'facial')).toBe(true);
+  });
+
+  it('ignores case and accents', () => {
+    expect(matchesFilter('Pédicure', 'pedicure')).toBe(true);
+    expect(matchesFilter('WAXING', 'wax')).toBe(true);
+  });
+
+  it('matches every word of the term, in any order', () => {
+    expect(matchesFilter("Men's Hair Keratin", 'men ker')).toBe(true);
+    expect(matchesFilter("Men's Hair Keratin", 'keratin men')).toBe(true);
+    expect(matchesFilter("Men's Hair Keratin", 'men nails')).toBe(false);
+  });
+
+  it('matches nothing on an empty term, so a blank field is never "no results"', () => {
+    expect(matchesFilter('Hair', '')).toBe(false);
+    expect(matchesFilter('Hair', '   ')).toBe(false);
+  });
+
+  it('says nothing matches when nothing does', () => {
+    expect(matchesFilter('Hair', 'zzz')).toBe(false);
+  });
+
+  /** Roughly a phone screen and a half of 53px rows: below it, looking beats typing. */
+  it('asks for a search field at a dozen categories', () => {
+    expect(FILTER_FROM).toBe(12);
   });
 });

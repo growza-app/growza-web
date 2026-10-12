@@ -4,16 +4,124 @@
   max-width: 720px;
 }
 
-.import-map {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3);
-  margin-top: var(--sp-4);
+/*
+ * Matching columns. Two views of one step: a short confirmation when the guess found everything it needs, and
+ * a card per column of the owner's file when it did not (or when they press Change). The cards are in the
+ * FILE's order — the owner is asking what their "Minutes" column is used for, not where Duration comes from.
+ */
+.import-matched {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 
-.import-map select {
+.import-matched li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: 11px 14px;
+  min-height: 44px;
+}
+
+.import-matched li + li {
+  border-top: 1px solid var(--border);
+}
+
+/* Their column, exactly as they named it, is the label; what it becomes is the value beside it. */
+.import-matched-col {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.import-matched-becomes {
+  flex: none;
+  max-width: 55%;
+  text-align: right;
+  color: var(--muted);
+}
+
+.import-unused {
+  margin: var(--sp-2) 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.import-change {
+  margin-top: var(--sp-3);
+  min-height: 44px;
+}
+
+.import-need {
+  margin-top: var(--sp-3);
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
+.import-need p {
+  margin: 0;
+}
+
+.import-cols {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.import-col {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.import-col-head {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.import-col-name {
+  font-weight: 620;
+  overflow-wrap: anywhere;
+}
+
+.import-col-sample {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-col-pick select {
   width: 100%;
   min-width: 0;
+}
+
+/* Room for it beside the column's own name: half the height per card, so six columns are not four screens. */
+@media (min-width: 440px) {
+  .import-col {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: center;
+    column-gap: var(--sp-3);
+  }
+}
+
+@media (min-width: 640px) {
+  .import-cols {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 /* Scrolls inside the modal so the actions stay reachable on a long list. */
@@ -120,10 +228,6 @@
 }
 
 @media (max-width: 860px) {
-  .import-map {
-    grid-template-columns: 1fr;
-  }
-
   .import-row {
     grid-template-columns: minmax(0, 1fr) 64px 74px;
     row-gap: 6px;
@@ -134,3 +238,197 @@
     grid-column: 1 / -1;
   }
 }
+
+/* ---------- review by exception (Jira GRW-592) ---------- */
+
+.rv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--sp-3);
+}
+
+.rv-chip {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.rv-chip b {
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+.rv-chip[aria-pressed='true'] {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+/* The chip that is waiting on the owner reads as such before it is pressed. */
+.rv-chip.is-fix:not([aria-pressed='true']) {
+  border-color: #fde68a;
+  background: var(--amber-soft);
+}
+
+.rv-list {
+  margin-top: var(--sp-3);
+}
+
+.rv-group + .rv-group {
+  margin-top: var(--sp-3);
+}
+
+.rv-group-head {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rv-group-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rv-chevron {
+  flex: none;
+  display: inline-flex;
+  color: var(--muted);
+  transition: transform 150ms ease;
+}
+
+.rv-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.rv-chevron svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.rv-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.rv-row + .rv-row {
+  border-top: 1px solid var(--border);
+}
+
+.rv-row.is-bad {
+  background: var(--amber-soft);
+}
+
+.rv-row.is-skipped .rv-main {
+  opacity: 0.5;
+}
+
+.rv-line {
+  display: flex;
+  align-items: center;
+}
+
+.rv-summary {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rv-summary:disabled {
+  cursor: default;
+}
+
+.rv-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.rv-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.rv-meta {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.rv-flag {
+  justify-self: start;
+  margin-top: 2px;
+}
+
+.rv-include {
+  flex: none;
+  min-height: 44px;
+  margin-right: 8px;
+}
+
+.rv-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  padding: 0 12px 12px;
+}
+
+.rv-edit .field {
+  margin: 0;
+}
+
+.rv-edit .rv-field-name,
+.rv-edit .rv-skip {
+  grid-column: 1 / -1;
+}
+
+.rv-edit input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
+}
+
+.rv-edit input[readonly] {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.rv-skip {
+  min-height: 44px;
+}
+

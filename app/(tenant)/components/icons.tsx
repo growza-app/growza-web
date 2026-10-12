@@ -411,6 +411,33 @@ export const IconTrendDown = () => (
   </svg>
 );
 
+/* Jira GRW-591 — reordering a list: the two arrows, and the handle that drags. Feather's chevrons and
+   its `more-vertical` dots doubled, which is the grip every list of this shape uses. */
+export const IconArrowUp = () => (
+  <svg {...base}>
+    <line x1="12" y1="19" x2="12" y2="5" />
+    <polyline points="5 12 12 5 19 12" />
+  </svg>
+);
+
+export const IconArrowDown = () => (
+  <svg {...base}>
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <polyline points="19 12 12 19 5 12" />
+  </svg>
+);
+
+export const IconGrip = () => (
+  <svg {...base} strokeWidth={2.5}>
+    <circle cx="9" cy="6" r="0.5" />
+    <circle cx="9" cy="12" r="0.5" />
+    <circle cx="9" cy="18" r="0.5" />
+    <circle cx="15" cy="6" r="0.5" />
+    <circle cx="15" cy="12" r="0.5" />
+    <circle cx="15" cy="18" r="0.5" />
+  </svg>
+);
+
 export const IconArrowRight = () => (
   <svg {...base}>
     <line x1="5" y1="12" x2="19" y2="12" />
