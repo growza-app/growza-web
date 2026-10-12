@@ -132,22 +132,12 @@ tr:last-child td {
   font-weight: 640;
 }
 
-/* Select all governs the rows under it, so it sits on them, separated by the heavier rule. */
-.svc-cat-row.svc-cat-pickall {
-  gap: 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.svc-cat-pickall .svc-cat-name {
-  flex: 1;
-  min-width: 0;
-}
-
 /* The sheet's own title line: the heading, and Edit at the trailing edge where a list keeps it. */
 .svc-cat-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  /* Select all / Clear / Delete / Edit all sit at the trailing end, so the gap is theirs (GRW-592). */
+  gap: 10px;
 }
 
 .svc-cat-title h3 {
@@ -175,6 +165,15 @@ tr:last-child td {
 .svc-cat-editbtn:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/*
+ * Jira GRW-592 — the one that starts a delete, coloured as what it leads to. #b91c1c is the red
+ * `.btn-danger` and `.confirm-error` already use — one red in the product, not three (GRW-?/96-packages).
+ * 6.5:1 on white at 15px, against the 4.5:1 this size needs.
+ */
+.svc-cat-editbtn.is-danger {
+  color: #b91c1c;
 }
 
 .svc-cat-list {
@@ -749,4 +748,12 @@ tr:last-child td {
   font-size: 0.75rem;
   line-height: 1.4;
   color: var(--muted);
+}
+
+/* The confirmation is one group (role=alertdialog) so it is announced whole; it lays out as the footer does. */
+.svc-cat-sheet-actions .svc-cat-confirm-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
 }

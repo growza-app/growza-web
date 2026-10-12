@@ -15,7 +15,7 @@ import { IconArrowDown, IconArrowUp, IconCheck, IconChevronRight, IconEdit, Icon
  * |--------|-----------------------------------------|-----------------|
  * | `read` | name · count · chevron — opens it       | the default     |
  * | `edit` | handle · name (renames) · ✎ · ↑ ↓       | Edit, on the title |
- * | `pick` | tick · name · count                     | Delete, in the footer |
+ * | `pick` | tick · name · count                     | Delete, on the title |
  *
  * Three modes and not two because reordering and deleting are different jobs with different controls, and
  * a row that carried both came to five things in 252px — the name column fell to 72px, which is four

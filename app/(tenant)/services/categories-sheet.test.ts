@@ -32,10 +32,15 @@ const cat = (over: Partial<ServiceCategoryAdmin>): ServiceCategoryAdmin => ({
   ...over,
 });
 
-const sheet = (locale: 'en' | 'hi', rows: ServiceCategoryAdmin[], services: ServiceAdmin[] = []) =>
+const sheet = (
+  locale: 'en' | 'hi',
+  rows: ServiceCategoryAdmin[],
+  services: ServiceAdmin[] = [],
+  startIn: 'read' | 'edit' | 'pick' = 'read',
+) =>
   wrap(
     locale,
-    createElement(CategoriesSheet, { branchId: 'b1', initial: rows, services, onClose: () => {}, onChanged: () => {} }),
+    createElement(CategoriesSheet, { branchId: 'b1', initial: rows, services, onClose: () => {}, onChanged: () => {}, startIn }),
   );
 
 /**
@@ -294,16 +299,49 @@ describe('picking categories to delete', () => {
    * action is present and disabled from the moment Edit is on, exactly as the delete card next door does
    * it, and its label says what it is waiting for.
    */
-  it('offers Delete on the sheet itself, not behind Edit', () => {
+  it('offers Delete on the title line, beside Edit, not behind it', () => {
     const html = sheet('en', [cat({ name: 'Hair' })]);
-    expect(html).toContain('Delete categories');
+    const title = html.slice(html.indexOf('svc-cat-title'), html.indexOf('modal-body'));
+    expect(title).toContain('>Delete<');
+    expect(title).toContain('>Edit<');
     // Still nothing to tick until that button is pressed — the list is for reading.
     expect(html).not.toContain('svc-cat-tick');
     expect(html).not.toContain('Select all');
   });
 
-  it('offers no Delete when there is nothing to delete', () => {
-    expect(sheet('en', [])).not.toContain('Delete categories');
+  it('offers no Delete and no Edit when there is nothing to act on', () => {
+    const html = sheet('en', []);
+    expect(html).not.toContain('>Delete<');
+    expect(html).not.toContain('>Edit<');
+  });
+
+  /**
+   * Jira GRW-592 — Select all acts on the whole list, so it cannot be the first ROW of the list: with
+   * twenty-six categories it scrolled off the top the moment the owner went looking for the fourth one
+   * to tick. It lives on the title line, which `.modal-fit` never scrolls.
+   */
+  it('keeps Select all out of the scrolling list', () => {
+    // Rendered IN pick mode: in read mode the control does not exist, so asserting on it there proves nothing.
+    const html = sheet('en', [cat({}), cat({ id: 'b', name: 'Nails' })], [], 'pick');
+    const body = html.indexOf('modal-body');
+    expect(html.slice(0, body)).toContain('Select all');
+    expect(html.slice(body)).not.toContain('Select all');
+    expect(html).not.toContain('svc-cat-pickall');
+  });
+
+  it('withholds the add row only while rows are being picked', () => {
+    expect(sheet('en', [cat({})], [], 'pick')).not.toContain('New category');
+    expect(sheet('en', [cat({})], [], 'read')).toContain('New category');
+  });
+
+  /**
+   * Deleting the last category used to leave "Add one below" over nothing: the add row lived inside the list,
+   * which is not rendered when the list is empty.
+   */
+  it('still offers a way to add when there are no categories', () => {
+    const html = sheet('en', []);
+    expect(html).toContain('You have no categories yet');
+    expect(html).toContain('New category');
   });
 
   it('keeps the disabled-action wording the delete card already uses', () => {
