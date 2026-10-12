@@ -520,9 +520,29 @@ tr:last-child td {
   white-space: nowrap;
 }
 
-.svc-cat-head-delete {
+/*
+ * Jira GRW-590 — both ways out of a category, at the foot of it.
+ *
+ * Stacked and full width, not a right-aligned row: "Delete this category and all 23 services" is a sentence,
+ * and three buttons of very different widths on one line is where a 344px screen starts cutting labels off.
+ * Each is its own line at every width, which also puts a comfortable distance between Back and the
+ * destructive one.
+ */
+.modal-actions.svc-cat-ways {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.svc-cat-ways .btn {
+  width: 100%;
   min-height: 44px;
-  flex-shrink: 0;
+}
+
+/* The destructive one last and visually separated, so it is never the button a thumb lands on by accident. */
+.svc-cat-ways .btn-danger {
+  margin-top: 2px;
 }
 
 /* A category's own list, read-only — the ticking lives in the delete card. */

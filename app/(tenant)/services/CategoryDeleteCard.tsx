@@ -32,6 +32,7 @@ export function CategoryDeleteCard({
   onClose,
   onDone,
   onChanged,
+  preselect = 'none',
 }: {
   branchId: string;
   category: ServiceCategoryAdmin;
@@ -42,9 +43,22 @@ export function CategoryDeleteCard({
   onDone: (gone: boolean) => void;
   /** Called after a write that left the card open, so the list behind it reloads. */
   onChanged: () => void;
+  /**
+   * Jira GRW-590 — what is ticked when the card opens.
+   *
+   * `'all'` when the owner arrived by asking to delete the CATEGORY, from the bin on its row in the sheet.
+   * They have already said what they want; the card's job then is to show them exactly what that takes with
+   * it and let them change their mind, not to make them say it a second time by hunting for "Select all".
+   *
+   * Left at `'none'` on the path in from the category's own screen, where "Delete" means "take something out
+   * of this category" and the owner has not yet said what.
+   */
+  preselect?: 'all' | 'none';
 }) {
   const t = useTranslations('services.categories');
-  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [selected, setSelected] = useState<ReadonlySet<string>>(
+    () => new Set(preselect === 'all' ? services.map((s) => s.id) : []),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
