@@ -55,6 +55,11 @@ export function toImportItems(drafts: Draft[]): ServiceImportItem[] {
             mode: 'updatePrice',
             existingId: d.existing.id,
             name: d.existing.name,
+            // Jira GRW-586 — sent on a re-price for its ORDER only: the server numbers the categories in the
+            // order the file first names them, and leaves the service filed where it is. Without it, importing
+            // the same price list a second time to correct its order left the category tabs alphabetical — and
+            // a re-import is the ONLY way an owner who already imported once can get their order applied.
+            categoryName: d.categoryName.trim() || null,
             durationMin: d.existing.durationMin,
             priceMinor: d.price.trim() ? Math.round(Number(d.price) * 100) : null,
           }

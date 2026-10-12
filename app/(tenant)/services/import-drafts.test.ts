@@ -106,6 +106,23 @@ describe('toImportItems', () => {
     expect(item).toMatchObject({ mode: 'updatePrice', durationMin: 30 });
   });
 
+  /**
+   * Jira GRW-586 — the category travels on a re-price too, and the server reads it for the ORDER alone.
+   *
+   * Not symmetry for its own sake. An owner who has already imported their price list once matches every row
+   * by name, so a corrective re-import is all re-prices; without the category on those rows there is nothing
+   * telling the server what order the file puts the categories in, and the one route to fixing the order
+   * silently fixes nothing.
+   */
+  it('sends the category on a re-price, so the file can still set the order', () => {
+    const item = toImportItems([draft({ name: 'Haircut', categoryName: 'Threading', existing: existing() })])[0];
+    expect(item).toMatchObject({ mode: 'updatePrice', categoryName: 'Threading' });
+  });
+
+  it('turns a blank category into null on a re-price as well', () => {
+    expect(toImportItems([draft({ categoryName: ' ', existing: existing() })])[0]).toMatchObject({ categoryName: null });
+  });
+
   it('sends a blank price as null, not as zero', () => {
     expect(toImportItems([draft({ price: '   ' })])[0]).toMatchObject({ priceMinor: null });
   });
