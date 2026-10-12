@@ -49,9 +49,13 @@
         "invoice": "बिल",
         "payment": "भुगतान",
         "discount": "छूट",
-        "autopay": "AutoPay"
+        "autopay": "AutoPay",
+        "attendanceIn": "हाज़िरी लगी",
+        "attendancePending": "हाँ या नहीं चाहिए"
       },
       "title": "{topic} — {services}",
+      "attendanceInTitle": "{who} की हाज़िरी लगी",
+      "attendancePendingTitle": "{who} की हाज़िरी — आपकी हाँ या नहीं चाहिए",
       "customer": "ग्राहक",
       "justNow": "अभी अभी",
       "minutesAgo": "{count} मि पहले",

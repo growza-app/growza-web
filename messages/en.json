@@ -49,9 +49,13 @@
         "invoice": "Bill",
         "payment": "Payment",
         "discount": "Discount",
-        "autopay": "AutoPay"
+        "autopay": "AutoPay",
+        "attendanceIn": "Marked in",
+        "attendancePending": "Needs a yes or no"
       },
       "title": "{topic} — {services}",
+      "attendanceInTitle": "{who} is in",
+      "attendancePendingTitle": "{who} marked in — needs a yes or no",
       "customer": "Client",
       "justNow": "just now",
       "minutesAgo": "{count}m ago",

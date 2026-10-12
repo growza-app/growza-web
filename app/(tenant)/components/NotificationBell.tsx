@@ -63,7 +63,7 @@ export function countUnread(events: ReadonlyArray<{ id: string | number }>, last
 /** The words are `notifications.feed.topics.<key>`; only the icon and class live here. */
 export type TopicKey =
   | 'newBooking' | 'cancelled' | 'rescheduled' | 'walkIn' | 'completed' | 'noShow'
-  | 'billing' | 'invoice' | 'payment' | 'discount' | 'autopay' | 'handoff';
+  | 'billing' | 'invoice' | 'payment' | 'discount' | 'autopay' | 'handoff' | 'attendanceIn' | 'attendancePending';
 export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: ComponentType; cls: string }> = {
   'appointment.confirmed': { key: 'newBooking', icon: IconCalendarPlus, cls: 'notif-new' },
   'appointment.cancelled': { key: 'cancelled', icon: IconClose, cls: 'notif-cancel' },
@@ -83,6 +83,9 @@ export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: C
   'billing.change_pending': { key: 'billing', icon: IconReceipt, cls: 'notif-billing' },
   // Jira GRW-479 (R-5) — a client asked the chat for a person; the bot has gone quiet for them.
   'conversation.handoff': { key: 'handoff', icon: IconChat, cls: 'notif-handoff' },
+  // A stylist marked themselves in from their phone: green when it counted, amber when it waits for a yes or no.
+  'attendance.in': { key: 'attendanceIn', icon: IconClipboardCheck, cls: 'notif-done' },
+  'attendance.pending': { key: 'attendancePending', icon: IconClipboardCheck, cls: 'notif-handoff' },
 };
 
 /** The `notifications.feed` messages, as a translator — these are plain helpers and cannot call hooks. */
@@ -176,6 +179,14 @@ export function eventLine(
     const who = e.customerName ?? t('customer');
     return { title: t('handoffTitle'), subtitle: [who, showBranch ? e.branchName : null].filter(Boolean).join(' · ') };
   }
+  if (e.topic === 'attendance.in' || e.topic === 'attendance.pending') {
+    const who = e.actorName ?? t('roles.staff');
+    const at = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('h:mm a') : null;
+    return {
+      title: t(e.topic === 'attendance.in' ? 'attendanceInTitle' : 'attendancePendingTitle', { who }),
+      subtitle: [at, showBranch ? e.branchName : null].filter(Boolean).join(' · '),
+    };
+  }
   const services = (e.serviceNames ?? []).join(' + ');
   const local = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('ccc, h:mm a') : '';
   const customer = e.customerName ?? t('customer');
@@ -213,6 +224,11 @@ export function notifHref(event: ActivityEvent, timezone: string): string | null
     const open = event.appointmentId ? `open=${event.appointmentId}` : null;
     const params = [date, open].filter(Boolean).join('&');
     return params ? `/appointments?${params}` : null;
+  }
+  // The register, on the day it was marked (the salon's day, like a booking's) — where the yes or no is given.
+  if (event.topic.startsWith('attendance.')) {
+    const day = event.startAt ? DateTime.fromISO(event.startAt).setZone(timezone) : null;
+    return day?.isValid ? `/attendance?date=${day.toISODate()}` : '/attendance';
   }
   // conversation.handoff has no screen of its own yet; a row that goes nowhere
   // stays a plain row rather than a link that lands somewhere unrelated.
