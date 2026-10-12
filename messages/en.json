@@ -904,7 +904,8 @@
       "needed": "needed",
       "missingName": "Choose which column holds the service name.",
       "missingMinutes": "Choose which column holds how long it takes, in minutes.",
-      "sampleEmpty": "(empty)"
+      "sampleEmpty": "(empty)",
+      "reviewTitle": "Review {count, plural, one {# service} other {# services}}"
     },
     "review": {
       "toAdd": "{count} to add",
@@ -923,7 +924,16 @@
       "importing": "Importing…",
       "fixFirst": "Fix {count, plural, one {# row} other {# rows}} first",
       "importN": "Import {count}",
-      "importFailed": "Import failed — nothing was saved."
+      "importFailed": "Import failed — nothing was saved.",
+      "filterLabel": "Show",
+      "filterAll": "All",
+      "filterFix": "Needs fixing",
+      "filterExisting": "Already in your list",
+      "filterSkipped": "Skipped",
+      "groupNone": "No category",
+      "unnamed": "(no name)",
+      "minShort": "{n} min",
+      "noPrice": "No price"
     },
     "problems": {
       "priceNotNumber": "Price is not a number",

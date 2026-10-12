@@ -904,7 +904,8 @@
       "needed": "ज़रूरी",
       "missingName": "बताएँ कि सेवा का नाम किस कॉलम में है।",
       "missingMinutes": "बताएँ कि कितने मिनट लगते हैं, यह किस कॉलम में है।",
-      "sampleEmpty": "(खाली)"
+      "sampleEmpty": "(खाली)",
+      "reviewTitle": "{count} सेवाएँ जाँचें"
     },
     "review": {
       "toAdd": "{count} जुड़ेंगी",
@@ -923,7 +924,16 @@
       "importing": "इंपोर्ट हो रहा है…",
       "fixFirst": "पहले {count, plural, one {# पंक्ति} other {# पंक्तियाँ}} ठीक करें",
       "importN": "{count} इंपोर्ट करें",
-      "importFailed": "इंपोर्ट नहीं हुआ — कुछ भी सेव नहीं हुआ।"
+      "importFailed": "इंपोर्ट नहीं हुआ — कुछ भी सेव नहीं हुआ।",
+      "filterLabel": "दिखाएँ",
+      "filterAll": "सभी",
+      "filterFix": "ठीक करना है",
+      "filterExisting": "पहले से सूची में",
+      "filterSkipped": "छोड़ी गईं",
+      "groupNone": "बिना श्रेणी",
+      "unnamed": "(नाम नहीं)",
+      "minShort": "{n} मिनट",
+      "noPrice": "कीमत नहीं"
     },
     "problems": {
       "priceNotNumber": "कीमत संख्या नहीं है",

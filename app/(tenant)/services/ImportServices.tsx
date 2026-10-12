@@ -99,7 +99,7 @@ export function ImportServices({
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal import-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>{step === 'map' ? t('mapTitle') : t('title')}</h3>
+        <h3>{step === 'map' ? t('mapTitle') : step === 'review' ? t('reviewTitle', { count: drafts.length }) : t('title')}</h3>
 
         {step === 'pick' && (
           <>
