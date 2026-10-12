@@ -51,6 +51,7 @@ export function Sidebar({
   locationName,
   branchCount = 1,
   phone,
+  name,
 }: {
   tenantName: string;
   labels: Record<string, string>;
@@ -69,6 +70,8 @@ export function Sidebar({
   branchCount?: number;
   /** Jira GRW-222 — who is signed in, at the foot of the sidebar. */
   phone?: string | null;
+  /** The person's own name; the role is shown instead until there is one. */
+  name?: string | null;
 }) {
   const tc = useTranslations('chrome');
   const pathname = usePathname();
@@ -193,12 +196,13 @@ export function Sidebar({
             the person who needs it most, and they see almost nothing above. */}
         <div className="nav-foot">
           {/* Jira GRW-222 — who is signed in. A role and a number, because a
-              person IS their phone number here (GRW-189) and the product holds
-              no display name for a login. */}
+              person IS their phone number here (GRW-189). Their own name leads
+              once there is one; the role and number sit under it. */}
           <div className="nav-who">
-            <span className="nav-who-avatar">{t.role[role ?? 'owner']?.charAt(0) ?? 'O'}</span>
+            <span className="nav-who-avatar">{Array.from(name ?? t.role[role ?? 'owner'] ?? 'O')[0]?.toUpperCase()}</span>
             <span className="nav-who-text">
-              <strong>{t.role[role ?? 'owner']}</strong>
+              <strong>{name ?? t.role[role ?? 'owner']}</strong>
+              {name ? <span>{t.role[role ?? 'owner']}</span> : null}
               {phone ? <span>{phone}</span> : null}
             </span>
           </div>

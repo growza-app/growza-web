@@ -69,6 +69,9 @@
   align-items: center;
   gap: var(--sp-2);
   min-width: 0;
+  /* A person can carry three chips (TOP, FREE, Can sign in). They drop to a second line rather than crushing the
+     name to "Ra…", which is what happened on a 390px card the day the login chip arrived. */
+  flex-wrap: wrap;
 }
 
 /* The name is the primary way into the edit screen — a real button, not a
@@ -118,4 +121,116 @@
 .staff-badge-free {
   color: var(--amber);
   background: var(--amber-soft);
+}
+
+/* ---------- who can sign in (was Settings › Team access) ---------- */
+
+/*
+ * A login state on a person's row, and a row for the people who have one and no diary. Same chip metrics as the
+ * TOP and FREE badges above, so a row with two of them still reads as one line.
+ */
+.staff-badge-in {
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.staff-badge-invited {
+  color: var(--muted);
+  background: var(--slate-soft);
+}
+
+.staff-group-empty {
+  margin: 0 var(--sp-1) var(--sp-2);
+}
+
+.login-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.login-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3) 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.login-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.login-name {
+  font-weight: 620;
+  font-size: 0.90625rem;
+  overflow-wrap: anywhere;
+}
+
+.login-sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  font-size: 0.78125rem;
+  color: var(--muted);
+}
+
+/* Its own line under the name: the name and Remove keep one line between them at 344px. */
+.login-branch {
+  order: 3;
+  flex: 1 1 100%;
+  max-width: 280px;
+  min-width: 0;
+}
+
+/* The invite sheet is the bottom sheet everywhere; from 861px it stops being full-bleed, like the other sheets. */
+.invite-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) 18px 0;
+}
+
+.invite-submit {
+  margin-top: var(--sp-1);
+}
+
+/*
+ * A <select> is as wide as its longest option unless it is told otherwise, and "Receptionist — bookings, clients,
+ * payments, attendance" is 452px. It pushed the sheet's own content past the phone's edge.
+ */
+.invite-body select,
+.invite-body input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.invite-sheet {
+  overflow-x: hidden;
+}
+
+/*
+ * The close button sits beside the title, not halfway down a wrapped sentence. `.sheet-head` is a GRID by the time
+ * the clay sheet has its say (101-clay-app.css), so the text column is named here rather than left to `flex: 1`,
+ * which that grid quietly ignored — the subtitle wrapped into a 152px column beside 200px of nothing.
+ */
+.invite-sheet .sheet-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+}
+
+@media (min-width: 861px) {
+  .invite-sheet {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(520px, 100%);
+    border-radius: 20px 20px 0 0;
+  }
 }

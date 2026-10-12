@@ -195,8 +195,15 @@ describe('Staff, as the QA pass left it', () => {
     expect(src('../providers/StaffClient.tsx')).toMatch(/\(branchId \? overview\.topByBranch\?\.\[branchId\] : overview\.topPerformer\)\?\.id/);
   });
 
-  it('the wizard keeps unticked skills when the tab comes back and the page data refreshes', () => {
-    expect(src('../providers/StaffWizard.tsx')).toMatch(/useEffect\(\(\) => setSkills\(new Set\(menu\.map\(\(s\) => s\.id\)\)\), \[menuKey\]\);/);
+  /*
+   * This asserted that the wizard kept the skills an owner had unticked when a tab refresh handed it the same
+   * menu again. There are no skills to untick since 2026-10-12 — anyone may be booked for anything — so the
+   * step, its state and the bug it could have are all gone. Asserted as absence, so it cannot creep back unseen.
+   */
+  it('the wizard asks no skills question at all', () => {
+    const wizard = src('../providers/StaffWizard.tsx');
+    expect(wizard).not.toMatch(/setSkills/);
+    expect(wizard).not.toMatch(/serviceIds/);
   });
 
   it('the edit screen loads a saved number as ten digits, so it can be saved again', () => {
@@ -205,19 +212,20 @@ describe('Staff, as the QA pass left it', () => {
     expect(edit).toMatch(/phone !== fromStoredPhone\(detail\.phone\)/);
   });
 
-  it('a stylist is offered their own branch’s menu only (Jira GRW-388: no skill is left at another branch)', () => {
+  /*
+   * Two cases stood here about which services a stylist is offered on their edit screen, and what a branch move
+   * does to them. The owner dropped the rule on 2026-10-12 — anyone may be booked for anything — so the card and
+   * the move's match-or-none question are gone with it. What is left to assert is that they are gone: a screen
+   * that saves a narrowing nothing reads is the failure this file exists to catch.
+   */
+  it('the skills card went with the rule it edited, and nothing saves a narrowing any more', () => {
     const edit = src('../providers/[id]/StaffEditClient.tsx');
-    expect(edit).toMatch(/const menu = services\.filter\(\(s\) => !detail\.locationId \|\| s\.locationId === detail\.locationId\);/);
-    expect(edit).not.toMatch(/skillLabel/);
-  });
-
-  /** Jira GRW-386 — a move sets their services itself; a skills save beside it raced the move and failed. */
-  it('a move asks match-or-none, never saves skills beside it, and lists what had no match', () => {
-    const edit = src('../providers/[id]/StaffEditClient.tsx');
-    expect(edit).toMatch(/\.\.\.\(moving \? \{ locationId, skillsOnMove \} : \{\}\)/);
-    expect(edit).toMatch(/if \(skillsDirty && !moving\) calls\.push\(api\.updateProviderServices/);
-    expect(edit).toMatch(/disabled=\{moving\}/);
-    expect(edit).toMatch(/t\('moveUnmatched'/);
+    expect(edit).not.toMatch(/api\.updateProviderServices/);
+    expect(edit).not.toMatch(/skillsOnMove/);
+    expect(edit).not.toMatch(/selectedServiceIds/);
+    // The move itself still goes, and still says which services had no match at the new branch.
+    expect(edit).toMatch(/\.\.\.\(moving \? \{ locationId \} : \{\}\)/);
+    expect(edit).not.toMatch(/moveUnmatched/);
   });
 });
 

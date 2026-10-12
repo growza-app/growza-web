@@ -40,7 +40,7 @@ const FIELD_FOR_ERROR: Record<string, string> = {
 };
 
 /** Every error key this form draws against a field; anything else would be set and never seen. */
-const SHOWN_FIELD = /^(name|country|businessTypeCode|planCode|owner\.phone|reason|branch\.\d+\.(name|line1|city|stylists|geo))$/;
+const SHOWN_FIELD = /^(name|country|businessTypeCode|planCode|owner\.(phone|name)|reason|branch\.\d+\.(name|line1|city|stylists|geo))$/;
 
 export interface CreatedBusiness {
   id: string;
@@ -92,6 +92,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   const setBranch = (index: number, patch: Partial<Branch>) =>
     setBranches((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   const [nationalNumber, setNationalNumber] = useState('');
+  const [ownerName, setOwnerName] = useState('');
   const [reason, setReason] = useState('');
 
   const [saving, setSaving] = useState(false);
@@ -153,7 +154,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   async function submit() {
     setFormError(null);
 
-    const found = validate({ name, country, typeCode, planCode, branches: visibleBranches, nationalNumber, dialCode, reason });
+    const found = validate({ name, country, typeCode, planCode, branches: visibleBranches, nationalNumber, dialCode, reason, ownerName });
     if (Object.keys(found).length > 0) {
       setErrors(found);
       return;
@@ -192,7 +193,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
            * admin never typed a `+`. A pasted `+919876543210`, `919876543210`
            * or `09876543210` all reduce to the same ten digits below.
            */
-          owner: { phone: `${dialCode}${nationalNumber.replace(/\D/g, '')}` },
+          owner: { phone: `${dialCode}${nationalNumber.replace(/\D/g, '')}`, name: ownerName.trim() },
           reason,
         }),
       });
@@ -358,6 +359,20 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
               setErrors({});
             }}
           />
+
+          <Field label="Owner’s name" hint="Shown on their avatar" error={errorFor('owner.name')}>
+            <TextInput
+              id={`${ids}-owner-name`}
+              value={ownerName}
+              maxLength={60}
+              autoComplete="off"
+              invalid={!!errorFor('owner.name')}
+              onChange={(e) => {
+                setOwnerName(e.target.value);
+                clear('owner.name');
+              }}
+            />
+          </Field>
 
           <Row>
             <Field

@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { avatarTone, initials } from '../providers/StaffRoster';
 
 /**
@@ -49,12 +52,19 @@ export function PersonPhoto({
   /** Off today, inactive: the screen's existing greyed treatment. */
   muted?: boolean;
 }) {
+  /*
+   * A key that 404s — a photo deleted from storage, a key written by another tenant (see the migration's note) —
+   * used to render the browser's broken-image glyph, which is the one thing worse than no photo. QA found it on a
+   * stylist whose file was gone: a torn-page icon where a face should be.
+   */
+  const [broken, setBroken] = useState(false);
+  const photo = broken ? null : photoUrl;
   const classes = [
     className,
     muted ? 'is-muted' : '',
     // `person-tile` is what the four tone colours hang off when the caller's own class is not
     // `.staff-avatar` — the photo field reuses the service sheet's 60px box instead.
-    photoUrl ? 'person-photo' : `person-tile ${avatarTone(name)}`,
+    photo ? 'person-photo' : `person-tile ${avatarTone(name)}`,
   ]
     .filter(Boolean)
     .join(' ');
@@ -65,6 +75,6 @@ export function PersonPhoto({
    * a screen reader say it twice. The image is decoration of a label that is
    * already there.
    */
-  if (photoUrl) return <img className={classes} src={photoUrl} alt="" />;
+  if (photo) return <img className={classes} src={photo} alt="" onError={() => setBroken(true)} />;
   return <div className={classes}>{initials(name)}</div>;
 }

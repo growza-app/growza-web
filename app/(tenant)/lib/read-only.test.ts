@@ -141,7 +141,7 @@ describe('every screen that writes asks whether it may (the list that cannot qui
     ['packages/new/page.tsx', /await guardWritable\('\/packages'\);/],
     ['packages/[id]/edit/page.tsx', /await guardWritable\('\/packages'\);/],
     // Staff
-    ['providers/StaffClient.tsx', /actions=\{\s*writable \? \(\s*<button type="button" className="btn" onClick=\{\(\) => setCreating\(true\)\}/],
+    ['providers/StaffClient.tsx', /actions=\{\s*writable \? \(\s*<button type="button" className="btn" onClick=\{\(\) => setCreating\('staff'\)\}/],
     ['providers/StaffRoster.tsx', /disabled=\{disabled \|\| !writable\}/],
     ['providers/StaffRoster.tsx', /if \(!writable\) return null;/],
     ['providers/[id]/StaffEditClient.tsx', /<ReadOnlyFields>\s*<div className="edit-layout">/],

@@ -167,7 +167,7 @@ describe('the device matrix renders the tabs this ticket is about', () => {
       .replace(/$/, ']'),
   );
 
-  it('sweeps six of the seven Settings tabs, not just the three it used to', () => {
+  it('sweeps every Settings tab there is, not just the three it used to', () => {
     // GRW-228 added profile and branches. The ones measured worst were never rendered.
     for (const r of [
       '/settings',
@@ -175,10 +175,18 @@ describe('the device matrix renders the tabs this ticket is about', () => {
       '/settings/branches',
       '/settings/booking',
       '/settings/report-access',
-      '/settings/team',
     ]) {
       expect(routes).toContain(r);
     }
+    /*
+     * `/settings/team` is deliberately NOT one of them (owner, 2026-10-12).
+     *
+     * Team access is no longer a tab — the logins live on Staff and the route is a redirect to `/providers`,
+     * which the sweep renders on its own account. Sweeping the redirect measured `/providers` a second time
+     * and reported it as a Settings tab, which is how a sweep comes out green over a screen it never saw.
+     */
+    expect(routes, 'a redirect is not a tab').not.toContain('/settings/team');
+    expect(routes).toContain('/providers');
   });
 
   /*

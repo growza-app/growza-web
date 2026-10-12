@@ -50,7 +50,9 @@ export function PhoneField({
     <div className="field">
       <label htmlFor={id}>
         {label}
-        {!required && <span className="field-optional">{optionalLabel}</span>}
+        {/* The star a required field carries across the product (`.field-required`), the mirror of the word an
+            optional one carries beside it. `aria-hidden`: the input's own `required` is what a screen reader reads. */}
+        {required ? <span className="field-required" aria-hidden="true"> *</span> : <span className="field-optional">{optionalLabel}</span>}
       </label>
 
       <div className={`phone-field ${error ? 'phone-field-invalid' : ''} ${disabled ? 'phone-field-off' : ''}`}>
@@ -60,6 +62,7 @@ export function PhoneField({
           {DIAL_CODE}
         </span>
         <input
+          required={required}
           id={id}
           type="tel"
           inputMode="numeric"

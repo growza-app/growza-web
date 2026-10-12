@@ -34,7 +34,7 @@ export function BranchScopeNote({
   keys?: string[];
   sameForAll?: boolean;
   /** What is on the tab — a key of `branchScope.topics`, so the note names it in the owner's language. */
-  topic: 'hours' | 'bookingRules' | 'teamAccess' | 'reportAccess' | 'reminders';
+  topic: 'hours' | 'bookingRules' | 'reportAccess' | 'reminders';
 }) {
   const t = useTranslations('branchScope');
   const what = t(`topics.${topic}`);

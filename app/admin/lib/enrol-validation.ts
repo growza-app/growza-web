@@ -71,6 +71,8 @@ export function validate(values: {
   typeCode: string;
   planCode: string;
   branches: { name: string; line1: string; city: string; stylists: string; geo?: string }[];
+  /** The owner's own name — required since 2026-10-12. */
+  ownerName: string;
   nationalNumber: string;
   dialCode: string | null;
   reason: string;
@@ -115,6 +117,8 @@ export function validate(values: {
 
   const digits = values.nationalNumber.replace(/\D/g, '');
   const expected = values.dialCode ? NATIONAL_DIGITS[values.dialCode] : undefined;
+  // Owner, 2026-10-12 — a person has a name, and this is the only moment the owner's is asked for.
+  if (!values.ownerName?.trim()) errors['owner.name'] = 'Enter the owner’s name';
   if (!digits) errors['owner.phone'] = 'Enter the owner’s phone number';
   else if (!values.dialCode) errors['owner.phone'] = 'Enter the full international number, starting with +';
   else if (expected && digits.length !== expected) errors['owner.phone'] = `${expected} digits after ${values.dialCode}`;

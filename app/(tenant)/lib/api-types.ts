@@ -68,6 +68,8 @@ export interface Me {
     providerId: string | null;
     /** GRW-202 — the number they signed in with, shown in the account menu. */
     phone?: string | null;
+    /** The name they go by — their own, else their stylist profile's. Null until set (or from an older API). */
+    name?: string | null;
     /** Jira GRW-237 — a receptionist's own branch; null means every branch. */
     locationId?: string | null;
     locationName?: string | null;

@@ -79,7 +79,7 @@ export const QUICK_FIXES: readonly FixCategory[] = [
   {
     id: 'team',
     topics: [
-      { id: 'invite', roles: ['owner', 'manager'], sections: [{ id: 'main', steps: 4 }] },
+      { id: 'invite', roles: ['owner', 'manager'], sections: [{ id: 'main', steps: 5 }] },
       { id: 'bill', roles: ['owner', 'manager'], sections: [{ id: 'main', steps: 2 }] },
     ],
   },

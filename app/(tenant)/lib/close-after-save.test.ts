@@ -42,7 +42,8 @@ describe('every full-page form closes on Save', () => {
   it('stays open only where the save has more to say: WhatsApp not live, skills left to set after a branch move', () => {
     // No exception for a business without WhatsApp: the page is not shown to one (owner, 2026-10-10).
     expect(code('settings/notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
-    expect(code('providers/[id]/StaffEditClient.tsx')).toMatch(/if \(moved\?\.unmatchedSkills\?\.length\) router\.refresh\(\);\s*else closeForm\(\);/);
+    // The staff edit screen's one exception went with the skills card (owner, 2026-10-12): it always closes now.
+    expect(code('providers/[id]/StaffEditClient.tsx')).not.toMatch(/unmatchedSkills/);
   });
 
   it('the lists they close to say "Saved"', () => {
@@ -51,6 +52,6 @@ describe('every full-page form closes on Save', () => {
   });
 
   it('the Team panel is not closed: its invite link is shown once and must stay', () => {
-    expect(code('settings/team/TeamAccessPanel.tsx')).not.toContain('useCloseAfterSave');
+    expect(code('providers/TeamLogins.tsx')).not.toContain('useCloseAfterSave');
   });
 });

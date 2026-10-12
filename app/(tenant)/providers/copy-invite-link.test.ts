@@ -1,16 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { copyToClipboard } from '../../lib/copy-to-clipboard';
+import { copyToClipboard } from '../lib/copy-to-clipboard';
 
 /**
  * The invite link is shown once, so "Copied" has to mean it was. The button used to fire the write and show
  * "Copied" without waiting for it — on an insecure origin or a refused permission nothing reached the clipboard and
  * the owner sent a link they did not have.
  */
-const panel = readFileSync(resolve(__dirname, 'TeamAccessPanel.tsx'), 'utf8');
-const en = JSON.parse(readFileSync(resolve(__dirname, '../../../../messages/en.json'), 'utf8')).settingsTeam;
-const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../../messages/hi.json'), 'utf8')).settingsTeam;
+const panel = readFileSync(resolve(__dirname, 'TeamLogins.tsx'), 'utf8');
+const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).settingsTeam;
+const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json'), 'utf8')).settingsTeam;
 
 const fakeDocument = (execCopy: boolean) => {
   const area = { value: '', style: { cssText: '' }, setAttribute: vi.fn(), select: vi.fn(), setSelectionRange: vi.fn() };
