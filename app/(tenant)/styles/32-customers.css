@@ -1101,6 +1101,52 @@
 
   .bk-tl-cards > .bk-card {
     flex: 1 1 auto;
+    /*
+     * And never wider than the row it sits in (owner, 2026-10-13: "alignment issue").
+     *
+     * On a phone `.bk-tl-cards` is a COLUMN flex, so a card's width is its cross size — `align-items:
+     * stretch` sizes it to the row, but stretch cannot take an item below its own min-content, and this
+     * card's min-content is a line of un-breakable text: a combo chip ("Pre-Bridal Package"), a phone
+     * number, and a services line set `nowrap`. A booking with a long package ran 455px wide inside a
+     * 330px row — its status chip, its price and the right-hand call button all off the screen edge,
+     * with nothing to scroll them back.
+     *
+     * `max-width` is the one thing that does clamp below min-content, and the text inside already knows
+     * what to do when it is short of room: `.bk-card-name` and `.bk-card-services` are `overflow:
+     * hidden` with an ellipsis.
+     */
+    max-width: 100%;
+  }
+
+  /*
+   * The strip the sticky filter bar does not cover (owner, 2026-10-13).
+   *
+   * `.bk-tabs` sticks to `top: 0` of the scrolling body, but the body carries 16px of padding above it, so a
+   * card scrolling past showed through that 16px band — a slice of white card wedged between the header and
+   * the pills, which is what "alignment issue" looked like at the top of the screen.
+   *
+   * `::after`, because `::before` is the sliding selected piece (100-clay-tabs.css) and taking it would stop
+   * the tabs animating. Painted in the page's own colour, so it is invisible until something scrolls under it.
+   */
+  /*
+   * `.page-tabs` scrolls sideways when a strip has more tabs than fit (35-segmented-filter.css), and that
+   * `overflow` would clip the band below away. Bookings' three tabs are equal columns that always fit, so
+   * nothing here has anything to scroll.
+   */
+  .page-tabs.bk-tabs {
+    /* Both classes, because `.page-tabs`'s own `overflow-x` is set in a sheet that loads after this one. */
+    overflow: visible;
+  }
+
+  .bk-tabs::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(-1 * var(--sp-4));
+    height: var(--sp-4);
+    background: var(--page-bg);
+    pointer-events: none;
   }
 
   .bk-timeline {

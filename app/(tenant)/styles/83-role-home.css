@@ -1958,11 +1958,24 @@ button.hm-now-count {
     color: #fff;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(9, 20, 15, 0.2), 0 10px 22px rgba(22, 163, 74, 0.33);
-    transition: transform 0.18s ease;
+    transition:
+      transform 0.18s ease,
+      opacity 0.18s ease;
     z-index: 5;
   }
   .bn-centre:active {
     transform: scale(0.94);
+  }
+  /*
+   * Away while the page scrolls down, back on the way up (owner, 2026-10-13) — see BottomNav.tsx, which decides
+   * when. It drops behind the bar rather than fading on the spot: the bar is opaque and sits over it, so the
+   * button reads as tucking itself away instead of blinking out. `pointer-events` goes with it, or the thumb
+   * still finds a button that is not there.
+   */
+  .bn-centre.is-away {
+    transform: translateY(calc(100% + var(--sp-3))) scale(0.9);
+    opacity: 0;
+    pointer-events: none;
   }
   .bn-centre-btn {
     display: flex;
