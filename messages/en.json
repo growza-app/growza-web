@@ -880,22 +880,31 @@
     "import": {
       "fields": {
         "name": "Service name",
-        "type": "Type",
+        "category": "Category",
         "minutes": "Minutes",
-        "cleanup": "Cleanup after (minutes)",
-        "price": "Price"
+        "cleanup": "Time after (cleanup)",
+        "price": "Price (₹)"
       },
       "title": "Import your price list",
       "pickBody": "Upload the spreadsheet you already have — an Excel file (.xlsx) or a CSV. You'll check every row before anything is saved.",
       "reading": "Reading…",
       "chooseFile": "Choose file",
-      "mapBody": "We found <b>{count}</b> rows. Confirm which column is which — your file doesn't need renaming.",
-      "notInFile": "— not in my file —",
+      "mapBody": "We read <b>{count}</b> rows. Check what each column of your file becomes.",
       "column": "Column {n}",
       "back": "Back",
       "check": "Check {count} rows",
       "cancel": "Cancel",
-      "readFailed": "Could not read that file."
+      "readFailed": "Could not read that file.",
+      "mapTitle": "Match your columns",
+      "mapDone": "We read <b>{count}</b> rows and matched your columns.",
+      "notUsed": "Not used: {names}",
+      "change": "Change",
+      "becomes": "Becomes",
+      "skipColumn": "Skip this column",
+      "needed": "needed",
+      "missingName": "Choose which column holds the service name.",
+      "missingMinutes": "Choose which column holds how long it takes, in minutes.",
+      "sampleEmpty": "(empty)"
     },
     "review": {
       "toAdd": "{count} to add",

@@ -5,34 +5,8 @@ import { useMemo, useRef, useState } from 'react';
 import { api, type ServiceAdmin } from '../lib/api';
 import { type Draft } from './import-drafts';
 import { ImportReview } from './ImportReview';
-
-type Field = 'name' | 'categoryName' | 'durationMin' | 'bufferAfterMin' | 'priceMinor';
-
-/** `labelKey` names the field in `services.import.fields`; `hints` are column-header words to recognise in the owner's file, in English as the files usually are. */
-const FIELDS: { key: Field; labelKey: 'name' | 'type' | 'minutes' | 'cleanup' | 'price'; required: boolean; hints: string[] }[] = [
-  { key: 'name', labelKey: 'name', required: true, hints: ['service', 'name', 'treatment', 'item'] },
-  { key: 'categoryName', labelKey: 'type', required: false, hints: ['type', 'category', 'group', 'section'] },
-  // "Labour hrs" is the design's own example of a column that should map to
-  // duration without the owner reformatting their file. The board calls this
-  // "Takes"; we say "Minutes", which names the unit and needs no decoding.
-  { key: 'durationMin', labelKey: 'minutes', required: true, hints: ['duration', 'mins', 'minutes', 'time', 'takes', 'labour', 'hrs'] },
-  { key: 'bufferAfterMin', labelKey: 'cleanup', required: false, hints: ['cleanup', 'buffer', 'gap', 'turnaround'] },
-  { key: 'priceMinor', labelKey: 'price', required: false, hints: ['price', 'rate', 'cost', 'amount', 'charge', 'fee'] },
-];
-
-/** Best-guess mapping so a conventionally-named sheet needs no work at all. */
-function suggest(headers: string[]): Record<Field, number> {
-  const used = new Set<number>();
-  const out = {} as Record<Field, number>;
-  for (const f of FIELDS) {
-    const i = headers.findIndex(
-      (h, idx) => !used.has(idx) && f.hints.some((hint) => h.toLowerCase().includes(hint)),
-    );
-    out[f.key] = i;
-    if (i >= 0) used.add(i);
-  }
-  return out;
-}
+import { ImportColumns } from './ImportColumns';
+import { suggest, type ColumnMap, type Field } from './import-columns';
 
 /**
  * Import a price list from a spreadsheet: pick the file, confirm which column
@@ -58,7 +32,7 @@ export function ImportServices({
   const [step, setStep] = useState<'pick' | 'map' | 'review'>('pick');
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
-  const [map, setMap] = useState<Record<Field, number>>({} as Record<Field, number>);
+  const [map, setMap] = useState<ColumnMap>({} as ColumnMap);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +99,7 @@ export function ImportServices({
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal import-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>{t('title')}</h3>
+        <h3>{step === 'map' ? t('mapTitle') : t('title')}</h3>
 
         {step === 'pick' && (
           <>
@@ -144,37 +118,7 @@ export function ImportServices({
         )}
 
         {step === 'map' && (
-          <>
-            <p className="confirm-body">{t.rich('mapBody', { count: rows.length, b: (chunks) => <strong>{chunks}</strong> })}</p>
-            <div className="import-map">
-              {FIELDS.map((f) => (
-                <label key={f.key} className="field">
-                  <span className="field-label">
-                    {t(`fields.${f.labelKey}`)} {f.required && '*'}
-                  </span>
-                  <select
-                    value={map[f.key] ?? -1}
-                    onChange={(e) => setMap((m) => ({ ...m, [f.key]: Number(e.target.value) }))}
-                  >
-                    <option value={-1}>{t('notInFile')}</option>
-                    {headers.map((h, i) => (
-                      <option key={i} value={i}>
-                        {h || t('column', { n: i + 1 })}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ))}
-            </div>
-            <div className="modal-actions">
-              <button type="button" className="btn btn-ghost" onClick={() => setStep('pick')}>
-                {t('back')}
-              </button>
-              <button type="button" className="btn" disabled={map.name < 0 || map.durationMin < 0} onClick={buildDrafts}>
-                {t('check', { count: rows.length })}
-              </button>
-            </div>
-          </>
+          <ImportColumns headers={headers} rows={rows} map={map} onMap={setMap} onBack={() => setStep('pick')} onNext={buildDrafts} />
         )}
 
         {step === 'review' && (
