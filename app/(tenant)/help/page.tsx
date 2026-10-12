@@ -5,6 +5,7 @@ import type { Me } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
 import { IconPhone, IconWhatsApp } from '../components/icons';
 import { helpOptions, isHelpRole, ROLE_KEY, supportIntro } from './links';
+import { QuickFixes } from './QuickFixes';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,12 @@ export default async function HelpPage() {
   /* One option reads exactly as the screen always did — a heading for the only choice would be noise. */
   const numbered = options.length > 1;
 
+  /*
+   * The section's keys are built from data (`topics.<id>.main.s1`), which the typed translator cannot check at
+   * compile time. quick-fixes.test.ts checks every one of them exists, in both languages, instead.
+   */
+  const fixText = (key: string) => (t as unknown as (k: string) => string)(`fixes.${key}`);
+
   return (
     <>
       <PageHeader title={t('title')} />
@@ -126,6 +133,9 @@ export default async function HelpPage() {
 
           <p className="help-reply">{t('reply')}</p>
         </div>
+
+        {/* The same page, below the people: what to try before ringing anybody. */}
+        <QuickFixes role={isHelpRole(role) ? role : null} t={fixText} />
       </div>
     </>
   );
