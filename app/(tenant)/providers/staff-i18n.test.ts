@@ -46,16 +46,14 @@ const edit = (locale: 'en' | 'hi') =>
 describe('the staff edit screen', () => {
   it('keeps the English words', () => {
     const html = edit('en');
-    for (const s of ['Details', 'Full name', 'Earnings', 'Show their own earnings', 'Working hours', 'Same as the business', 'Services this person can take', 'Last 30 days', 'Danger zone', 'Mark inactive', 'Save changes']) {
+    for (const s of ['Details', 'Full name', 'Earnings', 'Show their own earnings', 'Working hours', 'Same as the business', 'Last 30 days', 'Danger zone', 'Mark inactive', 'Save changes']) {
       expect(html, s).toContain(s);
     }
-    expect(html).toContain('1 of 1 selected');
   });
 
   it('reads in Hindi with no English chrome left', () => {
     const html = edit('hi');
     for (const s of ['जानकारी', 'पूरा नाम', 'कमाई', 'काम के घंटे', 'बिज़नेस के जैसे', 'पिछले 30 दिन', 'बंद करें', 'बदलाव सेव करें']) expect(html, s).toContain(s);
-    expect(html).toContain('1 में से 1 चुनी गईं');
     for (const s of ['Details', 'Earnings', 'Danger zone', 'Last 30 days', 'Save changes', 'Cancel']) expect(html, s).not.toContain(s);
   });
 });

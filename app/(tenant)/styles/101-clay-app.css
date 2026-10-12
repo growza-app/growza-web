@@ -351,3 +351,46 @@
     box-shadow: var(--clay-green);
   }
 }
+
+/* ---------- Add staff, and the people's logins beside it (owner, 2026-10-12) ---------- */
+/*
+ * The flow is a sheet, so it takes the sheet's own lift. Inside it the three moves repeat exactly as they do on
+ * the tab strip: the step you are on is a piece lifted out, the steps you are not on sit flat, and the chips that
+ * answer a question are raised until one is chosen.
+ */
+.wiz {
+  box-shadow: 0 -6px 24px rgba(14, 51, 37, 0.14), inset 0 2px 2px rgba(255, 255, 255, 0.9);
+}
+
+.wiz-step button {
+  box-shadow: var(--clay-raise-soft);
+}
+
+.wiz-step.is-on button {
+  box-shadow: var(--clay-press);
+}
+
+.wiz-step button:active {
+  box-shadow: var(--clay-press);
+}
+
+.wiz-chip {
+  box-shadow: var(--clay-raise-soft);
+}
+
+.wiz-chip.is-on {
+  box-shadow: var(--clay-green);
+}
+
+.wiz-chip:active:not(:disabled) {
+  box-shadow: var(--clay-press);
+}
+
+.wiz-chip:disabled {
+  box-shadow: none;
+}
+
+/* A person who can sign in, and an invite waiting to be taken: the same raised row as a staff card. */
+.login-row {
+  box-shadow: var(--clay-raise);
+}

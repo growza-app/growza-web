@@ -10,6 +10,13 @@
  *
  * Phone first, because that is where it is hardest to fit.
  */
+/*
+ * The card does not resize when you change step (owner, 2026-10-12).
+ *
+ * Each step asks a different number of questions — Who has four fields, Login has one switch — so the sheet grew
+ * and shrank under the thumb as you moved through it, and the Save button moved with it. The height is the tallest
+ * step's, held by the body below; a shorter step leaves empty space rather than dragging the frame up.
+ */
 .wiz {
   position: fixed;
   left: 0;
@@ -178,7 +185,27 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 18px;
+  /* Room at the foot, so the last row of chips does not sit flush against the action row's edge — a raised chip
+     needs space for its own shadow, and a control touching the border reads as clipped. */
+  padding: 0 18px var(--sp-4);
+}
+
+/*
+ * The height every step is drawn at, so the frame and the action row stay put.
+ *
+ * `min-height` rather than a fixed one: a step taller than this (the hours editor on a short phone) still grows
+ * and still scrolls inside the body, which is the behaviour the comment above this file's `.wiz-body` protects.
+ * The value is the "Who" step, which is the tallest of the ordinary ones.
+ */
+.wiz-body {
+  min-height: 340px;
+}
+
+/* A phone shorter than ~700px has no room to hold a floor; let the body be what it is and scroll. */
+@media (max-height: 700px) {
+  .wiz-body {
+    min-height: 0;
+  }
 }
 
 .wiz-section-label {
@@ -339,4 +366,14 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     padding-bottom: 0;
   }
+}
+
+/*
+ * The line under the Stylist / Receptionist chips.
+ *
+ * It had a negative top margin to sit tight under them, which was fine while the chips were flat and wrong the
+ * moment they became clay: a raised chip's shadow reaches below its box, so the sentence ran into it.
+ */
+.wiz-kind-sub {
+  margin: var(--sp-2) 0 var(--sp-3);
 }

@@ -1461,6 +1461,12 @@ input.wi-search-input-plain {
 .field-required {
   color: var(--amber);
   font-weight: 600;
+  /*
+   * Hard against the label it belongs to. Several `.field` labels are `display: flex; justify-content:
+   * space-between` so that "(optional)" sits at the far end — which is right for a word and wrong for a star:
+   * a lone `*` across the screen from "Full name" reads as marking the field below it.
+   */
+  margin-right: auto;
 }
 
 /*

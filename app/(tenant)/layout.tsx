@@ -15,6 +15,7 @@ import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionRefresh } from './components/SessionRefresh';
 import { SessionProvider } from './components/SessionProvider';
+import { NamePrompt } from './components/NamePrompt';
 import { SessionResume } from './components/SessionResume';
 import { BranchProvider } from './components/BranchProvider';
 import { LabelsProvider } from './components/LabelsProvider';
@@ -164,6 +165,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let reportTabs: string[] | undefined;
   /** GRW-203 — the number they sign in with, for the account menu. */
   let memberPhone: string | null = null;
+  let memberName: string | null = null;
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
   let impersonation: { businessName: string; role: string } | null = null;
   /** GRW-164 — set when the API says this account may not operate. */
@@ -216,6 +218,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     paymentReceived = me.paymentReceived ?? null;
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
+    memberName = me.member?.name?.trim() || null;
     branches = me.branches ?? [];
     memberLocationId = me.member?.locationId ?? null;
     impersonation = me.impersonation ?? null;
@@ -295,9 +298,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <NextIntlClientProvider locale={lang} messages={pickNamespaces(messages as Messages, CLIENT_MESSAGES)}>
         <SessionProvider
           session={{
-            initial: (tenantName ?? 'S').charAt(0).toUpperCase(),
+            initial: Array.from(memberName ?? tenantName ?? 'S')[0]!.toUpperCase(),
             role: role ?? null,
             phone: memberPhone,
+            name: memberName,
             businessName: tenantName ?? null,
             branches,
             lang,
@@ -311,9 +315,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>
         <LabelsProvider labels={labels}>
+        {impersonation ? null : <NamePrompt />}
         <MobileNavProvider>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} name={memberName} />
             <div className="content">
               {/*
                 * Jira GRW-300 — its own grid item, not a bare `BillingBanner`

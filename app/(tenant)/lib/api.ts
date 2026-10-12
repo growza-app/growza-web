@@ -396,6 +396,8 @@ export interface PaymentLink {
 export interface PendingInvite {
   id: string;
   phone: string;
+  /** The name the owner typed when inviting; null for an invite sent before names, or a stylist's. */
+  name?: string | null;
   role: string;
   providerId: string | null;
   /** Jira GRW-237 — the branch a receptionist is invited to; null for one branch or a stylist. */
@@ -409,6 +411,8 @@ export interface TeamMember {
   userId: string;
   role: string;
   phone: string | null;
+  /** Their own name, when they (or the invite) set one. */
+  name?: string | null;
   providerId: string | null;
   providerName: string | null;
   locationId: string | null;
@@ -574,7 +578,7 @@ export const api = {
   liveVersion: (timeoutMs?: number) =>
     get<{ version: string }>('/api/v1/live-version', timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined).then((r) => r.version),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
-  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null }) =>
+  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null; name?: string | null }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
   teamMembers: () => get<{ members: TeamMember[] }>('/api/v1/team/members'),
   setTeamMemberBranch: (userId: string, locationId: string) =>

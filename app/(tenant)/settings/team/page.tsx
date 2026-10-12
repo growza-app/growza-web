@@ -1,50 +1,20 @@
+import { redirect } from 'next/navigation';
 import { screenTitle } from '../../lib/page-title';
-import { api } from '../../lib/api';
-import { LoadErrorBanner } from '../../components/LoadErrorBanner';
-import { loadErrorKind } from '../../lib/load-error';
-import { BranchScopeNote } from '../BranchScopeNote';
-import { TeamAccessPanel } from './TeamAccessPanel';
-
-export const dynamic = 'force-dynamic';
 
 /**
- * Jira GRW-63 · GRW-67 — who else can sign in to this business.
+ * Team access moved onto Staff (`/providers`).
  *
- * Deliberately separate from Staff (`/providers`): a provider is somebody the
- * diary can book, and a member is somebody who can log in. They are usually the
- * same person, and are not the same thing — a receptionist logs in and is never
- * booked, and a visiting stylist is booked and never logs in.
+ * It was its own tab from GRW-63 until the owner said the obvious thing: a stylist appeared on two screens and a
+ * receptionist on the one nobody opened, and neither screen said how they related. The people and their logins are
+ * one list now — see `providers/TeamLogins`.
+ *
+ * The route stays as a redirect rather than a 404: owners have this address bookmarked, and a dead link is a worse
+ * answer than the screen that replaced it.
  */
-export default async function TeamSettingsPage() {
-  /**
-   * The roster comes with the invites (GRW-171): a `staff` invite has to name
-   * WHICH stylist the person is, and the picker cannot offer a list it does
-   * not have. Its own failure is not fatal — an owner can still invite a
-   * receptionist, who needs no provider — so it degrades to an empty list
-   * rather than taking the screen down with it.
-   */
-  const [initial, providers, settings, members, me] = await Promise.all([
-    // Kept as a result, not swallowed: a busy API (429) and a down one are told apart in the banner below.
-    api.teamInvites().then((ok) => ({ ok }), (error: unknown) => ({ error })),
-    api.providers().catch(() => []),
-    api.settings().catch(() => null),
-    api.teamMembers().catch(() => null),
-    api.me().catch(() => null),
-  ]);
-  if ('error' in initial) return <LoadErrorBanner kind={loadErrorKind(initial.error)} />;
-  return (
-    <>
-      {/* Jira GRW-230 — invites are for the whole business; Jira GRW-237 — a receptionist's branch is chosen on the invite. */}
-      {settings ? <BranchScopeNote settings={settings} branchName={null} sameForAll topic="teamAccess" /> : null}
-      <TeamAccessPanel
-        initial={initial.ok.invites}
-        providers={providers}
-        initialMembers={members?.members ?? []}
-        branches={me?.branches ?? []}
-      />
-    </>
-  );
+export default function TeamSettingsPage() {
+  redirect('/providers');
 }
 
-// Jira GRW-192 — the tab says which screen this is.
+// Never rendered — the redirect fires first — but every route declares one (`title-coverage`), and a redirect that
+// is slow to arrive should not flash the business name alone.
 export const metadata = screenTitle('Team access');

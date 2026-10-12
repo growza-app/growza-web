@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, reasonOr, type ProviderOverviewRow, type ProvidersOverview, type Service } from '../lib/api';
+import { api, ApiError, reasonOr, type PendingInvite, type ProviderOverviewRow, type ProvidersOverview, type Service, type TeamMember } from '../lib/api';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
@@ -15,6 +15,7 @@ import { StaffWizard } from './StaffWizard';
 import { useWritable } from '../components/SessionProvider';
 import { SavedToast } from '../components/SavedToast';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
+import { InviteSheet, LoginGroup, WaitingGroup, type InviteTarget } from './TeamLogins';
 
 type Tab = 'all' | 'working' | 'off' | 'inactive';
 
@@ -26,6 +27,8 @@ export function StaffClient({
   orgHours,
   hoursByBranch = {},
   branches = [],
+  initialInvites = [],
+  initialMembers = [],
 }: {
   initialOverview: ProvidersOverview;
   services: Service[];
@@ -37,10 +40,16 @@ export function StaffClient({
   hoursByBranch?: Record<string, Array<{ weekday: number; startTime: string; endTime: string }>>;
   /** Jira GRW-234 — a multi-branch business's branches, main first; empty for one branch. */
   branches?: Array<{ id: string; name: string }>;
+  /** Invites sent and not yet accepted. Empty when the API could not be asked — the roster still draws. */
+  initialInvites?: PendingInvite[];
+  /** Everybody who can sign in. Same degradation: a login list that failed to load must not take the roster down. */
+  initialMembers?: TeamMember[];
 }) {
   const router = useRouter();
   const t = useTranslations('staff');
   const tn = useTranslations('nouns');
+  // The invite and login words, kept in the namespace they were written in rather than copied into `staff`.
+  const tTeam = useTranslations('settingsTeam');
   const locale = useLocale();
   // The vertical's word in English; a generic one in other languages until vertical labels are translated (GRW-315 Story 5).
   const staffTitle = pickNoun(locale, staffWord, tn('staffTitle'));
@@ -62,7 +71,8 @@ export function StaffClient({
   const [tab, setTab] = useState<Tab>('all');
   const [page, setPage] = useState(1);
   const writable = useWritable();
-  const [creating, setCreating] = useState(false);
+  /** The Add flow, and which kind it opens on. Null when it is closed. */
+  const [creating, setCreating] = useState<'staff' | 'reception' | null>(null);
   const [sheetFor, setSheetFor] = useState<ProviderOverviewRow | null>(null);
   /** Pending availability change awaiting confirmation — the roster switch applies instantly, so it asks first. */
   const [confirmAvail, setConfirmAvail] = useState<{ p: ProviderOverviewRow; available: boolean } | null>(null);
@@ -70,6 +80,77 @@ export function StaffClient({
   const [busyId, setBusyId] = useState<string | null>(null);
   /** Why a change was refused — most often the plan's seat cap (GRW-23). */
   const [error, setError] = useState<string | null>(null);
+
+  /*
+   * The logins, which used to be a Settings tab of their own.
+   *
+   * Held here beside the roster because they describe the same people: a stylist's row says whether they can sign
+   * in, and that answer comes from these two lists. Two owners of the same fact is how the old split let a stylist
+   * be retired on one screen and keep a working password on the other.
+   */
+  const [invites, setInvites] = useState<PendingInvite[]>(initialInvites);
+  const [members, setMembers] = useState<TeamMember[]>(initialMembers);
+  useEffect(() => setInvites(initialInvites), [initialInvites]);
+  useEffect(() => setMembers(initialMembers), [initialMembers]);
+  /** The invite sheet's subject, or null when it is closed. */
+  const [invite, setInvite] = useState<InviteTarget | null>(null);
+  const [savingMember, setSavingMember] = useState<string | null>(null);
+  const [confirmLogin, setConfirmLogin] = useState<TeamMember | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [removingLogin, setRemovingLogin] = useState(false);
+
+  const branchNameOf = (id: string | null | undefined) => branches.find((b) => b.id === id)?.name ?? null;
+
+  const refreshLogins = async () => {
+    const [nextInvites, nextMembers] = await Promise.all([
+      api.teamInvites().then((r) => r.invites, () => null),
+      api.teamMembers().then((r) => r.members, () => null),
+    ]);
+    if (nextInvites) setInvites(nextInvites);
+    if (nextMembers) setMembers(nextMembers);
+  };
+
+  const revokeInvite = async (id: string) => {
+    setError(null);
+    try {
+      await api.revokeTeamInvite(id);
+      await refreshLogins();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : tTeam('errors.loadError'));
+    }
+  };
+
+  /** Jira GRW-237 — move a receptionist to a branch. Saved on choosing; there is nothing else on the row to save. */
+  const moveMember = async (userId: string, next: string) => {
+    if (!next) return;
+    setError(null);
+    setSavingMember(userId);
+    try {
+      await api.setTeamMemberBranch(userId, next);
+      setMembers((all) => all.map((m) => (m.userId === userId ? { ...m, locationId: next, locationName: branchNameOf(next) } : m)));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : tTeam('errors.loadError'));
+    } finally {
+      setSavingMember(null);
+    }
+  };
+
+  /**
+   * Jira GRW-470 — take a login away. Asked first, because it is immediate: their next tap is refused.
+   */
+  const doRemoveLogin = async (member: TeamMember) => {
+    setRemovingLogin(true);
+    setLoginError(null);
+    try {
+      await api.removeTeamMember(member.userId);
+      setMembers((all) => all.filter((m) => m.userId !== member.userId));
+      setConfirmLogin(null);
+    } catch (e) {
+      setLoginError(e instanceof ApiError ? e.message : tTeam('errors.loadError'));
+    } finally {
+      setRemovingLogin(false);
+    }
+  };
 
   const refresh = async () => {
     const fresh = await api.providersOverview().catch(() => null);
@@ -188,6 +269,18 @@ export function StaffClient({
   // working elsewhere (GRW-395 QA).
   const topPerformerId = (branchId ? overview.topByBranch?.[branchId] : overview.topPerformer)?.id ?? null;
 
+  /*
+   * The front desk is the receptionists. "Other logins" is the leftover case nobody should have and somebody will:
+   * a staff login whose stylist row is gone (invited before GRW-470 made the stylist mandatory, or the provider was
+   * deleted). Their row would otherwise be nowhere, and taking a login away would be impossible.
+   */
+  const frontDesk = useMemo(() => members.filter((m) => m.role === 'receptionist'), [members]);
+  const strayLogins = useMemo(
+    () => members.filter((m) => m.role === 'staff' && !everyone.some((p) => p.id === m.providerId)),
+    [members, everyone],
+  );
+  const roleLabelOf = (m: { role: string }) => (m.role === 'receptionist' ? tTeam('receptionist') : tTeam('stylist'));
+
   const tabbed = useMemo(() => {
     switch (tab) {
       case 'working':
@@ -222,12 +315,33 @@ export function StaffClient({
   const off = visible.filter((p) => p.active && !isWorkingToday(p));
   const inactive = visible.filter((p) => !p.active);
 
+  /*
+   * Who among the roster holds a login, and who has been asked.
+   *
+   * A member wins over an invite for the same stylist: accepting the invite leaves both rows readable for a moment,
+   * and "Can sign in" is the true one.
+   */
+  const loginByProvider = useMemo(() => {
+    const map = new Map<string, 'in' | 'invited'>();
+    for (const i of invites) if (i.providerId) map.set(i.providerId, 'invited');
+    for (const m of members) if (m.providerId) map.set(m.providerId, 'in');
+    return map;
+  }, [invites, members]);
+
   const actions: RosterActions = {
     onToggleAvailable: setAvailableToday,
     // Edit is a full screen now (design Turn 4), not the old right-hand drawer.
     onEdit: (p) => router.push(`/providers/${p.id}`),
     onSetActive: setActive,
     busyId,
+    loginOf: (p) => loginByProvider.get(p.id) ?? 'none',
+    onInvite: (p) => setInvite({ role: 'staff', providerId: p.id }),
+    onRemoveLogin: (p) => {
+      const member = members.find((m) => m.providerId === p.id);
+      if (!member) return;
+      setLoginError(null);
+      setConfirmLogin(member);
+    },
   };
 
   const tabs: { key: Tab; count: number }[] = [
@@ -271,7 +385,10 @@ export function StaffClient({
         actions={
           // Jira GRW-556 (follow-up) — a business suspended for non-payment sees its team and adds none.
           writable ? (
-            <button type="button" className="btn" onClick={() => setCreating(true)} disabled={seatsLeft === 0}>
+            /* Never disabled (owner, 2026-10-12): a receptionist takes no seat, and this is the only way in. A
+               plan with no room left is said on the Stylist chip inside, where it is the answer to a question
+               somebody just asked rather than a dead button in the header. */
+            <button type="button" className="btn" onClick={() => setCreating('staff')}>
               <IconPlus /> {t('addLabel', { label: staffLower })}
             </button>
           ) : undefined
@@ -374,6 +491,47 @@ export function StaffClient({
         </>
       )}
 
+      {/*
+        The people with a login and no diary, and the invites nobody has accepted yet — the whole of what used to be
+        Settings › Team access. Under the roster rather than beside it: a salon has eight stylists and one front
+        desk, and the roster is what the owner came here for.
+
+        Only on the All tab: the tabs above filter the DIARY (working, off, retired), and a receptionist has no
+        shift to be in either state — leaving them under "Off today" would be answering a question nobody asked.
+      */}
+      {tab === 'all' && (
+        <>
+          <LoginGroup
+            title={tTeam('frontDesk')}
+            empty={tTeam('noFrontDesk')}
+            members={frontDesk}
+            branches={branches}
+            savingId={savingMember}
+            roleLabel={roleLabelOf}
+            onMove={moveMember}
+            onRemove={(m) => {
+              setLoginError(null);
+              setConfirmLogin(m);
+            }}
+            writable={writable}
+          />
+          <LoginGroup
+            title={tTeam('otherLogins')}
+            members={strayLogins}
+            branches={branches}
+            savingId={savingMember}
+            roleLabel={roleLabelOf}
+            onMove={moveMember}
+            onRemove={(m) => {
+              setLoginError(null);
+              setConfirmLogin(m);
+            }}
+            writable={writable}
+          />
+          <WaitingGroup invites={invites} branchName={branchNameOf} onRevoke={(id) => void revokeInvite(id)} writable={writable} />
+        </>
+      )}
+
       {confirmAvail && (
         <ConfirmDialog
           title={confirmAvail.available ? t('avail.titleOn', { name: confirmAvail.p.displayName }) : t('avail.titleOff', { name: confirmAvail.p.displayName })}
@@ -418,6 +576,33 @@ export function StaffClient({
         />
       )}
 
+      {invite && (
+        <InviteSheet
+          target={invite}
+          // Every stylist in the business, not the branch being looked at: a login is the business's to give.
+          providers={everyone.filter((p) => p.active)}
+          branches={branches}
+          onClose={() => setInvite(null)}
+          onCreated={() => void refreshLogins()}
+        />
+      )}
+
+      {confirmLogin && (
+        <ConfirmDialog
+          title={tTeam('removeTitle', { name: confirmLogin.name ?? confirmLogin.providerName ?? confirmLogin.phone ?? roleLabelOf(confirmLogin) })}
+          body={tTeam('removeBody')}
+          confirmLabel={tTeam('remove')}
+          tone="danger"
+          busy={removingLogin}
+          error={loginError}
+          onConfirm={() => void doRemoveLogin(confirmLogin)}
+          onCancel={() => {
+            setConfirmLogin(null);
+            setLoginError(null);
+          }}
+        />
+      )}
+
       {/*
         Jira GRW-22 — the 3-step wizard GRW-004 asked for.
         `StaffDetailPanel` used to serve this too, and on the create path it
@@ -427,6 +612,8 @@ export function StaffClient({
       */}
       {creating && (
         <StaffWizard
+          startAs={creating}
+          seatsLeft={seatsLeft}
           staffWord={staffWord}
           services={services}
           roster={providers}
@@ -434,8 +621,11 @@ export function StaffClient({
           hoursByBranch={hoursByBranch}
           branches={branches}
           fullBranches={fullBranches}
-          onClose={() => setCreating(false)}
-          onCreated={refresh}
+          onClose={() => setCreating(null)}
+          onCreated={() => {
+            void refresh();
+            void refreshLogins();
+          }}
         />
       )}
       </div>

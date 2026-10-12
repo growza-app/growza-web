@@ -56,36 +56,61 @@ const saveBody = (() => {
 })();
 
 describe('creating a staff member', () => {
-  it('sends exactly one request', () => {
+  it('makes the person in exactly one request', () => {
     /*
      * The heart of it. Everything else here is a detail of what that one
      * request carries; this is the property that makes a half-made stylist
      * impossible rather than merely unlikely.
+     *
+     * The flow now also offers a LOGIN, which is a separate record and a separate request — see the two cases
+     * below. The person is still made by one call, and nothing about them is patched afterwards.
      */
-    const calls = saveBody.match(/api\.[a-zA-Z]+\(/g) ?? [];
+    const calls = (saveBody.match(/api\.[a-zA-Z]+\(/g) ?? []).filter((c) => c !== 'api.createTeamInvite(');
     expect(calls).toEqual(['api.createProvider(']);
+  });
+
+  it('the optional login is asked for after the person exists, and its failure does not undo them', () => {
+    /*
+     * The login cannot ride on the create: it is a `team_invite` row for a phone, not a column on the provider.
+     * So the order is load-bearing — the person is created, `onCreated()` has already refreshed the roster, and
+     * only then is the invite attempted inside its own try. A throw here must not read as "nothing was added",
+     * because the stylist IS added; that is how the same person ends up on the roster twice.
+     */
+    const createAt = saveBody.indexOf('api.createProvider(');
+    const inviteAt = saveBody.indexOf("api.createTeamInvite({ phone: stored, role: 'staff'");
+    expect(inviteAt, 'the stylist’s invite moved or was renamed').toBeGreaterThan(createAt);
+    expect(saveBody).toMatch(/if \(!wantsLogin\) return onClose\(\);/);
+    expect(saveBody).toMatch(/try \{\s*const invite = await api\.createTeamInvite\(\{ phone: stored, role: 'staff'[\s\S]*?\} catch \(err\) \{\s*setLoginFailed\(/);
+  });
+
+  it('the front desk is an invite and nothing else — there is no provider row to make', () => {
+    const reception = saveBody.slice(saveBody.indexOf("if (kind === 'reception')"), saveBody.indexOf('api.createProvider('));
+    expect(reception).toMatch(/api\.createTeamInvite\(\{[\s\S]*?role: 'receptionist'/);
+    expect(reception, 'a receptionist is never booked, so never a provider').not.toMatch(/api\.createProvider/);
   });
 
   it('carries the week, when the owner set one', () => {
     expect(saveBody).toMatch(/workingHours:/);
   });
 
-  it('carries the skills, when they are not simply all of them', () => {
-    expect(saveBody).toMatch(/serviceIds:/);
+  it('sends no services at all — nothing narrows who can be booked any more', () => {
+    /*
+     * The create used to carry the wizard's ticked services, and omitting them meant "every active one at this
+     * branch". The owner dropped the rule on 2026-10-12, so there is no list to carry and no step that asks:
+     * the server's own default is the only answer, and it is now also the only possible one.
+     */
+    expect(saveBody).not.toMatch(/serviceIds/);
   });
 
-  it('omits both when they are the defaults, rather than sending a snapshot', () => {
+  it('omits the week when it is the salon’s, rather than sending a snapshot', () => {
     /*
      * Silence is not laziness here, it is the feature.
      *
-     * Sending a COPY of today's salon hours would store rows and leave
-     * `uses_org_hours` false, so the stylist would stop following the salon
-     * the moment the owner changed it — GRW-183's standing intent, destroyed
-     * by a client being helpful. Same for services: omitted means "every active
-     * one" of the stylist's branch (Jira GRW-393), resolved server-side at insert.
+     * Sending a COPY of today's salon hours would store rows and leave `uses_org_hours` false, so the stylist
+     * would stop following the salon the moment the owner changed it — GRW-183's standing intent, destroyed by a
+     * client being helpful.
      */
     expect(saveBody).toMatch(/followsSalon\s*\n?\s*\?\s*\{\}/);
-    expect(saveBody).toMatch(/skills\.size === menu\.length \? \{\} :/);
   });
 
   it('has no follow-up PATCH of any kind', () => {

@@ -18,6 +18,7 @@ const good = {
   typeCode: 'salon',
   planCode: 'prime',
   branches: [{ name: 'MG Road', line1: '', city: '', stylists: '5' }],
+  ownerName: 'Meera Shah',
   nationalNumber: '9876543210',
   dialCode: '+91',
   reason: 'Signed up on a call',
@@ -169,10 +170,18 @@ describe('branches', () => {
   });
 });
 
+describe('the owner’s own name', () => {
+  /** Owner, 2026-10-12 — a person has a name, and enrolment is the only moment this one is asked for. */
+  it('is required', () => {
+    expect(validate({ ...good, ownerName: '   ' })['owner.name']).toBe('Enter the owner’s name');
+    expect(validate(good)['owner.name']).toBeUndefined();
+  });
+});
+
 describe('reporting', () => {
   it('reports every bad field at once, not just the first', () => {
-    const errors = validate({ ...good, name: '', reason: '', nationalNumber: '' });
-    expect(Object.keys(errors).sort()).toEqual(['name', 'owner.phone', 'reason']);
+    const errors = validate({ ...good, name: '', reason: '', nationalNumber: '', ownerName: '' });
+    expect(Object.keys(errors).sort()).toEqual(['name', 'owner.name', 'owner.phone', 'reason']);
   });
 });
 

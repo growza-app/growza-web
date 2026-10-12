@@ -5,7 +5,7 @@ import { PersonPhoto } from '../components/PersonPhoto';
 import { useEffect, useRef, useState } from 'react';
 import type { ProviderOverviewRow } from '../lib/api';
 import { useWritable } from '../components/SessionProvider';
-import { IconAppointments, IconCalendar, IconClock, IconEdit, IconServices, IconTrash } from '../components/icons';
+import { IconAppointments, IconCalendar, IconClock, IconEdit, IconTrash, IconUserPlus } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { weekdayNames } from '../lib/weekday-names';
 
@@ -121,6 +121,44 @@ export interface RosterActions {
   onSetActive: (p: ProviderOverviewRow, active: boolean) => void;
   /** Null while a row's request is in flight, so its switch can't be double-fired. */
   busyId: string | null;
+  /**
+   * Whether this person can sign in — the fact that used to live on a Settings tab of its own.
+   *
+   * Optional, and absent reads as `none` with no chip and no menu item: the roster is rendered in tests and on a
+   * session whose login lists failed to load, and neither should grow a control that cannot work.
+   */
+  loginOf?: (p: ProviderOverviewRow) => 'in' | 'invited' | 'none';
+  onInvite?: (p: ProviderOverviewRow) => void;
+  onRemoveLogin?: (p: ProviderOverviewRow) => void;
+}
+
+/** The chip on a person's row. Nothing at all when they have no login: most stylists never will, and a grey "No
+ *  login" on every row is noise about a thing the owner did not ask for. */
+function LoginChip({ state }: { state: 'in' | 'invited' | 'none' }) {
+  const t = useTranslations('settingsTeam');
+  if (state === 'none') return null;
+  return <span className={`staff-badge ${state === 'in' ? 'staff-badge-in' : 'staff-badge-invited'}`}>{state === 'in' ? t('chipIn') : t('chipInvited')}</span>;
+}
+
+/** The menu/sheet items for a person's login — invite, or take it away. Rendered only where both are wired. */
+function LoginItems({ p, actions, run }: { p: ProviderOverviewRow; actions: RosterActions; run: (fn: () => void) => () => void }) {
+  const t = useTranslations('settingsTeam');
+  const state = actions.loginOf?.(p) ?? 'none';
+  if (state === 'in') {
+    return actions.onRemoveLogin ? (
+      <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onRemoveLogin!(p))}>
+        <IconUserPlus /> {t('removeSignIn')}
+      </button>
+    ) : null;
+  }
+  // An invite already sent is cancelled from the "Waiting to join" group; sending a second one here would just
+  // replace it silently.
+  if (state === 'invited' || !actions.onInvite) return null;
+  return (
+    <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onInvite!(p))}>
+      <IconUserPlus /> {t('inviteToSignIn')}
+    </button>
+  );
 }
 
 function Switch({
@@ -204,9 +242,7 @@ function RowMenu({ p, actions }: { p: ProviderOverviewRow; actions: RosterAction
           <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onEdit(p))}>
             <IconClock /> {t('workingHours')}
           </button>
-          <button type="button" className="sheet-item" role="menuitem" onClick={run(() => actions.onEdit(p))}>
-            <IconServices /> {t('servicesSkills')}
-          </button>
+          <LoginItems p={p} actions={actions} run={run} />
           <div className="staff-menu-divider" />
           {p.active ? (
             <button
@@ -258,6 +294,7 @@ function StaffRow({
             {p.displayName}
           </button>
           {isTop && <span className="staff-badge staff-badge-top">{t('row.top')}</span>}
+          <LoginChip state={actions.loginOf?.(p) ?? 'none'} />
         </div>
         <div className="staff-identity-role">{p.title ?? '—'}{p.branchLabel ? ` · ${p.branchLabel}` : ''}</div>
       </div>
@@ -354,6 +391,7 @@ function StaffCard({
             <span className="staff-card-name">{p.displayName}</span>
             {isTop && <span className="staff-badge staff-badge-top">{t('row.top')}</span>}
             {freeAllDay && <span className="staff-badge staff-badge-free">{t('row.free')}</span>}
+            <LoginChip state={actions.loginOf?.(p) ?? 'none'} />
           </div>
           <div className="staff-identity-role">
             {off ? `${shiftOffLabel(p, t, locale)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}` : `${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''} · ${hours}`}
@@ -443,9 +481,14 @@ export function StaffActionSheet({
         <button type="button" className="sheet-item" onClick={run(() => actions.onEdit(p))}>
           <IconClock /> {t('workingHours')}
         </button>
-        <button type="button" className="sheet-item" onClick={run(() => actions.onEdit(p))}>
-          <IconServices /> {t('servicesSkills')}
-        </button>
+        {/*
+          "Services & skills" is gone from both menus (owner, 2026-10-12).
+          
+          It was a third door to the same edit screen, and the one thing it named — the services this person can
+          take — stopped existing when anyone at the branch became bookable for anything. A menu item that
+          promises a section the screen no longer has is worse than one fewer way in.
+        */}
+        {writable && <LoginItems p={p} actions={actions} run={run} />}
 
         {writable && <div className="staff-menu-divider" />}
         {!writable ? null : p.active ? (

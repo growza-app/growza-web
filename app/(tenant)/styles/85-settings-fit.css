@@ -273,51 +273,11 @@
   }
 }
 
-/* ---------- Team access: labels above their fields, one row on a laptop ---------- */
-.team-invite-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
-  align-items: end;
-}
-.team-role-field {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.team-role-field > label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 7px;
-}
-.team-invite-grid select,
-.team-invite-phone .phone-field {
-  width: 100%;
-  min-width: 0;
-}
-.team-invite-phone .field {
-  margin: 0;
-}
-.team-invite-btn {
-  justify-content: center;
-  min-height: 42px;
-}
-@media (min-width: 1101px) {
-  .team-invite-grid {
-    /*
-     * Two columns, not one row of four (Jira GRW-253 QA). Beside the settings list the
-     * card is ~520px at 1101 and ~790px at 1366: four tracks left "Which branch" an empty
-     * 48px box and cut the Role sentence to "Re". Phone and Role share the first row;
-     * the stylist or branch choice and the button the second.
-     */
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  }
-  .team-invite-btn {
-    justify-self: start;
-    padding-inline: 22px;
-  }
-}
+/*
+ * Team access's invite form used to sit here (`.team-invite-grid` and friends). The screen moved onto Staff
+ * (owner, 2026-10-12) and took its own sheet with it — 37-roster-rows-web.css — so the rules had no markup left
+ * to style. Deleted rather than left: dead CSS is read as "this is how that screen looks".
+ */
 
 /*
  * Short windows (up to 859px tall: 1366×680, 1280×720, and — since Jira
