@@ -2574,7 +2574,7 @@
           "main": {
             "s1": "Tap “New booking” on “Home”.",
             "s2": "Pick the client, the service and the time.",
-            "s3": "Save it."
+            "s3": "Save the booking."
           }
         },
         "move": {
@@ -2626,7 +2626,7 @@
         "show-qr": {
           "title": "Show your QR for them to scan",
           "main": {
-            "s1": "Do “Record payment” until “How did they pay?”.",
+            "s1": "Start “Record payment” and go on to “How did they pay?”.",
             "s2": "Tap UPI.",
             "s3": "The QR shows full screen: “Let them scan”. They type the amount in their own app.",
             "s4": "When the money arrives, tap “Money received”."
