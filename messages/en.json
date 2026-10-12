@@ -649,12 +649,8 @@
     "bookingLinkNumber": "It opens a WhatsApp chat with {number}."
   },
   "settingsCheckIn": {
-    "title": "Location check-in",
-    "titleBranch": "Location check-in · {name}",
-    "intro": "Your staff can mark themselves in from their phone. It counts by itself when the phone is at this branch. If the phone cannot say where it is, you say yes or no.",
     "pinLabel": "Where this branch is",
     "pinSaved": "Saved — this is the branch",
-    "pinCoords": "{lat}, {lng}",
     "pinNotSet": "Not set yet",
     "useHere": "Use where I am now",
     "finding": "Finding you…",
@@ -671,7 +667,7 @@
     "enabledOn": "On. Each stylist at this branch sees “I’m in” on their Home.",
     "enabledOff": "Off. Attendance is marked from the register only.",
     "deskApproves": "The front desk can also say yes or no",
-    "deskApprovesHint": "Normally only you decide. Turn this on if your receptionist should too.",
+    "deskApprovesHint": "If a phone cannot say where it is, you say yes or no. Turn this on if your receptionist should too.",
     "save": "Save",
     "saving": "Saving…",
     "savedLabel": "Saved",
