@@ -64,6 +64,21 @@ export interface HelpOption {
   n: number;
   whatsapp: string | null;
   tel: string | null;
+  /** The number to read on the screen, spaced the way an Indian number is said. Null only if neither is set. */
+  number: string | null;
+}
+
+/**
+ * `+919599420210` -> `+91 95994 20210`, so the reader can see which number they are about to ring.
+ *
+ * Only an Indian mobile number (91 and ten digits) is regrouped; anything else is shown as the operator typed
+ * it, trimmed. Guessing a grouping for a number we do not recognise would print a wrong number confidently.
+ */
+export function displayNumber(raw: string | undefined | null): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) return null;
+  const d = trimmed.replace(/\D/g, '').replace(/^0+/, '');
+  return d.length === 12 && d.startsWith('91') ? `+91 ${d.slice(2, 7)} ${d.slice(7)}` : trimmed;
 }
 
 /**
@@ -95,7 +110,7 @@ export function helpOptions(
     const tel = call && !calls.has(call) ? telHref(o.phone) : null;
     if (chat) chats.add(chat);
     if (call) calls.add(call);
-    if (whatsapp || tel) out.push({ n: out.length + 1, whatsapp, tel });
+    if (whatsapp || tel) out.push({ n: out.length + 1, whatsapp, tel, number: displayNumber(tel ? o.phone : o.whatsapp) });
   }
   return out;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { helpOptions, isHelpRole, supportIntro, telHref, whatsappHref } from './links';
+import { displayNumber, helpOptions, isHelpRole, supportIntro, telHref, whatsappHref } from './links';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 
@@ -75,10 +75,16 @@ describe('the screen itself', () => {
     expect(page).toMatch(/\{options\.length === 0 \? <p className="help-none">/);
   });
 
-  it('WhatsApp is the primary action, and opens in its own tab', () => {
-    expect(page).toMatch(/help-action-primary[\s\S]*?rel="noopener noreferrer"/);
-    // …and the only filled one: two primary actions on a screen is none.
-    expect(page).toMatch(/o\.n === firstChat \? ' help-action-primary' : ''/);
+  it('WhatsApp opens in its own tab, and looks the same on every option', () => {
+    expect(page).toMatch(/help-action help-action-chat[\s\S]*?rel="noopener noreferrer"/);
+    // A tinted pair of equals — no option's chat is louder than another's.
+    expect(page).not.toMatch(/firstChat|help-action-primary/);
+  });
+
+  it('the buttons say one word and carry the full sentence and the number as their name', () => {
+    expect(page).toMatch(/t\('whatsappShort'\)/);
+    expect(page).toMatch(/t\('callShort'\)/);
+    expect(page).toMatch(/aria-label=\{o\.number \? `\$\{t\('whatsapp'\)\} · \$\{o\.number\}` : t\('whatsapp'\)\}/);
   });
 
   it('is in the stylesheet order, before the clay layers', () => {
@@ -164,5 +170,28 @@ describe('the options on the screen', () => {
     const hi = JSON.parse(readFileSync(resolve(here, '../../../messages/hi.json'), 'utf8')).help;
     expect(en.option).toBe('Option {n}');
     expect(hi.option).toContain('{n}');
+  });
+});
+
+describe('the number on the screen', () => {
+  it('groups an Indian mobile number the way it is said', () => {
+    expect(displayNumber('+919599420210')).toBe('+91 95994 20210');
+    expect(displayNumber('+91 95994 20210')).toBe('+91 95994 20210');
+    expect(displayNumber('0091-95994-20210')).toBe('+91 95994 20210');
+  });
+
+  it('shows anything else as typed, trimmed — never a confident wrong grouping', () => {
+    expect(displayNumber('  +1 415 555 0100 ')).toBe('+1 415 555 0100');
+    expect(displayNumber('1800-123-456')).toBe('1800-123-456');
+  });
+
+  it('is null for nothing, not an empty string', () => {
+    expect(displayNumber(undefined)).toBeNull();
+    expect(displayNumber('   ')).toBeNull();
+  });
+
+  it('is the number to ring, falling back to the chat number when there is none to ring', () => {
+    expect(helpOptions({ options: [{ phone: '+919599420210', whatsapp: '+919773533899' }] }, 'm')[0]!.number).toBe('+91 95994 20210');
+    expect(helpOptions({ options: [{ phone: '', whatsapp: '+919773533899' }] }, 'm')[0]!.number).toBe('+91 97735 33899');
   });
 });
