@@ -933,7 +933,8 @@
       "groupNone": "बिना श्रेणी",
       "unnamed": "(नाम नहीं)",
       "minShort": "{n} मिनट",
-      "noPrice": "कीमत नहीं"
+      "noPrice": "कीमत नहीं",
+      "nameLabel": "{service} का नाम"
     },
     "problems": {
       "priceNotNumber": "कीमत संख्या नहीं है",
