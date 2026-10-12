@@ -2451,6 +2451,236 @@
       "manager": "Manager",
       "receptionist": "Front desk",
       "staff": "Stylist"
+    },
+    "fixes": {
+      "heading": "Quick fixes",
+      "lede": "Tap a group, then a problem. Short steps, one at a time.",
+      "labels": {
+        "iphone": "iPhone",
+        "android": "Android"
+      },
+      "cats": {
+        "phone": {
+          "title": "Your phone"
+        },
+        "checkin": {
+          "title": "Check-in"
+        },
+        "bookings": {
+          "title": "Bookings"
+        },
+        "payments": {
+          "title": "Payments"
+        },
+        "clients": {
+          "title": "Clients"
+        },
+        "team": {
+          "title": "Team and plan"
+        }
+      },
+      "topics": {
+        "home-screen": {
+          "title": "Put Growza on your phone",
+          "iphone": {
+            "s1": "Open Growza in Safari.",
+            "s2": "Tap the Share button.",
+            "s3": "Tap “Add to Home Screen”.",
+            "s4": "Tap “Add”."
+          },
+          "android": {
+            "s1": "Tap the ⋮ menu at the top right.",
+            "s2": "Tap “Install app” or “Add to Home screen”."
+          },
+          "note": "To see a new icon, delete Growza from your home screen and add it again."
+        },
+        "stuck": {
+          "title": "Screen looks old or stuck",
+          "main": {
+            "s1": "Close Growza completely.",
+            "s2": "Open it again.",
+            "s3": "Still the same? Delete Growza from your home screen and add it again."
+          }
+        },
+        "account": {
+          "title": "Change password, language, or log out",
+          "main": {
+            "s1": "Tap the round letter at the top right.",
+            "s2": "Tap English or हिन्दी to change the language.",
+            "s3": "Tap “Change password”, or “Log out”."
+          }
+        },
+        "forgot": {
+          "title": "Forgot your password?",
+          "main": {
+            "s1": "It cannot be reset inside the app yet.",
+            "s2": "Tap “Message us on WhatsApp” or “Call us” at the top of this page.",
+            "s3": "Tell us your phone number and your salon’s name."
+          }
+        },
+        "cant-in": {
+          "title": "Location check-in: “I’m in” doesn’t work",
+          "main": {
+            "s1": "Make sure your phone’s location (GPS) is on.",
+            "s2": "When Growza asks to use your location, tap Allow.",
+            "s3": "Not asked? Use the steps for your phone below."
+          },
+          "iphone": {
+            "s1": "Settings → Privacy & Security → Location Services → Safari Websites → While Using."
+          },
+          "android": {
+            "s1": "Press and hold the Growza icon → App info → Permissions → Location → Allow."
+          },
+          "note": "Not at the shop, or no signal? Your mark is still saved, and the owner can say yes."
+        },
+        "mark-in-out": {
+          "title": "Mark yourself in and out",
+          "main": {
+            "s1": "Open “Home”.",
+            "s2": "Tap “I’m in” when you arrive.",
+            "s3": "Tap “I’m out” when you leave."
+          },
+          "note": "The owner has to switch Location check-in on for your branch first."
+        },
+        "approve": {
+          "title": "Say yes or no to a check-in",
+          "main": {
+            "s1": "Open “Attendance”.",
+            "s2": "Find the line that says it is waiting for you.",
+            "s3": "Tap “Yes” if they were there, or “No” and pick why."
+          },
+          "note": "A front desk can do this only if the owner has allowed it."
+        },
+        "register": {
+          "title": "Mark the team present",
+          "main": {
+            "s1": "Open “Attendance”.",
+            "s2": "Tap “Mark all present” to mark everyone who is working today.",
+            "s3": "For one person, change their line to “Came late”, “On leave” or “Absent”."
+          }
+        },
+        "setup": {
+          "title": "Switch Location check-in on",
+          "main": {
+            "s1": "Go to the branch and stand inside it.",
+            "s2": "Open “Settings” → “Location check-in”.",
+            "s3": "Tap “Use where I am now”.",
+            "s4": "Set “How close counts”. 50 meters is one shop.",
+            "s5": "Switch on “Staff can mark themselves in”, then tap “Save”."
+          }
+        },
+        "add-booking": {
+          "title": "Add a booking",
+          "main": {
+            "s1": "Tap “New booking” on “Home”.",
+            "s2": "Pick the client, the service and the time.",
+            "s3": "Save it."
+          }
+        },
+        "move": {
+          "title": "Move a booking to another time",
+          "main": {
+            "s1": "Open “Bookings” and tap the booking.",
+            "s2": "Tap “Move to another time”.",
+            "s3": "Pick the new time, then tap “Move it”."
+          }
+        },
+        "cancel": {
+          "title": "Cancel a booking, or they didn’t come",
+          "main": {
+            "s1": "Open “Bookings” and tap the booking.",
+            "s2": "Tap “Cancel this booking”, then “Yes, cancel it”.",
+            "s3": "If they did not turn up, choose “Yes, they didn't come” instead."
+          }
+        },
+        "done": {
+          "title": "Mark a booking done",
+          "main": {
+            "s1": "Open “Bookings” and tap the booking.",
+            "s2": "Tap “Mark as done”."
+          }
+        },
+        "correct": {
+          "title": "Fix the amount or service after paying",
+          "main": {
+            "s1": "Open the finished booking.",
+            "s2": "Tap “Correct amount or service”.",
+            "s3": "Change it and save."
+          }
+        },
+        "news": {
+          "title": "See new bookings and payments",
+          "main": {
+            "s1": "Tap “Notifications”.",
+            "s2": "Tap a line to open that booking, or your bill."
+          }
+        },
+        "record": {
+          "title": "Record a payment",
+          "main": {
+            "s1": "Tap “Record payment” on “Home”.",
+            "s2": "Tap what they had, then tap “Next”.",
+            "s3": "Under “How did they pay?”, tap Cash, UPI or Card."
+          }
+        },
+        "show-qr": {
+          "title": "Show your QR for them to scan",
+          "main": {
+            "s1": "Do “Record payment” until “How did they pay?”.",
+            "s2": "Tap UPI.",
+            "s3": "The QR shows full screen: “Let them scan”. They type the amount in their own app.",
+            "s4": "When the money arrives, tap “Money received”."
+          },
+          "note": "No QR showing? Add it first (see below)."
+        },
+        "add-qr": {
+          "title": "Add your payment QR",
+          "main": {
+            "s1": "Take a screenshot of the QR in your UPI app.",
+            "s2": "Open “Settings” → “Payment QR”.",
+            "s3": "Tap “Upload QR” and pick the picture."
+          }
+        },
+        "send-bill": {
+          "title": "Send the bill on WhatsApp",
+          "main": {
+            "s1": "After the payment, add the client’s WhatsApp number.",
+            "s2": "Tap “Send on WhatsApp”.",
+            "s3": "WhatsApp opens with the bill typed out. Press send."
+          }
+        },
+        "add-client": {
+          "title": "Add a client",
+          "main": {
+            "s1": "Open “Clients”.",
+            "s2": "Tap “Add clients”.",
+            "s3": "Type their name and phone number, then save."
+          }
+        },
+        "find-client": {
+          "title": "Find a client",
+          "main": {
+            "s1": "Open “Clients”.",
+            "s2": "Type a name or phone number in the search box."
+          }
+        },
+        "invite": {
+          "title": "Invite a stylist or receptionist",
+          "main": {
+            "s1": "Open “Settings” → “Team access”.",
+            "s2": "Choose the role, and the branch if it asks.",
+            "s3": "Type their phone number and tap “Create invite”.",
+            "s4": "Tap “Copy link” and send it to them on WhatsApp. You will not see it again."
+          }
+        },
+        "bill": {
+          "title": "See your Growza bill",
+          "main": {
+            "s1": "Open “Settings” → “Billing”.",
+            "s2": "Your bills are listed there. Tap one to open it."
+          }
+        }
+      }
     }
   }
 }
