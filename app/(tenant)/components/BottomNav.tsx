@@ -118,6 +118,47 @@ export function BottomNav({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  /*
+   * The plus steps aside while you read down a list, and comes back the moment you scroll up (owner, 2026-10-13).
+   *
+   * It floats over the bottom right of the page, so on a long list it sits on top of a row — on Bookings, over a
+   * card's price. Going away while the thumb is travelling down and returning on the way up is what Material,
+   * Gmail and the Play Store all do: the button is in reach whenever someone has stopped to look at something,
+   * and out of the way while they are moving past it.
+   *
+   * Capture phase on `document`, because a scroll event does not bubble and the thing that scrolls is not the
+   * window — it is whichever `.page-body` the screen rendered. One listener, no screen has to opt in.
+   */
+  const [away, setAway] = useState(false);
+  const centreRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    /** How far a scroll has to travel before it counts: a tap that nudges the list by a pixel is not a direction. */
+    const TRAVEL = 8;
+    /** Above this, the button always shows — the top of a list is where "add one" is most likely next. */
+    const NEAR_TOP = 80;
+    const seen = new WeakMap<EventTarget, number>();
+
+    const onScroll = (e: Event) => {
+      const el = e.target instanceof Document ? document.documentElement : (e.target as HTMLElement | null);
+      if (!el) return;
+      const y = el.scrollTop;
+      const last = seen.get(e.target as EventTarget) ?? 0;
+      seen.set(e.target as EventTarget, y);
+      const moved = y - last;
+      if (Math.abs(moved) < TRAVEL) return;
+      // Never while the two-choice menu is open, and never out from under the keyboard: a button that vanishes
+      // while it holds the focus leaves a keyboard somewhere with nothing selected.
+      if (menuOpen || document.activeElement === centreRef.current) return;
+      setAway(moved > 0 && y > NEAR_TOP);
+    };
+
+    document.addEventListener('scroll', onScroll, true);
+    return () => document.removeEventListener('scroll', onScroll, true);
+  }, [menuOpen]);
+
+  // A route change is a fresh screen at the top of itself.
+  useEffect(() => setAway(false), [pathname]);
+
   // Escape closes the menu, and so does leaving the screen it was opened on.
   useEffect(() => {
     if (!menuOpen) return;
@@ -220,7 +261,11 @@ export function BottomNav({
           ) : null}
           <button
             type="button"
-            className={`bn-centre ${menuOpen ? 'is-open' : ''}`}
+            ref={centreRef}
+            className={`bn-centre ${menuOpen ? 'is-open' : ''} ${away ? 'is-away' : ''}`}
+            // Out of sight is out of the tab order too, so nobody tabs to a button they cannot see.
+            tabIndex={away ? -1 : undefined}
+            aria-hidden={away || undefined}
             onClick={menu ? () => setMenuOpen((o) => !o) : onCentre}
             aria-label={role === 'receptionist' ? t.walkInShort : t.nav.newBooking}
             aria-haspopup={menu ? 'menu' : undefined}

@@ -125,6 +125,13 @@ export function BookingSummary({
           </div>
         </div>
 
+        {/*
+          Everything between the client's name and the buttons scrolls (owner, 2026-10-13: "if the list exceeds
+          will it be scrollable?"). It did not: the sheet is a fixed-height column with `overflow: hidden`, so a
+          bridal package of eight services pushed the total — and the last services — out through the bottom of
+          the sheet with no way to reach them. The header stays, the buttons stay, the receipt moves between them.
+        */}
+        <div className="summary-scroll">
         {/* Jira GRW-480 (Q-1) — the API sends no prices to a stylist the owner keeps off the money. */}
         <div className="summary-section-label">{t('services')}</div>
         {booking.appointments.map((a) => (
@@ -202,6 +209,7 @@ export function BookingSummary({
             {tfix('loadFailed')}
           </div>
         )}
+        </div>
 
         <div className="modal-actions summary-actions">
           {mayCorrect && booking.appointments.some((a) => a.status === 'completed') && (
