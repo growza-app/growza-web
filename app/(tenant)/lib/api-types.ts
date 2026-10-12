@@ -106,7 +106,12 @@ export interface Me {
    * because an API a deploy behind sends nothing, and the screen must render
    * without it rather than crash.
    */
-  support?: { phone?: string; whatsapp?: string };
+  /**
+   * Jira GRW-564 — how to reach support. `options` (added later) is the list the help screen shows, each with
+   * its own number to ring and its own number to message; `phone` / `whatsapp` are kept for what predates it.
+   * Absent from an older API, which the help screen reads as one option made of `phone` and `whatsapp`.
+   */
+  support?: { phone?: string; whatsapp?: string; options?: { phone?: string; whatsapp?: string }[] };
 
   /**
    * Jira GRW-87 · GRW-163 — whether this business can be asked to pay online.

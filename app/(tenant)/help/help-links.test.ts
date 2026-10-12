@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isHelpRole, supportIntro, telHref, whatsappHref } from './links';
+import { helpOptions, isHelpRole, supportIntro, telHref, whatsappHref } from './links';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 
@@ -72,11 +72,13 @@ describe('the screen itself', () => {
     // The one failure this screen must not have: it is what somebody opens
     // when something is already broken.
     expect(page).toMatch(/} catch \{/);
-    expect(page).toMatch(/\{!waHref && !tel \? <p className="help-none">/);
+    expect(page).toMatch(/\{options\.length === 0 \? <p className="help-none">/);
   });
 
   it('WhatsApp is the primary action, and opens in its own tab', () => {
-    expect(page).toMatch(/className="help-action help-action-primary"[\s\S]*?rel="noopener noreferrer"/);
+    expect(page).toMatch(/help-action-primary[\s\S]*?rel="noopener noreferrer"/);
+    // …and the only filled one: two primary actions on a screen is none.
+    expect(page).toMatch(/o\.n === firstChat \? ' help-action-primary' : ''/);
   });
 
   it('is in the stylesheet order, before the clay layers', () => {
@@ -85,5 +87,79 @@ describe('the screen itself', () => {
     expect(globals.indexOf("@import './styles/99-help.css';")).toBeLessThan(
       globals.indexOf("@import './styles/100-clay-tabs.css';"),
     );
+  });
+});
+
+describe('the options the screen lists', () => {
+  const MSG = 'Hello';
+  const CALL_1 = '+919599420210';
+  const CHAT_1 = '+919773533899';
+  const CALL_2 = '+919773533899';
+
+  it('lists each option with its own number to ring and its own number to message', () => {
+    const o = helpOptions(
+      { options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: '+91 90000 00003', whatsapp: '+91 90000 00004' }] },
+      MSG,
+    );
+    expect(o).toHaveLength(2);
+    expect(o[0]).toMatchObject({ n: 1, tel: 'tel:+919599420210' });
+    expect(o[0]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919773533899\?text=/);
+    expect(o[1]).toMatchObject({ n: 2, tel: 'tel:+919000000003' });
+    expect(o[1]!.whatsapp).toMatch(/^https:\/\/wa\.me\/919000000004\?text=/);
+  });
+
+  it('offers a handset once — option 2 repeating option 1\'s chat does not draw a second button into it', () => {
+    // The built-in defaults: option 2 rings and messages +91 97735 33899, which is also option 1's chat.
+    const o = helpOptions({ options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: CALL_2, whatsapp: CALL_2 }] }, MSG);
+    expect(o).toHaveLength(2);
+    expect(o[0]!.whatsapp).not.toBeNull();
+    expect(o[1]!.whatsapp).toBeNull();
+    expect(o[1]!.tel).toBe('tel:+919773533899');
+  });
+
+  it('compares numbers, not spellings', () => {
+    const o = helpOptions(
+      { options: [{ phone: '+91 95994 20210', whatsapp: '+91 97735 33899' }, { phone: '0091-95994-20210', whatsapp: '919773533899' }] },
+      MSG,
+    );
+    // Same ring number, same chat handset, written four different ways: nothing left to offer, so it is dropped.
+    // (A bare national `09599420210` is deliberately NOT folded into `+91…`: that would be guessing a country.)
+    expect(o).toHaveLength(1);
+  });
+
+  it('drops an option with nothing left to offer, and renumbers', () => {
+    const o = helpOptions(
+      { options: [{ phone: CALL_1, whatsapp: CHAT_1 }, { phone: CALL_1, whatsapp: CHAT_1 }, { phone: '+91 90000 00009', whatsapp: '' }] },
+      MSG,
+    );
+    expect(o.map((x) => x.n)).toEqual([1, 2]);
+    expect(o[1]!.tel).toBe('tel:+919000000009');
+    expect(o[1]!.whatsapp).toBeNull();
+  });
+
+  it('an API older than `options` is one option made of phone and whatsapp', () => {
+    const o = helpOptions({ phone: CALL_1, whatsapp: CHAT_1 }, MSG);
+    expect(o).toHaveLength(1);
+    expect(o[0]).toMatchObject({ n: 1, tel: 'tel:+919599420210' });
+    expect(o[0]!.whatsapp).toMatch(/wa\.me\/919773533899/);
+  });
+
+  it('nothing configured is no options, which is what shows the plain sentence', () => {
+    expect(helpOptions(undefined, MSG)).toEqual([]);
+    expect(helpOptions({ options: [] }, MSG)).toEqual([]);
+    expect(helpOptions({ options: [{ phone: '  ', whatsapp: '' }] }, MSG)).toEqual([]);
+  });
+});
+
+describe('the options on the screen', () => {
+  const page = readFileSync(resolve(here, 'page.tsx'), 'utf8');
+
+  it('numbers them only when there is more than one, and the words exist in both languages', () => {
+    expect(page).toMatch(/const numbered = options\.length > 1;/);
+    expect(page).toMatch(/t\('option', \{ n: o\.n \}\)/);
+    const en = JSON.parse(readFileSync(resolve(here, '../../../messages/en.json'), 'utf8')).help;
+    const hi = JSON.parse(readFileSync(resolve(here, '../../../messages/hi.json'), 'utf8')).help;
+    expect(en.option).toBe('Option {n}');
+    expect(hi.option).toContain('{n}');
   });
 });

@@ -66,18 +66,41 @@
   text-align: center;
 }
 
-/* Wide enough for the two actions to sit side by side; below this they stack,
+/*
+ * An option is a number to ring and a number to message. Its two actions sit together; a heading names it when
+ * there is more than one, and there is no heading when there is only the one.
+ */
+.help-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.help-option + .help-option {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.help-option-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.help-option-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* Wide enough for an option's two actions to sit side by side; below this they stack,
    which is the 344px case and the common one. */
 @media (min-width: 560px) {
-  .help-card {
+  .help-option-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--sp-3);
-  }
-
-  .help-lede,
-  .help-reply,
-  .help-none {
-    grid-column: 1 / -1;
   }
 }
