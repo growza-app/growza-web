@@ -277,18 +277,27 @@
  * The drag handle. Its own 44px target, separate from the row's tap, because the row's job is to open the
  * category: a row that both opens and drags does neither reliably.
  */
+/*
+ * Jira GRW-592 — hidden on a phone. A 291px row cannot hold a tick, a name, a rename and two arrows AND a
+ * handle, and the handle is the one that can go: HTML5 drag does not fire on touch at all (GRW-441), so on
+ * the width where it is dropped it was never doing anything. It comes back wherever there is room for it.
+ */
 .svc-cat-grip {
-  flex: none;
-  width: 28px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  font-size: 1.0625rem;
-  line-height: 1;
-  cursor: grab;
-  user-select: none;
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .svc-cat-grip {
+    flex: none;
+    width: 28px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    cursor: grab;
+    user-select: none;
+  }
 }
 
 .svc-cat-grip:active {
@@ -309,15 +318,36 @@
 
 /* Unsorted is not a category, and does not look like one: no handle, no arrows, no rename. */
 .svc-cat-unsorted {
-  margin-top: 22px;
-  padding-top: 16px;
+  margin-top: 14px;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
 }
 
+/*
+ * Jira GRW-591 — one row that discloses, not a heading over a second list. It borrows `.svc-cat-text` for
+ * the row's own shape, so the one thing left to say here is that it takes the full width: it has nothing
+ * to its right to leave room for.
+ */
 .svc-cat-unsorted-head {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  width: 100%;
+}
+
+/*
+ * The count on this row is a sentence ("52 services · hidden from clients"), not a number, and `.svc-cat-meta` is
+ * `nowrap` with `flex: none` — so on a 320px phone it took 173px of a 236px row and the NAME was left 25px:
+ * "N…". The name keeps its own width here and it is the sentence that wraps, balanced over two lines.
+ */
+.svc-cat-text.svc-cat-unsorted-head > .svc-cat-name {
+  flex: 0 0 auto;
+  max-width: 60%;
+}
+
+.svc-cat-text.svc-cat-unsorted-head > .svc-cat-meta {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: normal;
+  text-align: right;
+  text-wrap: balance;
 }
 
 .svc-cat-unsorted-list {

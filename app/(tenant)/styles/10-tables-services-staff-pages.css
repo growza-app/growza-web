@@ -66,15 +66,114 @@ tr:last-child td {
  * column. Borrowing those names put four stacked buttons in every row here, which is exactly the kind of
  * accident a prefix exists to prevent.
  *
- * Phone first: a row is two lines — the name, then its controls — and only widens into one line when there is
- * room. The separators sit on the ROWS, not the list, which is what makes six categories read as six things
- * rather than as a table. Every control is 44px, because this is used one-handed at a reception desk, and the
- * destructive one is last, where a thumb reaches it only on purpose.
+ * Phone first: a row is ONE line at every width — name, count, chevron. The separators sit on the ROWS, not
+ * the list, which is what makes six categories read as six things rather than as a table. Every control is
+ * 44px, because this is used one-handed at a reception desk.
+ *
+ * Jira GRW-591 — the row used to be two lines on a phone, stacking a grip, the text and a group of three
+ * 44px buttons: 12 + 12 of padding, two 8px gaps and three 44px blocks is 172px of row for one category. A
+ * salon with 26 of them scrolled 4,472px and saw 2.7 at a time. Those controls moved behind Edit
+ * (`.svc-cat-editbtn`, on the title line), which leaves the row at 53px and eight of them on screen. The
+ * 44px floor did not move: the controls are the same size, they are just not all there at once.
  */
 .svc-cat-hint {
   margin: 0 0 12px;
   font-size: 0.8125rem;
   color: var(--muted);
+}
+
+/*
+ * Jira GRW-592 — the tick that marks a category for deletion. A 44px target around a 22px box, because the
+ * box is what the eye reads and the target is what the thumb hits, and those are not the same size.
+ */
+/* The 22px box sits at the leading edge of a 44px target, so the slack to its right IS the gap. */
+.svc-cat-tick {
+  flex: none;
+  margin-right: -10px;
+  width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.svc-cat-tick-box {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  color: var(--surface);
+}
+
+.svc-cat-tick[aria-checked='true'] .svc-cat-tick-box {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.svc-cat-tick-box svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.svc-cat-tick:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* A ticked row is marked on the row, not only in its box — colour alone is not an answer (GRW-484). */
+.svc-cat-row.is-picked .svc-cat-name {
+  font-weight: 640;
+}
+
+/* The sheet's own title line: the heading, and Edit at the trailing edge where a list keeps it. */
+.svc-cat-title {
+  display: flex;
+  align-items: center;
+  /* Select all / Clear / Delete / Edit all sit at the trailing end, so the gap is theirs (GRW-592). */
+  gap: 10px;
+}
+
+.svc-cat-title h3 {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
+ * A word, not an icon. "Edit" names the mode and swaps to "Done" to say you are in it; `aria-pressed` is
+ * what carries that to a screen reader, which a changed label on its own does not.
+ */
+.svc-cat-editbtn {
+  flex: none;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 560;
+  cursor: pointer;
+}
+
+.svc-cat-editbtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/*
+ * Jira GRW-592 — the one that starts a delete, coloured as what it leads to. #b91c1c is the red
+ * `.btn-danger` and `.confirm-error` already use — one red in the product, not three (GRW-?/96-packages).
+ * 6.5:1 on white at 15px, against the 4.5:1 this size needs.
+ */
+.svc-cat-editbtn.is-danger {
+  color: #b91c1c;
 }
 
 .svc-cat-list {
@@ -85,24 +184,24 @@ tr:last-child td {
 
 .svc-cat-row {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding: 12px 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 52px;
+  padding: 0;
 }
 
 .svc-cat-row + .svc-cat-row {
   border-top: 1px solid var(--border);
 }
 
-/* The row's text is the control that opens the category — a button, drawn as a row. */
+/* The row's text is the control: reading the list it opens the category, editing it, it renames. */
 .svc-cat-text {
+  flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  min-height: 44px;
+  min-height: 52px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -122,11 +221,123 @@ tr:last-child td {
   display: block;
 }
 
+/* Jira GRW-591 — a drawn chevron, the same Feather family as every other icon on the screen. */
 .svc-cat-chevron {
+  flex: none;
+  display: inline-flex;
   color: var(--muted);
-  font-size: 1.25rem;
-  line-height: 1;
-  flex-shrink: 0;
+}
+
+.svc-cat-chevron svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Pointing down when the thing it discloses is open, which is the only disclosure on this sheet. */
+.svc-cat-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+/* The grip: the same family too, and the same 28px column the braille character used to sit in. */
+.svc-cat-grip svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/*
+ * Jira GRW-591 — the search over the categories. Above `.modal-body` rather than inside it, so the list
+ * scrolls under a field that stays where the owner left it.
+ */
+.svc-cat-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.svc-cat-filter svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.svc-cat-filter input[type='search'] {
+  flex: 1;
+  /* `input[type=…]` in the base sheet is the same specificity and comes later, so this has to outrank it. */
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  /* The base sheet gives every input an inset (neumorphic) shadow and a radius; inside the wrapper that drew a
+     second, smaller field within the first. The wrapper is the field — the input is only its text. */
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
+}
+
+/*
+ * Jira GRW-490 — the ring goes on the box, not on the bare field inside it, or a focused search shows two
+ * rectangles one inside the other. The field opts out explicitly; the wrapper draws the one ring.
+ */
+.svc-cat-filter input[type='search']:focus-visible {
+  outline: 0 !important;
+}
+
+.svc-cat-filter:focus-within {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 1px;
+}
+
+/*
+ * Jira GRW-591 — adding, as the last row of the list rather than a field standing open under it. It reads
+ * as a row and not as a button on purpose: it is the next line of the thing above it.
+ */
+.svc-cat-addrow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 560;
+  text-align: left;
+  cursor: pointer;
+}
+
+.svc-cat-addrow svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+.svc-cat-addrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* The footnote belongs to the field it sits under, so it takes the whole line of the wrapped row. */
+.svc-cat-edit .svc-cat-foot {
+  flex-basis: 100%;
+  margin-top: 2px;
+}
+
+/* The one hint that has to sit above the list rather than under it: it explains what the list is missing. */
+.svc-cat-foot-top {
+  margin: 0 2px 10px;
 }
 
 .svc-cat-name {
@@ -138,17 +349,47 @@ tr:last-child td {
   white-space: nowrap;
 }
 
+/* Beside the name now, not under it — the count is what the row is scanned for, not a second line of it. */
 .svc-cat-meta {
+  flex: none;
   font-size: 0.75rem;
   color: var(--muted);
-  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/*
+ * Editing: a mark inside the name button, not a 44px target of its own — the button is the target.
+ * In rem, so Jira GRW-484 holds: it grows with the name beside it when Larger Text is on.
+ *
+ * Jira GRW-592 — it is back on a phone. It was dropped when the tick shared the row with the arrows and
+ * the name column fell to 72px; splitting pick out of edit gave those pixels back, so the mark that says
+ * the name renames can stay.
+ */
+.svc-cat-pencil {
+  display: inline-flex;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+
+.svc-cat-pencil svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .svc-cat-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  /* Jira GRW-592 — 2px, not 6: on a phone every pixel between the arrows is a pixel off the name. */
+  gap: 2px;
   flex-shrink: 0;
+}
+
+@media (min-width: 480px) {
+  .svc-cat-actions {
+    gap: 6px;
+  }
 }
 
 /* 44px, not `.icon-btn`'s 36 — GRW-342's floor for anything a thumb presses. */
@@ -173,15 +414,30 @@ tr:last-child td {
 
 /* The rename, in place: the field takes the line and its two buttons sit under it when there is no room. */
 .svc-cat-edit {
+  /* The row is a flex line now, so the form has to claim it; the padding is the row's own, back for one row. */
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 6px 0;
   flex-wrap: wrap;
 }
 
-.svc-cat-edit input {
-  flex: 1;
-  min-width: 140px;
+/*
+ * 100px, not 140 — at 140 the field, Save and Cancel came to more than the 291px a phone row has, and
+ * Cancel dropped onto a line of its own below a row that is otherwise one line tall.
+ *
+ * `input[type='text']` and not a bare `input`: the base sheet's own `input[type="text"] { min-width: 180px }`
+ * is the SAME specificity and comes later, so a bare selector here lost and the row wrapped anyway.
+ */
+.svc-cat-edit input[type='text'] {
+  /*
+   * The field takes the whole line on a phone and the two buttons sit under it. Squeezed onto one line it
+   * came to 115px — narrower than "Men's Hair Keratin" — and typing the name is the whole point of the row.
+   */
+  flex: 1 1 100%;
+  min-width: 100px;
   min-height: 44px;
   font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
 }
@@ -208,18 +464,25 @@ tr:last-child td {
   font-size: 16px;
 }
 
-/* Wide enough for the name and its controls on one line — a tablet, and the sheet on a desktop. */
+/*
+ * Jira GRW-591 — the 480px rule that turned the row back into one line is gone: the row is one line at 344px
+ * too now, so there is nothing left for the breakpoint to fix. A little more room where there is room.
+ */
 @media (min-width: 480px) {
-  .svc-cat-row {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
+  .svc-cat-row,
+  .svc-cat-text {
     min-height: 56px;
   }
 
-  .svc-cat-text {
-    flex: 1;
+  .svc-cat-row {
+    gap: 10px;
   }
+
+  /* Room for the field and its buttons on one line again. */
+  .svc-cat-edit input[type='text'] {
+    flex: 1 1 auto;
+  }
+
 }
 
 /* ---------- a category opened, with its services to tick (Jira GRW-428) ---------- */
@@ -477,4 +740,94 @@ tr:last-child td {
   width: 100%;
   min-height: 44px;
   margin-top: 8px;
+}
+
+/*
+ * Jira GRW-592 — the sheet's foot, which holds one button, two, or a confirmation and two.
+ *
+ * A column and not a row: at 291px "Delete 4 categories" beside "Close" is two buttons neither of which
+ * fits its own label. `.svc-cat-sheet-actions` and not `.svc-cat-ways` — that name belongs to the detail
+ * view's own footer (GRW-590), and two files owning one class is how the last prefix accident happened.
+ */
+.modal-actions.svc-cat-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.svc-cat-sheet-actions .btn {
+  width: 100%;
+  min-height: 44px;
+}
+
+.svc-cat-sheet-actions .svc-cat-confirm-body {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 560;
+}
+
+.svc-cat-sheet-actions .svc-cat-confirm-detail {
+  margin: 0 0 2px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* The confirmation is one group (role=alertdialog) so it is announced whole; it lays out as the footer does. */
+.svc-cat-sheet-actions .svc-cat-confirm-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/*
+ * A phone held sideways (812x375, a Z Fold's cover screen turned over) leaves the sheet ~340px, and the title,
+ * hint, search and a footer of stacked full-width buttons took all but 6px of it in Delete mode: a list of
+ * categories you could not see to tick. Short screens give the height to the rows — the footer's buttons sit
+ * side by side, and the hint goes (the footer button already says how many are ticked). 560px is the height
+ * edge `82-move-booking.css` already uses, so no new breakpoint for the device matrix to learn.
+ */
+@media (max-height: 560px) {
+  .modal-actions.svc-cat-sheet-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .svc-cat-sheet-actions .btn {
+    width: auto;
+    flex: 1 1 0;
+  }
+
+  .svc-cat-sheet-actions .svc-cat-confirm-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .svc-cat-sheet-actions .svc-cat-confirm-body,
+  .svc-cat-sheet-actions .svc-cat-confirm-detail {
+    flex: 1 1 100%;
+  }
+
+  .svc-cat-title + .svc-cat-hint {
+    display: none;
+  }
+}
+
+/*
+ * The shell tightens `.modal`'s side padding from 26px to 22px on a screen under 860px tall, and its own comment
+ * says the body and footer margins must follow — but `.modal-fit .modal-body` (0,2,0) and the checkout sheet's
+ * `.modal-actions` (loaded later) both outrank that rule and kept bleeding 26px. Four pixels past the dialog on
+ * each side, clipped by its `overflow: hidden`, so invisible — until something inside is wider than its box.
+ * Fixed here for this sheet; the shell rule itself touches every modal and is not this ticket's to move.
+ */
+@media (max-height: 860px) {
+  .modal.svc-cat-modal .modal-body,
+  .modal.svc-cat-modal .modal-actions {
+    margin-inline: -22px;
+    padding-inline: 22px;
+  }
 }

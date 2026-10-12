@@ -165,3 +165,13 @@ export function bareRefusalMessage(code: string, lang: string): string | null {
   const words = BARE_REFUSALS[code];
   return words ? (lang === 'hi' ? words.hi : words.en) : null;
 }
+
+/**
+ * What an owner is told when a request failed and the response carried no sentence at all — a proxy's 502, a
+ * dropped connection's empty body. It used to be the request path and status (`/api/v1/… failed: 502`), which is
+ * for a developer and was shown in the owner's own sheet. The status stays on `ApiError.status` for whoever
+ * needs to branch on it.
+ */
+export function genericFailureMessage(lang: string): string {
+  return lang === 'hi' ? 'कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।' : 'Something went wrong. Please try again.';
+}
