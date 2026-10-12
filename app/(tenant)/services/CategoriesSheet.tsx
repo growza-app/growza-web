@@ -365,24 +365,24 @@ export function CategoriesSheet({
             ) : (
               rows.length > 0 && (
                 <>
-                  {/* Jira GRW-592 — the way into picking, beside Edit, where an owner looks for an action. */}
-                  {!editing && (
-                    <button
-                      type="button"
-                      ref={deleteRef}
-                      className="svc-cat-editbtn is-danger"
-                      disabled={busy}
-                      onClick={() => {
-                        setError(null);
-                        setBlocked([]);
-                        setEditingId(null);
-                        setPicked(new Set());
-                        setMode('pick');
-                      }}
+                  {/* Jira GRW-592 — the way into picking, beside Edit, where an owner looks for an action.
+                      It stays while Edit is on: an action that disappears the moment you open the other one reads
+                      as a bug ("the delete button is gone"), and pressing it from Edit just changes the mode. */}
+                  <button
+                    type="button"
+                    ref={deleteRef}
+                    className="svc-cat-editbtn is-danger"
+                    disabled={busy}
+                    onClick={() => {
+                      setError(null);
+                      setBlocked([]);
+                      setEditingId(null);
+                      setPicked(new Set());
+                      setMode('pick');
+                    }}
                     >
-                      {t('delete')}
+                    {t('delete')}
                     </button>
-                  )}
                   <button
                     type="button"
                     className="svc-cat-editbtn"

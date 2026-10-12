@@ -311,6 +311,14 @@ describe('picking categories to delete', () => {
     expect(html).not.toContain('Select all');
   });
 
+  /** Pressing Edit used to take Delete off the title line, which an owner read as the button being gone. */
+  it('keeps Delete on the title line while Edit is on', () => {
+    const html = sheet('en', [cat({ name: 'Hair' }), cat({ id: 'b', name: 'Nails' })], [], 'edit');
+    const title = html.slice(html.indexOf('svc-cat-title'), html.indexOf('modal-body'));
+    expect(title).toContain('>Delete<');
+    expect(title).toContain('>Done<');
+  });
+
   it('offers no Delete and no Edit when there is nothing to act on', () => {
     const html = sheet('en', []);
     expect(html).not.toContain('>Delete<');
