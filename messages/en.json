@@ -1062,7 +1062,7 @@
       "reorderFailed": "That order was not saved. Please try again.",
       "edit": "Edit",
       "close": "Close",
-      "editHint": "Tap a name to rename it. Use the arrows to set the order clients see, or tick what you want to delete.",
+      "editHint": "Tap a name to rename it. Use the arrows to set the order clients see when they book on WhatsApp.",
       "renameHint": "Tap a name to rename it.",
       "filterPlaceholder": "Find a category",
       "noMatch": "No category matches “{term}”.",
@@ -1075,7 +1075,10 @@
       "deleteCatsAction": "{count, plural, one {Delete # category} other {Delete # categories}}",
       "deleteCatsTitle": "{count, plural, one {Delete # category?} other {Delete # categories?}}",
       "deleteCatsKeeps": "{count, plural, one {The # service in it stays on your list} other {The # services in them stay on your list}}, with no category — clients will not see {count, plural, one {it} other {them}} until you file {count, plural, one {it} other {them}} under one again.",
-      "deleteCatsEmpty": "Nothing is filed under {count, plural, one {it} other {them}}."
+      "deleteCatsEmpty": "Nothing is filed under {count, plural, one {it} other {them}}.",
+      "pickToDelete": "Pick what to delete",
+      "pickHint": "Tick the categories you want to delete. The services in them stay on your list.",
+      "deleteOpen": "Delete categories"
     },
     "delete": "Delete",
     "deleteTitle": "Delete {name}?",

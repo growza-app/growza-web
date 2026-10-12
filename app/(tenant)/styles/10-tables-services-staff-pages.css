@@ -127,7 +127,7 @@ tr:last-child td {
   cursor: default;
 }
 
-/* A ticked row is marked on the row, not only in its box — colour alone is not an answer. */
+/* A ticked row is marked on the row, not only in its box — colour alone is not an answer (GRW-484). */
 .svc-cat-row.is-picked .svc-cat-name {
   font-weight: 640;
 }
@@ -358,12 +358,12 @@ tr:last-child td {
  * Editing: a mark inside the name button, not a 44px target of its own — the button is the target.
  * In rem, so Jira GRW-484 holds: it grows with the name beside it when Larger Text is on.
  *
- * Jira GRW-592 — and not drawn at all on a phone. With the tick beside it the name column came to 72px,
- * which is four characters; the glyph and its gap are 26 of those pixels and the name is worth more than
- * the hint. The name is still the rename, and `editHint` is the sentence that says so.
+ * Jira GRW-592 — it is back on a phone. It was dropped when the tick shared the row with the arrows and
+ * the name column fell to 72px; splitting pick out of edit gave those pixels back, so the mark that says
+ * the name renames can stay.
  */
 .svc-cat-pencil {
-  display: none;
+  display: inline-flex;
   flex: none;
   width: 1rem;
   height: 1rem;
@@ -480,10 +480,6 @@ tr:last-child td {
     flex: 1 1 auto;
   }
 
-  /* And room for the mark that says the name renames. */
-  .svc-cat-pencil {
-    display: inline-flex;
-  }
 }
 
 /* ---------- a category opened, with its services to tick (Jira GRW-428) ---------- */

@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
 import { IconCheck, IconChevronRight, IconPlus, IconSearch } from '../components/icons';
-import { CategoryRow } from './CategoryRow';
+import { CategoryRow, type CategoryRowMode } from './CategoryRow';
 import { CategoryServices } from './CategoryServices';
 import { FILTER_FROM, matchesFilter, movedOrder, unsorted, worthOrdering } from './category-order';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -54,8 +54,15 @@ export function CategoriesSheet({
   const [editingName, setEditingName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** Jira GRW-591 — whether the grip, the arrows and the rename are on screen. Off until Edit is tapped. */
-  const [editing, setEditing] = useState(false);
+  /**
+   * Jira GRW-591 · GRW-592 — which of the sheet's three states it is in.
+   *
+   * `read` is the list. `edit` is Edit on the title line: the handle, the arrows and the rename. `pick` is
+   * Delete in the footer: ticks and nothing else. Two separate modes and not one, because an owner who
+   * wants to delete a category should not have to look for it behind a button called Edit — which is
+   * exactly what happened the first time this was built.
+   */
+  const [mode, setMode] = useState<CategoryRowMode>('read');
   /** The category opened into its own list of services; the sheet shows one or the other, never both. */
   const [openId, setOpenId] = useState<string | null>(null);
   /** Jira GRW-441 — the row being dragged, by index. Null whenever nothing is in flight. */
@@ -178,7 +185,7 @@ export function CategoriesSheet({
         await api.deleteCategory(branchId, id);
         gone.push(id);
       }
-      setEditing(false);
+      setMode('read');
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t('errors.failed'));
     } finally {
@@ -193,8 +200,9 @@ export function CategoriesSheet({
     }
   };
 
-  const leaveEditing = () => {
-    setEditing(false);
+  /** Back to the list, with nothing half-done left behind it. */
+  const toRead = () => {
+    setMode('read');
     setEditingId(null);
     setPicked(new Set());
     setConfirming(false);
@@ -212,6 +220,8 @@ export function CategoriesSheet({
    */
   const searching = filter.trim() !== '';
   const orderable = worthOrdering(rows) && !searching;
+  const editing = mode === 'edit';
+  const picking = mode === 'pick';
   /** Jira GRW-591 — the field appears at a dozen, which is where scanning the list stops working. */
   const filterable = rows.length >= FILTER_FROM;
   const shown = searching ? rows.filter((c) => matchesFilter(c.name, filter)) : rows;
@@ -267,7 +277,7 @@ export function CategoriesSheet({
                 className="svc-cat-editbtn"
                 disabled={busy}
                 aria-pressed={editing}
-                onClick={() => (editing ? leaveEditing() : setEditing(true))}
+                onClick={() => (editing ? toRead() : (setPicked(new Set()), setConfirming(false), setMode('edit')))}
               >
                 {editing ? t('done') : t('edit')}
               </button>
@@ -279,8 +289,8 @@ export function CategoriesSheet({
             subtitle explaining what a category is goes when the filter arrives: by twelve of them the owner
             has worked out what a category is, and the line is in the way of the field that finds one.
           */}
-          {(editing || !filterable) && (
-            <p className="svc-cat-hint">{editing ? (orderable ? t('editHint') : t('renameHint')) : t('hint')}</p>
+          {(mode !== 'read' || !filterable) && (
+            <p className="svc-cat-hint">{picking ? t('pickHint') : editing ? (orderable ? t('editHint') : t('renameHint')) : t('hint')}</p>
           )}
 
           {/*
@@ -312,7 +322,7 @@ export function CategoriesSheet({
               move a category past something the owner cannot see. The arrows go, and the sheet says why,
               rather than moving a row somewhere nobody asked for.
             */}
-            {editing && filter.trim() !== '' && worthOrdering(rows) && (
+            {editing && searching && worthOrdering(rows) && (
               <p className="svc-cat-foot svc-cat-foot-top">{t('filteredNoOrder')}</p>
             )}
 
@@ -328,7 +338,7 @@ export function CategoriesSheet({
                   running it would otherwise hand back the rows the search is hiding, which is how an owner
                   deletes a menu they cannot see.
                 */}
-                {editing && (
+                {picking && (
                   <li className="svc-cat-row svc-cat-pickall" key="pickall">
                     <button
                       type="button"
@@ -389,7 +399,7 @@ export function CategoriesSheet({
                     <CategoryRow
                       key={row.id}
                       row={row}
-                      editing={editing}
+                      mode={mode}
                       orderable={orderable}
                       busy={busy}
                       atTop={i === 0}
@@ -425,10 +435,13 @@ export function CategoriesSheet({
 
                 {/*
                   Jira GRW-591 — adding is a row at the foot of the list, not a field standing open below it.
+                  Jira GRW-592 — and not there at all while rows are being picked off: the one thing nobody
+                  is doing on the way to a delete is making another category.
                   The field and its button were 110px of chrome under all 26 rows, which is where the owner
                   had to scroll to reach the thing they do most often. The footnote about empty categories
                   comes with it: it is advice about what you are doing, exactly when you are doing it.
                 */}
+                {!picking && (
                 <li className="svc-cat-row" key="add">
                   {addOpen ? (
                     <div className="svc-cat-edit">
@@ -460,6 +473,7 @@ export function CategoriesSheet({
                     </button>
                   )}
                 </li>
+                )}
               </ul>
             )}
 
@@ -530,13 +544,45 @@ export function CategoriesSheet({
               </>
             ) : (
               <>
-                {picked.size > 0 && (
-                  <button type="button" className="btn btn-ghost btn-danger svc-cat-action" disabled={busy} onClick={() => setConfirming(true)}>
-                    {t('deleteCatsAction', { count: picked.size })}
+                {/*
+                  Jira GRW-592 — Delete is on the sheet itself, not behind Edit.
+
+                  The first build hid it: ticks appeared only in edit mode and the action only once a row
+                  was ticked, so an owner who wanted to delete a category tapped Edit, saw six ticks and a
+                  Close button, and reported that deleting categories was not built. It was — and an action
+                  nobody can find is an action that is not there.
+
+                  So it is its own mode with its own way in, and in that mode it stays on screen DISABLED
+                  until something is ticked, which is how the delete card next door does it.
+                */}
+                {picking ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-danger svc-cat-action"
+                    disabled={busy || picked.size === 0}
+                    onClick={() => setConfirming(true)}
+                  >
+                    {picked.size === 0 ? t('pickToDelete') : t('deleteCatsAction', { count: picked.size })}
                   </button>
+                ) : (
+                  rows.length > 0 &&
+                  !editing && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-danger svc-cat-action"
+                      disabled={busy}
+                      onClick={() => {
+                        setEditingId(null);
+                        setPicked(new Set());
+                        setMode('pick');
+                      }}
+                    >
+                      {t('deleteOpen')}
+                    </button>
+                  )
                 )}
-                <button type="button" className="btn btn-ghost svc-cat-action" disabled={busy} onClick={onClose}>
-                  {t('close')}
+                <button type="button" className="btn btn-ghost svc-cat-action" disabled={busy} onClick={picking ? toRead : onClose}>
+                  {picking ? t('cancel') : t('close')}
                 </button>
               </>
             )}

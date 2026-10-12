@@ -3,21 +3,31 @@
 import { useTranslations } from 'next-intl';
 import type { DragEvent } from 'react';
 import type { ServiceCategoryAdmin } from '../lib/api';
+
+/** Jira GRW-592 — reading the list, reordering and renaming it, or picking rows off it. */
+export type CategoryRowMode = 'read' | 'edit' | 'pick';
 import { IconArrowDown, IconArrowUp, IconCheck, IconChevronRight, IconEdit, IconGrip } from '../components/icons';
 
 /**
- * Jira GRW-591 — one category, in one of the two states the sheet can be in.
+ * Jira GRW-591 · GRW-592 — one category, in one of the three states the sheet can be in.
  *
- * Reading the list, the row is a single line: name, count, chevron, and it opens the category. Editing it,
- * the same line gains a drag handle and the two arrows, and the name itself becomes the rename.
+ * | Mode   | The row is                              | Reached by      |
+ * |--------|-----------------------------------------|-----------------|
+ * | `read` | name · count · chevron — opens it       | the default     |
+ * | `edit` | handle · name (renames) · ✎ · ↑ ↓       | Edit, on the title |
+ * | `pick` | tick · name · count                     | Delete, in the footer |
  *
- * Its own file because the two states are the whole point and were impossible to see — or to test — while
- * they were ninety lines of nested ternaries inside the sheet. The row renders no delete in either state:
- * removing services, and the category with them, lives in the detail view (owner's change, 2026-10-02).
+ * Three modes and not two because reordering and deleting are different jobs with different controls, and
+ * a row that carried both came to five things in 252px — the name column fell to 72px, which is four
+ * characters. Separating them gives each mode the width its own controls need, and means an owner who
+ * wants to delete something never has to find it behind a button called Edit.
+ *
+ * Its own file because the states are the whole point and were impossible to see — or to test — while they
+ * were ninety lines of nested ternaries inside the sheet.
  */
 export function CategoryRow({
   row,
-  editing,
+  mode,
   orderable,
   busy,
   atTop,
@@ -34,15 +44,15 @@ export function CategoryRow({
   onDrop,
 }: {
   row: ServiceCategoryAdmin;
-  /** Whether the sheet is in edit mode. The row carries no controls at all when it is not. */
-  editing: boolean;
+  /** Which of the sheet's three states this row is drawn in. */
+  mode: CategoryRowMode;
   /** Whether there is an order to change. One category has a name to fix but no position to move. */
   orderable: boolean;
   busy: boolean;
   atTop: boolean;
   atBottom: boolean;
   dragging: boolean;
-  /** Jira GRW-592 — ticked for deletion. Only ever true in edit mode. */
+  /** Jira GRW-592 — ticked for deletion. Only ever true in `pick`. */
   selected: boolean;
   onToggle: () => void;
   onOpen: () => void;
@@ -54,16 +64,18 @@ export function CategoryRow({
   onDrop: (e: DragEvent) => void;
 }) {
   const t = useTranslations('services.categories');
+  const editing = mode === 'edit';
+  const picking = mode === 'pick';
   const controls = editing && orderable;
 
   return (
     <li className={`svc-cat-row ${dragging ? 'is-dragging' : ''} ${selected ? 'is-picked' : ''}`} onDragOver={onDragOver} onDrop={onDrop}>
       {/*
         Jira GRW-592 — the tick, at the leading edge, which is where a list that can be emptied puts it.
-        Its own 44px target: the name beside it is the rename, and a row where the same tap did both would
-        delete a category every time somebody meant to fix a typo in it.
+        In `pick` only: it is the one control of that mode, so the whole row is given to it and the name
+        keeps its full width.
       */}
-      {editing && (
+      {picking && (
         <button
           type="button"
           role="checkbox"
@@ -83,10 +95,10 @@ export function CategoryRow({
         The handle, not the whole row, is draggable: the row's own job is to open the category, and a row
         that both opens and drags does neither reliably.
 
-        Jira GRW-592 — and it is the one control that gives way when the tick arrives. A phone row has 291px
-        and five controls do not fit in it; the handle is the one that can go, because HTML5 drag does not
-        fire on touch anyway (GRW-441) — the arrows beside it are what a thumb actually reorders with. On a
-        pointer, where the width is there and drag works, `.svc-cat-grip` comes back at 480px.
+        Jira GRW-592 — and it is the one control that gives way on a phone. Four controls do not fit in a
+        252px row; the handle is the one that can go, because HTML5 drag does not fire on touch anyway
+        (GRW-441) — the arrows beside it are what a thumb actually reorders with. On a pointer, where the
+        width is there and drag works, `.svc-cat-grip` comes back at 480px.
       */}
       {controls && (
         <span
@@ -111,7 +123,7 @@ export function CategoryRow({
         className="svc-cat-text"
         disabled={busy}
         aria-label={editing ? t('renameAria', { name: row.name }) : undefined}
-        onClick={editing ? onRename : onOpen}
+        onClick={editing ? onRename : picking ? onToggle : onOpen}
       >
         <span className="svc-cat-name">{row.name}</span>
         {editing ? (
@@ -122,7 +134,8 @@ export function CategoryRow({
           <>
             {/*
               `serviceCount` and not `activeCount`: it is what a delete sets loose, and a row promising
-              three when it would free five is the one way this screen can mislead.
+              three when it would free five is the one way this screen can mislead. Which is exactly why
+              it stays on screen in `pick`, where that number is the consequence being decided.
             */}
             <span className="svc-cat-meta">
               {row.serviceCount === 0
@@ -131,9 +144,11 @@ export function CategoryRow({
                   ? t('count', { count: row.serviceCount })
                   : t('countWithRetired', { count: row.serviceCount, retired: row.serviceCount - row.activeCount })}
             </span>
-            <span className="svc-cat-chevron" aria-hidden="true">
-              <IconChevronRight />
-            </span>
+            {!picking && (
+              <span className="svc-cat-chevron" aria-hidden="true">
+                <IconChevronRight />
+              </span>
+            )}
           </>
         )}
       </button>

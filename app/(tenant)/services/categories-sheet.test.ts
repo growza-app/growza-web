@@ -46,13 +46,13 @@ const sheet = (locale: 'en' | 'hi', rows: ServiceCategoryAdmin[], services: Serv
 const row = (
   locale: 'en' | 'hi',
   over: Partial<ServiceCategoryAdmin>,
-  state: Partial<{ editing: boolean; orderable: boolean; atTop: boolean; atBottom: boolean; selected: boolean }> = {},
+  state: Partial<{ mode: 'read' | 'edit' | 'pick'; orderable: boolean; atTop: boolean; atBottom: boolean; selected: boolean }> = {},
 ) =>
   wrap(
     locale,
     createElement(CategoryRow, {
       row: cat(over),
-      editing: state.editing ?? false,
+      mode: state.mode ?? 'read',
       orderable: state.orderable ?? true,
       busy: false,
       atTop: state.atTop ?? false,
@@ -152,7 +152,7 @@ describe('the categories sheet', () => {
    * Edit mode did not change that — it adds the two arrows and the rename, and no delete.
    */
   it('offers no delete on the row itself, in either mode', () => {
-    for (const html of [row('en', { name: 'Hair' }), row('en', { name: 'Hair' }, { editing: true })]) {
+    for (const html of [row('en', { name: 'Hair' }), row('en', { name: 'Hair' }, { mode: 'edit' })]) {
       expect(html).not.toContain('Delete');
     }
   });
@@ -228,7 +228,7 @@ describe('a category row', () => {
   });
 
   it('editing, trades the count and chevron for the grip, the arrows and a rename on the name itself', () => {
-    const html = row('en', { name: 'Hair', serviceCount: 10, activeCount: 10 }, { editing: true });
+    const html = row('en', { name: 'Hair', serviceCount: 10, activeCount: 10 }, { mode: 'edit' });
     expect(html).toContain('Rename Hair');
     expect(html).toContain('Move Hair up');
     expect(html).toContain('Move Hair down');
@@ -241,7 +241,7 @@ describe('a category row', () => {
 
   /** One category has a name to fix and no position to move it to. */
   it('editing a list of one, offers the rename and no arrows', () => {
-    const html = row('en', { name: 'Hair' }, { editing: true, orderable: false });
+    const html = row('en', { name: 'Hair' }, { mode: 'edit', orderable: false });
     expect(html).toContain('Rename Hair');
     expect(html).not.toContain('Move Hair up');
     expect(html).not.toContain('svc-cat-grip');
@@ -255,17 +255,17 @@ describe('a category row', () => {
       expect(at, label).toBeGreaterThan(-1);
       return html.slice(html.lastIndexOf('<button', at), at);
     };
-    const top = row('en', { name: 'Hair' }, { editing: true, atTop: true });
+    const top = row('en', { name: 'Hair' }, { mode: 'edit', atTop: true });
     expect(tag(top, 'Move Hair up')).toContain('disabled');
     expect(tag(top, 'Move Hair down')).not.toContain('disabled');
 
-    const bottom = row('en', { name: 'Hair' }, { editing: true, atBottom: true });
+    const bottom = row('en', { name: 'Hair' }, { mode: 'edit', atBottom: true });
     expect(tag(bottom, 'Move Hair up')).not.toContain('disabled');
     expect(tag(bottom, 'Move Hair down')).toContain('disabled');
   });
 
   it('reads in Hindi', () => {
-    const html = row('hi', { name: 'Hair' }, { editing: true });
+    const html = row('hi', { name: 'Hair' }, { mode: 'edit' });
     expect(html).toContain('Hair का नाम बदलें');
     expect(html).not.toContain('Rename Hair');
   });
@@ -280,25 +280,62 @@ describe('a category row', () => {
  * still have, so the wording is pinned here, not just the buttons.
  */
 describe('picking categories to delete', () => {
-  it('shows no tick and no delete until Edit is tapped', () => {
+  it('shows no tick and no Select all until Delete is tapped', () => {
     const html = sheet('en', [cat({ name: 'Hair' }), cat({ id: 'b', name: 'Nails' })]);
     expect(html).not.toContain('svc-cat-tick');
     expect(html).not.toContain('Select all');
-    expect(html).not.toContain('Delete');
+    expect(html).not.toContain('Pick what to delete');
     expect(html).toContain('Close');
   });
 
-  it('gives a row its own tick, separate from the name that renames it', () => {
-    const html = row('en', { name: 'Hair' }, { editing: true });
+  /**
+   * The failure this exists to stop: the delete used to appear only once a row was ticked, so an owner who
+   * tapped Edit saw six ticks and a Close button and reported that deleting a category was not built. The
+   * action is present and disabled from the moment Edit is on, exactly as the delete card next door does
+   * it, and its label says what it is waiting for.
+   */
+  it('offers Delete on the sheet itself, not behind Edit', () => {
+    const html = sheet('en', [cat({ name: 'Hair' })]);
+    expect(html).toContain('Delete categories');
+    // Still nothing to tick until that button is pressed — the list is for reading.
+    expect(html).not.toContain('svc-cat-tick');
+    expect(html).not.toContain('Select all');
+  });
+
+  it('offers no Delete when there is nothing to delete', () => {
+    expect(sheet('en', [])).not.toContain('Delete categories');
+  });
+
+  it('keeps the disabled-action wording the delete card already uses', () => {
+    const copy = en.services.categories;
+    expect(copy.pickToDelete).toBe('Pick what to delete');
+    expect(copy.pickSome).toBe('Pick what to take off the menu');
+  });
+
+  it('gives a picked row a tick and nothing else — no arrows, no chevron, no rename', () => {
+    const html = row('en', { name: 'Hair', serviceCount: 10, activeCount: 10 }, { mode: 'pick' });
     expect(html).toContain('Select Hair');
     expect(html).toContain('role="checkbox"');
     expect(html).toContain('aria-checked="false"');
-    // The tick and the rename are two targets, not one: a tap meant for a typo must not delete anything.
-    expect(html).toContain('Rename Hair');
+    // The count stays: it is the consequence being decided, not decoration.
+    expect(html).toContain('10 services');
+    for (const gone of ['Move Hair up', 'Rename Hair', 'svc-cat-chevron', 'svc-cat-grip']) {
+      expect(html, gone).not.toContain(gone);
+    }
+  });
+
+  /**
+   * The two modes stay apart. A row that carried the tick AND the arrows AND the rename came to five
+   * controls in a 252px phone row and left 72px for the name, which is four characters.
+   */
+  it('keeps ticks out of edit mode, and arrows out of pick mode', () => {
+    expect(row('en', { name: 'Hair' }, { mode: 'edit' })).not.toContain('Select Hair');
+    expect(row('en', { name: 'Hair' }, { mode: 'edit' })).toContain('Move Hair up');
+    expect(row('en', { name: 'Hair' }, { mode: 'pick' })).not.toContain('Move Hair up');
   });
 
   it('marks a ticked row by more than colour', () => {
-    const html = row('en', { name: 'Hair' }, { editing: true, selected: true });
+    const html = row('en', { name: 'Hair' }, { mode: 'pick', selected: true });
     expect(html).toContain('aria-checked="true"');
     expect(html).toContain('is-picked');
   });
