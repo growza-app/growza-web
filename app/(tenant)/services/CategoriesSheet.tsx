@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, type ServiceAdmin, type ServiceCategoryAdmin } from '../lib/api';
-import { IconCheck, IconChevronRight, IconPlus, IconSearch } from '../components/icons';
+import { IconAlert, IconCheck, IconChevronRight, IconPlus, IconSearch } from '../components/icons';
 import { CategoryRow, type CategoryRowMode } from './CategoryRow';
 import { CategoryServices } from './CategoryServices';
 import { FILTER_FROM, matchesFilter, movedOrder, unsorted, worthOrdering } from './category-order';
@@ -664,15 +664,30 @@ export function CategoriesSheet({
             */}
             {confirming ? (
               <div className="svc-cat-confirm-group" role="alertdialog" aria-labelledby="svc-cat-confirm-title" aria-describedby="svc-cat-confirm-detail">
-                <p id="svc-cat-confirm-title" className="svc-cat-confirm-body">
-                  {t('deleteCatsTitle', { count: pickedRows.length })}
+                {/*
+                  The state change has to be seen, not just read: a tinted panel with its own icon, the
+                  categories NAMED (the list behind may have scrolled them out of view), and the one button
+                  that does it drawn solid. The arming button in the footer was an outline; this is what
+                  pressing it turns into, so the two cannot be mistaken for each other.
+                */}
+                <div className="svc-cat-confirm-head">
+                  <span className="svc-cat-confirm-icon" aria-hidden="true">
+                    <IconAlert />
+                  </span>
+                  <p id="svc-cat-confirm-title" className="svc-cat-confirm-body">
+                    {t('deleteCatsTitle', { count: pickedRows.length })}
+                  </p>
+                </div>
+                <p className="svc-cat-confirm-names">
+                  {pickedRows.slice(0, 3).map((c) => c.name).join(', ')}
+                  {pickedRows.length > 3 ? ` ${t('deleteCatsMore', { count: pickedRows.length - 3 })}` : ''}
                 </p>
                 <p id="svc-cat-confirm-detail" className="svc-cat-confirm-detail">
                   {goingCount === 0
                     ? t('deleteCatsEmpty', { count: pickedRows.length })
                     : t('deleteCatsGoes', { count: goingCount, categories: pickedRows.length })}
                 </p>
-                <button type="button" className="btn btn-ghost btn-danger svc-cat-action" disabled={busy} onClick={() => void deletePicked()}>
+                <button type="button" className="btn btn-danger-solid svc-cat-action" disabled={busy} onClick={() => void deletePicked()}>
                   {busy ? t('working') : deleteLabel}
                 </button>
                 <button

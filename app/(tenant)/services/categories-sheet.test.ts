@@ -409,6 +409,21 @@ describe('picking categories to delete', () => {
     expect(t('deleteCatsWithServices', { categories: 1, count: 1 })).toBe('Delete 1 category and 1 service');
   });
 
+  /**
+   * Arming the delete has to LOOK different, not just say something: the footer's outline button turns into a
+   * tinted panel that names what goes and a solid red button. A sentence over an unchanged button was read as
+   * a caption, and the owner could not tell anything had happened.
+   */
+  it('turns the arming button into a solid confirm inside a named warning panel', () => {
+    const src = readFileSync(join(__dirname, 'CategoriesSheet.tsx'), 'utf8');
+    const confirm = src.slice(src.indexOf('svc-cat-confirm-group'));
+    expect(confirm).toContain('btn-danger-solid');
+    expect(confirm).toContain('svc-cat-confirm-names');
+    expect(confirm).toContain('<IconAlert />');
+    const t = createTranslator({ locale: 'en', messages: en, namespace: 'services.categories' });
+    expect(t('deleteCatsMore', { count: 2 })).toBe('and 2 more');
+  });
+
   it('removes the services before the categories, so a held service keeps its category', () => {
     const src = readFileSync(join(__dirname, 'CategoriesSheet.tsx'), 'utf8');
     const del = src.slice(src.indexOf('const deletePicked'));

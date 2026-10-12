@@ -695,6 +695,14 @@ tr:last-child td {
 .svc-cat-action {
   width: 100%;
   min-height: 48px;
+  /* "Delete 4 categories and 31 services" is longer than a 210px button at 320px: it wraps rather than being cut. */
+  padding-block: 10px;
+}
+
+/* `.btn` is `nowrap` and loads later at the same weight, so this has to outrank it. */
+.svc-cat-sheet-actions .btn.svc-cat-action {
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .svc-cat-action:disabled {
@@ -780,6 +788,46 @@ tr:last-child td {
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
+  /* A warning panel, not a caption: tinted, bordered, and with its own icon, so arming the delete visibly
+     changes the foot of the sheet instead of only swapping a sentence above an identical button. */
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+}
+
+.svc-cat-confirm-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.svc-cat-confirm-icon {
+  flex: none;
+  display: inline-flex;
+  color: #b91c1c;
+}
+
+.svc-cat-confirm-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.svc-cat-sheet-actions .svc-cat-confirm-head .svc-cat-confirm-body {
+  font-size: 0.9375rem;
+  font-weight: 640;
+}
+
+/* What is about to go, by name — the list behind may have scrolled it out of sight. */
+.svc-cat-confirm-names {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 560;
+  overflow-wrap: anywhere;
+}
+
+.svc-cat-confirm-group .btn-ghost {
+  background: transparent;
 }
 
 /*
@@ -807,7 +855,8 @@ tr:last-child td {
     flex-wrap: wrap;
   }
 
-  .svc-cat-sheet-actions .svc-cat-confirm-body,
+  .svc-cat-sheet-actions .svc-cat-confirm-head,
+  .svc-cat-sheet-actions .svc-cat-confirm-names,
   .svc-cat-sheet-actions .svc-cat-confirm-detail {
     flex: 1 1 100%;
   }

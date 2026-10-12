@@ -1076,6 +1076,7 @@
       "pickedCount": "{count} of {total} selected",
       "deleteCatsAction": "{count, plural, one {Delete # category} other {Delete # categories}}",
       "deleteCatsTitle": "{count, plural, one {Delete # category?} other {Delete # categories?}}",
+      "deleteCatsMore": "and {count} more",
       "deleteCatsGoes": "{count, plural, one {The # service} other {The # services}} in {categories, plural, one {it} other {them}} {count, plural, one {is} other {are}} deleted too. This cannot be undone — bookings already made keep their service name and price.",
       "deleteCatsWithServices": "{categories, plural, one {Delete # category} other {Delete # categories}} and {count, plural, one {# service} other {# services}}",
       "deleteCatsEmpty": "Nothing is filed under {count, plural, one {it} other {them}}.",
