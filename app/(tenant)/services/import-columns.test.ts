@@ -72,6 +72,15 @@ describe('the step, as the owner sees it', () => {
     expect(html).not.toContain('<select');
   });
 
+  /** The label is the owner's own column name, character for character — not our word for it. */
+  it('labels each line with the column exactly as it is named in their file', () => {
+    const odd = ['Treatment', 'Labour hrs', 'Rate (INR)'];
+    const html = view('en', odd);
+    for (const name of odd) expect(html, name).toContain(`import-matched-col">${name}<`);
+    // …and what it becomes is the value beside it, not the label.
+    expect(html).toMatch(/import-matched-col">Labour hrs<\/span><span class="import-matched-becomes">Minutes</);
+  });
+
   it('opens a card per column, with samples, when a required column is missing', () => {
     const html = view('en', ['Item', 'When', 'Cost']);
     expect(html).toContain('import-cols');

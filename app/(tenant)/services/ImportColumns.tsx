@@ -44,13 +44,21 @@ export function ImportColumns({
 
       {!changing ? (
         <>
+          {/*
+            The label is the owner's own column name, exactly as it is in their file — not our word for it. They
+            are checking their spreadsheet against what we understood, and "Labour hrs" has to read "Labour hrs".
+          */}
           <ul className="import-matched">
-            {FIELDS.filter((f) => map[f.key] >= 0).map((f) => (
-              <li key={f.key}>
-                <span className="import-matched-field">{label(f.key)}</span>
-                <span className="import-matched-col">“{headerOf(map[f.key])}”</span>
-              </li>
-            ))}
+            {headers.map((_, i) => {
+              const field = fieldAt(map, i);
+              if (!field) return null;
+              return (
+                <li key={i}>
+                  <span className="import-matched-col">{headerOf(i)}</span>
+                  <span className="import-matched-becomes">{label(field)}</span>
+                </li>
+              );
+            })}
           </ul>
           {unused.length > 0 && <p className="import-unused">{t('notUsed', { names: unused.map(headerOf).join(', ') })}</p>}
           <button type="button" className="btn btn-ghost import-change" onClick={() => setChanging(true)}>

@@ -30,16 +30,17 @@
   border-top: 1px solid var(--border);
 }
 
-.import-matched-field {
-  font-weight: 600;
-}
-
-/* Their column, in their words: the part that is theirs reads as data, the part that is ours as the label. */
+/* Their column, exactly as they named it, is the label; what it becomes is the value beside it. */
 .import-matched-col {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.import-matched-becomes {
+  flex: none;
+  max-width: 55%;
+  text-align: right;
   color: var(--muted);
 }
 
