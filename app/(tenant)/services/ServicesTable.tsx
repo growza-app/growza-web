@@ -22,6 +22,7 @@ import { AddServicesChooser, type AddServicesRoute } from './AddServicesChooser'
 import { CataloguePicker } from './CataloguePicker';
 import { CopyFromBranch } from './CopyFromBranch';
 import { CategoriesSheet } from './CategoriesSheet';
+import { CategoryPicker } from './CategoryPicker';
 import { ALL_TAB, RETIRED_TAB, hasRetired, servicesOnTab, tabAfterChange, tabCounts } from './services-tabs';
 import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
 import { HeldByPackagesDialog } from './HeldByPackagesDialog';
@@ -496,44 +497,19 @@ export function ServicesTable({
         </button>
       </div>
 
-      <div className="page-tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === ALL_TAB}
-          className={`page-tab ${tab === ALL_TAB ? 'active' : ''}`}
-          onClick={() => setCategoryId(ALL_TAB)}
-        >
-          {t('all')} <span className="page-tab-count">{counts.all}</span>
-        </button>
-        {categories.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === c.id}
-            className={`page-tab ${tab === c.id ? 'active' : ''}`}
-            onClick={() => setCategoryId(c.id)}
-          >
-            {c.name} <span className="page-tab-count">{counts.byCategory.get(c.id) ?? 0}</span>
-          </button>
-        ))}
-        {/*
-         * Jira GRW-437 — last, and only when there is something in it. The owner's live menu reads left to
-         * right; what they have taken off it sits at the end, out of the way but one tap from a restore.
-         */}
-        {showRetiredTab && (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === RETIRED_TAB}
-            className={`page-tab svc-tab-retired ${tab === RETIRED_TAB ? 'active' : ''}`}
-            onClick={() => setCategoryId(RETIRED_TAB)}
-          >
-            {t('retired')} <span className="page-tab-count">{counts.retired}</span>
-          </button>
-        )}
-      </div>
+      {/*
+       * Jira GRW-587 — one control, not a strip of tabs. A branch that typed in its printed price list has 23
+       * categories and the strip was 2584px inside a 343px screen; the seeded five already overflowed at 375px.
+       * The tab LOGIC is untouched — `servicesOnTab`, `tabCounts` and `tabAfterChange` still decide everything,
+       * and `tab` is still `all`, `retired` or a category id — only the thing the owner taps has changed.
+       */}
+      <CategoryPicker
+        tab={tab}
+        categories={categories}
+        counts={counts}
+        showRetired={showRetiredTab}
+        onPick={setCategoryId}
+      />
 
       {/*
         Jira GRW-449 — services close in MEANING to what was typed, above the table rather than inside it.

@@ -1091,7 +1091,11 @@
     },
     "hours": "{count, plural, one {# घंटा} other {# घंटे}}",
     "hoursMinutes": "{hours, plural, one {# घंटा} other {# घंटे}} {minutes} मिनट",
-    "nobodyDoesIt": "कोई {provider} नहीं"
+    "nobodyDoesIt": "कोई {provider} नहीं",
+    "categoryPicker": {
+      "label": "मेन्यू का हिस्सा",
+      "count": "{count} सेवाएँ"
+    }
   },
   "staff": {
     "addLabel": "{label} जोड़ें",
