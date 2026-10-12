@@ -97,6 +97,13 @@ describe('the review, as the owner sees it', () => {
     expect(html).toContain('Import 2');
   });
 
+  /** The field is the service's NAME: "Service" alone, over a box holding "Haircut", read as the category. */
+  it('labels the name field as a name, in both languages', () => {
+    const bad = [draft({ name: 'Wax', durationMin: '' })];
+    expect(render('en', bad)).toContain('field-label">Service name<');
+    expect(render('hi', bad)).toContain('field-label">सेवा का नाम<');
+  });
+
   it('groups under the category, with a count', () => {
     const html = render('en', drafts);
     expect(html).toContain('rv-group-name">Hair<');

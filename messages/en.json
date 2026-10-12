@@ -933,7 +933,8 @@
       "groupNone": "No category",
       "unnamed": "(no name)",
       "minShort": "{n} min",
-      "noPrice": "No price"
+      "noPrice": "No price",
+      "nameLabel": "{service} name"
     },
     "problems": {
       "priceNotNumber": "Price is not a number",

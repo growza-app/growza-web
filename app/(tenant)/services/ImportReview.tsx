@@ -184,7 +184,7 @@ export function ImportReview({
                         {open && (
                           <div className="rv-edit">
                             <label className="field rv-field-name">
-                              <span className="field-label">{serviceWord}</span>
+                              <span className="field-label">{t('nameLabel', { service: serviceWord })}</span>
                               <input
                                 type="text"
                                 value={d.name}
