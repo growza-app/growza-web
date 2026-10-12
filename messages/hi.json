@@ -1658,6 +1658,7 @@
         }
       },
       "changePassword": "पासवर्ड बदलें",
+      "help": "मदद",
       "currentPassword": "मौजूदा पासवर्ड",
       "newPassword": "नया पासवर्ड",
       "atLeast8": "कम से कम 8 अक्षर।",
