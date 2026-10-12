@@ -1091,7 +1091,11 @@
     },
     "hours": "{count, plural, one {# hr} other {# hrs}}",
     "hoursMinutes": "{hours, plural, one {# hr} other {# hrs}} {minutes} min",
-    "nobodyDoesIt": "No {provider}"
+    "nobodyDoesIt": "No {provider}",
+    "categoryPicker": {
+      "label": "Part of the menu",
+      "count": "{count} services"
+    }
   },
   "staff": {
     "addLabel": "Add {label}",
