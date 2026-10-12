@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { api } from '../lib/api';
-import { NOTIF_READ_EVENT, countUnread, readClearedBeforeId, readLastSeenId, useFeedBranch } from './NotificationBell';
+import { NOTIF_READ_EVENT, countUnread, knownEvents, readClearedBeforeId, readLastSeenId, useFeedBranch } from './NotificationBell';
 
 const POLL_MS = 15_000;
 
@@ -32,7 +32,7 @@ export function useUnreadNotifications(hostRef: RefObject<HTMLElement | null>): 
       const host = hostRef.current;
       if (host && getComputedStyle(host).display === 'none') return;
       const rows = await api.notifications(50, location).catch(() => null);
-      if (rows && alive.current) setEvents(rows);
+      if (rows && alive.current) setEvents(knownEvents(rows));
       readCursors(); // another tab may have moved it
     };
 
