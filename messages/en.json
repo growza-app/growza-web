@@ -2410,6 +2410,8 @@
     "qrTitle": "Let them scan",
     "qrAlt": "The salon's payment QR code",
     "qrHint": "They type the amount in their own app.",
+    "qrMissing": "No QR code here yet.",
+    "qrAddIt": "Add it in Settings → Payment QR",
     "qrPaid": "Money received",
     "saving": "Saving…",
     "spoken": "{amount} rupees received. {mode}.",
