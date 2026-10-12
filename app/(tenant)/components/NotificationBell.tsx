@@ -88,6 +88,16 @@ export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: C
   'attendance.pending': { key: 'attendancePending', icon: IconClipboardCheck, cls: 'notif-handoff' },
 };
 
+/**
+ * A topic this dashboard has no row for is dropped, not rendered: the API and the dashboard deploy separately, so a
+ * newer API can send a topic an older (or cached) dashboard does not know, and looking it up in TOPIC_META would
+ * throw and take the bell and the Notifications page down with it. Applied wherever the feed is read, so the
+ * unread count ignores it too — a badge for a row nobody can see is worse than no badge.
+ */
+export function knownEvents(rows: ReadonlyArray<ActivityEvent>): ActivityEvent[] {
+  return rows.filter((e) => Object.prototype.hasOwnProperty.call(TOPIC_META, e.topic));
+}
+
 /** The `notifications.feed` messages, as a translator — these are plain helpers and cannot call hooks. */
 export type FeedT = ReturnType<typeof useTranslations<'notifications.feed'>>;
 
@@ -348,8 +358,9 @@ export function NotificationBell() {
       // Notifications tab is the way in), and so is its toast; polling for an unseen
       // bell is a request every 15 seconds that nothing can show.
       if (wrapRef.current && getComputedStyle(wrapRef.current).display === 'none') return;
-      const rows = await api.notifications(20, feed.location).catch(() => null);
-      if (!rows) return;
+      const fetched = await api.notifications(20, feed.location).catch(() => null);
+      if (!fetched) return;
+      const rows = knownEvents(fetched);
 
       const newestId = rows.length > 0 ? Number(rows[0]!.id) : 0;
       if (hasLoadedOnce.current && newestId > maxKnownId.current) {

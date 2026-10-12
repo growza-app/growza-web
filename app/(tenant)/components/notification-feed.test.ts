@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { ActivityEvent } from '../lib/api';
-import { byWhom, eventLine, notifHref, timeAgo, TOPIC_META, type FeedT } from './NotificationBell';
+import { byWhom, eventLine, knownEvents, notifHref, timeAgo, TOPIC_META, type FeedT } from './NotificationBell';
 
 /** Jira GRW-360 — a notification reads in the owner's language: the row's title, its time and its age. */
 const feed = (locale: 'en' | 'hi') =>
@@ -165,5 +165,14 @@ describe('a stylist marking in', () => {
       expect((en.notifications.feed.topics as Record<string, string>)[TOPIC_META[topic].key]).toBeTruthy();
       expect((hi.notifications.feed.topics as Record<string, string>)[TOPIC_META[topic].key]).toBeTruthy();
     }
+  });
+});
+
+describe('a topic this dashboard does not know', () => {
+  it('is dropped rather than looked up, so a newer API cannot blank the bell', () => {
+    const future = { ...booking, id: '9', topic: 'something.new' } as unknown as ActivityEvent;
+    expect(knownEvents([booking, future]).map((e) => e.id)).toEqual(['1']);
+    // Inherited keys are not topics either.
+    expect(knownEvents([{ ...booking, topic: 'constructor' } as unknown as ActivityEvent])).toEqual([]);
   });
 });

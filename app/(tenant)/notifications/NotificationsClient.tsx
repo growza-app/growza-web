@@ -10,6 +10,7 @@ import {
   NotifRow,
   countUnread,
   eventLine,
+  knownEvents,
   useFeedBranch,
   readClearedBeforeId,
   readLastSeenId,
@@ -65,7 +66,7 @@ export function NotificationsClient() {
     // `/api/v1/notifications` already enforces server-side.
     api.notifications(50, feed.location)
       .then((rows) => {
-        if (!cancelled) setEvents(rows);
+        if (!cancelled) setEvents(knownEvents(rows));
       })
       .catch((err) => {
         if (!cancelled) setError(loadErrorKind(err));
