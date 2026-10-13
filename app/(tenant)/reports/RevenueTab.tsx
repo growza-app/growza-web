@@ -1,9 +1,10 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useReportsCopy } from '../lib/use-reports-copy';
 import type { ReportRevenue } from '../lib/api';
 import { IconCoins, IconRupee, IconUserPlus } from '../components/icons';
-import { BarList, Donut, LineChart } from './charts';
+import { BarList, Donut, LineChart, ReportTable, type Cell } from './charts';
 import { Kpi } from './Kpi';
 import { Card, money, moneyBars, rangeName } from './shared';
 import { useRowName } from './use-row-name';
@@ -28,6 +29,7 @@ const PAYMENT_COLOURS: Record<string, string> = {
  */
 export function RevenueTab({ data }: { data: ReportRevenue }) {
   const rp = useReportsCopy();
+  const sg = useTranslations('reports.signals');
   const nameOf = useRowName();
   const c = rp.money;
   const labels = data.range.buckets.map((b) => b.label);
@@ -135,6 +137,30 @@ export function RevenueTab({ data }: { data: ReportRevenue }) {
           />
         </Card>
       </div>
+
+      {/* Jira GRW-568 — which offers paid for themselves. Absent, not empty,
+          on an API that predates it. */}
+      {data.offers && (
+        <Card title={sg('offers.title')} hint={sg('offers.hint')}>
+          {data.offers.length === 0 ? (
+            <p className="rp-empty">{sg('offers.empty')}</p>
+          ) : (
+            <ReportTable
+              columns={[sg('offers.colOffer'), sg('offers.colBookings'), sg('offers.colEarned'), sg('offers.colDiscount')]}
+              rows={data.offers.map((o) => {
+                const cells: Cell[] = [
+                  { kind: 'text', text: o.retired ? `${o.title} · ${rp.servicesTab.retired}` : o.title, bold: true },
+                  { kind: 'text', text: String(o.bookings), align: 'center' },
+                  { kind: 'text', text: money(o.revenueMinor), bold: true },
+                  { kind: 'text', text: money(o.discountMinor), tone: o.discountMinor > 0 ? 'var(--rp-amber)' : 'var(--muted)' },
+                ];
+                return { id: o.id, cells };
+              })}
+              emptyText={sg('offers.empty')}
+            />
+          )}
+        </Card>
+      )}
     </div>
   );
 }

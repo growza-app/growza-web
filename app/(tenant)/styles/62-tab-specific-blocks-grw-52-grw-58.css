@@ -101,6 +101,22 @@
   color: var(--text);
 }
 
+/* Jira GRW-568 — a few numbers in lines ("Moved or called off"), and the
+   reach sentence on the Clients summary. */
+.sg-lines { list-style: none; margin: 0; padding: 0; }
+.sg-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border);
+}
+.sg-line:first-child { border-top: 0; padding-top: 0; }
+.sg-dot { flex: 0 0 0.625rem; width: 0.625rem; height: 0.625rem; border-radius: 50%; }
+.sg-label { flex: 1; min-width: 0; }
+.sg-value { font-size: 1.125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.rp-cs-reach { margin: var(--sp-3) 0 0; color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+.rp-cs-reach strong { color: var(--text); font-weight: 600; }
 /* Jira GRW-567 — the Overview scorecard: a word, a number, a dot, a sentence.
    Laid out at 344px first: label and number on one line, the sentence under
    them; from 640px the three sit on one row. */

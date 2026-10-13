@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useReportsCopy } from '../lib/use-reports-copy';
 import type { ReportStaff } from '../lib/api';
 import { BarList, ReportTable, type Cell } from './charts';
@@ -20,8 +21,11 @@ import { NOBODY_INITIAL } from '../lib/use-no-provider';
  */
 export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerLabel: string }) {
   const rp = useReportsCopy();
+  const sg = useTranslations('reports.signals');
   const nameOf = useRowName();
   const c = rp.staffTab;
+  // Jira GRW-568 — the column exists when the API sends the figure.
+  const discounts = data.rows.some((r) => typeof r.discountMinor === 'number');
 
   const rows = data.rows.map((r) => {
     // Jira GRW-363 — the no-stylist row is named in the owner's language; a person as typed.
@@ -47,6 +51,10 @@ export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerL
             align: 'center',
           },
     ];
+    if (discounts) {
+      const d = r.discountMinor ?? 0;
+      cells.push({ kind: 'text', text: money(d), tone: d > 0 ? 'var(--rp-amber)' : 'var(--muted)' });
+    }
     return { id: r.id, cells };
   });
 
@@ -71,7 +79,7 @@ export function StaffTab({ data, providerLabel }: { data: ReportStaff; providerL
 
       <Card title={`${providerLabel} ${c.table.toLowerCase()}`}>
         <ReportTable
-          columns={[c.colName, c.colBookings, c.colCompleted, c.colRevenue, c.colAvg, c.colUtilisation, c.colNoShow]}
+          columns={[c.colName, c.colBookings, c.colCompleted, c.colRevenue, c.colAvg, c.colUtilisation, c.colNoShow, ...(discounts ? [sg('staff.colDiscount')] : [])]}
           rows={rows}
           emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
         />

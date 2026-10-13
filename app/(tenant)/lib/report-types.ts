@@ -164,6 +164,38 @@ export interface ReportServiceRow {
   retired: boolean;
 }
 
+/** Jira GRW-568 — what one offer brought in, and what it cost in discount. */
+export interface ReportOfferRow {
+  id: string;
+  title: string;
+  bookings: number;
+  revenueMinor: number;
+  discountMinor: number;
+  retired: boolean;
+}
+
+/** Jira GRW-568 — WhatsApp, booked ahead at the desk, walked in. */
+export interface ReportBookingSources {
+  whatsapp: number;
+  bookedAhead: number;
+  walkIn: number;
+}
+
+/** Jira GRW-568 — moved, and cancelled by whom. */
+export interface ReportBookingEndings {
+  moved: number;
+  cancelledByCustomer: number;
+  cancelledBySalon: number;
+  cancelledOther: number;
+}
+
+/** Jira GRW-568 — who an offer can reach. */
+export interface ReportReach {
+  reachable: number;
+  noPhone: number;
+  optedOut: number;
+}
+
 export interface ReportProviderRow {
   id: string;
   name: string;
@@ -173,6 +205,8 @@ export interface ReportProviderRow {
   avgValueMinor: number | null;
   utilisationPct: number | null;
   noShowPct: number | null;
+  /** Jira GRW-568 — booked less paid at the till. Optional so an older API does not break the table. */
+  discountMinor?: number;
   retired: boolean;
   /** Jira GRW-363 — the row for visits recorded with no stylist; its `name` is English. */
   key?: 'unassigned';
@@ -205,6 +239,8 @@ export interface ReportRevenue {
   showProviders: boolean;
   bySegment: ReportNamedValue[];
   byPaymentMethod: ReportNamedValue[];
+  /** Jira GRW-568 — each offer's bookings, money and discount. Optional for an older API. */
+  offers?: ReportOfferRow[];
 }
 
 export interface ReportBookings {
@@ -219,15 +255,21 @@ export interface ReportBookings {
   trend: ReportPoint[];
   byStatus: ReportNamedValue[];
   bySource: ReportNamedValue[];
+  /** Jira GRW-568 — three sources; the tab falls back to `bySource` for an older API. */
+  sources?: ReportBookingSources;
+  /** Jira GRW-568 — moved, and cancelled by whom. */
+  endings?: ReportBookingEndings;
   peakPeriods: ReportHeatmap;
   /** Jira GRW-406 — tokens issued in the range. Optional so an older API does not break the tab. */
-  tokens?: { issued: number; waiting?: number; served: number; paid: number; left: number; cancelled: number };
+  tokens?: { issued: number; waiting?: number; served: number; paid: number; left: number; cancelled: number; avgWaitMin?: number | null };
 }
 
 export interface ReportServices {
   range: ReportRangeMeta;
   mostBooked: ReportNamedValue[];
   topRevenue: ReportNamedValue[];
+  /** Jira GRW-568 — money by category; "Other" (key `other`) for services without one. */
+  byCategory?: ReportNamedValue[];
   rows: ReportServiceRow[];
 }
 
@@ -257,6 +299,8 @@ export interface ReportCustomers {
   topCustomers: ReportTopCustomer[];
   /** Share of the period's clients who had been in before. One tile, no chart. */
   repeatRatePct: ReportMetric;
+  /** Jira GRW-568 — who an offer can reach. */
+  reach?: ReportReach;
 }
 
 
