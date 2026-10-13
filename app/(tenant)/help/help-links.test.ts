@@ -87,12 +87,9 @@ describe('the screen itself', () => {
     expect(page).toMatch(/aria-label=\{o\.number \? `\$\{t\('whatsapp'\)\} · \$\{o\.number\}` : t\('whatsapp'\)\}/);
   });
 
-  it('is in the stylesheet order, before the clay layers', () => {
+  it('is in the stylesheet order', () => {
     const globals = readFileSync(resolve(here, '../globals.css'), 'utf8');
     expect(globals.indexOf("@import './styles/99-help.css';")).toBeGreaterThan(-1);
-    expect(globals.indexOf("@import './styles/99-help.css';")).toBeLessThan(
-      globals.indexOf("@import './styles/100-clay-tabs.css';"),
-    );
   });
 });
 

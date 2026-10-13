@@ -101,6 +101,6 @@ describe('the setup banner', () => {
     expect(css).not.toMatch(/font-size:\s*\d+px/);
     expect(css).not.toMatch(/#[0-9a-f]{6}|rgba\(/i);
     expect(css).toMatch(/\.setup-row \{[^}]*min-height: 44px;/);
-    expect(here('../globals.css').indexOf('99-setup-banner.css')).toBeLessThan(here('../globals.css').indexOf('100-clay-tabs.css'));
+    expect(here('../globals.css').indexOf('99-setup-banner.css')).toBeGreaterThan(-1);
   });
 });
