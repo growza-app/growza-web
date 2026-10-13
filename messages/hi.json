@@ -2148,6 +2148,35 @@
       "newCustomers": "नए ग्राहक",
       "repeatRate": "लौटकर आए"
     },
+    "scorecard": {
+      "title": "कैसा चल रहा है?",
+      "lines": {
+        "money": "पैसा",
+        "visits": "विज़िट",
+        "newClients": "नए ग्राहक",
+        "cameBack": "लौटकर आए",
+        "noShows": "नहीं आए"
+      },
+      "tone": {
+        "good": "अच्छा",
+        "steady": "जैसा था",
+        "bad": "ध्यान दें"
+      },
+      "period": {
+        "yesterday": "कल से",
+        "week": "पिछले हफ़्ते से",
+        "month": "पिछले महीने से",
+        "quarter": "पिछले 3 महीनों से",
+        "year": "पिछले साल से",
+        "custom": "पिछली तारीख़ों से"
+      },
+      "moreMoney": "{period} {amount} ज़्यादा",
+      "lessMoney": "{period} {amount} कम",
+      "more": "{period} {n} ज़्यादा",
+      "fewer": "{period} {n} कम",
+      "same": "{period} उतना ही",
+      "noPrior": "अभी तुलना के लिए कुछ नहीं"
+    },
     "segments": {
       "active": "आते रहते हैं",
       "due": "विज़िट का समय हो गया",

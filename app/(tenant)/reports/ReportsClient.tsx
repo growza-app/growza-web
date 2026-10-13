@@ -156,7 +156,7 @@ export function ReportsClient({
       ) : payload.tab === 'todo' ? (
         <TodoTab data={payload.data} tenantName={tenantName} onTab={goToTab} onClient={onClient} />
       ) : payload.tab === 'overview' ? (
-        <OverviewTab data={payload.data} onTab={goToTab} onClient={onClient} />
+        <OverviewTab data={payload.data} onTab={goToTab} />
       ) : payload.tab === 'revenue' ? (
         <RevenueTab data={payload.data} />
       ) : payload.tab === 'bookings' ? (

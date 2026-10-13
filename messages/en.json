@@ -2151,6 +2151,35 @@
       "newCustomers": "New clients",
       "repeatRate": "Came back"
     },
+    "scorecard": {
+      "title": "How is it going?",
+      "lines": {
+        "money": "Money",
+        "visits": "Visits",
+        "newClients": "New clients",
+        "cameBack": "Came back",
+        "noShows": "Didn’t come"
+      },
+      "tone": {
+        "good": "Good",
+        "steady": "Steady",
+        "bad": "Needs you"
+      },
+      "period": {
+        "yesterday": "yesterday",
+        "week": "the week before",
+        "month": "last month",
+        "quarter": "the 3 months before",
+        "year": "last year",
+        "custom": "the dates before"
+      },
+      "moreMoney": "{amount} more than {period}",
+      "lessMoney": "{amount} less than {period}",
+      "more": "{n} more than {period}",
+      "fewer": "{n} fewer than {period}",
+      "same": "Same as {period}",
+      "noPrior": "Nothing to compare with yet"
+    },
     "segments": {
       "active": "Coming in",
       "due": "Due a visit",
