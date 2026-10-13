@@ -2435,6 +2435,13 @@
         "hint": "{optedOut, plural, =0 {} other {# ने संपर्क न करने को कहा है। }}{noPhone, plural, =0 {} other {# का नंबर नहीं है।}}",
         "button": "सूची देखें"
       },
+      "share": {
+        "title": "यह हफ़्ता शेयर करें",
+        "hint": "पाँच आँकड़े और आपके दो ज़रूरी काम, WhatsApp मैसेज के रूप में।",
+        "button": "यह हफ़्ता WhatsApp पर शेयर करें",
+        "heading": "{business} — इस हफ़्ते, {from} से {to}",
+        "todo": "करने के लिए:"
+      },
       "sheet": {
         "close": "बंद करें",
         "whatsapp": "WhatsApp",
