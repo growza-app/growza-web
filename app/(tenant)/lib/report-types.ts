@@ -24,6 +24,7 @@ export type ReportRangeKey =
   | 'custom';
 
 export type ReportTabKey =
+  | 'todo'
   | 'overview'
   | 'customers'
   | 'revenue'
@@ -114,9 +115,29 @@ export type ReportKpiKey =
   | 'newCustomers'
   | 'repeatRatePct';
 
+/** Jira GRW-567 — one scorecard line: the figure, and the same figure for the period before (null = nothing to compare with). */
+export interface ScorecardLine {
+  value: number;
+  previous: number | null;
+}
+
+export type ScorecardVs = 'yesterday' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+
+export interface Scorecard {
+  vs: ScorecardVs;
+  money: ScorecardLine;
+  visits: ScorecardLine;
+  newClients: ScorecardLine;
+  /** People with two or more visits in the period — a count, not a rate. */
+  cameBack: ScorecardLine;
+  noShows: ScorecardLine;
+}
+
 export interface ReportOverview {
   range: ReportRangeMeta;
   compare: boolean;
+  /** Always against the period before, whatever `compare` says. */
+  scorecard: Scorecard;
   kpis: Record<ReportKpiKey, ReportMetric>;
   revenueTrend: ReportPoint[];
   bookingTrend: ReportPoint[];
@@ -304,4 +325,38 @@ export interface ClientProfile {
   lifetimeSpendMinor: number;
   rows: ClientProfileRow[];
   recent: { service: string; whenISO: string; amountMinor: number }[];
+}
+
+/* ---- What to do (the first tab) ---------------------------------------- */
+
+export type TodoTone = 'good' | 'warn' | 'bad';
+
+/** A client the owner can act on from a card. `waPhone` is null when they may not be messaged. */
+export interface TodoClient {
+  customerId: string;
+  name: string;
+  initial: string;
+  waPhone: string | null;
+  optedOut: boolean;
+  lastVisitDays: number | null;
+  intervalDays: number | null;
+  avgTicketMinor: number | null;
+  usualService: string | null;
+}
+
+export type TodoCard =
+  | { kind: 'money'; tone: TodoTone; revenueMinor: number; previousMinor: number | null; bookings: number }
+  | { kind: 'dueBack'; tone: TodoTone; count: number; clients: TodoClient[] }
+  | { kind: 'stopped'; tone: TodoTone; count: number; clients: TodoClient[] }
+  | { kind: 'noShow'; tone: TodoTone; count: number; clients: TodoClient[] }
+  | { kind: 'quietHours'; tone: TodoTone; weekday: number; fromHour: number; toHour: number }
+  | { kind: 'bestEarner'; tone: TodoTone; service: string; revenueMinor: number; bookings: number }
+  | { kind: 'unreachable'; tone: TodoTone; count: number; noPhone: number; optedOut: number };
+
+export interface ReportTodo {
+  weekStartISO: string;
+  weekEndExclusiveISO: string;
+  monthLabel: string;
+  cards: TodoCard[];
+  possible: number;
 }

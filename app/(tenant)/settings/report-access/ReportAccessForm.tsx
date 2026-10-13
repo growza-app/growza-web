@@ -31,6 +31,7 @@ import { useCloseAfterSave } from '../../lib/close-after-save';
 const ROLES = ['receptionist'] as const;
 
 const TABS = [
+  { key: 'todo', money: true },
   { key: 'overview', money: true },
   { key: 'revenue', money: true },
   { key: 'customers', money: false },
