@@ -817,6 +817,8 @@ export interface OwnerBilling {
     planPriceMinor: number;
     branches: Array<{ id: string; name: string; included: boolean; amountMinor: number }>;
     discount: null | { amountMinor: number; reason: string | null; endsAt: string | null };
+    /** What this period costs — the plan price and branches less today's discount. The plan card's own total. */
+    monthlyMinor?: number;
     nextBill: { date: string; amountMinor: number };
     /**
      * Jira GRW-241 — `autopay` outranks `online_link`: a live mandate is not asked to pay a link.

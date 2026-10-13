@@ -17,11 +17,18 @@ export function BillingSummary({
   billing,
   lang,
   canPayOnline,
+  live = true,
   onAccountText = null,
 }: {
   billing: OwnerBilling;
   lang: Lang;
   canPayOnline: boolean;
+  /**
+   * Has the salon gone live? A business still being set up is not billed at all — its first bill is raised the
+   * day it goes live. Defaults to true, so an older API or a failed `/me` reads as live and nobody is told their
+   * billing has not started when it has (the same fail-open rule `isLive` follows).
+   */
+  live?: boolean;
   /** Jira GRW-407 — "₹299 is on your account…", already in the owner's language; null when nothing is. */
   onAccountText?: string | null;
 }) {
@@ -79,7 +86,9 @@ export function BillingSummary({
               ) : null}
               <div className="bill-line bill-line-total">
                 <span>{t.monthly}</span>
-                <span>{money(sub.nextBill.amountMinor)}</span>
+                {/* THIS period, so the total is the sum of the lines above it. The next bill is the card on the
+                    right, and a discount ending between the two is exactly when the two numbers differ. */}
+                <span>{money(sub.monthlyMinor ?? sub.nextBill.amountMinor)}</span>
               </div>
               {/* While a bill is due the Pay card above already says how; saying it twice, in different words, is the confusion. */}
               {billing.due && (sub.paidBy === 'offline' || sub.paidBy === 'online_link') ? null : (
@@ -102,8 +111,21 @@ export function BillingSummary({
           {sub ? (
             <section className="card bill-card" aria-labelledby="bill-next">
               <h3 id="bill-next" className="bill-card-title">
-                {t.nextBill} <small className="bill-muted">{t.on(day(sub.nextBill.date))}</small>
+                {live ? (
+                  <>
+                    {t.nextBill} <small className="bill-muted">{t.on(day(sub.nextBill.date))}</small>
+                  </>
+                ) : (
+                  t.firstBill
+                )}
               </h3>
+              {/* A date is only useful once it is real: while the salon is still being set up, no bill exists and
+                  the day it would fall on moves to whenever they go live. */}
+              {live ? null : (
+                <p className="bill-change" role="note">
+                  {t.billingStartsAtGoLive}
+                </p>
+              )}
               {sub.pendingChange ? (
                 <p className="bill-change" role="note">
                   {t.change(day(sub.pendingChange.effectiveFrom), money(sub.pendingChange.nextMonthlyMinor), money(sub.pendingChange.currentMonthlyMinor))}
@@ -111,7 +133,9 @@ export function BillingSummary({
               ) : null}
               <div className="bill-line bill-line-total">
                 <span>{t.amount}</span>
-                <span>{money(sub.nextBill.amountMinor)}</span>
+                {/* Not live yet: the first bill is raised at go-live, with the offer still on, so it is this
+                    period's figure — not `nextBill`, which is dated from an enrolment period nobody is billed for. */}
+                <span>{money(live ? sub.nextBill.amountMinor : (sub.monthlyMinor ?? sub.nextBill.amountMinor))}</span>
               </div>
               {onAccountText ? (
                 <p className="bill-change" role="note" data-testid="on-account">

@@ -40,6 +40,10 @@ export interface DiscountModalSubscription {
   finalPriceMinor: number;
   /** The next bill's extra-branch charge (Jira GRW-161). Absent means none. */
   nextBill?: { branchAmountMinor: number };
+  /** The day the next bill is raised — the first one this discount can reach. */
+  nextBillingDate?: string;
+  /** Whether the business is still being set up: its first bill is raised when it goes live, not before. */
+  liveYet?: boolean;
 }
 
 /**
@@ -460,6 +464,22 @@ export function DiscountModal({
               {type === 'final' ? 'The final price entered is above list price.' : 'That discount is larger than the list price itself.'}
             </div>
           ) : null}
+
+          {/*
+            * Which bill this reaches, said plainly.
+            *
+            * An issued bill never moves (GRW-256): a discount set now is on the NEXT one. That used to have an
+            * exception for a business's first bill, which was re-priced in place — and which bill came out free
+            * then depended on whether the owner had paid yet. Billing now starts at go-live and an offer is set
+            * on the enrol form, so the rule is the same every month and this line can simply state it.
+            */}
+          <p style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: oklch.textMuted }}>
+            {subscription?.liveYet === false
+              ? 'This business is not live yet. It applies to its first bill, raised when it goes live.'
+              : subscription?.nextBillingDate
+                ? `Applies from the next bill on ${formatDateOnly(subscription.nextBillingDate)}. The current bill does not change.`
+                : 'Applies from the next bill. The current bill does not change.'}
+          </p>
 
           {saveError ? <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{saveError}</div> : null}
         </div>

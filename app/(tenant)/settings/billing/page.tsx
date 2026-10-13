@@ -3,6 +3,7 @@ import { formatMoney } from '../../lib/format';
 import { api } from '../../lib/api';
 import { serverLang } from '../../lib/lang';
 import { billingCopy } from '../../lib/billing-copy';
+import { isLive } from '../../lib/go-live';
 import { BillingSummary } from './BillingSummary';
 import { getTranslations } from 'next-intl/server';
 
@@ -26,7 +27,15 @@ export default async function BillingSettingsPage() {
           amount: formatMoney(onAccount, billing.subscription?.currency ?? 'INR', lang),
         })
       : null;
-  return <BillingSummary billing={billing} lang={lang} canPayOnline={me?.payments?.online ?? false} onAccountText={onAccountText} />;
+  return (
+    <BillingSummary
+      billing={billing}
+      lang={lang}
+      canPayOnline={me?.payments?.online ?? false}
+      live={isLive(me?.tenant?.status)}
+      onAccountText={onAccountText}
+    />
+  );
 }
 
 // Jira GRW-192 — the tab says which screen this is.

@@ -444,6 +444,7 @@ function BusinessDetailInner() {
       {activeTab === 'subscription' ? (
         business.subscription ? (
           <SubscriptionPanel
+            businessLive={business.status !== 'provisioning'}
             subscriptionId={business.subscription.id}
             canManage={me?.permissions.includes('admin.subscription.manage') ?? false}
             canRecordPayment={me?.permissions.includes('admin.payment.record') ?? false}
