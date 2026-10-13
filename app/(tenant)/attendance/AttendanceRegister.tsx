@@ -511,6 +511,53 @@ export function AttendanceRegister({
             const hue = staffHue(row.displayName);
             return (
               <div key={row.providerId} className={`att-row ${row.rostered ? '' : 'is-off'}`}>
+                {/*
+                  * Jira GRW-563 — where this row came from, and the Yes / No when the fence could not place it. First in the
+                  * row, above the name and the times: a mark waiting for the owner is the thing they came to do.
+                  *
+                  * `source`, not `approval`, decides the words. A row the DESK typed is `source: 'register'`,
+                  * and reading only the approval told the owner "Marked from phone · no location" about a row
+                  * nobody's phone had touched — a false sentence on a pay-adjacent record.
+                  */}
+                {row.source === 'self' || row.source === 'self_unverified' || row.approval === 'pending' || row.approval === 'approved' || row.approval === 'rejected' ? (
+                  <div className={`ci-row ci-row-${row.approval ?? 'auto'}`}>
+                    <span className="ci-row-text">
+                      {row.approval === 'pending'
+                        ? tc(fromPhone(row) ? 'pendingRow' : 'pendingDesk', {
+                            where: row.inDistanceM == null ? tc('noLocation') : tc('away', { m: metresLabel(row.inDistanceM) ?? '' }),
+                          })
+                        : row.approval === 'rejected'
+                          ? tc('rejectedRow', { reason: tc(`reasons.${row.rejectReason ?? 'other'}`) })
+                          : row.approval === 'approved'
+                            ? tc(fromPhone(row) ? 'approvedRow' : 'approvedDesk')
+                            : tc('fromPhone', { m: metresLabel(row.inDistanceM) ?? '' })}
+                    </span>
+                    {row.approval === 'pending' && mayApprove && writable ? (
+                      decidingNo === row.providerId ? (
+                        <span className="ci-reasons" role="group" aria-label={tc('whyNo')}>
+                          {(['not_at_branch', 'wrong_time', 'other'] as const).map((r) => (
+                            <button key={r} type="button" className="btn-ghost" disabled={busy} onClick={() => void decide(row, 'rejected', r)}>
+                              {tc(`reasons.${r}`)}
+                            </button>
+                          ))}
+                          <button type="button" className="btn-ghost" disabled={busy} onClick={() => setDecidingNo(null)}>
+                            {tc('back')}
+                          </button>
+                        </span>
+                      ) : (
+                        <span className="ci-decide">
+                          <button type="button" className="ci-yes" disabled={busy} onClick={() => void decide(row, 'approved')}>
+                            {tc('yes')}
+                          </button>
+                          <button type="button" className="ci-no" disabled={busy} onClick={() => setDecidingNo(row.providerId)}>
+                            {tc('no')}
+                          </button>
+                        </span>
+                      )
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="att-who">
                   {/*
                     Jira GRW-559 — the photo where there is one, and otherwise the hue tile
@@ -652,52 +699,6 @@ export function AttendanceRegister({
                     {row.note ? <IconNote /> : <IconPlus />}
                   </button>
                 </div>
-
-                {/*
-                  * Jira GRW-563 — where this row came from, and the Yes / No when the fence could not place it.
-                  *
-                  * `source`, not `approval`, decides the words. A row the DESK typed is `source: 'register'`,
-                  * and reading only the approval told the owner "Marked from phone · no location" about a row
-                  * nobody's phone had touched — a false sentence on a pay-adjacent record.
-                  */}
-                {row.source === 'self' || row.source === 'self_unverified' || row.approval === 'pending' || row.approval === 'approved' || row.approval === 'rejected' ? (
-                  <div className={`ci-row ci-row-${row.approval ?? 'auto'}`}>
-                    <span className="ci-row-text">
-                      {row.approval === 'pending'
-                        ? tc(fromPhone(row) ? 'pendingRow' : 'pendingDesk', {
-                            where: row.inDistanceM == null ? tc('noLocation') : tc('away', { m: metresLabel(row.inDistanceM) ?? '' }),
-                          })
-                        : row.approval === 'rejected'
-                          ? tc('rejectedRow', { reason: tc(`reasons.${row.rejectReason ?? 'other'}`) })
-                          : row.approval === 'approved'
-                            ? tc(fromPhone(row) ? 'approvedRow' : 'approvedDesk')
-                            : tc('fromPhone', { m: metresLabel(row.inDistanceM) ?? '' })}
-                    </span>
-                    {row.approval === 'pending' && mayApprove && writable ? (
-                      decidingNo === row.providerId ? (
-                        <span className="ci-reasons" role="group" aria-label={tc('whyNo')}>
-                          {(['not_at_branch', 'wrong_time', 'other'] as const).map((r) => (
-                            <button key={r} type="button" className="btn-ghost" disabled={busy} onClick={() => void decide(row, 'rejected', r)}>
-                              {tc(`reasons.${r}`)}
-                            </button>
-                          ))}
-                          <button type="button" className="btn-ghost" disabled={busy} onClick={() => setDecidingNo(null)}>
-                            {tc('back')}
-                          </button>
-                        </span>
-                      ) : (
-                        <span className="ci-decide">
-                          <button type="button" className="ci-yes" disabled={busy} onClick={() => void decide(row, 'approved')}>
-                            {tc('yes')}
-                          </button>
-                          <button type="button" className="ci-no" disabled={busy} onClick={() => setDecidingNo(row.providerId)}>
-                            {tc('no')}
-                          </button>
-                        </span>
-                      )
-                    ) : null}
-                  </div>
-                ) : null}
 
                 {(noteFor === row.providerId || (row.note && noteFor === null)) && (
                   <div className="att-noterow">
