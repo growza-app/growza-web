@@ -151,7 +151,7 @@ export function ReportsClient({
           </div>
         </section>
       ) : payload.tab === 'overview' ? (
-        <OverviewTab data={payload.data} onTab={goToTab} onClient={onClient} />
+        <OverviewTab data={payload.data} onTab={goToTab} />
       ) : payload.tab === 'revenue' ? (
         <RevenueTab data={payload.data} />
       ) : payload.tab === 'bookings' ? (

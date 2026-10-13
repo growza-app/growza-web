@@ -114,9 +114,29 @@ export type ReportKpiKey =
   | 'newCustomers'
   | 'repeatRatePct';
 
+/** Jira GRW-567 — one scorecard line: the figure, and the same figure for the period before (null = nothing to compare with). */
+export interface ScorecardLine {
+  value: number;
+  previous: number | null;
+}
+
+export type ScorecardVs = 'yesterday' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+
+export interface Scorecard {
+  vs: ScorecardVs;
+  money: ScorecardLine;
+  visits: ScorecardLine;
+  newClients: ScorecardLine;
+  /** People with two or more visits in the period — a count, not a rate. */
+  cameBack: ScorecardLine;
+  noShows: ScorecardLine;
+}
+
 export interface ReportOverview {
   range: ReportRangeMeta;
   compare: boolean;
+  /** Always against the period before, whatever `compare` says. */
+  scorecard: Scorecard;
   kpis: Record<ReportKpiKey, ReportMetric>;
   revenueTrend: ReportPoint[];
   bookingTrend: ReportPoint[];
