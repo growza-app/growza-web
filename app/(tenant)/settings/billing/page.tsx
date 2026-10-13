@@ -32,7 +32,10 @@ export default async function BillingSettingsPage() {
       billing={billing}
       lang={lang}
       canPayOnline={me?.payments?.online ?? false}
-      live={isLive(me?.tenant?.status)}
+      // "Live" as far as BILLING is concerned: the salon has gone live, OR it already holds a bill. A business
+      // enrolled before billing started at go-live is still provisioning but was billed at enrolment, and telling
+      // its owner "nothing is charged while you are setting up" above a bill they owe would be wrong.
+      live={isLive(me?.tenant?.status) || billing.invoices.length > 0 || billing.due !== null}
       onAccountText={onAccountText}
     />
   );

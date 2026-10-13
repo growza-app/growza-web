@@ -68,7 +68,16 @@ interface PlanOption {
 /** The unset state of a select that must be chosen, not defaulted. */
 const CHOOSE = 'Choose…';
 
-export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; onCreated: (created: CreatedBusiness) => void }) {
+export function AddBusinessModal({
+  onClose,
+  onCreated,
+  canDiscount = false,
+}: {
+  onClose: () => void;
+  onCreated: (created: CreatedBusiness) => void;
+  /** `admin.discount.manage`. Defaults to false: a host that has not thought about it offers no discount. */
+  canDiscount?: boolean;
+}) {
   const ids = useId();
   const [types, setTypes] = useState<BusinessType[] | null>(null);
   const [plans, setPlans] = useState<PlanOption[] | null>(null);
@@ -163,7 +172,19 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   async function submit() {
     setFormError(null);
 
-    const found = validate({ name, country, typeCode, planCode, branches: visibleBranches, nationalNumber, dialCode, reason, ownerName, discount, planPriceMinor });
+    const found = validate({
+      name,
+      country,
+      typeCode,
+      planCode,
+      branches: visibleBranches,
+      nationalNumber,
+      dialCode,
+      reason,
+      ownerName,
+      discount: canDiscount ? discount : undefined,
+      planPriceMinor,
+    });
     if (Object.keys(found).length > 0) {
       setErrors(found);
       return;
@@ -171,6 +192,9 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
 
     setErrors({});
     setSaving(true);
+    // Once. `canDiscount` is checked again here and not only in what is rendered: a section opened and then a role
+    // change under it must not send what the server will refuse.
+    const offer = canDiscount ? enrolDiscountBody(discount) : null;
     try {
       const created = await adminFetch<CreatedBusiness>('/businesses', {
         method: 'POST',
@@ -204,7 +228,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
            */
           owner: { phone: `${dialCode}${nationalNumber.replace(/\D/g, '')}`, name: ownerName.trim() },
           // Omitted entirely when the section is off, so an API without it is unaffected.
-          ...(enrolDiscountBody(discount) ? { discount: enrolDiscountBody(discount) } : {}),
+          ...(offer ? { discount: offer } : {}),
           reason,
         }),
       });
@@ -440,15 +464,17 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
             </Field>
           </Row>
 
-          <EnrolDiscountFields
-            value={discount}
-            planPriceMinor={planPriceMinor}
-            errorFor={errorFor}
-            onChange={(patch, clearField) => {
-              setDiscount((d) => ({ ...d, ...patch }));
-              if (clearField) clear(clearField);
-            }}
-          />
+          {canDiscount ? (
+            <EnrolDiscountFields
+              value={discount}
+              planPriceMinor={planPriceMinor}
+              errorFor={errorFor}
+              onChange={(patch, clearField) => {
+                setDiscount((d) => ({ ...d, ...patch }));
+                if (clearField) clear(clearField);
+              }}
+            />
+          ) : null}
 
           <Field
             label="Why is this being created?"

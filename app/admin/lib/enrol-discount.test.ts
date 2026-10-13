@@ -104,3 +104,15 @@ describe('the whole form', () => {
     expect(validate({ ...good, discount: on(), planPriceMinor: PLAN })).toEqual({});
   });
 });
+
+describe('a percentage is a whole number', () => {
+  it('refuses 12.5 rather than previewing it and sending 13', () => {
+    expect(discountProblems(on({ type: 'percent', value: '12.5' }), PLAN)['discount.value']).toBe('Enter a whole percentage, such as 10 or 25');
+    expect(discountProblems(on({ type: 'percent', value: '12' }), PLAN)).toEqual({});
+  });
+
+  it('amounts may still have paise — only a percentage must be whole', () => {
+    expect(discountProblems(on({ type: 'fixed', value: '499.50' }), PLAN)).toEqual({});
+    expect(enrolDiscountBody(on({ type: 'fixed', value: '499.50' }))?.value).toBe(49950);
+  });
+});

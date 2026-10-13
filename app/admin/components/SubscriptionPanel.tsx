@@ -27,6 +27,8 @@ import { oklch } from '../tokens';
 export interface SubscriptionPanelSubscription {
   id: string;
   businessId: string;
+  /** Whether a bill has ever been raised. Absent from an older API, and read as "not known" rather than "no". */
+  invoiced?: boolean;
   planCode: string;
   planVersion: number;
   status: string;
@@ -469,7 +471,9 @@ export function SubscriptionPanel({
       <DiscountModal
         businessName={discountOpen ? (businessName ?? 'This business') : null}
         planName={planName}
-        subscription={discountOpen ? { ...s, liveYet: businessLive } : null}
+        // "Not live yet" is only true of a business that has not been billed. One enrolled before billing started
+        // at go-live already holds a bill and keeps the period it was raised for, so a discount will not reach it.
+        subscription={discountOpen ? { ...s, liveYet: businessLive === undefined ? undefined : businessLive || s.invoiced === true } : null}
         currentDiscount={discountOpen ? currentDiscount : null}
         onClose={() => setDiscountOpen(false)}
         onSaved={() => {

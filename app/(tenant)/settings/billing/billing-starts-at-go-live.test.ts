@@ -65,6 +65,14 @@ describe('the card', () => {
   });
 
   it('the page asks `/me` for the status rather than guessing', () => {
-    expect(page).toContain('live={isLive(me?.tenant?.status)}');
+    expect(page).toContain('isLive(me?.tenant?.status)');
+  });
+});
+
+describe('a business enrolled before billing started at go-live', () => {
+  it('is shown its bill, not "nothing is charged", when it already holds one', () => {
+    expect(page).toContain('billing.invoices.length > 0');
+    expect(page).toContain('billing.due !== null');
+    expect(page).toContain('live={isLive(me?.tenant?.status) ||');
   });
 });

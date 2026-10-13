@@ -100,6 +100,9 @@ export function discountProblems(d: EnrolDiscountValues, planPriceMinor: number)
   const typed = Number(d.value.trim());
 
   if (!d.value.trim() || !Number.isFinite(typed) || typed < 0) errors['discount.value'] = 'Enter the discount';
+  // Whole numbers only. The API takes an integer, and rounding 12.5 to 13 on the way out would bill a figure
+  // other than the one previewed and agreed with the customer.
+  else if (d.type === 'percent' && !Number.isInteger(typed)) errors['discount.value'] = 'Enter a whole percentage, such as 10 or 25';
   else if (d.type === 'percent' && typed > 100) errors['discount.value'] = 'A percent discount cannot be more than 100';
   else if (planPriceMinor > 0) {
     const storedMinor = d.type === 'percent' ? Math.round((planPriceMinor * typed) / 100) : Math.round(typed * 100);

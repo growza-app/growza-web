@@ -46,3 +46,27 @@ describe('what the host passes', () => {
     expect(detail).toContain("businessLive={business.status !== 'provisioning'}");
   });
 });
+
+describe('a business enrolled before billing started at go-live', () => {
+  it('is not told its first bill is still to come when one already exists', () => {
+    // `businessLive || s.invoiced === true` — provisioning but already billed reads as billing-has-started.
+    expect(panel).toContain('invoiced?: boolean;');
+    expect(panel).toContain('businessLive || s.invoiced === true');
+  });
+});
+
+describe('who is offered a discount at enrolment', () => {
+  const modal = readFileSync(path.join(here, 'AddBusinessModal.tsx'), 'utf-8');
+  const businesses = readFileSync(path.join(here, '../businesses/page.tsx'), 'utf-8');
+
+  it('only an admin who holds admin.discount.manage — the permission the server now asks for', () => {
+    expect(businesses).toContain("canDiscount={can('admin.discount.manage')}");
+    expect(modal).toContain('{canDiscount ? (');
+  });
+
+  it('defaults to no discount, and never sends one the admin cannot grant', () => {
+    expect(modal).toContain('canDiscount = false');
+    expect(modal).toContain('const offer = canDiscount ? enrolDiscountBody(discount) : null;');
+    expect(modal).toContain('discount: canDiscount ? discount : undefined');
+  });
+});
