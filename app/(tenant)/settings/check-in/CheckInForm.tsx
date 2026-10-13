@@ -29,6 +29,13 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(branch.geoLat != null && branch.geoLng != null ? { lat: branch.geoLat, lng: branch.geoLng } : null);
   const [link, setLink] = useState('');
   /*
+   * The pin as the two numbers an owner can read, copy and type. Held as TEXT for the same reason the radius is:
+   * "12." is a half-typed number, and a number state cannot hold it. A valid pair is promoted to `pin`.
+   */
+  const [latText, setLatText] = useState(branch.geoLat != null ? String(Number(branch.geoLat.toFixed(6))) : '');
+  const [lngText, setLngText] = useState(branch.geoLng != null ? String(Number(branch.geoLng.toFixed(6))) : '');
+  const [accuracyM, setAccuracyM] = useState<number | null>(null);
+  /*
    * Typed, not picked from a list (owner, 2026-10-11). The six choices were a guess at the salons that exist,
    * and a shop that needs 80 m had to take 100. Held as TEXT while the owner types — a number state cannot
    * hold the empty box between clearing it and typing the first digit, which is what makes a numeric input
@@ -52,8 +59,28 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
       setError(t('errors.noFix'));
       return;
     }
-    setPin({ lat: fix.lat, lng: fix.lng });
+    showPin({ lat: fix.lat, lng: fix.lng });
+    setAccuracyM(fix.accuracyM);
     setLink('');
+  };
+
+  /** One place a pin is set, so the numbers on screen are always the numbers that will be saved. */
+  const showPin = (p: { lat: number; lng: number }) => {
+    setPin(p);
+    setLatText(String(Number(p.lat.toFixed(6))));
+    setLngText(String(Number(p.lng.toFixed(6))));
+    setAccuracyM(null);
+  };
+
+  const coordsChanged = (nextLat: string, nextLng: string) => {
+    setLatText(nextLat);
+    setLngText(nextLng);
+    setError(null);
+    setAccuracyM(null);
+    const lat = Number(nextLat);
+    const lng = Number(nextLng);
+    const ok = nextLat.trim() !== '' && nextLng.trim() !== '' && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+    setPin(ok ? { lat, lng } : null);
   };
 
   const linkChanged = (text: string) => {
@@ -61,12 +88,17 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
     setError(null);
     if (!text.trim()) return;
     const found = pinFromText(text);
-    if (found) setPin(found);
+    if (found) showPin(found);
   };
 
   const save = async () => {
     if (link.trim() && !pinFromText(link)) {
       setError(t('errors.noPlaceInLink'));
+      return;
+    }
+    // Half a pair, or a number that is not a place: said here, next to the boxes it is about.
+    if ((latText.trim() || lngText.trim()) && !pin) {
+      setError(t('errors.badCoords'));
       return;
     }
     // Said here rather than let the API say it: the same two numbers are already on the screen as a hint.
@@ -97,7 +129,7 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
 
   /*
    * Ordered by what an owner came to do, so the five things that matter sit above the fold at 344x882:
-   * the switch that turns it on, where the branch is, how close counts, who else decides. The page header
+   * the two switches together (who may mark in: staff, and the front desk), where the branch is, how close counts. The page header
    * already names the screen and the branch, so there is no card title repeating them, and the maps-link
    * route is folded away — the button above it is the way almost everyone sets a pin.
    */
@@ -118,26 +150,42 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
           </div>
         </div>
 
+        <div className="ci-switch-row ci-switch-second">
+          <label className="switch">
+            <input type="checkbox" aria-labelledby="ci-desk-label" checked={deskApproves} disabled={busy || !writable} onChange={() => setDeskApproves((v) => !v)} />
+            <span className="switch-track">
+              <span className="switch-thumb" />
+            </span>
+          </label>
+          <div>
+            <div id="ci-desk-label" className="ci-switch-title">{t('deskApproves')}</div>
+            <span className="field-hint">{t('deskApprovesHint')}</span>
+          </div>
+        </div>
+
         <div className="field">
           <span className="field-label">{t('pinLabel')}</span>
-          {/*
-           * Words, not numbers. Latitude and longitude are the one thing on this screen an owner cannot check
-           * by reading them, so they are not shown: "See on map" is how a pin is actually checked.
-           */}
+          {/* The status, its numbers (so a pin can be read back and checked), and the one way to see it on a map. */}
           <p className={`ci-pin ${pin ? 'is-set' : ''}`} aria-live="polite">
-            {pin ? t('pinSaved') : t('pinNotSet')}
+            <span>{pin ? t('pinSaved') : t('pinNotSet')}</span>
             {pin ? (
               <a className="ci-map" href={mapsUrl(pin)} target="_blank" rel="noreferrer">
                 {t('seeOnMap')}
               </a>
             ) : null}
           </p>
+          {pin ? (
+            <p className="ci-coords" aria-label={t('coordsLabel')}>
+              <span>{pin.lat.toFixed(6)}, {pin.lng.toFixed(6)}</span>
+              {accuracyM != null ? <span className="ci-accuracy">{t('accuracy', { m: accuracyM })}</span> : null}
+            </p>
+          ) : null}
           <div className="ci-pin-actions">
             <button type="button" className="btn ci-here" disabled={locating || busy || !writable} onClick={() => void useHere()}>
               {locating ? t('finding') : t('useHere')}
             </button>
             {pin ? (
-              <button type="button" className="btn-ghost" disabled={busy || !writable} onClick={() => { setPin(null); setEnabled(false); setLink(''); }}>
+              <button type="button" className="btn-ghost" disabled={busy || !writable} onClick={() => { setPin(null); setEnabled(false); setLink(''); setLatText(''); setLngText(''); setAccuracyM(null); }}>
                 {t('clearPin')}
               </button>
             ) : null}
@@ -146,17 +194,27 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
 
           <details className="ci-link">
             <summary>
-              <span>{t('linkLabel')}</span>
+              <span>{t('manualLabel')}</span>
               <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </summary>
-            <input type="url" inputMode="url" aria-label={t('linkLabel')} value={link} placeholder={t('linkPlaceholder')} disabled={busy || !writable} onChange={(e) => linkChanged(e.target.value)} />
+            <div className="ci-coord-grid">
+              <label>
+                <span className="ci-mini-label">{t('latLabel')}</span>
+                <input type="text" inputMode="decimal" autoComplete="off" placeholder="12.971599" value={latText} disabled={busy || !writable} onChange={(e) => coordsChanged(e.target.value.replace(/[^\d.\-]/g, ''), lngText)} />
+              </label>
+              <label>
+                <span className="ci-mini-label">{t('lngLabel')}</span>
+                <input type="text" inputMode="decimal" autoComplete="off" placeholder="77.594566" value={lngText} disabled={busy || !writable} onChange={(e) => coordsChanged(latText, e.target.value.replace(/[^\d.\-]/g, ''))} />
+              </label>
+            </div>
+            <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-label={t('linkLabel')} value={link} placeholder={t('linkPlaceholder')} disabled={busy || !writable} onChange={(e) => linkChanged(e.target.value)} />
             <span className="field-hint">{t('linkHint')}</span>
           </details>
         </div>
 
-        <label className="field">
+        <label className="field ci-radius-field">
           <span className="field-label">{t('radiusLabel')}</span>
           {/* `m` is welded to the box, like the dial code on a phone field: a unit to read, never a thing to type. */}
           <span className="ci-radius">
@@ -181,19 +239,6 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
             {t('radiusHint')}
           </span>
         </label>
-
-        <div className="ci-switch-row">
-          <label className="switch">
-            <input type="checkbox" aria-labelledby="ci-desk-label" checked={deskApproves} disabled={busy || !writable} onChange={() => setDeskApproves((v) => !v)} />
-            <span className="switch-track">
-              <span className="switch-thumb" />
-            </span>
-          </label>
-          <div>
-            <div id="ci-desk-label" className="ci-switch-title">{t('deskApproves')}</div>
-            <span className="field-hint">{t('deskApprovesHint')}</span>
-          </div>
-        </div>
 
         {error ? (
           <div role="alert" className="field-error">
