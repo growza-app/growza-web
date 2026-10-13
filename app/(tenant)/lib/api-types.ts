@@ -444,7 +444,9 @@ export type ActivityTopic =
   | 'conversation.handoff'
   // A stylist marked themselves in from their phone — verified, or waiting for a yes or no.
   | 'attendance.in'
-  | 'attendance.pending';
+  | 'attendance.out'
+  | 'attendance.pending'
+  | 'attendance.out_pending';
 
 /** Jira GRW-562 — the billing half of a feed row, by topic; `change_pending` keeps GRW-301's shape. */
 export type ActivityBilling =
