@@ -1551,6 +1551,7 @@
         "other": "Other"
       },
       "pendingRow": "Marked from phone · {where} · waiting for you",
+      "waitingTitle": "Waiting for your yes or no",
       "pendingDesk": "Added at the desk · {where} · waiting for you",
       "noLocation": "no location",
       "away": "{m} away",

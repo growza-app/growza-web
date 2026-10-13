@@ -403,8 +403,20 @@
   margin-bottom: var(--sp-4);
 }
 
-/* First in its row, full width, with nothing above it to space from. */
-.att-row > .ci-row {
-  flex: 1 1 100%;
-  margin-top: 0;
+/* What is waiting for a yes or no, above the title: one amber card, a row per person. */
+.ci-waiting {
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: 14px;
+  background: #fdf6ec;
+  border: 1px solid #f3dfc2;
+}
+.ci-waiting-title {
+  margin: 0 0 var(--sp-2);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+.ci-waiting .ci-row {
+  margin-top: var(--sp-2);
+  background: #fff;
 }
