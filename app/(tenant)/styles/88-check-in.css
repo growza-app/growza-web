@@ -191,7 +191,14 @@
   margin-bottom: var(--sp-4);
 }
 .ci-switch-row .switch {
-  margin-top: 2px;
+  /* As tall as the title's line, so the track centres on the title and both rows line up the same way. */
+  flex: none;
+  align-self: flex-start;
+  height: 1.5rem;
+  margin: 0;
+}
+.ci-switch-row > div {
+  min-width: 0;
 }
 /* The maps-link route, folded: a disclosure row the height of a button, a chevron that turns when open. */
 .ci-link {
@@ -225,6 +232,11 @@
 .ci-switch-title {
   font-weight: 620;
   font-size: 0.9375rem;
+  line-height: 1.5rem;
+}
+.ci-switch-row .field-hint {
+  display: block;
+  margin-top: 0;
 }
 
 /*
@@ -278,4 +290,133 @@
   font-size: 0.9375rem;
   font-weight: 650;
   user-select: none;
+}
+
+/*
+ * One screen (owner, 2026-10-13). At 344x882 the form had to clear two switches, a pin with its two buttons,
+ * a folded link and the radius above a pinned Save and the floating nav. The numbers below take it down to
+ * what fits: tighter card padding, the radius label and its box on one row, the pin's status, coordinates and
+ * map link sharing two lines.
+ */
+.ci-settings .card-body {
+  padding: var(--sp-3) var(--sp-4);
+}
+.ci-settings .field {
+  margin-bottom: 0;
+}
+.ci-switch-first {
+  margin-bottom: var(--sp-3);
+}
+.ci-switch-row {
+  margin-top: var(--sp-3);
+}
+.ci-pin {
+  margin-top: 0;
+  justify-content: space-between;
+}
+.ci-map {
+  min-height: 36px;
+}
+.ci-coords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-3);
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  user-select: all;
+}
+.ci-accuracy {
+  font-family: inherit;
+  color: var(--muted);
+}
+.ci-pin-actions {
+  margin: var(--sp-2) 0 var(--sp-1);
+  flex-wrap: nowrap;
+}
+.ci-pin-actions .ci-here {
+  flex: 1 1 auto;
+  min-height: 44px;
+}
+.ci-pin-actions .btn-ghost {
+  flex: none;
+  min-height: 44px;
+}
+.ci-link {
+  margin: 0 0 var(--sp-2);
+}
+.ci-link summary {
+  min-height: 40px;
+}
+.ci-coord-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.ci-coord-grid label {
+  display: block;
+  min-width: 0;
+}
+.ci-mini-label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+.ci-coord-grid input,
+.ci-link > input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  /* 16px exactly: anything smaller and iOS zooms the page when the field takes focus. */
+  font-size: 16px;
+}
+/* Radius: the question on the left, the box on the right, the hint under both. */
+.ci-settings .ci-radius-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+.ci-settings .ci-radius-field .field-label {
+  margin: 0;
+}
+.ci-settings .ci-radius-field .field-hint {
+  grid-column: 1 / -1;
+  margin-top: var(--sp-1);
+}
+.ci-radius {
+  max-width: 11rem;
+}
+
+/* The two "who may say yes" switches are one group: a little apart from each other, a clear gap before the pin. */
+.ci-switch-first {
+  margin-bottom: 0;
+}
+.ci-switch-second {
+  margin-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+/* What is waiting for a yes or no, above the title: one amber card, a row per person. */
+.ci-waiting {
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: 14px;
+  background: #fdf6ec;
+  border: 1px solid #f3dfc2;
+}
+.ci-waiting-title {
+  margin: 0 0 var(--sp-2);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+.ci-waiting .ci-row {
+  margin-top: var(--sp-2);
+  background: #fff;
 }

@@ -63,7 +63,7 @@ export function countUnread(events: ReadonlyArray<{ id: string | number }>, last
 /** The words are `notifications.feed.topics.<key>`; only the icon and class live here. */
 export type TopicKey =
   | 'newBooking' | 'cancelled' | 'rescheduled' | 'walkIn' | 'completed' | 'noShow'
-  | 'billing' | 'invoice' | 'payment' | 'discount' | 'autopay' | 'handoff' | 'attendanceIn' | 'attendancePending';
+  | 'billing' | 'invoice' | 'payment' | 'discount' | 'autopay' | 'handoff' | 'attendanceIn' | 'attendanceOut' | 'attendancePending';
 export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: ComponentType; cls: string }> = {
   'appointment.confirmed': { key: 'newBooking', icon: IconCalendarPlus, cls: 'notif-new' },
   'appointment.cancelled': { key: 'cancelled', icon: IconClose, cls: 'notif-cancel' },
@@ -86,6 +86,9 @@ export const TOPIC_META: Record<ActivityEvent['topic'], { key: TopicKey; icon: C
   // A stylist marked themselves in from their phone: green when it counted, amber when it waits for a yes or no.
   'attendance.in': { key: 'attendanceIn', icon: IconClipboardCheck, cls: 'notif-done' },
   'attendance.pending': { key: 'attendancePending', icon: IconClipboardCheck, cls: 'notif-handoff' },
+  // ...and the same stylist marking out: the same row's next state, said as "out".
+  'attendance.out': { key: 'attendanceOut', icon: IconClipboardCheck, cls: 'notif-done' },
+  'attendance.out_pending': { key: 'attendancePending', icon: IconClipboardCheck, cls: 'notif-handoff' },
 };
 
 /**
@@ -189,11 +192,19 @@ export function eventLine(
     const who = e.customerName ?? t('customer');
     return { title: t('handoffTitle'), subtitle: [who, showBranch ? e.branchName : null].filter(Boolean).join(' · ') };
   }
-  if (e.topic === 'attendance.in' || e.topic === 'attendance.pending') {
+  if (e.topic === 'attendance.in' || e.topic === 'attendance.pending' || e.topic === 'attendance.out' || e.topic === 'attendance.out_pending') {
     const who = e.actorName ?? t('roles.staff');
     const at = e.startAt ? DateTime.fromISO(e.startAt).setZone(timezone).setLocale(locale).toFormat('h:mm a') : null;
     return {
-      title: t(e.topic === 'attendance.in' ? 'attendanceInTitle' : 'attendancePendingTitle', { who }),
+      title: t(
+        ({
+          'attendance.in': 'attendanceInTitle',
+          'attendance.out': 'attendanceOutTitle',
+          'attendance.pending': 'attendancePendingTitle',
+          'attendance.out_pending': 'attendanceOutPendingTitle',
+        } as const)[e.topic],
+        { who },
+      ),
       subtitle: [at, showBranch ? e.branchName : null].filter(Boolean).join(' · '),
     };
   }

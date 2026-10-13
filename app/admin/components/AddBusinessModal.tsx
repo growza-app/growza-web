@@ -6,7 +6,8 @@ import { oklch } from '../tokens';
 import { ERROR_COLOR, Field, PrimaryButton, SecondaryButton, Select, TextInput } from './primitives';
 import { BranchFields, emptyBranch, type Branch } from './BranchFields';
 import { pinFromText } from '../lib/geo-link';
-import { DIAL_CODES, validate } from '../lib/enrol-validation';
+import { DIAL_CODES, EMPTY_ENROL_DISCOUNT, enrolDiscountBody, validate, type EnrolDiscountValues } from '../lib/enrol-validation';
+import { EnrolDiscountFields } from './EnrolDiscountFields';
 import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
@@ -40,7 +41,7 @@ const FIELD_FOR_ERROR: Record<string, string> = {
 };
 
 /** Every error key this form draws against a field; anything else would be set and never seen. */
-const SHOWN_FIELD = /^(name|country|businessTypeCode|planCode|owner\.(phone|name)|reason|branch\.\d+\.(name|line1|city|stylists|geo))$/;
+const SHOWN_FIELD = /^(name|country|businessTypeCode|planCode|owner\.(phone|name)|reason|discount\.(value|reason)|branch\.\d+\.(name|line1|city|stylists|geo))$/;
 
 export interface CreatedBusiness {
   id: string;
@@ -58,6 +59,8 @@ interface PlanOption {
   code: string;
   name: string;
   status: string;
+  /** What the plan costs a month, in paise — what a discount typed below is judged against. */
+  basePriceMinor?: number;
   /** Jira GRW-557 — the plan's limits; `limits.max_providers` is where each branch's "Stylists at most" starts. */
   limits?: Record<string, number>;
 }
@@ -65,7 +68,16 @@ interface PlanOption {
 /** The unset state of a select that must be chosen, not defaulted. */
 const CHOOSE = 'Choose…';
 
-export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; onCreated: (created: CreatedBusiness) => void }) {
+export function AddBusinessModal({
+  onClose,
+  onCreated,
+  canDiscount = false,
+}: {
+  onClose: () => void;
+  onCreated: (created: CreatedBusiness) => void;
+  /** `admin.discount.manage`. Defaults to false: a host that has not thought about it offers no discount. */
+  canDiscount?: boolean;
+}) {
   const ids = useId();
   const [types, setTypes] = useState<BusinessType[] | null>(null);
   const [plans, setPlans] = useState<PlanOption[] | null>(null);
@@ -94,6 +106,11 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   const [nationalNumber, setNationalNumber] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [reason, setReason] = useState('');
+  /**
+   * The offer, if there is one. Here and not on the business afterwards, because billing starts at go-live: a
+   * discount applied later reaches the NEXT bill, so one added even a day after enrolment would miss the first.
+   */
+  const [discount, setDiscount] = useState<EnrolDiscountValues>(EMPTY_ENROL_DISCOUNT);
 
   const [saving, setSaving] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -142,6 +159,7 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
    * nobody has typed a different one: a row still showing the previous plan's number (or nothing) takes the new one.
    */
   const planStylists = plans?.find((p) => p.code === planCode)?.limits?.['limits.max_providers'];
+  const planPriceMinor = plans?.find((p) => p.code === planCode)?.basePriceMinor ?? 0;
   const planStylistsText = planStylists === undefined ? '' : String(planStylists);
   const previousPlanStylists = useRef('');
   useEffect(() => {
@@ -154,7 +172,19 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
   async function submit() {
     setFormError(null);
 
-    const found = validate({ name, country, typeCode, planCode, branches: visibleBranches, nationalNumber, dialCode, reason, ownerName });
+    const found = validate({
+      name,
+      country,
+      typeCode,
+      planCode,
+      branches: visibleBranches,
+      nationalNumber,
+      dialCode,
+      reason,
+      ownerName,
+      discount: canDiscount ? discount : undefined,
+      planPriceMinor,
+    });
     if (Object.keys(found).length > 0) {
       setErrors(found);
       return;
@@ -162,6 +192,9 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
 
     setErrors({});
     setSaving(true);
+    // Once. `canDiscount` is checked again here and not only in what is rendered: a section opened and then a role
+    // change under it must not send what the server will refuse.
+    const offer = canDiscount ? enrolDiscountBody(discount) : null;
     try {
       const created = await adminFetch<CreatedBusiness>('/businesses', {
         method: 'POST',
@@ -194,6 +227,8 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
            * or `09876543210` all reduce to the same ten digits below.
            */
           owner: { phone: `${dialCode}${nationalNumber.replace(/\D/g, '')}`, name: ownerName.trim() },
+          // Omitted entirely when the section is off, so an API without it is unaffected.
+          ...(offer ? { discount: offer } : {}),
           reason,
         }),
       });
@@ -428,6 +463,18 @@ export function AddBusinessModal({ onClose, onCreated }: { onClose: () => void; 
               </div>
             </Field>
           </Row>
+
+          {canDiscount ? (
+            <EnrolDiscountFields
+              value={discount}
+              planPriceMinor={planPriceMinor}
+              errorFor={errorFor}
+              onChange={(patch, clearField) => {
+                setDiscount((d) => ({ ...d, ...patch }));
+                if (clearField) clear(clearField);
+              }}
+            />
+          ) : null}
 
           <Field
             label="Why is this being created?"

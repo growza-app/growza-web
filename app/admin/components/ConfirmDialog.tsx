@@ -128,8 +128,20 @@ export function ConfirmDialog({
         ref={dialogRef}
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
+        /*
+         * Never taller than the window, and what gives way is the middle.
+         *
+         * Add a branch is this dialog with six fields, two footnotes and a billing line inside it, and at
+         * 1280x720 that ran past the bottom of the screen — Cancel and Add branch below the fold, with nothing
+         * to scroll because a fixed backdrop does not scroll and the panel had no height of its own. The
+         * two-branch device journey sat there clicking a button that was "outside of the viewport" until it
+         * timed out. Every confirm dialog in the admin plane is this component, so the cap belongs here.
+         */
         style={{
           width: 'min(440px, 100%)',
+          maxHeight: 'calc(100dvh - 48px)',
+          display: 'flex',
+          flexDirection: 'column',
           background: 'white',
           borderRadius: 18,
           boxShadow: '0 24px 60px oklch(0.2 0.04 155 / 0.35)',
@@ -137,6 +149,8 @@ export function ConfirmDialog({
           padding: 24,
         }}
       >
+        {/* The part that scrolls. The buttons below it are `flex: none`, so they stay put however long this is. */}
+        <div style={{ overflowY: 'auto', minHeight: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
           <span
             style={{
@@ -193,7 +207,9 @@ export function ConfirmDialog({
           <div style={{ marginTop: 14, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div>
         ) : null}
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 22, flex: 'none' }}>
           <SecondaryButton onClick={onCancel} disabled={loading} style={{ flex: 1, height: 44 }}>
             Cancel
           </SecondaryButton>

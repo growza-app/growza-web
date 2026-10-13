@@ -139,7 +139,7 @@ describe('where a notification row goes', () => {
 });
 
 describe('a stylist marking in', () => {
-  const mark = (topic: 'attendance.in' | 'attendance.pending', startAt: string | null = '2026-09-21T20:10:00.000Z') =>
+  const mark = (topic: 'attendance.in' | 'attendance.pending' | 'attendance.out' | 'attendance.out_pending', startAt: string | null = '2026-09-21T20:10:00.000Z') =>
     ({ id: '2', topic, actorName: 'Priya', actorRole: 'staff', branchName: 'MG Road', startAt, customerName: null, serviceNames: null, appointmentId: null }) as unknown as ActivityEvent;
 
   it('says who is in, and when, in the salon’s clock', () => {
@@ -154,13 +154,19 @@ describe('a stylist marking in', () => {
     expect(eventLine(mark('attendance.pending'), 'Asia/Kolkata', feed('hi'), 'hi').title).toContain('हाँ या नहीं');
   });
 
+  it('says "out" when a stylist marks out, not "marked in"', () => {
+    expect(eventLine(mark('attendance.out'), 'Asia/Kolkata', feed('en'), 'en').title).toBe('Priya is out');
+    expect(eventLine(mark('attendance.out_pending'), 'Asia/Kolkata', feed('en'), 'en').title).toBe('Priya marked out — needs a yes or no');
+    expect(eventLine(mark('attendance.out'), 'Asia/Kolkata', feed('hi'), 'hi').title).toContain('छुट्टी');
+  });
+
   it('opens the register on the salon’s day', () => {
     expect(notifHref(mark('attendance.in'), 'Asia/Kolkata')).toBe('/attendance?date=2026-09-22');
     expect(notifHref(mark('attendance.pending', null), 'Asia/Kolkata')).toBe('/attendance');
   });
 
   it('has an icon and words for both topics', () => {
-    for (const topic of ['attendance.in', 'attendance.pending'] as const) {
+    for (const topic of ['attendance.in', 'attendance.pending', 'attendance.out', 'attendance.out_pending'] as const) {
       expect(TOPIC_META[topic].icon).toBeTruthy();
       expect((en.notifications.feed.topics as Record<string, string>)[TOPIC_META[topic].key]).toBeTruthy();
       expect((hi.notifications.feed.topics as Record<string, string>)[TOPIC_META[topic].key]).toBeTruthy();

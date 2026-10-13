@@ -444,7 +444,9 @@ export type ActivityTopic =
   | 'conversation.handoff'
   // A stylist marked themselves in from their phone — verified, or waiting for a yes or no.
   | 'attendance.in'
-  | 'attendance.pending';
+  | 'attendance.out'
+  | 'attendance.pending'
+  | 'attendance.out_pending';
 
 /** Jira GRW-562 — the billing half of a feed row, by topic; `change_pending` keeps GRW-301's shape. */
 export type ActivityBilling =
@@ -817,6 +819,8 @@ export interface OwnerBilling {
     planPriceMinor: number;
     branches: Array<{ id: string; name: string; included: boolean; amountMinor: number }>;
     discount: null | { amountMinor: number; reason: string | null; endsAt: string | null };
+    /** What this period costs — the plan price and branches less today's discount. The plan card's own total. */
+    monthlyMinor?: number;
     nextBill: { date: string; amountMinor: number };
     /**
      * Jira GRW-241 — `autopay` outranks `online_link`: a live mandate is not asked to pay a link.

@@ -21,6 +21,16 @@ export function billingCopy(lang: Lang) {
     discountUntil: (d: string) => S(`until ${d}`, `${d} तक`),
     monthly: S('Monthly', 'मासिक'),
     nextBill: S('Next bill', 'अगला बिल'),
+    /*
+     * While a business is still being set up, nothing is billed at all — the first bill is raised the day it goes
+     * live. Said here because the alternative is a date the owner cannot act on: the card would otherwise name a
+     * day they may never reach, for a month they cannot use.
+     */
+    firstBill: S('Your first bill', 'आपका पहला बिल'),
+    billingStartsAtGoLive: S(
+      'Nothing is charged while you are setting up. Your first bill comes when your salon goes live.',
+      'जब तक आप सेटअप कर रहे हैं, कोई शुल्क नहीं लगता। आपका पहला बिल तब आएगा जब आपका सैलून लाइव होगा।',
+    ),
     on: (d: string) => S(`on ${d}`, `${d} को`),
     amount: S('Amount', 'राशि'),
     paidBy: S('How it is paid', 'भुगतान कैसे होता है'),
