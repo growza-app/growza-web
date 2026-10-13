@@ -23,8 +23,6 @@ const SEGMENT_TONE: Record<string, string> = {
 
 
 const CARD_ICON: Record<string, React.ReactNode> = {
-  quiet30: <IconClock />,
-  overdue: <IconAlert />,
   loyal: <IconRepeat />,
   highValue: <IconCoins />,
   atRisk: <IconAlert />,

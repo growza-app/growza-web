@@ -228,6 +228,7 @@ export const copy = {
     noProvider: (noun: string) => `No ${noun}`,
 
     tabs: {
+      todo: 'What to do',
       overview: 'Overview',
       customers: 'Clients',
       revenue: 'Money',
@@ -236,6 +237,7 @@ export const copy = {
       staff: 'Staff',
     },
     subtitles: {
+      todo: 'What to do this week to grow',
       overview: 'How is your business doing?',
       customers: 'Who are your clients, and do they come back?',
       revenue: 'Where is your money coming from?',

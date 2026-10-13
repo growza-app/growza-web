@@ -603,6 +603,7 @@
       }
     },
     "tabs": {
+      "todo": "What to do",
       "overview": "Overview",
       "revenue": "Money earned",
       "customers": "Clients",
@@ -2078,6 +2079,7 @@
     "title": "Reports",
     "navLabel": "Reports",
     "tabs": {
+      "todo": "What to do",
       "overview": "Overview",
       "customers": "Clients",
       "revenue": "Money",
@@ -2086,6 +2088,7 @@
       "staff": "Staff"
     },
     "subtitles": {
+      "todo": "What to do this week to grow",
       "overview": "How is your business doing?",
       "customers": "Who are your clients, and do they come back?",
       "revenue": "Where is your money coming from?",
@@ -2315,6 +2318,68 @@
       "hm": "{h}h {m}m",
       "h": "{h}h",
       "m": "{m}m"
+    },
+    "todo": {
+      "tone": {
+        "good": "Good",
+        "warn": "Worth doing",
+        "bad": "Needs you"
+      },
+      "money": {
+        "title": "Money this week",
+        "more": "{amount} more than last week",
+        "less": "{amount} less than last week",
+        "same": "Same as last week",
+        "first": "No bookings the week before",
+        "bookings": "{n, plural, one {# booking} other {# bookings}}"
+      },
+      "dueBack": {
+        "title": "{n, plural, one {# client is due back} other {# clients are due back}}",
+        "hint": "They usually come about now. One message brings them in.",
+        "button": "Message them",
+        "text": "Hi {name}, it’s been a while since your last visit to {business}. Shall we book you in? Reply here and we’ll find you a time."
+      },
+      "stopped": {
+        "title": "{n, plural, one {# regular has stopped coming} other {# regulars have stopped coming}}",
+        "hint": "Came 3 times or more, then nothing for 2 months.",
+        "button": "Message them",
+        "text": "Hi {name}, we miss you at {business}! It’s been a while. Reply here and we’ll book you a time you like."
+      },
+      "noShow": {
+        "title": "{n, plural, one {# person didn’t come this week} other {# people didn’t come this week}}",
+        "hint": "Booked, then didn’t turn up. Ask them to pick another time.",
+        "button": "See who",
+        "text": "Hi {name}, we missed you at {business} this week. Want to pick another time? Reply here."
+      },
+      "quietHours": {
+        "title": "{day} {from}–{to} is quiet most weeks",
+        "hint": "A small offer for that time fills it.",
+        "button": "Make an offer"
+      },
+      "bestEarner": {
+        "title": "{service} earned the most this month",
+        "hint": "{amount}. Tell your clients about it.",
+        "button": "Share on WhatsApp",
+        "text": "{business}: our most-loved service this month is {service}. Reply to this message to book yours."
+      },
+      "unreachable": {
+        "title": "{n, plural, one {# client can’t be messaged} other {# clients can’t be messaged}}",
+        "hint": "{optedOut, plural, =0 {} one {# asked not to be contacted. } other {# asked not to be contacted. }}{noPhone, plural, =0 {} one {# has no number.} other {# have no number.}}",
+        "button": "See list"
+      },
+      "sheet": {
+        "close": "Close",
+        "whatsapp": "WhatsApp",
+        "call": "Call",
+        "noNumber": "Asked not to be contacted",
+        "lastIn": "{n, plural, one {Last in # day ago} other {Last in # days ago}}",
+        "usually": "Usually every {days} days",
+        "worth": "{amount} a visit",
+        "noPhone": "No number saved"
+      },
+      "empty": "Nothing to do this week.",
+      "emptyHint": "Your clients are coming in and nobody is slipping away.",
+      "checked": "Checked against your bookings, not guessed."
     }
   },
   "autopayRenewal": {

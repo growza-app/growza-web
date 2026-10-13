@@ -133,6 +133,7 @@ import type {
   ReportServices,
   ReportStaff,
   ReportTabKey,
+  ReportTodo,
 } from './report-types';
 
 /**
@@ -333,7 +334,7 @@ export interface ReportFilterOptions {
  * The tabs a filter can honestly narrow.
  *
  * Every figure on these is bookings in a period, which is the row set a
- * filter narrows. Overview, Clients and Insights are not here: their figures
+ * filter narrows. What to do, Overview and Clients are not here: their figures
  * are all-time customer recency, or a statement about the whole business, so
  * a per-booking filter would change what the number means rather than which
  * rows it covers.
@@ -568,6 +569,9 @@ export const api = {
   reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportBookings>('bookings', r, c, f, t, x, b),
   reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportServices>('services', r, c, f, t, x, b),
   reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportStaff>('staff', r, c, f, t, x, b),
+  /** The What to do tab: this week, this month and today — no range to pick. */
+  reportsTodo: (branch?: string | null) =>
+    get<ReportTodo>(`/api/v1/reports/todo${branch ? `?location=${encodeURIComponent(branch)}` : ''}`),
   reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportCustomers>('customers', r, c, f, t, undefined, b),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),

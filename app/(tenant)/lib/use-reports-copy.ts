@@ -25,6 +25,7 @@ export function useReportsCopy() {
       title: t('title'),
       navLabel: t('navLabel'),
       tabs: {
+        todo: t('tabs.todo'),
         overview: t('tabs.overview'),
         customers: t('tabs.customers'),
         revenue: t('tabs.revenue'),
@@ -33,6 +34,7 @@ export function useReportsCopy() {
         staff: t('tabs.staff'),
       },
       subtitles: {
+        todo: t('subtitles.todo'),
         overview: t('subtitles.overview'),
         customers: t('subtitles.customers'),
         revenue: t('subtitles.revenue'),
