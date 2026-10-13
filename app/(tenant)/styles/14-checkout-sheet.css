@@ -171,7 +171,6 @@
   border: none;
   padding: 8px 0;
   /* 16px: below that iOS Safari zooms the page when the amount field is focused. */
-  font-size: 16px;
   min-width: 0;
 }
 
@@ -286,29 +285,6 @@
   border-top: 1px solid var(--border);
 }
 
-.btn-ghost {
-  background: transparent;
-  color: var(--muted);
-}
-
-.btn-ghost:hover {
-  background: var(--slate-soft);
-}
-
-.btn-danger {
-  background: transparent;
-  color: #b91c1c;
-}
-
-.btn-danger:hover {
-  background: #fde4e4;
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 .link-btn {
   background: none;
   border: none;
@@ -415,7 +391,3 @@
   color: var(--muted, #5f6a65);
 }
 
-.checkout-combo-legs select {
-  min-height: 44px;
-  font-size: 16px;
-}

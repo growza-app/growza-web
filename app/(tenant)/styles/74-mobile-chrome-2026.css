@@ -95,7 +95,7 @@
 
   .bottom-nav a {
     gap: 3px;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     /* 12px, the floor for any label on a phone (Jira GRW-339). Apple's tab label is 11pt; a shop owner reading
        across a counter needs more. */
     font-size: 0.75rem;
@@ -155,7 +155,7 @@
     width: 48px;
     height: 30px;
     box-sizing: border-box;
-    border-radius: 15px;
+    border-radius: var(--radius-lg);
     border: 1px solid rgba(255, 255, 255, 0.85);
     background: rgba(22, 101, 52, 0.1);
     -webkit-backdrop-filter: blur(6px);

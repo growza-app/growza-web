@@ -45,6 +45,8 @@ describe('Which branch?', () => {
   });
 
   it('fits a narrow phone: full width, 44px, a long name cut with an ellipsis', () => {
-    expect(css).toMatch(/\.wi-branch-field select \{\s*width: 100%;\s*min-width: 0;\s*min-height: 44px;\s*box-sizing: border-box;\s*text-overflow: ellipsis;/);
+    expect(css).toMatch(/\.wi-branch-field select \{\s*width: 100%;\s*min-width: 0;\s*box-sizing: border-box;\s*text-overflow: ellipsis;/);
+    // Jira GRW-571 — the 44px comes from the one phone floor, not from this sheet.
+    expect(readFileSync(resolve(__dirname, '../styles/90-accessibility.css'), 'utf8')).toMatch(/@media \(max-width: 860px\)[\s\S]*select \{\s*min-height: 44px;/);
   });
 });

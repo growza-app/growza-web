@@ -3,7 +3,7 @@
 .range-toggle {
   display: flex;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 2px;
 }
 
@@ -15,7 +15,7 @@
   font-size: 0.75rem;
   font-weight: 620;
   padding: 6px 11px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 

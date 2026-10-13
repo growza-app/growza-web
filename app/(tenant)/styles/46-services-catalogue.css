@@ -89,7 +89,7 @@
   display: grid;
   place-items: center;
   border: 1.5px dashed #c9cfc6;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -157,7 +157,7 @@ tr.is-retired td {
   max-height: min(46vh, 360px);
   overflow-y: auto;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 .copy-branch-list li + li {
   border-top: 1px solid var(--border);

@@ -73,7 +73,7 @@
   color: #6b7770;
   font-size: 0.84375rem;
   background: #fff;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin: 0 auto 8px;
 }
@@ -81,7 +81,7 @@
 .wa-bubble {
   max-width: 82%;
   padding: 9px 12px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   font-size: 0.90625rem;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -117,7 +117,7 @@
   gap: 2px;
   text-align: left;
   padding: 10px 13px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid #075e54;
   background: #fff;
   color: #075e54;
@@ -162,11 +162,11 @@
 .wa-input {
   padding: 10px 13px;
   border: 1px solid #d8d8d8;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font: inherit;
   font-size: 0.90625rem;
 }
 
 .wa-composer .btn {
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
 }

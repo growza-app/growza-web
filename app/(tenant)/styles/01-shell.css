@@ -46,7 +46,7 @@
 .brand-badge {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--accent-deep);
   color: #fff;
   display: grid;

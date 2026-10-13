@@ -48,7 +48,6 @@
   border-radius: 0;
   background: transparent;
   /* 16px or iOS zooms the whole page when the field takes focus. */
-  font-size: 16px;
   /* Digits are easier to check against a scrap of paper when they line up. */
   letter-spacing: 0.4px;
 }

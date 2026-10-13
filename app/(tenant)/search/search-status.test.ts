@@ -64,7 +64,8 @@ describe('the search bar row', () => {
   });
 
   it('the box is 16px type, so a phone does not zoom in when it is focused', () => {
-    expect(searchCss).toMatch(/\.srch-bar-row \.search-bar input\s*\{[^}]*font-size:\s*16px;/);
+    // Jira GRW-571 — the 16px is the one phone floor in 90-accessibility.css, not a rule of this sheet.
+    expect(readFileSync(resolve(__dirname, '../styles/90-accessibility.css'), 'utf8')).toMatch(/@media \(max-width: 860px\)[\s\S]*font-size:\s*16px !important/);
   });
 });
 

@@ -12,7 +12,7 @@
   text-align: left;
   border: 1px solid var(--border);
   border-left: 4px solid var(--rp-seg);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   padding: 12px 13px;
   background: var(--surface);
   cursor: pointer;

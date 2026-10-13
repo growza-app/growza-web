@@ -136,7 +136,6 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   font: inherit;
-  font-size: 16px;
   color: var(--text);
 }
 

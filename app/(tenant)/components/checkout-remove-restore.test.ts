@@ -25,7 +25,9 @@ describe('a combo is one row', () => {
   it('is taken off whole: one button, named for the combo, on a 44px target', () => {
     expect(sheet).toMatch(/aria-label=\{t\('removeItem', \{ title \}\)\}/);
     expect(sheet).toMatch(/onRemove=\{\(\) => takeOff\(l\.key, true\)\}/);
-    expect(css).toMatch(/\.checkout-combo-legs select\s*\{[^}]*min-height:\s*44px;/);
+    // Jira GRW-571 — the sheet no longer sizes its own select; the phone floor in 90-accessibility.css does.
+    expect(css).not.toMatch(/\.checkout-combo-legs select\s*\{/);
+    expect(readFileSync(resolve(__dirname, '../styles/90-accessibility.css'), 'utf8')).toMatch(/@media \(max-width: 860px\)[\s\S]*select \{\s*min-height: 44px;/);
   });
 
   it('has its price as one input; the pencil opens who did each service', () => {

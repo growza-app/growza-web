@@ -16,6 +16,7 @@
  * this order reproduces the original stylesheet BYTE FOR BYTE.
  */
 @import './styles/00-base.css';
+@import './styles/01-controls.css';
 @import './styles/01-shell.css';
 @import './styles/02-mobile-nav-hamburger-off-canvas-drawer.css';
 @import './styles/03-page-header.css';

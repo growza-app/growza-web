@@ -51,10 +51,9 @@ describe('a phone does not zoom when these fields are focused (pinch-zoom is all
   const css = (p: string) => read(`../styles/${p}`);
 
   it('the Bookings search and filter fields and the checkout amount are 16px', () => {
-    expect(css('32-customers.css')).toMatch(/\.bk-search-row input \{[^}]*font-size: 16px;/);
-    expect(css('32-customers.css')).toMatch(/\.bk-field input \{[^}]*font-size: 16px;/);
-    expect(css('32-customers.css')).toMatch(/\.bk-field select \{\s*font-size: 16px;/);
-    expect(css('14-checkout-sheet.css')).toMatch(/\.checkout-amount-field input \{[^}]*font-size: 16px;/);
+    // Jira GRW-571 — one phone floor for every field, in the accessibility sheet, instead of a 16px per screen.
+    expect(css('90-accessibility.css')).toMatch(/@media \(max-width: 860px\)[\s\S]*font-size:\s*16px !important/);
+    for (const sheet of ['32-customers.css', '14-checkout-sheet.css']) expect(css(sheet)).not.toMatch(/font-size: 16px;/);
   });
 });
 
@@ -66,7 +65,7 @@ describe('a phone does not zoom when these fields are focused (pinch-zoom is all
  * checkout sheet, because the next number field should not have to remember this.
  */
 describe('a number field has no stepper arrows', () => {
-  const css = read('../styles/11-availability.css');
+  const css = read('../styles/01-controls.css');
 
   it('both halves — WebKit paints two pseudo-elements, Firefox needs the appearance', () => {
     expect(css).toMatch(/input\[type='number'\]::-webkit-outer-spin-button,\s*input\[type='number'\]::-webkit-inner-spin-button \{\s*-webkit-appearance: none;\s*margin: 0;/);

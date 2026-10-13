@@ -33,6 +33,7 @@
   --purple-deep: #6d28d9;
   --radius: 10px; /* Jira GRW-570 — flat: 10 and 8, the way a crisp dashboard is drawn. */
   --radius-sm: 8px;
+  --radius-lg: 14px; /* Jira GRW-571 — the third and last: sheets, big cards, tiles with a photo. */
 
   /* ---------- spacing scale (single source of truth) ----------
      4-based tokens. Use these instead of arbitrary px so every screen shares

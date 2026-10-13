@@ -28,7 +28,7 @@
   flex-shrink: 0;
   width: 28px;
   height: 28px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--purple-soft);
   color: var(--purple-deep);
   display: grid;
@@ -365,7 +365,7 @@
 .bk-kpi-icon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   display: grid;
   place-items: center;
   margin-bottom: var(--sp-2);
@@ -471,14 +471,12 @@
 
 .bk-field input,
 .bk-field select {
-  height: 44px;
   width: 100%;
   min-width: 0;
   padding: 0 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 0.90625rem;
   font-weight: 600;
   color: var(--text);
   outline: none;
@@ -593,7 +591,7 @@
   height: 34px;
   padding: 0 15px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--muted);
   font-size: 0.84375rem;
@@ -671,7 +669,7 @@
   width: fit-content;
   margin-bottom: 9px;
   padding: 4px 11px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
@@ -956,7 +954,7 @@
   flex-shrink: 0;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent-deep);
   display: grid;
@@ -1048,7 +1046,7 @@
   .bk-kpi-icon {
     width: 28px;
     height: 28px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     margin-bottom: 8px;
   }
 
@@ -1322,7 +1320,6 @@
     background: transparent;
     /* 16px, not 14.5: iOS Safari zooms the page when a field under 16px is focused, and
        pinch-zoom is allowed now (Jira GRW-306), so nothing else holds that zoom back. */
-    font-size: 16px;
     font-weight: 500;
     color: var(--text);
   }
@@ -1434,12 +1431,8 @@
   .bk-field input {
     height: 44px;
     padding: 0 10px;
-    font-size: 16px;
   }
 
-  .bk-field select {
-    font-size: 16px;
-  }
 }
 
 .booking-sub {
@@ -1912,7 +1905,7 @@
     font-size: 0.8125rem;
     font-weight: 620;
     padding: 9px 15px;
-    border-radius: 10px;
+    border-radius: var(--radius);
     white-space: nowrap;
   }
 
@@ -2868,7 +2861,7 @@ button.bk-waiting-row:focus-visible {
   min-width: 32px;
   height: 32px;
   padding: 0 6px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: #fdf0d5;
   color: var(--amber);
   font-size: 0.9375rem;

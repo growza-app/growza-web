@@ -42,7 +42,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 4px solid var(--seg);
-  border-radius: 11px;
+  border-radius: var(--radius);
   padding: 8px 11px;
   min-width: 0;
 }

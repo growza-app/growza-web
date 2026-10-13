@@ -168,7 +168,7 @@
   gap: 8px;
   margin: 10px 0 0;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: color-mix(in srgb, #b3261e 8%, transparent);
   font-size: 0.8125rem;
 }

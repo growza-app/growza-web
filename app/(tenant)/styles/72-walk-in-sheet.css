@@ -50,7 +50,6 @@
 input.wi-search-input {
   width: 100%;
   padding-left: 34px;
-  font-size: 16px; /* iOS zooms the page on focus below 16px. */
 }
 
 input.wi-search-input-plain {
@@ -597,7 +596,7 @@ input.wi-search-input-plain {
     width: min(620px, calc(100vw - 48px));
     max-height: min(84vh, 780px);
     /* All four corners: it is no longer rising from the bottom edge. */
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
   }
 
   /* The grab handle is for dragging a sheet off the bottom of a phone. */
@@ -723,7 +722,7 @@ input.wi-search-input-plain {
   padding: 0 10px;
   min-height: 40px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--muted);
   font-size: 0.875rem;
@@ -922,7 +921,7 @@ input.wi-search-input-plain {
 .walk-in-page {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   padding: 10px 0 22px;
   max-width: 620px;
   margin: 0 auto;
@@ -1034,7 +1033,6 @@ input.wi-search-input-plain {
 .wi-branch-field select {
   width: 100%;
   min-width: 0;
-  min-height: 44px;
   box-sizing: border-box;
   text-overflow: ellipsis;
 }
@@ -1428,7 +1426,6 @@ input.wi-search-input-plain {
  * itself, so it reads "Stylist · whoever is free" rather than a bare name under a label.
  */
 .wi-stylist-row {
-  min-height: 44px;
   font-size: 0.78125rem;
   font-weight: 600;
 }
@@ -1842,7 +1839,6 @@ input.wi-search-input-plain {
 }
 
 .wi-receipt-more .btn {
-  min-height: 44px;
   justify-content: center;
   gap: var(--sp-2);
 }
@@ -1983,7 +1979,7 @@ input.wi-search-input-plain {
   width: 2.25rem;
   height: 2.25rem;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--slate-soft);
 }
 

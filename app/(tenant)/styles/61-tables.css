@@ -45,7 +45,7 @@
   font-weight: 700;
   font-size: 0.75rem;
   padding: 4px 9px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
 }
 
 .rp-cell-bar { display: flex; align-items: center; gap: 8px; }
