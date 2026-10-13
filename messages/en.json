@@ -2242,6 +2242,45 @@
       "colNoShow": "Didn't come",
       "noHours": "no hours set"
     },
+    "signals": {
+      "offers": {
+        "title": "Your offers",
+        "hint": "What each offer brought in, and what it cost you in discount",
+        "colOffer": "Offer",
+        "colBookings": "Bookings",
+        "colEarned": "Earned",
+        "colDiscount": "Discount given",
+        "empty": "No offer was booked in this period."
+      },
+      "sources": {
+        "hint": "Booked on WhatsApp, booked ahead at the desk, or walked in",
+        "whatsapp": "WhatsApp",
+        "bookedAhead": "Booked ahead at the desk",
+        "walkIn": "Walked in"
+      },
+      "endings": {
+        "title": "Moved or called off",
+        "hint": "A moved booking still happened, at another time",
+        "moved": "Moved to another time",
+        "byClient": "Called off by the client",
+        "bySalon": "Called off by you",
+        "other": "Called off, nobody recorded by whom",
+        "none": "Nothing was moved or called off."
+      },
+      "wait": "Walk-ins waited {min, plural, one {# minute} other {# minutes}} on average before being seen",
+      "category": {
+        "title": "Money by category",
+        "hint": "Hair against skin, nails against make-up"
+      },
+      "staff": {
+        "colDiscount": "Discounts"
+      },
+      "reach": {
+        "line": "{n, plural, one {# client} other {# clients}} can get an offer on WhatsApp.",
+        "noPhone": "{n, plural, one {# has} other {# have}} no number.",
+        "optedOut": "{n} asked not to be messaged."
+      }
+    },
     "customersTab": {
       "total": "Clients",
       "newClients": "New clients",
