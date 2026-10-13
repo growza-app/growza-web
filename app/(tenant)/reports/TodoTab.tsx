@@ -8,6 +8,7 @@ import { formatMoney, type ReportTodo, type TodoCard, type TodoClient } from '..
 import { whatsappHref } from '../lib/receipt-text';
 import { IconCheck, IconWhatsApp } from '../components/icons';
 import { MessageClientsSheet } from './MessageClientsSheet';
+import { ShareWeek } from './ShareWeek';
 
 /**
  * What to do — the first Reports tab, and the only one that is not numbers.
@@ -59,6 +60,9 @@ export function TodoTab({
           <p className="rp-card-sub">{t('emptyHint')}</p>
         </section>
       )}
+
+      {/* Jira GRW-569 — the week as a WhatsApp text the owner forwards. Absent on an API that predates `week`. */}
+      {data.week && <ShareWeek data={data} business={tenantName} />}
 
       <p className="td-foot">{t('checked')}</p>
 
@@ -185,14 +189,14 @@ function Card({
 }
 
 /** "Tuesday" in the owner's language. 0 = Sunday, as the API counts. */
-function weekdayName(weekday: number, locale: string): string {
+export function weekdayName(weekday: number, locale: string): string {
   // 4 Jan 2026 is a Sunday.
   const d = new Date(Date.UTC(2026, 0, 4 + weekday, 12));
   return new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(d);
 }
 
 /** "2 pm" in the owner's language. */
-function hourName(hour: number, locale: string): string {
+export function hourName(hour: number, locale: string): string {
   const d = new Date(Date.UTC(2026, 0, 4, hour));
   return new Intl.DateTimeFormat(locale, { hour: 'numeric', timeZone: 'UTC' }).format(d);
 }

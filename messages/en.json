@@ -2435,6 +2435,13 @@
         "hint": "{optedOut, plural, =0 {} one {# asked not to be contacted. } other {# asked not to be contacted. }}{noPhone, plural, =0 {} one {# has no number.} other {# have no number.}}",
         "button": "See list"
       },
+      "share": {
+        "title": "Share this week",
+        "hint": "The five numbers and your top two to-dos, as a WhatsApp message you forward.",
+        "button": "Share this week on WhatsApp",
+        "heading": "{business} — this week, {from} to {to}",
+        "todo": "To do:"
+      },
       "sheet": {
         "close": "Close",
         "whatsapp": "WhatsApp",

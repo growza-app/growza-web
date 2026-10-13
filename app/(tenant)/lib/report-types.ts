@@ -357,6 +357,8 @@ export interface ReportTodo {
   weekStartISO: string;
   weekEndExclusiveISO: string;
   monthLabel: string;
+  /** Jira GRW-569 — the week's five figures against the week before. Optional for an older API. */
+  week?: Scorecard;
   cards: TodoCard[];
   possible: number;
 }
