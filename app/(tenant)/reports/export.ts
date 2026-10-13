@@ -88,6 +88,8 @@ function rowName(row: { key?: string; label: string }, providerNoun: string): st
  */
 export function reportToCsv(payload: TabPayload, providerLabel: string, providerNoun = 'Staff member'): string {
   if (!payload) return '';
+  // What to do is sentences and buttons, not a table; there is nothing honest to put in a file.
+  if (payload.tab === 'todo') return '';
 
   if (payload.tab === 'revenue') {
     const d = payload.data;

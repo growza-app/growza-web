@@ -22,12 +22,12 @@ import { ReportsClient, type TabPayload } from './ReportsClient';
  * screen have to name the same six things or an owner ticks a box that grants
  * nothing.
  */
-const ALL_REPORT_TABS = ['overview', 'customers', 'revenue', 'bookings', 'services', 'staff'] as const;
+const ALL_REPORT_TABS = ['todo', 'overview', 'customers', 'revenue', 'bookings', 'services', 'staff'] as const;
 
 export const dynamic = 'force-dynamic';
 
 const TABS = new Set<string>([
-  'overview', 'customers', 'revenue', 'bookings', 'services', 'staff',
+  'todo', 'overview', 'customers', 'revenue', 'bookings', 'services', 'staff',
 ]);
 
 const RANGES = new Set<string>([
@@ -39,7 +39,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** What the range actually resolved to, for the download's filename. */
 function rangeLabelOf(payload: TabPayload): string | undefined {
-  return payload?.data.range.label;
+  return payload && 'range' in payload.data ? payload.data.range.label : undefined;
 }
 
 /** The statuses a filter may name — the same vocabulary `copy.status` renders. */
@@ -76,7 +76,7 @@ export default async function ReportsPage({
   await guardLive('/reports');
   const t = await getTranslations('reports');
   const params = await searchParams;
-  const tab = (params.tab && TABS.has(params.tab) ? params.tab : 'overview') as ReportTabKey;
+  const tab = (params.tab && TABS.has(params.tab) ? params.tab : 'todo') as ReportTabKey;
   const from = params.from && ISO_DATE.test(params.from) ? params.from : undefined;
   const to = params.to && ISO_DATE.test(params.to) ? params.to : undefined;
   const asked = params.range && RANGES.has(params.range) ? params.range : 'this_month';
@@ -193,7 +193,8 @@ export default async function ReportsPage({
   let loadError: LoadErrorKind = 'down';
   try {
     payload =
-      resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare, from, to, branch) }
+      resolvedTab === 'todo' ? { tab: 'todo', data: await api.reportsTodo(branch) }
+      : resolvedTab === 'overview' ? { tab: 'overview', data: await api.reportsOverview(range, compare, from, to, branch) }
       : resolvedTab === 'revenue' ? { tab: 'revenue', data: await api.reportsRevenue(range, compare, from, to, applied, branch) }
       : resolvedTab === 'bookings' ? { tab: 'bookings', data: await api.reportsBookings(range, compare, from, to, applied, branch) }
       : resolvedTab === 'services' ? { tab: 'services', data: await api.reportsServices(range, compare, from, to, applied, branch) }

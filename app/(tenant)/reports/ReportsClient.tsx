@@ -19,6 +19,7 @@ import type {
   ReportServices,
   ReportStaff,
   ReportTabKey,
+  ReportTodo,
 } from '../lib/api';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { useMayUse } from '../components/SessionProvider';
@@ -30,6 +31,7 @@ import { ReportsShell } from './ReportsShell';
 import { RevenueTab } from './RevenueTab';
 import { ServicesTab } from './ServicesTab';
 import { StaffTab } from './StaffTab';
+import { TodoTab } from './TodoTab';
 
 /**
  * A tab and its data as one value, so the two cannot get out of step — a
@@ -37,6 +39,7 @@ import { StaffTab } from './StaffTab';
  * envelope is a class of bug the type system should refuse outright.
  */
 export type TabPayload =
+  | { tab: 'todo'; data: ReportTodo }
   | { tab: 'overview'; data: ReportOverview }
   | { tab: 'revenue'; data: ReportRevenue }
   | { tab: 'bookings'; data: ReportBookings }
@@ -141,7 +144,7 @@ export function ReportsClient({
       onExport={onExport}
       canExport={csv.trim().length > 0}
       labels={labels}
-      rangeLabel={range === 'custom' ? payload?.data.range.label : undefined}
+      rangeLabel={range === 'custom' && payload && 'range' in payload.data ? payload.data.range.label : undefined}
     >
       {payload === null ? (
         <section className="rp-card rp-card-quiet">
@@ -150,6 +153,8 @@ export function ReportsClient({
             <p className="rp-card-sub"><LoadErrorHelp kind={loadError} /></p>
           </div>
         </section>
+      ) : payload.tab === 'todo' ? (
+        <TodoTab data={payload.data} tenantName={tenantName} onTab={goToTab} onClient={onClient} />
       ) : payload.tab === 'overview' ? (
         <OverviewTab data={payload.data} onTab={goToTab} onClient={onClient} />
       ) : payload.tab === 'revenue' ? (

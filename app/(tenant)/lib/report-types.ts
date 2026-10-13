@@ -24,6 +24,7 @@ export type ReportRangeKey =
   | 'custom';
 
 export type ReportTabKey =
+  | 'todo'
   | 'overview'
   | 'customers'
   | 'revenue'
@@ -260,4 +261,38 @@ export interface ClientProfile {
   lifetimeSpendMinor: number;
   rows: ClientProfileRow[];
   recent: { service: string; whenISO: string; amountMinor: number }[];
+}
+
+/* ---- What to do (the first tab) ---------------------------------------- */
+
+export type TodoTone = 'good' | 'warn' | 'bad';
+
+/** A client the owner can act on from a card. `waPhone` is null when they may not be messaged. */
+export interface TodoClient {
+  customerId: string;
+  name: string;
+  initial: string;
+  waPhone: string | null;
+  optedOut: boolean;
+  lastVisitDays: number | null;
+  intervalDays: number | null;
+  avgTicketMinor: number | null;
+  usualService: string | null;
+}
+
+export type TodoCard =
+  | { kind: 'money'; tone: TodoTone; revenueMinor: number; previousMinor: number | null; bookings: number }
+  | { kind: 'dueBack'; tone: TodoTone; count: number; clients: TodoClient[] }
+  | { kind: 'stopped'; tone: TodoTone; count: number; clients: TodoClient[] }
+  | { kind: 'noShow'; tone: TodoTone; count: number; clients: TodoClient[] }
+  | { kind: 'quietHours'; tone: TodoTone; weekday: number; fromHour: number; toHour: number }
+  | { kind: 'bestEarner'; tone: TodoTone; service: string; revenueMinor: number; bookings: number }
+  | { kind: 'unreachable'; tone: TodoTone; count: number; noPhone: number; optedOut: number };
+
+export interface ReportTodo {
+  weekStartISO: string;
+  weekEndExclusiveISO: string;
+  monthLabel: string;
+  cards: TodoCard[];
+  possible: number;
 }

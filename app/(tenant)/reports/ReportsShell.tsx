@@ -22,6 +22,7 @@ import { FiltersDrawer } from './FiltersDrawer';
 import { IconCalendar, IconChevronDown, IconDownload, IconFilter, IconRepeat } from '../components/icons';
 
 const TAB_ORDER: ReportTabKey[] = [
+  'todo',
   'overview',
   'customers',
   'revenue',
