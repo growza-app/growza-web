@@ -27,6 +27,8 @@ import { oklch } from '../tokens';
 export interface SubscriptionPanelSubscription {
   id: string;
   businessId: string;
+  /** Whether a bill has ever been raised. Absent from an older API, and read as "not known" rather than "no". */
+  invoiced?: boolean;
   planCode: string;
   planVersion: number;
   status: string;
@@ -83,6 +85,7 @@ export function SubscriptionPanel({
   canDiscount = false,
   /** Shown in the heading when the host already knows them — omitted, the panel just leads with the plan code. */
   businessName,
+  businessLive,
   planName,
   onChanged,
   onReplaced,
@@ -103,6 +106,12 @@ export function SubscriptionPanel({
    */
   canDiscount?: boolean;
   businessName?: string;
+  /**
+   * Whether the business has gone live. A business still being set up is not invoiced at all — its first bill is
+   * raised the day it goes live — so a discount set now reaches that bill rather than a next one. Omitted when the
+   * host does not know, and the dialog then says only that an issued bill does not change.
+   */
+  businessLive?: boolean;
   planName?: string;
   /** Called after a status change, so a host showing the same status elsewhere can refresh it. */
   onChanged?: () => void;
@@ -462,7 +471,9 @@ export function SubscriptionPanel({
       <DiscountModal
         businessName={discountOpen ? (businessName ?? 'This business') : null}
         planName={planName}
-        subscription={discountOpen ? s : null}
+        // "Not live yet" is only true of a business that has not been billed. One enrolled before billing started
+        // at go-live already holds a bill and keeps the period it was raised for, so a discount will not reach it.
+        subscription={discountOpen ? { ...s, liveYet: businessLive === undefined ? undefined : businessLive || s.invoiced === true } : null}
         currentDiscount={discountOpen ? currentDiscount : null}
         onClose={() => setDiscountOpen(false)}
         onSaved={() => {

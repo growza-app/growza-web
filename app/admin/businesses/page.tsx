@@ -321,6 +321,9 @@ function AdminBusinessesInner() {
 
       {adding ? (
         <AddBusinessModal
+          // The same permission the discount dialog's route asks, and the enrol route now asks too — so the
+          // section is not offered to an admin whose request would be refused with a 403.
+          canDiscount={can('admin.discount.manage')}
           onClose={() => setAdding(false)}
           onCreated={(business) => {
             setAdding(false);

@@ -3,6 +3,7 @@ import { formatMoney } from '../../lib/format';
 import { api } from '../../lib/api';
 import { serverLang } from '../../lib/lang';
 import { billingCopy } from '../../lib/billing-copy';
+import { isLive } from '../../lib/go-live';
 import { BillingSummary } from './BillingSummary';
 import { getTranslations } from 'next-intl/server';
 
@@ -26,7 +27,18 @@ export default async function BillingSettingsPage() {
           amount: formatMoney(onAccount, billing.subscription?.currency ?? 'INR', lang),
         })
       : null;
-  return <BillingSummary billing={billing} lang={lang} canPayOnline={me?.payments?.online ?? false} onAccountText={onAccountText} />;
+  return (
+    <BillingSummary
+      billing={billing}
+      lang={lang}
+      canPayOnline={me?.payments?.online ?? false}
+      // "Live" as far as BILLING is concerned: the salon has gone live, OR it already holds a bill. A business
+      // enrolled before billing started at go-live is still provisioning but was billed at enrolment, and telling
+      // its owner "nothing is charged while you are setting up" above a bill they owe would be wrong.
+      live={isLive(me?.tenant?.status) || billing.invoices.length > 0 || billing.due !== null}
+      onAccountText={onAccountText}
+    />
+  );
 }
 
 // Jira GRW-192 — the tab says which screen this is.

@@ -65,6 +65,75 @@ export function stylistsProblem(value: string): string | null {
   return null;
 }
 
+/**
+ * An offer agreed at the sale, as the form holds it: what the admin typed, before it becomes a request.
+ *
+ * `enabled` is the section's own toggle, so an admin who opens it and changes their mind is not held to a
+ * half-filled form. Everything else is a string for the same reason every other field here is — the input owns the
+ * text, and the rules below own what it means.
+ */
+export interface EnrolDiscountValues {
+  enabled: boolean;
+  type: 'fixed' | 'percent' | 'final';
+  /** Rupees for fixed/final, a 0-100 percentage for percent. */
+  value: string;
+  /** '1' | '2' | '3' | '6' | '12' bills, or '0' for permanent. */
+  durationMonths: string;
+  reason: string;
+}
+
+export const EMPTY_ENROL_DISCOUNT: EnrolDiscountValues = { enabled: false, type: 'percent', value: '100', durationMonths: '1', reason: '' };
+
+/**
+ * What an offer typed on the enrol form is worth, and whether it can be sent.
+ *
+ * The same three shapes the discount dialog offers, checked against the plan's price — which this form already
+ * knows, because it just asked the admin to choose a plan. `planPriceMinor` of 0 means no plan is chosen yet, and
+ * the range check waits rather than refusing a figure it cannot judge.
+ *
+ * Mirrors `EnrolDiscountSchema` in the API's `businesses.schemas.ts`, which remains the authority — as every other
+ * rule in this file does.
+ */
+export function discountProblems(d: EnrolDiscountValues, planPriceMinor: number): Record<string, string> {
+  if (!d.enabled) return {};
+  const errors: Record<string, string> = {};
+  const typed = Number(d.value.trim());
+
+  if (!d.value.trim() || !Number.isFinite(typed) || typed < 0) errors['discount.value'] = 'Enter the discount';
+  // Whole numbers only. The API takes an integer, and rounding 12.5 to 13 on the way out would bill a figure
+  // other than the one previewed and agreed with the customer.
+  else if (d.type === 'percent' && !Number.isInteger(typed)) errors['discount.value'] = 'Enter a whole percentage, such as 10 or 25';
+  else if (d.type === 'percent' && typed > 100) errors['discount.value'] = 'A percent discount cannot be more than 100';
+  else if (planPriceMinor > 0) {
+    const storedMinor = d.type === 'percent' ? Math.round((planPriceMinor * typed) / 100) : Math.round(typed * 100);
+    if (d.type === 'final' && storedMinor > planPriceMinor) errors['discount.value'] = 'The final price is above the plan price';
+    else if (d.type !== 'final' && storedMinor > planPriceMinor) errors['discount.value'] = 'That discount is larger than the plan price itself';
+  }
+
+  if (!d.reason.trim()) errors['discount.reason'] = 'Say why this business gets a discount';
+  else if (d.reason.trim().length > 500) errors['discount.reason'] = 'Reason is too long (500 characters maximum)';
+  return errors;
+}
+
+/**
+ * The offer as the API takes it, or null when the section is switched off.
+ *
+ * `durationMonths: null` is permanent — the same spelling the discount dialog and the route use. A 'final' entry
+ * sends the price itself, not a discount, because that is what the API's `final` type means.
+ */
+export function enrolDiscountBody(
+  d: EnrolDiscountValues,
+): { type: 'fixed' | 'percent' | 'final'; value: number; reason: string; durationMonths: number | null } | null {
+  if (!d.enabled) return null;
+  const typed = Number(d.value.trim());
+  return {
+    type: d.type,
+    value: d.type === 'percent' ? Math.round(typed) : Math.round(typed * 100),
+    reason: d.reason.trim(),
+    durationMonths: d.durationMonths === '0' ? null : Number(d.durationMonths),
+  };
+}
+
 export function validate(values: {
   name: string;
   country: string;
@@ -76,6 +145,9 @@ export function validate(values: {
   nationalNumber: string;
   dialCode: string | null;
   reason: string;
+  /** The optional offer, and the plan price to judge it against. Absent is the same as switched off. */
+  discount?: EnrolDiscountValues;
+  planPriceMinor?: number;
 }): Record<string, string> {
   const errors: Record<string, string> = {};
   const name = values.name.trim();
@@ -128,6 +200,8 @@ export function validate(values: {
   const reason = values.reason.trim();
   if (reason.length < 5 || !hasLetterOrDigit(reason)) errors.reason = 'Say why this business is being created (at least 5 characters)';
   else if (reason.length > 500) errors.reason = 'Reason is too long (500 characters maximum)';
+
+  if (values.discount) Object.assign(errors, discountProblems(values.discount, values.planPriceMinor ?? 0));
 
   return errors;
 }
