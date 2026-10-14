@@ -7,7 +7,7 @@ import { useLabel } from '../components/LabelsProvider';
 import { useWritable } from '../components/SessionProvider';
 import { hasServicePhoto, servicePhotoUrl } from '../lib/service-photos';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
-import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
+import { groupByCategory, timeParts, timePhrase, worthGrouping } from './services-groups';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
 
 /**
@@ -64,6 +64,24 @@ function time(s: ServiceAdmin, t: T): string {
     // Jira GRW-446 — "2 hrs 45 min", not "165 min". Cleanup stays a bare count; it never reaches an hour.
     (count) => durationPhrase(count, durationWords(t)),
     (count) => t('cleanupPlus', { count }),
+  );
+}
+
+/**
+ * The card's time, in two spans: the separator is the cleanup's own (`.svc-cleanup::before`), so on a narrow
+ * phone the line breaks as "25 min" / "+5 cleanup" and never as "25 min ·" / "+5 cleanup" (owner, 2026-10-14).
+ */
+function timeCard(s: ServiceAdmin, t: T) {
+  const [duration, cleanup] = timeParts(
+    s,
+    (count) => durationPhrase(count, durationWords(t)),
+    (count) => t('cleanupPlus', { count }),
+  );
+  return (
+    <>
+      <span>{duration}</span>
+      {cleanup && <span className="svc-cleanup">{cleanup}</span>}
+    </>
   );
 }
 
@@ -289,7 +307,7 @@ function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: Row
         <NameCell service={service} t={t} />
         <span className="svc-card-right">
           <span className="svc-price">{formatMoney(service.priceMinor, service.currency)}</span>
-          <span className="svc-time muted">{time(service, t)}</span>
+          <span className="svc-time muted">{timeCard(service, t)}</span>
         </span>
         <ServiceRowMenu service={service} actions={actions} t={t} />
       </div>
