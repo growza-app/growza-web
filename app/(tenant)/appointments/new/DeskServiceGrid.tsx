@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
-import type { Service } from '../../lib/api-types';
+import type { Offer, Service } from '../../lib/api-types';
 import { servicePhotoUrl } from '../../lib/service-photos';
 import { IconMinus, IconPlus, IconSearch } from '../../components/icons';
 
@@ -24,6 +24,9 @@ export function DeskServiceGrid({
   onLess,
   full,
   money,
+  packages = [],
+  packageOnBillId = null,
+  onPickPackage,
 }: {
   /** In display order: most sold first. */
   services: Service[];
@@ -33,9 +36,19 @@ export function DeskServiceGrid({
   /** The bill is at its twelve-line limit: tiles not yet on it cannot be added. */
   full: boolean;
   money: (minor: number) => string;
+  /** Jira GRW-572 — the branch's priced combos whose services are all on this menu; a second tab when there are any. */
+  packages?: Offer[];
+  packageOnBillId?: string | null;
+  onPickPackage?: (o: Offer) => void;
 }) {
   const t = useTranslations('payFlow');
   const [term, setTerm] = useState('');
+  const [tab, setTab] = useState<'services' | 'packages'>('services');
+  const byId = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
+  const shownPackages = useMemo(() => {
+    const q = term.trim().toLowerCase();
+    return q ? packages.filter((o) => o.title.toLowerCase().includes(q)) : packages;
+  }, [packages, term]);
 
   const shown = useMemo(() => {
     const q = term.trim().toLowerCase();
@@ -45,6 +58,16 @@ export function DeskServiceGrid({
 
   return (
     <section className="pf-wide-mid" aria-label={t('services')}>
+      {packages.length > 0 ? (
+        <div className="pf-chips pf-wide-tabs" role="tablist" aria-label={t('services')}>
+          <button type="button" role="tab" aria-selected={tab === 'services'} className={`pf-chip ${tab === 'services' ? 'pf-chip-on' : ''}`} onClick={() => setTab('services')}>
+            {t('services')}
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
+            {t('desk.packages', { n: packages.length })}
+          </button>
+        </div>
+      ) : null}
       <label className="pf-wide-search">
         <IconSearch />
         <input
@@ -56,7 +79,32 @@ export function DeskServiceGrid({
           autoComplete="off"
         />
       </label>
-      {shown.length === 0 ? (
+      {tab === 'packages' ? (
+        shownPackages.length === 0 ? (
+          <p className="pf-wide-empty">{t('desk.noMatch')}</p>
+        ) : (
+          /* A package reads like a service: the first leg's picture, the name, the package price, and what is in it. */
+          <div className="pf-tiles pf-wide-tiles">
+            {shownPackages.map((o) => {
+              const on = packageOnBillId === o.id;
+              const first = byId.get(o.serviceIds[0] ?? '');
+              const names = o.serviceIds.map((id) => byId.get(id)?.name).filter(Boolean).join(', ');
+              return (
+                <div key={o.id} className={`pf-tile ${on ? 'pf-tile-on' : ''}`}>
+                  <button type="button" className="pf-tile-tap" aria-pressed={on} onClick={() => onPickPackage?.(o)}>
+                    {first ? <img className="pf-tile-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-tile-photo" aria-hidden="true" />}
+                    <span className="pf-tile-name">{o.title}</span>
+                    <span className="pf-tile-price">
+                      {money(Number(o.comboPriceMinor ?? 0))}
+                      <span className="pf-tile-mins">{names}</span>
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : shown.length === 0 ? (
         <p className="pf-wide-empty">{t('desk.noMatch')}</p>
       ) : (
         <div className="pf-tiles pf-wide-tiles">

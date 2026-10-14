@@ -151,7 +151,8 @@ describe('Record payment in three taps', () => {
     expect(bill).toMatch(/offMinor > 0 \? t\('billOff'\) : t\('billExtra'\)/);
     // Same service twice is one row with a count, as the receipt groups it; each row can lose one from here.
     expect(bill).toMatch(/same\.count \+= 1;/);
-    expect(bill).toMatch(/onLess\(r\.serviceId\)/);
+    // Jira GRW-572 — the row's key: a service id, or a package id that takes every leg off.
+    expect(bill).toMatch(/onLess\(r\.key\)/);
     expect(css).toMatch(/\.pf-bill-less \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
   });
 
