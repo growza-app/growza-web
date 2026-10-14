@@ -2640,7 +2640,18 @@
       "booked": "Booked",
       "emptyBill": "Tap a service to start the bill.",
       "packages": "Packages ({n})",
-      "priceFor": "Price for {name}"
+      "priceFor": "Price for {name}",
+      "products": "Products",
+      "soon": "Soon",
+      "noPackages": "No priced package yet. Make one on the Packages screen."
+    },
+    "split": {
+      "link": "Paid two ways",
+      "first": "Which way first?",
+      "howMuch": "How much by {mode}?",
+      "restHint": "The rest goes on the next way",
+      "then": "{amount} by {mode} · and {rest} by…",
+      "clear": "One way after all"
     }
   },
   "help": {

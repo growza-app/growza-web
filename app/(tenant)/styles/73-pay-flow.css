@@ -686,6 +686,58 @@
   color: var(--muted);
 }
 
+/*
+ * Owner, 2026-10-14 — a bill paid two ways. The link sits under the four tiles at the weight of a text button,
+ * 44px tall; once a first way is held, the line above the tiles says what it was and what the next tap is for.
+ */
+.pf-split-link {
+  grid-column: 1 / -1;
+  min-height: 2.75rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.pf-split-link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pf-split-held {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--slate-soft);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pf-split-held > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pf-split-clear {
+  flex: none;
+}
+
+/* The tab that is not here yet (Products): the same chip, greyed, and not a target. */
+.pf-chip-soon,
+.pf-chip-soon:disabled {
+  color: var(--muted);
+  background: var(--surface);
+  opacity: 0.55;
+  cursor: default;
+}
+
 .pf-pay-tile:disabled {
   opacity: 0.6;
   cursor: default;

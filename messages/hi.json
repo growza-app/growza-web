@@ -2640,7 +2640,18 @@
       "booked": "बुक किया",
       "emptyBill": "बिल शुरू करने के लिए कोई सेवा चुनें।",
       "packages": "पैकेज ({n})",
-      "priceFor": "{name} की कीमत"
+      "priceFor": "{name} की कीमत",
+      "products": "सामान",
+      "soon": "जल्द",
+      "noPackages": "अभी कोई पैकेज नहीं। पैकेज स्क्रीन पर बनाएँ।"
+    },
+    "split": {
+      "link": "दो तरह से दिए",
+      "first": "पहले किस तरह?",
+      "howMuch": "{mode} से कितना?",
+      "restHint": "बाकी अगली तरह से",
+      "then": "{mode} से {amount} · और {rest} किससे…",
+      "clear": "एक ही तरह से"
     }
   },
   "help": {

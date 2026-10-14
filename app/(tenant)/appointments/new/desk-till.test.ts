@@ -119,3 +119,22 @@ describe('the wide till', () => {
     expect(h.search).toMatch(/\{count\}/);
   });
 });
+
+/** Owner, 2026-10-14 — three tabs, always: Services · Packages · Products (soon). */
+describe('the desk grid shows what a till sells', () => {
+  it('Products is there, greyed, before it exists — the shape is learnt once', () => {
+    const grid = here('DeskServiceGrid.tsx');
+    expect(grid).toMatch(/className="pf-chip pf-chip-soon" disabled>\s*\{t\('desk\.products'\)\}/);
+    // A row across the menu, not the desks' vertical `.pf-wide-tabs` list (#250) the grid once borrowed.
+    expect(grid).toMatch(/className="pf-chips pf-wide-menu-tabs" role="tablist"/);
+    expect(grid).not.toMatch(/pf-wide-tabs"/);
+    expect(grid).not.toMatch(/\{packages\.length > 0 \? \(\s*<div className="pf-chips pf-wide-tabs"/);
+    expect(grid).toMatch(/packages\.length === 0 \? t\('desk\.noPackages'\) : t\('desk\.noMatch'\)/);
+    for (const m of [en, hi]) {
+      const desk = (m as { payFlow: { desk: Record<string, string> } }).payFlow.desk;
+      expect(desk.products).toBeTruthy();
+      expect(desk.soon).toBeTruthy();
+      expect(desk.noPackages).toBeTruthy();
+    }
+  });
+});

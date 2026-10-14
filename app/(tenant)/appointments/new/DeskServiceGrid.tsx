@@ -99,16 +99,23 @@ export function DeskServiceGrid({
 
   return (
     <section className="pf-wide-mid" aria-label={t('services')}>
-      {packages.length > 0 ? (
-        <div className="pf-chips pf-wide-tabs" role="tablist" aria-label={t('services')}>
-          <button type="button" role="tab" aria-selected={tab === 'services'} className={`pf-chip ${tab === 'services' ? 'pf-chip-on' : ''}`} onClick={() => setTab('services')}>
-            {t('services')}
-          </button>
-          <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
-            {t('desk.packages', { n: packages.length })}
-          </button>
-        </div>
-      ) : null}
+      {/*
+        Owner, 2026-10-14 — three tabs, always: what a till sells. Products is the one that is not here yet; it is
+        shown greyed so the shape the owner will learn is the shape that is there now, and so nobody looks for it
+        in a menu. A bill holds services, a package and (later) products together: the tabs only change the grid.
+      */}
+      <div className="pf-chips pf-wide-menu-tabs" role="tablist" aria-label={t('services')}>
+        <button type="button" role="tab" aria-selected={tab === 'services'} className={`pf-chip ${tab === 'services' ? 'pf-chip-on' : ''}`} onClick={() => setTab('services')}>
+          {t('services')}
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
+          {t('desk.packages', { n: packages.length })}
+        </button>
+        <button type="button" role="tab" aria-selected={false} aria-disabled="true" className="pf-chip pf-chip-soon" disabled>
+          {t('desk.products')}
+          <span className="pf-wide-kind-n">{t('desk.soon')}</span>
+        </button>
+      </div>
       <label className="pf-wide-search">
         <IconSearch />
         <input
@@ -136,7 +143,7 @@ export function DeskServiceGrid({
       ) : null}
       {tab === 'packages' ? (
         shownPackages.length === 0 ? (
-          <p className="pf-wide-empty">{t('desk.noMatch')}</p>
+          <p className="pf-wide-empty">{packages.length === 0 ? t('desk.noPackages') : t('desk.noMatch')}</p>
         ) : (
           /* A package reads like a service: the first leg's picture, the name, the package price, and what is in it. */
           <div className="pf-tiles pf-wide-tiles">

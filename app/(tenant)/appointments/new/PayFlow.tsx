@@ -53,6 +53,8 @@ interface Sale {
   tokenNo: number | null;
   totalMinor: number;
   mode: PaymentMode;
+  /** How it was paid, in the owner's words: "Cash", or "Cash ₹800 · UPI ₹499" for a bill paid two ways. */
+  paidBy: string;
   bill: ReceiptRow[];
   phone: string | null;
   summary: string;
@@ -207,6 +209,18 @@ export function PayFlow({
   const [menuOpen, setMenuOpen] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
   const [saving, setSaving] = useState<PaymentMode | null>(null);
+  /*
+   * Owner, 2026-10-14 — a bill paid two ways (₹800 cash, the rest by UPI).
+   *
+   * `splitting` is the tiles asking "which way first?"; a tap then opens the keypad (`splitKeypad`) for how much
+   * came that way; `firstWay` holds the answer, and the NEXT tile is the rest — tapping it is the save, as a
+   * tile always is. One extra question, asked only by the owner who taps "Paid two ways"; the three-tap sale
+   * is untouched. A first amount that covers the bill is simply a bill paid one way.
+   */
+  const [splitting, setSplitting] = useState(false);
+  const [splitKeypad, setSplitKeypad] = useState<PaymentMode | null>(null);
+  const [splitAmount, setSplitAmount] = useState('');
+  const [firstWay, setFirstWay] = useState<{ mode: PaymentMode; minor: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
@@ -510,6 +524,22 @@ export function PayFlow({
 
   const money = (minor: number) => formatMoney(String(minor));
   const modeWord = (mode: PaymentMode) => (PAYMENT_MODES.some((m) => m.value === mode) ? tcr(`pay.${mode}`) : mode);
+  /** The ways this bill is paid when the tile `mode` is tapped: two when a first way is held and differs, else one. */
+  const waysFor = (mode: PaymentMode): Array<{ mode: PaymentMode; amountMinor: number }> => {
+    if (!firstWay || firstWay.mode === mode || firstWay.minor >= totalMinor) return [{ mode, amountMinor: totalMinor }];
+    return [
+      { mode: firstWay.mode, amountMinor: firstWay.minor },
+      { mode, amountMinor: totalMinor - firstWay.minor },
+    ];
+  };
+  const paidByWords = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) =>
+    ways.length > 1 ? ways.map((w) => `${modeWord(w.mode)} ${money(w.amountMinor)}`).join(' · ') : modeWord(ways[0]!.mode);
+  const clearSplit = () => {
+    setSplitting(false);
+    setSplitKeypad(null);
+    setSplitAmount('');
+    setFirstWay(null);
+  };
 
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode) => {
@@ -519,6 +549,11 @@ export function PayFlow({
     setError(null);
     const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
     const legs = lines.map((l, i) => ({ serviceId: l.serviceId, paidAmountMinor: amounts[i]! }));
+    // Owner, 2026-10-14 — a bill paid two ways goes as `payments`; the legs' one word is the larger way's.
+    const ways = waysFor(mode);
+    const paidBy = paidByWords(ways);
+    const mainMode = ways.reduce((best, w) => (w.amountMinor > best.amountMinor ? w : best), ways[0]!).mode;
+    const howPaid = ways.length > 1 ? { paymentMode: mainMode, payments: ways } : { paymentMode: mode };
     try {
       /*
        * Two writes, chosen by what is being paid for — the whole reason this screen can serve both.
@@ -554,7 +589,7 @@ export function PayFlow({
               api.checkout(visit.appointment.id, {
                 ...(originalIdx >= 0 ? { paidAmountMinor: amounts[originalIdx]! } : {}),
                 ...(stylistId ? { schedulableId: stylistId } : {}),
-                paymentMode: mode,
+                ...howPaid,
                 ...(extraServices.length ? { extraServices } : {}),
                 ...(groupMembers.length ? { groupMembers } : {}),
                 ...(cancelMemberIds.length ? { cancelMemberIds } : {}),
@@ -575,7 +610,7 @@ export function PayFlow({
               ...who,
               services: legs,
               ...(pkgOnBill ? { offerId: pkgOnBill.id } : {}),
-              paymentMode: mode,
+              ...howPaid,
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
             };
@@ -625,7 +660,7 @@ export function PayFlow({
               }
             : null,
           totalMinor: paidMinor,
-          paidBy: modeWord(mode),
+          paidBy,
         },
         {
           title: nv.receiptTitle,
@@ -647,7 +682,8 @@ export function PayFlow({
         appointmentId: result.appointmentId,
         tokenNo,
         totalMinor: paidMinor,
-        mode,
+        mode: mainMode,
+        paidBy,
         bill,
         /*
          * Whose number the receipt is sent to.
@@ -657,9 +693,10 @@ export function PayFlow({
          * up empty for a client who has a number on file. The booking has it; take it from there.
          */
         phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
-        summary: [tokenNo !== null ? nv.token(tokenNo) : null, modeWord(mode), names, stylist].filter(Boolean).join(' · '),
+        summary: [tokenNo !== null ? nv.token(tokenNo) : null, paidBy, names, stylist].filter(Boolean).join(' · '),
         day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
       });
+      clearSplit();
       setStep('done');
     } catch (e) {
       if (e instanceof LargeAmountDeclined) setError(nv.amountNotSaved);
@@ -678,6 +715,7 @@ export function PayFlow({
     setSale(null);
     setError(null);
     setAttemptKey(newAttemptKey());
+    clearSplit();
     tokenFilled.current = true; // a token has been paid: a second sale from this page is a plain one
     if (token) router.replace('/appointments/new?purpose=payment');
     setStep('what');
@@ -707,6 +745,8 @@ export function PayFlow({
     setOverride(null);
     setStylistId(null);
     setError(null);
+    setFirstWay(null);
+    setSplitting(false);
   }, [location, token]);
 
   const canGoOn = lines.length > 0 && (token !== undefined || client.kind !== 'none');
@@ -762,7 +802,7 @@ export function PayFlow({
         fixHref={fixVisitHref(sale.appointmentId, sale.day)}
         totalMinor={sale.totalMinor}
         mode={sale.mode}
-        modeLabel={modeWord(sale.mode)}
+        modeLabel={sale.paidBy}
         summary={sale.summary}
         bill={sale.bill}
         phone={sale.phone}
@@ -832,8 +872,25 @@ export function PayFlow({
    * The four payment tiles. On a phone they are ② — a screen of their own; on the wide till they sit under the
    * bill. One element, so UPI's QR rule and the save are written once.
    */
+  const restMinor = firstWay ? Math.max(0, totalMinor - firstWay.minor) : 0;
   const payTiles = (
     <div className="pf-pay" role="group" aria-label={t('howTitle')}>
+      {firstWay ? (
+        /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
+        <p className="pf-split-held" role="status">
+          <span>{t('split.then', { amount: money(firstWay.minor), mode: modeWord(firstWay.mode), rest: money(restMinor) })}</span>
+          <button type="button" className="icon-btn pf-split-clear" aria-label={t('split.clear')} onClick={clearSplit}>
+            <IconClose />
+          </button>
+        </p>
+      ) : splitting ? (
+        <p className="pf-split-held" role="status">
+          <span>{t('split.first')}</span>
+          <button type="button" className="icon-btn pf-split-clear" aria-label={t('split.clear')} onClick={clearSplit}>
+            <IconClose />
+          </button>
+        </p>
+      ) : null}
       {(['cash', 'upi', 'card', 'other'] as const).map((mode) => (
         <button
           key={mode}
@@ -849,7 +906,14 @@ export function PayFlow({
            */
           onClick={() => {
             if (wide && !readyToPay()) return;
-            if (mode === 'upi' && paymentQr) setStep('qr');
+            // "Which way first?" — this tile is the first way; the keypad asks how much came that way.
+            if (splitting && !firstWay) {
+              setSplitKeypad(mode);
+              setSplitAmount('');
+              return;
+            }
+            // A bill paid two ways is recorded as the tap says: the QR screen is for the whole bill by UPI.
+            if (mode === 'upi' && paymentQr && !firstWay) setStep('qr');
             else void pay(mode);
           }}
           disabled={saving !== null}
@@ -863,8 +927,42 @@ export function PayFlow({
           <span className="pf-pay-sub">{t(`sub.${mode}`)}</span>
         </button>
       ))}
+      {!splitting && !firstWay ? (
+        <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+          {t('split.link')}
+        </button>
+      ) : null}
     </div>
   );
+  /** The keypad for how much came the first way; the rest is the next tile's. Enough for the whole bill is one way. */
+  const splitKeypadEl =
+    splitKeypad !== null ? (
+      <Keypad
+        title={t('split.howMuch', { mode: modeWord(splitKeypad) })}
+        value={splitAmount}
+        hint={t('split.restHint')}
+        onChange={setSplitAmount}
+        onDone={() => {
+          const rupees = Number(splitAmount);
+          const minor = Number.isFinite(rupees) && splitAmount !== '' ? Math.round(rupees * 100) : 0;
+          const mode = splitKeypad;
+          setSplitKeypad(null);
+          setSplitAmount('');
+          setSplitting(false);
+          if (minor <= 0) return;
+          if (minor >= totalMinor) {
+            setFirstWay(null);
+            void pay(mode);
+            return;
+          }
+          setFirstWay({ mode, minor });
+        }}
+        onClose={() => {
+          setSplitKeypad(null);
+          setSplitAmount('');
+        }}
+      />
+    ) : null;
 
   /* ---------- ② How did they pay? ---------- */
   if (step === 'how') {
@@ -896,6 +994,7 @@ export function PayFlow({
           same line, and Other a target the size of the rest.
         */}
         {payTiles}
+        {splitKeypadEl}
         {dialog}
       </div>
     );
@@ -1084,6 +1183,7 @@ export function PayFlow({
             ) : null}
             <h2 className="pf-wide-h">{t('howTitle')}</h2>
             {payTiles}
+            {splitKeypadEl}
             {dialog}
           </aside>
         </div>

@@ -845,6 +845,8 @@ export const api = {
       paidAmountMinor?: number;
       schedulableId?: string;
       paymentMode?: PaymentMode;
+      /** Owner, 2026-10-14 — a bill paid two ways; the same list `/counter-sales` takes. */
+      payments?: { mode: PaymentMode; amountMinor: number }[];
       extraServices?: CheckoutExtraServiceInput[];
       /** The OTHER already-booked legs of this combo to complete in the same visit — existing appointments, not new ones. */
       groupMembers?: CheckoutGroupMemberInput[];
@@ -977,6 +979,8 @@ export const api = {
       services: { serviceId: string; paidAmountMinor: number }[];
       offerId?: string;
       paymentMode?: PaymentMode;
+      /** Owner, 2026-10-14 — a bill paid two ways: one entry per way, adding up to the bill. Wins over `paymentMode`. */
+      payments?: { mode: PaymentMode; amountMinor: number }[];
       idempotencyKey?: string;
       location?: string;
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).

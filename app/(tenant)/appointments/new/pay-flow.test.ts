@@ -197,7 +197,8 @@ describe('Record payment in three taps', () => {
     // Still the save for three of the four. UPI is the exception, and only when there is a QR to scan first
     // (the test below): recording the money before anyone has scanned anything would be a lie on the screen.
     // Jira GRW-572 — the wide till shares these tiles and checks for a client first; the phone's tap is unchanged.
-    expect(flow).toMatch(/if \(wide && !readyToPay\(\)\) return;\s*if \(mode === 'upi' && paymentQr\) setStep\('qr'\);\s*else void pay\(mode\);/);
+    // Owner, 2026-10-14 — a bill paid two ways: "which way first?" opens the keypad instead; the next tile still saves.
+    expect(flow).toMatch(/if \(wide && !readyToPay\(\)\) return;[\s\S]{0,400}if \(mode === 'upi' && paymentQr && !firstWay\) setStep\('qr'\);\s*else void pay\(mode\);/);
     expect(flow).not.toMatch(/markDone/);
     // The one call the full form makes for a sale with no chair (GRW-293) or a token (GRW-403); nothing new.
     expect(flow).toMatch(/api\.recordCounterSale\(/);
@@ -584,5 +585,35 @@ describe('the stylist the screen is holding is one it is showing', () => {
     expect(flow).toMatch(/shownProviders\.length > 0 \? \(/);
     expect(flow).toMatch(/\{shownProviders\.map\(\(p\) => \{/);
     expect(flow).not.toMatch(/\{providers\.map\(\(p\) => \{/);
+  });
+});
+
+/*
+ * Owner, 2026-10-14 — a bill paid two ways: ₹800 cash and the rest by UPI.
+ */
+describe('a bill paid two ways', () => {
+  it('is one extra question, asked only by "Paid two ways": a first way and how much, then the next tile saves', () => {
+    expect(flow).toMatch(/className="pf-split-link" onClick=\{\(\) => setSplitting\(true\)\}/);
+    expect(flow).toMatch(/if \(splitting && !firstWay\) \{\s*setSplitKeypad\(mode\);/);
+    expect(flow).toMatch(/title=\{t\('split\.howMuch', \{ mode: modeWord\(splitKeypad\) \}\)\}/);
+    // Enough for the whole bill is a bill paid one way: no split is held, the tap just pays.
+    expect(flow).toMatch(/if \(minor >= totalMinor\) \{\s*setFirstWay\(null\);\s*void pay\(mode\);/);
+  });
+  it('goes to the API as `payments`, the legs\' one word being the larger way, and the done screen says both', () => {
+    expect(flow).toMatch(/const howPaid = ways\.length > 1 \? \{ paymentMode: mainMode, payments: ways \} : \{ paymentMode: mode \};/);
+    // Both writes — a walk-in's sale and a booking's checkout — take the same list.
+    expect((flow.match(/\.\.\.howPaid,/g) ?? []).length).toBe(2);
+    expect(flow).toMatch(/modeLabel=\{sale\.paidBy\}/);
+    expect(flow).toMatch(/ways\.map\(\(w\) => `\$\{modeWord\(w\.mode\)\} \$\{money\(w\.amountMinor\)\}`\)\.join\(' · '\)/);
+  });
+  it('has its words in both languages, and the link is a 44px text button under the tiles', () => {
+    for (const m of [enMessages, hiMessages]) {
+      const split = (m as { payFlow: { split: Record<string, string> } }).payFlow.split;
+      for (const key of ['link', 'first', 'howMuch', 'restHint', 'then', 'clear']) expect(split[key], key).toBeTruthy();
+      expect(split.howMuch).toContain('{mode}');
+      expect(split.then).toContain('{rest}');
+    }
+    expect(css).toMatch(/\.pf-split-link \{[\s\S]{0,120}min-height: 2\.75rem;/);
+    expect(css).toMatch(/\.pf-split-held \{/);
   });
 });
