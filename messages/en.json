@@ -2658,7 +2658,28 @@
     "productsChip": "Products",
     "left": "{n} left",
     "outOfStock": "Out of stock",
-    "needService": "Add a service too — a product alone cannot be rung up yet."
+    "needService": "Add a service too — a product alone cannot be rung up yet.",
+    "sort": {
+      "label": "Sort",
+      "name": "Name A–Z",
+      "priceAsc": "Price, low to high",
+      "priceDesc": "Price, high to low"
+    },
+    "inStockOnly": "In stock only",
+    "pkg": {
+      "view": "What is inside {name}",
+      "close": "Close",
+      "noPrice": "Priced by its services",
+      "youSave": "You save {amount} — {list} one by one",
+      "mins": "{n} min · {count, plural, one {# service} other {# services}}",
+      "inside": "Inside",
+      "eachMins": "{n} min",
+      "until": "On sale until {date}.",
+      "add": "Add to bill",
+      "onBill": "On the bill",
+      "remove": "Take off the bill",
+      "addAnother": "Add one more (on the bill × {n})"
+    }
   },
   "help": {
     "title": "Help",

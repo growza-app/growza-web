@@ -17,7 +17,8 @@ export interface BillLine {
    * the route takes (each with its share of the package price) plus the `offerId`; on the bill they read as
    * ONE row at the package price, and taking that row off takes every leg with it.
    */
-  pkg?: { id: string; title: string; priceMinor: number };
+  /** `key` — owner, 2026-10-15: one per package ON THE BILL, so the same package rung up twice is two rows. */
+  pkg?: { id: string; key: string; title: string; priceMinor: number };
   /** Owner, 2026-10-14 — what this line is charged at when the desk typed a price for it; absent means the list price. */
   paidMinor?: number;
   /**
@@ -28,7 +29,7 @@ export interface BillLine {
 }
 
 /** The bill row's key: a service id, a package id, or `p:` + a product id. */
-export const lineKey = (l: BillLine): string => (l.pkg ? l.pkg.id : l.product ? `p:${l.product.id}` : l.serviceId);
+export const lineKey = (l: BillLine): string => (l.pkg ? l.pkg.key : l.product ? `p:${l.product.id}` : l.serviceId);
 
 /** What a line is worth before the whole-bill total is typed over: its typed price, else its list price. */
 export const lineMinor = (l: BillLine): number => l.paidMinor ?? l.priceMinor;
@@ -104,9 +105,9 @@ export function BillRows({
   const rows: Array<{ key: string; name: string; count: number; minor: number; list: number; sub?: string }> = [];
   for (const l of lines) {
     if (l.pkg) {
-      const same = rows.find((r) => r.key === l.pkg!.id);
+      const same = rows.find((r) => r.key === l.pkg!.key);
       if (same) same.sub = [same.sub, l.name].filter(Boolean).join(', ');
-      else rows.push({ key: l.pkg.id, name: l.pkg.title, count: 1, minor: l.pkg.priceMinor, list: l.pkg.priceMinor, sub: l.name });
+      else rows.push({ key: l.pkg.key, name: l.pkg.title, count: 1, minor: l.pkg.priceMinor, list: l.pkg.priceMinor, sub: l.name });
       continue;
     }
     const key = lineKey(l);

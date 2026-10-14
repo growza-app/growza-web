@@ -1004,7 +1004,7 @@ export const api = {
       customerId?: string;
       customerName?: string;
       customerPhone?: string;
-      services: { serviceId: string; paidAmountMinor: number }[];
+      services: { serviceId: string; paidAmountMinor: number; offerId?: string }[];
       offerId?: string;
       paymentMode?: PaymentMode;
       /** Owner, 2026-10-14 — a bill paid two ways: one entry per way, adding up to the bill. Wins over `paymentMode`. */

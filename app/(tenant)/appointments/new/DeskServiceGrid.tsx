@@ -6,7 +6,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Offer, Product, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
 import { productPhotoUrl, servicePhotoUrl } from '../../lib/service-photos';
-import { IconMinus, IconPlus, IconSearch } from '../../components/icons';
+import { IconInfo, IconMinus, IconPlus, IconSearch } from '../../components/icons';
+import { PackageSheet } from '../../components/PackageSheet';
+import { MENU_SORTS, sortMenu, type MenuSort } from '../../lib/menu-sort';
 
 /**
  * Jira GRW-572 — the middle panel of the wide till: the whole menu as tiles, with a search box above it.
@@ -28,6 +30,9 @@ export function DeskServiceGrid({
   money,
   packages = [],
   packageOnBillId = null,
+  packageOnBillIds,
+  packageCountOf,
+  onLessPackage,
   onPickPackage,
   products = [],
   productCountOf = () => 0,
@@ -45,6 +50,11 @@ export function DeskServiceGrid({
   /** Jira GRW-572 — the branch's priced combos whose services are all on this menu; a second tab when there are any. */
   packages?: Offer[];
   packageOnBillId?: string | null;
+  /** Owner, 2026-10-15 — the till may carry more than one package; the one-page form still sends one. */
+  packageOnBillIds?: readonly string[];
+  /** Owner, 2026-10-15 — how many times a package is on the bill, and one fewer; absent on the one-page form. */
+  packageCountOf?: (offerId: string) => number;
+  onLessPackage?: (offerId: string) => void;
   onPickPackage?: (o: Offer) => void;
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the third tab, the same tiles with a stock line. */
   products?: Product[];
@@ -58,6 +68,10 @@ export function DeskServiceGrid({
   const [tab, setTab] = useState<'services' | 'packages' | 'products'>('services');
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
+  /** Owner, 2026-10-15 — sort beside the search, and the shelf hides what is out of stock unless asked. */
+  const [sort, setSort] = useState<MenuSort>('name');
+  const [inStockOnly, setInStockOnly] = useState(true);
+  const [viewing, setViewing] = useState<Offer | null>(null);
   const kindRow = useRef<HTMLDivElement>(null);
   // The chosen chip stays in view, and a wheel over the row moves it sideways (a laptop has no sideways wheel).
   useEffect(() => {
@@ -89,31 +103,32 @@ export function DeskServiceGrid({
    */
   const shownPackages = useMemo(() => {
     const q = term.trim();
-    if (!q) return packages;
+    if (!q) return sortMenu(packages, sort, (o) => o.title, (o) => asMinor(o.comboPriceMinor));
     return matchItems(
       packages.map((o) => ({ item: o, text: [o.title, ...o.serviceIds.map((id) => byId.get(id)?.name ?? '')], priceMinor: asMinor(o.comboPriceMinor) })),
       q,
     );
-  }, [packages, term, byId]);
+  }, [packages, term, byId, sort]);
 
   const shownProducts = useMemo(() => {
+    const pool = inStockOnly ? products.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : products;
     const q = term.trim();
-    if (!q) return products;
+    if (!q) return sortMenu(pool, sort, (p) => p.name, (p) => asMinor(p.priceMinor));
     return matchItems(
-      products.map((p) => ({ item: p, text: [p.name], priceMinor: asMinor(p.priceMinor) })),
+      pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
       q,
     );
-  }, [products, term]);
+  }, [products, term, sort, inStockOnly, productCountOf]);
 
   const shown = useMemo(() => {
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
     const q = term.trim();
-    if (!q) return pool;
+    if (!q) return sortMenu(pool, sort, (s) => s.name, (s) => asMinor(s.priceMinor));
     return matchItems(
       pool.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
       q,
     );
-  }, [services, term, kind]);
+  }, [services, term, kind, sort]);
 
   return (
     <section className="pf-wide-mid" aria-label={t('services')}>
@@ -134,17 +149,34 @@ export function DeskServiceGrid({
           <span className="pf-wide-kind-n">{products.length}</span>
         </button>
       </div>
-      <label className="pf-wide-search">
-        <IconSearch />
-        <input
-          type="search"
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          placeholder={t('desk.search', { count: services.length })}
-          aria-label={t('desk.search', { count: services.length })}
-          autoComplete="off"
-        />
-      </label>
+      <div className="pf-wide-tools">
+        <label className="pf-wide-search">
+          <IconSearch />
+          <input
+            type="search"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder={t('desk.search', { count: services.length })}
+            aria-label={t('desk.search', { count: services.length })}
+            autoComplete="off"
+          />
+        </label>
+        <label className="pf-sort">
+          <span className="pf-sort-l">{t('sort.label')}</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value as MenuSort)} aria-label={t('sort.label')}>
+            {MENU_SORTS.map((k) => (
+              <option key={k} value={k}>
+                {t(`sort.${k}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        {tab === 'products' ? (
+          <button type="button" className={`pf-chip pf-filter-chip ${inStockOnly ? 'pf-chip-on' : ''}`} aria-pressed={inStockOnly} onClick={() => setInStockOnly((v) => !v)}>
+            {t('inStockOnly')}
+          </button>
+        ) : null}
+      </div>
       {tab === 'services' && kinds.length > 1 ? (
         <div className="pf-chips pf-wide-kinds" role="group" aria-label={nv.serviceKinds} ref={kindRow}>
           <button type="button" className={`pf-chip ${kind === '' ? 'pf-chip-on' : ''}`} aria-pressed={kind === ''} onClick={() => setKind('')}>
@@ -210,7 +242,8 @@ export function DeskServiceGrid({
           /* A package reads like a service: the first leg's picture, the name, the package price, and what is in it. */
           <div className="pf-tiles pf-wide-tiles">
             {shownPackages.map((o) => {
-              const on = packageOnBillId === o.id;
+              const pkgCount = packageCountOf ? packageCountOf(o.id) : 0;
+              const on = pkgCount > 0 || (packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id);
               const first = byId.get(o.serviceIds[0] ?? '');
               const names = o.serviceIds.map((id) => byId.get(id)?.name).filter(Boolean).join(', ');
               return (
@@ -223,6 +256,22 @@ export function DeskServiceGrid({
                       <span className="pf-tile-mins">{names}</span>
                     </span>
                   </button>
+                  <button type="button" className="pf-tile-info" aria-label={t('pkg.view', { name: o.title })} onClick={() => setViewing(o)}>
+                    <IconInfo />
+                  </button>
+                  {pkgCount > 0 && onLessPackage ? (
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count: pkgCount })}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: o.title })} onClick={() => onLessPackage(o.id)}>
+                        <IconMinus />
+                      </button>
+                      <span className="pf-qty-n" aria-live="polite">
+                        {pkgCount}
+                      </span>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: o.title })} onClick={() => onPickPackage?.(o)}>
+                        <IconPlus />
+                      </button>
+                    </span>
+                  ) : null}
                 </div>
               );
             })}
@@ -270,6 +319,24 @@ export function DeskServiceGrid({
           })}
         </div>
       )}
+      {viewing ? (
+        <PackageSheet
+          offer={viewing}
+          services={services}
+          onBill={packageCountOf ? packageCountOf(viewing.id) > 0 : packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
+          count={packageCountOf ? packageCountOf(viewing.id) : undefined}
+          onAdd={() => {
+            onPickPackage?.(viewing);
+            setViewing(null);
+          }}
+          onRemove={() => {
+            if (onLessPackage) onLessPackage(viewing.id);
+            else onPickPackage?.(viewing);
+            setViewing(null);
+          }}
+          onClose={() => setViewing(null)}
+        />
+      ) : null}
     </section>
   );
 }

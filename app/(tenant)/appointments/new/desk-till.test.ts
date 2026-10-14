@@ -34,7 +34,9 @@ describe('the wide till', () => {
     expect(flow).toMatch(/<DeskUnpaid location=\{location\} timezone=\{timezone\}/);
     expect(flow).toMatch(/<DeskServiceGrid\s+services=\{ranked_all\}\s+countOf=\{countOf\}\s+onMore=\{addOne\}\s+onLess=\{oneLess\}/);
     // A package is lines with a `pkg`, sent as its legs plus the offer id; its legs never count on a tile.
-    expect(flow).toMatch(/\.\.\.\(pkgOnBill \? \{ offerId: pkgOnBill\.id \} : \{\}\)/);
+    // Owner, 2026-10-15 — a bill may carry several packages: each leg names its own offer, nothing at the request level.
+    expect(flow).toMatch(/\.\.\.\(l\.pkg \? \{ offerId: l\.pkg\.id \} : \{\}\)/);
+    expect(flow).not.toMatch(/offerId: pkgOnBill/);
     // Owner, 2026-10-14 — nor does a product line (serviceId '') count on a service's tile.
     expect(flow).toMatch(/const countOf = \(serviceId: string\) => lines\.filter\(\(l\) => l\.serviceId === serviceId && !l\.pkg && !l\.product\)\.length;/);
     expect(flow).toMatch(/const amounts = spread\(baseAmounts\.map/);
@@ -129,7 +131,7 @@ describe('the desk grid shows what a till sells', () => {
     expect(grid).toMatch(/\{p\.stock <= 0 \? t\('outOfStock'\) : t\('left', \{ n: p\.stock \}\)\}/);
     expect(flow).toMatch(/products=\{products\}\s+productCountOf=\{productCountOf\}\s+onMoreProduct=\{addProduct\}\s+onLessProduct=\{\(id\) => oneLess\(`p:\$\{id\}`\)\}/);
     // Grouped for the route: which, how many, what the line came to — and never among the service legs.
-    expect(flow).toMatch(/const legs = lines\.flatMap\(\(l, i\) => \(l\.product \? \[\] : \[\{ serviceId: l\.serviceId, paidAmountMinor: amounts\[i\]! \}\]\)\);/);
+    expect(flow).toMatch(/const legs = lines\.flatMap\(\(l, i\) => \(l\.product \? \[\] : \[\{ serviceId: l\.serviceId, paidAmountMinor: amounts\[i\]!, \.\.\.\(l\.pkg \? \{ offerId: l\.pkg\.id \} : \{\}\) \}\]\)\);/);
     expect((flow.match(/\.\.\.soldProducts,/g) ?? []).length).toBe(2);
     // A bill is still a visit: a product alone is told to add a service, not refused in silence.
     expect(flow).toMatch(/const hasService = lines\.some\(\(l\) => !l\.product\);/);
