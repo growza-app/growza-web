@@ -26,6 +26,8 @@ describe('Bookings on a desk', () => {
     expect(list).toMatch(/<section className="pf-wide-mid bk-desk-mid"/);
     expect(list).toMatch(/<aside className="pf-wide-right bk-desk-right"/);
     expect(css).toMatch(/\.page-body\.bk-fit:has\(> \.bk-desk\) \{\s*display: flex;\s*flex-direction: column;\s*overflow: hidden;/);
+    // The grid's one row is bounded, so a tall left column scrolls instead of being clipped (matrix, 1280×720).
+    expect(css).toMatch(/\.bk-desk-grid \{[\s\S]*?grid-template-rows: minmax\(0, 1fr\);/);
   });
 
   it('the left panel is the takings, the segments as a list with their counts, and the filter card stacked', () => {

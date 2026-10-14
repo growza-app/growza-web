@@ -18,6 +18,9 @@
   .cust-desk-grid {
     flex: 1;
     min-height: 0;
+    /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
+       and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
+    grid-template-rows: minmax(0, 1fr);
     /* The list gets the room: a 1366 laptop leaves it ~36rem beside an 11rem band column and a 21rem card. */
     grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(20rem, 21rem);
     align-items: stretch;

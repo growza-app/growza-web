@@ -19,6 +19,7 @@
   .svc-desk-grid {
     flex: 1;
     min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
     /* The list gets the room: a 1366 laptop leaves it ~34rem beside an 11rem category column and a 20rem form. */
     grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(19rem, 23rem);
     align-items: stretch;
