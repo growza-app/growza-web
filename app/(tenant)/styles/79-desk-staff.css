@@ -190,4 +190,11 @@
   .staff-desk .staff-shift-head .staff-badge-free {
     display: none;
   }
+
+  /* The sign-in chip too: with TOP beside the name it wrapped the row to two lines at 1180 (owner, 2026-10-14).
+     The logins group under the roster and the panel's "Remove sign-in" still say who can sign in. */
+  .staff-desk .staff-identity-name .staff-badge-in,
+  .staff-desk .staff-identity-name .staff-badge-invited {
+    display: none;
+  }
 }
