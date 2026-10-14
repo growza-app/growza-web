@@ -350,6 +350,40 @@
     font-size: 1.5rem;
     font-weight: 800;
     letter-spacing: -0.01em;
+    color: var(--accent-deep);
+    text-decoration: underline dotted;
+    text-underline-offset: 4px;
+  }
+
+  .pf-wide-total-words {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* "Change total" under the word, in the accent, with a pencil: the figure is a control, not a label. */
+  .pf-wide-total-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-deep);
+  }
+
+  .pf-wide-total-edit svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .pf-wide-total:hover:not(:disabled) {
+    border-color: var(--accent-deep);
+  }
+
+  .pf-wide-total:disabled .pf-total-figure,
+  .pf-wide-total:disabled .pf-wide-total-edit {
+    color: var(--muted);
+    text-decoration: none;
   }
 
   .pf-wide-right .pf-pay-tile::after {
