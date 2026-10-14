@@ -119,6 +119,39 @@
     text-align: left;
   }
 
+  /* ---------- Add services: the till's grid in a wide dialog ---------- */
+  /*
+   * The picker is `DeskServiceGrid` (79-desk-till.css draws the tiles under `.pf-wide`), in a dialog wide enough
+   * for four or five tiles across. The tiles scroll inside it; the head and the search stay. A package holds a
+   * service once, so the tile's − n + is not drawn: the tap puts it in or takes it out.
+   */
+  /* Three classes: `.sheet` (98-service-sheet.css, loaded later) sets a 460px width and a 92vh cap of its own. */
+  .modal.sheet.svc-picker-desk {
+    width: min(62rem, 92vw);
+    max-width: none;
+    height: min(46rem, 90vh);
+    max-height: none;
+  }
+
+  .svc-picker-desk .pf-wide-mid {
+    flex: 1;
+    min-height: 0;
+    padding: var(--sp-3) var(--sp-4) var(--sp-4);
+    overflow: hidden;
+  }
+
+  .svc-picker-desk .pf-wide-tiles {
+    flex: 1;
+    min-height: 0;
+    align-content: start;
+    overflow-y: auto;
+    padding: 2px 2px var(--sp-2);
+  }
+
+  .svc-picker-desk .pf-tile-qty {
+    display: none;
+  }
+
   /* Flat ₹ · % off · Sum of parts in a 15rem column. */
   .pkg-editor .pe-mode-toggle button {
     padding: 4px 4px;

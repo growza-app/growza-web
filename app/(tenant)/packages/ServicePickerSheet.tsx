@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { formatMoney, type Service } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -8,6 +8,7 @@ import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { servicePhotoUrl } from '../lib/service-photos';
+import { DeskServiceGrid } from '../appointments/new/DeskServiceGrid';
 
 /**
  * Picking the services a package is made of, in a sheet of its own.
@@ -38,6 +39,19 @@ export function ServicePickerSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   useDialog(sheetRef, { onClose });
   const [search, setSearch] = useState('');
+  /*
+   * Owner, 2026-10-14 — on a desk (≥1101px) the picker is the till's grid: categories, search and big tiles
+   * (`DeskServiceGrid`), a picked tile ticked, a tap toggling it. One way of choosing a service on a desk,
+   * whether it is going on a bill or into a package. Null until the width is known; the list draws then.
+   */
+  const [desk, setDesk] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const apply = () => setDesk(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
 
   // Jira GRW-375 — the same matching as the walk-in sheet and the services table.
   const rows =
@@ -59,6 +73,44 @@ export function ServicePickerSheet({
     [rows, remote, search, serviceById],
   );
 
+  const head = (
+    <div className="sheet-head">
+      <span className="svc-picker-count">
+        {selectedIds.length > 0 ? t('picker.chosen', { count: selectedIds.length }) : ''}
+      </span>
+      <span className="sheet-head-title">{t('picker.title')}</span>
+      <button type="button" className="sheet-head-save" onClick={onClose}>
+        {t('picker.done')}
+      </button>
+    </div>
+  );
+
+  if (desk) {
+    return (
+      <div className="modal-backdrop" onClick={onClose}>
+        <div
+          className="modal sheet svc-picker svc-picker-desk pf-wide"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('picker.title')}
+          ref={sheetRef}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {head}
+          {/* A package holds a service once: the tile's tap toggles it, and the till's − n + is not drawn (79-desk-package.css). */}
+          <DeskServiceGrid
+            services={services}
+            countOf={(id) => (selectedIds.includes(id) ? 1 : 0)}
+            onMore={(s) => onToggle(s.id)}
+            onLess={(id) => onToggle(id)}
+            full={false}
+            money={(minor) => formatMoney(String(minor))}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
@@ -69,15 +121,7 @@ export function ServicePickerSheet({
         ref={sheetRef}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sheet-head">
-          <span className="svc-picker-count">
-            {selectedIds.length > 0 ? t('picker.chosen', { count: selectedIds.length }) : ''}
-          </span>
-          <span className="sheet-head-title">{t('picker.title')}</span>
-          <button type="button" className="sheet-head-save" onClick={onClose}>
-            {t('picker.done')}
-          </button>
-        </div>
+        {head}
 
         <div className="svc-picker-search picker-search">
           <input

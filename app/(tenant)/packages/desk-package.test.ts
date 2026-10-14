@@ -10,6 +10,7 @@ const read = (p: string) => readFileSync(join(__dirname, p), 'utf8');
 const builder = read('PackageBuilder.tsx');
 const css = read('../styles/79-desk-package.css');
 const wizard = read('../styles/30-combo-builder-wizard.css');
+const picker = read('ServicePickerSheet.tsx');
 
 describe('Make a package on a desk', () => {
   it('the form is three wrappers in the phone\'s order: details, services, the rest', () => {
@@ -48,6 +49,15 @@ describe('Make a package on a desk', () => {
 
   it('a 344px phone stacks the detail labels too, and lets the title wrap', () => {
     expect(wizard).toMatch(/@media \(max-width: 480px\) \{[\s\S]*?\.pkg-editor \.pe-title \{\s*white-space: normal;[\s\S]*?-webkit-line-clamp: 2;[\s\S]*?\.pkg-editor \.pe-col-details \.sheet-row \{\s*flex-wrap: wrap;/);
+  });
+
+  it('Add services on a desk is the till\'s grid: a tap toggles, the − n + is not drawn', () => {
+    expect(picker).toMatch(/window\.matchMedia\('\(min-width: 1101px\)'\)/);
+    expect(picker).toMatch(/className="modal sheet svc-picker svc-picker-desk pf-wide"/);
+    expect(picker).toMatch(/<DeskServiceGrid\s*services=\{services\}\s*countOf=\{\(id\) => \(selectedIds\.includes\(id\) \? 1 : 0\)\}\s*onMore=\{\(s\) => onToggle\(s\.id\)\}\s*onLess=\{\(id\) => onToggle\(id\)\}\s*full=\{false\}/);
+    expect(css).toMatch(/\.modal\.sheet\.svc-picker-desk \{\s*width: min\(62rem, 92vw\);/);
+    expect(css).toMatch(/\.svc-picker-desk \.pf-tile-qty \{\s*display: none;/);
+    expect(css).toMatch(/\.svc-picker-desk \.pf-wide-tiles \{[\s\S]*?overflow-y: auto;/);
   });
 
   it('the narrow band keeps the services wide', () => {
