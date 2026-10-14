@@ -141,7 +141,7 @@
 
   /*
    * The tab you are on sits in a small glass lens, the way iOS draws it: a translucent, lightly tinted capsule that blurs
-   * what is behind it, with a bright hairline on its edge and a soft shadow (the sheen and shadow are in the clay sheet).
+   * what is behind it, with a bright hairline on its edge and a soft shadow (the shadow is below; the clay sheen went with Jira GRW-570).
    * Every other tab is plain and single-coloured — the bar stays monochrome and the accent is kept for the selected
    * icon and label (Apple's Liquid Glass guide: "save it for ... the selected tab's icon").
    */

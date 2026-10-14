@@ -385,7 +385,7 @@
 }
 
 /*
- * The toolbar's two buttons are primaries: 101-clay-app.css paints every plain `.btn` green, and they sit on that
+ * The toolbar's two buttons are primaries: `01-controls.css` paints every plain `.btn` green, and they sit on that
  * green with `.cat-edit-btn`'s dark-green text (the white-surface button this class was written as) — unreadable.
  * White on the green, like every other primary. The row buttons below are `btn-ghost`, so they stay white.
  */

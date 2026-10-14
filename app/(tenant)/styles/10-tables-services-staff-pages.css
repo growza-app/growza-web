@@ -272,8 +272,8 @@ tr:last-child td {
   min-width: 0;
   padding: 0;
   border: 0;
-  /* The base sheet gives every input an inset (neumorphic) shadow and a radius; inside the wrapper that drew a
-     second, smaller field within the first. The wrapper is the field — the input is only its text. */
+  /* The control sheet gives every input a border and a radius; inside the wrapper that drew a second, smaller
+     field within the first. The wrapper is the field — the input is only its text. */
   border-radius: 0;
   box-shadow: none;
   background: transparent;

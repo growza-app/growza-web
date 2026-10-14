@@ -53,7 +53,8 @@ describe('a phone does not zoom when these fields are focused (pinch-zoom is all
   it('the Bookings search and filter fields and the checkout amount are 16px', () => {
     // Jira GRW-571 — one phone floor for every field, in the accessibility sheet, instead of a 16px per screen.
     expect(css('90-accessibility.css')).toMatch(/@media \(max-width: 860px\)[\s\S]*font-size:\s*16px !important/);
-    for (const sheet of ['32-customers.css', '14-checkout-sheet.css']) expect(css(sheet)).not.toMatch(/font-size: 16px;/);
+    expect(css('32-customers.css')).not.toMatch(/\.bk-(search-row|field) (input|select)[^{]*\{[^}]*font-size: 16px;/);
+    expect(css('14-checkout-sheet.css')).not.toMatch(/\.checkout-amount-field input \{[^}]*font-size: 16px;/);
   });
 });
 

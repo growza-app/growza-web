@@ -1123,7 +1123,7 @@
    * card scrolling past showed through that 16px band — a slice of white card wedged between the header and
    * the pills, which is what "alignment issue" looked like at the top of the screen.
    *
-   * `::after`, because `::before` is the sliding selected piece (100-clay-tabs.css) and taking it would stop
+   * `::after`, because `::before` was the sliding selected piece of the clay tab strip (removed in Jira GRW-570) and taking it would stop
    * the tabs animating. Painted in the page's own colour, so it is invisible until something scrolls under it.
    */
   /*

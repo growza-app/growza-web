@@ -372,7 +372,7 @@
  * The line under the Stylist / Receptionist chips.
  *
  * It had a negative top margin to sit tight under them, which was fine while the chips were flat and wrong the
- * moment they became clay: a raised chip's shadow reaches below its box, so the sentence ran into it.
+ * moment they became clay (since removed, Jira GRW-570): a raised chip's shadow reaches below its box, so the sentence ran into it.
  */
 .wiz-kind-sub {
   margin: var(--sp-2) 0 var(--sp-3);

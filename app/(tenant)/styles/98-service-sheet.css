@@ -371,7 +371,7 @@
     width: 48px;
     height: 48px;
   }
-  /* Retire and Delete: two rows, each its own raised piece (the shadow is in 101-clay-app.css). */
+  /* Retire and Delete: two rows, each its own raised piece (the clay shadow went with Jira GRW-570; a border now). */
   .sheet-group-danger {
     margin-top: 10px;
     display: flex;
@@ -400,7 +400,7 @@
  * Colour (owner, 2026-10-08): the sheet was white and grey while Home, Settings and Reports wear the Growza palette.
  * The same palette, nothing new: a tinted round badge on each group title (as the Home quick links have), green where
  * you act (steppers, the rupee sign, Save once it can be pressed), Retire in amber and Delete in red. Colour and
- * shape only — no row grows, so the one-screen fit above is unchanged. Shadows are in 101-clay-app.css.
+ * shape only — no row grows, so the one-screen fit above is unchanged. The clay shadows went with Jira GRW-570.
  */
 @media (max-width: 860px) {
   .sheet-label {

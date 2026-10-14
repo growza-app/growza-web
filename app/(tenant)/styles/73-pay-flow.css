@@ -692,7 +692,7 @@
 }
 
 .pf-pay-tile:active:not(:disabled) {
-  box-shadow: none;
+  background: var(--slate-soft);
 }
 
 .pf-pay-cash {
@@ -1042,7 +1042,7 @@
 }
 
 .pf-key:active {
-  box-shadow: none;
+  background: var(--slate-soft);
 }
 
 .pf-key-quiet {
