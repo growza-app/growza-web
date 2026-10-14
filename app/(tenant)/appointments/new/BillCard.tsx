@@ -42,6 +42,38 @@ export function BillCard({
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose, initialFocus: 'container' });
 
+  // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
+  return (
+    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={ref} className="pf-keypad pf-bill" role="dialog" aria-modal="true" aria-label={t('billTitle')} tabIndex={-1}>
+        <div className="pf-keypad-head">
+          <span className="pf-keypad-title">{t('billTitle')}</span>
+          <button type="button" className="pf-keypad-clear" onClick={onClose}>
+            {nv.close}
+          </button>
+        </div>
+        <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={onLess} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Jira GRW-572 — the rows and the sums on their own, so the wide till can show the bill in its right-hand
+ * panel all the time instead of behind a tap. The card above is this inside a dialog.
+ */
+export function BillRows({
+  lines,
+  listMinor,
+  totalMinor,
+  onLess,
+}: {
+  lines: readonly BillLine[];
+  listMinor: number;
+  totalMinor: number;
+  onLess: (serviceId: string) => void;
+}) {
+  const t = useTranslations('payFlow');
   // Same service rung up twice is one row with a count, as the receipt groups it.
   const rows: Array<{ serviceId: string; name: string; count: number; minor: number }> = [];
   for (const l of lines) {
@@ -54,17 +86,8 @@ export function BillCard({
   const offMinor = listMinor - totalMinor;
   const money = (minor: number) => formatMoney(String(minor));
 
-  // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className="pf-keypad pf-bill" role="dialog" aria-modal="true" aria-label={t('billTitle')} tabIndex={-1}>
-        <div className="pf-keypad-head">
-          <span className="pf-keypad-title">{t('billTitle')}</span>
-          <button type="button" className="pf-keypad-clear" onClick={onClose}>
-            {nv.close}
-          </button>
-        </div>
-
+    <>
         <ul className="pf-bill-lines">
           {rows.map((r) => (
             <li key={r.serviceId} className="pf-bill-line">
@@ -102,7 +125,6 @@ export function BillCard({
             <dd>{money(totalMinor)}</dd>
           </div>
         </dl>
-      </div>
-    </div>
+    </>
   );
 }

@@ -191,7 +191,8 @@ describe('Record payment in three taps', () => {
   it('tapping how they paid IS the save — there is no Mark done', () => {
     // Still the save for three of the four. UPI is the exception, and only when there is a QR to scan first
     // (the test below): recording the money before anyone has scanned anything would be a lie on the screen.
-    expect(flow).toMatch(/onClick=\{\(\) => \(mode === 'upi' && paymentQr \? setStep\('qr'\) : void pay\(mode\)\)\}/);
+    // Jira GRW-572 — the wide till shares these tiles and checks for a client first; the phone's tap is unchanged.
+    expect(flow).toMatch(/if \(wide && !readyToPay\(\)\) return;\s*if \(mode === 'upi' && paymentQr\) setStep\('qr'\);\s*else void pay\(mode\);/);
     expect(flow).not.toMatch(/markDone/);
     // The one call the full form makes for a sale with no chair (GRW-293) or a token (GRW-403); nothing new.
     expect(flow).toMatch(/api\.recordCounterSale\(/);

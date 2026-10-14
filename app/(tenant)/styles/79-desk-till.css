@@ -1,0 +1,293 @@
+/*
+ * Jira GRW-572 — the till on a wide desk: three panels.
+ *
+ *   left   who is paying, who did it, and everyone at this branch who still has to pay today
+ *   middle the menu as tiles, with a search box; the phone's `.pf-tile`, four or five across
+ *   right  the bill, the total, and the four payment tiles — always on screen, never behind a tap
+ *
+ * Only at the desktop tier (≥1101px, 00-base.css). Below it `NewBookingClient` never asks for `wide`, so
+ * nothing here is reached; the media query is belt and braces against a window resized mid-sale. Everything
+ * is `.pf-wide`-scoped so the phone's `.pf` rules (73-pay-flow.css) are untouched.
+ */
+@media (min-width: 1101px) {
+  .pf-wide {
+    /* No pinned tray on a desk: the total lives in the right panel. */
+    padding-bottom: var(--sp-6);
+  }
+
+  .pf-wide-grid {
+    display: grid;
+    grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr) minmax(17rem, 20rem);
+    gap: var(--sp-4);
+    align-items: start;
+  }
+
+  .pf-wide-left,
+  .pf-wide-right {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  /* The bill stays in view while the menu scrolls. 4.5rem clears the page header. */
+  .pf-wide-right {
+    position: sticky;
+    top: 4.5rem;
+  }
+
+  /* Who? and Stylist stack in the narrow column; the phone lays them out as rows. */
+  .pf-wide-left .pf-row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
+
+  .pf-wide-left .pf-row-label {
+    min-width: 0;
+  }
+
+  .pf-wide-left .pf-who-bar {
+    width: 100%;
+  }
+
+  .pf-wide-left .pf-who-search {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  .pf-wide-left .pf-chips {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .pf-wide-h {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ---------- left: unpaid today ---------- */
+  .pf-wide-unpaid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+
+  .pf-wide-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
+  .pf-wide-row {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font: inherit;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .pf-wide-row:hover {
+    background: var(--slate-soft);
+  }
+
+  .pf-wide-row-on {
+    border-color: var(--accent-deep);
+    background: var(--accent-soft);
+  }
+
+  .pf-wide-row-top {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  .pf-wide-row-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pf-wide-row-at {
+    flex: none;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pf-wide-row-sub {
+    color: var(--muted);
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pf-wide-state {
+    font-weight: 600;
+  }
+
+  .pf-wide-state-waiting {
+    color: var(--amber);
+  }
+
+  .pf-wide-state-withStylist {
+    color: var(--blue);
+  }
+
+  .pf-wide-state-booked {
+    color: var(--accent-deep);
+  }
+
+  /* ---------- middle: the menu ---------- */
+  .pf-wide-mid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    min-width: 0;
+  }
+
+  .pf-wide-search {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 0 var(--sp-3);
+    min-height: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--muted);
+  }
+
+  .pf-wide-search svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+  }
+
+  /* The box is the field; the input is only its text (the control sheet would draw a second border). */
+  .pf-wide-search input {
+    flex: 1;
+    min-width: 0;
+    min-height: 38px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text);
+  }
+
+  .pf-wide-search input:focus-visible {
+    outline: none;
+  }
+
+  .pf-wide-search:focus-within {
+    border-color: var(--accent-deep);
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 1px;
+  }
+
+  /* As many tiles as fit at a readable width: four on a 1366 laptop, five or six on a wide monitor. */
+  .pf-wide-tiles {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  }
+
+  .pf-wide .pf-tile {
+    min-height: 8.5rem;
+  }
+
+  .pf-wide .pf-tile-price {
+    font-size: 1rem;
+  }
+
+  .pf-tile-mins {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .pf-wide-empty {
+    margin: 0;
+    padding: var(--sp-3) 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  /* ---------- right: the bill ---------- */
+  /* The rows' own Total line is hidden here: the total button below it is the one figure, and it opens the keypad. */
+  .pf-wide-right .pf-bill-total {
+    display: none;
+  }
+
+  .pf-wide-right .pf-bill-sums:empty {
+    display: none;
+  }
+
+  .pf-wide-right .pf-bill-lines {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  .pf-wide-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    min-height: 3.25rem;
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--page-bg);
+    font: inherit;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .pf-wide-total:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  .pf-wide-total .pf-total-figure {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .pf-wide-right .pf-pay-tile {
+    padding: var(--sp-3) var(--sp-6) var(--sp-3) var(--sp-3);
+  }
+
+  .pf-wide-right .pf-pay-tile::after {
+    top: var(--sp-4);
+  }
+}
+

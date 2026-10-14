@@ -23,7 +23,9 @@ import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
 import { ServiceSheet } from '../../components/ServiceSheet';
-import { BillCard, type BillLine as Line } from './BillCard';
+import { BillCard, BillRows, type BillLine as Line } from './BillCard';
+import { DeskServiceGrid } from './DeskServiceGrid';
+import { DeskUnpaid } from './DeskUnpaid';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -117,6 +119,7 @@ export function PayFlow({
   providerId,
   timezone,
   backTo,
+  wide = false,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -138,6 +141,11 @@ export function PayFlow({
   providerId: string | null;
   timezone: string;
   backTo?: '/appointments';
+  /**
+   * Jira GRW-572 — a laptop ≥1101px: the same till laid out in three panels (who · what · the bill), with the
+   * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
+   */
+  wide?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const tcr = useTranslations('chrome');
@@ -362,6 +370,13 @@ export function PayFlow({
     }
     return shown;
   }, [services, ranked, token, lines]);
+
+  /** Jira GRW-572 — the whole menu, most sold first: the wide till has room for all of it. */
+  const ranked_all = useMemo(() => {
+    if (!services) return [];
+    const rank = new Map((ranked ?? []).map((id, i) => [id, i]));
+    return [...services].sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity));
+  }, [services, ranked]);
 
   const listMinor = lines.reduce((sum, l) => sum + l.priceMinor, 0);
   const totalMinor = override ?? listMinor;
@@ -619,6 +634,19 @@ export function PayFlow({
     setStep('how');
   };
 
+  /** Jira GRW-572 — the wide till has no Next: a payment tile does Next's check first, and marks what is missing. */
+  const readyToPay = () => {
+    const service = lines.length === 0;
+    const client_ = !token && client.kind === 'none';
+    if (service || client_) {
+      setMissing({ client: client_, service });
+      if (client_ && !service) setWhoOpen('add');
+      return false;
+    }
+    setMissing(null);
+    return true;
+  };
+
   // Marked only while still true, so answering one clears its own mark without clearing the other's.
   const badClient = Boolean(missing?.client) && !token && client.kind === 'none';
   const badService = Boolean(missing?.service) && lines.length === 0;
@@ -703,6 +731,44 @@ export function PayFlow({
     );
   }
 
+  /*
+   * The four payment tiles. On a phone they are ② — a screen of their own; on the wide till they sit under the
+   * bill. One element, so UPI's QR rule and the save are written once.
+   */
+  const payTiles = (
+    <div className="pf-pay" role="group" aria-label={t('howTitle')}>
+      {(['cash', 'upi', 'card', 'other'] as const).map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          className={`pf-pay-tile pf-pay-${mode}`}
+          /*
+           * UPI is the one tile that may not be the save.
+           *
+           * With a QR uploaded it opens the QR for the customer to scan, and the money is recorded on the
+           * next screen when it has actually arrived — recording it here would mark a sale paid before
+           * anybody had scanned anything. Every other tile still saves on the tap (the Square model): cash
+           * is in the hand, and the done screen's Fix a mistake is the way back.
+           */
+          onClick={() => {
+            if (wide && !readyToPay()) return;
+            if (mode === 'upi' && paymentQr) setStep('qr');
+            else void pay(mode);
+          }}
+          disabled={saving !== null}
+          aria-busy={saving === mode}
+        >
+          <span className="pf-pay-icon" aria-hidden="true">
+            {PAY_ICONS[mode]}
+          </span>
+          <span className="pf-pay-word">{saving === mode ? t('saving') : mode === 'other' ? t('other') : modeWord(mode)}</span>
+          {/* What it means, for the owner who is not sure which word is theirs. Never the only label. */}
+          <span className="pf-pay-sub">{t(`sub.${mode}`)}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   /* ---------- ② How did they pay? ---------- */
   if (step === 'how') {
     return (
@@ -732,33 +798,7 @@ export function PayFlow({
           A 2×2 grid of tinted cards fixes all of it: colour down to an icon on a pale ground, every label on the
           same line, and Other a target the size of the rest.
         */}
-        <div className="pf-pay" role="group" aria-label={t('howTitle')}>
-          {(['cash', 'upi', 'card', 'other'] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              className={`pf-pay-tile pf-pay-${mode}`}
-              /*
-               * UPI is the one tile that may not be the save.
-               *
-               * With a QR uploaded it opens the QR for the customer to scan, and the money is recorded on the
-               * next screen when it has actually arrived — recording it here would mark a sale paid before
-               * anybody had scanned anything. Every other tile still saves on the tap (the Square model): cash
-               * is in the hand, and the done screen's Fix a mistake is the way back.
-               */
-              onClick={() => (mode === 'upi' && paymentQr ? setStep('qr') : void pay(mode))}
-              disabled={saving !== null}
-              aria-busy={saving === mode}
-            >
-              <span className="pf-pay-icon" aria-hidden="true">
-                {PAY_ICONS[mode]}
-              </span>
-              <span className="pf-pay-word">{saving === mode ? t('saving') : mode === 'other' ? t('other') : modeWord(mode)}</span>
-              {/* What it means, for the owner who is not sure which word is theirs. Never the only label. */}
-              <span className="pf-pay-sub">{t(`sub.${mode}`)}</span>
-            </button>
-          ))}
-        </div>
+        {payTiles}
         {dialog}
       </div>
     );
@@ -832,6 +872,121 @@ export function PayFlow({
         </div>
       </div>
     ) : null;
+
+  /* ---------- ① on a wide desk (Jira GRW-572): who · what · the bill, side by side ---------- */
+  if (wide) {
+    return (
+      <div className="pf pf-wide">
+        <header className="pf-head">
+          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+            <IconArrowLeft />
+          </button>
+          <span className="pf-head-stack">
+            <h1 className="pf-title">{t('whatTitle')}</h1>
+            {token ? (
+              branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
+            ) : (
+              <HeaderBranchPicker variant="line" />
+            )}
+          </span>
+          <FormModeSwitch now="simple" simpleHref={simpleForm} advancedHref={fullForm} />
+        </header>
+        {tokenGone ? (
+          <div role="alert" className="pf-error">
+            {nv.tokenGone}
+          </div>
+        ) : null}
+        {visitGone ? (
+          <div role="alert" className="pf-error">
+            {nv.visitGone}
+          </div>
+        ) : null}
+        <div className="pf-wide-grid">
+          <aside className="pf-wide-left">
+            {who}
+            {stylists}
+            <DeskUnpaid location={location} timezone={timezone} currentTokenId={token?.id ?? null} currentVisitId={visit?.appointment.id ?? null} />
+          </aside>
+          {services === null ? (
+            <section className="pf-wide-mid" aria-busy="true">
+              <div className="pf-tiles pf-wide-tiles">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <div key={i} className="pf-tile pf-tile-wait" />
+                ))}
+              </div>
+            </section>
+          ) : services.length === 0 ? (
+            <section className="pf-wide-mid">
+              <div className="empty">{nv.noServicesYet}</div>
+            </section>
+          ) : (
+            <DeskServiceGrid services={ranked_all} countOf={countOf} onMore={addOne} onLess={oneLess} full={full} money={money} />
+          )}
+          <aside className="pf-wide-right">
+            <h2 className="pf-wide-h">{t('billTitle')}</h2>
+            {badService ? (
+              <p className="pf-miss pf-miss-wide" role="alert">
+                {t('pickOne')}
+              </p>
+            ) : null}
+            {lines.length === 0 ? (
+              <p className="pf-wide-empty">{t('desk.emptyBill')}</p>
+            ) : (
+              <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} />
+            )}
+            <button
+              type="button"
+              className="pf-wide-total"
+              aria-label={t('changeTotal')}
+              onClick={() => setKeypad(String(Math.round(totalMinor / 100)))}
+              disabled={lines.length === 0}
+            >
+              <span>{t('total')}</span>
+              <strong className="pf-total-figure">{money(totalMinor)}</strong>
+            </button>
+            {full ? (
+              <div role="alert" className="pf-error">
+                {nv.billFull(MAX_LINES)}
+              </div>
+            ) : null}
+            {error ? (
+              <div role="alert" className="pf-error">
+                {error}
+              </div>
+            ) : null}
+            <h2 className="pf-wide-h">{t('howTitle')}</h2>
+            {payTiles}
+            {dialog}
+          </aside>
+        </div>
+        {whoOpen ? (
+          <ClientSheet
+            location={location}
+            startAdding={whoOpen === 'add'}
+            onPick={(c) => {
+              setClient(c.id === null ? { kind: 'named', name: c.name ?? '' } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
+              setWhoOpen(false);
+            }}
+            onClose={() => setWhoOpen(false)}
+          />
+        ) : null}
+        {keypad !== null ? (
+          <Keypad
+            title={t('keypadTitle')}
+            value={keypad}
+            hint={t('listPrice', { amount: money(listMinor) })}
+            onChange={setKeypad}
+            onDone={() => {
+              const rupees = Number(keypad);
+              setOverride(Number.isFinite(rupees) && keypad !== '' && rupees * 100 !== listMinor ? rupees * 100 : null);
+              setKeypad(null);
+            }}
+            onClose={() => setKeypad(null)}
+          />
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="pf">
