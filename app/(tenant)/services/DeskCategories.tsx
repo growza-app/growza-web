@@ -75,7 +75,9 @@ export function DeskCategories({
   const row = (id: ServiceTab, name: string, n: number) => (
     <li key={id}>
       <button type="button" className={`svc-desk-cat ${tab === id ? 'is-on' : ''}`} aria-pressed={tab === id} onClick={() => onPick(id)}>
-        <span className="svc-desk-cat-name">{name}</span>
+        <span className="svc-desk-cat-name" title={name}>
+          {name}
+        </span>
         <span className="svc-desk-n">{n}</span>
       </button>
     </li>
