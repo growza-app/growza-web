@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Pagination } from '../components/Pagination';
 import { csvLines } from '../lib/csv';
 import { formatDate, formatPhone, formatRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
@@ -166,6 +167,19 @@ export function CustomersClient({
   const [direction, setDirection] = useState<SortDirection>(initialDirection ?? 'desc');
   // Jira GRW-556 (follow-up) — a business suspended for non-payment reads its clients and adds none.
   const writable = useWritable();
+  /*
+   * Owner, 2026-10-14 — Clients on a wide desk, as Services: the bands on the left, the list in the middle, the
+   * client's card in place on the right. Decided by the window, not the device: the desktop tier (≥1101px) gets
+   * the panels; a tablet keeps the paged table. Null until the width is known, so neither layout flashes first.
+   */
+  const [desk, setDesk] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const apply = () => setDesk(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
   // ?add=1 (from the Home quick-actions panel) opens the sheet straight away
   // instead of landing here and requiring a second click. Not for a read-only business: the link would open a form
   // whose save the API refuses.
@@ -322,6 +336,192 @@ export function CustomersClient({
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const tableHead = (
+    <tr>
+      <SortableTh col="name" label={t('colCustomer')} sort={sort} direction={direction} onSort={setSortColumn} />
+      <th>{t('colPhone')}</th>
+      <th>{t('colLastBooking')}</th>
+      <SortableTh col="visits" label={t('visitsColumn')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
+      <SortableTh col="spent" label={t('colTotalSpent')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
+      <SortableTh col="recent" label={t('colLastSeen')} sort={sort} direction={direction} onSort={setSortColumn} />
+    </tr>
+  );
+  /* The desk's row and the phone's are the same `<tr>`: on a desk a click also highlights it. */
+  // Desktop: a scannable table. Mobile: the same rows as cards — a 6-column table can't be read on a phone
+  // without pinch-zoom.
+  const tableRows = visibleRows.map((c) => (
+      <tr key={c.id} data-row className={`cust-row-click${openClientId === c.id ? ' is-selected' : ''}`} aria-selected={openClientId === c.id || undefined} onClick={() => setOpenClientId(c.id)}>
+        <td>
+          <div className="cust-name-cell">
+            <span className="avatar">{initials(c.name)}</span>
+            <span style={{ fontWeight: 620 }}>{c.name ?? t('unnamed')}</span>
+            {branchTag(c.locationId)}
+          </div>
+        </td>
+        <td>
+          {/* GRW-199 — a client recorded at the desk may have no
+              number; a wa.me link built from nothing opens WhatsApp
+              on a blank chat. */}
+          {c.waPhone ? (
+            <a
+              className="cust-phone"
+              href={`https://wa.me/${waDigits(c.waPhone)}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <IconWhatsApp />
+              {formatPhone(c.waPhone)}
+            </a>
+          ) : (
+            <span className="muted">—</span>
+          )}
+        </td>
+        <td>
+          {c.lastBookingAt ? (
+            <>
+              <div>{formatDate(c.lastBookingAt, undefined, locale)}</div>
+              <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
+            </>
+          ) : (
+            <span className="muted">{t('never')}</span>
+          )}
+        </td>
+        <td>{c.totalBookings}</td>
+        <td>{formatMoney(c.totalSpentMinor)}</td>
+        {/* Recency, not a constant. "Active" was true for every row in
+            the table, so the column carried no signal at all; how long
+            ago someone last came in does. */}
+        <td>
+          <div className="cust-recency">
+            <span>{formatRecency(c.lastBookingAt, undefined, locale)}</span>
+            {chipOf(c.segment)}
+          </div>
+        </td>
+      </tr>
+  ));
+
+  const addButton = writable ? (
+    <button type="button" className="btn" onClick={() => setAdding(true)}>
+      <IconPlus /> {t('addNoun', { noun: singular })}
+    </button>
+  ) : undefined;
+  const bands: CustomerStatusFilter[] = ['all', 'active', 'due', 'at_risk', 'inactive', 'never'];
+  const bandCount = (s: CustomerStatusFilter) =>
+    s === 'all' ? stats.total : s === 'never' ? stats.neverVisited : (stats.segments.find((seg) => seg.key === s)?.count ?? null);
+  const pickBand = (s: CustomerStatusFilter) => {
+    setStatus(s);
+    // A band of people who have drifted is a call list, so it opens highest-spend-first.
+    setSort(s === 'all' || s === 'active' ? 'recent' : 'spent');
+    setDirection('desc');
+    setPageIndex(0);
+  };
+
+  if (desk === null) {
+    return (
+      <>
+        <PageHeader title={label} menu subtitle={t('subtitle', { noun: lower })} actions={addButton} />
+        <div className="page-body" aria-busy="true" />
+      </>
+    );
+  }
+
+  if (desk) {
+    return (
+      <>
+        <PageHeader title={label} menu subtitle={t('subtitle', { noun: lower })} actions={addButton} />
+        <div className="page-body cust-desk">
+          <div className="pf-wide-grid cust-desk-grid">
+            <aside className="pf-wide-left cust-desk-left" aria-label={t('segmentsTitle')}>
+              <dl className="cust-desk-kpis">
+                <div><dt>{t('kpiTotal', { noun: lower })}</dt><dd>{stats.total}</dd></div>
+                <div><dt>{t('kpiNew')}</dt><dd>{stats.newThisMonth}</dd></div>
+                <div><dt>{t('kpiReturning', { noun: lower })}</dt><dd>{stats.returning}</dd></div>
+                <div><dt>{t('kpiRepeat')}</dt><dd>{stats.repeatRatePct}%</dd></div>
+              </dl>
+              <h2 className="pf-wide-h">{t('segmentsTitle')}</h2>
+              <ul className="cust-desk-bands">
+                {bands.map((s) => {
+                  const on = status === s;
+                  const n = bandCount(s);
+                  const seg = stats.segments.find((x) => x.key === s);
+                  return (
+                    <li key={s}>
+                      <button
+                        type="button"
+                        className={`cust-desk-band ${on ? 'is-on' : ''}`}
+                        aria-pressed={on}
+                        style={SEGMENT_TONE[s] ? { ['--seg' as string]: SEGMENT_TONE[s] } : undefined}
+                        title={seg ? `${t(`segments.${seg.key}.label`)} · ${t(`segments.${seg.key}.range`)}` : undefined}
+                        onClick={() => pickBand(on && s !== 'all' ? 'all' : s)}
+                      >
+                        <span className="cust-desk-band-name">
+                          {SEGMENT_TONE[s] && <span className="cust-segment-dot" />}
+                          {s === 'all' ? t('allNoun', { noun: lower }) : statusLabel(s)}
+                        </span>
+                        {n !== null && <span className="cust-desk-n">{n}</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </aside>
+
+            <section className="pf-wide-mid cust-desk-mid" aria-label={label}>
+              <div className="cust-desk-tools">
+                <label className="pf-wide-search">
+                  <IconSearch />
+                  <input
+                    type="search"
+                    placeholder={t('searchPlaceholder', { noun: lower })}
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPageIndex(0);
+                    }}
+                    aria-label={t('searchPlaceholder', { noun: lower })}
+                    autoComplete="off"
+                  />
+                </label>
+                <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={page.rows.length === 0}>
+                  {t('export')}
+                </button>
+              </div>
+              <div className="card cust-desk-table">
+                {page.rows.length === 0 ? (
+                  <div className="empty">{loading ? t('loading') : t('noMatch', { noun: lower })}</div>
+                ) : (
+                  <div className="table-scroll">
+                    <table>
+                      <thead>{tableHead}</thead>
+                      <tbody>{tableRows}</tbody>
+                    </table>
+                  </div>
+                )}
+                {/* Still ten a page: the list is the server's, and a numbered footer is how a long one reads. */}
+                <Pagination page={pageIndex + 1} total={page.total} pageSize={pageSize} noun={lower} onChange={(p) => setPageIndex(p - 1)} />
+              </div>
+            </section>
+
+            <aside className="pf-wide-right cust-desk-right" aria-label={singular}>
+              {openClientId ? (
+                <ClientProfileCard clientId={openClientId} inline onClose={() => setOpenClientId(null)} />
+              ) : (
+                <div className="cust-desk-nothing">
+                  <p>{t('deskPick', { noun: singular })}</p>
+                  {addButton}
+                </div>
+              )}
+            </aside>
+          </div>
+          {adding && (
+            <AddCustomerModal singular={singular} branchId={branchId} branches={branches} onClose={() => setAdding(false)} onSaved={refresh} />
+          )}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -509,16 +709,7 @@ export function CustomersClient({
               page={pageIndex + 1}
               total={page.total}
               onPageChange={(p) => setPageIndex(p - 1)}
-              head={
-                <tr>
-                  <SortableTh col="name" label={t('colCustomer')} sort={sort} direction={direction} onSort={setSortColumn} />
-                  <th>{t('colPhone')}</th>
-                  <th>{t('colLastBooking')}</th>
-                  <SortableTh col="visits" label={t('visitsColumn')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
-                  <SortableTh col="spent" label={t('colTotalSpent')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
-                  <SortableTh col="recent" label={t('colLastSeen')} sort={sort} direction={direction} onSort={setSortColumn} />
-                </tr>
-              }
+              head={tableHead}
               cards={visibleRows.map((c) => (
                 <div
                   className="cust-card cust-row-click"
@@ -574,59 +765,7 @@ export function CustomersClient({
                 </div>
               ))}
             >
-              {/* Desktop: a scannable table. Mobile: the same rows as cards — a
-                  6-column table can't be read on a phone without pinch-zoom. */}
-              {visibleRows.map((c) => (
-                <tr key={c.id} data-row className="cust-row-click" onClick={() => setOpenClientId(c.id)}>
-                  <td>
-                    <div className="cust-name-cell">
-                      <span className="avatar">{initials(c.name)}</span>
-                      <span style={{ fontWeight: 620 }}>{c.name ?? t('unnamed')}</span>
-                      {branchTag(c.locationId)}
-                    </div>
-                  </td>
-                  <td>
-                    {/* GRW-199 — a client recorded at the desk may have no
-                        number; a wa.me link built from nothing opens WhatsApp
-                        on a blank chat. */}
-                    {c.waPhone ? (
-                      <a
-                        className="cust-phone"
-                        href={`https://wa.me/${waDigits(c.waPhone)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <IconWhatsApp />
-                        {formatPhone(c.waPhone)}
-                      </a>
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </td>
-                  <td>
-                    {c.lastBookingAt ? (
-                      <>
-                        <div>{formatDate(c.lastBookingAt, undefined, locale)}</div>
-                        <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
-                      </>
-                    ) : (
-                      <span className="muted">{t('never')}</span>
-                    )}
-                  </td>
-                  <td>{c.totalBookings}</td>
-                  <td>{formatMoney(c.totalSpentMinor)}</td>
-                  {/* Recency, not a constant. "Active" was true for every row in
-                      the table, so the column carried no signal at all; how long
-                      ago someone last came in does. */}
-                  <td>
-                    <div className="cust-recency">
-                      <span>{formatRecency(c.lastBookingAt, undefined, locale)}</span>
-                      {chipOf(c.segment)}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {tableRows}
             </PaginatedTable>
           )}
         </div>
