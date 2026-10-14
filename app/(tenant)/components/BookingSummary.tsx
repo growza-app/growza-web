@@ -205,7 +205,7 @@ export function BookingSummary({
         )}
 
         {loadFailed && (
-          <div role="alert" style={{ padding: '10px 0 0', fontSize: 13, color: '#b91c1c' }}>
+          <div role="alert" style={{ padding: '10px 0 0', fontSize: 13, color: 'var(--danger)' }}>
             {tfix('loadFailed')}
           </div>
         )}

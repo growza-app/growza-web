@@ -110,7 +110,7 @@
 }
 
 .dropdown-item-danger {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .dropdown-item-icon {

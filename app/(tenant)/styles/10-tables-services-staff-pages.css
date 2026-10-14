@@ -173,7 +173,7 @@ tr:last-child td {
  * 6.5:1 on white at 15px, against the 4.5:1 this size needs.
  */
 .svc-cat-editbtn.is-danger {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .svc-cat-list {
@@ -708,7 +708,7 @@ tr:last-child td {
   margin-bottom: 12px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: var(--warn-soft, #fdf3e3);
+  background: var(--warn-soft, var(--amber-soft));
   border: 1px solid var(--border);
   font-size: 0.8125rem;
 }
@@ -776,9 +776,9 @@ tr:last-child td {
   /* A warning panel, not a caption: tinted, bordered, and with its own icon, so arming the delete visibly
      changes the foot of the sheet instead of only swapping a sentence above an identical button. */
   padding: 12px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-line);
   border-radius: var(--radius-sm);
-  background: #fef2f2;
+  background: var(--danger-soft);
 }
 
 .svc-cat-confirm-head {
@@ -790,7 +790,7 @@ tr:last-child td {
 .svc-cat-confirm-icon {
   flex: none;
   display: inline-flex;
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .svc-cat-confirm-icon svg {

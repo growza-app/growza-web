@@ -17,9 +17,9 @@
   --hm-faint: #5f6a65;
   --hm-line: #e6ebe7;
   --hm-line-soft: #f0f2f0;
-  --hm-green: #16a34a;
-  --hm-green-deep: var(--accent-deep); /* was its own #16794a: a second deep green beside --accent-deep */
-  --hm-green-soft: #e7f6ee;
+  --hm-green: var(--accent);
+  --hm-green-deep: var(--accent-deep); /* was its own var(--accent-deep): a second deep green beside --accent-deep */
+  --hm-green-soft: var(--accent-soft);
   --hm-hero-a: #1c5535;
   --hm-hero-b: #12301e;
 }
@@ -604,7 +604,7 @@
   white-space: nowrap;
 }
 .hm-delta.down {
-  color: #fecaca;
+  color: var(--danger-line);
 }
 .hm-hero .hm-menu {
   right: var(--sp-4);
@@ -995,13 +995,13 @@
 }
 .hm-tone-amber { background: #fdf6ec; border-color: #f6e6cd; }
 .hm-tone-amber .hm-att-icon { background: #f9e8ca; color: #9a6212; } /* Jira GRW-478 (U-7) — the icon was 2.8:1; 3:1 is the floor */
-.hm-tone-amber strong { color: #8a5a0f; }
+.hm-tone-amber strong { color: var(--amber-ink); }
 .hm-tone-rose { background: #fdf1f1; border-color: #f7d9d9; }
 .hm-tone-rose .hm-att-icon { background: #f9dede; color: #d64545; }
-.hm-tone-rose strong { color: #c53434; }
+.hm-tone-rose strong { color: var(--danger); }
 .hm-tone-blue { background: #f2f7ff; border-color: #e2ecfb; }
-.hm-tone-blue .hm-att-icon { background: #dbe8fe; color: #2563eb; }
-.hm-tone-blue strong { color: #1d4ed8; }
+.hm-tone-blue .hm-att-icon { background: var(--blue-soft); color: var(--blue); }
+.hm-tone-blue strong { color: var(--blue); }
 .hm-tone-green { background: #f0faf4; border-color: #d9f0e2; }
 .hm-tone-green strong { color: var(--hm-green); }
 .hm-tone-slate { background: #eef1f5; border-color: #e2e7ec; }
@@ -1067,9 +1067,9 @@
 }
 .hm-tile-rose { background: #fdf1f1; border-color: #f7d9d9; color: #d64545; }
 .hm-tile-green { background: #eef7f1; border-color: #dcece3; color: #2f7d55; }
-.hm-tile-violet { background: #f4f2fd; border-color: #e5e0f7; color: #6d4fc4; }
+.hm-tile-violet { background: #f4f2fd; border-color: #e5e0f7; color: var(--purple-deep); }
 .hm-tile-amber { background: #fdf6ec; border-color: #f6e6cd; color: #c07d18; }
-.hm-tile-blue { background: #f2f7ff; border-color: #e2ecfb; color: #2563eb; }
+.hm-tile-blue { background: #f2f7ff; border-color: #e2ecfb; color: var(--blue); }
 .hm-tile-slate { background: #eef1f5; border-color: #e2e7ec; color: #5b6b7b; }
 
 /* On a laptop the receptionist's tiles become a row of wide buttons. */
@@ -1123,9 +1123,9 @@
   width: 4px;
   background: var(--seg);
 }
-.hm-seg-active { --seg: #16a34a; }
+.hm-seg-active { --seg: var(--accent); }
 .hm-seg-due { --seg: #f0a828; }
-.hm-seg-at_risk { --seg: #ef4444; }
+.hm-seg-at_risk { --seg: var(--danger); }
 .hm-seg-inactive { --seg: #8b5cf6; }
 .hm-seg-top {
   display: flex;
@@ -1290,12 +1290,12 @@
   font-weight: 700;
   white-space: nowrap;
 }
-.hm-pill-green { background: #e7f6ee; color: var(--accent-deep); }
+.hm-pill-green { background: var(--accent-soft); color: var(--accent-deep); }
 /* Jira GRW-351 — blue was #2563eb (4.47:1) and grey #6b7570 (4.19:1), both under WCAG 1.4.3's 4.5:1 for 11.5px text. */
-.hm-pill-blue { background: #e6effe; color: #1d4ed8; }
+.hm-pill-blue { background: var(--blue-soft); color: var(--blue); }
 .hm-pill-grey { background: #eef1ee; color: var(--hm-muted); }
-.hm-pill-amber { background: #fbf0dc; color: #8a5a0f; }
-.hm-pill-rose { background: #fdecec; color: #c53434; }
+.hm-pill-amber { background: var(--amber-soft); color: var(--amber-ink); }
+.hm-pill-rose { background: var(--danger-soft); color: var(--danger); }
 @media (max-width: 400px) {
   /* A fixed width and `white-space: nowrap`: "10:00 am" needs 60px at this size and was painting
      4px of itself over the client's name. The column still lines up — it just cannot be cut. */
@@ -1363,8 +1363,8 @@
   height: 1.125rem;
   flex-shrink: 0;
 }
-.hm-now-alert-amber { background: #fbf0dc; color: #7a4f0c; }
-.hm-now-alert-rose { background: #fdecec; color: #a62b2b; }
+.hm-now-alert-amber { background: var(--amber-soft); color: var(--amber-ink); }
+.hm-now-alert-rose { background: var(--danger-soft); color: var(--danger-deep); }
 .hm-now-alert-name {
   flex: 0 1 auto;
   min-width: 0;
@@ -1910,8 +1910,8 @@ button.hm-now-count {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #dbe8fe;
-  color: #2563eb;
+  background: var(--blue-soft);
+  color: var(--blue);
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -1998,7 +1998,7 @@ button.hm-now-count {
 
 /* ---------- front desk, as the design draws it (Jira GRW-222) ---------- */
 .hm-tone-violet { background: #f4f2fd; border-color: #e5e0f7; }
-.hm-tone-violet .hm-att-icon { background: #e6e0fa; color: #6d4fc4; }
+.hm-tone-violet .hm-att-icon { background: var(--purple-soft); color: var(--purple-deep); }
 .hm-tone-violet strong { color: #5a3fb0; }
 
 .hm-desk .hm-primary-actions .hm-action {
@@ -2054,7 +2054,7 @@ button.hm-now-count {
 }
 .hm-tone-amber > svg { color: #c07d18; }
 .hm-tone-rose > svg { color: #d64545; }
-.hm-tone-violet > svg { color: #6d4fc4; }
+.hm-tone-violet > svg { color: var(--purple-deep); }
 .hm-att-tile-label {
   grid-area: label;
   font-size: 0.9375rem;
@@ -2104,7 +2104,7 @@ button.hm-now-count {
   border-radius: 50%;
   background: currentColor;
 }
-.hm-dot-green { color: #16a34a; }
+.hm-dot-green { color: var(--accent); }
 .hm-dot-amber { color: #c07d18; }
 .hm-dot-grey { color: #7c857e; }
 
@@ -2171,7 +2171,7 @@ button.hm-now-count {
   flex-shrink: 0;
   font-size: 0.875rem;
   font-weight: 700;
-  color: #8a5a0f;
+  color: var(--amber-ink);
   white-space: nowrap;
 }
 .hm-wait-rose {
@@ -2322,7 +2322,7 @@ button.hm-now-count {
 }
 
 /* ---------- stylist, as the design draws it (Jira GRW-222) ---------- */
-.hm-pill-violet { background: #efe9fb; color: #6d4fc4; }
+.hm-pill-violet { background: var(--purple-soft); color: var(--purple-deep); }
 .hm-stylist-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2369,20 +2369,20 @@ button.hm-now-count {
   font-size: 1.0625rem;
 }
 .hm-card-next .hm-avatar {
-  background: #e6e0fa !important;
-  color: #6d4fc4 !important;
+  background: var(--purple-soft) !important;
+  color: var(--purple-deep) !important;
 }
 .hm-tl-dot-done {
-  background: #16a34a;
-  border-color: #16a34a;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 .hm-tl-dot-now {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--blue);
+  border-color: var(--blue);
 }
 .hm-tl-dot-next {
-  background: #6d4fc4;
-  border-color: #6d4fc4;
+  background: var(--purple-deep);
+  border-color: var(--purple-deep);
 }
 .hm-tl-dot-later {
   background: #fff;

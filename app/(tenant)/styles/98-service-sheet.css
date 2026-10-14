@@ -97,7 +97,7 @@
 }
 
 .sheet-foot-error {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .sheet-row {
@@ -142,7 +142,7 @@
 }
 
 .sheet-row-value .field-invalid {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 /* ── The steppers ─────────────────────────────────────────────────────────── */
@@ -295,7 +295,7 @@
   background: transparent;
   font-family: inherit;
   font-size: 0.9375rem;
-  color: #b91c1c;
+  color: var(--danger);
   cursor: pointer;
 }
 
@@ -326,7 +326,7 @@
 }
 
 .sheet-danger-delete {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 /* On a phone the sheet is the screen, rising from the bottom as iOS sheets do. */
@@ -517,7 +517,7 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a4500b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16v3H4zM6 10v9h12v-9M10 14h4'/%3E%3C/svg%3E");
   }
   .sheet-danger-delete {
-    background: #fdeaea;
+    background: var(--danger-soft);
   }
   .sheet-danger-delete::before {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b91c1c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v6M14 11v6'/%3E%3C/svg%3E");

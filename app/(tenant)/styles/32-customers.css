@@ -389,8 +389,8 @@
   color: var(--purple-deep);
 }
 .bk-kpi-red {
-  background: #fde3e3;
-  color: #c0362c;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .bk-kpi-value {
@@ -425,7 +425,7 @@
   color: var(--purple-deep);
 }
 .bk-kpi-sub-red {
-  color: #c0362c;
+  color: var(--danger);
 }
 
 /* ---- combined filter card (search / From / To / staff / Show) ----
@@ -1538,7 +1538,7 @@
   color: var(--text);
 }
 .status-filter-banner strong {
-  color: #c0362c;
+  color: var(--danger);
 }
 .status-filter-banner a {
   color: var(--muted);
@@ -2862,7 +2862,7 @@ button.bk-waiting-row:focus-visible {
   height: 32px;
   padding: 0 6px;
   border-radius: var(--radius);
-  background: #fdf0d5;
+  background: var(--amber-soft);
   color: var(--amber);
   font-size: 0.9375rem;
   font-weight: 800;

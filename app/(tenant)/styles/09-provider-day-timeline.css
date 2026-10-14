@@ -36,17 +36,17 @@
 
 .tl-booking {
   background: var(--accent-soft);
-  color: #14532d;
+  color: var(--accent-ink);
 }
 
 .tl-booking-alt {
   background: var(--blue-soft);
-  color: #1e3a8a;
+  color: var(--blue);
 }
 
 .tl-booking-late {
-  background: var(--peach);
-  color: #9a3412;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
 }
 
 .tl-lunch,

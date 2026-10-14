@@ -146,9 +146,9 @@
 }
 
 /* Louder than the rest of the row on purpose: the owner is quoting a price for something that is gone.
-   #b91c1c is the red `.btn-danger` and `.confirm-error` already use — one red in the product, not three. */
+   var(--danger) is the red `.btn-danger` and `.confirm-error` already use — one red in the product, not three. */
 .pkg-missing {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .pkg-retired-chip {

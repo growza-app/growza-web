@@ -204,7 +204,7 @@ describe('Record payment in three taps', () => {
     // Colour is on the icon, not behind the whole card: four instances of one thing, told apart by a pale ground.
     for (const mode of ['cash', 'upi', 'card', 'other']) {
       expect(css).toMatch(new RegExp(`\\.pf-pay-${mode} \\{\\s*background: #[0-9a-f]{6};`));
-      expect(css).toMatch(new RegExp(`\\.pf-pay-${mode} \\.pf-pay-icon \\{\\s*background: #[0-9a-f]{6};`));
+      expect(css).toMatch(new RegExp(`\\.pf-pay-${mode} \\.pf-pay-icon \\{\\s*background: (#[0-9a-f]{6}|var\\(--[a-z-]+\\));`));
     }
     // Each says what it means underneath, in both languages — never instead of the word.
     expect(flow).toMatch(/<span className="pf-pay-sub">\{t\(`sub\.\$\{mode\}`\)\}<\/span>/);
@@ -398,7 +398,7 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/\{badClient \? \(\s*<p className="pf-miss" role="alert">\s*\{t\('needClient'\)\}/);
     expect(flow).toMatch(/\{badService \? \(\s*<p className="pf-miss pf-miss-wide" role="alert">\s*\{t\('pickOne'\)\}/);
     expect(flow).toMatch(/className=\{`pf-who-bar \$\{badClient \? 'pf-bad' : ''\}`\}/);
-    expect(css).toMatch(/\.pf-miss \{[\s\S]{0,160}color: #991b1b;/);
+    expect(css).toMatch(/\.pf-miss \{[\s\S]{0,160}color: var\(--danger-deep\);/);
     // The word says what is wrong; the colour only helps the eye find it.
     for (const m of [enMessages, hiMessages]) {
       const w = m.payFlow as unknown as Record<string, string>;

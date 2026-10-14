@@ -33,9 +33,9 @@
   margin-top: 0.3rem;
   border-radius: 50%;
 }
-.td-dot-good { background: var(--rp-brand, #16a34a); }
+.td-dot-good { background: var(--rp-brand, var(--accent)); }
 .td-dot-warn { background: var(--rp-amber, #d97706); }
-.td-dot-bad { background: var(--rp-red, #dc2626); }
+.td-dot-bad { background: var(--rp-red, var(--danger)); }
 
 .td-hint {
   margin: 0;

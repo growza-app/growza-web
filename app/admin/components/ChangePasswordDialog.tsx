@@ -123,7 +123,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
               />
             </label>
             <p style={{ margin: '8px 0 0', fontSize: 12, color: oklch.textMuted }}>At least 8 characters.</p>
-            {error && <p style={{ margin: '8px 0 0', fontSize: 13, color: '#c0362c' }}>{error}</p>}
+            {error && <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--danger)' }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button
                 type="button"

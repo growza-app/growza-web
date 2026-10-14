@@ -31,6 +31,18 @@
   --purple: #7c3aed;
   --purple-soft: #ede9fe;
   --purple-deep: #6d28d9;
+  /* Accent discipline (2026-10-14). Five colours, each with one meaning, so a colour reads before a word does:
+       green  = the accent: actions, selection, confirmed, done
+       amber  = warning: waiting, late, lapsed, needs the owner
+       red    = destructive and errors: delete, no-show, failed
+       blue   = time: when a thing happens, moved, in the chair, card payment
+       purple = a combo / package, UPI
+     Every red used to be a raw hex (#b91c1c ×28, #991b1b ×7, four pinks); --danger* replaces all of them. */
+  --danger: #b91c1c;
+  --danger-deep: #991b1b;
+  --danger-soft: #fdeaea;
+  --danger-line: #fecaca;
+  --amber-ink: #92400e; /* amber as TEXT on --amber-soft: 6.3:1 (Jira GRW-478); --amber itself is 4.99:1 */
   --radius: 10px; /* Jira GRW-570 — flat: 10 and 8, the way a crisp dashboard is drawn. */
   --radius-sm: 8px;
   --radius-lg: 14px; /* Jira GRW-571 — the third and last: sheets, big cards, tiles with a photo. */

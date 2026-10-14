@@ -166,11 +166,11 @@ select {
 .btn-danger {
   background: transparent;
   border-color: transparent;
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #fde4e4;
+  background: var(--danger-soft);
 }
 
 .btn:disabled {

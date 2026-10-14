@@ -178,7 +178,7 @@ input.wi-search-input-plain {
 .wi-error {
   margin-top: 12px;
   font-size: 0.8125rem;
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 /* The confirmation reads as one centred piece: a round check badge, what happened, then the way out. */
@@ -219,7 +219,7 @@ input.wi-search-input-plain {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: #fef3c7;
-  color: #92400e;
+  color: var(--amber-ink);
   font-size: 0.8125rem;
 }
 
@@ -557,7 +557,7 @@ input.wi-search-input-plain {
   border: 1px dashed #d19a2a;
   border-radius: var(--radius-sm);
   background: #fffaf0;
-  color: #92400e;
+  color: var(--amber-ink);
   font: inherit;
   font-size: 0.78125rem;
   font-weight: 600;
@@ -749,7 +749,7 @@ input.wi-search-input-plain {
   border-color: var(--accent);
 }
 .wi-amount:has(input[aria-invalid='true']) {
-  border-color: #b91c1c; /* the sheet's own error colour, .wi-error */
+  border-color: var(--danger); /* the sheet's own error colour, .wi-error */
 }
 .wi-combo-tag {
   margin-left: 6px;

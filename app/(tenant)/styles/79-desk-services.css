@@ -373,7 +373,7 @@
   }
 
   .sheet-inline .sheet-danger-delete {
-    background: #fdeaea;
+    background: var(--danger-soft);
   }
 
   .sheet-inline .sheet-danger-row:hover {
@@ -609,12 +609,12 @@
   }
 
   .svc-catd-trash:not(:disabled) {
-    color: #b91c1c;
+    color: var(--danger);
   }
 
   /* The question, in the row. */
   .svc-catd-row.is-asking {
-    background: #fdeaea;
+    background: var(--danger-soft);
   }
 
   .svc-catd-ask {

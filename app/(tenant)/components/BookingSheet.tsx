@@ -194,7 +194,7 @@ export function BookingSheet({
         </div>
 
         {error && (
-          <div style={{ padding: '10px 18px 0', fontSize: 13, color: '#b91c1c' }}>{error}</div>
+          <div style={{ padding: '10px 18px 0', fontSize: 13, color: 'var(--danger)' }}>{error}</div>
         )}
 
         {/*

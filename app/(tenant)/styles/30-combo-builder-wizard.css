@@ -444,8 +444,8 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #fdeaea;
-  color: #b91c1c;
+  background: var(--danger-soft);
+  color: var(--danger);
   font-size: 0.8125rem;
   line-height: 1;
   cursor: pointer;
@@ -683,12 +683,12 @@
     height: 7px;
     margin-right: 7px;
     border-radius: 50%;
-    background: #6d28d9;
+    background: var(--purple-deep);
     vertical-align: middle;
   }
 
   .pkg-editor .pe-foot-services.sheet-foot-error::before {
-    background: #b91c1c;
+    background: var(--danger);
   }
 }
 

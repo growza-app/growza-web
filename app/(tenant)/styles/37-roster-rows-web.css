@@ -47,13 +47,13 @@
 }
 
 .staff-avatar.tone-green,
-.person-tile.tone-green { background: var(--accent-soft); color: #12643e; }
+.person-tile.tone-green { background: var(--accent-soft); color: var(--accent-deep); }
 .staff-avatar.tone-purple,
-.person-tile.tone-purple { background: var(--purple-soft); color: #4c3a78; }
+.person-tile.tone-purple { background: var(--purple-soft); color: var(--purple-deep); }
 .staff-avatar.tone-peach,
-.person-tile.tone-peach { background: var(--peach); color: #7a4a1e; }
+.person-tile.tone-peach { background: var(--peach); color: var(--amber-ink); }
 .staff-avatar.tone-blue,
-.person-tile.tone-blue { background: var(--blue-soft); color: #1e4e73; }
+.person-tile.tone-blue { background: var(--blue-soft); color: var(--blue); }
 
 .staff-identity {
   width: 190px;

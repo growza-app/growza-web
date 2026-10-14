@@ -149,7 +149,7 @@
 }
 
 .tile-amber {
-  background: #fdf3e3;
+  background: var(--amber-soft);
 }
 .tile-amber .v {
   color: #8a5a10;
