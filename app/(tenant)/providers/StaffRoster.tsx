@@ -411,7 +411,16 @@ function StaffCard({
             <LoginChip state={actions.loginOf?.(p) ?? 'none'} />
           </div>
           <div className="staff-identity-role">
-            {off ? `${shiftOffLabel(p, t, locale)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}` : `${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''} · ${hours}`}
+            {off ? (
+              `${shiftOffLabel(p, t, locale)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}`
+            ) : (
+              <>
+                {`${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''}`}
+                {/* The separator is the hours' own (`.staff-card-hours::before`), so it never ends a line; on a phone
+                    (≤430px) the hours take a line of their own without it, as the Services card's cleanup does. */}
+                <span className="staff-card-hours">{hours}</span>
+              </>
+            )}
           </div>
         </div>
         {p.active ? (
