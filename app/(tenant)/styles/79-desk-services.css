@@ -412,6 +412,20 @@
     padding: var(--sp-3);
   }
 
+  /* A 9.5rem column leaves a name ~5.5rem: "Full Body Tanning" wraps to a second line here rather than reading
+     "Full Body Ta…" (owner, 2026-10-14). The row grows with it; the count stays on the first line. */
+  .svc-desk-cat {
+    align-items: flex-start;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .svc-desk-cat-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
+
   .svc-desk-table th:nth-child(2),
   .svc-desk-table td:nth-child(2) {
     display: none;
