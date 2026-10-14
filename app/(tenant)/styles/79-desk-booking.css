@@ -44,6 +44,26 @@
     min-height: 2.5rem;
   }
 
+  /*
+   * The chips' second line ("free now", "till 10:34 AM") is only known for a walk-in. So that choosing Pick a time
+   * does not shorten every chip, each keeps the height of a two-line one whichever answer is current.
+   */
+  .wi-desk .wi-stylist-chips .wi-chip {
+    min-height: 3.25rem;
+  }
+
+  /* Waiting: the stylist is chosen later, on Home. The chips stay where they are, greyed, with the reason under them. */
+  .wi-desk-stylist-off .wi-stylist-bar {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .wi-desk-stylist-why {
+    margin: calc(-1 * var(--sp-1)) 0 0;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
   /* The right panel's questions, in the card's own rhythm. */
   .wi-desk .wi-desk-when .wi-section-label {
     margin-top: var(--sp-2);

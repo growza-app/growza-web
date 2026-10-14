@@ -111,6 +111,7 @@ export function useNewVisitCopy() {
     deskOnVisit: t('deskOnVisit'),
     deskEmpty: t('deskEmpty'),
     deskNobodyToday: t('deskNobodyToday'),
+    deskStylistLater: t('deskStylistLater'),
     // Jira GRW-384 — a branch opened with no menu. GRW-399: the vertical's word for what it sells, not "services".
     noServicesAtBranch: (branch: string, services: string) =>
       t('noServicesAtBranch', { branch, services: pickNoun(locale, services, tn('services')) }),

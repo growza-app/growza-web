@@ -3563,8 +3563,15 @@ export function NewVisitSheet({
               <div className="wi-new-person" ref={addNewRef}>
                 {clientFields}
               </div>
-              {/* A token has no stylist (`queueIt` never sends one), so while Waiting is the answer the chips are not asked. */}
-              {queueing ? null : stylistField}
+              {/*
+                A token has no stylist (`queueIt` never sends one). The one-column form drops the row while Waiting is
+                the answer; here the column stays put (owner, 2026-10-14 — a tap in the right panel must not move the
+                left one), so the chips are greyed out with a line saying when the stylist IS chosen.
+              */}
+              <div className={queueing ? 'wi-desk-stylist-off' : undefined} aria-disabled={queueing || undefined}>
+                {stylistField}
+                {queueing ? <p className="wi-desk-stylist-why">{nv.deskStylistLater}</p> : null}
+              </div>
               <DeskUnpaid location={listBranch} timezone={timezone} title={nv.deskToday} empty={nv.deskNobodyToday} still />
             </aside>
             {services === null ? (
