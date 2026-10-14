@@ -60,9 +60,13 @@ describe('Clients on a desk', () => {
   it('the table never pushes past its panel: fixed columns, the name truncates, two columns the card carries fold', () => {
     expect(css).toMatch(/\.cust-desk-table table \{\s*min-width: 0;\s*table-layout: fixed;/);
     expect(css).toMatch(/\.cust-desk-table td \{\s*overflow: hidden;\s*text-overflow: ellipsis;/);
-    // "Last booking" always; Phone up to 1440.
+    // The name gives way last, the branch chip first (owner's screenshot, 2026-10-14).
+    expect(css).toMatch(/\.cust-desk-table \.cust-name-cell > span:nth-child\(2\) \{\s*flex: 1 1 auto;\s*min-width: 0;\s*overflow: hidden;/);
+    expect(css).toMatch(/\.cust-desk-table \.cust-branch-chip \{\s*flex: 0 4 auto;\s*min-width: 3\.5rem;/);
+    expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1440px\) \{\s*\.cust-desk-table \.cust-branch-chip \{\s*display: none;/);
+    // "Last booking" always; Phone up to 1600: at 1441 the name had ~10rem beside it.
     expect(css).toMatch(/@media \(min-width: 1101px\) \{[\s\S]*?\.cust-desk-table th:nth-child\(3\),\s*\.cust-desk-table td:nth-child\(3\) \{\s*display: none;/);
-    expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1440px\) \{\s*\.cust-desk-table th:nth-child\(2\),\s*\.cust-desk-table td:nth-child\(2\) \{\s*display: none;/);
+    expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1600px\) \{\s*\.cust-desk-table th:nth-child\(2\),\s*\.cust-desk-table td:nth-child\(2\) \{\s*display: none;/);
   });
 
   it('is loaded after the Services desk sheet, and says it in both languages', () => {
