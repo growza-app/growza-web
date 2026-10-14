@@ -331,3 +331,25 @@
     color: var(--muted);
   }
 }
+
+/*
+ * Jira GRW-572 — on the wide till the sheets are dialogs. A bottom sheet is a phone's shape: on a laptop
+ * it sat in the middle of the window, cut off at the bottom, half over the tiles. Who is paying, the bill
+ * and the keypad now open as a centred card with every corner rounded and room around it.
+ */
+@media (min-width: 1101px) {
+  .pf-wide .pf-keypad-scrim {
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-7);
+  }
+
+  .pf-wide .pf-keypad {
+    max-width: 30rem;
+    max-height: min(80vh, 40rem);
+    margin: 0;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
+  }
+}
