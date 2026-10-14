@@ -55,7 +55,7 @@ describe('paying a token has the same tray as the plain page', () => {
     expect(sheet).toMatch(/if \(!queueOffered && trayTotal\) return <div className="wi-tray-row">\{trayTotal\}\{go\}<\/div>;/);
   });
 
-  it('a package that would take the bill past 12 lines is refused with a message, before Mark done', () => {
+  it('a package that would take the bill past the line cap is refused with a message, before Mark done', () => {
     expect(sheet).toMatch(/if \(forPayment && singles\.length \+ items\.length > BILL_MAX_LINES\) \{\s*setBillFull\(true\);\s*return;/);
     expect(sheet).toMatch(/nv\.billFull\(BILL_MAX_LINES\)/);
   });

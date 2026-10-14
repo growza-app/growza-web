@@ -76,8 +76,8 @@ type Client =
 
 /** The tiles on ①: enough to cover a salon's everyday menu, few enough that each is the size of a thumb. */
 const TILES = 8;
-/** The counter-sale route takes 1–12 lines. */
-const MAX_LINES = 12;
+/** The counter-sale route takes 1–30 lines (`MAX_VISIT_LINES` in the API; was 12 until Jira GRW-572). */
+const MAX_LINES = 30;
 /** The phone remembers two things for the next sale: who did it, and whether the done screen speaks. */
 const STYLIST_KEY = 'growza.pay.stylist';
 
