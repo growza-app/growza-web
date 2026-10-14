@@ -195,11 +195,32 @@ export interface Product {
   costMinor: string | null;
   /** The screen flags the product once the count is at or below this; 0 = never. */
   lowStockAt: number;
+  /** 0117 — the shelf's own category. Null for none. */
+  categoryId: string | null;
+  categoryName: string | null;
+}
+
+/** 0117 — a shelf of the shelf: the owner's own grouping at one branch, with how many live products it holds. */
+export interface ProductCategory {
+  id: string;
+  name: string;
+  sortOrder: number;
+  locationId: string;
+  count: number;
+}
+
+/** The Sales part of the product sheet: the last `days` days from the bills' own lines. */
+export interface ProductSales {
+  days: number;
+  qty: number;
+  moneyMinor: number;
+  byDay: { day: string; qty: number; moneyMinor: number }[];
 }
 
 export interface ProductInput {
   name: string;
   priceMinor: number;
+  categoryId?: string | null;
   /** On create, the opening count. On an edit the API turns it into an `adjusted` ledger line. */
   stock?: number;
   active?: boolean;

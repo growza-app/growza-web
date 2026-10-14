@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { filterShelf } from './ProductsList';
 import type { Product } from '../lib/api-types';
 
-const p = (name: string, stock = 5, active = true): Product => ({ id: name, name, priceMinor: '45000', currency: 'INR', stock, imageUrl: null, active, locationId: 'b', sold: 0, costMinor: null, lowStockAt: 0 });
+const p = (name: string, stock = 5, active = true): Product => ({ id: name, name, priceMinor: '45000', currency: 'INR', stock, imageUrl: null, active, locationId: 'b', sold: 0, costMinor: null, lowStockAt: 0, categoryId: null, categoryName: null });
 const shelf = [p('Keratin Shampoo'), p('Argan Oil'), p('Old Serum', 1, false)];
 
 describe('the Products screen finds a product however it is spelled (GRW-375 matcher)', () => {

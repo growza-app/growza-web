@@ -229,6 +229,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products/:id/photo',
     'DELETE /api/v1/products/:id/photo',
     'POST /api/v1/products/:id/movements',
+    'POST /api/v1/product-categories',
+    'PATCH /api/v1/product-categories/:id',
+    'DELETE /api/v1/product-categories/:id',
   ],
   '/providers': [
     'POST /api/v1/providers',

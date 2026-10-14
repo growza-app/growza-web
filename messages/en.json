@@ -2947,14 +2947,17 @@
       "done": "Done",
       "part": {
         "details": "Details",
-        "stock": "Stock"
+        "stock": "Stock",
+        "sales": "Sales"
       },
       "cost": "Cost price",
       "costHint": "What you pay for one. Optional — it shows the margin and is never on a bill.",
       "margin": "{pct}% margin",
       "lowAt": "Warn me at",
       "lowAtOff": "Off",
-      "lowAtHint": "The screen flags the product in amber once the count is at or below this."
+      "lowAtHint": "The screen flags the product in amber once the count is at or below this.",
+      "category": "Category",
+      "noCategory": "No category"
     },
     "searchPlaceholder": "Search the shelf",
     "noMatch": "Nothing on the shelf is called \"{q}\".",
@@ -3006,6 +3009,44 @@
       "noHistory": "Nothing has happened to this product yet.",
       "afterShort": "{n} left"
     },
-    "deskPick": "Pick a product to change it or see its stock, or add a new one."
+    "deskPick": "Pick a product to change it or see its stock, or add a new one.",
+    "inStock": "In stock",
+    "noun": "products",
+    "cols": {
+      "product": "Product",
+      "price": "Price",
+      "cost": "Cost",
+      "stock": "Stock",
+      "status": "Status"
+    },
+    "sort": {
+      "label": "Sort",
+      "name": "Name (A–Z)",
+      "stock": "Stock, lowest first",
+      "sold": "Best selling",
+      "price": "Price, highest first"
+    },
+    "categories": {
+      "title": "Categories",
+      "all": "All products",
+      "none": "No category",
+      "addRow": "Add a category",
+      "addPlaceholder": "e.g. Hair care",
+      "add": "Add",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "done": "Done",
+      "delete": "Delete category",
+      "deleteNamed": "Delete {name}",
+      "deleteAsk": "Delete {name}? Its {n, plural, =0 {products} one {# product} other {# products}} stay on the shelf with no category.",
+      "failed": "That did not save. Try again."
+    },
+    "sales": {
+      "sold": "Sold in {days} days",
+      "money": "Money taken",
+      "margin": "Margin",
+      "allTime": "{n} sold all time.",
+      "none": "Nothing sold in the last 30 days."
+    }
   }
 }
