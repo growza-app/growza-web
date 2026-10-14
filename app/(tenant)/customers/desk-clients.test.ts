@@ -43,7 +43,7 @@ describe('Clients on a desk', () => {
 
   it('the right panel is the client card drawn in place, or the hint and Add', () => {
     expect(client).toMatch(/<ClientProfileCard clientId=\{openClientId\} inline onClose=\{\(\) => setOpenClientId\(null\)\} \/>/);
-    expect(client).toMatch(/<div className="cust-desk-nothing">\s*<p>\{t\('deskPick', \{ noun: singular \}\)\}<\/p>\s*\{addButton\}/);
+    expect(client).toMatch(/<div className="cust-desk-nothing">\s*<p>\{t\('deskPick', \{ noun: singular \}\)\}<\/p>\s*<\/div>/);
   });
 
   it('the card inline has no scrim, no focus trap, and is a region not a dialog', () => {

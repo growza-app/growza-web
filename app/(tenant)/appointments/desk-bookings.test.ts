@@ -14,9 +14,10 @@ const summary = read('../components/BookingSummary.tsx');
 const css = read('../styles/79-desk-bookings.css');
 
 describe('Bookings on a desk', () => {
-  it('decides by the window, at the desktop tier, and draws nothing until it knows', () => {
+  it('decides by the window, at the desktop tier, and draws the page (the server\'s HTML) until it knows', () => {
     expect(list).toMatch(/window\.matchMedia\('\(min-width: 1101px\)'\)/);
-    expect(list).toMatch(/if \(desk === null\) \{\s*return <div className="bk-desk-wait" aria-busy="true" \/>;/);
+    expect(list).not.toMatch(/desk === null/);
+    expect(list).toMatch(/if \(desk\) \{\s*return \(\s*<div className="bk-desk pf-wide-grid bk-desk-grid">/);
   });
 
   it('is the three panels of the till, inside the page body the server drew', () => {
@@ -29,8 +30,9 @@ describe('Bookings on a desk', () => {
 
   it('the left panel is the takings, the segments as a list with their counts, and the filter card stacked', () => {
     expect(list).toMatch(/<aside className="pf-wide-left bk-desk-left"[^>]*>\s*\{earningsCard\}/);
-    expect(list).toMatch(/<ul className="bk-desk-tabs" role="tablist"/);
-    expect(list).toMatch(/className=\{`bk-desk-tab \$\{tab === seg \? 'is-on' : ''\}`\}/);
+    expect(list).toMatch(/<ul className="pf-wide-tabs" role="tablist" aria-label=\{t\('statusLabel'\)\}/);
+    expect(list).toMatch(/className=\{`pf-wide-tab \$\{tab === seg \? 'is-on' : ''\}`\}/);
+    expect(read('../styles/79-desk-till.css')).toMatch(/\.pf-wide-tab\.is-on \{/);
     expect(list).toMatch(/\{filterCard\}\s*<\/aside>/);
     expect(css).toMatch(/\.bk-desk-left \.bk-filters \{\s*flex-direction: column;/);
     expect(css).toMatch(/\.bk-desk-left \.bk-field-search \{\s*display: none;/);
@@ -43,21 +45,22 @@ describe('Bookings on a desk', () => {
   });
 
   it('the phone keeps its page, in the same pieces', () => {
-    expect(list).toMatch(/\{earningsCard\}\s*\{unmarkedChip\}\s*\{tabsRow\}\s*\{findRow\}\s*\{filterCard\}\s*\{waitingBlock\}/);
+    expect(list).toMatch(/\{earningsCard\}\s*\{unmarkedChip\}\s*\{tabsRow\(\)\}\s*\{findRow\(\)\}\s*\{filterCard\}\s*\{waitingBlock\}/);
     expect(list).toMatch(/<div className="bk-scroll">\{schedBody\}<\/div>\s*\{pager\}/);
     expect(list).toMatch(/\{openSheet\(false\)\}\s*\{giveSheet\}/);
   });
 
-  it('a card picks the booking on a desk, and says so', () => {
-    expect(list).toMatch(/\$\{desk && open\?\.key === b\.key \? 'is-selected' : ''\}`\}\s*aria-selected=\{desk \? open\?\.key === b\.key : undefined\}/);
+  it('a card picks the booking on a desk, and says so; the pick is read fresh and clears when the row leaves the list', () => {
+    expect(list).toMatch(/\$\{desk && picked\?\.key === b\.key \? 'is-selected' : ''\}`\}\s*aria-current=\{desk && picked\?\.key === b\.key \? 'true' : undefined\}/);
+    expect(list).toMatch(/const liveOpen = open \? \(bookings\.find\(\(g\) => g\.key === open\.key\) \?\? null\) : null;\s*const picked = liveOpen && \(!desk \|\| filtered\.some\(\(g\) => g\.key === liveOpen\.key\)\) \? liveOpen : null;/);
     expect(css).toMatch(/\.bk-desk \.bk-card\.is-selected \{\s*border-color: var\(--accent\);/);
     // The card is the control, so its Details button goes.
     expect(css).toMatch(/\.bk-desk \.bk-card \.bk-details \{\s*display: none;/);
   });
 
   it('the right panel is the booking\'s own sheet drawn in place: no backdrop, no trap, a × to clear the pick', () => {
-    expect(list).toMatch(/\{open \? \(\s*openSheet\(true\)\s*\) : \(\s*<div className="bk-desk-nothing">/);
-    expect(list).toMatch(/<BookingSummary booking=\{open\} timezone=\{timezone\} onClose=\{\(\) => setOpen\(null\)\} inline=\{inline\} \/>/);
+    expect(list).toMatch(/\{picked \? \(\s*openSheet\(true\)\s*\) : \(\s*<div className="bk-desk-nothing">/);
+    expect(list).toMatch(/<BookingSummary booking=\{picked\} timezone=\{timezone\} onClose=\{\(\) => setOpen\(null\)\} inline=\{inline\} \/>/);
     expect(list).toMatch(/<BookingSheet\s*inline=\{inline\}/);
     for (const src of [sheet, summary]) {
       expect(src).toMatch(/useDialog\(dialogRef, \{ onClose: inline \? undefined : onClose, active: !inline \}\);/);

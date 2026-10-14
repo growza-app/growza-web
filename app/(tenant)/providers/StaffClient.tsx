@@ -613,18 +613,18 @@ export function StaffClient({
                 <div><dt>{t('deskPeople')}</dt><dd>{activeCount}</dd></div>
                 <div className={seatsLeft === 0 ? 'is-warn' : ''}><dt>{t('deskSeats')}</dt><dd>{seatsLeft}</dd></div>
               </dl>
-              <ul className="staff-desk-tabs" role="tablist">
+              <ul className="pf-wide-tabs" role="tablist">
                 {tabs.map((tb) => (
                   <li key={tb.key}>
                     <button
                       type="button"
                       role="tab"
                       aria-selected={tab === tb.key}
-                      className={`staff-desk-tab ${tab === tb.key ? 'is-on' : ''}`}
+                      className={`pf-wide-tab ${tab === tb.key ? 'is-on' : ''}`}
                       onClick={() => changeTab(tb.key)}
                     >
-                      <span className="staff-desk-tab-name">{t(`tabs.${tb.key}`)}</span>
-                      <span className="staff-desk-n">{tb.count}</span>
+                      <span className="pf-wide-tab-name">{t(`tabs.${tb.key}`)}</span>
+                      <span className="pf-wide-n">{tb.count}</span>
                     </button>
                   </li>
                 ))}
@@ -660,11 +660,6 @@ export function StaffClient({
               ) : (
                 <div className="staff-desk-nothing">
                   <p>{t('deskPick', { label: staffLower })}</p>
-                  {writable && (
-                    <button type="button" className="btn" onClick={() => setCreating('staff')}>
-                      <IconPlus /> {t('addLabel', { label: staffLower })}
-                    </button>
-                  )}
                 </div>
               )}
             </aside>

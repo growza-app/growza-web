@@ -20,10 +20,6 @@
     overflow: hidden;
   }
 
-  .bk-desk-wait {
-    flex: 1;
-  }
-
   .bk-desk-grid {
     flex: 1;
     min-height: 0;
@@ -79,7 +75,7 @@
     box-shadow: inset 3px 0 0 var(--accent);
   }
 
-  /* ---------- left: takings, the segments as a list, the filters stacked ---------- */
+  /* ---------- left: takings, the segments (`.pf-wide-tabs`, 79-desk-till.css), the filters stacked ---------- */
   .bk-desk-left .bk-earnings {
     margin: 0 0 var(--sp-3);
   }
@@ -87,63 +83,6 @@
   .bk-desk-left .bk-earnings-figures {
     flex-direction: column;
     gap: var(--sp-2);
-  }
-
-  .bk-desk-tabs {
-    list-style: none;
-    margin: 0 0 var(--sp-3);
-    padding: 0 0 var(--sp-3);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .bk-desk-tab {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--sp-2);
-    min-height: 2.5rem;
-    padding: 0 var(--sp-3);
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text);
-    font: inherit;
-    font-size: 0.875rem;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .bk-desk-tab:hover {
-    background: var(--page-bg);
-  }
-
-  .bk-desk-tab.is-on {
-    background: var(--accent-soft);
-    color: var(--accent-deep);
-    font-weight: 600;
-  }
-
-  .bk-desk-tab-name {
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .bk-desk-n {
-    flex: none;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .bk-desk-tab.is-on .bk-desk-n {
-    color: inherit;
   }
 
   /* The filter card is not a card here: the panel is. Its fields stack, one under the other, labels kept. */

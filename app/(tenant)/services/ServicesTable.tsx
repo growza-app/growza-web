@@ -820,7 +820,6 @@ export function ServicesTable({
               ) : (
                 <div className="svc-desk-nothing">
                   <p>{t('deskPick')}</p>
-                  {addButton}
                 </div>
               )}
             </aside>

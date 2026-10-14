@@ -510,7 +510,6 @@ export function CustomersClient({
               ) : (
                 <div className="cust-desk-nothing">
                   <p>{t('deskPick', { noun: singular })}</p>
-                  {addButton}
                 </div>
               )}
             </aside>

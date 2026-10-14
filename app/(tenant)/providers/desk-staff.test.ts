@@ -28,7 +28,7 @@ describe('Staff on a desk', () => {
 
   it('the left panel is the three figures and the tabs with their counts', () => {
     expect(client).toMatch(/<dl className="staff-desk-kpis">/);
-    expect(client).toMatch(/\{tabs\.map\(\(tb\) => \([\s\S]*?className=\{`staff-desk-tab \$\{tab === tb\.key \? 'is-on' : ''\}`\}[\s\S]*?onClick=\{\(\) => changeTab\(tb\.key\)\}/);
+    expect(client).toMatch(/\{tabs\.map\(\(tb\) => \([\s\S]*?className=\{`pf-wide-tab \$\{tab === tb\.key \? 'is-on' : ''\}`\}[\s\S]*?onClick=\{\(\) => changeTab\(tb\.key\)\}/);
   });
 
   it('the roster is the page\'s own, in a scrolling panel; the header and dialogs are shared with the page', () => {
