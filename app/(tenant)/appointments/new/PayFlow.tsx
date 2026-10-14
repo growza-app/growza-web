@@ -1003,7 +1003,15 @@ export function PayFlow({
             />
           )}
           <aside className="pf-wide-right">
-            <h2 className="pf-wide-h">{t('billTitle')}</h2>
+            {/* Owner, 2026-10-14 — the lines scroll inside the panel on a long bill, so a link opens the whole bill as a card. */}
+            <div className="pf-wide-bill-head">
+              <h2 className="pf-wide-h">{t('billTitle')}</h2>
+              {lines.length > 0 ? (
+                <button type="button" className="pf-wide-link" onClick={() => setBillOpen(true)}>
+                  {t('onBill', { count: lines.length })} · {t('viewDetails')}
+                </button>
+              ) : null}
+            </div>
             {badService ? (
               <p className="pf-miss pf-miss-wide" role="alert">
                 {t('pickOne')}
@@ -1048,6 +1056,18 @@ export function PayFlow({
               setWhoOpen(false);
             }}
             onClose={() => setWhoOpen(false)}
+          />
+        ) : null}
+        {billOpen && lines.length > 0 ? (
+          <BillCard
+            lines={lines}
+            listMinor={listMinor}
+            totalMinor={totalMinor}
+            onLess={(key) => {
+              oneLess(key);
+              if (lines.length === 1) setBillOpen(false);
+            }}
+            onClose={() => setBillOpen(false)}
           />
         ) : null}
         {keypad !== null ? (

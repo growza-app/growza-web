@@ -84,6 +84,13 @@ describe('the wide till', () => {
     expect((flow.match(/<FormModeSwitch now="simple"/g) ?? []).length).toBe(1);
   });
 
+  it('opens the whole bill as a card from a View details link (owner, 2026-10-14)', () => {
+    const wide = flow.slice(flow.indexOf('<div className="pf pf-wide">'), flow.indexOf('/* ---------- ① What did they get? ---------- */', flow.indexOf('<div className="pf pf-wide">')));
+    expect(wide).toMatch(/className="pf-wide-link" onClick=\{\(\) => setBillOpen\(true\)\}/);
+    expect(wide).toMatch(/\{t\('onBill', \{ count: lines\.length \}\)\} · \{t\('viewDetails'\)\}/);
+    expect(wide).toMatch(/\{billOpen && lines\.length > 0 \? \(\s*<BillCard/);
+  });
+
   it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {
     expect(flow).not.toMatch(/<input/);
     expect((grid.match(/<input/g) ?? []).length).toBe(1);

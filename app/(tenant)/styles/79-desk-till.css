@@ -266,6 +266,32 @@
   }
 
   /* ---------- right: the bill ---------- */
+  .pf-wide-bill-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+
+  .pf-wide-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-deep);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* On the Desk the card lists every line without a cap of its own: that is what it is for. */
+  .pf-wide .pf-bill .pf-bill-lines {
+    max-height: none;
+  }
+
   /* The rows' own Total line is hidden here: the total button below it is the one figure, and it opens the keypad. */
   .pf-wide-right .pf-bill-total {
     display: none;
@@ -275,10 +301,28 @@
     display: none;
   }
 
-  /* The lines scroll on their own first, so the total and the tiles stay in reach on a long bill. */
+  /*
+   * The lines scroll on their own first, so the total and the tiles stay in reach on a long bill. Five rows
+   * before they scroll (owner, 2026-10-14 — 30vh showed two on a laptop), and View details opens them all.
+   */
   .pf-wide-right .pf-bill-lines {
-    max-height: 30vh;
+    max-height: 19.5rem;
     overflow-y: auto;
+  }
+
+  /* Shorter payment tiles on the Desk, so five bill rows and all four tiles fit an 860px window. */
+  .pf-wide-right .pf-pay-tile {
+    padding: var(--sp-3) var(--sp-6) var(--sp-3) var(--sp-3);
+  }
+
+  .pf-wide-right .pf-pay-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: var(--sp-2);
+  }
+
+  .pf-wide-right .pf-pay-sub {
+    display: none;
   }
 
   .pf-wide-total {
@@ -306,10 +350,6 @@
     font-size: 1.5rem;
     font-weight: 800;
     letter-spacing: -0.01em;
-  }
-
-  .pf-wide-right .pf-pay-tile {
-    padding: var(--sp-3) var(--sp-6) var(--sp-3) var(--sp-3);
   }
 
   .pf-wide-right .pf-pay-tile::after {
