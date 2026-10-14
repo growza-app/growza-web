@@ -222,7 +222,14 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
    */
   '/packages': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
   // Owner, 2026-10-14 — the shelf: owner-only, closed whole by `guardScreen`.
-  '/products': ['POST /api/v1/products', 'PATCH /api/v1/products/:id', 'DELETE /api/v1/products/:id', 'POST /api/v1/products/:id/photo', 'DELETE /api/v1/products/:id/photo'],
+  '/products': [
+    'POST /api/v1/products',
+    'PATCH /api/v1/products/:id',
+    'DELETE /api/v1/products/:id',
+    'POST /api/v1/products/:id/photo',
+    'DELETE /api/v1/products/:id/photo',
+    'POST /api/v1/products/:id/movements',
+  ],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',

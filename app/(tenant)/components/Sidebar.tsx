@@ -48,6 +48,7 @@ export function Sidebar({
   reportTabs,
   whatsappLive,
   whatsappDemo = false,
+  products = true,
   lang,
   locationName,
   branchCount = 1,
@@ -63,6 +64,8 @@ export function Sidebar({
   whatsappLive?: boolean;
   /** Jira GRW-266 · GRW-271 — false in production, where the Try WhatsApp demo does not exist. */
   whatsappDemo?: boolean;
+  /** Owner, 2026-10-14 — false for a plan that does not sell over the counter; the shelf is not offered. */
+  products?: boolean;
   /** Jira GRW-222 — nav labels follow the Home language toggle. */
   lang?: Lang;
   /** Jira GRW-222 — the primary branch, under the business name. */
@@ -134,7 +137,7 @@ export function Sidebar({
     // Jira GRW-438 — beside Services, because a package is made of them and the owner edits the two together.
     { href: '/packages', label: t.nav.packages, icon: <IconPackages /> },
     // Owner, 2026-10-14 — what the till sells that nobody performs. Beside the menu it is sold with.
-    { href: '/products', label: t.nav.products, icon: <IconProducts /> },
+    ...(products === false ? [] : [{ href: '/products', label: t.nav.products, icon: <IconProducts /> }]),
     { href: '/offers', label: t.nav.offers, icon: <IconOffers /> },
     { href: '/customers', label: t.nav.clients, icon: <IconUserPlus /> },
     // GRW-170 — who was here. Sits beside the client list because it is the

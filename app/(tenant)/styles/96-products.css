@@ -104,3 +104,384 @@
     max-width: 48rem;
   }
 }
+
+/* ---------- 0116 — the stock screen: three numbers, a search, four chips, a pill per row ---------- */
+.prd-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.prd-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+.prd-stat-tap {
+  cursor: pointer;
+}
+
+.prd-stat-n {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-stat-l {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.prd-stat-low {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+
+.prd-stat-low .prd-stat-n {
+  color: var(--danger);
+}
+
+.prd-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.prd-search {
+  min-width: 0;
+}
+
+.prd-chips {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  margin: -2px;
+}
+
+.prd-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.prd-chip {
+  flex: none;
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.prd-chip-n {
+  margin-left: 4px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.prd-chip-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+}
+
+.prd-chip-on .prd-chip-n {
+  color: #fff;
+  opacity: 0.85;
+}
+
+.prd-chip-warn:not(.prd-chip-on) {
+  border-color: var(--amber);
+  color: var(--amber-ink);
+}
+
+.prd-meta {
+  grid-area: stock;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.prd-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.prd-pill-low {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.prd-pill-out {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.prd-pill-off {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.prd-row-tap {
+  grid-template-areas:
+    'photo name price'
+    'photo stock stock';
+}
+
+.prd-sold {
+  grid-area: auto;
+  justify-self: start;
+}
+
+.prd-chip-retired {
+  margin-left: var(--sp-2);
+  font-weight: 500;
+}
+
+/* ---------- the sheet's two parts ---------- */
+.prd-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0 var(--sp-4) var(--sp-2);
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--slate-soft);
+}
+
+.prd-seg button {
+  min-height: 38px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prd-seg button.is-on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.prd-cost-value {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.prd-margin {
+  flex: none;
+  font-size: 0.8125rem;
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.prd-margin-neg {
+  color: var(--danger);
+}
+
+/* ---------- Stock ---------- */
+.prd-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--sp-4) var(--sp-3);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.prd-count-low {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.prd-count-out {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.prd-count-n {
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.prd-count-l {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.prd-moves {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.prd-move {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.prd-move.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.prd-move-adjusted {
+  grid-column: 1 / -1;
+}
+
+.prd-move-form {
+  margin-top: var(--sp-3);
+}
+
+.prd-move-go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+
+.prd-move-after {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.prd-ledger-h {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.prd-ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.prd-ledger-row {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'qty what after'
+    'qty when after';
+  column-gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.prd-ledger-qty {
+  grid-area: qty;
+  font-weight: 800;
+  font-size: 1.0625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-ledger-in {
+  color: var(--accent-deep);
+}
+
+.prd-ledger-out {
+  color: var(--danger);
+}
+
+.prd-ledger-what {
+  grid-area: what;
+  display: flex;
+  gap: var(--sp-2);
+  min-width: 0;
+  font-weight: 600;
+}
+
+.prd-ledger-note {
+  font-weight: 400;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-ledger-when {
+  grid-area: when;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.prd-ledger-after {
+  grid-area: after;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (min-width: 861px) {
+  .prd-tools {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .prd-search {
+    max-width: 20rem;
+  }
+
+  .prd-moves {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .prd-move-adjusted {
+    grid-column: auto;
+  }
+}
+
+/* The Stock part has no Save: the head keeps its third column so the title stays centred. */
+.prd-head-spacer {
+  width: 4rem;
+}

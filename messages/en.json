@@ -2914,7 +2914,7 @@
   },
   "products": {
     "title": "Products",
-    "subtitle": "Things you sell over the counter — a shampoo, a serum, a hair oil. Ring them up on the Record payment screen beside the services.",
+    "subtitle": "Things you sell over the counter. Ring them up on the Record payment screen beside the services; every change to the count is kept here.",
     "add": "Add a product",
     "empty": "Nothing on the shelf yet.",
     "emptyHint": "Add what you sell over the counter and it shows up on the Record payment screen.",
@@ -2933,8 +2933,8 @@
       "name": "Name",
       "namePlaceholder": "e.g. Argan Oil 100ml",
       "price": "Price",
-      "stock": "In stock",
-      "stockHint": "How many are on the shelf. Each sale takes one off.",
+      "stock": "Opening count",
+      "stockHint": "How many are on the shelf today. Later changes go on the Stock tab, with a reason.",
       "addPhoto": "Add a photo",
       "changePhoto": "Change photo",
       "photoHint": "Optional. Shown on the till's tile.",
@@ -2943,7 +2943,68 @@
       "save": "Save",
       "saving": "Saving…",
       "needName": "Give the product a name",
-      "needPrice": "Give it a price"
+      "needPrice": "Give it a price",
+      "done": "Done",
+      "part": {
+        "details": "Details",
+        "stock": "Stock"
+      },
+      "cost": "Cost price",
+      "costHint": "What you pay for one. Optional — it shows the margin and is never on a bill.",
+      "margin": "{pct}% margin",
+      "lowAt": "Warn me at",
+      "lowAtOff": "Off",
+      "lowAtHint": "The screen flags the product in amber once the count is at or below this."
+    },
+    "searchPlaceholder": "Search the shelf",
+    "noMatch": "Nothing on the shelf is called \"{q}\".",
+    "lowStock": "{n} left — low",
+    "strip": {
+      "products": "Products",
+      "worth": "Stock worth",
+      "low": "Running low"
+    },
+    "filters": {
+      "label": "Show",
+      "all": "All",
+      "low": "Low",
+      "out": "Out",
+      "retired": "Retired",
+      "none": {
+        "all": "Nothing on the shelf.",
+        "low": "Nothing is running low.",
+        "out": "Nothing is out of stock.",
+        "retired": "Nothing has been taken off the till."
+      }
+    },
+    "ledger": {
+      "onShelf": "on the shelf",
+      "lowNow": "on the shelf — low (you asked to be warned at {at})",
+      "outNow": "out of stock",
+      "change": "Change the count",
+      "kind": {
+        "received": "Received",
+        "sold": "Sold",
+        "used": "Used in-house",
+        "damaged": "Damaged",
+        "returned": "Returned",
+        "adjusted": "Counted"
+      },
+      "howMany": "How many",
+      "countIs": "The count is",
+      "note": "Note",
+      "noteHint": {
+        "received": "e.g. Supplier delivery",
+        "used": "e.g. Opened for the floor",
+        "damaged": "e.g. Leaked in the box",
+        "returned": "e.g. Client brought it back",
+        "adjusted": "e.g. Counted the shelf"
+      },
+      "after": "Count will be {n}",
+      "confirm": "Confirm",
+      "history": "History",
+      "noHistory": "Nothing has happened to this product yet.",
+      "afterShort": "{n} left"
     }
   }
 }
