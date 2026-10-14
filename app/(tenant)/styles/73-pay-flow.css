@@ -692,7 +692,7 @@
 }
 
 .pf-pay-tile:active:not(:disabled) {
-  box-shadow: none;
+  background: var(--slate-soft);
 }
 
 .pf-pay-cash {
@@ -1042,7 +1042,7 @@
 }
 
 .pf-key:active {
-  box-shadow: none;
+  background: var(--slate-soft);
 }
 
 .pf-key-quiet {
@@ -1169,7 +1169,6 @@
 .pf-client-add-row .field input {
   width: 100%;
   min-height: 3rem;
-  font-size: 16px; /* iOS zooms the page on focus below 16px. */
 }
 
 .pf-client-contacts {
@@ -1201,7 +1200,6 @@
   width: 100%;
   min-height: 3.25rem;
   padding-left: 2.75rem;
-  font-size: 16px; /* iOS zooms the page on focus below 16px. */
 }
 
 .pf-client-label {

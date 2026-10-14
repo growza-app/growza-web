@@ -93,7 +93,7 @@
   gap: var(--sp-2);
   min-height: 40px;
   padding: 0 var(--sp-3);
-  border-radius: 11px;
+  border-radius: var(--radius);
   border: 1px solid var(--hm-line);
   background: #f4f6f4;
   color: var(--hm-ink);
@@ -241,7 +241,7 @@
 .hm-card {
   background: var(--surface);
   border: 1px solid var(--hm-line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   padding: var(--sp-4);
   min-width: 0;
 }
@@ -301,7 +301,7 @@
   justify-content: space-between;
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: #fdf1f1;
   border: 1px solid #f7d9d9;
   color: #9f2f2f;
@@ -310,7 +310,7 @@
 .hm-error button {
   min-height: 40px;
   padding: 0 var(--sp-3);
-  border-radius: 10px;
+  border-radius: var(--radius);
   border: 1px solid #f0c6c6;
   background: #fff;
   color: #9f2f2f;
@@ -319,7 +319,7 @@
   cursor: pointer;
 }
 .hm-skeleton {
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(90deg, #eef1ee 0%, #f6f8f6 50%, #eef1ee 100%);
   background-size: 200% 100%;
   animation: hm-shimmer 1.2s linear infinite;
@@ -334,7 +334,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 11px;
+  border-radius: var(--radius);
   font-weight: 700;
   font-size: 0.9375rem;
 }
@@ -367,7 +367,7 @@
 .hm-toolbar-actions .hm-action {
   min-height: 40px;
   padding: 0 var(--sp-4);
-  border-radius: 12px;
+  border-radius: var(--radius);
 }
 .hm-toolbar-actions .hm-action svg {
   width: 1.125rem;
@@ -380,14 +380,14 @@
 .hm-seg {
   display: inline-flex;
   padding: 3px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: #e7ebe7;
 }
 .hm-seg button {
   min-height: 38px;
   padding: 0 var(--sp-4);
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--hm-muted);
   font: inherit;
@@ -410,7 +410,7 @@
   z-index: 20;
   min-width: 200px;
   padding: 6px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--hm-line);
   background: #fff;
   box-shadow: 0 14px 34px rgba(11, 54, 28, 0.18);
@@ -424,7 +424,7 @@
   min-height: 44px;
   padding: 0 var(--sp-3);
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: transparent;
   color: var(--hm-ink);
   font: inherit;
@@ -550,7 +550,7 @@
     min-height: 44px;
     padding: 0 34px 0 var(--sp-3);
     border: 1px solid var(--hm-line);
-    border-radius: 12px;
+    border-radius: var(--radius);
     background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6f66' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 15px 15px;
     color: var(--hm-ink);
     font: inherit;
@@ -570,7 +570,7 @@
   gap: var(--sp-3);
   height: 100%;
   padding: var(--sp-5);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(140deg, var(--hm-hero-a), var(--hm-hero-b));
   color: #fff;
   transition: opacity 0.15s ease;
@@ -596,7 +596,7 @@
 .hm-delta {
   margin-left: auto;
   padding: 4px 11px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.1);
   color: #bff0d0;
   font-size: 0.875rem;
@@ -710,7 +710,7 @@
 }
 .hm-hero-stats span {
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.08);
   color: #bfe6cf;
   font-size: 0.875rem;
@@ -819,7 +819,7 @@
 }
 .hm-pay-tiles .hm-pay-item {
   padding: var(--sp-3);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.08);
 }
 .hm-pay-list {
@@ -953,7 +953,7 @@
   gap: var(--sp-3);
   min-height: 56px;
   padding: var(--sp-2) var(--sp-3);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border-width: 1px;
   border-style: solid;
   text-decoration: none;
@@ -971,7 +971,7 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 11px;
+  border-radius: var(--radius);
   flex-shrink: 0;
 }
 .hm-att-icon svg {
@@ -1039,7 +1039,7 @@
   justify-content: center;
   width: 50px;
   height: 50px;
-  border-radius: 15px;
+  border-radius: var(--radius-lg);
   border-width: 1px;
   border-style: solid;
 }
@@ -1081,14 +1081,14 @@
     flex-direction: row;
     padding: var(--sp-3) var(--sp-4);
     border: 1px solid var(--hm-line);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     background: var(--surface);
     gap: var(--sp-3);
   }
   .hm-page > .hm-tiles .hm-tile-icon {
     width: 42px;
     height: 42px;
-    border-radius: 12px;
+    border-radius: var(--radius);
   }
   .hm-page > .hm-tiles .hm-tile-label {
     font-size: 0.875rem;
@@ -1111,7 +1111,7 @@
   min-height: 64px;
   padding: var(--sp-2) var(--sp-3) var(--sp-2) calc(var(--sp-3) + 4px);
   border: 1px solid #eef1ee;
-  border-radius: 12px;
+  border-radius: var(--radius);
   overflow: hidden;
   color: var(--hm-ink);
   text-decoration: none;
@@ -1285,7 +1285,7 @@
 .hm-pill {
   flex-shrink: 0;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.8125rem;
   font-weight: 700;
   white-space: nowrap;
@@ -1351,7 +1351,7 @@
   min-height: 40px;
   margin: 0;
   padding: 6px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   font-size: 0.9375rem;
   min-width: 0;
   white-space: nowrap;
@@ -1399,7 +1399,7 @@ button.hm-now-count {
   min-height: 24px;
   padding: 0 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--hm-green-deep);
   font: inherit;
@@ -1444,7 +1444,7 @@ button.hm-now-count {
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: #f4f6f4;
   color: #4a574f;
   flex-shrink: 0;
@@ -1540,7 +1540,7 @@ button.hm-now-count {
     min-width: 0;
     min-height: 36px;
     padding: 0 12px;
-    border-radius: 11px;
+    border-radius: var(--radius);
     border: 1px solid #cdeedb;
     background: var(--hm-green-soft);
     color: var(--hm-green-deep);
@@ -1570,7 +1570,7 @@ button.hm-now-count {
   width: 100%;
   min-height: 56px;
   padding: var(--sp-3) var(--sp-4);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border: 1px solid #cdeedb;
   background: var(--hm-green-soft);
   color: var(--hm-ink);
@@ -1589,7 +1589,7 @@ button.hm-now-count {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 11px;
+  border-radius: var(--radius);
   background: #d0f0de;
   color: var(--hm-green-deep);
   flex-shrink: 0;
@@ -1657,7 +1657,7 @@ button.hm-now-count {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: 1px solid var(--hm-line);
   background: #fff;
   color: var(--hm-ink);
@@ -1678,7 +1678,7 @@ button.hm-now-count {
 .hm-btn {
   min-height: 48px;
   padding: 0 var(--sp-6);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   font: inherit;
   font-weight: 700;
   font-size: 0.90625rem;
@@ -1735,7 +1735,7 @@ button.hm-now-count {
   gap: var(--sp-3);
   min-height: 60px;
   padding: var(--sp-3) var(--sp-5);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--hm-line);
   background: var(--surface);
   color: var(--hm-ink);
@@ -1806,7 +1806,7 @@ button.hm-now-count {
   min-width: 0;
 }
 .hm-person .hm-avatar {
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   font-size: 1rem;
 }
 .hm-card-next {
@@ -1851,7 +1851,7 @@ button.hm-now-count {
   flex-direction: column;
   align-items: center;
   padding: var(--sp-3) var(--sp-1);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   border-width: 1px;
   border-style: solid;
   font-size: 0.8125rem;
@@ -2004,7 +2004,7 @@ button.hm-now-count {
 .hm-desk .hm-primary-actions .hm-action {
   min-height: 56px;
   padding: var(--sp-4) var(--sp-6);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   font-size: 0.9375rem;
 }
 .hm-desk .hm-primary-actions .hm-action svg {
@@ -2030,7 +2030,7 @@ button.hm-now-count {
   padding: 15px var(--sp-4);
   border-width: 1px;
   border-style: solid;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   color: var(--hm-ink);
   text-decoration: none;
 }
@@ -2038,7 +2038,7 @@ button.hm-now-count {
   grid-area: icon;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 .hm-att-count {
   grid-area: count;
@@ -2080,7 +2080,7 @@ button.hm-now-count {
   gap: 14px;
 }
 .hm-desk .hm-row .hm-avatar {
-  border-radius: 11px;
+  border-radius: var(--radius);
   font-size: 0.9375rem;
 }
 .hm-desk .hm-row-name {
@@ -2161,7 +2161,7 @@ button.hm-now-count {
   padding: 0 6px;
   height: 28px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: #f1f4f1;
   color: #4a574f;
   font-size: 0.9375rem;
@@ -2249,12 +2249,12 @@ button.hm-now-count {
       'label label label';
     row-gap: 0;
     padding: 12px 11px;
-    border-radius: 15px;
+    border-radius: var(--radius-lg);
   }
   .hm-att-tile .hm-att-icon {
     width: 28px;
     height: 28px;
-    border-radius: 9px;
+    border-radius: var(--radius-sm);
   }
   .hm-att-tile .hm-att-icon svg {
     width: 1rem;
@@ -2302,7 +2302,7 @@ button.hm-now-count {
   .hm-desk > .hm-tiles .hm-tile-icon {
     width: 56px;
     height: 56px;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
   }
 }
 .hm-wait-inline {
@@ -2356,7 +2356,7 @@ button.hm-now-count {
   text-decoration: none;
 }
 .hm-person-card .hm-avatar {
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   font-size: 1.0625rem;
 }
 .hm-person-card > svg {
@@ -2744,7 +2744,7 @@ button.hm-now-count {
   padding: var(--sp-2) var(--sp-3);
   border-width: 1px;
   border-style: solid;
-  border-radius: 12px;
+  border-radius: var(--radius);
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--hm-muted);
@@ -2795,7 +2795,7 @@ button.hm-now-count {
   font-weight: 800;
 }
 .hm-ds-lists li .hm-avatar {
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   font-size: 0.8125rem;
 }
 .hm-ds-lists .hm-empty {
@@ -2831,7 +2831,7 @@ button.hm-now-count {
   .hm-page .hm-hero:not(.hm-hero-small) {
     gap: 4px;
     padding: 12px 14px;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-top {
     min-height: 28px;
@@ -3059,7 +3059,7 @@ button.hm-now-count {
     /* Jira GRW-510 — a secondary button, like the other quiet buttons (`.hm-btn-quiet`): white, a
        line border, an ink icon. It was a green-tinted square, which read as a status chip. */
     border: 1px solid var(--hm-line);
-    border-radius: 13px;
+    border-radius: var(--radius-lg);
     background: #fff;
     color: var(--hm-ink);
     cursor: pointer;

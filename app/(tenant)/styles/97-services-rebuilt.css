@@ -22,7 +22,7 @@
   flex: none;
   width: 42px;
   height: 42px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
 }
 
@@ -409,7 +409,7 @@
   flex: none;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent-deep);
   display: flex;

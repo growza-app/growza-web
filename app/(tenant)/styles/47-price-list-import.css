@@ -419,8 +419,6 @@
 .rv-edit input {
   width: 100%;
   min-width: 0;
-  min-height: 44px;
-  font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
 }
 
 .rv-edit input[readonly] {

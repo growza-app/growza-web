@@ -117,7 +117,7 @@
   gap: 7px;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: transparent;
   font: inherit;
   color: var(--muted);
@@ -362,7 +362,7 @@
     width: min(560px, calc(100vw - 48px));
     max-height: min(86vh, 760px);
     /* All four corners: it is no longer rising from the bottom edge. */
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     padding-bottom: 0;
   }
@@ -372,7 +372,7 @@
  * The line under the Stylist / Receptionist chips.
  *
  * It had a negative top margin to sit tight under them, which was fine while the chips were flat and wrong the
- * moment they became clay: a raised chip's shadow reaches below its box, so the sentence ran into it.
+ * moment they became clay (since removed, Jira GRW-570): a raised chip's shadow reaches below its box, so the sentence ran into it.
  */
 .wiz-kind-sub {
   margin: var(--sp-2) 0 var(--sp-3);

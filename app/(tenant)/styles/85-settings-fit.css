@@ -340,7 +340,7 @@
   max-width: 220px;
   padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -372,7 +372,7 @@
   width: 230px;
   padding: 6px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: 0 14px 34px rgba(11, 54, 28, 0.18);
 }
@@ -383,7 +383,7 @@
   width: 100%;
   padding: 9px 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -412,7 +412,7 @@
   margin-bottom: 12px;
   padding: 9px 14px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--surface);
   font-size: 0.84375rem;
   color: #4a574f;
@@ -433,7 +433,7 @@
   min-height: 44px;
   padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--accent-deep);
   font: inherit;
@@ -658,7 +658,7 @@
 .bill-head .bp-sub { margin: 2px 0 0; }
 .bill-due {
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-  padding: 10px 14px; border-radius: 12px; font-weight: 600; font-size: 0.875rem;
+  padding: 10px 14px; border-radius: var(--radius); font-weight: 600; font-size: 0.875rem;
   border: 1px solid oklch(0.85 0.09 80); background: oklch(0.97 0.05 85); color: oklch(0.4 0.11 70);
 }
 .bill-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
@@ -676,7 +676,7 @@
 .bill-discount > span:last-child { color: oklch(0.5 0.15 25); }
 .bill-muted { color: var(--muted); font-weight: 500; }
 .bill-paid-by { margin: 10px 0 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.5; }
-.bill-change { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; font-size: 0.8125rem; line-height: 1.45; background: oklch(0.97 0.02 250); color: oklch(0.38 0.08 255); }
+.bill-change { margin: 0 0 8px; padding: 8px 10px; border-radius: var(--radius); font-size: 0.8125rem; line-height: 1.45; background: oklch(0.97 0.02 250); color: oklch(0.38 0.08 255); }
 .bill-invoices { list-style: none; margin: 0; padding: 0; }
 .bill-invoice { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
 .bill-invoices li:last-child .bill-invoice { border-bottom: 0; }
@@ -727,7 +727,7 @@
   gap: 10px 14px;
   min-width: 0;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: 1px solid oklch(0.88 0.04 250);
   background: oklch(0.97 0.02 250);
   color: oklch(0.36 0.08 255);
@@ -1000,10 +1000,10 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
 .pay-card-call { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 12px; max-width: 100%; text-align: center; }
 
 /* Jira GRW-556 (follow-up) — "we are confirming your payment", and the acknowledgement that it arrived. */
-.pay-card-confirming { margin: 10px 0 0; padding: 8px 10px; border-radius: 10px; font-size: 0.8125rem; line-height: 1.45; background: oklch(0.97 0.02 250); color: oklch(0.38 0.08 255); }
+.pay-card-confirming { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--radius); font-size: 0.8125rem; line-height: 1.45; background: oklch(0.97 0.02 250); color: oklch(0.38 0.08 255); }
 .pay-card-confirming a { font-weight: 700; }
 .payment-received {
-  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px; font-size: 0.875rem; line-height: 1.45;
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--radius); font-size: 0.875rem; line-height: 1.45;
   border: 1px solid oklch(0.82 0.1 150); background: oklch(0.96 0.05 150); color: oklch(0.35 0.09 150);
 }
 .payment-received-tick { flex: none; display: inline-flex; padding-top: 1px; }
@@ -1012,7 +1012,7 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
 /* 44px target, drawn small: the notice is a row, the tap area is not. Pulled into the padding so the row stays as tall. */
 .payment-received-close {
   flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -12px -14px -12px 0;
-  border: 0; background: transparent; color: inherit; cursor: pointer; border-radius: 12px;
+  border: 0; background: transparent; color: inherit; cursor: pointer; border-radius: var(--radius);
 }
 .payment-received-close:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
 

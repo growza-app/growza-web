@@ -469,7 +469,7 @@ describe('the token card on a phone (GRW-548)', () => {
 
   it('is its own rounded white card, on the page background', () => {
     expect(phone).toMatch(/\.tb-board \.tb-col,[^{]*\{[^}]*background: transparent;[^}]*border: 0;/);
-    expect(phone).toMatch(/\.tb-board \.tb-rows > \.tb-row,\s*\.tb-board \.tb-rows > \.tb-row:first-child \{[^}]*border-radius: 18px;[^}]*background: var\(--surface\);/);
+    expect(phone).toMatch(/\.tb-board \.tb-rows > \.tb-row,\s*\.tb-board \.tb-rows > \.tb-row:first-child \{[^}]*border-radius: var\(--radius-lg\);[^}]*background: var\(--surface\);/);
   });
 
   it('puts the name on a line of its own, so the pills fall to the next', () => {

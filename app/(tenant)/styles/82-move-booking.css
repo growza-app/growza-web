@@ -44,7 +44,7 @@
  */
 .mv-any-time input {
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 8px 9px;
   font: inherit;
   font-size: 0.84375rem;

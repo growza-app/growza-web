@@ -130,7 +130,6 @@
   border: 0;
   background: transparent;
   font-family: inherit;
-  font-size: 16px;
   color: var(--text);
   text-align: right;
   outline: none;
@@ -154,14 +153,14 @@
   gap: 2px;
   padding: 2px;
   background: var(--slate-soft);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
 }
 
 .sheet-stepper-btn {
   width: 44px;
   height: 36px;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   font-family: inherit;
@@ -372,7 +371,7 @@
     width: 48px;
     height: 48px;
   }
-  /* Retire and Delete: two rows, each its own raised piece (the shadow is in 101-clay-app.css). */
+  /* Retire and Delete: two rows, each its own raised piece (the clay shadow went with Jira GRW-570; a border now). */
   .sheet-group-danger {
     margin-top: 10px;
     display: flex;
@@ -401,7 +400,7 @@
  * Colour (owner, 2026-10-08): the sheet was white and grey while Home, Settings and Reports wear the Growza palette.
  * The same palette, nothing new: a tinted round badge on each group title (as the Home quick links have), green where
  * you act (steppers, the rupee sign, Save once it can be pressed), Retire in amber and Delete in red. Colour and
- * shape only — no row grows, so the one-screen fit above is unchanged. Shadows are in 101-clay-app.css.
+ * shape only — no row grows, so the one-screen fit above is unchanged. The clay shadows went with Jira GRW-570.
  */
 @media (max-width: 860px) {
   .sheet-label {
@@ -554,7 +553,7 @@
   width: 100%;
   height: auto;
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
 }
 

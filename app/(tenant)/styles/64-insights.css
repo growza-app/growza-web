@@ -2,7 +2,7 @@
 
 .rp-banner {
   background: var(--sidebar);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   padding: 22px;
   color: #e7f0ea;
 }
@@ -36,7 +36,7 @@
 .rp-insight-icon {
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;

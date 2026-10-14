@@ -23,7 +23,7 @@
   width: 190px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow: 0 16px 40px -18px rgba(20, 50, 35, 0.4);
   padding: 6px;
 }
@@ -38,7 +38,7 @@
   font-weight: 500;
   font-size: 0.8125rem;
   padding: 9px 11px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 

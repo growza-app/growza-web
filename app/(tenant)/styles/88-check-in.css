@@ -18,7 +18,7 @@
   width: 100%;
   min-height: 56px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   font-size: 1.25rem;
   font-weight: 800;
   cursor: pointer;
@@ -74,7 +74,7 @@
   gap: var(--sp-2);
   margin-top: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-size: 0.875rem;
   background: #f5f7f6;
 }
@@ -96,7 +96,7 @@
   min-width: 88px;
   min-height: 44px;
   padding: 0 var(--sp-4);
-  border-radius: 11px;
+  border-radius: var(--radius);
   border: 1px solid transparent;
   font-weight: 800;
   font-size: 0.9375rem;
@@ -110,9 +110,6 @@
   background: #fff;
   color: #b91c1c;
   border-color: #f0c2c2;
-}
-.ci-reasons .btn-ghost {
-  min-height: 44px;
 }
 .ci-needs-moving {
   display: flex;
@@ -271,7 +268,6 @@
   outline: none;
   background: none;
   /* 16px exactly: anything smaller and iOS zooms the page when the field takes focus. */
-  font-size: 16px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   padding: 0 var(--sp-3);
@@ -342,7 +338,6 @@
 }
 .ci-pin-actions .btn-ghost {
   flex: none;
-  min-height: 44px;
 }
 .ci-link {
   margin: 0 0 var(--sp-2);
@@ -371,9 +366,7 @@
 .ci-link > input {
   width: 100%;
   min-width: 0;
-  min-height: 44px;
   /* 16px exactly: anything smaller and iOS zooms the page when the field takes focus. */
-  font-size: 16px;
 }
 /* Radius: the question on the left, the box on the right, the hint under both. */
 .ci-settings .ci-radius-field {
@@ -407,7 +400,7 @@
 .ci-waiting {
   margin-bottom: var(--sp-4);
   padding: var(--sp-3);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: #fdf6ec;
   border: 1px solid #f3dfc2;
 }

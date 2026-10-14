@@ -10,7 +10,7 @@
 .rp-headline-box {
   background: var(--accent-soft);
   border: 1px solid #dbe7df;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: var(--sp-4);
 }
 

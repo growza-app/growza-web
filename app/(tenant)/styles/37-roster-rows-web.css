@@ -216,7 +216,7 @@
 
 /*
  * The close button sits beside the title, not halfway down a wrapped sentence. `.sheet-head` is a GRID by the time
- * the clay sheet has its say (101-clay-app.css), so the text column is named here rather than left to `flex: 1`,
+ * the clay sheet had its say (removed in Jira GRW-570), so the text column is named here rather than left to `flex: 1`,
  * which that grid quietly ignored — the subtitle wrapped into a 152px column beside 200px of nothing.
  */
 .invite-sheet .sheet-head {

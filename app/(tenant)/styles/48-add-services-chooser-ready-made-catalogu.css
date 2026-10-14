@@ -33,7 +33,7 @@
   text-align: left;
   padding: 15px 16px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--surface);
   font: inherit;
   color: var(--text);
@@ -192,7 +192,7 @@
 
 .cat-list {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -372,7 +372,7 @@
   white-space: nowrap;
   padding: 6px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--accent-deep);
   font-size: 0.8125rem;
@@ -385,7 +385,7 @@
 }
 
 /*
- * The toolbar's two buttons are primaries: 101-clay-app.css paints every plain `.btn` green, and they sit on that
+ * The toolbar's two buttons are primaries: `01-controls.css` paints every plain `.btn` green, and they sit on that
  * green with `.cat-edit-btn`'s dark-green text (the white-surface button this class was written as) — unreadable.
  * White on the green, like every other primary. The row buttons below are `btn-ghost`, so they stay white.
  */
@@ -426,7 +426,7 @@
   margin-top: 16px;
   padding: 14px 15px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
 }
 
 .cat-stepper {
