@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useWritable } from '../components/SessionProvider';
 import { IconPlus, IconSearch } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
+import { asMinor, matchItems } from '../lib/service-match';
 import { ProductSheet } from './ProductSheet';
 
 /**
@@ -30,10 +31,9 @@ export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): 
 export const shelfWorthMinor = (rows: readonly Pick<Product, 'stock' | 'priceMinor' | 'active'>[]): number =>
   rows.reduce((sum, p) => sum + (p.active && p.stock > 0 ? p.stock * Number(p.priceMinor) : 0), 0);
 
+/** The chip first, then the search — the same spelling-tolerant matcher the till and Services use (GRW-375): "shampo" finds Shampoo. */
 export function filterShelf(rows: readonly Product[], filter: ShelfFilter, search: string): Product[] {
-  const q = search.trim().toLowerCase();
-  return rows.filter((p) => {
-    if (q && !p.name.toLowerCase().includes(q)) return false;
+  const pool = rows.filter((p) => {
     if (filter === 'retired') return !p.active;
     if (!p.active) return false;
     const tone = stockTone(p);
@@ -41,6 +41,9 @@ export function filterShelf(rows: readonly Product[], filter: ShelfFilter, searc
     if (filter === 'out') return tone === 'out';
     return true;
   });
+  // One letter matches half the shelf and reads as a broken search; the matching starts at two.
+  const q = search.trim();
+  return q.length >= 2 ? matchItems(pool.map((p) => ({ item: p, text: [p.name], priceMinor: asMinor(p.priceMinor) })), q) : pool;
 }
 
 export function ProductsList({ products, branchId }: { products: Product[]; branchId: string }) {
