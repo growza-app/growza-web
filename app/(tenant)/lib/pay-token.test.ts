@@ -51,7 +51,8 @@ describe('paying a token has the same tray as the plain page', () => {
   it('shows the total beside Mark done in both trays', () => {
     // `trayTotal` is itself payPage-only, so the page's tray asks about it alone; the sheet's still asks
     // whether a queue is on offer, because there it decides between one button and two.
-    expect(sheet).toMatch(/return trayTotal \? <div className="wi-tray-row">\{trayTotal\}\{go\}<\/div> : go;/);
+    // Jira GRW-572 — the page's button is `goButton`, shared with the desk's right panel.
+    expect(sheet).toMatch(/\{trayTotal \? <div className="wi-tray-row">\{trayTotal\}\{goButton\}<\/div> : goButton\}/);
     expect(sheet).toMatch(/if \(!queueOffered && trayTotal\) return <div className="wi-tray-row">\{trayTotal\}\{go\}<\/div>;/);
   });
 

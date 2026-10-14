@@ -61,6 +61,9 @@ import { Pagination } from './Pagination';
 import { PackageDetails } from './PackageDetails';
 import { fixVisitHref, payVisitHref } from '../lib/pay-token';
 import { ServiceSheet } from './ServiceSheet';
+import { DeskServiceGrid } from '../appointments/new/DeskServiceGrid';
+import { DeskUnpaid } from '../appointments/new/DeskUnpaid';
+import { BillRows, type BillLine } from '../appointments/new/BillCard';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
 import { PaymentDone } from './PaymentDone';
@@ -291,6 +294,7 @@ export function NewVisitSheet({
   presentation = 'sheet',
   token,
   tokenGone = false,
+  desk = false,
 }: {
   onClose: () => void;
   /** Next customer on the payment done screen: a fresh form. Without it, Next customer closes like Done. */
@@ -320,6 +324,12 @@ export function NewVisitSheet({
    * unmounts on it as before.
    */
   presentation?: 'sheet' | 'page';
+  /**
+   * Jira GRW-572 — New booking on a wide desk (≥1101px, decided by `NewBookingClient`): the same form in three
+   * panels, as the till is. Who and who-with on the left, the menu as tiles in the middle, what was chosen and
+   * when on the right. The same state and the same three writes; nothing here is a second booking form.
+   */
+  desk?: boolean;
 }) {
   const tmin = useTranslations('services');
   const nv = useNewVisitCopy();
@@ -364,6 +374,8 @@ export function NewVisitSheet({
    * asked once, instead of eleven controls two of which could contradict each other.
    */
   const bookForm = pageForm && !forPayment;
+  /** Jira GRW-572 — New booking's own page at a wide desk: the three panels instead of the one column. */
+  const deskForm = bookForm && desk;
   /** Which question is open over the form. `null` is the form itself. */
   const [asking, setAsking] = useState<'services' | null>(null);
   /**
@@ -3158,160 +3170,40 @@ export function NewVisitSheet({
   const newPersonClosed =
     pageForm && !addingNew && !nobodyMatched && !newPhone.trim() && !nameError && phoneError === null;
   /*
-   * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
-   *
-   * The Booking date sets it, so on arrival the screen was called "Walk-in" while the control that decides
-   * walk-in-or-not was still below it, unanswered — and the owner had tapped "New booking" to get here. While
-   * the date can still change the title is the screen's own name; once a client is picked it can say which of
-   * the two this is, because by then it is settled.
+   * The one button that writes the visit, drawn by the phone's tray and the desk's right panel alike.
+   * Record payment has an answer with nobody on the branch (no stylist); a walk-in or booking does not.
+   * One button, named by the chip above it. Queueing asks for less than starting does — a person can wait
+   * before anybody has decided what they are having, so it does not want a service, a free chair, or somebody
+   * who can do it.
    */
-  const modeStillOpen = !forPayment && stage.step === 'client';
-  const sheetTitle = forPayment ? nv.paymentTitle : modeStillOpen ? nv.pageTitle : later ? nv.laterTitle : nv.title;
-
-  /**
-   * Jira GRW-458 — Back is navigation, so it belongs beside the title, not in the tray of actions that
-   * create the visit.
-   *
-   * It used to sit in the footer of three different steps as a ghost button, which left every tray holding
-   * one button that was not an outcome: on the walk-in step that was three buttons for two outcomes, and
-   * nothing in the row could be aligned without one of them looking like the odd one out.
-   *
-   * `null` means there is nowhere to go: mid-save, with the lines already written (GRW-290), or paying a
-   * token, whose client is the token's and has no client step behind it (GRW-403).
-   */
-  const goBack = (() => {
-    if (busy || linesLocked) return null;
-    // Jira GRW-537 — the first screen of the page has Back too: through history, or Home when there is none (the
-    // app's own Back, GRW-497). Not in the pop-up, which has its ✕.
-    if (asPage && stage.step === 'client') {
-      return () => (window.history.length > 1 ? router.back() : router.push('/'));
-    }
-    // The single page keeps its form on screen after a failed save: Back leaves the page, as it does from the form.
-    if (pageForm && stage.step === 'error') {
-      return () => (window.history.length > 1 ? router.back() : router.push('/'));
-    }
-    if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
-      return () => setStage({ step: 'client' });
-    }
-    if (stage.step === 'when') {
-      const client = stage.client;
-      return () => setStage({ step: 'details', client });
-    }
-    return null;
-  })();
-
+  const cannot = (later && !slotUtc) || (forPayment ? !amountsValid : noStaffHere || noOneCanDoIt);
+  const goButton = (
+    <button
+      key="go"
+      type="button"
+      className="btn"
+      onClick={() => void thenVisit(forPayment ? checkBeforeMarkDone() : pageClient(), queueing ? queueIt : submit)}
+      disabled={queueing ? busy : busy || (forPayment ? false : picked.length === 0 || cannot)}
+    >
+      {busy
+        ? nv.saving
+        : forPayment
+          ? nv.markDone
+          : later
+            ? bookForm && slotUtc
+              ? nv.bookAt(clockTime(slotUtc))
+              : nv.bookIt
+            : queueing
+              ? nv.addToQueue
+              : nv.start}
+    </button>
+  );
   /*
-   * Owner, 2026-10-10 — after a payment the page IS the done screen, exactly as the three-tap flow ends: no form
-   * header, no card, no close cross around it. Only a sheet (an overlay somewhere else) keeps its frame.
+   * Jira GRW-572 — who the visit is for, as two pieces the desk layout and the phone's column both draw: the
+   * search box with its dropdown, and what sits under it (the person picked, or the Name and Phone fields, and
+   * a returning client's Book again card). One markup, two places; neither page has a second copy.
    */
-  const paidScreen =
-    stage.step === 'paid' ? (
-      <PaymentDone
-        appointmentId={stage.result.appointmentId}
-        fixHref={fixVisitHref(stage.result.appointmentId, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(stage.result.startAt)))}
-        totalMinor={stage.totalMinor}
-        mode={stage.mode}
-        modeLabel={PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode}
-        summary={[
-          // Jira GRW-403 — the token this payment closed, or the one it was given.
-          stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
-          PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode,
-          everythingNamed,
-          providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? null,
-        ]
-          .filter(Boolean)
-          .join(' · ')}
-        bill={stage.bill}
-        phone={stage.client.phone || null}
-        onNextCustomer={onAnother ?? onClose}
-        onDone={onClose}
-      />
-    ) : null;
-  if (paidScreen && presentation === 'page') return paidScreen;
-
-  return (
-    <>
-      {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
-      {largeAmountDialog}
-      {/* New booking's open question, over the form: the menu, the people, or when. */}
-      {askSheet}
-      {!asPage && <div className="sheet-backdrop" onClick={busy || picked.length > 0 || newName.trim() || newPhone.trim() || stage.step !== 'client' ? undefined : onClose} />}
-      <div
-        className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
-        role={asPage ? undefined : 'dialog'}
-        aria-modal={asPage ? undefined : true}
-        ref={sheetRef}
-        aria-label={asPage ? undefined : forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title}
-      >
-        {!asPage && <div className="sheet-grab" />}
-
-        <div className="sheet-head">
-          {/*
-            Jira GRW-458 — the left cell is always drawn, empty when there is nowhere to go back to.
-
-            `.sheet-head` is `grid-template-columns: 1fr auto 1fr` (98-service-sheet.css), a header built for
-            a control on each side of a centred title. This sheet only ever gave it two children, so the
-            title took the first cell, the close button took the MIDDLE, and the third 1fr sat empty: the ✕
-            floated in the centre of the header with a column of nothing beside it. Keeping the cell holds
-            the title in the middle and the ✕ on the edge, with or without a back arrow.
-          */}
-          {goBack ? (
-            <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
-              <IconArrowLeft />
-            </button>
-          ) : (
-            <span className="wi-back-gap" aria-hidden="true" />
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
-            {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
-            {pageHead ? null : <div className="sheet-sub">{headSub}</div>}
-
-          </div>
-          {/*
-            One way out, not two (owner, 2026-10-09). A pop-up is closed by its ✕; a page is left by its back
-            arrow. On the routed page both were drawn, 250px apart, and they went to DIFFERENT places — ← to
-            whatever opened the page, ✕ always Home — with nothing on either to say which. The ✕ stays on the
-            steps where there is nowhere to go back to, so a page is never left with no exit at all.
-          */}
-          {/*
-            The way back to the three-tap screen (owner, 2026-10-10).
-            This page is reached by `?full=1` from it, and until now the only way out was the browser's own
-            Back — a one-way door. The same switch stands on both sides, and in the same corner on both.
-            It takes the slot the ✕ would use, which on this page is an empty 44px span anyway because the
-            back arrow is the way out. Phones only (CSS): at a desk this IS the form for Record payment, so
-            there is nothing to switch to.
-          */}
-          {forPayment && asPage && goBack ? (
-            <FormModeSwitch now="advanced" simpleHref={`/appointments/new?purpose=payment${payTokenQuery}`} advancedHref={`/appointments/new?purpose=payment&full=1${payTokenQuery}`} />
-          ) : asPage && goBack ? (
-            <span className="wi-close-gap" aria-hidden="true" />
-          ) : (
-            <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
-              <IconClose />
-            </button>
-          )}
-          {/*
-            A row of its own, not the middle cell's sub-line: `.sheet-head` is `1fr auto 1fr`, so between a back
-            arrow and a ✕ the middle cell is about 230px at 375 and the branch name came out as "MG Road…".
-            Spanning all three columns gives the name the header's full width.
-          */}
-          {pageHead}
-        </div>
-
-        {/* ---------- Stage 1: find them ---------- */}
-        {(stage.step === 'client' || (pageForm && onForm)) && (
-          <div className="wi-body" id="wi-client-panel">
-            {pageForm && stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
-            {pageForm && tokenGone && <div role="alert" className="wi-error">{nv.tokenGone}</div>}
-            {/*
-              Jira GRW-520 — a combobox: the matches float in a dropdown under the box instead of pushing the
-              form down. Pointer-down on the dropdown is kept from taking focus off the input, so a tap on a row
-              is not preceded by the box losing focus and the dropdown closing under the finger (iOS gives a
-              button no focus, so that blur arrives with no related target).
-            */}
-            {/* Either page's branch is in the header (`pageHead`), not here. */}
-
+  const clientCombo = (
             <div
               className="wi-combo"
               onBlur={(e) => {
@@ -3445,15 +3337,9 @@ export function NewVisitSheet({
                 </div>
               ) : null}
             </div>
-
-            {/* Jira GRW-517 — no list of previous clients: a client is found by typing, or added below. */}
-
-            {/*
-              Jira GRW-514 — adding someone new is on this screen, under the search, not a button to another one.
-              Jira GRW-518 — with no heading or icon of its own, and no margin above it: just the two fields.
-              The old second step (name, phone, "Use this person") is these same fields and the same checks.
-            */}
-            <div className="wi-new-person" ref={addNewRef}>
+  );
+  const clientFields = (
+    <>
               {pageForm && selected ? (
                 <>
                 <div className="wi-picked-row">
@@ -3557,6 +3443,285 @@ export function NewVisitSheet({
                   onPickTime={(plan, time) => bookAgainAt(selected, plan, time)}
                 />
               ) : null}
+    </>
+  );
+  /*
+   * The title names the MODE only once the mode can no longer be changed here (owner, 2026-10-04).
+   *
+   * The Booking date sets it, so on arrival the screen was called "Walk-in" while the control that decides
+   * walk-in-or-not was still below it, unanswered — and the owner had tapped "New booking" to get here. While
+   * the date can still change the title is the screen's own name; once a client is picked it can say which of
+   * the two this is, because by then it is settled.
+   */
+  const modeStillOpen = !forPayment && stage.step === 'client';
+  const sheetTitle = forPayment ? nv.paymentTitle : modeStillOpen ? nv.pageTitle : later ? nv.laterTitle : nv.title;
+
+  /**
+   * Jira GRW-458 — Back is navigation, so it belongs beside the title, not in the tray of actions that
+   * create the visit.
+   *
+   * It used to sit in the footer of three different steps as a ghost button, which left every tray holding
+   * one button that was not an outcome: on the walk-in step that was three buttons for two outcomes, and
+   * nothing in the row could be aligned without one of them looking like the odd one out.
+   *
+   * `null` means there is nowhere to go: mid-save, with the lines already written (GRW-290), or paying a
+   * token, whose client is the token's and has no client step behind it (GRW-403).
+   */
+  const goBack = (() => {
+    if (busy || linesLocked) return null;
+    // Jira GRW-537 — the first screen of the page has Back too: through history, or Home when there is none (the
+    // app's own Back, GRW-497). Not in the pop-up, which has its ✕.
+    if (asPage && stage.step === 'client') {
+      return () => (window.history.length > 1 ? router.back() : router.push('/'));
+    }
+    // The single page keeps its form on screen after a failed save: Back leaves the page, as it does from the form.
+    if (pageForm && stage.step === 'error') {
+      return () => (window.history.length > 1 ? router.back() : router.push('/'));
+    }
+    if ((stage.step === 'details' || stage.step === 'error') && !paysToken) {
+      return () => setStage({ step: 'client' });
+    }
+    if (stage.step === 'when') {
+      const client = stage.client;
+      return () => setStage({ step: 'details', client });
+    }
+    return null;
+  })();
+
+  /*
+   * Owner, 2026-10-10 — after a payment the page IS the done screen, exactly as the three-tap flow ends: no form
+   * header, no card, no close cross around it. Only a sheet (an overlay somewhere else) keeps its frame.
+   */
+  const paidScreen =
+    stage.step === 'paid' ? (
+      <PaymentDone
+        appointmentId={stage.result.appointmentId}
+        fixHref={fixVisitHref(stage.result.appointmentId, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(stage.result.startAt)))}
+        totalMinor={stage.totalMinor}
+        mode={stage.mode}
+        modeLabel={PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode}
+        summary={[
+          // Jira GRW-403 — the token this payment closed, or the one it was given.
+          stage.result.tokenNo ? nv.token(stage.result.tokenNo) : null,
+          PAYMENT_MODES.some((m) => m.value === stage.mode) ? tcr(`pay.${stage.mode}`) : stage.mode,
+          everythingNamed,
+          providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        bill={stage.bill}
+        phone={stage.client.phone || null}
+        onNextCustomer={onAnother ?? onClose}
+        onDone={onClose}
+      />
+    ) : null;
+  if (paidScreen && presentation === 'page') return paidScreen;
+
+  /* ---------- New booking on a wide desk (Jira GRW-572): who · what · when, side by side ---------- */
+  /*
+   * The same hooks, helpers and writes as the column above this comment: `clientCombo` and `clientFields` are
+   * the phone's own client block, `stylistField` its chips, `whenChoices` its Waiting / Starts now / Pick a
+   * time with the date and the free-slot grid, `goButton` its one button. What is new is only the shape — and
+   * the menu in the middle, which is the till's tile grid (`DeskServiceGrid`) driven by the same `picked`,
+   * `extras` and combo state the one-column form's service sheet drives.
+   */
+  const deskLines: BillLine[] = comboActive
+    ? [
+        ...picked.map((p) => ({
+          serviceId: p.serviceId,
+          name: p.name,
+          priceMinor: Number(p.priceMinor ?? 0),
+          pkg: { id: offerId!, title: comboTitle ?? nv.combo, priceMinor: Number(comboPriceMinor) },
+        })),
+        ...extras.map((p) => ({ serviceId: p.serviceId, name: p.name, priceMinor: Number(p.priceMinor ?? 0) })),
+      ]
+    : picked.map((p) => ({ serviceId: p.serviceId, name: p.name, priceMinor: Number(p.priceMinor ?? 0) }));
+  const deskListMinor = everything.reduce((sum, p) => sum + Number(p.priceMinor ?? 0), 0);
+  if (deskForm && onForm) {
+    return (
+      <>
+        {largeAmountDialog}
+        <div className="walk-in-page wi-desk">
+          <div className="sheet-head">
+            {goBack ? (
+              <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
+                <IconArrowLeft />
+              </button>
+            ) : (
+              <span className="wi-back-gap" aria-hidden="true" />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 className="sheet-title">{sheetTitle}</h1>
+            </div>
+            <span className="wi-close-gap" aria-hidden="true" />
+            {pageHead}
+          </div>
+          <div className="pf-wide-grid wi-desk-grid">
+            <aside className="pf-wide-left">
+              <h2 className="pf-wide-h">{clientNoun}</h2>
+              {clientCombo}
+              <div className="wi-new-person" ref={addNewRef}>
+                {clientFields}
+              </div>
+              {/* A token has no stylist (`queueIt` never sends one), so while Waiting is the answer the chips are not asked. */}
+              {queueing ? null : stylistField}
+              <DeskUnpaid location={listBranch} timezone={timezone} title={nv.deskToday} empty={nv.deskNobodyToday} still />
+            </aside>
+            {services === null ? (
+              <section className="pf-wide-mid" aria-busy="true">
+                <div className="pf-tiles pf-wide-tiles">
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <div key={i} className="pf-tile pf-tile-wait" />
+                  ))}
+                </div>
+              </section>
+            ) : services.length === 0 ? (
+              <section className="pf-wide-mid">
+                <div className="empty">{nv.noServicesYet}</div>
+              </section>
+            ) : (
+              <DeskServiceGrid
+                services={services}
+                countOf={countOnBill}
+                onMore={addOneMore}
+                onLess={removeOneOf}
+                full={billCount >= BILL_MAX_LINES}
+                money={(minor) => formatMoney(String(minor))}
+                packages={combos}
+                packageOnBillId={offerId}
+                onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
+              />
+            )}
+            <aside className="pf-wide-right">
+              <h2 className="pf-wide-h">{nv.deskOnVisit}</h2>
+              {showServicesError ? (
+                <div role="alert" className="field-error">
+                  {nv.servicesMissing}
+                </div>
+              ) : null}
+              {billFull ? (
+                <div role="alert" className="field-error">
+                  {nv.billFull(BILL_MAX_LINES)}
+                </div>
+              ) : null}
+              {billCount === 0 ? (
+                <p className="pf-wide-empty">{nv.deskEmpty}</p>
+              ) : (
+                <BillRows
+                  lines={deskLines}
+                  listMinor={deskListMinor}
+                  totalMinor={Number(bookTotalMinor)}
+                  onLess={(key) => (comboActive && key === offerId ? removeCombo() : removeOneOf(key))}
+                />
+              )}
+              <div className="wi-desk-when">{whenChoices}</div>
+              {stage.step === 'error' ? (
+                <div role="alert" className="wi-error">
+                  {stage.message}
+                </div>
+              ) : null}
+              <div className="wi-desk-go">{goButton}</div>
+            </aside>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* Jira GRW-478 (U-4) — once a client or a service is picked, a stray tap above the sheet keeps the visit; Close shuts it. */}
+      {largeAmountDialog}
+      {/* New booking's open question, over the form: the menu, the people, or when. */}
+      {askSheet}
+      {!asPage && <div className="sheet-backdrop" onClick={busy || picked.length > 0 || newName.trim() || newPhone.trim() || stage.step !== 'client' ? undefined : onClose} />}
+      <div
+        className={asPage ? 'walk-in-page' : 'sheet walk-in-sheet'}
+        role={asPage ? undefined : 'dialog'}
+        aria-modal={asPage ? undefined : true}
+        ref={sheetRef}
+        aria-label={asPage ? undefined : forPayment ? nv.paymentTitle : later ? nv.laterTitle : nv.title}
+      >
+        {!asPage && <div className="sheet-grab" />}
+
+        <div className="sheet-head">
+          {/*
+            Jira GRW-458 — the left cell is always drawn, empty when there is nowhere to go back to.
+
+            `.sheet-head` is `grid-template-columns: 1fr auto 1fr` (98-service-sheet.css), a header built for
+            a control on each side of a centred title. This sheet only ever gave it two children, so the
+            title took the first cell, the close button took the MIDDLE, and the third 1fr sat empty: the ✕
+            floated in the centre of the header with a column of nothing beside it. Keeping the cell holds
+            the title in the middle and the ✕ on the edge, with or without a back arrow.
+          */}
+          {goBack ? (
+            <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
+              <IconArrowLeft />
+            </button>
+          ) : (
+            <span className="wi-back-gap" aria-hidden="true" />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Jira GRW-342 — the routed page has no other heading; the pop-up keeps a plain div (it is named by aria-label). */}
+            {asPage ? <h1 className="sheet-title">{sheetTitle}</h1> : <div className="sheet-title">{sheetTitle}</div>}
+            {pageHead ? null : <div className="sheet-sub">{headSub}</div>}
+
+          </div>
+          {/*
+            One way out, not two (owner, 2026-10-09). A pop-up is closed by its ✕; a page is left by its back
+            arrow. On the routed page both were drawn, 250px apart, and they went to DIFFERENT places — ← to
+            whatever opened the page, ✕ always Home — with nothing on either to say which. The ✕ stays on the
+            steps where there is nowhere to go back to, so a page is never left with no exit at all.
+          */}
+          {/*
+            The way back to the three-tap screen (owner, 2026-10-10).
+            This page is reached by `?full=1` from it, and until now the only way out was the browser's own
+            Back — a one-way door. The same switch stands on both sides, and in the same corner on both.
+            It takes the slot the ✕ would use, which on this page is an empty 44px span anyway because the
+            back arrow is the way out. Phones only (CSS): at a desk this IS the form for Record payment, so
+            there is nothing to switch to.
+          */}
+          {forPayment && asPage && goBack ? (
+            <FormModeSwitch now="advanced" simpleHref={`/appointments/new?purpose=payment${payTokenQuery}`} advancedHref={`/appointments/new?purpose=payment&full=1${payTokenQuery}`} />
+          ) : asPage && goBack ? (
+            <span className="wi-close-gap" aria-hidden="true" />
+          ) : (
+            <button type="button" className="wi-close" aria-label={nv.close} onClick={onClose} disabled={busy}>
+              <IconClose />
+            </button>
+          )}
+          {/*
+            A row of its own, not the middle cell's sub-line: `.sheet-head` is `1fr auto 1fr`, so between a back
+            arrow and a ✕ the middle cell is about 230px at 375 and the branch name came out as "MG Road…".
+            Spanning all three columns gives the name the header's full width.
+          */}
+          {pageHead}
+        </div>
+
+        {/* ---------- Stage 1: find them ---------- */}
+        {(stage.step === 'client' || (pageForm && onForm)) && (
+          <div className="wi-body" id="wi-client-panel">
+            {pageForm && stage.step === 'error' && <div role="alert" className="wi-error">{stage.message}</div>}
+            {pageForm && tokenGone && <div role="alert" className="wi-error">{nv.tokenGone}</div>}
+            {/*
+              Jira GRW-520 — a combobox: the matches float in a dropdown under the box instead of pushing the
+              form down. Pointer-down on the dropdown is kept from taking focus off the input, so a tap on a row
+              is not preceded by the box losing focus and the dropdown closing under the finger (iOS gives a
+              button no focus, so that blur arrives with no related target).
+            */}
+            {/* Either page's branch is in the header (`pageHead`), not here. */}
+
+            {clientCombo}
+
+            {/* Jira GRW-517 — no list of previous clients: a client is found by typing, or added below. */}
+
+            {/*
+              Jira GRW-514 — adding someone new is on this screen, under the search, not a button to another one.
+              Jira GRW-518 — with no heading or icon of its own, and no margin above it: just the two fields.
+              The old second step (name, phone, "Use this person") is these same fields and the same checks.
+            */}
+            <div className="wi-new-person" ref={addNewRef}>
+              {clientFields}
 
               {/*
               Jira GRW-518 · GRW-519 · GRW-521 — the Booking date, last: search, name, phone, then when. It shows
@@ -3672,37 +3837,7 @@ export function NewVisitSheet({
                     </div>
                   )}
                   {outcomeChips}
-                  {(() => {
-                    // Record payment has an answer with nobody on the branch (no stylist); a walk-in or booking does not.
-                    const cannot = (later && !slotUtc) || (forPayment ? !amountsValid : noStaffHere || noOneCanDoIt);
-                    /*
-                     * One button, named by the chip above it. Queueing asks for less than starting does — a person
-                     * can wait before anybody has decided what they are having, so it does not want a service, a
-                     * free chair, or somebody who can do it.
-                     */
-                    const go = (
-                      <button
-                        key="go"
-                        type="button"
-                        className="btn"
-                        onClick={() => void thenVisit(forPayment ? checkBeforeMarkDone() : pageClient(), queueing ? queueIt : submit)}
-                        disabled={queueing ? busy : busy || (forPayment ? false : picked.length === 0 || cannot)}
-                      >
-                        {busy
-                          ? nv.saving
-                          : forPayment
-                            ? nv.markDone
-                            : later
-                              ? bookForm && slotUtc
-                                ? nv.bookAt(clockTime(slotUtc))
-                                : nv.bookIt
-                              : queueing
-                                ? nv.addToQueue
-                                : nv.start}
-                      </button>
-                    );
-                    return trayTotal ? <div className="wi-tray-row">{trayTotal}{go}</div> : go;
-                  })()}
+                  {trayTotal ? <div className="wi-tray-row">{trayTotal}{goButton}</div> : goButton}
                 </div>
               </>
             ) : null}

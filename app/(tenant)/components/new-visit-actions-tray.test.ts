@@ -97,7 +97,9 @@ describe('a page asks the outcome above one button', () => {
   });
 
   it('leaves one button, named by the chip above it', () => {
-    const tray = code.slice(code.indexOf('{outcomeChips}'));
+    // Jira GRW-572 — the button is `goButton`, one const the page's tray and the desk's right panel both draw.
+    const tray = code.slice(code.indexOf('const goButton = ('));
+    expect(code).toMatch(/\{trayTotal \? <div className="wi-tray-row">\{trayTotal\}\{goButton\}<\/div> : goButton\}/);
     expect(tray.slice(0, 1200)).toMatch(/className="btn"/);
     expect(tray.slice(0, 1200)).toMatch(/queueing \? queueIt : submit/);
     expect(tray.slice(0, 1200)).toMatch(/queueing\s*\n?\s*\? nv\.addToQueue/);

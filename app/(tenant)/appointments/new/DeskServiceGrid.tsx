@@ -146,7 +146,7 @@ export function DeskServiceGrid({
               const names = o.serviceIds.map((id) => byId.get(id)?.name).filter(Boolean).join(', ');
               return (
                 <div key={o.id} className={`pf-tile ${on ? 'pf-tile-on' : ''}`}>
-                  <button type="button" className="pf-tile-tap" aria-pressed={on} onClick={() => onPickPackage?.(o)}>
+                  <button type="button" className="pf-tile-tap" aria-label={t('tileA11y', { name: o.title, price: money(Number(o.comboPriceMinor ?? 0)) })} aria-pressed={on} onClick={() => onPickPackage?.(o)}>
                     {first ? <img className="pf-tile-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-tile-photo" aria-hidden="true" />}
                     <span className="pf-tile-name">{o.title}</span>
                     <span className="pf-tile-price">
