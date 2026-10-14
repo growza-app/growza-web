@@ -2608,7 +2608,18 @@
     "services": "Services",
     "formMode": "Which form",
     "simple": "Simple",
-    "advanced": "Full"
+    "advanced": "Full",
+    "desk": {
+      "search": "Search {count} services",
+      "noMatch": "No service by that name.",
+      "mins": "{n} min",
+      "unpaid": "Still to pay today",
+      "nobodyUnpaid": "Nobody waiting to pay.",
+      "waiting": "Waiting",
+      "withStylist": "With stylist",
+      "booked": "Booked",
+      "emptyBill": "Tap a service to start the bill."
+    }
   },
   "help": {
     "title": "Help",

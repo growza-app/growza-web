@@ -1,0 +1,60 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import en from '../../../../messages/en.json';
+import hi from '../../../../messages/hi.json';
+
+/**
+ * Jira GRW-572 — the till in three panels on a wide desk.
+ *
+ * It is `PayFlow` with room, not a third form: one state, one `pay()`, the same two writes. These pin the
+ * seams that make that true, and the width rule that keeps phones and narrow laptops exactly as they were.
+ */
+const here = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
+const wrapper = here('./NewBookingClient.tsx');
+const flow = here('./PayFlow.tsx');
+const grid = here('./DeskServiceGrid.tsx');
+const unpaid = here('./DeskUnpaid.tsx');
+const css = here('../../styles/79-desk-till.css');
+const globals = here('../../globals.css');
+
+describe('the wide till', () => {
+  it('is asked for only at the desktop tier, and decided in the same effect as the phone rule', () => {
+    expect(wrapper).toMatch(/setWide\(window\.matchMedia\('\(min-width: 1101px\)'\)\.matches\);\s*setLayout\(window\.matchMedia\('\(max-width: 860px\)'\)/);
+    expect(wrapper).toMatch(/if \(quick && layout === 'desk' && wide\) \{\s*return <PayFlow [^>]*wide \/>;/);
+    // A booking settles on the wide till too, at the same width, and on the phone's flow below it.
+    expect(wrapper).toMatch(/wide=\{wide && layout === 'desk'\}/);
+    expect(css).toMatch(/^@media \(min-width: 1101px\) \{/m);
+    expect(css).not.toMatch(/max-width: 860px/);
+    expect(globals.indexOf('79-desk-till.css')).toBeGreaterThan(globals.indexOf('73-pay-flow.css'));
+  });
+
+  it('has three panels and no second save path', () => {
+    for (const cls of ['pf-wide-left', 'pf-wide-mid', 'pf-wide-right']) expect(flow + grid).toContain(cls);
+    expect(flow).toMatch(/<DeskUnpaid location=\{location\} timezone=\{timezone\}/);
+    expect(flow).toMatch(/<DeskServiceGrid services=\{ranked_all\} countOf=\{countOf\} onMore=\{addOne\} onLess=\{oneLess\}/);
+    expect(flow).toMatch(/<BillRows lines=\{lines\} listMinor=\{listMinor\} totalMinor=\{totalMinor\} onLess=\{oneLess\} \/>/);
+    // The payment tiles are one element drawn in two places; neither the grid nor the list writes anything.
+    expect((flow.match(/\{payTiles\}/g) ?? []).length).toBe(2);
+    for (const src of [grid, unpaid]) {
+      expect(src).not.toMatch(/recordCounterSale|checkout\(/);
+    }
+    // The list opens the same addresses the token board and Bookings use.
+    expect(unpaid).toMatch(/payTokenHref\(x\)/);
+    expect(unpaid).toMatch(/payVisitHref\(\{ appointmentId: a\.id, startAt: a\.startAt \}, timezone\)/);
+  });
+
+  it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {
+    expect(flow).not.toMatch(/<input/);
+    expect((grid.match(/<input/g) ?? []).length).toBe(1);
+    expect(grid).not.toMatch(/autoFocus/);
+  });
+
+  it('says it in both languages', () => {
+    const e = en.payFlow.desk as Record<string, string>;
+    const h = hi.payFlow.desk as Record<string, string>;
+    expect(Object.keys(h).sort()).toEqual(Object.keys(e).sort());
+    expect(e.search).toMatch(/\{count\}/);
+    expect(h.search).toMatch(/\{count\}/);
+  });
+});
