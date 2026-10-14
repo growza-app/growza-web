@@ -529,3 +529,24 @@
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
   }
 }
+
+/* Owner, 2026-10-15 — the search takes the row; Sort and the stock chip sit at its end. */
+@media (min-width: 1101px) {
+  .pf-wide-tools {
+    width: 100%;
+  }
+
+  .pf-wide-tools .pf-wide-search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pf-wide-tools .pf-sort,
+  .pf-wide-tools .pf-filter-chip {
+    flex: none;
+  }
+
+  .pf-wide-tools .pf-sort select {
+    min-height: 40px;
+  }
+}
