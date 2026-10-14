@@ -2011,7 +2011,8 @@
     "whenNow": "Starts now",
     "timeMoved": "{asked} is taken. Nearest free is {got}.",
     "timeNoneAfter": "Nothing free after {asked} that day.",
-    "visitGone": "This booking is not open any more. It may already be settled. Check Bookings before taking money again."
+    "visitGone": "This booking is not open any more. It may already be settled. Check Bookings before taking money again.",
+    "receiptProducts": "Products"
   },
   "moveBooking": {
     "title": "Move this booking",
@@ -2640,8 +2641,24 @@
       "booked": "Booked",
       "emptyBill": "Tap a service to start the bill.",
       "packages": "Packages ({n})",
-      "priceFor": "Price for {name}"
-    }
+      "priceFor": "Price for {name}",
+      "products": "Products",
+      "soon": "Soon",
+      "noPackages": "No priced package yet. Make one on the Packages screen.",
+      "noProducts": "Nothing on the shelf yet. Add products on the Products screen."
+    },
+    "split": {
+      "link": "Paid two ways",
+      "first": "Which way first?",
+      "howMuch": "How much by {mode}?",
+      "restHint": "The rest goes on the next way",
+      "then": "{amount} by {mode} · and {rest} by…",
+      "clear": "One way after all"
+    },
+    "productsChip": "Products",
+    "left": "{n} left",
+    "outOfStock": "Out of stock",
+    "needService": "Add a service too — a product alone cannot be rung up yet."
   },
   "help": {
     "title": "Help",
@@ -2893,6 +2910,40 @@
           }
         }
       }
+    }
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "Things you sell over the counter — a shampoo, a serum, a hair oil. Ring them up on the Record payment screen beside the services.",
+    "add": "Add a product",
+    "empty": "Nothing on the shelf yet.",
+    "emptyHint": "Add what you sell over the counter and it shows up on the Record payment screen.",
+    "chooseBranch": "Choose a branch to see its shelf.",
+    "stock": "{n} left",
+    "outOfStock": "Out of stock",
+    "sold": "{n} sold",
+    "retired": "Retired",
+    "retire": "Take off the till",
+    "bringBack": "Put back on the till",
+    "delete": "Delete",
+    "deleteAsk": "Delete {name}? Bills that sold it keep their own copy.",
+    "form": {
+      "titleAdd": "Add a product",
+      "titleEdit": "Edit product",
+      "name": "Name",
+      "namePlaceholder": "e.g. Argan Oil 100ml",
+      "price": "Price",
+      "stock": "In stock",
+      "stockHint": "How many are on the shelf. Each sale takes one off.",
+      "addPhoto": "Add a photo",
+      "changePhoto": "Change photo",
+      "photoHint": "Optional. Shown on the till's tile.",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "needName": "Give the product a name",
+      "needPrice": "Give it a price"
     }
   }
 }

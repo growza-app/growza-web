@@ -35,6 +35,8 @@ export interface ReceiptInput {
   stylist: string | null;
   singles: ReceiptLine[];
   pkg: ReceiptPackage | null;
+  /** Owner, 2026-10-14 — products sold with the visit, one line per unit; grouped like the singles. */
+  products?: ReceiptLine[];
   totalMinor: number;
   paidBy: string;
 }
@@ -43,6 +45,8 @@ export interface ReceiptCopy {
   title: string;
   thanks: string;
   services: string;
+  /** The heading over the product lines; absent means they are listed under `services`. */
+  products?: string;
   token: (n: number) => string;
   stylist: (name: string) => string;
   packageName: (title: string) => string;
@@ -114,6 +118,15 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
     line({ t: `${copy.packageName(plain(input.pkg.title))} — ${money(input.pkg.paidMinor)}` });
     if (input.pkg.services.length > 0) line({ t: '  ' }, { t: input.pkg.services.map(plain).join(', '), italic: true });
     if (saving > 0) line({ t: '  ' }, { t: copy.separately(money(input.pkg.separateMinor), money(saving)), italic: true });
+  }
+
+  const products = input.products ?? [];
+  if (products.length > 0) {
+    gap();
+    line({ t: copy.products ?? copy.services, bold: true });
+    for (const g of grouped(products.map((x) => ({ ...x, name: plain(x.name) })))) {
+      line({ t: `${g.name}${g.count > 1 ? ` × ${g.count}` : ''} — ${money(g.amountMinor)}` });
+    }
   }
 
   gap();

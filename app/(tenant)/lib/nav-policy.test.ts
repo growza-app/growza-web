@@ -20,6 +20,7 @@ const NAV = [
   { href: '/offers' },
   // Jira GRW-438 — owner-only, like Services and Offers: a package is pricing.
   { href: '/packages' },
+  { href: '/products' },
   { href: '/customers' },
   // GRW-169/200 — a real destination for the receptionist and, read-only, for
   // a stylist looking at their own record.

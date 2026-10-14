@@ -103,6 +103,8 @@ import type {
   ServiceInput,
   SettingsSummary,
   SortDirection,
+  Product,
+  ProductInput,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -453,6 +455,15 @@ export const api = {
   bill: (id: string) => get<OwnerBill>(`/api/v1/billing/invoices/${encodeURIComponent(id)}`),
   /** Jira GRW-379 — `location`: one branch's menu. Absent: every branch's, which a one-branch business has one of. */
   services: (location?: string) => get<Service[]>(`/api/v1/services${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /** Owner, 2026-10-14 — what the till can sell beside the services: the branch's active products. */
+  products: (location?: string | null) => get<Product[]>(`/api/v1/products${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /** The Products screen: the whole shelf at one branch, retired ones too. */
+  productsAll: (location: string) => get<Product[]>(`/api/v1/products/all?location=${encodeURIComponent(location)}`),
+  createProduct: (location: string, body: ProductInput) => post<Product>('/api/v1/products', { ...body, locationId: location }),
+  updateProduct: (id: string, body: Partial<ProductInput>) => patch<Product>(`/api/v1/products/${id}`, body),
+  deleteProduct: (id: string) => del<void>(`/api/v1/products/${id}`),
+  uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
+  removeProductPhoto: (id: string) => del<Product>(`/api/v1/products/${id}/photo`),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the
@@ -845,6 +856,10 @@ export const api = {
       paidAmountMinor?: number;
       schedulableId?: string;
       paymentMode?: PaymentMode;
+      /** Owner, 2026-10-14 — a bill paid two ways; the same list `/counter-sales` takes. */
+      payments?: { mode: PaymentMode; amountMinor: number }[];
+      /** Owner, 2026-10-14 — products sold at the till with this visit. */
+      products?: { productId: string; qty: number; paidMinor: number }[];
       extraServices?: CheckoutExtraServiceInput[];
       /** The OTHER already-booked legs of this combo to complete in the same visit — existing appointments, not new ones. */
       groupMembers?: CheckoutGroupMemberInput[];
@@ -977,6 +992,10 @@ export const api = {
       services: { serviceId: string; paidAmountMinor: number }[];
       offerId?: string;
       paymentMode?: PaymentMode;
+      /** Owner, 2026-10-14 — a bill paid two ways: one entry per way, adding up to the bill. Wins over `paymentMode`. */
+      payments?: { mode: PaymentMode; amountMinor: number }[];
+      /** Owner, 2026-10-14 — products on the bill: which, how many, what was paid for the line. Needs a service on the bill too. */
+      products?: { productId: string; qty: number; paidMinor: number }[];
       idempotencyKey?: string;
       location?: string;
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).

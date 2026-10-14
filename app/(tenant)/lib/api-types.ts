@@ -174,6 +174,30 @@ export interface Service {
   locationId: string;
 }
 
+/**
+ * Owner, 2026-10-14 — something the till sells that nobody performs: a shampoo, a serum. At one branch, with a
+ * stock count the till takes from (it may go below zero — the bottle in the hand is the truth; the owner puts
+ * the number right). `sold` is how many have gone over the counter, ever.
+ */
+export interface Product {
+  id: string;
+  name: string;
+  priceMinor: string;
+  currency: string;
+  stock: number;
+  imageUrl: string | null;
+  active: boolean;
+  locationId: string;
+  sold: number;
+}
+
+export interface ProductInput {
+  name: string;
+  priceMinor: number;
+  stock?: number;
+  active?: boolean;
+}
+
 /** A catalogue row as the Services screen edits it — Service plus the fields booking flows never need. */
 export interface ServiceAdmin extends Service {
   categoryId: string | null;

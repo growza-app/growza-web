@@ -1,0 +1,106 @@
+/*
+ * Owner, 2026-10-14 — the Products screen: the shelf as one list, a row per product.
+ * Same tokens as the Services rows; nothing here is a new component.
+ */
+.prd-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.prd-row-tap {
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'photo name price'
+    'photo stock sold';
+  column-gap: var(--sp-3);
+  row-gap: 2px;
+  align-items: center;
+}
+
+.prd-row-tap:disabled {
+  cursor: default;
+}
+
+.prd-row-retired .prd-row-tap {
+  opacity: 0.6;
+}
+
+.prd-photo {
+  grid-area: photo;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-sm, 8px);
+  object-fit: cover;
+  background: var(--slate-soft);
+}
+
+.prd-name {
+  grid-area: name;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-chip {
+  margin-left: var(--sp-2);
+  font-weight: 500;
+}
+
+.prd-price {
+  grid-area: price;
+  font-weight: 700;
+  justify-self: end;
+}
+
+.prd-stock {
+  grid-area: stock;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.prd-stock-out {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.prd-sold {
+  grid-area: sold;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  justify-self: end;
+}
+
+.prd-empty-hint {
+  margin: var(--sp-2) 0 0;
+  color: var(--muted);
+}
+
+.prd-sheet-actions {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: space-between;
+  padding: var(--sp-3);
+}
+
+@media (min-width: 861px) {
+  .prd-page {
+    max-width: 48rem;
+  }
+}

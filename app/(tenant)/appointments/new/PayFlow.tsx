@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref } from '../../lib/pay-token';
-import type { Appointment, Offer, PaymentMode, Provider, Service } from '../../lib/api-types';
+import type { Appointment, Offer, PaymentMode, Product, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
@@ -23,7 +23,7 @@ import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
 import { ServiceSheet } from '../../components/ServiceSheet';
-import { BillCard, BillRows, lineMinor, type BillLine as Line } from './BillCard';
+import { BillCard, BillRows, lineKey, lineMinor, type BillLine as Line } from './BillCard';
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
@@ -53,6 +53,8 @@ interface Sale {
   tokenNo: number | null;
   totalMinor: number;
   mode: PaymentMode;
+  /** How it was paid, in the owner's words: "Cash", or "Cash ₹800 · UPI ₹499" for a bill paid two ways. */
+  paidBy: string;
   bill: ReceiptRow[];
   phone: string | null;
   summary: string;
@@ -197,6 +199,8 @@ export function PayFlow({
   const [lines, setLines] = useState<Line[]>([]);
   /** Jira GRW-572 — the branch's priced combos, for the wide till's Packages tab. Empty until read, and on a phone. */
   const [offers, setOffers] = useState<Offer[]>([]);
+  /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
+  const [products, setProducts] = useState<Product[]>([]);
   const [client, setClient] = useState<Client>({ kind: 'none' });
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
@@ -207,6 +211,18 @@ export function PayFlow({
   const [menuOpen, setMenuOpen] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
   const [saving, setSaving] = useState<PaymentMode | null>(null);
+  /*
+   * Owner, 2026-10-14 — a bill paid two ways (₹800 cash, the rest by UPI).
+   *
+   * `splitting` is the tiles asking "which way first?"; a tap then opens the keypad (`splitKeypad`) for how much
+   * came that way; `firstWay` holds the answer, and the NEXT tile is the rest — tapping it is the save, as a
+   * tile always is. One extra question, asked only by the owner who taps "Paid two ways"; the three-tap sale
+   * is untouched. A first amount that covers the bill is simply a bill paid one way.
+   */
+  const [splitting, setSplitting] = useState(false);
+  const [splitKeypad, setSplitKeypad] = useState<PaymentMode | null>(null);
+  const [splitAmount, setSplitAmount] = useState('');
+  const [firstWay, setFirstWay] = useState<{ mode: PaymentMode; minor: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
@@ -231,6 +247,14 @@ export function PayFlow({
       })
       .catch(() => {
         if (!gone) setServices([]);
+      });
+    void api
+      .products(location)
+      .then((rows) => {
+        if (!gone) setProducts(rows);
+      })
+      .catch(() => {
+        if (!gone) setProducts([]);
       });
     if (wide && !visit) {
       void api
@@ -414,7 +438,10 @@ export function PayFlow({
   /** The package on the bill, if any: one at a time, as on the one-page form. */
   const pkgOnBill = lines.find((l) => l.pkg)?.pkg ?? null;
   // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
-  const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg).length;
+  const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg && !l.product).length;
+  const productCountOf = (productId: string) => lines.filter((l) => l.product?.id === productId).length;
+  /** Owner, 2026-10-14 — a bill is still a visit: it needs a service. A product alone cannot be rung up yet. */
+  const hasService = lines.some((l) => !l.product);
   const full = lines.length >= MAX_LINES;
 
   /*
@@ -434,12 +461,22 @@ export function PayFlow({
     setLines((prev) => [...prev, toLine(s)]);
     setOverride(null);
   };
+  /** Owner, 2026-10-14 — a product on the bill: one line per unit, so "tap again for a second one" holds. */
+  const addProduct = (p: Product) => {
+    if (full) {
+      felt(BUZZ.tooMany);
+      return;
+    }
+    felt(BUZZ.added);
+    setLines((prev) => [...prev, { serviceId: '', name: p.name, priceMinor: Number(p.priceMinor ?? 0), product: { id: p.id } }]);
+    setOverride(null);
+  };
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
   const oneLess = (key: string) => {
     setLines((prev) => {
       // A package's row: every leg goes with it.
       if (prev.some((l) => l.pkg?.id === key)) return prev.filter((l) => l.pkg?.id !== key);
-      const at = prev.map((l) => (l.pkg ? '' : l.serviceId)).lastIndexOf(key);
+      const at = prev.map((l) => (l.pkg ? '' : lineKey(l))).lastIndexOf(key);
       return at < 0 ? prev : [...prev.slice(0, at), ...prev.slice(at + 1)];
     });
     setOverride(null);
@@ -452,7 +489,7 @@ export function PayFlow({
   const setRowPrice = (key: string, minor: number) => {
     setLines((prev) => {
       if (prev.some((l) => l.pkg?.id === key)) return prev.map((l) => (l.pkg?.id === key ? { ...l, pkg: { ...l.pkg!, priceMinor: minor } } : l));
-      const at = prev.map((l, i) => (!l.pkg && l.serviceId === key ? i : -1)).filter((i) => i >= 0);
+      const at = prev.map((l, i) => (!l.pkg && lineKey(l) === key ? i : -1)).filter((i) => i >= 0);
       if (at.length === 0) return prev;
       const shares = spread(at.map((i) => prev[i]!), minor);
       const next = [...prev];
@@ -468,7 +505,7 @@ export function PayFlow({
       setKeypad(String(Math.round(pkgLine.pkg!.priceMinor / 100)));
       return;
     }
-    const own = lines.filter((l) => !l.pkg && l.serviceId === key);
+    const own = lines.filter((l) => !l.pkg && lineKey(l) === key);
     if (own.length === 0) return;
     const list = own.reduce((sum, l) => sum + l.priceMinor, 0);
     setKeypadFor({ key, name: own[0]!.name, list });
@@ -510,6 +547,22 @@ export function PayFlow({
 
   const money = (minor: number) => formatMoney(String(minor));
   const modeWord = (mode: PaymentMode) => (PAYMENT_MODES.some((m) => m.value === mode) ? tcr(`pay.${mode}`) : mode);
+  /** The ways this bill is paid when the tile `mode` is tapped: two when a first way is held and differs, else one. */
+  const waysFor = (mode: PaymentMode): Array<{ mode: PaymentMode; amountMinor: number }> => {
+    if (!firstWay || firstWay.mode === mode || firstWay.minor >= totalMinor) return [{ mode, amountMinor: totalMinor }];
+    return [
+      { mode: firstWay.mode, amountMinor: firstWay.minor },
+      { mode, amountMinor: totalMinor - firstWay.minor },
+    ];
+  };
+  const paidByWords = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) =>
+    ways.length > 1 ? ways.map((w) => `${modeWord(w.mode)} ${money(w.amountMinor)}`).join(' · ') : modeWord(ways[0]!.mode);
+  const clearSplit = () => {
+    setSplitting(false);
+    setSplitKeypad(null);
+    setSplitAmount('');
+    setFirstWay(null);
+  };
 
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode) => {
@@ -518,7 +571,22 @@ export function PayFlow({
     setSaving(mode);
     setError(null);
     const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
-    const legs = lines.map((l, i) => ({ serviceId: l.serviceId, paidAmountMinor: amounts[i]! }));
+    const legs = lines.flatMap((l, i) => (l.product ? [] : [{ serviceId: l.serviceId, paidAmountMinor: amounts[i]! }]));
+    // Owner, 2026-10-14 — the products on the bill, grouped: which, how many, what the line came to.
+    const productLines = new Map<string, { productId: string; qty: number; paidMinor: number }>();
+    lines.forEach((l, i) => {
+      if (!l.product) return;
+      const at = productLines.get(l.product.id) ?? { productId: l.product.id, qty: 0, paidMinor: 0 };
+      at.qty += 1;
+      at.paidMinor += amounts[i]!;
+      productLines.set(l.product.id, at);
+    });
+    const soldProducts = productLines.size > 0 ? { products: [...productLines.values()] } : {};
+    // Owner, 2026-10-14 — a bill paid two ways goes as `payments`; the legs' one word is the larger way's.
+    const ways = waysFor(mode);
+    const paidBy = paidByWords(ways);
+    const mainMode = ways.reduce((best, w) => (w.amountMinor > best.amountMinor ? w : best), ways[0]!).mode;
+    const howPaid = ways.length > 1 ? { paymentMode: mainMode, payments: ways } : { paymentMode: mode };
     try {
       /*
        * Two writes, chosen by what is being paid for — the whole reason this screen can serve both.
@@ -543,7 +611,7 @@ export function PayFlow({
             const groupMembers: Array<{ appointmentId: string; paidAmountMinor: number; schedulableId?: string }> = [];
             const extraServices: Array<{ serviceId: string; paidAmountMinor: number; schedulableId?: string }> = [];
             lines.forEach((l, i) => {
-              if (i === originalIdx) return;
+              if (i === originalIdx || l.product) return;
               const id = take(l.serviceId);
               if (id) groupMembers.push({ appointmentId: id, paidAmountMinor: amounts[i]!, ...(stylistId ? { schedulableId: stylistId } : {}) });
               else extraServices.push({ serviceId: l.serviceId, paidAmountMinor: amounts[i]!, ...(stylistId ? { schedulableId: stylistId } : {}) });
@@ -554,7 +622,8 @@ export function PayFlow({
               api.checkout(visit.appointment.id, {
                 ...(originalIdx >= 0 ? { paidAmountMinor: amounts[originalIdx]! } : {}),
                 ...(stylistId ? { schedulableId: stylistId } : {}),
-                paymentMode: mode,
+                ...howPaid,
+                ...soldProducts,
                 ...(extraServices.length ? { extraServices } : {}),
                 ...(groupMembers.length ? { groupMembers } : {}),
                 ...(cancelMemberIds.length ? { cancelMemberIds } : {}),
@@ -575,7 +644,8 @@ export function PayFlow({
               ...who,
               services: legs,
               ...(pkgOnBill ? { offerId: pkgOnBill.id } : {}),
-              paymentMode: mode,
+              ...howPaid,
+              ...soldProducts,
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
             };
@@ -588,7 +658,8 @@ export function PayFlow({
             );
             return {
               appointmentId: r.appointmentId,
-              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
+              // Owner, 2026-10-14 — the legs are the services; the products on the bill are the rest of what was paid.
+              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + [...productLines.values()].reduce((sum, p) => sum + p.paidMinor, 0),
               schedulableId: r.schedulableId,
               startAt: r.startAt,
               tokenNo: r.tokenNo ?? null,
@@ -615,7 +686,8 @@ export function PayFlow({
           when,
           tokenNo,
           stylist,
-          singles: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => !lines[i]!.pkg),
+          singles: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => !lines[i]!.pkg && !lines[i]!.product),
+          products: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => lines[i]!.product),
           pkg: pkgOnBill
             ? {
                 title: pkgOnBill.title,
@@ -625,12 +697,13 @@ export function PayFlow({
               }
             : null,
           totalMinor: paidMinor,
-          paidBy: modeWord(mode),
+          paidBy,
         },
         {
           title: nv.receiptTitle,
           thanks: nv.receiptThanks,
           services: nv.receiptServices,
+          products: nv.receiptProducts,
           token: nv.token,
           stylist: (name) => nv.receiptStylist(providerNoun, name),
           packageName: nv.receiptPackage,
@@ -647,7 +720,8 @@ export function PayFlow({
         appointmentId: result.appointmentId,
         tokenNo,
         totalMinor: paidMinor,
-        mode,
+        mode: mainMode,
+        paidBy,
         bill,
         /*
          * Whose number the receipt is sent to.
@@ -657,9 +731,10 @@ export function PayFlow({
          * up empty for a client who has a number on file. The booking has it; take it from there.
          */
         phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
-        summary: [tokenNo !== null ? nv.token(tokenNo) : null, modeWord(mode), names, stylist].filter(Boolean).join(' · '),
+        summary: [tokenNo !== null ? nv.token(tokenNo) : null, paidBy, names, stylist].filter(Boolean).join(' · '),
         day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
       });
+      clearSplit();
       setStep('done');
     } catch (e) {
       if (e instanceof LargeAmountDeclined) setError(nv.amountNotSaved);
@@ -678,6 +753,7 @@ export function PayFlow({
     setSale(null);
     setError(null);
     setAttemptKey(newAttemptKey());
+    clearSplit();
     tokenFilled.current = true; // a token has been paid: a second sale from this page is a plain one
     if (token) router.replace('/appointments/new?purpose=payment');
     setStep('what');
@@ -707,9 +783,11 @@ export function PayFlow({
     setOverride(null);
     setStylistId(null);
     setError(null);
+    setFirstWay(null);
+    setSplitting(false);
   }, [location, token]);
 
-  const canGoOn = lines.length > 0 && (token !== undefined || client.kind !== 'none');
+  const canGoOn = hasService && (token !== undefined || client.kind !== 'none');
   /*
    * Both complaints at once (owner, 2026-10-10).
    *
@@ -718,7 +796,7 @@ export function PayFlow({
    * things the screen already knew. Each is now marked where it is missing, so one look answers both.
    */
   const onNext = () => {
-    const service = lines.length === 0;
+    const service = !hasService;
     const client_ = !token && client.kind === 'none';
     if (service || client_) {
       setMissing({ client: client_, service });
@@ -733,7 +811,7 @@ export function PayFlow({
 
   /** Jira GRW-572 — the wide till has no Next: a payment tile does Next's check first, and marks what is missing. */
   const readyToPay = () => {
-    const service = lines.length === 0;
+    const service = !hasService;
     const client_ = !token && client.kind === 'none';
     if (service || client_) {
       setMissing({ client: client_, service });
@@ -746,7 +824,7 @@ export function PayFlow({
 
   // Marked only while still true, so answering one clears its own mark without clearing the other's.
   const badClient = Boolean(missing?.client) && !token && client.kind === 'none';
-  const badService = Boolean(missing?.service) && lines.length === 0;
+  const badService = Boolean(missing?.service) && !hasService;
 
   const leave = () => router.push(backTo ?? '/');
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
@@ -762,7 +840,7 @@ export function PayFlow({
         fixHref={fixVisitHref(sale.appointmentId, sale.day)}
         totalMinor={sale.totalMinor}
         mode={sale.mode}
-        modeLabel={modeWord(sale.mode)}
+        modeLabel={sale.paidBy}
         summary={sale.summary}
         bill={sale.bill}
         phone={sale.phone}
@@ -832,8 +910,25 @@ export function PayFlow({
    * The four payment tiles. On a phone they are ② — a screen of their own; on the wide till they sit under the
    * bill. One element, so UPI's QR rule and the save are written once.
    */
+  const restMinor = firstWay ? Math.max(0, totalMinor - firstWay.minor) : 0;
   const payTiles = (
     <div className="pf-pay" role="group" aria-label={t('howTitle')}>
+      {firstWay ? (
+        /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
+        <p className="pf-split-held" role="status">
+          <span>{t('split.then', { amount: money(firstWay.minor), mode: modeWord(firstWay.mode), rest: money(restMinor) })}</span>
+          <button type="button" className="icon-btn pf-split-clear" aria-label={t('split.clear')} onClick={clearSplit}>
+            <IconClose />
+          </button>
+        </p>
+      ) : splitting ? (
+        <p className="pf-split-held" role="status">
+          <span>{t('split.first')}</span>
+          <button type="button" className="icon-btn pf-split-clear" aria-label={t('split.clear')} onClick={clearSplit}>
+            <IconClose />
+          </button>
+        </p>
+      ) : null}
       {(['cash', 'upi', 'card', 'other'] as const).map((mode) => (
         <button
           key={mode}
@@ -849,7 +944,14 @@ export function PayFlow({
            */
           onClick={() => {
             if (wide && !readyToPay()) return;
-            if (mode === 'upi' && paymentQr) setStep('qr');
+            // "Which way first?" — this tile is the first way; the keypad asks how much came that way.
+            if (splitting && !firstWay) {
+              setSplitKeypad(mode);
+              setSplitAmount('');
+              return;
+            }
+            // A bill paid two ways is recorded as the tap says: the QR screen is for the whole bill by UPI.
+            if (mode === 'upi' && paymentQr && !firstWay) setStep('qr');
             else void pay(mode);
           }}
           disabled={saving !== null}
@@ -863,8 +965,42 @@ export function PayFlow({
           <span className="pf-pay-sub">{t(`sub.${mode}`)}</span>
         </button>
       ))}
+      {!splitting && !firstWay ? (
+        <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+          {t('split.link')}
+        </button>
+      ) : null}
     </div>
   );
+  /** The keypad for how much came the first way; the rest is the next tile's. Enough for the whole bill is one way. */
+  const splitKeypadEl =
+    splitKeypad !== null ? (
+      <Keypad
+        title={t('split.howMuch', { mode: modeWord(splitKeypad) })}
+        value={splitAmount}
+        hint={t('split.restHint')}
+        onChange={setSplitAmount}
+        onDone={() => {
+          const rupees = Number(splitAmount);
+          const minor = Number.isFinite(rupees) && splitAmount !== '' ? Math.round(rupees * 100) : 0;
+          const mode = splitKeypad;
+          setSplitKeypad(null);
+          setSplitAmount('');
+          setSplitting(false);
+          if (minor <= 0) return;
+          if (minor >= totalMinor) {
+            setFirstWay(null);
+            void pay(mode);
+            return;
+          }
+          setFirstWay({ mode, minor });
+        }}
+        onClose={() => {
+          setSplitKeypad(null);
+          setSplitAmount('');
+        }}
+      />
+    ) : null;
 
   /* ---------- ② How did they pay? ---------- */
   if (step === 'how') {
@@ -896,6 +1032,7 @@ export function PayFlow({
           same line, and Other a target the size of the rest.
         */}
         {payTiles}
+        {splitKeypadEl}
         {dialog}
       </div>
     );
@@ -1033,6 +1170,10 @@ export function PayFlow({
               packages={offers.filter((o) => o.serviceIds.every((id) => services.some((s) => s.id === id)))}
               packageOnBillId={pkgOnBill?.id ?? null}
               onPickPackage={pickPackage}
+              products={products}
+              productCountOf={productCountOf}
+              onMoreProduct={addProduct}
+              onLessProduct={(id) => oneLess(`p:${id}`)}
             />
           )}
           <aside className="pf-wide-right">
@@ -1047,7 +1188,7 @@ export function PayFlow({
             </div>
             {badService ? (
               <p className="pf-miss pf-miss-wide" role="alert">
-                {t('pickOne')}
+                {lines.length > 0 ? t('needService') : t('pickOne')}
               </p>
             ) : null}
             {lines.length === 0 ? (
@@ -1084,6 +1225,7 @@ export function PayFlow({
             ) : null}
             <h2 className="pf-wide-h">{t('howTitle')}</h2>
             {payTiles}
+            {splitKeypadEl}
             {dialog}
           </aside>
         </div>
@@ -1207,7 +1349,7 @@ export function PayFlow({
 
       {badService ? (
         <p className="pf-miss pf-miss-wide" role="alert">
-          {t('pickOne')}
+          {lines.length > 0 ? t('needService') : t('pickOne')}
         </p>
       ) : null}
       {services === null ? (
@@ -1345,6 +1487,12 @@ export function PayFlow({
           counts={new Map(services.map((s) => [s.id, countOf(s.id)]))}
           onPick={(s) => {
             addOne(s);
+            setMenuOpen(false);
+          }}
+          products={products}
+          productCounts={new Map(products.map((p) => [p.id, productCountOf(p.id)]))}
+          onPickProduct={(p) => {
+            addProduct(p);
             setMenuOpen(false);
           }}
           onClose={() => setMenuOpen(false)}

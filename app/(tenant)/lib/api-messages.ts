@@ -75,6 +75,9 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That slot was just taken': 'वह स्लॉट अभी-अभी भर गया',
   'That service is not available': 'वह सेवा उपलब्ध नहीं है',
   'That staff member is not available': 'वह स्टाफ़ सदस्य उपलब्ध नहीं है',
+  // Owner, 2026-10-14 — the till sells products.
+  'That product is not on the shelf': 'वह सामान शेल्फ़ पर नहीं है',
+  'That product is sold at another branch': 'वह सामान दूसरी ब्रांच में बिकता है',
   'One of those services does not exist.': 'उनमें से एक सेवा मौजूद नहीं है।',
   'Appointment not found': 'बुकिंग नहीं मिली',
   'No such booking': 'ऐसी कोई बुकिंग नहीं',

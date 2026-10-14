@@ -64,6 +64,7 @@ export function useNewVisitCopy() {
     receiptTitle: t('receiptTitle'),
     receiptThanks: t('receiptThanks'),
     receiptServices: t('receiptServices'),
+    receiptProducts: t('receiptProducts'),
     receiptStylist: (noun: string, name: string) => t('receiptStylist', { noun, name }),
     receiptPackage: (title: string) => t('receiptPackage', { title }),
     receiptSeparately: (was: string, saved: string) => t('receiptSeparately', { was, saved }),
