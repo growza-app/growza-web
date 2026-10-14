@@ -425,9 +425,9 @@ export function PayFlow({
    */
   const baseAmounts = useMemo(() => {
     const out = lines.map((l) => lineMinor(l));
-    const pkgIds = [...new Set(lines.filter((l) => l.pkg).map((l) => l.pkg!.id))];
-    for (const id of pkgIds) {
-      const at = lines.map((l, i) => (l.pkg?.id === id ? i : -1)).filter((i) => i >= 0);
+    const pkgKeys = [...new Set(lines.filter((l) => l.pkg).map((l) => l.pkg!.key))];
+    for (const key of pkgKeys) {
+      const at = lines.map((l, i) => (l.pkg?.key === key ? i : -1)).filter((i) => i >= 0);
       const shares = spread(at.map((i) => lines[i]!), lines[at[0]!]!.pkg!.priceMinor);
       at.forEach((i, k) => (out[i] = shares[k]!));
     }
@@ -435,12 +435,13 @@ export function PayFlow({
   }, [lines]);
   const listMinor = baseAmounts.reduce((sum, m) => sum + m, 0);
   const totalMinor = override ?? listMinor;
-  /** Owner, 2026-10-15 — the packages on the bill, in the order they were picked; a bill may carry several. */
+  /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
   const pkgsOnBill = useMemo(() => {
     const seen = new Map<string, NonNullable<Line['pkg']>>();
-    for (const l of lines) if (l.pkg && !seen.has(l.pkg.id)) seen.set(l.pkg.id, l.pkg);
+    for (const l of lines) if (l.pkg && !seen.has(l.pkg.key)) seen.set(l.pkg.key, l.pkg);
     return [...seen.values()];
   }, [lines]);
+  const packageCountOf = (offerId: string) => pkgsOnBill.filter((p) => p.id === offerId).length;
   // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
   const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg && !l.product).length;
   const productCountOf = (productId: string) => lines.filter((l) => l.product?.id === productId).length;
@@ -479,7 +480,7 @@ export function PayFlow({
   const oneLess = (key: string) => {
     setLines((prev) => {
       // A package's row: every leg goes with it.
-      if (prev.some((l) => l.pkg?.id === key)) return prev.filter((l) => l.pkg?.id !== key);
+      if (prev.some((l) => l.pkg?.key === key)) return prev.filter((l) => l.pkg?.key !== key);
       const at = prev.map((l) => (l.pkg ? '' : lineKey(l))).lastIndexOf(key);
       return at < 0 ? prev : [...prev.slice(0, at), ...prev.slice(at + 1)];
     });
@@ -492,7 +493,7 @@ export function PayFlow({
    */
   const setRowPrice = (key: string, minor: number) => {
     setLines((prev) => {
-      if (prev.some((l) => l.pkg?.id === key)) return prev.map((l) => (l.pkg?.id === key ? { ...l, pkg: { ...l.pkg!, priceMinor: minor } } : l));
+      if (prev.some((l) => l.pkg?.key === key)) return prev.map((l) => (l.pkg?.key === key ? { ...l, pkg: { ...l.pkg!, priceMinor: minor } } : l));
       const at = prev.map((l, i) => (!l.pkg && lineKey(l) === key ? i : -1)).filter((i) => i >= 0);
       if (at.length === 0) return prev;
       const shares = spread(at.map((i) => prev[i]!), minor);
@@ -503,7 +504,7 @@ export function PayFlow({
     setOverride(null);
   };
   const openRowKeypad = (key: string) => {
-    const pkgLine = lines.find((l) => l.pkg?.id === key);
+    const pkgLine = lines.find((l) => l.pkg?.key === key);
     if (pkgLine) {
       setKeypadFor({ key, name: pkgLine.pkg!.title, list: pkgLine.pkg!.priceMinor });
       setKeypad(String(Math.round(pkgLine.pkg!.priceMinor / 100)));
@@ -518,17 +519,16 @@ export function PayFlow({
 
   /*
    * Jira GRW-572 — a package joins the bill beside the singles (owner, 2026-10-07: a facial rung up, then a package
-   * picked, must not lose the facial). Owner, 2026-10-15 — and a second package must not lose the first: picking
-   * one adds it beside what is there; picking it again takes it off. Its legs are lines like any other — the route
-   * gets each with its share and its own offer id.
+   * picked, must not lose the facial). Owner, 2026-10-15 — and a second package must not lose the first: every
+   * pick adds one more, the same package included (two bridal packages for two sisters); − on the tile takes the
+   * last one off. Its legs are lines like any other — the route gets each with its share and its own offer id.
    */
   const pickPackage = (o: Offer) => {
     if (!services) return;
     const byId = new Map(services.map((s) => [s.id, s]));
     const legs = o.serviceIds.map((id) => byId.get(id)).filter((s): s is Service => Boolean(s));
-    const pkg = { id: o.id, title: o.title, priceMinor: Number(o.comboPriceMinor ?? 0) };
+    const pkg = { id: o.id, key: `${o.id}#${Date.now()}`, title: o.title, priceMinor: Number(o.comboPriceMinor ?? 0) };
     setLines((prev) => {
-      if (prev.some((l) => l.pkg?.id === o.id)) return prev.filter((l) => l.pkg?.id !== o.id);
       if (legs.length === 0) return prev;
       if (prev.length + legs.length > MAX_LINES) {
         felt(BUZZ.tooMany);
@@ -536,6 +536,14 @@ export function PayFlow({
       }
       felt(BUZZ.added);
       return [...prev, ...legs.map((s) => ({ ...toLine(s), pkg }))];
+    });
+    setOverride(null);
+  };
+  /** The last of that package off the bill, legs and all. */
+  const oneLessPackage = (offerId: string) => {
+    setLines((prev) => {
+      const last = [...prev].reverse().find((l) => l.pkg?.id === offerId)?.pkg?.key;
+      return last ? prev.filter((l) => l.pkg?.key !== last) : prev;
     });
     setOverride(null);
   };
@@ -695,9 +703,9 @@ export function PayFlow({
           pkg: null,
           pkgs: pkgsOnBill.map((pkg) => ({
             title: pkg.title,
-            services: lines.filter((l) => l.pkg?.id === pkg.id).map((l) => l.name),
-            paidMinor: amounts.reduce((sum, a, i) => sum + (lines[i]!.pkg?.id === pkg.id ? a : 0), 0),
-            separateMinor: lines.filter((l) => l.pkg?.id === pkg.id).reduce((sum, l) => sum + l.priceMinor, 0),
+            services: lines.filter((l) => l.pkg?.key === pkg.key).map((l) => l.name),
+            paidMinor: amounts.reduce((sum, a, i) => sum + (lines[i]!.pkg?.key === pkg.key ? a : 0), 0),
+            separateMinor: lines.filter((l) => l.pkg?.key === pkg.key).reduce((sum, l) => sum + l.priceMinor, 0),
           })),
           totalMinor: paidMinor,
           paidBy,
@@ -1172,6 +1180,8 @@ export function PayFlow({
               money={money}
               packages={offers.filter((o) => o.serviceIds.every((id) => services.some((s) => s.id === id)))}
               packageOnBillIds={pkgsOnBill.map((p) => p.id)}
+              packageCountOf={packageCountOf}
+              onLessPackage={oneLessPackage}
               onPickPackage={pickPackage}
               products={products}
               productCountOf={productCountOf}
@@ -1499,6 +1509,9 @@ export function PayFlow({
             setMenuOpen(false);
           }}
           onClose={() => setMenuOpen(false)}
+          packageOnBillIds={pkgsOnBill.map((p) => p.id)}
+          packageCountOf={packageCountOf}
+          onLessPackage={oneLessPackage}
         />
       ) : null}
       {keypad !== null ? (

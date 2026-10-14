@@ -31,6 +31,8 @@ export function DeskServiceGrid({
   packages = [],
   packageOnBillId = null,
   packageOnBillIds,
+  packageCountOf,
+  onLessPackage,
   onPickPackage,
   products = [],
   productCountOf = () => 0,
@@ -50,6 +52,9 @@ export function DeskServiceGrid({
   packageOnBillId?: string | null;
   /** Owner, 2026-10-15 — the till may carry more than one package; the one-page form still sends one. */
   packageOnBillIds?: readonly string[];
+  /** Owner, 2026-10-15 — how many times a package is on the bill, and one fewer; absent on the one-page form. */
+  packageCountOf?: (offerId: string) => number;
+  onLessPackage?: (offerId: string) => void;
   onPickPackage?: (o: Offer) => void;
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the third tab, the same tiles with a stock line. */
   products?: Product[];
@@ -237,7 +242,8 @@ export function DeskServiceGrid({
           /* A package reads like a service: the first leg's picture, the name, the package price, and what is in it. */
           <div className="pf-tiles pf-wide-tiles">
             {shownPackages.map((o) => {
-              const on = packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id;
+              const pkgCount = packageCountOf ? packageCountOf(o.id) : 0;
+              const on = pkgCount > 0 || (packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id);
               const first = byId.get(o.serviceIds[0] ?? '');
               const names = o.serviceIds.map((id) => byId.get(id)?.name).filter(Boolean).join(', ');
               return (
@@ -253,6 +259,19 @@ export function DeskServiceGrid({
                   <button type="button" className="pf-tile-info" aria-label={t('pkg.view', { name: o.title })} onClick={() => setViewing(o)}>
                     <IconInfo />
                   </button>
+                  {pkgCount > 0 && onLessPackage ? (
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count: pkgCount })}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: o.title })} onClick={() => onLessPackage(o.id)}>
+                        <IconMinus />
+                      </button>
+                      <span className="pf-qty-n" aria-live="polite">
+                        {pkgCount}
+                      </span>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: o.title })} onClick={() => onPickPackage?.(o)}>
+                        <IconPlus />
+                      </button>
+                    </span>
+                  ) : null}
                 </div>
               );
             })}
@@ -304,13 +323,15 @@ export function DeskServiceGrid({
         <PackageSheet
           offer={viewing}
           services={services}
-          onBill={packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
+          onBill={packageCountOf ? packageCountOf(viewing.id) > 0 : packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
+          count={packageCountOf ? packageCountOf(viewing.id) : undefined}
           onAdd={() => {
             onPickPackage?.(viewing);
             setViewing(null);
           }}
           onRemove={() => {
-            onPickPackage?.(viewing);
+            if (onLessPackage) onLessPackage(viewing.id);
+            else onPickPackage?.(viewing);
             setViewing(null);
           }}
           onClose={() => setViewing(null)}

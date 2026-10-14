@@ -39,6 +39,8 @@ export function ServiceSheet({
   packages,
   packageOnBillId = null,
   packageOnBillIds,
+  packageCountOf,
+  onLessPackage,
   onPickPackage,
   products,
   productCounts,
@@ -54,6 +56,9 @@ export function ServiceSheet({
   packageOnBillId?: string | null;
   /** Owner, 2026-10-15 — the till may carry more than one package; the one-page form still sends one. */
   packageOnBillIds?: readonly string[];
+  /** Owner, 2026-10-15 — how many times a package is on the bill, and one fewer; absent on the one-page form. */
+  packageCountOf?: (offerId: string) => number;
+  onLessPackage?: (offerId: string) => void;
   onPickPackage?: (o: Offer) => void;
   /** Owner, 2026-10-14 — the branch's shelf, as one more chip: rows that read like services, with how many are left. */
   products?: Product[];
@@ -218,7 +223,8 @@ export function ServiceSheet({
           <ul className="pf-client-matches pf-menu-list">
             {shownPackages.map((o) => {
               const first = services.find((x) => x.id === o.serviceIds[0]);
-              const on = packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id;
+              const pkgCount = packageCountOf ? packageCountOf(o.id) : 0;
+              const on = pkgCount > 0 || (packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id);
               return (
                 <li key={o.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${on ? 'pf-menu-row-on' : ''}`} onClick={() => onPickPackage?.(o)}>
@@ -261,13 +267,15 @@ export function ServiceSheet({
         <PackageSheet
           offer={viewing}
           services={services}
-          onBill={packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
+          onBill={packageCountOf ? packageCountOf(viewing.id) > 0 : packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
+          count={packageCountOf ? packageCountOf(viewing.id) : undefined}
           onAdd={() => {
             onPickPackage?.(viewing);
             setViewing(null);
           }}
           onRemove={() => {
-            onPickPackage?.(viewing);
+            if (onLessPackage) onLessPackage(viewing.id);
+            else onPickPackage?.(viewing);
             setViewing(null);
           }}
           onClose={() => setViewing(null)}

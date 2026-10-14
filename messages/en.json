@@ -2677,7 +2677,8 @@
       "until": "On sale until {date}.",
       "add": "Add to bill",
       "onBill": "On the bill",
-      "remove": "Take off the bill"
+      "remove": "Take off the bill",
+      "addAnother": "Add one more (on the bill × {n})"
     }
   },
   "help": {

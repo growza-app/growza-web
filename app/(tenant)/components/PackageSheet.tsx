@@ -14,7 +14,24 @@ import { servicePhotoUrl } from '../lib/service-photos';
  * This sheet says every service with its minutes and price, what they would cost one by one, what the package
  * saves, and when it can be sold; then one button adds it (or takes it off, if it is already on the bill).
  */
-export function PackageSheet({ offer, services, onBill, onAdd, onRemove, onClose }: { offer: Offer; services: readonly Service[]; onBill: boolean; onAdd: () => void; onRemove?: () => void; onClose: () => void }) {
+export function PackageSheet({
+  offer,
+  services,
+  onBill,
+  count,
+  onAdd,
+  onRemove,
+  onClose,
+}: {
+  offer: Offer;
+  services: readonly Service[];
+  onBill: boolean;
+  /** How many times it is on the bill, where the till counts (the one-page form does not). */
+  count?: number;
+  onAdd: () => void;
+  onRemove?: () => void;
+  onClose: () => void;
+}) {
   const t = useTranslations('payFlow.pkg');
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose });
@@ -61,8 +78,8 @@ export function PackageSheet({ offer, services, onBill, onAdd, onRemove, onClose
               {t('remove')}
             </button>
           ) : null}
-          <button type="button" className="btn" onClick={onAdd} disabled={onBill}>
-            {onBill ? t('onBill') : t('add')}
+          <button type="button" className="btn" onClick={onAdd} disabled={onBill && count === undefined}>
+            {count !== undefined && count > 0 ? t('addAnother', { n: count }) : onBill ? t('onBill') : t('add')}
           </button>
         </div>
       </div>
