@@ -752,7 +752,6 @@
     "removeBody": "They will be signed out straight away and cannot sign in to this business again unless you invite them. Their past bookings and records stay."
   },
   "services": {
-    "deskPick": "Pick a service to change it, or add a new one.",
     "deskShowing": "{count, plural, one {# service} other {# services}}",
     "subtitle": "What you offer, how long each takes, and what you charge.",
     "cols": {
@@ -1166,7 +1165,8 @@
     "categoryPicker": {
       "label": "Part of the menu",
       "count": "{count} services"
-    }
+    },
+    "deskPick": "Pick a service to change it, or add a new one."
   },
   "staff": {
     "addLabel": "Add {label}",
@@ -1217,6 +1217,7 @@
       "availableToday": "{name} available today",
       "moreActions": "More actions for {name}",
       "actionsFor": "Actions for {name}",
+      "closeActions": "Close",
       "available": "Available",
       "offToday": "Off today",
       "inactive": "Inactive",
@@ -1234,7 +1235,11 @@
       "noHoursToday": "No hours today",
       "backOn": "Back {when}, {time}",
       "tomorrow": "tomorrow"
-    }
+    },
+    "deskPick": "Pick one of your {label} to see what they can do today, or add someone.",
+    "deskWorking": "Working today",
+    "deskPeople": "People",
+    "deskSeats": "Seats left"
   },
   "staffWizard": {
     "title": "Add {label}",

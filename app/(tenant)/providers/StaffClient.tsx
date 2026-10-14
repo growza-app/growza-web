@@ -74,6 +74,19 @@ export function StaffClient({
   /** The Add flow, and which kind it opens on. Null when it is closed. */
   const [creating, setCreating] = useState<'staff' | 'reception' | null>(null);
   const [sheetFor, setSheetFor] = useState<ProviderOverviewRow | null>(null);
+  /*
+   * Owner, 2026-10-14 — Staff on a wide desk, as Services and Clients: the summary and the tabs on the left, the
+   * roster in the middle, the picked person's actions in place on the right. Decided by the window, not the
+   * device: the desktop tier (≥1101px) gets the panels; a tablet keeps the page. Null until the width is known.
+   */
+  const [desk, setDesk] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const apply = () => setDesk(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
   /** Pending availability change awaiting confirmation — the roster switch applies instantly, so it asks first. */
   const [confirmAvail, setConfirmAvail] = useState<{ p: ProviderOverviewRow; available: boolean } | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<ProviderOverviewRow | null>(null);
@@ -367,19 +380,8 @@ export function StaffClient({
     setPage(1);
   };
 
-  return (
+  const header = (
     <>
-      {/* Jira GRW-556 (follow-up) — the staff edit page closes back here on Save; this says it saved. */}
-      <SavedToast />
-      {/*
-        Jira GRW-30 — the header moved in here so "Add staff" can live in it.
-
-        `PageHeader`'s `actions` slot is the one primary-action position, and
-        reaching it means the component that owns `setCreating` has to be the
-        one that renders the header. Same shape `CustomersClient` already uses;
-        the screen's `page.tsx` keeps the header only for its API-down state,
-        where there is no client component at all.
-      */}
       <PageHeader
         title={staffTitle}
         actions={
@@ -394,62 +396,10 @@ export function StaffClient({
           ) : undefined
         }
       />
-      <div className="page-body">
-      <div className="staff-summary">
-        <span>{t.rich('summaryWorking', { count: workingTodayCount, b: (chunks) => <strong>{chunks}</strong> })}</span>
-        <span className="staff-summary-dot" />
-        <span>{t.rich('summaryPeople', { count: activeCount, b: (chunks) => <strong>{chunks}</strong> })}</span>
-        <span className="staff-summary-dot" />
-        <span className={seatsLeft === 0 ? 'staff-summary-warn' : ''}>
-          {seatsLeft === 0 ? t('seatsNone') : t('seatsLeft', { count: seatsLeft })}
-        </span>
-      </div>
-
-      {/* Directly under the seat count, which is the number the message is
-          about — a refusal shown far from the reason reads as a random fault. */}
-      {error && (
-        <div className="banner" role="alert" style={{ marginBottom: 12 }}>
-          {error}
-        </div>
-      )}
-
-      {/*
-        The row beneath the header FINDS things. It used to create one too —
-        `[search][Add staff]` here, `[Add service][search][Export]` on Services
-        — and neither order looked wrong, which is how they stayed different.
-        Creating is the header's job now; this row is search and tabs.
-      */}
-      <div className="page-toolbar">
-        <div className="staff-search-wrap">
-          <IconSearch />
-          <input
-            type="search"
-            placeholder={t('searchPlaceholder', { label: staffLower })}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            aria-label={t('searchAria', { label: staffLower })}
-          />
-        </div>
-      </div>
-
-      <div className="page-tabs" role="tablist">
-        {tabs.map((tb) => (
-          <button
-            key={tb.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === tb.key}
-            className={`page-tab ${tab === tb.key ? 'active' : ''}`}
-            onClick={() => changeTab(tb.key)}
-          >
-            {t(`tabs.${tb.key}`)} <span className="page-tab-count">{tb.count}</span>
-          </button>
-        ))}
-      </div>
-
+    </>
+  );
+  const roster = (
+    <>
       {filtered.length === 0 ? (
         <div className="empty">{t('empty', { label: staffLower })}</div>
       ) : (
@@ -462,6 +412,8 @@ export function StaffClient({
             topPerformerId={topPerformerId}
             actions={actions}
             onOpenSheet={setSheetFor}
+            selectedId={desk ? (sheetFor?.id ?? null) : null}
+            onSelect={desk ? setSheetFor : undefined}
           />
           <StaffGroup
             title={t('groups.offToday')}
@@ -471,6 +423,8 @@ export function StaffClient({
             topPerformerId={topPerformerId}
             actions={actions}
             onOpenSheet={setSheetFor}
+            selectedId={desk ? (sheetFor?.id ?? null) : null}
+            onSelect={desk ? setSheetFor : undefined}
           />
           <StaffGroup
             title={t('groups.inactive')}
@@ -480,6 +434,8 @@ export function StaffClient({
             topPerformerId={topPerformerId}
             actions={actions}
             onOpenSheet={setSheetFor}
+            selectedId={desk ? (sheetFor?.id ?? null) : null}
+            onSelect={desk ? setSheetFor : undefined}
           />
           <Pagination
             page={clamped}
@@ -531,7 +487,10 @@ export function StaffClient({
           <WaitingGroup invites={invites} branchName={branchNameOf} onRevoke={(id) => void revokeInvite(id)} writable={writable} />
         </>
       )}
-
+    </>
+  );
+  const dialogs = (
+    <>
       {confirmAvail && (
         <ConfirmDialog
           title={confirmAvail.available ? t('avail.titleOn', { name: confirmAvail.p.displayName }) : t('avail.titleOff', { name: confirmAvail.p.displayName })}
@@ -568,7 +527,7 @@ export function StaffClient({
         />
       )}
 
-      {sheetFor && (
+      {sheetFor && !desk && (
         <StaffActionSheet
           p={providers.find((r) => r.id === sheetFor.id) ?? sheetFor}
           actions={actions}
@@ -628,6 +587,166 @@ export function StaffClient({
           }}
         />
       )}
+    </>
+  );
+
+  if (desk === null) {
+    return (
+      <>
+        {header}
+        <div className="page-body" aria-busy="true" />
+      </>
+    );
+  }
+
+  if (desk) {
+    const picked = sheetFor ? (providers.find((r) => r.id === sheetFor.id) ?? sheetFor) : null;
+    return (
+      <>
+        <SavedToast />
+        {header}
+        <div className="page-body staff-desk">
+          <div className="pf-wide-grid staff-desk-grid">
+            <aside className="pf-wide-left staff-desk-left" aria-label={t('tabs.all')}>
+              <dl className="staff-desk-kpis">
+                <div><dt>{t('deskWorking')}</dt><dd>{workingTodayCount}</dd></div>
+                <div><dt>{t('deskPeople')}</dt><dd>{activeCount}</dd></div>
+                <div className={seatsLeft === 0 ? 'is-warn' : ''}><dt>{t('deskSeats')}</dt><dd>{seatsLeft}</dd></div>
+              </dl>
+              <ul className="staff-desk-tabs" role="tablist">
+                {tabs.map((tb) => (
+                  <li key={tb.key}>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={tab === tb.key}
+                      className={`staff-desk-tab ${tab === tb.key ? 'is-on' : ''}`}
+                      onClick={() => changeTab(tb.key)}
+                    >
+                      <span className="staff-desk-tab-name">{t(`tabs.${tb.key}`)}</span>
+                      <span className="staff-desk-n">{tb.count}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+
+            <section className="pf-wide-mid staff-desk-mid" aria-label={staffTitle}>
+              <label className="pf-wide-search">
+                <IconSearch />
+                <input
+                  type="search"
+                  placeholder={t('searchPlaceholder', { label: staffLower })}
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  aria-label={t('searchAria', { label: staffLower })}
+                  autoComplete="off"
+                />
+              </label>
+              {error && (
+                <div className="banner" role="alert">
+                  {error}
+                </div>
+              )}
+              <div className="staff-desk-scroll">{roster}</div>
+            </section>
+
+            <aside className="pf-wide-right staff-desk-right" aria-label={staffLower}>
+              {picked ? (
+                <StaffActionSheet p={picked} actions={actions} inline onClose={() => setSheetFor(null)} />
+              ) : (
+                <div className="staff-desk-nothing">
+                  <p>{t('deskPick', { label: staffLower })}</p>
+                  {writable && (
+                    <button type="button" className="btn" onClick={() => setCreating('staff')}>
+                      <IconPlus /> {t('addLabel', { label: staffLower })}
+                    </button>
+                  )}
+                </div>
+              )}
+            </aside>
+          </div>
+          {dialogs}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* Jira GRW-556 (follow-up) — the staff edit page closes back here on Save; this says it saved. */}
+      <SavedToast />
+      {/*
+        Jira GRW-30 — the header moved in here so "Add staff" can live in it.
+
+        `PageHeader`'s `actions` slot is the one primary-action position, and
+        reaching it means the component that owns `setCreating` has to be the
+        one that renders the header. Same shape `CustomersClient` already uses;
+        the screen's `page.tsx` keeps the header only for its API-down state,
+        where there is no client component at all.
+      */}
+      {header}
+      <div className="page-body">
+      <div className="staff-summary">
+        <span>{t.rich('summaryWorking', { count: workingTodayCount, b: (chunks) => <strong>{chunks}</strong> })}</span>
+        <span className="staff-summary-dot" />
+        <span>{t.rich('summaryPeople', { count: activeCount, b: (chunks) => <strong>{chunks}</strong> })}</span>
+        <span className="staff-summary-dot" />
+        <span className={seatsLeft === 0 ? 'staff-summary-warn' : ''}>
+          {seatsLeft === 0 ? t('seatsNone') : t('seatsLeft', { count: seatsLeft })}
+        </span>
+      </div>
+
+      {/* Directly under the seat count, which is the number the message is
+          about — a refusal shown far from the reason reads as a random fault. */}
+      {error && (
+        <div className="banner" role="alert" style={{ marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
+
+      {/*
+        The row beneath the header FINDS things. It used to create one too —
+        `[search][Add staff]` here, `[Add service][search][Export]` on Services
+        — and neither order looked wrong, which is how they stayed different.
+        Creating is the header's job now; this row is search and tabs.
+      */}
+      <div className="page-toolbar">
+        <div className="staff-search-wrap">
+          <IconSearch />
+          <input
+            type="search"
+            placeholder={t('searchPlaceholder', { label: staffLower })}
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            aria-label={t('searchAria', { label: staffLower })}
+          />
+        </div>
+      </div>
+
+      <div className="page-tabs" role="tablist">
+        {tabs.map((tb) => (
+          <button
+            key={tb.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === tb.key}
+            className={`page-tab ${tab === tb.key ? 'active' : ''}`}
+            onClick={() => changeTab(tb.key)}
+          >
+            {t(`tabs.${tb.key}`)} <span className="page-tab-count">{tb.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {roster}
+      {dialogs}
       </div>
     </>
   );

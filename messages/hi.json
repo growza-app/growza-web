@@ -1217,6 +1217,7 @@
       "availableToday": "{name} आज उपलब्ध",
       "moreActions": "{name} के लिए और विकल्प",
       "actionsFor": "{name} के विकल्प",
+      "closeActions": "बंद करें",
       "available": "उपलब्ध",
       "offToday": "आज छुट्टी पर",
       "inactive": "बंद",
@@ -1234,7 +1235,11 @@
       "noHoursToday": "आज कोई घंटे नहीं",
       "backOn": "{when}, {time} पर वापस",
       "tomorrow": "कल"
-    }
+    },
+    "deskPick": "आज क्या कर सकते हैं देखने के लिए किसी {label} को चुनें, या किसी को जोड़ें।",
+    "deskWorking": "आज काम पर",
+    "deskPeople": "लोग",
+    "deskSeats": "बची सीटें"
   },
   "staffWizard": {
     "title": "{label} जोड़ें",
