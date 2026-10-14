@@ -56,7 +56,27 @@
   .pf-wide-left .pf-who-search {
     flex: 1;
     min-width: 0;
+    min-height: 40px;
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .pf-wide-left .pf-who-search:hover {
+    border-color: #b9c2bb;
+  }
+
+  .pf-wide-left .pf-who-add {
+    width: 40px;
+    height: 40px;
+    flex: none;
   }
 
   .pf-wide-left .pf-chips {
@@ -207,10 +227,9 @@
     outline: none;
   }
 
+  /* The ring on focus is in 90-accessibility.css, on the box and not the input inside it. */
   .pf-wide-search:focus-within {
     border-color: var(--accent-deep);
-    outline: 2px solid var(--accent-deep);
-    outline-offset: 1px;
   }
 
   /* As many tiles as fit at a readable width: four on a 1366 laptop, five or six on a wide monitor. */
