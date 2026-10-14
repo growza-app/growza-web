@@ -27,7 +27,19 @@ import { autoFocusField } from '../../shared/a11y/soft-keyboard';
  * (05-messaging-compliance.md, ADR-11). Call is a `tel:` link, which is the
  * owner's own phone doing the work.
  */
-export function ClientProfileCard({ clientId, onClose }: { clientId: string; onClose: () => void }) {
+export function ClientProfileCard({
+  clientId,
+  onClose,
+  inline = false,
+}: {
+  clientId: string;
+  onClose: () => void;
+  /**
+   * Owner, 2026-10-14 — drawn in place in the Clients desk's right panel: no scrim, no focus trap, and the list
+   * keeps the keyboard. The × clears the selection. Everything inside is the same card.
+   */
+  inline?: boolean;
+}) {
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [failed, setFailed] = useState(false);
   /*
@@ -88,7 +100,7 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
 
   // Escape closes, Tab stays inside, and focus goes back to the row it came from (Jira GRW-342). It lands on the
   // panel itself, which announces its name, rather than on the first field of an edit form.
-  useDialog(panel, { onClose, initialFocus: 'container' });
+  useDialog(panel, { onClose: inline ? undefined : onClose, initialFocus: 'container', active: !inline });
 
   /** Resolve a row to the words an owner reads. Money and dates go through the shared formatters. */
   function render(row: ClientProfileRow): string {
@@ -217,8 +229,8 @@ export function ClientProfileCard({ clientId, onClose }: { clientId: string; onC
 
   return (
     <>
-      <button type="button" className="cpc-scrim" aria-label={c.close} onClick={onClose} />
-      <div className="cpc" role="dialog" aria-modal="true" tabIndex={-1} ref={panel}>
+      {!inline && <button type="button" className="cpc-scrim" aria-label={c.close} onClick={onClose} />}
+      <div className={inline ? 'cpc cpc-inline' : 'cpc'} role={inline ? 'region' : 'dialog'} aria-modal={inline ? undefined : 'true'} tabIndex={-1} ref={panel}>
         <header className="cpc-head">
           <div className="cpc-head-top">
             <span className="cpc-kicker">{c.kicker}</span>

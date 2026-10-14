@@ -241,7 +241,8 @@
     "nameOptional": "Name (optional)",
     "namePlaceholder": "e.g. Priya Sharma",
     "couldNotAdd": "Could not add the {noun}.",
-    "whichBranch": "Which branch"
+    "whichBranch": "Which branch",
+    "deskPick": "Pick a {noun} to see their story, or add a new one."
   },
   "freeTimes": {
     "title": "Free times",

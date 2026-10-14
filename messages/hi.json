@@ -241,7 +241,8 @@
     "nameOptional": "नाम (ज़रूरी नहीं)",
     "namePlaceholder": "जैसे प्रिया शर्मा",
     "couldNotAdd": "{noun} नहीं जोड़ सके।",
-    "whichBranch": "कौन सी शाखा"
+    "whichBranch": "कौन सी शाखा",
+    "deskPick": "किसी {noun} की पूरी कहानी देखने के लिए उसे चुनें, या नया जोड़ें।"
   },
   "freeTimes": {
     "title": "खाली समय",
