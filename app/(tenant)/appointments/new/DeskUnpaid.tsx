@@ -37,11 +37,23 @@ export function DeskUnpaid({
   timezone,
   currentTokenId = null,
   currentVisitId = null,
+  title,
+  empty,
+  still = false,
 }: {
   location: string | null;
   timezone: string;
   currentTokenId?: string | null;
   currentVisitId?: string | null;
+  /** The heading, when it is not "Still to pay today": New booking's desk calls the same rows "Today". */
+  title?: string;
+  /** What an empty list says under that heading. */
+  empty?: string;
+  /**
+   * Rows that only say, never open (New booking's desk, Jira GRW-572): a half-filled booking must not be lost
+   * to a tap on who else is in today. The till keeps the tap — opening the next sale is its whole point.
+   */
+  still?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -103,15 +115,30 @@ export function DeskUnpaid({
 
   return (
     <section className="pf-wide-unpaid" aria-label={t('desk.unpaid')}>
-      <h2 className="pf-wide-h">{t('desk.unpaid')}</h2>
+      <h2 className="pf-wide-h">{title ?? t('desk.unpaid')}</h2>
       {rows === null ? (
         <p className="pf-wide-empty" aria-busy="true" />
       ) : rows.length === 0 ? (
-        <p className="pf-wide-empty">{t('desk.nobodyUnpaid')}</p>
+        <p className="pf-wide-empty">{empty ?? t('desk.nobodyUnpaid')}</p>
       ) : (
         <ul className="pf-wide-list">
           {rows.map((r) => (
             <li key={r.key}>
+              {still ? (
+                <div className="pf-wide-row pf-wide-row-still">
+                  <span className="pf-wide-row-top">
+                    <span className="pf-wide-row-name">
+                      {r.tokenNo !== null ? `${nv.token(r.tokenNo)} · ` : ''}
+                      {r.name ?? nv.noName}
+                    </span>
+                    <span className="pf-wide-row-at">{r.at}</span>
+                  </span>
+                  <span className="pf-wide-row-sub">
+                    <span className={`pf-wide-state pf-wide-state-${r.state}`}>{t(`desk.${r.state}`)}</span>
+                    {r.services ? ` · ${r.services}` : ''}
+                  </span>
+                </div>
+              ) : (
               <button type="button" className={`pf-wide-row ${r.current ? 'pf-wide-row-on' : ''}`} aria-current={r.current || undefined} onClick={() => router.push(r.href)}>
                 <span className="pf-wide-row-top">
                   <span className="pf-wide-row-name">
@@ -125,6 +152,7 @@ export function DeskUnpaid({
                   {r.services ? ` · ${r.services}` : ''}
                 </span>
               </button>
+              )}
             </li>
           ))}
         </ul>

@@ -54,11 +54,11 @@ export function NewBookingClient({
   const [wide, setWide] = useState(false);
   const quick = purpose === 'payment' && !full;
   useEffect(() => {
-    if (!quick) return;
     // Both in one effect, so React paints them together: no one-page form flashing up before the wide till.
+    // Jira GRW-572 — asked for every purpose now: New booking has a wide layout of its own (`desk` below).
     setWide(window.matchMedia('(min-width: 1101px)').matches);
     setLayout(window.matchMedia('(max-width: 860px)').matches ? 'phone' : 'desk');
-  }, [quick]);
+  }, []);
 
   /*
    * Settling a BOOKING is `PayFlow` at every width (owner, 2026-10-11).
@@ -95,6 +95,8 @@ export function NewBookingClient({
   };
 
   if (quick && !settlingBooking && layout === 'unknown') return <div className="pf" aria-busy="true" />;
+  // Jira GRW-572 — New booking waits the same one frame, so a desk never sees the column before the panels.
+  if (!quick && purpose !== 'payment' && layout === 'unknown') return <div className="walk-in-page" aria-busy="true" />;
   if (settlingBooking || (quick && layout === 'phone')) {
     return <PayFlow token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} wide={wide && layout === 'desk'} />;
   }
@@ -111,6 +113,7 @@ export function NewBookingClient({
       token={token}
       tokenGone={tokenGone}
       timezone={timezone}
+      desk={purpose !== 'payment' && wide && layout === 'desk'}
       onClose={() => router.push(backTo ?? (purpose === 'payment' ? '/' : '/appointments'))}
     />
   );
