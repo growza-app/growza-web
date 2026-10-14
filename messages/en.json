@@ -751,6 +751,8 @@
     "removeBody": "They will be signed out straight away and cannot sign in to this business again unless you invite them. Their past bookings and records stay."
   },
   "services": {
+    "deskPick": "Pick a service to change it, or add a new one.",
+    "deskShowing": "{count, plural, one {# service} other {# services}}",
     "subtitle": "What you offer, how long each takes, and what you charge.",
     "cols": {
       "name": "Service",

@@ -1,0 +1,334 @@
+/*
+ * Owner, 2026-10-14 — Services on a wide desk: the same three panels as the till (79-desk-till.css).
+ *
+ *   left   the categories, as a list — All, each one with its count, Retired — and a row to add one
+ *   middle the search and every service of the chosen category, no pages; the list scrolls inside its card
+ *   right  the service being edited, as the sheet's own form drawn in place (`ServiceForm inline`)
+ *
+ * Only at the desktop tier (≥1101px). `ServicesTable` asks the width itself and renders the paged table below
+ * it, so nothing here is reached there; the media query is belt and braces. Scoped to `.svc-desk`.
+ */
+@media (min-width: 1101px) {
+  /* The grid takes the page's height, like `.table-fit`: the panels scroll, the page does not. */
+  .page-body.svc-desk {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .svc-desk-grid {
+    flex: 1;
+    min-height: 0;
+    /* The list gets the room: a 1366 laptop leaves it ~34rem beside an 11rem category column and a 20rem form. */
+    grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(18rem, 21rem);
+    align-items: stretch;
+  }
+
+  .svc-desk-left,
+  .svc-desk-right {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Not sticky as the till's bill is: the grid is already the height of the window, and the panel scrolls itself. */
+  .svc-desk-right {
+    position: static;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .svc-desk-mid {
+    min-height: 0;
+  }
+
+  .svc-desk-mid .also-try {
+    margin: 0;
+  }
+
+  .svc-desk-table {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .svc-desk-table .table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* A compact table: the phone's 560px floor and 20px gutters are for a page-wide card, not a middle panel. */
+  .svc-desk-table table {
+    min-width: 0;
+  }
+
+  .svc-desk-table th,
+  .svc-desk-table td {
+    padding: 8px 12px;
+  }
+
+  .svc-desk-table .svc-thumb {
+    width: 34px;
+    height: 34px;
+  }
+
+  .svc-desk-table .svc-name {
+    font-size: 0.875rem;
+  }
+
+  .svc-desk-table .svc-time {
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .svc-desk-table .svc-price {
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .svc-desk-table th:nth-child(3) {
+    text-align: right;
+  }
+
+  /* The ··· column is the button and nothing else. */
+  .svc-desk-table th:last-child,
+  .svc-desk-table td:last-child {
+    width: 2.5rem;
+    padding-left: 0;
+    padding-right: 8px;
+  }
+
+  .svc-desk-table th:last-child {
+    font-size: 0;
+  }
+
+  .svc-desk-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+  }
+
+  .svc-desk-count {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* ---------- left: the categories ---------- */
+  .svc-desk-left-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+
+  .svc-desk-manage {
+    border: 0;
+    background: transparent;
+    padding: 0 var(--sp-1);
+    min-height: 1.75rem;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-deep);
+    cursor: pointer;
+  }
+
+  .svc-desk-manage:disabled {
+    color: var(--muted);
+    cursor: default;
+  }
+
+  .svc-desk-cats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .svc-desk-cat {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    min-height: 2.5rem;
+    padding: 0 var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .svc-desk-cat:hover {
+    background: var(--page-bg);
+  }
+
+  .svc-desk-cat.is-on {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-weight: 600;
+  }
+
+  .svc-desk-cat-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .svc-desk-n {
+    flex: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .svc-desk-cat.is-on .svc-desk-n {
+    color: inherit;
+  }
+
+  .svc-desk-addrow {
+    margin-top: var(--sp-1);
+  }
+
+  .svc-desk-addcat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+
+  .svc-desk-addcat-actions {
+    display: flex;
+    gap: var(--sp-2);
+  }
+
+  .svc-desk-addcat-actions .btn {
+    flex: 1;
+  }
+
+  /* ---------- middle: the rows open ---------- */
+  .svc-row-open {
+    cursor: pointer;
+  }
+
+  .svc-row-open:hover td {
+    background: var(--page-bg);
+  }
+
+  .svc-row-open.is-selected td {
+    background: var(--accent-soft);
+  }
+
+  .svc-row-open.is-selected td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent-deep);
+  }
+
+  /* ---------- right: the form in place ---------- */
+  /* `.sheet` (22-bottom-sheet.css) is a fixed bottom sheet; in the panel it is a plain block that fills it. */
+  .sheet-inline {
+    position: static;
+    z-index: auto;
+    width: 100%;
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .sheet-inline .sheet-head {
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  /* An 18–21rem column: the stepper keeps its width (it was squeezed and drawn over its label), the label
+     takes what is left and wraps, instead of being cut at "Cleanu". */
+  .sheet-inline .sheet-row-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.25;
+  }
+
+  .sheet-inline .sheet-row:has(.sheet-stepper) .sheet-row-value {
+    flex: none;
+  }
+
+  /* The phone's compact rhythm (98-service-sheet.css), so Retire and Delete are not three screens down. */
+  .sheet-inline .sheet-body {
+    padding: 8px 16px 16px;
+  }
+
+  .sheet-inline .sheet-label {
+    padding: 14px 4px 4px;
+  }
+
+  .sheet-inline .sheet-foot {
+    padding: 4px 4px 0;
+    font-size: 0.75rem;
+  }
+
+  .svc-desk-nothing {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+  }
+
+  .svc-desk-nothing p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+}
+
+/*
+ * The narrow end of the tier (1101–1300px: an iPad 10.9" sideways is 1180, a Galaxy Tab 1280). The sidebar and
+ * the two side panels leave the list about 15–20rem, which is a name, a price and the ··· — the Time column
+ * goes; the minutes are in the form on the right, one click away.
+ */
+@media (min-width: 1101px) and (max-width: 1300px) {
+  /* The side panels at their floors, so the list gets what is left (a grid gives fixed tracks their max first). */
+  .svc-desk-grid {
+    grid-template-columns: 9.5rem minmax(0, 1fr) 18rem;
+    gap: var(--sp-3);
+  }
+
+  .svc-desk-left {
+    padding: var(--sp-3);
+  }
+
+  .svc-desk-table th:nth-child(2),
+  .svc-desk-table td:nth-child(2) {
+    display: none;
+  }
+
+  .svc-desk-table th,
+  .svc-desk-table td {
+    padding: 8px 8px;
+  }
+
+  .svc-desk-table .svc-thumb {
+    width: 28px;
+    height: 28px;
+  }
+
+  .svc-desk-table .svc-name-cell {
+    gap: 8px;
+  }
+}

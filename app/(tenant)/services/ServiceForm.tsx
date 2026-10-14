@@ -122,9 +122,15 @@ export function ServiceForm({
   onRetire,
   onRestore,
   onDelete,
+  inline = false,
 }: {
   /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
   branchId: string;
+  /**
+   * Owner, 2026-10-14 — the form as the right panel of the wide Services screen, not a dialog over it. No
+   * backdrop, no dialog keyboard handling (there is nothing to trap focus in), the same head and body.
+   */
+  inline?: boolean;
   /** Null to create. */
   service: ServiceAdmin | null;
   categories: ServiceCategory[];
@@ -163,7 +169,7 @@ export function ServiceForm({
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; price?: string }>({});
   // Escape does nothing while a save is in flight, the same rule the other sheets follow.
-  useDialog(sheetRef, { onClose: busy ? undefined : onClose });
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : onClose });
   const changed =
     name !== (service?.name ?? '') ||
     categoryId !== (service?.categoryId ?? '') ||
@@ -257,21 +263,14 @@ export function ServiceForm({
   };
   const minutes = (count: number) => durationPhrase(count, words);
 
-  return (
-    // Jira GRW-478 (U-4) — a stray tap beside a changed form does not throw the changes away; Cancel does.
-    <div className="modal-backdrop" onClick={busy || changed ? undefined : onClose}>
-      {/*
-        Jira GRW-446 — a dialog that behaves like every other one in the product: Escape closes it, Tab stays
-        inside it, and focus comes back where it left. This was the screen's main editor and the one modal that
-        did none of that; a sheet that ignores Escape is a sheet people close by clicking somewhere risky.
-      */}
+  const sheet = (
       <div
-        className="modal sheet"
-        role="dialog"
-        aria-modal="true"
+        className={inline ? 'sheet sheet-inline' : 'modal sheet'}
+        role={inline ? undefined : 'dialog'}
+        aria-modal={inline ? undefined : 'true'}
         aria-label={service ? t('titleEditShort') : t('titleAdd')}
         ref={sheetRef}
-        onClick={(e) => e.stopPropagation()}
+        onClick={inline ? undefined : (e) => e.stopPropagation()}
       >
         <div className="sheet-head">
           <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
@@ -466,6 +465,14 @@ export function ServiceForm({
           />
         )}
       </div>
+  );
+  if (inline) return sheet;
+  return (
+    // Jira GRW-478 (U-4) — a stray tap beside a changed form does not throw the changes away; Cancel does.
+    // Jira GRW-446 — a dialog that behaves like every other one in the product: Escape closes it, Tab stays
+    // inside it, and focus comes back where it left.
+    <div className="modal-backdrop" onClick={busy || changed ? undefined : onClose}>
+      {sheet}
     </div>
   );
 }
