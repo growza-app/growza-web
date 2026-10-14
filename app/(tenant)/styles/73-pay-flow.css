@@ -681,7 +681,7 @@
   position: absolute;
   right: var(--sp-3);
   top: var(--sp-6);
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   line-height: 1;
   color: var(--muted);
 }
@@ -853,7 +853,7 @@
 
 .pf-done-title {
   margin: 0;
-  font-size: 1.875rem;
+  font-size: 1.75rem;
   font-weight: 750;
   line-height: 1.1;
   letter-spacing: -0.01em;

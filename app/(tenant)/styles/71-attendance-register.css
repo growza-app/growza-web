@@ -37,7 +37,7 @@
 
 .att-title {
   margin: 0 0 var(--sp-1);
-  font-size: 1.6875rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -123,13 +123,13 @@
   align-items: center;
   gap: var(--sp-2);
   margin-bottom: 10px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
 }
 
 .att-tile-count {
-  font-size: 1.875rem;
+  font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -280,7 +280,7 @@
   padding: 9px 10px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -370,7 +370,7 @@
 }
 
 .att-role {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -406,7 +406,7 @@
   border-radius: var(--radius-sm);
   padding: 8px 9px;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   background: #fbfcfb;
   color: var(--text);
@@ -468,7 +468,7 @@
   padding: 8px 11px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -523,14 +523,14 @@
   border-radius: var(--radius-sm);
   padding: 8px 10px;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   background: #fbfcfb;
   color: var(--text);
 }
 
 .att-note-text,
 .att-note-hint {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -561,7 +561,7 @@
   justify-content: space-between;
   gap: 10px;
   margin-top: 14px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -675,7 +675,7 @@
   font-weight: 700;
 }
 .ra-role-sub {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .ra-tabs {
@@ -690,7 +690,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 13px;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   background: var(--surface);
@@ -855,7 +855,7 @@
   margin-top: var(--sp-4);
   padding-top: var(--sp-3);
   border-top: 1px solid var(--border);
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -894,12 +894,12 @@
 }
 
 .am-detail-shift {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
 .am-hours {
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -952,7 +952,7 @@
     border-radius: var(--radius-sm);
   }
   .am-cell-day {
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
   }
   .am-cell-mark {
     font-size: 0.75rem;
@@ -1021,7 +1021,7 @@
 }
 
 .acct-sub {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 2px;
 }
@@ -1100,7 +1100,7 @@
 
 .acct-done {
   margin: 0;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -1245,7 +1245,7 @@
     min-height: 48px;
     padding: 0 10px;
     border-radius: var(--radius);
-    font-size: 0.96875rem;
+    font-size: 0.9375rem;
   }
 
   .acct-item svg {

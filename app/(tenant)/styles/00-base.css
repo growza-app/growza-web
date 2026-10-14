@@ -47,6 +47,38 @@
   --radius-sm: 8px;
   --radius-lg: 14px; /* Jira GRW-571 — the third and last: sheets, big cards, tiles with a photo. */
 
+  /* ---------- type scale (single source of truth) ----------
+     Twelve sizes, in rem so Larger Text grows them (Jira GRW-481), plus the two the money hero alone
+     uses. Before this (2026-10-14) there were 30 distinct sizes: 12.5px, 13.5px, 14.5px, 15.5px and
+     eleven more half-steps, 202 uses in all, each chosen in one sheet and never seen by the next. A
+     sheet writes one of these; accent-discipline.test.ts fails on any other value.
+       --fs-1  0.75    12px  the floor: pills, counts, hints
+       --fs-2  0.8125  13px  secondary text, table cells
+       --fs-3  0.875   14px  labels, buttons
+       --fs-4  0.9375  15px  list rows, inputs on a laptop
+       --fs-5  1       16px  body, inputs on a phone (no iOS zoom)
+       --fs-6  1.0625  17px  a sheet's title row
+       --fs-7  1.125   18px  section titles
+       --fs-8  1.25    20px  page titles on a phone
+       --fs-9  1.375   22px  KPI values
+       --fs-10 1.5     24px  page titles on a laptop
+       --fs-11 1.75    28px  a card's one big number
+       --fs-12 2       32px  the hero number on a phone
+     Written as literals today (a `font-size: 0.8125rem` reads at a glance); the tokens exist so a
+     screen that needs to size a family together can. */
+  --fs-1: 0.75rem;
+  --fs-2: 0.8125rem;
+  --fs-3: 0.875rem;
+  --fs-4: 0.9375rem;
+  --fs-5: 1rem;
+  --fs-6: 1.0625rem;
+  --fs-7: 1.125rem;
+  --fs-8: 1.25rem;
+  --fs-9: 1.375rem;
+  --fs-10: 1.5rem;
+  --fs-11: 1.75rem;
+  --fs-12: 2rem;
+
   /* ---------- spacing scale (single source of truth) ----------
      4-based tokens. Use these instead of arbitrary px so every screen shares
      one rhythm; 13/18/27/35px one-offs are what made the app feel stitched

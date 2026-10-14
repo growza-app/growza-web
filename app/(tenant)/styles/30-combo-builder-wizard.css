@@ -222,7 +222,7 @@
 .preview-caption {
   text-align: center;
   margin-top: 10px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -384,7 +384,7 @@
 
 .picker-row-name {
   font-weight: 600;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .picker-row-meta {
@@ -475,7 +475,7 @@
 
 .rules-option-title {
   font-weight: 620;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .rules-option-sub {
@@ -538,14 +538,14 @@
 }
 
 .preview-title {
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   font-weight: 700;
   margin: 10px 0 2px;
 }
 
 .preview-services {
   color: var(--muted);
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .preview-tagline {
@@ -625,7 +625,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 

@@ -152,4 +152,18 @@ describe('accent discipline', () => {
     const comps = ['../components/BookingSummary.tsx', '../components/BookingSheet.tsx', '../components/CheckoutSheet.tsx', '../components/home/parts.tsx'];
     for (const c of comps) expect(readFileSync(join(dir, c), 'utf8'), c).not.toMatch(/#(b91c1c|c0362c|8a5a0f|6d4fc4|16794a)/i);
   });
+
+  /* Type scale (2026-10-14) — a font-size is one of the twelve steps in 00-base.css, or the money hero's
+     two, or the 16px that stops iOS zooming a field. 12.5px and 13.5px are what a sheet wrote when 12 and
+     13 both looked wrong at 344px; the answer is to pick one and fix the layout, not a half step. */
+  it('every font-size is on the type scale', () => {
+    const scale = new Set(['0.75', '0.8125', '0.875', '0.9375', '1', '1.0625', '1.125', '1.25', '1.375', '1.5', '1.75', '2', '2.75', '3.25']);
+    const off: string[] = [];
+    for (const f of [...sheets, '00-base.css']) {
+      const css = strip(readFileSync(join(dir, f), 'utf8'));
+      for (const [, v] of css.matchAll(/font-size:\s*([0-9.]+)rem/g)) if (!scale.has(v!)) off.push(`${f}: ${v}rem`);
+      for (const [, v] of css.matchAll(/font-size:\s*([0-9.]+)px/g)) if (v !== '16') off.push(`${f}: ${v}px`);
+    }
+    expect(off).toEqual([]);
+  });
 });

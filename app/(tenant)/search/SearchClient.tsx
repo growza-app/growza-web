@@ -140,7 +140,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
                   <button type="button" className="res-main" onClick={() => setOpenClientId(c.id)}>
                     <div className="avatar">{initials(c.name)}</div>
                     <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                      <div style={{ fontWeight: 620, fontSize: 14.5 }}>
+                      <div style={{ fontWeight: 620, fontSize: 14 }}>
                         {c.name ?? t('unknown')}
                         {showBranch ? <span className="chip cust-branch-chip">{c.branchName}</span> : null}
                       </div>

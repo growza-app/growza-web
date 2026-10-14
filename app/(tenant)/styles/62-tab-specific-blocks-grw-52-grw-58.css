@@ -23,7 +23,7 @@
 
 .rp-figure-pair strong {
   display: block;
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   font-weight: 800;
   margin-top: 2px;
 }
@@ -62,13 +62,13 @@
 }
 
 .rp-opp-card-icon svg { width: 1.125rem; height: 1.125rem; }
-.rp-opp-card-count { font-size: 1.5625rem; font-weight: 800; letter-spacing: -0.5px; }
-.rp-opp-card-title { font-weight: 700; font-size: 0.84375rem; }
+.rp-opp-card-count { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+.rp-opp-card-title { font-weight: 700; font-size: 0.8125rem; }
 
 .rp-opp-card-body {
   margin: 3px 0 0;
   color: var(--muted);
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -83,7 +83,7 @@
   border: 1px solid #dbe7df;
   color: var(--accent-deep);
   font-weight: 700;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   padding: 7px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;

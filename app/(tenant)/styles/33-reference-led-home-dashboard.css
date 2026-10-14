@@ -121,7 +121,7 @@
 .attention-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .attention-icon { width: 24px; height: 24px; flex-shrink: 0; border-radius: var(--radius-sm); display: grid; place-items: center; background: rgba(255, 255, 255, 0.65); }
 .attention-icon svg { width: 0.8125rem; height: 0.8125rem; }
-.attention-card .attention-value { font-size: 1.1875rem; font-weight: 700; line-height: 1; }
+.attention-card .attention-value { font-size: 1.125rem; font-weight: 700; line-height: 1; }
 .attention-card > svg { position: absolute; right: 12px; top: 50%; width: 1rem; transform: translateY(-50%); }
 .attention-card.amber { background: #fffaf1; border-color: #f7e7cf; color: #ae6e0d; }
 .attention-card.rose { background: #fff7f7; border-color: #f7dddd; color: #e35060; }
@@ -186,7 +186,7 @@
 .rail-chart-dot { fill: var(--surface); stroke: #6ec886; stroke-width: 2; }
 .rail-chart-value { font-size: 0.75rem; font-weight: 700; fill: var(--text); }
 .rail-chart-label { font-size: 0.75rem; fill: var(--muted); }
-.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: var(--radius-lg); background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 1.3125rem; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 0.8125rem; }.rail-insight p { margin: 2px 0 0; font-size: 0.8125rem; }.rail-insight svg { width: 1.0625rem; color: var(--accent); }
+.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: var(--radius-lg); background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 1.25rem; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 0.8125rem; }.rail-insight p { margin: 2px 0 0; font-size: 0.8125rem; }.rail-insight svg { width: 1.0625rem; color: var(--accent); }
 
 @media (max-width: 1180px) { .home-layout { grid-template-columns: minmax(0, 1fr) 305px; }.summary-metric { padding: 0 12px; }.summary-metric strong { font-size: 1.25rem; }.summary-metric > span:not(.summary-metric-icon) { white-space: normal; } }
 /*

@@ -50,12 +50,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.96875rem;
+  font-size: 0.9375rem;
   font-weight: 640;
 }
 
 .summary-sub {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 2px;
 }
@@ -104,7 +104,7 @@
 }
 
 .summary-stylist {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -166,7 +166,7 @@
   background: transparent;
   border: none;
   font: inherit;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   color: var(--text);
   cursor: pointer;
   text-align: left;
@@ -186,7 +186,7 @@
 
 .sheet-item .trail {
   margin-left: auto;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 

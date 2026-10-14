@@ -141,11 +141,11 @@ describe('the accessibility stylesheet', () => {
 describe('one header, one ink, one dark card (Home and every other screen on a phone)', () => {
   const header = read(join(STYLES, '91-one-header.css'));
 
-  it('every screen\'s title is Home\'s: 1.3125rem (21px at the default root), weight 800, on the page, no bar and no rule', () => {
+  it('every screen\'s title is Home\'s: 1.25rem (20px at the default root), weight 800, on the page, no bar and no rule', () => {
     expect(header).toMatch(/@media \(max-width: 860px\)[\s\S]*\.topbar\s*\{\s*background:\s*transparent;\s*border-bottom:\s*0;/);
-    // Jira GRW-481 — the size is the same 21px it always was; it is written in rem
-    // so it grows with the reader's text size instead of ignoring it.
-    expect(header).toMatch(/\.topbar h1,\s*\.rp-title-row h1\s*\{[^}]*font-size:\s*1\.3125rem;[^}]*font-weight:\s*800;/);
+    // Jira GRW-481 — written in rem so it grows with the reader's text size. It was 21px until the
+    // type scale (2026-10-14) took the half steps out; 20px is --fs-8, the phone page title.
+    expect(header).toMatch(/\.topbar h1,\s*\.rp-title-row h1\s*\{[^}]*font-size:\s*1\.25rem;[^}]*font-weight:\s*800;/);
   });
 
   it('a subtitle stays on one line, as Home\'s date does', () => {

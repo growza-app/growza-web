@@ -128,7 +128,7 @@ input.wi-search-input-plain {
   border-radius: 999px;
   background: transparent;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -208,7 +208,7 @@ input.wi-search-input-plain {
 }
 
 .wi-done-sub {
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -298,7 +298,7 @@ input.wi-search-input-plain {
 .wi-picked-name {
   flex: 1;
   font-weight: 600;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   /* The list is the one place a long service name must not push the remove
      button off the row. */
   min-width: 0;
@@ -527,13 +527,13 @@ input.wi-search-input-plain {
 }
 
 .wi-chair-name {
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .wi-chair-state {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -559,7 +559,7 @@ input.wi-search-input-plain {
   background: #fffaf0;
   color: var(--amber-ink);
   font: inherit;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -899,7 +899,7 @@ input.wi-search-input-plain {
   white-space: nowrap;
 }
 .wi-combo-price {
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   white-space: nowrap;
 }
 /* The row itself may wrap: figures move under the title once both cannot
@@ -1219,7 +1219,7 @@ input.wi-search-input-plain {
 .wi-add-person::before {
   content: '+';
   margin-inline-end: 7px;
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
@@ -1426,7 +1426,7 @@ input.wi-search-input-plain {
  * itself, so it reads "Stylist · whoever is free" rather than a bare name under a label.
  */
 .wi-stylist-row {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -1795,7 +1795,7 @@ input.wi-search-input-plain {
 }
 
 .wi-receipt-to-label {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -1827,7 +1827,7 @@ input.wi-search-input-plain {
 
 .wi-receipt-hint {
   margin: calc(-1 * var(--sp-1)) 0 0;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   text-align: center;
 }

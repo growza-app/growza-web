@@ -157,7 +157,7 @@
      height and the search and avatar never move. */
   .hm-head-business {
     display: block;
-    font-size: 1.3125rem;
+    font-size: 1.25rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -697,7 +697,7 @@
   gap: var(--sp-4);
 }
 .hm-hero-amount {
-  font-size: 2.125rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -1246,7 +1246,7 @@
 }
 .hm-row-name,
 .hm-person-name {
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -1604,7 +1604,7 @@ button.hm-now-count {
   flex-direction: column;
 }
 .hm-closed-text strong {
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 .hm-closed-text span {
   font-size: 0.875rem;
@@ -1681,7 +1681,7 @@ button.hm-now-count {
   border-radius: var(--radius-lg);
   font: inherit;
   font-weight: 700;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   cursor: pointer;
 }
 .hm-btn-quiet {
@@ -1868,7 +1868,7 @@ button.hm-now-count {
   gap: var(--sp-3);
 }
 .hm-mine strong {
-  font-size: 1.625rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -2042,7 +2042,7 @@ button.hm-now-count {
 }
 .hm-att-count {
   grid-area: count;
-  font-size: 1.625rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -2287,7 +2287,7 @@ button.hm-now-count {
     font-size: 0.875rem;
   }
   .hm-desk .hm-row-name {
-    font-size: 0.90625rem;
+    font-size: 0.875rem;
   }
   .hm-desk .hm-row-sub {
     font-size: 0.875rem;
@@ -2623,7 +2623,7 @@ button.hm-now-count {
     padding: 10px 16px;
   }
   .hm-fit .hm-hero-amount {
-    font-size: 1.625rem;
+    font-size: 1.5rem;
   }
   .hm-fit .hm-hero-stats {
     margin-top: 4px;
@@ -2841,7 +2841,7 @@ button.hm-now-count {
     font-size: 0.8125rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-amount {
-    font-size: 1.625rem;
+    font-size: 1.5rem;
   }
   .hm-hero:not(.hm-hero-small) .hm-hero-week {
     display: grid;

@@ -22,7 +22,7 @@
 .rp-opp:disabled:hover { background: none; }
 
 .rp-opp-main { flex: 1; min-width: 0; }
-.rp-opp-name { display: block; font-weight: 700; font-size: 0.84375rem; }
+.rp-opp-name { display: block; font-weight: 700; font-size: 0.8125rem; }
 .rp-opp-meta { display: block; color: var(--muted); font-size: 0.75rem; }
 .rp-opp-right { text-align: right; }
 .rp-opp-spend { display: block; font-weight: 700; font-size: 0.8125rem; }
