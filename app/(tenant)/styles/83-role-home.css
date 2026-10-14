@@ -18,7 +18,7 @@
   --hm-line: #e6ebe7;
   --hm-line-soft: #f0f2f0;
   --hm-green: var(--accent);
-  --hm-green-deep: var(--accent-deep); /* was its own var(--accent-deep): a second deep green beside --accent-deep */
+  --hm-green-deep: var(--accent-deep); /* was its own #16794a: a second deep green beside --accent-deep */
   --hm-green-soft: var(--accent-soft);
   --hm-hero-a: #1c5535;
   --hm-hero-b: #12301e;
@@ -604,7 +604,7 @@
   white-space: nowrap;
 }
 .hm-delta.down {
-  color: var(--danger-line);
+  color: #fecaca; /* pink on the dark hero (8.4:1): the one red that is not --danger, which would be 3.3:1 here */
 }
 .hm-hero .hm-menu {
   right: var(--sp-4);
@@ -1124,9 +1124,9 @@
   background: var(--seg);
 }
 .hm-seg-active { --seg: var(--accent); }
-.hm-seg-due { --seg: #f0a828; }
+.hm-seg-due { --seg: var(--amber); }
 .hm-seg-at_risk { --seg: var(--danger); }
-.hm-seg-inactive { --seg: #8b5cf6; }
+.hm-seg-inactive { --seg: var(--purple); }
 .hm-seg-top {
   display: flex;
   /* Wraps rather than clips. "Slipping away" plus "46–90 days" did not fit a
