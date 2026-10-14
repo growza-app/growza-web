@@ -33,10 +33,16 @@
     background: var(--surface);
   }
 
-  /* The bill stays in view while the menu scrolls. 4.5rem clears the page header. */
+  /*
+   * The bill stays in view while the menu scrolls. 4.5rem clears the page header. Capped to the window and
+   * scrolling inside itself, because a sticky panel taller than the window keeps its bottom — the payment
+   * tiles — off screen until the whole menu has been scrolled past (owner, 2026-10-14).
+   */
   .pf-wide-right {
     position: sticky;
     top: 4.5rem;
+    max-height: calc(100vh - 5.5rem);
+    overflow-y: auto;
   }
 
   /* Who? and Stylist stack in the narrow column; the phone lays them out as rows. */
@@ -269,8 +275,9 @@
     display: none;
   }
 
+  /* The lines scroll on their own first, so the total and the tiles stay in reach on a long bill. */
   .pf-wide-right .pf-bill-lines {
-    max-height: 40vh;
+    max-height: 30vh;
     overflow-y: auto;
   }
 

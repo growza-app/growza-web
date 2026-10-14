@@ -188,7 +188,7 @@ const PAY_ICONS: Record<string, ReactNode> = {
  */
 const SERVICES_PER_PAGE = 3;
 /** The most lines one sale may carry — `POST /api/v1/counter-sales` takes 1–12, so + stops there. */
-const BILL_MAX_LINES = 12;
+const BILL_MAX_LINES = 30;
 /** Up to this many people, Record payment shows them as a row of names; more, and it keeps the dropdown. */
 const STYLIST_CHIPS_MAX = 6;
 /** The chip that lists the Packages tab's packages rather than one kind of service. Not a category name anyone can type. */

@@ -1886,7 +1886,7 @@
     "sendHint": "Opens WhatsApp with the bill typed out. You press send.",
     "shareBill": "Share",
     "printBill": "Print",
-    "billFull": "A bill can have up to {max} lines. Take something off to add this package.",
+    "billFull": "A bill can have up to {max} lines. Take something off to add more.",
     "qtyOnBill": "{name}: {count} on the bill",
     "oneMore": "One more {name}",
     "oneLess": "One less {name}",
