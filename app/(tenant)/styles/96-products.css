@@ -485,3 +485,71 @@
 .prd-head-spacer {
   width: 4rem;
 }
+
+/*
+ * Owner, 2026-10-14 — Products on a wide desk: the same three panels as Services (79-desk-services.css).
+ *   left   the three numbers, then All · Low · Out · Retired as a list
+ *   middle the search and the shelf, scrolling inside its card
+ *   right  the product, as the sheet drawn in place (`ProductSheet inline`): Details or Stock with the ledger
+ */
+@media (min-width: 1101px) {
+  .page-body.prd-desk {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .prd-desk-grid {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr) minmax(20rem, 24rem);
+    align-items: stretch;
+  }
+
+  .prd-desk-left,
+  .prd-desk-right {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .prd-desk-right {
+    position: static;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .prd-desk-left .prd-strip {
+    grid-template-columns: 1fr;
+    margin-bottom: var(--sp-2);
+  }
+
+  .prd-desk-mid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    min-height: 0;
+  }
+
+  .prd-desk-mid .prd-search {
+    max-width: none;
+  }
+
+  .prd-desk-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 2px;
+    margin: -2px;
+  }
+
+  .prd-row-tap.is-on {
+    border-color: var(--accent-deep);
+    background: var(--accent-soft);
+  }
+
+  .prd-desk-right .prd-sheet .sheet-body {
+    overflow-y: auto;
+  }
+}

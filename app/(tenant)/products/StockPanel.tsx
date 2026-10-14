@@ -62,7 +62,12 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   };
 
   const tone = stockTone(product);
-  const when = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  const when = new Intl.DateTimeFormat(intlLocale(locale), {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
   return (
     <div className="sheet-body prd-stock">
@@ -97,7 +102,16 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
               {kind === 'adjusted' ? t('countIs') : t('howMany')}
             </label>
             <div className="sheet-row-value">
-              <input id="prd-move-qty" type="number" inputMode="numeric" min={kind === 'adjusted' ? 0 : 1} step={1} value={qty} onChange={(e) => setQty(e.target.value)} autoFocus={autoFocusField(true)} />
+              <input
+                id="prd-move-qty"
+                type="number"
+                inputMode="numeric"
+                min={kind === 'adjusted' ? 0 : 1}
+                step={1}
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                autoFocus={autoFocusField(true)}
+              />
             </div>
           </div>
           <div className="sheet-row">
@@ -109,7 +123,13 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
             </div>
           </div>
           <div className="prd-move-go">
-            <span className="prd-move-after">{canGo ? t('after', { n: kind === 'adjusted' ? n : kind === 'received' || kind === 'returned' ? product.stock + n : product.stock - n }) : ''}</span>
+            <span className="prd-move-after">
+              {canGo
+                ? t('after', {
+                    n: kind === 'adjusted' ? n : kind === 'received' || kind === 'returned' ? product.stock + n : product.stock - n,
+                  })
+                : ''}
+            </span>
             <button type="button" className="btn" disabled={!canGo || busy} onClick={() => void go()}>
               {busy ? tc('working') : t('confirm')}
             </button>

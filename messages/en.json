@@ -3005,6 +3005,7 @@
       "history": "History",
       "noHistory": "Nothing has happened to this product yet.",
       "afterShort": "{n} left"
-    }
+    },
+    "deskPick": "Pick a product to change it or see its stock, or add a new one."
   }
 }

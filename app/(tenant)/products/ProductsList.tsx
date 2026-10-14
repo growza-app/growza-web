@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { Product } from '../lib/api-types';
@@ -55,6 +55,15 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The wide screen is three panels — status · the shelf · the product — the way Services and the till are. `null` until the width is known. */
+  const [desk, setDesk] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const read = () => setDesk(mq.matches);
+    read();
+    mq.addEventListener('change', read);
+    return () => mq.removeEventListener('change', read);
+  }, []);
 
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
   const lowCount = useMemo(() => live.filter((p) => stockTone(p) !== 'ok').length, [live]);
@@ -93,19 +102,171 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
     }
   };
 
+  const header = (
+    <PageHeader
+      title={t('title')}
+      subtitle={t('subtitle')}
+      actions={
+        <WriteOnly>
+          <button type="button" className="btn" onClick={() => setEditing('new')}>
+            <IconPlus /> {t('add')}
+          </button>
+        </WriteOnly>
+      }
+    />
+  );
+  const strip = (
+    <div className="prd-strip" role="list">
+      <div className="prd-stat" role="listitem">
+        <span className="prd-stat-n">{live.length}</span>
+        <span className="prd-stat-l">{t('strip.products')}</span>
+      </div>
+      <div className="prd-stat" role="listitem">
+        <span className="prd-stat-n">{formatMoney(worth)}</span>
+        <span className="prd-stat-l">{t('strip.worth')}</span>
+      </div>
+      <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} role="listitem" onClick={() => setFilter(lowCount > 0 ? 'low' : 'all')}>
+        <span className="prd-stat-n">{lowCount}</span>
+        <span className="prd-stat-l">{t('strip.low')}</span>
+      </button>
+    </div>
+  );
+  const searchBox = (
+    <label className="search-wrap prd-search">
+      <IconSearch />
+      <input type="text" className="search-input search-input-bare" placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
+    </label>
+  );
+  const chips = (
+    <div className="prd-chips" role="group" aria-label={t('filters.label')}>
+      {SHELF_FILTERS.map((f) => (
+        <button
+          key={f}
+          type="button"
+          className={`prd-chip ${filter === f ? 'prd-chip-on' : ''} ${f === 'low' && counts.low > 0 ? 'prd-chip-warn' : ''}`}
+          aria-pressed={filter === f}
+          onClick={() => setFilter(f)}
+        >
+          {t(`filters.${f}`)} <span className="prd-chip-n">{counts[f]}</span>
+        </button>
+      ))}
+    </div>
+  );
+  const list =
+    shown.length === 0 ? (
+      <div className="empty">{search ? t('noMatch', { q: search.trim() }) : t(`filters.none.${filter}`)}</div>
+    ) : (
+      <ul className="prd-list">
+        {shown.map((p) => {
+          const tone = stockTone(p);
+          return (
+            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'}`}>
+              <button
+                type="button"
+                className={`prd-row-tap ${editing && editing !== 'new' && editing.id === p.id ? 'is-on' : ''}`}
+                aria-current={editing && editing !== 'new' && editing.id === p.id ? 'true' : undefined}
+                onClick={() => (writable ? setEditing(p) : undefined)}
+                disabled={!writable}
+              >
+                <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                <span className="prd-name">
+                  {p.name}
+                  {!p.active ? <span className="chip prd-chip-retired">{t('retired')}</span> : null}
+                </span>
+                <span className="prd-price">{formatMoney(p.priceMinor)}</span>
+                <span className="prd-meta">
+                  {p.active ? (
+                    <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('stock', { n: p.stock })}</span>
+                  ) : (
+                    <span className="prd-pill prd-pill-off">{t('stock', { n: p.stock })}</span>
+                  )}
+                  <span className="prd-sold">{t('sold', { n: p.sold })}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  const sheet = (inline: boolean) =>
+    editing ? (
+      <ProductSheet
+        key={editing === 'new' ? 'new' : editing.id}
+        product={editing === 'new' ? null : editing}
+        branchId={branchId}
+        onSaved={saved}
+        onDelete={(p) => setDeleting(p)}
+        onClose={() => setEditing(null)}
+        inline={inline}
+      />
+    ) : null;
+  const dialogs = deleting ? (
+    <ConfirmDialog
+      title={t('delete')}
+      body={t('deleteAsk', { name: deleting.name })}
+      confirmLabel={t('delete')}
+      tone="danger"
+      busy={busy}
+      error={error}
+      onConfirm={() => void remove()}
+      onCancel={() => {
+        setDeleting(null);
+        setError(null);
+      }}
+    />
+  ) : null;
+
+  if (desk === null) {
+    return (
+      <>
+        {header}
+        <div className="page-body" aria-busy="true" />
+      </>
+    );
+  }
+
+  if (desk && rows.length > 0) {
+    return (
+      <>
+        {header}
+        <div className="page-body prd-desk">
+          <div className="pf-wide-grid prd-desk-grid">
+            <aside className="pf-wide-left prd-desk-left" aria-label={t('filters.label')}>
+              {strip}
+              <ul className="svc-desk-cats">
+                {SHELF_FILTERS.map((f) => (
+                  <li key={f}>
+                    <button type="button" className={`svc-desk-cat ${filter === f ? 'is-on' : ''}`} aria-pressed={filter === f} onClick={() => setFilter(f)}>
+                      <span className="svc-desk-cat-name">{t(`filters.${f}`)}</span>
+                      <span className="svc-desk-n">{counts[f]}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+            <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
+              {searchBox}
+              <div className="prd-desk-scroll">{list}</div>
+            </section>
+            <aside className="pf-wide-right prd-desk-right" aria-label={t('form.titleEdit')}>
+              {editing ? (
+                sheet(true)
+              ) : (
+                <div className="svc-desk-nothing">
+                  <p>{t('deskPick')}</p>
+                </div>
+              )}
+            </aside>
+          </div>
+          {dialogs}
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
-        actions={
-          <WriteOnly>
-            <button type="button" className="btn" onClick={() => setEditing('new')}>
-              <IconPlus /> {t('add')}
-            </button>
-          </WriteOnly>
-        }
-      />
+      {header}
       <div className="page-body prd-page">
         {rows.length === 0 ? (
           <div className="empty prd-empty">
@@ -114,85 +275,17 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
           </div>
         ) : (
           <>
-            <div className="prd-strip" role="list">
-              <div className="prd-stat" role="listitem">
-                <span className="prd-stat-n">{live.length}</span>
-                <span className="prd-stat-l">{t('strip.products')}</span>
-              </div>
-              <div className="prd-stat" role="listitem">
-                <span className="prd-stat-n">{formatMoney(worth)}</span>
-                <span className="prd-stat-l">{t('strip.worth')}</span>
-              </div>
-              <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} role="listitem" onClick={() => setFilter(lowCount > 0 ? 'low' : 'all')}>
-                <span className="prd-stat-n">{lowCount}</span>
-                <span className="prd-stat-l">{t('strip.low')}</span>
-              </button>
-            </div>
-
+            {strip}
             <div className="prd-tools">
-              <label className="search-wrap prd-search">
-                <IconSearch />
-                <input type="text" className="search-input search-input-bare" placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
-              </label>
-              <div className="prd-chips" role="group" aria-label={t('filters.label')}>
-                {SHELF_FILTERS.map((f) => (
-                  <button key={f} type="button" className={`prd-chip ${filter === f ? 'prd-chip-on' : ''} ${f === 'low' && counts.low > 0 ? 'prd-chip-warn' : ''}`} aria-pressed={filter === f} onClick={() => setFilter(f)}>
-                    {t(`filters.${f}`)} <span className="prd-chip-n">{counts[f]}</span>
-                  </button>
-                ))}
-              </div>
+              {searchBox}
+              {chips}
             </div>
-
-            {shown.length === 0 ? (
-              <div className="empty">{search ? t('noMatch', { q: search.trim() }) : t(`filters.none.${filter}`)}</div>
-            ) : (
-              <ul className="prd-list">
-                {shown.map((p) => {
-                  const tone = stockTone(p);
-                  return (
-                    <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'}`}>
-                      <button type="button" className="prd-row-tap" onClick={() => (writable ? setEditing(p) : undefined)} disabled={!writable}>
-                        <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
-                        <span className="prd-name">
-                          {p.name}
-                          {!p.active ? <span className="chip prd-chip-retired">{t('retired')}</span> : null}
-                        </span>
-                        <span className="prd-price">{formatMoney(p.priceMinor)}</span>
-                        <span className="prd-meta">
-                          {p.active ? (
-                            <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('stock', { n: p.stock })}</span>
-                          ) : (
-                            <span className="prd-pill prd-pill-off">{t('stock', { n: p.stock })}</span>
-                          )}
-                          <span className="prd-sold">{t('sold', { n: p.sold })}</span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+            {list}
           </>
         )}
       </div>
-      {editing ? (
-        <ProductSheet product={editing === 'new' ? null : editing} branchId={branchId} onSaved={saved} onDelete={(p) => setDeleting(p)} onClose={() => setEditing(null)} />
-      ) : null}
-      {deleting ? (
-        <ConfirmDialog
-          title={t('delete')}
-          body={t('deleteAsk', { name: deleting.name })}
-          confirmLabel={t('delete')}
-          tone="danger"
-          busy={busy}
-          error={error}
-          onConfirm={() => void remove()}
-          onCancel={() => {
-            setDeleting(null);
-            setError(null);
-          }}
-        />
-      ) : null}
+      {sheet(false)}
+      {dialogs}
     </>
   );
 }

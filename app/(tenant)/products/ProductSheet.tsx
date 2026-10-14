@@ -25,12 +25,15 @@ export function ProductSheet({
   onSaved,
   onDelete,
   onClose,
+  inline = false,
 }: {
   product: Product | null;
   branchId: string;
   onSaved: (p: Product) => void;
   onDelete: (p: Product) => void;
   onClose: () => void;
+  /** The wide desk draws the sheet in its right panel: no backdrop, no dialog, and a save keeps it open. */
+  inline?: boolean;
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
@@ -47,7 +50,7 @@ export function ProductSheet({
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useDialog(sheetRef, { onClose: busy ? undefined : onClose });
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : onClose });
 
   const rupees = Number(price);
   const costRupees = cost.trim() === '' ? null : Number(cost);
@@ -67,11 +70,15 @@ export function ProductSheet({
         costMinor: costRupees === null ? null : Math.round(costRupees * 100),
         lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
       };
-      let saved = product ? await api.updateProduct(product.id, body) : await api.createProduct(branchId, { ...body, stock: Math.trunc(Number(stock)) || 0 });
+      let saved = product
+        ? await api.updateProduct(product.id, body)
+        : await api.createProduct(branchId, {
+            ...body,
+            stock: Math.trunc(Number(stock)) || 0,
+          });
       if (photo) saved = await api.uploadProductPhoto(saved.id, photo);
       onSaved(saved);
-      if (product) onClose();
-      else onClose();
+      if (!inline) onClose();
     } catch (err) {
       fail(err);
     } finally {
@@ -84,7 +91,7 @@ export function ProductSheet({
     setError(null);
     try {
       onSaved(await api.updateProduct(product.id, { active: !product.active }));
-      onClose();
+      if (!inline) onClose();
     } catch (err) {
       fail(err);
     } finally {
@@ -93,146 +100,157 @@ export function ProductSheet({
   };
 
   const title = product ? t('titleEdit') : t('titleAdd');
-  return (
-    <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
-      <div className="modal sheet prd-sheet" role="dialog" aria-modal="true" aria-label={title} ref={sheetRef} onClick={(e) => e.stopPropagation()}>
-        <div className="sheet-head">
-          <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
-            {part === 'stock' ? t('done') : t('cancel')}
+  const sheet = (
+    <div
+      className={inline ? 'sheet sheet-inline prd-sheet' : 'modal sheet prd-sheet'}
+      role={inline ? undefined : 'dialog'}
+      aria-modal={inline ? undefined : 'true'}
+      aria-label={title}
+      ref={sheetRef}
+      onClick={inline ? undefined : (e) => e.stopPropagation()}
+    >
+      <div className="sheet-head">
+        <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
+          {part === 'stock' ? t('done') : t('cancel')}
+        </button>
+        <span className="sheet-head-title">{product ? product.name : title}</span>
+        {part === 'details' ? (
+          <button type="button" className="sheet-head-save" disabled={busy || !canSave} onClick={() => void submit()}>
+            {busy ? t('saving') : t('save')}
           </button>
-          <span className="sheet-head-title">{product ? product.name : title}</span>
-          {part === 'details' ? (
-            <button type="button" className="sheet-head-save" disabled={busy || !canSave} onClick={() => void submit()}>
-              {busy ? t('saving') : t('save')}
-            </button>
-          ) : (
-            <span className="prd-head-spacer" aria-hidden="true" />
-          )}
-        </div>
-
-        {product ? (
-          <div className="prd-seg" role="tablist" aria-label={title}>
-            {(['details', 'stock'] as const).map((p) => (
-              <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
-                {t(`part.${p}`)}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        {part === 'stock' && product ? (
-          <StockPanel product={product} onChanged={onSaved} />
         ) : (
-          <div className="sheet-body">
-            <div className="sheet-group sheet-photo">
-              {photo ? (
-                <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
-              ) : imageUrl ? (
-                <img className="sheet-photo-img" src={productPhotoUrl({ imageUrl })} alt="" />
-              ) : (
-                <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
-              )}
-              <input
-                ref={photoRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) setPhoto(f);
-                }}
-              />
-              <button type="button" className="sheet-photo-text" onClick={() => photoRef.current?.click()}>
-                <span className="sheet-photo-action">{photo || imageUrl ? t('changePhoto') : t('addPhoto')}</span>
-                <span className="sheet-photo-why">{t('photoHint')}</span>
-              </button>
-              {photo || imageUrl ? (
-                <button
-                  type="button"
-                  className="sheet-photo-remove"
-                  onClick={async () => {
-                    setPhoto(null);
-                    if (product && imageUrl) {
-                      await api.removeProductPhoto(product.id).catch(() => {});
-                      setImageUrl(null);
-                    }
-                    if (photoRef.current) photoRef.current.value = '';
-                  }}
-                >
-                  {t('remove')}
-                </button>
-              ) : null}
-            </div>
-
-            <div className="sheet-group">
-              <div className="sheet-row">
-                <label className="sheet-row-label" htmlFor="prd-name">
-                  {t('name')}
-                </label>
-                <div className="sheet-row-value">
-                  <input id="prd-name" type="text" value={name} placeholder={t('namePlaceholder')} maxLength={120} onChange={(e) => setName(e.target.value)} autoFocus={autoFocusField(!product)} />
-                </div>
-              </div>
-              <div className="sheet-row">
-                <label className="sheet-row-label" htmlFor="prd-price">
-                  {t('price')}
-                </label>
-                <div className="sheet-row-value">
-                  <input id="prd-price" type="number" inputMode="numeric" min={0} step={1} value={price} onChange={(e) => setPrice(e.target.value)} />
-                </div>
-              </div>
-              <div className="sheet-row">
-                <label className="sheet-row-label" htmlFor="prd-cost">
-                  {t('cost')}
-                </label>
-                <div className="sheet-row-value prd-cost-value">
-                  <input id="prd-cost" type="number" inputMode="numeric" min={0} step={1} value={cost} placeholder={tc('optional')} onChange={(e) => setCost(e.target.value)} />
-                  {marginPct !== null ? <span className={`prd-margin ${marginPct < 0 ? 'prd-margin-neg' : ''}`}>{t('margin', { pct: marginPct })}</span> : null}
-                </div>
-              </div>
-            </div>
-            <div className="sheet-foot">{t('costHint')}</div>
-
-            <div className="sheet-group">
-              {!product ? (
-                <div className="sheet-row">
-                  <label className="sheet-row-label" htmlFor="prd-stock">
-                    {t('stock')}
-                  </label>
-                  <div className="sheet-row-value">
-                    <input id="prd-stock" type="number" inputMode="numeric" step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
-                  </div>
-                </div>
-              ) : null}
-              <div className="sheet-row">
-                <label className="sheet-row-label" htmlFor="prd-low">
-                  {t('lowAt')}
-                </label>
-                <div className="sheet-row-value">
-                  <input id="prd-low" type="number" inputMode="numeric" min={0} step={1} value={lowAt} placeholder={t('lowAtOff')} onChange={(e) => setLowAt(e.target.value)} />
-                </div>
-              </div>
-            </div>
-            <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
-            {error ? (
-              <div role="alert" className="sheet-foot sheet-foot-error">
-                {error}
-              </div>
-            ) : null}
-
-            {product ? (
-              <div className="sheet-group prd-sheet-actions">
-                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void toggleActive()}>
-                  {product.active ? tp('retire') : tp('bringBack')}
-                </button>
-                <button type="button" className="btn btn-ghost btn-danger" disabled={busy} onClick={() => onDelete(product)}>
-                  {tp('delete')}
-                </button>
-              </div>
-            ) : null}
-          </div>
+          <span className="prd-head-spacer" aria-hidden="true" />
         )}
       </div>
+
+      {product ? (
+        <div className="prd-seg" role="tablist" aria-label={title}>
+          {(['details', 'stock'] as const).map((p) => (
+            <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
+              {t(`part.${p}`)}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {part === 'stock' && product ? (
+        <StockPanel product={product} onChanged={onSaved} />
+      ) : (
+        <div className="sheet-body">
+          <div className="sheet-group sheet-photo">
+            {photo ? (
+              <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
+            ) : imageUrl ? (
+              <img className="sheet-photo-img" src={productPhotoUrl({ imageUrl })} alt="" />
+            ) : (
+              <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
+            )}
+            <input
+              ref={photoRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setPhoto(f);
+              }}
+            />
+            <button type="button" className="sheet-photo-text" onClick={() => photoRef.current?.click()}>
+              <span className="sheet-photo-action">{photo || imageUrl ? t('changePhoto') : t('addPhoto')}</span>
+              <span className="sheet-photo-why">{t('photoHint')}</span>
+            </button>
+            {photo || imageUrl ? (
+              <button
+                type="button"
+                className="sheet-photo-remove"
+                onClick={async () => {
+                  setPhoto(null);
+                  if (product && imageUrl) {
+                    await api.removeProductPhoto(product.id).catch(() => {});
+                    setImageUrl(null);
+                  }
+                  if (photoRef.current) photoRef.current.value = '';
+                }}
+              >
+                {t('remove')}
+              </button>
+            ) : null}
+          </div>
+
+          <div className="sheet-group">
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-name">
+                {t('name')}
+              </label>
+              <div className="sheet-row-value">
+                <input id="prd-name" type="text" value={name} placeholder={t('namePlaceholder')} maxLength={120} onChange={(e) => setName(e.target.value)} autoFocus={autoFocusField(!product)} />
+              </div>
+            </div>
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-price">
+                {t('price')}
+              </label>
+              <div className="sheet-row-value">
+                <input id="prd-price" type="number" inputMode="numeric" min={0} step={1} value={price} onChange={(e) => setPrice(e.target.value)} />
+              </div>
+            </div>
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-cost">
+                {t('cost')}
+              </label>
+              <div className="sheet-row-value prd-cost-value">
+                <input id="prd-cost" type="number" inputMode="numeric" min={0} step={1} value={cost} placeholder={tc('optional')} onChange={(e) => setCost(e.target.value)} />
+                {marginPct !== null ? <span className={`prd-margin ${marginPct < 0 ? 'prd-margin-neg' : ''}`}>{t('margin', { pct: marginPct })}</span> : null}
+              </div>
+            </div>
+          </div>
+          <div className="sheet-foot">{t('costHint')}</div>
+
+          <div className="sheet-group">
+            {!product ? (
+              <div className="sheet-row">
+                <label className="sheet-row-label" htmlFor="prd-stock">
+                  {t('stock')}
+                </label>
+                <div className="sheet-row-value">
+                  <input id="prd-stock" type="number" inputMode="numeric" step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
+                </div>
+              </div>
+            ) : null}
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-low">
+                {t('lowAt')}
+              </label>
+              <div className="sheet-row-value">
+                <input id="prd-low" type="number" inputMode="numeric" min={0} step={1} value={lowAt} placeholder={t('lowAtOff')} onChange={(e) => setLowAt(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
+          {error ? (
+            <div role="alert" className="sheet-foot sheet-foot-error">
+              {error}
+            </div>
+          ) : null}
+
+          {product ? (
+            <div className="sheet-group prd-sheet-actions">
+              <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void toggleActive()}>
+                {product.active ? tp('retire') : tp('bringBack')}
+              </button>
+              <button type="button" className="btn btn-ghost btn-danger" disabled={busy} onClick={() => onDelete(product)}>
+                {tp('delete')}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+  if (inline) return sheet;
+  return (
+    <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
+      {sheet}
     </div>
   );
 }
