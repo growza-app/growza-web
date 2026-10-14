@@ -233,6 +233,7 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
           <div className="pf-wide-grid prd-desk-grid">
             <aside className="pf-wide-left prd-desk-left" aria-label={t('filters.label')}>
               {strip}
+              <h2 className="pf-wide-h">{t('filters.label')}</h2>
               <ul className="svc-desk-cats">
                 {SHELF_FILTERS.map((f) => (
                   <li key={f}>

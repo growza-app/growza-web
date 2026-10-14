@@ -520,9 +520,35 @@
     overflow: hidden;
   }
 
+  /* The three numbers as compact rows, not the phone's tiles: a column 11rem wide has no room for tiles. */
   .prd-desk-left .prd-strip {
     grid-template-columns: 1fr;
-    margin-bottom: var(--sp-2);
+    gap: 2px;
+    margin-bottom: var(--sp-3);
+    padding-bottom: var(--sp-3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prd-desk-left .prd-stat {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--sp-2) var(--sp-3);
+    border: 0;
+    background: transparent;
+  }
+
+  .prd-desk-left .prd-stat-low {
+    background: var(--danger-soft);
+  }
+
+  .prd-desk-left .prd-stat-n {
+    font-size: 0.9375rem;
+  }
+
+  .prd-desk-left .prd-stat-l {
+    font-size: 0.875rem;
+    color: var(--text);
   }
 
   .prd-desk-mid {
@@ -532,16 +558,34 @@
     min-height: 0;
   }
 
+  /* The search is a row, never the column's filler. */
   .prd-desk-mid .prd-search {
+    flex: none;
     max-width: none;
   }
 
+  /* The shelf in a card that scrolls itself, as the Services table does. */
   .prd-desk-scroll {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 2px;
-    margin: -2px;
+    padding: var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .prd-desk-scroll .prd-row-tap {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .prd-desk-scroll .prd-row-tap:hover {
+    background: var(--page-bg);
+  }
+
+  .prd-desk-scroll .empty {
+    margin: 0;
   }
 
   .prd-row-tap.is-on {
