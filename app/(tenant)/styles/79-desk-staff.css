@@ -84,10 +84,17 @@
     display: none;
   }
 
+  /* Sized to its content — the times and, on a free day, the chip — and the name gives way; a fixed 8.5rem let
+     the chip run under the switch (owner's screenshot, 2026-10-14). */
   .staff-desk .staff-shift {
     width: auto;
-    flex: 0 0 8.5rem;
+    flex: 0 0 auto;
+    max-width: 15rem;
     min-width: 0;
+  }
+
+  .staff-desk .staff-shift-head {
+    flex-wrap: nowrap;
   }
 
   .staff-desk .staff-row.is-selected {
@@ -234,11 +241,9 @@
     padding: var(--sp-3);
   }
 
-  .staff-desk .staff-shift-bar {
+  /* The bar and the free-day chip go; the times stay, and the panel says "0 bookings today" once picked. */
+  .staff-desk .staff-shift-bar,
+  .staff-desk .staff-shift-head .staff-badge-free {
     display: none;
-  }
-
-  .staff-desk .staff-shift {
-    flex-basis: auto;
   }
 }
