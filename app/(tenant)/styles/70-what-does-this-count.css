@@ -293,9 +293,8 @@
   align-items: center;
   gap: var(--sp-2);
   padding: 0 var(--sp-4);
-  /* The dashboard has no red in its palette — every existing state colour is
-     amber or green — which is exactly why this one is introduced here and
-     nowhere else. It should not look like anything else in the product. */
+  /* Darker than --danger on purpose: this banner should not look like a delete button or an error
+     chip. It is the one red that is not a token, and it is used here and nowhere else. */
   background: #7f1d1d;
   color: #fff;
   font-size: 0.84375rem;

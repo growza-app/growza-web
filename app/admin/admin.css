@@ -6,6 +6,8 @@
  */
 :root {
   color-scheme: light;
+  /* The admin plane never loads the tenant's 00-base.css, so the one shared colour it needs is declared here. */
+  --danger: #b91c1c;
 }
 
 * {
