@@ -625,91 +625,102 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
           <div className="pe-col-rest">
           <div className="sheet-label sheet-label-price">{t('groups.price')}</div>
           {/*
-            The panel the design draws: each figure under its own label, the three ways to price it as one
-            segmented control, and the amount in a field of its own. It went to single rows on the way to fitting
-            a phone and lost the shape; the shape is what makes the three numbers read as one sum.
+            Owner, 2026-10-14 — nothing to price before there is something: with no service picked the card's
+            ₹0, the three modes and an empty amount read as a question the owner could not yet answer. One line
+            says what comes first; the card appears with the first service.
           */}
-          <div className="pe-price-card">
-            <div className="pe-price-field">
-              <span className="pe-price-label">{t('original')}</span>
-              <div className="pe-price-figure">{formatMoney(String(originalPriceMinor))}</div>
-            </div>
-
-            <div className="pe-price-field">
-              <span className="pe-price-label" id="pkg-price-label">
-                {t('packagePrice')}
-              </span>
-              {/*
-                Jira GRW-438 — three ways to price it, and "Sum of parts" is a real choice rather than the absence
-                of one. All three visible, because which one is NOT in force is half of what the control says.
-              */}
-              <div className="pe-mode-toggle" role="group" aria-labelledby="pkg-price-label">
-                {(['flat', 'percent', 'sum'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={priceMode === m ? 'is-on' : ''}
-                    aria-pressed={priceMode === m}
-                    onClick={() => switchPriceMode(m)}
-                  >
-                    {t(m === 'flat' ? 'flat' : m === 'percent' ? 'percent' : 'sumOfParts')}
-                  </button>
-                ))}
-              </div>
-              {priceMode === 'flat' && (
-                <input
-                  className={`pe-price-input ${fieldErrors.price ? 'field-invalid' : ''}`}
-                  type="number"
-                  min="0"
-                  inputMode="numeric"
-                  value={flatInput}
-                  onChange={(e) => setFlatInput(e.target.value)}
-                  placeholder="0"
-                  aria-label={t('packagePrice')}
-                />
-              )}
-              {priceMode === 'percent' && (
-                <input
-                  className={`pe-price-input ${fieldErrors.price ? 'field-invalid' : ''}`}
-                  type="number"
-                  min="0"
-                  max="100"
-                  inputMode="numeric"
-                  value={percentInput}
-                  onChange={(e) => setPercentInput(e.target.value)}
-                  onBlur={(e) => setPercentInput(clampPercentInput(e.target.value))}
-                  placeholder="0"
-                  aria-label={t('percent')}
-                />
-              )}
-              {/* "Sum of parts" sets no number of its own — it IS the total above, so the field says so. */}
-              {priceMode === 'sum' && <div className="pe-price-figure">{formatMoney(String(originalPriceMinor))}</div>}
-            </div>
-
-            <div className="pe-price-field">
-              <span className="pe-price-label">{t('youSave')}</span>
-              <div className={`pe-price-figure ${savingsMinor != null && savingsMinor > 0 ? 'is-saving' : ''}`}>
-                {savingsMinor != null && savingsMinor > 0
-                  ? `${formatMoney(String(savingsMinor))} (${savingsPct}%)`
-                  : t('price.nothing')}
-              </div>
-            </div>
-          </div>
-
-          {/* What the client ends up paying, said in words, the way the design has it under the panel. */}
-          {fieldErrors.price ? (
-            <div role="alert" className="sheet-foot sheet-foot-error">
-              {fieldErrors.price}
-            </div>
-          ) : savingsMinor != null && savingsMinor > 0 ? (
-            <div className="savings-banner">
-              {t('customersPay', {
-                price: formatMoney(String(comboPriceMinor!)),
-                original: formatMoney(String(originalPriceMinor)),
-              })}
-            </div>
+          {selectedServices.length === 0 ? (
+            <div className="sheet-foot">{t('price.needServices')}</div>
           ) : (
-            priceFootnote() && <div className="sheet-foot">{priceFootnote()}</div>
+            <>
+            {/*
+              The panel the design draws: each figure under its own label, the three ways to price it as one
+              segmented control, and the amount in a field of its own. It went to single rows on the way to fitting
+              a phone and lost the shape; the shape is what makes the three numbers read as one sum.
+            */}
+            <div className="pe-price-card">
+              <div className="pe-price-field">
+                <span className="pe-price-label">{t('original')}</span>
+                <div className="pe-price-figure">{formatMoney(String(originalPriceMinor))}</div>
+              </div>
+
+              <div className="pe-price-field">
+                <span className="pe-price-label" id="pkg-price-label">
+                  {t('packagePrice')}
+                </span>
+                {/*
+                  Jira GRW-438 — three ways to price it, and "Sum of parts" is a real choice rather than the absence
+                  of one. All three visible, because which one is NOT in force is half of what the control says.
+                */}
+                <div className="pe-mode-toggle" role="group" aria-labelledby="pkg-price-label">
+                  {(['flat', 'percent', 'sum'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={priceMode === m ? 'is-on' : ''}
+                      aria-pressed={priceMode === m}
+                      onClick={() => switchPriceMode(m)}
+                    >
+                      {t(m === 'flat' ? 'flat' : m === 'percent' ? 'percent' : 'sumOfParts')}
+                    </button>
+                  ))}
+                </div>
+                {priceMode === 'flat' && (
+                  <input
+                    className={`pe-price-input ${fieldErrors.price ? 'field-invalid' : ''}`}
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={flatInput}
+                    onChange={(e) => setFlatInput(e.target.value)}
+                    placeholder="0"
+                    aria-label={t('packagePrice')}
+                  />
+                )}
+                {priceMode === 'percent' && (
+                  <input
+                    className={`pe-price-input ${fieldErrors.price ? 'field-invalid' : ''}`}
+                    type="number"
+                    min="0"
+                    max="100"
+                    inputMode="numeric"
+                    value={percentInput}
+                    onChange={(e) => setPercentInput(e.target.value)}
+                    onBlur={(e) => setPercentInput(clampPercentInput(e.target.value))}
+                    placeholder="0"
+                    aria-label={t('percent')}
+                  />
+                )}
+                {/* "Sum of parts" sets no number of its own — it IS the total above, so the field says so. */}
+                {priceMode === 'sum' && <div className="pe-price-figure">{formatMoney(String(originalPriceMinor))}</div>}
+              </div>
+
+              <div className="pe-price-field">
+                <span className="pe-price-label">{t('youSave')}</span>
+                <div className={`pe-price-figure ${savingsMinor != null && savingsMinor > 0 ? 'is-saving' : ''}`}>
+                  {savingsMinor != null && savingsMinor > 0
+                    ? `${formatMoney(String(savingsMinor))} (${savingsPct}%)`
+                    : t('price.nothing')}
+                </div>
+              </div>
+            </div>
+
+            {/* What the client ends up paying, said in words, the way the design has it under the panel. */}
+            {fieldErrors.price ? (
+              <div role="alert" className="sheet-foot sheet-foot-error">
+                {fieldErrors.price}
+              </div>
+            ) : savingsMinor != null && savingsMinor > 0 ? (
+              <div className="savings-banner">
+                {t('customersPay', {
+                  price: formatMoney(String(comboPriceMinor!)),
+                  original: formatMoney(String(originalPriceMinor)),
+                })}
+              </div>
+            ) : (
+              priceFootnote() && <div className="sheet-foot">{priceFootnote()}</div>
+            )}
+            </>
           )}
 
           {/* When it runs: one row that states its own answer, and opens on the choices behind it. */}

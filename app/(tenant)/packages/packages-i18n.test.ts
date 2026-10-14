@@ -27,6 +27,8 @@ const packages = [
 
 describe('the package builder', () => {
   const build = (l: 'en' | 'hi') => wrap(l, createElement(PackageBuilder, { services }));
+  // Editing Glow Up: the price card is only drawn once a service is picked (owner, 2026-10-14).
+  const buildEdit = (l: 'en' | 'hi') => wrap(l, createElement(PackageBuilder, { services, initialOffer: packages[0] }));
 
   /**
    * The words the owner reads. This is the test that would have caught shipping a screen called Packages whose
@@ -34,22 +36,33 @@ describe('the package builder', () => {
    */
   it('says package, never combo', () => {
     const html = build('en');
-    for (const s of ['Make a package', 'Details', 'Package name *', 'Original price', 'Flat ₹'])
-      expect(html, s).toContain(s);
+    for (const s of ['Make a package', 'Details', 'Package name *']) expect(html, s).toContain(s);
     expect(html).not.toMatch(/combo/i);
+    const edit = buildEdit('en');
+    for (const s of ['Original price', 'Flat ₹']) expect(edit, s).toContain(s);
+    // Words only: the preview's class names (`preview-price-combo`) are the code's, not the owner's.
+    expect(edit.replace(/class="[^"]*"/g, '')).not.toMatch(/combo/i);
   });
 
   it('reads in Hindi, and says पैकेज', () => {
     const html = build('hi');
     for (const s of ['पैकेज बनाएँ', 'जानकारी', 'पैकेज का नाम *']) expect(html, s).toContain(s);
-    for (const s of ['Save as draft', 'Details', 'Original price', 'Add services']) expect(html, s).not.toContain(s);
+    const edit = buildEdit('hi');
+    for (const s of ['Save as draft', 'Details', 'Original price', 'Add services']) expect(edit, s).not.toContain(s);
     expect(html).not.toContain('कॉम्बो');
+    expect(edit).not.toContain('कॉम्बो');
   });
 
   /** Jira GRW-438 — the third mode is offered in both languages, beside the two that already existed. */
   it('offers all three ways to price it', () => {
-    expect(build('en')).toContain('Sum of parts');
-    expect(build('hi')).toContain('जोड़ की कीमत');
+    expect(buildEdit('en')).toContain('Sum of parts');
+    expect(buildEdit('hi')).toContain('जोड़ की कीमत');
+  });
+
+  it('with nothing picked, the price is one line saying what comes first', () => {
+    const html = build('en');
+    expect(html).toContain('Add services first, then set the price.');
+    for (const s of ['Original price', 'Flat ₹', 'Sum of parts']) expect(html, s).not.toContain(s);
   });
 });
 
