@@ -59,8 +59,10 @@ describe('Staff on a desk', () => {
 
   it('the compact row and the narrow band', () => {
     expect(css).toMatch(/\.staff-desk \.staff-identity \{\s*width: auto;\s*flex: 1 1 11rem;/);
+    // The shift column is sized to its content, so a free day's chip never runs under the switch.
+    expect(css).toMatch(/\.staff-desk \.staff-shift \{\s*width: auto;\s*flex: 0 0 auto;\s*max-width: 15rem;/);
     expect(css).toMatch(/\.staff-desk \.staff-row\.is-selected \{\s*border-color: var\(--accent\);/);
-    expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1300px\) \{[\s\S]*?\.staff-desk \.staff-shift-bar \{\s*display: none;/);
+    expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1300px\) \{[\s\S]*?\.staff-desk \.staff-shift-bar,\s*\.staff-desk \.staff-shift-head \.staff-badge-free \{\s*display: none;/);
   });
 
   it('is loaded after the Clients desk sheet, and says it in both languages', () => {
