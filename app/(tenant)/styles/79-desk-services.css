@@ -255,18 +255,16 @@
     border-radius: var(--radius) var(--radius) 0 0;
   }
 
-  /* An 18–21rem column: a label the stepper leaves no room for goes on its own line, not cut at "Cleanu". */
-  .sheet-inline .sheet-row {
-    flex-wrap: wrap;
-  }
-
+  /* An 18–21rem column: the stepper keeps its width (it was squeezed and drawn over its label), the label
+     takes what is left and wraps, instead of being cut at "Cleanu". */
   .sheet-inline .sheet-row-label {
     flex: 1 1 auto;
     min-width: 0;
+    line-height: 1.25;
   }
 
-  .sheet-inline .sheet-row-value {
-    margin-left: auto;
+  .sheet-inline .sheet-row:has(.sheet-stepper) .sheet-row-value {
+    flex: none;
   }
 
   /* The phone's compact rhythm (98-service-sheet.css), so Retire and Delete are not three screens down. */
