@@ -12,6 +12,7 @@ import { PAGE_SIZE } from '../components/Pagination';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
+import { DeskCategories } from './DeskCategories';
 import { ServiceForm } from './ServiceForm';
 import { PackPhotoSheet } from './PackPhotoSheet';
 import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
@@ -113,8 +114,39 @@ export function ServicesTable({
   const [managing, setManaging] = useState<ServiceCategoryAdmin[] | null>(null);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const canCopy = branches.length > 1;
+  /**
+   * Owner, 2026-10-14 — the wide screen is three panels: categories · the list · the service being edited.
+   *
+   * `null` until the width is known, so a laptop never paints the phone's paged table for a frame first. Only
+   * the desktop tier (≥1101px) gets the panels; a tablet keeps the table.
+   */
+  const [desk, setDesk] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const read = () => setDesk(mq.matches);
+    read();
+    mq.addEventListener('change', read);
+    return () => mq.removeEventListener('change', read);
+  }, []);
+  /**
+   * The left panel's list: every category at the branch, EMPTY ones included, which the `categories` prop
+   * (the picker's list) leaves out — a category just added would not be there to put the first service in.
+   */
+  const [deskCats, setDeskCats] = useState<ServiceCategoryAdmin[] | null>(null);
+  const loadDeskCats = async () => {
+    try {
+      setDeskCats(await api.categoriesAtBranch(branchId));
+    } catch {
+      setDeskCats(null);
+    }
+  };
+  useEffect(() => {
+    if (desk) void loadDeskCats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desk, branchId]);
   const reload = async () => {
     setServices(await api.allServices(branchId));
+    if (desk) void loadDeskCats();
     router.refresh();
   };
   const [confirmRetire, setConfirmRetire] = useState<{ service: ServiceAdmin; bookings: number } | null>(null);
@@ -142,6 +174,8 @@ export function ServicesTable({
 
   const replace = (saved: ServiceAdmin) => {
     setServices((prev) => (prev.some((s) => s.id === saved.id) ? prev.map((s) => (s.id === saved.id ? saved : s)) : [saved, ...prev]));
+    // The right panel shows this service: it reads the row that was saved, not the one it opened with.
+    setEditing((prev) => (prev && prev.id === saved.id ? saved : prev));
     router.refresh();
   };
 
@@ -268,6 +302,7 @@ export function ServicesTable({
     try {
       await api.deleteService(branchId, service.id);
       setServices((prev) => prev.filter((x) => x.id !== service.id));
+      setEditing((prev) => (prev && prev.id === service.id ? null : prev));
       setConfirmDelete(null);
       router.refresh();
     } catch (err) {
@@ -321,7 +356,8 @@ export function ServicesTable({
    * every live service. Derive for this render so there is no empty frame, then commit it so it cannot come
    * back.
    */
-  const categoryIds = useMemo(() => categories.map((c) => c.id), [categories]);
+  // On the wide screen an empty category is a tab too (it is in the left panel), so it must not snap back to All.
+  const categoryIds = useMemo(() => (deskCats ?? categories).map((c) => c.id), [deskCats, categories]);
   /** Jira GRW-441 — the headings read in the owner's order, the same one the tabs above them read. */
   const categoryOrder = useMemo(() => categories.map((c) => c.name), [categories]);
   const tab = tabAfterChange(services, categoryId, categoryIds);
@@ -431,178 +467,91 @@ export function ServicesTable({
     busyId,
   };
 
-  return (
+  const openManaging = async () => {
+    setLoadingCategories(true);
+    setError(null);
+    try {
+      setManaging(await api.categoriesAtBranch(branchId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('categories.errors.failed'));
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const header = (
+    <PageHeader
+      title={title}
+      subtitle={t('subtitle')}
+      actions={
+        // Jira GRW-556 (follow-up) — a business suspended for non-payment reads its menu and adds nothing to it.
+        writable ? (
+          <button type="button" className="btn" onClick={() => setChoosing(true)}>
+            <IconPlus /> {t('addLabel', { label: lower })}
+          </button>
+        ) : undefined
+      }
+    />
+  );
+
+  /* One input for the screen (see `photoFor`): the ··· menu unmounts when it closes, so it cannot own this. */
+  const fileInput = (
+    <input
+      ref={photoInput}
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      style={{ display: 'none' }}
+      onChange={(e) => {
+        const service = photoFor;
+        const file = e.target.files?.[0];
+        setPhotoFor(null);
+        // Cleared so picking the SAME file twice in a row still fires a change event.
+        e.target.value = '';
+        if (service) void onPick(service, file);
+      }}
+    />
+  );
+
+  const serviceForm = (inline: boolean) => (
+    <ServiceForm
+      // Keyed, because the form reads its fields once on mount: opening another row must start it over.
+      key={editing?.id ?? 'new'}
+      inline={inline}
+      service={editing}
+      categories={pickerCategories ?? categories}
+      branchId={branchId}
+      /*
+       * Jira GRW-440 — the sheet's own Retire and Delete. Handled here, not in the sheet, so they open the
+       * same confirmations the row's ··· menu opens (GRW-431): one dialog, asked the same way from both.
+       * The sheet closes first, because a confirmation stacked on top of it is two modals deep.
+       */
+      onRetire={(s) => {
+        if (!inline) setEditing(null);
+        void askRetire(s);
+      }}
+      onRestore={(s) => {
+        if (!inline) setEditing(null);
+        void setActive(s, true);
+      }}
+      onDelete={(s) => {
+        if (!inline) setEditing(null);
+        void askDelete(s);
+      }}
+      onClose={() => {
+        setCreating(false);
+        setEditing(null);
+      }}
+      onSaved={(saved) => {
+        replace(saved);
+        setCreating(false);
+        // The panel keeps showing what was just saved; a dialog closes.
+        setEditing(inline ? saved : null);
+      }}
+    />
+  );
+
+  const dialogs = (
     <>
-      {/*
-        Jira GRW-30 — the header lives here now so Add can sit in it.
-
-        Add was the FIRST control in the row below, where Staff had it last.
-        Two screens, two orders, both using the same toolbar class —
-        and neither looked wrong on its own, which is why it survived. Creating
-        is the header's slot; this row searches and exports.
-      */}
-      <PageHeader
-        title={title}
-        subtitle={t('subtitle')}
-        actions={
-          // Jira GRW-556 (follow-up) — a business suspended for non-payment reads its menu and adds nothing to it.
-          writable ? (
-            <button type="button" className="btn" onClick={() => setChoosing(true)}>
-              <IconPlus /> {t('addLabel', { label: lower })}
-            </button>
-          ) : undefined
-        }
-      />
-      <div className="page-body table-fit">
-      <div className="page-toolbar">
-        <div className="staff-search-wrap">
-          <IconSearch />
-          <input
-            type="search"
-            /*
-             * Jira GRW-437 — the number the search will actually look through, which is the tab in view and not
-             * the whole branch. "Search 19 services…" sitting beside a tab reading "All 1" invites the owner to
-             * type a retired service's name into a box that cannot find it.
-             */
-            placeholder={t('searchPlaceholder', { count: inTab.length })}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label={t('searchAria')}
-          />
-        </div>
-        {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service.
-            Jira GRW-556 (follow-up) — the sheet it opens only adds, renames, reorders and deletes categories. */}
-        {writable && (
-        <button
-          type="button"
-          className="btn btn-ghost"
-          disabled={loadingCategories}
-          onClick={async () => {
-            setLoadingCategories(true);
-            setError(null);
-            try {
-              setManaging(await api.categoriesAtBranch(branchId));
-            } catch (err) {
-              setError(err instanceof Error ? err.message : t('categories.errors.failed'));
-            } finally {
-              setLoadingCategories(false);
-            }
-          }}
-        >
-          {loadingCategories ? '…' : t('categories.open')}
-        </button>
-        )}
-        <button type="button" className="btn btn-ghost" onClick={exportCsv}>
-          {t('export')}
-        </button>
-      </div>
-
-      {/*
-       * Jira GRW-587 — one control, not a strip of tabs. A branch that typed in its printed price list has 23
-       * categories and the strip was 2584px inside a 343px screen; the seeded five already overflowed at 375px.
-       * The tab LOGIC is untouched — `servicesOnTab`, `tabCounts` and `tabAfterChange` still decide everything,
-       * and `tab` is still `all`, `retired` or a category id — only the thing the owner taps has changed.
-       */}
-      <CategoryPicker
-        tab={tab}
-        categories={categories}
-        counts={counts}
-        showRetired={showRetiredTab}
-        onPick={setCategoryId}
-      />
-
-      {/*
-        Jira GRW-449 — services close in MEANING to what was typed, above the table rather than inside it.
-        Tapping one puts its name in the search box: the table then lists it with its own row actions, which a
-        chip cannot carry, and the counts, grouping and paging below stay exactly what the owner typed for.
-      */}
-      {alsoTry.length > 0 && (
-        <div className="also-try">
-          <span className="also-try-label">{t('alsoTry')}</span>
-          <div className="also-try-chips">
-            {alsoTry.map((s) => (
-              <button key={s.id} type="button" className="also-try-chip" onClick={() => setSearch(s.name)}>
-                {s.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* One input for the screen (see `photoFor`): the ··· menu unmounts when it closes, so it cannot own this. */}
-      <input
-        ref={photoInput}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          const service = photoFor;
-          const file = e.target.files?.[0];
-          setPhotoFor(null);
-          // Cleared so picking the SAME file twice in a row still fires a change event.
-          e.target.value = '';
-          if (service) void onPick(service, file);
-        }}
-      />
-
-      <div className="card svc-shell">
-        {error && <div role="alert" className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
-        {services.length === 0 ? (
-          <div className="empty svc-branch-empty">
-            <p>{branches.length > 1 ? t('emptyBranch') : t('emptyAll')}</p>
-            <div className="svc-branch-empty-actions">
-              {writable && canCopy && (
-                <button type="button" className="btn" onClick={() => setCopying(true)}>
-                  {t('copyFromBranch')}
-                </button>
-              )}
-              {writable && (
-                <button type="button" className={canCopy ? 'btn btn-ghost' : 'btn'} onClick={() => setChoosing(true)}>
-                  <IconPlus /> {t('addLabel', { label: lower })}
-                </button>
-              )}
-            </div>
-          </div>
-        ) : filtered.length === 0 ? (
-          /*
-           * Jira GRW-437 — "No services match here" is right for a search that found nothing and alarming when
-           * the branch has a full catalogue that simply happens to be entirely retired: it reads as though the
-           * menu is gone. Say where everything went, and offer the one tap that gets there.
-           */
-          <div className="empty">
-            {tab === ALL_TAB && search.trim().length < MIN_CHARS && showRetiredTab ? (
-              <>
-                <p>{t('allRetired')}</p>
-                <button type="button" className="btn btn-ghost" onClick={() => setCategoryId(RETIRED_TAB)}>
-                  {t('retired')} ({counts.retired})
-                </button>
-              </>
-            ) : (
-              t('empty')
-            )}
-          </div>
-        ) : (
-          <PaginatedTable
-            noun={tn('services')}
-            page={page}
-            total={filtered.length}
-            pageSize={PAGE_SIZE}
-            onPageChange={setWantedPage}
-            cards={<ServiceCards rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />}
-            head={
-              <tr>
-                <th>{t('cols.name')}</th>
-                <th>{t('cols.time')}</th>
-                <th>{t('cols.price')}</th>
-                <th>{t('cols.actions')}</th>
-              </tr>
-            }
-          >
-            <ServiceTableRows rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />
-          </PaginatedTable>
-        )}
-      </div>
-
       {heldBy && (
         <HeldByPackagesDialog
           serviceName={heldBy.service.name}
@@ -638,40 +587,6 @@ export function ServicesTable({
         />
       )}
 
-      {(creating || editing) && (
-        <ServiceForm
-          service={editing}
-          categories={pickerCategories ?? categories}
-          branchId={branchId}
-          /*
-           * Jira GRW-440 — the sheet's own Retire and Delete. Handled here, not in the sheet, so they open the
-           * same confirmations the row's ··· menu opens (GRW-431): one dialog, asked the same way from both.
-           * The sheet closes first, because a confirmation stacked on top of it is two modals deep.
-           */
-          onRetire={(s) => {
-            setEditing(null);
-            void askRetire(s);
-          }}
-          onRestore={(s) => {
-            setEditing(null);
-            void setActive(s, true);
-          }}
-          onDelete={(s) => {
-            setEditing(null);
-            void askDelete(s);
-          }}
-          onClose={() => {
-            setCreating(false);
-            setEditing(null);
-          }}
-          onSaved={(saved) => {
-            replace(saved);
-            setCreating(false);
-            setEditing(null);
-          }}
-        />
-      )}
-
       {choosing && (
         <AddServicesChooser
           tenantName={tenantName}
@@ -685,7 +600,10 @@ export function ServicesTable({
             if (route === 'copy') setCopying(true);
             else if (route === 'catalogue') setPicking(true);
             else if (route === 'sheet') setImporting(true);
-            else setCreating(true);
+            else {
+              setEditing(null);
+              setCreating(true);
+            }
           }}
         />
       )}
@@ -764,6 +682,289 @@ export function ServicesTable({
           onCancel={() => setConfirmRetire(null)}
         />
       )}
+    </>
+  );
+
+  if (desk === null) {
+    return (
+      <>
+        {header}
+        <div className="page-body" aria-busy="true" />
+      </>
+    );
+  }
+
+  if (desk) {
+    const addButton = writable && (
+      <button type="button" className="btn" onClick={() => setChoosing(true)}>
+        <IconPlus /> {t('addLabel', { label: lower })}
+      </button>
+    );
+    return (
+      <>
+        {header}
+        <div className="page-body svc-desk">
+          {fileInput}
+          <div className="pf-wide-grid svc-desk-grid">
+            <DeskCategories
+              tab={tab}
+              categories={deskCats ?? categories}
+              counts={counts}
+              showRetired={showRetiredTab}
+              onPick={setCategoryId}
+              onAdd={
+                writable
+                  ? async (name) => {
+                      await api.createCategory(branchId, name);
+                      await loadDeskCats();
+                      router.refresh();
+                    }
+                  : undefined
+              }
+              onManage={writable ? () => void openManaging() : undefined}
+              managing={loadingCategories}
+            />
+
+            <section className="pf-wide-mid svc-desk-mid" aria-label={title}>
+              <label className="pf-wide-search">
+                <IconSearch />
+                <input
+                  type="search"
+                  placeholder={t('searchPlaceholder', { count: inTab.length })}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label={t('searchAria')}
+                  autoComplete="off"
+                />
+              </label>
+              {alsoTry.length > 0 && (
+                <div className="also-try">
+                  <span className="also-try-label">{t('alsoTry')}</span>
+                  <div className="also-try-chips">
+                    {alsoTry.map((s) => (
+                      <button key={s.id} type="button" className="also-try-chip" onClick={() => setSearch(s.name)}>
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {error && <div role="alert" className="field-error">{error}</div>}
+              <div className="card svc-shell svc-desk-table">
+                {services.length === 0 ? (
+                  <div className="empty svc-branch-empty">
+                    <p>{branches.length > 1 ? t('emptyBranch') : t('emptyAll')}</p>
+                    <div className="svc-branch-empty-actions">
+                      {writable && canCopy && (
+                        <button type="button" className="btn" onClick={() => setCopying(true)}>
+                          {t('copyFromBranch')}
+                        </button>
+                      )}
+                      {addButton}
+                    </div>
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div className="empty">
+                    {tab === ALL_TAB && search.trim().length < MIN_CHARS && showRetiredTab ? (
+                      <>
+                        <p>{t('allRetired')}</p>
+                        <button type="button" className="btn btn-ghost" onClick={() => setCategoryId(RETIRED_TAB)}>
+                          {t('retired')} ({counts.retired})
+                        </button>
+                      </>
+                    ) : (
+                      t('empty')
+                    )}
+                  </div>
+                ) : (
+                  /* Every row of the tab, no pages: a desk has the height, and the list scrolls inside the card. */
+                  <div className="table-scroll">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{t('cols.name')}</th>
+                          <th>{t('cols.time')}</th>
+                          <th>{t('cols.price')}</th>
+                          <th>{t('cols.actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <ServiceTableRows
+                          rows={ordered}
+                          actions={rowActions}
+                          t={t}
+                          order={categoryOrder}
+                          totals={totals}
+                          selectedId={creating ? null : (editing?.id ?? null)}
+                          onSelect={(s) => {
+                            setCreating(false);
+                            setEditing(s);
+                          }}
+                        />
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <p className="svc-desk-count">{t('deskShowing', { count: filtered.length })}</p>
+            </section>
+
+            <aside className="pf-wide-right svc-desk-right" aria-label={t('form.titleEditShort')}>
+              {formOpen ? (
+                serviceForm(true)
+              ) : (
+                <div className="svc-desk-nothing">
+                  <p>{t('deskPick')}</p>
+                  {addButton}
+                </div>
+              )}
+            </aside>
+          </div>
+          {dialogs}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/*
+        Jira GRW-30 — the header lives here now so Add can sit in it.
+
+        Add was the FIRST control in the row below, where Staff had it last.
+        Two screens, two orders, both using the same toolbar class —
+        and neither looked wrong on its own, which is why it survived. Creating
+        is the header's slot; this row searches and exports.
+      */}
+      {header}
+      <div className="page-body table-fit">
+      <div className="page-toolbar">
+        <div className="staff-search-wrap">
+          <IconSearch />
+          <input
+            type="search"
+            /*
+             * Jira GRW-437 — the number the search will actually look through, which is the tab in view and not
+             * the whole branch. "Search 19 services…" sitting beside a tab reading "All 1" invites the owner to
+             * type a retired service's name into a box that cannot find it.
+             */
+            placeholder={t('searchPlaceholder', { count: inTab.length })}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label={t('searchAria')}
+          />
+        </div>
+        {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service.
+            Jira GRW-556 (follow-up) — the sheet it opens only adds, renames, reorders and deletes categories. */}
+        {writable && (
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={loadingCategories}
+          onClick={() => void openManaging()}
+        >
+          {loadingCategories ? '…' : t('categories.open')}
+        </button>
+        )}
+        <button type="button" className="btn btn-ghost" onClick={exportCsv}>
+          {t('export')}
+        </button>
+      </div>
+
+      {/*
+       * Jira GRW-587 — one control, not a strip of tabs. A branch that typed in its printed price list has 23
+       * categories and the strip was 2584px inside a 343px screen; the seeded five already overflowed at 375px.
+       * The tab LOGIC is untouched — `servicesOnTab`, `tabCounts` and `tabAfterChange` still decide everything,
+       * and `tab` is still `all`, `retired` or a category id — only the thing the owner taps has changed.
+       */}
+      <CategoryPicker
+        tab={tab}
+        categories={categories}
+        counts={counts}
+        showRetired={showRetiredTab}
+        onPick={setCategoryId}
+      />
+
+      {/*
+        Jira GRW-449 — services close in MEANING to what was typed, above the table rather than inside it.
+        Tapping one puts its name in the search box: the table then lists it with its own row actions, which a
+        chip cannot carry, and the counts, grouping and paging below stay exactly what the owner typed for.
+      */}
+      {alsoTry.length > 0 && (
+        <div className="also-try">
+          <span className="also-try-label">{t('alsoTry')}</span>
+          <div className="also-try-chips">
+            {alsoTry.map((s) => (
+              <button key={s.id} type="button" className="also-try-chip" onClick={() => setSearch(s.name)}>
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {fileInput}
+
+      <div className="card svc-shell">
+        {error && <div role="alert" className="card-body field-error" style={{ padding: '10px 16px 0' }}>{error}</div>}
+        {services.length === 0 ? (
+          <div className="empty svc-branch-empty">
+            <p>{branches.length > 1 ? t('emptyBranch') : t('emptyAll')}</p>
+            <div className="svc-branch-empty-actions">
+              {writable && canCopy && (
+                <button type="button" className="btn" onClick={() => setCopying(true)}>
+                  {t('copyFromBranch')}
+                </button>
+              )}
+              {writable && (
+                <button type="button" className={canCopy ? 'btn btn-ghost' : 'btn'} onClick={() => setChoosing(true)}>
+                  <IconPlus /> {t('addLabel', { label: lower })}
+                </button>
+              )}
+            </div>
+          </div>
+        ) : filtered.length === 0 ? (
+          /*
+           * Jira GRW-437 — "No services match here" is right for a search that found nothing and alarming when
+           * the branch has a full catalogue that simply happens to be entirely retired: it reads as though the
+           * menu is gone. Say where everything went, and offer the one tap that gets there.
+           */
+          <div className="empty">
+            {tab === ALL_TAB && search.trim().length < MIN_CHARS && showRetiredTab ? (
+              <>
+                <p>{t('allRetired')}</p>
+                <button type="button" className="btn btn-ghost" onClick={() => setCategoryId(RETIRED_TAB)}>
+                  {t('retired')} ({counts.retired})
+                </button>
+              </>
+            ) : (
+              t('empty')
+            )}
+          </div>
+        ) : (
+          <PaginatedTable
+            noun={tn('services')}
+            page={page}
+            total={filtered.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setWantedPage}
+            cards={<ServiceCards rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />}
+            head={
+              <tr>
+                <th>{t('cols.name')}</th>
+                <th>{t('cols.time')}</th>
+                <th>{t('cols.price')}</th>
+                <th>{t('cols.actions')}</th>
+              </tr>
+            }
+          >
+            <ServiceTableRows rows={pageRows} actions={rowActions} t={t} order={categoryOrder} totals={totals} />
+          </PaginatedTable>
+        )}
+      </div>
+
+      {(creating || editing) && serviceForm(false)}
+      {dialogs}
       </div>
     </>
   );

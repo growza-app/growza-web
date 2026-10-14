@@ -88,7 +88,7 @@ export function ServiceRowMenu({ service, actions, t }: { service: ServiceAdmin;
 
   if (!writable) return null;
   return (
-    <div className="dropdown-anchor svc-row-actions" ref={open ? panel.anchorRef : undefined}>
+    <div className="dropdown-anchor svc-row-actions" ref={open ? panel.anchorRef : undefined} onClick={(e) => e.stopPropagation()}>
       <button
         type="button"
         className="kebab-btn"
@@ -185,12 +185,17 @@ export function ServiceTableRows({
   t,
   order,
   totals,
+  selectedId = null,
+  onSelect,
 }: {
   rows: ServiceAdmin[];
   actions: RowActions;
   t: T;
   order: CategoryOrder;
   totals?: CategoryTotals;
+  /** Owner, 2026-10-14 — on the wide screen a row is a thing you open: the one in the right panel is marked. */
+  selectedId?: string | null;
+  onSelect?: (s: ServiceAdmin) => void;
 }) {
   const groups = groupByCategory(rows, order);
   const headings = totals ? totals.size > 1 : worthGrouping(groups);
@@ -209,7 +214,13 @@ export function ServiceTableRows({
     }
     for (const s of group.items) {
       out.push(
-        <tr key={s.id} data-row className={s.active ? undefined : 'is-retired'}>
+        <tr
+          key={s.id}
+          data-row
+          className={[s.active ? '' : 'is-retired', onSelect ? 'svc-row-open' : '', selectedId === s.id ? 'is-selected' : ''].filter(Boolean).join(' ') || undefined}
+          aria-selected={onSelect ? selectedId === s.id : undefined}
+          onClick={onSelect ? () => onSelect(s) : undefined}
+        >
           <td>
             <NameCell service={s} t={t} />
           </td>
