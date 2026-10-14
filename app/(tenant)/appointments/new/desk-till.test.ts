@@ -70,6 +70,10 @@ describe('the wide till', () => {
     expect(grid).toMatch(/className="pf-chips pf-wide-kinds"/);
     expect(grid).toMatch(/\{nv\.allServices\}/);
     expect(css).toMatch(/\.pf-wide-kinds \.pf-chip \{\s*min-height: 32px;/);
+    // Owner, 2026-10-14 — one line that scrolls sideways, never a second row that pushes the tiles down.
+    expect(css).toMatch(/\.pf-wide-kinds \{\s*flex-wrap: nowrap;\s*overflow-x: auto;/);
+    expect(css).not.toMatch(/\.pf-wide-tabs,\s*\.pf-wide-kinds \{/);
+    expect(grid).toMatch(/row\.addEventListener\('wheel', wheel, \{ passive: false \}\);/);
   });
 
   it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {

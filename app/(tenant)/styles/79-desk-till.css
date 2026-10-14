@@ -313,10 +313,28 @@
 
 /* Jira GRW-572 — the Packages tab and a package's row on the bill. */
 @media (min-width: 1101px) {
-  .pf-wide-tabs,
-  .pf-wide-kinds {
+  .pf-wide-tabs {
     flex-wrap: wrap;
     overflow: visible;
+  }
+
+  /*
+   * Owner, 2026-10-14 — the category row is ONE line that scrolls sideways, as the phone's chip rows do, so a
+   * salon with twenty-five categories never pushes the tiles down. A fade on the right edge says there is
+   * more; the chosen chip scrolls itself into view; the mouse wheel moves the row.
+   */
+  .pf-wide-kinds {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 3rem), transparent);
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 3rem), transparent);
+    padding-right: 3rem;
+  }
+
+  .pf-wide-kinds .pf-chip {
+    flex: none;
+    white-space: nowrap;
   }
 
   /* A smaller chip than the tabs above it: the second row reads as a filter, not a second set of tabs. */
