@@ -13,6 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
 import { DeskCategories } from './DeskCategories';
+import { DeskCategoriesDialog } from './DeskCategoriesDialog';
 import { ServiceForm } from './ServiceForm';
 import { PackPhotoSheet } from './PackPhotoSheet';
 import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
@@ -560,7 +561,11 @@ export function ServicesTable({
         />
       )}
 
-      {managing && (
+      {/* The phone's sheet, or on a desk the one-state dialog (owner, 2026-10-14). */}
+      {managing && desk && (
+        <DeskCategoriesDialog branchId={branchId} initial={managing} services={services} onClose={() => setManaging(null)} onChanged={() => void reload()} />
+      )}
+      {managing && !desk && (
         <CategoriesSheet
           branchId={branchId}
           initial={managing}
