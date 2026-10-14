@@ -48,6 +48,23 @@ describe('the wide till', () => {
     expect(unpaid).toMatch(/payVisitHref\(\{ appointmentId: a\.id, startAt: a\.startAt \}, timezone\)/);
   });
 
+  it('searches the way every other box does: by spelling, and by price', async () => {
+    // The grid must go through lib/service-match, which is what answers "300" with the ₹300 service.
+    expect(grid).toMatch(/matchItems\(\s*services\.map\(\(s\) => \(\{ item: s, text: \[s\.name, s\.categoryName \?\? ''\], priceMinor: asMinor\(s\.priceMinor\) \}\)\)/);
+    expect(grid).toMatch(/priceMinor: asMinor\(o\.comboPriceMinor\)/);
+    expect(grid).not.toMatch(/toLowerCase\(\)\.includes/);
+    const { matchItems, asMinor } = await import('../../lib/service-match');
+    const menu = [
+      { id: 'a', name: 'Haircut', priceMinor: '30000' },
+      { id: 'b', name: 'Beard Trim', priceMinor: '15000' },
+      { id: 'c', name: 'Gold Facial', priceMinor: '120000' },
+    ];
+    const find = (q: string) => matchItems(menu.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })), q).map((s) => s.name);
+    expect(find('300')).toEqual(['Haircut']);
+    expect(find('1200')).toEqual(['Gold Facial']);
+    expect(find('haircat')).toEqual(['Haircut']);
+  });
+
   it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {
     expect(flow).not.toMatch(/<input/);
     expect((grid.match(/<input/g) ?? []).length).toBe(1);

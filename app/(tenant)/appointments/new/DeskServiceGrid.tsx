@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import type { Offer, Service } from '../../lib/api-types';
+import { asMinor, matchItems } from '../../lib/service-match';
 import { servicePhotoUrl } from '../../lib/service-photos';
 import { IconMinus, IconPlus, IconSearch } from '../../components/icons';
 
@@ -45,15 +46,27 @@ export function DeskServiceGrid({
   const [term, setTerm] = useState('');
   const [tab, setTab] = useState<'services' | 'packages'>('services');
   const byId = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
+  /*
+   * The same matcher every other search in the app uses (lib/service-match.ts): spelling tolerance, words in any
+   * order, and a typed number finds what SELLS at that price — "300" is Haircut, "6000" is the Pre-Bridal Package.
+   * A plain substring test on the name was what shipped first, and the owner's first try was an amount.
+   */
   const shownPackages = useMemo(() => {
-    const q = term.trim().toLowerCase();
-    return q ? packages.filter((o) => o.title.toLowerCase().includes(q)) : packages;
-  }, [packages, term]);
+    const q = term.trim();
+    if (!q) return packages;
+    return matchItems(
+      packages.map((o) => ({ item: o, text: [o.title, ...o.serviceIds.map((id) => byId.get(id)?.name ?? '')], priceMinor: asMinor(o.comboPriceMinor) })),
+      q,
+    );
+  }, [packages, term, byId]);
 
   const shown = useMemo(() => {
-    const q = term.trim().toLowerCase();
+    const q = term.trim();
     if (!q) return services;
-    return services.filter((s) => s.name.toLowerCase().includes(q) || (s.categoryName ?? '').toLowerCase().includes(q));
+    return matchItems(
+      services.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
+      q,
+    );
   }, [services, term]);
 
   return (
