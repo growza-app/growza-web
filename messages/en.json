@@ -1046,6 +1046,12 @@
       "done": "Done"
     },
     "categories": {
+      "deskHint": "The groups clients see when they book. Drag to set the order.",
+      "deskOrderHint": "Changes are saved as you make them.",
+      "deleteOne": "Delete {name}?",
+      "deleteOneGoes": "{count, plural, one {The # service} other {The # services}} in it {count, plural, one {is} other {are}} deleted too. This cannot be undone.",
+      "deleteOneEmpty": "Nothing is filed under it. This cannot be undone.",
+      "deleteAria": "Delete {name}",
       "open": "Categories",
       "title": "Categories",
       "hint": "The groups your services are listed under at this branch.",

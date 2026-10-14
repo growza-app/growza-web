@@ -20,7 +20,7 @@
     flex: 1;
     min-height: 0;
     /* The list gets the room: a 1366 laptop leaves it ~34rem beside an 11rem category column and a 20rem form. */
-    grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(18rem, 21rem);
+    grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(19rem, 23rem);
     align-items: stretch;
   }
 
@@ -238,7 +238,11 @@
   }
 
   /* ---------- right: the form in place ---------- */
-  /* `.sheet` (22-bottom-sheet.css) is a fixed bottom sheet; in the panel it is a plain block that fills it. */
+  /*
+   * `.sheet` (22-bottom-sheet.css) is a fixed, grey bottom sheet with white groups floating on it. In the panel
+   * it is the panel: white like the other two, the groups drawn with a hairline, and its Cancel · title · Save
+   * line as the panel's head (owner, 2026-10-14 — the grey body under a white bar read as a dialog pasted in).
+   */
   .sheet-inline {
     position: static;
     z-index: auto;
@@ -249,14 +253,44 @@
     padding: 0;
     border-radius: var(--radius);
     overflow: hidden;
+    background: var(--surface);
   }
 
   .sheet-inline .sheet-head {
+    padding: var(--sp-3) var(--sp-4);
     border-radius: var(--radius) var(--radius) 0 0;
   }
 
-  /* An 18–21rem column: the stepper keeps its width (it was squeezed and drawn over its label), the label
-     takes what is left and wraps, instead of being cut at "Cleanu". */
+  .sheet-inline .sheet-head-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .sheet-inline .sheet-head-cancel,
+  .sheet-inline .sheet-head-save {
+    min-height: 2rem;
+    font-size: 0.875rem;
+  }
+
+  .sheet-inline .sheet-group {
+    box-shadow: none;
+    border: 1px solid var(--border);
+  }
+
+  /* The stepper in a 19–23rem column: 36px buttons and a 4rem box, so "Cleanup after" has a line of its own. */
+  .sheet-inline .sheet-stepper-btn {
+    width: 36px;
+    height: 32px;
+  }
+
+  .sheet-inline .sheet-row-value .sheet-stepper-value {
+    width: 4rem;
+    font-size: 0.9375rem;
+  }
+
   .sheet-inline .sheet-row-label {
     flex: 1 1 auto;
     min-width: 0;
@@ -267,18 +301,83 @@
     flex: none;
   }
 
-  /* The phone's compact rhythm (98-service-sheet.css), so Retire and Delete are not three screens down. */
+  /*
+   * One screen (owner, 2026-10-14): on a 768px laptop the Price, Retire and Delete sat below the panel's fold, the
+   * same fault the phone had on 2026-10-08. The same answer: nothing removed, the space between things goes —
+   * a 44px photo line, 42px rows, footnotes a size down, Retire and Delete side by side.
+   */
   .sheet-inline .sheet-body {
-    padding: 8px 16px 16px;
+    padding: 8px 16px 6px;
   }
 
   .sheet-inline .sheet-label {
-    padding: 14px 4px 4px;
+    padding: 10px 4px 3px;
   }
 
   .sheet-inline .sheet-foot {
-    padding: 4px 4px 0;
+    padding: 3px 4px 0;
     font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .sheet-inline .sheet-row {
+    min-height: 42px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  .sheet-inline .sheet-row-value input,
+  .sheet-inline .sheet-row-value select {
+    min-height: 34px;
+  }
+
+  .sheet-inline .sheet-photo {
+    gap: 10px 12px;
+    padding: 8px 12px;
+  }
+
+  .sheet-inline .sheet-photo-img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sheet-inline .sheet-photo-why {
+    display: none;
+  }
+
+  .sheet-inline .sheet-group-danger {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+
+  /* The phone's own two (owner, 2026-10-08): tinted pieces, amber for the reversible one, red for the final one. */
+  .sheet-inline .sheet-danger-row {
+    flex: 1;
+    min-height: 38px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 0;
+    border-radius: var(--radius-sm);
+  }
+
+  .sheet-inline .sheet-danger-row + .sheet-danger-row {
+    border-top: 0;
+  }
+
+  .sheet-inline .sheet-danger-warn {
+    background: var(--amber-soft);
+  }
+
+  .sheet-inline .sheet-danger-delete {
+    background: #fdeaea;
+  }
+
+  .sheet-inline .sheet-danger-row:hover {
+    filter: brightness(0.96);
   }
 
   .svc-desk-nothing {
@@ -330,5 +429,252 @@
 
   .svc-desk-table .svc-name-cell {
     gap: 8px;
+  }
+}
+
+/*
+ * Owner, 2026-10-14 — the categories dialog on a desk (`DeskCategoriesDialog`): one state, controls on hover.
+ * Reached only from the wide screen, so the media query is belt and braces.
+ */
+@media (min-width: 1101px) {
+  .modal.svc-catd {
+    max-width: 36rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: min(85vh, 44rem);
+  }
+
+  .svc-catd-head {
+    flex: none;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-5) var(--sp-5) var(--sp-3);
+  }
+
+  .svc-catd-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .svc-catd-sub {
+    margin: var(--sp-1) 0 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .svc-catd-x {
+    flex: none;
+    margin: -4px -6px 0 0;
+  }
+
+  .svc-catd-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 var(--sp-5);
+  }
+
+  .svc-catd-error {
+    margin-bottom: var(--sp-2);
+  }
+
+  .svc-catd-none {
+    margin: 0 0 var(--sp-3);
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .svc-catd-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .svc-catd-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 3rem;
+    padding: 0 var(--sp-1);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .svc-catd-row:hover,
+  .svc-catd-row:focus-within {
+    background: var(--page-bg);
+  }
+
+  .svc-catd-row.is-dragging {
+    opacity: 0.5;
+  }
+
+  .svc-catd-grip {
+    flex: none;
+    display: inline-flex;
+    width: 1.5rem;
+    height: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    cursor: grab;
+    opacity: 0;
+  }
+
+  .svc-catd-grip svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .svc-catd-name {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    padding: 0 var(--sp-1);
+    min-height: 2.75rem;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-weight: 600;
+    color: var(--text);
+    cursor: text;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .svc-catd-rename {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.25rem;
+    font-weight: 600;
+  }
+
+  .svc-catd-count {
+    flex: none;
+    font-size: 0.8125rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Quiet until the pointer is over the row; always there for a keyboard (focus-within). */
+  .svc-catd-actions {
+    flex: none;
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .svc-catd-row:hover .svc-catd-actions,
+  .svc-catd-row:focus-within .svc-catd-actions,
+  .svc-catd-row:hover .svc-catd-grip,
+  .svc-catd-row:focus-within .svc-catd-grip {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .svc-catd-actions {
+      transition: none;
+    }
+  }
+
+  /* Flat, square-ish icon buttons: the round bordered `.icon-btn` is the phone sheet's, and six circles a row was the look that read as unfinished. */
+  .svc-catd .icon-btn {
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .svc-catd .icon-btn:hover:not(:disabled) {
+    background: var(--slate-soft);
+    color: var(--text);
+  }
+
+  .svc-catd .icon-btn:disabled {
+    opacity: 0.35;
+  }
+
+  .svc-catd .icon-btn svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .svc-catd-trash:not(:disabled) {
+    color: #b91c1c;
+  }
+
+  /* The question, in the row. */
+  .svc-catd-row.is-asking {
+    background: #fdeaea;
+  }
+
+  .svc-catd-ask {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-2);
+  }
+
+  .svc-catd-ask-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.875rem;
+  }
+
+  .svc-catd-ask-text span {
+    color: var(--muted);
+    font-size: 0.8125rem;
+  }
+
+  .svc-catd-addrow {
+    border-bottom: 0;
+    padding: var(--sp-1);
+  }
+
+  .svc-catd-add {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 2.5rem;
+    padding: 0 var(--sp-1);
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-weight: 600;
+    color: var(--accent-deep);
+    cursor: pointer;
+  }
+
+  .svc-catd-add svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .svc-catd-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-5) var(--sp-4);
+    border-top: 1px solid var(--border);
+  }
+
+  .svc-catd-foot-hint {
+    font-size: 0.8125rem;
+    color: var(--muted);
   }
 }

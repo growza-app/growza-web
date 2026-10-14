@@ -74,3 +74,27 @@ describe('the wide Services screen', () => {
     }
   });
 });
+
+describe('the categories dialog on a desk', () => {
+  const dialog = read('./DeskCategoriesDialog.tsx');
+
+  it('opens on the wide screen in place of the phone sheet, with the same writes', () => {
+    expect(table).toMatch(/\{managing && desk && \(\s*<DeskCategoriesDialog/);
+    expect(table).toMatch(/\{managing && !desk && \(\s*<CategoriesSheet/);
+    for (const call of ['createCategory', 'renameCategory', 'reorderCategories', 'deleteServices', 'deleteCategory']) expect(dialog).toContain(`api.${call}(`);
+  });
+
+  it('has one state: every row carries its controls, and a delete asks in the row', () => {
+    expect(dialog).not.toMatch(/mode === 'edit'|mode === 'pick'/);
+    for (const aria of ['moveUpAria', 'moveDownAria', 'renameAria', 'deleteAria']) expect(dialog).toContain(`t('${aria}'`);
+    expect(dialog).toMatch(/askingId === row\.id \? \(/);
+    expect(css).toMatch(/\.svc-catd-row:hover \.svc-catd-actions,\s*\.svc-catd-row:focus-within \.svc-catd-actions/);
+  });
+
+  it('has its words in both languages', () => {
+    for (const lang of ['en', 'hi']) {
+      const m = JSON.parse(read(`../../../messages/${lang}.json`)) as { services: { categories: Record<string, string> } };
+      for (const key of ['deskHint', 'deskOrderHint', 'deleteOne', 'deleteOneGoes', 'deleteOneEmpty', 'deleteAria']) expect(m.services.categories[key]).toBeTruthy();
+    }
+  });
+});
