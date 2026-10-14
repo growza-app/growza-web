@@ -601,3 +601,248 @@
     overflow-y: auto;
   }
 }
+
+/* ---------- v2: the sheet's identity, the category pill, sort and category selects, the Sales part ---------- */
+.prd-sheet-id {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+
+.prd-sheet-photo {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--slate-soft);
+  flex: none;
+}
+
+.prd-sheet-id-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.prd-sheet-name {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-sheet-tags {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.prd-pill-cat {
+  background: var(--slate-soft);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.prd-name-cat {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.prd-selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+.prd-sort {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.prd-sort-l {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prd-sort select {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.prd-sales-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.prd-sales-row {
+  grid-template-areas: 'qty what after';
+}
+
+.prd-cat-li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.prd-cat-li .svc-desk-cat {
+  flex: 1;
+  min-width: 0;
+}
+
+.prd-cat-del {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (min-width: 1101px) {
+  .prd-desk-tools {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+  }
+
+  .prd-desk-tools .prd-search {
+    flex: 1;
+  }
+
+  .prd-desk-tools .prd-sort select {
+    min-height: 2.75rem;
+  }
+
+  .prd-desk-mid .prd-chips {
+    flex: none;
+  }
+
+  /* The shelf as a table in a card that scrolls itself, as the Services desk has it. */
+  .prd-desk-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .prd-desk-card .table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .prd-desk-card .pagination {
+    flex: none;
+    padding: var(--sp-2) var(--sp-3);
+    border-top: 1px solid var(--border);
+  }
+
+  .prd-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: collapse;
+  }
+
+  .prd-table th,
+  .prd-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.875rem;
+  }
+
+  .prd-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .prd-tr {
+    cursor: pointer;
+  }
+
+  .prd-tr:hover td {
+    background: var(--page-bg);
+  }
+
+  .prd-tr.is-on td {
+    background: var(--accent-soft);
+  }
+
+  .prd-tr.is-on td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent-deep);
+  }
+
+  .prd-cell-name {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+  }
+
+  .prd-cell-name .prd-photo {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .prd-td-num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .prd-td-muted {
+    color: var(--muted);
+  }
+
+  .prd-td-stock {
+    font-weight: 700;
+  }
+
+  .prd-td-stock-low {
+    color: var(--amber-ink);
+  }
+
+  .prd-td-stock-out {
+    color: var(--danger);
+  }
+
+  .prd-td-sold {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+}
+
+.prd-seg-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}

@@ -45,8 +45,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const branchId = branch.one;
 
   let products: Awaited<ReturnType<typeof api.productsAll>> = [];
+  let categories: Awaited<ReturnType<typeof api.productCategories>> = [];
   try {
-    if (branchId) products = await api.productsAll(branchId);
+    if (branchId) [products, categories] = await Promise.all([api.productsAll(branchId), api.productCategories(branchId)]);
   } catch (error) {
     return (
       <>
@@ -62,7 +63,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     <>
       <BranchUrlSync />
       {branchId ? (
-        <ProductsList key={branchId} products={products} branchId={branchId} />
+        <ProductsList key={branchId} products={products} categories={categories} branchId={branchId} />
       ) : (
         <>
           <PageHeader title={t('title')} subtitle={t('subtitle')} />

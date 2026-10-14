@@ -3,11 +3,13 @@
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
-import type { Product } from '../lib/api-types';
+import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { productPhotoUrl } from '../lib/service-photos';
 import { StockPanel } from './StockPanel';
+import { SalesPanel } from './SalesPanel';
+import { stockTone } from './ProductsList';
 
 /**
  * Owner, 2026-10-14 — one product, in the sheet the service form uses, in two parts:
@@ -17,11 +19,12 @@ import { StockPanel } from './StockPanel';
  * - **Stock** (an existing product only) — the count, five reasons it changes, and the ledger (0116). Typing
  *   over the count is deliberately NOT offered here: every change says why.
  */
-type Part = 'details' | 'stock';
+type Part = 'details' | 'stock' | 'sales';
 
 export function ProductSheet({
   product,
   branchId,
+  categories,
   onSaved,
   onDelete,
   onClose,
@@ -29,6 +32,8 @@ export function ProductSheet({
 }: {
   product: Product | null;
   branchId: string;
+  /** 0117 — the branch's own categories, for the Details part's picker. */
+  categories: readonly ProductCategory[];
   onSaved: (p: Product) => void;
   onDelete: (p: Product) => void;
   onClose: () => void;
@@ -45,6 +50,7 @@ export function ProductSheet({
   const [price, setPrice] = useState(product ? String(Math.round(Number(product.priceMinor) / 100)) : '');
   const [cost, setCost] = useState(product?.costMinor != null ? String(Math.round(Number(product.costMinor) / 100)) : '');
   const [lowAt, setLowAt] = useState(product && product.lowStockAt > 0 ? String(product.lowStockAt) : '');
+  const [categoryId, setCategoryId] = useState<string>(product?.categoryId ?? '');
   const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
@@ -69,6 +75,7 @@ export function ProductSheet({
         priceMinor: Math.round(rupees * 100),
         costMinor: costRupees === null ? null : Math.round(costRupees * 100),
         lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
+        categoryId: categoryId || null,
       };
       let saved = product
         ? await api.updateProduct(product.id, body)
@@ -111,9 +118,9 @@ export function ProductSheet({
     >
       <div className="sheet-head">
         <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
-          {part === 'stock' ? t('done') : t('cancel')}
+          {part !== 'details' ? t('done') : t('cancel')}
         </button>
-        <span className="sheet-head-title">{product ? product.name : title}</span>
+        <span className="sheet-head-title">{title}</span>
         {part === 'details' ? (
           <button type="button" className="sheet-head-save" disabled={busy || !canSave} onClick={() => void submit()}>
             {busy ? t('saving') : t('save')}
@@ -124,8 +131,24 @@ export function ProductSheet({
       </div>
 
       {product ? (
-        <div className="prd-seg" role="tablist" aria-label={title}>
-          {(['details', 'stock'] as const).map((p) => (
+        <div className="prd-sheet-id">
+          <img className="prd-sheet-photo" src={productPhotoUrl(product)} alt="" />
+          <span className="prd-sheet-id-text">
+            <span className="prd-sheet-name">{product.name}</span>
+            <span className="prd-sheet-tags">
+              {product.active ? (
+                <span className={`prd-pill prd-pill-${stockTone(product)}`}>{stockTone(product) === 'out' ? tp('outOfStock') : stockTone(product) === 'low' ? tp('lowStock', { n: product.stock }) : tp('inStock')}</span>
+              ) : (
+                <span className="prd-pill prd-pill-off">{tp('retired')}</span>
+              )}
+              {product.categoryName ? <span className="prd-pill prd-pill-cat">{product.categoryName}</span> : null}
+            </span>
+          </span>
+        </div>
+      ) : null}
+      {product ? (
+        <div className="prd-seg prd-seg-3" role="tablist" aria-label={title}>
+          {(['details', 'stock', 'sales'] as const).map((p) => (
             <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
               {t(`part.${p}`)}
             </button>
@@ -135,6 +158,8 @@ export function ProductSheet({
 
       {part === 'stock' && product ? (
         <StockPanel product={product} onChanged={onSaved} />
+      ) : part === 'sales' && product ? (
+        <SalesPanel product={product} />
       ) : (
         <div className="sheet-body">
           <div className="sheet-group sheet-photo">
@@ -186,6 +211,23 @@ export function ProductSheet({
                 <input id="prd-name" type="text" value={name} placeholder={t('namePlaceholder')} maxLength={120} onChange={(e) => setName(e.target.value)} autoFocus={autoFocusField(!product)} />
               </div>
             </div>
+            {categories.length > 0 ? (
+              <div className="sheet-row">
+                <label className="sheet-row-label" htmlFor="prd-cat">
+                  {t('category')}
+                </label>
+                <div className="sheet-row-value">
+                  <select id="prd-cat" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                    <option value="">{t('noCategory')}</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ) : null}
             <div className="sheet-row">
               <label className="sheet-row-label" htmlFor="prd-price">
                 {t('price')}

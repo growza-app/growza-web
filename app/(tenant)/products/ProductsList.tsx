@@ -4,25 +4,31 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
-import type { Product } from '../lib/api-types';
+import type { Product, ProductCategory } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useWritable } from '../components/SessionProvider';
 import { IconPlus, IconSearch } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { asMinor, matchItems } from '../lib/service-match';
 import { ProductSheet } from './ProductSheet';
+import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from './DeskProductCategories';
 
 /**
- * Owner, 2026-10-14 — the shelf, the way a stock screen is read: three numbers first (how many products, what
- * the stock is worth, how many are running low), then a search and four chips, then a row per product with a
- * green / amber / red stock pill. Tapping a row opens the sheet: Details, or Stock with the ledger (0116).
+ * Owner, 2026-10-14 — the shelf, the way a stock screen is read.
+ *
+ * Phone: three numbers, a search, a category picker and the status chips, then a row per product with a green /
+ * amber / red stock pill; tapping a row opens the sheet. Wide desk (≥1101px): three panels — categories on the
+ * left (0117), a table in the middle with sort and pages, the product on the right as the sheet drawn in place.
  *
  * Nothing here names a kind of business: the same screen sells a clinic's consumables and a gym's protein.
  */
 export type ShelfFilter = 'all' | 'low' | 'out' | 'retired';
 export const SHELF_FILTERS: readonly ShelfFilter[] = ['all', 'low', 'out', 'retired'];
+export type ShelfSort = 'name' | 'stock' | 'sold' | 'price';
+export const SHELF_SORTS: readonly ShelfSort[] = ['name', 'stock', 'sold', 'price'];
 
 /** The pill's colour: red at zero, amber at or under the owner's line, green otherwise. Retired products carry no pill. */
 export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): 'ok' | 'low' | 'out' => (p.stock <= 0 ? 'out' : p.lowStockAt > 0 && p.stock <= p.lowStockAt ? 'low' : 'ok');
@@ -31,9 +37,10 @@ export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): 
 export const shelfWorthMinor = (rows: readonly Pick<Product, 'stock' | 'priceMinor' | 'active'>[]): number =>
   rows.reduce((sum, p) => sum + (p.active && p.stock > 0 ? p.stock * Number(p.priceMinor) : 0), 0);
 
-/** The chip first, then the search — the same spelling-tolerant matcher the till and Services use (GRW-375): "shampo" finds Shampoo. */
-export function filterShelf(rows: readonly Product[], filter: ShelfFilter, search: string): Product[] {
+/** The category first, the chip second, then the search — the same spelling-tolerant matcher the till uses (GRW-375), from the second letter. */
+export function filterShelf(rows: readonly Product[], filter: ShelfFilter, search: string, category: string = ALL_CATEGORIES): Product[] {
   const pool = rows.filter((p) => {
+    if (category === NO_CATEGORY ? p.categoryId !== null : category !== ALL_CATEGORIES && p.categoryId !== category) return false;
     if (filter === 'retired') return !p.active;
     if (!p.active) return false;
     const tone = stockTone(p);
@@ -41,24 +48,43 @@ export function filterShelf(rows: readonly Product[], filter: ShelfFilter, searc
     if (filter === 'out') return tone === 'out';
     return true;
   });
-  // One letter matches half the shelf and reads as a broken search; the matching starts at two.
   const q = search.trim();
-  return q.length >= 2 ? matchItems(pool.map((p) => ({ item: p, text: [p.name], priceMinor: asMinor(p.priceMinor) })), q) : pool;
+  return q.length >= 2
+    ? matchItems(
+        pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
+        q,
+      )
+    : pool;
 }
 
-export function ProductsList({ products, branchId }: { products: Product[]; branchId: string }) {
+export function sortShelf(rows: readonly Product[], sort: ShelfSort): Product[] {
+  const by: Record<ShelfSort, (a: Product, b: Product) => number> = {
+    name: (a, b) => a.name.localeCompare(b.name),
+    stock: (a, b) => a.stock - b.stock || a.name.localeCompare(b.name),
+    sold: (a, b) => b.sold - a.sold || a.name.localeCompare(b.name),
+    price: (a, b) => Number(b.priceMinor) - Number(a.priceMinor) || a.name.localeCompare(b.name),
+  };
+  return [...rows].sort(by[sort]);
+}
+
+export function ProductsList({ products, categories: initialCategories, branchId }: { products: Product[]; categories: ProductCategory[]; branchId: string }) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
   const router = useRouter();
   const writable = useWritable();
   const [rows, setRows] = useState(products);
+  const [categories, setCategories] = useState(initialCategories);
+  const [category, setCategory] = useState<string>(ALL_CATEGORIES);
   const [filter, setFilter] = useState<ShelfFilter>('all');
+  const [sort, setSort] = useState<ShelfSort>('name');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** The wide screen is three panels — status · the shelf · the product — the way Services and the till are. `null` until the width is known. */
+  /** The wide screen is three panels — categories · the shelf · the product — the way Services and the till are. `null` until the width is known. */
   const [desk, setDesk] = useState<boolean | null>(null);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1101px)');
@@ -71,14 +97,27 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
   const lowCount = useMemo(() => live.filter((p) => stockTone(p) !== 'ok').length, [live]);
   const worth = useMemo(() => shelfWorthMinor(rows), [rows]);
-  const shown = useMemo(() => filterShelf(rows, filter, search), [rows, filter, search]);
+  const inCategory = useMemo(() => filterShelf(rows, 'all', '', category), [rows, category]);
+  const shown = useMemo(() => sortShelf(filterShelf(rows, filter, search, category), sort), [rows, filter, search, category, sort]);
   const counts: Record<ShelfFilter, number> = {
-    all: live.length,
-    low: lowCount,
-    out: live.filter((p) => p.stock <= 0).length,
-    retired: rows.length - live.length,
+    all: inCategory.length,
+    low: inCategory.filter((p) => stockTone(p) !== 'ok').length,
+    out: inCategory.filter((p) => p.stock <= 0).length,
+    retired: rows.filter((p) => !p.active && (category === ALL_CATEGORIES || (category === NO_CATEGORY ? p.categoryId === null : p.categoryId === category))).length,
+  };
+  const noneCount = live.filter((p) => p.categoryId === null).length;
+  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const pageRows = shown.slice((Math.min(page, pageCount) - 1) * PAGE_SIZE, Math.min(page, pageCount) * PAGE_SIZE);
+  const pick = (f: () => void) => {
+    f();
+    setPage(1);
   };
 
+  const refreshCategories = () =>
+    api
+      .productCategories(branchId)
+      .then(setCategories)
+      .catch(() => {});
   const saved = (p: Product) => {
     setRows((prev) => {
       const at = prev.findIndex((x) => x.id === p.id);
@@ -86,8 +125,10 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
       return [...next].sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
     });
     setEditing((cur) => (cur && cur !== 'new' && cur.id === p.id ? p : cur === 'new' ? p : cur));
+    void refreshCategories();
     router.refresh();
   };
+  const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
   const remove = async () => {
     if (!deleting) return;
     setBusy(true);
@@ -97,9 +138,31 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
       setRows((prev) => prev.filter((x) => x.id !== deleting.id));
       setDeleting(null);
       setEditing(null);
+      void refreshCategories();
       router.refresh();
     } catch (err) {
-      setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const addCategory = async (name: string) => {
+    const c = await api.createProductCategory(branchId, name);
+    setCategories((prev) => [...prev, c]);
+  };
+  const removeCategory = async () => {
+    if (!deletingCategory) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.deleteProductCategory(branchId, deletingCategory.id);
+      setCategories((prev) => prev.filter((c) => c.id !== deletingCategory.id));
+      setRows((prev) => prev.map((p) => (p.categoryId === deletingCategory.id ? { ...p, categoryId: null, categoryName: null } : p)));
+      if (category === deletingCategory.id) setCategory(ALL_CATEGORIES);
+      setDeletingCategory(null);
+      router.refresh();
+    } catch (err) {
+      fail(err);
     } finally {
       setBusy(false);
     }
@@ -128,7 +191,7 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
         <span className="prd-stat-n">{formatMoney(worth)}</span>
         <span className="prd-stat-l">{t('strip.worth')}</span>
       </div>
-      <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} role="listitem" onClick={() => setFilter(lowCount > 0 ? 'low' : 'all')}>
+      <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} role="listitem" onClick={() => pick(() => setFilter(lowCount > 0 ? 'low' : 'all'))}>
         <span className="prd-stat-n">{lowCount}</span>
         <span className="prd-stat-l">{t('strip.low')}</span>
       </button>
@@ -137,7 +200,7 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
   const searchBox = (
     <label className="search-wrap prd-search">
       <IconSearch />
-      <input type="text" className="search-input search-input-bare" placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
+      <input type="text" className="search-input search-input-bare" placeholder={t('searchPlaceholder')} value={search} onChange={(e) => pick(() => setSearch(e.target.value))} />
     </label>
   );
   const chips = (
@@ -148,33 +211,69 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
           type="button"
           className={`prd-chip ${filter === f ? 'prd-chip-on' : ''} ${f === 'low' && counts.low > 0 ? 'prd-chip-warn' : ''}`}
           aria-pressed={filter === f}
-          onClick={() => setFilter(f)}
+          onClick={() => pick(() => setFilter(f))}
         >
           {t(`filters.${f}`)} <span className="prd-chip-n">{counts[f]}</span>
         </button>
       ))}
     </div>
   );
+  const sortBox = (
+    <label className="prd-sort">
+      <span className="prd-sort-l">{t('sort.label')}</span>
+      <select value={sort} onChange={(e) => pick(() => setSort(e.target.value as ShelfSort))}>
+        {SHELF_SORTS.map((s) => (
+          <option key={s} value={s}>
+            {t(`sort.${s}`)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  const categorySelect = (
+    <label className="prd-sort">
+      <span className="prd-sort-l">{t('categories.title')}</span>
+      <select value={category} onChange={(e) => pick(() => setCategory(e.target.value))}>
+        <option value={ALL_CATEGORIES}>{t('categories.all')}</option>
+        {categories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name} ({c.count})
+          </option>
+        ))}
+        {noneCount > 0 ? <option value={NO_CATEGORY}>{t('categories.none')}</option> : null}
+      </select>
+    </label>
+  );
+  const isOn = (p: Product) => Boolean(editing && editing !== 'new' && editing.id === p.id);
+  const pill = (p: Product) => {
+    const tone = stockTone(p);
+    return p.active ? (
+      <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('inStock')}</span>
+    ) : (
+      <span className="prd-pill prd-pill-off">{t('retired')}</span>
+    );
+  };
+  const nothing = <div className="empty">{search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : t(`filters.none.${filter}`)}</div>;
   const list =
     shown.length === 0 ? (
-      <div className="empty">{search ? t('noMatch', { q: search.trim() }) : t(`filters.none.${filter}`)}</div>
+      nothing
     ) : (
       <ul className="prd-list">
-        {shown.map((p) => {
+        {pageRows.map((p) => {
           const tone = stockTone(p);
           return (
             <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'}`}>
               <button
                 type="button"
-                className={`prd-row-tap ${editing && editing !== 'new' && editing.id === p.id ? 'is-on' : ''}`}
-                aria-current={editing && editing !== 'new' && editing.id === p.id ? 'true' : undefined}
+                className={`prd-row-tap ${isOn(p) ? 'is-on' : ''}`}
+                aria-current={isOn(p) ? 'true' : undefined}
                 onClick={() => (writable ? setEditing(p) : undefined)}
                 disabled={!writable}
               >
                 <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
                 <span className="prd-name">
                   {p.name}
-                  {!p.active ? <span className="chip prd-chip-retired">{t('retired')}</span> : null}
+                  {p.categoryName ? <span className="prd-name-cat">{p.categoryName}</span> : null}
                 </span>
                 <span className="prd-price">{formatMoney(p.priceMinor)}</span>
                 <span className="prd-meta">
@@ -191,33 +290,99 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
         })}
       </ul>
     );
+  const table =
+    shown.length === 0 ? (
+      nothing
+    ) : (
+      <div className="table-scroll">
+        <table className="prd-table">
+          <thead>
+            <tr>
+              <th>{t('cols.product')}</th>
+              <th className="prd-td-num">{t('cols.price')}</th>
+              <th className="prd-td-num">{t('cols.cost')}</th>
+              <th className="prd-td-num">{t('cols.stock')}</th>
+              <th>{t('cols.status')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((p) => (
+              <tr
+                key={p.id}
+                className={`prd-tr ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'prd-row-retired'}`}
+                aria-current={isOn(p) ? 'true' : undefined}
+                onClick={() => (writable ? setEditing(p) : undefined)}
+              >
+                <td>
+                  <span className="prd-cell-name">
+                    <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <span className="prd-name">
+                      {p.name}
+                      <span className="prd-name-cat">{p.categoryName ?? t('categories.none')}</span>
+                    </span>
+                  </span>
+                </td>
+                <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
+                <td className="prd-td-num prd-td-muted">{p.costMinor != null ? formatMoney(p.costMinor) : '—'}</td>
+                <td className="prd-td-num">
+                  <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{p.stock}</span>
+                  <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
+                </td>
+                <td>{pill(p)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  const pages = shown.length > PAGE_SIZE ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={PAGE_SIZE} noun={t('noun')} onChange={setPage} /> : null;
   const sheet = (inline: boolean) =>
     editing ? (
       <ProductSheet
         key={editing === 'new' ? 'new' : editing.id}
         product={editing === 'new' ? null : editing}
         branchId={branchId}
+        categories={categories}
         onSaved={saved}
         onDelete={(p) => setDeleting(p)}
         onClose={() => setEditing(null)}
         inline={inline}
       />
     ) : null;
-  const dialogs = deleting ? (
-    <ConfirmDialog
-      title={t('delete')}
-      body={t('deleteAsk', { name: deleting.name })}
-      confirmLabel={t('delete')}
-      tone="danger"
-      busy={busy}
-      error={error}
-      onConfirm={() => void remove()}
-      onCancel={() => {
-        setDeleting(null);
-        setError(null);
-      }}
-    />
-  ) : null;
+  const dialogs = (
+    <>
+      {deleting ? (
+        <ConfirmDialog
+          title={t('delete')}
+          body={t('deleteAsk', { name: deleting.name })}
+          confirmLabel={t('delete')}
+          tone="danger"
+          busy={busy}
+          error={error}
+          onConfirm={() => void remove()}
+          onCancel={() => {
+            setDeleting(null);
+            setError(null);
+          }}
+        />
+      ) : null}
+      {deletingCategory ? (
+        <ConfirmDialog
+          title={t('categories.delete')}
+          body={t('categories.deleteAsk', { name: deletingCategory.name, n: deletingCategory.count })}
+          confirmLabel={t('categories.delete')}
+          tone="danger"
+          busy={busy}
+          error={error}
+          onConfirm={() => void removeCategory()}
+          onCancel={() => {
+            setDeletingCategory(null);
+            setError(null);
+          }}
+        />
+      ) : null}
+    </>
+  );
 
   if (desk === null) {
     return (
@@ -234,23 +399,28 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
         {header}
         <div className="page-body prd-desk">
           <div className="pf-wide-grid prd-desk-grid">
-            <aside className="pf-wide-left prd-desk-left" aria-label={t('filters.label')}>
+            <aside className="pf-wide-left prd-desk-left" aria-label={t('categories.title')}>
               {strip}
-              <h2 className="pf-wide-h">{t('filters.label')}</h2>
-              <ul className="svc-desk-cats">
-                {SHELF_FILTERS.map((f) => (
-                  <li key={f}>
-                    <button type="button" className={`svc-desk-cat ${filter === f ? 'is-on' : ''}`} aria-pressed={filter === f} onClick={() => setFilter(f)}>
-                      <span className="svc-desk-cat-name">{t(`filters.${f}`)}</span>
-                      <span className="svc-desk-n">{counts[f]}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <DeskProductCategories
+                picked={category}
+                categories={categories}
+                allCount={live.length}
+                noneCount={noneCount}
+                onPick={(id) => pick(() => setCategory(id))}
+                onAdd={writable ? addCategory : undefined}
+                onDelete={writable ? (c) => setDeletingCategory(c) : undefined}
+              />
             </aside>
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
-              {searchBox}
-              <div className="prd-desk-scroll">{list}</div>
+              <div className="prd-desk-tools">
+                {searchBox}
+                {sortBox}
+              </div>
+              {chips}
+              <div className="card prd-desk-card">
+                {table}
+                {pages}
+              </div>
             </section>
             <aside className="pf-wide-right prd-desk-right" aria-label={t('form.titleEdit')}>
               {editing ? (
@@ -282,9 +452,18 @@ export function ProductsList({ products, branchId }: { products: Product[]; bran
             {strip}
             <div className="prd-tools">
               {searchBox}
+              {categories.length > 0 ? (
+                <div className="prd-selects">
+                  {categorySelect}
+                  {sortBox}
+                </div>
+              ) : (
+                sortBox
+              )}
               {chips}
             </div>
             {list}
+            {pages}
           </>
         )}
       </div>

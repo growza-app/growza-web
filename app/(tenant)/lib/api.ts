@@ -104,7 +104,9 @@ import type {
   SettingsSummary,
   SortDirection,
   Product,
+  ProductCategory,
   ProductInput,
+  ProductSales,
   StockMovement,
   MovementKind,
 } from './api-types';
@@ -466,6 +468,13 @@ export const api = {
   deleteProduct: (id: string) => del<void>(`/api/v1/products/${id}`),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
   removeProductPhoto: (id: string) => del<Product>(`/api/v1/products/${id}/photo`),
+  /** 0117 — the shelf's categories at a branch, each with its count, empty ones included. */
+  productCategories: (location: string) => get<ProductCategory[]>(`/api/v1/product-categories?location=${encodeURIComponent(location)}`),
+  createProductCategory: (location: string, name: string) => post<ProductCategory>('/api/v1/product-categories', { name, locationId: location }),
+  renameProductCategory: (location: string, id: string, name: string) => patch<ProductCategory>(`/api/v1/product-categories/${id}?location=${encodeURIComponent(location)}`, { name }),
+  deleteProductCategory: (location: string, id: string) => del<{ released: number }>(`/api/v1/product-categories/${id}?location=${encodeURIComponent(location)}`),
+  /** What a product sold in the last 30 days, by day. */
+  productSales: (id: string, days = 30) => get<ProductSales>(`/api/v1/products/${id}/sales?days=${days}`),
   /** 0116 — the ledger behind a product's count, newest first. */
   productMovements: (id: string) => get<StockMovement[]>(`/api/v1/products/${id}/movements`),
   /** A delivery, a breakage, one used by the business, one brought back, or a recount. `qty` is how many; the kind gives the sign. */
