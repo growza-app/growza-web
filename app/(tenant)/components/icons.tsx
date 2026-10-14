@@ -689,3 +689,11 @@ export const IconPayOther = () => (
     <path d="M5 12h.01M12 12h.01M19 12h.01" />
   </svg>
 );
+
+/** Owner, 2026-10-15 — "what's inside": the small ⓘ beside a package on the till. */
+export const IconInfo = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5M12 8h.01" />
+  </svg>
+);

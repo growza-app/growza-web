@@ -1753,3 +1753,184 @@
   width: 100%;
   margin-top: var(--sp-3);
 }
+
+/* ---------- Owner, 2026-10-15 — sort and filter beside the search; what's inside a package ---------- */
+.pf-menu-tools,
+.pf-wide-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The phone sheet: search, sort and the stock chip on ONE row (owner, 2026-10-15). */
+.pf-menu-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-2);
+}
+
+.pf-menu-search-row .pf-client-box {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.pf-menu-tools {
+  flex: none;
+}
+
+.pf-menu-tools .pf-sort select {
+  max-width: 7.5rem;
+}
+
+.pf-sort {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.pf-sort-l {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pf-sort select {
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.pf-filter-chip {
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+}
+
+.pf-tile-info,
+.pf-menu-info {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.pf-tile-info svg,
+.pf-menu-info svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pf-tile-info {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.pf-menu-list li:has(.pf-menu-info) {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.pf-menu-list li:has(.pf-menu-info) .pf-menu-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-pkg-scrim {
+  z-index: 45;
+}
+
+.pf-pkg-price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+.pf-pkg-price-n {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pf-pkg-save {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.pf-pkg-mins {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.pf-pkg-desc {
+  margin: 0;
+  padding: 0 var(--sp-4) var(--sp-3);
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.pf-pkg-h {
+  margin: 0;
+  padding: 0 var(--sp-4) var(--sp-1);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pf-pkg-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'photo name'
+    'photo sub';
+  column-gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-4);
+}
+
+.pf-pkg-row .pf-menu-photo {
+  grid-area: photo;
+}
+
+.pf-pkg-row .pf-client-match-name {
+  grid-area: name;
+}
+
+.pf-pkg-row .pf-client-match-sub {
+  grid-area: sub;
+}
+
+.pf-pkg-note {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-4) 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.pf-pkg-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
