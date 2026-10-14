@@ -20,7 +20,7 @@
     flex: 1;
     min-height: 0;
     /* The list gets the room: a 1366 laptop leaves it ~34rem beside an 11rem category column and a 20rem form. */
-    grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(18rem, 21rem);
+    grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(19rem, 23rem);
     align-items: stretch;
   }
 
@@ -238,7 +238,11 @@
   }
 
   /* ---------- right: the form in place ---------- */
-  /* `.sheet` (22-bottom-sheet.css) is a fixed bottom sheet; in the panel it is a plain block that fills it. */
+  /*
+   * `.sheet` (22-bottom-sheet.css) is a fixed, grey bottom sheet with white groups floating on it. In the panel
+   * it is the panel: white like the other two, the groups drawn with a hairline, and its Cancel · title · Save
+   * line as the panel's head (owner, 2026-10-14 — the grey body under a white bar read as a dialog pasted in).
+   */
   .sheet-inline {
     position: static;
     z-index: auto;
@@ -249,14 +253,44 @@
     padding: 0;
     border-radius: var(--radius);
     overflow: hidden;
+    background: var(--surface);
   }
 
   .sheet-inline .sheet-head {
+    padding: var(--sp-3) var(--sp-4);
     border-radius: var(--radius) var(--radius) 0 0;
   }
 
-  /* An 18–21rem column: the stepper keeps its width (it was squeezed and drawn over its label), the label
-     takes what is left and wraps, instead of being cut at "Cleanu". */
+  .sheet-inline .sheet-head-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .sheet-inline .sheet-head-cancel,
+  .sheet-inline .sheet-head-save {
+    min-height: 2rem;
+    font-size: 0.875rem;
+  }
+
+  .sheet-inline .sheet-group {
+    box-shadow: none;
+    border: 1px solid var(--border);
+  }
+
+  /* The stepper in a 19–23rem column: 36px buttons and a 4rem box, so "Cleanup after" has a line of its own. */
+  .sheet-inline .sheet-stepper-btn {
+    width: 36px;
+    height: 32px;
+  }
+
+  .sheet-inline .sheet-row-value .sheet-stepper-value {
+    width: 4rem;
+    font-size: 0.9375rem;
+  }
+
   .sheet-inline .sheet-row-label {
     flex: 1 1 auto;
     min-width: 0;
