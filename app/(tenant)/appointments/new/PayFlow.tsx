@@ -953,7 +953,13 @@ export function PayFlow({
               <HeaderBranchPicker variant="line" />
             )}
           </span>
-          <FormModeSwitch now="simple" simpleHref={simpleForm} advancedHref={fullForm} />
+          {/*
+            Owner, 2026-10-14 — no Simple / Full switch on the wide till. The one-page form earned its door on
+            the phone for the sale the three taps could not write: a package, a client added by name and number.
+            The Desk sells packages and adds clients, so the switch here was a way to a smaller screen that does
+            less. `?full=1` still opens the one-page form for anyone who types it.
+          */}
+          <span className="pf-head-gap" aria-hidden="true" />
         </header>
         {tokenGone ? (
           <div role="alert" className="pf-error">

@@ -76,6 +76,14 @@ describe('the wide till', () => {
     expect(grid).toMatch(/row\.addEventListener\('wheel', wheel, \{ passive: false \}\);/);
   });
 
+  it('has no Simple / Full switch: it sells packages and adds clients itself (owner, 2026-10-14)', () => {
+    const wideHeader = flow.slice(flow.indexOf('<div className="pf pf-wide">'), flow.indexOf('<div className="pf-wide-grid">'));
+    expect(wideHeader).not.toMatch(/FormModeSwitch/);
+    expect(wideHeader).toMatch(/<span className="pf-head-gap" aria-hidden="true" \/>\s*<\/header>/);
+    // The phone keeps it: three taps still cannot sell a package.
+    expect((flow.match(/<FormModeSwitch now="simple"/g) ?? []).length).toBe(1);
+  });
+
   it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {
     expect(flow).not.toMatch(/<input/);
     expect((grid.match(/<input/g) ?? []).length).toBe(1);
