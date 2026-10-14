@@ -19,6 +19,7 @@
   .svc-desk-grid {
     flex: 1;
     min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
     /* The list gets the room: a 1366 laptop leaves it ~34rem beside an 11rem category column and a 20rem form. */
     grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(19rem, 23rem);
     align-items: stretch;
@@ -410,6 +411,20 @@
 
   .svc-desk-left {
     padding: var(--sp-3);
+  }
+
+  /* A 9.5rem column leaves a name ~5.5rem: "Full Body Tanning" wraps to a second line here rather than reading
+     "Full Body Ta…" (owner, 2026-10-14). The row grows with it; the count stays on the first line. */
+  .svc-desk-cat {
+    align-items: flex-start;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .svc-desk-cat-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
   }
 
   .svc-desk-table th:nth-child(2),

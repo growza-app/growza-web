@@ -229,6 +229,64 @@
     color: var(--text);
   }
 
+  /* The left panel's list of segments with their counts (Staff: the tabs; Bookings: All · To do · Completed). */
+  .pf-wide-tabs {
+    list-style: none;
+    margin: 0 0 var(--sp-3);
+    padding: 0 0 var(--sp-3);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pf-wide-tab {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    min-height: 2.5rem;
+    padding: 0 var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .pf-wide-tab:hover {
+    background: var(--page-bg);
+  }
+
+  .pf-wide-tab.is-on {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-weight: 600;
+  }
+
+  .pf-wide-tab-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .pf-wide-n {
+    flex: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pf-wide-tab.is-on .pf-wide-n {
+    color: inherit;
+  }
+
   .pf-wide-search input:focus-visible {
     outline: none;
   }

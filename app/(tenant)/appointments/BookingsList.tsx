@@ -28,6 +28,7 @@ import {
   IconMenu,
   IconPackages,
   IconPhone,
+  IconPlus,
   IconSearch,
   IconSort,
   IconStaff,
@@ -216,6 +217,21 @@ export function BookingsList({
   const [justGiven, setJustGiven] = useState<string | null>(null);
   // On a phone the waiting list draws ten rows and "Show more" adds ten at a time; a laptop draws them all.
   const phone = usePhoneLayout();
+  /*
+   * Owner, 2026-10-14 — Bookings on a wide desk, as Services, Clients and Staff: the filters on the left, the day
+   * in the middle, the picked booking's sheet in place on the right. Decided by the window, not the device: the
+   * desktop tier (≥1101px) gets the panels; a tablet keeps the page. Null until the width is known, and the page
+   * is what draws then: it is in the server's HTML, so a phone reads its day before a line of script has run.
+   */
+  const [desk, setDesk] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const apply = () => setDesk(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+  const mayBook = useMayUse('visit.new');
   const [waitingShown, setWaitingShown] = useState(SHOW_STEP);
   // Owner, 2026-10-07 — paying a waiting token opens the Record payment page, not an overlay of the old form.
   const router = useRouter();
@@ -518,6 +534,14 @@ export function BookingsList({
   const multiDay = useMemo(() => new Set(filtered.map((b) => dayKeyOf(b.startAt))).size > 1, [filtered, dayKeyOf]);
 
   const openBooking = (b: BookingGroup) => setOpen(b);
+  /*
+   * The pick, read fresh each render: `open` is the group as it was when tapped, and the list under it is redrawn
+   * every minute. The sheet shows the row as it is NOW (a visit marked done on a phone reads as done here), and on
+   * a desk, where the sheet stays up, it clears when the row leaves the list — a tab or a filter that hides the
+   * booking hides its sheet too, so the panel never describes a row that is not on screen.
+   */
+  const liveOpen = open ? (bookings.find((g) => g.key === open.key) ?? null) : null;
+  const picked = liveOpen && (!desk || filtered.some((g) => g.key === liveOpen.key)) ? liveOpen : null;
 
   /**
    * GRW-166 — a salon can withhold the client's identity from its staff, and
@@ -571,7 +595,8 @@ export function BookingsList({
     const [clock, meridiem] = formatTime(b.startAt, timezone).split(' ');
     return (
       <div
-        className={`bk-card ${b.appointments.some((a) => a.id === justGiven) ? 'bk-card-just-given' : ''}`}
+        className={`bk-card ${b.appointments.some((a) => a.id === justGiven) ? 'bk-card-just-given' : ''} ${desk && picked?.key === b.key ? 'is-selected' : ''}`}
+        aria-current={desk && picked?.key === b.key ? 'true' : undefined}
         /* Which bookings this card is: how the effect below finds the row a token just became. */
         data-appt={b.appointments.map((a) => a.id).join(' ')}
         style={railStyle}
@@ -645,7 +670,8 @@ export function BookingsList({
     );
   };
 
-  return (
+  /* The screen in pieces, so the phone's page and the desk's three panels draw the same things. */
+  const earningsCard = (
     <>
       {/*
         * Jira GRW-216 — the stylist's own takings.
@@ -678,7 +704,11 @@ export function BookingsList({
           </div>
         </div>
       )}
+    </>
+  );
 
+  const unmarkedChip = (
+    <>
       {/*
         Jira GRW-220 — no figures at all when the list could not be fetched.
         Four zeros sitting above a banner that says "could not load" is the same
@@ -696,7 +726,11 @@ export function BookingsList({
           </button>
         </div>
       )}
+    </>
+  );
 
+  const tabsRow = () => (
+    <>
       {/*
         Jira GRW-488 — the tiles become a segmented control.
         All · Waiting · Booked · Done, each with its count. The tiles were a summary AND the status
@@ -722,7 +756,11 @@ export function BookingsList({
           ))}
         </div>
       )}
+    </>
+  );
 
+  const findRow = () => (
+    <>
       {/* Filters sit BELOW the headline row in both mocks, not above it — the
           numbers are what the owner looks at first. Search and the staff
           select are desktop-only (mobile has its own search pill + tap chips
@@ -770,6 +808,11 @@ export function BookingsList({
           {filterCount > 0 && <span className="bk-filter-count">{filterCount}</span>}
         </button>
       </div>
+    </>
+  );
+
+  const filterCard = (
+    <>
       <div id="bk-filter-card" className={`card bk-filter-card ${filtersOpen ? 'is-open' : ''}`}>
         <form method="get" className="bk-filters">
           {/* Search / staff / status / sort are client-side state, but this
@@ -915,7 +958,11 @@ export function BookingsList({
               dates, and the hidden inputs above, through that submit. */}
         </form>
       </div>
+    </>
+  );
 
+  const waitingBlock = (
+    <>
       {/*
         Jira GRW-487 — the people waiting, above the day's timed rows — and above the empty state.
 
@@ -980,9 +1027,10 @@ export function BookingsList({
           </ul>
         </section>
       )}
+    </>
+  );
 
-
-      {bookings.length === 0 ? (
+  const emptyCard = (
         <div className="card">
           {loadFailed ? (
             /*
@@ -999,8 +1047,10 @@ export function BookingsList({
             <div className="empty">{emptyMessage}</div>
           )}
         </div>
-      ) : (
-        <>
+  );
+
+  const schedHead = (
+    <>
       {/*
         `StaffTable` is gone (2026-10-04).
 
@@ -1048,8 +1098,11 @@ export function BookingsList({
           </button>
         </div>
       </div>
+    </>
+  );
 
-      <div className="bk-scroll">
+  const schedBody = (
+    <>
       {noMatches ? (
         <div className="bk-no-matches">
           <div className="bk-no-matches-title">{t('noneFound')}</div>
@@ -1104,26 +1157,34 @@ export function BookingsList({
           ))}
         </div>
       )}
-      </div>
+    </>
+  );
 
-      {!noMatches && <Pagination page={clamped} total={filtered.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />}
-        </>
-      )}
+  const pager = !noMatches && <Pagination page={clamped} total={filtered.length} pageSize={PAGE_SIZE} noun={noun} onChange={setPage} />;
 
-      {open &&
-        (open.status === 'completed' ? (
-          <BookingSummary booking={open} timezone={timezone} onClose={() => setOpen(null)} />
+  /** The picked booking: finished ones get the receipt, the rest the actions. In place on a desk, a sheet on a phone. */
+  const openSheet = (inline: boolean) => (
+    <>
+      {picked &&
+        (picked.status === 'completed' ? (
+          <BookingSummary booking={picked} timezone={timezone} onClose={() => setOpen(null)} inline={inline} />
         ) : (
           <BookingSheet
+            inline={inline}
             canMove={canReschedule}
-            appointment={open.appointments.find((a) => a.status === open.status) ?? open.appointments[0]!}
+            appointment={picked.appointments.find((a) => a.status === picked.status) ?? picked.appointments[0]!}
             timezone={timezone}
             onClose={() => setOpen(null)}
-            comboServiceNames={open.isCombo ? open.serviceNames : undefined}
-            comboTotalMin={open.totalMin}
-            comboLegs={open.isCombo ? open.appointments : undefined}
+            comboServiceNames={picked.isCombo ? picked.serviceNames : undefined}
+            comboTotalMin={picked.totalMin}
+            comboLegs={picked.isCombo ? picked.appointments : undefined}
           />
         ))}
+    </>
+  );
+
+  const giveSheet = (
+    <>
       {/*
         Jira GRW-489 — the token's three answers, in the desk's own sheets.
 
@@ -1160,6 +1221,109 @@ export function BookingsList({
           }
         />
       ) : null}
+    </>
+  );
+
+  if (desk) {
+    return (
+      <div className="bk-desk pf-wide-grid bk-desk-grid">
+        <aside className="pf-wide-left bk-desk-left" aria-label={t('filters')}>
+          {earningsCard}
+          {!loadFailed && (
+            <ul className="pf-wide-tabs" role="tablist" aria-label={t('statusLabel')}>
+              {TABS.map((seg) => (
+                <li key={seg}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === seg}
+                    className={`pf-wide-tab ${tab === seg ? 'is-on' : ''}`}
+                    onClick={() => {
+                      setStatusFilter(seg === 'todo' ? 'confirmed' : seg === 'completed' ? 'completed' : '');
+                      setPage(1);
+                    }}
+                  >
+                    <span className="pf-wide-tab-name">{t(`tab_${seg}`)}</span>
+                    <span className="pf-wide-n">{tabCount(seg)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {filterCard}
+        </aside>
+
+        <section className="pf-wide-mid bk-desk-mid" aria-label={isToday ? t('scheduleToday') : t('scheduleOn', { day: dayLabel })}>
+          <label className="pf-wide-search">
+            <IconSearch />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder={t('searchHint')}
+              aria-label={t('search')}
+              autoComplete="off"
+            />
+          </label>
+          {unmarkedChip}
+          {bookings.length === 0 ? (
+            <div className="bk-scroll bk-desk-scroll">
+              {waitingBlock}
+              {emptyCard}
+            </div>
+          ) : (
+            <>
+              {schedHead}
+              <div className="bk-scroll bk-desk-scroll">
+                {waitingBlock}
+                {schedBody}
+              </div>
+              {pager}
+            </>
+          )}
+        </section>
+
+        <aside className="pf-wide-right bk-desk-right" aria-label={noun}>
+          {picked ? (
+            openSheet(true)
+          ) : (
+            <div className="bk-desk-nothing">
+              <p>{t('deskPick', { noun })}</p>
+              {mayBook && (
+                <a className="btn" href="/appointments/new">
+                  <IconPlus /> {t('deskNew')}
+                </a>
+              )}
+            </div>
+          )}
+        </aside>
+        {giveSheet}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {earningsCard}
+      {unmarkedChip}
+      {tabsRow()}
+      {findRow()}
+      {filterCard}
+      {waitingBlock}
+      {bookings.length === 0 ? (
+        emptyCard
+      ) : (
+        <>
+          {schedHead}
+          <div className="bk-scroll">{schedBody}</div>
+          {pager}
+        </>
+      )}
+      {openSheet(false)}
+      {giveSheet}
     </>
   );
 }

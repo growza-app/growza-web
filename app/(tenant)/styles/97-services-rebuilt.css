@@ -210,6 +210,23 @@
   text-wrap: balance;
 }
 
+/* The " · " belongs to the cleanup, so it travels with it when the line breaks. */
+.svc-card-right .svc-cleanup::before {
+  content: ' · ';
+}
+
+/* Owner, 2026-10-14 — on a phone (≤430px) the long ones never fit one line and the short ones only just: the
+   cleanup takes a line of its own, without the dot, so every card reads the same way. */
+@media (max-width: 430px) {
+  .svc-card-right .svc-cleanup {
+    display: block;
+  }
+
+  .svc-card-right .svc-cleanup::before {
+    content: none;
+  }
+}
+
 /* Owner-app audit 2026-10-10 — an iPhone SE and a folded Z Fold (320–344px): a smaller thumbnail, so the name keeps
    room for "Women's" and "Haircut" whole. */
 @media (max-width: 344px) {

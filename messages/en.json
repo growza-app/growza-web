@@ -162,7 +162,9 @@
     "clientNoneYet": " — they have none yet",
     "thisClient": "this client",
     "thisClientTitle": "This client",
-    "everyBookingFor": "Every booking for {name}"
+    "everyBookingFor": "Every booking for {name}",
+    "deskPick": "Pick a {noun} to see it or change it, or make a new one.",
+    "deskNew": "New booking"
   },
   "nouns": {
     "customers": "clients",

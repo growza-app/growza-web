@@ -18,6 +18,9 @@
   .cust-desk-grid {
     flex: 1;
     min-height: 0;
+    /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
+       and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
+    grid-template-rows: minmax(0, 1fr);
     /* The list gets the room: a 1366 laptop leaves it ~36rem beside an 11rem band column and a 21rem card. */
     grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(20rem, 21rem);
     align-items: stretch;
@@ -81,20 +84,37 @@
     width: 10.5rem;
   }
 
+  /* The headers in full — "Visits" and "Total spent" with their sort arrow at 14px and the cell's padding. */
   .cust-desk-table th:nth-child(4) {
-    width: 3.75rem;
+    width: 4.75rem;
   }
 
   .cust-desk-table th:nth-child(5) {
-    width: 5.5rem;
+    width: 7rem;
   }
 
   .cust-desk-table th:nth-child(6) {
     width: 8.5rem;
   }
 
+  /* The name is the cell: it takes the room and gives way last; the branch chip gives way first, to a floor
+     (owner's screenshot, 2026-10-14 — "MG R" and "Test Token Clie" side by side was the chip winning). */
+  .cust-desk-table .cust-name-cell {
+    min-width: 0;
+  }
+
+  .cust-desk-table .cust-name-cell > span:nth-child(2) {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .cust-desk-table .cust-branch-chip {
-    flex: none;
+    flex: 0 4 auto;
+    min-width: 3.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .cust-desk-table th,
@@ -106,12 +126,6 @@
   .cust-desk-table th:first-child,
   .cust-desk-table td:first-child {
     padding-left: 14px;
-  }
-
-  .cust-desk-table .cust-name-cell > span:last-of-type {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   /* "Last booking" is the first row of the card on the right, one click away. */
@@ -280,11 +294,11 @@
 }
 
 /*
- * Up to a 1440 laptop the list is 32rem or less, and a name, a number, three figures and the band do not fit
+ * Up to 1600 wide the list is under 44rem, and a name, a number, three figures and the band do not fit
  * it: the Phone column goes — the number is on the card with Call, the band chip in "Last seen" is nowhere
  * else. (At 1366 with every column drawn the name was left 24px.)
  */
-@media (min-width: 1101px) and (max-width: 1440px) {
+@media (min-width: 1101px) and (max-width: 1600px) {
   .cust-desk-table th:nth-child(2),
   .cust-desk-table td:nth-child(2) {
     display: none;
@@ -305,5 +319,12 @@
   .cust-desk-table th,
   .cust-desk-table td {
     padding: 8px 8px;
+  }
+}
+
+/* Up to 1440 the name has ~8rem: the branch chip goes (the card on the right says the branch), the name stays whole. */
+@media (min-width: 1101px) and (max-width: 1440px) {
+  .cust-desk-table .cust-branch-chip {
+    display: none;
   }
 }

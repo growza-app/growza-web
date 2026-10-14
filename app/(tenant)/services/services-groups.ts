@@ -114,9 +114,17 @@ export function timePhrase(
   minutes: (count: number) => string,
   cleanup: (count: number) => string,
 ): string {
-  const duration = minutes(service.durationMin);
-  if (service.bufferAfterMin <= 0) return duration;
-  return `${duration} · ${cleanup(service.bufferAfterMin)}`;
+  const [duration, extra] = timeParts(service, minutes, cleanup);
+  return extra ? `${duration} · ${extra}` : duration;
+}
+
+/** The same phrase in two pieces, for the phone's card, which draws the separator itself so it never ends a line. */
+export function timeParts(
+  service: { durationMin: number; bufferAfterMin: number },
+  minutes: (count: number) => string,
+  cleanup: (count: number) => string,
+): [string, string | null] {
+  return [minutes(service.durationMin), service.bufferAfterMin > 0 ? cleanup(service.bufferAfterMin) : null];
 }
 
 /**

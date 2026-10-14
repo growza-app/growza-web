@@ -122,10 +122,11 @@
 
   /*
    * The done screens' bill slip (`compactPreview`, 72-walk-in-sheet.css) is capped at 12rem because on a phone
-   * its full height put every button below the fold. A desk has the height: the whole slip, no scroll inside it.
+   * its full height put every button below the fold. On a desk the buttons are beside it (73-pay-flow.css), so
+   * the slip may take the screen's height — and scrolls inside only past that.
    */
   .wi-receipt-paper-short {
-    max-height: none;
+    max-height: calc(100dvh - 16rem);
   }
 
   /* Who else is in today: said, not opened. */

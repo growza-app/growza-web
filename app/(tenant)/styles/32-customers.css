@@ -2369,6 +2369,13 @@
 
   .pagination-indicator {
     display: inline-flex;
+    /* "Page 1 of 2" on one line: on a 344px phone it broke as "Page 1 of" / "2" (owner, 2026-10-14). The summary
+       on the left is the one that wraps. */
+    white-space: nowrap;
+  }
+
+  .pagination-controls {
+    flex: none;
   }
 
   /* Bookings' per-provider chair view: the multi-column table is unreadable on

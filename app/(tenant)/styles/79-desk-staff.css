@@ -19,6 +19,9 @@
   .staff-desk-grid {
     flex: 1;
     min-height: 0;
+    /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
+       and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
+    grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(19rem, 21rem);
     align-items: stretch;
   }
@@ -139,62 +142,6 @@
     color: var(--amber-ink);
   }
 
-  .staff-desk-tabs {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .staff-desk-tab {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--sp-2);
-    min-height: 2.5rem;
-    padding: 0 var(--sp-3);
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text);
-    font: inherit;
-    font-size: 0.875rem;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .staff-desk-tab:hover {
-    background: var(--page-bg);
-  }
-
-  .staff-desk-tab.is-on {
-    background: var(--accent-soft);
-    color: var(--accent-deep);
-    font-weight: 600;
-  }
-
-  .staff-desk-tab-name {
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .staff-desk-n {
-    flex: none;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .staff-desk-tab.is-on .staff-desk-n {
-    color: inherit;
-  }
-
   /* ---------- right: the sheet in place ---------- */
   .staff-sheet-inline {
     display: flex;
@@ -244,6 +191,13 @@
   /* The bar and the free-day chip go; the times stay, and the panel says "0 bookings today" once picked. */
   .staff-desk .staff-shift-bar,
   .staff-desk .staff-shift-head .staff-badge-free {
+    display: none;
+  }
+
+  /* The sign-in chip too: with TOP beside the name it wrapped the row to two lines at 1180 (owner, 2026-10-14).
+     The logins group under the roster and the panel's "Remove sign-in" still say who can sign in. */
+  .staff-desk .staff-identity-name .staff-badge-in,
+  .staff-desk .staff-identity-name .staff-badge-invited {
     display: none;
   }
 }

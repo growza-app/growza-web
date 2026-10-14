@@ -64,6 +64,8 @@ describe('the wide Services screen', () => {
   it('the stylesheet is loaded after the till\'s, and the narrow end of the tier drops the Time column', () => {
     expect(globals.indexOf("79-desk-services.css")).toBeGreaterThan(globals.indexOf('79-desk-booking.css'));
     expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1300px\) \{[\s\S]*td:nth-child\(2\) \{\s*display: none;/);
+    // A long category name wraps in the narrow band instead of truncating.
+    expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1300px\) \{[\s\S]*\.svc-desk-cat-name \{\s*white-space: normal;\s*overflow-wrap: anywhere;/);
   });
 
   it('has its words in both languages', () => {

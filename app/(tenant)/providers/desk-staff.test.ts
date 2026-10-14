@@ -28,7 +28,7 @@ describe('Staff on a desk', () => {
 
   it('the left panel is the three figures and the tabs with their counts', () => {
     expect(client).toMatch(/<dl className="staff-desk-kpis">/);
-    expect(client).toMatch(/\{tabs\.map\(\(tb\) => \([\s\S]*?className=\{`staff-desk-tab \$\{tab === tb\.key \? 'is-on' : ''\}`\}[\s\S]*?onClick=\{\(\) => changeTab\(tb\.key\)\}/);
+    expect(client).toMatch(/\{tabs\.map\(\(tb\) => \([\s\S]*?className=\{`pf-wide-tab \$\{tab === tb\.key \? 'is-on' : ''\}`\}[\s\S]*?onClick=\{\(\) => changeTab\(tb\.key\)\}/);
   });
 
   it('the roster is the page\'s own, in a scrolling panel; the header and dialogs are shared with the page', () => {
@@ -63,6 +63,7 @@ describe('Staff on a desk', () => {
     expect(css).toMatch(/\.staff-desk \.staff-shift \{\s*width: auto;\s*flex: 0 0 auto;\s*max-width: 15rem;/);
     expect(css).toMatch(/\.staff-desk \.staff-row\.is-selected \{\s*border-color: var\(--accent\);/);
     expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1300px\) \{[\s\S]*?\.staff-desk \.staff-shift-bar,\s*\.staff-desk \.staff-shift-head \.staff-badge-free \{\s*display: none;/);
+    expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1300px\) \{[\s\S]*?\.staff-desk \.staff-identity-name \.staff-badge-in,\s*\.staff-desk \.staff-identity-name \.staff-badge-invited \{\s*display: none;/);
   });
 
   it('is loaded after the Clients desk sheet, and says it in both languages', () => {

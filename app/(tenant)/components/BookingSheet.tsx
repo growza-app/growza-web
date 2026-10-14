@@ -53,6 +53,7 @@ export function BookingSheet({
   comboTotalMin,
   comboLegs,
   canMove = true,
+  inline = false,
 }: {
   appointment: Appointment;
   timezone: string;
@@ -76,13 +77,18 @@ export function BookingSheet({
    * a feature — the route is the gate, this is the courtesy.
    */
   canMove?: boolean;
+  /**
+   * Owner, 2026-10-14 — drawn in place in the Bookings desk's right panel: no backdrop, no focus trap, and the
+   * × clears the pick. A settled status still closes it (the row it was about has changed). Same sheet otherwise.
+   */
+  inline?: boolean;
 }) {
   const locale = useLocale();
   const bk = useBookingCopy();
   const tc = useTranslations('chrome');
   const tsh = useTranslations('chrome.sheet');
   const dialogRef = useRef<HTMLDivElement>(null);
-  useDialog(dialogRef, { onClose });
+  useDialog(dialogRef, { onClose: inline ? undefined : onClose, active: !inline });
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,9 +182,15 @@ export function BookingSheet({
 
   return (
     <>
-      <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet bk-sheet" role="dialog" aria-modal="true" aria-label={name} ref={dialogRef}>
-        <div className="sheet-grab" />
+      {!inline && <div className="sheet-backdrop" onClick={onClose} />}
+      <div
+        className={inline ? 'sheet bk-sheet sheet-inline bk-sheet-inline' : 'sheet bk-sheet'}
+        role={inline ? 'region' : 'dialog'}
+        aria-modal={inline ? undefined : 'true'}
+        aria-label={name}
+        ref={dialogRef}
+      >
+        {!inline && <div className="sheet-grab" />}
 
         <div className="sheet-head">
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -191,6 +203,11 @@ export function BookingSheet({
             </div>
           </div>
           <span className="ref">{bookingRef(appointment.id)}</span>
+          {inline && (
+            <button type="button" className="icon-btn bk-sheet-close" onClick={onClose} aria-label={tc('close')}>
+              <IconClose />
+            </button>
+          )}
         </div>
 
         {error && (

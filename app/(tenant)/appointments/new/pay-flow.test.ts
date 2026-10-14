@@ -42,7 +42,11 @@ describe('one done screen for both Record payment forms (owner, 2026-10-10)', ()
     // On the page it is the whole page — no form header or card around it, as the three-tap flow ends.
     expect(visitSheet).toMatch(/if \(paidScreen && presentation === 'page'\) return paidScreen;/);
     // A desk always ends on it too, in the phone's column rather than across the whole page.
-    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.pf-done-page \{\s*width: 100%;\s*max-width: 30rem;\s*margin-inline: auto;/);
+    // Two panels on a desk (owner, 2026-10-14): the bill left, what is pressed right; the receipt band across the top.
+    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.pf-done-page \{\s*width: 100%;\s*max-width: 64rem;\s*margin-inline: auto;\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\) 22rem;/);
+    expect(css).toMatch(/\.pf-done-page \.wi-receipt-share \{\s*display: contents;/);
+    expect(css).toMatch(/\.pf-done-page \.wi-receipt-share > \.wi-receipt-paper \{\s*grid-column: 1;\s*grid-row: 3 \/ span 12;/);
+    expect(css).toMatch(/\.pf-done-page > \.pf-done-actions \{\s*grid-column: 2;/);
     // The one-page form's old paid screen — "Paid", the bill, a lone Done — is gone, not kept beside it.
     expect(visitSheet).not.toMatch(/nv\.paid\(/);
     // Next customer opens a fresh one-page form.
