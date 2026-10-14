@@ -7,54 +7,80 @@ import type { Product } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { productPhotoUrl } from '../lib/service-photos';
+import { StockPanel } from './StockPanel';
 
 /**
- * Owner, 2026-10-14 — one product, in the sheet the service form uses: a photo, a name, a price, a count.
+ * Owner, 2026-10-14 — one product, in the sheet the service form uses, in two parts:
  *
- * No minutes, no category, no staff: nobody performs a bottle. Retire / put back and Delete sit at the foot of
- * the sheet for an existing product, as on the service sheet.
+ * - **Details** — photo, name, price, cost price (so the margin is on the screen), the low-stock line, and for a
+ *   new product its opening count. Retire / put back and Delete at the foot, as on the service sheet.
+ * - **Stock** (an existing product only) — the count, five reasons it changes, and the ledger (0116). Typing
+ *   over the count is deliberately NOT offered here: every change says why.
  */
-export function ProductForm({
+type Part = 'details' | 'stock';
+
+export function ProductSheet({
   product,
   branchId,
   onSaved,
   onDelete,
   onClose,
+  inline = false,
 }: {
   product: Product | null;
   branchId: string;
   onSaved: (p: Product) => void;
   onDelete: (p: Product) => void;
   onClose: () => void;
+  /** The wide desk draws the sheet in its right panel: no backdrop, no dialog, and a save keeps it open. */
+  inline?: boolean;
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
   const tc = useTranslations('common');
   const sheetRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+  const [part, setPart] = useState<Part>('details');
   const [name, setName] = useState(product?.name ?? '');
   const [price, setPrice] = useState(product ? String(Math.round(Number(product.priceMinor) / 100)) : '');
-  const [stock, setStock] = useState(String(product?.stock ?? 0));
+  const [cost, setCost] = useState(product?.costMinor != null ? String(Math.round(Number(product.costMinor) / 100)) : '');
+  const [lowAt, setLowAt] = useState(product && product.lowStockAt > 0 ? String(product.lowStockAt) : '');
+  const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useDialog(sheetRef, { onClose: busy ? undefined : onClose });
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : onClose });
 
   const rupees = Number(price);
-  const canSave = name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0;
+  const costRupees = cost.trim() === '' ? null : Number(cost);
+  const canSave = name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0));
+  const marginPct = costRupees !== null && rupees > 0 && Number.isFinite(costRupees) ? Math.round(((rupees - costRupees) / rupees) * 100) : null;
+
+  const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
 
   const submit = async () => {
     if (!canSave || busy) return;
     setBusy(true);
     setError(null);
     try {
-      const body = { name: name.trim(), priceMinor: Math.round(rupees * 100), stock: Number.isFinite(Number(stock)) ? Math.trunc(Number(stock)) : 0 };
-      let saved = product ? await api.updateProduct(product.id, body) : await api.createProduct(branchId, body);
+      const body = {
+        name: name.trim(),
+        priceMinor: Math.round(rupees * 100),
+        costMinor: costRupees === null ? null : Math.round(costRupees * 100),
+        lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
+      };
+      let saved = product
+        ? await api.updateProduct(product.id, body)
+        : await api.createProduct(branchId, {
+            ...body,
+            stock: Math.trunc(Number(stock)) || 0,
+          });
       if (photo) saved = await api.uploadProductPhoto(saved.id, photo);
       onSaved(saved);
+      if (!inline) onClose();
     } catch (err) {
-      setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+      fail(err);
     } finally {
       setBusy(false);
     }
@@ -65,25 +91,51 @@ export function ProductForm({
     setError(null);
     try {
       onSaved(await api.updateProduct(product.id, { active: !product.active }));
+      if (!inline) onClose();
     } catch (err) {
-      setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+      fail(err);
     } finally {
       setBusy(false);
     }
   };
 
-  return (
-    <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
-      <div className="modal sheet prd-sheet" role="dialog" aria-modal="true" aria-label={product ? t('titleEdit') : t('titleAdd')} ref={sheetRef} onClick={(e) => e.stopPropagation()}>
-        <div className="sheet-head">
-          <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
-            {t('cancel')}
-          </button>
-          <span className="sheet-head-title">{product ? t('titleEdit') : t('titleAdd')}</span>
+  const title = product ? t('titleEdit') : t('titleAdd');
+  const sheet = (
+    <div
+      className={inline ? 'sheet sheet-inline prd-sheet' : 'modal sheet prd-sheet'}
+      role={inline ? undefined : 'dialog'}
+      aria-modal={inline ? undefined : 'true'}
+      aria-label={title}
+      ref={sheetRef}
+      onClick={inline ? undefined : (e) => e.stopPropagation()}
+    >
+      <div className="sheet-head">
+        <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
+          {part === 'stock' ? t('done') : t('cancel')}
+        </button>
+        <span className="sheet-head-title">{product ? product.name : title}</span>
+        {part === 'details' ? (
           <button type="button" className="sheet-head-save" disabled={busy || !canSave} onClick={() => void submit()}>
             {busy ? t('saving') : t('save')}
           </button>
+        ) : (
+          <span className="prd-head-spacer" aria-hidden="true" />
+        )}
+      </div>
+
+      {product ? (
+        <div className="prd-seg" role="tablist" aria-label={title}>
+          {(['details', 'stock'] as const).map((p) => (
+            <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
+              {t(`part.${p}`)}
+            </button>
+          ))}
         </div>
+      ) : null}
+
+      {part === 'stock' && product ? (
+        <StockPanel product={product} onChanged={onSaved} />
+      ) : (
         <div className="sheet-body">
           <div className="sheet-group sheet-photo">
             {photo ? (
@@ -143,15 +195,38 @@ export function ProductForm({
               </div>
             </div>
             <div className="sheet-row">
-              <label className="sheet-row-label" htmlFor="prd-stock">
-                {t('stock')}
+              <label className="sheet-row-label" htmlFor="prd-cost">
+                {t('cost')}
               </label>
-              <div className="sheet-row-value">
-                <input id="prd-stock" type="number" inputMode="numeric" step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
+              <div className="sheet-row-value prd-cost-value">
+                <input id="prd-cost" type="number" inputMode="numeric" min={0} step={1} value={cost} placeholder={tc('optional')} onChange={(e) => setCost(e.target.value)} />
+                {marginPct !== null ? <span className={`prd-margin ${marginPct < 0 ? 'prd-margin-neg' : ''}`}>{t('margin', { pct: marginPct })}</span> : null}
               </div>
             </div>
           </div>
-          <div className="sheet-foot">{t('stockHint')}</div>
+          <div className="sheet-foot">{t('costHint')}</div>
+
+          <div className="sheet-group">
+            {!product ? (
+              <div className="sheet-row">
+                <label className="sheet-row-label" htmlFor="prd-stock">
+                  {t('stock')}
+                </label>
+                <div className="sheet-row-value">
+                  <input id="prd-stock" type="number" inputMode="numeric" step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
+                </div>
+              </div>
+            ) : null}
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-low">
+                {t('lowAt')}
+              </label>
+              <div className="sheet-row-value">
+                <input id="prd-low" type="number" inputMode="numeric" min={0} step={1} value={lowAt} placeholder={t('lowAtOff')} onChange={(e) => setLowAt(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
           {error ? (
             <div role="alert" className="sheet-foot sheet-foot-error">
               {error}
@@ -169,7 +244,13 @@ export function ProductForm({
             </div>
           ) : null}
         </div>
-      </div>
+      )}
+    </div>
+  );
+  if (inline) return sheet;
+  return (
+    <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
+      {sheet}
     </div>
   );
 }

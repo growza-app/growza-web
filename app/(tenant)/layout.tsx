@@ -154,6 +154,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let whatsappLive = false;
   /** Jira GRW-266 · GRW-271 — the Try WhatsApp demo exists only off production. False when the API cannot say. */
   let whatsappDemo = false;
+  /** Owner, 2026-10-14 — `me.capabilities.products`; only an explicit false takes the shelf off the nav. */
+  let products = true;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
   /**
@@ -208,6 +210,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     walkIn = me.capabilities?.walkIn !== false;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
+    products = me.capabilities?.products !== false;
     pendingAttendance = me.attendance?.pending ?? 0;
     selfCheckIn = me.attendance?.selfCheckIn ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
@@ -318,7 +321,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {impersonation ? null : <NamePrompt />}
         <MobileNavProvider>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} name={memberName} />
+            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} products={products} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} name={memberName} />
             <div className="content">
               {/*
                 * Jira GRW-300 — its own grid item, not a bare `BillingBanner`

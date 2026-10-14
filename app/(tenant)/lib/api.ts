@@ -105,6 +105,8 @@ import type {
   SortDirection,
   Product,
   ProductInput,
+  StockMovement,
+  MovementKind,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -464,6 +466,10 @@ export const api = {
   deleteProduct: (id: string) => del<void>(`/api/v1/products/${id}`),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
   removeProductPhoto: (id: string) => del<Product>(`/api/v1/products/${id}/photo`),
+  /** 0116 — the ledger behind a product's count, newest first. */
+  productMovements: (id: string) => get<StockMovement[]>(`/api/v1/products/${id}/movements`),
+  /** A delivery, a breakage, one used by the business, one brought back, or a recount. `qty` is how many; the kind gives the sign. */
+  moveStock: (id: string, body: { kind: Exclude<MovementKind, 'sold'>; qty: number; note?: string }) => post<Product>(`/api/v1/products/${id}/movements`, body),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the

@@ -148,6 +148,8 @@ export interface Me {
     reschedule: boolean;
     richAnalytics: boolean;
     staffLeaderboard: boolean;
+    /** Owner, 2026-10-14 — `catalog.products`: whether this business sells things over the counter. Absent reads as yes. */
+    products?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -189,13 +191,35 @@ export interface Product {
   active: boolean;
   locationId: string;
   sold: number;
+  /** 0116 — what the business pays for one, for the margin. Null until the owner says. */
+  costMinor: string | null;
+  /** The screen flags the product once the count is at or below this; 0 = never. */
+  lowStockAt: number;
 }
 
 export interface ProductInput {
   name: string;
   priceMinor: number;
+  /** On create, the opening count. On an edit the API turns it into an `adjusted` ledger line. */
   stock?: number;
   active?: boolean;
+  costMinor?: number | null;
+  lowStockAt?: number;
+}
+
+/** 0116 — why a product's count changed. Six words, the same for every kind of business. */
+export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned';
+
+export interface StockMovement {
+  id: string;
+  kind: MovementKind;
+  /** Signed: what was added to the count. */
+  qty: number;
+  stockAfter: number;
+  note: string | null;
+  byName: string | null;
+  visitKey: string | null;
+  createdAt: string;
 }
 
 /** A catalogue row as the Services screen edits it — Service plus the fields booking flows never need. */
