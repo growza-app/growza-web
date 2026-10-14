@@ -30,6 +30,7 @@ export function DeskServiceGrid({
   money,
   packages = [],
   packageOnBillId = null,
+  packageOnBillIds,
   onPickPackage,
   products = [],
   productCountOf = () => 0,
@@ -47,6 +48,8 @@ export function DeskServiceGrid({
   /** Jira GRW-572 — the branch's priced combos whose services are all on this menu; a second tab when there are any. */
   packages?: Offer[];
   packageOnBillId?: string | null;
+  /** Owner, 2026-10-15 — the till may carry more than one package; the one-page form still sends one. */
+  packageOnBillIds?: readonly string[];
   onPickPackage?: (o: Offer) => void;
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the third tab, the same tiles with a stock line. */
   products?: Product[];
@@ -234,7 +237,7 @@ export function DeskServiceGrid({
           /* A package reads like a service: the first leg's picture, the name, the package price, and what is in it. */
           <div className="pf-tiles pf-wide-tiles">
             {shownPackages.map((o) => {
-              const on = packageOnBillId === o.id;
+              const on = packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id;
               const first = byId.get(o.serviceIds[0] ?? '');
               const names = o.serviceIds.map((id) => byId.get(id)?.name).filter(Boolean).join(', ');
               return (
@@ -301,7 +304,7 @@ export function DeskServiceGrid({
         <PackageSheet
           offer={viewing}
           services={services}
-          onBill={packageOnBillId === viewing.id}
+          onBill={packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
           onAdd={() => {
             onPickPackage?.(viewing);
             setViewing(null);

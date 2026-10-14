@@ -38,6 +38,7 @@ export function ServiceSheet({
   onClose,
   packages,
   packageOnBillId = null,
+  packageOnBillIds,
   onPickPackage,
   products,
   productCounts,
@@ -51,6 +52,8 @@ export function ServiceSheet({
   packages?: Offer[];
   /** The one already on the bill, so tapping it again takes it off. */
   packageOnBillId?: string | null;
+  /** Owner, 2026-10-15 — the till may carry more than one package; the one-page form still sends one. */
+  packageOnBillIds?: readonly string[];
   onPickPackage?: (o: Offer) => void;
   /** Owner, 2026-10-14 — the branch's shelf, as one more chip: rows that read like services, with how many are left. */
   products?: Product[];
@@ -215,7 +218,7 @@ export function ServiceSheet({
           <ul className="pf-client-matches pf-menu-list">
             {shownPackages.map((o) => {
               const first = services.find((x) => x.id === o.serviceIds[0]);
-              const on = packageOnBillId === o.id;
+              const on = packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id;
               return (
                 <li key={o.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${on ? 'pf-menu-row-on' : ''}`} onClick={() => onPickPackage?.(o)}>
@@ -258,7 +261,7 @@ export function ServiceSheet({
         <PackageSheet
           offer={viewing}
           services={services}
-          onBill={packageOnBillId === viewing.id}
+          onBill={packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
           onAdd={() => {
             onPickPackage?.(viewing);
             setViewing(null);
