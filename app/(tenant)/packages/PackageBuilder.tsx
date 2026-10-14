@@ -496,6 +496,12 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
 
       <div className="pe-layout">
         <div className="pe-form">
+          {/*
+            Owner, 2026-10-14 — three columns on a desk (79-desk-package.css): what it is and what it costs on the
+            left, the services in the middle scrolling inside their group, the client's view on the right. The
+            three wrappers are the columns; below the desktop tier they are plain blocks in this order.
+          */}
+          <div className="pe-col-details">
           <div className="sheet-label sheet-label-details">{t('groups.details')}</div>
           <div className="sheet-group">
             <div className="sheet-row">
@@ -558,7 +564,8 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
               disabled={busy}
             />
           ) : null}
-
+          </div>
+          <div className="pe-col-services">
           <div className="sheet-label pe-label-services">{t('groups.services')}</div>
           <div className="sheet-group">
             {/* At the top of the group, not under the list: with eight services in it, the way to add a ninth
@@ -614,7 +621,8 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                     ),
                   }))}
           </div>
-
+          </div>
+          <div className="pe-col-rest">
           <div className="sheet-label sheet-label-price">{t('groups.price')}</div>
           {/*
             The panel the design draws: each figure under its own label, the three ways to price it as one
@@ -802,6 +810,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
               </button>
             </div>
           )}
+          </div>
         </div>
 
         {/* A laptop has the room to keep the client's view on screen the whole time; a phone opens it. */}

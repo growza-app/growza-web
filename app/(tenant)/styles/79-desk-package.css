@@ -1,0 +1,141 @@
+/*
+ * Owner, 2026-10-14 — Make a package on a wide desk: three columns, the shape of the till and the desk screens.
+ *
+ *   left   Details (name, tagline, branch), then Price and When it runs, Save as draft and Delete under them
+ *   middle the services: Add services at the top of the group, the picked rows scrolling inside it
+ *   right  Preview, the client's view, the whole time
+ *
+ * The page is one screen: the editor takes the body's height and each column scrolls on its own. On a phone the
+ * form ran details → services → price → when down one column, and with six services and a tagline open the
+ * price was a screen and a half down (owner's screenshot, 2026-10-14). Only at the desktop tier (≥1101px); the
+ * two-column page (30-combo-builder-wizard.css) stays below it. `.pe-form` dissolves (`display: contents`) so its
+ * three wrappers are the grid's own cells.
+ */
+@media (min-width: 1101px) {
+  .page-body:has(> .pkg-editor) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pkg-editor {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pkg-editor .pe-layout {
+    flex: 1;
+    min-height: 0;
+    /* The services get the room: at 1366 the middle is ~27rem beside a 19rem form column and a 21rem preview. */
+    grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr) minmax(18rem, 21rem);
+    /* Two rows: Details sits in the first, Price and the rest in the second; the middle and right span both. */
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--sp-4);
+    align-items: stretch;
+  }
+
+  .pkg-editor .pe-form {
+    display: contents;
+  }
+
+  .pkg-editor .pe-col-details {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .pkg-editor .pe-col-rest {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .pkg-editor .pe-col-services {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pkg-editor .pe-col-services > .sheet-group {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pkg-editor .pe-col-services .pe-add-row {
+    flex: none;
+  }
+
+  /* Every row scrolls inside the group past the column's height — not eight, however many there are. */
+  .pkg-editor .pe-service-list,
+  .pkg-editor .pe-service-list.is-long {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .pkg-editor .pe-aside {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .pkg-editor .pe-col-services > .sheet-label,
+  .pkg-editor .pe-col-details > .sheet-label:first-child {
+    padding-top: 4px;
+  }
+
+  /* A 15–19rem column: the name and the tagline stack their label over the field (side by side the label ran
+     under the placeholder at 1180), and the field reads left to right like any other. */
+  .pkg-editor .pe-col-details .sheet-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-label {
+    flex: 1 1 100%;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-value {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-value input {
+    width: 100%;
+    text-align: left;
+  }
+
+  /* Flat ₹ · % off · Sum of parts in a 15rem column. */
+  .pkg-editor .pe-mode-toggle button {
+    padding: 4px 4px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* The narrow end of the tier (1101–1300px): side columns at their floors, so the services keep ~22rem at 1180. */
+@media (min-width: 1101px) and (max-width: 1300px) {
+  .pkg-editor .pe-layout {
+    grid-template-columns: 15rem minmax(0, 1fr) 18rem;
+    gap: var(--sp-3);
+  }
+
+  /* "Sum of parts" was a pixel over its third of a 13rem control. */
+  .pkg-editor .pe-mode-toggle button {
+    padding: 4px 2px;
+    font-size: 0.75rem;
+  }
+}

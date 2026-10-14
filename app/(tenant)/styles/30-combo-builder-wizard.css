@@ -60,12 +60,12 @@
 }
 
 /* The first group's label sits under the header, not 22px below it. */
-.pe-form > .sheet-label:first-child {
+.pe-col-details > .sheet-label:first-child {
   padding-top: 4px;
 }
 
 /* Jira GRW-381 — the branch field keeps its own shape; it just needs the group spacing around it. */
-.pe-form > .offer-branch-field {
+.pe-col-details > .offer-branch-field {
   margin-top: 10px;
 }
 
@@ -256,7 +256,7 @@
     height: 38px;
   }
 
-  .pe-form > .sheet-label {
+  .pe-form > div > .sheet-label {
     padding: 14px 4px 5px;
   }
 
