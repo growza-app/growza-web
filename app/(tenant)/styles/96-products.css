@@ -562,6 +562,10 @@
   .prd-desk-mid .prd-search {
     flex: none;
     max-width: none;
+    min-height: 2.75rem;
+    /* `.search-wrap` is page-coloured for sitting inside a white card; here it sits on the page itself. */
+    background: var(--surface);
+    border-color: #c9d0cb;
   }
 
   /* The shelf in a card that scrolls itself, as the Services table does. */
