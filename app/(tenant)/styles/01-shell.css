@@ -76,7 +76,7 @@
   color: var(--sidebar-text);
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.96875rem;
+  font-size: 0.9375rem;
   transition: background 0.12s, color 0.12s;
 }
 

@@ -414,7 +414,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: #4a574f;
 }
 .bsn strong {
@@ -493,7 +493,7 @@
   .settings-page .bsn {
     margin-bottom: 6px;
     padding: 5px 10px;
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
   }
   .settings-page .bp-form .bsn {
     margin-bottom: 0;
@@ -577,7 +577,7 @@
     min-height: 36px;
     gap: 4px;
     padding: 0 8px;
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
   }
   .sbp-btn > svg:first-child {
     display: none;
@@ -604,7 +604,7 @@
   justify-content: flex-start;
   gap: 8px;
   font-weight: 500;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted);
   cursor: pointer;
 }
@@ -930,7 +930,7 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
 .settings-savebar-note {
   margin: 0;
   color: var(--accent-deep);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 

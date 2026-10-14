@@ -37,7 +37,7 @@
 }
 
 .sheet-title {
-  font-size: 0.96875rem;
+  font-size: 0.9375rem;
   font-weight: 640;
 }
 
@@ -47,7 +47,7 @@ h1.sheet-title {
 }
 
 .sheet-sub {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 

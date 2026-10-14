@@ -93,7 +93,7 @@
   align-items: center;
   gap: 9px;
   flex-wrap: wrap;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   font-weight: 650;
 }
 
@@ -176,7 +176,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 15px 10px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 
@@ -309,7 +309,7 @@
   flex: none;
   min-width: 74px;
   text-align: right;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
 }
 
 /* The flat editor carries a Group column the category editor does not need. */
@@ -442,7 +442,7 @@
 .cat-stepper span {
   min-width: 54px;
   text-align: center;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 650;
 }
 

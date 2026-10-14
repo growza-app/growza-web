@@ -90,7 +90,7 @@
 }
 
 .checkout-total-value {
-  font-size: 1.3125rem;
+  font-size: 1.25rem;
   font-weight: 660;
   color: var(--text);
 }
@@ -306,7 +306,7 @@
  */
 .checkout-total-saving {
   margin-top: 3px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -387,7 +387,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
   align-items: center;
   gap: 10px;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted, #5f6a65);
 }
 

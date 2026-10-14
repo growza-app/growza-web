@@ -260,7 +260,7 @@
 
 .svc-swipe-hint {
   margin: 10px 4px 0;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -369,7 +369,7 @@
 
 .held-body {
   margin: 4px 0 0;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--muted);
 }
@@ -436,7 +436,7 @@
 
 .held-row-meta {
   display: block;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 1px;
 }

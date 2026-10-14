@@ -167,7 +167,7 @@
 
 .login-name {
   font-weight: 620;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 
@@ -176,7 +176,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-1) var(--sp-2);
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 

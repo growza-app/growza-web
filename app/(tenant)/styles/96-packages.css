@@ -187,7 +187,7 @@
 }
 
 .pkg-price-was {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }

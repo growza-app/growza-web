@@ -81,7 +81,7 @@
     display: block;
   }
 
-  .cust-segments-head h2 { font-size: 0.84375rem; }
+  .cust-segments-head h2 { font-size: 0.8125rem; }
   .cust-segments-head p { margin-top: 1px; }
 
   .cust-segments { padding: var(--sp-3); }

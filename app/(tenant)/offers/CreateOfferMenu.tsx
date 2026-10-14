@@ -78,7 +78,7 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>{t('title')}</h3>
-        <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>
+        <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
           {t('note')}
         </p>
         <div className="field">

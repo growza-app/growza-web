@@ -79,7 +79,7 @@ export function BillingBanner({
         // Its own container, and text that wraps rather than truncates: at
         // 320px this is a full sentence and it must stay readable.
         lineHeight: 1.5,
-        fontSize: 13.5,
+        fontSize: 13,
         fontWeight: 600,
         border: restricted ? '1px solid oklch(0.82 0.11 25)' : '1px solid oklch(0.85 0.09 80)',
         background: restricted ? 'oklch(0.96 0.04 25)' : 'oklch(0.97 0.05 85)',

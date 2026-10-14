@@ -255,7 +255,7 @@ export function SlotGrid({ sections, serviceId, serviceName, providerNames }: Pr
                 <p className="muted">
                   {t('bookedLine', { service: serviceName, time: modal.slot.local, provider: providerName(modal.slot.assignedProviderId) })}
                 </p>
-                <p className="muted" style={{ fontSize: 13.5 }}>
+                <p className="muted" style={{ fontSize: 13 }}>
                   {t('bookAnotherHint')}
                 </p>
                 <div className="modal-actions">

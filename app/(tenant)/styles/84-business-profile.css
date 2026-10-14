@@ -22,7 +22,7 @@
 }
 .bp-sub {
   margin: 2px 0 0;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -57,7 +57,7 @@
   height: 1.0625rem;
 }
 .bp-card-title {
-  font-size: 0.96875rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   line-height: 32px;
 }
@@ -79,7 +79,7 @@
 }
 .bp-form .field label {
   gap: var(--sp-2);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: #3d4a43;
 }
 .bp-form .field-optional {
@@ -197,7 +197,7 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -261,7 +261,7 @@
   align-items: center;
   gap: 5px;
   margin-top: 2px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .bp-branch-meta svg {

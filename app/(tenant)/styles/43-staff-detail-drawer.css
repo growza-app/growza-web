@@ -80,7 +80,7 @@
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   margin-top: 3px;
 }
 
@@ -170,7 +170,7 @@
 .weekday-hours-label {
   width: 40px;
   flex-shrink: 0;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 620;
 }
 
@@ -209,14 +209,14 @@
 .schedule-time {
   width: 62px;
   flex-shrink: 0;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 620;
   color: var(--muted);
 }
 
 .schedule-label {
   flex: 1;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
 }
 
 .drawer-actions {

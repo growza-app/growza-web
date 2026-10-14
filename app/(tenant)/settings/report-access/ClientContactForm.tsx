@@ -47,7 +47,7 @@ export function ClientContactForm({ initial }: { initial: SettingsSummary }) {
             </span>
           </label>
           <div style={{ flex: 1 }}>
-            <div id="rule-staff-sees-label" style={{ fontWeight: 620, fontSize: 14.5 }}>
+            <div id="rule-staff-sees-label" style={{ fontWeight: 620, fontSize: 14 }}>
               {t('staffSees')}
             </div>
             <span className="field-hint" style={{ margin: '4px 0 0' }}>
