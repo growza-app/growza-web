@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useNewVisitCopy } from '../../lib/use-copy';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Offer, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
 import { servicePhotoUrl } from '../../lib/service-photos';
@@ -49,6 +49,23 @@ export function DeskServiceGrid({
   const [tab, setTab] = useState<'services' | 'packages'>('services');
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
+  const kindRow = useRef<HTMLDivElement>(null);
+  // The chosen chip stays in view, and a wheel over the row moves it sideways (a laptop has no sideways wheel).
+  useEffect(() => {
+    kindRow.current?.querySelector('.pf-chip-on')?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
+  }, [kind]);
+  // A native listener, not React's: React's wheel is passive, so the page would scroll along with the row.
+  useEffect(() => {
+    const row = kindRow.current;
+    if (!row) return;
+    const wheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || row.scrollWidth <= row.clientWidth) return;
+      e.preventDefault();
+      row.scrollLeft += e.deltaY;
+    };
+    row.addEventListener('wheel', wheel, { passive: false });
+    return () => row.removeEventListener('wheel', wheel);
+  }, [services.length]);
   const kinds = useMemo(() => {
     const counts = new Map<string, number>();
     for (const s of services) if (s.categoryName) counts.set(s.categoryName, (counts.get(s.categoryName) ?? 0) + 1);
@@ -104,7 +121,7 @@ export function DeskServiceGrid({
         />
       </label>
       {tab === 'services' && kinds.length > 1 ? (
-        <div className="pf-chips pf-wide-kinds" role="group" aria-label={nv.serviceKinds}>
+        <div className="pf-chips pf-wide-kinds" role="group" aria-label={nv.serviceKinds} ref={kindRow}>
           <button type="button" className={`pf-chip ${kind === '' ? 'pf-chip-on' : ''}`} aria-pressed={kind === ''} onClick={() => setKind('')}>
             {nv.allServices}
             <span className="pf-wide-kind-n">{services.length}</span>
