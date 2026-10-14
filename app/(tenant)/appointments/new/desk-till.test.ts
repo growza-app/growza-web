@@ -50,7 +50,7 @@ describe('the wide till', () => {
 
   it('searches the way every other box does: by spelling, and by price', async () => {
     // The grid must go through lib/service-match, which is what answers "300" with the ₹300 service.
-    expect(grid).toMatch(/matchItems\(\s*services\.map\(\(s\) => \(\{ item: s, text: \[s\.name, s\.categoryName \?\? ''\], priceMinor: asMinor\(s\.priceMinor\) \}\)\)/);
+    expect(grid).toMatch(/matchItems\(\s*pool\.map\(\(s\) => \(\{ item: s, text: \[s\.name, s\.categoryName \?\? ''\], priceMinor: asMinor\(s\.priceMinor\) \}\)\)/);
     expect(grid).toMatch(/priceMinor: asMinor\(o\.comboPriceMinor\)/);
     expect(grid).not.toMatch(/toLowerCase\(\)\.includes/);
     const { matchItems, asMinor } = await import('../../lib/service-match');
@@ -63,6 +63,13 @@ describe('the wide till', () => {
     expect(find('300')).toEqual(['Haircut']);
     expect(find('1200')).toEqual(['Gold Facial']);
     expect(find('haircat')).toEqual(['Haircut']);
+  });
+
+  it('has the category chips the phone sheet has, under the search, with a count each', () => {
+    expect(grid).toMatch(/const pool = kind \? services\.filter\(\(s\) => s\.categoryName === kind\) : services;/);
+    expect(grid).toMatch(/className="pf-chips pf-wide-kinds"/);
+    expect(grid).toMatch(/\{nv\.allServices\}/);
+    expect(css).toMatch(/\.pf-wide-kinds \.pf-chip \{\s*min-height: 32px;/);
   });
 
   it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {
