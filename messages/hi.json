@@ -162,7 +162,9 @@
     "clientNoneYet": " — अभी तक कोई नहीं",
     "thisClient": "यह ग्राहक",
     "thisClientTitle": "यह ग्राहक",
-    "everyBookingFor": "{name} की सारी बुकिंग"
+    "everyBookingFor": "{name} की सारी बुकिंग",
+    "deskPick": "कोई {noun} चुनें — देखने या बदलने के लिए, या नई बनाएँ।",
+    "deskNew": "नई बुकिंग"
   },
   "nouns": {
     "customers": "ग्राहक",
