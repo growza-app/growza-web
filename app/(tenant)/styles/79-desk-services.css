@@ -301,18 +301,69 @@
     flex: none;
   }
 
-  /* The phone's compact rhythm (98-service-sheet.css), so Retire and Delete are not three screens down. */
+  /*
+   * One screen (owner, 2026-10-14): on a 768px laptop the Price, Retire and Delete sat below the panel's fold, the
+   * same fault the phone had on 2026-10-08. The same answer: nothing removed, the space between things goes —
+   * a 44px photo line, 42px rows, footnotes a size down, Retire and Delete side by side.
+   */
   .sheet-inline .sheet-body {
-    padding: 8px 16px 16px;
+    padding: 8px 16px 6px;
   }
 
   .sheet-inline .sheet-label {
-    padding: 14px 4px 4px;
+    padding: 10px 4px 3px;
   }
 
   .sheet-inline .sheet-foot {
-    padding: 4px 4px 0;
+    padding: 3px 4px 0;
     font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .sheet-inline .sheet-row {
+    min-height: 42px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  .sheet-inline .sheet-row-value input,
+  .sheet-inline .sheet-row-value select {
+    min-height: 34px;
+  }
+
+  .sheet-inline .sheet-photo {
+    gap: 10px 12px;
+    padding: 8px 12px;
+  }
+
+  .sheet-inline .sheet-photo-img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sheet-inline .sheet-photo-why {
+    display: none;
+  }
+
+  .sheet-inline .sheet-group-danger {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+
+  .sheet-inline .sheet-danger-row {
+    flex: 1;
+    min-height: 38px;
+    font-size: 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .sheet-inline .sheet-danger-row + .sheet-danger-row {
+    border-top: 1px solid var(--border);
   }
 
   .svc-desk-nothing {
