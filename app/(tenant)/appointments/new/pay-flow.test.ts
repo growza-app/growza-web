@@ -536,7 +536,7 @@ describe('Record payment in three taps', () => {
     const imports: string[] = globals.match(/@import '\.\/styles\/[^']+';/g) ?? [];
     const at = imports.indexOf("@import './styles/73-pay-flow.css';");
     expect(at).toBeGreaterThan(imports.indexOf("@import './styles/72-walk-in-sheet.css';"));
-    expect(at).toBeLessThan(imports.indexOf("@import './styles/100-clay-tabs.css';"));
+    expect(at).toBeLessThan(imports.indexOf("@import './styles/74-mobile-chrome-2026.css';"));
   });
 });
 

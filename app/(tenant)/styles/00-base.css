@@ -3,7 +3,7 @@
   --sidebar-deep: #0b2f23;
   --sidebar-text: #a7c4b8;
   --sidebar-active: #17513c;
-  --page-bg: #eef1ef;
+  --page-bg: #f4f6f5; /* Jira GRW-570 — one shade lighter: flat white cards sit on a 1px border now, not a shadow. */
   --surface: #ffffff;
   --border: #e8eaea;
   --text: #14201b;
@@ -31,8 +31,8 @@
   --purple: #7c3aed;
   --purple-soft: #ede9fe;
   --purple-deep: #6d28d9;
-  --radius: 14px;
-  --radius-sm: 12px; /* Jira GRW-342 — was 10px; buttons and fields were 9, 10, 11, 12, 13 and 14px depending on the screen. */
+  --radius: 10px; /* Jira GRW-570 — flat: 10 and 8, the way a crisp dashboard is drawn. */
+  --radius-sm: 8px;
 
   /* ---------- spacing scale (single source of truth) ----------
      4-based tokens. Use these instead of arbitrary px so every screen shares
