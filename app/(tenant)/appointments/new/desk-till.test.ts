@@ -35,7 +35,8 @@ describe('the wide till', () => {
     expect(flow).toMatch(/<DeskServiceGrid\s+services=\{ranked_all\}\s+countOf=\{countOf\}\s+onMore=\{addOne\}\s+onLess=\{oneLess\}/);
     // A package is lines with a `pkg`, sent as its legs plus the offer id; its legs never count on a tile.
     expect(flow).toMatch(/\.\.\.\(pkgOnBill \? \{ offerId: pkgOnBill\.id \} : \{\}\)/);
-    expect(flow).toMatch(/const countOf = \(serviceId: string\) => lines\.filter\(\(l\) => l\.serviceId === serviceId && !l\.pkg\)\.length;/);
+    // Owner, 2026-10-14 — nor does a product line (serviceId '') count on a service's tile.
+    expect(flow).toMatch(/const countOf = \(serviceId: string\) => lines\.filter\(\(l\) => l\.serviceId === serviceId && !l\.pkg && !l\.product\)\.length;/);
     expect(flow).toMatch(/const amounts = spread\(baseAmounts\.map/);
     expect(flow).toMatch(/<BillRows lines=\{lines\} listMinor=\{listMinor\} totalMinor=\{totalMinor\} onLess=\{oneLess\} onPrice=\{openRowKeypad\} \/>/);
     // The payment tiles are one element drawn in two places; neither the grid nor the list writes anything.
@@ -120,11 +121,19 @@ describe('the wide till', () => {
   });
 });
 
-/** Owner, 2026-10-14 — three tabs, always: Services · Packages · Products (soon). */
+/** Owner, 2026-10-14 — three tabs, always: Services · Packages · Products. */
 describe('the desk grid shows what a till sells', () => {
-  it('Products is there, greyed, before it exists — the shape is learnt once', () => {
+  it('Products is the third tab: the same tiles, how many are left instead of minutes, one line per unit on the bill', () => {
     const grid = here('DeskServiceGrid.tsx');
-    expect(grid).toMatch(/className="pf-chip pf-chip-soon" disabled>\s*\{t\('desk\.products'\)\}/);
+    expect(grid).toMatch(/onClick=\{\(\) => setTab\('products'\)\}>\s*\{t\('desk\.products'\)\}/);
+    expect(grid).toMatch(/\{p\.stock <= 0 \? t\('outOfStock'\) : t\('left', \{ n: p\.stock \}\)\}/);
+    expect(flow).toMatch(/products=\{products\}\s+productCountOf=\{productCountOf\}\s+onMoreProduct=\{addProduct\}\s+onLessProduct=\{\(id\) => oneLess\(`p:\$\{id\}`\)\}/);
+    // Grouped for the route: which, how many, what the line came to — and never among the service legs.
+    expect(flow).toMatch(/const legs = lines\.flatMap\(\(l, i\) => \(l\.product \? \[\] : \[\{ serviceId: l\.serviceId, paidAmountMinor: amounts\[i\]! \}\]\)\);/);
+    expect((flow.match(/\.\.\.soldProducts,/g) ?? []).length).toBe(2);
+    // A bill is still a visit: a product alone is told to add a service, not refused in silence.
+    expect(flow).toMatch(/const hasService = lines\.some\(\(l\) => !l\.product\);/);
+    expect(flow).toMatch(/\{lines\.length > 0 \? t\('needService'\) : t\('pickOne'\)\}/);
     // A row across the menu, not the desks' vertical `.pf-wide-tabs` list (#250) the grid once borrowed.
     expect(grid).toMatch(/className="pf-chips pf-wide-menu-tabs" role="tablist"/);
     expect(grid).not.toMatch(/pf-wide-tabs"/);

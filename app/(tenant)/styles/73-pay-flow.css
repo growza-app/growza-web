@@ -729,13 +729,10 @@
   flex: none;
 }
 
-/* The tab that is not here yet (Products): the same chip, greyed, and not a target. */
-.pf-chip-soon,
-.pf-chip-soon:disabled {
-  color: var(--muted);
-  background: var(--surface);
-  opacity: 0.55;
-  cursor: default;
+/* A product tile's "Out of stock" line: said in the warning colour, never only in colour (the words are there). */
+.pf-tile-out {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 .pf-pay-tile:disabled {

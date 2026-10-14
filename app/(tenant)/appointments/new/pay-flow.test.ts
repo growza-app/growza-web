@@ -372,7 +372,8 @@ describe('Record payment in three taps', () => {
   it('will not record a sale against nobody — a name is required, a number is not', () => {
     // Owner, 2026-10-10, said twice: a salon should know who it served. The shared anonymous row is gone.
     expect(flow).not.toMatch(/WALK_IN_CLIENT|walkInClient/);
-    expect(flow).toMatch(/const canGoOn = lines\.length > 0 && \(token !== undefined \|\| client\.kind !== 'none'\);/);
+    // Owner, 2026-10-14 — a service, not just a line: a product alone cannot be rung up yet.
+    expect(flow).toMatch(/const canGoOn = hasService && \(token !== undefined \|\| client\.kind !== 'none'\);/);
     // The refusal says what is missing, and opens the sheet that fixes it when the client is all that is.
     expect(flow).toMatch(/if \(client_ && !service\) setWhoOpen\('add'\);/);
     // A token already carries its client, so it is never asked.
@@ -398,10 +399,11 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/setMissing\(\{ client: client_, service \}\);/);
     // Each mark is tied to the thing still missing, so answering one does not clear the other's.
     expect(flow).toMatch(/const badClient = Boolean\(missing\?\.client\) && !token && client\.kind === 'none';/);
-    expect(flow).toMatch(/const badService = Boolean\(missing\?\.service\) && lines\.length === 0;/);
+    expect(flow).toMatch(/const badService = Boolean\(missing\?\.service\) && !hasService;/);
     // Beside the control, not one sentence in the tray a thumb's length from the fix.
     expect(flow).toMatch(/\{badClient \? \(\s*<p className="pf-miss" role="alert">\s*\{t\('needClient'\)\}/);
-    expect(flow).toMatch(/\{badService \? \(\s*<p className="pf-miss pf-miss-wide" role="alert">\s*\{t\('pickOne'\)\}/);
+    // Owner, 2026-10-14 — with products on the bill and no service, the mark says to add a service.
+    expect(flow).toMatch(/\{badService \? \(\s*<p className="pf-miss pf-miss-wide" role="alert">\s*\{lines\.length > 0 \? t\('needService'\) : t\('pickOne'\)\}/);
     expect(flow).toMatch(/className=\{`pf-who-bar \$\{badClient \? 'pf-bad' : ''\}`\}/);
     expect(css).toMatch(/\.pf-miss \{[\s\S]{0,160}color: var\(--danger-deep\);/);
     // The word says what is wrong; the colour only helps the eye find it.

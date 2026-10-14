@@ -3,9 +3,9 @@
 import { useTranslations } from 'next-intl';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Offer, Service } from '../../lib/api-types';
+import type { Offer, Product, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
-import { servicePhotoUrl } from '../../lib/service-photos';
+import { productPhotoUrl, servicePhotoUrl } from '../../lib/service-photos';
 import { IconMinus, IconPlus, IconSearch } from '../../components/icons';
 
 /**
@@ -29,6 +29,10 @@ export function DeskServiceGrid({
   packages = [],
   packageOnBillId = null,
   onPickPackage,
+  products = [],
+  productCountOf = () => 0,
+  onMoreProduct,
+  onLessProduct,
 }: {
   /** In display order: most sold first. */
   services: Service[];
@@ -42,11 +46,16 @@ export function DeskServiceGrid({
   packages?: Offer[];
   packageOnBillId?: string | null;
   onPickPackage?: (o: Offer) => void;
+  /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the third tab, the same tiles with a stock line. */
+  products?: Product[];
+  productCountOf?: (productId: string) => number;
+  onMoreProduct?: (p: Product) => void;
+  onLessProduct?: (productId: string) => void;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
   const [term, setTerm] = useState('');
-  const [tab, setTab] = useState<'services' | 'packages'>('services');
+  const [tab, setTab] = useState<'services' | 'packages' | 'products'>('services');
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
   const kindRow = useRef<HTMLDivElement>(null);
@@ -87,6 +96,15 @@ export function DeskServiceGrid({
     );
   }, [packages, term, byId]);
 
+  const shownProducts = useMemo(() => {
+    const q = term.trim();
+    if (!q) return products;
+    return matchItems(
+      products.map((p) => ({ item: p, text: [p.name], priceMinor: asMinor(p.priceMinor) })),
+      q,
+    );
+  }, [products, term]);
+
   const shown = useMemo(() => {
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
     const q = term.trim();
@@ -111,9 +129,9 @@ export function DeskServiceGrid({
         <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
           {t('desk.packages', { n: packages.length })}
         </button>
-        <button type="button" role="tab" aria-selected={false} aria-disabled="true" className="pf-chip pf-chip-soon" disabled>
+        <button type="button" role="tab" aria-selected={tab === 'products'} className={`pf-chip ${tab === 'products' ? 'pf-chip-on' : ''}`} onClick={() => setTab('products')}>
           {t('desk.products')}
-          <span className="pf-wide-kind-n">{t('desk.soon')}</span>
+          <span className="pf-wide-kind-n">{products.length}</span>
         </button>
       </div>
       <label className="pf-wide-search">
@@ -141,7 +159,51 @@ export function DeskServiceGrid({
           ))}
         </div>
       ) : null}
-      {tab === 'packages' ? (
+      {tab === 'products' ? (
+        shownProducts.length === 0 ? (
+          <p className="pf-wide-empty">{products.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</p>
+        ) : (
+          /* A product reads like a service: its picture, its name, its price — and how many are left instead of minutes. */
+          <div className="pf-tiles pf-wide-tiles">
+            {shownProducts.map((p) => {
+              const count = productCountOf(p.id);
+              const price = Number(p.priceMinor ?? 0);
+              return (
+                <div key={p.id} className={`pf-tile ${count > 0 ? 'pf-tile-on' : ''}`}>
+                  <button
+                    type="button"
+                    className="pf-tile-tap"
+                    aria-label={t('tileA11y', { name: p.name, price: money(price) })}
+                    aria-pressed={count > 0}
+                    onClick={() => onMoreProduct?.(p)}
+                    disabled={full && count === 0}
+                  >
+                    <img className="pf-tile-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <span className="pf-tile-name">{p.name}</span>
+                    <span className="pf-tile-price">
+                      {money(price)}
+                      <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
+                    </span>
+                  </button>
+                  {count > 0 ? (
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: p.name })} onClick={() => onLessProduct?.(p.id)}>
+                        <IconMinus />
+                      </button>
+                      <span className="pf-qty-n" aria-live="polite">
+                        {count}
+                      </span>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => onMoreProduct?.(p)} aria-disabled={full || undefined}>
+                        <IconPlus />
+                      </button>
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : tab === 'packages' ? (
         shownPackages.length === 0 ? (
           <p className="pf-wide-empty">{packages.length === 0 ? t('desk.noPackages') : t('desk.noMatch')}</p>
         ) : (

@@ -20,7 +20,15 @@ export interface BillLine {
   pkg?: { id: string; title: string; priceMinor: number };
   /** Owner, 2026-10-14 — what this line is charged at when the desk typed a price for it; absent means the list price. */
   paidMinor?: number;
+  /**
+   * Owner, 2026-10-14 — a product on the bill (migration 0115). One line per unit, like a service rung up twice,
+   * so the same count and − work; `serviceId` is '' and the line goes to the route as `products`, grouped by id.
+   */
+  product?: { id: string };
 }
+
+/** The bill row's key: a service id, a package id, or `p:` + a product id. */
+export const lineKey = (l: BillLine): string => (l.pkg ? l.pkg.id : l.product ? `p:${l.product.id}` : l.serviceId);
 
 /** What a line is worth before the whole-bill total is typed over: its typed price, else its list price. */
 export const lineMinor = (l: BillLine): number => l.paidMinor ?? l.priceMinor;
@@ -101,12 +109,13 @@ export function BillRows({
       else rows.push({ key: l.pkg.id, name: l.pkg.title, count: 1, minor: l.pkg.priceMinor, list: l.pkg.priceMinor, sub: l.name });
       continue;
     }
-    const same = rows.find((r) => r.key === l.serviceId);
+    const key = lineKey(l);
+    const same = rows.find((r) => r.key === key);
     if (same) {
       same.count += 1;
       same.minor += lineMinor(l);
       same.list += l.priceMinor;
-    } else rows.push({ key: l.serviceId, name: l.name, count: 1, minor: lineMinor(l), list: l.priceMinor });
+    } else rows.push({ key, name: l.name, count: 1, minor: lineMinor(l), list: l.priceMinor });
   }
   const offMinor = listMinor - totalMinor;
   const money = (minor: number) => formatMoney(String(minor));

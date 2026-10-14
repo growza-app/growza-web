@@ -97,6 +97,15 @@ export const IconPackages = () => (
   </svg>
 );
 
+/** Owner, 2026-10-14 — a bottle: what the till sells that nobody performs. */
+export const IconProducts = () => (
+  <svg {...base}>
+    <path d="M9 2h6v3H9z" />
+    <path d="M10 5v3.5L7.5 12v8a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2v-8L14 8.5V5" />
+    <line x1="7.5" y1="15" x2="16.5" y2="15" />
+  </svg>
+);
+
 export const IconLightbulb = () => (
   <svg {...base}>
     <path d="M9 18h6M10 21h4" />

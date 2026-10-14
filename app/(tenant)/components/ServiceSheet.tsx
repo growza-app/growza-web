@@ -3,9 +3,9 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatMoney } from '../lib/api';
-import type { Offer, Service } from '../lib/api-types';
+import type { Offer, Product, Service } from '../lib/api-types';
 import { asMinor, matchItems } from '../lib/service-match';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { productPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { IconSearch } from './icons';
@@ -37,6 +37,9 @@ export function ServiceSheet({
   packages,
   packageOnBillId = null,
   onPickPackage,
+  products,
+  productCounts,
+  onPickProduct,
 }: {
   services: Service[];
   counts: Map<string, number>;
@@ -47,6 +50,10 @@ export function ServiceSheet({
   /** The one already on the bill, so tapping it again takes it off. */
   packageOnBillId?: string | null;
   onPickPackage?: (o: Offer) => void;
+  /** Owner, 2026-10-14 — the branch's shelf, as one more chip: rows that read like services, with how many are left. */
+  products?: Product[];
+  productCounts?: Map<string, number>;
+  onPickProduct?: (p: Product) => void;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -61,15 +68,23 @@ export function ServiceSheet({
   const [kind, setKind] = useState('');
   /** The chip that lists combos rather than one kind of service. Not a category name anyone can type. */
   const PACKAGES = '\u0000packages';
+  const PRODUCTS = '\u0000products';
   const offers = packages ?? [];
+  const shelf = products ?? [];
   const packageMode = kind === PACKAGES;
+  const productMode = kind === PRODUCTS;
   const kinds = useMemo(() => [...new Set(services.map((s) => s.categoryName).filter((c): c is string => Boolean(c)))], [services]);
+  const shownProducts = useMemo(() => {
+    if (!productMode) return [];
+    const q = term.trim();
+    return q ? matchItems(shelf.map((p) => ({ item: p, text: [p.name], priceMinor: asMinor(p.priceMinor) })), q) : shelf;
+  }, [shelf, productMode, term]);
   const shown = useMemo(() => {
-    if (packageMode) return [];
+    if (packageMode || productMode) return [];
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
     const q = term.trim();
     return q ? matchItems(pool.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })), q) : pool;
-  }, [services, kind, term, packageMode]);
+  }, [services, kind, term, packageMode, productMode]);
   /* A combo is found by its own name or by any service in it: "haircut" should reach the cut-and-colour offer. */
   const shownPackages = useMemo(() => {
     if (!packageMode) return [];
@@ -101,16 +116,39 @@ export function ServiceSheet({
           uncategorised and combos on sale is exactly one chip plus Packages, and that arithmetic hid the only
           door to the combos (review, 2026-10-11). Packages earns the row on its own.
         */}
-        {kinds.length > 1 || offers.length > 0 ? (
+        {kinds.length > 1 || offers.length > 0 || shelf.length > 0 ? (
           <div className="pf-chips pf-menu-kinds" role="group" aria-label={nv.serviceKinds}>
-            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : [])].map((k) => (
+            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : []), ...(shelf.length > 0 ? [PRODUCTS] : [])].map((k) => (
               <button key={k || 'all'} type="button" className={`pf-chip ${kind === k ? 'pf-chip-on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>
-                {k === PACKAGES ? nv.packagesChip : k || nv.allServices}
+                {k === PACKAGES ? nv.packagesChip : k === PRODUCTS ? t('productsChip') : k || nv.allServices}
               </button>
             ))}
           </div>
         ) : null}
-        {packageMode ? (
+        {productMode ? (
+          /* A product reads like a service: its picture, its name, its price, and how many are left. */
+          <ul className="pf-client-matches pf-menu-list">
+            {shownProducts.map((p) => {
+              const n = productCounts?.get(p.id) ?? 0;
+              return (
+                <li key={p.id}>
+                  <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPickProduct?.(p)}>
+                    <img className="pf-menu-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <span className="pf-client-match-name">{p.name}</span>
+                    <span className="pf-client-match-sub">
+                      {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}
+                    </span>
+                    {n > 0 ? (
+                      <span className="pf-menu-count" aria-label={t('onBill', { count: n })}>
+                        {n}
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : packageMode ? (
           /* A combo reads like a service: its picture, its name, what it costs. Tapping the one already on
              the bill takes it off, which is the row's own toggle on the full form too. */
           <ul className="pf-client-matches pf-menu-list">
