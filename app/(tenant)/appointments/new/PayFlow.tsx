@@ -658,7 +658,8 @@ export function PayFlow({
             );
             return {
               appointmentId: r.appointmentId,
-              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
+              // Owner, 2026-10-14 — the legs are the services; the products on the bill are the rest of what was paid.
+              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + [...productLines.values()].reduce((sum, p) => sum + p.paidMinor, 0),
               schedulableId: r.schedulableId,
               startAt: r.startAt,
               tokenNo: r.tokenNo ?? null,
