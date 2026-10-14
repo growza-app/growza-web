@@ -291,3 +291,24 @@
   }
 }
 
+
+/* Jira GRW-572 — the Packages tab and a package's row on the bill. */
+@media (min-width: 1101px) {
+  .pf-wide-tabs {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .pf-wide-tiles .pf-tile-mins {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pf-bill-sub {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--muted);
+  }
+}

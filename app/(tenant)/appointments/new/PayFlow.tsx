@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref } from '../../lib/pay-token';
-import type { Appointment, PaymentMode, Provider, Service } from '../../lib/api-types';
+import type { Appointment, Offer, PaymentMode, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
@@ -195,6 +195,8 @@ export function PayFlow({
   /** Whether the branch's people have come back yet — an empty list means nothing until they have. */
   const [providersKnown, setProvidersKnown] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
+  /** Jira GRW-572 — the branch's priced combos, for the wide till's Packages tab. Empty until read, and on a phone. */
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [client, setClient] = useState<Client>({ kind: 'none' });
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
@@ -228,6 +230,16 @@ export function PayFlow({
       .catch(() => {
         if (!gone) setServices([]);
       });
+    if (wide && !visit) {
+      void api
+        .offers(location)
+        .then((rows) => {
+          if (!gone) setOffers(rows.filter((o) => o.active && o.comboPriceMinor && o.serviceIds.length > 0));
+        })
+        .catch(() => {
+          if (!gone) setOffers([]);
+        });
+    }
     // Best effort: the tiles are the branch's most-sold services when the report answers, catalogue order when not.
     void api
       .reportsServices('last_3_months', false, undefined, undefined, undefined, location)
@@ -253,7 +265,7 @@ export function PayFlow({
     return () => {
       gone = true;
     };
-  }, [location, token]);
+  }, [location, token, wide, visit]);
 
   /*
    * Who did it: the booking's own stylist, else the phone's last answer, else the signed-in person's chair.
@@ -378,9 +390,29 @@ export function PayFlow({
     return [...services].sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity));
   }, [services, ranked]);
 
-  const listMinor = lines.reduce((sum, l) => sum + l.priceMinor, 0);
+  /*
+   * Jira GRW-572 — what each line is worth before anything is typed over the total: a single at its list
+   * price, a package's legs at their shares of the package price (the one-page form's `splitComboRupees`
+   * rule: by list price, the remainder on the last leg). `listMinor` is their sum — the bill as drawn — and
+   * a typed total is then spread across THESE amounts, so a discount on the bill lands on the package and the
+   * singles alike.
+   */
+  const baseAmounts = useMemo(() => {
+    const out = lines.map((l) => l.priceMinor);
+    const pkgIds = [...new Set(lines.filter((l) => l.pkg).map((l) => l.pkg!.id))];
+    for (const id of pkgIds) {
+      const at = lines.map((l, i) => (l.pkg?.id === id ? i : -1)).filter((i) => i >= 0);
+      const shares = spread(at.map((i) => lines[i]!), lines[at[0]!]!.pkg!.priceMinor);
+      at.forEach((i, k) => (out[i] = shares[k]!));
+    }
+    return out;
+  }, [lines]);
+  const listMinor = baseAmounts.reduce((sum, m) => sum + m, 0);
   const totalMinor = override ?? listMinor;
-  const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId).length;
+  /** The package on the bill, if any: one at a time, as on the one-page form. */
+  const pkgOnBill = lines.find((l) => l.pkg)?.pkg ?? null;
+  // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
+  const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg).length;
   const full = lines.length >= MAX_LINES;
 
   /*
@@ -401,10 +433,34 @@ export function PayFlow({
     setOverride(null);
   };
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
-  const oneLess = (serviceId: string) => {
+  const oneLess = (key: string) => {
     setLines((prev) => {
-      const at = prev.map((l) => l.serviceId).lastIndexOf(serviceId);
+      // A package's row: every leg goes with it.
+      if (prev.some((l) => l.pkg?.id === key)) return prev.filter((l) => l.pkg?.id !== key);
+      const at = prev.map((l) => (l.pkg ? '' : l.serviceId)).lastIndexOf(key);
       return at < 0 ? prev : [...prev.slice(0, at), ...prev.slice(at + 1)];
+    });
+    setOverride(null);
+  };
+  /*
+   * Jira GRW-572 — a package joins the bill beside the singles (owner, 2026-10-07: a facial rung up, then a package
+   * picked, must not lose the facial). One package at a time: picking another replaces it; picking the same one
+   * again takes it off. Its legs are lines like any other — the route gets them with their shares and the offer id.
+   */
+  const pickPackage = (o: Offer) => {
+    if (!services) return;
+    const byId = new Map(services.map((s) => [s.id, s]));
+    const legs = o.serviceIds.map((id) => byId.get(id)).filter((s): s is Service => Boolean(s));
+    const pkg = { id: o.id, title: o.title, priceMinor: Number(o.comboPriceMinor ?? 0) };
+    setLines((prev) => {
+      const singles = prev.filter((l) => !l.pkg);
+      if (prev.some((l) => l.pkg?.id === o.id) || legs.length === 0) return singles;
+      if (singles.length + legs.length > MAX_LINES) {
+        felt(BUZZ.tooMany);
+        return prev;
+      }
+      felt(BUZZ.added);
+      return [...singles, ...legs.map((s) => ({ ...toLine(s), pkg }))];
     });
     setOverride(null);
   };
@@ -428,7 +484,7 @@ export function PayFlow({
     felt(BUZZ.paid);
     setSaving(mode);
     setError(null);
-    const amounts = spread(lines, totalMinor);
+    const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
     const legs = lines.map((l, i) => ({ serviceId: l.serviceId, paidAmountMinor: amounts[i]! }));
     try {
       /*
@@ -485,6 +541,7 @@ export function PayFlow({
             const common = {
               ...who,
               services: legs,
+              ...(pkgOnBill ? { offerId: pkgOnBill.id } : {}),
               paymentMode: mode,
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
@@ -525,8 +582,15 @@ export function PayFlow({
           when,
           tokenNo,
           stylist,
-          singles: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })),
-          pkg: null,
+          singles: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => !lines[i]!.pkg),
+          pkg: pkgOnBill
+            ? {
+                title: pkgOnBill.title,
+                services: lines.filter((l) => l.pkg).map((l) => l.name),
+                paidMinor: amounts.reduce((sum, a, i) => sum + (lines[i]!.pkg ? a : 0), 0),
+                separateMinor: lines.filter((l) => l.pkg).reduce((sum, l) => sum + l.priceMinor, 0),
+              }
+            : null,
           totalMinor: paidMinor,
           paidBy: modeWord(mode),
         },
@@ -545,7 +609,7 @@ export function PayFlow({
         },
         money,
       );
-      const names = [...new Set(lines.map((l) => l.name))].join(' + ');
+      const names = [...new Set(lines.map((l) => l.pkg?.title ?? l.name))].join(' + ');
       setSale({
         appointmentId: result.appointmentId,
         tokenNo,
@@ -920,7 +984,17 @@ export function PayFlow({
               <div className="empty">{nv.noServicesYet}</div>
             </section>
           ) : (
-            <DeskServiceGrid services={ranked_all} countOf={countOf} onMore={addOne} onLess={oneLess} full={full} money={money} />
+            <DeskServiceGrid
+              services={ranked_all}
+              countOf={countOf}
+              onMore={addOne}
+              onLess={oneLess}
+              full={full}
+              money={money}
+              packages={offers.filter((o) => o.serviceIds.every((id) => services.some((s) => s.id === id)))}
+              packageOnBillId={pkgOnBill?.id ?? null}
+              onPickPackage={pickPackage}
+            />
           )}
           <aside className="pf-wide-right">
             <h2 className="pf-wide-h">{t('billTitle')}</h2>

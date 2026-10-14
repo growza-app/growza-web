@@ -12,6 +12,12 @@ export interface BillLine {
   serviceId: string;
   name: string;
   priceMinor: number;
+  /**
+   * Jira GRW-572 — the package this line is a leg of, when it is one. Its legs are sent as the service lines
+   * the route takes (each with its share of the package price) plus the `offerId`; on the bill they read as
+   * ONE row at the package price, and taking that row off takes every leg with it.
+   */
+  pkg?: { id: string; title: string; priceMinor: number };
 }
 
 /**
@@ -34,7 +40,8 @@ export function BillCard({
   listMinor: number;
   /** What is being taken — the list price, or the figure typed over it. */
   totalMinor: number;
-  onLess: (serviceId: string) => void;
+  /** The row's key: a service id, or a package id (which takes every leg off). */
+  onLess: (key: string) => void;
   onClose: () => void;
 }) {
   const t = useTranslations('payFlow');
@@ -71,17 +78,23 @@ export function BillRows({
   lines: readonly BillLine[];
   listMinor: number;
   totalMinor: number;
-  onLess: (serviceId: string) => void;
+  onLess: (key: string) => void;
 }) {
   const t = useTranslations('payFlow');
-  // Same service rung up twice is one row with a count, as the receipt groups it.
-  const rows: Array<{ serviceId: string; name: string; count: number; minor: number }> = [];
+  // Same service rung up twice is one row with a count, as the receipt groups it. A package is one row too.
+  const rows: Array<{ key: string; name: string; count: number; minor: number; sub?: string }> = [];
   for (const l of lines) {
-    const same = rows.find((r) => r.serviceId === l.serviceId);
+    if (l.pkg) {
+      const same = rows.find((r) => r.key === l.pkg!.id);
+      if (same) same.sub = [same.sub, l.name].filter(Boolean).join(', ');
+      else rows.push({ key: l.pkg.id, name: l.pkg.title, count: 1, minor: l.pkg.priceMinor, sub: l.name });
+      continue;
+    }
+    const same = rows.find((r) => r.key === l.serviceId);
     if (same) {
       same.count += 1;
       same.minor += l.priceMinor;
-    } else rows.push({ serviceId: l.serviceId, name: l.name, count: 1, minor: l.priceMinor });
+    } else rows.push({ key: l.serviceId, name: l.name, count: 1, minor: l.priceMinor });
   }
   const offMinor = listMinor - totalMinor;
   const money = (minor: number) => formatMoney(String(minor));
@@ -90,13 +103,14 @@ export function BillRows({
     <>
         <ul className="pf-bill-lines">
           {rows.map((r) => (
-            <li key={r.serviceId} className="pf-bill-line">
+            <li key={r.key} className="pf-bill-line">
               <span className="pf-bill-name">
                 {r.name}
                 {r.count > 1 ? <span className="pf-bill-times"> × {r.count}</span> : null}
+                {r.sub ? <span className="pf-bill-sub">{r.sub}</span> : null}
               </span>
               <span className="pf-bill-amount">{money(r.minor)}</span>
-              <button type="button" className="pf-bill-less" aria-label={t('oneLess', { name: r.name })} onClick={() => onLess(r.serviceId)}>
+              <button type="button" className="pf-bill-less" aria-label={t('oneLess', { name: r.name })} onClick={() => onLess(r.key)}>
                 <IconMinus />
               </button>
             </li>

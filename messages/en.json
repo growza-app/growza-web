@@ -2618,7 +2618,8 @@
       "waiting": "Waiting",
       "withStylist": "With stylist",
       "booked": "Booked",
-      "emptyBill": "Tap a service to start the bill."
+      "emptyBill": "Tap a service to start the bill.",
+      "packages": "Packages ({n})"
     }
   },
   "help": {

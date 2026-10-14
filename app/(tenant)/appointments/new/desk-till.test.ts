@@ -32,7 +32,11 @@ describe('the wide till', () => {
   it('has three panels and no second save path', () => {
     for (const cls of ['pf-wide-left', 'pf-wide-mid', 'pf-wide-right']) expect(flow + grid).toContain(cls);
     expect(flow).toMatch(/<DeskUnpaid location=\{location\} timezone=\{timezone\}/);
-    expect(flow).toMatch(/<DeskServiceGrid services=\{ranked_all\} countOf=\{countOf\} onMore=\{addOne\} onLess=\{oneLess\}/);
+    expect(flow).toMatch(/<DeskServiceGrid\s+services=\{ranked_all\}\s+countOf=\{countOf\}\s+onMore=\{addOne\}\s+onLess=\{oneLess\}/);
+    // A package is lines with a `pkg`, sent as its legs plus the offer id; its legs never count on a tile.
+    expect(flow).toMatch(/\.\.\.\(pkgOnBill \? \{ offerId: pkgOnBill\.id \} : \{\}\)/);
+    expect(flow).toMatch(/const countOf = \(serviceId: string\) => lines\.filter\(\(l\) => l\.serviceId === serviceId && !l\.pkg\)\.length;/);
+    expect(flow).toMatch(/const amounts = spread\(baseAmounts\.map/);
     expect(flow).toMatch(/<BillRows lines=\{lines\} listMinor=\{listMinor\} totalMinor=\{totalMinor\} onLess=\{oneLess\} \/>/);
     // The payment tiles are one element drawn in two places; neither the grid nor the list writes anything.
     expect((flow.match(/\{payTiles\}/g) ?? []).length).toBe(2);
