@@ -147,7 +147,7 @@ h1.sheet-title {
   background: var(--slate-soft);
 }
 .bk-sheet-actions .sheet-danger svg {
-  background: #fdecec;
+  background: var(--danger-soft);
 }
 /* Owner-app audit, 2026-10-10 — Cancel asks first: the question, then Keep (focused) and Yes. */
 .bk-cancel-ask {
@@ -157,7 +157,7 @@ h1.sheet-title {
   margin: 0;
   padding: var(--sp-3) var(--sp-4) var(--sp-2);
   font-weight: 600;
-  color: #b91c1c;
+  color: var(--danger);
 }
 .bk-cancel-ask .sheet-item {
   border-top: 1px solid var(--border);

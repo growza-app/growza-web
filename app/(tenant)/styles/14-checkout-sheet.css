@@ -197,8 +197,8 @@
 }
 
 .checkout-icon-btn-danger {
-  background: #fde8e8;
-  color: #b91c1c;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .checkout-icon-btn-spacer {

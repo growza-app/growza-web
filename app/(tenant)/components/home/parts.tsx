@@ -35,11 +35,11 @@ export function rupees(minor: number): string {
  * initials are 12–13px). Amber was #b76e12 (3.64:1) and blue #2563eb (4.48:1).
  */
 const TINTS = [
-  { bg: '#e7f6ee', fg: '#16794a' },
-  { bg: '#e8effd', fg: '#1d4ed8' },
-  { bg: '#fdf3e3', fg: '#8a5a0f' },
-  { bg: '#efebfb', fg: '#6d4fc4' },
-  { bg: '#fdeceb', fg: '#c53b3b' },
+  { bg: 'var(--accent-soft)', fg: 'var(--accent-deep)' },
+  { bg: 'var(--blue-soft)', fg: 'var(--blue)' },
+  { bg: 'var(--amber-soft)', fg: 'var(--amber-ink)' },
+  { bg: 'var(--purple-soft)', fg: 'var(--purple-deep)' },
+  { bg: 'var(--danger-soft)', fg: 'var(--danger)' },
 ];
 export function tintFor(key: string) {
   let h = 0;

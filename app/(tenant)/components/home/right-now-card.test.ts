@@ -292,20 +292,25 @@ describe('the Bookings list is readable', () => {
     const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
     return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
   };
+  const css = code('../../styles/83-role-home.css');
+  /* Accent discipline (2026-10-14) — colours are tokens now, so a measurement resolves var(--x) through 00-base.css first. */
+  const tokens = new Map<string, string>();
+  for (const [, name, hex] of (code('../../styles/00-base.css') + css).matchAll(/(--[\w-]+):\s*(#[0-9a-f]{6})\b/gi)) tokens.set(name!, hex!.toLowerCase());
+  const hex = (v: string) => {
+    const m = v.trim().match(/^var\((--[\w-]+)\)$/);
+    const out = m ? tokens.get(m[1]!) : v.trim();
+    if (!out) throw new Error(`${v} is not a hex colour or a token in 00-base.css / 83-role-home.css`);
+    return out;
+  };
   const ratio = (a: string, b: string) => {
-    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    const [hi, lo] = [lum(hex(a)), lum(hex(b))].sort((x, y) => y - x);
     return (hi! + 0.05) / (lo! + 0.05);
   };
-  const css = code('../../styles/83-role-home.css');
-  const muted = css.match(/--hm-muted:\s*(#[0-9a-f]{6})/i)![1]!;
 
   it('every status pill is 4.5:1 or better', () => {
-    const pills = [...css.matchAll(/\.hm-pill-(\w+) \{ background: (#[0-9a-f]{6}); color: ([^;]+); \}/gi)];
+    const pills = [...css.matchAll(/\.hm-pill-(\w+) \{ background: ([^;]+); color: ([^;]+); \}/gi)];
     expect(pills.length).toBeGreaterThanOrEqual(5);
-    for (const [, tone, bg, fgRaw] of pills) {
-      const fg = fgRaw === 'var(--hm-muted)' ? muted : fgRaw === 'var(--accent-deep)' ? '#166534' : fgRaw!;
-      expect(ratio(fg, bg!), `.hm-pill-${tone}`).toBeGreaterThanOrEqual(4.5);
-    }
+    for (const [, tone, bg, fg] of pills) expect(ratio(fg!, bg!), `.hm-pill-${tone}`).toBeGreaterThanOrEqual(4.5);
   });
 
   it('every avatar initial is 4.5:1 or better on its tint', () => {

@@ -414,8 +414,8 @@
 }
 
 .cat-delete-btn:hover {
-  color: #b91c1c;
-  background: #fde4e4;
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .cat-scale {

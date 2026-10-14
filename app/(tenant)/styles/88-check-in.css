@@ -47,9 +47,9 @@
 .ci-state:empty {
   display: none;
 }
-.ci-state-green { color: #166534; }
-.ci-state-amber { color: #8a5a0f; }
-.ci-state-rose { color: #b91c1c; }
+.ci-state-green { color: var(--accent-deep); }
+.ci-state-amber { color: var(--amber-ink); }
+.ci-state-rose { color: var(--danger); }
 .ci-state-slate { color: var(--hm-faint, #64748b); }
 .ci-hint {
   margin: var(--sp-1) 0 0;
@@ -59,7 +59,7 @@
 .ci-error {
   margin: var(--sp-2) 0 0;
   font-size: 0.875rem;
-  color: #b91c1c;
+  color: var(--danger);
 }
 @media (prefers-reduced-motion: reduce) {
   .ci-button { transition: none; }
@@ -108,7 +108,7 @@
 }
 .ci-no {
   background: #fff;
-  color: #b91c1c;
+  color: var(--danger);
   border-color: #f0c2c2;
 }
 .ci-needs-moving {
@@ -117,7 +117,7 @@
   align-items: center;
   gap: var(--sp-2);
   background: #fdf6ec;
-  color: #8a5a0f;
+  color: var(--amber-ink);
 }
 .ci-needs-moving a {
   font-weight: 700;
@@ -146,7 +146,7 @@
   color: var(--hm-faint, #64748b);
 }
 .ci-pin.is-set {
-  color: #166534;
+  color: var(--accent-deep);
   font-weight: 650;
 }
 /* The status and its one check, on a single line: the numbers behind it are not shown (nobody can read a pin). */

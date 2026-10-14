@@ -58,10 +58,10 @@
 .import-need {
   margin-top: var(--sp-3);
   padding: 10px 12px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-line);
   border-radius: var(--radius-sm);
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--danger-soft);
+  color: var(--danger);
   font-size: 0.875rem;
 }
 

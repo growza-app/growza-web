@@ -552,7 +552,7 @@ export function CheckoutSheet({
             ))}
           </div>
 
-          {error && <div style={{ padding: '10px 0 0', fontSize: 13, color: '#b91c1c' }}>{error}</div>}
+          {error && <div style={{ padding: '10px 0 0', fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
         </div>
 
         <div className="modal-actions">

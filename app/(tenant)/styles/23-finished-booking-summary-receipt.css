@@ -191,11 +191,11 @@
 }
 
 .sheet-danger {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .sheet-danger svg {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 /* "They didn't come" is a neutral record, not a success — a green tick-family

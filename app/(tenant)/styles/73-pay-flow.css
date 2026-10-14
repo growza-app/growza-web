@@ -584,8 +584,8 @@
 .pf-error {
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius-sm);
-  background: #fdecec;
-  color: #991b1b;
+  background: var(--danger-soft);
+  color: var(--danger-deep);
   font-size: 1rem;
   font-weight: 600;
 }
@@ -600,7 +600,7 @@
 .pf-miss {
   grid-column: 2;
   margin-top: calc(var(--sp-1) * -1);
-  color: #991b1b;
+  color: var(--danger-deep);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -614,7 +614,7 @@
 /* The control itself, so the eye finds it from the far end of a long screen. */
 .pf-bad .pf-who-search,
 .pf-bad .pf-who-add {
-  box-shadow: inset 0 0 0 2px #991b1b;
+  box-shadow: inset 0 0 0 2px var(--danger-deep);
 }
 
 .pf-error-tray {
@@ -725,23 +725,23 @@
 }
 
 .pf-pay-cash .pf-pay-icon {
-  background: #d7edde;
+  background: var(--accent-soft);
   color: var(--accent-deep);
 }
 
 .pf-pay-upi .pf-pay-icon {
-  background: #e8ddfc;
+  background: var(--purple-soft);
   color: var(--purple-deep);
 }
 
 .pf-pay-card .pf-pay-icon {
-  background: #dbe6fb;
+  background: var(--blue-soft);
   color: var(--blue);
 }
 
 .pf-pay-other .pf-pay-icon {
-  background: #fae3c2;
-  color: #c2650a;
+  background: var(--amber-soft);
+  color: var(--amber);
 }
 
 .pf-pay-icon svg {

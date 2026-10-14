@@ -255,7 +255,7 @@
 
 /* The same red as every other destructive control in the product. */
 .svc-swipe-delete {
-  background: #b91c1c;
+  background: var(--danger);
 }
 
 .svc-swipe-hint {

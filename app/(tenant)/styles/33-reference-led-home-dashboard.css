@@ -104,7 +104,7 @@
 .summary-metric-icon svg { width: 1.375rem; height: 1.375rem; }
 .summary-metric strong { font-size: 1.5rem; line-height: 1.15; letter-spacing: -.03em; white-space: nowrap; }
 .summary-metric > span:not(.summary-metric-icon) { font-size: 0.875rem; margin-top: 4px; white-space: nowrap; }
-.metric-bookings .summary-metric-icon { background: #dcf8e7; color: #16a34a; }
+.metric-bookings .summary-metric-icon { background: var(--accent-soft); color: var(--accent); }
 .metric-customers .summary-metric-icon { background: #fff0e0; color: #f97316; }
 .metric-revenue .summary-metric-icon { background: #e3f8eb; color: #159447; }
 
@@ -180,7 +180,7 @@
 /* ---- bookings-today chart ---- */
 .rail-trend { font-size: 0.875rem; font-weight: 650; padding: 3px 8px; border-radius: 999px; }
 .rail-trend.up { background: var(--accent-soft); color: var(--accent-deep); }
-.rail-trend.down { background: #fde3e3; color: #c0362c; }
+.rail-trend.down { background: var(--danger-soft); color: var(--danger); }
 .rail-chart-fill { fill: #7bd39c; fill-opacity: 0.18; stroke: none; }
 .rail-chart-line { fill: none; stroke: #6ec886; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .rail-chart-dot { fill: var(--surface); stroke: #6ec886; stroke-width: 2; }
