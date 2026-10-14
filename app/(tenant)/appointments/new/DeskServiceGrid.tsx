@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useNewVisitCopy } from '../../lib/use-copy';
 import { useMemo, useState } from 'react';
 import type { Offer, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
@@ -43,8 +44,17 @@ export function DeskServiceGrid({
   onPickPackage?: (o: Offer) => void;
 }) {
   const t = useTranslations('payFlow');
+  const nv = useNewVisitCopy();
   const [term, setTerm] = useState('');
   const [tab, setTab] = useState<'services' | 'packages'>('services');
+  /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
+  const [kind, setKind] = useState('');
+  const kinds = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of services) if (s.categoryName) counts.set(s.categoryName, (counts.get(s.categoryName) ?? 0) + 1);
+    // Catalogue order: the first service of each category decides where its chip sits.
+    return [...counts.entries()].map(([name, n]) => ({ name, n }));
+  }, [services]);
   const byId = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
   /*
    * The same matcher every other search in the app uses (lib/service-match.ts): spelling tolerance, words in any
@@ -61,13 +71,14 @@ export function DeskServiceGrid({
   }, [packages, term, byId]);
 
   const shown = useMemo(() => {
+    const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
     const q = term.trim();
-    if (!q) return services;
+    if (!q) return pool;
     return matchItems(
-      services.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
+      pool.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
       q,
     );
-  }, [services, term]);
+  }, [services, term, kind]);
 
   return (
     <section className="pf-wide-mid" aria-label={t('services')}>
@@ -92,6 +103,20 @@ export function DeskServiceGrid({
           autoComplete="off"
         />
       </label>
+      {tab === 'services' && kinds.length > 1 ? (
+        <div className="pf-chips pf-wide-kinds" role="group" aria-label={nv.serviceKinds}>
+          <button type="button" className={`pf-chip ${kind === '' ? 'pf-chip-on' : ''}`} aria-pressed={kind === ''} onClick={() => setKind('')}>
+            {nv.allServices}
+            <span className="pf-wide-kind-n">{services.length}</span>
+          </button>
+          {kinds.map((k) => (
+            <button key={k.name} type="button" className={`pf-chip ${kind === k.name ? 'pf-chip-on' : ''}`} aria-pressed={kind === k.name} onClick={() => setKind(k.name)}>
+              {k.name}
+              <span className="pf-wide-kind-n">{k.n}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
       {tab === 'packages' ? (
         shownPackages.length === 0 ? (
           <p className="pf-wide-empty">{t('desk.noMatch')}</p>
