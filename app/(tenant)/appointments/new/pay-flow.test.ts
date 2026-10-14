@@ -172,7 +172,7 @@ describe('Record payment in three taps', () => {
     // eight photos past the eye. A bar under the two people rows is where a search is looked for.
     expect(flow).toMatch(/className="pf-who-search pf-find-service" onClick=\{\(\) => setMenuOpen\(true\)\}/);
     expect(flow).not.toMatch(/pf-tile-more/);
-    expect(menu).toMatch(/matchItems\(pool\.map/); // the same spelling tolerance the full form has
+    expect(menu).toMatch(/matchItems\(\s*pool\.map/); // the same spelling tolerance the full form has
     expect(menu).toMatch(/servicePhotoUrl\(s\)/);
   });
 
