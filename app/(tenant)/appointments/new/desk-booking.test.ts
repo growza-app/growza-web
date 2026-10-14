@@ -47,11 +47,12 @@ describe('New booking on a wide desk', () => {
     expect(sheet).toMatch(/\{trayTotal \? <div className="wi-tray-row">\{trayTotal\}\{goButton\}<\/div> : goButton\}/);
   });
 
-  it('keeps the left column still whatever the right one answers: Waiting greys the stylists, never removes them', () => {
+  it('asks the stylist under What now?, so a tap on the right never changes the left column', () => {
     const desk = sheet.slice(sheet.indexOf('if (deskForm && onForm) {'), sheet.indexOf('return (\n    <>\n      {/* Jira GRW-478'));
-    expect(desk).not.toMatch(/queueing \? null : stylistField/);
-    expect(desk).toMatch(/className=\{queueing \? 'wi-desk-stylist-off' : undefined\}[^>]*>\s*\{stylistField\}/);
-    expect(css).toMatch(/\.wi-desk-stylist-off \.wi-stylist-bar \{[^}]*pointer-events: none/);
+    const left = desk.slice(desk.indexOf('<aside className="pf-wide-left">'), desk.indexOf('</aside>'));
+    expect(left).not.toContain('stylistField');
+    expect(desk).toMatch(/\{whenChoices\}\s*\{queueing \? null : <div className="wi-desk-stylist">\{stylistField\}<\/div>\}/);
+    expect(css).toMatch(/\.wi-desk \.wi-desk-stylist \{\s*order: 1;/);
   });
 
   it('lists who is in today as rows that only say, so a half-filled booking is never lost to a tap', () => {
@@ -62,7 +63,7 @@ describe('New booking on a wide desk', () => {
   });
 
   it('has its words in both languages', () => {
-    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskStylistLater']) {
+    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday']) {
       expect((en.newVisit as Record<string, string>)[key]).toBeTruthy();
       expect((hi.newVisit as Record<string, string>)[key]).toBeTruthy();
     }
