@@ -354,16 +354,30 @@
     overflow: visible;
   }
 
+  /* The phone's own two (owner, 2026-10-08): tinted pieces, amber for the reversible one, red for the final one. */
   .sheet-inline .sheet-danger-row {
     flex: 1;
     min-height: 38px;
     font-size: 0.875rem;
-    border: 1px solid var(--border);
+    font-weight: 600;
+    border: 0;
     border-radius: var(--radius-sm);
   }
 
   .sheet-inline .sheet-danger-row + .sheet-danger-row {
-    border-top: 1px solid var(--border);
+    border-top: 0;
+  }
+
+  .sheet-inline .sheet-danger-warn {
+    background: var(--amber-soft);
+  }
+
+  .sheet-inline .sheet-danger-delete {
+    background: #fdeaea;
+  }
+
+  .sheet-inline .sheet-danger-row:hover {
+    filter: brightness(0.96);
   }
 
   .svc-desk-nothing {
