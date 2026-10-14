@@ -1514,6 +1514,31 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Owner, 2026-10-14 — the amount is a tap that prices the row; a dotted underline says so without a second icon. */
+.pf-bill-amount-tap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 2.75rem;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.pf-bill-was {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .pf-bill-less {
   width: 2.75rem;
   height: 2.75rem;

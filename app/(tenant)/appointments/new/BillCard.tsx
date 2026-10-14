@@ -18,7 +18,12 @@ export interface BillLine {
    * ONE row at the package price, and taking that row off takes every leg with it.
    */
   pkg?: { id: string; title: string; priceMinor: number };
+  /** Owner, 2026-10-14 — what this line is charged at when the desk typed a price for it; absent means the list price. */
+  paidMinor?: number;
 }
+
+/** What a line is worth before the whole-bill total is typed over: its typed price, else its list price. */
+export const lineMinor = (l: BillLine): number => l.paidMinor ?? l.priceMinor;
 
 /**
  * What is on the bill, in full (owner, 2026-10-10).
@@ -34,6 +39,7 @@ export function BillCard({
   totalMinor,
   onLess,
   onClose,
+  onPrice,
 }: {
   lines: readonly BillLine[];
   /** What the services list at, before anything was changed by hand. */
@@ -43,6 +49,8 @@ export function BillCard({
   /** The row's key: a service id, or a package id (which takes every leg off). */
   onLess: (key: string) => void;
   onClose: () => void;
+  /** Tapping a row's amount asks for a price for that row. Absent: the amount is plain text. */
+  onPrice?: (key: string) => void;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -59,7 +67,7 @@ export function BillCard({
             {nv.close}
           </button>
         </div>
-        <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={onLess} />
+        <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={onLess} onPrice={onPrice} />
       </div>
     </div>
   );
@@ -74,27 +82,31 @@ export function BillRows({
   listMinor,
   totalMinor,
   onLess,
+  onPrice,
 }: {
   lines: readonly BillLine[];
   listMinor: number;
   totalMinor: number;
   onLess: (key: string) => void;
+  onPrice?: (key: string) => void;
 }) {
   const t = useTranslations('payFlow');
   // Same service rung up twice is one row with a count, as the receipt groups it. A package is one row too.
-  const rows: Array<{ key: string; name: string; count: number; minor: number; sub?: string }> = [];
+  // `minor` is what the row is charged; `list` what it would be at list prices, shown struck through when they differ.
+  const rows: Array<{ key: string; name: string; count: number; minor: number; list: number; sub?: string }> = [];
   for (const l of lines) {
     if (l.pkg) {
       const same = rows.find((r) => r.key === l.pkg!.id);
       if (same) same.sub = [same.sub, l.name].filter(Boolean).join(', ');
-      else rows.push({ key: l.pkg.id, name: l.pkg.title, count: 1, minor: l.pkg.priceMinor, sub: l.name });
+      else rows.push({ key: l.pkg.id, name: l.pkg.title, count: 1, minor: l.pkg.priceMinor, list: l.pkg.priceMinor, sub: l.name });
       continue;
     }
     const same = rows.find((r) => r.key === l.serviceId);
     if (same) {
       same.count += 1;
-      same.minor += l.priceMinor;
-    } else rows.push({ key: l.serviceId, name: l.name, count: 1, minor: l.priceMinor });
+      same.minor += lineMinor(l);
+      same.list += l.priceMinor;
+    } else rows.push({ key: l.serviceId, name: l.name, count: 1, minor: lineMinor(l), list: l.priceMinor });
   }
   const offMinor = listMinor - totalMinor;
   const money = (minor: number) => formatMoney(String(minor));
@@ -109,7 +121,14 @@ export function BillRows({
                 {r.count > 1 ? <span className="pf-bill-times"> × {r.count}</span> : null}
                 {r.sub ? <span className="pf-bill-sub">{r.sub}</span> : null}
               </span>
-              <span className="pf-bill-amount">{money(r.minor)}</span>
+              {onPrice ? (
+                <button type="button" className="pf-bill-amount pf-bill-amount-tap" aria-label={t('desk.priceFor', { name: r.name })} onClick={() => onPrice(r.key)}>
+                  {r.minor !== r.list ? <s className="pf-bill-was">{money(r.list)}</s> : null}
+                  {money(r.minor)}
+                </button>
+              ) : (
+                <span className="pf-bill-amount">{money(r.minor)}</span>
+              )}
               <button type="button" className="pf-bill-less" aria-label={t('oneLess', { name: r.name })} onClick={() => onLess(r.key)}>
                 <IconMinus />
               </button>

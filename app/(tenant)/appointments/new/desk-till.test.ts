@@ -37,7 +37,7 @@ describe('the wide till', () => {
     expect(flow).toMatch(/\.\.\.\(pkgOnBill \? \{ offerId: pkgOnBill\.id \} : \{\}\)/);
     expect(flow).toMatch(/const countOf = \(serviceId: string\) => lines\.filter\(\(l\) => l\.serviceId === serviceId && !l\.pkg\)\.length;/);
     expect(flow).toMatch(/const amounts = spread\(baseAmounts\.map/);
-    expect(flow).toMatch(/<BillRows lines=\{lines\} listMinor=\{listMinor\} totalMinor=\{totalMinor\} onLess=\{oneLess\} \/>/);
+    expect(flow).toMatch(/<BillRows lines=\{lines\} listMinor=\{listMinor\} totalMinor=\{totalMinor\} onLess=\{oneLess\} onPrice=\{openRowKeypad\} \/>/);
     // The payment tiles are one element drawn in two places; neither the grid nor the list writes anything.
     expect((flow.match(/\{payTiles\}/g) ?? []).length).toBe(2);
     for (const src of [grid, unpaid]) {
@@ -89,6 +89,20 @@ describe('the wide till', () => {
     expect(wide).toMatch(/className="pf-wide-link" onClick=\{\(\) => setBillOpen\(true\)\}/);
     expect(wide).toMatch(/\{t\('onBill', \{ count: lines\.length \}\)\} · \{t\('viewDetails'\)\}/);
     expect(wide).toMatch(/\{billOpen && lines\.length > 0 \? \(\s*<BillCard/);
+  });
+
+  it('prices one row from a tap on its amount, and says the total can be changed (owner, 2026-10-14)', () => {
+    const bill = here('./BillCard.tsx');
+    expect(bill).toMatch(/export const lineMinor = \(l: BillLine\): number => l\.paidMinor \?\? l\.priceMinor;/);
+    expect(bill).toMatch(/className="pf-bill-amount pf-bill-amount-tap" aria-label=\{t\('desk\.priceFor', \{ name: r\.name \}\)\} onClick=\{\(\) => onPrice\(r\.key\)\}/);
+    // The row's figure is spread over its lines by list price; a package row sets the package price; the whole-bill override clears.
+    expect(flow).toMatch(/const setRowPrice = \(key: string, minor: number\) => \{[\s\S]*?const shares = spread\(at\.map\(\(i\) => prev\[i\]!\), minor\);[\s\S]*?setOverride\(null\);\s*\};/);
+    expect(flow).toMatch(/const out = lines\.map\(\(l\) => lineMinor\(l\)\);/);
+    // Both bills offer it: the Desk's panel and card, and the phone's card.
+    expect((flow.match(/onPrice=\{openRowKeypad\}/g) ?? []).length).toBe(3);
+    expect(flow).toMatch(/className="pf-wide-total-edit">\s*<IconEdit \/>\s*\{t\('changeTotal'\)\}/);
+    expect(en.payFlow.desk.priceFor).toMatch(/\{name\}/);
+    expect(hi.payFlow.desk.priceFor).toMatch(/\{name\}/);
   });
 
   it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {

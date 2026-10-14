@@ -18,12 +18,12 @@ import { PAYMENT_MODES } from '../../lib/payment-modes';
 import { useLabel } from '../../components/LabelsProvider';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
 import { useSession } from '../../components/SessionProvider';
-import { IconArrowLeft, IconClose, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
+import { IconArrowLeft, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
 import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
 import { ServiceSheet } from '../../components/ServiceSheet';
-import { BillCard, BillRows, type BillLine as Line } from './BillCard';
+import { BillCard, BillRows, lineMinor, type BillLine as Line } from './BillCard';
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
@@ -201,6 +201,8 @@ export function PayFlow({
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
   const [keypad, setKeypad] = useState<string | null>(null);
+  /** Owner, 2026-10-14 — the bill row the keypad is pricing; null means it is pricing the whole total. */
+  const [keypadFor, setKeypadFor] = useState<{ key: string; name: string; list: number } | null>(null);
   const [whoOpen, setWhoOpen] = useState<false | 'find' | 'add'>(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
@@ -398,7 +400,7 @@ export function PayFlow({
    * singles alike.
    */
   const baseAmounts = useMemo(() => {
-    const out = lines.map((l) => l.priceMinor);
+    const out = lines.map((l) => lineMinor(l));
     const pkgIds = [...new Set(lines.filter((l) => l.pkg).map((l) => l.pkg!.id))];
     for (const id of pkgIds) {
       const at = lines.map((l, i) => (l.pkg?.id === id ? i : -1)).filter((i) => i >= 0);
@@ -442,6 +444,37 @@ export function PayFlow({
     });
     setOverride(null);
   };
+  /*
+   * Owner, 2026-10-14 — a price typed for one row. A single's row may be two of the same service, so the typed
+   * figure is the row's total, spread over its lines by list price; a package row's figure is the package price.
+   * Either way the whole-bill override is cleared: the bill is now the sum of what each line says.
+   */
+  const setRowPrice = (key: string, minor: number) => {
+    setLines((prev) => {
+      if (prev.some((l) => l.pkg?.id === key)) return prev.map((l) => (l.pkg?.id === key ? { ...l, pkg: { ...l.pkg!, priceMinor: minor } } : l));
+      const at = prev.map((l, i) => (!l.pkg && l.serviceId === key ? i : -1)).filter((i) => i >= 0);
+      if (at.length === 0) return prev;
+      const shares = spread(at.map((i) => prev[i]!), minor);
+      const next = [...prev];
+      at.forEach((i, k) => (next[i] = { ...prev[i]!, paidMinor: shares[k]! }));
+      return next;
+    });
+    setOverride(null);
+  };
+  const openRowKeypad = (key: string) => {
+    const pkgLine = lines.find((l) => l.pkg?.id === key);
+    if (pkgLine) {
+      setKeypadFor({ key, name: pkgLine.pkg!.title, list: pkgLine.pkg!.priceMinor });
+      setKeypad(String(Math.round(pkgLine.pkg!.priceMinor / 100)));
+      return;
+    }
+    const own = lines.filter((l) => !l.pkg && l.serviceId === key);
+    if (own.length === 0) return;
+    const list = own.reduce((sum, l) => sum + l.priceMinor, 0);
+    setKeypadFor({ key, name: own[0]!.name, list });
+    setKeypad(String(Math.round(own.reduce((sum, l) => sum + lineMinor(l), 0) / 100)));
+  };
+
   /*
    * Jira GRW-572 — a package joins the bill beside the singles (owner, 2026-10-07: a facial rung up, then a package
    * picked, must not lose the facial). One package at a time: picking another replaces it; picking the same one
@@ -1020,7 +1053,7 @@ export function PayFlow({
             {lines.length === 0 ? (
               <p className="pf-wide-empty">{t('desk.emptyBill')}</p>
             ) : (
-              <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} />
+              <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} onPrice={openRowKeypad} />
             )}
             <button
               type="button"
@@ -1029,7 +1062,14 @@ export function PayFlow({
               onClick={() => setKeypad(String(Math.round(totalMinor / 100)))}
               disabled={lines.length === 0}
             >
-              <span>{t('total')}</span>
+              <span className="pf-wide-total-words">
+                {t('total')}
+                {/* Owner, 2026-10-14 — a figure alone looked like plain text; the pencil and the word say it can be typed over. */}
+                <span className="pf-wide-total-edit">
+                  <IconEdit />
+                  {t('changeTotal')}
+                </span>
+              </span>
               <strong className="pf-total-figure">{money(totalMinor)}</strong>
             </button>
             {full ? (
@@ -1067,21 +1107,29 @@ export function PayFlow({
               oneLess(key);
               if (lines.length === 1) setBillOpen(false);
             }}
+            onPrice={openRowKeypad}
             onClose={() => setBillOpen(false)}
           />
         ) : null}
         {keypad !== null ? (
           <Keypad
-            title={t('keypadTitle')}
+            title={keypadFor ? t('desk.priceFor', { name: keypadFor.name }) : t('keypadTitle')}
             value={keypad}
-            hint={t('listPrice', { amount: money(listMinor) })}
+            hint={t('listPrice', { amount: money(keypadFor ? keypadFor.list : listMinor) })}
             onChange={setKeypad}
             onDone={() => {
               const rupees = Number(keypad);
-              setOverride(Number.isFinite(rupees) && keypad !== '' && rupees * 100 !== listMinor ? rupees * 100 : null);
+              const ok = Number.isFinite(rupees) && keypad !== '';
+              if (keypadFor) {
+                if (ok) setRowPrice(keypadFor.key, rupees * 100);
+              } else setOverride(ok && rupees * 100 !== listMinor ? rupees * 100 : null);
               setKeypad(null);
+              setKeypadFor(null);
             }}
-            onClose={() => setKeypad(null)}
+            onClose={() => {
+              setKeypad(null);
+              setKeypadFor(null);
+            }}
           />
         ) : null}
       </div>
@@ -1287,6 +1335,7 @@ export function PayFlow({
             oneLess(serviceId);
             if (lines.length === 1) setBillOpen(false);
           }}
+          onPrice={openRowKeypad}
           onClose={() => setBillOpen(false)}
         />
       ) : null}
@@ -1303,16 +1352,23 @@ export function PayFlow({
       ) : null}
       {keypad !== null ? (
         <Keypad
-          title={t('keypadTitle')}
+          title={keypadFor ? t('desk.priceFor', { name: keypadFor.name }) : t('keypadTitle')}
           value={keypad}
-          hint={t('listPrice', { amount: money(listMinor) })}
+          hint={t('listPrice', { amount: money(keypadFor ? keypadFor.list : listMinor) })}
           onChange={setKeypad}
           onDone={() => {
             const rupees = Number(keypad);
-            setOverride(Number.isFinite(rupees) && keypad !== '' && rupees * 100 !== listMinor ? rupees * 100 : null);
+            const ok = Number.isFinite(rupees) && keypad !== '';
+            if (keypadFor) {
+              if (ok) setRowPrice(keypadFor.key, rupees * 100);
+            } else setOverride(ok && rupees * 100 !== listMinor ? rupees * 100 : null);
             setKeypad(null);
+            setKeypadFor(null);
           }}
-          onClose={() => setKeypad(null)}
+          onClose={() => {
+            setKeypad(null);
+            setKeypadFor(null);
+          }}
         />
       ) : null}
     </div>
