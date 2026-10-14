@@ -866,3 +866,42 @@
 .pe-add-row + .pe-service-list .sheet-row:first-child {
   border-top: 0.5px solid var(--border);
 }
+
+/*
+ * Owner, 2026-10-14 — a 344px phone: the name's label ran under its placeholder ("Package name *e.g. Weekend…"),
+ * and the title read "Make a packa…". The name and the tagline stack their label over the field, as the desk's
+ * narrow column does (79-desk-package.css); the title takes a second line instead of an ellipsis.
+ */
+@media (max-width: 480px) {
+  .pkg-editor .pe-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.2;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-label {
+    flex: 1 1 100%;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-value {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-value input {
+    width: 100%;
+    text-align: left;
+  }
+}

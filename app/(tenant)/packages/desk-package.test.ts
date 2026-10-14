@@ -46,6 +46,10 @@ describe('Make a package on a desk', () => {
     expect(css).toMatch(/\.pkg-editor \.pe-col-details \.sheet-row-label \{\s*flex: 1 1 100%;/);
   });
 
+  it('a 344px phone stacks the detail labels too, and lets the title wrap', () => {
+    expect(wizard).toMatch(/@media \(max-width: 480px\) \{[\s\S]*?\.pkg-editor \.pe-title \{\s*white-space: normal;[\s\S]*?-webkit-line-clamp: 2;[\s\S]*?\.pkg-editor \.pe-col-details \.sheet-row \{\s*flex-wrap: wrap;/);
+  });
+
   it('the narrow band keeps the services wide', () => {
     expect(css).toMatch(/@media \(min-width: 1101px\) and \(max-width: 1300px\) \{\s*\.pkg-editor \.pe-layout \{\s*grid-template-columns: 15rem minmax\(0, 1fr\) 18rem;/);
   });
