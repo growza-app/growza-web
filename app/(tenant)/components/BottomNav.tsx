@@ -105,7 +105,9 @@ export function BottomNav({
       ];
 
   const visible = visibleItems(items, role, reportTabs, live);
-  const centre = !stylist && onCentre;
+  // Owner, 2026-10-15 — the plus is Home's. Elsewhere it sat on the corner of every list and form, so it is not drawn
+  // there at all; New booking is one tap from Home, and the screens that need it have their own button.
+  const centre = !stylist && onCentre && pathname === '/';
   const [menuOpen, setMenuOpen] = useState(false);
   const menu = Boolean(centre && onPayment);
 

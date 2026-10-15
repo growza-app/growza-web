@@ -10,8 +10,7 @@ describe('the plus on Home (owner, 2026-10-15)', () => {
     expect(bar).toMatch(/if \(stays\) return;\s*setAway\(moved > 0 && y > NEAR_TOP\);/);
     expect(bar).toMatch(/\}, \[menuOpen, stays\]\);/);
   });
-  it('still steps aside on every other screen, where a row has a price at the right edge', () => {
-    expect(bar).toMatch(/setAway\(moved > 0 && y > NEAR_TOP\);/);
-    expect(bar).toMatch(/is-away/);
+  it('is drawn on Home and nowhere else (owner, 2026-10-15)', () => {
+    expect(bar).toMatch(/const centre = !stylist && onCentre && pathname === '\/';/);
   });
 });
