@@ -608,7 +608,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
         {/* Desktop CRM Command Ribbon — 4 shaded full KPI cards across the top */}
         <div className={`hm-kpi-ribbon hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
-          <button type="button" className="hm-kpi-card hm-kpi-emerald" onClick={() => setSummaryOpen(true)}>
+          <a className="hm-kpi-card hm-kpi-emerald" href={canSee('/reports', p.role, p.reportTabs) ? '/reports' : '/appointments'}>
             <span className="hm-kpi-top">
               <span className="hm-kpi-icon">
                 <IconWallet />
@@ -630,7 +630,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                 {data?.money.bookings ?? 0} {t.done}
               </span>
             </span>
-          </button>
+          </a>
 
           <a className="hm-kpi-card hm-kpi-blue" href="/appointments">
             <span className="hm-kpi-top">
