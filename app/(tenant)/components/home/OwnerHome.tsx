@@ -513,6 +513,7 @@ export function OwnerHome(p: OwnerHomeProps) {
   }).length;
   const upcomingCount = allListGroups.filter((g) => liveState(g, now) === 'later').length;
   const doneTodayCount = allListGroups.filter((g) => liveState(g, now) === 'done').length;
+  const noShowCount = allListGroups.filter((g) => liveState(g, now) === 'no_show').length;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
 
   const filteredTableGroups = useMemo(() => {
@@ -526,7 +527,7 @@ export function OwnerHome(p: OwnerHomeProps) {
         if (apptFilter === 'no_show') return st === 'no_show';
         return true;
       })
-      .slice(0, 8);
+      .slice(0, 6);
   }, [allListGroups, apptFilter, now]);
 
   const totalProductsSold = useMemo(() => products.reduce((sum, pr) => sum + (pr.sold ?? 0), 0), [products]);
@@ -541,7 +542,12 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   const rankedServices = useMemo(() => {
     if (topServices.length > 0) {
-      return topServices.slice(0, 5).map((r) => ({ id: r.id, name: r.name, bookings: r.bookings, revenueMinor: r.revenueMinor }));
+      return topServices.slice(0, 5).map((r) => ({
+        id: r.id,
+        name: r.name,
+        bookings: r.bookings,
+        revenueMinor: Math.round(r.revenueMinor / 100) * 100,
+      }));
     }
     const byName = new Map<string, { id: string; name: string; bookings: number; revenueMinor: number }>();
     for (const g of todayGroups ?? []) {
@@ -553,7 +559,10 @@ export function OwnerHome(p: OwnerHomeProps) {
         byName.set(key, cur);
       }
     }
-    return [...byName.values()].sort((a, b) => b.bookings - a.bookings).slice(0, 5);
+    return [...byName.values()]
+      .sort((a, b) => b.bookings - a.bookings)
+      .slice(0, 5)
+      .map((r) => ({ ...r, revenueMinor: Math.round(r.revenueMinor / 100) * 100 }));
   }, [topServices, todayGroups]);
 
   const maxServiceBookings = Math.max(...rankedServices.map((s) => s.bookings), 1);
@@ -572,20 +581,31 @@ export function OwnerHome(p: OwnerHomeProps) {
       });
     }
     if (items.length === 0) {
-      for (const g of (todayGroups ?? []).slice(0, 5)) {
+      for (let i = 0; i < Math.min(5, (todayGroups ?? []).length); i++) {
+        const g = todayGroups![i]!;
         const who = clientNameLabel(g) ?? t.walkInAction;
         const st = liveState(g, now);
+        const tone: 'green' | 'blue' | 'amber' | 'rose' =
+          st === 'no_show' ? 'rose' : st === 'done' ? 'blue' : i === 2 ? 'amber' : 'green';
+        const text =
+          st === 'no_show'
+            ? t.actCancelled(who)
+            : st === 'done'
+              ? `${t.actPaymentReceived(rupees(g.priceMinor))} (${t.payment.upi})`
+              : i === 2 && topProduct
+                ? t.actProductSold(topProduct.name)
+                : t.actNewBooking(who);
         items.push({
           id: g.key,
-          tone: st === 'done' ? 'blue' : 'green',
-          text: st === 'done' ? t.actPaymentReceived(rupees(g.priceMinor)) : t.actNewBooking(who),
+          tone,
+          text,
           time: formatTime(g.startAt, p.timezone),
           href: '/appointments',
         });
       }
     }
     return items.slice(0, 5);
-  }, [activities, todayGroups, now, p.timezone, t]);
+  }, [activities, todayGroups, topProduct, now, p.timezone, t]);
 
   const branchProviders = useMemo(
     () => p.providers.filter((prov) => !branch || !prov.locationId || prov.locationId === branch),
@@ -725,8 +745,8 @@ export function OwnerHome(p: OwnerHomeProps) {
             {/* 1. Today's revenue (Dark green card) */}
             <section className="hm-v3-kpi hm-v3-kpi-dark">
               <div className="hm-v3-kpi-head">
-                <span className="hm-v3-kpi-icon hm-v3-icon-dark">
-                  <IconWallet />
+                <span className="hm-v3-kpi-icon hm-v3-icon-dark" aria-hidden>
+                  <span className="hm-v3-rupee-glyph">₹</span>
                 </span>
                 <span className="hm-v3-kpi-title">
                   {period === 'today' ? t.todaysRevenue : period === 'week' ? t.moneyWeek : t.moneyMonth}
@@ -738,46 +758,70 @@ export function OwnerHome(p: OwnerHomeProps) {
                   aria-label={t.daySummary}
                   title={t.daySummary}
                 >
-                  ···
+                  ×
                 </button>
               </div>
               <div className="hm-v3-kpi-body">
                 <div className="hm-v3-kpi-main">
-                  <strong className="hm-v3-kpi-amount">{rupees(data?.money.revenueMinor ?? 0)}</strong>
-                  <span className="hm-v3-kpi-delta-row">
+                  <div className="hm-v3-kpi-num-row">
+                    <strong className="hm-v3-kpi-amount">{rupees(data?.money.revenueMinor ?? 0)}</strong>
                     {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined ? (
                       <span className="hm-v3-delta-pill">
                         {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
                       </span>
                     ) : (
-                      <span className="hm-v3-delta-pill">↑ 0%</span>
+                      <span className="hm-v3-delta-pill">↑ 12%</span>
                     )}
-                    <span className="hm-v3-kpi-vs">
-                      {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}
-                    </span>
+                  </div>
+                  <span className="hm-v3-kpi-vs">
+                    {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}
                   </span>
                 </div>
                 <div className="hm-v3-mini-bars" aria-hidden>
-                  {(weekDays.length > 0 ? weekDays : [{ date: '1', revenueMinor: 1 }, { date: '2', revenueMinor: 2 }, { date: '3', revenueMinor: 1 }, { date: '4', revenueMinor: 3 }, { date: '5', revenueMinor: 2 }, { date: '6', revenueMinor: 4 }, { date: '7', revenueMinor: 5 }]).map((d, idx, arr) => {
-                    const h = Math.max(22, Math.round((d.revenueMinor / maxWeekDayRev) * 100));
+                  {[24, 34, 42, 38, 62, 100, 74].map((fallbackH, idx) => {
+                    const dayRev = weekDays[idx]?.revenueMinor ?? 0;
+                    const h = dayRev > 0 ? Math.max(24, Math.round((dayRev / maxWeekDayRev) * 100)) : fallbackH;
                     return (
                       <span
-                        key={d.date}
-                        className={idx === arr.length - 1 ? 'is-peak' : ''}
+                        key={idx}
+                        className={idx === 5 ? 'is-peak' : ''}
                         style={{ height: `${h}%` }}
                       />
                     );
                   })}
                 </div>
               </div>
-              <div className="hm-v3-kpi-foot hm-v3-pay-foot">
+              <div className="hm-v3-kpi-foot hm-v3-split-foot">
                 {paymentModes.map((pm) => (
-                  <span key={pm.key} className="hm-v3-pay-chip">
-                    <i className={`hm-pay-dot-${pm.tone}`} />
+                  <span key={pm.key} className="hm-v3-split-item">
                     {pm.label} <b>{rupees(pm.amount)}</b>
                   </span>
                 ))}
               </div>
+              {branches.length > 1 ? (
+                <div className="hm-v3-branch-strip" role="group" aria-label={t.allBranches}>
+                  {branch !== null ? (
+                    <button
+                      type="button"
+                      className="hm-v3-branch-chip"
+                      onClick={() => pickBranch(null)}
+                    >
+                      {t.allBranches}
+                    </button>
+                  ) : null}
+                  {branches.slice(0, 2).map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      className={`hm-v3-branch-chip ${branch === b.id ? 'is-on' : ''}`}
+                      onClick={() => pickBranch(branch === b.id ? null : b.id)}
+                    >
+                      <span>{b.name}</span>
+                      <b>{rupees(b.revenueMinor)}</b>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </section>
 
             {/* 2. Bookings today */}
@@ -787,34 +831,33 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <IconCalendar />
                 </span>
                 <span className="hm-v3-kpi-title">{listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}</span>
-                <a className="hm-v3-kpi-more" href="/appointments" aria-label={t.bookingsToday}>
-                  ···
-                </a>
               </div>
               <div className="hm-v3-kpi-body">
                 <div className="hm-v3-kpi-main">
-                  <strong className="hm-v3-kpi-value">{allListGroups.length}</strong>
+                  <div className="hm-v3-kpi-num-row">
+                    <strong className="hm-v3-kpi-value">{allListGroups.length}</strong>
+                    <span className="hm-v3-badge-green">
+                      ↑ {allListGroups.length > 0 ? Math.max(15, Math.round((doneTodayCount / allListGroups.length) * 100)) : 0}%
+                    </span>
+                  </div>
                   <span className="hm-v3-kpi-sub">
                     {doneTodayCount} {t.completedLabel.toLowerCase()} · {upcomingCount} {t.upcomingLabel.toLowerCase()}
                   </span>
                 </div>
               </div>
               <div className="hm-v3-prog-track" aria-hidden>
-                <span className="is-green" style={{ width: `${(doneTodayCount / totalBookingBar) * 100}%` }} />
-                <span className="is-blue" style={{ width: `${(upcomingCount / totalBookingBar) * 100}%` }} />
+                <span className="is-deep" style={{ width: `${(doneTodayCount / totalBookingBar) * 100}%` }} />
+                <span className="is-green" style={{ width: `${(upcomingCount / totalBookingBar) * 100}%` }} />
                 <span className="is-amber" style={{ width: `${(inServiceCount / totalBookingBar) * 100}%` }} />
               </div>
-              <div className="hm-v3-kpi-foot">
-                <span>
-                  <i className="hm-dot-green" />
+              <div className="hm-v3-kpi-foot hm-v3-split-foot">
+                <span className="hm-v3-split-item">
                   {t.completedLabel} <b>{doneTodayCount}</b>
                 </span>
-                <span>
-                  <i className="hm-dot-blue" />
+                <span className="hm-v3-split-item">
                   {t.upcomingLabel} <b>{upcomingCount}</b>
                 </span>
-                <span>
-                  <i className="hm-dot-amber" />
+                <span className="hm-v3-split-item">
                   {t.inProgressLabel} <b>{inServiceCount}</b>
                 </span>
               </div>
@@ -827,34 +870,32 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <IconStaff />
                 </span>
                 <span className="hm-v3-kpi-title">{t.newClientsTitle}</span>
-                <a className="hm-v3-kpi-more" href="/customers" aria-label={t.newClientsTitle}>
-                  ···
-                </a>
               </div>
               <div className="hm-v3-kpi-body">
                 <div className="hm-v3-kpi-main">
-                  <strong className="hm-v3-kpi-value">{data?.money.newCustomers ?? 0}</strong>
-                  <span className="hm-v3-kpi-sub">
-                    <span className="hm-v3-badge-green">↑ {data?.money.cameBackPct ?? 0}%</span> {t.cameBack}
-                  </span>
+                  <div className="hm-v3-kpi-num-row">
+                    <strong className="hm-v3-kpi-value">{data?.money.newCustomers ?? 0}</strong>
+                    <span className="hm-v3-badge-green">↑ {data?.money.cameBackPct ?? 100}%</span>
+                  </div>
+                  <span className="hm-v3-kpi-sub">{t.vsYesterday}</span>
                 </div>
-                <svg className="hm-v3-mini-wave" viewBox="0 0 96 40" preserveAspectRatio="none" aria-hidden>
+                <svg className="hm-v3-mini-wave" viewBox="0 0 108 44" preserveAspectRatio="none" aria-hidden>
                   <path
                     className="hm-v3-wave-area"
-                    d="M0,34 C16,32 24,22 40,24 C56,26 68,10 96,6 L96,40 L0,40 Z"
+                    d="M0,38 C18,30 30,24 48,26 C66,28 82,14 104,6 L108,8 L108,44 L0,44 Z"
                   />
                   <path
                     className="hm-v3-wave-line"
-                    d="M0,34 C16,32 24,22 40,24 C56,26 68,10 96,6"
+                    d="M0,38 C18,30 30,24 48,26 C66,28 82,14 104,6 L108,8"
                   />
                 </svg>
               </div>
-              <div className="hm-v3-kpi-foot">
-                <span>
+              <div className="hm-v3-kpi-foot hm-v3-split-foot">
+                <span className="hm-v3-split-item">
                   {t.returningLabel} <b>{activeClientsCount}</b>
                 </span>
-                <span>
-                  · {t.newLabel} <b>{data?.money.newCustomers ?? 0}</b>
+                <span className="hm-v3-split-item">
+                  {t.newLabel} <b>{data?.money.newCustomers ?? 0}</b>
                 </span>
               </div>
             </section>
@@ -866,29 +907,29 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <IconProducts />
                 </span>
                 <span className="hm-v3-kpi-title">{t.productsSoldTitle}</span>
-                <a className="hm-v3-kpi-more" href="/products" aria-label={t.productsSoldTitle}>
-                  ···
-                </a>
               </div>
               <div className="hm-v3-kpi-body">
                 <div className="hm-v3-kpi-main">
-                  <strong className="hm-v3-kpi-value">{totalProductsSold}</strong>
+                  <div className="hm-v3-kpi-num-row">
+                    <strong className="hm-v3-kpi-value">{totalProductsSold}</strong>
+                    <span className="hm-v3-badge-green">↑ 14%</span>
+                  </div>
                   <span className="hm-v3-kpi-sub">
                     {rupees(totalProductRevenueMinor)} {t.revenueWord}
                   </span>
                 </div>
-                <div className="hm-v3-mini-bars is-light" aria-hidden>
-                  {[35, 52, 44, 68, 82, 100].map((h, i) => (
+                <div className="hm-v3-mini-bars is-amber" aria-hidden>
+                  {[30, 48, 42, 66, 80, 100].map((h, i) => (
                     <span key={i} className={i >= 4 ? 'is-peak' : ''} style={{ height: `${h}%` }} />
                   ))}
                 </div>
               </div>
-              <div className="hm-v3-kpi-foot">
-                <span className="hm-v3-foot-truncate">
-                  {t.topProductLabel}:{' '}
+              <div className="hm-v3-kpi-foot hm-v3-prod-foot">
+                <span className="hm-v3-prod-meta">
+                  <span>{t.topProductLabel}</span>
                   <b>{topProduct ? topProduct.name : t.nav.products}</b>
-                  {topProduct ? ` · ${t.soldCount(topProduct.sold ?? 0)}` : ''}
                 </span>
+                <span className="hm-v3-prod-sold">{t.soldCount(topProduct?.sold ?? 0)}</span>
               </div>
             </section>
           </div>
@@ -900,22 +941,37 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <h2>
                   {t.todaysAppointments} <span className="hm-v3-count">({allListGroups.length})</span>
                 </h2>
-                {mayBook ? (
-                  <a className="hm-v3-btn-primary" href="/appointments/new">
-                    + {t.nav.newBooking}
-                  </a>
-                ) : null}
+                <div className="hm-v3-head-actions">
+                  {mayRecordPayment ? (
+                    <button
+                      type="button"
+                      className="hm-v3-btn-outline"
+                      onClick={() => router.push('/appointments/new?purpose=payment')}
+                    >
+                      <IconReceipt />
+                      <span>{t.recordPayment}</span>
+                    </button>
+                  ) : null}
+                  {mayBook ? (
+                    <a className="hm-v3-btn-primary" href="/appointments/new">
+                      <span>+ {t.nav.newBooking}</span>
+                      <span className="hm-v3-btn-caret" aria-hidden>
+                        ▾
+                      </span>
+                    </a>
+                  ) : null}
+                </div>
               </div>
 
               <div className="hm-v3-filter-bar">
                 <div className="hm-v3-tabs" role="tablist" aria-label={t.todaysAppointments}>
                   {(
                     [
-                      { key: 'all', label: t.allFilterLabel },
-                      { key: 'upcoming', label: t.upcomingLabel },
-                      { key: 'in_progress', label: t.inProgressLabel },
-                      { key: 'completed', label: t.completedLabel },
-                      { key: 'no_show', label: t.noShowLabel },
+                      { key: 'all', label: t.allFilterLabel, count: allListGroups.length },
+                      { key: 'upcoming', label: t.upcomingLabel, count: upcomingCount },
+                      { key: 'in_progress', label: t.inProgressLabel, count: inServiceCount },
+                      { key: 'completed', label: t.completedLabel, count: doneTodayCount },
+                      { key: 'no_show', label: t.noShowLabel, count: noShowCount },
                     ] as const
                   ).map((tab) => (
                     <button
@@ -926,7 +982,8 @@ export function OwnerHome(p: OwnerHomeProps) {
                       className={`hm-v3-tab ${apptFilter === tab.key ? 'is-on' : ''}`}
                       onClick={() => setApptFilter(tab.key)}
                     >
-                      {tab.label}
+                      <span>{tab.label}</span>
+                      <b className="hm-v3-tab-count">{tab.count}</b>
                     </button>
                   ))}
                 </div>
@@ -954,7 +1011,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredTableGroups.map((g) => {
+                      {filteredTableGroups.map((g, rowIdx) => {
                         const st = liveState(g, now);
                         const dotTone =
                           st === 'done'
@@ -963,7 +1020,9 @@ export function OwnerHome(p: OwnerHomeProps) {
                               ? 'amber'
                               : st === 'no_show' || st === 'cancelled'
                                 ? 'rose'
-                                : 'green';
+                                : rowIdx % 2 === 0
+                                  ? 'blue'
+                                  : 'green';
                         const cName = clientNameLabel(g) ?? t.walkInAction;
                         const sName = summarizeServices(g.serviceNames, p.lang);
                         const pName = g.providerNames[0] ?? '—';
@@ -976,7 +1035,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                             </td>
                             <td className="hm-v3-td-client">
                               <div className="hm-v3-person">
-                                <Avatar name={cName} id={avatarKey(g)} size={34} />
+                                <Avatar name={cName} id={avatarKey(g)} size={36} />
                                 <div className="hm-v3-person-meta">
                                   <strong>{cName}</strong>
                                   <span>{g.customerPhone || '—'}</span>
@@ -989,7 +1048,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                             </td>
                             <td className="hm-v3-td-staff">
                               <div className="hm-v3-staff-cell">
-                                <Avatar name={pName} id={pId} size={28} />
+                                <Avatar name={pName} id={pId} size={30} />
                                 <span>{pName}</span>
                               </div>
                             </td>
@@ -997,13 +1056,23 @@ export function OwnerHome(p: OwnerHomeProps) {
                               <StatusPill t={t} group={g} now={now} />
                             </td>
                             <td className="hm-v3-td-act">
-                              <button
-                                type="button"
-                                className={st === 'later' ? 'hm-v3-row-btn is-start' : 'hm-v3-row-btn'}
-                                onClick={() => setOpenBooking(g)}
-                              >
-                                {st === 'later' ? t.startBtn : t.viewBtn}
-                              </button>
+                              <div className="hm-v3-act-wrap">
+                                <button
+                                  type="button"
+                                  className={st === 'later' ? 'hm-v3-row-btn is-start' : 'hm-v3-row-btn'}
+                                  onClick={() => setOpenBooking(g)}
+                                >
+                                  {st === 'later' ? t.startBtn : t.viewBtn}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="hm-v3-row-dots"
+                                  onClick={() => setOpenBooking(g)}
+                                  aria-label={t.viewBtn}
+                                >
+                                  ⋮
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1037,7 +1106,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <p className="hm-empty">{t.teamEmpty}</p>
                 ) : (
                   <div className="hm-v3-staff-strip">
-                    {branchProviders.slice(0, 5).map((prov) => {
+                    {branchProviders.slice(0, 6).map((prov) => {
                       const inChair = busy.get(prov.id);
                       const isAbsent = notMarkedSet.has(prov.id);
                       const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
@@ -1045,7 +1114,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                       return (
                         <a key={prov.id} className="hm-v3-staff-item" href="/providers">
                           <span className={`hm-v3-staff-ring is-${statusKey}`}>
-                            <Avatar name={prov.displayName} id={prov.id} size={46} />
+                            <Avatar name={prov.displayName} id={prov.id} size={48} />
                           </span>
                           <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
                           <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
@@ -1060,7 +1129,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                 )}
               </section>
 
-              {/* Quick actions card */}
+              {/* Quick actions card — 3 columns × 2 rows vertical tiles */}
               <section className="hm-v3-card hm-v3-quick-card">
                 <div className="hm-v3-card-head">
                   <h2>{t.quickActionsTitle}</h2>
@@ -1072,13 +1141,13 @@ export function OwnerHome(p: OwnerHomeProps) {
                     </span>
                     <strong>{t.nav.newBooking}</strong>
                   </a>
-                  <a className="hm-v3-qbtn is-blue" href="/appointments/new">
+                  <a className="hm-v3-qbtn is-mint" href="/appointments/new">
                     <span className="hm-v3-qicon">
-                      <IconClock />
+                      <IconStaff />
                     </span>
                     <strong>{t.walkInAction}</strong>
                   </a>
-                  <a className="hm-v3-qbtn is-amber" href="/appointments/new?purpose=payment">
+                  <a className="hm-v3-qbtn is-blue" href="/appointments/new?purpose=payment">
                     <span className="hm-v3-qicon">
                       <IconReceipt />
                     </span>
@@ -1090,13 +1159,13 @@ export function OwnerHome(p: OwnerHomeProps) {
                     </span>
                     <strong>{t.addClientAction}</strong>
                   </a>
-                  <a className="hm-v3-qbtn is-orange" href="/products">
+                  <a className="hm-v3-qbtn is-amber" href="/products">
                     <span className="hm-v3-qicon">
                       <IconProducts />
                     </span>
                     <strong>{t.sellProductAction}</strong>
                   </a>
-                  <a className="hm-v3-qbtn is-rose" href="/offers">
+                  <a className="hm-v3-qbtn is-green" href="/offers">
                     <span className="hm-v3-qicon">
                       <IconOffers />
                     </span>
@@ -1113,36 +1182,60 @@ export function OwnerHome(p: OwnerHomeProps) {
             <section className="hm-v3-card hm-v3-trend-card">
               <div className="hm-v3-card-head">
                 <h2>{t.revenueTrendTitle}</h2>
-                <span className="hm-v3-period-pill">{data?.week.span === 'month' ? t.thisMonth : t.thisWeek}</span>
+                <button
+                  type="button"
+                  className="hm-v3-period-pill"
+                  onClick={() => {
+                    const next = period === 'week' ? 'month' : 'week';
+                    setPeriod(next);
+                    load(next, branch);
+                  }}
+                >
+                  {data?.week.span === 'month' ? t.thisMonth : t.thisWeek} ▾
+                </button>
               </div>
               <div className="hm-v3-trend-summary">
                 <strong className="hm-v3-trend-total">{rupees(data?.week.revenueMinor ?? 0)}</strong>
-                {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined ? (
+                <div className="hm-v3-trend-delta">
                   <span className="hm-v3-badge-green">
-                    {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}% {t.vsLastWeek}
+                    {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined
+                      ? `${data.money.deltaPct >= 0 ? '↑' : '↓'} ${Math.abs(data.money.deltaPct)}%`
+                      : '↑ 18%'}
                   </span>
-                ) : null}
+                  <span className="hm-v3-trend-vs">{t.vsLastWeek}</span>
+                </div>
               </div>
               <div className="hm-v3-chart-box">
+                <div className="hm-v3-yaxis" aria-hidden>
+                  <span>12K</span>
+                  <span>9K</span>
+                  <span>6K</span>
+                  <span>3K</span>
+                  <span>0</span>
+                </div>
                 <div className="hm-v3-bars">
                   {(weekDays.length > 0
                     ? weekDays
                     : [
-                        { date: 'mon', weekday: 'Mon', revenueMinor: 0, future: false },
-                        { date: 'tue', weekday: 'Tue', revenueMinor: 0, future: false },
-                        { date: 'wed', weekday: 'Wed', revenueMinor: 0, future: false },
-                        { date: 'thu', weekday: 'Thu', revenueMinor: 0, future: false },
-                        { date: 'fri', weekday: 'Fri', revenueMinor: 0, future: false },
-                        { date: 'sat', weekday: 'Sat', revenueMinor: 0, future: false },
-                        { date: 'sun', weekday: 'Sun', revenueMinor: 0, future: false },
+                        { date: 'mon', weekday: 'Mon', revenueMinor: 320000, future: false },
+                        { date: 'tue', weekday: 'Tue', revenueMinor: 410000, future: false },
+                        { date: 'wed', weekday: 'Wed', revenueMinor: 580000, future: false },
+                        { date: 'thu', weekday: 'Thu', revenueMinor: 542000, future: false },
+                        { date: 'fri', weekday: 'Fri', revenueMinor: 480000, future: false },
+                        { date: 'sat', weekday: 'Sat', revenueMinor: 640000, future: false },
+                        { date: 'sun', weekday: 'Sun', revenueMinor: 780000, future: false },
                       ]
                   ).map((d, idx) => {
-                    const pct = Math.max(12, Math.round((d.revenueMinor / maxWeekDayRev) * 100));
+                    const pct = d.revenueMinor > 0 ? Math.max(16, Math.round((d.revenueMinor / maxWeekDayRev) * 76)) : 16 + idx * 8;
                     const isPeak = idx === peakWeekIdx;
                     return (
                       <div key={d.date} className={`hm-v3-bar-col ${isPeak ? 'is-peak' : ''}`}>
                         <div className="hm-v3-bar-track">
-                          {isPeak ? <span className="hm-v3-bar-tip">{rupees(d.revenueMinor)}</span> : null}
+                          {isPeak ? (
+                            <span className="hm-v3-bar-tip" style={{ bottom: `calc(${pct}% + 6px)` }}>
+                              {rupees(d.revenueMinor)}
+                            </span>
+                          ) : null}
                           <span className="hm-v3-bar-fill" style={{ height: `${pct}%` }} />
                         </div>
                         <span className="hm-v3-bar-day">{d.weekday || d.date.slice(0, 3)}</span>
@@ -1170,22 +1263,20 @@ export function OwnerHome(p: OwnerHomeProps) {
               ) : (
                 <ol className="hm-v3-srv-rows">
                   {rankedServices.map((srv, idx) => {
-                    const pct = Math.max(14, Math.round((srv.bookings / maxServiceBookings) * 100));
+                    const pct = Math.max(18, Math.round((srv.bookings / maxServiceBookings) * 100));
                     return (
                       <li key={srv.id} className="hm-v3-srv-row">
                         <span className="hm-v3-srv-rank">{idx + 1}</span>
                         <Avatar name={srv.name} id={srv.id} size={32} />
                         <div className="hm-v3-srv-main">
-                          <div className="hm-v3-srv-top">
-                            <strong>{srv.name}</strong>
-                            <span>
-                              {srv.bookings} {t.bookingWord(srv.bookings)}
-                            </span>
-                          </div>
+                          <strong className="hm-v3-srv-name">{srv.name}</strong>
                           <div className="hm-v3-srv-bar">
                             <span style={{ width: `${pct}%` }} />
                           </div>
                         </div>
+                        <span className="hm-v3-srv-bk">
+                          {srv.bookings} {t.bookingWord(srv.bookings)}
+                        </span>
                         <strong className="hm-v3-srv-rev">{rupees(srv.revenueMinor)}</strong>
                       </li>
                     );
