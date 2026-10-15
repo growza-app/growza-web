@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { visibleItems, type MemberRole } from '../lib/nav-policy';
+import { canSee, type MemberRole } from '../lib/nav-policy';
+import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
@@ -125,34 +126,46 @@ export function Sidebar({
   // yet — listing it here would be a link to a 404.
   // Jira GRW-556 — while the business is being set up only the setup screens are offered.
   const live = useLive();
-  const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
+  // Owner, 2026-10-15 — grouped by job. Routes are unchanged; a group's children show while one of them is open.
+  const groups: NavGroup<ReactNode>[] = [
     { href: '/', label: t.nav.home, icon: <IconDashboard /> },
-    { href: '/appointments', label: role === 'staff' ? t.nav.schedule : t.nav.bookings, icon: <IconAppointments /> },
-    // Jira GRW-300 — moved off the bottom tab bar, which a 5th flat tab plus
-    // the raised centre action made "very contracted" (owner-reported). Same
-    // destination (`notifications/page.tsx`), reached from here now.
-    { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
-    { href: '/providers', label: t.nav.staff, icon: <IconStaff /> },
-    { href: '/services', label: t.nav.services, icon: <IconServices /> },
-    // Jira GRW-438 — beside Services, because a package is made of them and the owner edits the two together.
-    { href: '/packages', label: t.nav.packages, icon: <IconPackages /> },
-    // Owner, 2026-10-14 — what the till sells that nobody performs. Beside the menu it is sold with.
-    ...(products === false ? [] : [{ href: '/products', label: t.nav.products, icon: <IconProducts /> }]),
-    { href: '/offers', label: t.nav.offers, icon: <IconOffers /> },
+    {
+      href: '/appointments',
+      label: role === 'staff' ? t.nav.schedule : t.nav.bookings,
+      icon: <IconAppointments />,
+      children: [{ href: '/availability', label: t.nav.freeTimes }],
+    },
     { href: '/customers', label: t.nav.clients, icon: <IconUserPlus /> },
-    // GRW-170 — who was here. Sits beside the client list because it is the
-    // other thing the front desk keeps, and next to Staff it would read as
-    // part of hiring, which it is not.
-    { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck /> },
-    // Reports is added; nothing is removed (GRW-48 decision 2).
+    {
+      href: '',
+      label: t.nav.catalogue,
+      icon: <IconServices />,
+      children: [
+        { href: '/services', label: t.nav.services },
+        { href: '/packages', label: t.nav.packages },
+        // Owner, 2026-10-14 — what the till sells that nobody performs.
+        ...(products === false ? [] : [{ href: '/products', label: t.nav.products }]),
+        { href: '/offers', label: t.nav.offers },
+      ],
+    },
+    {
+      href: '',
+      label: t.nav.team,
+      icon: <IconStaff />,
+      // GRW-170 — who was here sits with the people, not with the client list.
+      children: [
+        { href: '/providers', label: t.nav.staff },
+        { href: '/attendance', label: t.nav.attendance },
+      ],
+    },
     { href: '/reports', label: t.nav.reports, icon: <IconReports /> },
-    { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics /> },
-    // GRW-165 — marked a demo while WhatsApp is not live, so nobody reads a
-    // working simulator as a working channel. Jira GRW-266 · GRW-271 — and not listed at
-    // all in production, where the simulator is switched off.
+    // Jira GRW-300 — reached from here on a phone; on a laptop the bell in the header is the same door.
+    { href: '/notifications', label: t.nav.notifications, icon: <IconBell />, className: 'nav-phone-only' },
+    // GRW-165 — marked a demo while WhatsApp is not live; Jira GRW-266 · GRW-271 — not listed in production at all.
     ...(whatsappDemo ? [{ href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, pill: whatsappLive ? null : t.nav.demo }] : []),
     { href: '/settings', label: t.nav.settings, icon: <IconSettings /> },
   ];
+  const nav = resolveNav(groups, (href) => canSee(href, role, reportTabs, live));
 
   return (
     <>
@@ -183,19 +196,33 @@ export function Sidebar({
           {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
               API is what refuses (GRW-156); this is about not wasting their time
               on eight links that 403. */}
-          {visibleItems(items, role, reportTabs, live).map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'active' : ''}
-              aria-current={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'page' : undefined}
-              onClick={close}
-            >
-              {item.icon}
-              {item.label}
-              {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
-            </a>
-          ))}
+          {nav.map((item) => {
+            const current = item.routes.some((r) => isActive(pathname, r));
+            return (
+              <div key={item.label} className={`nav-group ${item.className ?? ''}`}>
+                <a href={item.href} className={current ? 'active' : ''} aria-current={current && !item.children.length ? 'page' : undefined} aria-expanded={item.children.length ? current : undefined} onClick={close}>
+                  {item.icon}
+                  {item.label}
+                  {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
+                </a>
+                {current && item.children.length > 0 ? (
+                  <div className="nav-children">
+                    {/* A group that is a screen of its own (Bookings) lists itself first: the way back from Free times. */}
+                    {item.self ? (
+                      <a href={item.href} className={isActive(pathname, item.href) && !item.children.some((c) => isActive(pathname, c.href)) ? 'active' : ''} onClick={close}>
+                        {item.label}
+                      </a>
+                    ) : null}
+                    {item.children.map((c) => (
+                      <a key={c.href} href={c.href} className={isActive(pathname, c.href) ? 'active' : ''} aria-current={isActive(pathname, c.href) ? 'page' : undefined} onClick={close}>
+                        {c.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </nav>
         {/* Jira GRW-66 · GRW-160 — outside `visibleItems`, deliberately. Every
             role can end their own session; a stylist on a shared salon device is

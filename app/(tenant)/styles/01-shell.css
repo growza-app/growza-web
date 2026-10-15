@@ -191,3 +191,33 @@
 .content-main {
   display: contents;
 }
+
+/* ---------- Owner, 2026-10-15 — grouped nav: a group's children sit under it while one of them is open ---------- */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 4px 22px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.nav .nav-children a {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* The header's bell is the same door on a laptop; the drawer keeps the row for a phone. */
+@media (min-width: 861px) {
+  .nav-phone-only {
+    display: none;
+  }
+}
