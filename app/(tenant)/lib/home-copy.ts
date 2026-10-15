@@ -142,6 +142,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     providerRoleWord: S(labels.provider ?? 'Specialist', 'स्टाफ़'),
     busyLabel: S('Busy', 'व्यस्त'),
     absentLabel: S('Absent', 'गैरहाज़िर'),
+    staffInTime: (time: string) => S(`In ${time}`, `आए ${time}`),
+    staffNotInYet: S('Not marked', 'दर्ज नहीं'),
     quickActionsTitle: S('Quick actions', 'त्वरित एक्शन'),
     walkInAction: S('Walk-in', 'वॉक-इन'),
     addClientAction: S('Add client', 'ग्राहक जोड़ें'),

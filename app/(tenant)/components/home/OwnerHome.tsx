@@ -165,6 +165,7 @@ export interface OwnerHomeProps {
   /** Null when the register could not be read; the card is then left out rather than shown as 0. */
   /** Jira GRW-477 — the provider ids, so the count follows the header's branch. */
   staffNotMarkedIn: string[] | null;
+  staffInAt?: Record<string, string | null>;
   /** Jira GRW-242 — owner only: approve the new AutoPay amount before the billing date. */
   autopayRenewal?: AutopayRenewal | null;
   /** Jira GRW-402 — whether Approve can open a page at all (usable payment keys, online payments on). */
@@ -1085,21 +1086,26 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <p className="hm-empty">{t.teamEmpty}</p>
                 ) : (
                   <div className="hm-v3-staff-strip">
-                    {branchProviders.slice(0, 6).map((prov) => {
+                    {branchProviders.map((prov) => {
                       const inChair = busy.get(prov.id);
                       const isAbsent = notMarkedSet.has(prov.id);
                       const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
                       const statusLabel = inChair ? t.busyLabel : isAbsent ? t.absentLabel : t.availableNow;
+                      const inAtISO = p.staffInAt?.[prov.id] ?? null;
+                      const inTimeLabel = inAtISO ? formatTime(inAtISO, p.timezone) : null;
                       return (
                         <a key={prov.id} className="hm-v3-staff-item" href="/providers">
                           <span className={`hm-v3-staff-ring is-${statusKey}`}>
-                            <Avatar name={prov.displayName} id={prov.id} size={48} />
+                            <Avatar name={prov.displayName} id={prov.id} size={46} />
                           </span>
                           <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
                           <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
                           <span className={`hm-v3-staff-pill is-${statusKey}`}>
                             <i />
                             {statusLabel}
+                          </span>
+                          <span className={`hm-v3-staff-in ${inTimeLabel ? 'is-in' : ''}`}>
+                            {inTimeLabel ? t.staffInTime(inTimeLabel) : t.staffNotInYet}
                           </span>
                         </a>
                       );

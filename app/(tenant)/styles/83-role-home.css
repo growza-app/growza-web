@@ -3982,24 +3982,34 @@ button.hm-now-count {
   min-width: 0;
 }
 .hm-v3-staff-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
-  gap: 8px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
   text-align: center;
 }
 .hm-v3-staff-item {
+  flex: 1 0 96px;
+  min-width: 96px;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 6px 2px;
+  gap: 3px;
+  padding: 8px 6px;
   border-radius: var(--radius);
+  border: 1px solid var(--hm-line);
+  background: var(--page-bg);
   color: var(--hm-ink);
   text-decoration: none;
-  min-width: 0;
 }
 .hm-v3-staff-item:hover {
-  background: var(--page-bg);
+  border-color: var(--border-strong);
+  background: var(--surface);
   text-decoration: none;
 }
 .hm-v3-staff-ring {
@@ -4052,8 +4062,20 @@ button.hm-now-count {
   color: var(--danger);
 }
 .hm-v3-staff-pill.is-absent {
-  background: var(--page-bg);
+  background: var(--surface);
   color: var(--hm-muted);
+}
+.hm-v3-staff-in {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--hm-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-staff-in.is-in {
+  font-weight: 600;
+  color: var(--hm-ink);
 }
 
 /* Quick Actions — 3 columns × 2 rows light, airy tiles with tinted icon badges */
