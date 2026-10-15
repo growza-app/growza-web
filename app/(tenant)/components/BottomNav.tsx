@@ -105,7 +105,9 @@ export function BottomNav({
       ];
 
   const visible = visibleItems(items, role, reportTabs, live);
-  const centre = !stylist && onCentre;
+  // Owner, 2026-10-15 — the plus is Home's. Elsewhere it sat on the corner of every list and form, so it is not drawn
+  // there at all; New booking is one tap from Home, and the screens that need it have their own button.
+  const centre = !stylist && onCentre && pathname === '/';
   const [menuOpen, setMenuOpen] = useState(false);
   const menu = Boolean(centre && onPayment);
 
@@ -130,6 +132,7 @@ export function BottomNav({
    * window — it is whichever `.page-body` the screen rendered. One listener, no screen has to opt in.
    */
   const [away, setAway] = useState(false);
+  const stays = pathname === '/';
   const centreRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     /** How far a scroll has to travel before it counts: a tap that nudges the list by a pixel is not a direction. */
@@ -149,12 +152,16 @@ export function BottomNav({
       // Never while the two-choice menu is open, and never out from under the keyboard: a button that vanishes
       // while it holds the focus leaves a keyboard somewhere with nothing selected.
       if (menuOpen || document.activeElement === centreRef.current) return;
+      // Owner, 2026-10-15 — never on Home. It is a dashboard of cards, not a list of rows with a price at the
+      // right edge, so there is nothing for the plus to cover; reaching "Needs your attention" and finding it
+      // gone read as a fault.
+      if (stays) return;
       setAway(moved > 0 && y > NEAR_TOP);
     };
 
     document.addEventListener('scroll', onScroll, true);
     return () => document.removeEventListener('scroll', onScroll, true);
-  }, [menuOpen]);
+  }, [menuOpen, stays]);
 
   // A route change is a fresh screen at the top of itself.
   useEffect(() => setAway(false), [pathname]);
