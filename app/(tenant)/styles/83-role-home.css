@@ -3344,10 +3344,10 @@ button.hm-now-count {
   }
 }
 
-/* ---------- 3. Row 1: 4 Equal KPI Cards (.hm-v3-kpis) ---------- */
+/* ---------- 3. Row 1: 4 KPI Cards with Wider Money Hero (.hm-v3-kpis) ---------- */
 .hm-v3-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(340px, 1.45fr) minmax(245px, 1.1fr) repeat(2, minmax(0, 0.92fr));
   gap: 18px;
   align-items: stretch;
 }
@@ -3365,10 +3365,12 @@ button.hm-now-count {
   min-width: 0;
 }
 .hm-v3-kpi-dark {
+  padding: 18px 22px;
+  gap: 12px;
   background: linear-gradient(140deg, var(--hm-hero-a) 0%, var(--hm-hero-b) 100%);
   border-color: rgba(255, 255, 255, 0.1);
   color: var(--surface);
-  box-shadow: 0 4px 14px rgba(9, 32, 20, 0.14);
+  box-shadow: 0 6px 18px rgba(9, 32, 20, 0.16);
 }
 .hm-v3-kpi-head {
   display: flex;
@@ -3380,8 +3382,8 @@ button.hm-now-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -3390,7 +3392,7 @@ button.hm-now-count {
   height: 1rem;
 }
 .hm-v3-rupee-glyph {
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -3421,12 +3423,14 @@ button.hm-now-count {
   text-overflow: ellipsis;
 }
 .hm-v3-kpi-dark .hm-v3-kpi-title {
-  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
 }
 .hm-v3-kpi-period {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.1);
@@ -3443,36 +3447,40 @@ button.hm-now-count {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 .hm-v3-kpi-main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 .hm-v3-kpi-num-row {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: nowrap;
 }
-.hm-v3-kpi-amount,
-.hm-v3-kpi-value {
-  font-size: 1.5rem;
-  font-weight: 700;
+.hm-v3-kpi-amount {
+  font-size: 2rem;
+  font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
   color: var(--hm-ink);
 }
 .hm-v3-delta-pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: rgba(134, 239, 172, 0.22);
   color: var(--accent-soft);
@@ -3481,9 +3489,9 @@ button.hm-now-count {
   white-space: nowrap;
 }
 .hm-v3-kpi-vs {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.76);
 }
 .hm-v3-kpi-sub {
   display: inline-flex;
@@ -3509,9 +3517,9 @@ button.hm-now-count {
 .hm-v3-mini-bars {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 40px;
-  width: 78px;
+  gap: 5px;
+  height: 48px;
+  width: 98px;
   flex-shrink: 0;
 }
 .hm-v3-mini-bars span {
@@ -3522,6 +3530,11 @@ button.hm-now-count {
 }
 .hm-v3-mini-bars span.is-peak {
   background: rgba(134, 239, 172, 0.95);
+}
+.hm-v3-mini-bars.is-amber {
+  height: 40px;
+  width: 78px;
+  gap: 4px;
 }
 .hm-v3-mini-bars.is-amber span {
   background: rgba(217, 119, 6, 0.22);
@@ -3582,8 +3595,10 @@ button.hm-now-count {
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot {
+  padding-top: 10px;
   border-top-color: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.84);
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot b {
   color: var(--surface);
