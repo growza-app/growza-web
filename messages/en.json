@@ -1806,7 +1806,9 @@
       "loadFailed": "Could not load services. Check the connection and try again.",
       "notePackage": "A service in a package keeps its service; you can fix its amount. The old amount stays in the activity log.",
       "historyTitle": "Corrected"
-    }
+    },
+    "foldGroup": "Fold {name}",
+    "unfoldGroup": "Unfold {name}"
   },
   "auth": {
     "metaTitle": "Sign in",
