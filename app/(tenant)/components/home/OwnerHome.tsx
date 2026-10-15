@@ -475,14 +475,13 @@ export function OwnerHome(p: OwnerHomeProps) {
   const attentionTotal = attention.reduce((sum, a) => sum + a.count, 0);
 
   // Desktop CRM Command Center metrics — derived from already-loaded Home data.
-  const avgTicket =
-    data && data.money.bookings > 0
-      ? rupees(Math.round(data.money.revenueMinor / data.money.bookings))
-      : rupees(0);
   const inServiceCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'in_service').length;
   const upcomingCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'later').length;
   const doneTodayCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'done').length;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
+  const dueClientsCount = clientStats?.segments.find((s) => s.key === 'due')?.count ?? 0;
+  const atRiskClientsCount = clientStats?.segments.find((s) => s.key === 'at_risk')?.count ?? 0;
+  const inactiveClientsCount = clientStats?.segments.find((s) => s.key === 'inactive')?.count ?? 0;
 
   const branchProviders = useMemo(
     () => p.providers.filter((prov) => !branch || !prov.locationId || prov.locationId === branch),
@@ -606,32 +605,8 @@ export function OwnerHome(p: OwnerHomeProps) {
           </button>
         </div>
 
-        {/* Desktop CRM Command Ribbon — 4 shaded full KPI cards across the top */}
+        {/* Desktop CRM Command Ribbon — 4 clean KPI cards across the top */}
         <div className={`hm-kpi-ribbon hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
-          <a className="hm-kpi-card hm-kpi-emerald" href={canSee('/reports', p.role, p.reportTabs) ? '/reports' : '/appointments'}>
-            <span className="hm-kpi-top">
-              <span className="hm-kpi-icon">
-                <IconWallet />
-              </span>
-              <span className="hm-kpi-eyebrow">{t.avgTicketLabel}</span>
-              {data && data.money.deltaPct !== null ? (
-                <span className="hm-kpi-badge">
-                  {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
-                </span>
-              ) : null}
-            </span>
-            <strong className="hm-kpi-value">{data ? avgTicket : '—'}</strong>
-            <span className="hm-kpi-foot">
-              <span>
-                {period === 'today' ? t.moneyToday : period === 'week' ? t.moneyWeek : t.moneyMonth}:{' '}
-                <b>{data ? rupees(data.money.revenueMinor) : '—'}</b>
-              </span>
-              <span>
-                {data?.money.bookings ?? 0} {t.done}
-              </span>
-            </span>
-          </a>
-
           <a className="hm-kpi-card hm-kpi-blue" href="/appointments">
             <span className="hm-kpi-top">
               <span className="hm-kpi-icon">
@@ -664,6 +639,28 @@ export function OwnerHome(p: OwnerHomeProps) {
               </span>
               <span>
                 {t.segments.active.label}: <b>{activeClientsCount}</b>
+              </span>
+            </span>
+          </a>
+
+          <a
+            className="hm-kpi-card hm-kpi-emerald"
+            href={`/customers?status=due${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
+          >
+            <span className="hm-kpi-top">
+              <span className="hm-kpi-icon">
+                <IconClock />
+              </span>
+              <span className="hm-kpi-eyebrow">{t.segments.due.label}</span>
+              <span className="hm-kpi-badge">{t.segments.due.range}</span>
+            </span>
+            <strong className="hm-kpi-value">{dueClientsCount}</strong>
+            <span className="hm-kpi-foot">
+              <span>
+                {t.segments.at_risk.label}: <b>{atRiskClientsCount}</b>
+              </span>
+              <span>
+                {t.segments.inactive.label}: <b>{inactiveClientsCount}</b>
               </span>
             </span>
           </a>
