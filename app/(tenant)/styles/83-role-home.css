@@ -3317,7 +3317,7 @@ button.hm-now-count {
 .hm-desk-v3 {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 .hm-desk-v3.is-settling {
   visibility: hidden;
@@ -3333,8 +3333,11 @@ button.hm-now-count {
 @media (min-width: 1101px) {
   .page-body.hm-fit {
     overflow-y: auto;
-    gap: 12px;
-    padding: 10px var(--page-pad-x) 20px;
+    gap: 18px;
+    padding: 16px var(--page-pad-x) 24px;
+  }
+  .hm-page > .hm-toolbar {
+    display: none;
   }
   .hm-page > .hm-owner-grid {
     display: none;
@@ -3345,27 +3348,27 @@ button.hm-now-count {
 .hm-v3-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 18px;
   align-items: stretch;
 }
 .hm-v3-kpi {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 8px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 16px 18px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hm-line);
   background: var(--surface);
   color: var(--hm-ink);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   min-width: 0;
 }
 .hm-v3-kpi-dark {
   background: linear-gradient(140deg, var(--hm-hero-a) 0%, var(--hm-hero-b) 100%);
   border-color: rgba(255, 255, 255, 0.1);
   color: var(--surface);
-  box-shadow: 0 6px 18px rgba(9, 32, 20, 0.18);
+  box-shadow: 0 4px 14px rgba(9, 32, 20, 0.14);
 }
 .hm-v3-kpi-head {
   display: flex;
@@ -3377,18 +3380,18 @@ button.hm-now-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 .hm-v3-kpi-icon svg {
-  width: 1.0625rem;
-  height: 1.0625rem;
+  width: 1rem;
+  height: 1rem;
 }
 .hm-v3-rupee-glyph {
-  font-size: 1.125rem;
-  font-weight: 800;
+  font-size: 1.0625rem;
+  font-weight: 700;
   line-height: 1;
 }
 .hm-v3-icon-dark {
@@ -3411,34 +3414,30 @@ button.hm-now-count {
   flex: 1;
   min-width: 0;
   font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--hm-ink);
+  font-weight: 600;
+  color: var(--hm-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .hm-v3-kpi-dark .hm-v3-kpi-title {
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.88);
 }
-.hm-v3-kpi-more {
+.hm-v3-kpi-period {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  line-height: 1;
-  text-decoration: none;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
 }
-.hm-v3-kpi-more:hover {
-  background: rgba(255, 255, 255, 0.2);
-  text-decoration: none;
+.hm-v3-kpi-period:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 .hm-v3-kpi-body {
   display: flex;
@@ -3461,8 +3460,8 @@ button.hm-now-count {
 }
 .hm-v3-kpi-amount,
 .hm-v3-kpi-value {
-  font-size: 1.75rem;
-  font-weight: 800;
+  font-size: 1.5rem;
+  font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
@@ -3478,20 +3477,20 @@ button.hm-now-count {
   background: rgba(134, 239, 172, 0.22);
   color: var(--accent-soft);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 .hm-v3-kpi-vs {
   font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.76);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
 }
 .hm-v3-kpi-sub {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--hm-muted);
 }
 .hm-v3-badge-green {
@@ -3502,7 +3501,7 @@ button.hm-now-count {
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -3511,8 +3510,8 @@ button.hm-now-count {
   display: flex;
   align-items: flex-end;
   gap: 4px;
-  height: 44px;
-  width: 82px;
+  height: 40px;
+  width: 78px;
   flex-shrink: 0;
 }
 .hm-v3-mini-bars span {
@@ -3525,7 +3524,7 @@ button.hm-now-count {
   background: rgba(134, 239, 172, 0.95);
 }
 .hm-v3-mini-bars.is-amber span {
-  background: rgba(217, 119, 6, 0.25);
+  background: rgba(217, 119, 6, 0.22);
 }
 .hm-v3-mini-bars.is-amber span.is-peak {
   background: var(--amber);
@@ -3533,25 +3532,25 @@ button.hm-now-count {
 
 /* Smooth area sparkline inside New clients KPI card */
 .hm-v3-mini-wave {
-  width: 6.5rem;
-  height: 2.75rem;
+  width: 6.25rem;
+  height: 2.5rem;
   flex-shrink: 0;
   overflow: visible;
 }
 .hm-v3-wave-area {
-  fill: rgba(22, 163, 74, 0.14);
+  fill: rgba(22, 163, 74, 0.12);
 }
 .hm-v3-wave-line {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 2.2;
+  stroke-width: 2;
   stroke-linecap: round;
 }
 
 /* 3-segment progress track inside Bookings today KPI card */
 .hm-v3-prog-track {
   display: flex;
-  height: 7px;
+  height: 6px;
   border-radius: 999px;
   background: var(--page-bg);
   overflow: hidden;
@@ -3574,17 +3573,17 @@ button.hm-now-count {
   padding-top: 8px;
   border-top: 1px solid var(--hm-line);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--hm-muted);
 }
 .hm-v3-kpi-foot b {
   color: var(--hm-ink);
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot {
   border-top-color: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.8);
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot b {
   color: var(--surface);
@@ -3606,36 +3605,6 @@ button.hm-now-count {
 }
 .hm-v3-kpi-dark .hm-v3-split-item + .hm-v3-split-item {
   border-left-color: rgba(255, 255, 255, 0.16);
-}
-.hm-v3-branch-strip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.hm-v3-branch-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.84);
-  font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.hm-v3-branch-chip b {
-  font-weight: 800;
-  color: var(--surface);
-  font-variant-numeric: tabular-nums;
-}
-.hm-v3-branch-chip.is-on {
-  background: rgba(134, 239, 172, 0.24);
-  border-color: rgba(134, 239, 172, 0.45);
-  color: var(--surface);
 }
 .hm-v3-prod-foot {
   justify-content: space-between;
@@ -3661,7 +3630,7 @@ button.hm-now-count {
 }
 .hm-v3-prod-sold {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--hm-ink);
   white-space: nowrap;
 }
@@ -3670,11 +3639,11 @@ button.hm-now-count {
 .hm-v3-card {
   display: flex;
   flex-direction: column;
-  padding: 16px 18px;
+  padding: 18px 20px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hm-line);
   background: var(--surface);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   min-width: 0;
 }
 .hm-v3-card-head {
@@ -3682,12 +3651,12 @@ button.hm-now-count {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .hm-v3-card-head h2 {
   margin: 0;
-  font-size: 1.0625rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: -0.015em;
   color: var(--hm-ink);
 }
@@ -3697,13 +3666,13 @@ button.hm-now-count {
   gap: 8px;
 }
 .hm-v3-count {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--hm-muted);
 }
 .hm-v3-head-link,
 .hm-v3-foot-link {
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--accent-deep);
   text-decoration: none;
 }
@@ -3720,9 +3689,8 @@ button.hm-now-count {
   background: var(--accent-deep);
   color: var(--surface);
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
-  box-shadow: 0 2px 6px rgba(15, 106, 51, 0.22);
 }
 .hm-v3-btn-caret {
   display: inline-flex;
@@ -3742,8 +3710,8 @@ button.hm-now-count {
 /* ---------- 5. Row 2: Appointments Table (Left) + Staff & Quick Actions (Right) ---------- */
 .hm-v3-mid {
   display: grid;
-  grid-template-columns: minmax(0, 1.85fr) minmax(340px, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
+  gap: 18px;
   align-items: stretch;
 }
 .hm-v3-appts-card {
@@ -3755,38 +3723,39 @@ button.hm-now-count {
   justify-content: space-between;
   gap: 10px;
   padding-bottom: 10px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   border-bottom: 1px solid var(--hm-line);
   flex-wrap: wrap;
 }
 .hm-v3-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 .hm-v3-tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 32px;
-  padding: 4px 11px;
+  min-height: 30px;
+  padding: 4px 10px;
   border-radius: var(--radius);
-  border: 1px solid var(--hm-line);
-  background: var(--page-bg);
-  color: var(--hm-ink);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hm-muted);
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
 }
 .hm-v3-tab-count {
-  font-weight: 800;
+  font-weight: 700;
   color: var(--hm-ink);
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-tab:hover {
-  border-color: var(--border-strong);
+  background: var(--page-bg);
+  color: var(--hm-ink);
 }
 .hm-v3-tab.is-on {
   background: var(--accent-deep);
@@ -3806,12 +3775,12 @@ button.hm-now-count {
   min-height: 32px;
   padding: 4px 12px;
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hm-line);
   background: var(--surface);
   color: var(--hm-ink);
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
 }
@@ -3835,15 +3804,15 @@ button.hm-now-count {
   text-align: left;
 }
 .hm-v3-table th {
-  padding: 6px 10px;
+  padding: 8px 10px;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--hm-muted);
   border-bottom: 1px solid var(--hm-line);
   white-space: nowrap;
 }
 .hm-v3-table td {
-  padding: 8px 10px;
+  padding: 10px 10px;
   border-bottom: 1px solid var(--hm-line);
   vertical-align: middle;
   font-size: 0.875rem;
@@ -3876,15 +3845,15 @@ button.hm-now-count {
 }
 .hm-v3-td-time strong {
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--hm-ink);
 }
 .hm-v3-tl-dot {
   position: relative;
   z-index: 1;
   display: inline-block;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   margin-right: 10px;
   vertical-align: middle;
@@ -3915,7 +3884,7 @@ button.hm-now-count {
 }
 .hm-v3-person-meta strong {
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--hm-ink);
   white-space: nowrap;
   overflow: hidden;
@@ -3929,7 +3898,7 @@ button.hm-now-count {
 .hm-v3-td-service strong {
   display: block;
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--hm-ink);
 }
 .hm-v3-td-service span {
@@ -3941,7 +3910,7 @@ button.hm-now-count {
   align-items: center;
   gap: 8px;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--hm-ink);
 }
 .hm-v3-act-wrap {
@@ -3950,16 +3919,16 @@ button.hm-now-count {
   gap: 6px;
 }
 .hm-v3-row-btn {
-  min-height: 30px;
-  min-width: 60px;
-  padding: 4px 12px;
-  border-radius: var(--radius);
+  min-height: 28px;
+  min-width: 56px;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--hm-line);
-  background: var(--page-bg);
+  background: var(--surface);
   color: var(--hm-ink);
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 .hm-v3-row-btn.is-start {
@@ -3980,7 +3949,7 @@ button.hm-now-count {
   background: transparent;
   color: var(--hm-muted);
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 .hm-v3-card-foot {
@@ -3994,20 +3963,20 @@ button.hm-now-count {
 .hm-v3-right-col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
   min-width: 0;
 }
 .hm-v3-staff-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
-  gap: 6px;
+  gap: 8px;
   text-align: center;
 }
 .hm-v3-staff-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 6px 2px;
   border-radius: var(--radius);
   color: var(--hm-ink);
@@ -4021,7 +3990,7 @@ button.hm-now-count {
 .hm-v3-staff-ring {
   display: inline-flex;
   border-radius: 50%;
-  border: 2px solid var(--border);
+  border: 2px solid var(--hm-line);
   overflow: hidden;
 }
 .hm-v3-staff-ring.is-available {
@@ -4032,7 +4001,7 @@ button.hm-now-count {
 }
 .hm-v3-staff-name {
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--hm-ink);
   max-width: 100%;
   white-space: nowrap;
@@ -4050,7 +4019,7 @@ button.hm-now-count {
   padding: 2px 7px;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 .hm-v3-staff-pill i {
@@ -4072,7 +4041,7 @@ button.hm-now-count {
   color: var(--hm-muted);
 }
 
-/* Quick Actions — 3 columns × 2 rows vertical centered tiles */
+/* Quick Actions — 3 columns × 2 rows light, airy tiles with tinted icon badges */
 .hm-v3-quick-card {
   flex: 1;
 }
@@ -4088,69 +4057,58 @@ button.hm-now-count {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 6px;
-  min-height: 78px;
+  gap: 8px;
+  min-height: 76px;
   padding: 12px 8px;
   border-radius: var(--radius);
-  border: 1px solid transparent;
+  border: 1px solid var(--hm-line);
   background: var(--page-bg);
   color: var(--hm-ink);
   text-decoration: none;
   transition:
     transform 0.14s ease,
-    border-color 0.14s ease;
+    border-color 0.14s ease,
+    background 0.14s ease;
 }
 .hm-v3-qbtn:hover {
   transform: translateY(-1px);
   border-color: var(--border-strong);
+  background: var(--surface);
   text-decoration: none;
 }
 .hm-v3-qbtn strong {
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--hm-ink);
 }
 .hm-v3-qicon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
 .hm-v3-qicon svg {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.125rem;
+  height: 1.125rem;
 }
-.hm-v3-qbtn.is-green {
-  background: rgba(22, 163, 74, 0.09);
-}
-.hm-v3-qbtn.is-green .hm-v3-qicon {
-  color: var(--accent-deep);
-}
-.hm-v3-qbtn.is-mint {
-  background: rgba(22, 163, 74, 0.09);
-}
+.hm-v3-qbtn.is-green .hm-v3-qicon,
 .hm-v3-qbtn.is-mint .hm-v3-qicon {
+  background: var(--accent-soft);
   color: var(--accent-deep);
-}
-.hm-v3-qbtn.is-blue {
-  background: rgba(37, 99, 235, 0.08);
 }
 .hm-v3-qbtn.is-blue .hm-v3-qicon {
+  background: var(--blue-soft);
   color: var(--blue);
 }
-.hm-v3-qbtn.is-purple {
-  background: rgba(124, 58, 237, 0.08);
-}
 .hm-v3-qbtn.is-purple .hm-v3-qicon {
+  background: var(--purple-soft);
   color: var(--purple-deep);
 }
-.hm-v3-qbtn.is-amber {
-  background: rgba(217, 119, 6, 0.09);
-}
 .hm-v3-qbtn.is-amber .hm-v3-qicon {
+  background: var(--amber-soft);
   color: var(--amber);
 }
 
@@ -4158,7 +4116,7 @@ button.hm-now-count {
 .hm-v3-bot {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 18px;
   align-items: stretch;
 }
 .hm-v3-period-pill {

@@ -527,7 +527,7 @@ export function OwnerHome(p: OwnerHomeProps) {
         if (apptFilter === 'no_show') return st === 'no_show';
         return true;
       })
-      .slice(0, 6);
+      .slice(0, 4);
   }, [allListGroups, apptFilter, now]);
 
   const totalProductsSold = useMemo(() => products.reduce((sum, pr) => sum + (pr.sold ?? 0), 0), [products]);
@@ -542,7 +542,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   const rankedServices = useMemo(() => {
     if (topServices.length > 0) {
-      return topServices.slice(0, 5).map((r) => ({
+      return topServices.slice(0, 4).map((r) => ({
         id: r.id,
         name: r.name,
         bookings: r.bookings,
@@ -561,7 +561,7 @@ export function OwnerHome(p: OwnerHomeProps) {
     }
     return [...byName.values()]
       .sort((a, b) => b.bookings - a.bookings)
-      .slice(0, 5)
+      .slice(0, 4)
       .map((r) => ({ ...r, revenueMinor: Math.round(r.revenueMinor / 100) * 100 }));
   }, [topServices, todayGroups]);
 
@@ -569,7 +569,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   const recentFeed = useMemo(() => {
     const items: Array<{ id: string; tone: 'green' | 'blue' | 'amber' | 'rose'; text: string; time: string; href: string }> = [];
-    for (const ev of activities.slice(0, 5)) {
+    for (const ev of activities.slice(0, 4)) {
       const who = ev.customerName || t.nav.clients;
       const isCancel = ev.topic.includes('cancel');
       items.push({
@@ -581,7 +581,7 @@ export function OwnerHome(p: OwnerHomeProps) {
       });
     }
     if (items.length === 0) {
-      for (let i = 0; i < Math.min(5, (todayGroups ?? []).length); i++) {
+      for (let i = 0; i < Math.min(4, (todayGroups ?? []).length); i++) {
         const g = todayGroups![i]!;
         const who = clientNameLabel(g) ?? t.walkInAction;
         const st = liveState(g, now);
@@ -604,7 +604,7 @@ export function OwnerHome(p: OwnerHomeProps) {
         });
       }
     }
-    return items.slice(0, 5);
+    return items.slice(0, 4);
   }, [activities, todayGroups, topProduct, now, p.timezone, t]);
 
   const branchProviders = useMemo(
@@ -753,12 +753,15 @@ export function OwnerHome(p: OwnerHomeProps) {
                 </span>
                 <button
                   type="button"
-                  className="hm-v3-kpi-more"
-                  onClick={() => setSummaryOpen(true)}
-                  aria-label={t.daySummary}
-                  title={t.daySummary}
+                  className="hm-v3-kpi-period"
+                  onClick={() => {
+                    const next: HomePeriod = period === 'today' ? 'week' : period === 'week' ? 'month' : 'today';
+                    setPeriod(next);
+                    load(next, branch);
+                  }}
+                  aria-label={t.showMoneyFor}
                 >
-                  ×
+                  {period === 'today' ? t.today : period === 'week' ? t.week : t.month} ▾
                 </button>
               </div>
               <div className="hm-v3-kpi-body">
@@ -798,30 +801,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                   </span>
                 ))}
               </div>
-              {branches.length > 1 ? (
-                <div className="hm-v3-branch-strip" role="group" aria-label={t.allBranches}>
-                  {branch !== null ? (
-                    <button
-                      type="button"
-                      className="hm-v3-branch-chip"
-                      onClick={() => pickBranch(null)}
-                    >
-                      {t.allBranches}
-                    </button>
-                  ) : null}
-                  {branches.slice(0, 2).map((b) => (
-                    <button
-                      key={b.id}
-                      type="button"
-                      className={`hm-v3-branch-chip ${branch === b.id ? 'is-on' : ''}`}
-                      onClick={() => pickBranch(branch === b.id ? null : b.id)}
-                    >
-                      <span>{b.name}</span>
-                      <b>{rupees(b.revenueMinor)}</b>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
             </section>
 
             {/* 2. Bookings today */}
