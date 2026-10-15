@@ -763,7 +763,8 @@
       "actions": "कार्रवाई",
       "time": "समय",
       "duration": "मिनट",
-      "status": "स्थिति"
+      "status": "स्थिति",
+      "category": "श्रेणी"
     },
     "noCleanup": "कोई नहीं",
     "minutes": "{count} मिनट",
@@ -882,6 +883,20 @@
           "threading": "थ्रेडिंग",
           "waxing": "वैक्सिंग"
         }
+      },
+      "parts": {
+        "details": "जानकारी",
+        "pricing": "दाम",
+        "staff": "स्टाफ़"
+      },
+      "description": "विवरण",
+      "descriptionPlaceholder": "इस सेवा के बारे में एक-दो वाक्य",
+      "staff": {
+        "title": "कौन करता है",
+        "some": "इस ब्रांच का हर {provider} इस सेवा के लिए बुक हो सकता है।",
+        "nobody": "इस ब्रांच में किसी {provider} को अभी यह नहीं सौंपा गया।",
+        "hint": "स्टाफ़ सेवा के हिसाब से बँधा नहीं है: जो भी इस ब्रांच में काम करता है, उसे बुक किया जा सकता है।",
+        "open": "स्टाफ़ स्क्रीन खोलें"
       }
     },
     "chooser": {
@@ -1168,6 +1183,23 @@
     "categoryPicker": {
       "label": "मेन्यू का हिस्सा",
       "count": "{count} सेवाएँ"
+    },
+    "active": "चालू",
+    "inactive": "बंद",
+    "desk": {
+      "filter": "फ़िल्टर",
+      "sort": "क्रम",
+      "status": {
+        "all": "सभी",
+        "active": "चालू",
+        "inactive": "बंद"
+      },
+      "sorts": {
+        "name": "नाम A–Z",
+        "priceAsc": "दाम, कम से ज़्यादा",
+        "priceDesc": "दाम, ज़्यादा से कम",
+        "duration": "सबसे छोटी पहले"
+      }
     }
   },
   "staff": {

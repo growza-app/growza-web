@@ -693,3 +693,175 @@
     color: var(--muted);
   }
 }
+
+/* ---------- Owner, 2026-10-15 — Services v2: tools row, status pill, the form's identity and parts ---------- */
+.svc-status {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.svc-status-on {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.svc-status-off {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.svc-pill-cat {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: var(--slate-soft);
+  color: var(--text);
+}
+
+.svc-sheet-id {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+
+.svc-sheet-photo {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--slate-soft);
+  flex: none;
+}
+
+.svc-sheet-id-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.svc-sheet-name {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.svc-sheet-tags {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.svc-seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0 var(--sp-4) var(--sp-2);
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--slate-soft);
+}
+
+.svc-seg button {
+  min-height: 38px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.svc-seg button.is-on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.svc-desc-row textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  resize: vertical;
+}
+
+.svc-desc-count {
+  text-align: right;
+}
+
+.svc-staff-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.svc-staff-n {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+.svc-staff-link {
+  margin-top: var(--sp-3);
+}
+
+@media (min-width: 1101px) {
+  /*
+   * The middle panel is ~30rem on a laptop: search, Filter and Sort do not fit in one row without squeezing the
+   * search to a sliver. The search takes the whole first row; the two selects share the second.
+   */
+  .svc-desk-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    align-items: center;
+  }
+
+  .svc-desk-tools .pf-wide-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .svc-desk-sel {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+  }
+
+  .svc-desk-sel select {
+    flex: 1;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font: inherit;
+    font-size: 0.875rem;
+  }
+
+  .svc-desk-table .svc-cat {
+    white-space: nowrap;
+  }
+}
+
+/* The description box: the wrapper draws the ring, the bare field gives its own up (one ring per control). */
+.svc-desc-row:focus-within {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+
+.svc-desc-row textarea:focus-visible {
+  outline: 0 !important;
+}

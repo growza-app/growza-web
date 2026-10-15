@@ -30,10 +30,12 @@ describe('the wide Services screen', () => {
     expect(table).toMatch(/<aside className="pf-wide-right svc-desk-right"/);
   });
 
-  it('lists every row of the tab with no pages, and a row opens the service on the right', () => {
+  it('lists the tab flat, sorted and filtered, ten to a page (owner, 2026-10-15), and a row opens the service on the right', () => {
     const desk = table.slice(table.indexOf('if (desk) {'), table.indexOf('return (\n    <>\n      {/*'));
-    expect(desk).not.toMatch(/PaginatedTable|pageRows/);
-    expect(desk).toMatch(/rows=\{ordered\}/);
+    expect(desk).not.toMatch(/PaginatedTable/);
+    expect(desk).toMatch(/<ServiceTableRows[\s\S]*?flat[\s\S]*?rows=\{deskPageRows\}/);
+    expect(desk).toMatch(/<Pagination page=\{deskPageShown\}/);
+    expect(table).toMatch(/const deskRows = useMemo/);
     expect(desk).toMatch(/onSelect=\{\(s\) => \{\s*setCreating\(false\);\s*setEditing\(s\);/);
     expect(rows).toMatch(/onClick=\{onSelect \? \(\) => onSelect\(s\) : undefined\}/);
     // The ··· menu does not also open the row it sits on.
