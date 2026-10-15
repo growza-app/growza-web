@@ -523,11 +523,13 @@ export function PayFlow({
    * pick adds one more, the same package included (two bridal packages for two sisters); − on the tile takes the
    * last one off. Its legs are lines like any other — the route gets each with its share and its own offer id.
    */
+  /** Each copy of a package gets its own key; a counter, because two picks can land in the same millisecond. */
+  const packageSeq = useRef(0);
   const pickPackage = (o: Offer) => {
     if (!services) return;
     const byId = new Map(services.map((s) => [s.id, s]));
     const legs = o.serviceIds.map((id) => byId.get(id)).filter((s): s is Service => Boolean(s));
-    const pkg = { id: o.id, key: `${o.id}#${Date.now()}`, title: o.title, priceMinor: Number(o.comboPriceMinor ?? 0) };
+    const pkg = { id: o.id, key: `${o.id}#${++packageSeq.current}`, title: o.title, priceMinor: Number(o.comboPriceMinor ?? 0) };
     setLines((prev) => {
       if (legs.length === 0) return prev;
       if (prev.length + legs.length > MAX_LINES) {
@@ -1179,7 +1181,6 @@ export function PayFlow({
               full={full}
               money={money}
               packages={offers.filter((o) => o.serviceIds.every((id) => services.some((s) => s.id === id)))}
-              packageOnBillIds={pkgsOnBill.map((p) => p.id)}
               packageCountOf={packageCountOf}
               onLessPackage={oneLessPackage}
               onPickPackage={pickPackage}
@@ -1509,7 +1510,6 @@ export function PayFlow({
             setMenuOpen(false);
           }}
           onClose={() => setMenuOpen(false)}
-          packageOnBillIds={pkgsOnBill.map((p) => p.id)}
           packageCountOf={packageCountOf}
           onLessPackage={oneLessPackage}
         />

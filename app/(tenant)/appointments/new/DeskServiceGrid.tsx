@@ -29,9 +29,7 @@ export function DeskServiceGrid({
   full,
   money,
   packages = [],
-  packageOnBillId = null,
-  packageOnBillIds,
-  packageCountOf,
+  packageCountOf = () => 0,
   onLessPackage,
   onPickPackage,
   products = [],
@@ -49,9 +47,6 @@ export function DeskServiceGrid({
   money: (minor: number) => string;
   /** Jira GRW-572 — the branch's priced combos whose services are all on this menu; a second tab when there are any. */
   packages?: Offer[];
-  packageOnBillId?: string | null;
-  /** Owner, 2026-10-15 — the till may carry more than one package; the one-page form still sends one. */
-  packageOnBillIds?: readonly string[];
   /** Owner, 2026-10-15 — how many times a package is on the bill, and one fewer; absent on the one-page form. */
   packageCountOf?: (offerId: string) => number;
   onLessPackage?: (offerId: string) => void;
@@ -103,7 +98,13 @@ export function DeskServiceGrid({
    */
   const shownPackages = useMemo(() => {
     const q = term.trim();
-    if (!q) return sortMenu(packages, sort, (o) => o.title, (o) => asMinor(o.comboPriceMinor));
+    if (!q)
+      return sortMenu(
+        packages,
+        sort,
+        (o) => o.title,
+        (o) => asMinor(o.comboPriceMinor),
+      );
     return matchItems(
       packages.map((o) => ({ item: o, text: [o.title, ...o.serviceIds.map((id) => byId.get(id)?.name ?? '')], priceMinor: asMinor(o.comboPriceMinor) })),
       q,
@@ -113,7 +114,13 @@ export function DeskServiceGrid({
   const shownProducts = useMemo(() => {
     const pool = inStockOnly ? products.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : products;
     const q = term.trim();
-    if (!q) return sortMenu(pool, sort, (p) => p.name, (p) => asMinor(p.priceMinor));
+    if (!q)
+      return sortMenu(
+        pool,
+        sort,
+        (p) => p.name,
+        (p) => asMinor(p.priceMinor),
+      );
     return matchItems(
       pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
       q,
@@ -123,7 +130,13 @@ export function DeskServiceGrid({
   const shown = useMemo(() => {
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
     const q = term.trim();
-    if (!q) return sortMenu(pool, sort, (s) => s.name, (s) => asMinor(s.priceMinor));
+    if (!q)
+      return sortMenu(
+        pool,
+        sort,
+        (s) => s.name,
+        (s) => asMinor(s.priceMinor),
+      );
     return matchItems(
       pool.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
       q,
@@ -242,13 +255,22 @@ export function DeskServiceGrid({
           /* A package reads like a service: the first leg's picture, the name, the package price, and what is in it. */
           <div className="pf-tiles pf-wide-tiles">
             {shownPackages.map((o) => {
-              const pkgCount = packageCountOf ? packageCountOf(o.id) : 0;
-              const on = pkgCount > 0 || (packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id);
+              const pkgCount = packageCountOf(o.id);
+              const on = pkgCount > 0;
               const first = byId.get(o.serviceIds[0] ?? '');
-              const names = o.serviceIds.map((id) => byId.get(id)?.name).filter(Boolean).join(', ');
+              const names = o.serviceIds
+                .map((id) => byId.get(id)?.name)
+                .filter(Boolean)
+                .join(', ');
               return (
                 <div key={o.id} className={`pf-tile ${on ? 'pf-tile-on' : ''}`}>
-                  <button type="button" className="pf-tile-tap" aria-label={t('tileA11y', { name: o.title, price: money(Number(o.comboPriceMinor ?? 0)) })} aria-pressed={on} onClick={() => onPickPackage?.(o)}>
+                  <button
+                    type="button"
+                    className="pf-tile-tap"
+                    aria-label={t('tileA11y', { name: o.title, price: money(Number(o.comboPriceMinor ?? 0)) })}
+                    aria-pressed={on}
+                    onClick={() => onPickPackage?.(o)}
+                  >
                     {first ? <img className="pf-tile-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-tile-photo" aria-hidden="true" />}
                     <span className="pf-tile-name">{o.title}</span>
                     <span className="pf-tile-price">
@@ -319,24 +341,7 @@ export function DeskServiceGrid({
           })}
         </div>
       )}
-      {viewing ? (
-        <PackageSheet
-          offer={viewing}
-          services={services}
-          onBill={packageCountOf ? packageCountOf(viewing.id) > 0 : packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
-          count={packageCountOf ? packageCountOf(viewing.id) : undefined}
-          onAdd={() => {
-            onPickPackage?.(viewing);
-            setViewing(null);
-          }}
-          onRemove={() => {
-            if (onLessPackage) onLessPackage(viewing.id);
-            else onPickPackage?.(viewing);
-            setViewing(null);
-          }}
-          onClose={() => setViewing(null)}
-        />
-      ) : null}
+      {viewing ? <PackageSheet offer={viewing} services={services} countOf={packageCountOf} onPick={(o) => onPickPackage?.(o)} onLess={onLessPackage} onClose={() => setViewing(null)} /> : null}
     </section>
   );
 }
