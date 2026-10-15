@@ -56,7 +56,18 @@ export function ProductSheet({
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useDialog(sheetRef, { onClose: busy || inline ? undefined : onClose });
+  /**
+   * Review, 2026-10-15 — a save that made the product but could not upload its photo. The product now exists, so a
+   * second Save updates it (never a second create, which would meet the duplicate-name 409), and closing the sheet
+   * tells the list about it.
+   */
+  const [pending, setPending] = useState<Product | null>(null);
+  const target = pending ?? product;
+  const close = () => {
+    if (pending) onSaved(pending);
+    onClose();
+  };
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : close });
 
   const rupees = Number(price);
   const costRupees = cost.trim() === '' ? null : Number(cost);
@@ -77,13 +88,22 @@ export function ProductSheet({
         lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
         categoryId: categoryId || null,
       };
-      let saved = product
-        ? await api.updateProduct(product.id, body)
+      let saved = target
+        ? await api.updateProduct(target.id, body)
         : await api.createProduct(branchId, {
             ...body,
             stock: Math.trunc(Number(stock)) || 0,
           });
-      if (photo) saved = await api.uploadProductPhoto(saved.id, photo);
+      if (photo) {
+        try {
+          saved = await api.uploadProductPhoto(saved.id, photo);
+        } catch (err) {
+          setPending(saved);
+          setError(err instanceof ApiError && err.status < 500 ? err.message : t('photoFailed'));
+          return;
+        }
+      }
+      setPending(null);
       onSaved(saved);
       if (!inline) onClose();
     } catch (err) {
@@ -117,7 +137,7 @@ export function ProductSheet({
       onClick={inline ? undefined : (e) => e.stopPropagation()}
     >
       <div className="sheet-head">
-        <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
+        <button type="button" className="sheet-head-cancel" disabled={busy} onClick={close}>
           {part !== 'details' ? t('done') : t('cancel')}
         </button>
         <span className="sheet-head-title">{title}</span>
@@ -137,7 +157,9 @@ export function ProductSheet({
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
               {product.active ? (
-                <span className={`prd-pill prd-pill-${stockTone(product)}`}>{stockTone(product) === 'out' ? tp('outOfStock') : stockTone(product) === 'low' ? tp('lowStock', { n: product.stock }) : tp('inStock')}</span>
+                <span className={`prd-pill prd-pill-${stockTone(product)}`}>
+                  {stockTone(product) === 'out' ? tp('outOfStock') : stockTone(product) === 'low' ? tp('lowStock', { n: product.stock }) : tp('inStock')}
+                </span>
               ) : (
                 <span className="prd-pill prd-pill-off">{tp('retired')}</span>
               )}
@@ -291,7 +313,7 @@ export function ProductSheet({
   );
   if (inline) return sheet;
   return (
-    <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
+    <div className="modal-backdrop" onClick={busy ? undefined : close}>
       {sheet}
     </div>
   );

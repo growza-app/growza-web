@@ -314,13 +314,23 @@ export function ProductsList({ products, categories: initialCategories, branchId
                 onClick={() => (writable ? setEditing(p) : undefined)}
               >
                 <td>
-                  <span className="prd-cell-name">
+                  {/* The row opens on a click anywhere; the name is a real button so a keyboard or a screen reader reaches it. */}
+                  <button
+                    type="button"
+                    className="prd-cell-name prd-cell-tap"
+                    disabled={!writable}
+                    aria-current={isOn(p) ? 'true' : undefined}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (writable) setEditing(p);
+                    }}
+                  >
                     <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
                     <span className="prd-name">
                       {p.name}
                       <span className="prd-name-cat">{p.categoryName ?? t('categories.none')}</span>
                     </span>
-                  </span>
+                  </button>
                 </td>
                 <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
                 <td className="prd-td-num prd-td-muted">{p.costMinor != null ? formatMoney(p.costMinor) : '—'}</td>

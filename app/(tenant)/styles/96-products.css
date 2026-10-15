@@ -846,3 +846,19 @@
 .prd-seg-3 {
   grid-template-columns: 1fr 1fr 1fr;
 }
+
+/* The name cell is a button (keyboard and screen readers), drawn as the plain cell it replaced. */
+.prd-cell-tap {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.prd-cell-tap:disabled {
+  cursor: default;
+}

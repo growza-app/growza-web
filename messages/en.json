@@ -2978,7 +2978,8 @@
       "lowAtOff": "Off",
       "lowAtHint": "The screen flags the product in amber once the count is at or below this.",
       "category": "Category",
-      "noCategory": "No category"
+      "noCategory": "No category",
+      "photoFailed": "Saved, but the photo did not upload. Choose it again and save."
     },
     "searchPlaceholder": "Search the shelf",
     "noMatch": "Nothing on the shelf is called \"{q}\".",
