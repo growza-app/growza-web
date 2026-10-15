@@ -27,10 +27,18 @@ export function MobileNavProvider({ children }: { children: ReactNode }) {
    * it was: drawer open, scroll locked. Back brought that page straight back, so the ☰ then CLOSED an already-open
    * drawer on its first tap and looked dead ("it gets stuck"). `pageshow` with `persisted` is the one signal a
    * restored page gets. A client-side navigation keeps this provider mounted, so a changed path shuts it too.
+   *
+   * Owner, 2026-10-15 (second report: menu → Free times → Back → menu "stuck") — shutting the drawer was not
+   * enough on a phone: the restored page itself could stop answering, and it showed the figures it had when it
+   * was left. A restored page is reloaded.
    */
   useEffect(() => {
     const restored = (e: PageTransitionEvent) => {
-      if (e.persisted) setOpen(false);
+      if (!e.persisted) return;
+      setOpen(false);
+      // A page brought back from the cache is also a page of old figures, and on some phones one that no longer
+      // answers touches. This is a live tool: it is shown again from the server, not from a snapshot.
+      window.location.reload();
     };
     window.addEventListener('pageshow', restored);
     return () => window.removeEventListener('pageshow', restored);
