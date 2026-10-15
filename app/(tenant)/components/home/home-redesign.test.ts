@@ -54,16 +54,20 @@ describe('Tenant Home v2 redesign', () => {
     expect(boardCss).toMatch(/\.tb-col\[data-col='paid'\]\s*\{\s*border-top:\s*3px solid var\(--accent\);/);
   });
 
-  it('renders the Desktop CRM Command Center with 4 shaded KPI Ribbon cards, Team Floor Activity, and Workspace Launchpad', () => {
-    expect(owner).toContain('className={`hm-kpi-ribbon hm-desktop');
-    expect(owner).toContain('className="hm-kpi-card hm-kpi-emerald"');
-    expect(owner).toContain('className="hm-kpi-card hm-kpi-blue"');
-    expect(owner).toContain('className="hm-kpi-card hm-kpi-violet"');
-    expect(owner).toContain('className="hm-kpi-card hm-kpi-amber"');
-    expect(owner).toContain('className={`hm-crm-bottom hm-desktop');
-    expect(owner).toContain('className="hm-card-team"');
-    expect(owner).toContain('className="hm-card-launchpad"');
-    expect(homeCss).toMatch(/\.hm-kpi-ribbon\s*\{/);
-    expect(homeCss).toMatch(/\.hm-crm-bottom\s*\{/);
+  it('renders the 3-row Desktop v3 Command Center with 4 KPI cards, Appointments table + Staff status + Quick actions, and Revenue trend + Top services + Recent activity', () => {
+    expect(owner).toContain('className={`hm-desk-v3 hm-desktop');
+    expect(owner).toContain('className="hm-v3-kpis"');
+    expect(owner).toContain('className="hm-v3-kpi hm-v3-kpi-dark"');
+    expect(owner).toContain('className="hm-v3-mid"');
+    expect(owner).toContain('className="hm-v3-table"');
+    expect(owner).toContain('className="hm-v3-staff-strip"');
+    expect(owner).toContain('className="hm-v3-qgrid"');
+    expect(owner).toContain('className="hm-v3-bot"');
+    expect(owner).toContain('className="hm-v3-bars"');
+    expect(owner).toContain('className="hm-v3-srv-rows"');
+    expect(owner).toContain('className="hm-v3-feed-rows"');
+    expect(homeCss).toMatch(/\.hm-v3-kpis\s*\{/);
+    expect(homeCss).toMatch(/\.hm-v3-mid\s*\{/);
+    expect(homeCss).toMatch(/\.hm-v3-bot\s*\{/);
   });
 });

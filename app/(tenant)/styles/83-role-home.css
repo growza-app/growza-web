@@ -3313,422 +3313,993 @@ button.hm-now-count {
   box-shadow: 0 4px 10px rgba(15, 106, 51, 0.28);
 }
 
-/* ---------- 2. Desktop Layout & 1-Column Money Hero (≥1101px) ----------
-   Places Money Today, Needs Your Attention, and Right Now as 3 equal 1-column
-   cards side-by-side so Money Today is the exact same size as the other cards. */
-@media (min-width: 1101px) and (min-height: 680px) {
+/* ---------- 2. Desktop v3 Command Center (≥1101px) ---------- */
+.hm-desk-v3 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.hm-desk-v3.is-settling {
+  visibility: hidden;
+}
+@media (max-width: 1100px) {
+  .hm-desk-v3 {
+    display: none;
+  }
+}
+@media (min-width: 1101px) {
   .page-body.hm-fit {
     overflow-y: auto;
     gap: 14px;
-    padding: 14px var(--page-pad-x) 28px;
+    padding: 12px var(--page-pad-x) 32px;
   }
-  .hm-fit > .hm-owner-grid,
-  .hm-fit > .hm-owner-grid:has(> .hm-area-queue) {
-    flex: 0 0 auto;
-    gap: 14px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-areas:
-      'hero attention now'
-      'queue queue queue'
-      'bookings bookings bookings'
-      'clients clients clients';
-    grid-template-rows: auto;
-    align-items: stretch;
-  }
-  .hm-fit > .hm-owner-grid:not(:has(> .hm-area-queue)) {
-    flex: 0 0 auto;
-    gap: 14px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-areas:
-      'hero attention now'
-      'bookings bookings bookings'
-      'clients clients clients';
-    grid-template-rows: auto;
-    align-items: stretch;
-  }
-  .hm-fit .hm-card {
-    padding: 16px 18px;
-  }
-  .hm-fit .hm-card-head {
-    padding-bottom: 8px;
-    margin-bottom: 10px;
-  }
-  /* 1-Column Money Today card on Desktop — same size as adjacent cards */
-  .hm-fit .hm-hero {
-    height: 100%;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 16px 18px;
-  }
-  .hm-fit .hm-hero-body {
-    gap: 10px;
-    align-items: flex-start;
-  }
-  .hm-fit .hm-hero-amount {
-    font-size: 1.5rem;
-  }
-  .hm-fit .hm-hero-stats {
-    gap: 6px;
-    margin-top: 6px;
-  }
-  .hm-fit .hm-hero-stats span {
-    padding: 3px 8px;
-    font-size: 0.75rem;
-  }
-  .hm-fit .hm-hero-week strong {
-    font-size: 0.9375rem;
-  }
-  .hm-fit .hm-spark {
-    width: 112px;
-  }
-  .hm-fit .hm-spark svg {
-    width: 7rem;
-    height: 1.75rem;
-  }
-  .hm-fit .hm-pay {
-    margin-top: 4px;
-    gap: 6px;
-  }
-  .hm-fit .hm-pay-tiles {
-    grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
-  }
-  .hm-fit .hm-pay-tiles .hm-pay-item {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas: 'dot label value';
-    padding: 5px 8px;
-  }
-  .hm-fit .hm-pay-tiles .hm-pay-share {
+  .hm-page > .hm-owner-grid {
     display: none;
   }
-  .hm-fit .hm-pay-tiles .hm-pay-value {
-    font-size: 0.875rem;
-    text-align: right;
-  }
-  .hm-fit .hm-attention {
-    gap: 6px;
-  }
-  .hm-fit .hm-att {
-    min-height: 44px;
-    padding: 6px 12px;
-  }
-  .hm-fit .hm-att-sub {
+  .hm-toolbar-actions {
     display: none;
-  }
-  .hm-fit .hm-att-icon {
-    width: 30px;
-    height: 30px;
-  }
-  .hm-fit .hm-area-bookings,
-  .hm-fit .hm-area-bookings .hm-fit-list {
-    overflow: visible;
-  }
-  .hm-fit .hm-area-bookings .hm-row {
-    height: auto;
-    min-height: 50px;
-    padding: 6px 10px;
-  }
-  .hm-fit .hm-now {
-    gap: 8px;
-  }
-  .hm-fit .hm-now-row {
-    min-height: 44px;
-    padding: 6px 10px;
-  }
-  .hm-fit .hm-seg-card {
-    min-height: 92px;
-    padding: 14px 16px 16px 18px;
-    gap: 6px;
-  }
-  .hm-fit .hm-seg-count strong {
-    font-size: 1.5rem;
   }
 }
 
-/* ---------- 3. Desktop 4-Card Clean CRM KPI Ribbon ---------- */
-.hm-kpi-ribbon {
+/* ---------- 3. Row 1: 4 Equal KPI Cards (.hm-v3-kpis) ---------- */
+.hm-v3-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
+  align-items: stretch;
 }
-.hm-kpi-ribbon.is-settling,
-.hm-crm-bottom.is-settling {
-  visibility: hidden;
-}
-@media (max-width: 1180px) {
-  .hm-kpi-ribbon {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.hm-kpi-card {
-  position: relative;
+.hm-v3-kpi {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 8px;
-  min-height: 108px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 16px 18px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--hm-ink);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  overflow: hidden;
-  cursor: pointer;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
-}
-.hm-kpi-card:hover {
-  transform: translateY(-1px);
-  border-color: var(--border-strong);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-}
-.hm-kpi-emerald {
-  --kpi-accent: var(--accent-deep);
-  --kpi-bg: var(--accent-soft);
-}
-.hm-kpi-blue {
-  --kpi-accent: var(--blue);
-  --kpi-bg: var(--blue-soft);
-}
-.hm-kpi-violet {
-  --kpi-accent: var(--purple-deep);
-  --kpi-bg: var(--purple-soft);
-}
-.hm-kpi-amber {
-  --kpi-accent: var(--amber);
-  --kpi-bg: var(--amber-soft);
-}
-.hm-kpi-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
 }
-.hm-kpi-icon {
+.hm-v3-kpi-dark {
+  background: linear-gradient(140deg, var(--hm-hero-a) 0%, var(--hm-hero-b) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--surface);
+  box-shadow: 0 6px 18px rgba(9, 32, 20, 0.18);
+}
+.hm-v3-kpi-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.hm-v3-kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+.hm-v3-kpi-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.hm-v3-icon-dark {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--accent-soft);
+}
+.hm-v3-icon-blue {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.hm-v3-icon-green {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.hm-v3-icon-amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.hm-v3-kpi-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-v3-kpi-dark .hm-v3-kpi-title {
+  color: rgba(255, 255, 255, 0.88);
+}
+.hm-v3-kpi-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--hm-muted);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  cursor: pointer;
+}
+.hm-v3-kpi-dark .hm-v3-kpi-more {
+  color: rgba(255, 255, 255, 0.72);
+}
+.hm-v3-kpi-more:hover {
+  background: rgba(15, 23, 42, 0.06);
+  text-decoration: none;
+}
+.hm-v3-kpi-dark .hm-v3-kpi-more:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.hm-v3-kpi-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.hm-v3-kpi-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.hm-v3-kpi-amount,
+.hm-v3-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-kpi-value {
+  color: var(--hm-ink);
+}
+.hm-v3-kpi-delta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.hm-v3-delta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(134, 239, 172, 0.2);
+  color: var(--accent-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.hm-v3-kpi-vs {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+}
+.hm-v3-kpi-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hm-muted);
+}
+.hm-v3-badge-green {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* Mini 7-bar spark chart inside KPI cards */
+.hm-v3-mini-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 40px;
+  width: 72px;
+  flex-shrink: 0;
+}
+.hm-v3-mini-bars span {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  background: rgba(255, 255, 255, 0.26);
+  min-height: 6px;
+}
+.hm-v3-mini-bars span.is-peak {
+  background: rgba(134, 239, 172, 0.92);
+}
+.hm-v3-mini-bars.is-light span {
+  background: var(--accent-soft);
+}
+.hm-v3-mini-bars.is-light span.is-peak {
+  background: var(--accent);
+}
+
+/* Smooth area sparkline inside New clients KPI card */
+.hm-v3-mini-wave {
+  width: 5.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.hm-v3-wave-area {
+  fill: rgba(22, 163, 74, 0.14);
+}
+.hm-v3-wave-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* 3-segment progress track inside Bookings today KPI card */
+.hm-v3-prog-track {
+  display: flex;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--page-bg);
+  overflow: hidden;
+  gap: 2px;
+}
+.hm-v3-prog-track .is-green {
+  background: var(--accent);
+}
+.hm-v3-prog-track .is-blue {
+  background: var(--blue);
+}
+.hm-v3-prog-track .is-amber {
+  background: var(--amber);
+}
+
+/* KPI Card Footer */
+.hm-v3-kpi-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hm-line);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--hm-muted);
+}
+.hm-v3-kpi-foot b {
+  color: var(--hm-ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-kpi-dark .hm-v3-kpi-foot {
+  border-top-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.82);
+}
+.hm-v3-kpi-dark .hm-v3-kpi-foot b {
+  color: var(--surface);
+}
+.hm-v3-pay-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.hm-v3-pay-chip i,
+.hm-v3-kpi-foot i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hm-pay-dot-upi,
+.hm-dot-green {
+  background: var(--accent);
+}
+.hm-pay-dot-cash,
+.hm-dot-amber {
+  background: var(--amber);
+}
+.hm-pay-dot-card,
+.hm-dot-blue {
+  background: var(--blue);
+}
+.hm-v3-foot-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 4. Shared v3 Card Shell ---------- */
+.hm-v3-card {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+.hm-v3-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.hm-v3-card-head h2 {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--hm-ink);
+}
+.hm-v3-count {
+  font-weight: 700;
+  color: var(--hm-muted);
+}
+.hm-v3-head-link,
+.hm-v3-foot-link {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  text-decoration: none;
+}
+.hm-v3-head-link:hover,
+.hm-v3-foot-link:hover {
+  text-decoration: underline;
+}
+.hm-v3-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  background: var(--accent-deep);
+  color: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(15, 106, 51, 0.22);
+}
+.hm-v3-btn-primary:hover {
+  text-decoration: none;
+  opacity: 0.94;
+}
+
+/* ---------- 5. Row 2: Appointments Table (Left) + Staff & Quick Actions (Right) ---------- */
+.hm-v3-mid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.hm-v3-appts-card {
+  justify-content: space-between;
+}
+.hm-v3-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--hm-line);
+  flex-wrap: wrap;
+}
+.hm-v3-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.hm-v3-tab {
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hm-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hm-v3-tab:hover {
+  color: var(--hm-ink);
+  background: var(--page-bg);
+}
+.hm-v3-tab.is-on {
+  background: var(--accent-deep);
+  color: var(--surface);
+}
+.hm-v3-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--hm-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.hm-v3-btn-outline svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  color: var(--hm-muted);
+}
+.hm-v3-btn-outline:hover {
+  background: var(--page-bg);
+  text-decoration: none;
+}
+
+.hm-v3-table-wrap {
+  flex: 1;
+  overflow-x: auto;
+}
+.hm-v3-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.hm-v3-table th {
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--hm-muted);
+  border-bottom: 1px solid var(--hm-line);
+  white-space: nowrap;
+}
+.hm-v3-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--hm-line);
+  vertical-align: middle;
+  font-size: 0.875rem;
+}
+.hm-v3-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.hm-v3-table tbody tr:hover td {
+  background: var(--page-bg);
+}
+.hm-v3-td-time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-td-time strong {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--hm-ink);
+}
+.hm-v3-tl-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.hm-v3-tl-dot.is-green {
+  background: var(--accent);
+}
+.hm-v3-tl-dot.is-amber {
+  background: var(--amber);
+}
+.hm-v3-tl-dot.is-rose {
+  background: var(--danger);
+}
+.hm-v3-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.hm-v3-person-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.hm-v3-person-meta strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-v3-person-meta span {
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-td-service strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+}
+.hm-v3-td-service span {
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+}
+.hm-v3-staff-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--hm-ink);
+}
+.hm-v3-row-btn {
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--hm-ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hm-v3-row-btn.is-start {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.hm-v3-row-btn:hover {
+  border-color: var(--border-strong);
+}
+.hm-v3-card-foot {
+  padding-top: 12px;
+  margin-top: 6px;
+  border-top: 1px solid var(--hm-line);
+  text-align: center;
+}
+
+/* Right Column: Stacked Staff status + Quick actions */
+.hm-v3-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.hm-v3-staff-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+  text-align: center;
+}
+.hm-v3-staff-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: var(--radius);
+  color: var(--hm-ink);
+  text-decoration: none;
+  min-width: 0;
+}
+.hm-v3-staff-item:hover {
+  background: var(--page-bg);
+  text-decoration: none;
+}
+.hm-v3-staff-ring {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+}
+.hm-v3-staff-ring.is-busy {
+  border-color: var(--danger);
+}
+.hm-v3-staff-ring.is-absent {
+  border-color: var(--border-strong);
+}
+.hm-v3-staff-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-v3-staff-role {
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+}
+.hm-v3-staff-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.hm-v3-staff-pill i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.hm-v3-staff-pill.is-available {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.hm-v3-staff-pill.is-busy {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.hm-v3-staff-pill.is-absent {
+  background: var(--page-bg);
+  color: var(--hm-muted);
+}
+
+/* Quick Actions 2x3 Grid */
+.hm-v3-quick-card {
+  flex: 1;
+}
+.hm-v3-qgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.hm-v3-qbtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--hm-line);
+  background: var(--page-bg);
+  color: var(--hm-ink);
+  text-decoration: none;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease;
+}
+.hm-v3-qbtn:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  text-decoration: none;
+}
+.hm-v3-qbtn strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+}
+.hm-v3-qicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.hm-v3-qicon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.hm-v3-qbtn.is-green {
+  background: rgba(22, 163, 74, 0.07);
+}
+.hm-v3-qbtn.is-green .hm-v3-qicon {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.hm-v3-qbtn.is-blue {
+  background: rgba(37, 99, 235, 0.06);
+}
+.hm-v3-qbtn.is-blue .hm-v3-qicon {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.hm-v3-qbtn.is-amber {
+  background: rgba(217, 119, 6, 0.07);
+}
+.hm-v3-qbtn.is-amber .hm-v3-qicon {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.hm-v3-qbtn.is-purple {
+  background: rgba(124, 58, 237, 0.06);
+}
+.hm-v3-qbtn.is-purple .hm-v3-qicon {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+.hm-v3-qbtn.is-orange {
+  background: rgba(217, 119, 6, 0.07);
+}
+.hm-v3-qbtn.is-orange .hm-v3-qicon {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.hm-v3-qbtn.is-rose {
+  background: rgba(225, 29, 72, 0.06);
+}
+.hm-v3-qbtn.is-rose .hm-v3-qicon {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* ---------- 6. Row 3: 3 Equal Bottom Insights Cards (.hm-v3-bot) ---------- */
+.hm-v3-bot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.hm-v3-period-pill {
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--page-bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+}
+.hm-v3-trend-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.hm-v3-trend-total {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--hm-ink);
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-chart-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: 18px;
+}
+.hm-v3-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  height: 148px;
+  align-items: end;
+}
+.hm-v3-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+.hm-v3-bar-track {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.hm-v3-bar-fill {
+  width: 100%;
+  max-width: 32px;
+  border-radius: 6px 6px 2px 2px;
+  background: var(--accent-soft);
+  transition: height 0.2s ease;
+}
+.hm-v3-bar-col.is-peak .hm-v3-bar-fill {
+  background: var(--accent-deep);
+}
+.hm-v3-bar-tip {
+  position: absolute;
+  top: -24px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--hm-ink);
+  color: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-bar-day {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--hm-muted);
+}
+.hm-v3-bar-col.is-peak .hm-v3-bar-day {
+  font-weight: 800;
+  color: var(--hm-ink);
+}
+
+/* Top Services Ranked List */
+.hm-v3-srv-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hm-v3-srv-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.hm-v3-srv-rank {
+  width: 16px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--hm-muted);
+  text-align: center;
+  flex-shrink: 0;
+}
+.hm-v3-srv-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.hm-v3-srv-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hm-v3-srv-top strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-v3-srv-top span {
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  white-space: nowrap;
+}
+.hm-v3-srv-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--page-bg);
+  overflow: hidden;
+}
+.hm-v3-srv-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.hm-v3-srv-rev {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--hm-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Recent Activity Feed */
+.hm-v3-feed-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hm-v3-feed-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  color: var(--hm-ink);
+  text-decoration: none;
+}
+.hm-v3-feed-row:hover {
+  background: var(--page-bg);
+  text-decoration: none;
+}
+.hm-v3-feed-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--radius);
-  background: var(--kpi-bg, var(--page-bg));
-  color: var(--kpi-accent, var(--accent-deep));
+  border-radius: 50%;
   flex-shrink: 0;
 }
-.hm-kpi-icon svg {
+.hm-v3-feed-icon svg {
   width: 1rem;
   height: 1rem;
 }
-.hm-kpi-eyebrow {
+.hm-v3-feed-icon.is-green {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.hm-v3-feed-icon.is-blue {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.hm-v3-feed-icon.is-amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.hm-v3-feed-icon.is-rose {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.hm-v3-feed-text {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--hm-muted);
-}
-.hm-kpi-badge {
-  flex-shrink: 0;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--page-bg);
-  border: 1px solid var(--hm-line);
-  color: var(--hm-ink);
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.hm-kpi-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  color: var(--hm-ink);
-  font-variant-numeric: tabular-nums;
-}
-.hm-kpi-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-top: 6px;
-  border-top: 1px solid var(--hm-line);
   font-size: 0.8125rem;
   font-weight: 600;
+  color: var(--hm-ink);
+  line-height: 1.35;
+}
+.hm-v3-feed-time {
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--hm-muted);
-}
-.hm-kpi-foot b {
-  color: var(--hm-ink);
-  font-weight: 700;
-}
-
-/* ---------- 4. Clean White Cards & Structured Headers ---------- */
-.hm-card {
-  background: var(--surface);
-  border-color: var(--border);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-}
-.hm-card-head {
-  padding-bottom: var(--sp-2);
-  margin-bottom: var(--sp-3);
-  border-bottom: 1px solid var(--hm-line);
-}
-.hm-card-head h2 {
-  letter-spacing: -0.015em;
-}
-.hm-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--page-bg);
-  border: 1px solid var(--hm-line);
-  color: var(--hm-ink);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-.hm-link:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent-deep);
-  text-decoration: none;
-}
-
-/* ---------- 5. Money Hero Card ---------- */
-.hm-hero {
-  background: linear-gradient(140deg, var(--hm-hero-a) 0%, var(--hm-hero-b) 100%);
-  box-shadow: 0 4px 14px rgba(9, 32, 20, 0.16);
-}
-.hm-hero-amount {
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- 7. Calm Zero States & Sparkline Area ---------- */
 .hm-spark-area {
   fill: rgba(134, 239, 172, 0.18);
   stroke: none;
 }
-.hm-pay-value,
-.hm-pay-share {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- 6. Needs Your Attention — Calm Zero vs Active ---------- */
-.hm-att {
-  position: relative;
-  overflow: hidden;
-  transition:
-    border-color 0.14s ease,
-    box-shadow 0.14s ease;
-}
-.hm-att:hover {
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-}
-.hm-att-line strong {
-  font-variant-numeric: tabular-nums;
-}
-/* Calm state when count === 0: neutral surface instead of false alarm */
 .hm-att.is-clear {
   background: var(--surface);
   border-color: var(--hm-line);
-}
-.hm-att.is-clear .hm-att-icon {
-  background: var(--page-bg);
-  color: var(--hm-muted);
-}
-.hm-att.is-clear .hm-att-line {
-  color: var(--hm-muted);
-  font-weight: 600;
-}
-.hm-att.is-clear strong {
-  color: var(--hm-muted);
-  font-weight: 700;
-}
-/* Front desk attention tiles: calm state when count === 0 */
-.hm-att-tile {
-  transition:
-    box-shadow 0.14s ease,
-    border-color 0.14s ease;
 }
 .hm-att-tile.is-clear {
   background: var(--surface);
   border-color: var(--hm-line);
 }
+.hm-att.is-clear .hm-att-icon,
 .hm-att-tile.is-clear .hm-att-icon {
   background: var(--page-bg);
   color: var(--hm-muted);
 }
-.hm-att-tile.is-clear .hm-att-count {
-  color: var(--hm-muted);
-}
+.hm-att.is-clear .hm-att-line,
+.hm-att.is-clear strong,
+.hm-att-tile.is-clear .hm-att-count,
 .hm-att-tile.is-clear > svg {
   color: var(--hm-muted);
 }
-
-/* ---------- 7. Bookings Today & Schedule Rows ---------- */
-.hm-row-time {
-  font-variant-numeric: tabular-nums;
-}
-.hm-row-button button {
-  position: relative;
-  border-radius: var(--radius-sm);
-  transition: background 0.14s ease;
-}
-.hm-row-button button:hover {
-  background: var(--page-bg);
-}
-.hm-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.hm-pill::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.8;
-  flex-shrink: 0;
-}
-.hm-empty {
-  padding: var(--sp-4);
-  border-radius: var(--radius);
-  background: var(--page-bg);
-  border: 1px dashed var(--hm-line);
-  text-align: center;
-}
-
-/* ---------- 8. Right Now Live Pulse ---------- */
-.hm-now-value strong {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- 9. Client Retention Bands — Clean White Cards + Bottom Share Bar ---------- */
 .hm-seg-card {
   position: relative;
   overflow: hidden;
-  background: var(--surface);
-  border-color: var(--border);
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
 }
-.hm-seg-card:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
-}
-/* Proportional share bar along the bottom edge using --seg-pct from parts.tsx and --seg from .hm-seg-* */
 .hm-seg-card::after {
   content: '';
   position: absolute;
@@ -3737,113 +4308,5 @@ button.hm-now-count {
   height: 3px;
   width: var(--seg-pct, 0%);
   background: var(--seg, var(--accent));
-  opacity: 0.85;
-  transition: width 0.25s ease;
 }
-.hm-seg-count strong {
-  font-variant-numeric: tabular-nums;
-}
-.hm-seg-count span {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- 10. Desktop CRM Bottom Grid: Team Floor Activity & Workspace Launchpad ---------- */
-.hm-crm-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: stretch;
-}
-@media (max-width: 1100px) {
-  .hm-crm-bottom {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-.hm-team-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-.hm-team-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 56px;
-  padding: 8px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--hm-line);
-  background: var(--surface);
-  color: var(--hm-ink);
-  text-decoration: none;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-.hm-team-card:hover {
-  border-color: var(--border-strong);
-  background: var(--page-bg);
-}
-.hm-team-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.hm-team-name {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--hm-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hm-team-sub {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--hm-muted);
-}
-
-.hm-launchpad-wrap .hm-tiles {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-.hm-launchpad-wrap .hm-tile {
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  min-height: 50px;
-  padding: 8px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--hm-line);
-  background: var(--surface);
-}
-.hm-launchpad-wrap .hm-tile:hover {
-  border-color: var(--border-strong);
-  background: var(--page-bg);
-}
-.hm-launchpad-wrap .hm-tile-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-.hm-launchpad-wrap .hm-tile-icon svg {
-  width: 1rem;
-  height: 1rem;
-}
-.hm-launchpad-wrap .hm-tile-label {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--hm-ink);
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 

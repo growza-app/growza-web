@@ -4,16 +4,20 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   api,
+  formatTime,
+  type ActivityEvent,
   type Appointment,
   type AutopayRenewal,
   type CustomerStats,
   type HomeOverview,
   type HomePeriod,
+  type Product,
   type Provider,
   type QueueEntry,
+  type ReportServiceRow,
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
-import { clientNameLabel, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
+import { clientNameLabel, formatDuration, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import { liveState, minutesBetween } from '../../lib/live-state';
 import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
@@ -47,7 +51,7 @@ import { BookingSummary } from '../BookingSummary';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
-import { AttentionList, Avatar, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
+import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards, StatusPill } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
 
@@ -474,36 +478,145 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   const attentionTotal = attention.reduce((sum, a) => sum + a.count, 0);
 
-  // Desktop CRM Command Center metrics — derived from already-loaded Home data.
-  const inServiceCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'in_service').length;
-  const upcomingCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'later').length;
-  const doneTodayCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'done').length;
+  // Desktop v3 Command Center state & data.
+  const [apptFilter, setApptFilter] = useState<'all' | 'upcoming' | 'in_progress' | 'completed' | 'no_show'>('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [topServices, setTopServices] = useState<ReportServiceRow[]>([]);
+  const [activities, setActivities] = useState<ActivityEvent[]>([]);
+
+  useEffect(() => {
+    if (!branchContext.ready) return;
+    let cancelled = false;
+    api
+      .products(branch)
+      .then((res) => !cancelled && setProducts(res))
+      .catch(() => !cancelled && setProducts([]));
+    if (canSee('/reports', p.role, p.reportTabs)) {
+      api
+        .reportsServices('last_7_days', false, undefined, undefined, undefined, branch)
+        .then((res) => !cancelled && setTopServices(res.rows.slice(0, 5)))
+        .catch(() => !cancelled && setTopServices([]));
+    }
+    api
+      .notifications(6, branch)
+      .then((res) => !cancelled && setActivities(res))
+      .catch(() => !cancelled && setActivities([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [branchContext.ready, branch, serverSig, p.role, p.reportTabs]);
+
+  const allListGroups = listGroups ?? [];
+  const inServiceCount = allListGroups.filter((g) => {
+    const s = liveState(g, now);
+    return s === 'in_service' || s === 'needs_answer';
+  }).length;
+  const upcomingCount = allListGroups.filter((g) => liveState(g, now) === 'later').length;
+  const doneTodayCount = allListGroups.filter((g) => liveState(g, now) === 'done').length;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
-  const dueClientsCount = clientStats?.segments.find((s) => s.key === 'due')?.count ?? 0;
-  const atRiskClientsCount = clientStats?.segments.find((s) => s.key === 'at_risk')?.count ?? 0;
-  const inactiveClientsCount = clientStats?.segments.find((s) => s.key === 'inactive')?.count ?? 0;
+
+  const filteredTableGroups = useMemo(() => {
+    return allListGroups
+      .filter((g) => {
+        if (apptFilter === 'all') return true;
+        const st = liveState(g, now);
+        if (apptFilter === 'upcoming') return st === 'later';
+        if (apptFilter === 'in_progress') return st === 'in_service' || st === 'needs_answer';
+        if (apptFilter === 'completed') return st === 'done';
+        if (apptFilter === 'no_show') return st === 'no_show';
+        return true;
+      })
+      .slice(0, 8);
+  }, [allListGroups, apptFilter, now]);
+
+  const totalProductsSold = useMemo(() => products.reduce((sum, pr) => sum + (pr.sold ?? 0), 0), [products]);
+  const totalProductRevenueMinor = useMemo(
+    () => products.reduce((sum, pr) => sum + (pr.sold ?? 0) * Number(pr.priceMinor || 0), 0),
+    [products],
+  );
+  const topProduct = useMemo(() => {
+    if (products.length === 0) return null;
+    return [...products].sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0))[0] ?? null;
+  }, [products]);
+
+  const rankedServices = useMemo(() => {
+    if (topServices.length > 0) {
+      return topServices.slice(0, 5).map((r) => ({ id: r.id, name: r.name, bookings: r.bookings, revenueMinor: r.revenueMinor }));
+    }
+    const byName = new Map<string, { id: string; name: string; bookings: number; revenueMinor: number }>();
+    for (const g of todayGroups ?? []) {
+      for (const a of g.appointments) {
+        const key = a.serviceName || 'Service';
+        const cur = byName.get(key) ?? { id: a.serviceId || key, name: key, bookings: 0, revenueMinor: 0 };
+        cur.bookings += 1;
+        cur.revenueMinor += Number(a.paidAmountMinor ?? a.priceMinor ?? 0);
+        byName.set(key, cur);
+      }
+    }
+    return [...byName.values()].sort((a, b) => b.bookings - a.bookings).slice(0, 5);
+  }, [topServices, todayGroups]);
+
+  const maxServiceBookings = Math.max(...rankedServices.map((s) => s.bookings), 1);
+
+  const recentFeed = useMemo(() => {
+    const items: Array<{ id: string; tone: 'green' | 'blue' | 'amber' | 'rose'; text: string; time: string; href: string }> = [];
+    for (const ev of activities.slice(0, 5)) {
+      const who = ev.customerName || t.nav.clients;
+      const isCancel = ev.topic.includes('cancel');
+      items.push({
+        id: ev.id,
+        tone: isCancel ? 'rose' : 'green',
+        text: isCancel ? t.actCancelled(who) : t.actNewBooking(who),
+        time: formatTime(ev.createdAt, p.timezone),
+        href: ev.appointmentId ? `/appointments?open=${encodeURIComponent(ev.appointmentId)}` : '/appointments',
+      });
+    }
+    if (items.length === 0) {
+      for (const g of (todayGroups ?? []).slice(0, 5)) {
+        const who = clientNameLabel(g) ?? t.walkInAction;
+        const st = liveState(g, now);
+        items.push({
+          id: g.key,
+          tone: st === 'done' ? 'blue' : 'green',
+          text: st === 'done' ? t.actPaymentReceived(rupees(g.priceMinor)) : t.actNewBooking(who),
+          time: formatTime(g.startAt, p.timezone),
+          href: '/appointments',
+        });
+      }
+    }
+    return items.slice(0, 5);
+  }, [activities, todayGroups, now, p.timezone, t]);
 
   const branchProviders = useMemo(
     () => p.providers.filter((prov) => !branch || !prov.locationId || prov.locationId === branch),
     [p.providers, branch],
   );
   const notMarkedSet = useMemo(() => new Set(p.staffNotMarkedIn ?? []), [p.staffNotMarkedIn]);
-  const notMarkedInCount = branchProviders.filter((prov) => notMarkedSet.has(prov.id)).length;
-  const checkedInStaffCount = Math.max(0, branchProviders.length - notMarkedInCount);
 
-  const providerVisitCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const g of todayGroups ?? []) {
-      const seenInSitting = new Set<string>();
-      for (const a of g.appointments) {
-        if (a.providerId && !seenInSitting.has(a.providerId)) {
-          seenInSitting.add(a.providerId);
-          counts.set(a.providerId, (counts.get(a.providerId) ?? 0) + 1);
-        }
+  const weekDays = useMemo(() => (data?.week.days ?? []).slice(-7), [data]);
+  const maxWeekDayRev = useMemo(() => Math.max(...weekDays.map((d) => d.revenueMinor), 1), [weekDays]);
+  const peakWeekIdx = useMemo(() => {
+    let bestIdx = Math.max(0, weekDays.length - 1);
+    let bestVal = -1;
+    weekDays.forEach((d, idx) => {
+      if (!d.future && d.revenueMinor >= bestVal) {
+        bestVal = d.revenueMinor;
+        bestIdx = idx;
       }
-    }
-    return counts;
-  }, [todayGroups]);
+    });
+    return bestIdx;
+  }, [weekDays]);
+
+  const paymentModes = useMemo(() => {
+    const byMode = new Map((data?.money.byPaymentMode ?? []).map((s) => [s.mode, s.revenueMinor]));
+    return [
+      { key: 'upi' as const, label: t.payment.upi, amount: byMode.get('upi') ?? 0, tone: 'upi' },
+      { key: 'cash' as const, label: t.payment.cash, amount: byMode.get('cash') ?? 0, tone: 'cash' },
+      { key: 'card' as const, label: t.payment.card, amount: byMode.get('card') ?? 0, tone: 'card' },
+    ];
+  }, [data, t]);
+
+  const totalBookingBar = Math.max(doneTodayCount + upcomingCount + inServiceCount, 1);
 
   const links = [
     { href: '/providers', label: t.nav.staff, icon: <IconStaff />, tone: 'rose' },
@@ -605,86 +718,517 @@ export function OwnerHome(p: OwnerHomeProps) {
           </button>
         </div>
 
-        {/* Desktop CRM Command Ribbon — 4 clean KPI cards across the top */}
-        <div className={`hm-kpi-ribbon hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
-          <a className="hm-kpi-card hm-kpi-blue" href="/appointments">
-            <span className="hm-kpi-top">
-              <span className="hm-kpi-icon">
-                <IconCalendar />
-              </span>
-              <span className="hm-kpi-eyebrow">{listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}</span>
-              <span className="hm-kpi-badge">{t.activeNowBadge(inServiceCount)}</span>
-            </span>
-            <strong className="hm-kpi-value">{(todayGroups ?? []).length}</strong>
-            <span className="hm-kpi-foot">
-              <span>{t.upcomingShort(upcomingCount)}</span>
-              <span>{t.doneShort(doneTodayCount)}</span>
-            </span>
-          </a>
+        {/* Desktop v3 Command Center — 3-row workspace matching the owner's reference design */}
+        <div className={`hm-desk-v3 hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
+          {/* ROW 1 — 4 Equal KPI Cards */}
+          <div className="hm-v3-kpis">
+            {/* 1. Today's revenue (Dark green card) */}
+            <section className="hm-v3-kpi hm-v3-kpi-dark">
+              <div className="hm-v3-kpi-head">
+                <span className="hm-v3-kpi-icon hm-v3-icon-dark">
+                  <IconWallet />
+                </span>
+                <span className="hm-v3-kpi-title">
+                  {period === 'today' ? t.todaysRevenue : period === 'week' ? t.moneyWeek : t.moneyMonth}
+                </span>
+                <button
+                  type="button"
+                  className="hm-v3-kpi-more"
+                  onClick={() => setSummaryOpen(true)}
+                  aria-label={t.daySummary}
+                  title={t.daySummary}
+                >
+                  ···
+                </button>
+              </div>
+              <div className="hm-v3-kpi-body">
+                <div className="hm-v3-kpi-main">
+                  <strong className="hm-v3-kpi-amount">{rupees(data?.money.revenueMinor ?? 0)}</strong>
+                  <span className="hm-v3-kpi-delta-row">
+                    {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined ? (
+                      <span className="hm-v3-delta-pill">
+                        {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
+                      </span>
+                    ) : (
+                      <span className="hm-v3-delta-pill">↑ 0%</span>
+                    )}
+                    <span className="hm-v3-kpi-vs">
+                      {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}
+                    </span>
+                  </span>
+                </div>
+                <div className="hm-v3-mini-bars" aria-hidden>
+                  {(weekDays.length > 0 ? weekDays : [{ date: '1', revenueMinor: 1 }, { date: '2', revenueMinor: 2 }, { date: '3', revenueMinor: 1 }, { date: '4', revenueMinor: 3 }, { date: '5', revenueMinor: 2 }, { date: '6', revenueMinor: 4 }, { date: '7', revenueMinor: 5 }]).map((d, idx, arr) => {
+                    const h = Math.max(22, Math.round((d.revenueMinor / maxWeekDayRev) * 100));
+                    return (
+                      <span
+                        key={d.date}
+                        className={idx === arr.length - 1 ? 'is-peak' : ''}
+                        style={{ height: `${h}%` }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="hm-v3-kpi-foot hm-v3-pay-foot">
+                {paymentModes.map((pm) => (
+                  <span key={pm.key} className="hm-v3-pay-chip">
+                    <i className={`hm-pay-dot-${pm.tone}`} />
+                    {pm.label} <b>{rupees(pm.amount)}</b>
+                  </span>
+                ))}
+              </div>
+            </section>
 
-          <a className="hm-kpi-card hm-kpi-violet" href="/customers">
-            <span className="hm-kpi-top">
-              <span className="hm-kpi-icon">
-                <IconStaff />
-              </span>
-              <span className="hm-kpi-eyebrow">{t.nav.clients}</span>
-              <span className="hm-kpi-badge">
-                {data?.money.cameBackPct ?? 0}% {t.cameBack}
-              </span>
-            </span>
-            <strong className="hm-kpi-value">{clientStats?.total ?? 0}</strong>
-            <span className="hm-kpi-foot">
-              <span>
-                {data?.money.newCustomers ?? 0} {t.newClientWord(data?.money.newCustomers ?? 0)}
-              </span>
-              <span>
-                {t.segments.active.label}: <b>{activeClientsCount}</b>
-              </span>
-            </span>
-          </a>
+            {/* 2. Bookings today */}
+            <section className="hm-v3-kpi">
+              <div className="hm-v3-kpi-head">
+                <span className="hm-v3-kpi-icon hm-v3-icon-blue">
+                  <IconCalendar />
+                </span>
+                <span className="hm-v3-kpi-title">{listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}</span>
+                <a className="hm-v3-kpi-more" href="/appointments" aria-label={t.bookingsToday}>
+                  ···
+                </a>
+              </div>
+              <div className="hm-v3-kpi-body">
+                <div className="hm-v3-kpi-main">
+                  <strong className="hm-v3-kpi-value">{allListGroups.length}</strong>
+                  <span className="hm-v3-kpi-sub">
+                    {doneTodayCount} {t.completedLabel.toLowerCase()} · {upcomingCount} {t.upcomingLabel.toLowerCase()}
+                  </span>
+                </div>
+              </div>
+              <div className="hm-v3-prog-track" aria-hidden>
+                <span className="is-green" style={{ width: `${(doneTodayCount / totalBookingBar) * 100}%` }} />
+                <span className="is-blue" style={{ width: `${(upcomingCount / totalBookingBar) * 100}%` }} />
+                <span className="is-amber" style={{ width: `${(inServiceCount / totalBookingBar) * 100}%` }} />
+              </div>
+              <div className="hm-v3-kpi-foot">
+                <span>
+                  <i className="hm-dot-green" />
+                  {t.completedLabel} <b>{doneTodayCount}</b>
+                </span>
+                <span>
+                  <i className="hm-dot-blue" />
+                  {t.upcomingLabel} <b>{upcomingCount}</b>
+                </span>
+                <span>
+                  <i className="hm-dot-amber" />
+                  {t.inProgressLabel} <b>{inServiceCount}</b>
+                </span>
+              </div>
+            </section>
 
-          <a
-            className="hm-kpi-card hm-kpi-emerald"
-            href={`/customers?status=due${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
-          >
-            <span className="hm-kpi-top">
-              <span className="hm-kpi-icon">
-                <IconClock />
-              </span>
-              <span className="hm-kpi-eyebrow">{t.segments.due.label}</span>
-              <span className="hm-kpi-badge">{t.segments.due.range}</span>
-            </span>
-            <strong className="hm-kpi-value">{dueClientsCount}</strong>
-            <span className="hm-kpi-foot">
-              <span>
-                {t.segments.at_risk.label}: <b>{atRiskClientsCount}</b>
-              </span>
-              <span>
-                {t.segments.inactive.label}: <b>{inactiveClientsCount}</b>
-              </span>
-            </span>
-          </a>
+            {/* 3. New clients */}
+            <section className="hm-v3-kpi">
+              <div className="hm-v3-kpi-head">
+                <span className="hm-v3-kpi-icon hm-v3-icon-green">
+                  <IconStaff />
+                </span>
+                <span className="hm-v3-kpi-title">{t.newClientsTitle}</span>
+                <a className="hm-v3-kpi-more" href="/customers" aria-label={t.newClientsTitle}>
+                  ···
+                </a>
+              </div>
+              <div className="hm-v3-kpi-body">
+                <div className="hm-v3-kpi-main">
+                  <strong className="hm-v3-kpi-value">{data?.money.newCustomers ?? 0}</strong>
+                  <span className="hm-v3-kpi-sub">
+                    <span className="hm-v3-badge-green">↑ {data?.money.cameBackPct ?? 0}%</span> {t.cameBack}
+                  </span>
+                </div>
+                <svg className="hm-v3-mini-wave" viewBox="0 0 96 40" preserveAspectRatio="none" aria-hidden>
+                  <path
+                    className="hm-v3-wave-area"
+                    d="M0,34 C16,32 24,22 40,24 C56,26 68,10 96,6 L96,40 L0,40 Z"
+                  />
+                  <path
+                    className="hm-v3-wave-line"
+                    d="M0,34 C16,32 24,22 40,24 C56,26 68,10 96,6"
+                  />
+                </svg>
+              </div>
+              <div className="hm-v3-kpi-foot">
+                <span>
+                  {t.returningLabel} <b>{activeClientsCount}</b>
+                </span>
+                <span>
+                  · {t.newLabel} <b>{data?.money.newCustomers ?? 0}</b>
+                </span>
+              </div>
+            </section>
 
-          <a className="hm-kpi-card hm-kpi-amber" href="/attendance">
-            <span className="hm-kpi-top">
-              <span className="hm-kpi-icon">
-                <IconClipboardCheck />
-              </span>
-              <span className="hm-kpi-eyebrow">{t.nav.staff}</span>
-              <span className="hm-kpi-badge">
-                {notMarkedInCount === 0 ? t.allClear : `${notMarkedInCount} ${t.notCheckedIn}`}
-              </span>
-            </span>
-            <strong className="hm-kpi-value">
-              {checkedInStaffCount} / {branchProviders.length}
-            </strong>
-            <span className="hm-kpi-foot">
-              <span>{t.checkedInShort(checkedInStaffCount, branchProviders.length)}</span>
-              <span>
-                {t.inTheChair}: <b>{busy.size}</b>
-              </span>
-            </span>
-          </a>
+            {/* 4. Products sold */}
+            <section className="hm-v3-kpi">
+              <div className="hm-v3-kpi-head">
+                <span className="hm-v3-kpi-icon hm-v3-icon-amber">
+                  <IconProducts />
+                </span>
+                <span className="hm-v3-kpi-title">{t.productsSoldTitle}</span>
+                <a className="hm-v3-kpi-more" href="/products" aria-label={t.productsSoldTitle}>
+                  ···
+                </a>
+              </div>
+              <div className="hm-v3-kpi-body">
+                <div className="hm-v3-kpi-main">
+                  <strong className="hm-v3-kpi-value">{totalProductsSold}</strong>
+                  <span className="hm-v3-kpi-sub">
+                    {rupees(totalProductRevenueMinor)} {t.revenueWord}
+                  </span>
+                </div>
+                <div className="hm-v3-mini-bars is-light" aria-hidden>
+                  {[35, 52, 44, 68, 82, 100].map((h, i) => (
+                    <span key={i} className={i >= 4 ? 'is-peak' : ''} style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+              </div>
+              <div className="hm-v3-kpi-foot">
+                <span className="hm-v3-foot-truncate">
+                  {t.topProductLabel}:{' '}
+                  <b>{topProduct ? topProduct.name : t.nav.products}</b>
+                  {topProduct ? ` · ${t.soldCount(topProduct.sold ?? 0)}` : ''}
+                </span>
+              </div>
+            </section>
+          </div>
+
+          {/* ROW 2 — Today's Appointments Table (Left) + Staff Status & Quick Actions (Right) */}
+          <div className="hm-v3-mid">
+            <section className="hm-v3-card hm-v3-appts-card">
+              <div className="hm-v3-card-head">
+                <h2>
+                  {t.todaysAppointments} <span className="hm-v3-count">({allListGroups.length})</span>
+                </h2>
+                {mayBook ? (
+                  <a className="hm-v3-btn-primary" href="/appointments/new">
+                    + {t.nav.newBooking}
+                  </a>
+                ) : null}
+              </div>
+
+              <div className="hm-v3-filter-bar">
+                <div className="hm-v3-tabs" role="tablist" aria-label={t.todaysAppointments}>
+                  {(
+                    [
+                      { key: 'all', label: t.allFilterLabel },
+                      { key: 'upcoming', label: t.upcomingLabel },
+                      { key: 'in_progress', label: t.inProgressLabel },
+                      { key: 'completed', label: t.completedLabel },
+                      { key: 'no_show', label: t.noShowLabel },
+                    ] as const
+                  ).map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      role="tab"
+                      aria-selected={apptFilter === tab.key}
+                      className={`hm-v3-tab ${apptFilter === tab.key ? 'is-on' : ''}`}
+                      onClick={() => setApptFilter(tab.key)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <a className="hm-v3-btn-outline" href="/appointments">
+                  <IconCalendar />
+                  <span>{t.viewCalendar}</span>
+                </a>
+              </div>
+
+              <div className="hm-v3-table-wrap">
+                {listGroups === null ? (
+                  <CardError t={t} />
+                ) : filteredTableGroups.length === 0 ? (
+                  <p className="hm-empty">{listIsTomorrow ? t.nothingTomorrow : t.nothingToday}</p>
+                ) : (
+                  <table className="hm-v3-table">
+                    <thead>
+                      <tr>
+                        <th>{t.colTime}</th>
+                        <th>{t.colClient}</th>
+                        <th>{t.colService}</th>
+                        <th>{t.colStaff}</th>
+                        <th>{t.colStatus}</th>
+                        <th>{t.colActions}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredTableGroups.map((g) => {
+                        const st = liveState(g, now);
+                        const dotTone =
+                          st === 'done'
+                            ? 'green'
+                            : st === 'in_service' || st === 'needs_answer'
+                              ? 'amber'
+                              : st === 'no_show' || st === 'cancelled'
+                                ? 'rose'
+                                : 'green';
+                        const cName = clientNameLabel(g) ?? t.walkInAction;
+                        const sName = summarizeServices(g.serviceNames, p.lang);
+                        const pName = g.providerNames[0] ?? '—';
+                        const pId = g.appointments[0]?.providerId ?? pName;
+                        return (
+                          <tr key={g.key}>
+                            <td className="hm-v3-td-time">
+                              <span className={`hm-v3-tl-dot is-${dotTone}`} />
+                              <strong>{formatTime(g.startAt, p.timezone)}</strong>
+                            </td>
+                            <td className="hm-v3-td-client">
+                              <div className="hm-v3-person">
+                                <Avatar name={cName} id={avatarKey(g)} size={34} />
+                                <div className="hm-v3-person-meta">
+                                  <strong>{cName}</strong>
+                                  <span>{g.customerPhone || '—'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="hm-v3-td-service">
+                              <strong>{sName}</strong>
+                              <span>{formatDuration(g.totalMin)}</span>
+                            </td>
+                            <td className="hm-v3-td-staff">
+                              <div className="hm-v3-staff-cell">
+                                <Avatar name={pName} id={pId} size={28} />
+                                <span>{pName}</span>
+                              </div>
+                            </td>
+                            <td className="hm-v3-td-status">
+                              <StatusPill t={t} group={g} now={now} />
+                            </td>
+                            <td className="hm-v3-td-act">
+                              <button
+                                type="button"
+                                className={st === 'later' ? 'hm-v3-row-btn is-start' : 'hm-v3-row-btn'}
+                                onClick={() => setOpenBooking(g)}
+                              >
+                                {st === 'later' ? t.startBtn : t.viewBtn}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="hm-v3-card-foot">
+                <a className="hm-v3-foot-link" href="/appointments">
+                  {t.viewAllAppointments} →
+                </a>
+              </div>
+            </section>
+
+            <div className="hm-v3-right-col">
+              {/* Staff status card */}
+              <section className="hm-v3-card hm-v3-staff-card">
+                <div className="hm-v3-card-head">
+                  <h2>
+                    {t.staffStatusTitle} <span className="hm-v3-count">({branchProviders.length})</span>
+                  </h2>
+                  {canSee('/providers', p.role, p.reportTabs) ? (
+                    <a className="hm-v3-head-link" href="/providers">
+                      {t.viewAll} →
+                    </a>
+                  ) : null}
+                </div>
+                {branchProviders.length === 0 ? (
+                  <p className="hm-empty">{t.teamEmpty}</p>
+                ) : (
+                  <div className="hm-v3-staff-strip">
+                    {branchProviders.slice(0, 5).map((prov) => {
+                      const inChair = busy.get(prov.id);
+                      const isAbsent = notMarkedSet.has(prov.id);
+                      const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
+                      const statusLabel = inChair ? t.busyLabel : isAbsent ? t.absentLabel : t.availableNow;
+                      return (
+                        <a key={prov.id} className="hm-v3-staff-item" href="/providers">
+                          <span className={`hm-v3-staff-ring is-${statusKey}`}>
+                            <Avatar name={prov.displayName} id={prov.id} size={46} />
+                          </span>
+                          <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
+                          <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
+                          <span className={`hm-v3-staff-pill is-${statusKey}`}>
+                            <i />
+                            {statusLabel}
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {/* Quick actions card */}
+              <section className="hm-v3-card hm-v3-quick-card">
+                <div className="hm-v3-card-head">
+                  <h2>{t.quickActionsTitle}</h2>
+                </div>
+                <div className="hm-v3-qgrid">
+                  <a className="hm-v3-qbtn is-green" href="/appointments/new">
+                    <span className="hm-v3-qicon">
+                      <IconCalendarPlus />
+                    </span>
+                    <strong>{t.nav.newBooking}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-blue" href="/appointments/new">
+                    <span className="hm-v3-qicon">
+                      <IconClock />
+                    </span>
+                    <strong>{t.walkInAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-amber" href="/appointments/new?purpose=payment">
+                    <span className="hm-v3-qicon">
+                      <IconReceipt />
+                    </span>
+                    <strong>{t.recordPayment}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-purple" href="/customers">
+                    <span className="hm-v3-qicon">
+                      <IconStaff />
+                    </span>
+                    <strong>{t.addClientAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-orange" href="/products">
+                    <span className="hm-v3-qicon">
+                      <IconProducts />
+                    </span>
+                    <strong>{t.sellProductAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-rose" href="/offers">
+                    <span className="hm-v3-qicon">
+                      <IconOffers />
+                    </span>
+                    <strong>{t.nav.offers}</strong>
+                  </a>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          {/* ROW 3 — Revenue Trend + Top Services + Recent Activity */}
+          <div className="hm-v3-bot">
+            {/* 1. Revenue trend */}
+            <section className="hm-v3-card hm-v3-trend-card">
+              <div className="hm-v3-card-head">
+                <h2>{t.revenueTrendTitle}</h2>
+                <span className="hm-v3-period-pill">{data?.week.span === 'month' ? t.thisMonth : t.thisWeek}</span>
+              </div>
+              <div className="hm-v3-trend-summary">
+                <strong className="hm-v3-trend-total">{rupees(data?.week.revenueMinor ?? 0)}</strong>
+                {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined ? (
+                  <span className="hm-v3-badge-green">
+                    {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}% {t.vsLastWeek}
+                  </span>
+                ) : null}
+              </div>
+              <div className="hm-v3-chart-box">
+                <div className="hm-v3-bars">
+                  {(weekDays.length > 0
+                    ? weekDays
+                    : [
+                        { date: 'mon', weekday: 'Mon', revenueMinor: 0, future: false },
+                        { date: 'tue', weekday: 'Tue', revenueMinor: 0, future: false },
+                        { date: 'wed', weekday: 'Wed', revenueMinor: 0, future: false },
+                        { date: 'thu', weekday: 'Thu', revenueMinor: 0, future: false },
+                        { date: 'fri', weekday: 'Fri', revenueMinor: 0, future: false },
+                        { date: 'sat', weekday: 'Sat', revenueMinor: 0, future: false },
+                        { date: 'sun', weekday: 'Sun', revenueMinor: 0, future: false },
+                      ]
+                  ).map((d, idx) => {
+                    const pct = Math.max(12, Math.round((d.revenueMinor / maxWeekDayRev) * 100));
+                    const isPeak = idx === peakWeekIdx;
+                    return (
+                      <div key={d.date} className={`hm-v3-bar-col ${isPeak ? 'is-peak' : ''}`}>
+                        <div className="hm-v3-bar-track">
+                          {isPeak ? <span className="hm-v3-bar-tip">{rupees(d.revenueMinor)}</span> : null}
+                          <span className="hm-v3-bar-fill" style={{ height: `${pct}%` }} />
+                        </div>
+                        <span className="hm-v3-bar-day">{d.weekday || d.date.slice(0, 3)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            {/* 2. Top services */}
+            <section className="hm-v3-card hm-v3-services-card">
+              <div className="hm-v3-card-head">
+                <h2>
+                  {t.topServicesTitle} <span className="hm-v3-count">({t.thisWeek})</span>
+                </h2>
+                {canSee('/reports', p.role, p.reportTabs) ? (
+                  <a className="hm-v3-head-link" href="/reports?tab=services">
+                    {t.viewAll} →
+                  </a>
+                ) : null}
+              </div>
+              {rankedServices.length === 0 ? (
+                <p className="hm-empty">{t.nothingToday}</p>
+              ) : (
+                <ol className="hm-v3-srv-rows">
+                  {rankedServices.map((srv, idx) => {
+                    const pct = Math.max(14, Math.round((srv.bookings / maxServiceBookings) * 100));
+                    return (
+                      <li key={srv.id} className="hm-v3-srv-row">
+                        <span className="hm-v3-srv-rank">{idx + 1}</span>
+                        <Avatar name={srv.name} id={srv.id} size={32} />
+                        <div className="hm-v3-srv-main">
+                          <div className="hm-v3-srv-top">
+                            <strong>{srv.name}</strong>
+                            <span>
+                              {srv.bookings} {t.bookingWord(srv.bookings)}
+                            </span>
+                          </div>
+                          <div className="hm-v3-srv-bar">
+                            <span style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <strong className="hm-v3-srv-rev">{rupees(srv.revenueMinor)}</strong>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+
+            {/* 3. Recent activity */}
+            <section className="hm-v3-card hm-v3-activity-card">
+              <div className="hm-v3-card-head">
+                <h2>{t.recentActivityTitle}</h2>
+                <a className="hm-v3-head-link" href="/appointments">
+                  {t.viewAll} →
+                </a>
+              </div>
+              {recentFeed.length === 0 ? (
+                <p className="hm-empty">{t.nothingToday}</p>
+              ) : (
+                <ul className="hm-v3-feed-rows">
+                  {recentFeed.map((item) => (
+                    <li key={item.id}>
+                      <a className="hm-v3-feed-row" href={item.href}>
+                        <span className={`hm-v3-feed-icon is-${item.tone}`}>
+                          {item.tone === 'blue' ? (
+                            <IconReceipt />
+                          ) : item.tone === 'amber' ? (
+                            <IconProducts />
+                          ) : item.tone === 'rose' ? (
+                            <IconBan />
+                          ) : (
+                            <IconCalendar />
+                          )}
+                        </span>
+                        <span className="hm-v3-feed-text">{item.text}</span>
+                        <span className="hm-v3-feed-time">{item.time}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
         </div>
 
         <div className={`hm-owner-grid ${hideUntilBranch ? 'is-settling' : ''}`} aria-busy={hideUntilBranch || undefined}>
@@ -795,58 +1339,6 @@ export function OwnerHome(p: OwnerHomeProps) {
             <SegmentCards t={t} stats={clientStats} branch={branch} />
           </Card>
 
-        </div>
-
-        {/* Desktop CRM Bottom Row — Team & Specialist Floor Activity + Shaded Workspace Module Launchpad */}
-        <div className={`hm-crm-bottom hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
-          <Card
-            className="hm-card-team"
-            title={t.teamTodayTitle}
-            action={
-              canSee('/providers', p.role, p.reportTabs) ? (
-                <a className="hm-link" href="/providers">
-                  {t.viewAll} ({branchProviders.length}) ›
-                </a>
-              ) : undefined
-            }
-          >
-            {branchProviders.length === 0 ? (
-              <p className="hm-empty">{t.teamEmpty}</p>
-            ) : (
-              <ul className="hm-team-grid">
-                {branchProviders.slice(0, 6).map((prov) => {
-                  const inChair = busy.get(prov.id);
-                  const isUnmarked = notMarkedSet.has(prov.id);
-                  const visits = providerVisitCounts.get(prov.id) ?? 0;
-                  return (
-                    <li key={prov.id}>
-                      <a className="hm-team-card" href="/providers">
-                        <Avatar name={prov.displayName} id={prov.id} size={40} />
-                        <span className="hm-team-info">
-                          <strong className="hm-team-name">{prov.displayName}</strong>
-                          <span className="hm-team-sub">{t.staffBookings(visits)}</span>
-                        </span>
-                        {inChair ? (
-                          <span className="hm-pill hm-pill-blue">{t.inSessionWith(inChair.client)}</span>
-                        ) : isUnmarked ? (
-                          <span className="hm-pill hm-pill-amber">{t.notCheckedIn}</span>
-                        ) : (
-                          <span className="hm-pill hm-pill-green">{t.availableNow}</span>
-                        )}
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Card>
-
-          <Card className="hm-card-launchpad" title={t.workspaceModulesTitle}>
-            <p className="hm-card-hint">{t.workspaceModulesSub}</p>
-            <div className="hm-launchpad-wrap">
-              <QuickTiles items={links} />
-            </div>
-          </Card>
         </div>
       </div>
 
