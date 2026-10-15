@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 /**
  * Jira GRW-300 — the mobile hamburger drawer's open/closed state.
@@ -17,6 +18,26 @@ const MobileNavContext = createContext<{ open: boolean; toggle: () => void; clos
 
 export function MobileNavProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  /*
+   * Owner, 2026-10-15 — the drawer must be shut whenever a screen is shown again.
+   *
+   * A drawer link is a full page load, and a phone keeps the page it left in its back-forward cache, frozen the way
+   * it was: drawer open, scroll locked. Back brought that page straight back, so the ☰ then CLOSED an already-open
+   * drawer on its first tap and looked dead ("it gets stuck"). `pageshow` with `persisted` is the one signal a
+   * restored page gets. A client-side navigation keeps this provider mounted, so a changed path shuts it too.
+   */
+  useEffect(() => {
+    const restored = (e: PageTransitionEvent) => {
+      if (e.persisted) setOpen(false);
+    };
+    window.addEventListener('pageshow', restored);
+    return () => window.removeEventListener('pageshow', restored);
+  }, []);
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
   const value = useMemo(
     () => ({
       open,
