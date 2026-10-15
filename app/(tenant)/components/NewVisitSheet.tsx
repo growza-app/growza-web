@@ -3136,7 +3136,7 @@ export function NewVisitSheet({
           counts={new Map(services.map((x) => [x.id, countOnBill(x.id)]))}
           onPick={addOneMore}
           packages={combos}
-          packageOnBillId={offerId}
+          packageCountOf={(id) => (id === offerId ? 1 : 0)}
           onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
           onClose={() => setAsking(null)}
         />
@@ -3586,7 +3586,7 @@ export function NewVisitSheet({
                 full={billCount >= BILL_MAX_LINES}
                 money={(minor) => formatMoney(String(minor))}
                 packages={combos}
-                packageOnBillId={offerId}
+                packageCountOf={(id) => (id === offerId ? 1 : 0)}
                 onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
               />
             )}

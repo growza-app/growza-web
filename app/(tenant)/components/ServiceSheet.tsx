@@ -37,9 +37,7 @@ export function ServiceSheet({
   onPick,
   onClose,
   packages,
-  packageOnBillId = null,
-  packageOnBillIds,
-  packageCountOf,
+  packageCountOf = () => 0,
   onLessPackage,
   onPickPackage,
   products,
@@ -52,10 +50,6 @@ export function ServiceSheet({
   onClose: () => void;
   /** The combos on offer. Omitted by Record payment, which does not sell them from here. */
   packages?: Offer[];
-  /** The one already on the bill, so tapping it again takes it off. */
-  packageOnBillId?: string | null;
-  /** Owner, 2026-10-15 — the till may carry more than one package; the one-page form still sends one. */
-  packageOnBillIds?: readonly string[];
   /** Owner, 2026-10-15 — how many times a package is on the bill, and one fewer; absent on the one-page form. */
   packageCountOf?: (offerId: string) => number;
   onLessPackage?: (offerId: string) => void;
@@ -223,8 +217,8 @@ export function ServiceSheet({
           <ul className="pf-client-matches pf-menu-list">
             {shownPackages.map((o) => {
               const first = services.find((x) => x.id === o.serviceIds[0]);
-              const pkgCount = packageCountOf ? packageCountOf(o.id) : 0;
-              const on = pkgCount > 0 || (packageOnBillIds ? packageOnBillIds.includes(o.id) : packageOnBillId === o.id);
+              const pkgCount = packageCountOf(o.id);
+              const on = pkgCount > 0;
               return (
                 <li key={o.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${on ? 'pf-menu-row-on' : ''}`} onClick={() => onPickPackage?.(o)}>
@@ -263,24 +257,7 @@ export function ServiceSheet({
           </ul>
         )}
       </div>
-      {viewing ? (
-        <PackageSheet
-          offer={viewing}
-          services={services}
-          onBill={packageCountOf ? packageCountOf(viewing.id) > 0 : packageOnBillIds ? packageOnBillIds.includes(viewing.id) : packageOnBillId === viewing.id}
-          count={packageCountOf ? packageCountOf(viewing.id) : undefined}
-          onAdd={() => {
-            onPickPackage?.(viewing);
-            setViewing(null);
-          }}
-          onRemove={() => {
-            if (onLessPackage) onLessPackage(viewing.id);
-            else onPickPackage?.(viewing);
-            setViewing(null);
-          }}
-          onClose={() => setViewing(null)}
-        />
-      ) : null}
+      {viewing ? <PackageSheet offer={viewing} services={services} countOf={packageCountOf} onPick={(o) => onPickPackage?.(o)} onLess={onLessPackage} onClose={() => setViewing(null)} /> : null}
     </div>
   );
 }

@@ -153,7 +153,8 @@ describe('New booking asks one question per line', () => {
     const till = readFileSync(resolve(__dirname, 'ServiceSheet.tsx'), 'utf8');
     // Every New booking addition is optional, so the till's call site renders exactly what it rendered before.
     expect(till).toMatch(/packages\?: Offer\[\];/);
-    expect(till).toMatch(/packageOnBillId\?: string \| null;/);
+    // One prop says how many times a package is on the bill (review, 2026-10-15); the one-page form answers 1 or 0.
+    expect(till).toMatch(/packageCountOf\?: \(offerId: string\) => number;/);
     expect(till).toMatch(/const offers = packages \?\? \[\];/);
     const pay = readFileSync(resolve(__dirname, '../appointments/new/PayFlow.tsx'), 'utf8');
     expect(pay).toMatch(/import \{ ServiceSheet \} from '\.\.\/\.\.\/components\/ServiceSheet';/);

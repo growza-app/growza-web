@@ -17,23 +17,34 @@ import { servicePhotoUrl } from '../lib/service-photos';
 export function PackageSheet({
   offer,
   services,
-  onBill,
-  count,
-  onAdd,
-  onRemove,
+  countOf,
+  onPick,
+  onLess,
   onClose,
 }: {
   offer: Offer;
   services: readonly Service[];
-  onBill: boolean;
-  /** How many times it is on the bill, where the till counts (the one-page form does not). */
-  count?: number;
-  onAdd: () => void;
-  onRemove?: () => void;
+  /** How many times this package is on the bill. */
+  countOf: (offerId: string) => number;
+  /** Add one (or, on a bill that holds one package, toggle it). */
+  onPick: (o: Offer) => void;
+  /** One fewer. Absent on the one-page form, where picking the package again takes it off. */
+  onLess?: (offerId: string) => void;
   onClose: () => void;
 }) {
   const t = useTranslations('payFlow.pkg');
   const ref = useRef<HTMLDivElement>(null);
+  const count = countOf(offer.id);
+  const onBill = count > 0;
+  const onAdd = () => {
+    onPick(offer);
+    onClose();
+  };
+  const onRemove = () => {
+    if (onLess) onLess(offer.id);
+    else onPick(offer);
+    onClose();
+  };
   useDialog(ref, { onClose });
   const byId = new Map(services.map((s) => [s.id, s]));
   const inside = offer.serviceIds.map((id) => byId.get(id)).filter((s): s is Service => Boolean(s));
@@ -73,13 +84,13 @@ export function PackageSheet({
         </ul>
         {until ? <p className="pf-pkg-note">{t('until', { date: until.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) })}</p> : null}
         <div className="pf-pkg-foot">
-          {onBill && onRemove ? (
+          {onBill ? (
             <button type="button" className="btn btn-ghost" onClick={onRemove}>
               {t('remove')}
             </button>
           ) : null}
-          <button type="button" className="btn" onClick={onAdd} disabled={onBill && count === undefined}>
-            {count !== undefined && count > 0 ? t('addAnother', { n: count }) : onBill ? t('onBill') : t('add')}
+          <button type="button" className="btn" onClick={onAdd} disabled={onBill && !onLess}>
+            {onBill && onLess ? t('addAnother', { n: count }) : onBill ? t('onBill') : t('add')}
           </button>
         </div>
       </div>
