@@ -817,30 +817,31 @@
 }
 
 @media (min-width: 1101px) {
+  /*
+   * The middle panel is ~30rem on a laptop: search, Filter and Sort do not fit in one row without squeezing the
+   * search to a sliver. The search takes the whole first row; the two selects share the second.
+   */
   .svc-desk-tools {
     display: flex;
-    gap: var(--sp-3);
+    flex-wrap: wrap;
+    gap: var(--sp-2);
     align-items: center;
   }
 
   .svc-desk-tools .pf-wide-search {
-    flex: 1;
+    flex: 1 1 100%;
     min-width: 0;
   }
 
   .svc-desk-sel {
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
-    align-items: center;
-    gap: var(--sp-1);
-    flex: none;
-  }
-
-  .svc-desk-sel span {
-    font-size: 0.8125rem;
-    color: var(--muted);
   }
 
   .svc-desk-sel select {
+    flex: 1;
+    min-width: 0;
     min-height: 40px;
     padding: 0 var(--sp-2);
     border: 1px solid var(--border);

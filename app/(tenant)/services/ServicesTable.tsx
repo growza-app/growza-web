@@ -757,8 +757,7 @@ export function ServicesTable({
                   />
                 </label>
                 <label className="svc-desk-sel">
-                  <span>{t('desk.filter')}</span>
-                  <select value={deskStatus} onChange={(e) => setDeskStatus(e.target.value as DeskStatus)}>
+                  <select value={deskStatus} aria-label={t('desk.filter')} title={t('desk.filter')} onChange={(e) => setDeskStatus(e.target.value as DeskStatus)}>
                     {DESK_STATUSES.map((v) => (
                       <option key={v} value={v}>
                         {t(`desk.status.${v}`)}
@@ -767,8 +766,7 @@ export function ServicesTable({
                   </select>
                 </label>
                 <label className="svc-desk-sel">
-                  <span>{t('desk.sort')}</span>
-                  <select value={deskSort} onChange={(e) => setDeskSort(e.target.value as DeskSort)} disabled={search.trim().length >= MIN_CHARS}>
+                  <select value={deskSort} aria-label={t('desk.sort')} title={t('desk.sort')} onChange={(e) => setDeskSort(e.target.value as DeskSort)} disabled={search.trim().length >= MIN_CHARS}>
                     {DESK_SORTS.map((v) => (
                       <option key={v} value={v}>
                         {t(`desk.sorts.${v}`)}
