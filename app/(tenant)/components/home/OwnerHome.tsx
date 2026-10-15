@@ -26,6 +26,7 @@ import type { Lang } from '../../lib/lang';
 import { canSee, mayUse, type MemberRole } from '../../lib/nav-policy';
 import {
   IconBan,
+  IconCalendar,
   IconCalendarPlus,
   IconChevronRight,
   IconClipboardCheck,
@@ -33,6 +34,7 @@ import {
   IconDaySummary,
   IconOffers,
   IconPackages,
+  IconProducts,
   IconReceipt,
   IconReports,
   IconServices,
@@ -45,7 +47,7 @@ import { BookingSummary } from '../BookingSummary';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
-import { AttentionList, BookingRows, Card, CardError, HomeHeader, QuickTiles, Segmented, SegmentCards } from './parts';
+import { AttentionList, Avatar, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
 
@@ -356,7 +358,7 @@ export function OwnerHome(p: OwnerHomeProps) {
   const locationLine = multiBranch ? (selected?.name ?? t.allBranches) : p.primaryLocationName;
 
   const fit = useFitBookings();
-  const bookingsShown = fit.count;
+  const bookingsShown = Math.max(HOME_BOOKINGS_SHOWN, fit.count);
 
   const todayGroups = useMemo(() => visibleGroups(p.appointments, branch), [p.appointments, branch]);
   const tomorrowGroups = useMemo(() => visibleGroups(p.tomorrowAppointments, branch), [p.tomorrowAppointments, branch]);
@@ -470,11 +472,46 @@ export function OwnerHome(p: OwnerHomeProps) {
       ]
     : [];
 
+  const attentionTotal = attention.reduce((sum, a) => sum + a.count, 0);
+
+  // Desktop CRM Command Center metrics — derived from already-loaded Home data.
+  const avgTicket =
+    data && data.money.bookings > 0
+      ? rupees(Math.round(data.money.revenueMinor / data.money.bookings))
+      : rupees(0);
+  const inServiceCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'in_service').length;
+  const upcomingCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'later').length;
+  const doneTodayCount = (todayGroups ?? []).filter((g) => liveState(g, now) === 'done').length;
+  const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
+
+  const branchProviders = useMemo(
+    () => p.providers.filter((prov) => !branch || !prov.locationId || prov.locationId === branch),
+    [p.providers, branch],
+  );
+  const notMarkedSet = useMemo(() => new Set(p.staffNotMarkedIn ?? []), [p.staffNotMarkedIn]);
+  const notMarkedInCount = branchProviders.filter((prov) => notMarkedSet.has(prov.id)).length;
+  const checkedInStaffCount = Math.max(0, branchProviders.length - notMarkedInCount);
+
+  const providerVisitCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const g of todayGroups ?? []) {
+      const seenInSitting = new Set<string>();
+      for (const a of g.appointments) {
+        if (a.providerId && !seenInSitting.has(a.providerId)) {
+          seenInSitting.add(a.providerId);
+          counts.set(a.providerId, (counts.get(a.providerId) ?? 0) + 1);
+        }
+      }
+    }
+    return counts;
+  }, [todayGroups]);
+
   const links = [
     { href: '/providers', label: t.nav.staff, icon: <IconStaff />, tone: 'rose' },
     { href: '/services', label: t.nav.services, icon: <IconServices />, tone: 'green' },
     // Jira GRW-438 — a quick link of its own, asked for alongside the screen.
     { href: '/packages', label: t.nav.packages, icon: <IconPackages />, tone: 'green' },
+    { href: '/products', label: t.nav.products, icon: <IconProducts />, tone: 'blue' },
     { href: '/offers', label: t.nav.offers, icon: <IconOffers />, tone: 'violet' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
@@ -569,6 +606,91 @@ export function OwnerHome(p: OwnerHomeProps) {
           </button>
         </div>
 
+        {/* Desktop CRM Command Ribbon — 4 shaded full KPI cards across the top */}
+        <div className={`hm-kpi-ribbon hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
+          <button type="button" className="hm-kpi-card hm-kpi-emerald" onClick={() => setSummaryOpen(true)}>
+            <span className="hm-kpi-top">
+              <span className="hm-kpi-icon">
+                <IconWallet />
+              </span>
+              <span className="hm-kpi-eyebrow">
+                {period === 'today' ? t.moneyToday : period === 'week' ? t.moneyWeek : t.moneyMonth}
+              </span>
+              {data && data.money.deltaPct !== null ? (
+                <span className="hm-kpi-badge">
+                  {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
+                </span>
+              ) : null}
+            </span>
+            <strong className="hm-kpi-value">{data ? rupees(data.money.revenueMinor) : '—'}</strong>
+            <span className="hm-kpi-foot">
+              <span>
+                {t.avgTicketLabel}: <b>{avgTicket}</b>
+              </span>
+              <span>
+                {data?.money.bookings ?? 0} {t.done}
+              </span>
+            </span>
+          </button>
+
+          <a className="hm-kpi-card hm-kpi-blue" href="/appointments">
+            <span className="hm-kpi-top">
+              <span className="hm-kpi-icon">
+                <IconCalendar />
+              </span>
+              <span className="hm-kpi-eyebrow">{listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}</span>
+              <span className="hm-kpi-badge">{t.activeNowBadge(inServiceCount)}</span>
+            </span>
+            <strong className="hm-kpi-value">{(todayGroups ?? []).length}</strong>
+            <span className="hm-kpi-foot">
+              <span>{t.upcomingShort(upcomingCount)}</span>
+              <span>{t.doneShort(doneTodayCount)}</span>
+            </span>
+          </a>
+
+          <a className="hm-kpi-card hm-kpi-violet" href="/customers">
+            <span className="hm-kpi-top">
+              <span className="hm-kpi-icon">
+                <IconStaff />
+              </span>
+              <span className="hm-kpi-eyebrow">{t.nav.clients}</span>
+              <span className="hm-kpi-badge">
+                {data?.money.cameBackPct ?? 0}% {t.cameBack}
+              </span>
+            </span>
+            <strong className="hm-kpi-value">{clientStats?.total ?? 0}</strong>
+            <span className="hm-kpi-foot">
+              <span>
+                {data?.money.newCustomers ?? 0} {t.newClientWord(data?.money.newCustomers ?? 0)}
+              </span>
+              <span>
+                {t.segments.active.label}: <b>{activeClientsCount}</b>
+              </span>
+            </span>
+          </a>
+
+          <a className="hm-kpi-card hm-kpi-amber" href="/attendance">
+            <span className="hm-kpi-top">
+              <span className="hm-kpi-icon">
+                <IconClipboardCheck />
+              </span>
+              <span className="hm-kpi-eyebrow">{t.nav.staff}</span>
+              <span className="hm-kpi-badge">
+                {notMarkedInCount === 0 ? t.allClear : `${notMarkedInCount} ${t.notCheckedIn}`}
+              </span>
+            </span>
+            <strong className="hm-kpi-value">
+              {checkedInStaffCount} / {branchProviders.length}
+            </strong>
+            <span className="hm-kpi-foot">
+              <span>{t.checkedInShort(checkedInStaffCount, branchProviders.length)}</span>
+              <span>
+                {t.inTheChair}: <b>{busy.size}</b>
+              </span>
+            </span>
+          </a>
+        </div>
+
         <div className={`hm-owner-grid ${hideUntilBranch ? 'is-settling' : ''}`} aria-busy={hideUntilBranch || undefined}>
           {/* The figures are the branch's; while a switch loads, the last ones stay, dimmed. A failed read says so. */}
           {/* On a phone, "All branches" is a carousel with one card per branch (the hero stays for a laptop). */}
@@ -647,7 +769,18 @@ export function OwnerHome(p: OwnerHomeProps) {
             the owner with a phone in their hand is the one who can act on it. What it displaced is a
             grid of nine links to screens the tab bar and the drawer already reach.
           */}
-          <Card className="hm-area-attention" title={t.needsYourAttention}>
+          <Card
+            className="hm-area-attention" title={t.needsYourAttention}
+            action={
+              canSee('/reports', p.role, p.reportTabs) ? (
+                <a className="hm-link" href="/reports">
+                  {t.whatToDoLink} ›
+                </a>
+              ) : attentionTotal === 0 && !failed ? (
+                <span className="hm-pill hm-pill-green">{t.allClear}</span>
+              ) : undefined
+            }
+          >
             {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
           </Card>
 
@@ -666,6 +799,58 @@ export function OwnerHome(p: OwnerHomeProps) {
             <SegmentCards t={t} stats={clientStats} branch={branch} />
           </Card>
 
+        </div>
+
+        {/* Desktop CRM Bottom Row — Team & Specialist Floor Activity + Shaded Workspace Module Launchpad */}
+        <div className={`hm-crm-bottom hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
+          <Card
+            className="hm-card-team"
+            title={t.teamTodayTitle}
+            action={
+              canSee('/providers', p.role, p.reportTabs) ? (
+                <a className="hm-link" href="/providers">
+                  {t.viewAll} ({branchProviders.length}) ›
+                </a>
+              ) : undefined
+            }
+          >
+            {branchProviders.length === 0 ? (
+              <p className="hm-empty">{t.teamEmpty}</p>
+            ) : (
+              <ul className="hm-team-grid">
+                {branchProviders.slice(0, 6).map((prov) => {
+                  const inChair = busy.get(prov.id);
+                  const isUnmarked = notMarkedSet.has(prov.id);
+                  const visits = providerVisitCounts.get(prov.id) ?? 0;
+                  return (
+                    <li key={prov.id}>
+                      <a className="hm-team-card" href="/providers">
+                        <Avatar name={prov.displayName} id={prov.id} size={40} />
+                        <span className="hm-team-info">
+                          <strong className="hm-team-name">{prov.displayName}</strong>
+                          <span className="hm-team-sub">{t.staffBookings(visits)}</span>
+                        </span>
+                        {inChair ? (
+                          <span className="hm-pill hm-pill-blue">{t.inSessionWith(inChair.client)}</span>
+                        ) : isUnmarked ? (
+                          <span className="hm-pill hm-pill-amber">{t.notCheckedIn}</span>
+                        ) : (
+                          <span className="hm-pill hm-pill-green">{t.availableNow}</span>
+                        )}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="hm-card-launchpad" title={t.workspaceModulesTitle}>
+            <p className="hm-card-hint">{t.workspaceModulesSub}</p>
+            <div className="hm-launchpad-wrap">
+              <QuickTiles items={links} />
+            </div>
+          </Card>
         </div>
       </div>
 

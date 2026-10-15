@@ -33,6 +33,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
   const S = (en: string, h: string) => (hi ? h : en);
   const bookingsWord = hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments).toLowerCase();
   const clientsWord = hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers);
+  const staffWord = hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff);
   /*
    * "1 booking", not "1 bookings". The vertical carries both forms
    * (`appointment` / `appointments`, `customer` / `customers`); Hindi uses one
@@ -99,6 +100,20 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
 
     needsYourAttention: S('Needs your attention', 'आपके ध्यान की ज़रूरत'),
     needsAttention: S('Needs attention', 'ध्यान देने वाली बातें'),
+    whatToDoLink: S('What to do', 'क्या करें'),
+    allClear: S('All clear', 'सब ठीक है'),
+    avgTicketLabel: S('Avg. ticket', 'औसत बिल'),
+    activeNowBadge: (n: number) => S(`${n} active now`, `${n} अभी चल रहे`),
+    upcomingShort: (n: number) => S(`${n} upcoming`, `${n} आने वाले`),
+    doneShort: (n: number) => S(`${n} completed`, `${n} पूरे हुए`),
+    checkedInShort: (n: number, of: number) => S(`${n} of ${of} checked in`, `${of} में से ${n} हाज़िर`),
+    teamTodayTitle: S(`${staffWord} today`, `आज का ${staffWord}`),
+    teamEmpty: S(`No active ${staffWord.toLowerCase()} added yet.`, `अभी कोई ${staffWord} नहीं जोड़ा गया।`),
+    availableNow: S('Available', 'उपलब्ध'),
+    notCheckedIn: S('Not marked in', 'हाज़िरी बाकी'),
+    inSessionWith: (who: string) => S(`With ${who}`, `${who} के साथ`),
+    workspaceModulesTitle: S('Workspace & modules', 'वर्कस्पेस और मॉड्यूल'),
+    workspaceModulesSub: S('Jump straight to your catalogue, inventory, team, and reports', 'कैटलॉग, प्रोडक्ट्स, स्टाफ़ और रिपोर्ट्स पर जाएँ'),
     notMarkedDone: S('Not marked done yet', 'अभी पूरे नहीं हुए'),
     /** Everything came in one way: "All cash", "All UPI". A capital only where the word is an acronym. */
     allPaidBy: (label: string, mode: string) => (hi ? `सब ${label}` : `All ${mode === 'upi' ? label : label.toLowerCase()}`),

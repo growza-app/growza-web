@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import type { HomeCopy } from '../../lib/home-copy';
@@ -188,7 +188,7 @@ export function AttentionList({ items }: { items: Array<{ key: string; count: nu
   return (
     <div className="hm-attention">
       {items.map((a) => (
-        <a key={a.key} className={`hm-att hm-tone-${a.tone}`} href={a.href}>
+        <a key={a.key} className={`hm-att hm-tone-${a.tone}${a.count === 0 ? ' is-clear' : ''}`} href={a.href}>
           <span className="hm-att-icon">{a.icon}</span>
           <span className="hm-att-text">
             <span className="hm-att-line">
@@ -257,9 +257,15 @@ export function SegmentCards({
       <div className="hm-segments">
         {SEGMENT_KEYS.map((key) => {
           const n = bands.get(key)?.count ?? 0;
+          const share = bands.get(key)?.pct ?? 0;
           const seg = t.segments[key];
           return (
-            <a key={key} className={`hm-seg-card hm-seg-${key}`} href={`/customers?status=${key}&branch=${encodeURIComponent(branch ?? 'all')}`}>
+            <a
+              key={key}
+              className={`hm-seg-card hm-seg-${key}`}
+              href={`/customers?status=${key}&branch=${encodeURIComponent(branch ?? 'all')}`}
+              style={{ '--seg-pct': `${share}%` } as CSSProperties}
+            >
               <span className="hm-seg-top">
                 <span className="hm-seg-name">
                   <i />
@@ -269,7 +275,7 @@ export function SegmentCards({
               </span>
               <span className="hm-seg-count">
                 <strong>{n}</strong>
-                <span>{bands.get(key)?.pct ?? 0}%</span>
+                <span>{share}%</span>
               </span>
             </a>
           );

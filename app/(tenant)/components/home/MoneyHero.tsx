@@ -163,10 +163,12 @@ function Sparkline({ days }: { days: HomeOverview['week']['days'] }) {
   const x = (i: number) => 4 + (i * 192) / Math.max(days.length - 1, 1);
   const y = (v: number) => 36 - (v / max) * 30;
   const points = shown.map((d, i) => `${x(i)},${y(d.revenueMinor)}`).join(' ');
+  const areaPoints = shown.length > 1 ? `${x(0)},39 ${points} ${x(shown.length - 1)},39` : '';
   const last = shown.at(-1);
   return (
     <div className="hm-spark">
       <svg viewBox="0 0 200 42" preserveAspectRatio="none" role="img" aria-label={days.map((d) => `${d.weekday} ${rupees(d.revenueMinor)}`).join(', ')}>
+        {shown.length > 1 ? <polygon className="hm-spark-area" points={areaPoints} /> : null}
         {shown.length > 1 ? <polyline points={points} /> : null}
         {last ? <circle cx={x(shown.length - 1)} cy={y(last.revenueMinor)} r="3.5" /> : null}
       </svg>

@@ -3243,3 +3243,880 @@ button.hm-now-count {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   Tenant Home v2 Redesign — Multi-Vertical CRM Desktop Command Center
+   Token-disciplined (00-base.css) and type-scale compliant (12-step rem)
+   ========================================================================== */
+
+/* ---------- 1. Header & Toolbar Elevations ---------- */
+.hm-head {
+  background: linear-gradient(180deg, var(--surface) 0%, var(--page-bg) 160%);
+  box-shadow: 0 1px 0 var(--hm-line);
+}
+.hm-date-chip {
+  background: var(--page-bg);
+  border-color: var(--hm-line);
+  font-weight: 600;
+}
+.hm-summary-btn {
+  border-color: rgba(22, 163, 74, 0.28);
+  box-shadow: 0 1px 2px rgba(15, 106, 51, 0.08);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.hm-summary-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: 0 3px 8px rgba(15, 106, 51, 0.14);
+}
+.hm-seg {
+  background: var(--surface);
+  border: 1px solid var(--hm-line);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.hm-seg button {
+  border-radius: var(--radius);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.hm-seg button:hover:not(.is-on) {
+  color: var(--hm-ink);
+  background: var(--page-bg);
+}
+.hm-seg button.is-on {
+  background: var(--accent-deep);
+  box-shadow: 0 2px 6px rgba(15, 106, 51, 0.28);
+}
+.hm-toolbar-actions .hm-action {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.hm-toolbar-actions .hm-action:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+.hm-toolbar-actions .hm-action-dark {
+  background: linear-gradient(135deg, var(--accent-deep), var(--hm-hero-a));
+  box-shadow: 0 3px 10px rgba(15, 106, 51, 0.28);
+}
+.hm-toolbar-actions .hm-action-dark:hover {
+  border-color: transparent;
+  box-shadow: 0 6px 14px rgba(15, 106, 51, 0.36);
+}
+
+/* ---------- 2. Desktop Full-Card Un-Crush (≥1101px) ----------
+   Overrides the cramped 720px clip so Desktop Home renders full-bodied CRM cards
+   and scrolls naturally like a modern SaaS command center. */
+@media (min-width: 1101px) and (min-height: 680px) {
+  .page-body.hm-fit {
+    overflow-y: auto;
+    gap: 18px;
+    padding: 18px var(--page-pad-x) 36px;
+  }
+  .hm-fit > .hm-owner-grid,
+  .hm-fit > .hm-owner-grid:not(:has(> .hm-area-queue)),
+  .hm-fit > .hm-owner-grid:has(> .hm-area-queue) {
+    flex: 0 0 auto;
+    gap: 18px;
+    grid-template-rows: auto;
+  }
+  .hm-fit .hm-card {
+    padding: 20px 22px;
+  }
+  .hm-fit .hm-card-head {
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  .hm-fit .hm-card-head h2 {
+    font-size: 1.0625rem;
+  }
+  .hm-fit .hm-hero {
+    gap: 12px;
+    padding: 22px 24px;
+  }
+  .hm-fit .hm-hero-amount {
+    font-size: 2rem;
+  }
+  .hm-fit .hm-spark svg {
+    height: 2.5rem;
+  }
+  .hm-fit .hm-pay {
+    margin-top: 10px;
+    gap: 12px;
+  }
+  .hm-fit .hm-pay-tiles .hm-pay-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'label label'
+      'value share';
+    padding: 10px 14px;
+  }
+  .hm-fit .hm-pay-tiles .hm-pay-value {
+    font-size: 1.125rem;
+    text-align: left;
+  }
+  .hm-fit .hm-attention {
+    gap: 10px;
+  }
+  .hm-fit .hm-att {
+    min-height: 58px;
+    padding: 10px 14px;
+  }
+  .hm-fit .hm-att-sub {
+    display: block;
+  }
+  .hm-fit .hm-att-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .hm-fit .hm-area-bookings,
+  .hm-fit .hm-area-bookings .hm-fit-list {
+    overflow: visible;
+  }
+  .hm-fit .hm-area-bookings .hm-row {
+    height: auto;
+    min-height: 56px;
+    padding: 8px 12px;
+  }
+  .hm-fit .hm-area-bookings .hm-row .hm-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 0.9375rem;
+  }
+  .hm-fit .hm-now {
+    gap: 8px;
+  }
+  .hm-fit .hm-now-row {
+    min-height: 48px;
+    padding: 8px 12px;
+  }
+  .hm-fit .hm-now-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .hm-fit .hm-seg-card {
+    min-height: 104px;
+    padding: 16px 18px 18px 20px;
+    gap: 8px;
+  }
+  .hm-fit .hm-seg-count strong {
+    font-size: 1.75rem;
+  }
+}
+
+/* ---------- 3. Desktop 4-Card Shaded CRM KPI Ribbon ---------- */
+.hm-kpi-ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.hm-kpi-ribbon.is-settling,
+.hm-crm-bottom.is-settling {
+  visibility: hidden;
+}
+@media (max-width: 1180px) {
+  .hm-kpi-ribbon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.hm-kpi-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 128px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--hm-ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow:
+    0 2px 5px rgba(15, 23, 42, 0.04),
+    0 8px 20px rgba(15, 23, 42, 0.03);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+.hm-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--kpi-accent, var(--accent));
+}
+.hm-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(15, 23, 42, 0.08),
+    0 12px 28px rgba(15, 23, 42, 0.05);
+}
+.hm-kpi-emerald {
+  --kpi-accent: var(--accent);
+  border-color: rgba(22, 163, 74, 0.25);
+  background:
+    radial-gradient(100% 100% at 100% 0%, rgba(22, 163, 74, 0.18) 0%, rgba(22, 163, 74, 0) 62%),
+    linear-gradient(155deg, rgba(220, 245, 230, 0.72) 0%, var(--surface) 75%);
+}
+.hm-kpi-blue {
+  --kpi-accent: var(--blue);
+  border-color: rgba(29, 78, 216, 0.24);
+  background:
+    radial-gradient(100% 100% at 100% 0%, rgba(29, 78, 216, 0.16) 0%, rgba(29, 78, 216, 0) 62%),
+    linear-gradient(155deg, rgba(223, 231, 253, 0.76) 0%, var(--surface) 75%);
+}
+.hm-kpi-violet {
+  --kpi-accent: var(--purple);
+  border-color: rgba(124, 58, 237, 0.24);
+  background:
+    radial-gradient(100% 100% at 100% 0%, rgba(124, 58, 237, 0.16) 0%, rgba(124, 58, 237, 0) 62%),
+    linear-gradient(155deg, rgba(237, 233, 254, 0.78) 0%, var(--surface) 75%);
+}
+.hm-kpi-amber {
+  --kpi-accent: var(--amber);
+  border-color: rgba(164, 80, 11, 0.24);
+  background:
+    radial-gradient(100% 100% at 100% 0%, rgba(217, 119, 6, 0.18) 0%, rgba(217, 119, 6, 0) 62%),
+    linear-gradient(155deg, rgba(253, 240, 213, 0.78) 0%, var(--surface) 75%);
+}
+.hm-kpi-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hm-kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--kpi-accent, var(--accent-deep));
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.05);
+  flex-shrink: 0;
+}
+.hm-kpi-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.hm-kpi-eyebrow {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--hm-muted);
+}
+.hm-kpi-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--hm-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.hm-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--hm-ink);
+  font-variant-numeric: tabular-nums;
+}
+.hm-kpi-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hm-muted);
+}
+.hm-kpi-foot b {
+  color: var(--hm-ink);
+  font-weight: 700;
+}
+
+/* ---------- 4. Shaded Card Surfaces, Structured Headers & Action Pills ---------- */
+.hm-card {
+  border-color: var(--border);
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.04),
+    0 8px 22px rgba(15, 23, 42, 0.035);
+}
+@media (min-width: 861px) {
+  .hm-area-attention {
+    border-color: rgba(164, 80, 11, 0.2);
+    background: linear-gradient(180deg, rgba(253, 240, 213, 0.45) 0%, var(--surface) 110px);
+  }
+  .hm-area-bookings {
+    border-color: rgba(22, 163, 74, 0.2);
+    background: linear-gradient(180deg, rgba(220, 245, 230, 0.42) 0%, var(--surface) 110px);
+  }
+  .hm-area-now {
+    border-color: rgba(29, 78, 216, 0.2);
+    background: linear-gradient(180deg, rgba(223, 231, 253, 0.45) 0%, var(--surface) 110px);
+  }
+  .hm-area-clients {
+    border-color: rgba(124, 58, 237, 0.2);
+    background: linear-gradient(180deg, rgba(237, 233, 254, 0.42) 0%, var(--surface) 110px);
+  }
+}
+.hm-card-head {
+  padding-bottom: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+.hm-card-head h2 {
+  letter-spacing: -0.015em;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.hm-card-head h2::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.hm-area-attention .hm-card-head h2::before {
+  background: var(--amber);
+}
+.hm-area-now .hm-card-head h2::before {
+  background: var(--blue);
+}
+.hm-area-clients .hm-card-head h2::before {
+  background: var(--purple);
+}
+.hm-card-team .hm-card-head h2::before {
+  background: var(--blue);
+}
+.hm-card-launchpad .hm-card-head h2::before {
+  background: var(--accent-deep);
+}
+.hm-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.hm-link:hover {
+  background: var(--accent-deep);
+  color: var(--surface);
+  text-decoration: none;
+}
+
+/* ---------- 5. Money Hero Command Panel ---------- */
+.hm-hero {
+  background:
+    radial-gradient(110% 100% at 96% 4%, rgba(74, 222, 128, 0.25) 0%, rgba(74, 222, 128, 0) 56%),
+    radial-gradient(85% 90% at 0% 100%, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0) 60%),
+    linear-gradient(140deg, var(--hm-hero-a) 0%, var(--hm-hero-b) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 14px 32px -8px rgba(9, 32, 20, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.hm-hero-amount {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+.hm-delta {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.13);
+}
+.hm-spark-area {
+  fill: rgba(134, 239, 172, 0.24);
+  stroke: none;
+}
+@media (min-width: 861px) {
+  .hm-hero-week {
+    padding: 10px 14px;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.085);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .hm-hero-stats {
+    gap: var(--sp-2);
+  }
+  .hm-hero-stats span {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-variant-numeric: tabular-nums;
+  }
+  .hm-pay-tiles .hm-pay-item {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+  .hm-pay-tiles .hm-pay-item:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+  }
+}
+.hm-pay-value,
+.hm-pay-share {
+  font-variant-numeric: tabular-nums;
+}
+.hm-paybar {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- 6. Needs Your Attention — Shaded Active Tones vs Calm Zero ---------- */
+.hm-att {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    border-color 0.14s ease,
+    background 0.14s ease;
+}
+.hm-att::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: currentColor;
+  opacity: 0.8;
+}
+.hm-att.hm-tone-amber::before {
+  background: var(--amber);
+}
+.hm-att.hm-tone-rose::before {
+  background: var(--danger);
+}
+.hm-att.hm-tone-blue::before {
+  background: var(--blue);
+}
+.hm-att.hm-tone-violet::before {
+  background: var(--purple-deep);
+}
+.hm-att:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.07);
+}
+.hm-att-line strong {
+  font-variant-numeric: tabular-nums;
+}
+/* Calm state when count === 0: soft shaded neutral surface instead of false alarm */
+.hm-att.is-clear {
+  background: linear-gradient(90deg, var(--page-bg) 0%, var(--surface) 100%);
+  border-color: var(--hm-line);
+}
+.hm-att.is-clear::before {
+  background: var(--hm-line);
+  opacity: 0.9;
+}
+.hm-att.is-clear .hm-att-icon {
+  background: var(--surface);
+  color: var(--hm-muted);
+  border: 1px solid var(--hm-line);
+}
+.hm-att.is-clear .hm-att-line {
+  color: var(--hm-muted);
+  font-weight: 600;
+}
+.hm-att.is-clear strong {
+  color: var(--hm-muted);
+  font-weight: 700;
+}
+/* Front desk attention tiles: calm state when count === 0 */
+.hm-att-tile {
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    border-color 0.14s ease;
+}
+.hm-att-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+.hm-att-tile.is-clear {
+  background: var(--surface);
+  border-color: var(--hm-line);
+}
+.hm-att-tile.is-clear .hm-att-icon {
+  background: var(--page-bg);
+  color: var(--hm-muted);
+}
+.hm-att-tile.is-clear .hm-att-count {
+  color: var(--hm-muted);
+}
+.hm-att-tile.is-clear > svg {
+  color: var(--hm-muted);
+}
+
+/* ---------- 7. Bookings Today & Schedule Card Rows ---------- */
+@media (min-width: 861px) {
+  .hm-area-bookings .hm-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .hm-area-bookings .hm-row {
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius);
+    background: linear-gradient(90deg, var(--page-bg) 0%, var(--surface) 60%);
+    padding: 6px 12px;
+  }
+  .hm-area-bookings .hm-row.hm-row-button {
+    padding: 0;
+  }
+  .hm-area-bookings .hm-row-button button {
+    padding: 8px 12px;
+    border-radius: var(--radius);
+  }
+}
+.hm-row-time {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--hm-line);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+.hm-row-button button {
+  position: relative;
+  border-radius: var(--radius-sm);
+  transition:
+    background 0.14s ease,
+    box-shadow 0.14s ease;
+}
+.hm-row-button button:hover {
+  background: var(--accent-soft);
+}
+.hm-row-button button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+.hm-row-button button:hover::before {
+  opacity: 1;
+}
+.hm-row-button button:hover .hm-row-time {
+  background: var(--surface);
+  border-color: rgba(22, 163, 74, 0.3);
+  color: var(--accent-deep);
+}
+.hm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.hm-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+.hm-empty {
+  padding: var(--sp-5) var(--sp-4);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--page-bg) 0%, var(--surface) 100%);
+  border: 1px dashed var(--hm-line);
+  text-align: center;
+  font-weight: 600;
+}
+
+/* ---------- 8. Right Now Live Pulse ---------- */
+.hm-now-calm {
+  border: 1px solid rgba(22, 163, 74, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+.hm-now-alert {
+  border: 1px solid rgba(217, 119, 6, 0.28);
+}
+.hm-now-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hm-now-row {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--page-bg) 0%, var(--surface) 100%);
+  border: 1px solid var(--hm-line);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025);
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+.hm-now-row:hover {
+  border-color: rgba(29, 78, 216, 0.28);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
+}
+.hm-now-icon {
+  border: 1px solid rgba(29, 78, 216, 0.18);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.hm-now-value strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 9. Client Retention Bands — Colour-Shaded Full Cards ---------- */
+.hm-seg-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+.hm-seg-active {
+  border-color: rgba(22, 163, 74, 0.25);
+  background:
+    radial-gradient(90% 90% at 100% 0%, rgba(22, 163, 74, 0.14) 0%, rgba(22, 163, 74, 0) 65%),
+    linear-gradient(155deg, rgba(220, 245, 230, 0.65) 0%, var(--surface) 80%);
+}
+.hm-seg-due {
+  border-color: rgba(164, 80, 11, 0.25);
+  background:
+    radial-gradient(90% 90% at 100% 0%, rgba(217, 119, 6, 0.15) 0%, rgba(217, 119, 6, 0) 65%),
+    linear-gradient(155deg, rgba(253, 240, 213, 0.72) 0%, var(--surface) 80%);
+}
+.hm-seg-at_risk {
+  border-color: rgba(185, 28, 28, 0.24);
+  background:
+    radial-gradient(90% 90% at 100% 0%, rgba(185, 28, 28, 0.13) 0%, rgba(185, 28, 28, 0) 65%),
+    linear-gradient(155deg, rgba(253, 234, 234, 0.72) 0%, var(--surface) 80%);
+}
+.hm-seg-inactive {
+  border-color: rgba(124, 58, 237, 0.24);
+  background:
+    radial-gradient(90% 90% at 100% 0%, rgba(124, 58, 237, 0.14) 0%, rgba(124, 58, 237, 0) 65%),
+    linear-gradient(155deg, rgba(237, 233, 254, 0.72) 0%, var(--surface) 80%);
+}
+.hm-seg-card:hover {
+  border-color: var(--seg, var(--accent));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+/* Proportional share bar along the bottom edge using --seg-pct from parts.tsx and --seg from .hm-seg-* */
+.hm-seg-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 5px;
+  width: var(--seg-pct, 0%);
+  background: var(--seg, var(--accent));
+  opacity: 0.9;
+  transition: width 0.25s ease;
+}
+.hm-seg-count strong {
+  font-variant-numeric: tabular-nums;
+}
+.hm-seg-count span {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: var(--hm-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 10. Desktop CRM Bottom Grid: Team Floor Activity & Workspace Launchpad ---------- */
+.hm-crm-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+@media (max-width: 1100px) {
+  .hm-crm-bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.hm-card-team {
+  border-color: rgba(29, 78, 216, 0.18);
+  background: linear-gradient(180deg, rgba(223, 231, 253, 0.35) 0%, var(--surface) 110px);
+}
+.hm-team-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.hm-team-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hm-line);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--page-bg) 100%);
+  color: var(--hm-ink);
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.hm-team-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.07);
+}
+.hm-team-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hm-team-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-team-sub {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hm-muted);
+}
+
+.hm-card-launchpad {
+  border-color: rgba(22, 163, 74, 0.2);
+  background: linear-gradient(180deg, rgba(220, 245, 230, 0.38) 0%, var(--surface) 110px);
+}
+.hm-launchpad-wrap .hm-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.hm-launchpad-wrap .hm-tile {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--hm-line);
+  background: linear-gradient(145deg, var(--surface) 0%, var(--page-bg) 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+.hm-launchpad-wrap .hm-tile:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
+}
+.hm-launchpad-wrap .hm-tile-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.hm-launchpad-wrap .hm-tile-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.hm-launchpad-wrap .hm-tile-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 11. Quick Links & Stylist Polish ---------- */
+.hm-tile {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.hm-tile:hover {
+  transform: translateY(-1px);
+}
+.hm-tile:hover .hm-tile-icon {
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+.hm-tl-dot {
+  box-shadow: 0 0 0 3px var(--page-bg);
+}
+
