@@ -247,6 +247,8 @@ export interface StockMovement {
 export interface ServiceAdmin extends Service {
   categoryId: string | null;
   active: boolean;
+  /** Owner, 2026-10-15 — a sentence or two about the service; null when never written. */
+  description?: string | null;
   /**
    * Jira GRW-482 — how many of this branch's stylists can perform it.
    *
@@ -321,6 +323,7 @@ export interface ServiceInput {
   bufferAfterMin?: number;
   priceMinor?: number | null;
   active?: boolean;
+  description?: string | null;
   /** A picture picked from the pack, or null to go back to matching on the name. Update only. */
   catalogKey?: string | null;
 }

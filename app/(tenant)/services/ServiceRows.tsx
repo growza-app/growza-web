@@ -205,18 +205,21 @@ export function ServiceTableRows({
   totals,
   selectedId = null,
   onSelect,
+  flat = false,
 }: {
   rows: ServiceAdmin[];
   actions: RowActions;
   t: T;
   order: CategoryOrder;
   totals?: CategoryTotals;
+  /** Owner, 2026-10-15 — the wide table: no group headings, a Category and a Status column, the list as sorted. */
+  flat?: boolean;
   /** Owner, 2026-10-14 — on the wide screen a row is a thing you open: the one in the right panel is marked. */
   selectedId?: string | null;
   onSelect?: (s: ServiceAdmin) => void;
 }) {
-  const groups = groupByCategory(rows, order);
-  const headings = totals ? totals.size > 1 : worthGrouping(groups);
+  const groups = flat ? [{ name: null as string | null, items: rows }] : groupByCategory(rows, order);
+  const headings = flat ? false : totals ? totals.size > 1 : worthGrouping(groups);
   const out: ReactNode[] = [];
 
   for (const group of groups) {
@@ -242,8 +245,14 @@ export function ServiceTableRows({
           <td>
             <NameCell service={s} t={t} />
           </td>
+          {flat ? <td className="muted svc-cat">{s.categoryName ?? t('unfiled')}</td> : null}
           <td className="muted svc-time">{time(s, t)}</td>
           <td className="svc-price">{formatMoney(s.priceMinor, s.currency)}</td>
+          {flat ? (
+            <td>
+              <span className={`svc-status ${s.active ? 'svc-status-on' : 'svc-status-off'}`}>{s.active ? t('active') : t('inactive')}</span>
+            </td>
+          ) : null}
           <td>
             <ServiceRowMenu service={s} actions={actions} t={t} />
           </td>

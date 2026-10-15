@@ -8,7 +8,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { api, BookingConflictError, type ServiceAdmin, type ServiceCategory, type ServiceCategoryAdmin } from '../lib/api';
 import { pickNoun } from '../lib/nouns';
 import { PaginatedTable } from '../components/PaginatedTable';
-import { PAGE_SIZE } from '../components/Pagination';
+import { PAGE_SIZE, Pagination } from '../components/Pagination';
+import { byStatus, DESK_SORTS, DESK_STATUSES, sortDesk, type DeskSort, type DeskStatus } from './services-desk-sort';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
@@ -417,6 +418,18 @@ export function ServicesTable({
    * different count each time, beside a tab that said 18.
    */
   const ordered = useMemo(() => orderedByCategory(filtered, categoryOrder), [filtered, categoryOrder]);
+  /** Owner, 2026-10-15 — the wide table: a flat list, sorted, filtered by status, ten to a page. A typed search keeps its ranking. */
+  const [deskSort, setDeskSort] = useState<DeskSort>('name');
+  const [deskStatus, setDeskStatus] = useState<DeskStatus>('all');
+  const [deskPage, setDeskPage] = useState(1);
+  const deskRows = useMemo(() => {
+    const statused = byStatus(filtered, deskStatus);
+    return search.trim().length >= MIN_CHARS ? statused : sortDesk(statused, deskSort);
+  }, [filtered, deskStatus, deskSort, search]);
+  const deskPageCount = Math.max(1, Math.ceil(deskRows.length / PAGE_SIZE));
+  const deskPageShown = Math.min(deskPage, deskPageCount);
+  const deskPageRows = useMemo(() => deskRows.slice((deskPageShown - 1) * PAGE_SIZE, deskPageShown * PAGE_SIZE), [deskRows, deskPageShown]);
+  useEffect(() => setDeskPage(1), [tab, search, deskSort, deskStatus]);
   const totals = useMemo(() => categoryTotals(filtered), [filtered]);
   const pageRows = useMemo(() => ordered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [ordered, page]);
   // Back to the first page when the list under it changes: page 3 of a search that now matches four rows is empty.
@@ -731,17 +744,39 @@ export function ServicesTable({
             />
 
             <section className="pf-wide-mid svc-desk-mid" aria-label={title}>
-              <label className="pf-wide-search">
-                <IconSearch />
-                <input
-                  type="search"
-                  placeholder={t('searchPlaceholder', { count: inTab.length })}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  aria-label={t('searchAria')}
-                  autoComplete="off"
-                />
-              </label>
+              <div className="svc-desk-tools">
+                <label className="pf-wide-search">
+                  <IconSearch />
+                  <input
+                    type="search"
+                    placeholder={t('searchPlaceholder', { count: inTab.length })}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    aria-label={t('searchAria')}
+                    autoComplete="off"
+                  />
+                </label>
+                <label className="svc-desk-sel">
+                  <span>{t('desk.filter')}</span>
+                  <select value={deskStatus} onChange={(e) => setDeskStatus(e.target.value as DeskStatus)}>
+                    {DESK_STATUSES.map((v) => (
+                      <option key={v} value={v}>
+                        {t(`desk.status.${v}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="svc-desk-sel">
+                  <span>{t('desk.sort')}</span>
+                  <select value={deskSort} onChange={(e) => setDeskSort(e.target.value as DeskSort)} disabled={search.trim().length >= MIN_CHARS}>
+                    {DESK_SORTS.map((v) => (
+                      <option key={v} value={v}>
+                        {t(`desk.sorts.${v}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
               {alsoTry.length > 0 && (
                 <div className="also-try">
                   <span className="also-try-label">{t('alsoTry')}</span>
@@ -788,14 +823,17 @@ export function ServicesTable({
                       <thead>
                         <tr>
                           <th>{t('cols.name')}</th>
-                          <th>{t('cols.time')}</th>
+                          <th>{t('cols.category')}</th>
+                          <th>{t('cols.duration')}</th>
                           <th>{t('cols.price')}</th>
+                          <th>{t('cols.status')}</th>
                           <th>{t('cols.actions')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         <ServiceTableRows
-                          rows={ordered}
+                          flat
+                          rows={deskPageRows}
                           actions={rowActions}
                           t={t}
                           order={categoryOrder}
@@ -811,7 +849,11 @@ export function ServicesTable({
                   </div>
                 )}
               </div>
-              <p className="svc-desk-count">{t('deskShowing', { count: filtered.length })}</p>
+              {deskRows.length > PAGE_SIZE ? (
+                <Pagination page={deskPageShown} total={deskRows.length} pageSize={PAGE_SIZE} noun={lower} onChange={setDeskPage} />
+              ) : (
+                <p className="svc-desk-count">{t('deskShowing', { count: deskRows.length })}</p>
+              )}
             </section>
 
             <aside className="pf-wide-right svc-desk-right" aria-label={t('form.titleEditShort')}>

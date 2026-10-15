@@ -762,7 +762,8 @@
       "actions": "Actions",
       "time": "Time",
       "duration": "Minutes",
-      "status": "Status"
+      "status": "Status",
+      "category": "Category"
     },
     "noCleanup": "None",
     "minutes": "{count} min",
@@ -881,6 +882,20 @@
           "threading": "Threading",
           "waxing": "Waxing"
         }
+      },
+      "parts": {
+        "details": "Details",
+        "pricing": "Pricing",
+        "staff": "Staff"
+      },
+      "description": "Description",
+      "descriptionPlaceholder": "A sentence or two about this service",
+      "staff": {
+        "title": "Who does it",
+        "some": "Every {provider} at this branch can be booked for this service.",
+        "nobody": "No {provider} at this branch is set up for this yet.",
+        "hint": "Staff are not restricted per service: whoever works at this branch can be booked for it.",
+        "open": "Open the Staff screen"
       }
     },
     "chooser": {
@@ -1168,7 +1183,24 @@
       "label": "Part of the menu",
       "count": "{count} services"
     },
-    "deskPick": "Pick a service to change it, or add a new one."
+    "deskPick": "Pick a service to change it, or add a new one.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "desk": {
+      "filter": "Filter",
+      "sort": "Sort",
+      "status": {
+        "all": "All statuses",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "sorts": {
+        "name": "Name A–Z",
+        "priceAsc": "Price, low to high",
+        "priceDesc": "Price, high to low",
+        "duration": "Shortest first"
+      }
+    }
   },
   "staff": {
     "addLabel": "Add {label}",
