@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
@@ -27,6 +27,7 @@ import {
   IconUserPlus,
   IconClipboardCheck,
   IconClose,
+  IconChevronDown,
 } from './icons';
 
 /**
@@ -42,6 +43,9 @@ import {
  * salon, "Doctors" for a clinic. Everything else is plain-language UI copy
  * from lib/copy.ts. See 07-product-surfaces.md §1.1.
  */
+/** Where a person's folded and unfolded groups are kept on this device. */
+const FOLDS_KEY = 'growza_nav_folds';
+
 export function Sidebar({
   tenantName,
   labels,
@@ -167,6 +171,50 @@ export function Sidebar({
   ];
   const nav = resolveNav(groups, (href) => canSee(href, role, reportTabs, live));
 
+  /*
+   * Owner, 2026-10-15 — a group folds and unfolds. The open group is unfolded by default; a person's own choice
+   * (a group they folded, or one they opened to look) is remembered on this device. Going to a screen inside a
+   * group unfolds it again: they asked to be there.
+   */
+  const [folds, setFolds] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(FOLDS_KEY);
+      if (saved) setFolds(JSON.parse(saved) as Record<string, boolean>);
+    } catch {
+      /* private window or blocked storage: the default is fine */
+    }
+  }, []);
+  const remember = (next: Record<string, boolean>) => {
+    setFolds(next);
+    try {
+      window.localStorage.setItem(FOLDS_KEY, JSON.stringify(next));
+    } catch {
+      /* the choice just lasts until the page is reloaded */
+    }
+  };
+  const currentLabels = nav.filter((n) => n.children.length > 0 && n.routes.some((r) => isActive(pathname, r))).map((n) => n.label);
+  const currentKey = currentLabels.join('|');
+  // Not on arrival: reloading the page a group is open on keeps it folded if that is how they left it.
+  const arrivedAt = useRef(pathname);
+  useEffect(() => {
+    if (arrivedAt.current === pathname) return;
+    arrivedAt.current = pathname;
+    setFolds((prev) => {
+      if (!currentLabels.some((l) => l in prev)) return prev;
+      const next = { ...prev };
+      for (const l of currentLabels) delete next[l];
+      try {
+        window.localStorage.setItem(FOLDS_KEY, JSON.stringify(next));
+      } catch {
+        /* see above */
+      }
+      return next;
+    });
+    // `currentKey` stands for `currentLabels`: it changes exactly when the open group does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, currentKey]);
+
   return (
     <>
       {/* Jira GRW-300 — the drawer's scrim. Desktop never sets `open` (the
@@ -198,15 +246,32 @@ export function Sidebar({
               on eight links that 403. */}
           {nav.map((item) => {
             const current = item.routes.some((r) => isActive(pathname, r));
+            const expandable = item.children.length > 0;
+            const expanded = expandable && (folds[item.label] ?? current);
+            const panel = `nav-children-${item.label.replace(/\W+/g, '-')}`;
             return (
               <div key={item.label} className={`nav-group ${item.className ?? ''}`}>
-                <a href={item.href} className={current ? 'active' : ''} aria-current={current && !item.children.length ? 'page' : undefined} aria-expanded={item.children.length ? current : undefined} onClick={close}>
-                  {item.icon}
-                  {item.label}
-                  {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
-                </a>
-                {current && item.children.length > 0 ? (
-                  <div className="nav-children">
+                <div className="nav-row">
+                  <a href={item.href} className={current ? 'active' : ''} aria-current={current && !expandable ? 'page' : undefined} onClick={close}>
+                    {item.icon}
+                    {item.label}
+                    {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
+                  </a>
+                  {expandable ? (
+                    <button
+                      type="button"
+                      className={`nav-fold ${expanded ? 'is-open' : ''}`}
+                      aria-expanded={expanded}
+                      aria-controls={panel}
+                      aria-label={expanded ? tc('foldGroup', { name: item.label }) : tc('unfoldGroup', { name: item.label })}
+                      onClick={() => remember({ ...folds, [item.label]: !expanded })}
+                    >
+                      <IconChevronDown />
+                    </button>
+                  ) : null}
+                </div>
+                {expanded ? (
+                  <div className="nav-children" id={panel}>
                     {/* A group that is a screen of its own (Bookings) lists itself first: the way back from Free times. */}
                     {item.self ? (
                       <a href={item.href} className={isActive(pathname, item.href) && !item.children.some((c) => isActive(pathname, c.href)) ? 'active' : ''} onClick={close}>

@@ -55,3 +55,16 @@ describe('the grouped sidebar (owner, 2026-10-15)', () => {
     }
   });
 });
+
+describe('the sidebar folds (owner, 2026-10-15)', () => {
+  const side = require('node:fs').readFileSync(require('node:path').join(__dirname, '../components/Sidebar.tsx'), 'utf8') as string;
+  it('each group with children has its own fold button, named and wired to its panel', () => {
+    expect(side).toMatch(/className=\{`nav-fold \$\{expanded \? 'is-open' : ''\}`\}/);
+    expect(side).toMatch(/aria-expanded=\{expanded\}\s*aria-controls=\{panel\}/);
+  });
+  it('the person\'s choice is remembered on the device and survives a reload; arriving elsewhere in the group unfolds it', () => {
+    expect(side).toMatch(/const FOLDS_KEY = 'growza_nav_folds';/);
+    expect(side).toMatch(/folds\[item\.label\] \?\? current/);
+    expect(side).toMatch(/if \(arrivedAt\.current === pathname\) return;/);
+  });
+});
