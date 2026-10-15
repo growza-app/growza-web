@@ -613,19 +613,18 @@ export function OwnerHome(p: OwnerHomeProps) {
               <span className="hm-kpi-icon">
                 <IconWallet />
               </span>
-              <span className="hm-kpi-eyebrow">
-                {period === 'today' ? t.moneyToday : period === 'week' ? t.moneyWeek : t.moneyMonth}
-              </span>
+              <span className="hm-kpi-eyebrow">{t.avgTicketLabel}</span>
               {data && data.money.deltaPct !== null ? (
                 <span className="hm-kpi-badge">
                   {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
                 </span>
               ) : null}
             </span>
-            <strong className="hm-kpi-value">{data ? rupees(data.money.revenueMinor) : '—'}</strong>
+            <strong className="hm-kpi-value">{data ? avgTicket : '—'}</strong>
             <span className="hm-kpi-foot">
               <span>
-                {t.avgTicketLabel}: <b>{avgTicket}</b>
+                {period === 'today' ? t.moneyToday : period === 'week' ? t.moneyWeek : t.moneyMonth}:{' '}
+                <b>{data ? rupees(data.money.revenueMinor) : '—'}</b>
               </span>
               <span>
                 {data?.money.bookings ?? 0} {t.done}
