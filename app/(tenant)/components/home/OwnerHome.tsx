@@ -1217,7 +1217,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                     </span>
                     <strong>{t.nav.newBooking}</strong>
                   </a>
-                  <a className="hm-v3-qbtn is-amber" href="/products">
+                  <a className="hm-v3-qbtn is-amber" href="/appointments/new?purpose=payment&tab=products">
                     <span className="hm-v3-qicon">
                       <IconProducts />
                     </span>

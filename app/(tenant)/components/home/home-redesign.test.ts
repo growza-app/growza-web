@@ -70,4 +70,14 @@ describe('Tenant Home v2 redesign', () => {
     expect(homeCss).toMatch(/\.hm-v3-mid\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-bot\s*\{/);
   });
+
+  it('routes Sell product on Home directly to the till on the Products tab', () => {
+    const newBooking = code('../../appointments/new/NewBookingClient.tsx');
+    const payFlow = code('../../appointments/new/PayFlow.tsx');
+    const deskGrid = code('../../appointments/new/DeskServiceGrid.tsx');
+    expect(owner).toContain('href="/appointments/new?purpose=payment&tab=products"');
+    expect(newBooking).toContain("const initialTab = searchParams.get('tab') === 'products' ? 'products' : undefined;");
+    expect(payFlow).toContain('initialTab={initialTab}');
+    expect(deskGrid).toContain("useState<'services' | 'packages' | 'products'>(initialTab ?? 'services')");
+  });
 });

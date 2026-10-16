@@ -104,6 +104,7 @@ export function NewBookingClient({
    * drops it on purpose, and that is the fresh bill.
    */
   const billKey = billKeyOf(searchParams);
+  const initialTab = searchParams.get('tab') === 'products' ? 'products' : undefined;
   const another = () => {
     setRun((n) => n + 1);
     // `tokenGone` too: the refresh after a payment has already dropped `token`, but the address still names it.
@@ -114,10 +115,10 @@ export function NewBookingClient({
   // Jira GRW-572 — New booking waits the same one frame, so a desk never sees the column before the panels.
   if (!quick && purpose !== 'payment' && layout === 'unknown') return <div className="walk-in-page" aria-busy="true" />;
   if (settlingBooking || (quick && layout === 'phone')) {
-    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} wide={wide && layout === 'desk'} />;
+    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} wide={wide && layout === 'desk'} initialTab={initialTab} />;
   }
   if (quick && layout === 'desk' && wide) {
-    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} providerId={providerId} timezone={timezone} backTo={backTo} wide />;
+    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} providerId={providerId} timezone={timezone} backTo={backTo} initialTab={initialTab} wide />;
   }
   return (
     <NewVisitSheet
