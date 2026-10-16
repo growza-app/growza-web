@@ -3062,6 +3062,12 @@
       "lowNow": "on the shelf — low (you asked to be warned at {at})",
       "outNow": "out of stock",
       "change": "Change the count",
+      "actions": {
+        "add": "Add stock",
+        "remove": "Remove stock",
+        "move": "Move stock"
+      },
+      "reason": "Reason",
       "kind": {
         "received": "Received",
         "sold": "Sold",

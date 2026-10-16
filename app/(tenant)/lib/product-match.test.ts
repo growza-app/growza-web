@@ -156,11 +156,23 @@ describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
   const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).products.ledger;
   const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json'), 'utf8')).products.ledger;
 
-  it('offers Move to another branch only to an owner with at least one other branch', () => {
+  it('offers Move stock only to an owner/manager with at least one other branch, alongside Add stock and Remove stock tiles', () => {
     expect(panel).toMatch(/otherBranches = branches\.filter\(\(b\) => b\.id !== product\.locationId\)/);
     expect(panel).toMatch(
       /canTransfer =\s*\(session\?\.role === null \|\| session\?\.role === undefined \|\| session\?\.role === 'owner' \|\| session\?\.role === 'manager'\) && otherBranches\.length > 0/,
     );
+    expect(panel).toMatch(/export const ADD_KINDS: readonly ManualMovementKind\[\] = \['received', 'returned', 'adjusted'\];/);
+    expect(panel).toMatch(/export const REMOVE_KINDS: readonly ManualMovementKind\[\] = \['used', 'damaged', 'adjusted'\];/);
+    expect(panel).toMatch(/if \(r === kind\) return;/);
+    expect(panel).toMatch(/t\('actions\.add'\)/);
+    expect(panel).toMatch(/t\('actions\.remove'\)/);
+    expect(panel).toMatch(/t\('actions\.move'\)/);
+    for (const k of ['add', 'remove', 'move']) {
+      expect(en.actions[k], k).toBeTruthy();
+      expect(hi.actions[k], k).toBeTruthy();
+    }
+    expect(en.reason).toBe('Reason');
+    expect(hi.reason).toBeTruthy();
   });
 
   it('warns and asks for a second confirmation when the transfer leaves negative stock at the source branch (AC-04)', () => {
