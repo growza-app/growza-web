@@ -33,7 +33,7 @@ import { BottomNav } from './BottomNav';
  * its own "Back to home page"); a bar under it only took height from the form. Every `.content` row is pinned
  * by its own `grid-row` (01-shell.css), so leaving the bar out cannot move the others.
  */
-const NO_BAR_ROUTE_RE = /^\/appointments\/new(\/|$)/;
+const NO_BAR_ROUTE_RE = /^\/(appointments\/new|products\/sell)(\/|$)/;
 
 /**
  * Jira GRW-508 — the floating New booking is on Home, Bookings and Clients, and nowhere else.

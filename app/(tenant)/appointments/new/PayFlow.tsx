@@ -6,11 +6,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
-import type { Appointment, Offer, PaymentMode, Product, Provider, Service } from '../../lib/api-types';
+import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
-import { servicePhotoUrl } from '../../lib/service-photos';
+import { productPhotoUrl, servicePhotoUrl } from '../../lib/service-photos';
+import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from '../../products/DeskProductCategories';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useBranch } from '../../components/BranchProvider';
 import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
@@ -126,6 +127,7 @@ export function PayFlow({
   backTo,
   wide = false,
   initialTab,
+  productsOnly = false,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -146,7 +148,7 @@ export function PayFlow({
   /** The signed-in person's own chair, when they have one: the stylist ① starts on. */
   providerId: string | null;
   timezone: string;
-  backTo?: '/appointments';
+  backTo?: '/appointments' | '/products';
   /**
    * Jira GRW-572 — a laptop ≥1101px: the same till laid out in three panels (who · what · the bill), with the
    * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
@@ -154,6 +156,8 @@ export function PayFlow({
   wide?: boolean;
   /** Open directly on the Products tab (desk) or Products sheet chip (phone), e.g. from Home's Sell product button. */
   initialTab?: 'products';
+  /** Retail / Sell product page (`/products/sell`): client + product categories on the left, product shelf in the middle, bill + payment on the right. */
+  productsOnly?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const tcr = useTranslations('chrome');
@@ -197,7 +201,7 @@ export function PayFlow({
    */
   const [qrBroken, setQrBroken] = useState(false);
   const [step, setStep] = useState<'what' | 'how' | 'qr' | 'done'>('what');
-  const [services, setServices] = useState<Service[] | null>(null);
+  const [services, setServices] = useState<Service[] | null>(productsOnly ? [] : null);
   const [ranked, setRanked] = useState<string[] | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   /** Whether the branch's people have come back yet — an empty list means nothing until they have. */
@@ -207,6 +211,9 @@ export function PayFlow({
   const [offers, setOffers] = useState<Offer[]>([]);
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
+  const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORIES);
   const [client, setClient] = useState<Client>({ kind: 'none' });
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
@@ -214,7 +221,7 @@ export function PayFlow({
   /** Owner, 2026-10-14 — the bill row the keypad is pricing; null means it is pricing the whole total. */
   const [keypadFor, setKeypadFor] = useState<{ key: string; name: string; list: number } | null>(null);
   const [whoOpen, setWhoOpen] = useState<false | 'find' | 'add'>(false);
-  const [menuOpen, setMenuOpen] = useState(initialTab === 'products' && !wide);
+  const [menuOpen, setMenuOpen] = useState(initialTab === 'products' && !wide && !productsOnly);
   const [billOpen, setBillOpen] = useState(false);
   const [saving, setSaving] = useState<PaymentMode | null>(null);
   /*
@@ -246,6 +253,41 @@ export function PayFlow({
   // The menu, the people, the latest clients — three reads, all at once, none blocking the others.
   useEffect(() => {
     let gone = false;
+    setProductsLoaded(false);
+    setProductCategory(ALL_CATEGORIES);
+    void api
+      .products(location)
+      .then((rows) => {
+        if (!gone) {
+          setProducts(rows);
+          setProductsLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (!gone) {
+          setProducts([]);
+          setProductsLoaded(true);
+        }
+      });
+    if (productsOnly && location) {
+      void api
+        .productCategories(location)
+        .then((rows) => {
+          if (!gone) setProductCategories(rows);
+        })
+        .catch(() => {
+          if (!gone) setProductCategories([]);
+        });
+    } else if (productsOnly) {
+      setProductCategories([]);
+    }
+    if (productsOnly) {
+      setServices([]);
+      setProvidersKnown(true);
+      return () => {
+        gone = true;
+      };
+    }
     void api
       .services(location ?? undefined)
       .then((rows) => {
@@ -253,14 +295,6 @@ export function PayFlow({
       })
       .catch(() => {
         if (!gone) setServices([]);
-      });
-    void api
-      .products(location)
-      .then((rows) => {
-        if (!gone) setProducts(rows);
-      })
-      .catch(() => {
-        if (!gone) setProducts([]);
       });
     if (wide && !visit) {
       void api
@@ -297,7 +331,7 @@ export function PayFlow({
     return () => {
       gone = true;
     };
-  }, [location, token, wide, visit]);
+  }, [location, token, wide, visit, productsOnly]);
 
   /*
    * Who did it: the booking's own stylist, else the phone's last answer, else the signed-in person's chair.
@@ -773,6 +807,8 @@ export function PayFlow({
     setError(null);
     setAttemptKey(newAttemptKey());
     clearSplit();
+    void api.products(location).then(setProducts).catch(() => {});
+    if (productsOnly && location) void api.productCategories(location).then(setProductCategories).catch(() => {});
     tokenFilled.current = true; // a token has been paid: a second sale from this page is a plain one
     // The address names the bill being left. After a payment the refresh has already dropped `token` / `visit`, so the
     // "gone" flags are what say the address still carries one: without them the banner stays up over a fresh till.
@@ -803,6 +839,7 @@ export function PayFlow({
     setLines([]);
     setOverride(null);
     setStylistId(null);
+    setProductCategory(ALL_CATEGORIES);
     setError(null);
     setFirstWay(null);
     setSplitting(false);
@@ -1130,6 +1167,26 @@ export function PayFlow({
       </div>
     ) : null;
 
+  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
+  const phoneProducts = useMemo(() => {
+    if (!productsOnly) return [];
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
+    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
+    const drawn = new Set(shown.map((p) => p.id));
+    const byId = new Map(products.map((p) => [p.id, p]));
+    for (const l of lines) {
+      if (!l.product || drawn.has(l.product.id)) continue;
+      const p = byId.get(l.product.id);
+      if (!p) continue;
+      shown.push(p);
+      drawn.add(p.id);
+    }
+    return shown;
+  }, [productsOnly, products, productCategory, lines]);
+
   /* ---------- ① on a wide desk (Jira GRW-572): who · what · the bill, side by side ---------- */
   if (wide) {
     return (
@@ -1139,7 +1196,7 @@ export function PayFlow({
             <IconArrowLeft />
           </button>
           <span className="pf-head-stack">
-            <h1 className="pf-title">{t('whatTitle')}</h1>
+            <h1 className="pf-title">{productsOnly ? t('sellTitle') : t('whatTitle')}</h1>
             {token ? (
               branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
             ) : (
@@ -1167,10 +1224,22 @@ export function PayFlow({
         <div className="pf-wide-grid">
           <aside className="pf-wide-left">
             {who}
-            {stylists}
-            <DeskUnpaid location={location} timezone={timezone} currentTokenId={token?.id ?? null} currentVisitId={visit?.appointment.id ?? null} />
+            {productsOnly ? (
+              <DeskProductCategories
+                picked={productCategory}
+                categories={productCategories}
+                allCount={products.length}
+                noneCount={noneCount}
+                onPick={setProductCategory}
+              />
+            ) : (
+              <>
+                {stylists}
+                <DeskUnpaid location={location} timezone={timezone} currentTokenId={token?.id ?? null} currentVisitId={visit?.appointment.id ?? null} />
+              </>
+            )}
           </aside>
-          {services === null ? (
+          {(productsOnly ? !productsLoaded : services === null) ? (
             <section className="pf-wide-mid" aria-busy="true">
               <div className="pf-tiles pf-wide-tiles">
                 {Array.from({ length: 8 }, (_, i) => (
@@ -1178,7 +1247,7 @@ export function PayFlow({
                 ))}
               </div>
             </section>
-          ) : services.length === 0 && initialTab !== 'products' ? (
+          ) : !productsOnly && services!.length === 0 && initialTab !== 'products' ? (
             <section className="pf-wide-mid">
               <div className="empty">{nv.noServicesYet}</div>
             </section>
@@ -1190,7 +1259,7 @@ export function PayFlow({
               onLess={oneLess}
               full={full}
               money={money}
-              packages={offers.filter((o) => o.serviceIds.every((id) => services.some((s) => s.id === id)))}
+              packages={offers.filter((o) => o.serviceIds.every((id) => (services ?? []).some((s) => s.id === id)))}
               packageCountOf={packageCountOf}
               onLessPackage={oneLessPackage}
               onPickPackage={pickPackage}
@@ -1199,6 +1268,8 @@ export function PayFlow({
               onMoreProduct={addProduct}
               onLessProduct={(id) => oneLess(`p:${id}`)}
               initialTab={initialTab}
+              productsOnly={productsOnly}
+              productCategory={productCategory}
             />
           )}
           <aside className="pf-wide-right">
@@ -1211,13 +1282,19 @@ export function PayFlow({
                 </button>
               ) : null}
             </div>
-            {badService ? (
+            {productsOnly ? (
+              badService ? (
+                <p className="pf-miss pf-miss-wide" role="alert">
+                  {t('pickProduct')}
+                </p>
+              ) : null
+            ) : badService ? (
               <p className="pf-miss pf-miss-wide" role="alert">
                 {lines.length > 0 ? t('needService') : t('pickOne')}
               </p>
             ) : null}
             {lines.length === 0 ? (
-              <p className="pf-wide-empty">{t('desk.emptyBill')}</p>
+              <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill') : t('desk.emptyBill')}</p>
             ) : (
               <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} onPrice={openRowKeypad} />
             )}
@@ -1314,22 +1391,35 @@ export function PayFlow({
         it is ("Record payment", "How did they pay?", "₹600 received") and whose button says what comes next,
         so they were the one thing on the line that no owner needed.
       */}
-      <header className="pf-head">
-        <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-          <IconArrowLeft />
-        </button>
-        <span className="pf-head-stack">
-          <h1 className="pf-title">{t('whatTitle')}</h1>
-          {token ? (
-            branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
-          ) : (
+      {productsOnly ? (
+        <header className="pf-head">
+          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+            <IconArrowLeft />
+          </button>
+          <span className="pf-head-stack">
+            <h1 className="pf-title">{t('sellTitle')}</h1>
             <HeaderBranchPicker variant="line" />
-          )}
-        </span>
-        {/* The ☰ that used to live here was the way to the full form: an icon that looked like a menu, did
-            something else, and had no way back. The labelled switch takes its corner. */}
-        <FormModeSwitch now="simple" simpleHref={simpleForm} advancedHref={fullForm} />
-      </header>
+          </span>
+          <span className="pf-head-gap" aria-hidden="true" />
+        </header>
+      ) : (
+        <header className="pf-head">
+          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+            <IconArrowLeft />
+          </button>
+          <span className="pf-head-stack">
+            <h1 className="pf-title">{t('whatTitle')}</h1>
+            {token ? (
+              branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
+            ) : (
+              <HeaderBranchPicker variant="line" />
+            )}
+          </span>
+          {/* The ☰ that used to live here was the way to the full form: an icon that looked like a menu, did
+              something else, and had no way back. The labelled switch takes its corner. */}
+          <FormModeSwitch now="simple" simpleHref={simpleForm} advancedHref={fullForm} />
+        </header>
+      )}
       {tokenGone ? (
         <div role="alert" className="pf-error">
           {nv.tokenGone}
@@ -1346,7 +1436,7 @@ export function PayFlow({
         </div>
       ) : null}
       {who}
-      {stylists}
+      {productsOnly ? null : stylists}
 
       {/*
         The whole menu, under the two rows that name people and above the tiles it searches (owner, 2026-10-10).
@@ -1354,6 +1444,53 @@ export function PayFlow({
         scrolling past everything it exists to shortcut. A bar reads as "type what you are looking for"; the
         tiles below it stay the fast path for what is sold all day.
       */}
+      {productsOnly && products.length > 0 ? (
+        <>
+          <div className="pf-row" role="group" aria-label={t('desk.products')}>
+            <span className="pf-row-label">{t('desk.products')}</span>
+            <div className="pf-who-bar">
+              <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
+                <IconSearch />
+                {t('desk.searchProducts', { count: products.length })}
+              </button>
+              <span className="pf-who-add pf-who-gap" aria-hidden="true" />
+            </div>
+          </div>
+          {productCategories.length > 0 ? (
+            <div className="pf-chips">
+              <button
+                type="button"
+                className={`pf-chip ${productCategory === ALL_CATEGORIES ? 'pf-chip-on' : ''}`}
+                aria-pressed={productCategory === ALL_CATEGORIES}
+                onClick={() => setProductCategory(ALL_CATEGORIES)}
+              >
+                {t('allCategories')}
+              </button>
+              {productCategories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`pf-chip ${productCategory === c.id ? 'pf-chip-on' : ''}`}
+                  aria-pressed={productCategory === c.id}
+                  onClick={() => setProductCategory(c.id)}
+                >
+                  {c.name}
+                </button>
+              ))}
+              {noneCount > 0 ? (
+                <button
+                  type="button"
+                  className={`pf-chip ${productCategory === NO_CATEGORY ? 'pf-chip-on' : ''}`}
+                  aria-pressed={productCategory === NO_CATEGORY}
+                  onClick={() => setProductCategory(NO_CATEGORY)}
+                >
+                  {t('noCategory')}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      ) : null}
       {services && (services.length > TILES || products.length > 0 || offers.length > 0) ? (
         /*
           A labelled row like Who? and Stylist above it, so the screen reads as three questions down one column
@@ -1372,12 +1509,71 @@ export function PayFlow({
         </div>
       ) : null}
 
-      {badService ? (
-        <p className="pf-miss pf-miss-wide" role="alert">
-          {lines.length > 0 ? t('needService') : t('pickOne')}
-        </p>
-      ) : null}
-      {services === null ? (
+      {productsOnly ? (
+        badService ? (
+          <p className="pf-miss pf-miss-wide" role="alert">
+            {t('pickProduct')}
+          </p>
+        ) : null
+      ) : (
+        <>
+          {badService ? (
+            <p className="pf-miss pf-miss-wide" role="alert">
+              {lines.length > 0 ? t('needService') : t('pickOne')}
+            </p>
+          ) : null}
+        </>
+      )}
+      {productsOnly ? (
+        !productsLoaded ? (
+          <div className="pf-tiles" aria-busy="true">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="pf-tile pf-tile-wait" />
+            ))}
+          </div>
+        ) : phoneProducts.length === 0 ? (
+          <div className="empty">{products.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</div>
+        ) : (
+          <div className="pf-tiles">
+            {phoneProducts.map((p) => {
+              const count = productCountOf(p.id);
+              const price = Number(p.priceMinor ?? 0);
+              return (
+                <div key={p.id} className={`pf-tile ${count > 0 ? 'pf-tile-on' : ''}`}>
+                  <button
+                    type="button"
+                    className="pf-tile-tap"
+                    aria-label={t('tileA11y', { name: p.name, price: money(price) })}
+                    aria-pressed={count > 0}
+                    onClick={() => addProduct(p)}
+                    disabled={full && count === 0}
+                  >
+                    <img className="pf-tile-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <span className="pf-tile-name">{p.name}</span>
+                    <span className="pf-tile-price">
+                      {money(price)}
+                      <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
+                    </span>
+                  </button>
+                  {count > 0 ? (
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: p.name })} onClick={() => oneLess(`p:${p.id}`)}>
+                        <IconMinus />
+                      </button>
+                      <span className="pf-qty-n" aria-live="polite">
+                        {count}
+                      </span>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => addProduct(p)} aria-disabled={full || undefined}>
+                        <IconPlus />
+                      </button>
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : services === null ? (
         <div className="pf-tiles" aria-busy="true">
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="pf-tile pf-tile-wait" />
@@ -1506,10 +1702,10 @@ export function PayFlow({
           onClose={() => setBillOpen(false)}
         />
       ) : null}
-      {menuOpen && services ? (
+      {menuOpen && (services || productsOnly) ? (
         <ServiceSheet
-          services={services}
-          counts={new Map(services.map((s) => [s.id, countOf(s.id)]))}
+          services={services ?? []}
+          counts={new Map((services ?? []).map((s) => [s.id, countOf(s.id)]))}
           onPick={(s) => {
             addOne(s);
             setMenuOpen(false);
@@ -1523,7 +1719,8 @@ export function PayFlow({
           onClose={() => setMenuOpen(false)}
           packageCountOf={packageCountOf}
           onLessPackage={oneLessPackage}
-          initialKind={initialTab}
+          initialKind={productsOnly ? 'products' : initialTab}
+          productsOnly={productsOnly}
         />
       ) : null}
       {keypad !== null ? (

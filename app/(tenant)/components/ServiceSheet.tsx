@@ -45,6 +45,7 @@ export function ServiceSheet({
   productCounts,
   onPickProduct,
   initialKind,
+  productsOnly = false,
 }: {
   services: Service[];
   counts: Map<string, number>;
@@ -61,6 +62,7 @@ export function ServiceSheet({
   productCounts?: Map<string, number>;
   onPickProduct?: (p: Product) => void;
   initialKind?: 'products';
+  productsOnly?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -75,7 +77,7 @@ export function ServiceSheet({
   const PACKAGES = '\u0000packages';
   const PRODUCTS = '\u0000products';
   const [term, setTerm] = useState('');
-  const [kind, setKind] = useState(initialKind === 'products' ? PRODUCTS : '');
+  const [kind, setKind] = useState(productsOnly || initialKind === 'products' ? PRODUCTS : '');
   const offers = packages ?? [];
   const shelf = products ?? [];
   const packageMode = kind === PACKAGES;
@@ -142,11 +144,13 @@ export function ServiceSheet({
   }, [offers, packageMode, term, services, sort]);
 
   // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
+  const sheetTitle = productsOnly ? t('desk.products') : t('allServices', { count: services.length });
+  const searchLabel = productsOnly ? t('desk.searchProducts', { count: shelf.length }) : t('searchServices');
   return (
     <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className="pf-keypad pf-client pf-menu" role="dialog" aria-modal="true" aria-label={t('allServices', { count: services.length })} tabIndex={-1}>
+      <div ref={ref} className="pf-keypad pf-client pf-menu" role="dialog" aria-modal="true" aria-label={sheetTitle} tabIndex={-1}>
         <div className="pf-keypad-head">
-          <span className="pf-keypad-title">{t('allServices', { count: services.length })}</span>
+          <span className="pf-keypad-title">{sheetTitle}</span>
           <button type="button" className="pf-keypad-clear" onClick={onClose}>
             {nv.close}
           </button>
@@ -160,8 +164,8 @@ export function ServiceSheet({
               value={term}
               onChange={(e) => setTerm(e.target.value)}
               onKeyDown={onSearchKey}
-              placeholder={t('searchServices')}
-              aria-label={t('searchServices')}
+              placeholder={searchLabel}
+              aria-label={searchLabel}
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -189,7 +193,7 @@ export function ServiceSheet({
           uncategorised and combos on sale is exactly one chip plus Packages, and that arithmetic hid the only
           door to the combos (review, 2026-10-11). Packages earns the row on its own.
         */}
-        {kinds.length > 1 || offers.length > 0 || shelf.length > 0 || initialKind === 'products' ? (
+        {!productsOnly && (kinds.length > 1 || offers.length > 0 || shelf.length > 0 || initialKind === 'products') ? (
           <div className="pf-chips pf-menu-kinds" role="group" aria-label={nv.serviceKinds}>
             {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : []), ...(shelf.length > 0 || initialKind === 'products' ? [PRODUCTS] : [])].map((k) => (
               <button key={k || 'all'} type="button" className={`pf-chip ${kind === k ? 'pf-chip-on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>

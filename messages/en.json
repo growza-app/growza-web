@@ -2685,8 +2685,14 @@
       "products": "Products",
       "soon": "Soon",
       "noPackages": "No priced package yet. Make one on the Packages screen.",
-      "noProducts": "Nothing on the shelf yet. Add products on the Products screen."
+      "noProducts": "Nothing on the shelf yet. Add products on the Products screen.",
+      "searchProducts": "Search {count} products or scan barcode",
+      "emptyProductBill": "Tap a product to start the bill."
     },
+    "sellTitle": "Sell product",
+    "pickProduct": "Select a product",
+    "allCategories": "All products",
+    "noCategory": "No category",
     "split": {
       "link": "Paid two ways",
       "first": "Which way first?",
@@ -2978,6 +2984,7 @@
     "title": "Products",
     "subtitle": "Things you sell over the counter. Ring them up on the Record payment screen beside the services; every change to the count is kept here.",
     "add": "Add a product",
+    "sell": "Sell product",
     "empty": "Nothing on the shelf yet.",
     "emptyHint": "Add what you sell over the counter and it shows up on the Record payment screen.",
     "chooseBranch": "Choose a branch to see its shelf.",

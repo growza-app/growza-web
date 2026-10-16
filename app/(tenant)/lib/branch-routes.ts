@@ -41,6 +41,7 @@ export function oneBranchOnly(pathname: string): boolean {
 }
 
 export function branchInAddress(pathname: string): boolean {
+  if (pathname === '/products/sell') return false;
   return BRANCH_IN_ADDRESS.some((route) => matches(pathname, route));
 }
 

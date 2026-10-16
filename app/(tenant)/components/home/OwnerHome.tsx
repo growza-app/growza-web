@@ -1205,30 +1205,38 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <h2>{t.quickActionsTitle}</h2>
                 </div>
                 <div className="hm-v3-qgrid">
-                  <a className="hm-v3-qbtn is-primary" href="/appointments/new?purpose=payment">
-                    <span className="hm-v3-qicon">
-                      <IconReceipt />
-                    </span>
-                    <strong>{t.recordPayment}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-green" href="/appointments/new">
-                    <span className="hm-v3-qicon">
-                      <IconCalendarPlus />
-                    </span>
-                    <strong>{t.nav.newBooking}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-amber" href="/appointments/new?purpose=payment&tab=products">
-                    <span className="hm-v3-qicon">
-                      <IconProducts />
-                    </span>
-                    <strong>{t.sellProductAction}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-mint" href="/appointments/new">
-                    <span className="hm-v3-qicon">
-                      <IconStaff />
-                    </span>
-                    <strong>{t.walkInAction}</strong>
-                  </a>
+                  {mayRecordPayment ? (
+                    <a className="hm-v3-qbtn is-primary" href="/appointments/new?purpose=payment">
+                      <span className="hm-v3-qicon">
+                        <IconReceipt />
+                      </span>
+                      <strong>{t.recordPayment}</strong>
+                    </a>
+                  ) : null}
+                  {mayBook ? (
+                    <a className="hm-v3-qbtn is-green" href="/appointments/new">
+                      <span className="hm-v3-qicon">
+                        <IconCalendarPlus />
+                      </span>
+                      <strong>{t.nav.newBooking}</strong>
+                    </a>
+                  ) : null}
+                  {mayRecordPayment ? (
+                    <a className="hm-v3-qbtn is-amber" href="/products/sell">
+                      <span className="hm-v3-qicon">
+                        <IconProducts />
+                      </span>
+                      <strong>{t.sellProductAction}</strong>
+                    </a>
+                  ) : null}
+                  {mayBook ? (
+                    <a className="hm-v3-qbtn is-mint" href="/appointments/new">
+                      <span className="hm-v3-qicon">
+                        <IconStaff />
+                      </span>
+                      <strong>{t.walkInAction}</strong>
+                    </a>
+                  ) : null}
                   <a className="hm-v3-qbtn is-purple" href="/customers">
                     <span className="hm-v3-qicon">
                       <IconStaff />
