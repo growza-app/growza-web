@@ -95,6 +95,13 @@
     border: 0;
     box-shadow: none;
     background: transparent;
+    /*
+     * Release review, 2026-10-16 — it keeps its own height. The card is `overflow: hidden` and a flex child, so on a
+     * short laptop window it SHRANK to fit the panel and cut its last field off (9px at 1280x720, 1101 to 1280 wide):
+     * unreachable rather than scrollable. The panel scrolls instead.
+     */
+    flex: none;
+    overflow: visible;
   }
 
   .bk-desk-left .bk-filters {

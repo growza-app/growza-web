@@ -1200,6 +1200,11 @@
         "priceDesc": "Price, high to low",
         "duration": "Shortest first"
       }
+    },
+    "discard": {
+      "title": "Leave without saving?",
+      "body": "You have changes to this service that are not saved. They will be lost.",
+      "confirm": "Leave"
     }
   },
   "staff": {

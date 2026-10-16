@@ -865,3 +865,16 @@
 .svc-desc-row textarea:focus-visible {
   outline: 0 !important;
 }
+
+/* The name cell is a button (keyboard and screen readers), drawn as the plain cell it replaced. */
+.svc-row-tap {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
