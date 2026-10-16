@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -47,8 +47,8 @@ export function ProductSheet({
   const photoRef = useRef<HTMLInputElement>(null);
   const [part, setPart] = useState<Part>('details');
   const [name, setName] = useState(product?.name ?? '');
-  const [price, setPrice] = useState(product ? String(Math.round(Number(product.priceMinor) / 100)) : '');
-  const [cost, setCost] = useState(product?.costMinor != null ? String(Math.round(Number(product.costMinor) / 100)) : '');
+  const [price, setPrice] = useState(product ? String(Number(product.priceMinor) / 100) : '');
+  const [cost, setCost] = useState(product?.costMinor != null ? String(Number(product.costMinor) / 100) : '');
   const [lowAt, setLowAt] = useState(product && product.lowStockAt > 0 ? String(product.lowStockAt) : '');
   const [categoryId, setCategoryId] = useState<string>(product?.categoryId ?? '');
   const [stock, setStock] = useState('0');
@@ -68,6 +68,15 @@ export function ProductSheet({
     onClose();
   };
   useDialog(sheetRef, { onClose: busy || inline ? undefined : close });
+
+  // One object URL per picked file, released when the file changes or the sheet closes (not one per render).
+  const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
+  useEffect(
+    () => () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+    },
+    [photoPreview],
+  );
 
   const rupees = Number(price);
   const costRupees = cost.trim() === '' ? null : Number(cost);
@@ -186,7 +195,7 @@ export function ProductSheet({
         <div className="sheet-body">
           <div className="sheet-group sheet-photo">
             {photo ? (
-              <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
+              <img className="sheet-photo-img" src={photoPreview ?? ''} alt="" />
             ) : imageUrl ? (
               <img className="sheet-photo-img" src={productPhotoUrl({ imageUrl })} alt="" />
             ) : (
@@ -212,11 +221,17 @@ export function ProductSheet({
                 className="sheet-photo-remove"
                 onClick={async () => {
                   setPhoto(null);
-                  if (product && imageUrl) {
-                    await api.removeProductPhoto(product.id).catch(() => {});
-                    setImageUrl(null);
-                  }
                   if (photoRef.current) photoRef.current.value = '';
+                  if (target && imageUrl) {
+                    // Only what the server did is shown: a failed removal leaves the picture on screen, with the reason.
+                    try {
+                      const updated = await api.removeProductPhoto(target.id);
+                      setImageUrl(null);
+                      onSaved(updated);
+                    } catch (err) {
+                      fail(err);
+                    }
+                  }
                 }}
               >
                 {t('remove')}

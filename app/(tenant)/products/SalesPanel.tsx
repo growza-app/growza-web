@@ -12,12 +12,13 @@ export function SalesPanel({ product }: { product: Product }) {
   const tc = useTranslations('common');
   const locale = useLocale();
   const [sales, setSales] = useState<ProductSales | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false)
   useEffect(() => {
     let live = true;
     api
       .productSales(product.id)
       .then((s) => live && setSales(s))
-      .catch(() => live && setSales({ days: 30, qty: 0, moneyMinor: 0, byDay: [] }));
+      .catch(() => live && setLoadFailed(true));
     return () => {
       live = false;
     };
@@ -27,7 +28,11 @@ export function SalesPanel({ product }: { product: Product }) {
 
   return (
     <div className="sheet-body prd-sales">
-      {sales === null ? (
+      {loadFailed ? (
+        <div role="alert" className="sheet-foot sheet-foot-error">
+          {t('loadFailed')}
+        </div>
+      ) : sales === null ? (
         <div className="sheet-foot">{tc('loading')}</div>
       ) : (
         <>

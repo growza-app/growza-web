@@ -478,7 +478,7 @@ export const api = {
   /** 0116 — the ledger behind a product's count, newest first. */
   productMovements: (id: string) => get<StockMovement[]>(`/api/v1/products/${id}/movements`),
   /** A delivery, a breakage, one used by the business, one brought back, or a recount. `qty` is how many; the kind gives the sign. */
-  moveStock: (id: string, body: { kind: Exclude<MovementKind, 'sold'>; qty: number; note?: string }) => post<Product>(`/api/v1/products/${id}/movements`, body),
+  moveStock: (id: string, body: { kind: Exclude<MovementKind, 'sold'>; qty?: number; /** A recount: the count itself, set on the server (a sale since the sheet opened is not lost). */ count?: number; note?: string }) => post<Product>(`/api/v1/products/${id}/movements`, body),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the

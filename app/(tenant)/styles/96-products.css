@@ -862,3 +862,8 @@
 .prd-cell-tap:disabled {
   cursor: default;
 }
+
+/* The low-stock tile sits in a listitem wrapper so the button keeps its own role. */
+.prd-stat-cell {
+  display: contents;
+}

@@ -43,7 +43,7 @@ describe('one till settles a booking too', () => {
     expect(page).toMatch(/const one = day\.find\(\(a\) => a\.id === params\.visit && a\.status === 'confirmed'\);/);
     expect(flow).toMatch(/\{visitGone \? \(/);
     expect(flow).toMatch(/\{nv\.visitGone\}/);
-    expect(client).toMatch(/<PayFlow token=\{token\}[^>]*visit=\{visit\}/);
+    expect(client).toMatch(/<PayFlow key=\{billKey\} token=\{token\}[^>]*visit=\{visit\}/);
   });
 
   it('settles the combo as one payment, and says when the booking is not there', () => {

@@ -78,7 +78,7 @@ export function ServiceSheet({
   const packageMode = kind === PACKAGES;
   const productMode = kind === PRODUCTS;
   /** Owner, 2026-10-15 — sort under the search; the shelf hides what is out of stock unless asked. */
-  const [sort, setSort] = useState<MenuSort>('name');
+  const [sort, setSort] = useState<MenuSort>('menu');
   const [inStockOnly, setInStockOnly] = useState(true);
   const [viewing, setViewing] = useState<Offer | null>(null);
   const kinds = useMemo(() => [...new Set(services.map((s) => s.categoryName).filter((c): c is string => Boolean(c)))], [services]);

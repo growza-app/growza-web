@@ -191,10 +191,13 @@ export function ProductsList({ products, categories: initialCategories, branchId
         <span className="prd-stat-n">{formatMoney(worth)}</span>
         <span className="prd-stat-l">{t('strip.worth')}</span>
       </div>
-      <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} role="listitem" onClick={() => pick(() => setFilter(lowCount > 0 ? 'low' : 'all'))}>
-        <span className="prd-stat-n">{lowCount}</span>
-        <span className="prd-stat-l">{t('strip.low')}</span>
-      </button>
+      {/* The listitem is the wrapper: a role on the button itself would strip its button role for a screen reader. */}
+      <div role="listitem" className="prd-stat-cell">
+        <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} onClick={() => pick(() => setFilter(lowCount > 0 ? 'low' : 'all'))}>
+          <span className="prd-stat-n">{lowCount}</span>
+          <span className="prd-stat-l">{t('strip.low')}</span>
+        </button>
+      </div>
     </div>
   );
   const searchBox = (
