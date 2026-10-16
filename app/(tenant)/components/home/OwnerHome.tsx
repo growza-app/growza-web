@@ -167,6 +167,7 @@ export interface OwnerHomeProps {
   /** Null when the register could not be read; the card is then left out rather than shown as 0. */
   /** Jira GRW-477 — the provider ids, so the count follows the header's branch. */
   staffNotMarkedIn: string[] | null;
+  staffAbsentIds?: string[];
   staffInAt?: Record<string, string | null>;
   /** Jira GRW-242 — owner only: approve the new AutoPay amount before the billing date. */
   autopayRenewal?: AutopayRenewal | null;
@@ -652,7 +653,7 @@ export function OwnerHome(p: OwnerHomeProps) {
     () => p.providers.filter((prov) => !branch || !prov.locationId || prov.locationId === branch),
     [p.providers, branch],
   );
-  const notMarkedSet = useMemo(() => new Set(p.staffNotMarkedIn ?? []), [p.staffNotMarkedIn]);
+  const absentSet = useMemo(() => new Set(p.staffAbsentIds ?? []), [p.staffAbsentIds]);
 
   const weekDays = useMemo(() => (data?.week.days ?? []).slice(-7), [data]);
   const maxWeekDayRev = useMemo(() => Math.max(...weekDays.map((d) => d.revenueMinor), 1), [weekDays]);
@@ -1188,7 +1189,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <div className="hm-v3-staff-strip">
                     {branchProviders.map((prov) => {
                       const inChair = busy.get(prov.id);
-                      const isAbsent = notMarkedSet.has(prov.id);
+                      const isAbsent = absentSet.has(prov.id);
                       const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
                       const statusLabel = inChair ? t.busyLabel : isAbsent ? t.absentLabel : t.availableNow;
                       const inAtISO = p.staffInAt?.[prov.id] ?? null;

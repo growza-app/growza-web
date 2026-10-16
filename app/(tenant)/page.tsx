@@ -68,6 +68,13 @@ function staffInTimes(register: AttendanceRegister | null): Record<string, strin
   return out;
 }
 
+function absentToday(register: AttendanceRegister | null): string[] {
+  if (!register) return [];
+  return register.rows
+    .filter((r) => r.onDate === register.today && (r.status === 'absent' || r.status === 'leave'))
+    .map((r) => r.providerId);
+}
+
 export default async function DashboardPage() {
   let me: Me;
   try {
@@ -192,6 +199,7 @@ export default async function DashboardPage() {
       tomorrowAppointments={tomorrowAppointments}
       customerStats={stats}
       staffNotMarkedIn={notMarkedIn(register)}
+      staffAbsentIds={absentToday(register)}
       staffInAt={staffInTimes(register)}
       autopayRenewal={me.autopayRenewal ?? null}
       canPayOnline={me.payments?.online ?? false}
