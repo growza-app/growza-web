@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateShort } from '../lib/format';
 import { bookingBill, clientNameLabel, groupBookings, initials, summarizeServices, type BookingGroup } from '../lib/appointment-display';
-import { matchItems } from '../lib/service-match';
 import { PageHeader } from '../components/PageHeader';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { BookingSummary } from '../components/BookingSummary';
@@ -128,7 +127,7 @@ export function filterSalesByWindow(
   });
 }
 
-/** Filters sale rows by tab (`all`, `products`, `services`) and search query (2+ characters). */
+/** Filters sale rows by tab (`all`, `products`, `services`) and search query. */
 export function filterSalesRows(rows: readonly SaleRow[], filter: SalesFilter, search: string): SaleRow[] {
   const pool = rows.filter((r) => {
     if (filter === 'products') return r.products.length > 0;
@@ -136,29 +135,34 @@ export function filterSalesRows(rows: readonly SaleRow[], filter: SalesFilter, s
     return true;
   });
 
-  const q = search.trim();
-  if (q.length < 2) return pool;
+  const q = search.trim().toLowerCase();
+  if (!q) return pool;
 
+  const tokens = q.split(/\s+/).filter(Boolean);
   const digits = q.replace(/\D/g, '');
-  const searchable = pool.map((r) => ({
-    item: r,
-    text: [
+
+  return pool.filter((r) => {
+    const fields = [
       r.clientName,
       r.clientPhone ?? '',
-      ...r.serviceNames,
-      r.offerTitle ?? '',
-      ...r.products.map((p) => p.name),
-      ...r.staffNames,
-    ].filter(Boolean),
-  }));
+      ...(filter !== 'products' ? [...r.serviceNames, r.offerTitle ?? ''] : []),
+      ...(filter !== 'services' ? r.products.map((p) => p.name) : []),
+      ...(filter === 'services' ? r.staffNames : []),
+    ]
+      .filter(Boolean)
+      .map((f) => f.toLowerCase());
 
-  const matched = new Set(matchItems(searchable, q).map((m) => m.key));
-  if (digits.length >= 2) {
-    for (const r of pool) {
-      if ((r.clientPhone ?? '').replace(/\D/g, '').includes(digits)) matched.add(r.key);
+    const phoneDigits = (r.clientPhone ?? '').replace(/\D/g, '');
+    if (digits.length >= 2 && digits === q.replace(/[\s+-]/g, '') && phoneDigits.includes(digits)) {
+      return true;
     }
-  }
-  return pool.filter((r) => matched.has(r.key));
+
+    return tokens.every(
+      (tok) =>
+        fields.some((f) => f.includes(tok)) ||
+        (tok.replace(/\D/g, '').length >= 2 && phoneDigits.includes(tok.replace(/\D/g, ''))),
+    );
+  });
 }
 
 export interface SalesKpis {

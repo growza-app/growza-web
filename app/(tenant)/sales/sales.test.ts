@@ -116,13 +116,23 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
           serviceName: 'Keratin Spa',
           products: [],
         }),
+        mkAppointment({
+          id: 'karan-row',
+          bookingGroupId: 'g3',
+          customerName: 'Karan Kapoor',
+          customerPhone: '+919811122233',
+          serviceName: 'Beard Trim',
+          products: [{ productId: 'p1', name: 'Argan Oil 100ml', priceMinor: '45000', qty: 1, paidMinor: '45000' }],
+        }),
       ],
       'Asia/Kolkata',
     );
 
-    expect(filterSalesRows(rows, 'products', '').map((r) => r.key)).toEqual(['g1']);
-    expect(filterSalesRows(rows, 'services', '').map((r) => r.key)).toEqual(['g1', 'g2']);
-    expect(filterSalesRows(rows, 'all', 'Argan').map((r) => r.key)).toEqual(['g1']);
+    expect(filterSalesRows(rows, 'products', '').map((r) => r.key)).toEqual(['g1', 'g3']);
+    expect(filterSalesRows(rows, 'services', '').map((r) => r.key)).toEqual(['g1', 'g2', 'g3']);
+    expect(filterSalesRows(rows, 'all', 'Argan').map((r) => r.key)).toEqual(['g1', 'g3']);
+    expect(filterSalesRows(rows, 'all', 'karan').map((r) => r.key)).toEqual(['g3']);
+    expect(filterSalesRows(rows, 'products', 'karan').map((r) => r.key)).toEqual(['g3']);
     expect(filterSalesRows(rows, 'all', '33445').map((r) => r.key)).toEqual(['g2']);
     expect(filterSalesRows(rows, 'all', 'Keratin').map((r) => r.key)).toEqual(['g2']);
   });
