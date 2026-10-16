@@ -146,8 +146,12 @@ export function filterSalesByDateRange(
 
 export interface SalesRowFilterExtra {
   selectedClients?: readonly string[];
+  selectedServices?: readonly string[];
+  selectedProducts?: readonly string[];
   selectedItems?: readonly string[];
   clientQuery?: string;
+  serviceQuery?: string;
+  productQuery?: string;
   itemQuery?: string;
 }
 
@@ -184,6 +188,36 @@ export function filterSalesRows(
           (tok.replace(/\D/g, '').length >= 2 && phoneDigits.includes(tok.replace(/\D/g, ''))),
       );
     });
+  }
+
+  const selectedServices = extra?.selectedServices ?? [];
+  if (filter !== 'products') {
+    if (selectedServices.length > 0) {
+      const srvSet = new Set(selectedServices);
+      pool = pool.filter((r) => r.serviceNames.some((s) => srvSet.has(s)));
+    } else if (extra?.serviceQuery?.trim()) {
+      const sq = extra.serviceQuery.trim().toLowerCase();
+      const sTokens = sq.split(/\s+/).filter(Boolean);
+      pool = pool.filter((r) => {
+        const srvFields = [...r.serviceNames, r.offerTitle ?? ''].filter(Boolean).map((f) => f.toLowerCase());
+        return sTokens.every((tok) => srvFields.some((f) => f.includes(tok)));
+      });
+    }
+  }
+
+  const selectedProducts = extra?.selectedProducts ?? [];
+  if (filter !== 'services') {
+    if (selectedProducts.length > 0) {
+      const prdSet = new Set(selectedProducts);
+      pool = pool.filter((r) => r.products.some((p) => prdSet.has(p.name)));
+    } else if (extra?.productQuery?.trim()) {
+      const pq = extra.productQuery.trim().toLowerCase();
+      const pTokens = pq.split(/\s+/).filter(Boolean);
+      pool = pool.filter((r) => {
+        const prdFields = r.products.map((p) => p.name.toLowerCase());
+        return pTokens.every((tok) => prdFields.some((f) => f.includes(tok)));
+      });
+    }
   }
 
   const selectedItems = extra?.selectedItems ?? [];
@@ -330,10 +364,12 @@ export function SalesClient({
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
   const [search, setSearch] = useState(initialQuery);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [clientQuery, setClientQuery] = useState(initialQuery);
-  const [itemQuery, setItemQuery] = useState('');
-  const [openDropdown, setOpenDropdown] = useState<'clients' | 'items' | null>(null);
+  const [serviceQuery, setServiceQuery] = useState('');
+  const [productQuery, setProductQuery] = useState('');
+  const [openDropdown, setOpenDropdown] = useState<'clients' | 'services' | 'products' | null>(null);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -398,27 +434,27 @@ export function SalesClient({
     );
   }, [windowRows, clientQuery]);
 
-  const itemOptions = useMemo(() => {
-    const seen = new Map<string, { key: string; label: string }>();
+  const serviceOptions = useMemo(() => {
+    const seen = new Set<string>();
     for (const r of windowRows) {
-      if (filter !== 'products') {
-        for (const s of r.serviceNames) {
-          const k = `srv:${s}`;
-          if (!seen.has(k)) seen.set(k, { key: k, label: s });
-        }
-      }
-      if (filter !== 'services') {
-        for (const p of r.products) {
-          const k = `prd:${p.name}`;
-          if (!seen.has(k)) seen.set(k, { key: k, label: p.name });
-        }
-      }
+      for (const s of r.serviceNames) seen.add(s);
     }
-    const list = [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
-    const iq = itemQuery.trim().toLowerCase();
-    if (!iq) return list;
-    return list.filter((it) => it.label.toLowerCase().includes(iq));
-  }, [windowRows, filter, itemQuery]);
+    const list = [...seen].sort((a, b) => a.localeCompare(b));
+    const sq = serviceQuery.trim().toLowerCase();
+    if (!sq) return list;
+    return list.filter((s) => s.toLowerCase().includes(sq));
+  }, [windowRows, serviceQuery]);
+
+  const productOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const r of windowRows) {
+      for (const p of r.products) seen.add(p.name);
+    }
+    const list = [...seen].sort((a, b) => a.localeCompare(b));
+    const pq = productQuery.trim().toLowerCase();
+    if (!pq) return list;
+    return list.filter((p) => p.toLowerCase().includes(pq));
+  }, [windowRows, productQuery]);
 
   const counts = useMemo(
     () => ({
@@ -435,11 +471,13 @@ export function SalesClient({
     () =>
       filterSalesRows(windowRows, filter, search, {
         selectedClients,
-        selectedItems,
+        selectedServices,
+        selectedProducts,
         clientQuery,
-        itemQuery,
+        serviceQuery,
+        productQuery,
       }),
-    [windowRows, filter, search, selectedClients, selectedItems, clientQuery, itemQuery],
+    [windowRows, filter, search, selectedClients, selectedServices, selectedProducts, clientQuery, serviceQuery, productQuery],
   );
 
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
@@ -465,20 +503,18 @@ export function SalesClient({
   const rowAmountMinor = (row: SaleRow) =>
     filter === 'products' ? row.productsMinor : filter === 'services' ? row.servicesMinor : row.totalMinor;
 
-  const itemFilterLabel =
-    filter === 'products'
-      ? t('itemFilterProducts')
-      : filter === 'services'
-        ? t('itemFilterServices')
-        : t('itemFilterAll');
-
   const toggleClient = (key: string) => {
     setSelectedClients((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
     setPage(1);
   };
 
-  const toggleItem = (key: string) => {
-    setSelectedItems((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  const toggleService = (name: string) => {
+    setSelectedServices((prev) => (prev.includes(name) ? prev.filter((k) => k !== name) : [...prev, name]));
+    setPage(1);
+  };
+
+  const toggleProduct = (name: string) => {
+    setSelectedProducts((prev) => (prev.includes(name) ? prev.filter((k) => k !== name) : [...prev, name]));
     setPage(1);
   };
 
@@ -534,7 +570,7 @@ export function SalesClient({
           </div>
 
           <div className="sls-filter-bar">
-            {/* Client / Phone checkbox + search filter */}
+            {/* 1. Client / Phone checkbox + search filter */}
             <div className="sls-dd">
               <button
                 type="button"
@@ -605,73 +641,145 @@ export function SalesClient({
               ) : null}
             </div>
 
-            {/* Services / Products checkbox + search filter */}
-            <div className="sls-dd">
-              <button
-                type="button"
-                className={`sls-dd-btn ${selectedItems.length > 0 || itemQuery.trim() ? 'is-active' : ''}`}
-                aria-expanded={openDropdown === 'items'}
-                onClick={() => setOpenDropdown((v) => (v === 'items' ? null : 'items'))}
-              >
-                <span>
-                  {itemFilterLabel}
-                  {selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
-                </span>
-                <IconChevronDown />
-              </button>
+            {/* 2. Services checkbox + search filter */}
+            {showServicesCol ? (
+              <div className="sls-dd">
+                <button
+                  type="button"
+                  className={`sls-dd-btn ${selectedServices.length > 0 || serviceQuery.trim() ? 'is-active' : ''}`}
+                  aria-expanded={openDropdown === 'services'}
+                  onClick={() => setOpenDropdown((v) => (v === 'services' ? null : 'services'))}
+                >
+                  <span>
+                    {t('itemFilterServices')}
+                    {selectedServices.length > 0 ? ` (${selectedServices.length})` : ''}
+                  </span>
+                  <IconChevronDown />
+                </button>
 
-              {openDropdown === 'items' ? (
-                <div className="sls-dd-menu" role="group" aria-label={itemFilterLabel}>
-                  <div className="sls-dd-head">
-                    <label className="search-wrap sls-dd-search">
-                      <IconSearch />
-                      <input
-                        type="text"
-                        className="search-input search-input-bare"
-                        placeholder={t('itemSearchPlaceholder')}
-                        value={itemQuery}
-                        onChange={(e) => {
-                          setItemQuery(e.target.value);
-                          setPage(1);
-                        }}
-                      />
-                    </label>
-                    {selectedItems.length > 0 || itemQuery.trim() ? (
-                      <button
-                        type="button"
-                        className="sls-dd-clear"
-                        onClick={() => {
-                          setSelectedItems([]);
-                          setItemQuery('');
-                          setPage(1);
-                        }}
-                      >
-                        {t('clearFilter')}
-                      </button>
-                    ) : null}
+                {openDropdown === 'services' ? (
+                  <div className="sls-dd-menu" role="group" aria-label={t('itemFilterServices')}>
+                    <div className="sls-dd-head">
+                      <label className="search-wrap sls-dd-search">
+                        <IconSearch />
+                        <input
+                          type="text"
+                          className="search-input search-input-bare"
+                          placeholder={t('serviceSearchPlaceholder')}
+                          value={serviceQuery}
+                          onChange={(e) => {
+                            setServiceQuery(e.target.value);
+                            setPage(1);
+                          }}
+                        />
+                      </label>
+                      {selectedServices.length > 0 || serviceQuery.trim() ? (
+                        <button
+                          type="button"
+                          className="sls-dd-clear"
+                          onClick={() => {
+                            setSelectedServices([]);
+                            setServiceQuery('');
+                            setPage(1);
+                          }}
+                        >
+                          {t('clearFilter')}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="sls-dd-list">
+                      {serviceOptions.length === 0 ? (
+                        <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                      ) : (
+                        serviceOptions.map((srv) => {
+                          const checked = selectedServices.includes(srv);
+                          return (
+                            <label key={srv} className="sls-check-row">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleService(srv)}
+                              />
+                              <span className="sls-check-main">{srv}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
-                  <div className="sls-dd-list">
-                    {itemOptions.length === 0 ? (
-                      <div className="sls-dd-empty">{t('noFilterMatches')}</div>
-                    ) : (
-                      itemOptions.map((it) => {
-                        const checked = selectedItems.includes(it.key);
-                        return (
-                          <label key={it.key} className="sls-check-row">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleItem(it.key)}
-                            />
-                            <span className="sls-check-main">{it.label}</span>
-                          </label>
-                        );
-                      })
-                    )}
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* 3. Products checkbox + search filter */}
+            {showProductsCol ? (
+              <div className="sls-dd">
+                <button
+                  type="button"
+                  className={`sls-dd-btn ${selectedProducts.length > 0 || productQuery.trim() ? 'is-active' : ''}`}
+                  aria-expanded={openDropdown === 'products'}
+                  onClick={() => setOpenDropdown((v) => (v === 'products' ? null : 'products'))}
+                >
+                  <span>
+                    {t('itemFilterProducts')}
+                    {selectedProducts.length > 0 ? ` (${selectedProducts.length})` : ''}
+                  </span>
+                  <IconChevronDown />
+                </button>
+
+                {openDropdown === 'products' ? (
+                  <div className="sls-dd-menu" role="group" aria-label={t('itemFilterProducts')}>
+                    <div className="sls-dd-head">
+                      <label className="search-wrap sls-dd-search">
+                        <IconSearch />
+                        <input
+                          type="text"
+                          className="search-input search-input-bare"
+                          placeholder={t('productSearchPlaceholder')}
+                          value={productQuery}
+                          onChange={(e) => {
+                            setProductQuery(e.target.value);
+                            setPage(1);
+                          }}
+                        />
+                      </label>
+                      {selectedProducts.length > 0 || productQuery.trim() ? (
+                        <button
+                          type="button"
+                          className="sls-dd-clear"
+                          onClick={() => {
+                            setSelectedProducts([]);
+                            setProductQuery('');
+                            setPage(1);
+                          }}
+                        >
+                          {t('clearFilter')}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="sls-dd-list">
+                      {productOptions.length === 0 ? (
+                        <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                      ) : (
+                        productOptions.map((prd) => {
+                          const checked = selectedProducts.includes(prd);
+                          return (
+                            <label key={prd} className="sls-check-row">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleProduct(prd)}
+                              />
+                              <span className="sls-check-main">{prd}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 

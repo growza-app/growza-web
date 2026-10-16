@@ -143,6 +143,17 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(filterSalesRows(rows, 'products', '', { selectedItems: ['prd:Argan Oil 100ml'] }).map((r) => r.key)).toEqual(
       ['g1', 'g3'],
     );
+    expect(filterSalesRows(rows, 'all', '', { selectedServices: ['Keratin Spa'] }).map((r) => r.key)).toEqual(['g2']);
+    expect(filterSalesRows(rows, 'all', '', { selectedProducts: ['Argan Oil 100ml'] }).map((r) => r.key)).toEqual([
+      'g1',
+      'g3',
+    ]);
+    expect(
+      filterSalesRows(rows, 'all', '', {
+        selectedServices: ['Haircut'],
+        selectedProducts: ['Argan Oil 100ml'],
+      }).map((r) => r.key),
+    ).toEqual(['g1']);
   });
 
   it('computes KPI totals and payment split accurately', () => {

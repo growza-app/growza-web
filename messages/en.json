@@ -3146,6 +3146,8 @@
     "itemFilterServices": "Services",
     "itemFilterProducts": "Products",
     "itemSearchPlaceholder": "Search service or product…",
+    "serviceSearchPlaceholder": "Search service…",
+    "productSearchPlaceholder": "Search product…",
     "clearFilter": "Clear",
     "noFilterMatches": "No matches",
     "searchPlaceholder": "Search client, phone, service or product…",

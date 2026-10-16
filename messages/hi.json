@@ -3146,6 +3146,8 @@
     "itemFilterServices": "सेवाएँ",
     "itemFilterProducts": "सामान",
     "itemSearchPlaceholder": "सेवा या सामान खोजें…",
+    "serviceSearchPlaceholder": "सेवा खोजें…",
+    "productSearchPlaceholder": "सामान खोजें…",
     "clearFilter": "हटाएँ",
     "noFilterMatches": "कुछ नहीं मिला",
     "searchPlaceholder": "ग्राहक, फ़ोन, सेवा या सामान खोजें…",
