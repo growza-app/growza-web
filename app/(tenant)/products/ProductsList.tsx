@@ -10,7 +10,7 @@ import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useWritable } from '../components/SessionProvider';
-import { IconPlus, IconSearch } from '../components/icons';
+import { IconPlus, IconSearch, IconSort } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
@@ -26,10 +26,13 @@ import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from './DeskProduc
  *
  * Nothing here names a kind of business: the same screen sells a clinic's consumables and a gym's protein.
  */
-export type ShelfFilter = 'all' | 'low' | 'out' | 'retired';
-export const SHELF_FILTERS: readonly ShelfFilter[] = ['all', 'low', 'out', 'retired'];
-export type ShelfSort = 'name' | 'stock' | 'sold' | 'price';
-export const SHELF_SORTS: readonly ShelfSort[] = ['name', 'stock', 'sold', 'price'];
+export type ShelfFilter = 'all' | 'inStock' | 'low' | 'out' | 'retired';
+export const SHELF_FILTERS: readonly ShelfFilter[] = ['all', 'inStock', 'low', 'out', 'retired'];
+export type ShelfSort = 'name' | 'stock' | 'sold' | 'price' | 'cost' | 'status';
+export const SHELF_SORTS: readonly ShelfSort[] = ['name', 'stock', 'sold', 'price', 'cost', 'status'];
+export type ShelfSortDir = 'asc' | 'desc';
+export const defaultSortDir = (sort: ShelfSort): ShelfSortDir =>
+  sort === 'name' || sort === 'stock' || sort === 'status' ? 'asc' : 'desc';
 
 /** The pill's colour: red at zero, amber at or under the owner's line, green otherwise. Retired products carry no pill. */
 export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): 'ok' | 'low' | 'out' => (p.stock <= 0 ? 'out' : p.lowStockAt > 0 && p.stock <= p.lowStockAt ? 'low' : 'ok');
@@ -48,6 +51,7 @@ export function filterShelf(rows: readonly Product[], filter: ShelfFilter, searc
     if (filter === 'retired') return !p.active;
     if (!p.active) return false;
     const tone = stockTone(p);
+    if (filter === 'inStock') return tone === 'ok';
     if (filter === 'low') return tone !== 'ok';
     if (filter === 'out') return tone === 'out';
     return true;
@@ -56,14 +60,59 @@ export function filterShelf(rows: readonly Product[], filter: ShelfFilter, searc
   return q.length >= 2 ? matchItems(pool.map(productMatchable), q) : pool;
 }
 
-export function sortShelf(rows: readonly Product[], sort: ShelfSort): Product[] {
-  const by: Record<ShelfSort, (a: Product, b: Product) => number> = {
-    name: (a, b) => a.name.localeCompare(b.name),
-    stock: (a, b) => a.stock - b.stock || a.name.localeCompare(b.name),
-    sold: (a, b) => b.sold - a.sold || a.name.localeCompare(b.name),
-    price: (a, b) => Number(b.priceMinor) - Number(a.priceMinor) || a.name.localeCompare(b.name),
-  };
-  return [...rows].sort(by[sort]);
+const statusRank = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): number => {
+  const tone = stockTone(p);
+  return tone === 'out' ? 0 : tone === 'low' ? 1 : 2;
+};
+
+export function sortShelf(rows: readonly Product[], sort: ShelfSort, dir: ShelfSortDir = defaultSortDir(sort)): Product[] {
+  const sign = dir === 'asc' ? 1 : -1;
+  const byName = (a: Product, b: Product) => a.name.localeCompare(b.name);
+  return [...rows].sort((a, b) => {
+    if (sort === 'name') return sign * byName(a, b);
+    if (sort === 'price') return sign * (Number(a.priceMinor) - Number(b.priceMinor)) || byName(a, b);
+    if (sort === 'cost') {
+      if (a.costMinor == null && b.costMinor == null) return byName(a, b);
+      if (a.costMinor == null) return 1;
+      if (b.costMinor == null) return -1;
+      return sign * (Number(a.costMinor) - Number(b.costMinor)) || byName(a, b);
+    }
+    if (sort === 'stock') return sign * (a.stock - b.stock) || byName(a, b);
+    if (sort === 'sold') return sign * (a.sold - b.sold) || byName(a, b);
+    if (a.active !== b.active) return a.active ? -1 : 1;
+    return sign * (statusRank(a) - statusRank(b)) || a.stock - b.stock || byName(a, b);
+  });
+}
+
+function SortableTh({
+  col,
+  label,
+  sort,
+  dir,
+  onSort,
+  numeric,
+}: {
+  col: ShelfSort;
+  label: string;
+  sort: ShelfSort;
+  dir: ShelfSortDir;
+  onSort: (col: ShelfSort) => void;
+  numeric?: boolean;
+}) {
+  const active = sort === col;
+  return (
+    <th
+      className={numeric ? 'th-sortable prd-td-num' : 'th-sortable'}
+      aria-sort={active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}
+    >
+      <button type="button" onClick={() => onSort(col)}>
+        {label}
+        <span className={`th-arrow ${active ? 'is-on' : ''}`} aria-hidden="true">
+          {active ? (dir === 'desc' ? '↓' : '↑') : <IconSort />}
+        </span>
+      </button>
+    </th>
+  );
 }
 
 export function ProductsList({ products, categories: initialCategories, branchId }: { products: Product[]; categories: ProductCategory[]; branchId: string }) {
@@ -76,9 +125,11 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const [category, setCategory] = useState<string>(ALL_CATEGORIES);
   const [filter, setFilter] = useState<ShelfFilter>('all');
   const [sort, setSort] = useState<ShelfSort>('name');
+  const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null);
   const [busy, setBusy] = useState(false);
@@ -97,9 +148,10 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const lowCount = useMemo(() => live.filter((p) => stockTone(p) !== 'ok').length, [live]);
   const worth = useMemo(() => shelfWorthMinor(rows), [rows]);
   const inCategory = useMemo(() => filterShelf(rows, 'all', '', category), [rows, category]);
-  const shown = useMemo(() => sortShelf(filterShelf(rows, filter, search, category), sort), [rows, filter, search, category, sort]);
+  const shown = useMemo(() => sortShelf(filterShelf(rows, filter, search, category), sort, sortDir), [rows, filter, search, category, sort, sortDir]);
   const counts: Record<ShelfFilter, number> = {
     all: inCategory.length,
+    inStock: inCategory.filter((p) => stockTone(p) === 'ok').length,
     low: inCategory.filter((p) => stockTone(p) !== 'ok').length,
     out: inCategory.filter((p) => p.stock <= 0).length,
     retired: rows.filter((p) => !p.active && (category === ALL_CATEGORIES || (category === NO_CATEGORY ? p.categoryId === null : p.categoryId === category))).length,
@@ -111,6 +163,14 @@ export function ProductsList({ products, categories: initialCategories, branchId
     f();
     setPage(1);
   };
+  const pickColumnSort = (col: ShelfSort) =>
+    pick(() => {
+      if (sort === col) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+      else {
+        setSort(col);
+        setSortDir(defaultSortDir(col));
+      }
+    });
 
   const refreshCategories = () =>
     api
@@ -123,6 +183,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
       const next = at >= 0 ? prev.map((x) => (x.id === p.id ? p : x)) : [...prev, p];
       return [...next].sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
     });
+    setSavedId((cur) => (editing === 'new' ? p.id : cur));
     setEditing((cur) => (cur && cur !== 'new' && cur.id === p.id ? p : cur === 'new' ? p : cur));
     void refreshCategories();
     router.refresh();
@@ -223,7 +284,16 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const sortBox = (
     <label className="prd-sort">
       <span className="prd-sort-l">{t('sort.label')}</span>
-      <select value={sort} onChange={(e) => pick(() => setSort(e.target.value as ShelfSort))}>
+      <select
+        value={sort}
+        onChange={(e) => {
+          const next = e.target.value as ShelfSort;
+          pick(() => {
+            setSort(next);
+            setSortDir(defaultSortDir(next));
+          });
+        }}
+      >
         {SHELF_SORTS.map((s) => (
           <option key={s} value={s}>
             {t(`sort.${s}`)}
@@ -300,11 +370,11 @@ export function ProductsList({ products, categories: initialCategories, branchId
         <table className="prd-table">
           <thead>
             <tr>
-              <th>{t('cols.product')}</th>
-              <th className="prd-td-num">{t('cols.price')}</th>
-              <th className="prd-td-num">{t('cols.cost')}</th>
-              <th className="prd-td-num">{t('cols.stock')}</th>
-              <th>{t('cols.status')}</th>
+              <SortableTh col="name" label={t('cols.product')} sort={sort} dir={sortDir} onSort={pickColumnSort} />
+              <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+              <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+              <SortableTh col="stock" label={t('cols.stock')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+              <SortableTh col="status" label={t('cols.status')} sort={sort} dir={sortDir} onSort={pickColumnSort} />
             </tr>
           </thead>
           <tbody>
@@ -359,6 +429,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
         onDelete={(p) => setDeleting(p)}
         onClose={() => setEditing(null)}
         inline={inline}
+        initialSaved={editing !== 'new' && savedId === editing.id}
       />
     ) : null;
   const dialogs = (

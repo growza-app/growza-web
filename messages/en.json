@@ -3004,6 +3004,7 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving…",
+      "saved": "Saved",
       "needName": "Give the product a name",
       "needPrice": "Give it a price",
       "done": "Done",
@@ -3039,11 +3040,13 @@
     "filters": {
       "label": "Show",
       "all": "All",
+      "inStock": "In stock",
       "low": "Low",
       "out": "Out",
       "retired": "Retired",
       "none": {
         "all": "Nothing on the shelf.",
+        "inStock": "Nothing is in stock right now.",
         "low": "Nothing is running low.",
         "out": "Nothing is out of stock.",
         "retired": "Nothing has been taken off the till."
@@ -3094,7 +3097,9 @@
       "name": "Name (A–Z)",
       "stock": "Stock, lowest first",
       "sold": "Best selling",
-      "price": "Price, highest first"
+      "price": "Price, highest first",
+      "cost": "Cost, highest first",
+      "status": "Status"
     },
     "categories": {
       "title": "Categories",
