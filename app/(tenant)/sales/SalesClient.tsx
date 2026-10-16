@@ -12,8 +12,6 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { BookingSummary } from '../components/BookingSummary';
 import { useBranch } from '../components/BranchProvider';
 import { useMayUse } from '../components/SessionProvider';
-import { useLabel } from '../components/LabelsProvider';
-import { pickNoun } from '../lib/nouns';
 import {
   IconPackages,
   IconProducts,
@@ -237,12 +235,10 @@ export function SalesClient({
 }) {
   const t = useTranslations('sales');
   const tc = useTranslations('chrome');
-  const tn = useTranslations('nouns');
   const locale = useLocale();
   const router = useRouter();
   const branch = useBranch();
   const mayRecordPayment = useMayUse('visit.recordPayment');
-  const providerWord = pickNoun(locale, useLabel('provider', 'Staff'), tn('staffTitle'));
 
   const [range, setRange] = useState<SalesRange>(initialRange);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
@@ -482,7 +478,6 @@ export function SalesClient({
                     <th>{t('cols.client')}</th>
                     <th>{t('cols.services')}</th>
                     <th>{t('cols.products')}</th>
-                    <th>{providerWord}</th>
                     <th>{t('cols.payment')}</th>
                     <th className="is-num">{t('cols.total')}</th>
                     <th className="is-action">{t('cols.action')}</th>
@@ -538,9 +533,6 @@ export function SalesClient({
                             <span className="sls-muted">{t('noProducts')}</span>
                           )}
                         </td>
-                        <td className="sls-col-staff">
-                          {row.staffNames.length > 0 ? row.staffNames.join(', ') : <span className="sls-muted">{t('noStaff')}</span>}
-                        </td>
                         <td>
                           <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
                         </td>
@@ -578,10 +570,7 @@ export function SalesClient({
                         <span className="sls-avatar">{initials(row.clientName)}</span>
                         <div className="sls-client-meta">
                           <strong className="sls-client-name">{row.clientName}</strong>
-                          <span className="sls-client-phone">
-                            {formatWhen(row)}
-                            {` · ${row.staffNames.length > 0 ? row.staffNames.join(', ') : t('noStaff')}`}
-                          </span>
+                          <span className="sls-client-phone">{formatWhen(row)}</span>
                         </div>
                       </div>
                       <div className="sls-card-right">

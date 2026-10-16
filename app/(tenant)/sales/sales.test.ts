@@ -251,5 +251,6 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
     expect(client).toContain("t('moreProducts', { n: hiddenProducts })");
     expect(client).toContain('summarizeServices(row.serviceNames, locale)');
+    expect(client).not.toContain('sls-col-staff');
   });
 });
