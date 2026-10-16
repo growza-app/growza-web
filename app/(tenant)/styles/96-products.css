@@ -92,6 +92,10 @@
   color: var(--muted);
 }
 
+.prd-sheet .sheet-group ~ .sheet-group {
+  margin-top: var(--sp-2);
+}
+
 .prd-sheet-actions {
   display: flex;
   gap: var(--sp-2);

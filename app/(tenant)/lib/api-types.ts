@@ -201,6 +201,9 @@ export interface Product {
   /** Jira GRW-574 (0119) — the business's own code and what a scanner reads off the product. Null until said. */
   sku: string | null;
   barcode: string | null;
+  /** Jira GRW-574 (0120) — optional GST rate in basis points (0..2800; 0 is 0%, null is not set) and HSN code. */
+  gstRateBp: number | null;
+  hsn: string | null;
 }
 
 /** 0117 — a shelf of the shelf: the owner's own grouping at one branch, with how many live products it holds. */
@@ -232,6 +235,9 @@ export interface ProductInput {
   /** 0119 — null clears it; one live, active product per branch may hold each. */
   sku?: string | null;
   barcode?: string | null;
+  /** 0120 — null clears it; 0 is 0% GST (kept apart from null). */
+  gstRateBp?: number | null;
+  hsn?: string | null;
 }
 
 /** 0116 — why a product's count changed. Six words, the same for every kind of business. */

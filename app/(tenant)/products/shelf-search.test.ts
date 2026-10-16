@@ -25,6 +25,8 @@ const p = (
   categoryName: null,
   sku: codes.sku ?? null,
   barcode: codes.barcode ?? null,
+  gstRateBp: null,
+  hsn: null,
 });
 const shelf = [p('Keratin Shampoo'), p('Argan Oil'), p('Old Serum', 1, false)];
 
