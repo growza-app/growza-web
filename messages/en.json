@@ -3133,6 +3133,8 @@
   "sales": {
     "title": "Sales",
     "subtitle": "Every completed bill — what services were done, what products were sold, who paid, and how.",
+    "from": "From",
+    "to": "To",
     "ranges": {
       "today": "Today",
       "last_7_days": "Last 7 days",
@@ -3141,8 +3143,20 @@
     "filters": {
       "all": "All bills ({n})",
       "products": "Products sold ({n})",
-      "services": "Services only ({n})"
+      "services": "Services sold ({n})"
     },
+    "branchFilter": "Branches",
+    "branchSearchPlaceholder": "Search branch…",
+    "clientFilter": "Clients",
+    "clientSearchPlaceholder": "Search client or phone…",
+    "itemFilterAll": "Services & Products",
+    "itemFilterServices": "Services",
+    "itemFilterProducts": "Products",
+    "itemSearchPlaceholder": "Search service or product…",
+    "serviceSearchPlaceholder": "Search service…",
+    "productSearchPlaceholder": "Search product…",
+    "clearFilter": "Clear",
+    "noFilterMatches": "No matches",
     "searchPlaceholder": "Search client, phone, service or product…",
     "kpi": {
       "totalSales": "Total sales",
@@ -3157,25 +3171,29 @@
     "cols": {
       "when": "When",
       "client": "Client",
+      "phone": "Phone",
       "services": "Services",
       "products": "Products",
       "staff": "Staff",
       "payment": "Payment",
       "total": "Total",
-      "action": ""
+      "action": "Bill"
     },
     "view": "View bill",
+    "moreProducts": "+{n} more",
     "noProducts": "—",
     "noStaff": "Unassigned",
     "notRecorded": "Not recorded",
     "empty": {
       "all": "No completed sales in this period.",
       "products": "No products were sold in this period.",
-      "services": "No service-only bills in this period.",
+      "services": "No services were sold in this period.",
       "search": "Nothing matches \"{q}\".",
       "hint": "Try a longer date range, or ring up a bill from Record payment."
     },
     "recordPayment": "Record payment",
+    "exportCsv": "Export CSV",
+    "exportCsvLimit": "Exporting up to {max} rows",
     "paginationNoun": "bills",
     "loadFailed": "Could not load sales for this period. Try again.",
     "retry": "Try again"

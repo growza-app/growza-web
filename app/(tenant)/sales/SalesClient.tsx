@@ -1,12 +1,11 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateShort } from '../lib/format';
-import { bookingBill, clientNameLabel, groupBookings, initials, type BookingGroup } from '../lib/appointment-display';
-import { matchItems } from '../lib/service-match';
+import { bookingBill, clientNameLabel, groupBookings, initials, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { PageHeader } from '../components/PageHeader';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { BookingSummary } from '../components/BookingSummary';
@@ -15,6 +14,8 @@ import { useMayUse } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
+  IconChevronDown,
+  IconDownload,
   IconPackages,
   IconProducts,
   IconReceipt,
@@ -22,12 +23,106 @@ import {
   IconSearch,
   IconServices,
 } from '../components/icons';
+import { csvLines } from '../lib/csv';
+import { clampSalesDateRange, MAX_SALES_DATE_YEARS, MAX_SALES_EXPORT_ROWS } from './sales-helpers';
+
+export { clampSalesDateRange, MAX_SALES_DATE_YEARS, MAX_SALES_EXPORT_ROWS };
 
 export type SalesFilter = 'all' | 'products' | 'services';
 export const SALES_FILTERS: readonly SalesFilter[] = ['all', 'products', 'services'];
 
 export type SalesRange = 'today' | 'last_7_days' | 'last_30_days';
 export const SALES_RANGES: readonly SalesRange[] = ['today', 'last_7_days', 'last_30_days'];
+
+export const MAX_ROW_PRODUCTS = 2;
+
+export interface SalesCsvHeaders {
+  when: string;
+  client: string;
+  phone: string;
+  branch?: string;
+  services: string;
+  products: string;
+  staff: string;
+  payment: string;
+  total: string;
+}
+
+/**
+ * High-performance single-pass CSV builder for filtered sales rows.
+ * Enforces `MAX_SALES_EXPORT_ROWS` limit, reuses a single `Intl.DateTimeFormat` instance,
+ * and writes major-unit numeric totals for spreadsheet arithmetic.
+ */
+export function buildSalesCsv(
+  rows: readonly SaleRow[],
+  timezone: string,
+  headers: SalesCsvHeaders,
+  formatPayment: (modes: string[]) => string,
+  branchMap?: ReadonlyMap<string, string>,
+  maxRows = MAX_SALES_EXPORT_ROWS,
+  filter: SalesFilter = 'all',
+): { csv: string; exportedCount: number; capped: boolean } {
+  const limit = Math.max(0, maxRows);
+  const slice = rows.length > limit ? rows.slice(0, limit) : rows;
+  const timeFmt = new Intl.DateTimeFormat('en-IN', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const includeBranch = Boolean(headers.branch && branchMap && branchMap.size > 0);
+  const headRow: (string | number)[] = [
+    headers.when,
+    headers.client,
+    headers.phone,
+    ...(includeBranch ? [headers.branch!] : []),
+    headers.services,
+    headers.products,
+    headers.staff,
+    headers.payment,
+    headers.total,
+  ];
+
+  const lines: (string | number | null | undefined)[][] = new Array(slice.length + 1);
+  lines[0] = headRow;
+
+  for (let i = 0; i < slice.length; i++) {
+    const r = slice[i]!;
+    const timeStr = timeFmt.format(new Date(r.startAt));
+    const whenStr = `${r.dayISO} ${timeStr}`;
+    const servicesStr = [
+      ...(r.offerTitle ? [`[${r.offerTitle}]`] : []),
+      ...r.serviceNames,
+    ].join('; ');
+    const productsStr = r.products
+      .map((p) => (p.qty > 1 ? `${p.name} x${p.qty}` : p.name))
+      .join('; ');
+    const staffStr = r.staffNames.join(', ');
+    const paymentStr = formatPayment(r.paymentModes);
+    const amountMinor =
+      filter === 'products' ? r.productsMinor : filter === 'services' ? r.servicesMinor : r.totalMinor;
+    const totalMajor = (amountMinor / 100).toFixed(2);
+
+    lines[i + 1] = [
+      whenStr,
+      r.clientName,
+      r.clientPhone ?? '',
+      ...(includeBranch ? [r.locationId ? (branchMap!.get(r.locationId) ?? '') : ''] : []),
+      servicesStr,
+      productsStr,
+      staffStr,
+      paymentStr,
+      totalMajor,
+    ];
+  }
+
+  return {
+    csv: csvLines(lines),
+    exportedCount: slice.length,
+    capped: rows.length > limit,
+  };
+}
 
 export interface SaleRow {
   group: BookingGroup;
@@ -46,6 +141,10 @@ export interface SaleRow {
   servicesMinor: number;
   productsMinor: number;
   totalMinor: number;
+}
+
+export function clientKeyOf(r: Pick<SaleRow, 'clientName' | 'clientPhone'>): string {
+  return `${r.clientName}|${r.clientPhone ?? ''}`;
 }
 
 /**
@@ -114,49 +213,170 @@ export function filterSalesByWindow(
   rows: readonly SaleRow[],
   range: SalesRange,
   todayISO: string,
-  branchId: string | null,
+  branchId: string | readonly string[] | null,
 ): SaleRow[] {
   const todayMs = new Date(`${todayISO}T00:00:00Z`).getTime();
   const daysBack = range === 'today' ? 0 : range === 'last_7_days' ? 6 : 29;
   const fromISO = new Date(todayMs - daysBack * 86_400_000).toISOString().slice(0, 10);
 
+  return filterSalesByDateRange(rows, fromISO, todayISO, branchId);
+}
+
+/** Filters sale rows by explicit `[fromISO, toISO]` date bounds and one or more branches. */
+export function filterSalesByDateRange(
+  rows: readonly SaleRow[],
+  fromISO: string,
+  toISO: string,
+  branchId: string | readonly string[] | null,
+): SaleRow[] {
+  const start = fromISO || '0000-01-01';
+  const end = toISO && toISO >= start ? toISO : start;
+  const branchSet = Array.isArray(branchId)
+    ? branchId.length > 0
+      ? new Set(branchId)
+      : null
+    : typeof branchId === 'string' && branchId
+      ? new Set([branchId])
+      : null;
   return rows.filter((r) => {
-    if (branchId && r.locationId !== branchId) return false;
-    return r.dayISO >= fromISO && r.dayISO <= todayISO;
+    if (branchSet && (!r.locationId || !branchSet.has(r.locationId))) return false;
+    return r.dayISO >= start && r.dayISO <= end;
   });
 }
 
-/** Filters sale rows by tab (`all`, `products`, `services`) and search query (2+ characters). */
-export function filterSalesRows(rows: readonly SaleRow[], filter: SalesFilter, search: string): SaleRow[] {
-  const pool = rows.filter((r) => {
+export interface SalesRowFilterExtra {
+  selectedBranches?: readonly string[];
+  selectedClients?: readonly string[];
+  selectedServices?: readonly string[];
+  selectedProducts?: readonly string[];
+  selectedItems?: readonly string[];
+  clientQuery?: string;
+  serviceQuery?: string;
+  productQuery?: string;
+  itemQuery?: string;
+}
+
+/** Filters sale rows by tab (`all`, `products`, `services`), search query, and checkbox selections. */
+export function filterSalesRows(
+  rows: readonly SaleRow[],
+  filter: SalesFilter,
+  search: string,
+  extra?: SalesRowFilterExtra,
+): SaleRow[] {
+  let pool = rows.filter((r) => {
     if (filter === 'products') return r.products.length > 0;
-    if (filter === 'services') return r.products.length === 0 && r.serviceNames.length > 0;
+    if (filter === 'services') return r.serviceNames.length > 0;
     return true;
   });
 
-  const q = search.trim();
-  if (q.length < 2) return pool;
+  const selectedBranches = extra?.selectedBranches ?? [];
+  if (selectedBranches.length > 0) {
+    const branchSet = new Set(selectedBranches);
+    pool = pool.filter((r) => Boolean(r.locationId && branchSet.has(r.locationId)));
+  }
 
-  const digits = q.replace(/\D/g, '');
-  const searchable = pool.map((r) => ({
-    item: r,
-    text: [
-      r.clientName,
-      r.clientPhone ?? '',
-      ...r.serviceNames,
-      r.offerTitle ?? '',
-      ...r.products.map((p) => p.name),
-      ...r.staffNames,
-    ].filter(Boolean),
-  }));
+  const selectedClients = extra?.selectedClients ?? [];
+  if (selectedClients.length > 0) {
+    const clientSet = new Set(selectedClients);
+    pool = pool.filter((r) => clientSet.has(clientKeyOf(r)));
+  } else if (extra?.clientQuery?.trim()) {
+    const cq = extra.clientQuery.trim().toLowerCase();
+    const cTokens = cq.split(/\s+/).filter(Boolean);
+    const cDigits = cq.replace(/\D/g, '');
+    pool = pool.filter((r) => {
+      const nameLow = r.clientName.toLowerCase();
+      const phoneLow = (r.clientPhone ?? '').toLowerCase();
+      const phoneDigits = (r.clientPhone ?? '').replace(/\D/g, '');
+      if (cDigits.length >= 2 && cDigits === cq.replace(/[\s+-]/g, '') && phoneDigits.includes(cDigits)) return true;
+      return cTokens.every(
+        (tok) =>
+          nameLow.includes(tok) ||
+          phoneLow.includes(tok) ||
+          (tok.replace(/\D/g, '').length >= 2 && phoneDigits.includes(tok.replace(/\D/g, ''))),
+      );
+    });
+  }
 
-  const matched = new Set(matchItems(searchable, q).map((m) => m.key));
-  if (digits.length >= 2) {
-    for (const r of pool) {
-      if ((r.clientPhone ?? '').replace(/\D/g, '').includes(digits)) matched.add(r.key);
+  const selectedServices = extra?.selectedServices ?? [];
+  if (filter !== 'products') {
+    if (selectedServices.length > 0) {
+      const srvSet = new Set(selectedServices);
+      pool = pool.filter((r) => r.serviceNames.some((s) => srvSet.has(s)));
+    } else if (extra?.serviceQuery?.trim()) {
+      const sq = extra.serviceQuery.trim().toLowerCase();
+      const sTokens = sq.split(/\s+/).filter(Boolean);
+      pool = pool.filter((r) => {
+        const srvFields = [...r.serviceNames, r.offerTitle ?? ''].filter(Boolean).map((f) => f.toLowerCase());
+        return sTokens.every((tok) => srvFields.some((f) => f.includes(tok)));
+      });
     }
   }
-  return pool.filter((r) => matched.has(r.key));
+
+  const selectedProducts = extra?.selectedProducts ?? [];
+  if (filter !== 'services') {
+    if (selectedProducts.length > 0) {
+      const prdSet = new Set(selectedProducts);
+      pool = pool.filter((r) => r.products.some((p) => prdSet.has(p.name)));
+    } else if (extra?.productQuery?.trim()) {
+      const pq = extra.productQuery.trim().toLowerCase();
+      const pTokens = pq.split(/\s+/).filter(Boolean);
+      pool = pool.filter((r) => {
+        const prdFields = r.products.map((p) => p.name.toLowerCase());
+        return pTokens.every((tok) => prdFields.some((f) => f.includes(tok)));
+      });
+    }
+  }
+
+  const selectedItems = extra?.selectedItems ?? [];
+  if (selectedItems.length > 0) {
+    const itemSet = new Set(selectedItems);
+    pool = pool.filter((r) => {
+      const srvMatch = filter !== 'products' && r.serviceNames.some((s) => itemSet.has(`srv:${s}`));
+      const prdMatch = filter !== 'services' && r.products.some((p) => itemSet.has(`prd:${p.name}`));
+      return srvMatch || prdMatch;
+    });
+  } else if (extra?.itemQuery?.trim()) {
+    const iq = extra.itemQuery.trim().toLowerCase();
+    const iTokens = iq.split(/\s+/).filter(Boolean);
+    pool = pool.filter((r) => {
+      const itemFields = [
+        ...(filter !== 'products' ? [...r.serviceNames, r.offerTitle ?? ''] : []),
+        ...(filter !== 'services' ? r.products.map((p) => p.name) : []),
+      ]
+        .filter(Boolean)
+        .map((f) => f.toLowerCase());
+      return iTokens.every((tok) => itemFields.some((f) => f.includes(tok)));
+    });
+  }
+
+  const q = search.trim().toLowerCase();
+  if (!q) return pool;
+
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const digits = q.replace(/\D/g, '');
+
+  return pool.filter((r) => {
+    const fields = [
+      r.clientName,
+      r.clientPhone ?? '',
+      ...(filter !== 'products' ? [...r.serviceNames, r.offerTitle ?? ''] : []),
+      ...(filter !== 'services' ? r.products.map((p) => p.name) : []),
+      ...(filter === 'services' ? r.staffNames : []),
+    ]
+      .filter(Boolean)
+      .map((f) => f.toLowerCase());
+
+    const phoneDigits = (r.clientPhone ?? '').replace(/\D/g, '');
+    if (digits.length >= 2 && digits === q.replace(/[\s+-]/g, '') && phoneDigits.includes(digits)) {
+      return true;
+    }
+
+    return tokens.every(
+      (tok) =>
+        fields.some((f) => f.includes(tok)) ||
+        (tok.replace(/\D/g, '').length >= 2 && phoneDigits.includes(tok.replace(/\D/g, ''))),
+    );
+  });
 }
 
 export interface SalesKpis {
@@ -220,14 +440,18 @@ export function SalesClient({
   appointments,
   timezone,
   todayISO,
+  initialFrom,
+  initialTo,
   initialFilter,
-  initialRange,
+  initialRange: _initialRange,
   initialQuery,
   loadFailed,
 }: {
   appointments: Appointment[];
   timezone: string;
   todayISO: string;
+  initialFrom?: string;
+  initialTo?: string;
   initialFilter: SalesFilter;
   initialRange: SalesRange;
   initialQuery: string;
@@ -242,24 +466,136 @@ export function SalesClient({
   const mayRecordPayment = useMayUse('visit.recordPayment');
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff'), tn('staffTitle'));
 
-  const [range, setRange] = useState<SalesRange>(initialRange);
+  const initialBounds = useMemo(
+    () => clampSalesDateRange(initialFrom ?? todayISO, initialTo ?? todayISO, todayISO),
+    [initialFrom, initialTo, todayISO],
+  );
+  const minDateISO = initialBounds.minISO;
+
+  const [fromDate, setFromDate] = useState<string>(initialBounds.fromISO);
+  const [toDate, setToDate] = useState<string>(initialBounds.toISO);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
   const [search, setSearch] = useState(initialQuery);
+  const [selectedBranches, setSelectedBranches] = useState<string[]>(() =>
+    branch.choice ? [branch.choice] : [],
+  );
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [branchQuery, setBranchQuery] = useState('');
+  const [clientQuery, setClientQuery] = useState(initialQuery);
+  const [serviceQuery, setServiceQuery] = useState('');
+  const [productQuery, setProductQuery] = useState('');
+  const [openDropdown, setOpenDropdown] = useState<'branches' | 'clients' | 'services' | 'products' | null>(null);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
 
+  useEffect(() => {
+    setFromDate(initialBounds.fromISO);
+    setToDate(initialBounds.toISO);
+  }, [initialBounds.fromISO, initialBounds.toISO]);
+
+  useEffect(() => {
+    setSelectedBranches(branch.choice ? [branch.choice] : []);
+  }, [branch.choice]);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const onOutside = (e: MouseEvent | PointerEvent) => {
+      if (!(e.target instanceof Element && e.target.closest('.sls-dd'))) {
+        setOpenDropdown(null);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenDropdown(null);
+    };
+    document.addEventListener('pointerdown', onOutside, true);
+    document.addEventListener('mousedown', onOutside, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onOutside, true);
+      document.removeEventListener('mousedown', onOutside, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [openDropdown]);
+
+  const showServicesCol = filter !== 'products';
+  const showProductsCol = filter !== 'services';
+  const showStaffCol = filter === 'services';
+
+  const applyDates = (nextFrom: string, nextTo: string) => {
+    const { fromISO: safeFrom, toISO: safeTo } = clampSalesDateRange(nextFrom, nextTo, todayISO);
+    setFromDate(safeFrom);
+    setToDate(safeTo);
+    setPage(1);
+    const params = new URLSearchParams();
+    params.set('date', safeFrom);
+    params.set('to', safeTo);
+    if (filter !== 'all') params.set('filter', filter);
+    router.replace(`/sales?${params.toString()}`, { scroll: false });
+  };
+
   const allSaleRows = useMemo(() => buildSaleRows(appointments, timezone), [appointments, timezone]);
 
+  const effectiveBranches = branch.pinned ? branch.choice : selectedBranches;
+
   const windowRows = useMemo(
-    () => filterSalesByWindow(allSaleRows, range, todayISO, branch.choice),
-    [allSaleRows, range, todayISO, branch.choice],
+    () => filterSalesByDateRange(allSaleRows, fromDate, toDate, effectiveBranches),
+    [allSaleRows, fromDate, toDate, effectiveBranches],
   );
+
+  const branchOptions = useMemo(() => {
+    const list = [...branch.branches].sort((a, b) => a.name.localeCompare(b.name));
+    const bq = branchQuery.trim().toLowerCase();
+    if (!bq) return list;
+    return list.filter((b) => b.name.toLowerCase().includes(bq));
+  }, [branch.branches, branchQuery]);
+
+  const clientOptions = useMemo(() => {
+    const seen = new Map<string, { key: string; name: string; phone: string | null }>();
+    for (const r of windowRows) {
+      const k = clientKeyOf(r);
+      if (!seen.has(k)) seen.set(k, { key: k, name: r.clientName, phone: r.clientPhone });
+    }
+    const list = [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+    const cq = clientQuery.trim().toLowerCase();
+    if (!cq) return list;
+    const cDigits = cq.replace(/\D/g, '');
+    return list.filter(
+      (c) =>
+        c.name.toLowerCase().includes(cq) ||
+        (c.phone ?? '').toLowerCase().includes(cq) ||
+        (cDigits.length >= 2 && (c.phone ?? '').replace(/\D/g, '').includes(cDigits)),
+    );
+  }, [windowRows, clientQuery]);
+
+  const serviceOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const r of windowRows) {
+      for (const s of r.serviceNames) seen.add(s);
+    }
+    const list = [...seen].sort((a, b) => a.localeCompare(b));
+    const sq = serviceQuery.trim().toLowerCase();
+    if (!sq) return list;
+    return list.filter((s) => s.toLowerCase().includes(sq));
+  }, [windowRows, serviceQuery]);
+
+  const productOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const r of windowRows) {
+      for (const p of r.products) seen.add(p.name);
+    }
+    const list = [...seen].sort((a, b) => a.localeCompare(b));
+    const pq = productQuery.trim().toLowerCase();
+    if (!pq) return list;
+    return list.filter((p) => p.toLowerCase().includes(pq));
+  }, [windowRows, productQuery]);
 
   const counts = useMemo(
     () => ({
       all: windowRows.length,
-      products: windowRows.filter((r) => r.products.length > 0).length,
-      services: windowRows.filter((r) => r.products.length === 0 && r.serviceNames.length > 0).length,
+      products: windowRows.reduce((sum, r) => sum + r.productUnits, 0),
+      services: windowRows.reduce((sum, r) => sum + r.serviceNames.length, 0),
     }),
     [windowRows],
   );
@@ -267,8 +603,16 @@ export function SalesClient({
   const kpis = useMemo(() => computeSalesKpis(windowRows), [windowRows]);
 
   const filteredRows = useMemo(
-    () => filterSalesRows(windowRows, filter, search),
-    [windowRows, filter, search],
+    () =>
+      filterSalesRows(windowRows, filter, search, {
+        selectedClients,
+        selectedServices,
+        selectedProducts,
+        clientQuery,
+        serviceQuery,
+        productQuery,
+      }),
+    [windowRows, filter, search, selectedClients, selectedServices, selectedProducts, clientQuery, serviceQuery, productQuery],
   );
 
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
@@ -288,8 +632,69 @@ export function SalesClient({
 
   const formatWhen = (row: SaleRow) => {
     const time = formatTime(row.startAt, timezone);
-    if (row.dayISO === todayISO) return time;
     return `${formatDateShort(new Date(`${row.dayISO}T12:00:00`), undefined, locale)} · ${time}`;
+  };
+
+  const rowAmountMinor = (row: SaleRow) =>
+    filter === 'products' ? row.productsMinor : filter === 'services' ? row.servicesMinor : row.totalMinor;
+
+  const toggleBranch = (id: string) => {
+    setSelectedBranches((prev) => (prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]));
+    setPage(1);
+  };
+
+  const toggleClient = (key: string) => {
+    setSelectedClients((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setPage(1);
+  };
+
+  const toggleService = (name: string) => {
+    setSelectedServices((prev) => (prev.includes(name) ? prev.filter((k) => k !== name) : [...prev, name]));
+    setPage(1);
+  };
+
+  const toggleProduct = (name: string) => {
+    setSelectedProducts((prev) => (prev.includes(name) ? prev.filter((k) => k !== name) : [...prev, name]));
+    setPage(1);
+  };
+
+  const branchMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const b of branch.branches) map.set(b.id, b.name);
+    return map;
+  }, [branch.branches]);
+
+  const exportCsv = () => {
+    if (filteredRows.length === 0) return;
+    const { csv } = buildSalesCsv(
+      filteredRows,
+      timezone,
+      {
+        when: t('cols.when'),
+        client: t('cols.client'),
+        phone: t('cols.phone'),
+        branch: branch.branches.length > 1 ? t('branchFilter') : undefined,
+        services: t('cols.services'),
+        products: t('cols.products'),
+        staff: providerWord,
+        payment: t('cols.payment'),
+        total: t('cols.total'),
+      },
+      formatPaymentMode,
+      branchMap,
+      MAX_SALES_EXPORT_ROWS,
+      filter,
+    );
+    const filename = `sales-${fromDate}-to-${toDate}.csv`;
+    const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -300,7 +705,15 @@ export function SalesClient({
         menu
         actions={
           mayRecordPayment ? (
-            <a className="btn" href="/appointments/new?purpose=payment">
+            <a
+              className="btn"
+              href="/appointments/new?purpose=payment"
+              onClick={() => {
+                if (!branch.pinned && selectedBranches.length === 1) {
+                  branch.setBranch(selectedBranches[0]!);
+                }
+              }}
+            >
               <IconReceipt /> {t('recordPayment')}
             </a>
           ) : null
@@ -317,38 +730,314 @@ export function SalesClient({
           </div>
         ) : null}
 
-        {/* Period & Filter Toolbar */}
+        {/* Date Filter & Checkbox Filter Toolbar */}
         <div className="sls-toolbar">
-          <div className="sls-ranges" role="group" aria-label={t('title')}>
-            {SALES_RANGES.map((r) => (
-              <button
-                key={r}
-                type="button"
-                className={`sls-range-btn ${range === r ? 'is-active' : ''}`}
-                aria-pressed={range === r}
-                onClick={() => {
-                  setRange(r);
-                  setPage(1);
-                }}
-              >
-                {t(`ranges.${r}`)}
-              </button>
-            ))}
+          <div className="sls-dates" role="group" aria-label={t('title')}>
+            <label className="sls-date-field">
+              <span className="sls-date-label">{t('from')}</span>
+              <input
+                type="date"
+                className="sls-date-input"
+                aria-label={t('from')}
+                value={fromDate}
+                min={minDateISO}
+                max={todayISO}
+                onChange={(e) => applyDates(e.target.value, toDate)}
+              />
+            </label>
+            <label className="sls-date-field">
+              <span className="sls-date-label">{t('to')}</span>
+              <input
+                type="date"
+                className="sls-date-input"
+                aria-label={t('to')}
+                value={toDate}
+                min={fromDate >= minDateISO ? fromDate : minDateISO}
+                max={todayISO}
+                onChange={(e) => applyDates(fromDate, e.target.value)}
+              />
+            </label>
           </div>
 
-          <label className="search-wrap sls-search">
-            <IconSearch />
-            <input
-              type="text"
-              className="search-input search-input-bare"
-              placeholder={t('searchPlaceholder')}
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </label>
+          <div className="sls-filter-bar">
+            {/* 0. Branch multi-select checkbox + search filter */}
+            {!branch.pinned ? (
+              <div className="sls-dd">
+                <button
+                  type="button"
+                  className={`sls-dd-btn ${selectedBranches.length > 0 ? 'is-active' : ''}`}
+                  aria-expanded={openDropdown === 'branches'}
+                  onClick={() => setOpenDropdown((v) => (v === 'branches' ? null : 'branches'))}
+                >
+                  <span>
+                    {t('branchFilter')}
+                    {selectedBranches.length > 0 ? ` (${selectedBranches.length})` : ''}
+                  </span>
+                  <IconChevronDown />
+                </button>
+
+                {openDropdown === 'branches' ? (
+                  <div className="sls-dd-menu" role="group" aria-label={t('branchFilter')}>
+                    <div className="sls-dd-head">
+                      <label className="search-wrap sls-dd-search">
+                        <IconSearch />
+                        <input
+                          type="text"
+                          className="search-input search-input-bare"
+                          placeholder={t('branchSearchPlaceholder')}
+                          value={branchQuery}
+                          onChange={(e) => setBranchQuery(e.target.value)}
+                        />
+                      </label>
+                      {selectedBranches.length > 0 || branchQuery.trim() ? (
+                        <button
+                          type="button"
+                          className="sls-dd-clear"
+                          onClick={() => {
+                            setSelectedBranches([]);
+                            setBranchQuery('');
+                            setPage(1);
+                          }}
+                        >
+                          {t('clearFilter')}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="sls-dd-list">
+                      {branchOptions.length === 0 ? (
+                        <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                      ) : (
+                        branchOptions.map((b) => {
+                          const checked = selectedBranches.includes(b.id);
+                          return (
+                            <label key={b.id} className="sls-check-row">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleBranch(b.id)}
+                              />
+                              <span className="sls-check-main">{b.name}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* 1. Client / Phone checkbox + search filter */}
+            <div className="sls-dd">
+              <button
+                type="button"
+                className={`sls-dd-btn ${selectedClients.length > 0 || clientQuery.trim() ? 'is-active' : ''}`}
+                aria-expanded={openDropdown === 'clients'}
+                onClick={() => setOpenDropdown((v) => (v === 'clients' ? null : 'clients'))}
+              >
+                <span>
+                  {t('clientFilter')}
+                  {selectedClients.length > 0 ? ` (${selectedClients.length})` : ''}
+                </span>
+                <IconChevronDown />
+              </button>
+
+              {openDropdown === 'clients' ? (
+                <div className="sls-dd-menu" role="group" aria-label={t('clientFilter')}>
+                  <div className="sls-dd-head">
+                    <label className="search-wrap sls-dd-search">
+                      <IconSearch />
+                      <input
+                        type="text"
+                        className="search-input search-input-bare"
+                        placeholder={t('clientSearchPlaceholder')}
+                        value={clientQuery}
+                        onChange={(e) => {
+                          setClientQuery(e.target.value);
+                          setSearch('');
+                          setPage(1);
+                        }}
+                      />
+                    </label>
+                    {selectedClients.length > 0 || clientQuery.trim() ? (
+                      <button
+                        type="button"
+                        className="sls-dd-clear"
+                        onClick={() => {
+                          setSelectedClients([]);
+                          setClientQuery('');
+                          setSearch('');
+                          setPage(1);
+                        }}
+                      >
+                        {t('clearFilter')}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="sls-dd-list">
+                    {clientOptions.length === 0 ? (
+                      <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                    ) : (
+                      clientOptions.map((c) => {
+                        const checked = selectedClients.includes(c.key);
+                        return (
+                          <label key={c.key} className="sls-check-row">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleClient(c.key)}
+                            />
+                            <span className="sls-check-main">{c.name}</span>
+                            {c.phone ? <span className="sls-check-sub">{c.phone}</span> : null}
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* 2. Services checkbox + search filter */}
+            {showServicesCol ? (
+              <div className="sls-dd">
+                <button
+                  type="button"
+                  className={`sls-dd-btn ${selectedServices.length > 0 || serviceQuery.trim() ? 'is-active' : ''}`}
+                  aria-expanded={openDropdown === 'services'}
+                  onClick={() => setOpenDropdown((v) => (v === 'services' ? null : 'services'))}
+                >
+                  <span>
+                    {t('itemFilterServices')}
+                    {selectedServices.length > 0 ? ` (${selectedServices.length})` : ''}
+                  </span>
+                  <IconChevronDown />
+                </button>
+
+                {openDropdown === 'services' ? (
+                  <div className="sls-dd-menu" role="group" aria-label={t('itemFilterServices')}>
+                    <div className="sls-dd-head">
+                      <label className="search-wrap sls-dd-search">
+                        <IconSearch />
+                        <input
+                          type="text"
+                          className="search-input search-input-bare"
+                          placeholder={t('serviceSearchPlaceholder')}
+                          value={serviceQuery}
+                          onChange={(e) => {
+                            setServiceQuery(e.target.value);
+                            setPage(1);
+                          }}
+                        />
+                      </label>
+                      {selectedServices.length > 0 || serviceQuery.trim() ? (
+                        <button
+                          type="button"
+                          className="sls-dd-clear"
+                          onClick={() => {
+                            setSelectedServices([]);
+                            setServiceQuery('');
+                            setPage(1);
+                          }}
+                        >
+                          {t('clearFilter')}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="sls-dd-list">
+                      {serviceOptions.length === 0 ? (
+                        <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                      ) : (
+                        serviceOptions.map((srv) => {
+                          const checked = selectedServices.includes(srv);
+                          return (
+                            <label key={srv} className="sls-check-row">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleService(srv)}
+                              />
+                              <span className="sls-check-main">{srv}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* 3. Products checkbox + search filter */}
+            {showProductsCol ? (
+              <div className="sls-dd">
+                <button
+                  type="button"
+                  className={`sls-dd-btn ${selectedProducts.length > 0 || productQuery.trim() ? 'is-active' : ''}`}
+                  aria-expanded={openDropdown === 'products'}
+                  onClick={() => setOpenDropdown((v) => (v === 'products' ? null : 'products'))}
+                >
+                  <span>
+                    {t('itemFilterProducts')}
+                    {selectedProducts.length > 0 ? ` (${selectedProducts.length})` : ''}
+                  </span>
+                  <IconChevronDown />
+                </button>
+
+                {openDropdown === 'products' ? (
+                  <div className="sls-dd-menu" role="group" aria-label={t('itemFilterProducts')}>
+                    <div className="sls-dd-head">
+                      <label className="search-wrap sls-dd-search">
+                        <IconSearch />
+                        <input
+                          type="text"
+                          className="search-input search-input-bare"
+                          placeholder={t('productSearchPlaceholder')}
+                          value={productQuery}
+                          onChange={(e) => {
+                            setProductQuery(e.target.value);
+                            setPage(1);
+                          }}
+                        />
+                      </label>
+                      {selectedProducts.length > 0 || productQuery.trim() ? (
+                        <button
+                          type="button"
+                          className="sls-dd-clear"
+                          onClick={() => {
+                            setSelectedProducts([]);
+                            setProductQuery('');
+                            setPage(1);
+                          }}
+                        >
+                          {t('clearFilter')}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="sls-dd-list">
+                      {productOptions.length === 0 ? (
+                        <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                      ) : (
+                        productOptions.map((prd) => {
+                          const checked = selectedProducts.includes(prd);
+                          return (
+                            <label key={prd} className="sls-check-row">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleProduct(prd)}
+                              />
+                              <span className="sls-check-main">{prd}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {/* 4 Summary KPI Cards */}
@@ -356,6 +1045,7 @@ export function SalesClient({
           <button
             type="button"
             className={`sls-kpi sls-kpi-tap ${filter === 'all' ? 'is-selected' : ''}`}
+            aria-pressed={filter === 'all'}
             onClick={() => {
               setFilter('all');
               setPage(1);
@@ -367,13 +1057,16 @@ export function SalesClient({
               </span>
               <span className="sls-kpi-label">{t('kpi.totalSales')}</span>
             </div>
-            <strong className="sls-kpi-value">{formatMoney(String(kpis.totalSalesMinor))}</strong>
-            <span className="sls-kpi-sub">{t('kpi.billsCount', { n: kpis.billsCount })}</span>
+            <div className="sls-kpi-main">
+              <strong className="sls-kpi-value">{formatMoney(String(kpis.totalSalesMinor))}</strong>
+              <span className="sls-kpi-sub">{t('kpi.billsCount', { n: kpis.billsCount })}</span>
+            </div>
           </button>
 
           <button
             type="button"
             className={`sls-kpi sls-kpi-tap ${filter === 'services' ? 'is-selected' : ''}`}
+            aria-pressed={filter === 'services'}
             onClick={() => {
               setFilter(filter === 'services' ? 'all' : 'services');
               setPage(1);
@@ -385,13 +1078,16 @@ export function SalesClient({
               </span>
               <span className="sls-kpi-label">{t('kpi.servicesSold')}</span>
             </div>
-            <strong className="sls-kpi-value">{formatMoney(String(kpis.servicesRevenueMinor))}</strong>
-            <span className="sls-kpi-sub">{t('kpi.servicesCount', { n: kpis.servicesCount })}</span>
+            <div className="sls-kpi-main">
+              <strong className="sls-kpi-value">{formatMoney(String(kpis.servicesRevenueMinor))}</strong>
+              <span className="sls-kpi-sub">{t('kpi.servicesCount', { n: kpis.servicesCount })}</span>
+            </div>
           </button>
 
           <button
             type="button"
             className={`sls-kpi sls-kpi-tap ${filter === 'products' ? 'is-selected' : ''}`}
+            aria-pressed={filter === 'products'}
             onClick={() => {
               setFilter(filter === 'products' ? 'all' : 'products');
               setPage(1);
@@ -403,8 +1099,10 @@ export function SalesClient({
               </span>
               <span className="sls-kpi-label">{t('kpi.productsSold')}</span>
             </div>
-            <strong className="sls-kpi-value">{formatMoney(String(kpis.productsRevenueMinor))}</strong>
-            <span className="sls-kpi-sub">{t('kpi.unitsCount', { n: kpis.productUnitsCount })}</span>
+            <div className="sls-kpi-main">
+              <strong className="sls-kpi-value">{formatMoney(String(kpis.productsRevenueMinor))}</strong>
+              <span className="sls-kpi-sub">{t('kpi.unitsCount', { n: kpis.productUnitsCount })}</span>
+            </div>
           </button>
 
           <div className="sls-kpi">
@@ -437,22 +1135,39 @@ export function SalesClient({
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="sls-chips" role="group" aria-label={t('title')}>
-          {SALES_FILTERS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className={`sls-chip ${filter === f ? 'is-on' : ''}`}
-              aria-pressed={filter === f}
-              onClick={() => {
-                setFilter(f);
-                setPage(1);
-              }}
-            >
-              {t(`filters.${f}`, { n: counts[f] })}
-            </button>
-          ))}
+        {/* Filter Tabs + Top-Right Export CSV */}
+        <div className="sls-table-head-bar">
+          <div className="sls-chips" role="group" aria-label={t('title')}>
+            {SALES_FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                className={`sls-chip ${filter === f ? 'is-on' : ''}`}
+                aria-pressed={filter === f}
+                onClick={() => {
+                  setFilter(f);
+                  setPage(1);
+                }}
+              >
+                {t(`filters.${f}`, { n: counts[f] })}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm sls-export-btn"
+            disabled={filteredRows.length === 0}
+            title={
+              filteredRows.length > MAX_SALES_EXPORT_ROWS
+                ? t('exportCsvLimit', { max: MAX_SALES_EXPORT_ROWS })
+                : t('exportCsv')
+            }
+            onClick={exportCsv}
+          >
+            <IconDownload />
+            <span>{t('exportCsv')}</span>
+          </button>
         </div>
 
         {/* Empty State or Sales Table / Cards */}
@@ -472,123 +1187,153 @@ export function SalesClient({
                   <tr>
                     <th>{t('cols.when')}</th>
                     <th>{t('cols.client')}</th>
-                    <th>{t('cols.services')}</th>
-                    <th>{t('cols.products')}</th>
-                    <th>{providerWord}</th>
+                    {showServicesCol ? <th>{t('cols.services')}</th> : null}
+                    {showProductsCol ? <th>{t('cols.products')}</th> : null}
+                    {showStaffCol ? <th>{providerWord}</th> : null}
                     <th>{t('cols.payment')}</th>
                     <th className="is-num">{t('cols.total')}</th>
                     <th className="is-action">{t('cols.action')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pageRows.map((row) => (
-                    <tr key={row.key}>
-                      <td className="sls-col-when">{formatWhen(row)}</td>
-                      <td>
-                        <div className="sls-client">
-                          <span className="sls-avatar">{initials(row.clientName)}</span>
-                          <div className="sls-client-meta">
-                            <strong className="sls-client-name">{row.clientName}</strong>
-                            {row.clientPhone ? <span className="sls-client-phone">{row.clientPhone}</span> : null}
+                  {pageRows.map((row) => {
+                    const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
+                    const hiddenProducts = row.products.length - shownProducts.length;
+                    return (
+                      <tr key={row.key}>
+                        <td className="sls-col-when">{formatWhen(row)}</td>
+                        <td>
+                          <div className="sls-client">
+                            <span className="sls-avatar">{initials(row.clientName)}</span>
+                            <div className="sls-client-meta">
+                              <strong className="sls-client-name">{row.clientName}</strong>
+                              {row.clientPhone ? <span className="sls-client-phone">{row.clientPhone}</span> : null}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="sls-items">
-                          {row.offerTitle ? (
-                            <span className="sls-badge sls-badge-pkg">
-                              <IconPackages /> {row.offerTitle}
-                            </span>
-                          ) : null}
-                          <span className="sls-service-list">{row.serviceNames.join(' + ') || '—'}</span>
-                        </div>
-                      </td>
-                      <td>
-                        {row.products.length > 0 ? (
-                          <div className="sls-product-chips">
-                            {row.products.map((p, i) => (
-                              <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
-                                <IconProducts />
-                                {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}
-                                <b className="sls-prd-price">{formatMoney(p.paidMinor)}</b>
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="sls-muted">{t('noProducts')}</span>
-                        )}
-                      </td>
-                      <td className="sls-col-staff">
-                        {row.staffNames.length > 0 ? row.staffNames.join(', ') : <span className="sls-muted">{t('noStaff')}</span>}
-                      </td>
-                      <td>
-                        <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
-                      </td>
-                      <td className="is-num sls-col-total">{formatMoney(String(row.totalMinor))}</td>
-                      <td className="is-action">
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm sls-view-btn"
-                          onClick={() => setOpenBooking(row.group)}
-                        >
-                          {t('view')}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        {showServicesCol ? (
+                          <td>
+                            <div className="sls-items">
+                              {row.offerTitle ? (
+                                <span className="sls-badge sls-badge-pkg">
+                                  <IconPackages /> {row.offerTitle}
+                                </span>
+                              ) : null}
+                              <span className="sls-service-list">{summarizeServices(row.serviceNames, locale) || '—'}</span>
+                            </div>
+                          </td>
+                        ) : null}
+                        {showProductsCol ? (
+                          <td>
+                            {row.products.length > 0 ? (
+                              <div className="sls-product-chips">
+                                {shownProducts.map((p, i) => (
+                                  <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
+                                    <IconProducts />
+                                    {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}
+                                    <b className="sls-prd-price">{formatMoney(p.paidMinor)}</b>
+                                  </span>
+                                ))}
+                                {hiddenProducts > 0 ? (
+                                  <button
+                                    type="button"
+                                    className="sls-badge sls-badge-more"
+                                    onClick={() => setOpenBooking(row.group)}
+                                  >
+                                    {t('moreProducts', { n: hiddenProducts })}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="sls-muted">{t('noProducts')}</span>
+                            )}
+                          </td>
+                        ) : null}
+                        {showStaffCol ? (
+                          <td className="sls-col-staff">
+                            {row.staffNames.length > 0 ? row.staffNames.join(', ') : <span className="sls-muted">{t('noStaff')}</span>}
+                          </td>
+                        ) : null}
+                        <td>
+                          <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
+                        </td>
+                        <td className="is-num sls-col-total">{formatMoney(String(rowAmountMinor(row)))}</td>
+                        <td className="is-action">
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm sls-view-btn"
+                            onClick={() => setOpenBooking(row.group)}
+                          >
+                            {t('view')}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Cards (≤ 860px, including 344px phone) */}
             <div className="sls-cards">
-              {pageRows.map((row) => (
-                <button
-                  key={row.key}
-                  type="button"
-                  className="sls-card"
-                  onClick={() => setOpenBooking(row.group)}
-                >
-                  <div className="sls-card-top">
-                    <div className="sls-client">
-                      <span className="sls-avatar">{initials(row.clientName)}</span>
-                      <div className="sls-client-meta">
-                        <strong className="sls-client-name">{row.clientName}</strong>
-                        <span className="sls-client-phone">
-                          {formatWhen(row)}
-                          {` · ${row.staffNames.length > 0 ? row.staffNames.join(', ') : t('noStaff')}`}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="sls-card-right">
-                      <strong className="sls-card-total">{formatMoney(String(row.totalMinor))}</strong>
-                      <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
-                    </div>
-                  </div>
-                  <div className="sls-card-items">
-                    {row.offerTitle ? (
-                      <span className="sls-badge sls-badge-pkg">
-                        <IconPackages /> {row.offerTitle}
-                      </span>
-                    ) : null}
-                    {row.serviceNames.length > 0 ? (
-                      <div className="sls-card-line">
-                        <span className="sls-service-list">{row.serviceNames.join(' + ')}</span>
-                      </div>
-                    ) : null}
-                    {row.products.length > 0 ? (
-                      <div className="sls-product-chips">
-                        {row.products.map((p, i) => (
-                          <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
-                            <IconProducts />
-                            {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name} ({formatMoney(p.paidMinor)})
+              {pageRows.map((row) => {
+                const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
+                const hiddenProducts = row.products.length - shownProducts.length;
+                return (
+                  <button
+                    key={row.key}
+                    type="button"
+                    className="sls-card"
+                    onClick={() => setOpenBooking(row.group)}
+                  >
+                    <div className="sls-card-top">
+                      <div className="sls-client">
+                        <span className="sls-avatar">{initials(row.clientName)}</span>
+                        <div className="sls-client-meta">
+                          <strong className="sls-client-name">{row.clientName}</strong>
+                          <span className="sls-client-phone">
+                            {formatWhen(row)}
+                            {showStaffCol
+                              ? ` · ${row.staffNames.length > 0 ? row.staffNames.join(', ') : t('noStaff')}`
+                              : ''}
                           </span>
-                        ))}
+                        </div>
                       </div>
-                    ) : null}
-                  </div>
-                </button>
-              ))}
+                      <div className="sls-card-right">
+                        <strong className="sls-card-total">{formatMoney(String(rowAmountMinor(row)))}</strong>
+                        <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
+                      </div>
+                    </div>
+                    <div className="sls-card-items">
+                      {showServicesCol && row.offerTitle ? (
+                        <span className="sls-badge sls-badge-pkg">
+                          <IconPackages /> {row.offerTitle}
+                        </span>
+                      ) : null}
+                      {showServicesCol && row.serviceNames.length > 0 ? (
+                        <div className="sls-card-line">
+                          <span className="sls-service-list">{summarizeServices(row.serviceNames, locale)}</span>
+                        </div>
+                      ) : null}
+                      {showProductsCol && row.products.length > 0 ? (
+                        <div className="sls-product-chips">
+                          {shownProducts.map((p, i) => (
+                            <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
+                              <IconProducts />
+                              {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name} ({formatMoney(p.paidMinor)})
+                            </span>
+                          ))}
+                          {hiddenProducts > 0 ? (
+                            <span className="sls-badge sls-badge-more">
+                              {t('moreProducts', { n: hiddenProducts })}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             <Pagination

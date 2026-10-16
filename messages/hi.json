@@ -3133,6 +3133,8 @@
   "sales": {
     "title": "बिक्री",
     "subtitle": "हर पूरा हुआ बिल — कौन सी सेवाएँ हुईं, कौन सा सामान बिका, किसने और कैसे पैसे दिए।",
+    "from": "से",
+    "to": "तक",
     "ranges": {
       "today": "आज",
       "last_7_days": "पिछले 7 दिन",
@@ -3141,8 +3143,20 @@
     "filters": {
       "all": "सभी बिल ({n})",
       "products": "सामान बिका ({n})",
-      "services": "सिर्फ़ सेवाएँ ({n})"
+      "services": "सेवाएँ बिकीं ({n})"
     },
+    "branchFilter": "ब्रांच",
+    "branchSearchPlaceholder": "ब्रांच खोजें…",
+    "clientFilter": "ग्राहक",
+    "clientSearchPlaceholder": "ग्राहक या फ़ोन खोजें…",
+    "itemFilterAll": "सेवाएँ और सामान",
+    "itemFilterServices": "सेवाएँ",
+    "itemFilterProducts": "सामान",
+    "itemSearchPlaceholder": "सेवा या सामान खोजें…",
+    "serviceSearchPlaceholder": "सेवा खोजें…",
+    "productSearchPlaceholder": "सामान खोजें…",
+    "clearFilter": "हटाएँ",
+    "noFilterMatches": "कुछ नहीं मिला",
     "searchPlaceholder": "ग्राहक, फ़ोन, सेवा या सामान खोजें…",
     "kpi": {
       "totalSales": "कुल बिक्री",
@@ -3157,25 +3171,29 @@
     "cols": {
       "when": "कब",
       "client": "ग्राहक",
+      "phone": "फ़ोन",
       "services": "सेवाएँ",
       "products": "सामान",
       "staff": "स्टाफ़",
       "payment": "भुगतान",
       "total": "कुल",
-      "action": ""
+      "action": "बिल"
     },
     "view": "बिल देखें",
+    "moreProducts": "+{n} और",
     "noProducts": "—",
     "noStaff": "तय नहीं",
     "notRecorded": "दर्ज नहीं",
     "empty": {
       "all": "इस समय में कोई बिक्री नहीं हुई।",
       "products": "इस समय में कोई सामान नहीं बिका।",
-      "services": "इस समय में सिर्फ़ सेवा वाला कोई बिल नहीं है।",
+      "services": "इस समय में कोई सेवा नहीं बिकी।",
       "search": "\"{q}\" से कुछ नहीं मिला।",
       "hint": "लंबी तारीख़ चुनें, या पेमेंट दर्ज करें से नया बिल बनाएँ।"
     },
     "recordPayment": "पेमेंट दर्ज करें",
+    "exportCsv": "CSV डाउनलोड करें",
+    "exportCsvLimit": "अधिकतम {max} पंक्तियाँ डाउनलोड होंगी",
     "paginationNoun": "बिल",
     "loadFailed": "इस समय की बिक्री लोड नहीं हो सकी। फिर कोशिश करें।",
     "retry": "फिर कोशिश करें"

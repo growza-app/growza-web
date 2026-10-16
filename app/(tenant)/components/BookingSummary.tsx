@@ -43,7 +43,8 @@ export function BookingSummary({
   const [correcting, setCorrecting] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [corrections, setCorrections] = useState<BookingCorrection[]>([]);
-  const firstId = booking.appointments[0]?.id;
+  const serviceLegs = booking.appointments.filter((a) => Boolean(a.serviceId || a.serviceName));
+  const firstId = serviceLegs[0]?.id;
   // The owner sees what was changed on a finished visit, so a figure that moved is never a mystery. A failed read
   // just shows nothing: the receipt above is still right.
   useEffect(() => {
@@ -128,7 +129,8 @@ export function BookingSummary({
               </a>
             </div>
             <div className="summary-sub">
-              {t('finished')} · {dateLine} · {formatTime(booking.startAt, timezone)} · {formatDuration(booking.totalMin, locale)}
+              {t('finished')} · {dateLine} · {formatTime(booking.startAt, timezone)}
+              {booking.totalMin > 0 ? ` · ${formatDuration(booking.totalMin, locale)}` : ''}
             </div>
             {booking.offerTitle && (
               <div className="summary-combo">
@@ -146,22 +148,26 @@ export function BookingSummary({
         */}
         <div className="summary-scroll">
         {/* Jira GRW-480 (Q-1) — the API sends no prices to a stylist the owner keeps off the money. */}
-        <div className="summary-section-label">{t('services')}</div>
-        {booking.appointments.map((a) => (
-          <div className="summary-row" key={a.id}>
-            <span className="summary-avatar">{a.serviceName.slice(0, 1).toUpperCase()}</span>
-            <div className="summary-info">
-              <div className="summary-service">{a.serviceName}</div>
-              <div className="summary-stylist">{a.providerName ?? t('noStaff', { label: providerWord.toLowerCase() })}</div>
-            </div>
-            {/* Jira GRW-314 — a service cancelled at the till is listed, but is not on the bill. */}
-            {a.status === 'cancelled' ? (
-              <span className="summary-price">{t('cancelled')}</span>
-            ) : pricesShown ? (
-              <span className="summary-price">{formatMoney(paidOf(a))}</span>
-            ) : null}
-          </div>
-        ))}
+        {serviceLegs.length > 0 && (
+          <>
+            <div className="summary-section-label">{t('services')}</div>
+            {serviceLegs.map((a) => (
+              <div className="summary-row" key={a.id}>
+                <span className="summary-avatar">{a.serviceName.slice(0, 1).toUpperCase()}</span>
+                <div className="summary-info">
+                  <div className="summary-service">{a.serviceName}</div>
+                  <div className="summary-stylist">{a.providerName ?? t('noStaff', { label: providerWord.toLowerCase() })}</div>
+                </div>
+                {/* Jira GRW-314 — a service cancelled at the till is listed, but is not on the bill. */}
+                {a.status === 'cancelled' ? (
+                  <span className="summary-price">{t('cancelled')}</span>
+                ) : pricesShown ? (
+                  <span className="summary-price">{formatMoney(paidOf(a))}</span>
+                ) : null}
+              </div>
+            ))}
+          </>
+        )}
 
         {products.length > 0 && (
           <>
@@ -253,7 +259,7 @@ export function BookingSummary({
         </div>
 
         <div className="modal-actions summary-actions">
-          {mayCorrect && booking.appointments.some((a) => a.status === 'completed') && (
+          {mayCorrect && booking.appointments.some((a) => a.status === 'completed') && serviceLegs.length > 0 && (
             <button type="button" className="btn btn-ghost" onClick={openCorrect}>
               <IconEdit />
               {tfix('item')}

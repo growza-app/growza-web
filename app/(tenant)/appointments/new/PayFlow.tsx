@@ -448,8 +448,8 @@ export function PayFlow({
   // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
   const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg && !l.product).length;
   const productCountOf = (productId: string) => lines.filter((l) => l.product?.id === productId).length;
-  /** Owner, 2026-10-14 — a bill is still a visit: it needs a service. A product alone cannot be rung up yet. */
-  const hasService = lines.some((l) => !l.product);
+  /** Jira GRW-576 — a walk-in can buy a product alone; settling a booking or token still needs a service. */
+  const hasService = (visit || token) ? lines.some((l) => !l.product) : lines.length > 0;
   const full = lines.length >= MAX_LINES;
 
   /*
@@ -668,7 +668,7 @@ export function PayFlow({
             };
             const r = await guard((confirmed) =>
               api.recordCounterSale(
-                stylistId
+                stylistId && legs.length > 0
                   ? { ...common, schedulableId: stylistId, ...(confirmed ? { confirmLargeAmount: true } : {}) }
                   : { ...common, noStylist: true, ...(confirmed ? { confirmLargeAmount: true } : {}) },
               ),

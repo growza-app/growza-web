@@ -27,16 +27,185 @@
 .sls-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--sp-3);
   flex-wrap: wrap;
+}
+
+.sls-dates {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.sls-date-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sls-date-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sls-date-input {
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sls-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.sls-dd {
+  position: relative;
+}
+
+.sls-dd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sls-dd-btn svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.sls-dd-btn.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.sls-dd-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: min(300px, calc(100vw - 32px));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sls-dd-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sls-dd-search {
+  flex: 1 1 auto;
+  min-height: 40px;
+}
+
+.sls-dd-search svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.sls-dd-clear {
+  min-height: 40px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sls-dd-list {
+  display: flex;
+  flex-direction: column;
+  max-height: min(50vh, 260px);
+  overflow-y: auto;
+}
+
+.sls-check-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 40px;
+  padding: 0 var(--sp-2);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.sls-check-row:hover {
+  background: var(--page-bg);
+}
+
+.sls-check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.sls-check-main {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sls-check-sub {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.sls-dd-empty {
+  padding: var(--sp-3);
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
 }
 
 .sls-ranges {
   display: inline-flex;
   align-items: center;
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 3px;
   gap: 2px;
@@ -56,7 +225,7 @@
 
 .sls-range-btn.is-active {
   background: var(--accent);
-  color: var(--card);
+  color: var(--surface);
 }
 
 .sls-search {
@@ -80,11 +249,12 @@
 .sls-kpi {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
-  padding: var(--sp-4);
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  justify-content: space-between;
+  gap: 4px;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   text-align: left;
 }
 
@@ -111,22 +281,22 @@
 .sls-kpi-head {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 6px;
 }
 
 .sls-kpi-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   flex-shrink: 0;
 }
 
 .sls-kpi-icon svg {
-  width: 1rem;
-  height: 1rem;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .sls-icon-green {
@@ -150,42 +320,58 @@
 }
 
 .sls-kpi-label {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
 }
 
+.sls-kpi-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
 .sls-kpi-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--text);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .sls-kpi-sub {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
 .sls-pay-modes {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 2px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--sp-3);
 }
 
 .sls-pay-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.8125rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
 .sls-pay-line strong {
-  color: var(--ink);
+  color: var(--text);
   font-weight: 700;
+}
+
+.sls-table-head-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
 }
 
 .sls-chips {
@@ -195,13 +381,45 @@
   flex-wrap: wrap;
 }
 
+.sls-export-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sls-export-btn svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.sls-export-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
+.sls-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .sls-chip {
-  min-height: 40px;
+  min-height: 38px;
   padding: 0 var(--sp-3);
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--ink);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -210,39 +428,71 @@
 .sls-chip.is-on {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--card);
+  color: var(--surface);
 }
 
 .sls-table-wrap {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   overflow-x: auto;
+  overflow-y: auto;
+  flex: 0 1 auto;
+}
+
+@media (min-width: 861px) {
+  .sls-page {
+    gap: var(--sp-2);
+  }
+
+  .sls-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .sls-table .sls-client-meta {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
 }
 
 .sls-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .sls-table th {
   text-align: left;
-  padding: var(--sp-2) var(--sp-3);
+  padding: 5px var(--sp-3);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--muted);
-  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  background: var(--slate-soft);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   white-space: nowrap;
 }
 
+.sls-table th:last-child {
+  border-right: 0;
+}
+
 .sls-table td {
-  padding: var(--sp-3) var(--sp-3);
-  border-bottom: 1px solid var(--line);
+  padding: 4px var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   vertical-align: middle;
-  color: var(--ink);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.sls-table td:last-child {
+  border-right: 0;
 }
 
 .sls-table tbody tr:last-child td {
@@ -250,7 +500,7 @@
 }
 
 .sls-table tbody tr:hover {
-  background: var(--bg);
+  background: var(--page-bg);
 }
 
 .sls-table th.is-num,
@@ -261,7 +511,7 @@
 
 .sls-table th.is-action,
 .sls-table td.is-action {
-  text-align: right;
+  text-align: center;
   width: 1%;
   white-space: nowrap;
 }
@@ -289,12 +539,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-deep);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -303,12 +553,13 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  line-height: 1.2;
 }
 
 .sls-client-name {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -322,26 +573,31 @@
 .sls-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .sls-service-list {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-product-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
+}
+
+.sls-table .sls-product-chips {
+  flex-wrap: nowrap;
 }
 
 .sls-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  gap: 4px;
+  padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -349,8 +605,8 @@
 }
 
 .sls-badge svg {
-  width: 0.875rem;
-  height: 0.875rem;
+  width: 0.8125rem;
+  height: 0.8125rem;
   flex-shrink: 0;
 }
 
@@ -370,23 +626,41 @@
   width: fit-content;
 }
 
+.sls-badge-more {
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.sls-badge-more:hover {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
 .sls-pay-pill {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: var(--bg);
-  border: 1px solid var(--line);
+  background: var(--page-bg);
+  border: 1px solid var(--border);
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--text);
   white-space: nowrap;
 }
 
 .sls-col-total {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--text);
+}
+
+.sls-view-btn {
+  min-height: 30px;
+  padding: 0 var(--sp-2);
+  font-size: 0.75rem;
 }
 
 .sls-muted {
@@ -395,9 +669,9 @@
 
 .sls-empty {
   padding: var(--sp-6) var(--sp-4);
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   text-align: center;
 }
 
@@ -405,7 +679,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-empty-hint {
@@ -425,8 +699,8 @@
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-3);
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
   text-align: left;
   cursor: pointer;
@@ -451,7 +725,7 @@
 .sls-card-total {
   font-size: 1rem;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-card-items {
@@ -491,7 +765,8 @@
     width: 100%;
   }
 
-  .sls-chip {
+  .sls-chip,
+  .sls-export-btn {
     min-height: 44px;
   }
 }
@@ -503,10 +778,10 @@
   }
 
   .sls-kpi {
-    padding: var(--sp-3);
+    padding: var(--sp-2);
   }
 
   .sls-kpi-value {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
   }
 }
