@@ -1178,7 +1178,7 @@ export function PayFlow({
                 ))}
               </div>
             </section>
-          ) : services.length === 0 ? (
+          ) : services.length === 0 && initialTab !== 'products' ? (
             <section className="pf-wide-mid">
               <div className="empty">{nv.noServicesYet}</div>
             </section>
