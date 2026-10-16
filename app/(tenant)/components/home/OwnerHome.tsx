@@ -49,8 +49,9 @@ import {
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
 import { BookingSheet } from '../BookingSheet';
 import { BookingSummary } from '../BookingSummary';
-import { payVisitHref } from '../../lib/pay-token';
+import { payTokenHref, payVisitHref } from '../../lib/pay-token';
 import { DaySummarySheet } from './DaySummarySheet';
+import { GiveToStaffSheet } from './GiveToStaffSheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
 import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards, StatusPill } from './parts';
@@ -396,6 +397,7 @@ export function OwnerHome(p: OwnerHomeProps) {
   const showBoard = p.board !== null && hasLiveWork(boardTokens);
 
   const [actionBooking, setActionBooking] = useState<BookingGroup | null>(null);
+  const [givingEntry, setGivingEntry] = useState<QueueEntry | null>(null);
   const [startedKeys, setStartedKeys] = useState<string[]>([]);
   useEffect(() => {
     try {
@@ -541,23 +543,37 @@ export function OwnerHome(p: OwnerHomeProps) {
   }, [branchContext.ready, branch, serverSig, p.role, p.reportTabs]);
 
   const allListGroups = listGroups ?? [];
+  const waitingQueue = useMemo(
+    () =>
+      listIsTomorrow || !queue
+        ? []
+        : [...queue].sort((a, b) => (a.tokenNo ?? Number.MAX_SAFE_INTEGER) - (b.tokenNo ?? Number.MAX_SAFE_INTEGER)),
+    [queue, listIsTomorrow],
+  );
   const inServiceCount = allListGroups.filter((g) => {
     const s = rowState(g);
     return s === 'in_service' || s === 'needs_answer';
   }).length;
-  const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length;
+  const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length + waitingQueue.length;
   const doneTodayCount = allListGroups.filter((g) => rowState(g) === 'done').length;
   const noShowCount = allListGroups.filter((g) => rowState(g) === 'no_show').length;
+  const totalAppointmentsCount = allListGroups.length + waitingQueue.length;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
 
+  const filteredWaitingQueue = useMemo(
+    () => (apptFilter === 'all' || apptFilter === 'upcoming' ? waitingQueue : []),
+    [apptFilter, waitingQueue],
+  );
+
   const filteredTableGroups = useMemo(() => {
+    const maxApptRows = Math.max(1, 4 - filteredWaitingQueue.length);
     if (apptFilter === 'all') {
       const firstActive = allListGroups.findIndex((g) => {
         const s = liveState(g, now);
         return s === 'in_service' || s === 'needs_answer' || s === 'later';
       });
       const from = firstActive > 0 ? firstActive - 1 : 0;
-      return allListGroups.slice(from, from + 4);
+      return allListGroups.slice(from, from + maxApptRows);
     }
     return allListGroups
       .filter((g) => {
@@ -568,9 +584,9 @@ export function OwnerHome(p: OwnerHomeProps) {
         if (apptFilter === 'no_show') return st === 'no_show';
         return true;
       })
-      .slice(0, 4);
+      .slice(0, maxApptRows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allListGroups, apptFilter, now, startedSet]);
+  }, [allListGroups, apptFilter, now, startedSet, filteredWaitingQueue.length]);
 
   const totalProductsSold = useMemo(() => products.reduce((sum, pr) => sum + (pr.sold ?? 0), 0), [products]);
   const totalProductRevenueMinor = useMemo(
@@ -857,9 +873,9 @@ export function OwnerHome(p: OwnerHomeProps) {
               <div className="hm-v3-kpi-body">
                 <div className="hm-v3-kpi-main">
                   <div className="hm-v3-kpi-num-row">
-                    <strong className="hm-v3-kpi-value">{allListGroups.length}</strong>
+                    <strong className="hm-v3-kpi-value">{totalAppointmentsCount}</strong>
                     <span className="hm-v3-badge-green">
-                      ↑ {allListGroups.length > 0 ? Math.max(15, Math.round((doneTodayCount / allListGroups.length) * 100)) : 0}%
+                      ↑ {totalAppointmentsCount > 0 ? Math.max(15, Math.round((doneTodayCount / totalAppointmentsCount) * 100)) : 0}%
                     </span>
                   </div>
                   <span className="hm-v3-kpi-sub">
@@ -961,7 +977,7 @@ export function OwnerHome(p: OwnerHomeProps) {
             <section className="hm-v3-card hm-v3-appts-card">
               <div className="hm-v3-card-head">
                 <h2>
-                  {t.todaysAppointments} <span className="hm-v3-count">({allListGroups.length})</span>
+                  {t.todaysAppointments} <span className="hm-v3-count">({totalAppointmentsCount})</span>
                 </h2>
               </div>
 
@@ -969,7 +985,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <div className="hm-v3-tabs" role="tablist" aria-label={t.todaysAppointments}>
                   {(
                     [
-                      { key: 'all', label: t.allFilterLabel, count: allListGroups.length },
+                      { key: 'all', label: t.allFilterLabel, count: totalAppointmentsCount },
                       { key: 'upcoming', label: t.upcomingLabel, count: upcomingCount },
                       { key: 'in_progress', label: t.inProgressLabel, count: inServiceCount },
                       { key: 'completed', label: t.completedLabel, count: doneTodayCount },
@@ -998,7 +1014,7 @@ export function OwnerHome(p: OwnerHomeProps) {
               <div className="hm-v3-table-wrap">
                 {listGroups === null ? (
                   <CardError t={t} />
-                ) : filteredTableGroups.length === 0 ? (
+                ) : filteredTableGroups.length === 0 && filteredWaitingQueue.length === 0 ? (
                   <p className="hm-empty">{listIsTomorrow ? t.nothingTomorrow : t.nothingToday}</p>
                 ) : (
                   <table className="hm-v3-table">
@@ -1013,6 +1029,63 @@ export function OwnerHome(p: OwnerHomeProps) {
                       </tr>
                     </thead>
                     <tbody>
+                      {filteredWaitingQueue.map((q) => {
+                        const sName = q.serviceNames.length > 0 ? summarizeServices(q.serviceNames, p.lang) : t.whatHaving;
+                        return (
+                          <tr key={`q-${q.id}`}>
+                            <td className="hm-v3-td-time">
+                              <span className="hm-v3-tl-dot is-amber" />
+                              <strong>{formatTime(q.addedAt, p.timezone)}</strong>
+                            </td>
+                            <td className="hm-v3-td-client">
+                              <div className="hm-v3-person">
+                                <Avatar name={q.customerName} id={q.customerId ?? q.id} size={36} />
+                                <div className="hm-v3-person-meta">
+                                  <strong>
+                                    {q.customerName}
+                                    {q.tokenNo !== null ? ` · #${q.tokenNo}` : ''}
+                                  </strong>
+                                  <span>{q.customerPhone || '—'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="hm-v3-td-service">
+                              <strong>{sName}</strong>
+                              <span>{t.waitingLabel}</span>
+                            </td>
+                            <td className="hm-v3-td-staff">
+                              <div className="hm-v3-staff-cell">
+                                <span>—</span>
+                              </div>
+                            </td>
+                            <td className="hm-v3-td-status">
+                              <span className="hm-pill hm-pill-amber">
+                                <i />
+                                {t.waitingLabel}
+                              </span>
+                            </td>
+                            <td className="hm-v3-td-act">
+                              <div className="hm-v3-act-wrap">
+                                <button
+                                  type="button"
+                                  className="hm-v3-row-btn is-start"
+                                  onClick={() => setGivingEntry(q)}
+                                >
+                                  {t.startBtn}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="hm-v3-row-dots"
+                                  onClick={() => setGivingEntry(q)}
+                                  aria-label={t.viewBtn}
+                                >
+                                  ⋮
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                       {filteredTableGroups.map((g, rowIdx) => {
                         const st = rowState(g);
                         const dotTone =
@@ -1483,6 +1556,20 @@ export function OwnerHome(p: OwnerHomeProps) {
           comboServiceNames={actionBooking.isCombo ? actionBooking.serviceNames : undefined}
           comboTotalMin={actionBooking.totalMin}
           comboLegs={actionBooking.isCombo ? actionBooking.appointments : undefined}
+        />
+      ) : null}
+      {givingEntry ? (
+        <GiveToStaffSheet
+          t={t}
+          entry={givingEntry}
+          providers={p.providers}
+          busy={busy}
+          onClose={() => setGivingEntry(null)}
+          onRecordPayment={() => {
+            const entry = givingEntry;
+            setGivingEntry(null);
+            router.push(payTokenHref(entry));
+          }}
         />
       ) : null}
 

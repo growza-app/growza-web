@@ -125,6 +125,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     inProgressLabel: S('In progress', 'चल रहे'),
     completedLabel: S('Completed', 'पूरे हुए'),
     upcomingLabel: S('Upcoming', 'आने वाले'),
+    waitingLabel: S('Waiting', 'इंतज़ार में'),
     noShowLabel: S('No show', 'नहीं आए'),
     allFilterLabel: S('All', 'सभी'),
     todaysAppointments: S("Today's appointments", 'आज की बुकिंग'),
