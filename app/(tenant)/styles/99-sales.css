@@ -80,11 +80,12 @@
 .sls-kpi {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
-  padding: var(--sp-4);
+  justify-content: space-between;
+  gap: 4px;
+  padding: var(--sp-2) var(--sp-3);
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 12px;
   text-align: left;
 }
 
@@ -111,22 +112,22 @@
 .sls-kpi-head {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 6px;
 }
 
 .sls-kpi-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
   flex-shrink: 0;
 }
 
 .sls-kpi-icon svg {
-  width: 1rem;
-  height: 1rem;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .sls-icon-green {
@@ -150,13 +151,21 @@
 }
 
 .sls-kpi-label {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
 }
 
+.sls-kpi-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
 .sls-kpi-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--ink);
   letter-spacing: -0.02em;
@@ -164,22 +173,22 @@
 }
 
 .sls-kpi-sub {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
 .sls-pay-modes {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 2px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--sp-3);
 }
 
 .sls-pay-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.8125rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -334,7 +343,12 @@
 .sls-product-chips {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+}
+
+.sls-table .sls-product-chips {
+  flex-wrap: nowrap;
 }
 
 .sls-badge {
@@ -368,6 +382,18 @@
   background: var(--purple-soft);
   color: var(--purple-deep);
   width: fit-content;
+}
+
+.sls-badge-more {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.sls-badge-more:hover {
+  border-color: var(--accent);
+  color: var(--accent-deep);
 }
 
 .sls-pay-pill {
@@ -503,10 +529,10 @@
   }
 
   .sls-kpi {
-    padding: var(--sp-3);
+    padding: var(--sp-2);
   }
 
   .sls-kpi-value {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
   }
 }

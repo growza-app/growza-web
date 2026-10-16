@@ -7,6 +7,7 @@ import {
   computeSalesKpis,
   filterSalesByWindow,
   filterSalesRows,
+  MAX_ROW_PRODUCTS,
 } from './SalesClient';
 
 const here = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
@@ -241,5 +242,14 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     });
     expect(filterSalesRows(rows, 'products', '').map((r) => r.key)).toEqual(['single:sale-1']);
     expect(filterSalesRows(rows, 'services', '')).toEqual([]);
+  });
+
+  it('caps visible product chips per row at MAX_ROW_PRODUCTS (+N more) and counts total product units on the Products sold filter chip', () => {
+    const client = here('./SalesClient.tsx');
+    expect(MAX_ROW_PRODUCTS).toBe(2);
+    expect(client).toContain('products: windowRows.reduce((sum, r) => sum + r.productUnits, 0)');
+    expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
+    expect(client).toContain("t('moreProducts', { n: hiddenProducts })");
+    expect(client).toContain('summarizeServices(row.serviceNames, locale)');
   });
 });

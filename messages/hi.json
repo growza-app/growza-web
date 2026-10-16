@@ -3160,6 +3160,7 @@
       "action": ""
     },
     "view": "बिल देखें",
+    "moreProducts": "+{n} और",
     "noProducts": "—",
     "noStaff": "तय नहीं",
     "notRecorded": "दर्ज नहीं",

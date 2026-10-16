@@ -3160,6 +3160,7 @@
       "action": ""
     },
     "view": "View bill",
+    "moreProducts": "+{n} more",
     "noProducts": "—",
     "noStaff": "Unassigned",
     "notRecorded": "Not recorded",
