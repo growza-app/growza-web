@@ -771,7 +771,9 @@ export function PayFlow({
     setAttemptKey(newAttemptKey());
     clearSplit();
     tokenFilled.current = true; // a token has been paid: a second sale from this page is a plain one
-    if (token) router.replace('/appointments/new?purpose=payment');
+    // The address names the bill being left. After a payment the refresh has already dropped `token` / `visit`, so the
+    // "gone" flags are what say the address still carries one: without them the banner stays up over a fresh till.
+    if (token || tokenGone || visit || visitGone) router.replace('/appointments/new?purpose=payment');
     setStep('what');
   };
 

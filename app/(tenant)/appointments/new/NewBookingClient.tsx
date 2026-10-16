@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NewVisitSheet, type VisitMode, type VisitPurpose } from '../../components/NewVisitSheet';
 import type { QueueEntry } from '../../lib/home-types';
@@ -39,6 +39,7 @@ export function NewBookingClient({
   visitGone?: boolean;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   /*
    * Owner, 2026-10-09 — Record payment on a phone is `PayFlow`, three screens; at a desk it is the one-page form.
    * The server cannot know the width, and the form fetches the menu the moment it mounts, so neither is drawn
@@ -94,8 +95,14 @@ export function NewBookingClient({
    * or booking ONCE (a ref guards it), and the desk's "Still to pay" list moves between them with `router.push`, which
    * keeps this component mounted: paying booking B with booking A's lines on the bill cancelled B's own service.
    * Keyed on what the bill is for, the whole sale starts again when that changes.
+   *
+   * Keyed on the ADDRESS, not on the resolved `token` / `visit`. Paying calls `router.refresh()`, the server re-reads, and
+   * a token that was just paid is no longer waiting — it comes back undefined. A key built from it changed on that
+   * refresh, remounted `PayFlow`, and swapped the Paid screen for an empty till and "no longer waiting" (2026-10-16,
+   * found on the owner's first payment after the release). The address does not change on a refresh; Next customer
+   * drops it on purpose, and that is the fresh bill.
    */
-  const billKey = token?.id ?? visit?.appointment.id ?? 'walk-in';
+  const billKey = searchParams.get('token') ?? searchParams.get('visit') ?? 'walk-in';
   const another = () => {
     setRun((n) => n + 1);
     if (token) router.replace(`/appointments/new?purpose=payment${full ? '&full=1' : ''}`);
