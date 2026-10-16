@@ -38,6 +38,8 @@ export function DeskServiceGrid({
   onMoreProduct,
   onLessProduct,
   initialTab,
+  productsOnly = false,
+  productCategory = '',
 }: {
   /** In display order: most sold first. */
   services: Service[];
@@ -59,11 +61,14 @@ export function DeskServiceGrid({
   onMoreProduct?: (p: Product) => void;
   onLessProduct?: (productId: string) => void;
   initialTab?: 'services' | 'packages' | 'products';
+  /** Retail / Sell product screen: hides the Services/Packages/Products tabs and filters by the left panel's category. */
+  productsOnly?: boolean;
+  productCategory?: string;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
   const [term, setTerm] = useState('');
-  const [tab, setTab] = useState<'services' | 'packages' | 'products'>(initialTab ?? 'services');
+  const [tab, setTab] = useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'));
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
   /** Owner, 2026-10-15 — sort beside the search, and the shelf hides what is out of stock unless asked. */
@@ -116,7 +121,10 @@ export function DeskServiceGrid({
   }, [packages, term, byId, sort]);
 
   const shownProducts = useMemo(() => {
-    const pool = inStockOnly ? products.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : products;
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === '\u0000none' ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    const pool = inStockOnly ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
     const q = term.trim();
     if (!q)
       return sortMenu(
@@ -126,7 +134,7 @@ export function DeskServiceGrid({
         (p) => asMinor(p.priceMinor),
       );
     return matchItems(pool.map(productMatchable), q);
-  }, [products, term, sort, inStockOnly, productCountOf]);
+  }, [products, productCategory, term, sort, inStockOnly, productCountOf]);
 
   /**
    * Jira GRW-574 (AC-07) — a barcode scanned, or a code typed, then Enter on the Products tab: that product goes on
@@ -160,24 +168,26 @@ export function DeskServiceGrid({
   }, [services, term, kind, sort]);
 
   return (
-    <section className="pf-wide-mid" aria-label={t('services')}>
+    <section className="pf-wide-mid" aria-label={productsOnly ? t('desk.products') : t('services')}>
       {/*
         Owner, 2026-10-14 — three tabs, always: what a till sells. Products is the one that is not here yet; it is
         shown greyed so the shape the owner will learn is the shape that is there now, and so nobody looks for it
         in a menu. A bill holds services, a package and (later) products together: the tabs only change the grid.
       */}
-      <div className="pf-chips pf-wide-menu-tabs" role="tablist" aria-label={t('services')}>
-        <button type="button" role="tab" aria-selected={tab === 'services'} className={`pf-chip ${tab === 'services' ? 'pf-chip-on' : ''}`} onClick={() => setTab('services')}>
-          {t('services')}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
-          {t('desk.packages', { n: packages.length })}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'products'} className={`pf-chip ${tab === 'products' ? 'pf-chip-on' : ''}`} onClick={() => setTab('products')}>
-          {t('desk.products')}
-          <span className="pf-wide-kind-n">{products.length}</span>
-        </button>
-      </div>
+      {!productsOnly ? (
+        <div className="pf-chips pf-wide-menu-tabs" role="tablist" aria-label={t('services')}>
+          <button type="button" role="tab" aria-selected={tab === 'services'} className={`pf-chip ${tab === 'services' ? 'pf-chip-on' : ''}`} onClick={() => setTab('services')}>
+            {t('services')}
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
+            {t('desk.packages', { n: packages.length })}
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'products'} className={`pf-chip ${tab === 'products' ? 'pf-chip-on' : ''}`} onClick={() => setTab('products')}>
+            {t('desk.products')}
+            <span className="pf-wide-kind-n">{products.length}</span>
+          </button>
+        </div>
+      ) : null}
       <div className="pf-wide-tools">
         <label className="pf-wide-search">
           <IconSearch />
@@ -186,8 +196,8 @@ export function DeskServiceGrid({
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             onKeyDown={onSearchKey}
-            placeholder={t('desk.search', { count: services.length })}
-            aria-label={t('desk.search', { count: services.length })}
+            placeholder={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
+            aria-label={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
             autoComplete="off"
           />
         </label>

@@ -71,13 +71,18 @@ describe('Tenant Home v2 redesign', () => {
     expect(homeCss).toMatch(/\.hm-v3-bot\s*\{/);
   });
 
-  it('routes Sell product on Home directly to the till on the Products tab', () => {
-    const newBooking = code('../../appointments/new/NewBookingClient.tsx');
+  it('routes Sell product on Home and Products to the dedicated /products/sell POS screen with product categories', () => {
+    const sellPage = code('../../products/sell/page.tsx');
+    const sellClient = code('../../products/sell/SellProductClient.tsx');
+    const productsList = code('../../products/ProductsList.tsx');
     const payFlow = code('../../appointments/new/PayFlow.tsx');
     const deskGrid = code('../../appointments/new/DeskServiceGrid.tsx');
-    expect(owner).toContain('href="/appointments/new?purpose=payment&tab=products"');
-    expect(newBooking).toContain("const initialTab = searchParams.get('tab') === 'products' ? 'products' : undefined;");
-    expect(payFlow).toContain('initialTab={initialTab}');
-    expect(deskGrid).toContain("useState<'services' | 'packages' | 'products'>(initialTab ?? 'services')");
+    expect(owner).toContain('href="/products/sell"');
+    expect(productsList).toContain('href="/products/sell?from=products"');
+    expect(sellPage).toContain("await guardScreen('/products');");
+    expect(sellPage).toContain("await guardLive('/appointments/new');");
+    expect(sellClient).toContain('productsOnly');
+    expect(payFlow).toContain('<DeskProductCategories');
+    expect(deskGrid).toContain("useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'))");
   });
 });

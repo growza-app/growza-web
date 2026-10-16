@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
@@ -237,6 +238,11 @@ export function ProductsList({ products, categories: initialCategories, branchId
       subtitle={t('subtitle')}
       actions={
         <WriteOnly>
+          {live.length > 0 ? (
+            <Link className="btn btn-ghost" href="/products/sell?from=products">
+              {t('sell')}
+            </Link>
+          ) : null}
           <button type="button" className="btn" onClick={() => setEditing('new')}>
             <IconPlus /> {t('add')}
           </button>
