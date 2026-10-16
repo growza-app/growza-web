@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import type { HomeCopy } from '../../lib/home-copy';
@@ -51,8 +51,33 @@ export function tintFor(key: string) {
  * `nobody` — Jira GRW-363: a row that is not a person (the no-stylist row) gets a neutral dash, not
  * initials made from its phrase ("NS", "कस") in a colour that makes it look like someone.
  */
-export function Avatar({ name, id, size = 38, nobody = false }: { name: string | null; id: string; size?: number; nobody?: boolean }) {
+export function Avatar({
+  name,
+  id,
+  size = 38,
+  nobody = false,
+  photoUrl,
+}: {
+  name: string | null;
+  id: string;
+  size?: number;
+  nobody?: boolean;
+  photoUrl?: string | null;
+}) {
+  const [broken, setBroken] = useState(false);
   const t = nobody ? { bg: 'var(--border)', fg: 'var(--muted)' } : tintFor(id);
+  if (!nobody && photoUrl && !broken) {
+    return (
+      <img
+        className="hm-avatar person-photo"
+        src={photoUrl}
+        alt=""
+        style={{ width: size, height: size, objectFit: 'cover' }}
+        onError={() => setBroken(true)}
+        aria-hidden
+      />
+    );
+  }
   return (
     <span className="hm-avatar" style={{ width: size, height: size, background: t.bg, color: t.fg }} aria-hidden>
       {nobody ? NOBODY_INITIAL : initials(name)}

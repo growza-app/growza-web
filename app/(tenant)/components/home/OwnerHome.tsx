@@ -1044,6 +1044,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                         const sName = summarizeServices(g.serviceNames, p.lang);
                         const pName = g.providerNames[0] ?? '—';
                         const pId = g.appointments[0]?.providerId ?? pName;
+                        const staffProv = p.providers.find((pr) => pr.id === g.appointments[0]?.providerId);
                         const isLiveOrLater = st === 'later' || st === 'in_service' || st === 'needs_answer';
                         return (
                           <tr key={g.key}>
@@ -1066,7 +1067,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                             </td>
                             <td className="hm-v3-td-staff">
                               <div className="hm-v3-staff-cell">
-                                <Avatar name={pName} id={pId} size={30} />
+                                <Avatar name={pName} id={pId} size={30} photoUrl={staffProv?.photoUrl} />
                                 <span>{pName}</span>
                               </div>
                             </td>
@@ -1195,7 +1196,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                       return (
                         <a key={prov.id} className="hm-v3-staff-item" href="/providers">
                           <span className={`hm-v3-staff-ring is-${statusKey}`}>
-                            <Avatar name={prov.displayName} id={prov.id} size={36} />
+                            <Avatar name={prov.displayName} id={prov.id} size={36} photoUrl={prov.photoUrl} />
                           </span>
                           <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
                           <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
