@@ -65,7 +65,7 @@ export function DeskServiceGrid({
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
   /** Owner, 2026-10-15 — sort beside the search, and the shelf hides what is out of stock unless asked. */
-  const [sort, setSort] = useState<MenuSort>('name');
+  const [sort, setSort] = useState<MenuSort>('menu');
   const [inStockOnly, setInStockOnly] = useState(true);
   const [viewing, setViewing] = useState<Offer | null>(null);
   const kindRow = useRef<HTMLDivElement>(null);
@@ -84,7 +84,8 @@ export function DeskServiceGrid({
     };
     row.addEventListener('wheel', wheel, { passive: false });
     return () => row.removeEventListener('wheel', wheel);
-  }, [services.length]);
+  // `tab` too: the chip row is not drawn on Packages or Products, so coming back mounts a new row that needs its handler.
+  }, [services.length, tab]);
   const kinds = useMemo(() => {
     const counts = new Map<string, number>();
     for (const s of services) if (s.categoryName) counts.set(s.categoryName, (counts.get(s.categoryName) ?? 0) + 1);

@@ -1200,6 +1200,11 @@
         "priceDesc": "Price, high to low",
         "duration": "Shortest first"
       }
+    },
+    "discard": {
+      "title": "Leave without saving?",
+      "body": "You have changes to this service that are not saved. They will be lost.",
+      "confirm": "Leave"
     }
   },
   "staff": {
@@ -2697,7 +2702,8 @@
       "label": "Sort",
       "name": "Name A–Z",
       "priceAsc": "Price, low to high",
-      "priceDesc": "Price, high to low"
+      "priceDesc": "Price, high to low",
+      "menu": "Menu order"
     },
     "inStockOnly": "In stock only",
     "pkg": {
@@ -3069,7 +3075,8 @@
       "confirm": "Confirm",
       "history": "History",
       "noHistory": "Nothing has happened to this product yet.",
-      "afterShort": "{n} left"
+      "afterShort": "{n} left",
+      "loadFailed": "The history did not load. Close this and open it again."
     },
     "deskPick": "Pick a product to change it or see its stock, or add a new one.",
     "inStock": "In stock",
@@ -3108,7 +3115,8 @@
       "money": "Money taken",
       "margin": "Margin",
       "allTime": "{n} sold all time.",
-      "none": "Nothing sold in the last 30 days."
+      "none": "Nothing sold in the last 30 days.",
+      "loadFailed": "The sales did not load. Close this and open it again."
     }
   }
 }

@@ -78,6 +78,8 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Owner, 2026-10-14 — the till sells products.
   'That product is not on the shelf': 'वह सामान शेल्फ़ पर नहीं है',
   'That product is sold at another branch': 'वह सामान दूसरी ब्रांच में बिकता है',
+  'A product by that name is already on the shelf': 'इस नाम का सामान शेल्फ़ पर पहले से है',
+  'This plan does not sell products over the counter.': 'इस प्लान में काउंटर पर सामान बेचना शामिल नहीं है।',
   // Jira GRW-574 — a product's SKU and barcode (0119).
   'Another product at this branch has that SKU': 'इस ब्रांच में किसी दूसरे सामान का यही SKU है',
   'Another product at this branch has that barcode': 'इस ब्रांच में किसी दूसरे सामान का यही बारकोड है',
