@@ -846,7 +846,7 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
 
             {/* 2. Bookings today */}
-            <section className="hm-v3-kpi">
+            <a className="hm-v3-kpi hm-v3-kpi-link" href="/appointments">
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-blue">
                   <IconCalendar />
@@ -882,10 +882,10 @@ export function OwnerHome(p: OwnerHomeProps) {
                   {t.inProgressLabel} <b>{inServiceCount}</b>
                 </span>
               </div>
-            </section>
+            </a>
 
             {/* 3. New clients */}
-            <section className="hm-v3-kpi">
+            <a className="hm-v3-kpi hm-v3-kpi-link" href="/customers">
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-green">
                   <IconStaff />
@@ -919,10 +919,10 @@ export function OwnerHome(p: OwnerHomeProps) {
                   {t.newLabel} <b>{data?.money.newCustomers ?? 0}</b>
                 </span>
               </div>
-            </section>
+            </a>
 
             {/* 4. Products sold */}
-            <section className="hm-v3-kpi">
+            <a className="hm-v3-kpi hm-v3-kpi-link" href="/products">
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-amber">
                   <IconProducts />
@@ -952,7 +952,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                 </span>
                 <span className="hm-v3-prod-sold">{t.soldCount(topProduct?.sold ?? 0)}</span>
               </div>
-            </section>
+            </a>
           </div>
 
           {/* ROW 2 — Today's Appointments Table (Left) + Staff Status & Quick Actions (Right) */}
