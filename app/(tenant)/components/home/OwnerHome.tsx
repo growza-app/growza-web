@@ -921,26 +921,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <h2>
                   {t.todaysAppointments} <span className="hm-v3-count">({allListGroups.length})</span>
                 </h2>
-                <div className="hm-v3-head-actions">
-                  {mayRecordPayment ? (
-                    <button
-                      type="button"
-                      className="hm-v3-btn-outline"
-                      onClick={() => router.push('/appointments/new?purpose=payment')}
-                    >
-                      <IconReceipt />
-                      <span>{t.recordPayment}</span>
-                    </button>
-                  ) : null}
-                  {mayBook ? (
-                    <a className="hm-v3-btn-primary" href="/appointments/new">
-                      <span>+ {t.nav.newBooking}</span>
-                      <span className="hm-v3-btn-caret" aria-hidden>
-                        ▾
-                      </span>
-                    </a>
-                  ) : null}
-                </div>
               </div>
 
               <div className="hm-v3-filter-bar">
