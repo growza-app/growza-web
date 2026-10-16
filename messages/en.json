@@ -3136,7 +3136,7 @@
     "filters": {
       "all": "All bills ({n})",
       "products": "Products sold ({n})",
-      "services": "Services only ({n})"
+      "services": "Services sold ({n})"
     },
     "searchPlaceholder": "Search client, phone, service or product…",
     "kpi": {
@@ -3167,7 +3167,7 @@
     "empty": {
       "all": "No completed sales in this period.",
       "products": "No products were sold in this period.",
-      "services": "No service-only bills in this period.",
+      "services": "No services were sold in this period.",
       "search": "Nothing matches \"{q}\".",
       "hint": "Try a longer date range, or ring up a bill from Record payment."
     },

@@ -12,6 +12,8 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { BookingSummary } from '../components/BookingSummary';
 import { useBranch } from '../components/BranchProvider';
 import { useMayUse } from '../components/SessionProvider';
+import { useLabel } from '../components/LabelsProvider';
+import { pickNoun } from '../lib/nouns';
 import {
   IconPackages,
   IconProducts,
@@ -130,7 +132,7 @@ export function filterSalesByWindow(
 export function filterSalesRows(rows: readonly SaleRow[], filter: SalesFilter, search: string): SaleRow[] {
   const pool = rows.filter((r) => {
     if (filter === 'products') return r.products.length > 0;
-    if (filter === 'services') return r.products.length === 0 && r.serviceNames.length > 0;
+    if (filter === 'services') return r.serviceNames.length > 0;
     return true;
   });
 
@@ -235,16 +237,22 @@ export function SalesClient({
 }) {
   const t = useTranslations('sales');
   const tc = useTranslations('chrome');
+  const tn = useTranslations('nouns');
   const locale = useLocale();
   const router = useRouter();
   const branch = useBranch();
   const mayRecordPayment = useMayUse('visit.recordPayment');
+  const providerWord = pickNoun(locale, useLabel('provider', 'Staff'), tn('staffTitle'));
 
   const [range, setRange] = useState<SalesRange>(initialRange);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
   const [search, setSearch] = useState(initialQuery);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
+
+  const showServicesCol = filter !== 'products';
+  const showProductsCol = filter !== 'services';
+  const showStaffCol = filter === 'services';
 
   const allSaleRows = useMemo(() => buildSaleRows(appointments, timezone), [appointments, timezone]);
 
@@ -257,7 +265,7 @@ export function SalesClient({
     () => ({
       all: windowRows.length,
       products: windowRows.reduce((sum, r) => sum + r.productUnits, 0),
-      services: windowRows.filter((r) => r.products.length === 0 && r.serviceNames.length > 0).length,
+      services: windowRows.reduce((sum, r) => sum + r.serviceNames.length, 0),
     }),
     [windowRows],
   );
@@ -289,6 +297,9 @@ export function SalesClient({
     if (row.dayISO === todayISO) return time;
     return `${formatDateShort(new Date(`${row.dayISO}T12:00:00`), undefined, locale)} · ${time}`;
   };
+
+  const rowAmountMinor = (row: SaleRow) =>
+    filter === 'products' ? row.productsMinor : filter === 'services' ? row.servicesMinor : row.totalMinor;
 
   return (
     <>
@@ -476,8 +487,9 @@ export function SalesClient({
                   <tr>
                     <th>{t('cols.when')}</th>
                     <th>{t('cols.client')}</th>
-                    <th>{t('cols.services')}</th>
-                    <th>{t('cols.products')}</th>
+                    {showServicesCol ? <th>{t('cols.services')}</th> : null}
+                    {showProductsCol ? <th>{t('cols.products')}</th> : null}
+                    {showStaffCol ? <th>{providerWord}</th> : null}
                     <th>{t('cols.payment')}</th>
                     <th className="is-num">{t('cols.total')}</th>
                     <th className="is-action">{t('cols.action')}</th>
@@ -499,44 +511,53 @@ export function SalesClient({
                             </div>
                           </div>
                         </td>
-                        <td>
-                          <div className="sls-items">
-                            {row.offerTitle ? (
-                              <span className="sls-badge sls-badge-pkg">
-                                <IconPackages /> {row.offerTitle}
-                              </span>
-                            ) : null}
-                            <span className="sls-service-list">{summarizeServices(row.serviceNames, locale) || '—'}</span>
-                          </div>
-                        </td>
-                        <td>
-                          {row.products.length > 0 ? (
-                            <div className="sls-product-chips">
-                              {shownProducts.map((p, i) => (
-                                <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
-                                  <IconProducts />
-                                  {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}
-                                  <b className="sls-prd-price">{formatMoney(p.paidMinor)}</b>
+                        {showServicesCol ? (
+                          <td>
+                            <div className="sls-items">
+                              {row.offerTitle ? (
+                                <span className="sls-badge sls-badge-pkg">
+                                  <IconPackages /> {row.offerTitle}
                                 </span>
-                              ))}
-                              {hiddenProducts > 0 ? (
-                                <button
-                                  type="button"
-                                  className="sls-badge sls-badge-more"
-                                  onClick={() => setOpenBooking(row.group)}
-                                >
-                                  {t('moreProducts', { n: hiddenProducts })}
-                                </button>
                               ) : null}
+                              <span className="sls-service-list">{summarizeServices(row.serviceNames, locale) || '—'}</span>
                             </div>
-                          ) : (
-                            <span className="sls-muted">{t('noProducts')}</span>
-                          )}
-                        </td>
+                          </td>
+                        ) : null}
+                        {showProductsCol ? (
+                          <td>
+                            {row.products.length > 0 ? (
+                              <div className="sls-product-chips">
+                                {shownProducts.map((p, i) => (
+                                  <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
+                                    <IconProducts />
+                                    {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}
+                                    <b className="sls-prd-price">{formatMoney(p.paidMinor)}</b>
+                                  </span>
+                                ))}
+                                {hiddenProducts > 0 ? (
+                                  <button
+                                    type="button"
+                                    className="sls-badge sls-badge-more"
+                                    onClick={() => setOpenBooking(row.group)}
+                                  >
+                                    {t('moreProducts', { n: hiddenProducts })}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="sls-muted">{t('noProducts')}</span>
+                            )}
+                          </td>
+                        ) : null}
+                        {showStaffCol ? (
+                          <td className="sls-col-staff">
+                            {row.staffNames.length > 0 ? row.staffNames.join(', ') : <span className="sls-muted">{t('noStaff')}</span>}
+                          </td>
+                        ) : null}
                         <td>
                           <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
                         </td>
-                        <td className="is-num sls-col-total">{formatMoney(String(row.totalMinor))}</td>
+                        <td className="is-num sls-col-total">{formatMoney(String(rowAmountMinor(row)))}</td>
                         <td className="is-action">
                           <button
                             type="button"
@@ -570,26 +591,31 @@ export function SalesClient({
                         <span className="sls-avatar">{initials(row.clientName)}</span>
                         <div className="sls-client-meta">
                           <strong className="sls-client-name">{row.clientName}</strong>
-                          <span className="sls-client-phone">{formatWhen(row)}</span>
+                          <span className="sls-client-phone">
+                            {formatWhen(row)}
+                            {showStaffCol
+                              ? ` · ${row.staffNames.length > 0 ? row.staffNames.join(', ') : t('noStaff')}`
+                              : ''}
+                          </span>
                         </div>
                       </div>
                       <div className="sls-card-right">
-                        <strong className="sls-card-total">{formatMoney(String(row.totalMinor))}</strong>
+                        <strong className="sls-card-total">{formatMoney(String(rowAmountMinor(row)))}</strong>
                         <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
                       </div>
                     </div>
                     <div className="sls-card-items">
-                      {row.offerTitle ? (
+                      {showServicesCol && row.offerTitle ? (
                         <span className="sls-badge sls-badge-pkg">
                           <IconPackages /> {row.offerTitle}
                         </span>
                       ) : null}
-                      {row.serviceNames.length > 0 ? (
+                      {showServicesCol && row.serviceNames.length > 0 ? (
                         <div className="sls-card-line">
                           <span className="sls-service-list">{summarizeServices(row.serviceNames, locale)}</span>
                         </div>
                       ) : null}
-                      {row.products.length > 0 ? (
+                      {showProductsCol && row.products.length > 0 ? (
                         <div className="sls-product-chips">
                           {shownProducts.map((p, i) => (
                             <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">

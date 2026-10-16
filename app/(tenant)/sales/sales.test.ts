@@ -121,7 +121,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     );
 
     expect(filterSalesRows(rows, 'products', '').map((r) => r.key)).toEqual(['g1']);
-    expect(filterSalesRows(rows, 'services', '').map((r) => r.key)).toEqual(['g2']);
+    expect(filterSalesRows(rows, 'services', '').map((r) => r.key)).toEqual(['g1', 'g2']);
     expect(filterSalesRows(rows, 'all', 'Argan').map((r) => r.key)).toEqual(['g1']);
     expect(filterSalesRows(rows, 'all', '33445').map((r) => r.key)).toEqual(['g2']);
     expect(filterSalesRows(rows, 'all', 'Keratin').map((r) => r.key)).toEqual(['g2']);
@@ -244,15 +244,18 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(filterSalesRows(rows, 'services', '')).toEqual([]);
   });
 
-  it('caps visible product chips per row at MAX_ROW_PRODUCTS (+N more) and counts total product units on the Products sold filter chip', () => {
+  it('caps visible product chips per row at MAX_ROW_PRODUCTS (+N more), counts units/services on filter chips, and scopes columns by tab', () => {
     const client = here('./SalesClient.tsx');
     const css = here('../styles/99-sales.css');
     expect(MAX_ROW_PRODUCTS).toBe(2);
     expect(client).toContain('products: windowRows.reduce((sum, r) => sum + r.productUnits, 0)');
+    expect(client).toContain('services: windowRows.reduce((sum, r) => sum + r.serviceNames.length, 0)');
+    expect(client).toContain("const showServicesCol = filter !== 'products'");
+    expect(client).toContain("const showProductsCol = filter !== 'services'");
+    expect(client).toContain("const showStaffCol = filter === 'services'");
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
     expect(client).toContain("t('moreProducts', { n: hiddenProducts })");
     expect(client).toContain('summarizeServices(row.serviceNames, locale)');
-    expect(client).not.toContain('sls-col-staff');
     expect(css).toContain('border: 1px solid var(--border)');
     expect(css).not.toContain('var(--line)');
     expect(css).not.toContain('var(--card)');
