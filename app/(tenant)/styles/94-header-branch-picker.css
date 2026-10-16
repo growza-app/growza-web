@@ -96,6 +96,9 @@
   .hbp-line {
     display: none;
   }
+  .pf-head-stack .hbp-line {
+    display: inline-flex;
+  }
 }
 
 /* Home's phone line: "📍 MG Road ▾ · Fri, 25 Sep". The branch keeps up to 70% of the line and the date gives

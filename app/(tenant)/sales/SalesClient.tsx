@@ -15,6 +15,7 @@ import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
   IconChevronDown,
+  IconDownload,
   IconPackages,
   IconProducts,
   IconReceipt,
@@ -22,6 +23,10 @@ import {
   IconSearch,
   IconServices,
 } from '../components/icons';
+import { csvLines } from '../lib/csv';
+import { clampSalesDateRange, MAX_SALES_DATE_YEARS, MAX_SALES_EXPORT_ROWS } from './sales-helpers';
+
+export { clampSalesDateRange, MAX_SALES_DATE_YEARS, MAX_SALES_EXPORT_ROWS };
 
 export type SalesFilter = 'all' | 'products' | 'services';
 export const SALES_FILTERS: readonly SalesFilter[] = ['all', 'products', 'services'];
@@ -30,6 +35,94 @@ export type SalesRange = 'today' | 'last_7_days' | 'last_30_days';
 export const SALES_RANGES: readonly SalesRange[] = ['today', 'last_7_days', 'last_30_days'];
 
 export const MAX_ROW_PRODUCTS = 2;
+
+export interface SalesCsvHeaders {
+  when: string;
+  client: string;
+  phone: string;
+  branch?: string;
+  services: string;
+  products: string;
+  staff: string;
+  payment: string;
+  total: string;
+}
+
+/**
+ * High-performance single-pass CSV builder for filtered sales rows.
+ * Enforces `MAX_SALES_EXPORT_ROWS` limit, reuses a single `Intl.DateTimeFormat` instance,
+ * and writes major-unit numeric totals for spreadsheet arithmetic.
+ */
+export function buildSalesCsv(
+  rows: readonly SaleRow[],
+  timezone: string,
+  headers: SalesCsvHeaders,
+  formatPayment: (modes: string[]) => string,
+  branchMap?: ReadonlyMap<string, string>,
+  maxRows = MAX_SALES_EXPORT_ROWS,
+  filter: SalesFilter = 'all',
+): { csv: string; exportedCount: number; capped: boolean } {
+  const limit = Math.max(0, maxRows);
+  const slice = rows.length > limit ? rows.slice(0, limit) : rows;
+  const timeFmt = new Intl.DateTimeFormat('en-IN', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const includeBranch = Boolean(headers.branch && branchMap && branchMap.size > 0);
+  const headRow: (string | number)[] = [
+    headers.when,
+    headers.client,
+    headers.phone,
+    ...(includeBranch ? [headers.branch!] : []),
+    headers.services,
+    headers.products,
+    headers.staff,
+    headers.payment,
+    headers.total,
+  ];
+
+  const lines: (string | number | null | undefined)[][] = new Array(slice.length + 1);
+  lines[0] = headRow;
+
+  for (let i = 0; i < slice.length; i++) {
+    const r = slice[i]!;
+    const timeStr = timeFmt.format(new Date(r.startAt));
+    const whenStr = `${r.dayISO} ${timeStr}`;
+    const servicesStr = [
+      ...(r.offerTitle ? [`[${r.offerTitle}]`] : []),
+      ...r.serviceNames,
+    ].join('; ');
+    const productsStr = r.products
+      .map((p) => (p.qty > 1 ? `${p.name} x${p.qty}` : p.name))
+      .join('; ');
+    const staffStr = r.staffNames.join(', ');
+    const paymentStr = formatPayment(r.paymentModes);
+    const amountMinor =
+      filter === 'products' ? r.productsMinor : filter === 'services' ? r.servicesMinor : r.totalMinor;
+    const totalMajor = (amountMinor / 100).toFixed(2);
+
+    lines[i + 1] = [
+      whenStr,
+      r.clientName,
+      r.clientPhone ?? '',
+      ...(includeBranch ? [r.locationId ? (branchMap!.get(r.locationId) ?? '') : ''] : []),
+      servicesStr,
+      productsStr,
+      staffStr,
+      paymentStr,
+      totalMajor,
+    ];
+  }
+
+  return {
+    csv: csvLines(lines),
+    exportedCount: slice.length,
+    capped: rows.length > limit,
+  };
+}
 
 export interface SaleRow {
   group: BookingGroup;
@@ -373,8 +466,14 @@ export function SalesClient({
   const mayRecordPayment = useMayUse('visit.recordPayment');
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff'), tn('staffTitle'));
 
-  const [fromDate, setFromDate] = useState<string>(initialFrom ?? todayISO);
-  const [toDate, setToDate] = useState<string>(initialTo ?? todayISO);
+  const initialBounds = useMemo(
+    () => clampSalesDateRange(initialFrom ?? todayISO, initialTo ?? todayISO, todayISO),
+    [initialFrom, initialTo, todayISO],
+  );
+  const minDateISO = initialBounds.minISO;
+
+  const [fromDate, setFromDate] = useState<string>(initialBounds.fromISO);
+  const [toDate, setToDate] = useState<string>(initialBounds.toISO);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
   const [search, setSearch] = useState(initialQuery);
   const [selectedBranches, setSelectedBranches] = useState<string[]>(() =>
@@ -420,8 +519,7 @@ export function SalesClient({
   const showStaffCol = filter === 'services';
 
   const applyDates = (nextFrom: string, nextTo: string) => {
-    const safeFrom = nextFrom || todayISO;
-    const safeTo = nextTo && nextTo >= safeFrom ? nextTo : safeFrom;
+    const { fromISO: safeFrom, toISO: safeTo } = clampSalesDateRange(nextFrom, nextTo, todayISO);
     setFromDate(safeFrom);
     setToDate(safeTo);
     setPage(1);
@@ -555,6 +653,45 @@ export function SalesClient({
     setPage(1);
   };
 
+  const branchMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const b of branch.branches) map.set(b.id, b.name);
+    return map;
+  }, [branch.branches]);
+
+  const exportCsv = () => {
+    if (filteredRows.length === 0) return;
+    const { csv } = buildSalesCsv(
+      filteredRows,
+      timezone,
+      {
+        when: t('cols.when'),
+        client: t('cols.client'),
+        phone: t('clientFilter'),
+        branch: branch.branches.length > 1 ? t('branchFilter') : undefined,
+        services: t('cols.services'),
+        products: t('cols.products'),
+        staff: providerWord,
+        payment: t('cols.payment'),
+        total: t('cols.total'),
+      },
+      formatPaymentMode,
+      branchMap,
+      MAX_SALES_EXPORT_ROWS,
+      filter,
+    );
+    const filename = `sales-${fromDate}-to-${toDate}.csv`;
+    const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <PageHeader
@@ -563,7 +700,15 @@ export function SalesClient({
         menu
         actions={
           mayRecordPayment ? (
-            <a className="btn" href="/appointments/new?purpose=payment">
+            <a
+              className="btn"
+              href="/appointments/new?purpose=payment"
+              onClick={() => {
+                if (!branch.pinned && selectedBranches.length === 1) {
+                  branch.setBranch(selectedBranches[0]!);
+                }
+              }}
+            >
               <IconReceipt /> {t('recordPayment')}
             </a>
           ) : null
@@ -590,6 +735,8 @@ export function SalesClient({
                 className="sls-date-input"
                 aria-label={t('from')}
                 value={fromDate}
+                min={minDateISO}
+                max={todayISO}
                 onChange={(e) => applyDates(e.target.value, toDate)}
               />
             </label>
@@ -600,7 +747,8 @@ export function SalesClient({
                 className="sls-date-input"
                 aria-label={t('to')}
                 value={toDate}
-                min={fromDate}
+                min={fromDate >= minDateISO ? fromDate : minDateISO}
+                max={todayISO}
                 onChange={(e) => applyDates(fromDate, e.target.value)}
               />
             </label>
@@ -982,22 +1130,39 @@ export function SalesClient({
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="sls-chips" role="group" aria-label={t('title')}>
-          {SALES_FILTERS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className={`sls-chip ${filter === f ? 'is-on' : ''}`}
-              aria-pressed={filter === f}
-              onClick={() => {
-                setFilter(f);
-                setPage(1);
-              }}
-            >
-              {t(`filters.${f}`, { n: counts[f] })}
-            </button>
-          ))}
+        {/* Filter Tabs + Top-Right Export CSV */}
+        <div className="sls-table-head-bar">
+          <div className="sls-chips" role="group" aria-label={t('title')}>
+            {SALES_FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                className={`sls-chip ${filter === f ? 'is-on' : ''}`}
+                aria-pressed={filter === f}
+                onClick={() => {
+                  setFilter(f);
+                  setPage(1);
+                }}
+              >
+                {t(`filters.${f}`, { n: counts[f] })}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm sls-export-btn"
+            disabled={filteredRows.length === 0}
+            title={
+              filteredRows.length > MAX_SALES_EXPORT_ROWS
+                ? t('exportCsvLimit', { max: MAX_SALES_EXPORT_ROWS })
+                : t('exportCsv')
+            }
+            onClick={exportCsv}
+          >
+            <IconDownload />
+            <span>{t('exportCsv')}</span>
+          </button>
         </div>
 
         {/* Empty State or Sales Table / Cards */}

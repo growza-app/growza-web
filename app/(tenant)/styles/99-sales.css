@@ -366,6 +366,14 @@
   font-weight: 700;
 }
 
+.sls-table-head-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
 .sls-chips {
   display: flex;
   align-items: center;
@@ -373,8 +381,40 @@
   flex-wrap: wrap;
 }
 
+.sls-export-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sls-export-btn svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.sls-export-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
+.sls-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .sls-chip {
-  min-height: 40px;
+  min-height: 38px;
   padding: 0 var(--sp-3);
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -397,17 +437,12 @@
   border-radius: 12px;
   overflow-x: auto;
   overflow-y: auto;
+  flex: 0 1 auto;
 }
 
 @media (min-width: 861px) {
-  .page-body.sls-page {
-    overflow: hidden;
-    min-height: 0;
-  }
-
-  .sls-table-wrap {
-    flex: 1;
-    min-height: 0;
+  .sls-page {
+    gap: var(--sp-2);
   }
 
   .sls-table thead th {
@@ -415,17 +450,23 @@
     top: 0;
     z-index: 1;
   }
+
+  .sls-table .sls-client-meta {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
 }
 
 .sls-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .sls-table th {
   text-align: left;
-  padding: var(--sp-2) var(--sp-3);
+  padding: 5px var(--sp-3);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -442,11 +483,12 @@
 }
 
 .sls-table td {
-  padding: var(--sp-2) var(--sp-3);
+  padding: 4px var(--sp-3);
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
   vertical-align: middle;
   color: var(--text);
+  line-height: 1.2;
 }
 
 .sls-table td:last-child {
@@ -497,12 +539,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-deep);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -511,10 +553,11 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  line-height: 1.2;
 }
 
 .sls-client-name {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
@@ -530,11 +573,11 @@
 .sls-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .sls-service-list {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -543,7 +586,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .sls-table .sls-product-chips {
@@ -553,8 +596,8 @@
 .sls-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  gap: 4px;
+  padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -562,8 +605,8 @@
 }
 
 .sls-badge svg {
-  width: 0.875rem;
-  height: 0.875rem;
+  width: 0.8125rem;
+  height: 0.8125rem;
   flex-shrink: 0;
 }
 
@@ -598,7 +641,7 @@
 .sls-pay-pill {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: var(--page-bg);
   border: 1px solid var(--border);
@@ -609,9 +652,15 @@
 }
 
 .sls-col-total {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 800;
   color: var(--text);
+}
+
+.sls-view-btn {
+  min-height: 30px;
+  padding: 0 var(--sp-2);
+  font-size: 0.75rem;
 }
 
 .sls-muted {
@@ -716,7 +765,8 @@
     width: 100%;
   }
 
-  .sls-chip {
+  .sls-chip,
+  .sls-export-btn {
     min-height: 44px;
   }
 }

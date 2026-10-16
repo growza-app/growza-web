@@ -6,6 +6,7 @@ import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { guardScreen } from '../lib/screen-guard';
 import { SalesClient, type SalesFilter, type SalesRange } from './SalesClient';
+import { clampSalesDateRange } from './sales-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,13 +65,14 @@ export default async function SalesPage({
 
   const isoRe = /^\d{4}-\d{2}-\d{2}$/;
   const defaultFrom = initialRange === 'last_30_days' ? thirtyDaysAgoISO : todayISO;
-  const initialFrom = params.date && isoRe.test(params.date) ? params.date : defaultFrom;
-  const initialTo =
-    params.to && isoRe.test(params.to) && params.to >= initialFrom
+  const rawFrom = params.date && isoRe.test(params.date) ? params.date : defaultFrom;
+  const rawTo =
+    params.to && isoRe.test(params.to) && params.to >= rawFrom
       ? params.to
       : params.date && isoRe.test(params.date)
         ? params.date
         : todayISO;
+  const { fromISO: initialFrom, toISO: initialTo } = clampSalesDateRange(rawFrom, rawTo, todayISO);
 
   const fetchFrom = initialFrom < thirtyDaysAgoISO ? initialFrom : thirtyDaysAgoISO;
   const fetchTo = initialTo > todayISO ? initialTo : todayISO;
