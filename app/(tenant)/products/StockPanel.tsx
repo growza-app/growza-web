@@ -23,6 +23,7 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   const tc = useTranslations('common');
   const locale = useLocale();
   const [ledger, setLedger] = useState<StockMovement[] | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [kind, setKind] = useState<Exclude<MovementKind, 'sold'> | null>(null);
   const [qty, setQty] = useState('');
   const [note, setNote] = useState('');
@@ -32,22 +33,27 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   const load = () =>
     api
       .productMovements(product.id)
-      .then(setLedger)
-      .catch(() => setLedger([]));
+      .then((rows) => {
+        setLoadFailed(false);
+        setLedger(rows);
+      })
+      // Said, not shown as an empty history: "Nothing has happened" is a claim a failed load cannot make.
+      .catch(() => setLoadFailed(true));
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
   const n = Math.trunc(Number(qty));
-  const canGo = kind !== null && qty.trim() !== '' && Number.isFinite(n) && (kind === 'adjusted' ? n >= 0 && n !== product.stock : n > 0);
+  const canGo = kind !== null && qty.trim() !== '' && Number.isFinite(n) && (kind === 'adjusted' ? n >= 0 : n > 0);
 
   const go = async () => {
     if (!kind || !canGo || busy) return;
     setBusy(true);
     setError(null);
     try {
-      const body = kind === 'adjusted' ? { kind, qty: n - product.stock, note: note.trim() || undefined } : { kind, qty: n, note: note.trim() || undefined };
+      // A recount sends the COUNT: the server sets it under a lock, so a sale since this sheet opened is not undone.
+      const body = kind === 'adjusted' ? { kind, count: n, note: note.trim() || undefined } : { kind, qty: n, note: note.trim() || undefined };
       const updated = await api.moveStock(product.id, body);
       onChanged(updated);
       setKind(null);
@@ -143,7 +149,11 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
       ) : null}
 
       <h3 className="prd-ledger-h">{t('history')}</h3>
-      {ledger === null ? (
+      {loadFailed ? (
+        <div role="alert" className="sheet-foot sheet-foot-error">
+          {t('loadFailed')}
+        </div>
+      ) : ledger === null ? (
         <div className="sheet-foot">{tc('loading')}</div>
       ) : ledger.length === 0 ? (
         <div className="sheet-foot">{t('noHistory')}</div>

@@ -1,12 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { productPhotoUrl } from '../lib/service-photos';
+import { codeHolder } from '../lib/product-match';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
 import { stockTone } from './ProductsList';
@@ -47,10 +48,13 @@ export function ProductSheet({
   const photoRef = useRef<HTMLInputElement>(null);
   const [part, setPart] = useState<Part>('details');
   const [name, setName] = useState(product?.name ?? '');
-  const [price, setPrice] = useState(product ? String(Math.round(Number(product.priceMinor) / 100)) : '');
-  const [cost, setCost] = useState(product?.costMinor != null ? String(Math.round(Number(product.costMinor) / 100)) : '');
+  const [price, setPrice] = useState(product ? String(Number(product.priceMinor) / 100) : '');
+  const [cost, setCost] = useState(product?.costMinor != null ? String(Number(product.costMinor) / 100) : '');
   const [lowAt, setLowAt] = useState(product && product.lowStockAt > 0 ? String(product.lowStockAt) : '');
   const [categoryId, setCategoryId] = useState<string>(product?.categoryId ?? '');
+  /** Jira GRW-574 (0119) — the business's own code, and what a scanner reads off the pack. */
+  const [sku, setSku] = useState(product?.sku ?? '');
+  const [barcode, setBarcode] = useState(product?.barcode ?? '');
   const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
@@ -69,12 +73,28 @@ export function ProductSheet({
   };
   useDialog(sheetRef, { onClose: busy || inline ? undefined : close });
 
+  // One object URL per picked file, released when the file changes or the sheet closes (not one per render).
+  const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
+  useEffect(
+    () => () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+    },
+    [photoPreview],
+  );
+
   const rupees = Number(price);
   const costRupees = cost.trim() === '' ? null : Number(cost);
-  const canSave = name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0));
+  /** The API's own rule (printable characters, no spaces), said here so the owner is told before Save, in their language. */
+  const barcodeBad = barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
+  const canSave =
+    name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && !barcodeBad;
   const marginPct = costRupees !== null && rupees > 0 && Number.isFinite(costRupees) ? Math.round(((rupees - costRupees) / rupees) * 100) : null;
 
-  const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+  const fail = (err: unknown) => {
+    const holder = codeHolder(err);
+    if (holder) setError(t(holder.field === 'sku' ? 'skuTaken' : 'barcodeTaken', { name: holder.name }));
+    else setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+  };
 
   const submit = async () => {
     if (!canSave || busy) return;
@@ -87,6 +107,8 @@ export function ProductSheet({
         costMinor: costRupees === null ? null : Math.round(costRupees * 100),
         lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
         categoryId: categoryId || null,
+        sku: sku.trim() || null,
+        barcode: barcode.trim() || null,
       };
       let saved = target
         ? await api.updateProduct(target.id, body)
@@ -186,7 +208,7 @@ export function ProductSheet({
         <div className="sheet-body">
           <div className="sheet-group sheet-photo">
             {photo ? (
-              <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
+              <img className="sheet-photo-img" src={photoPreview ?? ''} alt="" />
             ) : imageUrl ? (
               <img className="sheet-photo-img" src={productPhotoUrl({ imageUrl })} alt="" />
             ) : (
@@ -212,11 +234,17 @@ export function ProductSheet({
                 className="sheet-photo-remove"
                 onClick={async () => {
                   setPhoto(null);
-                  if (product && imageUrl) {
-                    await api.removeProductPhoto(product.id).catch(() => {});
-                    setImageUrl(null);
-                  }
                   if (photoRef.current) photoRef.current.value = '';
+                  if (target && imageUrl) {
+                    // Only what the server did is shown: a failed removal leaves the picture on screen, with the reason.
+                    try {
+                      const updated = await api.removeProductPhoto(target.id);
+                      setImageUrl(null);
+                      onSaved(updated);
+                    } catch (err) {
+                      fail(err);
+                    }
+                  }
                 }}
               >
                 {t('remove')}
@@ -269,6 +297,58 @@ export function ProductSheet({
             </div>
           </div>
           <div className="sheet-foot">{t('costHint')}</div>
+
+          {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
+          <div className="sheet-group">
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-sku">
+                {t('sku')}
+              </label>
+              <div className="sheet-row-value">
+                <input
+                  id="prd-sku"
+                  type="text"
+                  value={sku}
+                  placeholder={tc('optional')}
+                  maxLength={40}
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-describedby={barcodeBad ? undefined : 'prd-codes-hint'}
+                  onChange={(e) => setSku(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-barcode">
+                {t('barcode')}
+              </label>
+              <div className="sheet-row-value">
+                <input
+                  id="prd-barcode"
+                  type="text"
+                  value={barcode}
+                  placeholder={tc('optional')}
+                  maxLength={64}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-invalid={barcodeBad || undefined}
+                  aria-describedby={barcodeBad ? 'prd-barcode-error' : 'prd-codes-hint'}
+                  onChange={(e) => setBarcode(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          {barcodeBad ? (
+            <div id="prd-barcode-error" className="sheet-foot sheet-foot-error">
+              {t('barcodeSpaces')}
+            </div>
+          ) : (
+            <div id="prd-codes-hint" className="sheet-foot">{t('codesHint')}</div>
+          )}
 
           <div className="sheet-group">
             {!product ? (

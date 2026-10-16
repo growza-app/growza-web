@@ -1,10 +1,11 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { formatMoney } from '../lib/api';
 import type { Offer, Product, Service } from '../lib/api-types';
 import { asMinor, matchItems } from '../lib/service-match';
+import { productByCode, productMatchable } from '../lib/product-match';
 import { productPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -78,7 +79,7 @@ export function ServiceSheet({
   const packageMode = kind === PACKAGES;
   const productMode = kind === PRODUCTS;
   /** Owner, 2026-10-15 — sort under the search; the shelf hides what is out of stock unless asked. */
-  const [sort, setSort] = useState<MenuSort>('name');
+  const [sort, setSort] = useState<MenuSort>('menu');
   const [inStockOnly, setInStockOnly] = useState(true);
   const [viewing, setViewing] = useState<Offer | null>(null);
   const kinds = useMemo(() => [...new Set(services.map((s) => s.categoryName).filter((c): c is string => Boolean(c)))], [services]);
@@ -87,10 +88,7 @@ export function ServiceSheet({
     const pool = inStockOnly ? shelf.filter((p) => p.stock > 0 || (productCounts?.get(p.id) ?? 0) > 0) : shelf;
     const q = term.trim();
     return q
-      ? matchItems(
-          pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
-          q,
-        )
+      ? matchItems(pool.map(productMatchable), q)
       : sortMenu(
           pool,
           sort,
@@ -98,6 +96,15 @@ export function ServiceSheet({
           (p) => asMinor(p.priceMinor),
         );
   }, [shelf, productMode, term, sort, inStockOnly, productCounts]);
+  /** Jira GRW-574 — under Products, Enter on exactly one product's barcode or SKU picks it, as the desk till does. */
+  const onSearchKey = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || e.nativeEvent.isComposing || !productMode || !onPickProduct) return;
+    const hit = productByCode(shelf, e.currentTarget.value);
+    if (!hit) return;
+    e.preventDefault();
+    onPickProduct(hit);
+    setTerm('');
+  };
   const shown = useMemo(() => {
     if (packageMode || productMode) return [];
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
@@ -150,6 +157,7 @@ export function ServiceSheet({
               type="search"
               value={term}
               onChange={(e) => setTerm(e.target.value)}
+              onKeyDown={onSearchKey}
               placeholder={t('searchServices')}
               aria-label={t('searchServices')}
               autoComplete="off"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { packPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
@@ -129,6 +129,7 @@ export function ServiceForm({
   onRestore,
   onDelete,
   inline = false,
+  onDirtyChange,
 }: {
   /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
   branchId: string;
@@ -137,6 +138,8 @@ export function ServiceForm({
    * backdrop, no dialog keyboard handling (there is nothing to trap focus in), the same head and body.
    */
   inline?: boolean;
+  /** The desk panel asks to hear whether this form holds unsaved changes, so it can ask before they are thrown away. */
+  onDirtyChange?: (dirty: boolean) => void;
   /** Null to create. */
   service: ServiceAdmin | null;
   categories: ServiceCategory[];
@@ -178,7 +181,7 @@ export function ServiceForm({
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; price?: string }>({});
   // Escape does nothing while a save is in flight, the same rule the other sheets follow.
-  useDialog(sheetRef, { onClose: busy || inline ? undefined : onClose });
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : onClose, active: !inline });
   const changed =
     name !== (service?.name ?? '') ||
     categoryId !== (service?.categoryId ?? '') ||
@@ -188,6 +191,11 @@ export function ServiceForm({
     description !== (service?.description ?? '') ||
     photo !== null ||
     pickedKey !== undefined;
+
+  useEffect(() => {
+    onDirtyChange?.(changed);
+    return () => onDirtyChange?.(false);
+  }, [changed, onDirtyChange]);
 
   const original: SheetValues = {
     name: service?.name ?? '',
@@ -214,6 +222,11 @@ export function ServiceForm({
       if (!Number.isFinite(p) || p < 0) next.price = t('errors.priceNegative');
     }
     setFieldErrors(next);
+    // An error on a part that is not showing would read as Save doing nothing: show the part that has it.
+    if (service) {
+      if (next.name && part !== 'details') setPart('details');
+      else if (next.price && !next.name && part !== 'pricing') setPart('pricing');
+    }
     return Object.keys(next).length === 0;
   };
 

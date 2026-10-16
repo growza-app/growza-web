@@ -89,6 +89,13 @@ export function NewBookingClient({
    * three-tap flow). A fresh form is a fresh mount; a token that was just paid is gone, so the address drops it.
    */
   const [run, setRun] = useState(0);
+  /*
+   * Release review, 2026-10-16 — a different token or booking is a different bill. `PayFlow` fills itself from its token
+   * or booking ONCE (a ref guards it), and the desk's "Still to pay" list moves between them with `router.push`, which
+   * keeps this component mounted: paying booking B with booking A's lines on the bill cancelled B's own service.
+   * Keyed on what the bill is for, the whole sale starts again when that changes.
+   */
+  const billKey = token?.id ?? visit?.appointment.id ?? 'walk-in';
   const another = () => {
     setRun((n) => n + 1);
     if (token) router.replace(`/appointments/new?purpose=payment${full ? '&full=1' : ''}`);
@@ -98,10 +105,10 @@ export function NewBookingClient({
   // Jira GRW-572 — New booking waits the same one frame, so a desk never sees the column before the panels.
   if (!quick && purpose !== 'payment' && layout === 'unknown') return <div className="walk-in-page" aria-busy="true" />;
   if (settlingBooking || (quick && layout === 'phone')) {
-    return <PayFlow token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} wide={wide && layout === 'desk'} />;
+    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} wide={wide && layout === 'desk'} />;
   }
   if (quick && layout === 'desk' && wide) {
-    return <PayFlow token={token} tokenGone={tokenGone} providerId={providerId} timezone={timezone} backTo={backTo} wide />;
+    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} providerId={providerId} timezone={timezone} backTo={backTo} wide />;
   }
   return (
     <NewVisitSheet

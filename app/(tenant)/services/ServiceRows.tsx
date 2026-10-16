@@ -243,7 +243,21 @@ export function ServiceTableRows({
           onClick={onSelect ? () => onSelect(s) : undefined}
         >
           <td>
-            <NameCell service={s} t={t} />
+            {onSelect ? (
+              /* The row opens on a click anywhere; the name is a real button so a keyboard and a screen reader reach it. */
+              <button
+                type="button"
+                className="svc-row-tap"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(s);
+                }}
+              >
+                <NameCell service={s} t={t} />
+              </button>
+            ) : (
+              <NameCell service={s} t={t} />
+            )}
           </td>
           {flat ? <td className="muted svc-cat">{s.categoryName ?? t('unfiled')}</td> : null}
           <td className="muted svc-time">{time(s, t)}</td>

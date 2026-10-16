@@ -190,7 +190,8 @@ describe('Record payment in three taps', () => {
     // A service found by searching still gets a tile — appended, so it carries its count and its − + .
     expect(flow).toMatch(/for \(const l of lines\) \{[\s\S]{0,220}shown\.push\(s\);/);
     // Whether the search bar is there follows the size of the MENU, not a tile count that grows as it is used.
-    expect(flow).toMatch(/\{services && services\.length > TILES \? \(/);
+    // Owner review, 2026-10-16 — also drawn when the branch sells products or packages, so a small menu can still reach them.
+    expect(flow).toMatch(/\{services && \(services\.length > TILES \|\| products\.length > 0 \|\| offers\.length > 0\) \? \(/);
   });
 
   it('tapping how they paid IS the save — there is no Mark done', () => {

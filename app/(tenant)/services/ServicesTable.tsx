@@ -81,6 +81,14 @@ export function ServicesTable({
   const [editing, setEditing] = useState<ServiceAdmin | null>(null);
   const [creating, setCreating] = useState(false);
   /*
+   * Release review, 2026-10-16 — the desk's panel is keyed on the service, so another row (or category) starts it over
+   * and typed changes are gone. The dialog form guards a stray tap on its backdrop; the panel had no equivalent.
+   * `ServiceForm` reports whether it holds unsaved changes, and a move away asks first.
+   */
+  const [dirty, setDirty] = useState(false);
+  const [discard, setDiscard] = useState<(() => void) | null>(null);
+  const unlessDirty = (go: () => void) => (dirty ? setDiscard(() => go) : go());
+  /*
    * Jira GRW-473 — the form's category picker lists EVERY category at this branch, empty ones included. It was
    * handed `categories`, the tab list, which leaves out a category with no services — so a category just made in
    * Manage categories could not be chosen for the first service meant to go in it.
@@ -531,6 +539,7 @@ export function ServicesTable({
       // Keyed, because the form reads its fields once on mount: opening another row must start it over.
       key={editing?.id ?? 'new'}
       inline={inline}
+      onDirtyChange={inline ? setDirty : undefined}
       service={editing}
       categories={pickerCategories ?? categories}
       branchId={branchId}
@@ -566,6 +575,21 @@ export function ServicesTable({
 
   const dialogs = (
     <>
+      {discard ? (
+        <ConfirmDialog
+          title={t('discard.title')}
+          body={t('discard.body')}
+          confirmLabel={t('discard.confirm')}
+          tone="danger"
+          onConfirm={() => {
+            const go = discard;
+            setDiscard(null);
+            setDirty(false);
+            go();
+          }}
+          onCancel={() => setDiscard(null)}
+        />
+      ) : null}
       {heldBy && (
         <HeldByPackagesDialog
           serviceName={heldBy.service.name}
@@ -729,7 +753,7 @@ export function ServicesTable({
               categories={deskCats ?? categories}
               counts={counts}
               showRetired={showRetiredTab}
-              onPick={setCategoryId}
+              onPick={(id) => unlessDirty(() => setCategoryId(id))}
               onAdd={
                 writable
                   ? async (name) => {
@@ -801,9 +825,9 @@ export function ServicesTable({
                       {addButton}
                     </div>
                   </div>
-                ) : filtered.length === 0 ? (
+                ) : deskRows.length === 0 ? (
                   <div className="empty">
-                    {tab === ALL_TAB && search.trim().length < MIN_CHARS && showRetiredTab ? (
+                    {tab === ALL_TAB && search.trim().length < MIN_CHARS && deskStatus === 'all' && showRetiredTab ? (
                       <>
                         <p>{t('allRetired')}</p>
                         <button type="button" className="btn btn-ghost" onClick={() => setCategoryId(RETIRED_TAB)}>
@@ -837,10 +861,17 @@ export function ServicesTable({
                           order={categoryOrder}
                           totals={totals}
                           selectedId={creating ? null : (editing?.id ?? null)}
-                          onSelect={(s) => {
-                            setCreating(false);
-                            setEditing(s);
-                          }}
+                          // A business suspended for non-payment reads its menu: there is no editor to open.
+                          onSelect={
+                            writable
+                              ? (s) =>
+                                  unlessDirty(() => {
+                                    setDirty(false);
+                                    setCreating(false);
+                                    setEditing(s);
+                                  })
+                              : undefined
+                          }
                         />
                       </tbody>
                     </table>
