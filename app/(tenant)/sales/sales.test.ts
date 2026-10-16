@@ -246,11 +246,15 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
 
   it('caps visible product chips per row at MAX_ROW_PRODUCTS (+N more) and counts total product units on the Products sold filter chip', () => {
     const client = here('./SalesClient.tsx');
+    const css = here('../styles/99-sales.css');
     expect(MAX_ROW_PRODUCTS).toBe(2);
     expect(client).toContain('products: windowRows.reduce((sum, r) => sum + r.productUnits, 0)');
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
     expect(client).toContain("t('moreProducts', { n: hiddenProducts })");
     expect(client).toContain('summarizeServices(row.serviceNames, locale)');
     expect(client).not.toContain('sls-col-staff');
+    expect(css).toContain('border: 1px solid var(--border)');
+    expect(css).not.toContain('var(--line)');
+    expect(css).not.toContain('var(--card)');
   });
 });

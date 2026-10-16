@@ -35,8 +35,8 @@
 .sls-ranges {
   display: inline-flex;
   align-items: center;
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 3px;
   gap: 2px;
@@ -56,7 +56,7 @@
 
 .sls-range-btn.is-active {
   background: var(--accent);
-  color: var(--card);
+  color: var(--surface);
 }
 
 .sls-search {
@@ -83,8 +83,8 @@
   justify-content: space-between;
   gap: 4px;
   padding: var(--sp-2) var(--sp-3);
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   text-align: left;
 }
@@ -167,7 +167,7 @@
 .sls-kpi-value {
   font-size: 1.25rem;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--text);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
@@ -193,7 +193,7 @@
 }
 
 .sls-pay-line strong {
-  color: var(--ink);
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -208,9 +208,9 @@
   min-height: 40px;
   padding: 0 var(--sp-3);
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--ink);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -219,14 +219,15 @@
 .sls-chip.is-on {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--card);
+  color: var(--surface);
 }
 
 .sls-table-wrap {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .sls-table {
@@ -243,15 +244,16 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
-  border-bottom: 1px solid var(--line);
+  background: var(--page-bg);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 .sls-table td {
   padding: var(--sp-3) var(--sp-3);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-table tbody tr:last-child td {
@@ -259,7 +261,7 @@
 }
 
 .sls-table tbody tr:hover {
-  background: var(--bg);
+  background: var(--page-bg);
 }
 
 .sls-table th.is-num,
@@ -312,7 +314,7 @@
 .sls-client-name {
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -332,7 +334,7 @@
 .sls-service-list {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-product-chips {
@@ -380,9 +382,9 @@
 }
 
 .sls-badge-more {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  color: var(--ink);
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
   cursor: pointer;
 }
 
@@ -396,18 +398,18 @@
   align-items: center;
   padding: 3px 9px;
   border-radius: 999px;
-  background: var(--bg);
-  border: 1px solid var(--line);
+  background: var(--page-bg);
+  border: 1px solid var(--border);
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--text);
   white-space: nowrap;
 }
 
 .sls-col-total {
   font-size: 0.9375rem;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-muted {
@@ -416,9 +418,9 @@
 
 .sls-empty {
   padding: var(--sp-6) var(--sp-4);
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   text-align: center;
 }
 
@@ -426,7 +428,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-empty-hint {
@@ -446,8 +448,8 @@
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-3);
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
   text-align: left;
   cursor: pointer;
@@ -472,7 +474,7 @@
 .sls-card-total {
   font-size: 1rem;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .sls-card-items {
