@@ -354,6 +354,10 @@
   margin-top: var(--sp-3);
 }
 
+.prd-moves-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .prd-move {
   min-height: 2.75rem;
   padding: 0 var(--sp-3);
@@ -366,15 +370,91 @@
   cursor: pointer;
 }
 
-.prd-move.is-on {
-  border-color: var(--accent-deep);
+.prd-move-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 5.5rem;
+  padding: var(--sp-3) var(--sp-2);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  line-height: 1.2;
+  font-size: 0.875rem;
+}
+
+.prd-tile-icon {
+  width: 1.875rem;
+  height: 1.875rem;
+  flex: none;
+}
+
+.prd-move-add {
+  border-color: transparent;
   background: var(--accent-soft);
   color: var(--accent-ink);
 }
 
-.prd-move-adjusted,
+.prd-move-add .prd-tile-icon {
+  color: var(--accent-deep);
+}
+
+.prd-move-add.is-on {
+  border-color: var(--accent-deep);
+  box-shadow: inset 0 0 0 1px var(--accent-deep);
+}
+
+.prd-move-remove {
+  border-color: transparent;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.prd-move-remove.is-on {
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
 .prd-move-transfer {
-  grid-column: 1 / -1;
+  border-color: transparent;
+  background: var(--slate-soft);
+  color: var(--text);
+}
+
+.prd-move-transfer.is-on {
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--text);
+}
+
+.prd-reason-row {
+  align-items: center;
+}
+
+.prd-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  justify-content: flex-end;
+}
+
+.prd-reason-chip {
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prd-reason-chip.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 .prd-move-form {
@@ -480,14 +560,6 @@
 
   .prd-search {
     max-width: 20rem;
-  }
-
-  .prd-moves {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .prd-move-adjusted {
-    grid-column: auto;
   }
 }
 
@@ -609,14 +681,6 @@
 
   .prd-desk-right .prd-sheet .sheet-body {
     overflow-y: auto;
-  }
-
-  .prd-desk-right .prd-moves {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .prd-desk-right .prd-move-adjusted {
-    grid-column: 1 / -1;
   }
 }
 

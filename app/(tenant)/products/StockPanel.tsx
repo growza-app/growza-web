@@ -18,7 +18,42 @@ import { stockTone } from './ProductsList';
  * "Used in-house", never "used in the salon".
  */
 export const MOVE_KINDS: readonly ManualMovementKind[] = ['received', 'used', 'damaged', 'returned', 'adjusted'];
+export const ADD_KINDS: readonly ManualMovementKind[] = ['received', 'returned', 'adjusted'];
+export const REMOVE_KINDS: readonly ManualMovementKind[] = ['used', 'damaged'];
 type ActionKind = ManualMovementKind | 'transfer';
+type TileGroup = 'add' | 'remove' | 'move';
+
+function IconPlusCircle() {
+  return (
+    <svg className="prd-tile-icon" viewBox="0 0 28 28" aria-hidden="true">
+      <circle cx="14" cy="14" r="13" fill="currentColor" />
+      <path d="M14 8.5v11M8.5 14h11" stroke="var(--surface)" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconMinusCircle() {
+  return (
+    <svg className="prd-tile-icon" viewBox="0 0 28 28" aria-hidden="true">
+      <circle cx="14" cy="14" r="13" fill="currentColor" />
+      <path d="M8.5 14h11" stroke="var(--surface)" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconTransferArrows() {
+  return (
+    <svg className="prd-tile-icon prd-tile-icon-arrows" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <path
+        d="M8 10h12m0 0-3.5-3.5M20 10l-3.5 3.5M20 18H8m0 0 3.5-3.5M8 18l3.5 3.5"
+        stroke="currentColor"
+        strokeWidth="2.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export function StockPanel({ product, onChanged }: { product: Product; onChanged: (p: Product) => void }) {
   const t = useTranslations('products.ledger');
@@ -54,6 +89,16 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
+
+  const activeGroup: TileGroup | null =
+    kind === null
+      ? null
+      : kind === 'transfer'
+        ? 'move'
+        : ADD_KINDS.includes(kind)
+          ? 'add'
+          : 'remove';
+  const reasonOptions = activeGroup === 'add' ? ADD_KINDS : activeGroup === 'remove' ? REMOVE_KINDS : null;
 
   const n = Math.trunc(Number(qty));
   const canGo =
@@ -123,32 +168,47 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
         <span className="prd-count-l">{tone === 'out' ? t('outNow') : tone === 'low' ? t('lowNow', { at: product.lowStockAt }) : t('onShelf')}</span>
       </div>
 
-      <div className="prd-moves" role="group" aria-label={t('change')}>
-        {MOVE_KINDS.map((k) => (
-          <button
-            key={k}
-            type="button"
-            className={`prd-move prd-move-${k} ${kind === k ? 'is-on' : ''}`}
-            aria-pressed={kind === k}
-            disabled={busy}
-            onClick={() => {
-              setKind(kind === k ? null : k);
-              setQty(k === 'adjusted' ? String(product.stock) : '');
-              setWarnNegative(false);
-              setError(null);
-            }}
-          >
-            {t(`kind.${k}`)}
-          </button>
-        ))}
+      <div className={`prd-moves ${canTransfer ? 'prd-moves-3' : 'prd-moves-2'}`} role="group" aria-label={t('change')}>
+        <button
+          type="button"
+          className={`prd-move prd-move-tile prd-move-add ${activeGroup === 'add' ? 'is-on' : ''}`}
+          aria-pressed={activeGroup === 'add'}
+          disabled={busy}
+          onClick={() => {
+            setKind(activeGroup === 'add' ? null : 'received');
+            setQty('');
+            setWarnNegative(false);
+            setError(null);
+          }}
+        >
+          <IconPlusCircle />
+          <span className="prd-tile-label">{t('actions.add')}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`prd-move prd-move-tile prd-move-remove ${activeGroup === 'remove' ? 'is-on' : ''}`}
+          aria-pressed={activeGroup === 'remove'}
+          disabled={busy}
+          onClick={() => {
+            setKind(activeGroup === 'remove' ? null : 'used');
+            setQty('');
+            setWarnNegative(false);
+            setError(null);
+          }}
+        >
+          <IconMinusCircle />
+          <span className="prd-tile-label">{t('actions.remove')}</span>
+        </button>
+
         {canTransfer ? (
           <button
             type="button"
-            className={`prd-move prd-move-transfer ${kind === 'transfer' ? 'is-on' : ''}`}
-            aria-pressed={kind === 'transfer'}
+            className={`prd-move prd-move-tile prd-move-transfer ${activeGroup === 'move' ? 'is-on' : ''}`}
+            aria-pressed={activeGroup === 'move'}
             disabled={busy}
             onClick={() => {
-              const next = kind === 'transfer' ? null : 'transfer';
+              const next = activeGroup === 'move' ? null : 'transfer';
               setKind(next);
               if (next === 'transfer') {
                 setToBranchId((prev) => (otherBranches.some((b) => b.id === prev) ? prev : (otherBranches[0]?.id ?? '')));
@@ -158,13 +218,38 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
               setError(null);
             }}
           >
-            {t('transfer.open')}
+            <IconTransferArrows />
+            <span className="prd-tile-label">{t('actions.move')}</span>
           </button>
         ) : null}
       </div>
 
       {kind ? (
         <div className="sheet-group prd-move-form">
+          {reasonOptions ? (
+            <div className="sheet-row prd-reason-row">
+              <span className="sheet-row-label">{t('reason')}</span>
+              <div className="prd-reasons" role="group" aria-label={t('reason')}>
+                {reasonOptions.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    className={`prd-reason-chip ${kind === r ? 'is-on' : ''}`}
+                    aria-pressed={kind === r}
+                    disabled={busy}
+                    onClick={() => {
+                      setKind(r);
+                      setQty(r === 'adjusted' ? String(product.stock) : '');
+                      setWarnNegative(false);
+                      setError(null);
+                    }}
+                  >
+                    {t(`kind.${r}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {kind === 'transfer' ? (
             <div className="sheet-row">
               <label className="sheet-row-label" htmlFor="prd-move-branch">
