@@ -47,7 +47,9 @@ import {
   IconWallet,
 } from '../icons';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
+import { BookingSheet } from '../BookingSheet';
 import { BookingSummary } from '../BookingSummary';
+import { payVisitHref } from '../../lib/pay-token';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
@@ -392,11 +394,41 @@ export function OwnerHome(p: OwnerHomeProps) {
   // LIVE work only — see `hasLiveWork`. A board of paid tokens needs nobody and costs the one-screen fit.
   const showBoard = p.board !== null && hasLiveWork(boardTokens);
 
+  const [actionBooking, setActionBooking] = useState<BookingGroup | null>(null);
+  const [startedKeys, setStartedKeys] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('growza.home.started');
+      if (saved) setStartedKeys(JSON.parse(saved) as string[]);
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, []);
+  const startBooking = (key: string) => {
+    setStartedKeys((prev) => {
+      if (prev.includes(key)) return prev;
+      const next = [...prev, key];
+      try {
+        sessionStorage.setItem('growza.home.started', JSON.stringify(next));
+      } catch {
+        // sessionStorage unavailable
+      }
+      return next;
+    });
+  };
+  const startedSet = useMemo(() => new Set(startedKeys), [startedKeys]);
+  const rowState = (g: BookingGroup) => {
+    const st = liveState(g, now);
+    if (st === 'later' && startedSet.has(g.key)) return 'in_service' as const;
+    return st;
+  };
+
   /** providerId → who is in their chair, for the give sheet's free/busy pills. Same derivation the desk's Home makes. */
   const busy = useMemo(() => {
     const m = new Map<string, { client: string; min: number }>();
     for (const g of todayGroups ?? []) {
-      if (liveState(g, now) !== 'in_service') continue;
+      const st = liveState(g, now);
+      if (st !== 'in_service' && !(st === 'later' && startedSet.has(g.key))) continue;
       for (const a of g.appointments) {
         if (a.providerId && !m.has(a.providerId)) {
           m.set(a.providerId, { client: clientNameLabel(g) ?? summarizeServices(g.serviceNames, t.lang), min: minutesBetween(g.startAt, now) });
@@ -404,7 +436,7 @@ export function OwnerHome(p: OwnerHomeProps) {
       }
     }
     return m;
-  }, [todayGroups, now, t.lang]);
+  }, [todayGroups, now, t.lang, startedSet]);
 
   /*
    * Jira GRW-450 — no closing time while more than one branch is in view.
@@ -509,19 +541,26 @@ export function OwnerHome(p: OwnerHomeProps) {
 
   const allListGroups = listGroups ?? [];
   const inServiceCount = allListGroups.filter((g) => {
-    const s = liveState(g, now);
+    const s = rowState(g);
     return s === 'in_service' || s === 'needs_answer';
   }).length;
-  const upcomingCount = allListGroups.filter((g) => liveState(g, now) === 'later').length;
-  const doneTodayCount = allListGroups.filter((g) => liveState(g, now) === 'done').length;
-  const noShowCount = allListGroups.filter((g) => liveState(g, now) === 'no_show').length;
+  const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length;
+  const doneTodayCount = allListGroups.filter((g) => rowState(g) === 'done').length;
+  const noShowCount = allListGroups.filter((g) => rowState(g) === 'no_show').length;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
 
   const filteredTableGroups = useMemo(() => {
+    if (apptFilter === 'all') {
+      const firstActive = allListGroups.findIndex((g) => {
+        const s = liveState(g, now);
+        return s === 'in_service' || s === 'needs_answer' || s === 'later';
+      });
+      const from = firstActive > 0 ? firstActive - 1 : 0;
+      return allListGroups.slice(from, from + 4);
+    }
     return allListGroups
       .filter((g) => {
-        if (apptFilter === 'all') return true;
-        const st = liveState(g, now);
+        const st = rowState(g);
         if (apptFilter === 'upcoming') return st === 'later';
         if (apptFilter === 'in_progress') return st === 'in_service' || st === 'needs_answer';
         if (apptFilter === 'completed') return st === 'done';
@@ -529,7 +568,8 @@ export function OwnerHome(p: OwnerHomeProps) {
         return true;
       })
       .slice(0, 4);
-  }, [allListGroups, apptFilter, now]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allListGroups, apptFilter, now, startedSet]);
 
   const totalProductsSold = useMemo(() => products.reduce((sum, pr) => sum + (pr.sold ?? 0), 0), [products]);
   const totalProductRevenueMinor = useMemo(
@@ -973,7 +1013,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                     </thead>
                     <tbody>
                       {filteredTableGroups.map((g, rowIdx) => {
-                        const st = liveState(g, now);
+                        const st = rowState(g);
                         const dotTone =
                           st === 'done'
                             ? 'green'
@@ -984,10 +1024,27 @@ export function OwnerHome(p: OwnerHomeProps) {
                                 : rowIdx % 2 === 0
                                   ? 'blue'
                                   : 'green';
+                        const pillTone =
+                          st === 'done'
+                            ? 'green'
+                            : st === 'in_service' || st === 'needs_answer'
+                              ? 'amber'
+                              : st === 'no_show' || st === 'cancelled'
+                                ? 'rose'
+                                : 'blue';
+                        const pillLabel =
+                          st === 'done'
+                            ? t.completedLabel
+                            : st === 'in_service' || st === 'needs_answer'
+                              ? t.inProgressLabel
+                              : st === 'no_show' || st === 'cancelled'
+                                ? t.noShowLabel
+                                : t.upcomingLabel;
                         const cName = clientNameLabel(g) ?? t.walkInAction;
                         const sName = summarizeServices(g.serviceNames, p.lang);
                         const pName = g.providerNames[0] ?? '—';
                         const pId = g.appointments[0]?.providerId ?? pName;
+                        const isLiveOrLater = st === 'later' || st === 'in_service' || st === 'needs_answer';
                         return (
                           <tr key={g.key}>
                             <td className="hm-v3-td-time">
@@ -1014,21 +1071,37 @@ export function OwnerHome(p: OwnerHomeProps) {
                               </div>
                             </td>
                             <td className="hm-v3-td-status">
-                              <StatusPill t={t} group={g} now={now} />
+                              <span className={`hm-pill hm-pill-${pillTone}`}>
+                                <i />
+                                {pillLabel}
+                              </span>
                             </td>
                             <td className="hm-v3-td-act">
                               <div className="hm-v3-act-wrap">
                                 <button
                                   type="button"
-                                  className={st === 'later' ? 'hm-v3-row-btn is-start' : 'hm-v3-row-btn'}
-                                  onClick={() => setOpenBooking(g)}
+                                  className={isLiveOrLater ? 'hm-v3-row-btn is-start' : 'hm-v3-row-btn'}
+                                  onClick={() => {
+                                    if (st === 'later') {
+                                      startBooking(g.key);
+                                    } else if (st === 'in_service' || st === 'needs_answer') {
+                                      const appt = g.appointments[0];
+                                      if (appt) {
+                                        router.push(payVisitHref({ appointmentId: appt.id, startAt: g.startAt }, p.timezone, 'bookings'));
+                                      }
+                                    } else if (st === 'done') {
+                                      setOpenBooking(g);
+                                    } else {
+                                      setActionBooking(g);
+                                    }
+                                  }}
                                 >
-                                  {st === 'later' ? t.startBtn : t.viewBtn}
+                                  {st === 'later' ? t.startBtn : st === 'in_service' || st === 'needs_answer' ? t.completeBtn : t.viewBtn}
                                 </button>
                                 <button
                                   type="button"
                                   className="hm-v3-row-dots"
-                                  onClick={() => setOpenBooking(g)}
+                                  onClick={() => (st === 'done' ? setOpenBooking(g) : setActionBooking(g))}
                                   aria-label={t.viewBtn}
                                 >
                                   ⋮
@@ -1400,6 +1473,16 @@ export function OwnerHome(p: OwnerHomeProps) {
       </div>
 
       {openBooking ? <BookingSummary booking={openBooking} timezone={p.timezone} onClose={() => setOpenBooking(null)} /> : null}
+      {actionBooking ? (
+        <BookingSheet
+          appointment={actionBooking.appointments.find((a) => a.status === actionBooking.status) ?? actionBooking.appointments[0]!}
+          timezone={p.timezone}
+          onClose={() => setActionBooking(null)}
+          comboServiceNames={actionBooking.isCombo ? actionBooking.serviceNames : undefined}
+          comboTotalMin={actionBooking.totalMin}
+          comboLegs={actionBooking.isCombo ? actionBooking.appointments : undefined}
+        />
+      ) : null}
 
       {summaryOpen ? (
         <DaySummarySheet

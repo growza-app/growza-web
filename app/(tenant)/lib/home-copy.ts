@@ -137,6 +137,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     colStatus: S('Status', 'स्थिति'),
     colActions: S('Actions', 'एक्शन'),
     startBtn: S('Start', 'शुरू करें'),
+    completeBtn: S('Complete', 'पूरा करें'),
     viewBtn: S('View', 'देखें'),
     staffStatusTitle: S(`${staffWord} status`, `${staffWord} स्थिति`),
     providerRoleWord: S(labels.provider ?? 'Specialist', 'स्टाफ़'),
