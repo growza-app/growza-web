@@ -56,7 +56,7 @@ export default async function SalesPage({
   let appointments: Appointment[] = [];
   let loadFailed = false;
   try {
-    appointments = await api.appointments(thirtyDaysAgoISO, todayISO);
+    appointments = await api.appointments(thirtyDaysAgoISO, todayISO, undefined, undefined, { includeSales: true });
   } catch {
     loadFailed = true;
   }

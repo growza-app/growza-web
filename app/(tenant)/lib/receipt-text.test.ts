@@ -108,6 +108,24 @@ describe('the WhatsApp bill (owner, 2026-10-07)', () => {
   it('opens WhatsApp on that number with the bill typed out', () => {
     expect(whatsappHref('919876543210', 'Hi & bye')).toBe('https://wa.me/919876543210?text=Hi%20%26%20bye');
   });
+
+  it('a product-only sale omits the Services heading and leads with Products', () => {
+    const text = receiptText(
+      {
+        ...full,
+        tokenNo: null,
+        stylist: null,
+        singles: [],
+        pkg: null,
+        products: [{ name: 'Argan Oil 100ml', amountMinor: 45900 }],
+        totalMinor: 45900,
+      },
+      { ...copy, products: 'Products' },
+      money,
+    );
+    expect(text).not.toContain('*Services*');
+    expect(text).toContain('*Products*\nArgan Oil 100ml — ₹459');
+  });
 });
 
 describe('the screen after Mark done offers the bill', () => {

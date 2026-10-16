@@ -201,4 +201,45 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(ownerHome).toContain('href="/sales?filter=products"');
     expect(summary).toContain("t('products')");
   });
+
+  it('Jira GRW-576 — includes product-only sales on /sales and renders them with zero servicesMinor', () => {
+    const salesPage = here('./page.tsx');
+    const summary = here('../components/BookingSummary.tsx');
+    expect(salesPage).toContain('{ includeSales: true }');
+    expect(summary).toContain('serviceLegs.length > 0');
+
+    const rows = buildSaleRows(
+      [
+        mkAppointment({
+          id: 'sale-1',
+          bookingGroupId: null,
+          serviceId: null,
+          serviceName: '',
+          priceMinor: null,
+          paidAmountMinor: null,
+          providerId: null,
+          providerName: null,
+          customerName: 'Asha',
+          paymentMode: 'upi',
+          products: [{ productId: 'p1', name: 'Argan Oil 100ml', priceMinor: '45000', qty: 2, paidMinor: '90000' }],
+        }),
+      ],
+      'Asia/Kolkata',
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!).toMatchObject({
+      key: 'single:sale-1',
+      clientName: 'Asha',
+      serviceNames: [],
+      staffNames: [],
+      servicesMinor: 0,
+      productsMinor: 90000,
+      totalMinor: 90000,
+      productUnits: 2,
+      paymentModes: ['upi'],
+    });
+    expect(filterSalesRows(rows, 'products', '').map((r) => r.key)).toEqual(['single:sale-1']);
+    expect(filterSalesRows(rows, 'services', '')).toEqual([]);
+  });
 });

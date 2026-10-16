@@ -76,6 +76,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That service is not available': 'वह सेवा उपलब्ध नहीं है',
   'That staff member is not available': 'वह स्टाफ़ सदस्य उपलब्ध नहीं है',
   // Owner, 2026-10-14 — the till sells products.
+  'Pick at least one service or product': 'कम से कम एक सेवा या सामान चुनें',
   'That product is not on the shelf': 'वह सामान शेल्फ़ पर नहीं है',
   'That product is sold at another branch': 'वह सामान दूसरी ब्रांच में बिकता है',
   'A product by that name is already on the shelf': 'इस नाम का सामान शेल्फ़ पर पहले से है',

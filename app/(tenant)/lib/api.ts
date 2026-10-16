@@ -552,12 +552,19 @@ export const api = {
   capacity: (date: string, to?: string) =>
     get<Capacity>(`/api/v1/capacity?date=${encodeURIComponent(date)}${to ? `&to=${encodeURIComponent(to)}` : ''}`),
   /** `date` alone = one day; `date` + `to` = an inclusive day range (the Bookings From/To filter). */
-  appointments: (date?: string, to?: string, providerId?: string, customerId?: string) => {
+  appointments: (
+    date?: string,
+    to?: string,
+    providerId?: string,
+    customerId?: string,
+    opts?: { includeSales?: boolean },
+  ) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (to) params.set('to', to);
     if (providerId) params.set('providerId', providerId);
     if (customerId) params.set('customerId', customerId);
+    if (opts?.includeSales) params.set('includeSales', '1');
     const qs = params.toString();
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
