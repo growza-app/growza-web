@@ -43,7 +43,8 @@ export function BookingSummary({
   const [correcting, setCorrecting] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [corrections, setCorrections] = useState<BookingCorrection[]>([]);
-  const firstId = booking.appointments[0]?.id;
+  const serviceLegs = booking.appointments.filter((a) => Boolean(a.serviceId || a.serviceName));
+  const firstId = serviceLegs[0]?.id;
   // The owner sees what was changed on a finished visit, so a figure that moved is never a mystery. A failed read
   // just shows nothing: the receipt above is still right.
   useEffect(() => {
@@ -61,7 +62,6 @@ export function BookingSummary({
   // Jira GRW-314 — what the customer actually paid, less anything cancelled at the till, with the
   // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
   const { totalMinor: servicesPaid, savingsMinor: savings } = bookingBill(booking.appointments);
-  const serviceLegs = booking.appointments.filter((a) => Boolean(a.serviceId || a.serviceName));
   const products = booking.products ?? [];
   const productsPaid = products.reduce((sum, p) => sum + Number(p.paidMinor || 0), 0);
   const totalPaid = servicesPaid + productsPaid;

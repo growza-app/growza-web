@@ -294,6 +294,11 @@
   font-weight: 600;
 }
 
+.sls-col-staff {
+  white-space: nowrap;
+  font-size: 0.8125rem;
+}
+
 .sls-client {
   display: flex;
   align-items: center;

@@ -365,6 +365,7 @@ export function SalesClient({
           <button
             type="button"
             className={`sls-kpi sls-kpi-tap ${filter === 'all' ? 'is-selected' : ''}`}
+            aria-pressed={filter === 'all'}
             onClick={() => {
               setFilter('all');
               setPage(1);
@@ -385,6 +386,7 @@ export function SalesClient({
           <button
             type="button"
             className={`sls-kpi sls-kpi-tap ${filter === 'services' ? 'is-selected' : ''}`}
+            aria-pressed={filter === 'services'}
             onClick={() => {
               setFilter(filter === 'services' ? 'all' : 'services');
               setPage(1);
@@ -405,6 +407,7 @@ export function SalesClient({
           <button
             type="button"
             className={`sls-kpi sls-kpi-tap ${filter === 'products' ? 'is-selected' : ''}`}
+            aria-pressed={filter === 'products'}
             onClick={() => {
               setFilter(filter === 'products' ? 'all' : 'products');
               setPage(1);
