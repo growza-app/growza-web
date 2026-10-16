@@ -3567,10 +3567,10 @@ button.hm-now-count {
   gap: 3px;
 }
 .hm-v3-mini-bars.is-amber span {
-  background: rgba(217, 119, 6, 0.22);
+  background: var(--accent-soft);
 }
 .hm-v3-mini-bars.is-amber span.is-peak {
-  background: var(--amber);
+  background: var(--accent);
 }
 
 /* Smooth area sparkline inside New clients KPI card */
