@@ -78,6 +78,9 @@ type Client =
 
 /** The tiles on ①: enough to cover a salon's everyday menu, few enough that each is the size of a thumb. */
 const TILES = 8;
+
+/** A price in the keypad: whole rupees as they were, paise kept (₹99.50 is "99.5", never rounded up to 100 by pressing ✓). */
+const rupeesText = (minor: number): string => String(minor / 100);
 /** The counter-sale route takes 1–30 lines (`MAX_VISIT_LINES` in the API; was 12 until Jira GRW-572). */
 const MAX_LINES = 30;
 /** The phone remembers two things for the next sale: who did it, and whether the done screen speaks. */
@@ -507,14 +510,14 @@ export function PayFlow({
     const pkgLine = lines.find((l) => l.pkg?.key === key);
     if (pkgLine) {
       setKeypadFor({ key, name: pkgLine.pkg!.title, list: pkgLine.pkg!.priceMinor });
-      setKeypad(String(Math.round(pkgLine.pkg!.priceMinor / 100)));
+      setKeypad(rupeesText(pkgLine.pkg!.priceMinor));
       return;
     }
     const own = lines.filter((l) => !l.pkg && lineKey(l) === key);
     if (own.length === 0) return;
     const list = own.reduce((sum, l) => sum + l.priceMinor, 0);
     setKeypadFor({ key, name: own[0]!.name, list });
-    setKeypad(String(Math.round(own.reduce((sum, l) => sum + lineMinor(l), 0) / 100)));
+    setKeypad(rupeesText(own.reduce((sum, l) => sum + lineMinor(l), 0)));
   };
 
   /*
@@ -877,7 +880,7 @@ export function PayFlow({
     return (
       <div className="pf">
         <header className="pf-head">
-          <button type="button" className="pf-back" aria-label={nv.back} onClick={() => setStep('how')} disabled={saving !== null}>
+          <button type="button" className="pf-back" aria-label={nv.back} onClick={() => setStep(wide ? 'what' : 'how')} disabled={saving !== null}>
             <IconArrowLeft />
           </button>
           <h1 className="pf-title">{t('qrTitle')}</h1>
@@ -915,6 +918,8 @@ export function PayFlow({
         <button type="button" className="btn pf-go pf-qr-paid" onClick={() => void pay('upi')} disabled={saving !== null} aria-busy={saving === 'upi'}>
           {saving === 'upi' ? t('saving') : t('qrPaid')}
         </button>
+        {/* The large-amount question is asked from here too: a typo'd total answered 409 and waited for a dialog nobody drew. */}
+        {dialog}
       </div>
     );
   }
@@ -1214,7 +1219,7 @@ export function PayFlow({
               type="button"
               className="pf-wide-total"
               aria-label={t('changeTotal')}
-              onClick={() => setKeypad(String(Math.round(totalMinor / 100)))}
+              onClick={() => setKeypad(rupeesText(totalMinor))}
               disabled={lines.length === 0}
             >
               <span className="pf-wide-total-words">
@@ -1277,8 +1282,8 @@ export function PayFlow({
               const rupees = Number(keypad);
               const ok = Number.isFinite(rupees) && keypad !== '';
               if (keypadFor) {
-                if (ok) setRowPrice(keypadFor.key, rupees * 100);
-              } else setOverride(ok && rupees * 100 !== listMinor ? rupees * 100 : null);
+                if (ok) setRowPrice(keypadFor.key, Math.round(rupees * 100));
+              } else setOverride(ok && Math.round(rupees * 100) !== listMinor ? Math.round(rupees * 100) : null);
               setKeypad(null);
               setKeypadFor(null);
             }}
@@ -1343,7 +1348,7 @@ export function PayFlow({
         scrolling past everything it exists to shortcut. A bar reads as "type what you are looking for"; the
         tiles below it stay the fast path for what is sold all day.
       */}
-      {services && services.length > TILES ? (
+      {services && (services.length > TILES || products.length > 0 || offers.length > 0) ? (
         /*
           A labelled row like Who? and Stylist above it, so the screen reads as three questions down one column
           rather than two questions and a loose bar. The empty span holds the width the + takes on the Who? row,
@@ -1450,7 +1455,7 @@ export function PayFlow({
           type="button"
           className="pf-total"
           aria-label={t('changeTotal')}
-          onClick={() => setKeypad(String(Math.round(totalMinor / 100)))}
+          onClick={() => setKeypad(rupeesText(totalMinor))}
           disabled={lines.length === 0}
         >
           <strong className="pf-total-figure">{money(totalMinor)}</strong>
@@ -1524,8 +1529,8 @@ export function PayFlow({
             const rupees = Number(keypad);
             const ok = Number.isFinite(rupees) && keypad !== '';
             if (keypadFor) {
-              if (ok) setRowPrice(keypadFor.key, rupees * 100);
-            } else setOverride(ok && rupees * 100 !== listMinor ? rupees * 100 : null);
+              if (ok) setRowPrice(keypadFor.key, Math.round(rupees * 100));
+            } else setOverride(ok && Math.round(rupees * 100) !== listMinor ? Math.round(rupees * 100) : null);
             setKeypad(null);
             setKeypadFor(null);
           }}
