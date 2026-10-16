@@ -37,6 +37,7 @@ export function DeskServiceGrid({
   productCountOf = () => 0,
   onMoreProduct,
   onLessProduct,
+  initialTab,
 }: {
   /** In display order: most sold first. */
   services: Service[];
@@ -57,11 +58,12 @@ export function DeskServiceGrid({
   productCountOf?: (productId: string) => number;
   onMoreProduct?: (p: Product) => void;
   onLessProduct?: (productId: string) => void;
+  initialTab?: 'services' | 'packages' | 'products';
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
   const [term, setTerm] = useState('');
-  const [tab, setTab] = useState<'services' | 'packages' | 'products'>('services');
+  const [tab, setTab] = useState<'services' | 'packages' | 'products'>(initialTab ?? 'services');
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
   /** Owner, 2026-10-15 — sort beside the search, and the shelf hides what is out of stock unless asked. */

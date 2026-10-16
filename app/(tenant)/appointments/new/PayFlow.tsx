@@ -125,6 +125,7 @@ export function PayFlow({
   timezone,
   backTo,
   wide = false,
+  initialTab,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -151,6 +152,8 @@ export function PayFlow({
    * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
    */
   wide?: boolean;
+  /** Open directly on the Products tab (desk) or Products sheet chip (phone), e.g. from Home's Sell product button. */
+  initialTab?: 'products';
 }) {
   const t = useTranslations('payFlow');
   const tcr = useTranslations('chrome');
@@ -211,7 +214,7 @@ export function PayFlow({
   /** Owner, 2026-10-14 — the bill row the keypad is pricing; null means it is pricing the whole total. */
   const [keypadFor, setKeypadFor] = useState<{ key: string; name: string; list: number } | null>(null);
   const [whoOpen, setWhoOpen] = useState<false | 'find' | 'add'>(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(initialTab === 'products' && !wide);
   const [billOpen, setBillOpen] = useState(false);
   const [saving, setSaving] = useState<PaymentMode | null>(null);
   /*
@@ -1175,7 +1178,7 @@ export function PayFlow({
                 ))}
               </div>
             </section>
-          ) : services.length === 0 ? (
+          ) : services.length === 0 && initialTab !== 'products' ? (
             <section className="pf-wide-mid">
               <div className="empty">{nv.noServicesYet}</div>
             </section>
@@ -1195,6 +1198,7 @@ export function PayFlow({
               productCountOf={productCountOf}
               onMoreProduct={addProduct}
               onLessProduct={(id) => oneLess(`p:${id}`)}
+              initialTab={initialTab}
             />
           )}
           <aside className="pf-wide-right">
@@ -1519,6 +1523,7 @@ export function PayFlow({
           onClose={() => setMenuOpen(false)}
           packageCountOf={packageCountOf}
           onLessPackage={oneLessPackage}
+          initialKind={initialTab}
         />
       ) : null}
       {keypad !== null ? (

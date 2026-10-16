@@ -44,6 +44,7 @@ export function ServiceSheet({
   products,
   productCounts,
   onPickProduct,
+  initialKind,
 }: {
   services: Service[];
   counts: Map<string, number>;
@@ -59,6 +60,7 @@ export function ServiceSheet({
   products?: Product[];
   productCounts?: Map<string, number>;
   onPickProduct?: (p: Product) => void;
+  initialKind?: 'products';
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -69,11 +71,11 @@ export function ServiceSheet({
     box.current?.focus({ preventScroll: true });
   }, []);
 
-  const [term, setTerm] = useState('');
-  const [kind, setKind] = useState('');
   /** The chip that lists combos rather than one kind of service. Not a category name anyone can type. */
   const PACKAGES = '\u0000packages';
   const PRODUCTS = '\u0000products';
+  const [term, setTerm] = useState('');
+  const [kind, setKind] = useState(initialKind === 'products' ? PRODUCTS : '');
   const offers = packages ?? [];
   const shelf = products ?? [];
   const packageMode = kind === PACKAGES;
@@ -187,9 +189,9 @@ export function ServiceSheet({
           uncategorised and combos on sale is exactly one chip plus Packages, and that arithmetic hid the only
           door to the combos (review, 2026-10-11). Packages earns the row on its own.
         */}
-        {kinds.length > 1 || offers.length > 0 || shelf.length > 0 ? (
+        {kinds.length > 1 || offers.length > 0 || shelf.length > 0 || initialKind === 'products' ? (
           <div className="pf-chips pf-menu-kinds" role="group" aria-label={nv.serviceKinds}>
-            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : []), ...(shelf.length > 0 ? [PRODUCTS] : [])].map((k) => (
+            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : []), ...(shelf.length > 0 || initialKind === 'products' ? [PRODUCTS] : [])].map((k) => (
               <button key={k || 'all'} type="button" className={`pf-chip ${kind === k ? 'pf-chip-on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>
                 {k === PACKAGES ? nv.packagesChip : k === PRODUCTS ? t('productsChip') : k || nv.allServices}
               </button>
@@ -197,28 +199,32 @@ export function ServiceSheet({
           </div>
         ) : null}
         {productMode ? (
-          /* A product reads like a service: its picture, its name, its price, and how many are left. */
-          <ul className="pf-client-matches pf-menu-list">
-            {shownProducts.map((p) => {
-              const n = productCounts?.get(p.id) ?? 0;
-              return (
-                <li key={p.id}>
-                  <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPickProduct?.(p)}>
-                    <img className="pf-menu-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
-                    <span className="pf-client-match-name">{p.name}</span>
-                    <span className="pf-client-match-sub">
-                      {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}
-                    </span>
-                    {n > 0 ? (
-                      <span className="pf-menu-count" aria-label={t('onBill', { count: n })}>
-                        {n}
+          shownProducts.length === 0 ? (
+            <p className="pf-client-note">{shelf.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</p>
+          ) : (
+            /* A product reads like a service: its picture, its name, its price, and how many are left. */
+            <ul className="pf-client-matches pf-menu-list">
+              {shownProducts.map((p) => {
+                const n = productCounts?.get(p.id) ?? 0;
+                return (
+                  <li key={p.id}>
+                    <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPickProduct?.(p)}>
+                      <img className="pf-menu-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                      <span className="pf-client-match-name">{p.name}</span>
+                      <span className="pf-client-match-sub">
+                        {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}
                       </span>
-                    ) : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                      {n > 0 ? (
+                        <span className="pf-menu-count" aria-label={t('onBill', { count: n })}>
+                          {n}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )
         ) : packageMode ? (
           /* A combo reads like a service: its picture, its name, what it costs. Tapping the one already on
              the bill takes it off, which is the row's own toggle on the full form too. */
