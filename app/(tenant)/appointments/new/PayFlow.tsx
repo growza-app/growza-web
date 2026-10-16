@@ -889,6 +889,26 @@ export function PayFlow({
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
 
+  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
+  const phoneProducts = useMemo(() => {
+    if (!productsOnly) return [];
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
+    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
+    const drawn = new Set(shown.map((p) => p.id));
+    const byId = new Map(products.map((p) => [p.id, p]));
+    for (const l of lines) {
+      if (!l.product || drawn.has(l.product.id)) continue;
+      const p = byId.get(l.product.id);
+      if (!p) continue;
+      shown.push(p);
+      drawn.add(p.id);
+    }
+    return shown;
+  }, [productsOnly, products, productCategory, lines]);
+
   /* ---------- ③ Done ---------- */
   // The same screen the one-page form ends on (owner, 2026-10-10): `PaymentDone`, sound, Next customer and all.
   if (step === 'done' && sale) {
@@ -1166,26 +1186,6 @@ export function PayFlow({
         </div>
       </div>
     ) : null;
-
-  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
-  const phoneProducts = useMemo(() => {
-    if (!productsOnly) return [];
-    const byCat = productCategory
-      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
-      : products;
-    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
-    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
-    const drawn = new Set(shown.map((p) => p.id));
-    const byId = new Map(products.map((p) => [p.id, p]));
-    for (const l of lines) {
-      if (!l.product || drawn.has(l.product.id)) continue;
-      const p = byId.get(l.product.id);
-      if (!p) continue;
-      shown.push(p);
-      drawn.add(p.id);
-    }
-    return shown;
-  }, [productsOnly, products, productCategory, lines]);
 
   /* ---------- ① on a wide desk (Jira GRW-572): who · what · the bill, side by side ---------- */
   if (wide) {
