@@ -36,7 +36,8 @@ describe('the wide Services screen', () => {
     expect(desk).toMatch(/<ServiceTableRows[\s\S]*?flat[\s\S]*?rows=\{deskPageRows\}/);
     expect(desk).toMatch(/<Pagination page=\{deskPageShown\}/);
     expect(table).toMatch(/const deskRows = useMemo/);
-    expect(desk).toMatch(/onSelect=\{\(s\) => \{\s*setCreating\(false\);\s*setEditing\(s\);/);
+    // Opening a row asks first when the panel holds unsaved changes, and is not offered at all to a suspended business.
+    expect(desk).toMatch(/onSelect=\{\s*writable\s*\?\s*\(s\) =>\s*unlessDirty\(\(\) => \{\s*setDirty\(false\);\s*setCreating\(false\);\s*setEditing\(s\);/);
     expect(rows).toMatch(/onClick=\{onSelect \? \(\) => onSelect\(s\) : undefined\}/);
     // The ··· menu does not also open the row it sits on.
     expect(rows).toMatch(/className="dropdown-anchor svc-row-actions"[^>]*onClick=\{\(e\) => e\.stopPropagation\(\)\}/);

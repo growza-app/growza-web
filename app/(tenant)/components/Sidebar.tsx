@@ -177,10 +177,33 @@ export function Sidebar({
    * group unfolds it again: they asked to be there.
    */
   const [folds, setFolds] = useState<Record<string, boolean>>({});
+  /** The groups the page in view is inside; read by the arrival check below, which runs before they are computed. */
+  const currentLabelsRef = useRef<string[]>([]);
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(FOLDS_KEY);
-      if (saved) setFolds(JSON.parse(saved) as Record<string, boolean>);
+      const stored = saved ? (JSON.parse(saved) as Record<string, boolean>) : {};
+      /*
+       * Release review, 2026-10-16 — a sidebar link is a full page load, so the "going to a screen inside a group
+       * unfolds it" rule cannot see a navigation. A page reached from ANOTHER page of this site was asked for: its
+       * group unfolds. A reload (same path) or a fresh open (no referrer) keeps the fold the person left.
+       */
+      let from = '';
+      try {
+        const ref = document.referrer ? new URL(document.referrer) : null;
+        if (ref && ref.origin === window.location.origin) from = ref.pathname;
+      } catch {
+        /* an odd referrer is no referrer */
+      }
+      if (from && from !== window.location.pathname) {
+        for (const l of currentLabelsRef.current) delete stored[l];
+        try {
+          window.localStorage.setItem(FOLDS_KEY, JSON.stringify(stored));
+        } catch {
+          /* see below */
+        }
+      }
+      if (saved || from) setFolds(stored);
     } catch {
       /* private window or blocked storage: the default is fine */
     }
@@ -194,6 +217,7 @@ export function Sidebar({
     }
   };
   const currentLabels = nav.filter((n) => n.children.length > 0 && n.routes.some((r) => isActive(pathname, r))).map((n) => n.label);
+  currentLabelsRef.current = currentLabels;
   const currentKey = currentLabels.join('|');
   // Not on arrival: reloading the page a group is open on keeps it folded if that is how they left it.
   const arrivedAt = useRef(pathname);
@@ -248,11 +272,11 @@ export function Sidebar({
             const current = item.routes.some((r) => isActive(pathname, r));
             const expandable = item.children.length > 0;
             const expanded = expandable && (folds[item.label] ?? current);
-            const panel = `nav-children-${item.label.replace(/\W+/g, '-')}`;
+            const panel = `nav-children-${nav.indexOf(item)}`;
             return (
               <div key={item.label} className={`nav-group ${item.className ?? ''}`}>
                 <div className="nav-row">
-                  <a href={item.href} className={current ? 'active' : ''} aria-current={current && !expandable ? 'page' : undefined} onClick={close}>
+                  <a href={item.href} className={current ? 'active' : ''} aria-current={current && (!expandable || !expanded) ? 'page' : undefined} onClick={close}>
                     {item.icon}
                     {item.label}
                     {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
