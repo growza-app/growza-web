@@ -59,6 +59,22 @@ function notMarkedIn(register: AttendanceRegister | null): string[] | null {
   return register.rows.filter((r) => r.onDate === register.today && r.rostered && r.status === null).map((r) => r.providerId);
 }
 
+function staffInTimes(register: AttendanceRegister | null): Record<string, string | null> {
+  if (!register) return {};
+  const out: Record<string, string | null> = {};
+  for (const r of register.rows) {
+    if (r.onDate === register.today && r.inAt) out[r.providerId] = r.inAt;
+  }
+  return out;
+}
+
+function absentToday(register: AttendanceRegister | null): string[] {
+  if (!register) return [];
+  return register.rows
+    .filter((r) => r.onDate === register.today && (r.status === 'absent' || r.status === 'leave'))
+    .map((r) => r.providerId);
+}
+
 export default async function DashboardPage() {
   let me: Me;
   try {
@@ -183,6 +199,8 @@ export default async function DashboardPage() {
       tomorrowAppointments={tomorrowAppointments}
       customerStats={stats}
       staffNotMarkedIn={notMarkedIn(register)}
+      staffAbsentIds={absentToday(register)}
+      staffInAt={staffInTimes(register)}
       autopayRenewal={me.autopayRenewal ?? null}
       canPayOnline={me.payments?.online ?? false}
       queue={queue}

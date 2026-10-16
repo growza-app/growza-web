@@ -1759,6 +1759,7 @@
       "fallbackName": "Booking",
       "finished": "Finished",
       "services": "Services",
+      "products": "Products",
       "noStaff": "No {label}",
       "cancelled": "Cancelled",
       "subtotal": "Subtotal",
@@ -3003,6 +3004,7 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving…",
+      "saved": "Saved",
       "needName": "Give the product a name",
       "needPrice": "Give it a price",
       "done": "Done",
@@ -3043,11 +3045,13 @@
     "filters": {
       "label": "Show",
       "all": "All",
+      "inStock": "In stock",
       "low": "Low",
       "out": "Out",
       "retired": "Retired",
       "none": {
         "all": "Nothing on the shelf.",
+        "inStock": "Nothing is in stock right now.",
         "low": "Nothing is running low.",
         "out": "Nothing is out of stock.",
         "retired": "Nothing has been taken off the till."
@@ -3098,7 +3102,9 @@
       "name": "Name (A–Z)",
       "stock": "Stock, lowest first",
       "sold": "Best selling",
-      "price": "Price, highest first"
+      "price": "Price, highest first",
+      "cost": "Cost, highest first",
+      "status": "Status"
     },
     "categories": {
       "title": "Categories",
@@ -3123,5 +3129,55 @@
       "none": "Nothing sold in the last 30 days.",
       "loadFailed": "The sales did not load. Close this and open it again."
     }
+  },
+  "sales": {
+    "title": "Sales",
+    "subtitle": "Every completed bill — what services were done, what products were sold, who paid, and how.",
+    "ranges": {
+      "today": "Today",
+      "last_7_days": "Last 7 days",
+      "last_30_days": "Last 30 days"
+    },
+    "filters": {
+      "all": "All bills ({n})",
+      "products": "Products sold ({n})",
+      "services": "Services only ({n})"
+    },
+    "searchPlaceholder": "Search client, phone, service or product…",
+    "kpi": {
+      "totalSales": "Total sales",
+      "billsCount": "{n, plural, =0 {No bills} one {# bill} other {# bills}}",
+      "servicesSold": "Services sold",
+      "servicesCount": "{n, plural, =0 {No services} one {# service} other {# services}}",
+      "productsSold": "Products sold",
+      "unitsCount": "{n, plural, =0 {No units} one {# unit sold} other {# units sold}}",
+      "paymentSplit": "How they paid",
+      "noPayments": "No payments yet"
+    },
+    "cols": {
+      "when": "When",
+      "client": "Client",
+      "services": "Services",
+      "products": "Products",
+      "staff": "Staff",
+      "payment": "Payment",
+      "total": "Total",
+      "action": ""
+    },
+    "view": "View bill",
+    "noProducts": "—",
+    "noStaff": "Unassigned",
+    "notRecorded": "Not recorded",
+    "empty": {
+      "all": "No completed sales in this period.",
+      "products": "No products were sold in this period.",
+      "services": "No service-only bills in this period.",
+      "search": "Nothing matches \"{q}\".",
+      "hint": "Try a longer date range, or ring up a bill from Record payment."
+    },
+    "recordPayment": "Record payment",
+    "paginationNoun": "bills",
+    "loadFailed": "Could not load sales for this period. Try again.",
+    "retry": "Try again"
   }
 }

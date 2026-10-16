@@ -8,7 +8,7 @@ import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { isLive } from '../lib/go-live';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconHelp, IconOffers, IconPackages, IconChevronRight, IconLogout, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconHelp, IconOffers, IconPackages, IconChevronRight, IconLogout, IconReceipt, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 import { SignOutButton } from '../components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
@@ -59,6 +59,7 @@ export default async function MorePage() {
   const nav = homeCopy(lang, labels);
 
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
+    { href: '/sales', label: nav.nav.sales, icon: <IconReceipt /> },
     // GRW-170 — the register lives here on a phone. The bottom bar is five
     // fixed slots and a sixth would break it, so Attendance rides the menu
     // rather than displacing a tab everybody uses.

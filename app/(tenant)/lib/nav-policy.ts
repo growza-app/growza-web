@@ -50,7 +50,8 @@ const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
 /** May this role see this destination — and, until the business is live, is it one of the setup ones? */
 export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
-  return (live || isSetupDestination(href)) && roleCanSee(href, role, reportTabs);
+  const roleHref = href.startsWith('/sales') ? '/customers' : href;
+  return (live || isSetupDestination(href)) && roleCanSee(roleHref, role, reportTabs);
 }
 
 export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null, reportTabs?: readonly string[], live = true): T[] {

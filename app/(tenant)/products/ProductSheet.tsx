@@ -6,6 +6,7 @@ import { api, ApiError } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { IconCheck } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { codeHolder } from '../lib/product-match';
 import { StockPanel } from './StockPanel';
@@ -32,6 +33,7 @@ export function ProductSheet({
   onDelete,
   onClose,
   inline = false,
+  initialSaved = false,
 }: {
   product: Product | null;
   branchId: string;
@@ -42,6 +44,8 @@ export function ProductSheet({
   onClose: () => void;
   /** The wide desk draws the sheet in its right panel: no backdrop, no dialog, and a save keeps it open. */
   inline?: boolean;
+  /** True when a newly created product on the wide desk mounts in place right after Save. */
+  initialSaved?: boolean;
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
@@ -65,6 +69,7 @@ export function ProductSheet({
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
   const [busy, setBusy] = useState(false);
+  const [justSaved, setJustSaved] = useState(initialSaved);
   const [error, setError] = useState<string | null>(null);
   /**
    * Review, 2026-10-15 — a save that made the product but could not upload its photo. The product now exists, so a
@@ -92,8 +97,25 @@ export function ProductSheet({
   const costRupees = cost.trim() === '' ? null : Number(cost);
   /** The API's own rule (printable characters, no spaces), said here so the owner is told before Save, in their language. */
   const barcodeBad = barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
-  const canSave =
+  const valid =
     name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && !barcodeBad;
+  const dirty = target
+    ? name.trim() !== target.name ||
+      Math.round(rupees * 100) !== Number(target.priceMinor) ||
+      (costRupees === null ? null : Math.round(costRupees * 100)) !== (target.costMinor == null ? null : Number(target.costMinor)) ||
+      (lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0)) !== target.lowStockAt ||
+      (categoryId || null) !== target.categoryId ||
+      (sku.trim() || null) !== (target.sku ?? null) ||
+      (barcode.trim() || null) !== (target.barcode ?? null) ||
+      (gstRateBp === '' ? null : Number(gstRateBp)) !== (target.gstRateBp ?? null) ||
+      (hsn.trim() || null) !== (target.hsn ?? null) ||
+      photo !== null
+    : true;
+  const canSave = valid && dirty;
+  useEffect(() => {
+    if (dirty && justSaved) setJustSaved(false);
+  }, [dirty, justSaved]);
+  const showSaved = justSaved && !dirty && !busy;
   const marginPct = costRupees !== null && rupees > 0 && Number.isFinite(costRupees) ? Math.round(((rupees - costRupees) / rupees) * 100) : null;
   const gstSlabs =
     target?.gstRateBp != null && !GST_SLABS_BP.includes(target.gstRateBp as (typeof GST_SLABS_BP)[number])
@@ -133,13 +155,26 @@ export function ProductSheet({
       if (photo) {
         try {
           saved = await api.uploadProductPhoto(saved.id, photo);
+          setPhoto(null);
+          setImageUrl(saved.imageUrl);
+          if (photoRef.current) photoRef.current.value = '';
         } catch (err) {
           setPending(saved);
           setError(err instanceof ApiError && err.status < 500 ? err.message : t('photoFailed'));
           return;
         }
       }
+      setName(saved.name);
+      setPrice(String(Number(saved.priceMinor) / 100));
+      setCost(saved.costMinor != null ? String(Number(saved.costMinor) / 100) : '');
+      setLowAt(saved.lowStockAt > 0 ? String(saved.lowStockAt) : '');
+      setCategoryId(saved.categoryId ?? '');
+      setSku(saved.sku ?? '');
+      setBarcode(saved.barcode ?? '');
+      setGstRateBp(saved.gstRateBp != null ? String(saved.gstRateBp) : '');
+      setHsn(saved.hsn ?? '');
       setPending(null);
+      setJustSaved(true);
       onSaved(saved);
       if (!inline) onClose();
     } catch (err) {
@@ -178,8 +213,22 @@ export function ProductSheet({
         </button>
         <span className="sheet-head-title">{title}</span>
         {part === 'details' ? (
-          <button type="button" className="sheet-head-save" disabled={busy || !canSave} onClick={() => void submit()}>
-            {busy ? t('saving') : t('save')}
+          <button
+            type="button"
+            className={`sheet-head-save ${showSaved ? 'is-saved' : ''}`}
+            disabled={busy || !canSave}
+            aria-live="polite"
+            onClick={() => void submit()}
+          >
+            {busy ? (
+              t('saving')
+            ) : showSaved ? (
+              <>
+                <IconCheck /> {t('saved')}
+              </>
+            ) : (
+              t('save')
+            )}
           </button>
         ) : (
           <span className="prd-head-spacer" aria-hidden="true" />

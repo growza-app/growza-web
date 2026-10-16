@@ -437,3 +437,42 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ---------- Token Board v2 — column status accents & tabular alignment ---------- */
+@media (min-width: 861px) {
+  .tb-col[data-col='waiting'] {
+    border-top: 3px solid var(--amber);
+  }
+  .tb-col[data-col='with_stylist'] {
+    border-top: 3px solid var(--blue);
+  }
+  .tb-col[data-col='paid'] {
+    border-top: 3px solid var(--accent);
+  }
+}
+.tb-col[data-col='waiting'] .tb-count {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+.tb-col[data-col='with_stylist'] .tb-count {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.tb-count,
+.tb-meta,
+.tb-time {
+  font-variant-numeric: tabular-nums;
+}
+.tb-actions .hm-give {
+  transition:
+    background 0.14s ease,
+    box-shadow 0.14s ease;
+}
+.tb-actions .hm-give:hover {
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+.tb-actions .tb-pay:hover {
+  background: var(--hm-green-soft);
+  box-shadow: inset 0 0 0 1.5px var(--hm-green-deep);
+}
+

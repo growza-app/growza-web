@@ -475,6 +475,23 @@ export interface Appointment {
   locationId?: string;
   /** Jira GRW-405 — booked ahead, not a walk-in recorded as it happened. Optional for an older API. */
   bookedAhead?: boolean;
+  /** Jira GRW-581 — products sold on this visit (`visit_product`). */
+  products?: VisitProductLine[];
+  /** Jira GRW-581 — split payment lines for this visit (`visit_payment`). */
+  payments?: VisitPaymentLine[];
+}
+
+export interface VisitProductLine {
+  productId: string | null;
+  name: string;
+  priceMinor: string;
+  qty: number;
+  paidMinor: string;
+}
+
+export interface VisitPaymentLine {
+  mode: string;
+  amountMinor: string;
 }
 
 export interface SettingsSummary {

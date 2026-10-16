@@ -236,7 +236,7 @@ export function GiveToStaffSheet({
               return (
                 <li key={p.id} className="hm-row hm-row-button">
                   <button type="button" disabled={saving !== null} onClick={() => choose(p)}>
-                    <Avatar name={p.displayName} id={p.id} size={38} />
+                    <Avatar name={p.displayName} id={p.id} size={38} photoUrl={p.photoUrl} />
                     <span className="hm-row-main">
                       <span className="hm-row-name">{p.displayName}</span>
                     </span>
