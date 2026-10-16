@@ -111,13 +111,25 @@ describe('the product sheet carries both codes and the collapsed Tax group', () 
     expect(sheet).toMatch(/gstRateBp: gstRateBp === '' \? null : Number\(gstRateBp\),\s*hsn: hsn\.trim\(\) \|\| null,/);
     expect(sheet).toMatch(/aria-expanded=\{taxOpen\}/);
   });
-  it('every new word ships in English and Hindi', () => {
+  it('every new word ships in English and Hindi, including the API refusal sentences', async () => {
     for (const k of ['sku', 'barcode', 'codesHint', 'barcodeSpaces', 'skuTaken', 'barcodeTaken', 'tax', 'taxNotSet', 'gstRate', 'hsn', 'taxHint']) {
       expect(en[k], k).toBeTruthy();
       expect(hi[k], k).toBeTruthy();
     }
     expect(en.skuTaken).toContain('{name}');
     expect(hi.skuTaken).toContain('{name}');
+    const { localiseApiMessage } = await import('./api-messages');
+    for (const msg of [
+      'Another product at this branch has that SKU',
+      'Another product at this branch has that barcode',
+      'Type the barcode as it is printed, with no spaces',
+      'A SKU is 40 characters at most',
+      'A barcode is 64 characters at most',
+      'GST rate must be between 0% and 28%',
+      'An HSN code is 8 characters at most',
+    ]) {
+      expect(localiseApiMessage(msg, 'hi'), msg).not.toBe(msg);
+    }
   });
 });
 
