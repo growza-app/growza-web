@@ -240,8 +240,9 @@ export interface ProductInput {
   hsn?: string | null;
 }
 
-/** 0116 — why a product's count changed. Six words, the same for every kind of business. */
-export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned';
+/** 0116 · 0122 — why a product's count changed. */
+export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in';
+export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in'>;
 
 export interface StockMovement {
   id: string;
@@ -252,6 +253,8 @@ export interface StockMovement {
   note: string | null;
   byName: string | null;
   visitKey: string | null;
+  /** 0122 — pairs `transfer_out` at the sending branch with `transfer_in` at the receiving branch. */
+  transferId?: string | null;
   createdAt: string;
 }
 
