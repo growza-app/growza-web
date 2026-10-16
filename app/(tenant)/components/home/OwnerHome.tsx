@@ -1130,29 +1130,17 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <h2>{t.quickActionsTitle}</h2>
                 </div>
                 <div className="hm-v3-qgrid">
-                  <a className="hm-v3-qbtn is-primary" href="/appointments/new">
-                    <span className="hm-v3-qicon">
-                      <IconCalendarPlus />
-                    </span>
-                    <strong>{t.nav.newBooking}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-mint" href="/appointments/new">
-                    <span className="hm-v3-qicon">
-                      <IconStaff />
-                    </span>
-                    <strong>{t.walkInAction}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-blue" href="/appointments/new?purpose=payment">
+                  <a className="hm-v3-qbtn is-primary" href="/appointments/new?purpose=payment">
                     <span className="hm-v3-qicon">
                       <IconReceipt />
                     </span>
                     <strong>{t.recordPayment}</strong>
                   </a>
-                  <a className="hm-v3-qbtn is-purple" href="/customers">
+                  <a className="hm-v3-qbtn is-green" href="/appointments/new">
                     <span className="hm-v3-qicon">
-                      <IconStaff />
+                      <IconCalendarPlus />
                     </span>
-                    <strong>{t.addClientAction}</strong>
+                    <strong>{t.nav.newBooking}</strong>
                   </a>
                   <a className="hm-v3-qbtn is-amber" href="/products">
                     <span className="hm-v3-qicon">
@@ -1160,11 +1148,23 @@ export function OwnerHome(p: OwnerHomeProps) {
                     </span>
                     <strong>{t.sellProductAction}</strong>
                   </a>
-                  <a className="hm-v3-qbtn is-green" href="/offers">
+                  <a className="hm-v3-qbtn is-mint" href="/appointments/new">
                     <span className="hm-v3-qicon">
-                      <IconOffers />
+                      <IconStaff />
                     </span>
-                    <strong>{t.nav.offers}</strong>
+                    <strong>{t.walkInAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-purple" href="/customers">
+                    <span className="hm-v3-qicon">
+                      <IconStaff />
+                    </span>
+                    <strong>{t.addClientAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-blue" href="/packages">
+                    <span className="hm-v3-qicon">
+                      <IconPackages />
+                    </span>
+                    <strong>{t.nav.packages}</strong>
                   </a>
                 </div>
               </section>
@@ -1195,7 +1195,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                       return (
                         <a key={prov.id} className="hm-v3-staff-item" href="/providers">
                           <span className={`hm-v3-staff-ring is-${statusKey}`}>
-                            <Avatar name={prov.displayName} id={prov.id} size={46} />
+                            <Avatar name={prov.displayName} id={prov.id} size={36} />
                           </span>
                           <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
                           <span className="hm-v3-staff-role">{t.providerRoleWord}</span>

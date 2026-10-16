@@ -3317,7 +3317,7 @@ button.hm-now-count {
 .hm-desk-v3 {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 .hm-desk-v3.is-settling {
   visibility: hidden;
@@ -3342,8 +3342,8 @@ button.hm-now-count {
 @media (min-width: 861px) {
   .page-body.hm-fit {
     overflow-y: auto;
-    gap: 18px;
-    padding: 16px var(--page-pad-x) 24px;
+    gap: 12px;
+    padding: 10px var(--page-pad-x) 20px;
   }
   .hm-page > .hm-toolbar {
     display: none;
@@ -3356,8 +3356,8 @@ button.hm-now-count {
 /* ---------- 3. Row 1: 4 KPI Cards with Wider Money Hero (.hm-v3-kpis) ---------- */
 .hm-v3-kpis {
   display: grid;
-  grid-template-columns: minmax(340px, 1.45fr) minmax(245px, 1.1fr) repeat(2, minmax(0, 0.92fr));
-  gap: 18px;
+  grid-template-columns: minmax(320px, 1.38fr) minmax(260px, 1.15fr) repeat(2, minmax(0, 0.9fr));
+  gap: 12px;
   align-items: stretch;
 }
 @media (min-width: 861px) and (max-width: 1180px) {
@@ -3369,8 +3369,8 @@ button.hm-now-count {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
-  padding: 16px 18px;
+  gap: 6px;
+  padding: 10px 14px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--hm-line);
   background: var(--surface);
@@ -3379,8 +3379,8 @@ button.hm-now-count {
   min-width: 0;
 }
 .hm-v3-kpi-dark {
-  padding: 18px 22px;
-  gap: 12px;
+  padding: 12px 18px;
+  gap: 6px;
   background: linear-gradient(140deg, var(--hm-hero-a) 0%, var(--hm-hero-b) 100%);
   border-color: rgba(255, 255, 255, 0.1);
   color: var(--surface);
@@ -3389,24 +3389,24 @@ button.hm-now-count {
 .hm-v3-kpi-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 .hm-v3-kpi-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 .hm-v3-kpi-icon svg {
-  width: 1rem;
-  height: 1rem;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 .hm-v3-rupee-glyph {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -3461,30 +3461,30 @@ button.hm-now-count {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
 }
 .hm-v3-kpi-main {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
   min-width: 0;
 }
 .hm-v3-kpi-num-row {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: nowrap;
 }
 .hm-v3-kpi-amount {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-kpi-value {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.025em;
@@ -3494,7 +3494,7 @@ button.hm-now-count {
 .hm-v3-delta-pill {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: rgba(134, 239, 172, 0.22);
   color: var(--accent-soft);
@@ -3503,17 +3503,19 @@ button.hm-now-count {
   white-space: nowrap;
 }
 .hm-v3-kpi-vs {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.76);
+  white-space: nowrap;
 }
 .hm-v3-kpi-sub {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--hm-muted);
+  white-space: nowrap;
 }
 .hm-v3-badge-green {
   display: inline-flex;
@@ -3531,24 +3533,24 @@ button.hm-now-count {
 .hm-v3-mini-bars {
   display: flex;
   align-items: flex-end;
-  gap: 5px;
-  height: 48px;
-  width: 98px;
+  gap: 4px;
+  height: 38px;
+  width: 84px;
   flex-shrink: 0;
 }
 .hm-v3-mini-bars span {
   flex: 1;
   border-radius: 3px 3px 0 0;
   background: rgba(134, 239, 172, 0.34);
-  min-height: 6px;
+  min-height: 5px;
 }
 .hm-v3-mini-bars span.is-peak {
   background: rgba(134, 239, 172, 0.95);
 }
 .hm-v3-mini-bars.is-amber {
-  height: 40px;
-  width: 78px;
-  gap: 4px;
+  height: 34px;
+  width: 68px;
+  gap: 3px;
 }
 .hm-v3-mini-bars.is-amber span {
   background: rgba(217, 119, 6, 0.22);
@@ -3559,8 +3561,8 @@ button.hm-now-count {
 
 /* Smooth area sparkline inside New clients KPI card */
 .hm-v3-mini-wave {
-  width: 6.25rem;
-  height: 2.5rem;
+  width: 4.5rem;
+  height: 1.75rem;
   flex-shrink: 0;
   overflow: visible;
 }
@@ -3577,7 +3579,7 @@ button.hm-now-count {
 /* 3-segment progress track inside Bookings today KPI card */
 .hm-v3-prog-track {
   display: flex;
-  height: 6px;
+  height: 5px;
   border-radius: 999px;
   background: var(--page-bg);
   overflow: hidden;
@@ -3597,7 +3599,7 @@ button.hm-now-count {
 .hm-v3-kpi-foot {
   display: flex;
   align-items: center;
-  padding-top: 8px;
+  padding-top: 6px;
   border-top: 1px solid var(--hm-line);
   font-size: 0.75rem;
   font-weight: 500;
@@ -3609,9 +3611,9 @@ button.hm-now-count {
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot {
-  padding-top: 10px;
+  padding-top: 6px;
   border-top-color: rgba(255, 255, 255, 0.14);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.84);
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot b {
@@ -3637,25 +3639,27 @@ button.hm-now-count {
 }
 .hm-v3-prod-foot {
   justify-content: space-between;
-  align-items: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
 }
 .hm-v3-prod-meta {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   min-width: 0;
 }
 .hm-v3-prod-meta span {
   font-size: 0.75rem;
   color: var(--hm-muted);
+  line-height: 1.15;
 }
 .hm-v3-prod-meta b {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--hm-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 .hm-v3-prod-sold {
   font-size: 0.75rem;
@@ -3668,7 +3672,7 @@ button.hm-now-count {
 .hm-v3-card {
   display: flex;
   flex-direction: column;
-  padding: 18px 20px;
+  padding: 12px 16px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--hm-line);
   background: var(--surface);
@@ -3679,8 +3683,8 @@ button.hm-now-count {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 .hm-v3-card-head h2 {
   margin: 0;
@@ -3740,7 +3744,7 @@ button.hm-now-count {
 .hm-v3-mid {
   display: grid;
   grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
-  gap: 18px;
+  gap: 14px;
   align-items: stretch;
 }
 .hm-v3-appts-card {
@@ -3992,29 +3996,29 @@ button.hm-now-count {
 .hm-v3-right-col {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   min-width: 0;
 }
 .hm-v3-staff-strip {
   display: flex;
   align-items: stretch;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
   scroll-snap-type: x proximity;
   scrollbar-width: thin;
   text-align: center;
 }
 .hm-v3-staff-item {
-  flex: 1 0 96px;
-  min-width: 96px;
+  flex: 1 0 92px;
+  min-width: 92px;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 8px 6px;
+  gap: 2px;
+  padding: 5px 4px;
   border-radius: var(--radius);
   border: 1px solid var(--hm-line);
   background: var(--page-bg);
@@ -4055,7 +4059,7 @@ button.hm-now-count {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -4080,7 +4084,7 @@ button.hm-now-count {
   color: var(--hm-muted);
 }
 .hm-v3-staff-in {
-  margin-top: 2px;
+  margin-top: 1px;
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--hm-muted);
@@ -4099,7 +4103,7 @@ button.hm-now-count {
 .hm-v3-qgrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 .hm-v3-qbtn {
   display: flex;
@@ -4107,9 +4111,9 @@ button.hm-now-count {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 7px;
-  min-height: 74px;
-  padding: 10px 8px;
+  gap: 4px;
+  min-height: 52px;
+  padding: 6px 4px;
   border-radius: var(--radius);
   border: 1px solid var(--hm-line);
   background: var(--page-bg);
@@ -4127,9 +4131,10 @@ button.hm-now-count {
   text-decoration: none;
 }
 .hm-v3-qbtn strong {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--hm-ink);
+  white-space: nowrap;
 }
 .hm-v3-qbtn.is-primary {
   background: var(--accent-deep);
@@ -4152,14 +4157,14 @@ button.hm-now-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
 .hm-v3-qicon svg {
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 .hm-v3-qbtn.is-green .hm-v3-qicon,
 .hm-v3-qbtn.is-mint .hm-v3-qicon {
@@ -4183,7 +4188,7 @@ button.hm-now-count {
 .hm-v3-bot {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 12px;
   align-items: stretch;
 }
 .hm-v3-period-pill {
