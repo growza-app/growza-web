@@ -3068,7 +3068,9 @@
         "used": "Used in-house",
         "damaged": "Damaged",
         "returned": "Returned",
-        "adjusted": "Counted"
+        "adjusted": "Counted",
+        "transfer_out": "Moved out",
+        "transfer_in": "Moved in"
       },
       "howMany": "How many",
       "countIs": "The count is",
@@ -3078,7 +3080,15 @@
         "used": "e.g. Opened for the floor",
         "damaged": "e.g. Leaked in the box",
         "returned": "e.g. Client brought it back",
-        "adjusted": "e.g. Counted the shelf"
+        "adjusted": "e.g. Counted the shelf",
+        "transfer": "e.g. Sent with the evening van"
+      },
+      "transfer": {
+        "open": "Move to another branch",
+        "toBranch": "To branch",
+        "leavesNegativeAt": "That leaves {n} at {branch}",
+        "leavesNegative": "That leaves {n}",
+        "confirmAnyway": "Move anyway"
       },
       "after": "Count will be {n}",
       "confirm": "Confirm",

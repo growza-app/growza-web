@@ -150,3 +150,37 @@ describe('codeHolder — the 409 that names who has the code', () => {
     expect(codeHolder(new Error('offline'))).toBeNull();
   });
 });
+
+describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
+  const panel = readFileSync(resolve(__dirname, '../products/StockPanel.tsx'), 'utf8');
+  const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).products.ledger;
+  const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json'), 'utf8')).products.ledger;
+
+  it('offers Move to another branch only to an owner with at least one other branch', () => {
+    expect(panel).toMatch(/otherBranches = branches\.filter\(\(b\) => b\.id !== product\.locationId\)/);
+    expect(panel).toMatch(
+      /canTransfer =\s*\(session\?\.role === null \|\| session\?\.role === undefined \|\| session\?\.role === 'owner' \|\| session\?\.role === 'manager'\) && otherBranches\.length > 0/,
+    );
+  });
+
+  it('warns and asks for a second confirmation when the transfer leaves negative stock at the source branch (AC-04)', () => {
+    expect(panel).toMatch(/const transferAfter = product\.stock - n;/);
+    expect(panel).toMatch(/const leavesNegative = kind === 'transfer' && canGo && transferAfter < 0;/);
+    expect(panel).toMatch(/if \(kind === 'transfer' && leavesNegative && !warnNegative\) \{\s*setWarnNegative\(true\);\s*return;\s*\}/);
+    expect(panel).toMatch(/warnNegative && leavesNegative \? t\('transfer\.confirmAnyway'\) : t\('confirm'\)/);
+  });
+
+  it('ships transfer_out, transfer_in, and transfer copy in English and Hindi', async () => {
+    expect(en.kind.transfer_out).toBe('Moved out');
+    expect(en.kind.transfer_in).toBe('Moved in');
+    expect(hi.kind.transfer_out).toBeTruthy();
+    expect(hi.kind.transfer_in).toBeTruthy();
+    for (const k of ['open', 'toBranch', 'leavesNegativeAt', 'leavesNegative', 'confirmAnyway']) {
+      expect(en.transfer[k], k).toBeTruthy();
+      expect(hi.transfer[k], k).toBeTruthy();
+    }
+    const { localiseApiMessage } = await import('./api-messages');
+    expect(localiseApiMessage('Choose another branch', 'hi')).not.toBe('Choose another branch');
+  });
+});
+

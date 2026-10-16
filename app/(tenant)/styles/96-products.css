@@ -372,7 +372,8 @@
   color: var(--accent-ink);
 }
 
-.prd-move-adjusted {
+.prd-move-adjusted,
+.prd-move-transfer {
   grid-column: 1 / -1;
 }
 
@@ -391,6 +392,11 @@
 .prd-move-after {
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.prd-move-after-warn {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 .prd-ledger-h {
@@ -603,6 +609,14 @@
 
   .prd-desk-right .prd-sheet .sheet-body {
     overflow-y: auto;
+  }
+
+  .prd-desk-right .prd-moves {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .prd-desk-right .prd-move-adjusted {
+    grid-column: 1 / -1;
   }
 }
 

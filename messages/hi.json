@@ -3068,7 +3068,9 @@
         "used": "खुद इस्तेमाल",
         "damaged": "ख़राब",
         "returned": "वापस आया",
-        "adjusted": "गिना"
+        "adjusted": "गिना",
+        "transfer_out": "दूसरी ब्रांच भेजा",
+        "transfer_in": "दूसरी ब्रांच से आया"
       },
       "howMany": "कितने",
       "countIs": "गिनती है",
@@ -3078,7 +3080,15 @@
         "used": "जैसे काम के लिए खोला",
         "damaged": "जैसे डिब्बे में लीक",
         "returned": "जैसे ग्राहक वापस लाया",
-        "adjusted": "जैसे शेल्फ़ गिनी"
+        "adjusted": "जैसे शेल्फ़ गिनी",
+        "transfer": "जैसे शाम की गाड़ी से भेजा"
+      },
+      "transfer": {
+        "open": "दूसरी ब्रांच भेजें",
+        "toBranch": "किस ब्रांच में",
+        "leavesNegativeAt": "{branch} में {n} बचेंगे",
+        "leavesNegative": "{n} बचेंगे",
+        "confirmAnyway": "फिर भी भेजें"
       },
       "after": "गिनती {n} होगी",
       "confirm": "पक्का",

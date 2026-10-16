@@ -3,9 +3,10 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../lib/api';
-import type { MovementKind, Product, StockMovement } from '../lib/api-types';
+import type { ManualMovementKind, Product, StockMovement } from '../lib/api-types';
 import { intlLocale } from '../lib/format';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { useSession } from '../components/SessionProvider';
 import { stockTone } from './ProductsList';
 
 /**
@@ -16,17 +17,27 @@ import { stockTone } from './ProductsList';
  * ledger: every change, newest first, with who and when. The words are the same for every kind of business:
  * "Used in-house", never "used in the salon".
  */
-export const MOVE_KINDS: readonly Exclude<MovementKind, 'sold'>[] = ['received', 'used', 'damaged', 'returned', 'adjusted'];
+export const MOVE_KINDS: readonly ManualMovementKind[] = ['received', 'used', 'damaged', 'returned', 'adjusted'];
+type ActionKind = ManualMovementKind | 'transfer';
 
 export function StockPanel({ product, onChanged }: { product: Product; onChanged: (p: Product) => void }) {
   const t = useTranslations('products.ledger');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const session = useSession();
+  const branches = session?.branches ?? [];
+  const otherBranches = branches.filter((b) => b.id !== product.locationId);
+  const hereName = branches.find((b) => b.id === product.locationId)?.name ?? null;
+  const canTransfer =
+    (session?.role === null || session?.role === undefined || session?.role === 'owner' || session?.role === 'manager') && otherBranches.length > 0;
+
   const [ledger, setLedger] = useState<StockMovement[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [kind, setKind] = useState<Exclude<MovementKind, 'sold'> | null>(null);
+  const [kind, setKind] = useState<ActionKind | null>(null);
+  const [toBranchId, setToBranchId] = useState('');
   const [qty, setQty] = useState('');
   const [note, setNote] = useState('');
+  const [warnNegative, setWarnNegative] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,20 +56,42 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   }, [product.id]);
 
   const n = Math.trunc(Number(qty));
-  const canGo = kind !== null && qty.trim() !== '' && Number.isFinite(n) && (kind === 'adjusted' ? n >= 0 : n > 0);
+  const canGo =
+    kind !== null &&
+    qty.trim() !== '' &&
+    Number.isFinite(n) &&
+    (kind === 'adjusted' ? n >= 0 : n > 0) &&
+    (kind !== 'transfer' || toBranchId !== '');
+  const transferAfter = product.stock - n;
+  const leavesNegative = kind === 'transfer' && canGo && transferAfter < 0;
 
   const go = async () => {
     if (!kind || !canGo || busy) return;
+    if (kind === 'transfer' && leavesNegative && !warnNegative) {
+      setWarnNegative(true);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      // A recount sends the COUNT: the server sets it under a lock, so a sale since this sheet opened is not undone.
-      const body = kind === 'adjusted' ? { kind, count: n, note: note.trim() || undefined } : { kind, qty: n, note: note.trim() || undefined };
-      const updated = await api.moveStock(product.id, body);
+      let updated: Product;
+      if (kind === 'transfer') {
+        const res = await api.transferProduct(product.id, {
+          toLocationId: toBranchId,
+          qty: n,
+          note: note.trim() || undefined,
+        });
+        updated = res.from;
+      } else {
+        // A recount sends the COUNT: the server sets it under a lock, so a sale since this sheet opened is not undone.
+        const body = kind === 'adjusted' ? { kind, count: n, note: note.trim() || undefined } : { kind, qty: n, note: note.trim() || undefined };
+        updated = await api.moveStock(product.id, body);
+      }
       onChanged(updated);
       setKind(null);
       setQty('');
       setNote('');
+      setWarnNegative(false);
       await load();
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
@@ -74,6 +107,14 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
     hour: 'numeric',
     minute: '2-digit',
   });
+  const afterCount =
+    kind === 'adjusted' ? n : kind === 'received' || kind === 'returned' ? product.stock + n : product.stock - n;
+  const negativeText =
+    leavesNegative
+      ? hereName
+        ? t('transfer.leavesNegativeAt', { n: `−${Math.abs(transferAfter)}`, branch: hereName })
+        : t('transfer.leavesNegative', { n: `−${Math.abs(transferAfter)}` })
+      : '';
 
   return (
     <div className="sheet-body prd-stock">
@@ -93,16 +134,61 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
             onClick={() => {
               setKind(kind === k ? null : k);
               setQty(k === 'adjusted' ? String(product.stock) : '');
+              setWarnNegative(false);
               setError(null);
             }}
           >
             {t(`kind.${k}`)}
           </button>
         ))}
+        {canTransfer ? (
+          <button
+            type="button"
+            className={`prd-move prd-move-transfer ${kind === 'transfer' ? 'is-on' : ''}`}
+            aria-pressed={kind === 'transfer'}
+            disabled={busy}
+            onClick={() => {
+              const next = kind === 'transfer' ? null : 'transfer';
+              setKind(next);
+              if (next === 'transfer') {
+                setToBranchId((prev) => (otherBranches.some((b) => b.id === prev) ? prev : (otherBranches[0]?.id ?? '')));
+              }
+              setQty('');
+              setWarnNegative(false);
+              setError(null);
+            }}
+          >
+            {t('transfer.open')}
+          </button>
+        ) : null}
       </div>
 
       {kind ? (
         <div className="sheet-group prd-move-form">
+          {kind === 'transfer' ? (
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-move-branch">
+                {t('transfer.toBranch')}
+              </label>
+              <div className="sheet-row-value">
+                <select
+                  id="prd-move-branch"
+                  value={toBranchId}
+                  onChange={(e) => {
+                    setToBranchId(e.target.value);
+                    setWarnNegative(false);
+                    setError(null);
+                  }}
+                >
+                  {otherBranches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : null}
           <div className="sheet-row">
             <label className="sheet-row-label" htmlFor="prd-move-qty">
               {kind === 'adjusted' ? t('countIs') : t('howMany')}
@@ -115,7 +201,10 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
                 min={kind === 'adjusted' ? 0 : 1}
                 step={1}
                 value={qty}
-                onChange={(e) => setQty(e.target.value)}
+                onChange={(e) => {
+                  setQty(e.target.value);
+                  setWarnNegative(false);
+                }}
                 autoFocus={autoFocusField(true)}
               />
             </div>
@@ -129,15 +218,11 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
             </div>
           </div>
           <div className="prd-move-go">
-            <span className="prd-move-after">
-              {canGo
-                ? t('after', {
-                    n: kind === 'adjusted' ? n : kind === 'received' || kind === 'returned' ? product.stock + n : product.stock - n,
-                  })
-                : ''}
+            <span className={`prd-move-after ${leavesNegative ? 'prd-move-after-warn' : ''}`} role={warnNegative ? 'alert' : undefined}>
+              {canGo ? (leavesNegative ? negativeText : t('after', { n: afterCount })) : ''}
             </span>
             <button type="button" className="btn" disabled={!canGo || busy} onClick={() => void go()}>
-              {busy ? tc('working') : t('confirm')}
+              {busy ? tc('working') : warnNegative && leavesNegative ? t('transfer.confirmAnyway') : t('confirm')}
             </button>
           </div>
           {error ? (
