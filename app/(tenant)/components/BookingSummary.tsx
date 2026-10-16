@@ -60,10 +60,14 @@ export function BookingSummary({
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff member'), tn('staff'));
   // Jira GRW-314 — what the customer actually paid, less anything cancelled at the till, with the
   // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
-  const { totalMinor: totalPaid, savingsMinor: savings } = bookingBill(booking.appointments);
+  const { totalMinor: servicesPaid, savingsMinor: savings } = bookingBill(booking.appointments);
+  const products = booking.products ?? [];
+  const productsPaid = products.reduce((sum, p) => sum + Number(p.paidMinor || 0), 0);
+  const totalPaid = servicesPaid + productsPaid;
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
   const subtotal = totalPaid + savings;
-  const pricesShown = booking.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null);
+  const pricesShown =
+    booking.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null) || products.length > 0;
   const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
   const dateLine = formatDateWithWeekday(booking.startAt, timezone, { locale });
 
@@ -159,6 +163,21 @@ export function BookingSummary({
           </div>
         ))}
 
+        {products.length > 0 && (
+          <>
+            <div className="summary-section-label">{t('products')}</div>
+            {products.map((p, idx) => (
+              <div className="summary-row" key={`${p.productId ?? p.name}-${idx}`}>
+                <span className="summary-avatar">{p.name.slice(0, 1).toUpperCase()}</span>
+                <div className="summary-info">
+                  <div className="summary-service">{p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}</div>
+                </div>
+                {pricesShown ? <span className="summary-price">{formatMoney(p.paidMinor)}</span> : null}
+              </div>
+            ))}
+          </>
+        )}
+
         {pricesShown && (
         <div className="summary-totals">
           {savings > 0 && (
@@ -177,7 +196,20 @@ export function BookingSummary({
             <span>{t('total')}</span>
             <span className="summary-total-value">{formatMoney(String(totalPaid))}</span>
           </div>
-          {paymentMode && (
+          {booking.payments && booking.payments.length > 1 ? (
+            <div className="summary-line">
+              <span>{t('paidBy')}</span>
+              <span>
+                {booking.payments
+                  .map((pm) =>
+                    (PAYMENT_MODE_KEYS as readonly string[]).includes(pm.mode)
+                      ? `${tc(`pay.${pm.mode as (typeof PAYMENT_MODE_KEYS)[number]}`)} (${formatMoney(pm.amountMinor)})`
+                      : pm.mode,
+                  )
+                  .join(' + ')}
+              </span>
+            </div>
+          ) : paymentMode && (
             <div className="summary-line">
               <span>{t('paidBy')}</span>
               <span>{(PAYMENT_MODE_KEYS as readonly string[]).includes(paymentMode) ? tc(`pay.${paymentMode as (typeof PAYMENT_MODE_KEYS)[number]}`) : paymentMode}</span>

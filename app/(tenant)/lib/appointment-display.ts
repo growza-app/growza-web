@@ -1,4 +1,4 @@
-import type { Appointment } from './api';
+import type { Appointment, VisitPaymentLine, VisitProductLine } from './api';
 
 /** The `status` message group's keys — the label is looked up where the chip is shown. */
 export type StatusKey = 'done' | 'didNotCome' | 'cancelled' | 'moved' | 'reminded' | 'walkIn' | 'confirmed';
@@ -117,6 +117,10 @@ export interface BookingGroup {
   offerTitle: string | null;
   /** Where a moved visit is now: set only when every leg was retired by a move (owner-app audit, 2026-10-10). */
   movedTo: string | null;
+  /** Jira GRW-581 — products sold on this visit (`visit_product`). */
+  products?: VisitProductLine[];
+  /** Jira GRW-581 — split payment lines (`visit_payment`). */
+  payments?: VisitPaymentLine[];
 }
 
 /**
@@ -157,6 +161,8 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
     const totalMin = Math.round(
       sorted.reduce((sum, a) => sum + (new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60000, 0),
     );
+    const products = sorted.find((a) => a.products && a.products.length > 0)?.products ?? first.products;
+    const payments = sorted.find((a) => a.payments && a.payments.length > 0)?.payments ?? first.payments;
     return {
       key,
       appointments: sorted,
@@ -179,6 +185,8 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
       offerTitle: sorted.find((a) => a.offerTitle)?.offerTitle ?? null,
       // The legs move together, so the first leg's new start is the visit's.
       movedTo: sorted.every((a) => a.status === 'cancelled' && a.movedTo) ? first.movedTo! : null,
+      ...(products !== undefined ? { products } : {}),
+      ...(payments !== undefined ? { payments } : {}),
     };
   });
 
