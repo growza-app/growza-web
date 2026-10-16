@@ -1070,6 +1070,51 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
 
             <div className="hm-v3-right-col">
+              {/* Quick actions card — placed first in the right column so primary actions sit at eye level */}
+              <section className="hm-v3-card hm-v3-quick-card">
+                <div className="hm-v3-card-head">
+                  <h2>{t.quickActionsTitle}</h2>
+                </div>
+                <div className="hm-v3-qgrid">
+                  <a className="hm-v3-qbtn is-primary" href="/appointments/new">
+                    <span className="hm-v3-qicon">
+                      <IconCalendarPlus />
+                    </span>
+                    <strong>{t.nav.newBooking}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-mint" href="/appointments/new">
+                    <span className="hm-v3-qicon">
+                      <IconStaff />
+                    </span>
+                    <strong>{t.walkInAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-blue" href="/appointments/new?purpose=payment">
+                    <span className="hm-v3-qicon">
+                      <IconReceipt />
+                    </span>
+                    <strong>{t.recordPayment}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-purple" href="/customers">
+                    <span className="hm-v3-qicon">
+                      <IconStaff />
+                    </span>
+                    <strong>{t.addClientAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-amber" href="/products">
+                    <span className="hm-v3-qicon">
+                      <IconProducts />
+                    </span>
+                    <strong>{t.sellProductAction}</strong>
+                  </a>
+                  <a className="hm-v3-qbtn is-green" href="/offers">
+                    <span className="hm-v3-qicon">
+                      <IconOffers />
+                    </span>
+                    <strong>{t.nav.offers}</strong>
+                  </a>
+                </div>
+              </section>
+
               {/* Staff status card */}
               <section className="hm-v3-card hm-v3-staff-card">
                 <div className="hm-v3-card-head">
@@ -1112,51 +1157,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                     })}
                   </div>
                 )}
-              </section>
-
-              {/* Quick actions card — 3 columns × 2 rows vertical tiles */}
-              <section className="hm-v3-card hm-v3-quick-card">
-                <div className="hm-v3-card-head">
-                  <h2>{t.quickActionsTitle}</h2>
-                </div>
-                <div className="hm-v3-qgrid">
-                  <a className="hm-v3-qbtn is-green" href="/appointments/new">
-                    <span className="hm-v3-qicon">
-                      <IconCalendarPlus />
-                    </span>
-                    <strong>{t.nav.newBooking}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-mint" href="/appointments/new">
-                    <span className="hm-v3-qicon">
-                      <IconStaff />
-                    </span>
-                    <strong>{t.walkInAction}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-blue" href="/appointments/new?purpose=payment">
-                    <span className="hm-v3-qicon">
-                      <IconReceipt />
-                    </span>
-                    <strong>{t.recordPayment}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-purple" href="/customers">
-                    <span className="hm-v3-qicon">
-                      <IconStaff />
-                    </span>
-                    <strong>{t.addClientAction}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-amber" href="/products">
-                    <span className="hm-v3-qicon">
-                      <IconProducts />
-                    </span>
-                    <strong>{t.sellProductAction}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-green" href="/offers">
-                    <span className="hm-v3-qicon">
-                      <IconOffers />
-                    </span>
-                    <strong>{t.nav.offers}</strong>
-                  </a>
-                </div>
               </section>
             </div>
           </div>

@@ -4078,12 +4078,11 @@ button.hm-now-count {
   color: var(--hm-ink);
 }
 
-/* Quick Actions — 3 columns × 2 rows light, airy tiles with tinted icon badges */
-.hm-v3-quick-card {
+/* Quick Actions — 3 columns × 2 rows at the top of the right column */
+.hm-v3-staff-card {
   flex: 1;
 }
 .hm-v3-qgrid {
-  flex: 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
@@ -4094,9 +4093,9 @@ button.hm-now-count {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 8px;
-  min-height: 76px;
-  padding: 12px 8px;
+  gap: 7px;
+  min-height: 74px;
+  padding: 10px 8px;
   border-radius: var(--radius);
   border: 1px solid var(--hm-line);
   background: var(--page-bg);
@@ -4117,6 +4116,23 @@ button.hm-now-count {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--hm-ink);
+}
+.hm-v3-qbtn.is-primary {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: var(--surface);
+}
+.hm-v3-qbtn.is-primary:hover {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  opacity: 0.94;
+}
+.hm-v3-qbtn.is-primary strong {
+  color: var(--surface);
+}
+.hm-v3-qbtn.is-primary .hm-v3-qicon {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--surface);
 }
 .hm-v3-qicon {
   display: inline-flex;
