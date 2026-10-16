@@ -27,6 +27,8 @@ const p = (id: string, codes: { sku?: string; barcode?: string } = {}, stock = 5
   categoryName: null,
   sku: codes.sku ?? null,
   barcode: codes.barcode ?? null,
+  gstRateBp: null,
+  hsn: null,
 });
 
 const shelf = [p('Argan Oil', { sku: 'ARG-100', barcode: '8901234567890' }), p('Argan Mask', { sku: 'ARG-200', barcode: '8901234567891' }), p('Plain Comb')];
@@ -90,7 +92,7 @@ describe('the till hands Enter to the code lookup (AC-07)', () => {
   });
 });
 
-describe('the product sheet carries both codes', () => {
+describe('the product sheet carries both codes and the collapsed Tax group', () => {
   const sheet = readFileSync(resolve(__dirname, '../products/ProductSheet.tsx'), 'utf8');
   const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).products.form;
   const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json'), 'utf8')).products.form;
@@ -103,8 +105,14 @@ describe('the product sheet carries both codes', () => {
     expect(sheet).toMatch(/&& !barcodeBad;/);
     expect(sheet).toMatch(/aria-describedby=\{barcodeBad \? 'prd-barcode-error' : 'prd-codes-hint'\}/);
   });
+  it('FR-03: Tax is collapsed until set or opened, and 0% GST (0 bp) stays distinct from not set (null)', () => {
+    expect(sheet).toMatch(/useState<string>\(product\?\.gstRateBp != null \? String\(product\.gstRateBp\) : ''\)/);
+    expect(sheet).toMatch(/useState\(Boolean\(product && \(product\.gstRateBp != null \|\| product\.hsn\)\)\)/);
+    expect(sheet).toMatch(/gstRateBp: gstRateBp === '' \? null : Number\(gstRateBp\),\s*hsn: hsn\.trim\(\) \|\| null,/);
+    expect(sheet).toMatch(/aria-expanded=\{taxOpen\}/);
+  });
   it('every new word ships in English and Hindi', () => {
-    for (const k of ['sku', 'barcode', 'codesHint', 'barcodeSpaces', 'skuTaken', 'barcodeTaken']) {
+    for (const k of ['sku', 'barcode', 'codesHint', 'barcodeSpaces', 'skuTaken', 'barcodeTaken', 'tax', 'taxNotSet', 'gstRate', 'hsn', 'taxHint']) {
       expect(en[k], k).toBeTruthy();
       expect(hi[k], k).toBeTruthy();
     }

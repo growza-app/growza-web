@@ -22,6 +22,8 @@ import { stockTone } from './ProductsList';
  */
 type Part = 'details' | 'stock' | 'sales';
 
+const GST_SLABS_BP = [0, 500, 1200, 1800, 2800] as const;
+
 export function ProductSheet({
   product,
   branchId,
@@ -55,6 +57,10 @@ export function ProductSheet({
   /** Jira GRW-574 (0119) — the business's own code, and what a scanner reads off the pack. */
   const [sku, setSku] = useState(product?.sku ?? '');
   const [barcode, setBarcode] = useState(product?.barcode ?? '');
+  /** Jira GRW-574 (0120) — optional GST rate (basis points; 0 is 0%, '' is not set) and HSN code, shown when set or opened. */
+  const [gstRateBp, setGstRateBp] = useState<string>(product?.gstRateBp != null ? String(product.gstRateBp) : '');
+  const [hsn, setHsn] = useState(product?.hsn ?? '');
+  const [taxOpen, setTaxOpen] = useState(Boolean(product && (product.gstRateBp != null || product.hsn)));
   const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
@@ -89,6 +95,12 @@ export function ProductSheet({
   const canSave =
     name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && !barcodeBad;
   const marginPct = costRupees !== null && rupees > 0 && Number.isFinite(costRupees) ? Math.round(((rupees - costRupees) / rupees) * 100) : null;
+  const gstSlabs =
+    target?.gstRateBp != null && !GST_SLABS_BP.includes(target.gstRateBp as (typeof GST_SLABS_BP)[number])
+      ? [...GST_SLABS_BP, target.gstRateBp].sort((a, b) => a - b)
+      : GST_SLABS_BP;
+  const taxParts = [gstRateBp !== '' ? `${Number(gstRateBp) / 100}%` : null, hsn.trim() || null].filter(Boolean);
+  const taxSummary = taxParts.length > 0 ? taxParts.join(' · ') : t('taxNotSet');
 
   const fail = (err: unknown) => {
     const holder = codeHolder(err);
@@ -109,6 +121,8 @@ export function ProductSheet({
         categoryId: categoryId || null,
         sku: sku.trim() || null,
         barcode: barcode.trim() || null,
+        gstRateBp: gstRateBp === '' ? null : Number(gstRateBp),
+        hsn: hsn.trim() || null,
       };
       let saved = target
         ? await api.updateProduct(target.id, body)
@@ -371,6 +385,62 @@ export function ProductSheet({
             </div>
           </div>
           <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
+
+          {/* Jira GRW-574 (0120) — optional GST rate and HSN code, collapsed unless set or opened. */}
+          <div className="sheet-group">
+            <button
+              type="button"
+              className="sheet-row pe-disclosure"
+              aria-expanded={taxOpen}
+              onClick={() => setTaxOpen((o) => !o)}
+            >
+              <span className="sheet-row-label">{t('tax')}</span>
+              <span className="sheet-row-value pe-disclosure-value">
+                {taxSummary}
+                <span className="pe-chevron" aria-hidden="true" />
+              </span>
+            </button>
+            {taxOpen ? (
+              <>
+                <div className="sheet-row">
+                  <label className="sheet-row-label" htmlFor="prd-gst">
+                    {t('gstRate')}
+                  </label>
+                  <div className="sheet-row-value">
+                    <select id="prd-gst" value={gstRateBp} aria-describedby="prd-tax-hint" onChange={(e) => setGstRateBp(e.target.value)}>
+                      <option value="">{t('taxNotSet')}</option>
+                      {gstSlabs.map((bp) => (
+                        <option key={bp} value={String(bp)}>
+                          {bp / 100}%
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="sheet-row">
+                  <label className="sheet-row-label" htmlFor="prd-hsn">
+                    {t('hsn')}
+                  </label>
+                  <div className="sheet-row-value">
+                    <input
+                      id="prd-hsn"
+                      type="text"
+                      value={hsn}
+                      placeholder={t('taxNotSet')}
+                      maxLength={8}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      autoComplete="off"
+                      spellCheck={false}
+                      aria-describedby="prd-tax-hint"
+                      onChange={(e) => setHsn(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
+          {taxOpen ? <div id="prd-tax-hint" className="sheet-foot">{t('taxHint')}</div> : null}
           {error ? (
             <div role="alert" className="sheet-foot sheet-foot-error">
               {error}
