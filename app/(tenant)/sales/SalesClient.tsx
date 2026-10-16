@@ -121,9 +121,21 @@ export function filterSalesByWindow(
   const daysBack = range === 'today' ? 0 : range === 'last_7_days' ? 6 : 29;
   const fromISO = new Date(todayMs - daysBack * 86_400_000).toISOString().slice(0, 10);
 
+  return filterSalesByDateRange(rows, fromISO, todayISO, branchId);
+}
+
+/** Filters sale rows by explicit `[fromISO, toISO]` date bounds and branch. */
+export function filterSalesByDateRange(
+  rows: readonly SaleRow[],
+  fromISO: string,
+  toISO: string,
+  branchId: string | null,
+): SaleRow[] {
+  const start = fromISO || '0000-01-01';
+  const end = toISO && toISO >= start ? toISO : start;
   return rows.filter((r) => {
     if (branchId && r.locationId !== branchId) return false;
-    return r.dayISO >= fromISO && r.dayISO <= todayISO;
+    return r.dayISO >= start && r.dayISO <= end;
   });
 }
 
@@ -226,14 +238,18 @@ export function SalesClient({
   appointments,
   timezone,
   todayISO,
+  initialFrom,
+  initialTo,
   initialFilter,
-  initialRange,
+  initialRange: _initialRange,
   initialQuery,
   loadFailed,
 }: {
   appointments: Appointment[];
   timezone: string;
   todayISO: string;
+  initialFrom?: string;
+  initialTo?: string;
   initialFilter: SalesFilter;
   initialRange: SalesRange;
   initialQuery: string;
@@ -248,7 +264,8 @@ export function SalesClient({
   const mayRecordPayment = useMayUse('visit.recordPayment');
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff'), tn('staffTitle'));
 
-  const [range, setRange] = useState<SalesRange>(initialRange);
+  const [fromDate, setFromDate] = useState<string>(initialFrom ?? todayISO);
+  const [toDate, setToDate] = useState<string>(initialTo ?? todayISO);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
   const [search, setSearch] = useState(initialQuery);
   const [page, setPage] = useState(1);
@@ -258,11 +275,25 @@ export function SalesClient({
   const showProductsCol = filter !== 'services';
   const showStaffCol = filter === 'services';
 
+  const applyDates = (nextFrom: string, nextTo: string) => {
+    const safeFrom = nextFrom || todayISO;
+    const safeTo = nextTo && nextTo >= safeFrom ? nextTo : safeFrom;
+    setFromDate(safeFrom);
+    setToDate(safeTo);
+    setPage(1);
+    const params = new URLSearchParams();
+    params.set('date', safeFrom);
+    params.set('to', safeTo);
+    if (filter !== 'all') params.set('filter', filter);
+    if (search.trim()) params.set('q', search.trim());
+    router.replace(`/sales?${params.toString()}`, { scroll: false });
+  };
+
   const allSaleRows = useMemo(() => buildSaleRows(appointments, timezone), [appointments, timezone]);
 
   const windowRows = useMemo(
-    () => filterSalesByWindow(allSaleRows, range, todayISO, branch.choice),
-    [allSaleRows, range, todayISO, branch.choice],
+    () => filterSalesByDateRange(allSaleRows, fromDate, toDate, branch.choice),
+    [allSaleRows, fromDate, toDate, branch.choice],
   );
 
   const counts = useMemo(
@@ -298,7 +329,6 @@ export function SalesClient({
 
   const formatWhen = (row: SaleRow) => {
     const time = formatTime(row.startAt, timezone);
-    if (row.dayISO === todayISO) return time;
     return `${formatDateShort(new Date(`${row.dayISO}T12:00:00`), undefined, locale)} · ${time}`;
   };
 
@@ -330,23 +360,30 @@ export function SalesClient({
           </div>
         ) : null}
 
-        {/* Period & Filter Toolbar */}
+        {/* Date Filter & Search Toolbar */}
         <div className="sls-toolbar">
-          <div className="sls-ranges" role="group" aria-label={t('title')}>
-            {SALES_RANGES.map((r) => (
-              <button
-                key={r}
-                type="button"
-                className={`sls-range-btn ${range === r ? 'is-active' : ''}`}
-                aria-pressed={range === r}
-                onClick={() => {
-                  setRange(r);
-                  setPage(1);
-                }}
-              >
-                {t(`ranges.${r}`)}
-              </button>
-            ))}
+          <div className="sls-dates" role="group" aria-label={t('title')}>
+            <label className="sls-date-field">
+              <span className="sls-date-label">{t('from')}</span>
+              <input
+                type="date"
+                className="sls-date-input"
+                aria-label={t('from')}
+                value={fromDate}
+                onChange={(e) => applyDates(e.target.value, toDate)}
+              />
+            </label>
+            <label className="sls-date-field">
+              <span className="sls-date-label">{t('to')}</span>
+              <input
+                type="date"
+                className="sls-date-input"
+                aria-label={t('to')}
+                value={toDate}
+                min={fromDate}
+                onChange={(e) => applyDates(fromDate, e.target.value)}
+              />
+            </label>
           </div>
 
           <label className="search-wrap sls-search">

@@ -22,6 +22,8 @@ export default async function SalesPage({
   searchParams: Promise<{
     filter?: string;
     range?: string;
+    date?: string;
+    to?: string;
     q?: string;
   }>;
 }) {
@@ -53,14 +55,6 @@ export default async function SalesPage({
   const initialFilter: SalesFilter =
     params.filter === 'products' ? 'products' : params.filter === 'services' ? 'services' : 'all';
 
-  let appointments: Appointment[] = [];
-  let loadFailed = false;
-  try {
-    appointments = await api.appointments(thirtyDaysAgoISO, todayISO, undefined, undefined, { includeSales: true });
-  } catch {
-    loadFailed = true;
-  }
-
   const initialRange: SalesRange =
     params.range === 'today' || params.range === 'last_7_days' || params.range === 'last_30_days'
       ? params.range
@@ -68,11 +62,34 @@ export default async function SalesPage({
         ? 'last_30_days'
         : 'today';
 
+  const isoRe = /^\d{4}-\d{2}-\d{2}$/;
+  const defaultFrom = initialRange === 'last_30_days' ? thirtyDaysAgoISO : todayISO;
+  const initialFrom = params.date && isoRe.test(params.date) ? params.date : defaultFrom;
+  const initialTo =
+    params.to && isoRe.test(params.to) && params.to >= initialFrom
+      ? params.to
+      : params.date && isoRe.test(params.date)
+        ? params.date
+        : todayISO;
+
+  const fetchFrom = initialFrom < thirtyDaysAgoISO ? initialFrom : thirtyDaysAgoISO;
+  const fetchTo = initialTo > todayISO ? initialTo : todayISO;
+
+  let appointments: Appointment[] = [];
+  let loadFailed = false;
+  try {
+    appointments = await api.appointments(fetchFrom, fetchTo, undefined, undefined, { includeSales: true });
+  } catch {
+    loadFailed = true;
+  }
+
   return (
     <SalesClient
       appointments={appointments}
       timezone={timezone}
       todayISO={todayISO}
+      initialFrom={initialFrom}
+      initialTo={initialTo}
       initialFilter={initialFilter}
       initialRange={initialRange}
       initialQuery={params.q ?? ''}

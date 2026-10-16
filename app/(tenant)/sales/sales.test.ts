@@ -254,7 +254,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(filterSalesRows(rows, 'services', '')).toEqual([]);
   });
 
-  it('caps visible product chips per row at MAX_ROW_PRODUCTS (+N more), counts units/services on filter chips, and scopes columns by tab', () => {
+  it('caps visible product chips per row at MAX_ROW_PRODUCTS (+N more), counts units/services on filter chips, scopes columns by tab, and provides From/To date filter with scrollable table', () => {
     const client = here('./SalesClient.tsx');
     const css = here('../styles/99-sales.css');
     expect(MAX_ROW_PRODUCTS).toBe(2);
@@ -266,7 +266,11 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
     expect(client).toContain("t('moreProducts', { n: hiddenProducts })");
     expect(client).toContain('summarizeServices(row.serviceNames, locale)');
+    expect(client).toContain('filterSalesByDateRange(allSaleRows, fromDate, toDate, branch.choice)');
+    expect(client).not.toContain('if (row.dayISO === todayISO) return time;');
     expect(css).toContain('border: 1px solid var(--border)');
+    expect(css).toContain('overflow-y: auto;');
+    expect(css).toContain('position: sticky;');
     expect(css).not.toContain('var(--line)');
     expect(css).not.toContain('var(--card)');
   });

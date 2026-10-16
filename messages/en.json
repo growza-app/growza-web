@@ -3128,6 +3128,8 @@
   "sales": {
     "title": "Sales",
     "subtitle": "Every completed bill — what services were done, what products were sold, who paid, and how.",
+    "from": "From",
+    "to": "To",
     "ranges": {
       "today": "Today",
       "last_7_days": "Last 7 days",

@@ -32,6 +32,38 @@
   flex-wrap: wrap;
 }
 
+.sls-dates {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.sls-date-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sls-date-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sls-date-input {
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .sls-ranges {
   display: inline-flex;
   align-items: center;
@@ -227,7 +259,25 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
+}
+
+@media (min-width: 861px) {
+  .page-body.sls-page {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .sls-table-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .sls-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 }
 
 .sls-table {
