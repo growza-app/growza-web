@@ -243,17 +243,27 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--muted);
-  background: var(--page-bg);
+  color: var(--text);
+  background: var(--slate-soft);
   border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   white-space: nowrap;
 }
 
+.sls-table th:last-child {
+  border-right: 0;
+}
+
 .sls-table td {
-  padding: var(--sp-3) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   vertical-align: middle;
   color: var(--text);
+}
+
+.sls-table td:last-child {
+  border-right: 0;
 }
 
 .sls-table tbody tr:last-child td {
@@ -272,7 +282,7 @@
 
 .sls-table th.is-action,
 .sls-table td.is-action {
-  text-align: right;
+  text-align: center;
   width: 1%;
   white-space: nowrap;
 }
