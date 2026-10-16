@@ -807,6 +807,8 @@ export function PayFlow({
     setError(null);
     setAttemptKey(newAttemptKey());
     clearSplit();
+    void api.products(location).then(setProducts).catch(() => {});
+    if (productsOnly && location) void api.productCategories(location).then(setProductCategories).catch(() => {});
     tokenFilled.current = true; // a token has been paid: a second sale from this page is a plain one
     // The address names the bill being left. After a payment the refresh has already dropped `token` / `visit`, so the
     // "gone" flags are what say the address still carries one: without them the banner stays up over a fresh till.
@@ -1171,7 +1173,8 @@ export function PayFlow({
     const byCat = productCategory
       ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
       : products;
-    const shown = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0).slice(0, TILES);
+    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
+    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
     const drawn = new Set(shown.map((p) => p.id));
     const byId = new Map(products.map((p) => [p.id, p]));
     for (const l of lines) {
@@ -1279,9 +1282,15 @@ export function PayFlow({
                 </button>
               ) : null}
             </div>
-            {badService ? (
+            {productsOnly ? (
+              badService ? (
+                <p className="pf-miss pf-miss-wide" role="alert">
+                  {t('pickProduct')}
+                </p>
+              ) : null
+            ) : badService ? (
               <p className="pf-miss pf-miss-wide" role="alert">
-                {lines.length > 0 ? t('needService') : t(productsOnly ? 'pickProduct' : 'pickOne')}
+                {lines.length > 0 ? t('needService') : t('pickOne')}
               </p>
             ) : null}
             {lines.length === 0 ? (
@@ -1436,14 +1445,16 @@ export function PayFlow({
         tiles below it stay the fast path for what is sold all day.
       */}
       {productsOnly && products.length > 0 ? (
-        <div className="pf-row" role="group" aria-label={t('desk.products')}>
-          <span className="pf-row-label">{t('desk.products')}</span>
-          <div className="pf-who-bar">
-            <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
-              <IconSearch />
-              {t('desk.searchProducts', { count: products.length })}
-            </button>
-            <span className="pf-who-add pf-who-gap" aria-hidden="true" />
+        <>
+          <div className="pf-row" role="group" aria-label={t('desk.products')}>
+            <span className="pf-row-label">{t('desk.products')}</span>
+            <div className="pf-who-bar">
+              <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
+                <IconSearch />
+                {t('desk.searchProducts', { count: products.length })}
+              </button>
+              <span className="pf-who-add pf-who-gap" aria-hidden="true" />
+            </div>
           </div>
           {productCategories.length > 0 ? (
             <div className="pf-chips">
@@ -1478,7 +1489,7 @@ export function PayFlow({
               ) : null}
             </div>
           ) : null}
-        </div>
+        </>
       ) : null}
       {services && (services.length > TILES || products.length > 0 || offers.length > 0) ? (
         /*
@@ -1498,11 +1509,21 @@ export function PayFlow({
         </div>
       ) : null}
 
-      {badService ? (
-        <p className="pf-miss pf-miss-wide" role="alert">
-          {lines.length > 0 ? t('needService') : t('pickOne')}
-        </p>
-      ) : null}
+      {productsOnly ? (
+        badService ? (
+          <p className="pf-miss pf-miss-wide" role="alert">
+            {t('pickProduct')}
+          </p>
+        ) : null
+      ) : (
+        <>
+          {badService ? (
+            <p className="pf-miss pf-miss-wide" role="alert">
+              {lines.length > 0 ? t('needService') : t('pickOne')}
+            </p>
+          ) : null}
+        </>
+      )}
       {productsOnly ? (
         !productsLoaded ? (
           <div className="pf-tiles" aria-busy="true">

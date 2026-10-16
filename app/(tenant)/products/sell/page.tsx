@@ -42,7 +42,11 @@ export default async function SellProductPage({
 
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
 
-  return <SellProductClient timezone={timezone} backTo={params.from === 'products' ? '/products' : undefined} />;
+  return (
+    <div className="page-body">
+      <SellProductClient timezone={timezone} backTo={params.from === 'products' ? '/products' : undefined} />
+    </div>
+  );
 }
 
 export const metadata = screenTitle('Sell product');

@@ -10,6 +10,7 @@ import { productPhotoUrl, servicePhotoUrl } from '../../lib/service-photos';
 import { IconInfo, IconMinus, IconPlus, IconSearch } from '../../components/icons';
 import { PackageSheet } from '../../components/PackageSheet';
 import { MENU_SORTS, sortMenu, type MenuSort } from '../../lib/menu-sort';
+import { NO_CATEGORY } from '../../products/DeskProductCategories';
 
 /**
  * Jira GRW-572 — the middle panel of the wide till: the whole menu as tiles, with a search box above it.
@@ -122,7 +123,7 @@ export function DeskServiceGrid({
 
   const shownProducts = useMemo(() => {
     const byCat = productCategory
-      ? products.filter((p) => (productCategory === '\u0000none' ? p.categoryId === null : p.categoryId === productCategory))
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
       : products;
     const pool = inStockOnly ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
     const q = term.trim();
