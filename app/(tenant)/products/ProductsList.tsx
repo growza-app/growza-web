@@ -172,6 +172,9 @@ export function ProductsList({ products, categories: initialCategories, branchId
       }
     });
 
+  useEffect(() => {
+    if (savedId && (!editing || editing === 'new' || editing.id !== savedId)) setSavedId(null);
+  }, [editing, savedId]);
   const refreshCategories = () =>
     api
       .productCategories(branchId)
@@ -183,7 +186,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
       const next = at >= 0 ? prev.map((x) => (x.id === p.id ? p : x)) : [...prev, p];
       return [...next].sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
     });
-    setSavedId((cur) => (editing === 'new' ? p.id : cur));
+    setSavedId(editing === 'new' ? p.id : null);
     setEditing((cur) => (cur && cur !== 'new' && cur.id === p.id ? p : cur === 'new' ? p : cur));
     void refreshCategories();
     router.refresh();
@@ -281,11 +284,12 @@ export function ProductsList({ products, categories: initialCategories, branchId
       ))}
     </div>
   );
+  const sortReversed = sortDir !== defaultSortDir(sort);
   const sortBox = (
     <label className="prd-sort">
       <span className="prd-sort-l">{t('sort.label')}</span>
       <select
-        value={sort}
+        value={sortReversed ? `${sort}:${sortDir}` : sort}
         onChange={(e) => {
           const next = e.target.value as ShelfSort;
           pick(() => {
@@ -294,6 +298,11 @@ export function ProductsList({ products, categories: initialCategories, branchId
           });
         }}
       >
+        {sortReversed ? (
+          <option value={`${sort}:${sortDir}`} disabled>
+            {sort === 'sold' ? t('sort.sold') : t(`cols.${sort === 'name' ? 'product' : sort}`)} ({sortDir === 'desc' ? '↓' : '↑'})
+          </option>
+        ) : null}
         {SHELF_SORTS.map((s) => (
           <option key={s} value={s}>
             {t(`sort.${s}`)}
