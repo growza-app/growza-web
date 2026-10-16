@@ -19,7 +19,7 @@ import { stockTone } from './ProductsList';
  */
 export const MOVE_KINDS: readonly ManualMovementKind[] = ['received', 'used', 'damaged', 'returned', 'adjusted'];
 export const ADD_KINDS: readonly ManualMovementKind[] = ['received', 'returned', 'adjusted'];
-export const REMOVE_KINDS: readonly ManualMovementKind[] = ['used', 'damaged'];
+export const REMOVE_KINDS: readonly ManualMovementKind[] = ['used', 'damaged', 'adjusted'];
 type ActionKind = ManualMovementKind | 'transfer';
 type TileGroup = 'add' | 'remove' | 'move';
 
@@ -68,6 +68,7 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
 
   const [ledger, setLedger] = useState<StockMovement[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [group, setGroup] = useState<TileGroup | null>(null);
   const [kind, setKind] = useState<ActionKind | null>(null);
   const [toBranchId, setToBranchId] = useState('');
   const [qty, setQty] = useState('');
@@ -90,14 +91,7 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
-  const activeGroup: TileGroup | null =
-    kind === null
-      ? null
-      : kind === 'transfer'
-        ? 'move'
-        : ADD_KINDS.includes(kind)
-          ? 'add'
-          : 'remove';
+  const activeGroup: TileGroup | null = kind === null ? null : group;
   const reasonOptions = activeGroup === 'add' ? ADD_KINDS : activeGroup === 'remove' ? REMOVE_KINDS : null;
 
   const n = Math.trunc(Number(qty));
@@ -133,6 +127,7 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
         updated = await api.moveStock(product.id, body);
       }
       onChanged(updated);
+      setGroup(null);
       setKind(null);
       setQty('');
       setNote('');
@@ -175,7 +170,9 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
           aria-pressed={activeGroup === 'add'}
           disabled={busy}
           onClick={() => {
-            setKind(activeGroup === 'add' ? null : 'received');
+            const closing = activeGroup === 'add';
+            setGroup(closing ? null : 'add');
+            setKind(closing ? null : 'received');
             setQty('');
             setWarnNegative(false);
             setError(null);
@@ -191,7 +188,9 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
           aria-pressed={activeGroup === 'remove'}
           disabled={busy}
           onClick={() => {
-            setKind(activeGroup === 'remove' ? null : 'used');
+            const closing = activeGroup === 'remove';
+            setGroup(closing ? null : 'remove');
+            setKind(closing ? null : 'used');
             setQty('');
             setWarnNegative(false);
             setError(null);
@@ -208,9 +207,10 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
             aria-pressed={activeGroup === 'move'}
             disabled={busy}
             onClick={() => {
-              const next = activeGroup === 'move' ? null : 'transfer';
-              setKind(next);
-              if (next === 'transfer') {
+              const closing = activeGroup === 'move';
+              setGroup(closing ? null : 'move');
+              setKind(closing ? null : 'transfer');
+              if (!closing) {
                 setToBranchId((prev) => (otherBranches.some((b) => b.id === prev) ? prev : (otherBranches[0]?.id ?? '')));
               }
               setQty('');
@@ -238,8 +238,10 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
                     aria-pressed={kind === r}
                     disabled={busy}
                     onClick={() => {
+                      if (r === kind) return;
+                      if (r === 'adjusted') setQty(String(product.stock));
+                      else if (kind === 'adjusted') setQty('');
                       setKind(r);
-                      setQty(r === 'adjusted' ? String(product.stock) : '');
                       setWarnNegative(false);
                       setError(null);
                     }}

@@ -162,7 +162,8 @@ describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
       /canTransfer =\s*\(session\?\.role === null \|\| session\?\.role === undefined \|\| session\?\.role === 'owner' \|\| session\?\.role === 'manager'\) && otherBranches\.length > 0/,
     );
     expect(panel).toMatch(/export const ADD_KINDS: readonly ManualMovementKind\[\] = \['received', 'returned', 'adjusted'\];/);
-    expect(panel).toMatch(/export const REMOVE_KINDS: readonly ManualMovementKind\[\] = \['used', 'damaged'\];/);
+    expect(panel).toMatch(/export const REMOVE_KINDS: readonly ManualMovementKind\[\] = \['used', 'damaged', 'adjusted'\];/);
+    expect(panel).toMatch(/if \(r === kind\) return;/);
     expect(panel).toMatch(/t\('actions\.add'\)/);
     expect(panel).toMatch(/t\('actions\.remove'\)/);
     expect(panel).toMatch(/t\('actions\.move'\)/);
