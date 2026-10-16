@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateShort } from '../lib/format';
@@ -390,7 +390,6 @@ export function SalesClient({
   const [openDropdown, setOpenDropdown] = useState<'branches' | 'clients' | 'services' | 'products' | null>(null);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
-  const filterBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSelectedBranches(branch.choice ? [branch.choice] : []);
@@ -398,18 +397,20 @@ export function SalesClient({
 
   useEffect(() => {
     if (!openDropdown) return;
-    const onDown = (e: MouseEvent) => {
-      if (filterBarRef.current && !filterBarRef.current.contains(e.target as Node)) {
+    const onOutside = (e: MouseEvent | PointerEvent) => {
+      if (!(e.target instanceof Element && e.target.closest('.sls-dd'))) {
         setOpenDropdown(null);
       }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpenDropdown(null);
     };
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener('pointerdown', onOutside, true);
+    document.addEventListener('mousedown', onOutside, true);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('pointerdown', onOutside, true);
+      document.removeEventListener('mousedown', onOutside, true);
       document.removeEventListener('keydown', onKey);
     };
   }, [openDropdown]);
@@ -580,7 +581,7 @@ export function SalesClient({
         ) : null}
 
         {/* Date Filter & Checkbox Filter Toolbar */}
-        <div className="sls-toolbar" ref={filterBarRef}>
+        <div className="sls-toolbar">
           <div className="sls-dates" role="group" aria-label={t('title')}>
             <label className="sls-date-field">
               <span className="sls-date-label">{t('from')}</span>

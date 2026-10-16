@@ -293,6 +293,8 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('summarizeServices(row.serviceNames, locale)');
     expect(client).toContain('filterSalesByDateRange(allSaleRows, fromDate, toDate, effectiveBranches)');
     expect(client).toContain("t('branchFilter')");
+    expect(client).toContain("e.target.closest('.sls-dd')");
+    expect(client).toContain("document.addEventListener('pointerdown', onOutside, true)");
     expect(client).not.toContain('if (row.dayISO === todayISO) return time;');
     expect(css).toContain('border: 1px solid var(--border)');
     expect(css).toContain('overflow-y: auto;');
