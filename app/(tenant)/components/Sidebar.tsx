@@ -19,6 +19,7 @@ import {
   IconOffers,
   IconPackages,
   IconProducts,
+  IconReceipt,
   IconReports,
   IconServices,
   IconSettings,
@@ -139,6 +140,7 @@ export function Sidebar({
       icon: <IconAppointments />,
       children: [{ href: '/availability', label: t.nav.freeTimes }],
     },
+    { href: '/sales', label: t.nav.sales, icon: <IconReceipt /> },
     { href: '/customers', label: t.nav.clients, icon: <IconUserPlus /> },
     {
       href: '',

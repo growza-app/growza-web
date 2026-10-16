@@ -363,6 +363,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     nav: {
       home: S('Home', 'होम'),
       bookings: hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments),
+      sales: S('Sales', 'बिक्री'),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
       staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),

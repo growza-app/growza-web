@@ -939,7 +939,7 @@ export function OwnerHome(p: OwnerHomeProps) {
             </a>
 
             {/* 4. Products sold */}
-            <a className="hm-v3-kpi hm-v3-kpi-link" href="/products">
+            <a className="hm-v3-kpi hm-v3-kpi-link" href="/sales?filter=products">
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-amber">
                   <IconProducts />
