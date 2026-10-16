@@ -95,6 +95,12 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(filterSalesByWindow(rows, 'today', '2026-10-16', null).map((r) => r.key)).toEqual(['g1']);
     expect(filterSalesByWindow(rows, 'last_7_days', '2026-10-16', null).map((r) => r.key)).toEqual(['g1', 'g2']);
     expect(filterSalesByWindow(rows, 'last_30_days', '2026-10-16', 'loc-1').map((r) => r.key)).toEqual(['g1', 'g3']);
+    expect(filterSalesByWindow(rows, 'last_30_days', '2026-10-16', ['loc-1', 'loc-2']).map((r) => r.key)).toEqual([
+      'g1',
+      'g2',
+      'g3',
+    ]);
+    expect(filterSalesByWindow(rows, 'last_30_days', '2026-10-16', ['loc-2']).map((r) => r.key)).toEqual(['g2']);
   });
 
   it('filters sales by Products sold vs Services only and searches client, phone, service, or product', () => {
@@ -285,7 +291,8 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
     expect(client).toContain("t('moreProducts', { n: hiddenProducts })");
     expect(client).toContain('summarizeServices(row.serviceNames, locale)');
-    expect(client).toContain('filterSalesByDateRange(allSaleRows, fromDate, toDate, branch.choice)');
+    expect(client).toContain('filterSalesByDateRange(allSaleRows, fromDate, toDate, effectiveBranches)');
+    expect(client).toContain("t('branchFilter')");
     expect(client).not.toContain('if (row.dayISO === todayISO) return time;');
     expect(css).toContain('border: 1px solid var(--border)');
     expect(css).toContain('overflow-y: auto;');

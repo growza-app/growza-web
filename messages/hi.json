@@ -3140,6 +3140,8 @@
       "products": "सामान बिका ({n})",
       "services": "सेवाएँ बिकीं ({n})"
     },
+    "branchFilter": "ब्रांच",
+    "branchSearchPlaceholder": "ब्रांच खोजें…",
     "clientFilter": "ग्राहक",
     "clientSearchPlaceholder": "ग्राहक या फ़ोन खोजें…",
     "itemFilterAll": "सेवाएँ और सामान",

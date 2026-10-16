@@ -120,7 +120,7 @@ export function filterSalesByWindow(
   rows: readonly SaleRow[],
   range: SalesRange,
   todayISO: string,
-  branchId: string | null,
+  branchId: string | readonly string[] | null,
 ): SaleRow[] {
   const todayMs = new Date(`${todayISO}T00:00:00Z`).getTime();
   const daysBack = range === 'today' ? 0 : range === 'last_7_days' ? 6 : 29;
@@ -129,22 +129,30 @@ export function filterSalesByWindow(
   return filterSalesByDateRange(rows, fromISO, todayISO, branchId);
 }
 
-/** Filters sale rows by explicit `[fromISO, toISO]` date bounds and branch. */
+/** Filters sale rows by explicit `[fromISO, toISO]` date bounds and one or more branches. */
 export function filterSalesByDateRange(
   rows: readonly SaleRow[],
   fromISO: string,
   toISO: string,
-  branchId: string | null,
+  branchId: string | readonly string[] | null,
 ): SaleRow[] {
   const start = fromISO || '0000-01-01';
   const end = toISO && toISO >= start ? toISO : start;
+  const branchSet = Array.isArray(branchId)
+    ? branchId.length > 0
+      ? new Set(branchId)
+      : null
+    : typeof branchId === 'string' && branchId
+      ? new Set([branchId])
+      : null;
   return rows.filter((r) => {
-    if (branchId && r.locationId !== branchId) return false;
+    if (branchSet && (!r.locationId || !branchSet.has(r.locationId))) return false;
     return r.dayISO >= start && r.dayISO <= end;
   });
 }
 
 export interface SalesRowFilterExtra {
+  selectedBranches?: readonly string[];
   selectedClients?: readonly string[];
   selectedServices?: readonly string[];
   selectedProducts?: readonly string[];
@@ -167,6 +175,12 @@ export function filterSalesRows(
     if (filter === 'services') return r.serviceNames.length > 0;
     return true;
   });
+
+  const selectedBranches = extra?.selectedBranches ?? [];
+  if (selectedBranches.length > 0) {
+    const branchSet = new Set(selectedBranches);
+    pool = pool.filter((r) => Boolean(r.locationId && branchSet.has(r.locationId)));
+  }
 
   const selectedClients = extra?.selectedClients ?? [];
   if (selectedClients.length > 0) {
@@ -363,16 +377,24 @@ export function SalesClient({
   const [toDate, setToDate] = useState<string>(initialTo ?? todayISO);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
   const [search, setSearch] = useState(initialQuery);
+  const [selectedBranches, setSelectedBranches] = useState<string[]>(() =>
+    branch.choice ? [branch.choice] : [],
+  );
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [branchQuery, setBranchQuery] = useState('');
   const [clientQuery, setClientQuery] = useState(initialQuery);
   const [serviceQuery, setServiceQuery] = useState('');
   const [productQuery, setProductQuery] = useState('');
-  const [openDropdown, setOpenDropdown] = useState<'clients' | 'services' | 'products' | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<'branches' | 'clients' | 'services' | 'products' | null>(null);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSelectedBranches(branch.choice ? [branch.choice] : []);
+  }, [branch.choice]);
 
   useEffect(() => {
     if (!openDropdown) return;
@@ -411,10 +433,19 @@ export function SalesClient({
 
   const allSaleRows = useMemo(() => buildSaleRows(appointments, timezone), [appointments, timezone]);
 
+  const effectiveBranches = branch.pinned ? branch.choice : selectedBranches;
+
   const windowRows = useMemo(
-    () => filterSalesByDateRange(allSaleRows, fromDate, toDate, branch.choice),
-    [allSaleRows, fromDate, toDate, branch.choice],
+    () => filterSalesByDateRange(allSaleRows, fromDate, toDate, effectiveBranches),
+    [allSaleRows, fromDate, toDate, effectiveBranches],
   );
+
+  const branchOptions = useMemo(() => {
+    const list = [...branch.branches].sort((a, b) => a.name.localeCompare(b.name));
+    const bq = branchQuery.trim().toLowerCase();
+    if (!bq) return list;
+    return list.filter((b) => b.name.toLowerCase().includes(bq));
+  }, [branch.branches, branchQuery]);
 
   const clientOptions = useMemo(() => {
     const seen = new Map<string, { key: string; name: string; phone: string | null }>();
@@ -503,6 +534,11 @@ export function SalesClient({
   const rowAmountMinor = (row: SaleRow) =>
     filter === 'products' ? row.productsMinor : filter === 'services' ? row.servicesMinor : row.totalMinor;
 
+  const toggleBranch = (id: string) => {
+    setSelectedBranches((prev) => (prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]));
+    setPage(1);
+  };
+
   const toggleClient = (key: string) => {
     setSelectedClients((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
     setPage(1);
@@ -570,6 +606,73 @@ export function SalesClient({
           </div>
 
           <div className="sls-filter-bar">
+            {/* 0. Branch multi-select checkbox + search filter */}
+            {!branch.pinned ? (
+              <div className="sls-dd">
+                <button
+                  type="button"
+                  className={`sls-dd-btn ${selectedBranches.length > 0 ? 'is-active' : ''}`}
+                  aria-expanded={openDropdown === 'branches'}
+                  onClick={() => setOpenDropdown((v) => (v === 'branches' ? null : 'branches'))}
+                >
+                  <span>
+                    {t('branchFilter')}
+                    {selectedBranches.length > 0 ? ` (${selectedBranches.length})` : ''}
+                  </span>
+                  <IconChevronDown />
+                </button>
+
+                {openDropdown === 'branches' ? (
+                  <div className="sls-dd-menu" role="group" aria-label={t('branchFilter')}>
+                    <div className="sls-dd-head">
+                      <label className="search-wrap sls-dd-search">
+                        <IconSearch />
+                        <input
+                          type="text"
+                          className="search-input search-input-bare"
+                          placeholder={t('branchSearchPlaceholder')}
+                          value={branchQuery}
+                          onChange={(e) => setBranchQuery(e.target.value)}
+                        />
+                      </label>
+                      {selectedBranches.length > 0 || branchQuery.trim() ? (
+                        <button
+                          type="button"
+                          className="sls-dd-clear"
+                          onClick={() => {
+                            setSelectedBranches([]);
+                            setBranchQuery('');
+                            setPage(1);
+                          }}
+                        >
+                          {t('clearFilter')}
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="sls-dd-list">
+                      {branchOptions.length === 0 ? (
+                        <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                      ) : (
+                        branchOptions.map((b) => {
+                          const checked = selectedBranches.includes(b.id);
+                          return (
+                            <label key={b.id} className="sls-check-row">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleBranch(b.id)}
+                              />
+                              <span className="sls-check-main">{b.name}</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             {/* 1. Client / Phone checkbox + search filter */}
             <div className="sls-dd">
               <button

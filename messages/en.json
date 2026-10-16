@@ -3140,6 +3140,8 @@
       "products": "Products sold ({n})",
       "services": "Services sold ({n})"
     },
+    "branchFilter": "Branches",
+    "branchSearchPlaceholder": "Search branch…",
     "clientFilter": "Clients",
     "clientSearchPlaceholder": "Search client or phone…",
     "itemFilterAll": "Services & Products",
