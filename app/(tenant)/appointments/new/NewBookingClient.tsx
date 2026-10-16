@@ -105,7 +105,8 @@ export function NewBookingClient({
   const billKey = searchParams.get('token') ?? searchParams.get('visit') ?? 'walk-in';
   const another = () => {
     setRun((n) => n + 1);
-    if (token) router.replace(`/appointments/new?purpose=payment${full ? '&full=1' : ''}`);
+    // `tokenGone` too: the refresh after a payment has already dropped `token`, but the address still names it.
+    if (token || tokenGone) router.replace(`/appointments/new?purpose=payment${full ? '&full=1' : ''}`);
   };
 
   if (quick && !settlingBooking && layout === 'unknown') return <div className="pf" aria-busy="true" />;

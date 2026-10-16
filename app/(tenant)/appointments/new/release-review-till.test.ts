@@ -19,6 +19,9 @@ describe('release review, 2026-10-16 — the till', () => {
     const next = flow.slice(flow.indexOf('const nextCustomer = () => {'), flow.indexOf('A sale needs somebody'));
     expect(next).toMatch(/if \(token \|\| tokenGone \|\| visit \|\| visitGone\) router\.replace\('\/appointments\/new\?purpose=payment'\);/);
   });
+  it('the one-page form\'s Next customer drops the paid token\'s address too', () => {
+    expect(client).toMatch(/if \(token \|\| tokenGone\) router\.replace\(`\/appointments\/new\?purpose=payment\$\{full \? '&full=1' : ''\}`\);/);
+  });
   it('the large-amount question is drawn on the UPI QR screen too', () => {
     const qr = flow.slice(flow.indexOf("if (step === 'qr' && paymentQr)"), flow.indexOf('The four payment tiles'));
     expect(qr).toMatch(/\{dialog\}/);
