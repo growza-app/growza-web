@@ -412,7 +412,8 @@
  */
 @media (max-width: 860px) and (max-height: 700px) {
   .sheet-photo-why,
-  .sheet-label-price + .sheet-group + .sheet-foot:not(.sheet-foot-error) {
+  .sheet-label-price + .sheet-group + .sheet-foot:not(.sheet-foot-error),
+  .prd-sheet .sheet-foot:not(.sheet-foot-error) {
     display: none;
   }
   .sheet-head {

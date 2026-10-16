@@ -12,7 +12,8 @@ import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useWritable } from '../components/SessionProvider';
 import { IconPlus, IconSearch } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
-import { asMinor, matchItems } from '../lib/service-match';
+import { matchItems } from '../lib/service-match';
+import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
 import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from './DeskProductCategories';
 
@@ -37,7 +38,10 @@ export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): 
 export const shelfWorthMinor = (rows: readonly Pick<Product, 'stock' | 'priceMinor' | 'active'>[]): number =>
   rows.reduce((sum, p) => sum + (p.active && p.stock > 0 ? p.stock * Number(p.priceMinor) : 0), 0);
 
-/** The category first, the chip second, then the search — the same spelling-tolerant matcher the till uses (GRW-375), from the second letter. */
+/**
+ * The category first, the chip second, then the search — the same spelling-tolerant matcher the till uses (GRW-375), from the second letter.
+ * Jira GRW-574 — the search also finds a product by its SKU or barcode, whole or from the start.
+ */
 export function filterShelf(rows: readonly Product[], filter: ShelfFilter, search: string, category: string = ALL_CATEGORIES): Product[] {
   const pool = rows.filter((p) => {
     if (category === NO_CATEGORY ? p.categoryId !== null : category !== ALL_CATEGORIES && p.categoryId !== category) return false;
@@ -49,12 +53,7 @@ export function filterShelf(rows: readonly Product[], filter: ShelfFilter, searc
     return true;
   });
   const q = search.trim();
-  return q.length >= 2
-    ? matchItems(
-        pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
-        q,
-      )
-    : pool;
+  return q.length >= 2 ? matchItems(pool.map(productMatchable), q) : pool;
 }
 
 export function sortShelf(rows: readonly Product[], sort: ShelfSort): Product[] {
