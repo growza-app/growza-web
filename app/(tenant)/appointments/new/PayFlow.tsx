@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
-import { fixVisitHref } from '../../lib/pay-token';
+import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
 import type { Appointment, Offer, PaymentMode, Product, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
@@ -771,7 +771,9 @@ export function PayFlow({
     setAttemptKey(newAttemptKey());
     clearSplit();
     tokenFilled.current = true; // a token has been paid: a second sale from this page is a plain one
-    if (token) router.replace('/appointments/new?purpose=payment');
+    // The address names the bill being left. After a payment the refresh has already dropped `token` / `visit`, so the
+    // "gone" flags are what say the address still carries one: without them the banner stays up over a fresh till.
+    if (token || tokenGone || visit || visitGone) router.replace(nextCustomerHref({ from: backTo ? 'bookings' : undefined }));
     setStep('what');
   };
 
