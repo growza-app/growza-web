@@ -2,9 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useNewVisitCopy } from '../../lib/use-copy';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Offer, Product, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
+import { productByCode, productMatchable } from '../../lib/product-match';
 import { productPhotoUrl, servicePhotoUrl } from '../../lib/service-photos';
 import { IconInfo, IconMinus, IconPlus, IconSearch } from '../../components/icons';
 import { PackageSheet } from '../../components/PackageSheet';
@@ -121,11 +122,23 @@ export function DeskServiceGrid({
         (p) => p.name,
         (p) => asMinor(p.priceMinor),
       );
-    return matchItems(
-      pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
-      q,
-    );
+    return matchItems(pool.map(productMatchable), q);
   }, [products, term, sort, inStockOnly, productCountOf]);
+
+  /**
+   * Jira GRW-574 (AC-07) — a barcode scanned, or a code typed, then Enter on the Products tab: that product goes on
+   * the bill once and the box clears for the next scan. A scanner is a keyboard that types fast and presses Enter.
+   * Anything that is not exactly one product's code is left alone, so Enter after a name does what it did before.
+   */
+  const onSearchKey = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || e.nativeEvent.isComposing || tab !== 'products' || !onMoreProduct) return;
+    const hit = productByCode(products, term);
+    if (!hit) return;
+    e.preventDefault();
+    if (full && productCountOf(hit.id) === 0) return;
+    onMoreProduct(hit);
+    setTerm('');
+  };
 
   const shown = useMemo(() => {
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
@@ -169,6 +182,7 @@ export function DeskServiceGrid({
             type="search"
             value={term}
             onChange={(e) => setTerm(e.target.value)}
+            onKeyDown={onSearchKey}
             placeholder={t('desk.search', { count: services.length })}
             aria-label={t('desk.search', { count: services.length })}
             autoComplete="off"

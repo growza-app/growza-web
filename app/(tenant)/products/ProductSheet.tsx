@@ -21,6 +21,18 @@ import { stockTone } from './ProductsList';
  */
 type Part = 'details' | 'stock' | 'sales';
 
+/**
+ * Jira GRW-574 — a 409 for a SKU or barcode another product at the branch holds (or took back when it was brought
+ * back from retired). The API names that product in `existing`; the sheet says its name in the page's language.
+ */
+export function codeHolder(err: unknown): { field: 'sku' | 'barcode'; name: string } | null {
+  if (!(err instanceof ApiError) || err.status !== 409) return null;
+  const body = err.body as { field?: unknown; existing?: { name?: unknown } } | null | undefined;
+  const field = body?.field;
+  const name = body?.existing?.name;
+  return (field === 'sku' || field === 'barcode') && typeof name === 'string' ? { field, name } : null;
+}
+
 export function ProductSheet({
   product,
   branchId,
@@ -51,6 +63,9 @@ export function ProductSheet({
   const [cost, setCost] = useState(product?.costMinor != null ? String(Math.round(Number(product.costMinor) / 100)) : '');
   const [lowAt, setLowAt] = useState(product && product.lowStockAt > 0 ? String(product.lowStockAt) : '');
   const [categoryId, setCategoryId] = useState<string>(product?.categoryId ?? '');
+  /** Jira GRW-574 (0119) — the business's own code, and what a scanner reads off the pack. */
+  const [sku, setSku] = useState(product?.sku ?? '');
+  const [barcode, setBarcode] = useState(product?.barcode ?? '');
   const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
@@ -71,10 +86,17 @@ export function ProductSheet({
 
   const rupees = Number(price);
   const costRupees = cost.trim() === '' ? null : Number(cost);
-  const canSave = name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0));
+  /** The API's own rule (printable characters, no spaces), said here so the owner is told before Save, in their language. */
+  const barcodeBad = barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
+  const canSave =
+    name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && !barcodeBad;
   const marginPct = costRupees !== null && rupees > 0 && Number.isFinite(costRupees) ? Math.round(((rupees - costRupees) / rupees) * 100) : null;
 
-  const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+  const fail = (err: unknown) => {
+    const holder = codeHolder(err);
+    if (holder) setError(t(holder.field === 'sku' ? 'skuTaken' : 'barcodeTaken', { name: holder.name }));
+    else setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+  };
 
   const submit = async () => {
     if (!canSave || busy) return;
@@ -87,6 +109,8 @@ export function ProductSheet({
         costMinor: costRupees === null ? null : Math.round(costRupees * 100),
         lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
         categoryId: categoryId || null,
+        sku: sku.trim() || null,
+        barcode: barcode.trim() || null,
       };
       let saved = target
         ? await api.updateProduct(target.id, body)
@@ -269,6 +293,57 @@ export function ProductSheet({
             </div>
           </div>
           <div className="sheet-foot">{t('costHint')}</div>
+
+          {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
+          <div className="sheet-group">
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-sku">
+                {t('sku')}
+              </label>
+              <div className="sheet-row-value">
+                <input
+                  id="prd-sku"
+                  type="text"
+                  value={sku}
+                  placeholder={tc('optional')}
+                  maxLength={40}
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(e) => setSku(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-barcode">
+                {t('barcode')}
+              </label>
+              <div className="sheet-row-value">
+                <input
+                  id="prd-barcode"
+                  type="text"
+                  value={barcode}
+                  placeholder={tc('optional')}
+                  maxLength={64}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-invalid={barcodeBad || undefined}
+                  aria-describedby={barcodeBad ? 'prd-barcode-error' : undefined}
+                  onChange={(e) => setBarcode(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          {barcodeBad ? (
+            <div id="prd-barcode-error" className="sheet-foot sheet-foot-error">
+              {t('barcodeSpaces')}
+            </div>
+          ) : (
+            <div className="sheet-foot">{t('codesHint')}</div>
+          )}
 
           <div className="sheet-group">
             {!product ? (

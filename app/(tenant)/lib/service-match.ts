@@ -35,6 +35,12 @@ export interface Matchable<T> {
    * Absent means this kind of thing has no price to search; `null` means this one has none set.
    */
   priceMinor?: number | null;
+  /**
+   * Jira GRW-574 — a product's barcode and SKU. Matched whole or from the start, without case, and never by
+   * spelling: a code one character off is another product, and close-enough digits would answer a scan with its
+   * neighbours on the shelf.
+   */
+  codes?: ReadonlyArray<string | null>;
 }
 
 /** A stored price as a number, keeping "no price" apart from zero — `Number(null)` and `Number('')` are both 0. */
@@ -199,6 +205,28 @@ export function priceAsked(query: string): number | null {
 const PRICE_SCORE = 1000;
 
 /**
+ * Jira GRW-574 — a code typed whole, then a code typed from its start: under an exact price (a number that is a
+ * price was asked as a price) and over any name, because a code is meant to name one thing.
+ */
+const CODE_EXACT_SCORE = 900;
+const CODE_PREFIX_SCORE = 800;
+
+const normCode = (s: string): string => s.trim().toLowerCase();
+
+/** How well a typed code matches a candidate's codes; 0 for none. Two characters before a code matches from its start. */
+function codeScore(codes: ReadonlyArray<string | null> | undefined, typed: string): number {
+  if (!codes || typed === '') return 0;
+  let best = 0;
+  for (const c of codes) {
+    if (!c) continue;
+    const code = normCode(c);
+    if (code === typed) return CODE_EXACT_SCORE;
+    if (typed.length >= 2 && code.startsWith(typed)) best = CODE_PREFIX_SCORE;
+  }
+  return best;
+}
+
+/**
  * Ranks `candidates` against what was typed: real matches only, best first.
  *
  * An empty query returns everything at score 0 in the given order, so a caller
@@ -210,12 +238,30 @@ const PRICE_SCORE = 1000;
  */
 export function matchAll<T>(candidates: ReadonlyArray<Matchable<T>>, query: string): Array<MatchResult<T>> {
   const asked = priceAsked(query);
-  if (asked === null) return byText(candidates, query);
+  const typedCode = normCode(query);
+  const anyCodes = typedCode !== '' && candidates.some((c) => c.codes?.some(Boolean));
+  if (asked === null && !anyCodes) return byText(candidates, query);
 
   const scores = new Map<T, number>();
   for (const r of byText(candidates, query)) scores.set(r.item, r.score);
-  for (const c of candidates) if (c.priceMinor != null && c.priceMinor === asked) scores.set(c.item, PRICE_SCORE);
+  for (const c of candidates) {
+    if (asked !== null && c.priceMinor != null && c.priceMinor === asked) scores.set(c.item, PRICE_SCORE);
+    const byCode = codeScore(c.codes, typedCode);
+    if (byCode > (scores.get(c.item) ?? 0)) scores.set(c.item, byCode);
+  }
   return [...scores].map(([item, score]) => ({ item, score })).sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Jira GRW-574 — the one candidate whose code is exactly what was typed or scanned, for Enter at the till. Null for
+ * none, and null for more than one (one product's barcode is another's SKU): adding the wrong bottle is worse than
+ * adding none, and the list under the box still shows both.
+ */
+export function exactCode<T>(candidates: ReadonlyArray<Matchable<T>>, query: string): T | null {
+  const typed = normCode(query);
+  if (typed === '') return null;
+  const hits = candidates.filter((c) => c.codes?.some((code) => code != null && normCode(code) === typed));
+  return hits.length === 1 ? hits[0]!.item : null;
 }
 
 /** The spelling match: everything above except the price, and what `matchAll` meant before prices. */

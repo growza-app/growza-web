@@ -78,6 +78,12 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Owner, 2026-10-14 — the till sells products.
   'That product is not on the shelf': 'वह सामान शेल्फ़ पर नहीं है',
   'That product is sold at another branch': 'वह सामान दूसरी ब्रांच में बिकता है',
+  // Jira GRW-574 — a product's SKU and barcode (0119).
+  'Another product at this branch has that SKU': 'इस ब्रांच में किसी दूसरे सामान का यही SKU है',
+  'Another product at this branch has that barcode': 'इस ब्रांच में किसी दूसरे सामान का यही बारकोड है',
+  'Type the barcode as it is printed, with no spaces': 'बारकोड वैसे ही लिखें जैसा छपा है, बीच में जगह न छोड़ें',
+  'A SKU is 40 characters at most': 'SKU ज़्यादा से ज़्यादा 40 अक्षर का हो सकता है',
+  'A barcode is 64 characters at most': 'बारकोड ज़्यादा से ज़्यादा 64 अक्षर का हो सकता है',
   'One of those services does not exist.': 'उनमें से एक सेवा मौजूद नहीं है।',
   'Appointment not found': 'बुकिंग नहीं मिली',
   'No such booking': 'ऐसी कोई बुकिंग नहीं',

@@ -198,6 +198,9 @@ export interface Product {
   /** 0117 — the shelf's own category. Null for none. */
   categoryId: string | null;
   categoryName: string | null;
+  /** Jira GRW-574 (0119) — the business's own code and what a scanner reads off the product. Null until said. */
+  sku: string | null;
+  barcode: string | null;
 }
 
 /** 0117 — a shelf of the shelf: the owner's own grouping at one branch, with how many live products it holds. */
@@ -226,6 +229,9 @@ export interface ProductInput {
   active?: boolean;
   costMinor?: number | null;
   lowStockAt?: number;
+  /** 0119 — null clears it; one live, active product per branch may hold each. */
+  sku?: string | null;
+  barcode?: string | null;
 }
 
 /** 0116 — why a product's count changed. Six words, the same for every kind of business. */
