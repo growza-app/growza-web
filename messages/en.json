@@ -3016,7 +3016,7 @@
       "photoFailed": "Saved, but the photo did not upload. Choose it again and save.",
       "sku": "SKU",
       "barcode": "Barcode",
-      "codesHint": "Both optional. The SKU is your own short code, like ARG-100. Scan or type the barcode from the pack, and the till adds the product when it reads it.",
+      "codesHint": "Both optional. The SKU is your own short code, like ARG-100. On the till's Products tab, scan a barcode and press Enter to add it.",
       "barcodeSpaces": "Type the barcode as it is printed, with no spaces.",
       "skuTaken": "{name} already has this SKU at this branch.",
       "barcodeTaken": "{name} already has this barcode at this branch."

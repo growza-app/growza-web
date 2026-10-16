@@ -205,23 +205,32 @@ export function priceAsked(query: string): number | null {
 const PRICE_SCORE = 1000;
 
 /**
- * Jira GRW-574 — a code typed whole, then a code typed from its start: under an exact price (a number that is a
- * price was asked as a price) and over any name, because a code is meant to name one thing.
+ * Jira GRW-574 — a code typed whole ranks above everything (including a price that happens to be the same number, so
+ * the top tile is the one Enter adds). A code prefix with a hyphen or digit ("arg-", "arg1") ranks above names; plain
+ * letters ("ar") sit beside name prefixes so an exact word in a name still wins.
  */
-const CODE_EXACT_SCORE = 900;
+const CODE_EXACT_SCORE = 1100;
 const CODE_PREFIX_SCORE = 800;
+const CODE_LETTER_PREFIX_SCORE = 95;
 
 const normCode = (s: string): string => s.trim().toLowerCase();
 
-/** How well a typed code matches a candidate's codes; 0 for none. Two characters before a code matches from its start. */
+/**
+ * How well a typed code matches a candidate's codes; 0 for none.
+ *
+ * A short number ("89", "300") is a price or a pack size, never the start of an EAN-13 barcode (every Indian barcode
+ * begins 890), so digits-only queries wait for six digits unless they match the whole code.
+ */
 function codeScore(codes: ReadonlyArray<string | null> | undefined, typed: string): number {
   if (!codes || typed === '') return 0;
+  const canPrefix = /^\d+$/.test(typed) ? typed.length >= 6 : typed.length >= 2;
+  const prefixScore = /^[a-z]+$/.test(typed) ? CODE_LETTER_PREFIX_SCORE : CODE_PREFIX_SCORE;
   let best = 0;
   for (const c of codes) {
     if (!c) continue;
     const code = normCode(c);
     if (code === typed) return CODE_EXACT_SCORE;
-    if (typed.length >= 2 && code.startsWith(typed)) best = CODE_PREFIX_SCORE;
+    if (canPrefix && code.startsWith(typed)) best = prefixScore;
   }
   return best;
 }

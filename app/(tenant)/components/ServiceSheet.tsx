@@ -99,7 +99,7 @@ export function ServiceSheet({
   /** Jira GRW-574 — under Products, Enter on exactly one product's barcode or SKU picks it, as the desk till does. */
   const onSearchKey = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter' || e.nativeEvent.isComposing || !productMode || !onPickProduct) return;
-    const hit = productByCode(shelf, term);
+    const hit = productByCode(shelf, e.currentTarget.value);
     if (!hit) return;
     e.preventDefault();
     onPickProduct(hit);

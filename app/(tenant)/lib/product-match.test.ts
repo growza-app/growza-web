@@ -52,9 +52,12 @@ describe('productByCode — what Enter at the till adds', () => {
 });
 
 describe('productMatchable — the same search on every shelf screen', () => {
-  it('a code ranks above a name that only looks like it', () => {
+  it('a code ranks above a name that only looks like it, and an exact code ranks above an equal rupee price', () => {
     const list = [p('ARG Serum'), p('Argan Oil', { sku: 'ARG' })];
     expect(matchItems(list.map(productMatchable), 'arg')[0]!.id).toBe('Argan Oil');
+    const priced = [p('₹450 Cream'), p('Code 450 Bottle', { sku: '450' })];
+    priced[1]!.priceMinor = '99900';
+    expect(matchItems(priced.map(productMatchable), '450')[0]!.id).toBe('Code 450 Bottle');
   });
   it('the Products screen, the desk till and the phone till all use it', () => {
     const here = (f: string) => readFileSync(resolve(__dirname, f), 'utf8');
@@ -72,17 +75,17 @@ describe('the till hands Enter to the code lookup (AC-07)', () => {
   it('the desk grid: only on the Products tab, from the whole shelf, once, then the box clears', () => {
     expect(grid).toMatch(/onKeyDown=\{onSearchKey\}/);
     expect(grid).toMatch(/if \(e\.key !== 'Enter' \|\| e\.nativeEvent\.isComposing \|\| tab !== 'products' \|\| !onMoreProduct\) return;/);
-    // The whole shelf, not the in-stock view.
-    expect(grid).toMatch(/productByCode\(products, term\)/);
+    // The whole shelf, not the in-stock view; read from the live input so a fast hardware scanner cannot beat React state.
+    expect(grid).toMatch(/productByCode\(products, e\.currentTarget\.value\)/);
     expect(grid).toMatch(/onMoreProduct\(hit\);\s*setTerm\(''\);/);
-    // A full bill takes no new line from a scan, as its tiles take none.
-    expect(grid).toMatch(/if \(full && productCountOf\(hit\.id\) === 0\) return;/);
+    // A full bill takes no more items from a scan, matching PayFlow.addProduct.
+    expect(grid).toMatch(/if \(full\) return;/);
   });
 
   it('the phone sheet: only under the Products chip, from the whole shelf', () => {
     expect(sheet).toMatch(/onKeyDown=\{onSearchKey\}/);
     expect(sheet).toMatch(/!productMode \|\| !onPickProduct\) return;/);
-    expect(sheet).toMatch(/productByCode\(shelf, term\)/);
+    expect(sheet).toMatch(/productByCode\(shelf, e\.currentTarget\.value\)/);
     expect(sheet).toMatch(/onPickProduct\(hit\);\s*setTerm\(''\);/);
   });
 });
@@ -98,7 +101,7 @@ describe('the product sheet carries both codes', () => {
   it('holds Save on a barcode with a space, and says why under the field', () => {
     expect(sheet).toMatch(/const barcodeBad = barcode\.trim\(\) !== '' && !\/\^\[!-~\]\+\$\/\.test\(barcode\.trim\(\)\);/);
     expect(sheet).toMatch(/&& !barcodeBad;/);
-    expect(sheet).toMatch(/aria-describedby=\{barcodeBad \? 'prd-barcode-error' : undefined\}/);
+    expect(sheet).toMatch(/aria-describedby=\{barcodeBad \? 'prd-barcode-error' : 'prd-codes-hint'\}/);
   });
   it('every new word ships in English and Hindi', () => {
     for (const k of ['sku', 'barcode', 'codesHint', 'barcodeSpaces', 'skuTaken', 'barcodeTaken']) {
@@ -113,13 +116,13 @@ describe('the product sheet carries both codes', () => {
 describe('codeHolder — the 409 that names who has the code', () => {
   it('reads the field and the holder\'s name from a 409 body', async () => {
     const { BookingConflictError } = await import('./api');
-    const { codeHolder } = await import('../products/ProductSheet');
+    const { codeHolder } = await import('./product-match');
     const err = new BookingConflictError('Another product at this branch has that SKU', { error: 'Another product at this branch has that SKU', field: 'sku', existing: { id: 'p1', name: 'Argan Oil' } });
     expect(codeHolder(err)).toEqual({ field: 'sku', name: 'Argan Oil' });
   });
   it('leaves a taken name, a 400 and a plain error to the sheet\'s usual words', async () => {
     const { ApiError, BookingConflictError } = await import('./api');
-    const { codeHolder } = await import('../products/ProductSheet');
+    const { codeHolder } = await import('./product-match');
     expect(codeHolder(new BookingConflictError('A product by that name is already on the shelf', { existing: { name: 'Argan Oil' } }))).toBeNull();
     expect(codeHolder(new ApiError(400, 'A SKU is 40 characters at most'))).toBeNull();
     expect(codeHolder(new Error('offline'))).toBeNull();

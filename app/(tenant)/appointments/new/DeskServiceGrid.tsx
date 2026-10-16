@@ -132,10 +132,10 @@ export function DeskServiceGrid({
    */
   const onSearchKey = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter' || e.nativeEvent.isComposing || tab !== 'products' || !onMoreProduct) return;
-    const hit = productByCode(products, term);
+    const hit = productByCode(products, e.currentTarget.value);
     if (!hit) return;
     e.preventDefault();
-    if (full && productCountOf(hit.id) === 0) return;
+    if (full) return;
     onMoreProduct(hit);
     setTerm('');
   };

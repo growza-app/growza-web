@@ -49,8 +49,10 @@ describe('Jira GRW-574 — the Products screen finds a product by its SKU or bar
   it('a code typed from its start lists every product it could be', () => {
     expect(filterShelf(coded, 'all', 'arg-').map((x) => x.name).sort()).toEqual(['Argan Mask', 'Argan Oil']);
   });
-  it('a whole barcode finds only its own product, never a neighbour one digit off', () => {
+  it('a whole barcode finds only its own product, never a neighbour one digit off, and "89"/"890" does not match every Indian barcode', () => {
     expect(filterShelf(coded, 'all', '8901234567890').map((x) => x.name)).toEqual(['Argan Oil']);
+    expect(filterShelf(coded, 'all', '89')).toEqual([]);
+    expect(filterShelf(coded, 'all', '890')).toEqual([]);
   });
   it('a product with no codes is still found by name', () => {
     expect(filterShelf(coded, 'all', 'keratin').map((x) => x.name)).toEqual(['Keratin Shampoo']);

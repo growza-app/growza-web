@@ -7,6 +7,7 @@ import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { productPhotoUrl } from '../lib/service-photos';
+import { codeHolder } from '../lib/product-match';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
 import { stockTone } from './ProductsList';
@@ -20,18 +21,6 @@ import { stockTone } from './ProductsList';
  *   over the count is deliberately NOT offered here: every change says why.
  */
 type Part = 'details' | 'stock' | 'sales';
-
-/**
- * Jira GRW-574 — a 409 for a SKU or barcode another product at the branch holds (or took back when it was brought
- * back from retired). The API names that product in `existing`; the sheet says its name in the page's language.
- */
-export function codeHolder(err: unknown): { field: 'sku' | 'barcode'; name: string } | null {
-  if (!(err instanceof ApiError) || err.status !== 409) return null;
-  const body = err.body as { field?: unknown; existing?: { name?: unknown } } | null | undefined;
-  const field = body?.field;
-  const name = body?.existing?.name;
-  return (field === 'sku' || field === 'barcode') && typeof name === 'string' ? { field, name } : null;
-}
 
 export function ProductSheet({
   product,
@@ -311,6 +300,7 @@ export function ProductSheet({
                   autoCorrect="off"
                   autoComplete="off"
                   spellCheck={false}
+                  aria-describedby={barcodeBad ? undefined : 'prd-codes-hint'}
                   onChange={(e) => setSku(e.target.value)}
                 />
               </div>
@@ -331,7 +321,7 @@ export function ProductSheet({
                   autoComplete="off"
                   spellCheck={false}
                   aria-invalid={barcodeBad || undefined}
-                  aria-describedby={barcodeBad ? 'prd-barcode-error' : undefined}
+                  aria-describedby={barcodeBad ? 'prd-barcode-error' : 'prd-codes-hint'}
                   onChange={(e) => setBarcode(e.target.value)}
                 />
               </div>
@@ -342,7 +332,7 @@ export function ProductSheet({
               {t('barcodeSpaces')}
             </div>
           ) : (
-            <div className="sheet-foot">{t('codesHint')}</div>
+            <div id="prd-codes-hint" className="sheet-foot">{t('codesHint')}</div>
           )}
 
           <div className="sheet-group">

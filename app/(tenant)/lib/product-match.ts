@@ -1,3 +1,4 @@
+import { ApiError } from './api';
 import type { Product } from './api-types';
 import { asMinor, exactCode, type Matchable } from './service-match';
 
@@ -20,3 +21,15 @@ export const productMatchable = (p: Product): Matchable<Product> => ({
  * hand is the truth), so a scanned bottle is sold even when the screen thought there were none.
  */
 export const productByCode = (products: readonly Product[], typed: string): Product | null => exactCode(products.map(productMatchable), typed);
+
+/**
+ * Jira GRW-574 — a 409 for a SKU or barcode another product at the branch holds (or took back when it was brought
+ * back from retired). The API names that product in `existing`; the sheet says its name in the page's language.
+ */
+export function codeHolder(err: unknown): { field: 'sku' | 'barcode'; name: string } | null {
+  if (!(err instanceof ApiError) || err.status !== 409) return null;
+  const body = err.body as { field?: unknown; existing?: { name?: unknown } } | null | undefined;
+  const field = body?.field;
+  const name = body?.existing?.name;
+  return (field === 'sku' || field === 'barcode') && typeof name === 'string' ? { field, name } : null;
+}
