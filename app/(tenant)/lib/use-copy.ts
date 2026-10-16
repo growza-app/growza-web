@@ -64,6 +64,7 @@ export function useNewVisitCopy() {
     receiptTitle: t('receiptTitle'),
     receiptThanks: t('receiptThanks'),
     receiptServices: t('receiptServices'),
+    receiptProducts: t('receiptProducts'),
     receiptStylist: (noun: string, name: string) => t('receiptStylist', { noun, name }),
     receiptPackage: (title: string) => t('receiptPackage', { title }),
     receiptSeparately: (was: string, saved: string) => t('receiptSeparately', { was, saved }),
@@ -106,6 +107,11 @@ export function useNewVisitCopy() {
     searchServices: (n: number) => t('searchServices', { n }),
     loadingServices: t('loadingServices'),
     noServicesYet: t('noServicesYet'),
+    // Jira GRW-572 — New booking on a wide desk.
+    deskToday: t('deskToday'),
+    deskOnVisit: t('deskOnVisit'),
+    deskEmpty: t('deskEmpty'),
+    deskNobodyToday: t('deskNobodyToday'),
     // Jira GRW-384 — a branch opened with no menu. GRW-399: the vertical's word for what it sells, not "services".
     noServicesAtBranch: (branch: string, services: string) =>
       t('noServicesAtBranch', { branch, services: pickNoun(locale, services, tn('services')) }),

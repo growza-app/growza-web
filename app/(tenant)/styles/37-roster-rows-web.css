@@ -47,13 +47,13 @@
 }
 
 .staff-avatar.tone-green,
-.person-tile.tone-green { background: var(--accent-soft); color: #12643e; }
+.person-tile.tone-green { background: var(--accent-soft); color: var(--accent-deep); }
 .staff-avatar.tone-purple,
-.person-tile.tone-purple { background: var(--purple-soft); color: #4c3a78; }
+.person-tile.tone-purple { background: var(--purple-soft); color: var(--purple-deep); }
 .staff-avatar.tone-peach,
-.person-tile.tone-peach { background: var(--peach); color: #7a4a1e; }
+.person-tile.tone-peach { background: var(--peach); color: var(--amber-ink); }
 .staff-avatar.tone-blue,
-.person-tile.tone-blue { background: var(--blue-soft); color: #1e4e73; }
+.person-tile.tone-blue { background: var(--blue-soft); color: var(--blue); }
 
 .staff-identity {
   width: 190px;
@@ -167,7 +167,7 @@
 
 .login-name {
   font-weight: 620;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 
@@ -176,7 +176,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-1) var(--sp-2);
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -216,7 +216,7 @@
 
 /*
  * The close button sits beside the title, not halfway down a wrapped sentence. `.sheet-head` is a GRID by the time
- * the clay sheet has its say (101-clay-app.css), so the text column is named here rather than left to `flex: 1`,
+ * the clay sheet had its say (removed in Jira GRW-570), so the text column is named here rather than left to `flex: 1`,
  * which that grid quietly ignored — the subtitle wrapped into a 152px column beside 200px of nothing.
  */
 .invite-sheet .sheet-head {

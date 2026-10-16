@@ -77,8 +77,8 @@ describe('Record payment fits one phone screen', () => {
     expect(css).toMatch(/\.wi-qty-btn \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
     // Each one is its own line on the bill (one leg each, as the API takes), numbered so each amount can differ.
     expect(sheet).toMatch(/\{numberedName\(picked, i\)\}/);
-    // The API takes 1–12 lines; + stops there rather than letting Mark done fail.
-    expect(sheet).toMatch(/const BILL_MAX_LINES = 12;/);
+    // The API takes 1–30 lines (Jira GRW-572, was 12); + stops there rather than letting Mark done fail.
+    expect(sheet).toMatch(/const BILL_MAX_LINES = 30;/);
     expect(sheet).toMatch(/disabled=\{busy \|\| linesLocked \|\| full\}/);
   });
 

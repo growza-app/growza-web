@@ -31,7 +31,7 @@
   align-items: baseline;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 4px 8px;
   font-size: 0.75rem;
   font-weight: 700;

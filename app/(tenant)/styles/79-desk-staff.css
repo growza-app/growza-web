@@ -1,0 +1,203 @@
+/*
+ * Owner, 2026-10-14 — Staff on a wide desk: the same three panels as Services and Clients.
+ *
+ *   left   the three figures (working today, people, seats left), then the tabs as a list with their counts
+ *   middle the search and the roster, grouped as it is on the page, ten a page; it scrolls inside the panel
+ *   right  the picked person's actions (`StaffActionSheet inline`): the phone's sheet drawn in place
+ *
+ * Editing a person stays the full screen it is (design Turn 4): the hours, the photo and the scorecard need the
+ * width. Only at the desktop tier (≥1101px). `StaffClient` asks the width itself and renders the page below it,
+ * so nothing here is reached there; the media query is belt and braces. Scoped to `.staff-desk`.
+ */
+@media (min-width: 1101px) {
+  .page-body.staff-desk {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .staff-desk-grid {
+    flex: 1;
+    min-height: 0;
+    /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
+       and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(19rem, 21rem);
+    align-items: stretch;
+  }
+
+  .staff-desk-left,
+  .staff-desk-right {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .staff-desk-right {
+    position: static;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .staff-desk-mid {
+    min-height: 0;
+  }
+
+  .staff-desk-mid .banner {
+    margin: 0;
+  }
+
+  .staff-desk-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  /* A compact row: the page's row has a 190px identity and 16px gaps for a page-wide card, not a middle panel. */
+  .staff-desk .staff-row {
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    min-height: 60px;
+    cursor: pointer;
+  }
+
+  .staff-desk .staff-identity {
+    width: auto;
+    flex: 1 1 11rem;
+  }
+
+  .staff-desk .staff-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.875rem;
+  }
+
+  .staff-desk .staff-name-btn {
+    font-size: 0.9375rem;
+  }
+
+  /* Edit, ··· and the bookings count are on the panel once the row is picked (and a free day says so on the row);
+     the switch stays, it is the row's one quick action, and needs no word beside it. At 1366 with all of them the
+     name, its chips and the title stacked three high and the row was 125px. */
+  .staff-desk .staff-row .row-edit-btn,
+  .staff-desk .staff-row .staff-menu-wrap,
+  .staff-desk .staff-row .staff-count,
+  .staff-desk .staff-row .staff-toggle-label {
+    display: none;
+  }
+
+  /* Sized to its content — the times and, on a free day, the chip — and the name gives way; a fixed 8.5rem let
+     the chip run under the switch (owner's screenshot, 2026-10-14). */
+  .staff-desk .staff-shift {
+    width: auto;
+    flex: 0 0 auto;
+    max-width: 15rem;
+    min-width: 0;
+  }
+
+  .staff-desk .staff-shift-head {
+    flex-wrap: nowrap;
+  }
+
+  .staff-desk .staff-row.is-selected {
+    border-color: var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  /* ---------- left: the figures and the tabs ---------- */
+  .staff-desk-kpis {
+    margin: 0 0 var(--sp-3);
+    padding: 0 0 var(--sp-3);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .staff-desk-kpis > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+
+  .staff-desk-kpis dt {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .staff-desk-kpis dd {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .staff-desk-kpis .is-warn dd {
+    color: var(--amber-ink);
+  }
+
+  /* ---------- right: the sheet in place ---------- */
+  .staff-sheet-inline {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: var(--sp-2);
+  }
+
+  .staff-sheet-inline .sheet-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .staff-sheet-close {
+    flex: none;
+  }
+
+  .staff-desk-nothing {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+  }
+
+  .staff-desk-nothing p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+}
+
+/* The narrow end of the tier (1101–1300px): side panels at their floors; the shift bar goes, its times stay. */
+@media (min-width: 1101px) and (max-width: 1300px) {
+  .staff-desk-grid {
+    grid-template-columns: 10rem minmax(0, 1fr) 19rem;
+    gap: var(--sp-3);
+  }
+
+  .staff-desk-left {
+    padding: var(--sp-3);
+  }
+
+  /* The bar and the free-day chip go; the times stay, and the panel says "0 bookings today" once picked. */
+  .staff-desk .staff-shift-bar,
+  .staff-desk .staff-shift-head .staff-badge-free {
+    display: none;
+  }
+
+  /* The sign-in chip too: with TOP beside the name it wrapped the row to two lines at 1180 (owner, 2026-10-14).
+     The logins group under the roster and the panel's "Remove sign-in" still say who can sign in. */
+  .staff-desk .staff-identity-name .staff-badge-in,
+  .staff-desk .staff-identity-name .staff-badge-invited {
+    display: none;
+  }
+}

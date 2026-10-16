@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useReportsCopy } from '../lib/use-reports-copy';
 import type { ReportServices } from '../lib/api';
 import { BarList, ReportTable, type Cell } from './charts';
 import { Card, countBars, money, moneyBars, rangeName } from './shared';
+import { useRowName } from './use-row-name';
 
 /**
  * Services — popular and profitable, shown as the two different questions
@@ -12,6 +14,8 @@ import { Card, countBars, money, moneyBars, rangeName } from './shared';
  */
 export function ServicesTab({ data }: { data: ReportServices }) {
   const rp = useReportsCopy();
+  const sg = useTranslations('reports.signals');
+  const nameOf = useRowName();
   const c = rp.servicesTab;
   const empty = data.rows.length === 0;
 
@@ -47,6 +51,13 @@ export function ServicesTab({ data }: { data: ReportServices }) {
           <BarList items={moneyBars(data.topRevenue, rp.servicesTab.retired)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
         </Card>
       </div>
+
+      {/* Jira GRW-568 — "Hair against skin", which no per-service list can say. */}
+      {data.byCategory && (
+        <Card title={sg('category.title')} hint={sg('category.hint')}>
+          <BarList items={moneyBars(data.byCategory, rp.servicesTab.retired, nameOf)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
+        </Card>
+      )}
 
       <Card title={c.table} hint={c.tableHint}>
         {empty ? (

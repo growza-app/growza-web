@@ -45,11 +45,20 @@ export function NewBookingClient({
    * until the browser has answered — one blank frame, not a form that flashes up and is replaced.
    */
   const [layout, setLayout] = useState<'unknown' | 'phone' | 'desk'>('unknown');
+  /*
+   * Jira GRW-572 — a desk WIDE enough for the till in three panels (≥1101px, the desktop tier in 00-base.css):
+   * who is paying on the left, the menu as tiles in the middle, the bill and the payment on the right. It is
+   * `PayFlow` with room, not a third form: the same lines, the same total, the same two writes. Between 861 and
+   * 1100 the one-page form stays, as it does for a walk-in booked for later at any width.
+   */
+  const [wide, setWide] = useState(false);
   const quick = purpose === 'payment' && !full;
   useEffect(() => {
-    if (!quick) return;
+    // Both in one effect, so React paints them together: no one-page form flashing up before the wide till.
+    // Jira GRW-572 — asked for every purpose now: New booking has a wide layout of its own (`desk` below).
+    setWide(window.matchMedia('(min-width: 1101px)').matches);
     setLayout(window.matchMedia('(max-width: 860px)').matches ? 'phone' : 'desk');
-  }, [quick]);
+  }, []);
 
   /*
    * Settling a BOOKING is `PayFlow` at every width (owner, 2026-10-11).
@@ -80,14 +89,26 @@ export function NewBookingClient({
    * three-tap flow). A fresh form is a fresh mount; a token that was just paid is gone, so the address drops it.
    */
   const [run, setRun] = useState(0);
+  /*
+   * Release review, 2026-10-16 — a different token or booking is a different bill. `PayFlow` fills itself from its token
+   * or booking ONCE (a ref guards it), and the desk's "Still to pay" list moves between them with `router.push`, which
+   * keeps this component mounted: paying booking B with booking A's lines on the bill cancelled B's own service.
+   * Keyed on what the bill is for, the whole sale starts again when that changes.
+   */
+  const billKey = token?.id ?? visit?.appointment.id ?? 'walk-in';
   const another = () => {
     setRun((n) => n + 1);
     if (token) router.replace(`/appointments/new?purpose=payment${full ? '&full=1' : ''}`);
   };
 
   if (quick && !settlingBooking && layout === 'unknown') return <div className="pf" aria-busy="true" />;
+  // Jira GRW-572 — New booking waits the same one frame, so a desk never sees the column before the panels.
+  if (!quick && purpose !== 'payment' && layout === 'unknown') return <div className="walk-in-page" aria-busy="true" />;
   if (settlingBooking || (quick && layout === 'phone')) {
-    return <PayFlow token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} />;
+    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} visit={visit} visitGone={visitGone} providerId={providerId} timezone={timezone} backTo={backTo} wide={wide && layout === 'desk'} />;
+  }
+  if (quick && layout === 'desk' && wide) {
+    return <PayFlow key={billKey} token={token} tokenGone={tokenGone} providerId={providerId} timezone={timezone} backTo={backTo} wide />;
   }
   return (
     <NewVisitSheet
@@ -99,6 +120,7 @@ export function NewBookingClient({
       token={token}
       tokenGone={tokenGone}
       timezone={timezone}
+      desk={purpose !== 'payment' && wide && layout === 'desk'}
       onClose={() => router.push(backTo ?? (purpose === 'payment' ? '/' : '/appointments'))}
     />
   );

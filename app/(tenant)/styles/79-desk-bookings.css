@@ -1,0 +1,180 @@
+/*
+ * Owner, 2026-10-14 — Bookings on a wide desk: the same three panels as Services, Clients and Staff.
+ *
+ *   left   a stylist's own takings (when shown), the All · To do · Completed list with its counts, then the
+ *          filter card's fields stacked: From, To, Staff, Status, Order
+ *   middle the search, the "not marked" chip, the schedule's head with the Timeline | List switch, and the day
+ *          scrolling inside the panel (the people waiting first, as on the page), the pager under it
+ *   right  the picked booking in place — `BookingSheet inline` for one still to come, `BookingSummary inline`
+ *          for a finished one; "New booking" when nothing is picked
+ *
+ * Moving a booking and giving a token stay the overlays they are. Only at the desktop tier (≥1101px).
+ * `BookingsList` asks the width itself and renders the page below it, so nothing here is reached there; the
+ * media query is belt and braces. Scoped to `.bk-desk`.
+ */
+@media (min-width: 1101px) {
+  /* Bookings scrolls the page (32-customers.css, `.bk-fit`); the desk scrolls the middle panel instead. */
+  .page-body.bk-fit:has(> .bk-desk) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .bk-desk-grid {
+    flex: 1;
+    min-height: 0;
+    /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
+       and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(20rem, 22rem);
+    align-items: stretch;
+  }
+
+  .bk-desk-left,
+  .bk-desk-right {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .bk-desk-right {
+    position: static;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .bk-desk-mid {
+    min-height: 0;
+  }
+
+  .bk-desk-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .bk-desk-mid .bk-sched-head,
+  .bk-desk-mid .bk-unmarked-chip,
+  .bk-desk-mid .bk-waiting {
+    margin-top: 0;
+  }
+
+  .bk-desk-mid .bk-waiting {
+    margin-bottom: var(--sp-3);
+  }
+
+  .bk-desk .bk-card {
+    cursor: pointer;
+  }
+
+  /* The card is the control, so its Details button is the same tap twice; at 1180 it also sat on the price. */
+  .bk-desk .bk-card .bk-details {
+    display: none;
+  }
+
+  .bk-desk .bk-card.is-selected {
+    border-color: var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  /* ---------- left: takings, the segments (`.pf-wide-tabs`, 79-desk-till.css), the filters stacked ---------- */
+  .bk-desk-left .bk-earnings {
+    margin: 0 0 var(--sp-3);
+  }
+
+  .bk-desk-left .bk-earnings-figures {
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  /* The filter card is not a card here: the panel is. Its fields stack, one under the other, labels kept. */
+  .bk-desk-left .bk-filter-card {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    /*
+     * Release review, 2026-10-16 — it keeps its own height. The card is `overflow: hidden` and a flex child, so on a
+     * short laptop window it SHRANK to fit the panel and cut its last field off (9px at 1280x720, 1101 to 1280 wide):
+     * unreachable rather than scrollable. The panel scrolls instead.
+     */
+    flex: none;
+    overflow: visible;
+  }
+
+  .bk-desk-left .bk-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+    padding: 0;
+  }
+
+  .bk-desk-left .bk-field {
+    flex: none;
+  }
+
+  /* The search is the middle panel's; the left has no room for a second one. */
+  .bk-desk-left .bk-field-search {
+    display: none;
+  }
+
+  /* A date box in an 11rem column: the control's own width, not the page's 14px either side. */
+  .bk-desk-left .bk-field input,
+  .bk-desk-left .bk-field select {
+    padding: 0 var(--sp-2);
+    font-size: 0.875rem;
+  }
+
+  /* ---------- right: the sheet in place ---------- */
+  .bk-sheet-inline {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: var(--sp-2);
+  }
+
+  .bk-sheet-inline .sheet-head,
+  .bk-sheet-inline .summary-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bk-sheet-close {
+    flex: none;
+  }
+
+  .bk-desk-nothing {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+  }
+
+  .bk-desk-nothing p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+}
+
+/* The narrow end of the tier (1101–1300px): side panels at their floors, the card's phone line goes. */
+@media (min-width: 1101px) and (max-width: 1300px) {
+  .bk-desk-grid {
+    grid-template-columns: 10rem minmax(0, 1fr) 20rem;
+    gap: var(--sp-3);
+  }
+
+  .bk-desk-left {
+    padding: var(--sp-3);
+  }
+
+  .bk-desk .bk-card-phone {
+    display: none;
+  }
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { packPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
@@ -9,6 +9,12 @@ import { PackPhotoSheet } from './PackPhotoSheet';
 import { CLEANUP, DURATION, canStep, clamp, isDirty, slotMinutes, step, type Bounds, type SheetValues } from './service-sheet';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { useLabel } from '../components/LabelsProvider';
+
+/** Owner, 2026-10-15 — the form's parts for an existing service. A new one is a single page. */
+type Part = 'details' | 'pricing' | 'staff';
+const PARTS: readonly Part[] = ['details', 'pricing', 'staff'];
+const DESCRIPTION_MAX = 200;
 
 /** Rupees in the form, paise in the database — converted at this boundary only. */
 function toMinor(rupees: string): number | null {
@@ -122,9 +128,18 @@ export function ServiceForm({
   onRetire,
   onRestore,
   onDelete,
+  inline = false,
+  onDirtyChange,
 }: {
   /** Jira GRW-378 — the branch this screen is showing; everything added here lands there. */
   branchId: string;
+  /**
+   * Owner, 2026-10-14 — the form as the right panel of the wide Services screen, not a dialog over it. No
+   * backdrop, no dialog keyboard handling (there is nothing to trap focus in), the same head and body.
+   */
+  inline?: boolean;
+  /** The desk panel asks to hear whether this form holds unsaved changes, so it can ask before they are thrown away. */
+  onDirtyChange?: (dirty: boolean) => void;
   /** Null to create. */
   service: ServiceAdmin | null;
   categories: ServiceCategory[];
@@ -147,6 +162,9 @@ export function ServiceForm({
   const [durationMin, setDurationMin] = useState(service?.durationMin ?? 30);
   const [cleanupMin, setCleanupMin] = useState(service?.bufferAfterMin ?? 0);
   const [price, setPrice] = useState(fromMinor(service?.priceMinor ?? null));
+  const [description, setDescription] = useState(service?.description ?? '');
+  const [part, setPart] = useState<Part>('details');
+  const providerWord = useLabel('provider', 'stylist');
 
   // Held until save. On create there is no service id to attach a photo to yet, so the file is uploaded
   // straight after the record exists — the owner still only presses one button.
@@ -163,15 +181,21 @@ export function ServiceForm({
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; price?: string }>({});
   // Escape does nothing while a save is in flight, the same rule the other sheets follow.
-  useDialog(sheetRef, { onClose: busy ? undefined : onClose });
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : onClose, active: !inline });
   const changed =
     name !== (service?.name ?? '') ||
     categoryId !== (service?.categoryId ?? '') ||
     durationMin !== (service?.durationMin ?? 30) ||
     cleanupMin !== (service?.bufferAfterMin ?? 0) ||
     price !== fromMinor(service?.priceMinor ?? null) ||
+    description !== (service?.description ?? '') ||
     photo !== null ||
     pickedKey !== undefined;
+
+  useEffect(() => {
+    onDirtyChange?.(changed);
+    return () => onDirtyChange?.(false);
+  }, [changed, onDirtyChange]);
 
   const original: SheetValues = {
     name: service?.name ?? '',
@@ -183,7 +207,7 @@ export function ServiceForm({
   };
   const current: SheetValues = { name, categoryId, durationMin, cleanupMin, price, hasNewPhoto: photo !== null || pickedKey !== undefined };
   // On create there is nothing to compare against, so Save waits only on a name.
-  const canSave = service ? isDirty(current, original) : name.trim().length > 0;
+  const canSave = service ? isDirty(current, original) || description !== (service.description ?? '') : name.trim().length > 0;
 
   /**
    * Only the two that the steppers cannot already guarantee. Duration and cleanup are clamped by construction
@@ -198,6 +222,11 @@ export function ServiceForm({
       if (!Number.isFinite(p) || p < 0) next.price = t('errors.priceNegative');
     }
     setFieldErrors(next);
+    // An error on a part that is not showing would read as Save doing nothing: show the part that has it.
+    if (service) {
+      if (next.name && part !== 'details') setPart('details');
+      else if (next.price && !next.name && part !== 'pricing') setPart('pricing');
+    }
     return Object.keys(next).length === 0;
   };
 
@@ -211,6 +240,7 @@ export function ServiceForm({
       durationMin,
       bufferAfterMin: cleanupMin,
       priceMinor: toMinor(price),
+      description: description.trim() || null,
     };
     try {
       let saved = service
@@ -257,21 +287,14 @@ export function ServiceForm({
   };
   const minutes = (count: number) => durationPhrase(count, words);
 
-  return (
-    // Jira GRW-478 (U-4) — a stray tap beside a changed form does not throw the changes away; Cancel does.
-    <div className="modal-backdrop" onClick={busy || changed ? undefined : onClose}>
-      {/*
-        Jira GRW-446 — a dialog that behaves like every other one in the product: Escape closes it, Tab stays
-        inside it, and focus comes back where it left. This was the screen's main editor and the one modal that
-        did none of that; a sheet that ignores Escape is a sheet people close by clicking somewhere risky.
-      */}
+  const sheet = (
       <div
-        className="modal sheet"
-        role="dialog"
-        aria-modal="true"
+        className={inline ? 'sheet sheet-inline' : 'modal sheet'}
+        role={inline ? undefined : 'dialog'}
+        aria-modal={inline ? undefined : 'true'}
         aria-label={service ? t('titleEditShort') : t('titleAdd')}
         ref={sheetRef}
-        onClick={(e) => e.stopPropagation()}
+        onClick={inline ? undefined : (e) => e.stopPropagation()}
       >
         <div className="sheet-head">
           <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
@@ -283,7 +306,31 @@ export function ServiceForm({
           </button>
         </div>
 
+        {service ? (
+          <>
+            <div className="svc-sheet-id">
+              <img className="svc-sheet-photo" src={servicePhotoUrl(service)} alt="" />
+              <span className="svc-sheet-id-text">
+                <span className="svc-sheet-name">{service.name}</span>
+                <span className="svc-sheet-tags">
+                  <span className={`svc-status ${service.active ? 'svc-status-on' : 'svc-status-off'}`}>{service.active ? tp('active') : tp('inactive')}</span>
+                  {service.categoryName ? <span className="svc-pill-cat">{service.categoryName}</span> : null}
+                </span>
+              </span>
+            </div>
+            <div className="svc-seg" role="tablist" aria-label={t('titleEditShort')}>
+              {PARTS.map((p) => (
+                <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
+                  {t(`parts.${p}`)}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
+
         <div className="sheet-body">
+          {part === 'details' || !service ? (
+          <>
           {/* The photo row says what a photo is FOR, which is the only reason an owner bothers to add one. */}
           <div className="sheet-group sheet-photo">
             {photo ? (
@@ -367,6 +414,22 @@ export function ServiceForm({
           </div>
           {fieldErrors.name && <div role="alert" className="sheet-foot sheet-foot-error">{fieldErrors.name}</div>}
 
+          <div className="sheet-label">{t('description')}</div>
+          <div className="sheet-group">
+            <div className="sheet-row svc-desc-row">
+              <textarea
+                id="svc-description"
+                aria-label={t('description')}
+                value={description}
+                maxLength={DESCRIPTION_MAX}
+                rows={3}
+                placeholder={t('descriptionPlaceholder')}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="sheet-foot svc-desc-count">{description.length}/{DESCRIPTION_MAX}</div>
+
           <div className="sheet-label sheet-label-time">{t('groups.time')}</div>
           <div className="sheet-group">
             <Row label={t('duration')}>
@@ -396,7 +459,11 @@ export function ServiceForm({
           <div className="sheet-foot">
             {t('cleanupHint')} {t('slotIs', { duration: minutes(slotMinutes(durationMin, cleanupMin)) })}
           </div>
+          </>
+          ) : null}
 
+          {part === 'pricing' || !service ? (
+          <>
           <div className="sheet-label sheet-label-price">{t('groups.price')}</div>
           <div className="sheet-group">
             <div className="sheet-row sheet-row-price">
@@ -419,12 +486,32 @@ export function ServiceForm({
           </div>
           {fieldErrors.price && <div role="alert" className="sheet-foot sheet-foot-error">{fieldErrors.price}</div>}
           {service && !fieldErrors.price && <div className="sheet-foot">{t('priceHint')}</div>}
+          </>
+          ) : null}
+
+          {service && part === 'staff' ? (
+            <>
+              <div className="sheet-label">{t('staff.title', { provider: providerWord })}</div>
+              <div className="sheet-group">
+                <div className="sheet-row svc-staff-row">
+                  <span className="svc-staff-n">{service.providerCount ?? 0}</span>
+                  <span className="svc-staff-text">
+                    {(service.providerCount ?? 0) === 0 ? t('staff.nobody', { provider: providerWord.toLowerCase() }) : t('staff.some', { provider: providerWord.toLowerCase() })}
+                  </span>
+                </div>
+              </div>
+              <div className="sheet-foot">{t('staff.hint', { provider: providerWord.toLowerCase() })}</div>
+              <a className="btn btn-ghost svc-staff-link" href="/providers">
+                {t('staff.open', { provider: providerWord })}
+              </a>
+            </>
+          ) : null}
 
           {/*
             The destructive group, only when there is a service to act on. Both open the confirmations the
             list owns (GRW-431) — this sheet never retires or deletes on one tap.
           */}
-          {service && (onRetire || onDelete) && (
+          {service && part === 'details' && (onRetire || onDelete) && (
             <>
               <div className="sheet-group sheet-group-danger">
                 {service.active
@@ -466,6 +553,14 @@ export function ServiceForm({
           />
         )}
       </div>
+  );
+  if (inline) return sheet;
+  return (
+    // Jira GRW-478 (U-4) — a stray tap beside a changed form does not throw the changes away; Cancel does.
+    // Jira GRW-446 — a dialog that behaves like every other one in the product: Escape closes it, Tab stays
+    // inside it, and focus comes back where it left.
+    <div className="modal-backdrop" onClick={busy || changed ? undefined : onClose}>
+      {sheet}
     </div>
   );
 }

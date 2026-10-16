@@ -37,7 +37,7 @@
 
 .att-title {
   margin: 0 0 var(--sp-1);
-  font-size: 1.6875rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -54,7 +54,7 @@
   gap: var(--sp-2);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 5px;
 }
 
@@ -63,7 +63,7 @@
   height: 34px;
   border: none;
   background: var(--slate-soft);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 1rem;
   font-weight: 700;
@@ -123,13 +123,13 @@
   align-items: center;
   gap: var(--sp-2);
   margin-bottom: 10px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
 }
 
 .att-tile-count {
-  font-size: 1.875rem;
+  font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -166,7 +166,7 @@
   gap: 9px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: var(--radius);
   padding: 0 13px;
   height: 42px;
   color: var(--muted);
@@ -192,7 +192,7 @@
   gap: var(--sp-2);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: var(--radius);
   cursor: pointer;
   font: inherit;
   font-size: 0.875rem;
@@ -230,7 +230,7 @@
   background: var(--accent-deep);
   color: #fff;
   border: none;
-  border-radius: 11px;
+  border-radius: var(--radius);
   cursor: pointer;
   font: inherit;
   font-size: 0.875rem;
@@ -255,7 +255,7 @@
   z-index: 40;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow: 0 12px 30px rgb(20 32 27 / 0.14);
   padding: 6px;
   min-width: 176px;
@@ -276,11 +276,11 @@
   text-align: left;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 9px 10px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -314,7 +314,7 @@
 .att-list {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   /* NOT overflow:hidden — the status menu opens downward out of the last row,
      and clipping it would make the bottom person's status unsettable. */
 }
@@ -349,7 +349,7 @@
 .att-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 11px;
+  border-radius: var(--radius);
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -370,7 +370,7 @@
 }
 
 .att-role {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -403,11 +403,10 @@
 
 .att-timeset input {
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 8px 9px;
-  min-height: 44px;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   background: #fbfcfb;
   color: var(--text);
@@ -418,7 +417,7 @@
 .att-timeset button {
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 8px;
   min-width: 44px;
   min-height: 44px;
@@ -465,11 +464,11 @@
   gap: var(--sp-2);
   min-width: 150px;
   min-height: 44px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 8px 11px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -497,7 +496,7 @@
   height: 44px;
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.8125rem;
   color: var(--muted);
@@ -521,17 +520,17 @@
   flex: 1;
   min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 8px 10px;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   background: #fbfcfb;
   color: var(--text);
 }
 
 .att-note-text,
 .att-note-hint {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -562,7 +561,7 @@
   justify-content: space-between;
   gap: 10px;
   margin-top: 14px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -676,7 +675,7 @@
   font-weight: 700;
 }
 .ra-role-sub {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 .ra-tabs {
@@ -691,7 +690,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 13px;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   background: var(--surface);
@@ -764,7 +763,7 @@
 .am-cal-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: var(--sp-4);
 }
 
@@ -791,7 +790,7 @@
 .am-cell {
   aspect-ratio: 1;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -856,7 +855,7 @@
   margin-top: var(--sp-4);
   padding-top: var(--sp-3);
   border-top: 1px solid var(--border);
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -895,12 +894,12 @@
 }
 
 .am-detail-shift {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
 .am-hours {
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -950,10 +949,10 @@
     gap: 4px;
   }
   .am-cell {
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
   }
   .am-cell-day {
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
   }
   .am-cell-mark {
     font-size: 0.75rem;
@@ -994,7 +993,7 @@
   max-width: calc(100vw - 32px);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 14px 36px rgb(20 32 27 / 0.16);
   overflow: hidden;
 }
@@ -1022,7 +1021,7 @@
 }
 
 .acct-sub {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 2px;
 }
@@ -1049,7 +1048,7 @@
   text-align: left;
   border: none;
   background: transparent;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 10px 10px;
   font: inherit;
   font-size: 0.875rem;
@@ -1081,7 +1080,7 @@
   font: inherit;
   font-size: 0.875rem;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: #fbfcfb;
   color: var(--text);
   width: 100%;
@@ -1101,7 +1100,7 @@
 
 .acct-done {
   margin: 0;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -1129,14 +1128,14 @@
   gap: 3px;
   margin: 4px 4px 8px;
   padding: 3px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--slate-soft);
 }
 
 .acct-lang button {
   min-height: 44px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--muted);
   font: inherit;
@@ -1245,8 +1244,8 @@
     gap: 14px;
     min-height: 48px;
     padding: 0 10px;
-    border-radius: 12px;
-    font-size: 0.96875rem;
+    border-radius: var(--radius);
+    font-size: 0.9375rem;
   }
 
   .acct-item svg {

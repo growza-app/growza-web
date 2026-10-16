@@ -22,8 +22,8 @@
   border: none;
   background: transparent;
   padding: 7px 14px;
-  border-radius: 8px;
-  font-size: 0.84375rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
@@ -92,7 +92,7 @@
   padding: 9px 10px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font: inherit;
   color: var(--text);
@@ -104,13 +104,13 @@
 }
 
 .dropdown-item-plain {
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 560;
   padding: 8px 10px;
 }
 
 .dropdown-item-danger {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .dropdown-item-icon {
@@ -118,7 +118,7 @@
   flex-shrink: 0;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,7 +140,7 @@
 
 .dropdown-item-desc {
   display: block;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 1px;
 }
@@ -214,7 +214,7 @@
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,11 +268,11 @@
 .offer-strike {
   color: var(--muted);
   text-decoration: line-through;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
 }
 
 .offer-savings {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--accent-deep);
   font-weight: 600;
 }
@@ -283,7 +283,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
 }
 
 .offer-info-item {
@@ -380,7 +380,7 @@
 
 .offer-stat-value {
   font-weight: 660;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .offer-stat-label {
@@ -392,7 +392,7 @@
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
   font-size: 1.125rem;

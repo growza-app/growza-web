@@ -5,7 +5,7 @@ import { PersonPhoto } from '../components/PersonPhoto';
 import { useEffect, useRef, useState } from 'react';
 import type { ProviderOverviewRow } from '../lib/api';
 import { useWritable } from '../components/SessionProvider';
-import { IconAppointments, IconCalendar, IconClock, IconEdit, IconTrash, IconUserPlus } from '../components/icons';
+import { IconAppointments, IconCalendar, IconClock, IconClose, IconEdit, IconTrash, IconUserPlus } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { weekdayNames } from '../lib/weekday-names';
 
@@ -270,11 +270,16 @@ function StaffRow({
   off,
   topPerformerId,
   actions,
+  selected = false,
+  onSelect,
 }: {
   p: ProviderOverviewRow;
   off: boolean;
   topPerformerId: string | null;
   actions: RosterActions;
+  /** Owner, 2026-10-14 — on a wide desk the row is also a pick: the person's actions draw in the right panel. */
+  selected?: boolean;
+  onSelect?: (p: ProviderOverviewRow) => void;
 }) {
   const t = useTranslations('staff');
   const locale = useLocale();
@@ -285,7 +290,19 @@ function StaffRow({
   const isTop = p.id === topPerformerId;
 
   return (
-    <div className={`staff-row ${off ? 'is-off' : ''}`}>
+    <div
+      className={`staff-row ${off ? 'is-off' : ''} ${selected ? 'is-selected' : ''}`}
+      aria-selected={onSelect ? selected : undefined}
+      onClick={
+        onSelect
+          ? (e) => {
+              // The name, the switch, Edit and ··· keep their own jobs; anywhere else on the row picks the person.
+              if ((e.target as HTMLElement).closest('button, a, label, input')) return;
+              onSelect(p);
+            }
+          : undefined
+      }
+    >
       <PersonPhoto name={p.displayName} photoUrl={p.photoUrl} muted={off} />
 
       <div className="staff-identity">
@@ -394,7 +411,16 @@ function StaffCard({
             <LoginChip state={actions.loginOf?.(p) ?? 'none'} />
           </div>
           <div className="staff-identity-role">
-            {off ? `${shiftOffLabel(p, t, locale)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}` : `${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''} · ${hours}`}
+            {off ? (
+              `${shiftOffLabel(p, t, locale)}${p.branchLabel ? ` · ${p.branchLabel}` : ''}`
+            ) : (
+              <>
+                {`${p.title ?? '—'}${p.branchLabel ? ` · ${p.branchLabel}` : ''}`}
+                {/* The separator is the hours' own (`.staff-card-hours::before`), so it never ends a line; on a phone
+                    (≤430px) the hours take a line of their own without it, as the Services card's cleanup does. */}
+                <span className="staff-card-hours">{hours}</span>
+              </>
+            )}
           </div>
         </div>
         {p.active ? (
@@ -430,33 +456,50 @@ export function StaffActionSheet({
   p,
   actions,
   onClose,
+  inline = false,
 }: {
   p: ProviderOverviewRow;
   actions: RosterActions;
   onClose: () => void;
+  /**
+   * Owner, 2026-10-14 — drawn in place in the Staff desk's right panel: no backdrop, no focus trap, and an action
+   * leaves the panel open (the person is still the one picked). The × clears the pick. Same sheet otherwise.
+   */
+  inline?: boolean;
 }) {
   const t = useTranslations('staff.row');
   const writable = useWritable();
   const dialogRef = useRef<HTMLDivElement>(null);
-  useDialog(dialogRef, { onClose });
+  useDialog(dialogRef, { onClose: inline ? undefined : onClose, active: !inline });
   const run = (fn: () => void) => () => {
-    onClose();
+    if (!inline) onClose();
     fn();
   };
 
   return (
     <>
-      <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={t('actionsFor', { name: p.displayName })} ref={dialogRef}>
-        <div className="sheet-grab" />
+      {!inline && <div className="sheet-backdrop" onClick={onClose} />}
+      <div
+        className={inline ? 'sheet sheet-inline staff-sheet-inline' : 'sheet'}
+        role={inline ? 'region' : 'dialog'}
+        aria-modal={inline ? undefined : 'true'}
+        aria-label={t('actionsFor', { name: p.displayName })}
+        ref={dialogRef}
+      >
+        {!inline && <div className="sheet-grab" />}
         <div className="sheet-head">
           <PersonPhoto name={p.displayName} photoUrl={p.photoUrl} />
-          <div>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div className="sheet-title">{p.displayName}</div>
             <div className="sheet-sub">
               {p.title ?? '—'}{p.branchLabel ? ` · ${p.branchLabel}` : ''} · {t('bookingsCount', { count: p.todayBookings })}
             </div>
           </div>
+          {inline && (
+            <button type="button" className="icon-btn staff-sheet-close" onClick={onClose} aria-label={t('closeActions')}>
+              <IconClose />
+            </button>
+          )}
         </div>
 
         {/* Calendar, not the clock — the clock belongs to "Working hours" two rows
@@ -514,6 +557,8 @@ export function StaffGroup({
   topPerformerId,
   actions,
   onOpenSheet,
+  selectedId = null,
+  onSelect,
 }: {
   title: string;
   tone: 'on' | 'off';
@@ -522,6 +567,9 @@ export function StaffGroup({
   topPerformerId: string | null;
   actions: RosterActions;
   onOpenSheet: (p: ProviderOverviewRow) => void;
+  /** The desk's pick (see `StaffRow`). */
+  selectedId?: string | null;
+  onSelect?: (p: ProviderOverviewRow) => void;
 }) {
   if (people.length === 0) return null;
   return (
@@ -534,7 +582,7 @@ export function StaffGroup({
       </div>
       <div className="staff-rows">
         {people.map((p) => (
-          <StaffRow key={p.id} p={p} off={off} topPerformerId={topPerformerId} actions={actions} />
+          <StaffRow key={p.id} p={p} off={off} topPerformerId={topPerformerId} actions={actions} selected={p.id === selectedId} onSelect={onSelect} />
         ))}
       </div>
       <div className="staff-cards">

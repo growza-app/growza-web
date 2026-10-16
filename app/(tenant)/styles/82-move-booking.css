@@ -44,10 +44,10 @@
  */
 .mv-any-time input {
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 8px 9px;
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   background: #fbfcfb;
   color: var(--text);
@@ -86,7 +86,7 @@
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: #fef3c7;
-  color: #92400e;
+  color: var(--amber-ink);
   font-size: 0.8125rem;
 }
 

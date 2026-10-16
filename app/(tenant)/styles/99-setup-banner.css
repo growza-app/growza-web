@@ -171,6 +171,5 @@
 }
 .not-live .btn {
   justify-self: start;
-  min-height: 44px;
   text-decoration: none;
 }

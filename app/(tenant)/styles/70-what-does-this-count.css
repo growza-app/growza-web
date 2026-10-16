@@ -38,7 +38,7 @@
   z-index: 60;
   padding: 9px 11px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface);
   box-shadow: 0 10px 26px rgba(18, 38, 29, 0.16);
   color: var(--text);
@@ -114,7 +114,6 @@
   box-sizing: border-box;
   /* 16px is not a style choice: anything smaller makes iOS Safari zoom the
      page on focus, and it never zooms back out. */
-  font-size: 16px;
 }
 
 /* The fields were a 1px #e8eaea line plus a faint inset shadow on a white card: they read as blank space, and
@@ -176,7 +175,7 @@
   background: none;
   color: var(--accent-deep);
   font: inherit;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -215,7 +214,7 @@
   color: var(--sidebar-text);
   font: inherit;
   font-weight: 500;
-  font-size: 0.96875rem;
+  font-size: 0.9375rem;
   text-align: left;
   cursor: pointer;
 }
@@ -294,12 +293,11 @@
   align-items: center;
   gap: var(--sp-2);
   padding: 0 var(--sp-4);
-  /* The dashboard has no red in its palette — every existing state colour is
-     amber or green — which is exactly why this one is introduced here and
-     nowhere else. It should not look like anything else in the product. */
+  /* Darker than --danger on purpose: this banner should not look like a delete button or an error
+     chip. It is the one red that is not a token, and it is used here and nowhere else. */
   background: #7f1d1d;
   color: #fff;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 550;
 }
 
@@ -413,7 +411,7 @@
 
 .billing-banner-error {
   flex-basis: 100%;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   opacity: 0.9;
 }
@@ -467,7 +465,7 @@
 
 .account-status-card p {
   margin: 0;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   /* Wraps rather than truncates: this is a full sentence and it is the only
      thing on the screen. */
   line-height: 1.6;

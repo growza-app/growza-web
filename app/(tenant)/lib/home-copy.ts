@@ -312,6 +312,10 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       offers: S(copy.nav.offers, 'ऑफर'),
       /** Jira GRW-438 — several services sold as one visit. "पैकेज" is the word a salon owner already uses. */
       packages: S('Packages', 'पैकेज'),
+      products: S('Products', 'सामान'),
+      /** Owner, 2026-10-15 — the sidebar's groups: what is sold, and the people who work there. */
+      catalogue: S('Catalogue', 'कैटलॉग'),
+      team: S('Team', 'टीम'),
       attendance: S('Attendance', 'हाज़िरी'),
       notifications: S('Notifications', 'सूचनाएं'),
       reports: S(copy.reports.navLabel, 'रिपोर्ट'),

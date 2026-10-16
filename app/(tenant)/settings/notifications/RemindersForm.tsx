@@ -123,7 +123,7 @@ export function RemindersForm({
               </span>
             </label>
             <div style={{ flex: 1 }}>
-              <div id={`rem-title-${row.key}`} style={{ fontWeight: 620, fontSize: 14.5 }}>{t(row.nameKey)}</div>
+              <div id={`rem-title-${row.key}`} style={{ fontWeight: 620, fontSize: 14 }}>{t(row.nameKey)}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <input
                   type="number"

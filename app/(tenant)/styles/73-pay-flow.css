@@ -145,7 +145,7 @@
   padding: 3px;
   border-radius: 999px;
   background: var(--slate-soft);
-  box-shadow: var(--clay-press);
+  box-shadow: none;
 }
 
 .pf-mode {
@@ -184,7 +184,7 @@
   background: var(--accent-deep);
   color: var(--surface);
   font-weight: 700;
-  box-shadow: var(--clay-green);
+  box-shadow: none;
 }
 
 /*
@@ -295,14 +295,14 @@
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  box-shadow: var(--clay-raise-soft);
+  box-shadow: none;
 }
 
 .pf-chip-on {
   background: var(--accent-deep);
   border-color: var(--accent-deep);
   color: #fff;
-  box-shadow: var(--clay-green);
+  box-shadow: none;
 }
 
 .pf-chip-link {
@@ -358,7 +358,7 @@
   border-radius: var(--radius);
   background: var(--surface);
   border: 2px solid transparent;
-  box-shadow: var(--clay-raise-soft);
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -453,7 +453,7 @@
   display: grid;
   grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
   align-items: center;
-  box-shadow: var(--clay-raise);
+  box-shadow: none;
 }
 
 .pf-qty-btn {
@@ -584,8 +584,8 @@
 .pf-error {
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius-sm);
-  background: #fdecec;
-  color: #991b1b;
+  background: var(--danger-soft);
+  color: var(--danger-deep);
   font-size: 1rem;
   font-weight: 600;
 }
@@ -600,7 +600,7 @@
 .pf-miss {
   grid-column: 2;
   margin-top: calc(var(--sp-1) * -1);
-  color: #991b1b;
+  color: var(--danger-deep);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -614,7 +614,7 @@
 /* The control itself, so the eye finds it from the far end of a long screen. */
 .pf-bad .pf-who-search,
 .pf-bad .pf-who-add {
-  box-shadow: inset 0 0 0 2px #991b1b;
+  box-shadow: inset 0 0 0 2px var(--danger-deep);
 }
 
 .pf-error-tray {
@@ -681,9 +681,58 @@
   position: absolute;
   right: var(--sp-3);
   top: var(--sp-6);
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   line-height: 1;
   color: var(--muted);
+}
+
+/*
+ * Owner, 2026-10-14 — a bill paid two ways. The link sits under the four tiles at the weight of a text button,
+ * 44px tall; once a first way is held, the line above the tiles says what it was and what the next tap is for.
+ */
+.pf-split-link {
+  grid-column: 1 / -1;
+  min-height: 2.75rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.pf-split-link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pf-split-held {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--slate-soft);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pf-split-held > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pf-split-clear {
+  flex: none;
+}
+
+/* A product tile's "Out of stock" line: said in the warning colour, never only in colour (the words are there). */
+.pf-tile-out {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 .pf-pay-tile:disabled {
@@ -692,7 +741,7 @@
 }
 
 .pf-pay-tile:active:not(:disabled) {
-  box-shadow: var(--clay-press);
+  background: var(--slate-soft);
 }
 
 .pf-pay-cash {
@@ -725,23 +774,23 @@
 }
 
 .pf-pay-cash .pf-pay-icon {
-  background: #d7edde;
+  background: var(--accent-soft);
   color: var(--accent-deep);
 }
 
 .pf-pay-upi .pf-pay-icon {
-  background: #e8ddfc;
+  background: var(--purple-soft);
   color: var(--purple-deep);
 }
 
 .pf-pay-card .pf-pay-icon {
-  background: #dbe6fb;
+  background: var(--blue-soft);
   color: var(--blue);
 }
 
 .pf-pay-other .pf-pay-icon {
-  background: #fae3c2;
-  color: #c2650a;
+  background: var(--amber-soft);
+  color: var(--amber);
 }
 
 .pf-pay-icon svg {
@@ -785,13 +834,55 @@
 /*
  * The same screen on a desk (owner, 2026-10-10 — both Record payment forms end on it, and a desk always uses the
  * one-page form). Drawn for a phone, it stretched to 1,066px of content area there: a bill as wide as the page and
- * a Next customer bar a metre long. It keeps the phone's column instead, centred.
+ * a Next customer bar a metre long. It was the phone's column, centred, until 2026-10-14: a four-service bill made
+ * that column ~1,050px on a 768px screen and Send and Next customer were below the fold. Two panels now: the
+ * receipt band across the top, the bill on the left (its own scroll past the screen's height, 79-desk-booking.css),
+ * and everything that is pressed — Sending to, Send, Print, Next customer — in a column on the right.
+ * `ReceiptShare`'s own grid dissolves (`display: contents`) so its pieces sit in this one.
  */
 @media (min-width: 861px) {
   .pf-done-page {
     width: 100%;
-    max-width: 30rem;
+    max-width: 64rem;
     margin-inline: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    column-gap: var(--sp-5);
+    row-gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .pf-done-page > .pf-done {
+    grid-column: 1 / -1;
+  }
+
+  .pf-done-page .wi-receipt-share {
+    display: contents;
+  }
+
+  .pf-done-page .wi-receipt-share > .wi-section-label {
+    grid-column: 1;
+    align-self: end;
+  }
+
+  .pf-done-page .wi-receipt-share > .wi-receipt-paper {
+    grid-column: 1;
+    grid-row: 3 / span 12;
+    align-self: start;
+  }
+
+  .pf-done-page .wi-receipt-share > :not(.wi-section-label):not(.wi-receipt-paper),
+  .pf-done-page > .pf-kept,
+  .pf-done-page > .pf-done-actions {
+    grid-column: 2;
+  }
+
+  .pf-done-page > .pf-kept {
+    margin: 0;
+  }
+
+  .pf-done-page > .pf-done-actions {
+    margin-top: var(--sp-3);
   }
 }
 
@@ -813,7 +904,7 @@
   border-radius: var(--radius);
   background: var(--accent-deep);
   color: #fff;
-  box-shadow: var(--clay-green);
+  box-shadow: none;
 }
 
 .pf-done-check {
@@ -853,7 +944,7 @@
 
 .pf-done-title {
   margin: 0;
-  font-size: 1.875rem;
+  font-size: 1.75rem;
   font-weight: 750;
   line-height: 1.1;
   letter-spacing: -0.01em;
@@ -1038,11 +1129,11 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-  box-shadow: var(--clay-raise-soft);
+  box-shadow: none;
 }
 
 .pf-key:active {
-  box-shadow: var(--clay-press);
+  background: var(--slate-soft);
 }
 
 .pf-key-quiet {
@@ -1053,7 +1144,7 @@
 .pf-key-go {
   background: var(--accent-deep);
   color: #fff;
-  box-shadow: var(--clay-green);
+  box-shadow: none;
 }
 
 /* ---------- who is paying: the client, by number ---------- */
@@ -1106,7 +1197,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: var(--sp-3);
   align-items: center;
-  box-shadow: var(--clay-raise-soft);
+  box-shadow: none;
 }
 
 .pf-client-match .pf-face {
@@ -1169,7 +1260,6 @@
 .pf-client-add-row .field input {
   width: 100%;
   min-height: 3rem;
-  font-size: 16px; /* iOS zooms the page on focus below 16px. */
 }
 
 .pf-client-contacts {
@@ -1201,7 +1291,6 @@
   width: 100%;
   min-height: 3.25rem;
   padding-left: 2.75rem;
-  font-size: 16px; /* iOS zooms the page on focus below 16px. */
 }
 
 .pf-client-label {
@@ -1361,7 +1450,7 @@
   gap: var(--sp-2);
   white-space: nowrap;
   overflow: hidden;
-  box-shadow: var(--clay-raise-soft);
+  box-shadow: none;
 }
 
 .pf-who-search svg {
@@ -1382,7 +1471,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: var(--clay-green);
+  box-shadow: none;
 }
 
 .pf-who-add svg {
@@ -1400,7 +1489,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   column-gap: var(--sp-3);
   align-items: center;
-  box-shadow: var(--clay-green);
+  box-shadow: none;
 }
 
 .pf-who-picked .pf-face {
@@ -1514,6 +1603,31 @@
   font-size: 1.0625rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* Owner, 2026-10-14 — the amount is a tap that prices the row; a dotted underline says so without a second icon. */
+.pf-bill-amount-tap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 2.75rem;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.pf-bill-was {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 .pf-bill-less {
@@ -1638,4 +1752,185 @@
 .pf-qr-paid {
   width: 100%;
   margin-top: var(--sp-3);
+}
+
+/* ---------- Owner, 2026-10-15 — sort and filter beside the search; what's inside a package ---------- */
+.pf-menu-tools,
+.pf-wide-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* The phone sheet: search, sort and the stock chip on ONE row (owner, 2026-10-15). */
+.pf-menu-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-2);
+}
+
+.pf-menu-search-row .pf-client-box {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.pf-menu-tools {
+  flex: none;
+}
+
+.pf-menu-tools .pf-sort select {
+  max-width: 7.5rem;
+}
+
+.pf-sort {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.pf-sort-l {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pf-sort select {
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.pf-filter-chip {
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+}
+
+.pf-tile-info,
+.pf-menu-info {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.pf-tile-info svg,
+.pf-menu-info svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pf-tile-info {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.pf-menu-list li:has(.pf-menu-info) {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.pf-menu-list li:has(.pf-menu-info) .pf-menu-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-pkg-scrim {
+  z-index: 45;
+}
+
+.pf-pkg-price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+.pf-pkg-price-n {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pf-pkg-save {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.pf-pkg-mins {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.pf-pkg-desc {
+  margin: 0;
+  padding: 0 var(--sp-4) var(--sp-3);
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.pf-pkg-h {
+  margin: 0;
+  padding: 0 var(--sp-4) var(--sp-1);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pf-pkg-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'photo name'
+    'photo sub';
+  column-gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-4);
+}
+
+.pf-pkg-row .pf-menu-photo {
+  grid-area: photo;
+}
+
+.pf-pkg-row .pf-client-match-name {
+  grid-area: name;
+}
+
+.pf-pkg-row .pf-client-match-sub {
+  grid-area: sub;
+}
+
+.pf-pkg-note {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-4) 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.pf-pkg-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
 }

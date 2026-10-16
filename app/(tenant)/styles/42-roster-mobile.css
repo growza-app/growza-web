@@ -19,6 +19,16 @@
     font-size: 0.8125rem;
   }
 
+  /* Two lines on a phone, by design: "6 working today · 6 people" and the seats under it. Left to wrap on its
+     own the last dot ended the first line (owner, 2026-10-14). */
+  .staff-summary > .staff-summary-dot:nth-last-child(2) {
+    display: none;
+  }
+
+  .staff-summary > span:last-child {
+    flex: 1 0 100%;
+  }
+
   .page-tabs {
     display: flex;
     width: 100%;
@@ -91,8 +101,23 @@
     color: #3d4a43;
   }
 
+  /* Title · branch · hours is one line on a laptop and never on a 344px card ("Senior Stylist · MG Road · 9 A…",
+     owner, 2026-10-14): it wraps to two lines here, then stops. */
   .staff-card-identity .staff-identity-role {
     font-size: 0.75rem;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.3;
+  }
+
+  .staff-card-hours {
+    white-space: nowrap;
+  }
+
+  .staff-card-hours::before {
+    content: ' · ';
   }
 
   .staff-card-shift {
@@ -135,4 +160,15 @@
    * and something where it was not is not a rule worth keeping the good half
    * of.
    */
+}
+
+/* Owner, 2026-10-14 — on a phone the hours are a line of their own, without the dot, so every card reads the same way. */
+@media (max-width: 430px) {
+  .staff-card-hours {
+    display: block;
+  }
+
+  .staff-card-hours::before {
+    content: none;
+  }
 }

@@ -4,7 +4,7 @@
   display: inline-block;
   padding: 5px 13px;
   border-radius: 999px;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 630;
   white-space: nowrap;
 }
@@ -19,7 +19,7 @@
    from a chip about reminders. */
 .chip-attention {
   background: var(--amber-soft);
-  color: #92400e;
+  color: var(--amber-ink);
 }
 
 .chip-confirmed {
@@ -35,7 +35,7 @@
 .chip-reminder {
   background: var(--amber-soft);
   /* Jira GRW-478 (U-11) — --amber on its soft background is 4.45:1, just under; this is 6.3:1. */
-  color: #92400e;
+  color: var(--amber-ink);
 }
 
 /* Deliberately different treatments, not a shared rule: a cancellation is
@@ -61,15 +61,15 @@
 }
 
 .chip-no_show {
-  background: #fde4e4;
-  color: #b91c1c;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 /* A client nobody has seen in 60+ days. Amber, not red — lapsed is a prompt to
    win them back, not an error state. */
 .chip-lapsed {
   background: var(--amber-soft);
-  color: #92400e; /* Jira GRW-478 (U-11) — as .chip-reminder */
+  color: var(--amber-ink); /* Jira GRW-478 (U-11) — as .chip-reminder */
 }
 
 /* Recency + its optional Lapsed chip, in the Clients "Last seen" column. */

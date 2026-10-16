@@ -63,141 +63,11 @@
 }
 
 .wizard-section-title {
-  font-size: 0.96875rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   margin-bottom: 12px;
 }
 
-/* Soft, per-field validation — sits right under the field it belongs to
-   instead of a blocking banner up top, so it's obvious exactly what needs
-   fixing without losing your place on the page. */
-.field-error {
-  margin-top: 6px;
-  font-size: 0.8125rem;
-  font-weight: 550;
-  color: var(--amber);
-}
-
-.field-invalid {
-  border-color: var(--amber) !important;
-}
-
-select,
-input[type='text'],
-input[type='date'],
-input[type='search'],
-input[type='tel'],
-input[type='email'],
-input[type='number'],
-/* Added with the sign-in screen (GRW-160), which is the first password field
-   in the product — without it the input rendered as a bare browser default
-   next to a styled phone field. Added to the shared rule rather than patched
-   on that one screen, so the next password field inherits it too. */
-input[type='password'],
-textarea {
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  font: inherit;
-  font-size: 0.9375rem;
-  color: var(--text);
-  min-width: 180px;
-  /* Tap targets stay comfortable on a phone-sized PWA window without over-zooming Safari (16px+ avoids its auto-zoom-on-focus). */
-  min-height: 40px;
-}
-
-/*
- * Jira GRW-491 — no stepper arrows on a number field.
- *
- * `type='number'` buys the numeric keypad on a phone and the browser's own
- * refusal of letters; the ▲▼ it comes with on a pointer is a different thing,
- * and a bad fit for what this app asks for. A bill is ₹300 and the step is 1,
- * so the arrows are a hundred clicks from any answer; they also eat the right
- * end of a narrow field — on the checkout row they sit where the amount is,
- * in a box 60px wide.
- *
- * Nothing is lost: ↑ and ↓ on the keyboard still step the value, because the
- * input is still a number input. Only the painted buttons go.
- *
- * The admin portal decided this for itself in GRW-024 and applied it
- * portal-wide (`admin.css`); this is the same rule for the owner's app, put
- * beside the shared control styling rather than patched onto each field.
- */
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type='number'] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-textarea {
-  min-height: 80px;
-}
-
-input[type='date'] {
-  /* Native date inputs ignore min-width the same way text inputs do — fixed so it doesn't dwarf its neighbours in a filter row. */
-  min-width: 160px;
-}
-
-/* Selects wear the app's chrome, not the OS's.
-   The three remaining ones (Bookings staff, Free times service and day) sit
-   inside plain `<form method="get">` blocks that submit on change — that
-   full-page-navigation behaviour is load-bearing (SlotGrid restores its
-   customer from sessionStorage across it), so this restyles the native
-   control rather than replacing it with a JS listbox. Same visual language,
-   none of the risk, and the keyboard/screen-reader behaviour stays native. */
-select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 34px;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2377857f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 11px center;
-  background-size: 15px 15px;
-  cursor: pointer;
-}
-
-select:hover {
-  border-color: #b9c2bb;
-}
-
-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.btn {
-  padding: 9px 20px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--accent-deep);
-  color: #fff;
-  font: inherit;
-  font-weight: 620;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn:hover {
-  background: var(--accent-ink);
-}
-
-/* An <svg> icon with no explicit width/height falls back to the browser's
-   default intrinsic size (defaults to ~300x150, which flex sizing here let
-   render at ~50px) — every icon+text button needs an explicit cap. */
-.btn svg,
-.btn-ghost svg {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
 
 .slot-grid {
   display: flex;
@@ -252,7 +122,7 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -276,7 +146,7 @@ select:focus-visible {
 }
 
 .section-label {
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   font-weight: 650;
   color: var(--text);
   margin-top: 20px;

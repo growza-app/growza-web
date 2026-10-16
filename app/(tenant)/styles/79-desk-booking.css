@@ -1,0 +1,140 @@
+/*
+ * Jira GRW-572 — New booking on a wide desk: the same three panels as the till (79-desk-till.css).
+ *
+ *   left   who it is for (the search and the Name / Phone fields), who with, and who else is in today
+ *   middle the menu as tiles — `DeskServiceGrid`, the till's own grid
+ *   right  what was chosen, what now (Waiting · Starts now · Pick a time, the date and the free times), Book
+ *
+ * Only at the desktop tier (≥1101px). `NewBookingClient` asks for `desk` only there, so below it nothing here
+ * is reached; the media query is belt and braces against a window resized mid-booking. Everything is scoped
+ * to `.wi-desk` so the one-column page (72-walk-in-sheet.css) is untouched.
+ */
+@media (min-width: 1101px) {
+  /* Not a card itself: the three panels are the cards, as on the till. */
+  .walk-in-page.wi-desk {
+    max-width: none;
+    margin: 0;
+    padding: 0 0 var(--sp-6);
+    border: 0;
+    background: transparent;
+  }
+
+  .wi-desk-grid {
+    margin-top: var(--sp-3);
+  }
+
+  .wi-desk .pf-wide-left .picker-search {
+    margin: 0;
+  }
+
+  /* The names wrap in the narrow column instead of scrolling past its edge. */
+  .wi-desk .wi-stylist-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+    margin: 0;
+  }
+
+  .wi-desk .wi-stylist-chips {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .wi-desk .wi-stylist-chips .wi-chip {
+    min-height: 2.5rem;
+  }
+
+  /*
+   * The stylist, under What now? (owner, 2026-10-14). `whenChoices` is one fragment — the chips, then the date and
+   * the free times — so the stylist is drawn after it and moved up between the chips and the date with `order`.
+   */
+  .wi-desk .wi-desk-when {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  .wi-desk .wi-desk-when > * {
+    order: 2;
+  }
+
+  .wi-desk .wi-desk-when > .wi-section-label:first-child,
+  .wi-desk .wi-desk-when > .wi-when-list {
+    order: 0;
+  }
+
+  .wi-desk .wi-desk-stylist {
+    order: 1;
+    margin-top: var(--sp-1);
+  }
+
+  /* The right panel's questions, in the card's own rhythm. */
+  .wi-desk .wi-desk-when .wi-section-label {
+    margin-top: var(--sp-2);
+  }
+
+  .wi-desk .wi-when-opt {
+    min-height: 2.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* The date and the time stack: two fields in a 20rem column is a date input cut short. */
+  .wi-desk .wi-when-date {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+  }
+
+  .wi-desk .wi-date-field {
+    margin-bottom: 0;
+  }
+
+  /*
+   * The panel holds the lines, the total, three chips, a date, a time, the free times and Book, and it is
+   * capped to the window (79-desk-till.css). So the two lists inside it stay short — three rows of times, four
+   * or five lines — and scroll on their own; everything else is always on screen.
+   */
+  .wi-desk .wi-slot-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-height: 9.25rem;
+  }
+
+  .wi-desk .pf-wide-right .pf-bill-lines {
+    max-height: 11rem;
+  }
+
+  /* A booking has no total button: the rows' own Total line (hidden on the till) is the figure here. */
+  .wi-desk .pf-wide-right .pf-bill-total {
+    display: flex;
+    margin-top: var(--sp-1);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+
+  .wi-desk .wi-desk-go .btn {
+    width: 100%;
+    margin-top: var(--sp-2);
+  }
+
+  .wi-desk .wi-error,
+  .wi-desk .field-error {
+    margin: 0;
+  }
+
+  /*
+   * The done screens' bill slip (`compactPreview`, 72-walk-in-sheet.css) is capped at 12rem because on a phone
+   * its full height put every button below the fold. On a desk the buttons are beside it (73-pay-flow.css), so
+   * the slip may take the screen's height — and scrolls inside only past that.
+   */
+  .wi-receipt-paper-short {
+    max-height: calc(100dvh - 16rem);
+  }
+
+  /* Who else is in today: said, not opened. */
+  .pf-wide-row-still {
+    cursor: default;
+  }
+
+  .pf-wide-row-still:hover {
+    background: transparent;
+  }
+}

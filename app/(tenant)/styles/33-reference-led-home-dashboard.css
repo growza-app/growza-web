@@ -44,7 +44,7 @@
   color: var(--text);
   background: linear-gradient(180deg, #f4faf6, #eff8f3);
   border: 1px solid #dcede2;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03);
 }
 
@@ -88,7 +88,7 @@
 .range-toggle-secondary button.active { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
 
 .home-main .summary-progress-layout { display: flex; align-items: stretch; gap: 16px; }
-.summary-progress-hero { flex: 0 0 200px; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #0b3d2d, #104a37); color: #fff; display: flex; flex-direction: column; justify-content: center; }
+.summary-progress-hero { flex: 0 0 200px; padding: 20px; border-radius: var(--radius); background: linear-gradient(135deg, #0b3d2d, #104a37); color: #fff; display: flex; flex-direction: column; justify-content: center; }
 .summary-progress-line { font-size: 0.9375rem; font-weight: 600; }
 .summary-progress-hero .summary-bar { margin-top: 14px; background: rgba(255,255,255,.20); }
 .summary-progress-hero .summary-bar span { background: #20c568; }
@@ -104,7 +104,7 @@
 .summary-metric-icon svg { width: 1.375rem; height: 1.375rem; }
 .summary-metric strong { font-size: 1.5rem; line-height: 1.15; letter-spacing: -.03em; white-space: nowrap; }
 .summary-metric > span:not(.summary-metric-icon) { font-size: 0.875rem; margin-top: 4px; white-space: nowrap; }
-.metric-bookings .summary-metric-icon { background: #dcf8e7; color: #16a34a; }
+.metric-bookings .summary-metric-icon { background: var(--accent-soft); color: var(--accent); }
 .metric-customers .summary-metric-icon { background: #fff0e0; color: #f97316; }
 .metric-revenue .summary-metric-icon { background: #e3f8eb; color: #159447; }
 
@@ -117,11 +117,11 @@
 .home-section-head h2 { margin: 0; font-size: 1.0625rem; letter-spacing: -.02em; }
 .home-section-head a { color: var(--accent-deep); font-size: 0.9375rem; font-weight: 650; text-decoration: none; }
 .attention-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.attention-card { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 12px 34px 12px 12px; border: 1px solid; border-radius: 12px; color: var(--text); text-decoration: none; font-size: 0.875rem; }
+.attention-card { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 12px 34px 12px 12px; border: 1px solid; border-radius: var(--radius); color: var(--text); text-decoration: none; font-size: 0.875rem; }
 .attention-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.attention-icon { width: 24px; height: 24px; flex-shrink: 0; border-radius: 7px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.65); }
+.attention-icon { width: 24px; height: 24px; flex-shrink: 0; border-radius: var(--radius-sm); display: grid; place-items: center; background: rgba(255, 255, 255, 0.65); }
 .attention-icon svg { width: 0.8125rem; height: 0.8125rem; }
-.attention-card .attention-value { font-size: 1.1875rem; font-weight: 700; line-height: 1; }
+.attention-card .attention-value { font-size: 1.125rem; font-weight: 700; line-height: 1; }
 .attention-card > svg { position: absolute; right: 12px; top: 50%; width: 1rem; transform: translateY(-50%); }
 .attention-card.amber { background: #fffaf1; border-color: #f7e7cf; color: #ae6e0d; }
 .attention-card.rose { background: #fff7f7; border-color: #f7dddd; color: #e35060; }
@@ -129,7 +129,7 @@
 .attention-card > span:last-of-type { color: var(--text); }
 
 .home-upcoming .sched { padding: 0; border: 0; background: transparent; }
-.home-upcoming .sched-card { min-height: 92px; padding: 16px 15px; border: 1px solid var(--border); background: var(--surface); border-radius: 15px; box-shadow: 0 2px 8px rgba(18,38,29,.02); }
+.home-upcoming .sched-card { min-height: 92px; padding: 16px 15px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-lg); box-shadow: 0 2px 8px rgba(18,38,29,.02); }
 .home-upcoming .sched-group { padding: 0; }
 .home-upcoming .sched-time { width: 104px; padding-top: 18px; }
 .home-upcoming .sched-time .t { font-size: 1rem; color: var(--text); }
@@ -151,11 +151,11 @@
 /* Same soft mint tint as the summary card above (.home-main .summary) — every
    rail card now shares that theme instead of plain white, so the rail reads
    as one family rather than the summary card standing alone. */
-.rail-card { padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); }
+.rail-card { padding: 16px; border: 1px solid #dcede2; border-radius: var(--radius-lg); background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); }
 .rail-card h3 { margin: 0 0 12px; font-size: 0.9375rem; }
 .rail-actions { display: flex; flex-direction: column; gap: 10px; }
 .rail-actions h3 { margin-bottom: 10px; }
-.quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 11px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 0.875rem; font-weight: 650; }
+.quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: var(--radius); background: var(--surface); color: var(--text); text-decoration: none; font-size: 0.875rem; font-weight: 650; }
 .quick-action svg { width: 1.125rem; height: 1.125rem; color: var(--text); flex-shrink: 0; }
 .quick-action:hover { filter: brightness(0.97); }
 /* The one prominent, filled CTA — every other action is a plain light row. */
@@ -166,7 +166,7 @@
 /* ---- staff/chair capacity ---- */
 .rail-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .rail-head-row h3 { margin: 0; }
-.capacity-mode-toggle { display: flex; gap: 3px; padding: 2px; border-radius: 8px; background: var(--page-bg); flex-shrink: 0; }
+.capacity-mode-toggle { display: flex; gap: 3px; padding: 2px; border-radius: var(--radius-sm); background: var(--page-bg); flex-shrink: 0; }
 .capacity-mode-toggle button { border: none; background: transparent; color: var(--muted); font-size: 0.8125rem; font-weight: 650; padding: 4px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
 .capacity-mode-toggle button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(18, 38, 29, 0.08); }
 .capacity-row + .capacity-row { margin-top: 14px; }
@@ -180,13 +180,13 @@
 /* ---- bookings-today chart ---- */
 .rail-trend { font-size: 0.875rem; font-weight: 650; padding: 3px 8px; border-radius: 999px; }
 .rail-trend.up { background: var(--accent-soft); color: var(--accent-deep); }
-.rail-trend.down { background: #fde3e3; color: #c0362c; }
+.rail-trend.down { background: var(--danger-soft); color: var(--danger); }
 .rail-chart-fill { fill: #7bd39c; fill-opacity: 0.18; stroke: none; }
 .rail-chart-line { fill: none; stroke: #6ec886; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .rail-chart-dot { fill: var(--surface); stroke: #6ec886; stroke-width: 2; }
 .rail-chart-value { font-size: 0.75rem; font-weight: 700; fill: var(--text); }
 .rail-chart-label { font-size: 0.75rem; fill: var(--muted); }
-.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: 13px; background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 1.3125rem; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 0.8125rem; }.rail-insight p { margin: 2px 0 0; font-size: 0.8125rem; }.rail-insight svg { width: 1.0625rem; color: var(--accent); }
+.rail-insight { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #dcede2; border-radius: var(--radius-lg); background: linear-gradient(180deg, #f4faf6, #eff8f3); box-shadow: 0 5px 18px rgba(18, 38, 29, 0.03); color: var(--text); text-decoration: none; }.rail-insight > span { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: #dcf7e6; color: var(--accent); font-size: 1.25rem; }.rail-insight div { flex: 1; }.rail-insight strong { font-size: 0.8125rem; }.rail-insight p { margin: 2px 0 0; font-size: 0.8125rem; }.rail-insight svg { width: 1.0625rem; color: var(--accent); }
 
 @media (max-width: 1180px) { .home-layout { grid-template-columns: minmax(0, 1fr) 305px; }.summary-metric { padding: 0 12px; }.summary-metric strong { font-size: 1.25rem; }.summary-metric > span:not(.summary-metric-icon) { white-space: normal; } }
 /*
@@ -226,7 +226,7 @@
      centres on the same line as each other. Sizes come from
      76-header-controls.css; only the offset is Home's. */
   .home-head .hdr-search, .home-head .avatar-lg, .home-head .notif-wrap { margin-top: 5px; }
-  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: 18px; }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 0.875rem; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 0.875rem; height: 0.875rem; }.summary-metric strong { font-size: 0.9375rem; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 0.75rem; white-space: normal; line-height: 1.2; }
+  .home-layout { display: block; }.home-main .summary { padding: 16px; border-radius: var(--radius-lg); }.home-main .summary-progress-layout { flex-direction: column; gap: 12px; }.summary-progress-hero { flex-basis: auto; padding: 14px; }.summary-progress-line { font-size: 0.875rem; }.summary-metrics { gap: 6px; }.summary-metric { padding: 0 8px; border-left-width: 1px; }.summary-metric-icon { width: 26px; height: 26px; margin-bottom: 6px; }.summary-metric-icon svg { width: 0.875rem; height: 0.875rem; }.summary-metric strong { font-size: 0.9375rem; white-space: normal; }.summary-metric > span:not(.summary-metric-icon) { font-size: 0.75rem; white-space: normal; line-height: 1.2; }
   /* repeat(2, 1fr), not 3: three columns in .home-main's full mobile width
      (no rail to share it with here) measured at 81-108px per card at 320px —
      the narrowest one clipped under the floating "+" button and its label

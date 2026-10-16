@@ -28,7 +28,7 @@
   flex-shrink: 0;
   width: 28px;
   height: 28px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--purple-soft);
   color: var(--purple-deep);
   display: grid;
@@ -41,7 +41,7 @@
 }
 
 .cust-kpi-label {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   line-height: 1.25;
 }
@@ -334,7 +334,7 @@
   border-radius: var(--radius-sm);
   background: #fdf8ec;
   color: #6b5423;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -365,7 +365,7 @@
 .bk-kpi-icon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   display: grid;
   place-items: center;
   margin-bottom: var(--sp-2);
@@ -389,8 +389,8 @@
   color: var(--purple-deep);
 }
 .bk-kpi-red {
-  background: #fde3e3;
-  color: #c0362c;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .bk-kpi-value {
@@ -425,7 +425,7 @@
   color: var(--purple-deep);
 }
 .bk-kpi-sub-red {
-  color: #c0362c;
+  color: var(--danger);
 }
 
 /* ---- combined filter card (search / From / To / staff / Show) ----
@@ -471,14 +471,12 @@
 
 .bk-field input,
 .bk-field select {
-  height: 44px;
   width: 100%;
   min-width: 0;
   padding: 0 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 0.90625rem;
   font-weight: 600;
   color: var(--text);
   outline: none;
@@ -541,7 +539,7 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text);
 }
@@ -568,7 +566,7 @@
 .bk-sched-count {
   display: inline-block;
   margin-left: 8px;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -593,10 +591,10 @@
   height: 34px;
   padding: 0 15px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--muted);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -671,7 +669,7 @@
   width: fit-content;
   margin-bottom: 9px;
   padding: 4px 11px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
@@ -824,7 +822,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 6px;
 }
@@ -956,7 +954,7 @@
   flex-shrink: 0;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent-deep);
   display: grid;
@@ -992,7 +990,7 @@
   align-items: center;
   gap: 3px;
   color: var(--accent-deep);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -1048,7 +1046,7 @@
   .bk-kpi-icon {
     width: 28px;
     height: 28px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     margin-bottom: 8px;
   }
 
@@ -1058,7 +1056,7 @@
   }
 
   .bk-kpi-value {
-    font-size: 1.1875rem;
+    font-size: 1.125rem;
   }
 
   /* Quarter of a phone's width is not enough for "Completed" on one line —
@@ -1125,7 +1123,7 @@
    * card scrolling past showed through that 16px band — a slice of white card wedged between the header and
    * the pills, which is what "alignment issue" looked like at the top of the screen.
    *
-   * `::after`, because `::before` is the sliding selected piece (100-clay-tabs.css) and taking it would stop
+   * `::after`, because `::before` was the sliding selected piece of the clay tab strip (removed in Jira GRW-570) and taking it would stop
    * the tabs animating. Painted in the page's own colour, so it is invisible until something scrolls under it.
    */
   /*
@@ -1245,7 +1243,7 @@
     align-items: center;
     gap: 6px;
     margin-top: 5px;
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
     color: var(--muted);
     font-weight: 600;
   }
@@ -1322,7 +1320,6 @@
     background: transparent;
     /* 16px, not 14.5: iOS Safari zooms the page when a field under 16px is focused, and
        pinch-zoom is allowed now (Jira GRW-306), so nothing else holds that zoom back. */
-    font-size: 16px;
     font-weight: 500;
     color: var(--text);
   }
@@ -1358,12 +1355,12 @@
     justify-content: space-between;
     flex: 1;
     gap: 10px;
-    font-size: 1.1875rem;
+    font-size: 1.125rem;
     font-weight: 800;
   }
 
   .bk-sched-count {
-    font-size: 0.84375rem;
+    font-size: 0.8125rem;
     font-weight: 600;
   }
 
@@ -1415,7 +1412,7 @@
   .bk-field-sort select {
     height: 42px;
     padding: 0 10px;
-    font-size: 0.84375rem;
+    font-size: 0.8125rem;
   }
 
   /* The labels and the weekday hint are what make this card tall, so the folded fields drop them.
@@ -1434,12 +1431,8 @@
   .bk-field input {
     height: 44px;
     padding: 0 10px;
-    font-size: 16px;
   }
 
-  .bk-field select {
-    font-size: 16px;
-  }
 }
 
 .booking-sub {
@@ -1541,11 +1534,11 @@
   border: 1px solid #f7dddd;
   background: #fff7f7;
   border-radius: var(--radius-sm);
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--text);
 }
 .status-filter-banner strong {
-  color: #c0362c;
+  color: var(--danger);
 }
 .status-filter-banner a {
   color: var(--muted);
@@ -1912,7 +1905,7 @@
     font-size: 0.8125rem;
     font-weight: 620;
     padding: 9px 15px;
-    border-radius: 10px;
+    border-radius: var(--radius);
     white-space: nowrap;
   }
 
@@ -1970,7 +1963,7 @@
      ones stay hidden (they ran 3–4 lines and ate the top of the screen). */
   .topbar-with-sub p {
     display: block;
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
     margin-top: 1px;
   }
 
@@ -1983,7 +1976,7 @@
   }
 
   .home-sub {
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
   }
 
   /* Scrolling pages: the tab bar is a normal flex sibling now (see .bottom-nav
@@ -2282,7 +2275,7 @@
   }
 
   .offer-title {
-    font-size: 0.90625rem;
+    font-size: 0.875rem;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2306,7 +2299,7 @@
   }
 
   .offer-subtitle {
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2344,7 +2337,7 @@
   }
 
   .offer-stat-value {
-    font-size: 0.84375rem;
+    font-size: 0.8125rem;
   }
 
   .offer-info-item {
@@ -2367,7 +2360,7 @@
   }
 
   .pagination-summary {
-    font-size: 0.78125rem;
+    font-size: 0.75rem;
   }
 
   .pagination-pages {
@@ -2376,6 +2369,13 @@
 
   .pagination-indicator {
     display: inline-flex;
+    /* "Page 1 of 2" on one line: on a 344px phone it broke as "Page 1 of" / "2" (owner, 2026-10-14). The summary
+       on the left is the one that wraps. */
+    white-space: nowrap;
+  }
+
+  .pagination-controls {
+    flex: none;
   }
 
   /* Bookings' per-provider chair view: the multi-column table is unreadable on
@@ -2868,8 +2868,8 @@ button.bk-waiting-row:focus-visible {
   min-width: 32px;
   height: 32px;
   padding: 0 6px;
-  border-radius: 10px;
-  background: #fdf0d5;
+  border-radius: var(--radius);
+  background: var(--amber-soft);
   color: var(--amber);
   font-size: 0.9375rem;
   font-weight: 800;

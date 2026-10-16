@@ -60,12 +60,12 @@
 }
 
 /* The first group's label sits under the header, not 22px below it. */
-.pe-form > .sheet-label:first-child {
+.pe-col-details > .sheet-label:first-child {
   padding-top: 4px;
 }
 
 /* Jira GRW-381 — the branch field keeps its own shape; it just needs the group spacing around it. */
-.pe-form > .offer-branch-field {
+.pe-col-details > .offer-branch-field {
   margin-top: 10px;
 }
 
@@ -222,7 +222,7 @@
 .preview-caption {
   text-align: center;
   margin-top: 10px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -256,7 +256,7 @@
     height: 38px;
   }
 
-  .pe-form > .sheet-label {
+  .pe-form > div > .sheet-label {
     padding: 14px 4px 5px;
   }
 
@@ -384,7 +384,7 @@
 
 .picker-row-name {
   font-weight: 600;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .picker-row-meta {
@@ -395,7 +395,7 @@
 .picker-row-thumb {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   object-fit: cover;
   flex-shrink: 0;
@@ -444,8 +444,8 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #fdeaea;
-  color: #b91c1c;
+  background: var(--danger-soft);
+  color: var(--danger);
   font-size: 0.8125rem;
   line-height: 1;
   cursor: pointer;
@@ -475,7 +475,7 @@
 
 .rules-option-title {
   font-weight: 620;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .rules-option-sub {
@@ -538,14 +538,14 @@
 }
 
 .preview-title {
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   font-weight: 700;
   margin: 10px 0 2px;
 }
 
 .preview-services {
   color: var(--muted);
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .preview-tagline {
@@ -596,7 +596,7 @@
 .preview-photo-avatar {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--accent-soft);
   object-fit: cover;
   display: block;
@@ -625,7 +625,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -683,12 +683,12 @@
     height: 7px;
     margin-right: 7px;
     border-radius: 50%;
-    background: #6d28d9;
+    background: var(--purple-deep);
     vertical-align: middle;
   }
 
   .pkg-editor .pe-foot-services.sheet-foot-error::before {
-    background: #b91c1c;
+    background: var(--danger);
   }
 }
 
@@ -754,7 +754,7 @@
   gap: 10px 12px;
   padding: 12px 14px 14px;
   border: 1px solid #bfe0cc;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--accent-soft);
 }
 
@@ -826,7 +826,7 @@
   min-height: 42px;
   padding: 0 14px;
   border: 1px solid #bfe0cc;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--surface);
   font-family: inherit;
   font-size: 1.0625rem;
@@ -865,4 +865,43 @@
 
 .pe-add-row + .pe-service-list .sheet-row:first-child {
   border-top: 0.5px solid var(--border);
+}
+
+/*
+ * Owner, 2026-10-14 — a 344px phone: the name's label ran under its placeholder ("Package name *e.g. Weekend…"),
+ * and the title read "Make a packa…". The name and the tagline stack their label over the field, as the desk's
+ * narrow column does (79-desk-package.css); the title takes a second line instead of an ellipsis.
+ */
+@media (max-width: 480px) {
+  .pkg-editor .pe-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.2;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-label {
+    flex: 1 1 100%;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-value {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+
+  .pkg-editor .pe-col-details .sheet-row-value input {
+    width: 100%;
+    text-align: left;
+  }
 }

@@ -265,6 +265,14 @@ describe('the Staff tab', () => {
 const overview = {
   range,
   compare: false,
+  scorecard: {
+    vs: 'month',
+    money: { value: 800000, previous: 700000 },
+    visits: { value: 8, previous: 8 },
+    newClients: { value: 4, previous: 2 },
+    cameBack: { value: 3, previous: 3 },
+    noShows: { value: 1, previous: 0 },
+  },
   kpis: {
     revenueMinor: metric(800000),
     bookings: metric(8),
@@ -291,20 +299,21 @@ const overview = {
 } as unknown as ReportOverview;
 
 describe('the Overview tab', () => {
-  const html = (l: 'en' | 'hi') => wrap(l, createElement(OverviewTab, { data: overview, onTab: () => {}, onClient: () => {} }));
+  const html = (l: 'en' | 'hi') => wrap(l, createElement(OverviewTab, { data: overview, onTab: () => {} }));
 
-  it('names the came-back line and the bands’ days in English', () => {
+  it('opens with the scorecard, and names the bands’ days in English', () => {
     const page = html('en');
-    expect(page).toContain('aria-label="Came back, 1 Sep – 2 Sep"');
+    // Jira GRW-567 — the scorecard, not a sparkline tile, is what opens the tab.
+    expect(page).toContain('₹1,000 more than last month');
+    expect(page).not.toContain('rp-kpi-grid');
     expect(page).toContain('>0–30 days<');
   });
 
   it('and in Hindi', () => {
     const page = html('hi');
-    // Jira GRW-478 (U-3) — the dates too, not only the words.
-    expect(page).toContain('aria-label="लौटकर आए, 1 सित॰ – 2 सित॰"');
+    expect(page).toContain('पिछले महीने से ₹1,000 ज़्यादा');
     expect(page).toContain('>0–30 दिन<');
-    for (const s of ['Came back', '0–30 days']) expect(page, s).not.toContain(s);
+    for (const s of ['Came back', '0–30 days', 'more than']) expect(page, s).not.toContain(s);
   });
 });
 

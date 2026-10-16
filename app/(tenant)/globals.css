@@ -16,6 +16,7 @@
  * this order reproduces the original stylesheet BYTE FOR BYTE.
  */
 @import './styles/00-base.css';
+@import './styles/01-controls.css';
 @import './styles/01-shell.css';
 @import './styles/02-mobile-nav-hamburger-off-canvas-drawer.css';
 @import './styles/03-page-header.css';
@@ -93,6 +94,13 @@
 @import './styles/76-header-controls.css';
 @import './styles/77-staff-wizard.css';
 @import './styles/78-collapsed-week-hours.css';
+@import './styles/79-desk-till.css';
+@import './styles/79-desk-booking.css';
+@import './styles/79-desk-services.css';
+@import './styles/79-desk-clients.css';
+@import './styles/79-desk-staff.css';
+@import './styles/79-desk-bookings.css';
+@import './styles/79-desk-package.css';
 @import './styles/80-own-earnings.css';
 @import './styles/81-client-edit.css';
 @import './styles/82-move-booking.css';
@@ -106,10 +114,12 @@
 @import './styles/90-accessibility.css';
 @import './styles/91-one-header.css';
 @import './styles/92-spacing.css';
+@import './styles/93-what-to-do.css';
 @import './styles/94-header-branch-picker.css';
 @import './styles/95-token-board.css';
 @import './styles/95-branch-carousel.css';
 @import './styles/96-packages.css';
+@import './styles/96-products.css';
 @import './styles/97-services-rebuilt.css';
 @import './styles/98-service-sheet.css';
 @import './styles/99-screen-states.css';
@@ -118,5 +128,3 @@
 @import './styles/99-help.css';
 @import './styles/99-payment-qr.css';
 @import './styles/99-category-picker.css';
-@import './styles/100-clay-tabs.css';
-@import './styles/101-clay-app.css';

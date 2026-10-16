@@ -31,6 +31,7 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
   const rp = useReportsCopy();
   const st = useTranslations('status');
   const tt = useTranslations('tokens');
+  const sg = useTranslations('reports.signals');
   const locale = useLocale();
   const nameOf = useRowName();
   const c = rp.bookingsTab;
@@ -118,7 +119,13 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
 
       {/* Jira GRW-406 — the counter's tokens over the same days: given, served, paid, left without service. */}
       {data.tokens ? (
-        <Card title={tt('figuresReport')} hint={tt('figuresReportHint')} figure={data.tokens.issued}>
+        <Card
+          title={tt('figuresReport')}
+          hint={tt('figuresReportHint')}
+          figure={data.tokens.issued}
+          // Jira GRW-568 — how long they waited. Absent when nobody was given a token: a 0 would read as "no wait".
+          foot={typeof data.tokens.avgWaitMin === 'number' ? sg('wait', { min: data.tokens.avgWaitMin }) : undefined}
+        >
           <TokenFigures figures={data.tokens} />
         </Card>
       ) : null}
@@ -141,12 +148,51 @@ export function BookingsTab({ data }: { data: ReportBookings }) {
           />
         </Card>
 
-        {/* Two sources, because two is what the booking path records. The
-            design draws four; the other two would be invented (GRW-54 AC-02). */}
-        <Card title={c.source} hint={c.sourceHint}>
-          <BarList items={countBars(data.bySource, rp.servicesTab.retired, nameOf)} emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))} />
+        {/* Jira GRW-568 — three sources, because `booked_ahead` now tells a desk
+            booking for later from a walk-in. Two on an API that predates it. */}
+        <Card title={c.source} hint={data.sources ? sg('sources.hint') : c.sourceHint}>
+          <BarList
+            items={
+              data.sources
+                ? [
+                    { label: sg('sources.whatsapp'), value: data.sources.whatsapp, display: String(data.sources.whatsapp), color: 'var(--rp-brand)' },
+                    { label: sg('sources.bookedAhead'), value: data.sources.bookedAhead, display: String(data.sources.bookedAhead), color: 'var(--rp-blue)' },
+                    { label: sg('sources.walkIn'), value: data.sources.walkIn, display: String(data.sources.walkIn), color: 'var(--rp-amber)' },
+                  ].filter((i) => i.value > 0)
+                : countBars(data.bySource, rp.servicesTab.retired, nameOf)
+            }
+            emptyText={rp.noDataHint(rangeName(data.range, rp.ranges))}
+          />
         </Card>
       </div>
+
+      {/* Jira GRW-568 — a move is not a cancellation, and a cancellation has an
+          author. Lines, not a chart: four numbers an owner reads once. */}
+      {data.endings && (
+        <Card title={sg('endings.title')} hint={sg('endings.hint')}>
+          {(() => {
+            const lines = [
+              { key: 'moved' as const, n: data.endings.moved, tone: 'var(--rp-blue)' },
+              { key: 'byClient' as const, n: data.endings.cancelledByCustomer, tone: 'var(--rp-red)' },
+              { key: 'bySalon' as const, n: data.endings.cancelledBySalon, tone: 'var(--rp-amber)' },
+              { key: 'other' as const, n: data.endings.cancelledOther, tone: 'var(--muted)' },
+            ].filter((l) => l.n > 0);
+            return lines.length === 0 ? (
+              <p className="rp-empty">{sg('endings.none')}</p>
+            ) : (
+              <ul className="sg-lines">
+                {lines.map((l) => (
+                  <li key={l.key} className="sg-line">
+                    <span className="sg-dot" style={{ background: l.tone }} />
+                    <span className="sg-label">{sg(`endings.${l.key}`)}</span>
+                    <strong className="sg-value">{l.n}</strong>
+                  </li>
+                ))}
+              </ul>
+            );
+          })()}
+        </Card>
+      )}
 
       <Card
         title={c.peak}

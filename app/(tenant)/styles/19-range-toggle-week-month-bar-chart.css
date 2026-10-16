@@ -3,7 +3,7 @@
 .range-toggle {
   display: flex;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   padding: 2px;
 }
 
@@ -15,7 +15,7 @@
   font-size: 0.75rem;
   font-weight: 620;
   padding: 6px 11px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .summary-tile .k {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
 }
 
 .tile-blue {
@@ -149,10 +149,10 @@
 }
 
 .tile-amber {
-  background: #fdf3e3;
+  background: var(--amber-soft);
 }
 .tile-amber .v {
-  color: #8a5a10;
+  color: var(--amber-ink);
 }
 .tile-amber .k {
   color: var(--muted);

@@ -1,0 +1,330 @@
+/*
+ * Owner, 2026-10-14 — Clients on a wide desk: the same three panels as Services (79-desk-services.css).
+ *
+ *   left   the four figures as a short list, then the bands — All, each band with its count, Never been
+ *   middle the search and the list, ten a page as the server sends it; the table scrolls inside its card
+ *   right  the client's card (`ClientProfileCard inline`) drawn in place instead of sliding over the list
+ *
+ * Only at the desktop tier (≥1101px). `CustomersClient` asks the width itself and renders the paged table
+ * below it, so nothing here is reached there; the media query is belt and braces. Scoped to `.cust-desk`.
+ */
+@media (min-width: 1101px) {
+  .page-body.cust-desk {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .cust-desk-grid {
+    flex: 1;
+    min-height: 0;
+    /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
+       and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
+    grid-template-rows: minmax(0, 1fr);
+    /* The list gets the room: a 1366 laptop leaves it ~36rem beside an 11rem band column and a 21rem card. */
+    grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(20rem, 21rem);
+    align-items: stretch;
+  }
+
+  .cust-desk-left,
+  .cust-desk-right {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .cust-desk-right {
+    position: static;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .cust-desk-mid {
+    min-height: 0;
+  }
+
+  .cust-desk-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  .cust-desk-tools .pf-wide-search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cust-desk-table {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .cust-desk-table .table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Fixed columns: the name takes what is left and truncates, the numbers keep their width. An auto table
+     let a long name, its branch chip and a nowrap number push the whole thing past the panel. */
+  .cust-desk-table table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .cust-desk-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cust-desk-table th:nth-child(2) {
+    width: 10.5rem;
+  }
+
+  /* The headers in full — "Visits" and "Total spent" with their sort arrow at 14px and the cell's padding. */
+  .cust-desk-table th:nth-child(4) {
+    width: 4.75rem;
+  }
+
+  .cust-desk-table th:nth-child(5) {
+    width: 7rem;
+  }
+
+  .cust-desk-table th:nth-child(6) {
+    width: 8.5rem;
+  }
+
+  /* The name is the cell: it takes the room and gives way last; the branch chip gives way first, to a floor
+     (owner's screenshot, 2026-10-14 — "MG R" and "Test Token Clie" side by side was the chip winning). */
+  .cust-desk-table .cust-name-cell {
+    min-width: 0;
+  }
+
+  .cust-desk-table .cust-name-cell > span:nth-child(2) {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cust-desk-table .cust-branch-chip {
+    flex: 0 4 auto;
+    min-width: 3.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cust-desk-table th,
+  .cust-desk-table td {
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .cust-desk-table th:first-child,
+  .cust-desk-table td:first-child {
+    padding-left: 14px;
+  }
+
+  /* "Last booking" is the first row of the card on the right, one click away. */
+  .cust-desk-table th:nth-child(3),
+  .cust-desk-table td:nth-child(3) {
+    display: none;
+  }
+
+  .cust-desk-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+  }
+
+  .cust-desk-table .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+  }
+
+  .cust-desk-table tr.is-selected td {
+    background: var(--accent-soft);
+  }
+
+  .cust-desk-table tr.is-selected td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  /* ---------- left: the figures and the bands ---------- */
+  .cust-desk-kpis {
+    margin: 0 0 var(--sp-3);
+    padding: 0 0 var(--sp-3);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cust-desk-kpis > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+
+  .cust-desk-kpis dt {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .cust-desk-kpis dd {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cust-desk-bands {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .cust-desk-band {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    min-height: 2.5rem;
+    padding: 0 var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .cust-desk-band:hover {
+    background: var(--page-bg);
+  }
+
+  .cust-desk-band.is-on {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-weight: 600;
+  }
+
+  .cust-desk-band-name {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* The band's dot: the same four colours the phone's cards use, from --seg. */
+  .cust-desk-band .cust-segment-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--seg, var(--muted));
+  }
+
+  .cust-desk-n {
+    flex: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cust-desk-band.is-on .cust-desk-n {
+    color: inherit;
+  }
+
+  /* ---------- right: the card in place ---------- */
+  /* `.cpc` (65-narrower-viewports.css) is a fixed panel sliding in from the right. Here it is the panel. */
+  .cpc-inline {
+    position: static;
+    z-index: auto;
+    width: 100%;
+    max-width: none;
+    flex: 1;
+    min-height: 0;
+    border-radius: var(--radius);
+    box-shadow: none;
+  }
+
+  .cpc-inline .cpc-head {
+    padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  }
+
+  .cpc-inline .cpc-foot {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .cust-desk-nothing {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+  }
+
+  .cust-desk-nothing p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+}
+
+/*
+ * Up to 1600 wide the list is under 44rem, and a name, a number, three figures and the band do not fit
+ * it: the Phone column goes — the number is on the card with Call, the band chip in "Last seen" is nowhere
+ * else. (At 1366 with every column drawn the name was left 24px.)
+ */
+@media (min-width: 1101px) and (max-width: 1600px) {
+  .cust-desk-table th:nth-child(2),
+  .cust-desk-table td:nth-child(2) {
+    display: none;
+  }
+}
+
+/* The narrow end of the tier (1101–1300px): side panels at their floors, the list gets what is left. */
+@media (min-width: 1101px) and (max-width: 1300px) {
+  .cust-desk-grid {
+    grid-template-columns: 10rem minmax(0, 1fr) 19rem;
+    gap: var(--sp-3);
+  }
+
+  .cust-desk-left {
+    padding: var(--sp-3);
+  }
+
+  .cust-desk-table th,
+  .cust-desk-table td {
+    padding: 8px 8px;
+  }
+}
+
+/* Up to 1440 the name has ~8rem: the branch chip goes (the card on the right says the branch), the name stays whole. */
+@media (min-width: 1101px) and (max-width: 1440px) {
+  .cust-desk-table .cust-branch-chip {
+    display: none;
+  }
+}

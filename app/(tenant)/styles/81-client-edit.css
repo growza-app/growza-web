@@ -79,7 +79,7 @@
  */
 .cpc-edit-error {
   margin: 0;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.35;
   color: #b3261e;
@@ -129,7 +129,7 @@
   background: transparent;
   padding: 5px 12px;
   font: inherit;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
   cursor: pointer;
@@ -168,7 +168,7 @@
   gap: 8px;
   margin: 10px 0 0;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: color-mix(in srgb, #b3261e 8%, transparent);
   font-size: 0.8125rem;
 }

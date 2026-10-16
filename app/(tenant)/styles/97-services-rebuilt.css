@@ -22,7 +22,7 @@
   flex: none;
   width: 42px;
   height: 42px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
 }
 
@@ -210,6 +210,23 @@
   text-wrap: balance;
 }
 
+/* The " · " belongs to the cleanup, so it travels with it when the line breaks. */
+.svc-card-right .svc-cleanup::before {
+  content: ' · ';
+}
+
+/* Owner, 2026-10-14 — on a phone (≤430px) the long ones never fit one line and the short ones only just: the
+   cleanup takes a line of its own, without the dot, so every card reads the same way. */
+@media (max-width: 430px) {
+  .svc-card-right .svc-cleanup {
+    display: block;
+  }
+
+  .svc-card-right .svc-cleanup::before {
+    content: none;
+  }
+}
+
 /* Owner-app audit 2026-10-10 — an iPhone SE and a folded Z Fold (320–344px): a smaller thumbnail, so the name keeps
    room for "Women's" and "Haircut" whole. */
 @media (max-width: 344px) {
@@ -255,12 +272,12 @@
 
 /* The same red as every other destructive control in the product. */
 .svc-swipe-delete {
-  background: #b91c1c;
+  background: var(--danger);
 }
 
 .svc-swipe-hint {
   margin: 10px 4px 0;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -369,7 +386,7 @@
 
 .held-body {
   margin: 4px 0 0;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--muted);
 }
@@ -409,7 +426,7 @@
   flex: none;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--accent-soft);
   color: var(--accent-deep);
   display: flex;
@@ -436,7 +453,7 @@
 
 .held-row-meta {
   display: block;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 1px;
 }

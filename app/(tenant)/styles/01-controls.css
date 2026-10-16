@@ -1,0 +1,187 @@
+/*
+ * Jira GRW-571 — one control set.
+ *
+ * Every field, select, textarea, label, hint and button in the owner's app is drawn here, once, and
+ * nowhere else. Before this the field rule lived in the availability screen's sheet, the secondary
+ * button in the checkout sheet's, and the label in the staff edit screen's — three screens that happened
+ * to be written first. A screen may still size or place a control; it must not restyle one.
+ *
+ * Sizes: 40px on a pointer, 44px under a thumb (90-accessibility.css raises the floor on phones and sets
+ * the 16px that stops iOS zooming a field on focus). Three radii in the whole app: --radius-sm for
+ * controls, --radius for cards, --radius-lg for sheets and big tiles.
+ */
+
+/* ---------- the field ---------- */
+select,
+input[type='text'],
+input[type='date'],
+input[type='search'],
+input[type='tel'],
+input[type='email'],
+input[type='number'],
+input[type='password'],
+textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text);
+  min-width: 180px;
+  min-height: 40px;
+}
+
+textarea {
+  padding: 10px 12px;
+  min-height: 80px;
+  resize: vertical;
+}
+
+input[type='date'] {
+  min-width: 160px;
+}
+
+select:hover,
+input:hover:not(:disabled):not([type='checkbox']):not([type='radio']),
+textarea:hover:not(:disabled) {
+  border-color: #b9c2bb;
+}
+
+select:disabled,
+input:disabled,
+textarea:disabled {
+  background: var(--slate-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8a948f;
+}
+
+/* No stepper arrows on a number field (Jira GRW-491): the keypad is the point, the ▲▼ eat the amount. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Selects wear the app's chrome, not the OS's; the control stays native so keyboard and screen-reader
+   behaviour stay native too. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6a65' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 15px 15px;
+  cursor: pointer;
+}
+
+/* ---------- words around a field ---------- */
+.field-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.field-optional {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.field-hint {
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* Soft, per-field validation — under the field it belongs to, not a banner up top. */
+.field-error {
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  color: var(--amber);
+}
+
+.field-invalid {
+  border-color: var(--amber) !important;
+}
+
+/* ---------- the button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent-deep);
+  color: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--accent-ink);
+}
+
+/* An <svg> icon with no width falls back to the browser's intrinsic default; every icon+text button needs a cap. */
+.btn svg,
+.btn-ghost svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Secondary: same piece, outlined. */
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--slate-soft);
+}
+
+/* Destructive, quiet until hovered. */
+.btn-danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Under a thumb: 44px (the floor for every control is in 90-accessibility.css; text size is the screen's call). */
+@media (max-width: 860px) {
+  .btn {
+    min-height: 44px;
+    padding: 0 18px;
+  }
+}

@@ -162,7 +162,9 @@
     "clientNoneYet": " — they have none yet",
     "thisClient": "this client",
     "thisClientTitle": "This client",
-    "everyBookingFor": "Every booking for {name}"
+    "everyBookingFor": "Every booking for {name}",
+    "deskPick": "Pick a {noun} to see it or change it, or make a new one.",
+    "deskNew": "New booking"
   },
   "nouns": {
     "customers": "clients",
@@ -241,7 +243,8 @@
     "nameOptional": "Name (optional)",
     "namePlaceholder": "e.g. Priya Sharma",
     "couldNotAdd": "Could not add the {noun}.",
-    "whichBranch": "Which branch"
+    "whichBranch": "Which branch",
+    "deskPick": "Pick a {noun} to see their story, or add a new one."
   },
   "freeTimes": {
     "title": "Free times",
@@ -603,6 +606,7 @@
       }
     },
     "tabs": {
+      "todo": "What to do",
       "overview": "Overview",
       "revenue": "Money earned",
       "customers": "Clients",
@@ -750,6 +754,7 @@
     "removeBody": "They will be signed out straight away and cannot sign in to this business again unless you invite them. Their past bookings and records stay."
   },
   "services": {
+    "deskShowing": "{count, plural, one {# service} other {# services}}",
     "subtitle": "What you offer, how long each takes, and what you charge.",
     "cols": {
       "name": "Service",
@@ -757,7 +762,8 @@
       "actions": "Actions",
       "time": "Time",
       "duration": "Minutes",
-      "status": "Status"
+      "status": "Status",
+      "category": "Category"
     },
     "noCleanup": "None",
     "minutes": "{count} min",
@@ -876,6 +882,20 @@
           "threading": "Threading",
           "waxing": "Waxing"
         }
+      },
+      "parts": {
+        "details": "Details",
+        "pricing": "Pricing",
+        "staff": "Staff"
+      },
+      "description": "Description",
+      "descriptionPlaceholder": "A sentence or two about this service",
+      "staff": {
+        "title": "Who does it",
+        "some": "Every {provider} at this branch can be booked for this service.",
+        "nobody": "No {provider} at this branch is set up for this yet.",
+        "hint": "Staff are not restricted per service: whoever works at this branch can be booked for it.",
+        "open": "Open the Staff screen"
       }
     },
     "chooser": {
@@ -1043,6 +1063,12 @@
       "done": "Done"
     },
     "categories": {
+      "deskHint": "The groups clients see when they book. Drag to set the order.",
+      "deskOrderHint": "Changes are saved as you make them.",
+      "deleteOne": "Delete {name}?",
+      "deleteOneGoes": "{count, plural, one {The # service} other {The # services}} in it {count, plural, one {is} other {are}} deleted too. This cannot be undone.",
+      "deleteOneEmpty": "Nothing is filed under it. This cannot be undone.",
+      "deleteAria": "Delete {name}",
       "open": "Categories",
       "title": "Categories",
       "hint": "The groups your services are listed under at this branch.",
@@ -1156,6 +1182,29 @@
     "categoryPicker": {
       "label": "Part of the menu",
       "count": "{count} services"
+    },
+    "deskPick": "Pick a service to change it, or add a new one.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "desk": {
+      "filter": "Filter",
+      "sort": "Sort",
+      "status": {
+        "all": "All statuses",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "sorts": {
+        "name": "Name A–Z",
+        "priceAsc": "Price, low to high",
+        "priceDesc": "Price, high to low",
+        "duration": "Shortest first"
+      }
+    },
+    "discard": {
+      "title": "Leave without saving?",
+      "body": "You have changes to this service that are not saved. They will be lost.",
+      "confirm": "Leave"
     }
   },
   "staff": {
@@ -1207,6 +1256,7 @@
       "availableToday": "{name} available today",
       "moreActions": "More actions for {name}",
       "actionsFor": "Actions for {name}",
+      "closeActions": "Close",
       "available": "Available",
       "offToday": "Off today",
       "inactive": "Inactive",
@@ -1224,7 +1274,11 @@
       "noHoursToday": "No hours today",
       "backOn": "Back {when}, {time}",
       "tomorrow": "tomorrow"
-    }
+    },
+    "deskPick": "Pick one of your {label} to see what they can do today, or add someone.",
+    "deskWorking": "Working today",
+    "deskPeople": "People",
+    "deskSeats": "Seats left"
   },
   "staffWizard": {
     "title": "Add {label}",
@@ -1757,7 +1811,9 @@
       "loadFailed": "Could not load services. Check the connection and try again.",
       "notePackage": "A service in a package keeps its service; you can fix its amount. The old amount stays in the activity log.",
       "historyTitle": "Corrected"
-    }
+    },
+    "foldGroup": "Fold {name}",
+    "unfoldGroup": "Unfold {name}"
   },
   "auth": {
     "metaTitle": "Sign in",
@@ -1885,7 +1941,7 @@
     "sendHint": "Opens WhatsApp with the bill typed out. You press send.",
     "shareBill": "Share",
     "printBill": "Print",
-    "billFull": "A bill can have up to {max} lines. Take something off to add this package.",
+    "billFull": "A bill can have up to {max} lines. Take something off to add more.",
     "qtyOnBill": "{name}: {count} on the bill",
     "oneMore": "One more {name}",
     "oneLess": "One less {name}",
@@ -1911,6 +1967,10 @@
     "searchServices": "{n, plural, =0 {Search services…} one {Search 1 service or package…} other {Search # services or packages…}}",
     "loadingServices": "Loading services…",
     "noServicesYet": "No services yet. Add them under Services first.",
+    "deskToday": "Today at this branch",
+    "deskOnVisit": "On this visit",
+    "deskEmpty": "Tap a service to add it.",
+    "deskNobodyToday": "Nobody in yet today.",
     "noServiceMatch": "No service matches that.",
     "alsoTry": "Also try",
     "combos": "Packages & offers",
@@ -1990,7 +2050,8 @@
     "whenNow": "Starts now",
     "timeMoved": "{asked} is taken. Nearest free is {got}.",
     "timeNoneAfter": "Nothing free after {asked} that day.",
-    "visitGone": "This booking is not open any more. It may already be settled. Check Bookings before taking money again."
+    "visitGone": "This booking is not open any more. It may already be settled. Check Bookings before taking money again.",
+    "receiptProducts": "Products"
   },
   "moveBooking": {
     "title": "Move this booking",
@@ -2078,6 +2139,7 @@
     "title": "Reports",
     "navLabel": "Reports",
     "tabs": {
+      "todo": "What to do",
       "overview": "Overview",
       "customers": "Clients",
       "revenue": "Money",
@@ -2086,6 +2148,7 @@
       "staff": "Staff"
     },
     "subtitles": {
+      "todo": "What to do this week to grow",
       "overview": "How is your business doing?",
       "customers": "Who are your clients, and do they come back?",
       "revenue": "Where is your money coming from?",
@@ -2147,6 +2210,35 @@
       "bookings": "Bookings",
       "newCustomers": "New clients",
       "repeatRate": "Came back"
+    },
+    "scorecard": {
+      "title": "How is it going?",
+      "lines": {
+        "money": "Money",
+        "visits": "Visits",
+        "newClients": "New clients",
+        "cameBack": "Came back",
+        "noShows": "Didn’t come"
+      },
+      "tone": {
+        "good": "Good",
+        "steady": "Steady",
+        "bad": "Needs you"
+      },
+      "period": {
+        "yesterday": "yesterday",
+        "week": "the week before",
+        "month": "last month",
+        "quarter": "the 3 months before",
+        "year": "last year",
+        "custom": "the dates before"
+      },
+      "moreMoney": "{amount} more than {period}",
+      "lessMoney": "{amount} less than {period}",
+      "more": "{n} more than {period}",
+      "fewer": "{n} fewer than {period}",
+      "same": "Same as {period}",
+      "noPrior": "Nothing to compare with yet"
     },
     "segments": {
       "active": "Coming in",
@@ -2242,6 +2334,45 @@
       "colNoShow": "Didn't come",
       "noHours": "no hours set"
     },
+    "signals": {
+      "offers": {
+        "title": "Your offers",
+        "hint": "What each offer brought in, and what it cost you in discount",
+        "colOffer": "Offer",
+        "colBookings": "Bookings",
+        "colEarned": "Earned",
+        "colDiscount": "Discount given",
+        "empty": "No offer was booked in this period."
+      },
+      "sources": {
+        "hint": "Booked on WhatsApp, booked ahead at the desk, or walked in",
+        "whatsapp": "WhatsApp",
+        "bookedAhead": "Booked ahead at the desk",
+        "walkIn": "Walked in"
+      },
+      "endings": {
+        "title": "Moved or called off",
+        "hint": "A moved booking still happened, at another time",
+        "moved": "Moved to another time",
+        "byClient": "Called off by the client",
+        "bySalon": "Called off by you",
+        "other": "Called off, nobody recorded by whom",
+        "none": "Nothing was moved or called off."
+      },
+      "wait": "Walk-ins waited {min, plural, one {# minute} other {# minutes}} on average before being seen",
+      "category": {
+        "title": "Money by category",
+        "hint": "Hair against skin, nails against make-up"
+      },
+      "staff": {
+        "colDiscount": "Discounts"
+      },
+      "reach": {
+        "line": "{n, plural, one {# client} other {# clients}} can get an offer on WhatsApp.",
+        "noPhone": "{n, plural, one {# has} other {# have}} no number.",
+        "optedOut": "{n} asked not to be messaged."
+      }
+    },
     "customersTab": {
       "total": "Clients",
       "newClients": "New clients",
@@ -2315,6 +2446,75 @@
       "hm": "{h}h {m}m",
       "h": "{h}h",
       "m": "{m}m"
+    },
+    "todo": {
+      "tone": {
+        "good": "Good",
+        "warn": "Worth doing",
+        "bad": "Needs you"
+      },
+      "money": {
+        "title": "Money this week",
+        "more": "{amount} more than last week",
+        "less": "{amount} less than last week",
+        "same": "Same as last week",
+        "first": "No bookings the week before",
+        "bookings": "{n, plural, one {# booking} other {# bookings}}"
+      },
+      "dueBack": {
+        "title": "{n, plural, one {# client is due back} other {# clients are due back}}",
+        "hint": "They usually come about now. One message brings them in.",
+        "button": "Message them",
+        "text": "Hi {name}, it’s been a while since your last visit to {business}. Shall we book you in? Reply here and we’ll find you a time."
+      },
+      "stopped": {
+        "title": "{n, plural, one {# regular has stopped coming} other {# regulars have stopped coming}}",
+        "hint": "Came 3 times or more, then nothing for 2 months.",
+        "button": "Message them",
+        "text": "Hi {name}, we miss you at {business}! It’s been a while. Reply here and we’ll book you a time you like."
+      },
+      "noShow": {
+        "title": "{n, plural, one {# person didn’t come this week} other {# people didn’t come this week}}",
+        "hint": "Booked, then didn’t turn up. Ask them to pick another time.",
+        "button": "See who",
+        "text": "Hi {name}, we missed you at {business} this week. Want to pick another time? Reply here."
+      },
+      "quietHours": {
+        "title": "{day} {from}–{to} is quiet most weeks",
+        "hint": "A small offer for that time fills it.",
+        "button": "Make an offer"
+      },
+      "bestEarner": {
+        "title": "{service} earned the most this month",
+        "hint": "{amount}. Tell your clients about it.",
+        "button": "Share on WhatsApp",
+        "text": "{business}: our most-loved service this month is {service}. Reply to this message to book yours."
+      },
+      "unreachable": {
+        "title": "{n, plural, one {# client can’t be messaged} other {# clients can’t be messaged}}",
+        "hint": "{optedOut, plural, =0 {} one {# asked not to be contacted. } other {# asked not to be contacted. }}{noPhone, plural, =0 {} one {# has no number.} other {# have no number.}}",
+        "button": "See list"
+      },
+      "share": {
+        "title": "Share this week",
+        "hint": "The five numbers and your top two to-dos, as a WhatsApp message you forward.",
+        "button": "Share this week on WhatsApp",
+        "heading": "{business} — this week, {from} to {to}",
+        "todo": "To do:"
+      },
+      "sheet": {
+        "close": "Close",
+        "whatsapp": "WhatsApp",
+        "call": "Call",
+        "noNumber": "Asked not to be contacted",
+        "lastIn": "{n, plural, one {Last in # day ago} other {Last in # days ago}}",
+        "usually": "Usually every {days} days",
+        "worth": "{amount} a visit",
+        "noPhone": "No number saved"
+      },
+      "empty": "Nothing to do this week.",
+      "emptyHint": "Your clients are coming in and nobody is slipping away.",
+      "checked": "Checked against your bookings, not guessed."
     }
   },
   "autopayRenewal": {
@@ -2468,7 +2668,58 @@
     "services": "Services",
     "formMode": "Which form",
     "simple": "Simple",
-    "advanced": "Full"
+    "advanced": "Full",
+    "desk": {
+      "search": "Search {count} services",
+      "noMatch": "No service by that name.",
+      "mins": "{n} min",
+      "unpaid": "Still to pay today",
+      "nobodyUnpaid": "Nobody waiting to pay.",
+      "waiting": "Waiting",
+      "withStylist": "With stylist",
+      "booked": "Booked",
+      "emptyBill": "Tap a service to start the bill.",
+      "packages": "Packages ({n})",
+      "priceFor": "Price for {name}",
+      "products": "Products",
+      "soon": "Soon",
+      "noPackages": "No priced package yet. Make one on the Packages screen.",
+      "noProducts": "Nothing on the shelf yet. Add products on the Products screen."
+    },
+    "split": {
+      "link": "Paid two ways",
+      "first": "Which way first?",
+      "howMuch": "How much by {mode}?",
+      "restHint": "The rest goes on the next way",
+      "then": "{amount} by {mode} · and {rest} by…",
+      "clear": "One way after all"
+    },
+    "productsChip": "Products",
+    "left": "{n} left",
+    "outOfStock": "Out of stock",
+    "needService": "Add a service too — a product alone cannot be rung up yet.",
+    "sort": {
+      "label": "Sort",
+      "name": "Name A–Z",
+      "priceAsc": "Price, low to high",
+      "priceDesc": "Price, high to low",
+      "menu": "Menu order"
+    },
+    "inStockOnly": "In stock only",
+    "pkg": {
+      "view": "What is inside {name}",
+      "close": "Close",
+      "noPrice": "Priced by its services",
+      "youSave": "You save {amount} — {list} one by one",
+      "mins": "{n} min · {count, plural, one {# service} other {# services}}",
+      "inside": "Inside",
+      "eachMins": "{n} min",
+      "until": "On sale until {date}.",
+      "add": "Add to bill",
+      "onBill": "On the bill",
+      "remove": "Take off the bill",
+      "addAnother": "Add one more (on the bill × {n})"
+    }
   },
   "help": {
     "title": "Help",
@@ -2720,6 +2971,146 @@
           }
         }
       }
+    }
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "Things you sell over the counter. Ring them up on the Record payment screen beside the services; every change to the count is kept here.",
+    "add": "Add a product",
+    "empty": "Nothing on the shelf yet.",
+    "emptyHint": "Add what you sell over the counter and it shows up on the Record payment screen.",
+    "chooseBranch": "Choose a branch to see its shelf.",
+    "stock": "{n} left",
+    "outOfStock": "Out of stock",
+    "sold": "{n} sold",
+    "retired": "Retired",
+    "retire": "Take off the till",
+    "bringBack": "Put back on the till",
+    "delete": "Delete",
+    "deleteAsk": "Delete {name}? Bills that sold it keep their own copy.",
+    "form": {
+      "titleAdd": "Add a product",
+      "titleEdit": "Edit product",
+      "name": "Name",
+      "namePlaceholder": "e.g. Argan Oil 100ml",
+      "price": "Price",
+      "stock": "Opening count",
+      "stockHint": "How many are on the shelf today. Later changes go on the Stock tab, with a reason.",
+      "addPhoto": "Add a photo",
+      "changePhoto": "Change photo",
+      "photoHint": "Optional. Shown on the till's tile.",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "needName": "Give the product a name",
+      "needPrice": "Give it a price",
+      "done": "Done",
+      "part": {
+        "details": "Details",
+        "stock": "Stock",
+        "sales": "Sales"
+      },
+      "cost": "Cost price",
+      "costHint": "What you pay for one. Optional — it shows the margin and is never on a bill.",
+      "margin": "{pct}% margin",
+      "lowAt": "Warn me at",
+      "lowAtOff": "Off",
+      "lowAtHint": "The screen flags the product in amber once the count is at or below this.",
+      "category": "Category",
+      "noCategory": "No category",
+      "photoFailed": "Saved, but the photo did not upload. Choose it again and save."
+    },
+    "searchPlaceholder": "Search the shelf",
+    "noMatch": "Nothing on the shelf is called \"{q}\".",
+    "lowStock": "{n} left — low",
+    "strip": {
+      "products": "Products",
+      "worth": "Stock worth",
+      "low": "Running low"
+    },
+    "filters": {
+      "label": "Show",
+      "all": "All",
+      "low": "Low",
+      "out": "Out",
+      "retired": "Retired",
+      "none": {
+        "all": "Nothing on the shelf.",
+        "low": "Nothing is running low.",
+        "out": "Nothing is out of stock.",
+        "retired": "Nothing has been taken off the till."
+      }
+    },
+    "ledger": {
+      "onShelf": "on the shelf",
+      "lowNow": "on the shelf — low (you asked to be warned at {at})",
+      "outNow": "out of stock",
+      "change": "Change the count",
+      "kind": {
+        "received": "Received",
+        "sold": "Sold",
+        "used": "Used in-house",
+        "damaged": "Damaged",
+        "returned": "Returned",
+        "adjusted": "Counted"
+      },
+      "howMany": "How many",
+      "countIs": "The count is",
+      "note": "Note",
+      "noteHint": {
+        "received": "e.g. Supplier delivery",
+        "used": "e.g. Opened for the floor",
+        "damaged": "e.g. Leaked in the box",
+        "returned": "e.g. Client brought it back",
+        "adjusted": "e.g. Counted the shelf"
+      },
+      "after": "Count will be {n}",
+      "confirm": "Confirm",
+      "history": "History",
+      "noHistory": "Nothing has happened to this product yet.",
+      "afterShort": "{n} left",
+      "loadFailed": "The history did not load. Close this and open it again."
+    },
+    "deskPick": "Pick a product to change it or see its stock, or add a new one.",
+    "inStock": "In stock",
+    "noun": "products",
+    "cols": {
+      "product": "Product",
+      "price": "Price",
+      "cost": "Cost",
+      "stock": "Stock",
+      "status": "Status"
+    },
+    "sort": {
+      "label": "Sort",
+      "name": "Name (A–Z)",
+      "stock": "Stock, lowest first",
+      "sold": "Best selling",
+      "price": "Price, highest first"
+    },
+    "categories": {
+      "title": "Categories",
+      "all": "All products",
+      "none": "No category",
+      "addRow": "Add a category",
+      "addPlaceholder": "e.g. Hair care",
+      "add": "Add",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "done": "Done",
+      "delete": "Delete category",
+      "deleteNamed": "Delete {name}",
+      "deleteAsk": "Delete {name}? Its {n, plural, =0 {products} one {# product} other {# products}} stay on the shelf with no category.",
+      "failed": "That did not save. Try again."
+    },
+    "sales": {
+      "sold": "Sold in {days} days",
+      "money": "Money taken",
+      "margin": "Margin",
+      "allTime": "{n} sold all time.",
+      "none": "Nothing sold in the last 30 days.",
+      "loadFailed": "The sales did not load. Close this and open it again."
     }
   }
 }

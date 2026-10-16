@@ -30,27 +30,27 @@
   width: 100%;
   padding: 9px 14px;
   border-radius: var(--radius-sm);
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .tl-booking {
   background: var(--accent-soft);
-  color: #14532d;
+  color: var(--accent-ink);
 }
 
 .tl-booking-alt {
   background: var(--blue-soft);
-  color: #1e3a8a;
+  color: var(--blue);
 }
 
 .tl-booking-late {
-  background: var(--peach);
-  color: #9a3412;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
 }
 
 .tl-lunch,
 .tl-open {
   color: var(--muted);
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }

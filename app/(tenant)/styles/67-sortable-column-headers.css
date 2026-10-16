@@ -81,7 +81,7 @@
     display: block;
   }
 
-  .cust-segments-head h2 { font-size: 0.84375rem; }
+  .cust-segments-head h2 { font-size: 0.8125rem; }
   .cust-segments-head p { margin-top: 1px; }
 
   .cust-segments { padding: var(--sp-3); }
@@ -174,7 +174,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 3px solid var(--seg);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 7px 10px;
 }
 
@@ -241,7 +241,7 @@
   min-width: 0;
   padding: 7px 10px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   text-decoration: none;
   color: inherit;
 }
@@ -304,7 +304,7 @@
     align-items: baseline;
     gap: 6px;
     padding: 5px 9px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
   }
 
   .rp-cs-band-name { font-size: 0.75rem; }

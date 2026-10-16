@@ -21,7 +21,7 @@
 }
 
 .tile .value {
-  font-size: 1.9375rem;
+  font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   margin: 10px 0 6px;
@@ -43,5 +43,5 @@
 }
 
 .delta-bad {
-  color: #b91c1c;
+  color: var(--danger);
 }

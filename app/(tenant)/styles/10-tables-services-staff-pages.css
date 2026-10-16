@@ -173,7 +173,7 @@ tr:last-child td {
  * 6.5:1 on white at 15px, against the 4.5:1 this size needs.
  */
 .svc-cat-editbtn.is-danger {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .svc-cat-list {
@@ -270,17 +270,15 @@ tr:last-child td {
   flex: 1;
   /* `input[type=…]` in the base sheet is the same specificity and comes later, so this has to outrank it. */
   min-width: 0;
-  min-height: 44px;
   padding: 0;
   border: 0;
-  /* The base sheet gives every input an inset (neumorphic) shadow and a radius; inside the wrapper that drew a
-     second, smaller field within the first. The wrapper is the field — the input is only its text. */
+  /* The control sheet gives every input a border and a radius; inside the wrapper that drew a second, smaller
+     field within the first. The wrapper is the field — the input is only its text. */
   border-radius: 0;
   box-shadow: none;
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
 }
 
 /*
@@ -438,14 +436,8 @@ tr:last-child td {
    */
   flex: 1 1 100%;
   min-width: 100px;
-  min-height: 44px;
-  font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
 }
 
-.svc-cat-edit .btn,
-.svc-cat-add .btn {
-  min-height: 44px;
-}
 
 .svc-cat-add {
   display: flex;
@@ -460,8 +452,6 @@ tr:last-child td {
 .svc-cat-add input {
   flex: 1;
   min-width: 150px;
-  min-height: 44px;
-  font-size: 16px;
 }
 
 /*
@@ -537,7 +527,6 @@ tr:last-child td {
 
 .svc-cat-ways .btn {
   width: 100%;
-  min-height: 44px;
 }
 
 /* The destructive one last and visually separated, so it is never the button a thumb lands on by accident. */
@@ -608,9 +597,6 @@ tr:last-child td {
   flex-wrap: wrap;
 }
 
-.svc-cat-confirm-actions .btn {
-  min-height: 44px;
-}
 
 .svc-cat-count {
   margin: 0 0 6px;
@@ -722,7 +708,7 @@ tr:last-child td {
   margin-bottom: 12px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: var(--warn-soft, #fdf3e3);
+  background: var(--warn-soft, var(--amber-soft));
   border: 1px solid var(--border);
   font-size: 0.8125rem;
 }
@@ -766,7 +752,6 @@ tr:last-child td {
 
 .svc-cat-sheet-actions .btn {
   width: 100%;
-  min-height: 44px;
 }
 
 .svc-cat-sheet-actions .svc-cat-confirm-body {
@@ -791,9 +776,9 @@ tr:last-child td {
   /* A warning panel, not a caption: tinted, bordered, and with its own icon, so arming the delete visibly
      changes the foot of the sheet instead of only swapping a sentence above an identical button. */
   padding: 12px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-line);
   border-radius: var(--radius-sm);
-  background: #fef2f2;
+  background: var(--danger-soft);
 }
 
 .svc-cat-confirm-head {
@@ -805,7 +790,7 @@ tr:last-child td {
 .svc-cat-confirm-icon {
   flex: none;
   display: inline-flex;
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 .svc-cat-confirm-icon svg {

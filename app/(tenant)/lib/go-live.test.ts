@@ -168,7 +168,8 @@ describe('every surface that offers a destination follows the flag', () => {
   });
 
   it('the sidebar, the tab bar and the More menu ask with the flag', () => {
-    expect(code('components/Sidebar.tsx')).toMatch(/visibleItems\(items, role, reportTabs, live\)/);
+    // The sidebar asks `canSee` of every group and every child (Owner, 2026-10-15: grouped nav), with the flag.
+    expect(code('components/Sidebar.tsx')).toMatch(/resolveNav\(groups, \(href\) => canSee\(href, role, reportTabs, live\)\)/);
     expect(code('components/BottomNav.tsx')).toMatch(/visibleItems\(items, role, reportTabs, live\)/);
     expect(code('more/page.tsx')).toMatch(/visibleItems\(items, role, reportTabs, live\)/);
   });

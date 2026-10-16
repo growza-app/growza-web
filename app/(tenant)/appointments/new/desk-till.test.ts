@@ -1,0 +1,151 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import en from '../../../../messages/en.json';
+import hi from '../../../../messages/hi.json';
+
+/**
+ * Jira GRW-572 — the till in three panels on a wide desk.
+ *
+ * It is `PayFlow` with room, not a third form: one state, one `pay()`, the same two writes. These pin the
+ * seams that make that true, and the width rule that keeps phones and narrow laptops exactly as they were.
+ */
+const here = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
+const wrapper = here('./NewBookingClient.tsx');
+const flow = here('./PayFlow.tsx');
+const grid = here('./DeskServiceGrid.tsx');
+const unpaid = here('./DeskUnpaid.tsx');
+const css = here('../../styles/79-desk-till.css');
+const globals = here('../../globals.css');
+
+describe('the wide till', () => {
+  it('is asked for only at the desktop tier, and decided in the same effect as the phone rule', () => {
+    expect(wrapper).toMatch(/setWide\(window\.matchMedia\('\(min-width: 1101px\)'\)\.matches\);\s*setLayout\(window\.matchMedia\('\(max-width: 860px\)'\)/);
+    expect(wrapper).toMatch(/if \(quick && layout === 'desk' && wide\) \{\s*return <PayFlow [^>]*wide \/>;/);
+    // A booking settles on the wide till too, at the same width, and on the phone's flow below it.
+    expect(wrapper).toMatch(/wide=\{wide && layout === 'desk'\}/);
+    expect(css).toMatch(/^@media \(min-width: 1101px\) \{/m);
+    expect(css).not.toMatch(/max-width: 860px/);
+    expect(globals.indexOf('79-desk-till.css')).toBeGreaterThan(globals.indexOf('73-pay-flow.css'));
+  });
+
+  it('has three panels and no second save path', () => {
+    for (const cls of ['pf-wide-left', 'pf-wide-mid', 'pf-wide-right']) expect(flow + grid).toContain(cls);
+    expect(flow).toMatch(/<DeskUnpaid location=\{location\} timezone=\{timezone\}/);
+    expect(flow).toMatch(/<DeskServiceGrid\s+services=\{ranked_all\}\s+countOf=\{countOf\}\s+onMore=\{addOne\}\s+onLess=\{oneLess\}/);
+    // A package is lines with a `pkg`, sent as its legs plus the offer id; its legs never count on a tile.
+    // Owner, 2026-10-15 — a bill may carry several packages: each leg names its own offer, nothing at the request level.
+    expect(flow).toMatch(/\.\.\.\(l\.pkg \? \{ offerId: l\.pkg\.id \} : \{\}\)/);
+    expect(flow).not.toMatch(/offerId: pkgOnBill/);
+    // Owner, 2026-10-14 — nor does a product line (serviceId '') count on a service's tile.
+    expect(flow).toMatch(/const countOf = \(serviceId: string\) => lines\.filter\(\(l\) => l\.serviceId === serviceId && !l\.pkg && !l\.product\)\.length;/);
+    expect(flow).toMatch(/const amounts = spread\(baseAmounts\.map/);
+    expect(flow).toMatch(/<BillRows lines=\{lines\} listMinor=\{listMinor\} totalMinor=\{totalMinor\} onLess=\{oneLess\} onPrice=\{openRowKeypad\} \/>/);
+    // The payment tiles are one element drawn in two places; neither the grid nor the list writes anything.
+    expect((flow.match(/\{payTiles\}/g) ?? []).length).toBe(2);
+    for (const src of [grid, unpaid]) {
+      expect(src).not.toMatch(/recordCounterSale|checkout\(/);
+    }
+    // The list opens the same addresses the token board and Bookings use.
+    expect(unpaid).toMatch(/payTokenHref\(x\)/);
+    expect(unpaid).toMatch(/payVisitHref\(\{ appointmentId: a\.id, startAt: a\.startAt \}, timezone\)/);
+  });
+
+  it('searches the way every other box does: by spelling, and by price', async () => {
+    // The grid must go through lib/service-match, which is what answers "300" with the ₹300 service.
+    expect(grid).toMatch(/matchItems\(\s*pool\.map\(\(s\) => \(\{ item: s, text: \[s\.name, s\.categoryName \?\? ''\], priceMinor: asMinor\(s\.priceMinor\) \}\)\)/);
+    expect(grid).toMatch(/priceMinor: asMinor\(o\.comboPriceMinor\)/);
+    expect(grid).not.toMatch(/toLowerCase\(\)\.includes/);
+    const { matchItems, asMinor } = await import('../../lib/service-match');
+    const menu = [
+      { id: 'a', name: 'Haircut', priceMinor: '30000' },
+      { id: 'b', name: 'Beard Trim', priceMinor: '15000' },
+      { id: 'c', name: 'Gold Facial', priceMinor: '120000' },
+    ];
+    const find = (q: string) => matchItems(menu.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })), q).map((s) => s.name);
+    expect(find('300')).toEqual(['Haircut']);
+    expect(find('1200')).toEqual(['Gold Facial']);
+    expect(find('haircat')).toEqual(['Haircut']);
+  });
+
+  it('has the category chips the phone sheet has, under the search, with a count each', () => {
+    expect(grid).toMatch(/const pool = kind \? services\.filter\(\(s\) => s\.categoryName === kind\) : services;/);
+    expect(grid).toMatch(/className="pf-chips pf-wide-kinds"/);
+    expect(grid).toMatch(/\{nv\.allServices\}/);
+    expect(css).toMatch(/\.pf-wide-kinds \.pf-chip \{\s*min-height: 32px;/);
+    // Owner, 2026-10-14 — one line that scrolls sideways, never a second row that pushes the tiles down.
+    expect(css).toMatch(/\.pf-wide-kinds \{\s*flex-wrap: nowrap;\s*overflow-x: auto;/);
+    expect(css).not.toMatch(/\.pf-wide-tabs,\s*\.pf-wide-kinds \{/);
+    expect(grid).toMatch(/row\.addEventListener\('wheel', wheel, \{ passive: false \}\);/);
+  });
+
+  it('has no Simple / Full switch: it sells packages and adds clients itself (owner, 2026-10-14)', () => {
+    const wideHeader = flow.slice(flow.indexOf('<div className="pf pf-wide">'), flow.indexOf('<div className="pf-wide-grid">'));
+    expect(wideHeader).not.toMatch(/FormModeSwitch/);
+    expect(wideHeader).toMatch(/<span className="pf-head-gap" aria-hidden="true" \/>\s*<\/header>/);
+    // The phone keeps it: three taps still cannot sell a package.
+    expect((flow.match(/<FormModeSwitch now="simple"/g) ?? []).length).toBe(1);
+  });
+
+  it('opens the whole bill as a card from a View details link (owner, 2026-10-14)', () => {
+    const wide = flow.slice(flow.indexOf('<div className="pf pf-wide">'), flow.indexOf('/* ---------- ① What did they get? ---------- */', flow.indexOf('<div className="pf pf-wide">')));
+    expect(wide).toMatch(/className="pf-wide-link" onClick=\{\(\) => setBillOpen\(true\)\}/);
+    expect(wide).toMatch(/\{t\('onBill', \{ count: lines\.length \}\)\} · \{t\('viewDetails'\)\}/);
+    expect(wide).toMatch(/\{billOpen && lines\.length > 0 \? \(\s*<BillCard/);
+  });
+
+  it('prices one row from a tap on its amount, and says the total can be changed (owner, 2026-10-14)', () => {
+    const bill = here('./BillCard.tsx');
+    expect(bill).toMatch(/export const lineMinor = \(l: BillLine\): number => l\.paidMinor \?\? l\.priceMinor;/);
+    expect(bill).toMatch(/className="pf-bill-amount pf-bill-amount-tap" aria-label=\{t\('desk\.priceFor', \{ name: r\.name \}\)\} onClick=\{\(\) => onPrice\(r\.key\)\}/);
+    // The row's figure is spread over its lines by list price; a package row sets the package price; the whole-bill override clears.
+    expect(flow).toMatch(/const setRowPrice = \(key: string, minor: number\) => \{[\s\S]*?const shares = spread\(at\.map\(\(i\) => prev\[i\]!\), minor\);[\s\S]*?setOverride\(null\);\s*\};/);
+    expect(flow).toMatch(/const out = lines\.map\(\(l\) => lineMinor\(l\)\);/);
+    // Both bills offer it: the Desk's panel and card, and the phone's card.
+    expect((flow.match(/onPrice=\{openRowKeypad\}/g) ?? []).length).toBe(3);
+    expect(flow).toMatch(/className="pf-wide-total-edit">\s*<IconEdit \/>\s*\{t\('changeTotal'\)\}/);
+    expect(en.payFlow.desk.priceFor).toMatch(/\{name\}/);
+    expect(hi.payFlow.desk.priceFor).toMatch(/\{name\}/);
+  });
+
+  it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {
+    expect(flow).not.toMatch(/<input/);
+    expect((grid.match(/<input/g) ?? []).length).toBe(1);
+    expect(grid).not.toMatch(/autoFocus/);
+  });
+
+  it('says it in both languages', () => {
+    const e = en.payFlow.desk as Record<string, string>;
+    const h = hi.payFlow.desk as Record<string, string>;
+    expect(Object.keys(h).sort()).toEqual(Object.keys(e).sort());
+    expect(e.search).toMatch(/\{count\}/);
+    expect(h.search).toMatch(/\{count\}/);
+  });
+});
+
+/** Owner, 2026-10-14 — three tabs, always: Services · Packages · Products. */
+describe('the desk grid shows what a till sells', () => {
+  it('Products is the third tab: the same tiles, how many are left instead of minutes, one line per unit on the bill', () => {
+    const grid = here('DeskServiceGrid.tsx');
+    expect(grid).toMatch(/onClick=\{\(\) => setTab\('products'\)\}>\s*\{t\('desk\.products'\)\}/);
+    expect(grid).toMatch(/\{p\.stock <= 0 \? t\('outOfStock'\) : t\('left', \{ n: p\.stock \}\)\}/);
+    expect(flow).toMatch(/products=\{products\}\s+productCountOf=\{productCountOf\}\s+onMoreProduct=\{addProduct\}\s+onLessProduct=\{\(id\) => oneLess\(`p:\$\{id\}`\)\}/);
+    // Grouped for the route: which, how many, what the line came to — and never among the service legs.
+    expect(flow).toMatch(/const legs = lines\.flatMap\(\(l, i\) => \(l\.product \? \[\] : \[\{ serviceId: l\.serviceId, paidAmountMinor: amounts\[i\]!, \.\.\.\(l\.pkg \? \{ offerId: l\.pkg\.id \} : \{\}\) \}\]\)\);/);
+    expect((flow.match(/\.\.\.soldProducts,/g) ?? []).length).toBe(2);
+    // A bill is still a visit: a product alone is told to add a service, not refused in silence.
+    expect(flow).toMatch(/const hasService = lines\.some\(\(l\) => !l\.product\);/);
+    expect(flow).toMatch(/\{lines\.length > 0 \? t\('needService'\) : t\('pickOne'\)\}/);
+    // A row across the menu, not the desks' vertical `.pf-wide-tabs` list (#250) the grid once borrowed.
+    expect(grid).toMatch(/className="pf-chips pf-wide-menu-tabs" role="tablist"/);
+    expect(grid).not.toMatch(/pf-wide-tabs"/);
+    expect(grid).not.toMatch(/\{packages\.length > 0 \? \(\s*<div className="pf-chips pf-wide-tabs"/);
+    expect(grid).toMatch(/packages\.length === 0 \? t\('desk\.noPackages'\) : t\('desk\.noMatch'\)/);
+    for (const m of [en, hi]) {
+      const desk = (m as { payFlow: { desk: Record<string, string> } }).payFlow.desk;
+      expect(desk.products).toBeTruthy();
+      expect(desk.soon).toBeTruthy();
+      expect(desk.noPackages).toBeTruthy();
+    }
+  });
+});

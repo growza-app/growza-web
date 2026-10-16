@@ -1,9 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { visibleItems, type MemberRole } from '../lib/nav-policy';
+import { canSee, type MemberRole } from '../lib/nav-policy';
+import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
@@ -17,6 +18,7 @@ import {
   IconDashboard,
   IconOffers,
   IconPackages,
+  IconProducts,
   IconReports,
   IconServices,
   IconSettings,
@@ -25,6 +27,7 @@ import {
   IconUserPlus,
   IconClipboardCheck,
   IconClose,
+  IconChevronDown,
 } from './icons';
 
 /**
@@ -40,6 +43,9 @@ import {
  * salon, "Doctors" for a clinic. Everything else is plain-language UI copy
  * from lib/copy.ts. See 07-product-surfaces.md §1.1.
  */
+/** Where a person's folded and unfolded groups are kept on this device. */
+const FOLDS_KEY = 'growza_nav_folds';
+
 export function Sidebar({
   tenantName,
   labels,
@@ -47,6 +53,7 @@ export function Sidebar({
   reportTabs,
   whatsappLive,
   whatsappDemo = false,
+  products = true,
   lang,
   locationName,
   branchCount = 1,
@@ -62,6 +69,8 @@ export function Sidebar({
   whatsappLive?: boolean;
   /** Jira GRW-266 · GRW-271 — false in production, where the Try WhatsApp demo does not exist. */
   whatsappDemo?: boolean;
+  /** Owner, 2026-10-14 — false for a plan that does not sell over the counter; the shelf is not offered. */
+  products?: boolean;
   /** Jira GRW-222 — nav labels follow the Home language toggle. */
   lang?: Lang;
   /** Jira GRW-222 — the primary branch, under the business name. */
@@ -121,32 +130,114 @@ export function Sidebar({
   // yet — listing it here would be a link to a 404.
   // Jira GRW-556 — while the business is being set up only the setup screens are offered.
   const live = useLive();
-  const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
+  // Owner, 2026-10-15 — grouped by job. Routes are unchanged; a group's children show while one of them is open.
+  const groups: NavGroup<ReactNode>[] = [
     { href: '/', label: t.nav.home, icon: <IconDashboard /> },
-    { href: '/appointments', label: role === 'staff' ? t.nav.schedule : t.nav.bookings, icon: <IconAppointments /> },
-    // Jira GRW-300 — moved off the bottom tab bar, which a 5th flat tab plus
-    // the raised centre action made "very contracted" (owner-reported). Same
-    // destination (`notifications/page.tsx`), reached from here now.
-    { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
-    { href: '/providers', label: t.nav.staff, icon: <IconStaff /> },
-    { href: '/services', label: t.nav.services, icon: <IconServices /> },
-    // Jira GRW-438 — beside Services, because a package is made of them and the owner edits the two together.
-    { href: '/packages', label: t.nav.packages, icon: <IconPackages /> },
-    { href: '/offers', label: t.nav.offers, icon: <IconOffers /> },
+    {
+      href: '/appointments',
+      label: role === 'staff' ? t.nav.schedule : t.nav.bookings,
+      icon: <IconAppointments />,
+      children: [{ href: '/availability', label: t.nav.freeTimes }],
+    },
     { href: '/customers', label: t.nav.clients, icon: <IconUserPlus /> },
-    // GRW-170 — who was here. Sits beside the client list because it is the
-    // other thing the front desk keeps, and next to Staff it would read as
-    // part of hiring, which it is not.
-    { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck /> },
-    // Reports is added; nothing is removed (GRW-48 decision 2).
+    {
+      href: '',
+      label: t.nav.catalogue,
+      icon: <IconServices />,
+      children: [
+        { href: '/services', label: t.nav.services },
+        { href: '/packages', label: t.nav.packages },
+        // Owner, 2026-10-14 — what the till sells that nobody performs.
+        ...(products === false ? [] : [{ href: '/products', label: t.nav.products }]),
+        { href: '/offers', label: t.nav.offers },
+      ],
+    },
+    {
+      href: '',
+      label: t.nav.team,
+      icon: <IconStaff />,
+      // GRW-170 — who was here sits with the people, not with the client list.
+      children: [
+        { href: '/providers', label: t.nav.staff },
+        { href: '/attendance', label: t.nav.attendance },
+      ],
+    },
     { href: '/reports', label: t.nav.reports, icon: <IconReports /> },
-    { href: '/availability', label: t.nav.freeTimes, icon: <IconAnalytics /> },
-    // GRW-165 — marked a demo while WhatsApp is not live, so nobody reads a
-    // working simulator as a working channel. Jira GRW-266 · GRW-271 — and not listed at
-    // all in production, where the simulator is switched off.
+    // Jira GRW-300 — reached from here on a phone; on a laptop the bell in the header is the same door.
+    { href: '/notifications', label: t.nav.notifications, icon: <IconBell />, className: 'nav-phone-only' },
+    // GRW-165 — marked a demo while WhatsApp is not live; Jira GRW-266 · GRW-271 — not listed in production at all.
     ...(whatsappDemo ? [{ href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, pill: whatsappLive ? null : t.nav.demo }] : []),
     { href: '/settings', label: t.nav.settings, icon: <IconSettings /> },
   ];
+  const nav = resolveNav(groups, (href) => canSee(href, role, reportTabs, live));
+
+  /*
+   * Owner, 2026-10-15 — a group folds and unfolds. The open group is unfolded by default; a person's own choice
+   * (a group they folded, or one they opened to look) is remembered on this device. Going to a screen inside a
+   * group unfolds it again: they asked to be there.
+   */
+  const [folds, setFolds] = useState<Record<string, boolean>>({});
+  /** The groups the page in view is inside; read by the arrival check below, which runs before they are computed. */
+  const currentLabelsRef = useRef<string[]>([]);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(FOLDS_KEY);
+      const stored = saved ? (JSON.parse(saved) as Record<string, boolean>) : {};
+      /*
+       * Release review, 2026-10-16 — a sidebar link is a full page load, so the "going to a screen inside a group
+       * unfolds it" rule cannot see a navigation. A page reached from ANOTHER page of this site was asked for: its
+       * group unfolds. A reload (same path) or a fresh open (no referrer) keeps the fold the person left.
+       */
+      let from = '';
+      try {
+        const ref = document.referrer ? new URL(document.referrer) : null;
+        if (ref && ref.origin === window.location.origin) from = ref.pathname;
+      } catch {
+        /* an odd referrer is no referrer */
+      }
+      if (from && from !== window.location.pathname) {
+        for (const l of currentLabelsRef.current) delete stored[l];
+        try {
+          window.localStorage.setItem(FOLDS_KEY, JSON.stringify(stored));
+        } catch {
+          /* see below */
+        }
+      }
+      if (saved || from) setFolds(stored);
+    } catch {
+      /* private window or blocked storage: the default is fine */
+    }
+  }, []);
+  const remember = (next: Record<string, boolean>) => {
+    setFolds(next);
+    try {
+      window.localStorage.setItem(FOLDS_KEY, JSON.stringify(next));
+    } catch {
+      /* the choice just lasts until the page is reloaded */
+    }
+  };
+  const currentLabels = nav.filter((n) => n.children.length > 0 && n.routes.some((r) => isActive(pathname, r))).map((n) => n.label);
+  currentLabelsRef.current = currentLabels;
+  const currentKey = currentLabels.join('|');
+  // Not on arrival: reloading the page a group is open on keeps it folded if that is how they left it.
+  const arrivedAt = useRef(pathname);
+  useEffect(() => {
+    if (arrivedAt.current === pathname) return;
+    arrivedAt.current = pathname;
+    setFolds((prev) => {
+      if (!currentLabels.some((l) => l in prev)) return prev;
+      const next = { ...prev };
+      for (const l of currentLabels) delete next[l];
+      try {
+        window.localStorage.setItem(FOLDS_KEY, JSON.stringify(next));
+      } catch {
+        /* see above */
+      }
+      return next;
+    });
+    // `currentKey` stands for `currentLabels`: it changes exactly when the open group does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, currentKey]);
 
   return (
     <>
@@ -177,19 +268,50 @@ export function Sidebar({
           {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
               API is what refuses (GRW-156); this is about not wasting their time
               on eight links that 403. */}
-          {visibleItems(items, role, reportTabs, live).map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'active' : ''}
-              aria-current={(item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)) ? 'page' : undefined}
-              onClick={close}
-            >
-              {item.icon}
-              {item.label}
-              {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
-            </a>
-          ))}
+          {nav.map((item) => {
+            const current = item.routes.some((r) => isActive(pathname, r));
+            const expandable = item.children.length > 0;
+            const expanded = expandable && (folds[item.label] ?? current);
+            const panel = `nav-children-${nav.indexOf(item)}`;
+            return (
+              <div key={item.label} className={`nav-group ${item.className ?? ''}`}>
+                <div className="nav-row">
+                  <a href={item.href} className={current ? 'active' : ''} aria-current={current && (!expandable || !expanded) ? 'page' : undefined} onClick={close}>
+                    {item.icon}
+                    {item.label}
+                    {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
+                  </a>
+                  {expandable ? (
+                    <button
+                      type="button"
+                      className={`nav-fold ${expanded ? 'is-open' : ''}`}
+                      aria-expanded={expanded}
+                      aria-controls={panel}
+                      aria-label={expanded ? tc('foldGroup', { name: item.label }) : tc('unfoldGroup', { name: item.label })}
+                      onClick={() => remember({ ...folds, [item.label]: !expanded })}
+                    >
+                      <IconChevronDown />
+                    </button>
+                  ) : null}
+                </div>
+                {expanded ? (
+                  <div className="nav-children" id={panel}>
+                    {/* A group that is a screen of its own (Bookings) lists itself first: the way back from Free times. */}
+                    {item.self ? (
+                      <a href={item.href} className={isActive(pathname, item.href) && !item.children.some((c) => isActive(pathname, c.href)) ? 'active' : ''} onClick={close}>
+                        {item.label}
+                      </a>
+                    ) : null}
+                    {item.children.map((c) => (
+                      <a key={c.href} href={c.href} className={isActive(pathname, c.href) ? 'active' : ''} aria-current={isActive(pathname, c.href) ? 'page' : undefined} onClick={close}>
+                        {c.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </nav>
         {/* Jira GRW-66 · GRW-160 — outside `visibleItems`, deliberately. Every
             role can end their own session; a stylist on a shared salon device is

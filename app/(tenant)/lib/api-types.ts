@@ -148,6 +148,8 @@ export interface Me {
     reschedule: boolean;
     richAnalytics: boolean;
     staffLeaderboard: boolean;
+    /** Owner, 2026-10-14 — `catalog.products`: whether this business sells things over the counter. Absent reads as yes. */
+    products?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -174,10 +176,79 @@ export interface Service {
   locationId: string;
 }
 
+/**
+ * Owner, 2026-10-14 — something the till sells that nobody performs: a shampoo, a serum. At one branch, with a
+ * stock count the till takes from (it may go below zero — the bottle in the hand is the truth; the owner puts
+ * the number right). `sold` is how many have gone over the counter, ever.
+ */
+export interface Product {
+  id: string;
+  name: string;
+  priceMinor: string;
+  currency: string;
+  stock: number;
+  imageUrl: string | null;
+  active: boolean;
+  locationId: string;
+  sold: number;
+  /** 0116 — what the business pays for one, for the margin. Null until the owner says. */
+  costMinor: string | null;
+  /** The screen flags the product once the count is at or below this; 0 = never. */
+  lowStockAt: number;
+  /** 0117 — the shelf's own category. Null for none. */
+  categoryId: string | null;
+  categoryName: string | null;
+}
+
+/** 0117 — a shelf of the shelf: the owner's own grouping at one branch, with how many live products it holds. */
+export interface ProductCategory {
+  id: string;
+  name: string;
+  sortOrder: number;
+  locationId: string;
+  count: number;
+}
+
+/** The Sales part of the product sheet: the last `days` days from the bills' own lines. */
+export interface ProductSales {
+  days: number;
+  qty: number;
+  moneyMinor: number;
+  byDay: { day: string; qty: number; moneyMinor: number }[];
+}
+
+export interface ProductInput {
+  name: string;
+  priceMinor: number;
+  categoryId?: string | null;
+  /** On create, the opening count. On an edit the API turns it into an `adjusted` ledger line. */
+  stock?: number;
+  active?: boolean;
+  costMinor?: number | null;
+  lowStockAt?: number;
+}
+
+/** 0116 — why a product's count changed. Six words, the same for every kind of business. */
+export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned';
+
+export interface StockMovement {
+  id: string;
+  kind: MovementKind;
+  /** Signed: what was added to the count. */
+  qty: number;
+  stockAfter: number;
+  note: string | null;
+  byName: string | null;
+  visitKey: string | null;
+  createdAt: string;
+}
+
 /** A catalogue row as the Services screen edits it — Service plus the fields booking flows never need. */
 export interface ServiceAdmin extends Service {
   categoryId: string | null;
   active: boolean;
+  /** Owner, 2026-10-15 — a sentence or two about the service; null when never written. */
+  description?: string | null;
   /**
    * Jira GRW-482 — how many of this branch's stylists can perform it.
    *
@@ -252,6 +323,7 @@ export interface ServiceInput {
   bufferAfterMin?: number;
   priceMinor?: number | null;
   active?: boolean;
+  description?: string | null;
   /** A picture picked from the pack, or null to go back to matching on the name. Update only. */
   catalogKey?: string | null;
 }

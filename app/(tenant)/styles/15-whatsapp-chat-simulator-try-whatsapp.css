@@ -51,11 +51,11 @@
 
 .wa-title {
   font-weight: 620;
-  font-size: 0.96875rem;
+  font-size: 0.9375rem;
 }
 
 .wa-subtitle {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.75);
 }
 
@@ -71,9 +71,9 @@
 .wa-system {
   text-align: center;
   color: #6b7770;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   background: #fff;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   margin: 0 auto 8px;
 }
@@ -81,8 +81,8 @@
 .wa-bubble {
   max-width: 82%;
   padding: 9px 12px;
-  border-radius: 9px;
-  font-size: 0.90625rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
   line-height: 1.4;
   white-space: pre-wrap;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
@@ -117,7 +117,7 @@
   gap: 2px;
   text-align: left;
   padding: 10px 13px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid #075e54;
   background: #fff;
   color: #075e54;
@@ -131,7 +131,7 @@
    the row's secondary line, e.g. a combo's price under its name. */
 .wa-option-sublabel {
   font-weight: 500;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
@@ -162,11 +162,11 @@
 .wa-input {
   padding: 10px 13px;
   border: 1px solid #d8d8d8;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font: inherit;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
 }
 
 .wa-composer .btn {
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
 }

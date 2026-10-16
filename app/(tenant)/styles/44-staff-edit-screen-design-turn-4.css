@@ -120,18 +120,6 @@
   min-width: 0;
 }
 
-.field-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #3d4a43;
-  margin-bottom: 7px;
-}
-
-.field-optional {
-  color: var(--muted);
-  font-weight: 500;
-}
-
 .edit-grid input {
   width: 100%;
   min-width: 0;
@@ -231,7 +219,7 @@
 }
 
 .edit-stat strong {
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   font-weight: 700;
 }
 

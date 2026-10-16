@@ -18,7 +18,9 @@ describe('New booking, first screen', () => {
   });
 
   it('shows the add block on the first screen, with the same fields and the same checks', () => {
-    const start = code.indexOf("{(stage.step === 'client' || (pageForm && onForm)) && (");
+    // Jira GRW-572 — the search and the fields are `clientCombo` / `clientFields`, defined just before the return
+    // so the desk layout can draw them too; the slice starts there and runs to the second stage as before.
+    const start = code.indexOf('const clientCombo = (');
     const first = code.slice(start, code.indexOf("(stage.step === 'details' || stage.step === 'saving'", start));
     expect(first.length).toBeGreaterThan(1000);
     expect(first).toMatch(/className="wi-new-person"/);

@@ -20,7 +20,7 @@
   .rp-figure-pair { gap: var(--sp-4); }
   .rp-banner { padding: var(--sp-4); }
   .rp-banner-body { font-size: 1.0625rem; }
-  .rp-kpi-value { font-size: 1.3125rem; }
+  .rp-kpi-value { font-size: 1.25rem; }
   .rp-kpi-spark { display: none; }
 }
 
@@ -32,7 +32,7 @@
 @media (max-width: 400px) {
   .rp-kpi-value { font-size: 1.125rem; letter-spacing: -0.3px; }
   .rp-controls-spacer { display: none; }
-  .rp-control { padding: 7px 10px; font-size: 0.78125rem; }
+  .rp-control { padding: 7px 10px; font-size: 0.75rem; }
   /* Clear the floating action button, which sits 74px above the tab bar. The
      same 84px other mobile scrollers use — without it the last card ends up
      under the FAB and its bottom row is untappable. */
@@ -99,7 +99,7 @@
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--page-bg);
   color: var(--text);
   cursor: pointer;
@@ -128,7 +128,7 @@
 
 .cpc-name {
   font-weight: 800;
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   letter-spacing: -0.3px;
   /* Long names truncate rather than push the close button off the panel. */
   overflow: hidden;
@@ -146,7 +146,7 @@
   min-width: 0;
   background: var(--accent-soft);
   border: 1px solid #dbe7df;
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 11px 13px;
 }
 
@@ -181,7 +181,7 @@
 
 .cpc-row > span { color: var(--muted); font-size: 0.8125rem; min-width: 0; }
 .cpc-row > span em { display: block; font-style: normal; font-size: 0.75rem; margin-top: 1px; }
-.cpc-row > strong { font-weight: 700; font-size: 0.84375rem; text-align: right; white-space: nowrap; }
+.cpc-row > strong { font-weight: 700; font-size: 0.8125rem; text-align: right; white-space: nowrap; }
 
 .cpc-foot {
   flex: 0 0 auto;
@@ -199,11 +199,11 @@
   gap: 7px;
   padding: 11px;
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   font-weight: 700;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   cursor: pointer;
   text-decoration: none;
 }

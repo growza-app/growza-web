@@ -26,10 +26,13 @@ export function BookingSummary({
   booking,
   timezone,
   onClose,
+  inline = false,
 }: {
   booking: BookingGroup;
   timezone: string;
   onClose: () => void;
+  /** Owner, 2026-10-14 — drawn in place in the Bookings desk's right panel: no backdrop, no focus trap. */
+  inline?: boolean;
 }) {
   const t = useTranslations('chrome.summary');
   const tc = useTranslations('chrome');
@@ -53,7 +56,7 @@ export function BookingSummary({
   }, [mayCorrect, firstId]);
   const locale = useLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
-  useDialog(dialogRef, { onClose });
+  useDialog(dialogRef, { onClose: inline ? undefined : onClose, active: !inline });
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff member'), tn('staff'));
   // Jira GRW-314 — what the customer actually paid, less anything cancelled at the till, with the
   // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
@@ -91,9 +94,15 @@ export function BookingSummary({
 
   return (
     <>
-      <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={t('aria', { name: booking.customerName ?? t('fallbackName') })} ref={dialogRef}>
-        <div className="sheet-grab" />
+      {!inline && <div className="sheet-backdrop" onClick={onClose} />}
+      <div
+        className={inline ? 'sheet sheet-inline bk-sheet-inline' : 'sheet'}
+        role={inline ? 'region' : 'dialog'}
+        aria-modal={inline ? undefined : 'true'}
+        aria-label={t('aria', { name: booking.customerName ?? t('fallbackName') })}
+        ref={dialogRef}
+      >
+        {!inline && <div className="sheet-grab" />}
 
         <div className="summary-head">
           <span className="summary-badge">
@@ -205,7 +214,7 @@ export function BookingSummary({
         )}
 
         {loadFailed && (
-          <div role="alert" style={{ padding: '10px 0 0', fontSize: 13, color: '#b91c1c' }}>
+          <div role="alert" style={{ padding: '10px 0 0', fontSize: 13, color: 'var(--danger)' }}>
             {tfix('loadFailed')}
           </div>
         )}

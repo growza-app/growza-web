@@ -103,6 +103,12 @@ import type {
   ServiceInput,
   SettingsSummary,
   SortDirection,
+  Product,
+  ProductCategory,
+  ProductInput,
+  ProductSales,
+  StockMovement,
+  MovementKind,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -133,6 +139,7 @@ import type {
   ReportServices,
   ReportStaff,
   ReportTabKey,
+  ReportTodo,
 } from './report-types';
 
 /**
@@ -333,7 +340,7 @@ export interface ReportFilterOptions {
  * The tabs a filter can honestly narrow.
  *
  * Every figure on these is bookings in a period, which is the row set a
- * filter narrows. Overview, Clients and Insights are not here: their figures
+ * filter narrows. What to do, Overview and Clients are not here: their figures
  * are all-time customer recency, or a statement about the whole business, so
  * a per-booking filter would change what the number means rather than which
  * rows it covers.
@@ -452,6 +459,26 @@ export const api = {
   bill: (id: string) => get<OwnerBill>(`/api/v1/billing/invoices/${encodeURIComponent(id)}`),
   /** Jira GRW-379 — `location`: one branch's menu. Absent: every branch's, which a one-branch business has one of. */
   services: (location?: string) => get<Service[]>(`/api/v1/services${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /** Owner, 2026-10-14 — what the till can sell beside the services: the branch's active products. */
+  products: (location?: string | null) => get<Product[]>(`/api/v1/products${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /** The Products screen: the whole shelf at one branch, retired ones too. */
+  productsAll: (location: string) => get<Product[]>(`/api/v1/products/all?location=${encodeURIComponent(location)}`),
+  createProduct: (location: string, body: ProductInput) => post<Product>('/api/v1/products', { ...body, locationId: location }),
+  updateProduct: (id: string, body: Partial<ProductInput>) => patch<Product>(`/api/v1/products/${id}`, body),
+  deleteProduct: (id: string) => del<void>(`/api/v1/products/${id}`),
+  uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
+  removeProductPhoto: (id: string) => del<Product>(`/api/v1/products/${id}/photo`),
+  /** 0117 — the shelf's categories at a branch, each with its count, empty ones included. */
+  productCategories: (location: string) => get<ProductCategory[]>(`/api/v1/product-categories?location=${encodeURIComponent(location)}`),
+  createProductCategory: (location: string, name: string) => post<ProductCategory>('/api/v1/product-categories', { name, locationId: location }),
+  renameProductCategory: (location: string, id: string, name: string) => patch<ProductCategory>(`/api/v1/product-categories/${id}?location=${encodeURIComponent(location)}`, { name }),
+  deleteProductCategory: (location: string, id: string) => del<{ released: number }>(`/api/v1/product-categories/${id}?location=${encodeURIComponent(location)}`),
+  /** What a product sold in the last 30 days, by day. */
+  productSales: (id: string, days = 30) => get<ProductSales>(`/api/v1/products/${id}/sales?days=${days}`),
+  /** 0116 — the ledger behind a product's count, newest first. */
+  productMovements: (id: string) => get<StockMovement[]>(`/api/v1/products/${id}/movements`),
+  /** A delivery, a breakage, one used by the business, one brought back, or a recount. `qty` is how many; the kind gives the sign. */
+  moveStock: (id: string, body: { kind: Exclude<MovementKind, 'sold'>; qty?: number; /** A recount: the count itself, set on the server (a sale since the sheet opened is not lost). */ count?: number; note?: string }) => post<Product>(`/api/v1/products/${id}/movements`, body),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the
@@ -568,6 +595,9 @@ export const api = {
   reportsBookings: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportBookings>('bookings', r, c, f, t, x, b),
   reportsServices: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportServices>('services', r, c, f, t, x, b),
   reportsStaff: (r: ReportRangeKey, c: boolean, f?: string, t?: string, x?: ReportFilters, b?: string | null) => reportGet<ReportStaff>('staff', r, c, f, t, x, b),
+  /** The What to do tab: this week, this month and today — no range to pick. */
+  reportsTodo: (branch?: string | null) =>
+    get<ReportTodo>(`/api/v1/reports/todo${branch ? `?location=${encodeURIComponent(branch)}` : ''}`),
   reportsCustomers: (r: ReportRangeKey, c: boolean, f?: string, t?: string, b?: string | null) => reportGet<ReportCustomers>('customers', r, c, f, t, undefined, b),
   /** One client's derived profile, for the card that opens from a row. */
   clientProfile: (id: string) => get<ClientProfile>(`/api/v1/reports/client/${id}`),
@@ -841,6 +871,10 @@ export const api = {
       paidAmountMinor?: number;
       schedulableId?: string;
       paymentMode?: PaymentMode;
+      /** Owner, 2026-10-14 — a bill paid two ways; the same list `/counter-sales` takes. */
+      payments?: { mode: PaymentMode; amountMinor: number }[];
+      /** Owner, 2026-10-14 — products sold at the till with this visit. */
+      products?: { productId: string; qty: number; paidMinor: number }[];
       extraServices?: CheckoutExtraServiceInput[];
       /** The OTHER already-booked legs of this combo to complete in the same visit — existing appointments, not new ones. */
       groupMembers?: CheckoutGroupMemberInput[];
@@ -970,9 +1004,13 @@ export const api = {
       customerId?: string;
       customerName?: string;
       customerPhone?: string;
-      services: { serviceId: string; paidAmountMinor: number }[];
+      services: { serviceId: string; paidAmountMinor: number; offerId?: string }[];
       offerId?: string;
       paymentMode?: PaymentMode;
+      /** Owner, 2026-10-14 — a bill paid two ways: one entry per way, adding up to the bill. Wins over `paymentMode`. */
+      payments?: { mode: PaymentMode; amountMinor: number }[];
+      /** Owner, 2026-10-14 — products on the bill: which, how many, what was paid for the line. Needs a service on the bill too. */
+      products?: { productId: string; qty: number; paidMinor: number }[];
       idempotencyKey?: string;
       location?: string;
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).

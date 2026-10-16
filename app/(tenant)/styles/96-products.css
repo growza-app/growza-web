@@ -1,0 +1,869 @@
+/*
+ * Owner, 2026-10-14 — the Products screen: the shelf as one list, a row per product.
+ * Same tokens as the Services rows; nothing here is a new component.
+ */
+.prd-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.prd-row-tap {
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'photo name price'
+    'photo stock sold';
+  column-gap: var(--sp-3);
+  row-gap: 2px;
+  align-items: center;
+}
+
+.prd-row-tap:disabled {
+  cursor: default;
+}
+
+.prd-row-retired .prd-row-tap {
+  opacity: 0.6;
+}
+
+.prd-photo {
+  grid-area: photo;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-sm, 8px);
+  object-fit: cover;
+  background: var(--slate-soft);
+}
+
+.prd-name {
+  grid-area: name;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-chip {
+  margin-left: var(--sp-2);
+  font-weight: 500;
+}
+
+.prd-price {
+  grid-area: price;
+  font-weight: 700;
+  justify-self: end;
+}
+
+.prd-stock {
+  grid-area: stock;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.prd-stock-out {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.prd-sold {
+  grid-area: sold;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  justify-self: end;
+}
+
+.prd-empty-hint {
+  margin: var(--sp-2) 0 0;
+  color: var(--muted);
+}
+
+.prd-sheet-actions {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: space-between;
+  padding: var(--sp-3);
+}
+
+@media (min-width: 861px) {
+  .prd-page {
+    max-width: 48rem;
+  }
+}
+
+/* ---------- 0116 — the stock screen: three numbers, a search, four chips, a pill per row ---------- */
+.prd-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.prd-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+.prd-stat-tap {
+  cursor: pointer;
+}
+
+.prd-stat-n {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-stat-l {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.prd-stat-low {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+
+.prd-stat-low .prd-stat-n {
+  color: var(--danger);
+}
+
+.prd-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.prd-search {
+  min-width: 0;
+}
+
+.prd-chips {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  margin: -2px;
+}
+
+.prd-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.prd-chip {
+  flex: none;
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.prd-chip-n {
+  margin-left: 4px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.prd-chip-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+}
+
+.prd-chip-on .prd-chip-n {
+  color: #fff;
+  opacity: 0.85;
+}
+
+.prd-chip-warn:not(.prd-chip-on) {
+  border-color: var(--amber);
+  color: var(--amber-ink);
+}
+
+.prd-meta {
+  grid-area: stock;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.prd-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.prd-pill-low {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.prd-pill-out {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.prd-pill-off {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.prd-row-tap {
+  grid-template-areas:
+    'photo name price'
+    'photo stock stock';
+}
+
+.prd-sold {
+  grid-area: auto;
+  justify-self: start;
+}
+
+.prd-chip-retired {
+  margin-left: var(--sp-2);
+  font-weight: 500;
+}
+
+/* ---------- the sheet's two parts ---------- */
+.prd-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0 var(--sp-4) var(--sp-2);
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--slate-soft);
+}
+
+.prd-seg button {
+  min-height: 38px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prd-seg button.is-on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.prd-cost-value {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.prd-margin {
+  flex: none;
+  font-size: 0.8125rem;
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.prd-margin-neg {
+  color: var(--danger);
+}
+
+/* ---------- Stock ---------- */
+.prd-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--sp-4) var(--sp-3);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.prd-count-low {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.prd-count-out {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.prd-count-n {
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.prd-count-l {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.prd-moves {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.prd-move {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.prd-move.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.prd-move-adjusted {
+  grid-column: 1 / -1;
+}
+
+.prd-move-form {
+  margin-top: var(--sp-3);
+}
+
+.prd-move-go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+
+.prd-move-after {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.prd-ledger-h {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.prd-ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.prd-ledger-row {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'qty what after'
+    'qty when after';
+  column-gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.prd-ledger-qty {
+  grid-area: qty;
+  font-weight: 800;
+  font-size: 1.0625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-ledger-in {
+  color: var(--accent-deep);
+}
+
+.prd-ledger-out {
+  color: var(--danger);
+}
+
+.prd-ledger-what {
+  grid-area: what;
+  display: flex;
+  gap: var(--sp-2);
+  min-width: 0;
+  font-weight: 600;
+}
+
+.prd-ledger-note {
+  font-weight: 400;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-ledger-when {
+  grid-area: when;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.prd-ledger-after {
+  grid-area: after;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (min-width: 861px) {
+  .prd-tools {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .prd-search {
+    max-width: 20rem;
+  }
+
+  .prd-moves {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .prd-move-adjusted {
+    grid-column: auto;
+  }
+}
+
+/* The Stock part has no Save: the head keeps its third column so the title stays centred. */
+.prd-head-spacer {
+  width: 4rem;
+}
+
+/*
+ * Owner, 2026-10-14 — Products on a wide desk: the same three panels as Services (79-desk-services.css).
+ *   left   the three numbers, then All · Low · Out · Retired as a list
+ *   middle the search and the shelf, scrolling inside its card
+ *   right  the product, as the sheet drawn in place (`ProductSheet inline`): Details or Stock with the ledger
+ */
+@media (min-width: 1101px) {
+  .page-body.prd-desk {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .prd-desk-grid {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr) minmax(20rem, 24rem);
+    align-items: stretch;
+  }
+
+  .prd-desk-left,
+  .prd-desk-right {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .prd-desk-right {
+    position: static;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* The three numbers as compact rows, not the phone's tiles: a column 11rem wide has no room for tiles. */
+  .prd-desk-left .prd-strip {
+    grid-template-columns: 1fr;
+    gap: 2px;
+    margin-bottom: var(--sp-3);
+    padding-bottom: var(--sp-3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prd-desk-left .prd-stat {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--sp-2) var(--sp-3);
+    border: 0;
+    background: transparent;
+  }
+
+  .prd-desk-left .prd-stat-low {
+    background: var(--danger-soft);
+  }
+
+  .prd-desk-left .prd-stat-n {
+    font-size: 0.9375rem;
+  }
+
+  .prd-desk-left .prd-stat-l {
+    font-size: 0.875rem;
+    color: var(--text);
+  }
+
+  .prd-desk-mid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    min-height: 0;
+  }
+
+  /* The search is a row, never the column's filler. */
+  .prd-desk-mid .prd-search {
+    flex: none;
+    max-width: none;
+    min-height: 2.75rem;
+    /* `.search-wrap` is page-coloured for sitting inside a white card; here it sits on the page itself. */
+    background: var(--surface);
+    border-color: #c9d0cb;
+  }
+
+  /* The shelf in a card that scrolls itself, as the Services table does. */
+  .prd-desk-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .prd-desk-scroll .prd-row-tap {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .prd-desk-scroll .prd-row-tap:hover {
+    background: var(--page-bg);
+  }
+
+  .prd-desk-scroll .empty {
+    margin: 0;
+  }
+
+  .prd-row-tap.is-on {
+    border-color: var(--accent-deep);
+    background: var(--accent-soft);
+  }
+
+  .prd-desk-right .prd-sheet .sheet-body {
+    overflow-y: auto;
+  }
+}
+
+/* ---------- v2: the sheet's identity, the category pill, sort and category selects, the Sales part ---------- */
+.prd-sheet-id {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+
+.prd-sheet-photo {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--slate-soft);
+  flex: none;
+}
+
+.prd-sheet-id-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.prd-sheet-name {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-sheet-tags {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.prd-pill-cat {
+  background: var(--slate-soft);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.prd-name-cat {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.prd-selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+.prd-sort {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.prd-sort-l {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prd-sort select {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.prd-sales-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.prd-sales-row {
+  grid-template-areas: 'qty what after';
+}
+
+.prd-cat-li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.prd-cat-li .svc-desk-cat {
+  flex: 1;
+  min-width: 0;
+}
+
+.prd-cat-del {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (min-width: 1101px) {
+  .prd-desk-tools {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: center;
+  }
+
+  .prd-desk-tools .prd-search {
+    flex: 1;
+  }
+
+  .prd-desk-tools .prd-sort select {
+    min-height: 2.75rem;
+  }
+
+  .prd-desk-mid .prd-chips {
+    flex: none;
+  }
+
+  /* The shelf as a table in a card that scrolls itself, as the Services desk has it. */
+  .prd-desk-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .prd-desk-card .table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .prd-desk-card .pagination {
+    flex: none;
+    padding: var(--sp-2) var(--sp-3);
+    border-top: 1px solid var(--border);
+  }
+
+  .prd-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: collapse;
+  }
+
+  .prd-table th,
+  .prd-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.875rem;
+  }
+
+  .prd-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .prd-tr {
+    cursor: pointer;
+  }
+
+  .prd-tr:hover td {
+    background: var(--page-bg);
+  }
+
+  .prd-tr.is-on td {
+    background: var(--accent-soft);
+  }
+
+  .prd-tr.is-on td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent-deep);
+  }
+
+  .prd-cell-name {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+  }
+
+  .prd-cell-name .prd-photo {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .prd-td-num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .prd-td-muted {
+    color: var(--muted);
+  }
+
+  .prd-td-stock {
+    font-weight: 700;
+  }
+
+  .prd-td-stock-low {
+    color: var(--amber-ink);
+  }
+
+  .prd-td-stock-out {
+    color: var(--danger);
+  }
+
+  .prd-td-sold {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+}
+
+.prd-seg-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* The name cell is a button (keyboard and screen readers), drawn as the plain cell it replaced. */
+.prd-cell-tap {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.prd-cell-tap:disabled {
+  cursor: default;
+}
+
+/* The low-stock tile sits in a listitem wrapper so the button keeps its own role. */
+.prd-stat-cell {
+  display: contents;
+}

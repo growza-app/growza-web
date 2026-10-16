@@ -23,8 +23,6 @@ const SEGMENT_TONE: Record<string, string> = {
 
 
 const CARD_ICON: Record<string, React.ReactNode> = {
-  quiet30: <IconClock />,
-  overdue: <IconAlert />,
   loyal: <IconRepeat />,
   highValue: <IconCoins />,
   atRisk: <IconAlert />,
@@ -57,6 +55,7 @@ export function CustomersTab({
 }) {
   const rp = useReportsCopy();
   const t = useTranslations('reports');
+  const sg = useTranslations('reports.signals');
   const bands = useTranslations('customers');
   const nameOf = useRowName();
   const c = rp.customersTab;
@@ -130,6 +129,15 @@ export function CustomersTab({
         {/* One heading for the card. The bands and the groups beneath it are
             both "who these clients are", and a heading each was two lines
             spent saying so twice. */}
+        {/* Jira GRW-568 — the audience an offer can reach, before the owner writes one. */}
+        {data.reach && (
+          <p className="rp-cs-reach">
+            <strong>{sg('reach.line', { n: data.reach.reachable })}</strong>{' '}
+            {data.reach.noPhone > 0 && sg('reach.noPhone', { n: data.reach.noPhone })}{' '}
+            {data.reach.optedOut > 0 && sg('reach.optedOut', { n: data.reach.optedOut })}
+          </p>
+        )}
+
         <h3 className="rp-cs-heading">
           {rp.segmentsTitle}
           {onSegment ? <em>{rp.segmentsTapHint}</em> : null}

@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
 }
 
 .rp-legend-dot { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 9px; }

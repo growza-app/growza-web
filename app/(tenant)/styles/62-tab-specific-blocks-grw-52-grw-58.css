@@ -23,7 +23,7 @@
 
 .rp-figure-pair strong {
   display: block;
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   font-weight: 800;
   margin-top: 2px;
 }
@@ -42,7 +42,7 @@
   gap: 11px;
   border: 1px solid var(--border);
   border-left: 4px solid var(--rp-seg);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 15px;
   min-width: 0;
 }
@@ -53,7 +53,7 @@
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,13 +62,13 @@
 }
 
 .rp-opp-card-icon svg { width: 1.125rem; height: 1.125rem; }
-.rp-opp-card-count { font-size: 1.5625rem; font-weight: 800; letter-spacing: -0.5px; }
-.rp-opp-card-title { font-weight: 700; font-size: 0.84375rem; }
+.rp-opp-card-count { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+.rp-opp-card-title { font-weight: 700; font-size: 0.8125rem; }
 
 .rp-opp-card-body {
   margin: 3px 0 0;
   color: var(--muted);
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -83,9 +83,9 @@
   border: 1px solid #dbe7df;
   color: var(--accent-deep);
   font-weight: 700;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   padding: 7px 12px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-decoration: none;
 }
@@ -99,4 +99,67 @@
   font-weight: 800;
   letter-spacing: -0.2px;
   color: var(--text);
+}
+
+/* Jira GRW-568 — a few numbers in lines ("Moved or called off"), and the
+   reach sentence on the Clients summary. */
+.sg-lines { list-style: none; margin: 0; padding: 0; }
+.sg-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border);
+}
+.sg-line:first-child { border-top: 0; padding-top: 0; }
+.sg-dot { flex: 0 0 0.625rem; width: 0.625rem; height: 0.625rem; border-radius: 50%; }
+.sg-label { flex: 1; min-width: 0; }
+.sg-value { font-size: 1.125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.rp-cs-reach { margin: var(--sp-3) 0 0; color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+.rp-cs-reach strong { color: var(--text); font-weight: 600; }
+/* Jira GRW-567 — the Overview scorecard: a word, a number, a dot, a sentence.
+   Laid out at 344px first: label and number on one line, the sentence under
+   them; from 640px the three sit on one row. */
+.sc-title { margin: 0 0 var(--sp-2); font-size: 1.0625rem; font-weight: 700; }
+.sc-lines { list-style: none; margin: 0; padding: 0; }
+.sc-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'label value' 'note note';
+  align-items: baseline;
+  column-gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border);
+}
+.sc-line:first-child { border-top: 0; padding-top: 0; }
+.sc-label { grid-area: label; font-weight: 600; color: var(--text); }
+.sc-value {
+  grid-area: value;
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.sc-note {
+  grid-area: note;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.sc-dot { flex: 0 0 0.625rem; width: 0.625rem; height: 0.625rem; border-radius: 50%; }
+.sc-dot-good { background: var(--rp-brand); }
+.sc-dot-steady { background: var(--rp-amber); }
+.sc-dot-bad { background: var(--rp-red); }
+
+@media (min-width: 640px) {
+  .sc-line {
+    grid-template-columns: 7rem auto 1fr;
+    grid-template-areas: 'label value note';
+    align-items: center;
+  }
+  .sc-note { margin-top: 0; justify-content: flex-start; padding-left: var(--sp-3); }
 }

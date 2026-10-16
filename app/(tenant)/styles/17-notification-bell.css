@@ -12,7 +12,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: #d84a3c;
   color: #fff;
   font-size: 0.75rem;
@@ -35,7 +35,7 @@
   height: 18px;
   padding: 0 4px;
   box-sizing: border-box;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: #d84a3c;
   color: #fff;
   font-size: 0.75rem;
@@ -58,7 +58,7 @@
   max-width: calc(100vw - 32px);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px rgba(18, 38, 29, 0.14);
   overflow: hidden;
 }
@@ -73,8 +73,8 @@
   color: var(--text);
 }
 .notif-dropdown-actions { display: flex; align-items: center; gap: 10px; }
-.notif-mark-read { background: none; border: none; color: var(--accent-deep); font-size: 0.78125rem; font-weight: 620; cursor: pointer; padding: 0; }
-.notif-clear-all { background: none; border: none; color: var(--muted); font-size: 0.78125rem; font-weight: 600; cursor: pointer; padding: 0; }
+.notif-mark-read { background: none; border: none; color: var(--accent-deep); font-size: 0.75rem; font-weight: 620; cursor: pointer; padding: 0; }
+.notif-clear-all { background: none; border: none; color: var(--muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 0; }
 .notif-empty { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 0.8125rem; }
 .notif-list { max-height: 360px; overflow-y: auto; }
 .notif-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
@@ -92,14 +92,14 @@
 .notif-item-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .notif-icon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
 .notif-icon svg { width: 0.9375rem; height: 0.9375rem; }
-.notif-new { background: #dcf8e7; color: #16a34a; }
-.notif-cancel { background: #fde3e3; color: #c0362c; }
-.notif-reschedule { background: #fdf3e3; color: #8a5a10; }
+.notif-new { background: var(--accent-soft); color: var(--accent); }
+.notif-cancel { background: var(--danger-soft); color: var(--danger); }
+.notif-reschedule { background: var(--amber-soft); color: var(--amber-ink); }
 .notif-billing { background: #e3ecfd; color: #2952cc; }
 /* Jira GRW-562 — a visit done, a payment in. */
 .notif-done { background: #e6f4ea; color: #1e7b3a; }
 /* Jira GRW-479 — a client waiting for a person. */
-.notif-handoff { background: #fdf0d5; color: #92400e; }
+.notif-handoff { background: var(--amber-soft); color: var(--amber-ink); }
 .notif-item-body { flex: 1; min-width: 0; }
 .notif-item-title { font-size: 0.8125rem; color: var(--text); }
 .notif-item-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
@@ -114,7 +114,7 @@
   align-items: center;
   gap: 10px;
   background: var(--sidebar);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 12px 16px;
   max-width: 340px;
   box-shadow: 0 12px 32px rgba(18, 38, 29, 0.24);

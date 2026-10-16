@@ -22,6 +22,7 @@ import { FiltersDrawer } from './FiltersDrawer';
 import { IconCalendar, IconChevronDown, IconDownload, IconFilter, IconRepeat } from '../components/icons';
 
 const TAB_ORDER: ReportTabKey[] = [
+  'todo',
   'overview',
   'customers',
   'revenue',
@@ -184,6 +185,9 @@ export function ReportsShell({
         </div>
 
         <div className="rp-controls">
+          {/* "What to do" is this week, this month and today; it reads neither the range nor Compare, so neither is drawn there. */}
+          {tab !== 'todo' ? (
+            <>
           <div className="rp-range">
             <button type="button" className="rp-control" onClick={() => setRangeOpen((open) => !open)}>
               <span className="rp-control-icon rp-brand-ink">
@@ -232,6 +236,8 @@ export function ReportsShell({
             </span>
             <span>{rp.compare}</span>
           </button>
+            </>
+          ) : null}
 
           <div className="rp-controls-spacer" />
 

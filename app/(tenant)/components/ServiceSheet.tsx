@@ -3,12 +3,14 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatMoney } from '../lib/api';
-import type { Offer, Service } from '../lib/api-types';
+import type { Offer, Product, Service } from '../lib/api-types';
 import { asMinor, matchItems } from '../lib/service-match';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { productPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { IconSearch } from './icons';
+import { IconInfo, IconSearch } from './icons';
+import { PackageSheet } from './PackageSheet';
+import { MENU_SORTS, sortMenu, type MenuSort } from '../lib/menu-sort';
 
 /**
  * "More…" — the whole menu, in the flow (owner, 2026-10-09: the tile used to leave for the full form).
@@ -35,8 +37,12 @@ export function ServiceSheet({
   onPick,
   onClose,
   packages,
-  packageOnBillId = null,
+  packageCountOf = () => 0,
+  onLessPackage,
   onPickPackage,
+  products,
+  productCounts,
+  onPickProduct,
 }: {
   services: Service[];
   counts: Map<string, number>;
@@ -44,9 +50,14 @@ export function ServiceSheet({
   onClose: () => void;
   /** The combos on offer. Omitted by Record payment, which does not sell them from here. */
   packages?: Offer[];
-  /** The one already on the bill, so tapping it again takes it off. */
-  packageOnBillId?: string | null;
+  /** Owner, 2026-10-15 — how many times a package is on the bill, and one fewer; absent on the one-page form. */
+  packageCountOf?: (offerId: string) => number;
+  onLessPackage?: (offerId: string) => void;
   onPickPackage?: (o: Offer) => void;
+  /** Owner, 2026-10-14 — the branch's shelf, as one more chip: rows that read like services, with how many are left. */
+  products?: Product[];
+  productCounts?: Map<string, number>;
+  onPickProduct?: (p: Product) => void;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -61,26 +72,65 @@ export function ServiceSheet({
   const [kind, setKind] = useState('');
   /** The chip that lists combos rather than one kind of service. Not a category name anyone can type. */
   const PACKAGES = '\u0000packages';
+  const PRODUCTS = '\u0000products';
   const offers = packages ?? [];
+  const shelf = products ?? [];
   const packageMode = kind === PACKAGES;
+  const productMode = kind === PRODUCTS;
+  /** Owner, 2026-10-15 — sort under the search; the shelf hides what is out of stock unless asked. */
+  const [sort, setSort] = useState<MenuSort>('menu');
+  const [inStockOnly, setInStockOnly] = useState(true);
+  const [viewing, setViewing] = useState<Offer | null>(null);
   const kinds = useMemo(() => [...new Set(services.map((s) => s.categoryName).filter((c): c is string => Boolean(c)))], [services]);
+  const shownProducts = useMemo(() => {
+    if (!productMode) return [];
+    const pool = inStockOnly ? shelf.filter((p) => p.stock > 0 || (productCounts?.get(p.id) ?? 0) > 0) : shelf;
+    const q = term.trim();
+    return q
+      ? matchItems(
+          pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
+          q,
+        )
+      : sortMenu(
+          pool,
+          sort,
+          (p) => p.name,
+          (p) => asMinor(p.priceMinor),
+        );
+  }, [shelf, productMode, term, sort, inStockOnly, productCounts]);
   const shown = useMemo(() => {
-    if (packageMode) return [];
+    if (packageMode || productMode) return [];
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
     const q = term.trim();
-    return q ? matchItems(pool.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })), q) : pool;
-  }, [services, kind, term, packageMode]);
+    return q
+      ? matchItems(
+          pool.map((s) => ({ item: s, text: [s.name], priceMinor: asMinor(s.priceMinor) })),
+          q,
+        )
+      : sortMenu(
+          pool,
+          sort,
+          (s) => s.name,
+          (s) => asMinor(s.priceMinor),
+        );
+  }, [services, kind, term, packageMode, productMode, sort]);
   /* A combo is found by its own name or by any service in it: "haircut" should reach the cut-and-colour offer. */
   const shownPackages = useMemo(() => {
     if (!packageMode) return [];
     const q = term.trim();
-    if (!q) return offers;
+    if (!q)
+      return sortMenu(
+        offers,
+        sort,
+        (o) => o.title,
+        (o) => asMinor(o.comboPriceMinor),
+      );
     const byId = new Map(services.map((x) => [x.id, x.name]));
     return matchItems(
       offers.map((o) => ({ item: o, text: [o.title, ...o.serviceIds.map((id) => byId.get(id) ?? '')], priceMinor: asMinor(o.comboPriceMinor) })),
       q,
     );
-  }, [offers, packageMode, term, services]);
+  }, [offers, packageMode, term, services, sort]);
 
   // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
   return (
@@ -92,39 +142,92 @@ export function ServiceSheet({
             {nv.close}
           </button>
         </div>
-        <div className="pf-client-box">
-          <IconSearch />
-          <input ref={box} type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder={t('searchServices')} aria-label={t('searchServices')} autoComplete="off" autoCorrect="off" spellCheck={false} />
+        <div className="pf-menu-search-row">
+          <div className="pf-client-box">
+            <IconSearch />
+            <input
+              ref={box}
+              type="search"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder={t('searchServices')}
+              aria-label={t('searchServices')}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          </div>
+          <div className="pf-menu-tools">
+            <label className="pf-sort">
+              <select value={sort} onChange={(e) => setSort(e.target.value as MenuSort)} aria-label={t('sort.label')}>
+                {MENU_SORTS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(`sort.${k}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {productMode ? (
+              <button type="button" className={`pf-chip pf-filter-chip ${inStockOnly ? 'pf-chip-on' : ''}`} aria-pressed={inStockOnly} onClick={() => setInStockOnly((v) => !v)}>
+                {t('inStockOnly')}
+              </button>
+            ) : null}
+          </div>
         </div>
         {/*
           One chip is no choice, which is why a single category draws none — but a salon with its services
           uncategorised and combos on sale is exactly one chip plus Packages, and that arithmetic hid the only
           door to the combos (review, 2026-10-11). Packages earns the row on its own.
         */}
-        {kinds.length > 1 || offers.length > 0 ? (
+        {kinds.length > 1 || offers.length > 0 || shelf.length > 0 ? (
           <div className="pf-chips pf-menu-kinds" role="group" aria-label={nv.serviceKinds}>
-            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : [])].map((k) => (
+            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : []), ...(shelf.length > 0 ? [PRODUCTS] : [])].map((k) => (
               <button key={k || 'all'} type="button" className={`pf-chip ${kind === k ? 'pf-chip-on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>
-                {k === PACKAGES ? nv.packagesChip : k || nv.allServices}
+                {k === PACKAGES ? nv.packagesChip : k === PRODUCTS ? t('productsChip') : k || nv.allServices}
               </button>
             ))}
           </div>
         ) : null}
-        {packageMode ? (
+        {productMode ? (
+          /* A product reads like a service: its picture, its name, its price, and how many are left. */
+          <ul className="pf-client-matches pf-menu-list">
+            {shownProducts.map((p) => {
+              const n = productCounts?.get(p.id) ?? 0;
+              return (
+                <li key={p.id}>
+                  <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPickProduct?.(p)}>
+                    <img className="pf-menu-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <span className="pf-client-match-name">{p.name}</span>
+                    <span className="pf-client-match-sub">
+                      {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}
+                    </span>
+                    {n > 0 ? (
+                      <span className="pf-menu-count" aria-label={t('onBill', { count: n })}>
+                        {n}
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : packageMode ? (
           /* A combo reads like a service: its picture, its name, what it costs. Tapping the one already on
              the bill takes it off, which is the row's own toggle on the full form too. */
           <ul className="pf-client-matches pf-menu-list">
             {shownPackages.map((o) => {
               const first = services.find((x) => x.id === o.serviceIds[0]);
-              const on = packageOnBillId === o.id;
+              const pkgCount = packageCountOf(o.id);
+              const on = pkgCount > 0;
               return (
                 <li key={o.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${on ? 'pf-menu-row-on' : ''}`} onClick={() => onPickPackage?.(o)}>
                     {first ? <img className="pf-menu-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-menu-photo" aria-hidden="true" />}
                     <span className="pf-client-match-name">{o.title}</span>
-                    <span className="pf-client-match-sub">
-                      {o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}
-                    </span>
+                    <span className="pf-client-match-sub">{o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}</span>
+                  </button>
+                  <button type="button" className="pf-menu-info" aria-label={t('pkg.view', { name: o.title })} onClick={() => setViewing(o)}>
+                    <IconInfo />
                   </button>
                 </li>
               );
@@ -154,6 +257,7 @@ export function ServiceSheet({
           </ul>
         )}
       </div>
+      {viewing ? <PackageSheet offer={viewing} services={services} countOf={packageCountOf} onPick={(o) => onPickPackage?.(o)} onLess={onLessPackage} onClose={() => setViewing(null)} /> : null}
     </div>
   );
 }

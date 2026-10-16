@@ -58,10 +58,10 @@
 .import-need {
   margin-top: var(--sp-3);
   padding: 10px 12px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-line);
   border-radius: var(--radius-sm);
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--danger-soft);
+  color: var(--danger);
   font-size: 0.875rem;
 }
 
@@ -157,7 +157,7 @@
 .import-row input {
   min-width: 0;
   width: 100%;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   min-height: 34px;
   padding: 5px 9px;
 }
@@ -202,7 +202,7 @@
 
 .import-money-sym {
   flex: none;
-  font-size: 0.84375rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -216,13 +216,13 @@
 }
 
 .import-issue {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--amber);
 }
 
 .import-note {
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
   min-width: 0;
   overflow: hidden;
 }
@@ -419,8 +419,6 @@
 .rv-edit input {
   width: 100%;
   min-width: 0;
-  min-height: 44px;
-  font-size: 16px; /* 16px or a phone zooms the whole sheet on focus. */
 }
 
 .rv-edit input[readonly] {

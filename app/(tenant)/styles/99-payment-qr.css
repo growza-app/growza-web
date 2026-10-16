@@ -111,7 +111,7 @@
 }
 
 .pq-remove {
-  color: #991b1b;
+  color: var(--danger-deep);
 }
 
 .pq-link {
@@ -128,8 +128,8 @@
 .pq-error {
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius-sm);
-  background: #fdecec;
-  color: #991b1b;
+  background: var(--danger-soft);
+  color: var(--danger-deep);
   font-size: 1rem;
   font-weight: 600;
 }

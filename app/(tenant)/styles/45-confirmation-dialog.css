@@ -6,7 +6,7 @@
 
 .confirm-body {
   margin: 8px 0 0;
-  font-size: 0.90625rem;
+  font-size: 0.875rem;
   line-height: 1.55;
   color: var(--text);
 }
@@ -30,18 +30,18 @@
   margin: 12px 0 0;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--danger-soft);
+  color: var(--danger-deep);
   font-size: 0.8125rem;
   font-weight: 550;
   line-height: 1.5;
 }
 
 .btn-danger-solid {
-  background: #b91c1c;
+  background: var(--danger);
   color: #fff;
 }
 
 .btn-danger-solid:hover:not(:disabled) {
-  background: #991b1b;
+  background: var(--danger-deep);
 }

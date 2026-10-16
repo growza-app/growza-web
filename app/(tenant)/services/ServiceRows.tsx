@@ -7,7 +7,7 @@ import { useLabel } from '../components/LabelsProvider';
 import { useWritable } from '../components/SessionProvider';
 import { hasServicePhoto, servicePhotoUrl } from '../lib/service-photos';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
-import { groupByCategory, timePhrase, worthGrouping } from './services-groups';
+import { groupByCategory, timeParts, timePhrase, worthGrouping } from './services-groups';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
 
 /**
@@ -68,6 +68,24 @@ function time(s: ServiceAdmin, t: T): string {
 }
 
 /**
+ * The card's time, in two spans: the separator is the cleanup's own (`.svc-cleanup::before`), so on a narrow
+ * phone the line breaks as "25 min" / "+5 cleanup" and never as "25 min ·" / "+5 cleanup" (owner, 2026-10-14).
+ */
+function timeCard(s: ServiceAdmin, t: T) {
+  const [duration, cleanup] = timeParts(
+    s,
+    (count) => durationPhrase(count, durationWords(t)),
+    (count) => t('cleanupPlus', { count }),
+  );
+  return (
+    <>
+      <span>{duration}</span>
+      {cleanup && <span className="svc-cleanup">{cleanup}</span>}
+    </>
+  );
+}
+
+/**
  * The ··· menu.
  *
  * Anchored to the viewport by `useAnchoredPanel` (Jira GRW-433), so the last row's menu is not cut in half by
@@ -88,7 +106,7 @@ export function ServiceRowMenu({ service, actions, t }: { service: ServiceAdmin;
 
   if (!writable) return null;
   return (
-    <div className="dropdown-anchor svc-row-actions" ref={open ? panel.anchorRef : undefined}>
+    <div className="dropdown-anchor svc-row-actions" ref={open ? panel.anchorRef : undefined} onClick={(e) => e.stopPropagation()}>
       <button
         type="button"
         className="kebab-btn"
@@ -185,15 +203,23 @@ export function ServiceTableRows({
   t,
   order,
   totals,
+  selectedId = null,
+  onSelect,
+  flat = false,
 }: {
   rows: ServiceAdmin[];
   actions: RowActions;
   t: T;
   order: CategoryOrder;
   totals?: CategoryTotals;
+  /** Owner, 2026-10-15 — the wide table: no group headings, a Category and a Status column, the list as sorted. */
+  flat?: boolean;
+  /** Owner, 2026-10-14 — on the wide screen a row is a thing you open: the one in the right panel is marked. */
+  selectedId?: string | null;
+  onSelect?: (s: ServiceAdmin) => void;
 }) {
-  const groups = groupByCategory(rows, order);
-  const headings = totals ? totals.size > 1 : worthGrouping(groups);
+  const groups = flat ? [{ name: null as string | null, items: rows }] : groupByCategory(rows, order);
+  const headings = flat ? false : totals ? totals.size > 1 : worthGrouping(groups);
   const out: ReactNode[] = [];
 
   for (const group of groups) {
@@ -209,12 +235,38 @@ export function ServiceTableRows({
     }
     for (const s of group.items) {
       out.push(
-        <tr key={s.id} data-row className={s.active ? undefined : 'is-retired'}>
+        <tr
+          key={s.id}
+          data-row
+          className={[s.active ? '' : 'is-retired', onSelect ? 'svc-row-open' : '', selectedId === s.id ? 'is-selected' : ''].filter(Boolean).join(' ') || undefined}
+          aria-selected={onSelect ? selectedId === s.id : undefined}
+          onClick={onSelect ? () => onSelect(s) : undefined}
+        >
           <td>
-            <NameCell service={s} t={t} />
+            {onSelect ? (
+              /* The row opens on a click anywhere; the name is a real button so a keyboard and a screen reader reach it. */
+              <button
+                type="button"
+                className="svc-row-tap"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(s);
+                }}
+              >
+                <NameCell service={s} t={t} />
+              </button>
+            ) : (
+              <NameCell service={s} t={t} />
+            )}
           </td>
+          {flat ? <td className="muted svc-cat">{s.categoryName ?? t('unfiled')}</td> : null}
           <td className="muted svc-time">{time(s, t)}</td>
           <td className="svc-price">{formatMoney(s.priceMinor, s.currency)}</td>
+          {flat ? (
+            <td>
+              <span className={`svc-status ${s.active ? 'svc-status-on' : 'svc-status-off'}`}>{s.active ? t('active') : t('inactive')}</span>
+            </td>
+          ) : null}
           <td>
             <ServiceRowMenu service={s} actions={actions} t={t} />
           </td>
@@ -278,7 +330,7 @@ function SwipeRow({ service, actions, t }: { service: ServiceAdmin; actions: Row
         <NameCell service={service} t={t} />
         <span className="svc-card-right">
           <span className="svc-price">{formatMoney(service.priceMinor, service.currency)}</span>
-          <span className="svc-time muted">{time(service, t)}</span>
+          <span className="svc-time muted">{timeCard(service, t)}</span>
         </span>
         <ServiceRowMenu service={service} actions={actions} t={t} />
       </div>

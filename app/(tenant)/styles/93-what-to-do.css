@@ -1,0 +1,162 @@
+/* ---------- Reports › What to do ----------
+   One sentence, one number, one button per card, laid out at 344px first.
+   The dot is the verdict for a reader who skips words; its aria-label is the
+   verdict for a reader who cannot see it. */
+
+.td-stack { gap: var(--sp-3); }
+
+.td-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+}
+
+.td-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.td-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.td-dot {
+  flex: 0 0 0.75rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-top: 0.3rem;
+  border-radius: 50%;
+}
+.td-dot-good { background: var(--rp-brand, var(--accent)); }
+.td-dot-warn { background: var(--rp-amber, #d97706); }
+.td-dot-bad { background: var(--rp-red, var(--danger)); }
+
+.td-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.td-money .td-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.td-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  width: 100%;
+  margin-top: var(--sp-1);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.td-action svg { width: 1.125rem; height: 1.125rem; }
+
+.td-empty {
+  text-align: center;
+  padding: var(--sp-6) var(--sp-4);
+}
+.td-empty h2 { margin: var(--sp-2) 0 0; font-size: 1.0625rem; }
+.td-empty-icon {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.td-empty-icon svg { width: 1.25rem; height: 1.25rem; }
+
+.td-foot {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* The people sheet */
+.td-sheet { max-height: calc(100dvh - 48px); display: flex; flex-direction: column; }
+.td-sheet .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.td-sheet-close {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  border-radius: 50%;
+}
+.td-sheet-close svg { width: 1.125rem; height: 1.125rem; }
+
+.td-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.td-person {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid #eef0ee;
+}
+.td-person:last-child { border-bottom: 0; }
+
+.td-person-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.td-person-who:disabled { cursor: default; }
+.td-person-text { min-width: 0; display: flex; flex-direction: column; }
+.td-person-name { font-weight: 700; font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-person-meta { color: var(--muted); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.td-person-actions { display: flex; gap: var(--sp-1); flex: none; }
+.td-wa, .td-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--sp-3);
+  font-weight: 700;
+}
+.td-call { padding: 0; width: 44px; }
+.td-wa svg, .td-call svg { width: 1.125rem; height: 1.125rem; }
+
+.td-person-quiet { color: var(--muted); font-size: 0.75rem; flex: none; max-width: 9rem; text-align: right; }
+
+@media (min-width: 860px) {
+  .td-stack { max-width: 640px; }
+  .td-action { width: auto; align-self: flex-start; min-width: 12rem; }
+}

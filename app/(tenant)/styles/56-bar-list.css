@@ -11,7 +11,7 @@
   justify-content: space-between;
   gap: var(--sp-2);
   margin-bottom: 6px;
-  font-size: 0.78125rem;
+  font-size: 0.75rem;
 }
 
 .rp-bar-label {

@@ -42,7 +42,11 @@ describe('one done screen for both Record payment forms (owner, 2026-10-10)', ()
     // On the page it is the whole page — no form header or card around it, as the three-tap flow ends.
     expect(visitSheet).toMatch(/if \(paidScreen && presentation === 'page'\) return paidScreen;/);
     // A desk always ends on it too, in the phone's column rather than across the whole page.
-    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.pf-done-page \{\s*width: 100%;\s*max-width: 30rem;\s*margin-inline: auto;/);
+    // Two panels on a desk (owner, 2026-10-14): the bill left, what is pressed right; the receipt band across the top.
+    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.pf-done-page \{\s*width: 100%;\s*max-width: 64rem;\s*margin-inline: auto;\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\) 22rem;/);
+    expect(css).toMatch(/\.pf-done-page \.wi-receipt-share \{\s*display: contents;/);
+    expect(css).toMatch(/\.pf-done-page \.wi-receipt-share > \.wi-receipt-paper \{\s*grid-column: 1;\s*grid-row: 3 \/ span 12;/);
+    expect(css).toMatch(/\.pf-done-page > \.pf-done-actions \{\s*grid-column: 2;/);
     // The one-page form's old paid screen — "Paid", the bill, a lone Done — is gone, not kept beside it.
     expect(visitSheet).not.toMatch(/nv\.paid\(/);
     // Next customer opens a fresh one-page form.
@@ -151,7 +155,8 @@ describe('Record payment in three taps', () => {
     expect(bill).toMatch(/offMinor > 0 \? t\('billOff'\) : t\('billExtra'\)/);
     // Same service twice is one row with a count, as the receipt groups it; each row can lose one from here.
     expect(bill).toMatch(/same\.count \+= 1;/);
-    expect(bill).toMatch(/onLess\(r\.serviceId\)/);
+    // Jira GRW-572 — the row's key: a service id, or a package id that takes every leg off.
+    expect(bill).toMatch(/onLess\(r\.key\)/);
     expect(css).toMatch(/\.pf-bill-less \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
   });
 
@@ -167,7 +172,7 @@ describe('Record payment in three taps', () => {
     // eight photos past the eye. A bar under the two people rows is where a search is looked for.
     expect(flow).toMatch(/className="pf-who-search pf-find-service" onClick=\{\(\) => setMenuOpen\(true\)\}/);
     expect(flow).not.toMatch(/pf-tile-more/);
-    expect(menu).toMatch(/matchItems\(pool\.map/); // the same spelling tolerance the full form has
+    expect(menu).toMatch(/matchItems\(\s*pool\.map/); // the same spelling tolerance the full form has
     expect(menu).toMatch(/servicePhotoUrl\(s\)/);
   });
 
@@ -185,13 +190,16 @@ describe('Record payment in three taps', () => {
     // A service found by searching still gets a tile — appended, so it carries its count and its − + .
     expect(flow).toMatch(/for \(const l of lines\) \{[\s\S]{0,220}shown\.push\(s\);/);
     // Whether the search bar is there follows the size of the MENU, not a tile count that grows as it is used.
-    expect(flow).toMatch(/\{services && services\.length > TILES \? \(/);
+    // Owner review, 2026-10-16 — also drawn when the branch sells products or packages, so a small menu can still reach them.
+    expect(flow).toMatch(/\{services && \(services\.length > TILES \|\| products\.length > 0 \|\| offers\.length > 0\) \? \(/);
   });
 
   it('tapping how they paid IS the save — there is no Mark done', () => {
     // Still the save for three of the four. UPI is the exception, and only when there is a QR to scan first
     // (the test below): recording the money before anyone has scanned anything would be a lie on the screen.
-    expect(flow).toMatch(/onClick=\{\(\) => \(mode === 'upi' && paymentQr \? setStep\('qr'\) : void pay\(mode\)\)\}/);
+    // Jira GRW-572 — the wide till shares these tiles and checks for a client first; the phone's tap is unchanged.
+    // Owner, 2026-10-14 — a bill paid two ways: "which way first?" opens the keypad instead; the next tile still saves.
+    expect(flow).toMatch(/if \(wide && !readyToPay\(\)\) return;[\s\S]{0,400}if \(mode === 'upi' && paymentQr && !firstWay\) setStep\('qr'\);\s*else void pay\(mode\);/);
     expect(flow).not.toMatch(/markDone/);
     // The one call the full form makes for a sale with no chair (GRW-293) or a token (GRW-403); nothing new.
     expect(flow).toMatch(/api\.recordCounterSale\(/);
@@ -202,7 +210,7 @@ describe('Record payment in three taps', () => {
     // Colour is on the icon, not behind the whole card: four instances of one thing, told apart by a pale ground.
     for (const mode of ['cash', 'upi', 'card', 'other']) {
       expect(css).toMatch(new RegExp(`\\.pf-pay-${mode} \\{\\s*background: #[0-9a-f]{6};`));
-      expect(css).toMatch(new RegExp(`\\.pf-pay-${mode} \\.pf-pay-icon \\{\\s*background: #[0-9a-f]{6};`));
+      expect(css).toMatch(new RegExp(`\\.pf-pay-${mode} \\.pf-pay-icon \\{\\s*background: (#[0-9a-f]{6}|var\\(--[a-z-]+\\));`));
     }
     // Each says what it means underneath, in both languages — never instead of the word.
     expect(flow).toMatch(/<span className="pf-pay-sub">\{t\(`sub\.\$\{mode\}`\)\}<\/span>/);
@@ -365,7 +373,8 @@ describe('Record payment in three taps', () => {
   it('will not record a sale against nobody — a name is required, a number is not', () => {
     // Owner, 2026-10-10, said twice: a salon should know who it served. The shared anonymous row is gone.
     expect(flow).not.toMatch(/WALK_IN_CLIENT|walkInClient/);
-    expect(flow).toMatch(/const canGoOn = lines\.length > 0 && \(token !== undefined \|\| client\.kind !== 'none'\);/);
+    // Owner, 2026-10-14 — a service, not just a line: a product alone cannot be rung up yet.
+    expect(flow).toMatch(/const canGoOn = hasService && \(token !== undefined \|\| client\.kind !== 'none'\);/);
     // The refusal says what is missing, and opens the sheet that fixes it when the client is all that is.
     expect(flow).toMatch(/if \(client_ && !service\) setWhoOpen\('add'\);/);
     // A token already carries its client, so it is never asked.
@@ -391,12 +400,13 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/setMissing\(\{ client: client_, service \}\);/);
     // Each mark is tied to the thing still missing, so answering one does not clear the other's.
     expect(flow).toMatch(/const badClient = Boolean\(missing\?\.client\) && !token && client\.kind === 'none';/);
-    expect(flow).toMatch(/const badService = Boolean\(missing\?\.service\) && lines\.length === 0;/);
+    expect(flow).toMatch(/const badService = Boolean\(missing\?\.service\) && !hasService;/);
     // Beside the control, not one sentence in the tray a thumb's length from the fix.
     expect(flow).toMatch(/\{badClient \? \(\s*<p className="pf-miss" role="alert">\s*\{t\('needClient'\)\}/);
-    expect(flow).toMatch(/\{badService \? \(\s*<p className="pf-miss pf-miss-wide" role="alert">\s*\{t\('pickOne'\)\}/);
+    // Owner, 2026-10-14 — with products on the bill and no service, the mark says to add a service.
+    expect(flow).toMatch(/\{badService \? \(\s*<p className="pf-miss pf-miss-wide" role="alert">\s*\{lines\.length > 0 \? t\('needService'\) : t\('pickOne'\)\}/);
     expect(flow).toMatch(/className=\{`pf-who-bar \$\{badClient \? 'pf-bad' : ''\}`\}/);
-    expect(css).toMatch(/\.pf-miss \{[\s\S]{0,160}color: #991b1b;/);
+    expect(css).toMatch(/\.pf-miss \{[\s\S]{0,160}color: var\(--danger-deep\);/);
     // The word says what is wrong; the colour only helps the eye find it.
     for (const m of [enMessages, hiMessages]) {
       const w = m.payFlow as unknown as Record<string, string>;
@@ -536,7 +546,7 @@ describe('Record payment in three taps', () => {
     const imports: string[] = globals.match(/@import '\.\/styles\/[^']+';/g) ?? [];
     const at = imports.indexOf("@import './styles/73-pay-flow.css';");
     expect(at).toBeGreaterThan(imports.indexOf("@import './styles/72-walk-in-sheet.css';"));
-    expect(at).toBeLessThan(imports.indexOf("@import './styles/100-clay-tabs.css';"));
+    expect(at).toBeLessThan(imports.indexOf("@import './styles/74-mobile-chrome-2026.css';"));
   });
 });
 
@@ -578,5 +588,35 @@ describe('the stylist the screen is holding is one it is showing', () => {
     expect(flow).toMatch(/shownProviders\.length > 0 \? \(/);
     expect(flow).toMatch(/\{shownProviders\.map\(\(p\) => \{/);
     expect(flow).not.toMatch(/\{providers\.map\(\(p\) => \{/);
+  });
+});
+
+/*
+ * Owner, 2026-10-14 — a bill paid two ways: ₹800 cash and the rest by UPI.
+ */
+describe('a bill paid two ways', () => {
+  it('is one extra question, asked only by "Paid two ways": a first way and how much, then the next tile saves', () => {
+    expect(flow).toMatch(/className="pf-split-link" onClick=\{\(\) => setSplitting\(true\)\}/);
+    expect(flow).toMatch(/if \(splitting && !firstWay\) \{\s*setSplitKeypad\(mode\);/);
+    expect(flow).toMatch(/title=\{t\('split\.howMuch', \{ mode: modeWord\(splitKeypad\) \}\)\}/);
+    // Enough for the whole bill is a bill paid one way: no split is held, the tap just pays.
+    expect(flow).toMatch(/if \(minor >= totalMinor\) \{\s*setFirstWay\(null\);\s*void pay\(mode\);/);
+  });
+  it('goes to the API as `payments`, the legs\' one word being the larger way, and the done screen says both', () => {
+    expect(flow).toMatch(/const howPaid = ways\.length > 1 \? \{ paymentMode: mainMode, payments: ways \} : \{ paymentMode: mode \};/);
+    // Both writes — a walk-in's sale and a booking's checkout — take the same list.
+    expect((flow.match(/\.\.\.howPaid,/g) ?? []).length).toBe(2);
+    expect(flow).toMatch(/modeLabel=\{sale\.paidBy\}/);
+    expect(flow).toMatch(/ways\.map\(\(w\) => `\$\{modeWord\(w\.mode\)\} \$\{money\(w\.amountMinor\)\}`\)\.join\(' · '\)/);
+  });
+  it('has its words in both languages, and the link is a 44px text button under the tiles', () => {
+    for (const m of [enMessages, hiMessages]) {
+      const split = (m as { payFlow: { split: Record<string, string> } }).payFlow.split;
+      for (const key of ['link', 'first', 'howMuch', 'restHint', 'then', 'clear']) expect(split[key], key).toBeTruthy();
+      expect(split.howMuch).toContain('{mode}');
+      expect(split.then).toContain('{rest}');
+    }
+    expect(css).toMatch(/\.pf-split-link \{[\s\S]{0,120}min-height: 2\.75rem;/);
+    expect(css).toMatch(/\.pf-split-held \{/);
   });
 });

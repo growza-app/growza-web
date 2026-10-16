@@ -10,7 +10,7 @@
 .rp-headline-box {
   background: var(--accent-soft);
   border: 1px solid #dbe7df;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: var(--sp-4);
 }
 
@@ -24,7 +24,7 @@
 }
 
 .rp-headline-value {
-  font-size: 2.125rem;
+  font-size: 2rem;
   font-weight: 800;
   margin-top: var(--sp-2);
   color: var(--accent-deep);
