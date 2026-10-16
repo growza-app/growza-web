@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateShort } from '../lib/format';
@@ -14,6 +14,7 @@ import { useMayUse } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
+  IconChevronDown,
   IconPackages,
   IconProducts,
   IconReceipt,
@@ -47,6 +48,10 @@ export interface SaleRow {
   servicesMinor: number;
   productsMinor: number;
   totalMinor: number;
+}
+
+export function clientKeyOf(r: Pick<SaleRow, 'clientName' | 'clientPhone'>): string {
+  return `${r.clientName}|${r.clientPhone ?? ''}`;
 }
 
 /**
@@ -139,13 +144,69 @@ export function filterSalesByDateRange(
   });
 }
 
-/** Filters sale rows by tab (`all`, `products`, `services`) and search query. */
-export function filterSalesRows(rows: readonly SaleRow[], filter: SalesFilter, search: string): SaleRow[] {
-  const pool = rows.filter((r) => {
+export interface SalesRowFilterExtra {
+  selectedClients?: readonly string[];
+  selectedItems?: readonly string[];
+  clientQuery?: string;
+  itemQuery?: string;
+}
+
+/** Filters sale rows by tab (`all`, `products`, `services`), search query, and checkbox selections. */
+export function filterSalesRows(
+  rows: readonly SaleRow[],
+  filter: SalesFilter,
+  search: string,
+  extra?: SalesRowFilterExtra,
+): SaleRow[] {
+  let pool = rows.filter((r) => {
     if (filter === 'products') return r.products.length > 0;
     if (filter === 'services') return r.serviceNames.length > 0;
     return true;
   });
+
+  const selectedClients = extra?.selectedClients ?? [];
+  if (selectedClients.length > 0) {
+    const clientSet = new Set(selectedClients);
+    pool = pool.filter((r) => clientSet.has(clientKeyOf(r)));
+  } else if (extra?.clientQuery?.trim()) {
+    const cq = extra.clientQuery.trim().toLowerCase();
+    const cTokens = cq.split(/\s+/).filter(Boolean);
+    const cDigits = cq.replace(/\D/g, '');
+    pool = pool.filter((r) => {
+      const nameLow = r.clientName.toLowerCase();
+      const phoneLow = (r.clientPhone ?? '').toLowerCase();
+      const phoneDigits = (r.clientPhone ?? '').replace(/\D/g, '');
+      if (cDigits.length >= 2 && cDigits === cq.replace(/[\s+-]/g, '') && phoneDigits.includes(cDigits)) return true;
+      return cTokens.every(
+        (tok) =>
+          nameLow.includes(tok) ||
+          phoneLow.includes(tok) ||
+          (tok.replace(/\D/g, '').length >= 2 && phoneDigits.includes(tok.replace(/\D/g, ''))),
+      );
+    });
+  }
+
+  const selectedItems = extra?.selectedItems ?? [];
+  if (selectedItems.length > 0) {
+    const itemSet = new Set(selectedItems);
+    pool = pool.filter((r) => {
+      const srvMatch = filter !== 'products' && r.serviceNames.some((s) => itemSet.has(`srv:${s}`));
+      const prdMatch = filter !== 'services' && r.products.some((p) => itemSet.has(`prd:${p.name}`));
+      return srvMatch || prdMatch;
+    });
+  } else if (extra?.itemQuery?.trim()) {
+    const iq = extra.itemQuery.trim().toLowerCase();
+    const iTokens = iq.split(/\s+/).filter(Boolean);
+    pool = pool.filter((r) => {
+      const itemFields = [
+        ...(filter !== 'products' ? [...r.serviceNames, r.offerTitle ?? ''] : []),
+        ...(filter !== 'services' ? r.products.map((p) => p.name) : []),
+      ]
+        .filter(Boolean)
+        .map((f) => f.toLowerCase());
+      return iTokens.every((tok) => itemFields.some((f) => f.includes(tok)));
+    });
+  }
 
   const q = search.trim().toLowerCase();
   if (!q) return pool;
@@ -268,8 +329,32 @@ export function SalesClient({
   const [toDate, setToDate] = useState<string>(initialTo ?? todayISO);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
   const [search, setSearch] = useState(initialQuery);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [clientQuery, setClientQuery] = useState(initialQuery);
+  const [itemQuery, setItemQuery] = useState('');
+  const [openDropdown, setOpenDropdown] = useState<'clients' | 'items' | null>(null);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
+  const filterBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const onDown = (e: MouseEvent) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenDropdown(null);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [openDropdown]);
 
   const showServicesCol = filter !== 'products';
   const showProductsCol = filter !== 'services';
@@ -285,7 +370,6 @@ export function SalesClient({
     params.set('date', safeFrom);
     params.set('to', safeTo);
     if (filter !== 'all') params.set('filter', filter);
-    if (search.trim()) params.set('q', search.trim());
     router.replace(`/sales?${params.toString()}`, { scroll: false });
   };
 
@@ -295,6 +379,46 @@ export function SalesClient({
     () => filterSalesByDateRange(allSaleRows, fromDate, toDate, branch.choice),
     [allSaleRows, fromDate, toDate, branch.choice],
   );
+
+  const clientOptions = useMemo(() => {
+    const seen = new Map<string, { key: string; name: string; phone: string | null }>();
+    for (const r of windowRows) {
+      const k = clientKeyOf(r);
+      if (!seen.has(k)) seen.set(k, { key: k, name: r.clientName, phone: r.clientPhone });
+    }
+    const list = [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+    const cq = clientQuery.trim().toLowerCase();
+    if (!cq) return list;
+    const cDigits = cq.replace(/\D/g, '');
+    return list.filter(
+      (c) =>
+        c.name.toLowerCase().includes(cq) ||
+        (c.phone ?? '').toLowerCase().includes(cq) ||
+        (cDigits.length >= 2 && (c.phone ?? '').replace(/\D/g, '').includes(cDigits)),
+    );
+  }, [windowRows, clientQuery]);
+
+  const itemOptions = useMemo(() => {
+    const seen = new Map<string, { key: string; label: string }>();
+    for (const r of windowRows) {
+      if (filter !== 'products') {
+        for (const s of r.serviceNames) {
+          const k = `srv:${s}`;
+          if (!seen.has(k)) seen.set(k, { key: k, label: s });
+        }
+      }
+      if (filter !== 'services') {
+        for (const p of r.products) {
+          const k = `prd:${p.name}`;
+          if (!seen.has(k)) seen.set(k, { key: k, label: p.name });
+        }
+      }
+    }
+    const list = [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
+    const iq = itemQuery.trim().toLowerCase();
+    if (!iq) return list;
+    return list.filter((it) => it.label.toLowerCase().includes(iq));
+  }, [windowRows, filter, itemQuery]);
 
   const counts = useMemo(
     () => ({
@@ -308,8 +432,14 @@ export function SalesClient({
   const kpis = useMemo(() => computeSalesKpis(windowRows), [windowRows]);
 
   const filteredRows = useMemo(
-    () => filterSalesRows(windowRows, filter, search),
-    [windowRows, filter, search],
+    () =>
+      filterSalesRows(windowRows, filter, search, {
+        selectedClients,
+        selectedItems,
+        clientQuery,
+        itemQuery,
+      }),
+    [windowRows, filter, search, selectedClients, selectedItems, clientQuery, itemQuery],
   );
 
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
@@ -334,6 +464,23 @@ export function SalesClient({
 
   const rowAmountMinor = (row: SaleRow) =>
     filter === 'products' ? row.productsMinor : filter === 'services' ? row.servicesMinor : row.totalMinor;
+
+  const itemFilterLabel =
+    filter === 'products'
+      ? t('itemFilterProducts')
+      : filter === 'services'
+        ? t('itemFilterServices')
+        : t('itemFilterAll');
+
+  const toggleClient = (key: string) => {
+    setSelectedClients((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setPage(1);
+  };
+
+  const toggleItem = (key: string) => {
+    setSelectedItems((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setPage(1);
+  };
 
   return (
     <>
@@ -360,8 +507,8 @@ export function SalesClient({
           </div>
         ) : null}
 
-        {/* Date Filter & Search Toolbar */}
-        <div className="sls-toolbar">
+        {/* Date Filter & Checkbox Filter Toolbar */}
+        <div className="sls-toolbar" ref={filterBarRef}>
           <div className="sls-dates" role="group" aria-label={t('title')}>
             <label className="sls-date-field">
               <span className="sls-date-label">{t('from')}</span>
@@ -386,19 +533,146 @@ export function SalesClient({
             </label>
           </div>
 
-          <label className="search-wrap sls-search">
-            <IconSearch />
-            <input
-              type="text"
-              className="search-input search-input-bare"
-              placeholder={t('searchPlaceholder')}
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </label>
+          <div className="sls-filter-bar">
+            {/* Client / Phone checkbox + search filter */}
+            <div className="sls-dd">
+              <button
+                type="button"
+                className={`sls-dd-btn ${selectedClients.length > 0 || clientQuery.trim() ? 'is-active' : ''}`}
+                aria-expanded={openDropdown === 'clients'}
+                onClick={() => setOpenDropdown((v) => (v === 'clients' ? null : 'clients'))}
+              >
+                <span>
+                  {t('clientFilter')}
+                  {selectedClients.length > 0 ? ` (${selectedClients.length})` : ''}
+                </span>
+                <IconChevronDown />
+              </button>
+
+              {openDropdown === 'clients' ? (
+                <div className="sls-dd-menu" role="group" aria-label={t('clientFilter')}>
+                  <div className="sls-dd-head">
+                    <label className="search-wrap sls-dd-search">
+                      <IconSearch />
+                      <input
+                        type="text"
+                        className="search-input search-input-bare"
+                        placeholder={t('clientSearchPlaceholder')}
+                        value={clientQuery}
+                        onChange={(e) => {
+                          setClientQuery(e.target.value);
+                          setSearch('');
+                          setPage(1);
+                        }}
+                      />
+                    </label>
+                    {selectedClients.length > 0 || clientQuery.trim() ? (
+                      <button
+                        type="button"
+                        className="sls-dd-clear"
+                        onClick={() => {
+                          setSelectedClients([]);
+                          setClientQuery('');
+                          setSearch('');
+                          setPage(1);
+                        }}
+                      >
+                        {t('clearFilter')}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="sls-dd-list">
+                    {clientOptions.length === 0 ? (
+                      <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                    ) : (
+                      clientOptions.map((c) => {
+                        const checked = selectedClients.includes(c.key);
+                        return (
+                          <label key={c.key} className="sls-check-row">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleClient(c.key)}
+                            />
+                            <span className="sls-check-main">{c.name}</span>
+                            {c.phone ? <span className="sls-check-sub">{c.phone}</span> : null}
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Services / Products checkbox + search filter */}
+            <div className="sls-dd">
+              <button
+                type="button"
+                className={`sls-dd-btn ${selectedItems.length > 0 || itemQuery.trim() ? 'is-active' : ''}`}
+                aria-expanded={openDropdown === 'items'}
+                onClick={() => setOpenDropdown((v) => (v === 'items' ? null : 'items'))}
+              >
+                <span>
+                  {itemFilterLabel}
+                  {selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
+                </span>
+                <IconChevronDown />
+              </button>
+
+              {openDropdown === 'items' ? (
+                <div className="sls-dd-menu" role="group" aria-label={itemFilterLabel}>
+                  <div className="sls-dd-head">
+                    <label className="search-wrap sls-dd-search">
+                      <IconSearch />
+                      <input
+                        type="text"
+                        className="search-input search-input-bare"
+                        placeholder={t('itemSearchPlaceholder')}
+                        value={itemQuery}
+                        onChange={(e) => {
+                          setItemQuery(e.target.value);
+                          setPage(1);
+                        }}
+                      />
+                    </label>
+                    {selectedItems.length > 0 || itemQuery.trim() ? (
+                      <button
+                        type="button"
+                        className="sls-dd-clear"
+                        onClick={() => {
+                          setSelectedItems([]);
+                          setItemQuery('');
+                          setPage(1);
+                        }}
+                      >
+                        {t('clearFilter')}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="sls-dd-list">
+                    {itemOptions.length === 0 ? (
+                      <div className="sls-dd-empty">{t('noFilterMatches')}</div>
+                    ) : (
+                      itemOptions.map((it) => {
+                        const checked = selectedItems.includes(it.key);
+                        return (
+                          <label key={it.key} className="sls-check-row">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleItem(it.key)}
+                            />
+                            <span className="sls-check-main">{it.label}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         {/* 4 Summary KPI Cards */}

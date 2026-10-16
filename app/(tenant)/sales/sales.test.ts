@@ -135,6 +135,14 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(filterSalesRows(rows, 'products', 'karan').map((r) => r.key)).toEqual(['g3']);
     expect(filterSalesRows(rows, 'all', '33445').map((r) => r.key)).toEqual(['g2']);
     expect(filterSalesRows(rows, 'all', 'Keratin').map((r) => r.key)).toEqual(['g2']);
+    expect(
+      filterSalesRows(rows, 'all', '', { selectedClients: ['Karan Kapoor|+919811122233'] }).map((r) => r.key),
+    ).toEqual(['g3']);
+    expect(filterSalesRows(rows, 'all', '', { clientQuery: '11222' }).map((r) => r.key)).toEqual(['g3']);
+    expect(filterSalesRows(rows, 'all', '', { selectedItems: ['srv:Keratin Spa'] }).map((r) => r.key)).toEqual(['g2']);
+    expect(filterSalesRows(rows, 'products', '', { selectedItems: ['prd:Argan Oil 100ml'] }).map((r) => r.key)).toEqual(
+      ['g1', 'g3'],
+    );
   });
 
   it('computes KPI totals and payment split accurately', () => {

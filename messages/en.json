@@ -3140,6 +3140,14 @@
       "products": "Products sold ({n})",
       "services": "Services sold ({n})"
     },
+    "clientFilter": "Clients",
+    "clientSearchPlaceholder": "Search client or phone…",
+    "itemFilterAll": "Services & Products",
+    "itemFilterServices": "Services",
+    "itemFilterProducts": "Products",
+    "itemSearchPlaceholder": "Search service or product…",
+    "clearFilter": "Clear",
+    "noFilterMatches": "No matches",
     "searchPlaceholder": "Search client, phone, service or product…",
     "kpi": {
       "totalSales": "Total sales",

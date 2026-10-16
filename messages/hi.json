@@ -3140,6 +3140,14 @@
       "products": "सामान बिका ({n})",
       "services": "सेवाएँ बिकीं ({n})"
     },
+    "clientFilter": "ग्राहक",
+    "clientSearchPlaceholder": "ग्राहक या फ़ोन खोजें…",
+    "itemFilterAll": "सेवाएँ और सामान",
+    "itemFilterServices": "सेवाएँ",
+    "itemFilterProducts": "सामान",
+    "itemSearchPlaceholder": "सेवा या सामान खोजें…",
+    "clearFilter": "हटाएँ",
+    "noFilterMatches": "कुछ नहीं मिला",
     "searchPlaceholder": "ग्राहक, फ़ोन, सेवा या सामान खोजें…",
     "kpi": {
       "totalSales": "कुल बिक्री",
