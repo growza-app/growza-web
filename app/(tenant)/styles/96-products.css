@@ -738,6 +738,10 @@
     flex: none;
   }
 
+  .prd-desk-mid .prd-chips .prd-chip {
+    margin-left: 0;
+  }
+
   /* The shelf as a table in a card that scrolls itself, as the Services desk has it. */
   .prd-desk-card {
     flex: 1;
@@ -769,11 +773,25 @@
 
   .prd-table th,
   .prd-table td {
-    padding: 8px 12px;
+    padding: 8px 8px;
     border-bottom: 1px solid var(--border);
     text-align: left;
     vertical-align: middle;
     font-size: 0.875rem;
+    white-space: nowrap;
+    width: 1%;
+  }
+
+  .prd-table th:first-child,
+  .prd-table td:first-child {
+    padding-left: 12px;
+    width: 100%;
+    max-width: 0;
+  }
+
+  .prd-table th:last-child,
+  .prd-table td:last-child {
+    padding-right: 12px;
   }
 
   .prd-table thead th {
@@ -784,6 +802,27 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--muted);
+  }
+
+  .prd-table th.th-sortable {
+    padding: 0;
+  }
+
+  .prd-table th.th-sortable button {
+    gap: 4px;
+    padding: 8px 8px;
+  }
+
+  .prd-table th.th-sortable:first-child button {
+    padding-left: 12px;
+  }
+
+  .prd-table th.th-sortable:last-child button {
+    padding-right: 12px;
+  }
+
+  .prd-table th.prd-td-num button {
+    justify-content: flex-end;
   }
 
   .prd-tr {
@@ -805,7 +844,7 @@
   .prd-cell-name {
     display: flex;
     align-items: center;
-    gap: var(--sp-3);
+    gap: var(--sp-2);
     min-width: 0;
   }
 
@@ -866,4 +905,21 @@
 /* The low-stock tile sits in a listitem wrapper so the button keeps its own role. */
 .prd-stat-cell {
   display: contents;
+}
+
+.prd-sheet .sheet-head-save.is-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 2rem;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  opacity: 1;
+}
+
+.prd-sheet .sheet-head-save.is-saved svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
