@@ -491,6 +491,11 @@ export function SalesClient({
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
 
   useEffect(() => {
+    setFromDate(initialBounds.fromISO);
+    setToDate(initialBounds.toISO);
+  }, [initialBounds.fromISO, initialBounds.toISO]);
+
+  useEffect(() => {
     setSelectedBranches(branch.choice ? [branch.choice] : []);
   }, [branch.choice]);
 
@@ -667,7 +672,7 @@ export function SalesClient({
       {
         when: t('cols.when'),
         client: t('cols.client'),
-        phone: t('clientFilter'),
+        phone: t('cols.phone'),
         branch: branch.branches.length > 1 ? t('branchFilter') : undefined,
         services: t('cols.services'),
         products: t('cols.products'),

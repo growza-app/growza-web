@@ -405,6 +405,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('max={todayISO}');
     expect(client).toContain('className="sls-table-head-bar"');
     expect(client).toContain('className="btn btn-ghost btn-sm sls-export-btn"');
+    expect(client).toContain("phone: t('cols.phone')");
     expect(client).toContain('pageSize={PAGE_SIZE}');
     expect(client).toContain("t('branchFilter')");
     expect(client).toContain("e.target.closest('.sls-dd')");
