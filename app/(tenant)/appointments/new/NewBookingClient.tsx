@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NewVisitSheet, type VisitMode, type VisitPurpose } from '../../components/NewVisitSheet';
 import type { QueueEntry } from '../../lib/home-types';
+import { billKeyOf, nextCustomerHref } from '../../lib/pay-token';
 import type { Appointment } from '../../lib/api-types';
 import { PayFlow } from './PayFlow';
 
@@ -102,11 +103,11 @@ export function NewBookingClient({
    * found on the owner's first payment after the release). The address does not change on a refresh; Next customer
    * drops it on purpose, and that is the fresh bill.
    */
-  const billKey = searchParams.get('token') ?? searchParams.get('visit') ?? 'walk-in';
+  const billKey = billKeyOf(searchParams);
   const another = () => {
     setRun((n) => n + 1);
     // `tokenGone` too: the refresh after a payment has already dropped `token`, but the address still names it.
-    if (token || tokenGone) router.replace(`/appointments/new?purpose=payment${full ? '&full=1' : ''}`);
+    if (token || tokenGone) router.replace(nextCustomerHref({ full, from: backTo ? 'bookings' : undefined }));
   };
 
   if (quick && !settlingBooking && layout === 'unknown') return <div className="pf" aria-busy="true" />;

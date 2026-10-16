@@ -55,3 +55,27 @@ export function fixVisitHref(appointmentId: string, day?: string | null): string
   }
   return `/appointments?${q.toString()}`;
 }
+
+/**
+ * What the till's bill is FOR, read from the address, never from what the server found there.
+ *
+ * Paying calls `router.refresh()` and the token (or booking) just settled is no longer open, so the page's resolved
+ * `token` / `visit` come back undefined. A key built from them changed on that refresh and remounted the till over its
+ * own Paid screen (2026-10-16). The address does not change on a refresh. Moving to another bill does change it, and
+ * that remount is wanted: one bill's lines must never ride into another's.
+ */
+export function billKeyOf(params: { get(name: string): string | null }): string {
+  return params.get('token') ?? params.get('visit') ?? 'walk-in';
+}
+
+/**
+ * Where Next customer goes: the till with no bill named. Keeps what is about the SCREEN, not the bill — Bookings as the
+ * place Close returns to, and the one-page form where it was asked for — so the second customer is rung up where the
+ * first was.
+ */
+export function nextCustomerHref(keep: { from?: 'bookings'; full?: boolean } = {}): string {
+  const q = new URLSearchParams({ purpose: 'payment' });
+  if (keep.full) q.set('full', '1');
+  if (keep.from) q.set('from', keep.from);
+  return `/appointments/new?${q.toString()}`;
+}
