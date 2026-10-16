@@ -778,6 +778,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                     )}
                   </div>
                   <span className="hm-v3-kpi-vs">
+                    {selected?.name ? `${selected.name} · ` : ''}
                     {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}
                   </span>
                 </div>

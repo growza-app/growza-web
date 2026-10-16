@@ -3313,7 +3313,7 @@ button.hm-now-count {
   box-shadow: 0 4px 10px rgba(15, 106, 51, 0.28);
 }
 
-/* ---------- 2. Desktop v3 Command Center (≥1101px) ---------- */
+/* ---------- 2. Desktop v3 Command Center (≥861px) ---------- */
 .hm-desk-v3 {
   display: flex;
   flex-direction: column;
@@ -3325,12 +3325,21 @@ button.hm-now-count {
 .hm-desk-v3 .hm-avatar {
   border-radius: 50%;
 }
-@media (max-width: 1100px) {
+.hm-line-branches {
+  display: none !important;
+}
+@media (max-width: 860px) {
   .hm-desk-v3 {
     display: none;
   }
+  .hm-area-hero.has-carousel > .hm-hero {
+    display: flex;
+  }
+  .hm-area-hero.has-carousel > .bc {
+    display: none;
+  }
 }
-@media (min-width: 1101px) {
+@media (min-width: 861px) {
   .page-body.hm-fit {
     overflow-y: auto;
     gap: 18px;
@@ -3350,6 +3359,11 @@ button.hm-now-count {
   grid-template-columns: minmax(340px, 1.45fr) minmax(245px, 1.1fr) repeat(2, minmax(0, 0.92fr));
   gap: 18px;
   align-items: stretch;
+}
+@media (min-width: 861px) and (max-width: 1180px) {
+  .hm-v3-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .hm-v3-kpi {
   display: flex;
