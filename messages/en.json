@@ -247,6 +247,17 @@
     "whichBranch": "Which branch",
     "deskPick": "Pick a {noun} to see their story, or add a new one."
   },
+  "documents": {
+    "type": {
+      "tax_invoice": "tax invoice",
+      "bill_of_supply": "bill of supply",
+      "receipt": "receipt"
+    },
+    "make": "Make {title}",
+    "making": "Making…",
+    "view": "View {title}",
+    "couldNotMake": "That could not be made. Try again."
+  },
   "freeTimes": {
     "title": "Free times",
     "subtitle": "Times clients can book right now. Already-booked times and breaks are removed automatically.",

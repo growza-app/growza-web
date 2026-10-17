@@ -680,6 +680,15 @@ export const api = {
   removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
   uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
   removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
+  /** Jira GRW-582 — what the document for this bill would be. Asked before the button is offered, never after. */
+  documentPreview: (visitKey: string) =>
+    get<{ docType: 'tax_invoice' | 'bill_of_supply' | 'receipt'; showsTax: boolean; issued: { id: string; number: string } | null }>(
+      `/api/v1/bills/${visitKey}/document/preview`,
+    ),
+  /** Idempotent per bill: a second call answers with the document already issued. */
+  issueDocument: (visitKey: string) =>
+    post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, {}),
+
   /** Jira GRW-582 — Settings › GST. One Save; the API decides what belongs to the business and what to the branch. */
   updateGstSettings: (
     body: {

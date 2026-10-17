@@ -280,6 +280,14 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/availability': ['POST /api/v1/holds', 'POST /api/v1/appointments'],
   // The Clients screen's "Add client" (the desk's Home links to it with ?add=1).
   '/customers': ['POST /api/v1/customers'],
+  /*
+   * Jira GRW-582 — the customer's receipt or GST invoice, offered on the Done screen at the end of taking a
+   * payment. Classified by its SCREEN rather than as a control of its own: whoever may settle the bill may hand
+   * over the document for it, which is the same gate `visit.recordPayment` already applies to the screen it sits
+   * on. (It belongs in that action in shared too; the pin here is what this repo can check today, since the
+   * installed @growza-app/shared is behind the API's source.)
+   */
+  '/appointments/new': ['POST /api/v1/bills/:visitKey/document'],
 };
 
 /** Every signed-in person's own: the session says whose, and no role can widen it. */
