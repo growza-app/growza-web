@@ -120,9 +120,9 @@
 .prd-stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
-  padding: var(--sp-3);
+  padding: 6px var(--sp-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -136,9 +136,9 @@
 }
 
 .prd-stat-n {
-  font-size: 1.25rem;
+  font-size: 1.0625rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
