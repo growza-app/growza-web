@@ -418,7 +418,8 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(css).toContain('border: 1px solid var(--border)');
     expect(css).toContain('overflow-y: auto;');
     expect(css).toContain('position: sticky;');
-    expect(css).toContain('flex: 0 1 auto;');
+    expect(css).toContain('flex-shrink: 0;');
+    expect(css).not.toContain('flex: 0 1 auto;');
     expect(css).not.toContain('var(--line)');
     expect(css).not.toContain('var(--card)');
     expect(client).toContain('sls-clear-filters-btn');

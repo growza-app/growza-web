@@ -11,6 +11,10 @@
   gap: var(--sp-3);
 }
 
+.sls-page > * {
+  flex-shrink: 0;
+}
+
 .sls-error {
   display: flex;
   align-items: center;
@@ -1173,8 +1177,7 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow-x: auto;
-  overflow-y: auto;
-  flex: 0 1 auto;
+  flex-shrink: 0;
 }
 
 @media (min-width: 861px) {
