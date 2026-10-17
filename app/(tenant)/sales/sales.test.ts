@@ -474,12 +474,29 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(daily.buckets.reduce((s, b) => s + b.productsMinor, 0)).toBe(kpis.productsRevenueMinor);
     expect(daily.peakIndex).toBe(2);
 
-    // 3. Long range (> 31 days) -> monthly mode
-    const monthly = buildSalesChart(rows, '2026-08-01', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
+    // 3. 32..92 days (up to 3 months) -> weekly mode (7-day chunks bounded to [From, To])
+    const weekly = buildSalesChart(rows, '2026-08-01', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
+    expect(weekly.mode).toBe('weekly');
+    expect(weekly.rangeLabel).toBe('1 Aug – 17 Oct');
+    expect(weekly.buckets).toHaveLength(12);
+    expect(weekly.buckets[0]?.key).toBe('2026-08-01..2026-08-07');
+    expect(weekly.buckets[11]?.key).toBe('2026-10-17..2026-10-17');
+    expect(weekly.buckets.reduce((s, b) => s + b.totalMinor, 0)).toBe(220000);
+
+    // 4. 93..730 days (> 3 months up to 2 years, e.g. 1 year) -> monthly mode
+    const monthly = buildSalesChart(rows, '2025-11-01', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
     expect(monthly.mode).toBe('monthly');
-    expect(monthly.rangeLabel).toBe('1 Aug – 17 Oct');
-    expect(monthly.buckets.map((b) => b.key)).toEqual(['2026-08', '2026-09', '2026-10']);
-    expect(monthly.buckets[2]?.totalMinor).toBe(220000);
+    expect(monthly.rangeLabel).toBe("1 Nov '25 – 17 Oct '26");
+    expect(monthly.buckets).toHaveLength(12);
+    expect(monthly.buckets[0]?.key).toBe('2025-11');
+    expect(monthly.buckets[11]?.key).toBe('2026-10');
+    expect(monthly.buckets[11]?.totalMinor).toBe(220000);
+
+    // 5. > 730 days (> 2 years) -> yearly mode
+    const yearly = buildSalesChart(rows, '2023-01-01', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
+    expect(yearly.mode).toBe('yearly');
+    expect(yearly.buckets.map((b) => b.key)).toEqual(['2023', '2024', '2025', '2026']);
+    expect(yearly.buckets[3]?.totalMinor).toBe(220000);
 
     // Source pins for collapsible chart card, From/To fetch sync, and toolbarRows KPI sync
     const client = here('./SalesClient.tsx');

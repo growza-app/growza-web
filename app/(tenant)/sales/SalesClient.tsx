@@ -447,7 +447,7 @@ export interface SalesChartBucket {
 }
 
 export interface SalesChartData {
-  mode: 'daily' | 'monthly';
+  mode: 'daily' | 'weekly' | 'monthly' | 'yearly';
   rangeLabel: string;
   buckets: SalesChartBucket[];
   maxTotalMinor: number;
@@ -457,7 +457,9 @@ export interface SalesChartData {
 /**
  * Builds date-ordered stacked revenue buckets (Services + Products) synced with `[fromISO, toISO]`:
  * - `1..31` days (including `fromISO === toISO`): daily date buckets (`YYYY-MM-DD`)
- * - `> 31` days: monthly buckets (`YYYY-MM`) bounded to `[fromISO, toISO]`
+ * - `32..92` days (up to ~3 months): weekly 7-day buckets bounded to `[fromISO, toISO]`
+ * - `93..730` days (> 3 months up to 2 years, including 1 year): monthly buckets (`YYYY-MM`)
+ * - `> 730` days (> 2 years): yearly buckets (`YYYY`)
  */
 export function buildSalesChart(
   rows: readonly SaleRow[],
@@ -469,9 +471,15 @@ export function buildSalesChart(
 ): SalesChartData {
   const start = fromISO || '0000-01-01';
   const end = toISO && toISO >= start ? toISO : start;
+  const crossYear = start.slice(0, 4) !== end.slice(0, 4);
   const startShort = formatDateShort(new Date(`${start}T12:00:00Z`), 'UTC', locale);
   const endShort = formatDateShort(new Date(`${end}T12:00:00Z`), 'UTC', locale);
-  const rangeLabel = start === end ? startShort : `${startShort} – ${endShort}`;
+  const rangeLabel =
+    start === end
+      ? startShort
+      : crossYear
+        ? `${startShort} '${start.slice(2, 4)} – ${endShort} '${end.slice(2, 4)}`
+        : `${startShort} – ${endShort}`;
 
   const finalize = (mode: SalesChartData['mode'], buckets: SalesChartBucket[]): SalesChartData => {
     let maxTotalMinor = 0;
@@ -526,47 +534,130 @@ export function buildSalesChart(
     return finalize('daily', buckets);
   }
 
-  const byMonth = new Map<string, { srv: number; prd: number; count: number }>();
+  if (dayCount <= 92) {
+    const weekCount = Math.ceil(dayCount / 7);
+    const weekTotals = Array.from({ length: weekCount }, () => ({ srv: 0, prd: 0, count: 0 }));
+    for (const r of rows) {
+      if (r.dayISO < start || r.dayISO > end) continue;
+      if (filter === 'products' && r.products.length === 0) continue;
+      if (filter === 'services' && r.serviceNames.length === 0) continue;
+      const rowMs = Date.parse(`${r.dayISO}T00:00:00Z`);
+      if (!Number.isFinite(rowMs)) continue;
+      const offsetDays = Math.max(0, Math.floor((rowMs - startMs) / 86_400_000));
+      const idx = Math.min(weekCount - 1, Math.floor(offsetDays / 7));
+      const cur = weekTotals[idx]!;
+      if (filter !== 'products') cur.srv += r.servicesMinor;
+      if (filter !== 'services') cur.prd += r.productsMinor;
+      cur.count += 1;
+    }
+
+    const buckets: SalesChartBucket[] = [];
+    for (let w = 0; w < weekCount; w++) {
+      const wStartMs = startMs + w * 7 * 86_400_000;
+      const wEndMs = Math.min(endMs, wStartMs + 6 * 86_400_000);
+      const wStartISO = new Date(wStartMs).toISOString().slice(0, 10);
+      const wEndISO = new Date(wEndMs).toISOString().slice(0, 10);
+      const wStartShort = formatDateShort(new Date(`${wStartISO}T12:00:00Z`), 'UTC', locale);
+      const wEndShort = formatDateShort(new Date(`${wEndISO}T12:00:00Z`), 'UTC', locale);
+      const sameMonth = wStartISO.slice(0, 7) === wEndISO.slice(0, 7);
+      const startDayNum = String(Number(wStartISO.slice(8, 10)));
+      const label =
+        wStartISO === wEndISO
+          ? wStartShort
+          : sameMonth
+            ? `${startDayNum}–${wEndShort}`
+            : `${wStartShort}–${wEndShort}`;
+      const fullLabel = wStartISO === wEndISO ? wStartShort : `${wStartShort} – ${wEndShort}`;
+      const cur = weekTotals[w]!;
+      buckets.push({
+        key: `${wStartISO}..${wEndISO}`,
+        label,
+        fullLabel,
+        servicesMinor: cur.srv,
+        productsMinor: cur.prd,
+        totalMinor: cur.srv + cur.prd,
+        billsCount: cur.count,
+      });
+    }
+    return finalize('weekly', buckets);
+  }
+
+  if (dayCount <= 730) {
+    const byMonth = new Map<string, { srv: number; prd: number; count: number }>();
+    for (const r of rows) {
+      if (r.dayISO < start || r.dayISO > end) continue;
+      if (filter === 'products' && r.products.length === 0) continue;
+      if (filter === 'services' && r.serviceNames.length === 0) continue;
+      const ym = r.dayISO.slice(0, 7);
+      const cur = byMonth.get(ym) ?? { srv: 0, prd: 0, count: 0 };
+      if (filter !== 'products') cur.srv += r.servicesMinor;
+      if (filter !== 'services') cur.prd += r.productsMinor;
+      cur.count += 1;
+      byMonth.set(ym, cur);
+    }
+
+    const monthFmt = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
+      month: 'short',
+      year: '2-digit',
+      timeZone: 'UTC',
+    });
+    const [sy = 2026, sm = 1] = start.slice(0, 7).split('-').map(Number);
+    const [ey = 2026, em = 1] = end.slice(0, 7).split('-').map(Number);
+    const totalMonths = Math.min(24, Math.max(1, (ey - sy) * 12 + (em - sm) + 1));
+
+    const buckets: SalesChartBucket[] = [];
+    for (let i = 0; i < totalMonths; i++) {
+      const d = new Date(Date.UTC(sy, sm - 1 + i, 15));
+      const ym = d.toISOString().slice(0, 7);
+      const cur = byMonth.get(ym);
+      const servicesMinor = cur?.srv ?? 0;
+      const productsMinor = cur?.prd ?? 0;
+      const label = monthFmt.format(d);
+      buckets.push({
+        key: ym,
+        label,
+        fullLabel: label,
+        servicesMinor,
+        productsMinor,
+        totalMinor: servicesMinor + productsMinor,
+        billsCount: cur?.count ?? 0,
+      });
+    }
+    return finalize('monthly', buckets);
+  }
+
+  const byYear = new Map<string, { srv: number; prd: number; count: number }>();
   for (const r of rows) {
     if (r.dayISO < start || r.dayISO > end) continue;
     if (filter === 'products' && r.products.length === 0) continue;
     if (filter === 'services' && r.serviceNames.length === 0) continue;
-    const ym = r.dayISO.slice(0, 7);
-    const cur = byMonth.get(ym) ?? { srv: 0, prd: 0, count: 0 };
+    const yr = r.dayISO.slice(0, 4);
+    const cur = byYear.get(yr) ?? { srv: 0, prd: 0, count: 0 };
     if (filter !== 'products') cur.srv += r.servicesMinor;
     if (filter !== 'services') cur.prd += r.productsMinor;
     cur.count += 1;
-    byMonth.set(ym, cur);
+    byYear.set(yr, cur);
   }
 
-  const monthFmt = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
-    month: 'short',
-    year: '2-digit',
-    timeZone: 'UTC',
-  });
-  const [sy = 2026, sm = 1] = start.slice(0, 7).split('-').map(Number);
-  const [ey = 2026, em = 1] = end.slice(0, 7).split('-').map(Number);
-  const totalMonths = Math.min(60, Math.max(1, (ey - sy) * 12 + (em - sm) + 1));
-
+  const sy = Number(start.slice(0, 4)) || 2026;
+  const ey = Math.max(sy, Number(end.slice(0, 4)) || sy);
   const buckets: SalesChartBucket[] = [];
-  for (let i = 0; i < totalMonths; i++) {
-    const d = new Date(Date.UTC(sy, sm - 1 + i, 15));
-    const ym = d.toISOString().slice(0, 7);
-    const cur = byMonth.get(ym);
+  for (let yr = sy; yr <= ey; yr++) {
+    const key = String(yr);
+    const cur = byYear.get(key);
     const servicesMinor = cur?.srv ?? 0;
     const productsMinor = cur?.prd ?? 0;
-    const label = monthFmt.format(d);
     buckets.push({
-      key: ym,
-      label,
-      fullLabel: label,
+      key,
+      label: key,
+      fullLabel: key,
       servicesMinor,
       productsMinor,
       totalMinor: servicesMinor + productsMinor,
       billsCount: cur?.count ?? 0,
     });
   }
-  return finalize('monthly', buckets);
+  return finalize('yearly', buckets);
 }
 
 export function SalesClient({

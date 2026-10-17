@@ -3240,7 +3240,9 @@
       "title": "Sales trend",
       "hourly": "By hour",
       "daily": "By day",
+      "weekly": "By week",
       "monthly": "By month",
+      "yearly": "By year",
       "show": "Show chart",
       "hide": "Hide chart",
       "peak": "Peak"
