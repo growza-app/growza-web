@@ -1005,3 +1005,169 @@
   width: 0.875rem;
   height: 0.875rem;
 }
+
+/* ---------- 0123 — Stock take: count a branch's shelf in one pass ---------- */
+.prd-st-page {
+  max-width: 56rem;
+}
+
+.prd-st-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.prd-st-bar-top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.prd-st-bar-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.prd-st-note-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.prd-st-note-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.prd-st-summary {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prd-st-summary-diff {
+  color: var(--accent-deep);
+}
+
+.prd-st-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.prd-st-row {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  column-gap: var(--sp-3);
+  align-items: center;
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.prd-st-row-diff {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.prd-st-row-invalid {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+
+.prd-st-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prd-st-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.prd-st-code {
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-st-field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.prd-st-field-l {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.prd-st-input {
+  width: 5rem;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 860px) {
+  /* Text-only header actions (Sell product, Stock take, Cancel, Save stock take) carry no icon, so they keep their words and wrap cleanly on a 344px phone. */
+  .topbar .btn:not(:has(svg)) {
+    font-size: 0.875rem;
+    padding: 0 var(--sp-3);
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .prd-st-field-l {
+    display: none;
+  }
+}
+
+@media (min-width: 861px) {
+  .prd-st-bar-top {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .prd-st-search {
+    flex: 1;
+    max-width: 22rem;
+  }
+}
+

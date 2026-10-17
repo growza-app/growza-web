@@ -108,6 +108,7 @@ import type {
   ProductInput,
   ProductSales,
   StockMovement,
+  StockTakeResult,
   MovementKind,
   ManualMovementKind,
 } from './api-types';
@@ -483,6 +484,10 @@ export const api = {
   /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
   transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
     post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-574 (0123) — the branch's shelf for a stock take pass, and saving the pass in one transaction. */
+  stockTakeProducts: (location: string) => get<Product[]>(`/api/v1/products/stock-take?location=${encodeURIComponent(location)}`),
+  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; note?: string }) =>
+    post<StockTakeResult>('/api/v1/products/stock-take', { ...body, locationId: location }),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the
