@@ -487,6 +487,26 @@ export function PayFlow({
   // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
   const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg && !l.product).length;
   const productCountOf = (productId: string) => lines.filter((l) => l.product?.id === productId).length;
+  // Hooks stay above every early return below (done, qr, how): a sale that ends on one of them must not change the hook count.
+  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
+  const phoneProducts = useMemo(() => {
+    if (!productsOnly) return [];
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
+    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
+    const drawn = new Set(shown.map((p) => p.id));
+    const byId = new Map(products.map((p) => [p.id, p]));
+    for (const l of lines) {
+      if (!l.product || drawn.has(l.product.id)) continue;
+      const p = byId.get(l.product.id);
+      if (!p) continue;
+      shown.push(p);
+      drawn.add(p.id);
+    }
+    return shown;
+  }, [productsOnly, products, productCategory, lines]);
   /** Jira GRW-576 — a walk-in can buy a product alone; settling a booking or token still needs a service. */
   const hasService = (visit || token) ? lines.some((l) => !l.product) : lines.length > 0;
   const full = lines.length >= MAX_LINES;
@@ -1169,26 +1189,6 @@ export function PayFlow({
         </div>
       </div>
     ) : null;
-
-  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
-  const phoneProducts = useMemo(() => {
-    if (!productsOnly) return [];
-    const byCat = productCategory
-      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
-      : products;
-    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
-    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
-    const drawn = new Set(shown.map((p) => p.id));
-    const byId = new Map(products.map((p) => [p.id, p]));
-    for (const l of lines) {
-      if (!l.product || drawn.has(l.product.id)) continue;
-      const p = byId.get(l.product.id);
-      if (!p) continue;
-      shown.push(p);
-      drawn.add(p.id);
-    }
-    return shown;
-  }, [productsOnly, products, productCategory, lines]);
 
   /* ---------- ① on a wide desk (Jira GRW-572): who · what · the bill, side by side ---------- */
   if (wide) {
