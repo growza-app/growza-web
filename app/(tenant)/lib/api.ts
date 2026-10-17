@@ -691,6 +691,8 @@ export const api = {
       businessName: string;
       customerName: string;
       customerPhone: string | null;
+      /** False when the server has no PDF renderer, so the screen does not offer a Download that cannot work. */
+      pdfAvailable?: boolean;
     }>(`/api/v1/documents/${id}`),
 
   /** Jira GRW-582 — what the document for this bill would be. Asked before the button is offered, never after. */

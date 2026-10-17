@@ -69,9 +69,42 @@ describe('where it is offered', () => {
     expect(lastHook).toBeLessThan(firstReturn);
   });
 
+  it.each([
+    ['the Done screen', action],
+    ['the document screen', viewer],
+  ])('%s: a double tap cannot make two links (the guard is a ref, because state is stale until the next render)', (_where, src) => {
+    expect(src).toMatch(/const sharingNow = useRef\(false\)/);
+    expect(src).toMatch(/if \(.*sharingNow\.current\) return/);
+    expect(src).toMatch(/sharingNow\.current = true;\s*setSharing\(true\)/);
+    // And it is let go again whichever way the share ended.
+    expect(src).toMatch(/finally \{\s*sharingNow\.current = false;/);
+  });
+
   it('on the document screen, but never for a cancelled document', () => {
     expect(viewer).toContain("status === 'issued'");
     expect(viewer).toContain('sendDocumentOnWhatsApp');
+  });
+});
+
+describe('Download PDF', () => {
+  it('is offered only when the server says it can make one, so it is never a button that can only fail', () => {
+    expect(viewer).toMatch(/\{pdfAvailable \? \(\s*<button[^>]*onClick=\{\(\) => void download\(\)\}/);
+    const page = readFileSync(resolve(__dirname, '[id]/page.tsx'), 'utf8');
+    // Strictly true: an older API that does not send the field must read as "no", not as "yes".
+    expect(page).toContain('pdfAvailable={doc.pdfAvailable === true}');
+  });
+});
+
+describe('the sentences the server can answer with', () => {
+  const messages = readFileSync(resolve(__dirname, '../lib/api-messages.ts'), 'utf8');
+  it.each([
+    'That bill was not found',
+    'There is nothing on this bill to put on a document',
+    'Add the client to this bill first',
+    'This bill has not been paid yet. Take payment first, then make the document.',
+    'This document was cancelled, so it cannot be sent',
+  ])('has Hindi for %s', (sentence) => {
+    expect(messages).toContain(`'${sentence}'`);
   });
 });
 

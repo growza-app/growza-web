@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ApiError } from '../../lib/api';
 import { sendDocumentOnWhatsApp } from '../../lib/share-document';
 
@@ -31,6 +31,7 @@ export function DocumentViewer({
   phone,
   amount,
   shareText,
+  pdfAvailable,
 }: {
   id: string;
   number: string;
@@ -40,15 +41,23 @@ export function DocumentViewer({
   phone: string | null;
   amount: string;
   shareText: string;
+  /** Whether the server can make a PDF at all. When it cannot, Print is the way to a file and Download stays away. */
+  pdfAvailable: boolean;
 }) {
   const t = useTranslations('documents');
   const [note, setNote] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  /**
+   * The guard is a ref, not the `sharing` state. State is read from the render a tap happened in, so two taps before
+   * the next render both see `false` — and each opens a window and makes a link.
+   */
+  const sharingNow = useRef(false);
   const href = `/api/v1/documents/${id}/html`;
 
   /** A link the customer opens with no account; valid a week, then the business sends a new one. */
   const share = async () => {
-    if (sharing) return;
+    if (sharingNow.current) return;
+    sharingNow.current = true;
     setSharing(true);
     setNote(null);
     try {
@@ -60,6 +69,7 @@ export function DocumentViewer({
     } catch (e) {
       setNote(e instanceof ApiError && e.status < 500 ? e.message : t('couldNotMake'));
     } finally {
+      sharingNow.current = false;
       setSharing(false);
     }
   };
@@ -129,9 +139,11 @@ export function DocumentViewer({
         <button type="button" className="btn btn-ghost" onClick={print}>
           {t('print')}
         </button>
-        <button type="button" className="btn btn-ghost" onClick={() => void download()}>
-          {t('download')}
-        </button>
+        {pdfAvailable ? (
+          <button type="button" className="btn btn-ghost" onClick={() => void download()}>
+            {t('download')}
+          </button>
+        ) : null}
         {status === 'issued' ? (
           <button type="button" className="btn btn-ghost" disabled={sharing} onClick={() => void share()}>
             {sharing ? t('sharing') : t('share')}

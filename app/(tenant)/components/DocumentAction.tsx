@@ -49,6 +49,8 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
   const [sharing, setSharing] = useState(false);
   /** One issue at a time, however fast the button is tapped. */
   const issuing = useRef(false);
+  /** One link at a time, for the same reason: the `sharing` state is stale until the next render. */
+  const sharingNow = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,7 +90,8 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
   }, [issuedId]);
 
   const send = async () => {
-    if (!issued || !summary || sharing) return;
+    if (!issued || !summary || sharingNow.current) return;
+    sharingNow.current = true;
     setSharing(true);
     setError(null);
     const title = t(`type.${preview!.docType}`);
@@ -102,6 +105,7 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
     } catch (e) {
       setError(e instanceof ApiError && e.status < 500 ? e.message : t('couldNotMake'));
     } finally {
+      sharingNow.current = false;
       setSharing(false);
     }
   };

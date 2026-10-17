@@ -48,6 +48,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
           customerName={doc.customerName}
           amount={money(doc.grandTotalMinor)}
           phone={doc.customerPhone}
+          pdfAvailable={doc.pdfAvailable === true}
           /* What the customer reads in WhatsApp before they open anything: who, what, how much, and settled. */
           shareText={t('shareText', {
             business: doc.businessName,

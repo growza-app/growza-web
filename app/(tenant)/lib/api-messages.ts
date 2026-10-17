@@ -178,6 +178,14 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That client belongs to another branch. Search for them here, or add them as a client of this branch.': 'वह ग्राहक दूसरी ब्रांच का है। उन्हें यहाँ खोजें, या इस ब्रांच के ग्राहक के तौर पर जोड़ें।',
   'That category belongs to another branch': 'वह श्रेणी दूसरी ब्रांच की है',
   'Could not find a location in that link.': 'उस लिंक में कोई जगह नहीं मिली।',
+  // ---- receipts and GST invoices (Jira GRW-582)
+  'That bill was not found': 'वह बिल नहीं मिला',
+  'That document was not found': 'वह दस्तावेज़ नहीं मिला',
+  'There is nothing on this bill to put on a document': 'इस बिल में दस्तावेज़ पर डालने के लिए कुछ नहीं है',
+  'Add the client to this bill first': 'पहले इस बिल में ग्राहक जोड़ें',
+  'This bill has not been paid yet. Take payment first, then make the document.': 'इस बिल का भुगतान अभी नहीं हुआ है। पहले भुगतान लें, फिर दस्तावेज़ बनाएँ।',
+  'This document was cancelled, so it cannot be sent': 'यह दस्तावेज़ रद्द हो चुका है, इसलिए भेजा नहीं जा सकता',
+  'A PDF cannot be made on this server yet. Open the document and use Print to save it.': 'इस सर्वर पर अभी PDF नहीं बन सकता। दस्तावेज़ खोलें और प्रिंट से सेव करें।',
   // ---- team, invites and the session
   'That number is already on this team.': 'यह नंबर पहले से इस टीम में है।',
   'This business cannot add people right now. Ask whoever invited you to contact Growza support.': 'यह बिज़नेस अभी लोग नहीं जोड़ सकता। जिसने आपको बुलाया है, उनसे Growza सपोर्ट से बात करने को कहें।',
