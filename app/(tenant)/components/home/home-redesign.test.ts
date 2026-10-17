@@ -60,8 +60,6 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).toContain('className="hm-v3-kpis"');
     expect(owner).toContain('className="hm-v3-kpi hm-v3-kpi-dark"');
     expect(owner).toContain('className="hm-v3-mid"');
-    expect(owner).toContain('className={`hm-v3-card hm-v3-attention-card');
-    expect(owner).toContain('<AttentionList items={attention} />');
     expect(owner).not.toContain('className="hm-v3-table"');
     expect(bookingsList).toContain('className="hm-v3-table bk-table"');
     expect(owner).toContain('className="hm-v3-card hm-v3-payment-card"');
@@ -73,7 +71,6 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).toContain('className="hm-v3-bot"');
     expect(owner).toContain('className="hm-v3-bars"');
     expect(owner).toContain('className="hm-v3-srv-rows"');
-    expect(owner).toContain('className="hm-v3-feed-rows"');
     expect(owner).toContain('filterSalesByDateRange(allSaleRows, periodStartISO, todayISO, branch)');
     expect(homeCss).toMatch(/\.hm-v3-kpis\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-mid\s*\{/);
