@@ -81,6 +81,21 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That product is sold at another branch': 'वह सामान दूसरी ब्रांच में बिकता है',
   'A product by that name is already on the shelf': 'इस नाम का सामान शेल्फ़ पर पहले से है',
   'This plan does not sell products over the counter.': 'इस प्लान में काउंटर पर सामान बेचना शामिल नहीं है।',
+  'The sales register is not open to your role': 'बिक्री का रजिस्टर आपकी भूमिका के लिए खुला नहीं है',
+  'There is not enough stock at this branch to move that many': 'इस ब्रांच में इतना स्टॉक नहीं है कि इतना भेजा जा सके',
+  // QA, 2026-10-17 — what the product routes answer with a 400 or 404.
+  'Product not found': 'सामान नहीं मिला',
+  'Category not found': 'श्रेणी नहीं मिली',
+  'No such category at this branch': 'इस ब्रांच में ऐसी कोई श्रेणी नहीं है',
+  'Send the branch’s categories in the order you want them': 'ब्रांच की श्रेणियाँ उसी क्रम में भेजें जिसमें आप उन्हें चाहते हैं',
+  'That is not this branch’s list of categories': 'यह इस ब्रांच की श्रेणियों की सूची नहीं है',
+  // Release review, 2026-10-17 — sentences the product, transfer and till routes can send.
+  'Choose a branch': 'एक ब्रांच चुनें',
+  'A count goes with a recount only': 'गिनती सिर्फ़ दोबारा गिनने के साथ दी जा सकती है',
+  'That amount is too large': 'यह रकम बहुत बड़ी है',
+  'Description must be text': 'विवरण लिखा हुआ होना चाहिए',
+  'Description must be 200 characters or fewer': 'विवरण ज़्यादा से ज़्यादा 200 अक्षर का हो सकता है',
+  'Name the package on the request or on its lines, not both': 'पैकेज का नाम पूरे बिल पर लिखें या उसकी लाइनों पर, दोनों पर नहीं',
   // Jira GRW-574 — a product's SKU, barcode (0119), GST rate and HSN (0120).
   'Another product at this branch has that SKU': 'इस ब्रांच में किसी दूसरे सामान का यही SKU है',
   'Another product at this branch has that barcode': 'इस ब्रांच में किसी दूसरे सामान का यही बारकोड है',

@@ -82,7 +82,7 @@ export function ProductSheet({
     if (pending) onSaved(pending);
     onClose();
   };
-  useDialog(sheetRef, { onClose: busy || inline ? undefined : close });
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : close, active: !inline });
 
   // One object URL per picked file, released when the file changes or the sheet closes (not one per render).
   const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);

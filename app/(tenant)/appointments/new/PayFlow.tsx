@@ -61,6 +61,8 @@ interface Sale {
   summary: string;
   /** The visit's own day in the salon's zone — what "Fix a mistake" needs to find it in the list. */
   day: string;
+  /** Only products were sold: the id is a sale's, not a booking's, so there is nothing in Bookings to open. */
+  productOnly: boolean;
 }
 
 /**
@@ -485,6 +487,26 @@ export function PayFlow({
   // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
   const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg && !l.product).length;
   const productCountOf = (productId: string) => lines.filter((l) => l.product?.id === productId).length;
+  // Hooks stay above every early return below (done, qr, how): a sale that ends on one of them must not change the hook count.
+  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
+  const phoneProducts = useMemo(() => {
+    if (!productsOnly) return [];
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
+    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
+    const drawn = new Set(shown.map((p) => p.id));
+    const byId = new Map(products.map((p) => [p.id, p]));
+    for (const l of lines) {
+      if (!l.product || drawn.has(l.product.id)) continue;
+      const p = byId.get(l.product.id);
+      if (!p) continue;
+      shown.push(p);
+      drawn.add(p.id);
+    }
+    return shown;
+  }, [productsOnly, products, productCategory, lines]);
   /** Jira GRW-576 — a walk-in can buy a product alone; settling a booking or token still needs a service. */
   const hasService = (visit || token) ? lines.some((l) => !l.product) : lines.length > 0;
   const full = lines.length >= MAX_LINES;
@@ -786,6 +808,7 @@ export function PayFlow({
         phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
         summary: [tokenNo !== null ? nv.token(tokenNo) : null, paidBy, names, stylist].filter(Boolean).join(' · '),
         day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
+        productOnly: !lines.some((l) => !l.product),
       });
       clearSplit();
       setStep('done');
@@ -889,33 +912,13 @@ export function PayFlow({
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
 
-  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
-  const phoneProducts = useMemo(() => {
-    if (!productsOnly) return [];
-    const byCat = productCategory
-      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
-      : products;
-    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
-    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
-    const drawn = new Set(shown.map((p) => p.id));
-    const byId = new Map(products.map((p) => [p.id, p]));
-    for (const l of lines) {
-      if (!l.product || drawn.has(l.product.id)) continue;
-      const p = byId.get(l.product.id);
-      if (!p) continue;
-      shown.push(p);
-      drawn.add(p.id);
-    }
-    return shown;
-  }, [productsOnly, products, productCategory, lines]);
-
   /* ---------- ③ Done ---------- */
   // The same screen the one-page form ends on (owner, 2026-10-10): `PaymentDone`, sound, Next customer and all.
   if (step === 'done' && sale) {
     return (
       <PaymentDone
         appointmentId={sale.appointmentId}
-        fixHref={fixVisitHref(sale.appointmentId, sale.day)}
+        fixHref={sale.productOnly ? null : fixVisitHref(sale.appointmentId, sale.day)}
         totalMinor={sale.totalMinor}
         mode={sale.mode}
         modeLabel={sale.paidBy}

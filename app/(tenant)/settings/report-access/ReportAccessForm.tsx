@@ -38,6 +38,8 @@ const TABS = [
   { key: 'staff', money: false },
   { key: 'bookings', money: false },
   { key: 'services', money: false },
+  // Not a Reports tab: the Sales register, bill by bill. Opened to a receptionist here, and shut until then.
+  { key: 'sales', money: true },
 ] as const;
 
 export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
