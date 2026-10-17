@@ -3212,7 +3212,7 @@
       "vsPrevDays": "पिछले {n, plural, one {दिन} other {# दिनों}} से {pct}%"
     },
     "cols": {
-      "when": "कब",
+      "when": "तारीख",
       "client": "ग्राहक",
       "phone": "फ़ोन",
       "services": "सेवाएँ",
