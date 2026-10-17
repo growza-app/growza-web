@@ -174,6 +174,15 @@ export function ProductCategoriesDropdown({
   const wrapRef = useRef<HTMLDivElement>(null);
   const addRef = useRef<HTMLInputElement>(null);
 
+  const closeMenu = () => {
+    setOpen(false);
+    setQuery('');
+    setEditing(false);
+    setAddOpen(false);
+    setAdding('');
+    setError(null);
+  };
+
   useEffect(() => {
     if (addOpen) addRef.current?.focus();
   }, [addOpen]);
@@ -182,11 +191,18 @@ export function ProductCategoriesDropdown({
     if (!open) return;
     const onDown = (e: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeMenu();
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      if (addOpen) {
+        setAddOpen(false);
+        setAdding('');
+        setError(null);
+        return;
+      }
+      closeMenu();
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -194,7 +210,7 @@ export function ProductCategoriesDropdown({
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, addOpen]);
 
   const add = async () => {
     const name = adding.trim();
@@ -214,7 +230,7 @@ export function ProductCategoriesDropdown({
 
   const q = query.trim().toLowerCase();
   const shownCats = q ? categories.filter((c) => c.name.toLowerCase().includes(q)) : categories;
-  const showNone = noneCount > 0 && (!q || t('none').toLowerCase().includes(q));
+  const showNone = (noneCount > 0 || selected.includes(NO_CATEGORY)) && (!q || t('none').toLowerCase().includes(q));
 
   return (
     <div className="sls-dd prd-cat-dd" ref={wrapRef}>
@@ -222,7 +238,7 @@ export function ProductCategoriesDropdown({
         type="button"
         className={`sls-dd-btn ${selected.length > 0 ? 'is-active' : ''}`}
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? closeMenu() : setOpen(true))}
       >
         <span>
           {t('title')}
@@ -282,7 +298,10 @@ export function ProductCategoriesDropdown({
                           type="button"
                           className="prd-cat-del"
                           aria-label={t('deleteNamed', { name: c.name })}
-                          onClick={() => onDelete(c)}
+                          onClick={() => {
+                            closeMenu();
+                            onDelete(c);
+                          }}
                         >
                           ×
                         </button>
@@ -321,6 +340,7 @@ export function ProductCategoriesDropdown({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') void add();
                       if (e.key === 'Escape') {
+                        e.stopPropagation();
                         setAddOpen(false);
                         setAdding('');
                         setError(null);

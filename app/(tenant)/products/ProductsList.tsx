@@ -609,10 +609,14 @@ export function ProductsList({ products, categories: initialCategories, branchId
             {strip}
             <div className="prd-tools">
               {searchBox}
-              <div className="prd-selects">
-                {categoriesDropdown}
-                {sortBox}
-              </div>
+              {categoriesDropdown ? (
+                <div className="prd-selects">
+                  {categoriesDropdown}
+                  {sortBox}
+                </div>
+              ) : (
+                sortBox
+              )}
               {chips}
             </div>
             {list}
