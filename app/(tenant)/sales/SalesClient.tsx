@@ -1817,8 +1817,18 @@ export function SalesClient({
                         <span key={tick.valueMinor} className="sls-chart-gridline" />
                       ))}
                     </div>
-                    <div className="sls-chart-bars" role="list" aria-label={t('chart.title')}>
+                    <div
+                      className={`sls-chart-bars ${chartData.buckets.length > 10 ? 'is-dense' : ''}`}
+                      role="list"
+                      aria-label={t('chart.title')}
+                    >
                       {chartData.buckets.map((b, idx) => {
+                        const n = chartData.buckets.length;
+                        const tickStep = Math.max(1, Math.ceil(n / 6));
+                        const showTick =
+                          n <= 10 ||
+                          idx === n - 1 ||
+                          (idx % tickStep === 0 && n - 1 - idx >= Math.ceil(tickStep / 2));
                         const pct =
                           b.totalMinor > 0
                             ? Math.max(6, Math.min(96, Math.round((b.totalMinor / chartData.yMaxMinor) * 100)))
@@ -1842,7 +1852,7 @@ export function SalesClient({
                                 </span>
                               ) : b.totalMinor > 0 ? (
                                 <span
-                                  className={`sls-chart-val ${chartData.buckets.length <= 10 ? 'is-always' : ''}`}
+                                  className={`sls-chart-val ${n <= 10 ? 'is-always' : ''}`}
                                   style={{ bottom: `calc(${pct}% + 4px)` }}
                                 >
                                   {formatMoney(String(b.totalMinor))}
@@ -1857,7 +1867,12 @@ export function SalesClient({
                                 ) : null}
                               </span>
                             </div>
-                            <span className="sls-chart-lbl">{b.label}</span>
+                            <span
+                              className={`sls-chart-lbl ${showTick ? '' : 'is-tick-hidden'}`}
+                              aria-hidden={!showTick || undefined}
+                            >
+                              {b.label}
+                            </span>
                           </div>
                         );
                       })}

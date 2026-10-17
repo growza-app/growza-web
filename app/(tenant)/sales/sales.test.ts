@@ -424,7 +424,10 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('sls-clear-filters-btn');
     expect(client).toContain('onClick={clearAllFilters}');
     expect(client).toContain("t('clearAllFilters')");
+    expect(client).toContain('is-tick-hidden');
     expect(css).toContain('.sls-clear-filters-btn');
+    expect(css).toContain('.sls-chart-bars.is-dense');
+    expect(css).toContain('.sls-chart-lbl.is-tick-hidden');
     expect(hbpCss).toMatch(/\.pf-head-stack \.hbp-line \{\s*display: inline-flex;/);
   });
 

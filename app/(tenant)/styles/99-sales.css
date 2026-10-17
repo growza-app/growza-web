@@ -788,12 +788,15 @@
   gap: 6px;
   height: 156px;
   padding-top: 22px;
-  overflow-x: auto;
+}
+
+.sls-chart-bars.is-dense {
+  gap: 3px;
 }
 
 .sls-chart-col {
   flex: 1 1 0;
-  min-width: 24px;
+  min-width: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -901,11 +904,30 @@
 }
 
 .sls-chart-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 14px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   white-space: nowrap;
   line-height: 1.1;
+}
+
+.sls-chart-col:first-child .sls-chart-lbl {
+  align-self: flex-start;
+}
+
+.sls-chart-col:last-child .sls-chart-lbl {
+  align-self: flex-end;
+}
+
+.sls-chart-lbl.is-tick-hidden {
+  visibility: hidden;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .sls-chart-col.is-peak .sls-chart-lbl {
