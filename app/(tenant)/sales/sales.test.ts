@@ -421,6 +421,10 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(css).toContain('flex: 0 1 auto;');
     expect(css).not.toContain('var(--line)');
     expect(css).not.toContain('var(--card)');
+    expect(client).toContain('sls-clear-filters-btn');
+    expect(client).toContain('onClick={clearAllFilters}');
+    expect(client).toContain("t('clearAllFilters')");
+    expect(css).toContain('.sls-clear-filters-btn');
     expect(hbpCss).toMatch(/\.pf-head-stack \.hbp-line \{\s*display: inline-flex;/);
   });
 

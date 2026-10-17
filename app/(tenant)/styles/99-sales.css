@@ -104,6 +104,36 @@
   color: var(--accent-deep);
 }
 
+.sls-clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sls-clear-filters-btn svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.sls-clear-filters-btn:hover,
+.sls-clear-filters-btn.is-active {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
 .sls-dd-menu {
   position: absolute;
   top: calc(100% + 6px);
