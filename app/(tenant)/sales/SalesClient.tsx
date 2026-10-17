@@ -18,6 +18,7 @@ import {
   IconCheck,
   IconChevronDown,
   IconChevronRight,
+  IconClose,
   IconDownload,
   IconPackages,
   IconProducts,
@@ -1129,6 +1130,54 @@ export function SalesClient({
     setPage(1);
   };
 
+  const hasActiveFilters =
+    (!branch.pinned && (selectedBranches.length > 0 || branchQuery.trim() !== '')) ||
+    selectedClients.length > 0 ||
+    selectedServices.length > 0 ||
+    selectedProducts.length > 0 ||
+    clientQuery.trim() !== '' ||
+    serviceQuery.trim() !== '' ||
+    productQuery.trim() !== '' ||
+    search.trim() !== '' ||
+    filter !== 'all' ||
+    fromDate !== sevenDaysAgoISO ||
+    toDate !== todayISO;
+
+  const clearAllFilters = () => {
+    setSelectedBranches([]);
+    setBranchQuery('');
+    setSelectedClients([]);
+    setClientQuery('');
+    setSelectedServices([]);
+    setServiceQuery('');
+    setSelectedProducts([]);
+    setProductQuery('');
+    setSearch('');
+    setFilter('all');
+    setOpenDropdown(null);
+    setPage(1);
+    if (fromDate !== sevenDaysAgoISO || toDate !== todayISO) {
+      setFromDate(sevenDaysAgoISO);
+      setToDate(todayISO);
+      const seq = ++fetchSeqRef.current;
+      api
+        .appointments(sevenDaysAgoISO, todayISO, undefined, undefined, { includeSales: true })
+        .then((rows) => {
+          if (fetchSeqRef.current !== seq) return;
+          setLoadedAppointments((prev) => {
+            const map = new Map(prev.map((a) => [a.id, a]));
+            for (const a of rows) map.set(a.id, a);
+            return [...map.values()];
+          });
+        })
+        .catch(() => {});
+    }
+    const params = new URLSearchParams();
+    params.set('date', sevenDaysAgoISO);
+    params.set('to', todayISO);
+    router.replace(`/sales?${params.toString()}`, { scroll: false });
+  };
+
   const branchMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const b of branch.branches) map.set(b.id, b.name);
@@ -1509,6 +1558,15 @@ export function SalesClient({
                 ) : null}
               </div>
             ) : null}
+
+            <button
+              type="button"
+              className={`sls-clear-filters-btn ${hasActiveFilters ? 'is-active' : ''}`}
+              onClick={clearAllFilters}
+            >
+              <IconClose />
+              <span>{t('clearAllFilters')}</span>
+            </button>
           </div>
         </div>
 

@@ -3197,6 +3197,7 @@
     "serviceSearchPlaceholder": "Search service…",
     "productSearchPlaceholder": "Search product…",
     "clearFilter": "Clear",
+    "clearAllFilters": "Clear filters",
     "noFilterMatches": "No matches",
     "searchPlaceholder": "Search client, phone, service or product…",
     "kpi": {
