@@ -2232,6 +2232,11 @@ button.hm-now-count {
   opacity: 0.6;
   cursor: progress;
 }
+.hm-pick .hm-row-button.is-selected button {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 
 @media (max-width: 1100px) {
   .hm-desk-grid {
