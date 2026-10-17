@@ -10,12 +10,13 @@ import { PageHeader } from '../components/PageHeader';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { useWritable } from '../components/SessionProvider';
+import { useSession, useWritable } from '../components/SessionProvider';
 import { IconPlus, IconSearch, IconSort } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
+import { StockTake } from './StockTake';
 import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from './DeskProductCategories';
 
 /**
@@ -120,7 +121,10 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const t = useTranslations('products');
   const tc = useTranslations('common');
   const router = useRouter();
+  const session = useSession();
   const writable = useWritable();
+  const canStockTake =
+    session?.role === null || session?.role === undefined || session?.role === 'owner' || session?.role === 'manager';
   const [rows, setRows] = useState(products);
   const [categories, setCategories] = useState(initialCategories);
   const [category, setCategory] = useState<string>(ALL_CATEGORIES);
@@ -131,6 +135,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [stockTakeOpen, setStockTakeOpen] = useState(false);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null);
   const [busy, setBusy] = useState(false);
@@ -232,6 +237,21 @@ export function ProductsList({ products, categories: initialCategories, branchId
     }
   };
 
+  const stockTakeSaved = (updated: Product[]) => {
+    setRows((prev) => {
+      const byId = new Map(updated.map((p) => [p.id, p]));
+      const seen = new Set(prev.map((x) => x.id));
+      const next = [...prev.map((x) => byId.get(x.id) ?? x), ...updated.filter((p) => !seen.has(p.id))];
+      return next.sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
+    });
+    setEditing((cur) => {
+      if (!cur || cur === 'new') return cur;
+      return updated.find((p) => p.id === cur.id) ?? cur;
+    });
+    setStockTakeOpen(false);
+    router.refresh();
+  };
+
   const header = (
     <PageHeader
       title={t('title')}
@@ -242,6 +262,18 @@ export function ProductsList({ products, categories: initialCategories, branchId
             <Link className="btn btn-ghost" href="/products/sell?from=products">
               {t('sell')}
             </Link>
+          ) : null}
+          {live.length > 0 && canStockTake ? (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                setEditing((cur) => (cur === 'new' ? null : cur));
+                setStockTakeOpen(true);
+              }}
+            >
+              {t('stockTake.open')}
+            </button>
           ) : null}
           <button type="button" className="btn" onClick={() => setEditing('new')}>
             <IconPlus /> {t('add')}
@@ -481,6 +513,19 @@ export function ProductsList({ products, categories: initialCategories, branchId
       ) : null}
     </>
   );
+
+  if (stockTakeOpen) {
+    return (
+      <StockTake
+        key={branchId}
+        branchId={branchId}
+        initialProducts={rows}
+        categories={categories}
+        onSaved={stockTakeSaved}
+        onCancel={() => setStockTakeOpen(false)}
+      />
+    );
+  }
 
   if (desk === null) {
     return (

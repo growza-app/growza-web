@@ -196,3 +196,56 @@ describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
   });
 });
 
+describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", () => {
+  const list = readFileSync(resolve(__dirname, '../products/ProductsList.tsx'), 'utf8');
+  const take = readFileSync(resolve(__dirname, '../products/StockTake.tsx'), 'utf8');
+  const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).products.stockTake;
+  const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json'), 'utf8')).products.stockTake;
+
+  it('parses integer counts within -100,000..1,000,000 and rejects blanks, decimals, or out-of-range values', async () => {
+    const { parseStockTakeCount } = await import('../products/StockTake');
+    expect(parseStockTakeCount(undefined, 7)).toBe(7);
+    expect(parseStockTakeCount(' 12 ', 7)).toBe(12);
+    expect(parseStockTakeCount('0', 7)).toBe(0);
+    expect(parseStockTakeCount('-3', 7)).toBe(-3);
+    expect(parseStockTakeCount('-0', 7)).toBe(0);
+    expect(Object.is(parseStockTakeCount('-0', 7), -0)).toBe(false);
+    expect(parseStockTakeCount('', 7)).toBeNull();
+    expect(parseStockTakeCount('3.5', 7)).toBeNull();
+    expect(parseStockTakeCount('abc', 7)).toBeNull();
+    expect(parseStockTakeCount('-100001', 7)).toBeNull();
+    expect(parseStockTakeCount('1000001', 7)).toBeNull();
+  });
+
+  it('offers Stock take in the Products header for owner/manager when live products exist, and posts once to /api/v1/products/stock-take', () => {
+    expect(list).toMatch(/live\.length > 0 && canStockTake \? \([\s\S]*setStockTakeOpen\(true\)/);
+    expect(list).toMatch(/<StockTake[\s\S]*branchId=\{branchId\}/);
+    expect(take).toMatch(/api\s*\.stockTakeProducts\(branchId\)/);
+    expect(take).toMatch(/await api\.saveStockTake\(branchId, \{/);
+    expect(take).toMatch(/matchItems\(pool\.map\(productMatchable\), q\)/);
+    expect(take).toMatch(/prd-st-row-diff/);
+  });
+
+  it('uses plain words ("Stock take", never "cycle count") and ships English and Hindi strings + API messages', async () => {
+    expect(en.open).toBe('Stock take');
+    expect(en.title).toBe('Stock take');
+    for (const k of ['open', 'title', 'subtitle', 'save', 'counted', 'countedAria', 'systemStock', 'notePlaceholder', 'allMatch', 'changedCount']) {
+      expect(en[k], k).toBeTruthy();
+      expect(hi[k], k).toBeTruthy();
+      expect(String(en[k]).toLowerCase()).not.toContain('cycle count');
+    }
+    const { localiseApiMessage } = await import('./api-messages');
+    for (const msg of [
+      'Only the owner can run a stock take.',
+      'Say what the count is',
+      'That count is too small',
+      'Count at least one product',
+      'Too many products in one stock take',
+      'Each product can be counted once',
+    ]) {
+      expect(localiseApiMessage(msg, 'hi'), msg).not.toBe(msg);
+    }
+  });
+});
+
+
