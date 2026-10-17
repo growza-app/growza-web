@@ -147,6 +147,7 @@
     "scheduleOn": "{day} schedule",
     "bookingCount": "{count, plural, one {# booking} other {# bookings}}",
     "sameTime": "{count} bookings at the same time",
+    "viewTable": "Table",
     "viewTimeline": "Timeline",
     "viewList": "List",
     "noneFound": "No bookings found",

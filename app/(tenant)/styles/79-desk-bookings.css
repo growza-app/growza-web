@@ -26,7 +26,7 @@
     /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
        and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
     grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(20rem, 22rem);
+    grid-template-columns: minmax(9.5rem, 10rem) minmax(0, 1fr) minmax(17rem, 18rem);
     align-items: stretch;
   }
 
@@ -166,7 +166,7 @@
 /* The narrow end of the tier (1101–1300px): side panels at their floors, the card's phone line goes. */
 @media (min-width: 1101px) and (max-width: 1300px) {
   .bk-desk-grid {
-    grid-template-columns: 10rem minmax(0, 1fr) 20rem;
+    grid-template-columns: 9.5rem minmax(0, 1fr) 18rem;
     gap: var(--sp-3);
   }
 
@@ -178,3 +178,136 @@
     display: none;
   }
 }
+
+/* ---------- Bookings Table view & direct row actions ---------- */
+.bk-table-wrap,
+.bk-card-actions {
+  --hm-ink: var(--text);
+  --hm-muted: var(--muted);
+  --hm-line: var(--border);
+}
+
+.bk-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+}
+
+.hm-v3-table.bk-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hm-v3-table.bk-table th,
+.hm-v3-table.bk-table td {
+  padding: 8px 4px;
+}
+
+.hm-v3-table.bk-table th:first-child,
+.hm-v3-table.bk-table td:first-child {
+  padding-left: 8px;
+}
+
+.hm-v3-table.bk-table th:last-child,
+.hm-v3-table.bk-table td:last-child {
+  padding-right: 8px;
+  text-align: right;
+}
+
+.hm-v3-table.bk-table .hm-v3-td-time::before {
+  left: 11px;
+}
+
+.hm-v3-table.bk-table .hm-v3-td-time strong {
+  font-size: 0.75rem;
+}
+
+.hm-v3-table.bk-table .hm-v3-tl-dot {
+  margin-right: 5px;
+}
+
+.hm-v3-table.bk-table .hm-v3-person {
+  gap: 6px;
+}
+
+.hm-v3-table.bk-table .hm-v3-td-client {
+  max-width: 5.5rem;
+}
+
+.hm-v3-table.bk-table .hm-v3-td-service {
+  max-width: 5.5rem;
+}
+
+.hm-v3-table.bk-table .hm-v3-td-staff {
+  max-width: 3.5rem;
+}
+
+@media (min-width: 1101px) and (max-width: 1440px) {
+  .bk-desk .hm-v3-table.bk-table .hm-avatar {
+    display: none;
+  }
+}
+
+.hm-v3-table.bk-table .hm-v3-staff-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+}
+
+.hm-v3-table.bk-table .hm-pill {
+  padding: 2px 7px;
+  font-size: 0.75rem;
+}
+
+.hm-v3-table.bk-table .hm-v3-row-btn {
+  min-width: 0;
+  padding: 3px 7px;
+  font-size: 0.75rem;
+}
+
+.bk-table tbody tr {
+  cursor: pointer;
+}
+
+.bk-table tbody tr:hover td {
+  background: var(--surface-2);
+}
+
+.bk-table tbody tr.is-selected td {
+  background: var(--accent-soft);
+}
+
+.bk-table tbody tr.is-selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.bk-table-day-row td {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.bk-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.bk-waiting-cta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+

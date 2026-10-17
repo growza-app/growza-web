@@ -54,12 +54,16 @@ describe('Tenant Home v2 redesign', () => {
     expect(boardCss).toMatch(/\.tb-col\[data-col='paid'\]\s*\{\s*border-top:\s*3px solid var\(--accent\);/);
   });
 
-  it('renders the 3-row Desktop v3 Command Center with 4 KPI cards, Appointments table + Staff status + Quick actions, and Revenue trend + Top services + Recent activity', () => {
+  it('renders the 3-row Desktop v3 Command Center with 4 KPI cards, Revenue trend + Top services + Quick actions, and Staff status + Attention + Recent activity, while Bookings owns the Appointments table', () => {
+    const bookingsList = code('../../appointments/BookingsList.tsx');
     expect(owner).toContain('className={`hm-desk-v3 hm-desktop');
     expect(owner).toContain('className="hm-v3-kpis"');
     expect(owner).toContain('className="hm-v3-kpi hm-v3-kpi-dark"');
     expect(owner).toContain('className="hm-v3-mid"');
-    expect(owner).toContain('className="hm-v3-table"');
+    expect(owner).toContain('className="hm-v3-card hm-v3-attention-card"');
+    expect(owner).toContain('<AttentionList items={attention} />');
+    expect(owner).not.toContain('className="hm-v3-table"');
+    expect(bookingsList).toContain('className="hm-v3-table bk-table"');
     expect(owner).toContain('className="hm-v3-staff-strip"');
     expect(owner).toContain('className="hm-v3-qgrid"');
     expect(owner).toContain('className="hm-v3-bot"');

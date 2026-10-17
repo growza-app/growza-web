@@ -147,6 +147,7 @@
     "scheduleOn": "{day} का शेड्यूल",
     "bookingCount": "{count, plural, one {# बुकिंग} other {# बुकिंग}}",
     "sameTime": "एक ही समय पर {count} बुकिंग",
+    "viewTable": "तालिका",
     "viewTimeline": "टाइमलाइन",
     "viewList": "सूची",
     "noneFound": "कोई बुकिंग नहीं मिली",

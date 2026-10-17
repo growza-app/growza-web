@@ -13,10 +13,11 @@ import { useBranch } from '../components/BranchProvider';
 import { useLabels } from '../components/LabelsProvider';
 import { useMayUse } from '../components/SessionProvider';
 import { GiveToStaffSheet } from '../components/home/GiveToStaffSheet';
+import { Avatar, avatarKey } from '../components/home/parts';
 import { SHOW_STEP } from '../components/home/use-visible-rows';
 import { usePhoneLayout } from '../components/home/use-phone-layout';
 import { useRouter } from 'next/navigation';
-import { payTokenHref } from '../lib/pay-token';
+import { payTokenHref, payVisitHref } from '../lib/pay-token';
 import { homeCopy } from '../lib/home-copy';
 import { atBranch, wholeMinutes } from '../lib/right-now';
 import {
@@ -24,6 +25,7 @@ import {
   IconCheck,
   IconChevronDown,
   IconClock,
+  IconDashboard,
   IconFilter,
   IconMenu,
   IconPackages,
@@ -194,7 +196,8 @@ export function BookingsList({
   const ts = useTranslations('status');
   const te = useTranslations('errors');
   const [page, setPage] = useState(1);
-  const [view, setView] = useState<'timeline' | 'list'>('timeline');
+  const [view, setView] = useState<'table' | 'timeline' | 'list'>('timeline');
+  const viewInitRef = useRef(false);
   // Jira-free, owner's call (2026-10-04): on a phone the filter card folds away behind a button.
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -226,12 +229,19 @@ export function BookingsList({
   const [desk, setDesk] = useState<boolean | null>(null);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1101px)');
-    const apply = () => setDesk(mq.matches);
+    const apply = () => {
+      setDesk(mq.matches);
+      if (!viewInitRef.current && mq.matches) {
+        viewInitRef.current = true;
+        setView('table');
+      }
+    };
     apply();
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
   }, []);
   const mayBook = useMayUse('visit.new');
+  const mayCheckout = useMayUse('booking.checkout');
   const [waitingShown, setWaitingShown] = useState(SHOW_STEP);
   // Owner, 2026-10-07 — paying a waiting token opens the Record payment page, not an overlay of the old form.
   const router = useRouter();
@@ -549,29 +559,48 @@ export function BookingsList({
    * that dials an empty `tel:` is worse than none, because it looks like the
    * product is broken rather than like the owner made a choice.
    */
-  const actionFor = (b: BookingGroup) =>
-    b.status === 'confirmed' && b.customerPhone ? (
-      <a
-        className="call"
-        href={`tel:${dialable(b.customerPhone)}`}
-        aria-label={t('callName', { name: b.customerName ?? t('customer') })}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <IconPhone />
-      </a>
-    ) : (
-      <button
-        type="button"
-        className="btn btn-ghost bk-details"
-        onClick={(e) => {
-          e.stopPropagation();
-          openBooking(b);
-        }}
-      >
-        <IconCalendar />
-        {t('details')}
-      </button>
+  const actionFor = (b: BookingGroup) => {
+    const st = liveState(b, now);
+    const canComplete = mayCheckout && (st === 'in_service' || st === 'needs_answer');
+    return (
+      <div className="bk-card-actions">
+        {canComplete && (
+          <button
+            type="button"
+            className="hm-v3-row-btn is-start"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(payVisitHref({ appointmentId: b.appointments[0]!.id, startAt: b.startAt }, timezone, 'bookings'));
+            }}
+          >
+            {hc.completeBtn}
+          </button>
+        )}
+        {b.status === 'confirmed' && b.customerPhone ? (
+          <a
+            className="call"
+            href={`tel:${dialable(b.customerPhone)}`}
+            aria-label={t('callName', { name: b.customerName ?? t('customer') })}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <IconPhone />
+          </a>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost bk-details"
+            onClick={(e) => {
+              e.stopPropagation();
+              openBooking(b);
+            }}
+          >
+            <IconCalendar />
+            {t('details')}
+          </button>
+        )}
+      </div>
     );
+  };
 
   /** Where a moved booking is now: the time alone on the same day, the date too when it moved to another. */
   const movedLine = (movedTo: string, from: string) => {
@@ -1009,6 +1038,7 @@ export function BookingsList({
                     onClick={() => (mayGive ? setGiving(w) : payToken(w))}
                   >
                     {waitingRow(w)}
+                    <span className="bk-waiting-cta">{hc.startBtn} →</span>
                   </button>
                 ) : (
                   <a className="bk-waiting-row" href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}>
@@ -1076,10 +1106,18 @@ export function BookingsList({
           {isToday ? t('scheduleToday') : t('scheduleOn', { day: dayLabel })}
           <span className="bk-sched-count">{t('bookingCount', { count: filtered.length })}</span>
         </h2>
-        {/* Segmented Timeline | List, both always visible with the active one
-            highlighted (per the mock) — the old single pill toggled blind, so
-            you couldn't see which view you'd land in until after tapping. */}
+        {/* Segmented Table | Timeline | List, always visible with the active one
+            highlighted — desktop defaults to Table for high-density scan and
+            direct row actions, while phone defaults to Timeline. */}
         <div className="bk-view">
+          <button
+            type="button"
+            className={`bk-view-tab ${view === 'table' ? 'is-active' : ''}`}
+            onClick={() => setView('table')}
+          >
+            <IconDashboard />
+            {t('viewTable')}
+          </button>
           <button
             type="button"
             className={`bk-view-tab ${view === 'timeline' ? 'is-active' : ''}`}
@@ -1107,6 +1145,130 @@ export function BookingsList({
         <div className="bk-no-matches">
           <div className="bk-no-matches-title">{t('noneFound')}</div>
           <div className="bk-no-matches-sub">{t('noneFoundHint')}</div>
+        </div>
+      ) : view === 'table' ? (
+        <div className="bk-table-wrap">
+          <table className="hm-v3-table bk-table">
+            <thead>
+              <tr>
+                <th>{hc.colTime}</th>
+                <th>{hc.colClient}</th>
+                <th>{hc.colService}</th>
+                <th>{hc.colStaff}</th>
+                <th>{hc.colStatus}</th>
+                <th>{hc.colActions}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((b, i) => {
+                const startsNewDay = multiDay && dayKeyOf(b.startAt) !== (rows[i - 1] && dayKeyOf(rows[i - 1]!.startAt));
+                const timeStr = formatTime(b.startAt, timezone);
+                const cName = clientNameLabel(b) ?? bookingRef(b.appointments[0]!.id);
+                const svcLabel = summarizeServices(b.serviceNames, locale);
+                const staffName = b.providerNames.length > 0 ? b.providerNames.join(', ') : '—';
+                const st = liveState(b, now);
+                const isActive = st === 'in_service' || st === 'needs_answer';
+                const canComplete = mayCheckout && isActive;
+                const dotTone =
+                  isActive
+                    ? 'green'
+                    : st === 'done'
+                      ? 'blue'
+                      : st === 'later'
+                        ? 'amber'
+                        : 'rose';
+                const pillTone =
+                  isActive
+                    ? 'green'
+                    : st === 'done'
+                      ? 'blue'
+                      : st === 'later'
+                        ? 'amber'
+                        : 'rose';
+                const statusLabel =
+                  isActive
+                    ? hc.inProgressLabel
+                    : st === 'done'
+                      ? hc.completedLabel
+                      : st === 'later'
+                        ? hc.upcomingLabel
+                        : st === 'cancelled'
+                          ? hc.cancelledLabel
+                          : hc.noShowLabel;
+                return (
+                  <Fragment key={b.key}>
+                    {startsNewDay && (
+                      <tr className="bk-table-day-row">
+                        <td colSpan={6}>{formatDateWithWeekday(b.startAt, timezone, { locale })}</td>
+                      </tr>
+                    )}
+                    <tr
+                      className={`${b.appointments.some((a) => a.id === justGiven) ? 'bk-card-just-given' : ''} ${desk && picked?.key === b.key ? 'is-selected' : ''}`}
+                      aria-current={desk && picked?.key === b.key ? 'true' : undefined}
+                      data-appt={b.appointments.map((a) => a.id).join(' ')}
+                      onClick={() => openBooking(b)}
+                    >
+                      <td className="hm-v3-td-time">
+                        <span className={`hm-v3-tl-dot is-${dotTone}`} />
+                        <strong>{timeStr}</strong>
+                      </td>
+                      <td className="hm-v3-td-client">
+                        <div className="hm-v3-person">
+                          <Avatar name={cName} id={avatarKey(b)} size={24} />
+                          <div className="hm-v3-person-meta">
+                            <strong>{cName}</strong>
+                            <span>{b.customerPhone ? b.customerPhone : formatDuration(b.totalMin, locale)}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hm-v3-td-service">
+                        <strong>{svcLabel}</strong>
+                        <span>
+                          {pricesShown(b)
+                            ? `${formatMoney(String(bookingTotalMinor(b)))} · ${formatDuration(b.totalMin, locale)}`
+                            : formatDuration(b.totalMin, locale)}
+                        </span>
+                        {b.movedTo ? <div className="bk-card-moved">{movedLine(b.movedTo, b.startAt)}</div> : null}
+                      </td>
+                      <td className="hm-v3-td-staff">
+                        <div className="hm-v3-staff-cell">{staffName}</div>
+                      </td>
+                      <td>
+                        <span className={`hm-pill hm-pill-${pillTone}`}>{statusLabel}</span>
+                      </td>
+                      <td className="bk-td-actions">
+                        <div className="hm-v3-act-wrap">
+                          {canComplete ? (
+                            <button
+                              type="button"
+                              className="hm-v3-row-btn is-start"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(payVisitHref({ appointmentId: b.appointments[0]!.id, startAt: b.startAt }, timezone, 'bookings'));
+                              }}
+                            >
+                              {hc.completeBtn}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="hm-v3-row-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openBooking(b);
+                              }}
+                            >
+                              {hc.viewBtn}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       ) : view === 'timeline' ? (
         <div className="bk-timeline">
