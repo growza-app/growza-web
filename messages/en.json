@@ -256,7 +256,16 @@
     "make": "Make {title}",
     "making": "Making…",
     "view": "View {title}",
-    "couldNotMake": "That could not be made. Try again."
+    "couldNotMake": "That could not be made. Try again.",
+    "print": "Print",
+    "download": "Download PDF",
+    "share": "Send on WhatsApp",
+    "shareText": "{business}\\n{title} {number}\\nAmount: {amount}\\nPaid — thank you!",
+    "open": "Open the document",
+    "popupBlocked": "Your browser blocked the new window. Use Open, then print from there.",
+    "cancelled": "This document was cancelled.",
+    "billedTo": "Billed to",
+    "amount": "Amount"
   },
   "freeTimes": {
     "title": "Free times",

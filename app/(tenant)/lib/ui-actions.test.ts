@@ -363,6 +363,12 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
    * its own address, in its page or its segment's layout.
    */
   const OWN_GATE: Record<string, RegExp> = {
+    /*
+     * Jira GRW-582 — a customer's document is the same thing the Sales register is: a record of what a bill took.
+     * It is gated as `/sales` rather than inventing a second answer to the same question, so a business that has
+     * opened the register to its receptionist has opened the documents behind it too.
+     */
+    '/documents': /await guardScreen\('\/sales'\);/,
     // The header's control and this page ask the same action.
     '/search': /if \(!mayUse\(role, 'search'\)\) redirect\(/,
     // Its own tab gate (GRW-197): a tab they cannot open lands on one they can, none says so plainly.

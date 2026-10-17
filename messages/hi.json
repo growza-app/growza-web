@@ -256,7 +256,16 @@
     "make": "{title} बनाएँ",
     "making": "बन रहा है…",
     "view": "{title} देखें",
-    "couldNotMake": "यह नहीं बन सका। दोबारा कोशिश करें।"
+    "couldNotMake": "यह नहीं बन सका। दोबारा कोशिश करें।",
+    "print": "प्रिंट करें",
+    "download": "PDF डाउनलोड करें",
+    "share": "WhatsApp पर भेजें",
+    "shareText": "{business}\\n{title} {number}\\nरकम: {amount}\\nभुगतान हो गया — धन्यवाद!",
+    "open": "दस्तावेज़ खोलें",
+    "popupBlocked": "ब्राउज़र ने नई विंडो रोक दी। पहले खोलें, फिर वहीं से प्रिंट करें।",
+    "cancelled": "यह दस्तावेज़ रद्द कर दिया गया था।",
+    "billedTo": "किसके नाम",
+    "amount": "रकम"
   },
   "freeTimes": {
     "title": "खाली समय",

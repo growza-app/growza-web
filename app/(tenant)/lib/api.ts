@@ -680,6 +680,19 @@ export const api = {
   removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
   uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
   removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
+  /** Jira GRW-582 — the summary the document screen's chrome needs; the document itself comes from /html. */
+  document: (id: string) =>
+    get<{
+      id: string;
+      number: string;
+      docType: 'tax_invoice' | 'bill_of_supply' | 'receipt';
+      status: 'issued' | 'cancelled';
+      grandTotalMinor: number;
+      businessName: string;
+      customerName: string;
+      customerPhone: string | null;
+    }>(`/api/v1/documents/${id}`),
+
   /** Jira GRW-582 — what the document for this bill would be. Asked before the button is offered, never after. */
   documentPreview: (visitKey: string) =>
     get<{ docType: 'tax_invoice' | 'bill_of_supply' | 'receipt'; showsTax: boolean; issued: { id: string; number: string } | null }>(
