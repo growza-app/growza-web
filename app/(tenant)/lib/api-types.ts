@@ -280,6 +280,10 @@ export interface ServiceAdmin extends Service {
    * API will not send it, and a missing count must not be read as a warning.
    */
   providerCount?: number;
+  /** Jira GRW-582 — GST rate in basis points (1800 = 18%); null is "not set", which is not 0%. Optional for an older API. */
+  gstRateBp?: number | null;
+  /** Jira GRW-582 — the service's SAC, 4 to 8 digits; null until entered. */
+  sac?: string | null;
 }
 
 export interface ServiceCategory {
@@ -350,6 +354,9 @@ export interface ServiceInput {
   description?: string | null;
   /** A picture picked from the pack, or null to go back to matching on the name. Update only. */
   catalogKey?: string | null;
+  /** Jira GRW-582 — tax details, both optional; null clears. */
+  gstRateBp?: number | null;
+  sac?: string | null;
 }
 
 export interface Provider {

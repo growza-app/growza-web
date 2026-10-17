@@ -111,10 +111,14 @@ describe('the product sheet carries both codes and the collapsed Tax group', () 
     expect(sheet).toMatch(/\(gstRateBp === '' \? null : Number\(gstRateBp\)\) !== \(target\.gstRateBp \?\? null\)/);
     expect(sheet).toMatch(/\(hsn\.trim\(\) \|\| null\) !== \(target\.hsn \?\? null\)/);
     expect(sheet).toMatch(/gstRateBp: gstRateBp === '' \? null : Number\(gstRateBp\),\s*hsn: hsn\.trim\(\) \|\| null,/);
-    expect(sheet).toMatch(/aria-expanded=\{taxOpen\}/);
+    // Jira GRW-582 — the group itself is the shared TaxFields (the service form is its second place).
+    expect(sheet).toMatch(/<TaxFields\s+idPrefix="prd"\s+kind="product"/);
+    expect(sheet).toMatch(/open=\{taxOpen\}/);
+    const fields = readFileSync(resolve(__dirname, '../components/TaxFields.tsx'), 'utf8');
+    expect(fields).toMatch(/aria-expanded=\{open\}/);
   });
   it('every new word ships in English and Hindi, including the API refusal sentences', async () => {
-    for (const k of ['sku', 'barcode', 'codesHint', 'barcodeSpaces', 'skuTaken', 'barcodeTaken', 'tax', 'taxNotSet', 'gstRate', 'hsn', 'taxHint']) {
+    for (const k of ['sku', 'barcode', 'codesHint', 'barcodeSpaces', 'skuTaken', 'barcodeTaken']) {
       expect(en[k], k).toBeTruthy();
       expect(hi[k], k).toBeTruthy();
     }
@@ -128,7 +132,7 @@ describe('the product sheet carries both codes and the collapsed Tax group', () 
       'A SKU is 40 characters at most',
       'A barcode is 64 characters at most',
       'GST rate must be between 0% and 28%',
-      'An HSN code is 8 characters at most',
+      'An HSN code is 4 to 8 digits',
     ]) {
       expect(localiseApiMessage(msg, 'hi'), msg).not.toBe(msg);
     }

@@ -7,6 +7,7 @@ import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { IconCheck } from '../components/icons';
+import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { productPhotoUrl } from '../lib/service-photos';
 import { codeHolder } from '../lib/product-match';
 import { StockPanel } from './StockPanel';
@@ -23,7 +24,6 @@ import { stockTone } from './ProductsList';
  */
 type Part = 'details' | 'stock' | 'sales';
 
-const GST_SLABS_BP = [0, 500, 1200, 1800, 2800] as const;
 
 export function ProductSheet({
   product,
@@ -117,12 +117,6 @@ export function ProductSheet({
   }, [dirty, justSaved]);
   const showSaved = justSaved && !dirty && !busy;
   const marginPct = costRupees !== null && rupees > 0 && Number.isFinite(costRupees) ? Math.round(((rupees - costRupees) / rupees) * 100) : null;
-  const gstSlabs =
-    target?.gstRateBp != null && !GST_SLABS_BP.includes(target.gstRateBp as (typeof GST_SLABS_BP)[number])
-      ? [...GST_SLABS_BP, target.gstRateBp].sort((a, b) => a - b)
-      : GST_SLABS_BP;
-  const taxParts = [gstRateBp !== '' ? `${Number(gstRateBp) / 100}%` : null, hsn.trim() || null].filter(Boolean);
-  const taxSummary = taxParts.length > 0 ? taxParts.join(' · ') : t('taxNotSet');
 
   const fail = (err: unknown) => {
     const holder = codeHolder(err);
@@ -360,6 +354,7 @@ export function ProductSheet({
             </div>
           </div>
           <div className="sheet-foot">{t('costHint')}</div>
+          <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
 
           {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
           <div className="sheet-group">
@@ -436,60 +431,17 @@ export function ProductSheet({
           <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
 
           {/* Jira GRW-574 (0120) — optional GST rate and HSN code, collapsed unless set or opened. */}
-          <div className="sheet-group">
-            <button
-              type="button"
-              className="sheet-row pe-disclosure"
-              aria-expanded={taxOpen}
-              onClick={() => setTaxOpen((o) => !o)}
-            >
-              <span className="sheet-row-label">{t('tax')}</span>
-              <span className="sheet-row-value pe-disclosure-value">
-                {taxSummary}
-                <span className="pe-chevron" aria-hidden="true" />
-              </span>
-            </button>
-            {taxOpen ? (
-              <>
-                <div className="sheet-row">
-                  <label className="sheet-row-label" htmlFor="prd-gst">
-                    {t('gstRate')}
-                  </label>
-                  <div className="sheet-row-value">
-                    <select id="prd-gst" value={gstRateBp} aria-describedby="prd-tax-hint" onChange={(e) => setGstRateBp(e.target.value)}>
-                      <option value="">{t('taxNotSet')}</option>
-                      {gstSlabs.map((bp) => (
-                        <option key={bp} value={String(bp)}>
-                          {bp / 100}%
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="sheet-row">
-                  <label className="sheet-row-label" htmlFor="prd-hsn">
-                    {t('hsn')}
-                  </label>
-                  <div className="sheet-row-value">
-                    <input
-                      id="prd-hsn"
-                      type="text"
-                      value={hsn}
-                      placeholder={t('taxNotSet')}
-                      maxLength={8}
-                      autoCapitalize="characters"
-                      autoCorrect="off"
-                      autoComplete="off"
-                      spellCheck={false}
-                      aria-describedby="prd-tax-hint"
-                      onChange={(e) => setHsn(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </div>
-          {taxOpen ? <div id="prd-tax-hint" className="sheet-foot">{t('taxHint')}</div> : null}
+          <TaxFields
+            idPrefix="prd"
+            kind="product"
+            rateBp={gstRateBp}
+            onRateBp={setGstRateBp}
+            code={hsn}
+            onCode={setHsn}
+            open={taxOpen}
+            onToggle={() => setTaxOpen((o) => !o)}
+            savedRateBp={target?.gstRateBp}
+          />
           {error ? (
             <div role="alert" className="sheet-foot sheet-foot-error">
               {error}
