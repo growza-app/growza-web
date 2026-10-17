@@ -218,12 +218,17 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
   });
 
   it('offers Stock take in the Products header for owner/manager when live products exist, and posts once to /api/v1/products/stock-take', () => {
+    const css = readFileSync(resolve(__dirname, '../styles/96-products.css'), 'utf8');
     expect(list).toMatch(/live\.length > 0 && canStockTake \? \([\s\S]*setStockTakeOpen\(true\)/);
     expect(list).toMatch(/<StockTake[\s\S]*branchId=\{branchId\}/);
     expect(take).toMatch(/api\s*\.stockTakeProducts\(branchId\)/);
     expect(take).toMatch(/await api\.saveStockTake\(branchId, \{/);
     expect(take).toMatch(/matchItems\(pool\.map\(productMatchable\), q\)/);
+    expect(take).toMatch(/<DeskProductCategories[\s\S]*picked=\{category\}/);
+    expect(take).toMatch(/className="prd-table prd-st-table"/);
     expect(take).toMatch(/prd-st-row-diff/);
+    expect(css).toMatch(/\.prd-st-row \{[\s\S]*?display:\s*flex;/);
+    expect(css).toMatch(/\.prd-st-row \.prd-photo \{[\s\S]*?grid-area:\s*auto;/);
   });
 
   it('uses plain words ("Count stock", never "stock take" or "cycle count") and ships English and Hindi strings + API messages', async () => {

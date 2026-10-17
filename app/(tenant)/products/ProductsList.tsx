@@ -521,6 +521,8 @@ export function ProductsList({ products, categories: initialCategories, branchId
         branchId={branchId}
         initialProducts={rows}
         categories={categories}
+        initialCategory={category}
+        initialSearch={search}
         onSaved={stockTakeSaved}
         onCancel={() => setStockTakeOpen(false)}
       />
