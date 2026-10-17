@@ -418,13 +418,17 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(css).toContain('border: 1px solid var(--border)');
     expect(css).toContain('overflow-y: auto;');
     expect(css).toContain('position: sticky;');
-    expect(css).toContain('flex: 0 1 auto;');
+    expect(css).toContain('flex-shrink: 0;');
+    expect(css).not.toContain('flex: 0 1 auto;');
     expect(css).not.toContain('var(--line)');
     expect(css).not.toContain('var(--card)');
     expect(client).toContain('sls-clear-filters-btn');
     expect(client).toContain('onClick={clearAllFilters}');
     expect(client).toContain("t('clearAllFilters')");
+    expect(client).toContain('is-tick-hidden');
     expect(css).toContain('.sls-clear-filters-btn');
+    expect(css).toContain('.sls-chart-bars.is-dense');
+    expect(css).toContain('.sls-chart-lbl.is-tick-hidden');
     expect(hbpCss).toMatch(/\.pf-head-stack \.hbp-line \{\s*display: inline-flex;/);
   });
 
