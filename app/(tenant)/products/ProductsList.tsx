@@ -248,7 +248,6 @@ export function ProductsList({ products, categories: initialCategories, branchId
       if (!cur || cur === 'new') return cur;
       return updated.find((p) => p.id === cur.id) ?? cur;
     });
-    setStockTakeOpen(false);
     router.refresh();
   };
 

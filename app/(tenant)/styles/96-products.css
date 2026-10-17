@@ -1152,9 +1152,15 @@
   gap: var(--sp-2);
 }
 
+.prd-st-save svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
 @media (max-width: 860px) {
-  /* Text-only header actions (Sell product, Count stock, Cancel, Save counts) carry no icon, so they keep their words and wrap cleanly on a 344px phone. */
-  .topbar .btn:not(:has(svg)) {
+  /* Text-only header actions (Sell product, Count stock, Cancel, Save counts / Saved) keep their words and wrap cleanly on a 344px phone. */
+  .topbar .btn:not(:has(svg)),
+  .topbar .btn.prd-st-save {
     font-size: 0.875rem;
     padding: 0 var(--sp-3);
   }

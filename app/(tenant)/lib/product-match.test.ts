@@ -227,6 +227,11 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
     expect(take).toMatch(/<DeskProductCategories[\s\S]*picked=\{category\}/);
     expect(take).toMatch(/className="prd-table prd-st-table"/);
     expect(take).toMatch(/prd-st-row-diff/);
+    expect(take).toMatch(/setSaved\(true\)/);
+    expect(take).toMatch(/<IconCheck \/> \{t\('form\.saved'\)\}/);
+    const savedFn = list.match(/const stockTakeSaved = [\s\S]*?\n  \};/)?.[0] ?? '';
+    expect(savedFn).toContain('router.refresh()');
+    expect(savedFn).not.toContain('setStockTakeOpen(false)');
     expect(css).toMatch(/\.prd-st-row \{[\s\S]*?display:\s*flex;/);
     expect(css).toMatch(/\.prd-st-row \.prd-photo \{[\s\S]*?grid-area:\s*auto;/);
   });
