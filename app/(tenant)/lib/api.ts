@@ -680,6 +680,23 @@ export const api = {
   removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
   uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
   removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
+  /** Jira GRW-582 — Settings › GST. One Save; the API decides what belongs to the business and what to the branch. */
+  updateGstSettings: (
+    body: {
+      status?: 'regular' | 'composition' | 'unregistered';
+      gstin?: string;
+      legalName?: string;
+      registeredAddress?: string;
+      invoicePrefix?: string;
+      invoiceFooter?: string;
+      pricesIncludeTax?: boolean;
+      branchState?: string;
+      branchStateCode?: string;
+      branchGstin?: string;
+    },
+    location?: string | null,
+  ) => patch<SettingsSummary>(`/api/v1/settings/gst${atBranch(location)}`, body),
+
   updateBookingRules: (body: {
     slotGranularityMin?: number;
     slotPolicy?: 'fixed_grid' | 'gap_packed';

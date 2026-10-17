@@ -256,6 +256,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/settings/branch-reset',
     'POST /api/v1/settings/apply-to-all',
     'PATCH /api/v1/settings/profile',
+    // Jira GRW-582 — Settings › GST and invoices. Owner-only like the rest of Settings, which is the gate.
+    'PATCH /api/v1/settings/gst',
     'POST /api/v1/settings/branches/:id/close',
     'POST /api/v1/settings/branches/:id/make-main',
     'PATCH /api/v1/settings/branches/:id',

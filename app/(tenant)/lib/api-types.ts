@@ -535,6 +535,25 @@ export interface SettingsSummary {
     /** Jira GRW-248 — the business's closed days, which close every branch. */
     businessClosedDates?: string[];
   };
+  /**
+   * Jira GRW-582 — what a business needs on file to give a customer a GST document.
+   *
+   * `status` is `unregistered` until an owner says otherwise, which is most businesses. The three `branch*` fields
+   * belong to the branch this Settings is scoped to, because a business registered in two states holds one
+   * registration per state.
+   */
+  gst: {
+    status: 'regular' | 'composition' | 'unregistered';
+    gstin: string;
+    legalName: string;
+    registeredAddress: string;
+    invoicePrefix: string;
+    invoiceFooter: string;
+    pricesIncludeTax: boolean;
+    branchState: string;
+    branchStateCode: string;
+    branchGstin: string;
+  };
   /** GRW-197 — report tabs granted per limited role; `{}` means none. */
   reportAccess: Record<string, string[]>;
   reminderRules: Array<{ ruleKey: string; offsetMin: number; template: string }>;

@@ -375,6 +375,10 @@
         "label": "Who sees what",
         "sub": "Reports and client numbers"
       },
+      "gst": {
+        "label": "GST and invoices",
+        "sub": "Tax details on your bills"
+      },
       "billing": {
         "label": "Billing",
         "sub": "What you pay Growza"
@@ -627,6 +631,47 @@
     "staffSees": "Staff can see client name and number",
     "staffSeesOn": "Your team sees who each booking is for, and can call them.",
     "staffSeesOff": "Your team sees the time and the service, but not the client’s name or number. You, and any managers, still see everything."
+  },
+  "settingsGst": {
+    "title": "GST and invoices",
+    "hint": "Only if your business is registered for GST. Leave it as it is and your customers get a plain receipt, which is right for most businesses.",
+    "statusLabel": "Is your business registered for GST?",
+    "status": {
+      "unregistered": "Not registered",
+      "regular": "Registered (regular)",
+      "composition": "Composition scheme"
+    },
+    "statusHelp": {
+      "unregistered": "Your customers get a receipt. No tax is shown on it.",
+      "regular": "Your customers get a tax invoice showing CGST and SGST, or IGST.",
+      "composition": "Your customers get a bill of supply. A composition dealer does not collect GST from them."
+    },
+    "gstinLabel": "GSTIN",
+    "gstinHint": "The 15-character number on your registration certificate.",
+    "legalNameLabel": "Business name as registered",
+    "legalNameHint": "The name on your GST certificate, which is often not the name over the door.",
+    "addressLabel": "Registered address",
+    "prefixLabel": "Invoice number starts with",
+    "prefixHint": "Your invoices will be numbered like {example}. Leave it blank for {plain}.",
+    "footerLabel": "Note at the bottom of every invoice",
+    "footerHint": "Your terms, or a thank you. It is printed on every document.",
+    "pricesIncludeTaxLabel": "My prices already include tax",
+    "pricesIncludeTaxOn": "₹300 on the menu is ₹300 to pay, with the tax inside it.",
+    "pricesIncludeTaxOff": "Tax is added to the price at the till, so ₹300 becomes more.",
+    "branchTitle": "This branch",
+    "branchHint": "Where this branch supplies from. It decides whether a bill shows CGST and SGST, or IGST.",
+    "stateLabel": "State",
+    "stateCodeLabel": "State code",
+    "stateCodeHint": "The two digits your GSTIN starts with — 07 for Delhi, 27 for Maharashtra.",
+    "branchGstinLabel": "This branch's own GSTIN",
+    "branchGstinHint": "Only if you hold a separate registration for this state. Otherwise leave it blank.",
+    "notRegisteredNote": "Nothing here is needed while you are not registered. Your customers still get a receipt for every payment.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "errors": {
+      "saveFailed": "That did not save. Try again."
+    }
   },
   "settingsBranches": {
     "title": "Branches",
