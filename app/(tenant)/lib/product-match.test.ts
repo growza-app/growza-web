@@ -221,7 +221,6 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
     const css = readFileSync(resolve(__dirname, '../styles/96-products.css'), 'utf8');
     expect(list).toMatch(/live\.length > 0 && canStockTake \? \([\s\S]*setStockTakeOpen\(true\)/);
     expect(list).toMatch(/<StockTake[\s\S]*branchId=\{branchId\}/);
-    expect(list).toMatch(/className="card prd-sales-card"/);
     expect(list).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
     expect(take).toMatch(/api\s*\.stockTakeProducts\(branchId\)/);
     expect(take).toMatch(/await api\.saveStockTake\(branchId, \{\s*counts: payload,\s*\}\);/);

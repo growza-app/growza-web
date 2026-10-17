@@ -170,20 +170,6 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
   const lowCount = useMemo(() => live.filter((p) => stockTone(p) !== 'ok').length, [live]);
   const worth = useMemo(() => shelfWorthMinor(rows), [rows]);
-  const topSellers = useMemo(
-    () =>
-      [...live]
-        .filter((p) => p.sold > 0)
-        .sort(
-          (a, b) =>
-            b.sold - a.sold ||
-            Number(b.priceMinor) * b.sold - Number(a.priceMinor) * a.sold ||
-            a.name.localeCompare(b.name),
-        )
-        .slice(0, 5),
-    [live],
-  );
-  const maxSold = topSellers[0]?.sold ?? 0;
   const inCategory = useMemo(() => filterShelf(rows, 'all', '', selectedCategories), [rows, selectedCategories]);
   const shown = useMemo(
     () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
@@ -337,41 +323,6 @@ export function ProductsList({ products, categories: initialCategories, branchId
           <span className="prd-stat-l">{t('strip.low')}</span>
         </button>
       </div>
-    </div>
-  );
-  const salesCard = (
-    <section className="card prd-sales-card" aria-label={t('sales.topSellers')}>
-      <div className="prd-sales-head">
-        <span className="prd-sales-title">{t('sales.topSellers')}</span>
-      </div>
-      {topSellers.length === 0 ? (
-        <p className="prd-sales-empty">{t('sales.noneEver')}</p>
-      ) : (
-        <ul className="prd-sales-bars">
-          {topSellers.map((p) => {
-            const pct = maxSold > 0 ? Math.max(8, Math.round((p.sold / maxSold) * 100)) : 0;
-            return (
-              <li key={p.id} className="prd-sales-bar-row">
-                <span className="prd-sales-bar-name" title={p.name}>
-                  {p.name}
-                </span>
-                <span className="prd-sales-bar-track" aria-hidden="true">
-                  <span className="prd-sales-bar-fill" style={{ width: `${pct}%` }} />
-                </span>
-                <span className="prd-sales-bar-val">
-                  {t('sold', { n: p.sold })} · {formatMoney(p.sold * Number(p.priceMinor))}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
-  );
-  const topBand = (
-    <div className="prd-top-band">
-      {strip}
-      {salesCard}
     </div>
   );
   const searchBox = (
@@ -614,7 +565,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
       <>
         {header}
         <div className="page-body prd-desk">
-          {topBand}
+          {strip}
           <div className="pf-wide-grid prd-desk-grid">
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
               <div className="prd-desk-tools">
@@ -655,7 +606,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
           </div>
         ) : (
           <>
-            {topBand}
+            {strip}
             <div className="prd-tools">
               {searchBox}
               <div className="prd-selects">

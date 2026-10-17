@@ -1005,96 +1005,7 @@
   color: var(--accent-deep);
 }
 
-/* ---------- Top KPI band + Sales graph + multi-select Categories dropdown ---------- */
-.prd-top-band {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-3);
-}
-
-.prd-top-band .prd-strip {
-  margin-bottom: 0;
-}
-
-.prd-sales-card.prd-sales-card {
-  margin: 0;
-  padding: var(--sp-2) var(--sp-3);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.prd-sales-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.prd-sales-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-.prd-sales-empty {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--muted);
-}
-
-.prd-sales-bars {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.prd-sales-bar-row {
-  display: grid;
-  grid-template-columns: minmax(4.5rem, 8.5rem) minmax(2.5rem, 1fr) auto;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: 0.8125rem;
-  line-height: 1.25;
-}
-
-.prd-sales-bar-name {
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.prd-sales-bar-track {
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--slate-soft);
-  overflow: hidden;
-}
-
-.prd-sales-bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent-deep);
-}
-
-.prd-sales-bar-val {
-  font-size: 0.75rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  text-align: right;
-}
-
+/* ---------- Multi-select Categories dropdown ---------- */
 .prd-selects .prd-cat-dd .sls-dd-btn {
   width: 100%;
 }
@@ -1246,18 +1157,6 @@
 }
 
 @media (min-width: 1101px) {
-  .prd-top-band {
-    flex: none;
-    display: grid;
-    grid-template-columns: minmax(22rem, 1.15fr) minmax(20rem, 1fr);
-    gap: var(--sp-3);
-    align-items: stretch;
-  }
-
-  .prd-top-band .prd-stat {
-    justify-content: center;
-  }
-
   .prd-st-desk-tools {
     flex-wrap: wrap;
   }
