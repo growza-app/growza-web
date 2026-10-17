@@ -226,21 +226,23 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
     expect(take).toMatch(/prd-st-row-diff/);
   });
 
-  it('uses plain words ("Stock take", never "cycle count") and ships English and Hindi strings + API messages', async () => {
-    expect(en.open).toBe('Stock take');
-    expect(en.title).toBe('Stock take');
+  it('uses plain words ("Count stock", never "stock take" or "cycle count") and ships English and Hindi strings + API messages', async () => {
+    expect(en.open).toBe('Count stock');
+    expect(en.title).toBe('Count stock');
+    expect(en.save).toBe('Save counts');
     for (const k of ['open', 'title', 'subtitle', 'save', 'counted', 'countedAria', 'systemStock', 'notePlaceholder', 'allMatch', 'changedCount']) {
       expect(en[k], k).toBeTruthy();
       expect(hi[k], k).toBeTruthy();
       expect(String(en[k]).toLowerCase()).not.toContain('cycle count');
+      expect(String(en[k]).toLowerCase()).not.toContain('stock take');
     }
     const { localiseApiMessage } = await import('./api-messages');
     for (const msg of [
-      'Only the owner can run a stock take.',
+      'Only the owner can count stock.',
       'Say what the count is',
       'That count is too small',
       'Count at least one product',
-      'Too many products in one stock take',
+      'Too many products to count at once',
       'Each product can be counted once',
     ]) {
       expect(localiseApiMessage(msg, 'hi'), msg).not.toBe(msg);

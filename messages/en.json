@@ -3153,10 +3153,10 @@
       "loadFailed": "The sales did not load. Close this and open it again."
     },
     "stockTake": {
-      "open": "Stock take",
-      "title": "Stock take",
+      "open": "Count stock",
+      "title": "Count stock",
       "subtitle": "Type what is on the shelf. Products that match keep their history untouched; only the ones that differ get a Counted line.",
-      "save": "Save stock take",
+      "save": "Save counts",
       "counted": "Counted",
       "countedAria": "Counted for {name}",
       "systemStock": "On shelf: {n}",
