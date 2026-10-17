@@ -70,3 +70,10 @@
 .doc-amount {
   font-size: 1.125rem;
 }
+
+/* The Done screen's two document buttons — see it, send it — one under the other, as the rest of that screen stacks. */
+.pf-doc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}

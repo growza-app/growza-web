@@ -702,6 +702,12 @@ export const api = {
   issueDocument: (visitKey: string) =>
     post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, {}),
 
+  /**
+   * Jira GRW-582 — a link the customer can open with no account. The token comes back once and only its hash is kept,
+   * so asking again makes a new link; the ones already sent keep working until they run out on their own.
+   */
+  shareDocument: (id: string) => post<{ token: string; expiresAt: string }>(`/api/v1/documents/${id}/share`, {}),
+
   /** Jira GRW-582 — Settings › GST. One Save; the API decides what belongs to the business and what to the branch. */
   updateGstSettings: (
     body: {

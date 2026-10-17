@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { whatsappHref } from '../../lib/receipt-text';
+import { ApiError } from '../../lib/api';
+import { sendDocumentOnWhatsApp } from '../../lib/share-document';
 
 /**
  * Jira GRW-582 · ADR-17 — a customer's document, and the four things an owner does with it.
@@ -42,7 +43,26 @@ export function DocumentViewer({
 }) {
   const t = useTranslations('documents');
   const [note, setNote] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
   const href = `/api/v1/documents/${id}/html`;
+
+  /** A link the customer opens with no account; valid a week, then the business sends a new one. */
+  const share = async () => {
+    if (sharing) return;
+    setSharing(true);
+    setNote(null);
+    try {
+      await sendDocumentOnWhatsApp({
+        id,
+        phone,
+        compose: (link, days) => `${shareText}\n${t('shareLine', { link, days })}`,
+      });
+    } catch (e) {
+      setNote(e instanceof ApiError && e.status < 500 ? e.message : t('couldNotMake'));
+    } finally {
+      setSharing(false);
+    }
+  };
 
   /** Opens the document and asks that window to print itself, so the printed sheet is the document and nothing else. */
   const print = () => {
@@ -112,10 +132,10 @@ export function DocumentViewer({
         <button type="button" className="btn btn-ghost" onClick={() => void download()}>
           {t('download')}
         </button>
-        {phone ? (
-          <a className="btn btn-ghost" href={whatsappHref(phone.replace(/\D/g, ''), shareText)} target="_blank" rel="noreferrer">
-            {t('share')}
-          </a>
+        {status === 'issued' ? (
+          <button type="button" className="btn btn-ghost" disabled={sharing} onClick={() => void share()}>
+            {sharing ? t('sharing') : t('share')}
+          </button>
         ) : null}
       </div>
 

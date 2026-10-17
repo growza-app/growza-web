@@ -51,7 +51,8 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
           /* What the customer reads in WhatsApp before they open anything: who, what, how much, and settled. */
           shareText={t('shareText', {
             business: doc.businessName,
-            title,
+            // "Tax invoice MU/…", not "tax invoice": the titles are lower-case for "Make {title}", and this is a sentence.
+            title: title.charAt(0).toUpperCase() + title.slice(1),
             number: doc.number,
             amount: money(doc.grandTotalMinor),
           })}

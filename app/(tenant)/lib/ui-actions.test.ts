@@ -287,7 +287,7 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
    * on. (It belongs in that action in shared too; the pin here is what this repo can check today, since the
    * installed @growza-app/shared is behind the API's source.)
    */
-  '/appointments/new': ['POST /api/v1/bills/:visitKey/document'],
+  '/appointments/new': ['POST /api/v1/bills/:visitKey/document', 'POST /api/v1/documents/:id/share'],
 };
 
 /** Every signed-in person's own: the session says whose, and no role can widen it. */

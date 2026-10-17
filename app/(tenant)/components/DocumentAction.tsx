@@ -3,6 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
+import { formatMoney } from '../lib/format';
+import { sendDocumentOnWhatsApp } from '../lib/share-document';
 
 /**
  * Jira GRW-582 — the receipt or GST invoice, offered on the screen that just took the money.
@@ -22,6 +24,12 @@ import { api, ApiError } from '../lib/api';
  *
  * Issuing is idempotent per bill, so a double tap, a retry and a later visit from the Sales register all land on the
  * same document under the same number.
+ *
+ * ## Sending it
+ *
+ * Once it exists the desk can send the customer a link on WhatsApp from this same screen — the moment they are most
+ * likely to want it, with the customer still standing there. The link is the document drawn from the record when
+ * they open it, so nothing is generated or stored for it; it works for a week.
  */
 type Preview = {
   docType: 'tax_invoice' | 'bill_of_supply' | 'receipt';
@@ -36,6 +44,9 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
   const [issued, setIssued] = useState<{ id: string; number: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Who it is for and what it came to; read once the document exists, because that is when it can be sent. */
+  const [summary, setSummary] = useState<{ phone: string | null; business: string; amountMinor: number } | null>(null);
+  const [sharing, setSharing] = useState(false);
   /** One issue at a time, however fast the button is tapped. */
   const issuing = useRef(false);
 
@@ -58,6 +69,42 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
       cancelled = true;
     };
   }, [visitKey]);
+
+  const issuedId = issued?.id;
+  useEffect(() => {
+    if (!issuedId) return;
+    let cancelled = false;
+    api
+      .document(issuedId)
+      .then((d) => {
+        if (!cancelled) setSummary({ phone: d.customerPhone, business: d.businessName, amountMinor: d.grandTotalMinor });
+      })
+      // Sending is a convenience on top of a document that already exists; without the summary the button stays
+      // away rather than offering something that cannot be composed.
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [issuedId]);
+
+  const send = async () => {
+    if (!issued || !summary || sharing) return;
+    setSharing(true);
+    setError(null);
+    const title = t(`type.${preview!.docType}`);
+    try {
+      await sendDocumentOnWhatsApp({
+        id: issued.id,
+        phone: summary.phone,
+        compose: (link, days) =>
+          `${t('shareText', { business: summary.business, title: title.charAt(0).toUpperCase() + title.slice(1), number: issued.number, amount: formatMoney(summary.amountMinor) })}\n${t('shareLine', { link, days })}`,
+      });
+    } catch (e) {
+      setError(e instanceof ApiError && e.status < 500 ? e.message : t('couldNotMake'));
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const issue = async () => {
     if (issuing.current) return;
@@ -89,9 +136,16 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
   return (
     <div className="pf-doc">
       {issued ? (
-        <a className="btn btn-ghost pf-go-alt" href={`/documents/${issued.id}`}>
-          {t('view', { title })} · {issued.number}
-        </a>
+        <>
+          <a className="btn btn-ghost pf-go-alt" href={`/documents/${issued.id}`}>
+            {t('view', { title })} · {issued.number}
+          </a>
+          {summary ? (
+            <button type="button" className="btn btn-ghost pf-go-alt" disabled={sharing} onClick={() => void send()}>
+              {sharing ? t('sharing') : t('share')}
+            </button>
+          ) : null}
+        </>
       ) : (
         <button type="button" className="btn btn-ghost pf-go-alt" disabled={busy} onClick={() => void issue()}>
           {busy ? t('making') : t('make', { title })}
