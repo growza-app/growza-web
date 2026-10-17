@@ -872,8 +872,9 @@ export function SalesClient({
     [todayISO],
   );
 
-  const activeRangePreset: 'last_7_days' | 'last_30_days' | 'this_month' | 'custom' = useMemo(() => {
+  const activeRangePreset: 'today' | 'last_7_days' | 'last_30_days' | 'this_month' | 'custom' = useMemo(() => {
     if (toDate === todayISO) {
+      if (fromDate === todayISO) return 'today';
       if (fromDate === sevenDaysAgoISO) return 'last_7_days';
       if (fromDate === thirtyDaysAgoISO) return 'last_30_days';
       if (fromDate === monthStartISO) return 'this_month';
@@ -1733,6 +1734,14 @@ export function SalesClient({
               <div className="sls-chart-title-wrap">
                 <h2 className="sls-chart-title">{t('chart.title')}</h2>
                 <div className="sls-chart-presets" role="group" aria-label={t('chart.title')}>
+                  <button
+                    type="button"
+                    className={`sls-preset-pill ${activeRangePreset === 'today' ? 'is-on' : ''}`}
+                    aria-pressed={activeRangePreset === 'today'}
+                    onClick={() => applyDates(todayISO, todayISO)}
+                  >
+                    {t('ranges.today')}
+                  </button>
                   <button
                     type="button"
                     className={`sls-preset-pill ${activeRangePreset === 'last_7_days' ? 'is-on' : ''}`}

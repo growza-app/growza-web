@@ -54,25 +54,32 @@ describe('Tenant Home v2 redesign', () => {
     expect(boardCss).toMatch(/\.tb-col\[data-col='paid'\]\s*\{\s*border-top:\s*3px solid var\(--accent\);/);
   });
 
-  it('renders the 3-row Desktop v3 Command Center with 4 KPI cards, Revenue trend + Top services + Quick actions, and Staff status + Attention + Recent activity, while Bookings owns the Appointments table', () => {
+  it('renders the Desktop Command Center with 4 light KPI cards, Revenue trend + Sales by payment method donut + Quick actions, Top services + Top products + vertical Staff status, and Recent bookings table synced with /sales', () => {
     const bookingsList = code('../../appointments/BookingsList.tsx');
     expect(owner).toContain('className={`hm-desk-v3 hm-desktop');
     expect(owner).toContain('className="hm-v3-kpis"');
     expect(owner).toContain('className="hm-v3-kpi hm-v3-kpi-dark"');
     expect(owner).toContain('className="hm-v3-mid"');
-    expect(owner).toContain('className="hm-v3-card hm-v3-attention-card"');
+    expect(owner).toContain('className={`hm-v3-card hm-v3-attention-card');
     expect(owner).toContain('<AttentionList items={attention} />');
     expect(owner).not.toContain('className="hm-v3-table"');
     expect(bookingsList).toContain('className="hm-v3-table bk-table"');
-    expect(owner).toContain('className="hm-v3-staff-strip"');
+    expect(owner).toContain('className="hm-v3-card hm-v3-payment-card"');
+    expect(owner).toContain('className="hm-v3-donut-svg"');
+    expect(owner).toContain('className="hm-v3-card hm-v3-products-card"');
+    expect(owner).toContain('className="hm-v3-staff-strip hm-v3-staff-list"');
+    expect(owner).toContain('className="hm-v3-recent-table"');
     expect(owner).toContain('className="hm-v3-qgrid"');
     expect(owner).toContain('className="hm-v3-bot"');
     expect(owner).toContain('className="hm-v3-bars"');
     expect(owner).toContain('className="hm-v3-srv-rows"');
     expect(owner).toContain('className="hm-v3-feed-rows"');
+    expect(owner).toContain('filterSalesByDateRange(allSaleRows, periodStartISO, todayISO, branch)');
     expect(homeCss).toMatch(/\.hm-v3-kpis\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-mid\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-bot\s*\{/);
+    expect(homeCss).toMatch(/\.hm-v3-donut-wrap\s*\{/);
+    expect(homeCss).toMatch(/\.hm-v3-recent-table\s*\{/);
   });
 
   it('routes Sell product on Home and Products to the dedicated /products/sell POS screen with product categories', () => {
