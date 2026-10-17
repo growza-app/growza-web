@@ -250,17 +250,53 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 4px;
-  padding: var(--sp-2) var(--sp-3);
+  gap: 6px;
+  padding: var(--sp-3);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   text-align: left;
+}
+
+.sls-kpi-green {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent-soft) 68%, var(--surface)),
+    color-mix(in srgb, var(--accent-soft) 36%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.sls-kpi-blue {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--blue-soft) 64%, var(--surface)),
+    color-mix(in srgb, var(--blue-soft) 30%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--blue) 22%, var(--border));
+}
+
+.sls-kpi-amber {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--amber-soft) 68%, var(--surface)),
+    color-mix(in srgb, var(--amber-soft) 32%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--amber) 22%, var(--border));
+}
+
+.sls-kpi-purple {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--purple-soft) 64%, var(--surface)),
+    color-mix(in srgb, var(--purple-soft) 28%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--purple) 22%, var(--border));
 }
 
 .sls-kpi-tap {
   cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -270,12 +306,27 @@
 }
 
 .sls-kpi-tap:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-deep);
 }
 
 .sls-kpi-tap.is-selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-deep);
+}
+
+.sls-kpi-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.sls-kpi-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .sls-kpi-head {
@@ -300,65 +351,196 @@
 }
 
 .sls-icon-green {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
   color: var(--accent-deep);
 }
 
 .sls-icon-blue {
-  background: var(--blue-soft);
+  background: color-mix(in srgb, var(--blue) 16%, var(--surface));
   color: var(--blue);
 }
 
 .sls-icon-amber {
-  background: var(--amber-soft);
+  background: color-mix(in srgb, var(--amber) 16%, var(--surface));
   color: var(--amber-ink);
 }
 
 .sls-icon-purple {
-  background: var(--purple-soft);
+  background: color-mix(in srgb, var(--purple) 16%, var(--surface));
   color: var(--purple-deep);
 }
 
 .sls-kpi-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
 }
 
-.sls-kpi-main {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
+.sls-kpi-green .sls-kpi-label {
+  color: var(--accent-deep);
+}
+
+.sls-kpi-blue .sls-kpi-label {
+  color: var(--blue);
+}
+
+.sls-kpi-amber .sls-kpi-label {
+  color: var(--amber-ink);
+}
+
+.sls-kpi-purple .sls-kpi-label {
+  color: var(--purple-deep);
 }
 
 .sls-kpi-value {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
+.sls-kpi-foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+}
+
+.sls-kpi-delta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.sls-kpi-delta.is-up b {
+  color: var(--accent-deep);
+  font-weight: 800;
+}
+
+.sls-kpi-delta.is-down b {
+  color: var(--danger);
+  font-weight: 800;
+}
+
 .sls-kpi-sub {
   font-size: 0.75rem;
+  font-weight: 600;
   color: var(--muted);
+}
+
+.sls-kpi-spark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.sls-kpi-spark i {
+  display: block;
+  width: 7px;
+  border-radius: 4px 4px 2px 2px;
+}
+
+.sls-spark-green i {
+  background: color-mix(in srgb, var(--accent) 42%, var(--surface));
+}
+
+.sls-spark-green i:last-child {
+  background: color-mix(in srgb, var(--accent) 68%, var(--surface));
+}
+
+.sls-spark-blue i {
+  background: color-mix(in srgb, var(--blue) 34%, var(--surface));
+}
+
+.sls-spark-blue i:last-child {
+  background: color-mix(in srgb, var(--blue) 56%, var(--surface));
+}
+
+.sls-spark-amber i {
+  background: color-mix(in srgb, var(--amber) 34%, var(--surface));
+}
+
+.sls-spark-amber i:last-child {
+  background: color-mix(in srgb, var(--amber) 56%, var(--surface));
+}
+
+.sls-pay-donut-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.sls-pay-donut {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+
+.sls-donut-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--purple) 14%, var(--surface));
+  stroke-width: 7;
+}
+
+.sls-donut-seg {
+  fill: none;
+  stroke-width: 7;
+}
+
+.sls-donut-seg.is-upi {
+  stroke: var(--accent-deep);
+}
+
+.sls-donut-seg.is-cash {
+  stroke: var(--accent);
+}
+
+.sls-donut-seg.is-card {
+  stroke: var(--blue);
 }
 
 .sls-pay-modes {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px var(--sp-3);
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .sls-pay-line {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
   font-size: 0.75rem;
   color: var(--muted);
+}
+
+.sls-pay-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.sls-pay-dot.is-upi {
+  background: var(--accent-deep);
+}
+
+.sls-pay-dot.is-cash {
+  background: var(--accent);
+}
+
+.sls-pay-dot.is-card {
+  background: var(--blue);
+}
+
+.sls-pay-name {
+  font-weight: 600;
+  color: var(--text);
 }
 
 .sls-pay-line strong {
@@ -366,18 +548,30 @@
   font-weight: 700;
 }
 
+.sls-pay-pct {
+  color: var(--purple-deep);
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+}
+
+.sls-mid-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+
 .sls-chart-card {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent-soft) 45%, var(--surface)),
-    color-mix(in srgb, var(--accent-soft) 24%, var(--surface))
-  );
-  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
-  border-radius: 12px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  min-width: 0;
 }
 
 .sls-chart-head {
@@ -389,16 +583,47 @@
 }
 
 .sls-chart-title-wrap {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--sp-2);
+  flex-wrap: wrap;
 }
 
 .sls-chart-title {
   margin: 0;
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: 0.9375rem;
+  font-weight: 800;
   color: var(--text);
+}
+
+.sls-chart-presets {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.sls-preset-pill {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--page-bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sls-preset-pill:hover {
+  border-color: var(--accent-deep);
+  color: var(--text);
+}
+
+.sls-preset-pill.is-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: var(--surface);
 }
 
 .sls-chart-mode {
@@ -406,8 +631,8 @@
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  background: var(--page-bg);
+  border: 1px solid var(--border);
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
@@ -443,18 +668,18 @@
 }
 
 .sls-dot-srv {
-  background: var(--blue);
+  background: var(--accent-deep);
 }
 
 .sls-dot-prd {
-  background: var(--amber);
+  background: color-mix(in srgb, var(--accent) 46%, var(--accent-soft));
 }
 
 .sls-chart-toggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 var(--sp-2);
   font-size: 0.75rem;
   font-weight: 600;
@@ -472,41 +697,89 @@
 
 .sls-chart-empty {
   margin: 0;
-  padding: var(--sp-3) 0;
+  padding: var(--sp-4) 0;
   text-align: center;
   font-size: 0.8125rem;
   color: var(--muted);
 }
 
+.sls-chart-plot {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: var(--sp-2);
+  align-items: stretch;
+  padding: 10px 12px 8px 8px;
+  background: color-mix(in srgb, var(--accent-soft) 36%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: 10px;
+}
+
+.sls-chart-yaxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px 0 22px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+  user-select: none;
+}
+
+.sls-chart-stage {
+  position: relative;
+  min-width: 0;
+}
+
+.sls-chart-gridlines {
+  position: absolute;
+  inset: 22px 0 22px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.sls-chart-gridline {
+  display: block;
+  width: 100%;
+  border-top: 1px dashed var(--border);
+}
+
+.sls-chart-gridline:last-child {
+  border-top-style: solid;
+}
+
 .sls-chart-bars {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 112px;
+  gap: 6px;
+  height: 156px;
   padding-top: 22px;
   overflow-x: auto;
 }
 
 .sls-chart-col {
   flex: 1 1 0;
-  min-width: 18px;
+  min-width: 24px;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .sls-chart-track {
   position: relative;
   width: 100%;
-  max-width: 28px;
+  max-width: 42px;
   flex: 1 1 auto;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: color-mix(in srgb, var(--surface) 78%, var(--accent-soft));
-  border-radius: 6px;
+  border-radius: 6px 6px 2px 2px;
 }
 
 .sls-chart-stack {
@@ -514,7 +787,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  border-radius: 6px;
+  border-radius: 6px 6px 2px 2px;
   overflow: hidden;
   transition: height 160ms ease;
 }
@@ -530,24 +803,28 @@
 }
 
 .sls-bar-srv {
-  background: var(--blue);
+  background: color-mix(in srgb, var(--accent) 76%, var(--surface));
 }
 
 .sls-bar-prd {
-  background: var(--amber);
+  background: color-mix(in srgb, var(--accent) 34%, var(--accent-soft));
 }
 
-.sls-chart-col.is-peak .sls-chart-stack {
-  box-shadow: 0 0 0 1px var(--accent-deep);
+.sls-chart-col.is-peak .sls-bar-srv {
+  background: var(--accent-deep);
+}
+
+.sls-chart-col.is-peak .sls-bar-prd {
+  background: color-mix(in srgb, var(--accent) 68%, var(--accent-soft));
 }
 
 .sls-chart-peak {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: var(--accent-deep);
+  background: var(--sidebar);
   color: var(--surface);
   font-size: 0.75rem;
   font-weight: 700;
@@ -606,6 +883,149 @@
   font-weight: 700;
 }
 
+.sls-quick-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.sls-quick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.sls-quick-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.sls-quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  text-decoration: none;
+}
+
+.sls-quick-link svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.sls-quick-link:hover {
+  text-decoration: underline;
+}
+
+.sls-quick-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sls-quick-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.sls-quick-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.sls-quick-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  flex-shrink: 0;
+}
+
+.sls-quick-icon svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.sls-quick-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sls-quick-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sls-quick-val {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.sls-quick-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sls-quick-pill.is-up {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.sls-quick-pill.is-down {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+.sls-quick-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  min-width: 0;
+}
+
+.sls-quick-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sls-quick-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sls-chart-toggle svg,
   .sls-chart-stack {
@@ -628,8 +1048,26 @@
   flex-wrap: wrap;
 }
 
-.sls-export-btn {
+.sls-table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   margin-left: auto;
+}
+
+.sls-table-search {
+  min-height: 38px;
+  width: 240px;
+  background: var(--surface);
+}
+
+.sls-table-search svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.sls-export-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -717,33 +1155,29 @@
 
 .sls-table th {
   text-align: left;
-  padding: 5px var(--sp-3);
+  padding: 6px var(--sp-3);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text);
+  color: var(--muted);
   background: var(--slate-soft);
   border-bottom: 1px solid var(--border);
-  border-right: 1px solid var(--border);
   white-space: nowrap;
 }
 
-.sls-table th:last-child {
-  border-right: 0;
+.sls-th-sub {
+  text-transform: lowercase;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 .sls-table td {
-  padding: 4px var(--sp-3);
+  padding: 6px var(--sp-3);
   border-bottom: 1px solid var(--border);
-  border-right: 1px solid var(--border);
   vertical-align: middle;
   color: var(--text);
-  line-height: 1.2;
-}
-
-.sls-table td:last-child {
-  border-right: 0;
+  line-height: 1.25;
 }
 
 .sls-table tbody tr:last-child td {
@@ -769,7 +1203,7 @@
 
 .sls-col-when {
   white-space: nowrap;
-  color: var(--muted);
+  color: var(--text);
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -777,6 +1211,28 @@
 .sls-col-staff {
   white-space: nowrap;
   font-size: 0.8125rem;
+}
+
+.sls-staff-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sls-staff-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .sls-client {
@@ -829,7 +1285,7 @@
 
 .sls-service-list {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
 }
 
@@ -897,6 +1353,7 @@
 .sls-pay-pill {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--page-bg);
@@ -905,6 +1362,62 @@
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
+}
+
+.sls-pay-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.sls-pay-pill.is-upi {
+  background: var(--purple-soft);
+  border-color: color-mix(in srgb, var(--purple) 22%, var(--border));
+  color: var(--purple-deep);
+}
+
+.sls-pay-pill.is-upi .sls-pay-pill-dot {
+  background: var(--purple-deep);
+}
+
+.sls-pay-pill.is-cash {
+  background: var(--amber-soft);
+  border-color: color-mix(in srgb, var(--amber) 22%, var(--border));
+  color: var(--amber-ink);
+}
+
+.sls-pay-pill.is-cash .sls-pay-pill-dot {
+  background: var(--amber);
+}
+
+.sls-pay-pill.is-card {
+  background: var(--blue-soft);
+  border-color: color-mix(in srgb, var(--blue) 22%, var(--border));
+  color: var(--blue);
+}
+
+.sls-pay-pill.is-card .sls-pay-pill-dot {
+  background: var(--blue);
+}
+
+.sls-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sls-status-pill svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
 }
 
 .sls-col-total {
@@ -994,6 +1507,10 @@
   .sls-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .sls-mid-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 860px) {
@@ -1005,25 +1522,21 @@
     display: flex;
   }
 
-  .sls-search {
-    max-width: none;
-    flex: 1 1 100%;
-  }
-
-  .sls-range-btn {
-    min-height: 44px;
-    flex: 1 1 0;
-    padding: 0 var(--sp-2);
-    white-space: nowrap;
-  }
-
-  .sls-ranges {
+  .sls-table-actions {
     width: 100%;
+    margin-left: 0;
+  }
+
+  .sls-table-search {
+    flex: 1 1 auto;
+    width: auto;
+    min-height: 44px;
   }
 
   .sls-chip,
   .sls-export-btn,
-  .sls-chart-toggle {
+  .sls-chart-toggle,
+  .sls-preset-pill {
     min-height: 44px;
   }
 }
@@ -1041,10 +1554,18 @@
   .sls-kpi-value {
     font-size: 1.125rem;
   }
+
+  .sls-kpi-spark,
+  .sls-pay-donut {
+    display: none;
+  }
+
+  .sls-pay-line {
+    gap: 4px;
+    font-size: 0.6875rem;
+  }
 }
 
-/* QA, 2026-10-17 — at 861–1100px (an iPad held sideways) the seven columns need 840px and the card gives 727: Payment, Total
-   and Bill were hidden. Tighter cells, and the date and name may wrap, bring it inside the card. */
 @media (min-width: 861px) and (max-width: 1100px) {
   .sls-table th,
   .sls-table td {

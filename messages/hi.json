@@ -3177,7 +3177,9 @@
     "ranges": {
       "today": "आज",
       "last_7_days": "पिछले 7 दिन",
-      "last_30_days": "पिछले 30 दिन"
+      "last_30_days": "पिछले 30 दिन",
+      "this_month": "इस महीने",
+      "custom": "कस्टम"
     },
     "filters": {
       "all": "सभी बिल ({n})",
@@ -3205,7 +3207,8 @@
       "productsSold": "सामान बिका",
       "unitsCount": "{n, plural, =0 {कोई नग नहीं} one {# नग बिका} other {# नग बिके}}",
       "paymentSplit": "पैसे कैसे आए",
-      "noPayments": "अभी कोई भुगतान नहीं"
+      "noPayments": "अभी कोई भुगतान नहीं",
+      "vsPrevDays": "पिछले {n, plural, one {दिन} other {# दिनों}} से {pct}%"
     },
     "cols": {
       "when": "कब",
@@ -3213,11 +3216,14 @@
       "phone": "फ़ोन",
       "services": "सेवाएँ",
       "products": "सामान",
+      "countSuffix": "(संख्या)",
       "staff": "स्टाफ़",
       "payment": "भुगतान",
       "total": "कुल",
+      "status": "स्थिति",
       "action": "बिल"
     },
+    "completedStatus": "पूरा हुआ",
     "view": "बिल देखें",
     "moreProducts": "+{n} और",
     "noProducts": "—",
@@ -3231,7 +3237,7 @@
       "hint": "लंबी तारीख़ चुनें, या पेमेंट दर्ज करें से नया बिल बनाएँ।"
     },
     "recordPayment": "पेमेंट दर्ज करें",
-    "exportCsv": "CSV डाउनलोड करें",
+    "exportCsv": "डाउनलोड करें",
     "exportCsvLimit": "अधिकतम {max} पंक्तियाँ डाउनलोड होंगी",
     "paginationNoun": "बिल",
     "loadFailed": "इस समय की बिक्री लोड नहीं हो सकी। फिर कोशिश करें।",
@@ -3246,6 +3252,16 @@
       "show": "ग्राफ़ दिखाएँ",
       "hide": "ग्राफ़ छुपाएँ",
       "peak": "सबसे ज़्यादा"
+    },
+    "quickStats": {
+      "title": "मुख्य आँकड़े",
+      "viewAll": "सब देखें",
+      "avgBill": "औसत बिल राशि",
+      "clientsServed": "ग्राहक आए",
+      "topService": "सबसे ज़्यादा सेवा",
+      "topProduct": "सबसे ज़्यादा सामान",
+      "bookingsCount": "{n, plural, =0 {कोई बुकिंग नहीं} one {# बुकिंग} other {# बुकिंग}}",
+      "noneYet": "—"
     }
   }
 }
